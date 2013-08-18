@@ -527,4 +527,3 @@ npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
             return d_sgn + (((npy_uint64)(h&0x7fffu) + 0xfc000u) << 42);
     }
 }
-

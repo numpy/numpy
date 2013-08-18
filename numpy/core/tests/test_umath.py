@@ -78,7 +78,7 @@ class TestDivision(TestCase):
         msg = "Complex floor division implementation check"
         x = np.array([.9 + 1j, -.1 + 1j, .9 + .5*1j, .9 + 2.*1j], dtype=np.complex128)
         y = np.array([0., -1., 0., 0.], dtype=np.complex128)
-        assert_equal(np.floor_divide(x**2,x), y, err_msg=msg)
+        assert_equal(np.floor_divide(x**2, x), y, err_msg=msg)
         # check overflow, underflow
         msg = "Complex floor division overflow/underflow check"
         x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
@@ -169,14 +169,14 @@ class TestPower(TestCase):
         assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
     def test_fast_power(self):
-        x = np.array([1,2,3], np.int16)
+        x = np.array([1, 2, 3], np.int16)
         assert_((x**2.00001).dtype is (x**2.0).dtype)
 
 class TestLog2(TestCase):
     def test_log2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
@@ -186,7 +186,7 @@ class TestExp2(TestCase):
     def test_exp2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.exp2(yf), xf)
@@ -198,7 +198,7 @@ class TestLogAddExp2(_FilterInvalids):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f','d','g'],[6, 15, 15]) :
+        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]) :
             xf = np.log2(np.array(x, dtype=dt))
             yf = np.log2(np.array(y, dtype=dt))
             zf = np.log2(np.array(z, dtype=dt))
@@ -208,7 +208,7 @@ class TestLogAddExp2(_FilterInvalids):
         x = [1000000, -1000000, 1000200, -1000200]
         y = [1000200, -1000200, 1000000, -1000000]
         z = [1000200, -1000000, 1000200, -1000000]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
@@ -220,7 +220,7 @@ class TestLogAddExp2(_FilterInvalids):
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='ignore'):
-            for dt in ['f','d','g'] :
+            for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
                 logzf = np.array(z, dtype=dt)
@@ -238,7 +238,7 @@ class TestLog(TestCase):
     def test_log_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             log2_ = 0.69314718055994530943
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)*log2_
@@ -249,7 +249,7 @@ class TestExp(TestCase):
     def test_exp_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             log2_ = 0.69314718055994530943
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)*log2_
@@ -261,7 +261,7 @@ class TestLogAddExp(_FilterInvalids):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f','d','g'],[6, 15, 15]) :
+        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]) :
             xf = np.log(np.array(x, dtype=dt))
             yf = np.log(np.array(y, dtype=dt))
             zf = np.log(np.array(z, dtype=dt))
@@ -271,7 +271,7 @@ class TestLogAddExp(_FilterInvalids):
         x = [1000000, -1000000, 1000200, -1000200]
         y = [1000200, -1000200, 1000000, -1000000]
         z = [1000200, -1000000, 1000200, -1000000]
-        for dt in ['f','d','g'] :
+        for dt in ['f', 'd', 'g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
@@ -283,7 +283,7 @@ class TestLogAddExp(_FilterInvalids):
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='ignore'):
-            for dt in ['f','d','g'] :
+            for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
                 logzf = np.array(z, dtype=dt)
@@ -479,8 +479,8 @@ class TestMaximum(_FilterInvalids):
             assert_equal(func(tmp2), np.nan)
 
     def test_reduce_complex(self):
-        assert_equal(np.maximum.reduce([1,2j]),1)
-        assert_equal(np.maximum.reduce([1+3j,2j]),1+3j)
+        assert_equal(np.maximum.reduce([1, 2j]), 1)
+        assert_equal(np.maximum.reduce([1+3j, 2j]), 1+3j)
 
     def test_float_nans(self):
         nan = np.nan
@@ -526,8 +526,8 @@ class TestMinimum(_FilterInvalids):
             assert_equal(func(tmp2), np.nan)
 
     def test_reduce_complex(self):
-        assert_equal(np.minimum.reduce([1,2j]),2j)
-        assert_equal(np.minimum.reduce([1+3j,2j]),2j)
+        assert_equal(np.minimum.reduce([1, 2j]), 2j)
+        assert_equal(np.minimum.reduce([1+3j, 2j]), 2j)
 
     def test_float_nans(self):
         nan = np.nan
@@ -573,8 +573,8 @@ class TestFmax(_FilterInvalids):
             assert_equal(func(tmp2), 9)
 
     def test_reduce_complex(self):
-        assert_equal(np.fmax.reduce([1,2j]),1)
-        assert_equal(np.fmax.reduce([1+3j,2j]),1+3j)
+        assert_equal(np.fmax.reduce([1, 2j]), 1)
+        assert_equal(np.fmax.reduce([1+3j, 2j]), 1+3j)
 
     def test_float_nans(self):
         nan = np.nan
@@ -615,8 +615,8 @@ class TestFmin(_FilterInvalids):
             assert_equal(func(tmp2), 1)
 
     def test_reduce_complex(self):
-        assert_equal(np.fmin.reduce([1,2j]),2j)
-        assert_equal(np.fmin.reduce([1+3j,2j]),2j)
+        assert_equal(np.fmin.reduce([1, 2j]), 2j)
+        assert_equal(np.fmin.reduce([1+3j, 2j]), 2j)
 
     def test_float_nans(self):
         nan = np.nan
@@ -784,21 +784,21 @@ class TestSpecialMethods(TestCase):
         b = B()
         c = C()
         f = ncu.minimum
-        self.assertTrue(type(f(x,x)) is np.ndarray)
-        self.assertTrue(type(f(x,a)) is A)
-        self.assertTrue(type(f(x,b)) is B)
-        self.assertTrue(type(f(x,c)) is C)
-        self.assertTrue(type(f(a,x)) is A)
-        self.assertTrue(type(f(b,x)) is B)
-        self.assertTrue(type(f(c,x)) is C)
+        self.assertTrue(type(f(x, x)) is np.ndarray)
+        self.assertTrue(type(f(x, a)) is A)
+        self.assertTrue(type(f(x, b)) is B)
+        self.assertTrue(type(f(x, c)) is C)
+        self.assertTrue(type(f(a, x)) is A)
+        self.assertTrue(type(f(b, x)) is B)
+        self.assertTrue(type(f(c, x)) is C)
 
-        self.assertTrue(type(f(a,a)) is A)
-        self.assertTrue(type(f(a,b)) is B)
-        self.assertTrue(type(f(b,a)) is B)
-        self.assertTrue(type(f(b,b)) is B)
-        self.assertTrue(type(f(b,c)) is C)
-        self.assertTrue(type(f(c,b)) is C)
-        self.assertTrue(type(f(c,c)) is C)
+        self.assertTrue(type(f(a, a)) is A)
+        self.assertTrue(type(f(a, b)) is B)
+        self.assertTrue(type(f(b, a)) is B)
+        self.assertTrue(type(f(b, b)) is B)
+        self.assertTrue(type(f(b, c)) is C)
+        self.assertTrue(type(f(c, b)) is C)
+        self.assertTrue(type(f(c, c)) is C)
 
         self.assertTrue(type(ncu.exp(a) is A))
         self.assertTrue(type(ncu.exp(b) is B))
@@ -871,9 +871,9 @@ class TestSpecialMethods(TestCase):
 
 class TestChoose(TestCase):
     def test_mixed(self):
-        c = np.array([True,True])
-        a = np.array([True,True])
-        assert_equal(np.choose(c, (a, 1)), np.array([1,1]))
+        c = np.array([True, True])
+        a = np.array([True, True])
+        assert_equal(np.choose(c, (a, 1)), np.array([1, 1]))
 
 
 def is_longdouble_finfo_bogus():
@@ -966,7 +966,7 @@ class TestComplexFunctions(object):
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
-                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname,p,a,b))
+                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname, p, a, b))
 
     def check_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
@@ -1046,8 +1046,8 @@ class TestComplexFunctions(object):
             good = (abs(func(zp) - func(zm)) < 2*eps)
             assert_(np.all(good), (func, z0[~good]))
 
-        for func in (np.arcsinh,np.arcsinh,np.arcsin,np.arctanh,np.arctan):
-            pts = [rp+1j*ip for rp in (-1e-3,0,1e-3) for ip in(-1e-3,0,1e-3)
+        for func in (np.arcsinh, np.arcsinh, np.arcsin, np.arctanh, np.arctan):
+            pts = [rp+1j*ip for rp in (-1e-3, 0, 1e-3) for ip in(-1e-3, 0, 1e-3)
                    if rp != 0 or ip != 0]
             check(func, pts, 1)
             check(func, pts, 1j)
@@ -1081,7 +1081,7 @@ class TestSubclass(TestCase):
                 self = np.ndarray.__new__(subtype, shape, dtype=object)
                 self.fill(0)
                 return self
-        a = simple((3,4))
+        a = simple((3, 4))
         assert_equal(a+a, a)
 
 def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
@@ -1237,12 +1237,12 @@ def test_pos_nan():
 
 def test_reduceat():
     """Test bug in reduceat when structured arrays are not copied."""
-    db = np.dtype([('name', 'S11'),('time', np.int64), ('value', np.float32)])
+    db = np.dtype([('name', 'S11'), ('time', np.int64), ('value', np.float32)])
     a = np.empty([100], dtype=db)
     a['name'] = 'Simple'
     a['time'] = 10
     a['value'] = 100
-    indx = [0,7,15,25]
+    indx = [0, 7, 15, 25]
 
     h2 = []
     val1 = indx[0]
@@ -1271,7 +1271,7 @@ def test_reduceat_empty():
     assert_equal(result.dtype, x.dtype)
     assert_equal(result.shape, (0,))
     # Another case with a slightly different zero-sized shape
-    x = np.ones((5,2))
+    x = np.ones((5, 2))
     result = np.add.reduceat(x, [], axis=0)
     assert_equal(result.dtype, x.dtype)
     assert_equal(result.shape, (0, 2))

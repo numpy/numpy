@@ -351,7 +351,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Compute the bin number each sample falls into.
     Ncount = {}
     for i in arange(D):
-        Ncount[i] = digitize(sample[:,i], edges[i])
+        Ncount[i] = digitize(sample[:, i], edges[i])
 
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right
@@ -362,7 +362,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         if not np.isinf(mindiff):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
-            on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1],
+            on_edge = where(around(sample[:, i], decimal) == around(edges[i][-1],
                                                                    decimal))[0]
             # Shift these points one bin to the left.
             Ncount[i][on_edge] -= 1
@@ -392,11 +392,11 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     hist = hist.reshape(sort(nbin))
     for i in arange(nbin.size):
         j = ni.argsort()[i]
-        hist = hist.swapaxes(i,j)
-        ni[i],ni[j] = ni[j],ni[i]
+        hist = hist.swapaxes(i, j)
+        ni[i], ni[j] = ni[j], ni[i]
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*[slice(1,-1)]
+    core = D*[slice(1, -1)]
     hist = hist[core]
 
     # Normalize if normed is True
@@ -1196,7 +1196,7 @@ def sort_complex(a):
     array([ 1.+2.j,  2.-1.j,  3.-3.j,  3.-2.j,  3.+5.j])
 
     """
-    b = array(a,copy=True)
+    b = array(a, copy=True)
     b.sort()
     if not issubclass(b.dtype.type, _nx.complexfloating):
         if b.dtype.char in 'bhBH':
@@ -1269,7 +1269,7 @@ def unique(x):
         if tmp.size == 0:
             return tmp
         tmp.sort()
-        idx = concatenate(([True],tmp[1:]!=tmp[:-1]))
+        idx = concatenate(([True], tmp[1:]!=tmp[:-1]))
         return tmp[idx]
     except AttributeError:
         items = sorted(set(x))
@@ -1736,7 +1736,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         rowvar = 1
     if rowvar:
         axis = 0
-        tup = (slice(None),newaxis)
+        tup = (slice(None), newaxis)
     else:
         axis = 1
         tup = (newaxis, slice(None))
@@ -1744,7 +1744,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
 
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=float)
-        X = concatenate((X,y), axis)
+        X = concatenate((X, y), axis)
 
     X -= X.mean(axis=1-axis)[tup]
     if rowvar:
@@ -1820,7 +1820,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         d = diag(c)
     except ValueError: # scalar covariance
         return 1
-    return c/sqrt(multiply.outer(d,d))
+    return c/sqrt(multiply.outer(d, d))
 
 def blackman(M):
     """
@@ -1916,7 +1916,7 @@ def blackman(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0,M)
+    n = arange(0, M)
     return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
 
 def bartlett(M):
@@ -2022,8 +2022,8 @@ def bartlett(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0,M)
-    return where(less_equal(n,(M-1)/2.0),2.0*n/(M-1),2.0-2.0*n/(M-1))
+    n = arange(0, M)
+    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0-2.0*n/(M-1))
 
 def hanning(M):
     """
@@ -2120,7 +2120,7 @@ def hanning(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0,M)
+    n = arange(0, M)
     return 0.5-0.5*cos(2.0*pi*n/(M-1))
 
 def hamming(M):
@@ -2216,8 +2216,8 @@ def hamming(M):
     if M < 1:
         return array([])
     if M == 1:
-        return ones(1,float)
-    n = arange(0,M)
+        return ones(1, float)
+    n = arange(0, M)
     return 0.54-0.46*cos(2.0*pi*n/(M-1))
 
 ## Code from cephes for i0
@@ -2285,7 +2285,7 @@ def _chbevl(x, vals):
     b0 = vals[0]
     b1 = 0.0
 
-    for i in range(1,len(vals)):
+    for i in range(1, len(vals)):
         b2 = b1
         b1 = b0
         b0 = x*b1 - b2 + vals[i]
@@ -2364,7 +2364,7 @@ def i0(x):
 
 ## End of cephes code for i0
 
-def kaiser(M,beta):
+def kaiser(M, beta):
     """
     Return the Kaiser window.
 
@@ -2487,7 +2487,7 @@ def kaiser(M,beta):
     from numpy.dual import i0
     if M == 1:
         return np.array([1.])
-    n = arange(0,M)
+    n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
 
@@ -2592,7 +2592,7 @@ def msort(a):
     ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
 
     """
-    b = array(a,subok=True,copy=True)
+    b = array(a, subok=True, copy=True)
     b.sort(0)
     return b
 
@@ -2841,7 +2841,7 @@ def _compute_qth_percentile(sorted, q, axis, out):
     else:
         indexer[axis] = slice(i, i+2)
         j = i + 1
-        weights = array([(j - index), (index - i)],float)
+        weights = array([(j - index), (index - i)], float)
         wshape = [1]*sorted.ndim
         wshape[axis] = 2
         weights.shape = wshape
@@ -2926,8 +2926,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     nd = len(y.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
-    slice1[axis] = slice(1,None)
-    slice2[axis] = slice(None,-1)
+    slice1[axis] = slice(1, None)
+    slice2[axis] = slice(None, -1)
     try:
         ret = (d * (y[slice1] +y [slice2]) / 2.0).sum(axis)
     except ValueError: # Operations didn't work, cast to ndarray
@@ -3212,7 +3212,7 @@ def delete(arr, obj, axis=None):
         if stop == N:
             pass
         else:
-            slobj[axis] = slice(stop-numtodel,None)
+            slobj[axis] = slice(stop-numtodel, None)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(stop, None)
             new[slobj] = arr[slobj2]
@@ -3253,9 +3253,9 @@ def delete(arr, obj, axis=None):
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
-        slobj[axis] = slice(obj,None)
+        slobj[axis] = slice(obj, None)
         slobj2 = [slice(None)]*ndim
-        slobj2[axis] = slice(obj+1,None)
+        slobj2[axis] = slice(obj+1, None)
         new[slobj] = arr[slobj2]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):

@@ -17,9 +17,9 @@ from __future__ import division, absolute_import, print_function
 #  otherwise.
 #  Usage  --- from numpy.dual import fft, inv
 
-__all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
-           'norm','inv','svd','solve','det','eig','eigvals',
-           'eigh','eigvalsh','lstsq', 'pinv','cholesky','i0']
+__all__ = ['fft', 'ifft', 'fftn', 'ifftn', 'fft2', 'ifft2',
+           'norm', 'inv', 'svd', 'solve', 'det', 'eig', 'eigvals',
+           'eigh', 'eigvalsh', 'lstsq', 'pinv', 'cholesky', 'i0']
 
 import numpy.linalg as linpkg
 import numpy.fft as fftpkg

@@ -68,8 +68,8 @@ def fftshift(x, axes=None):
     for k in axes:
         n = tmp.shape[k]
         p2 = (n+1)//2
-        mylist = concatenate((arange(p2,n),arange(p2)))
-        y = take(y,mylist,k)
+        mylist = concatenate((arange(p2, n), arange(p2)))
+        y = take(y, mylist, k)
     return y
 
 
@@ -116,8 +116,8 @@ def ifftshift(x, axes=None):
     for k in axes:
         n = tmp.shape[k]
         p2 = n-(n+1)//2
-        mylist = concatenate((arange(p2,n),arange(p2)))
-        y = take(y,mylist,k)
+        mylist = concatenate((arange(p2, n), arange(p2)))
+        y = take(y, mylist, k)
     return y
 
 
@@ -125,8 +125,8 @@ def fftfreq(n, d=1.0):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
-    The returned float array `f` contains the frequency bin centers in cycles 
-    per unit of the sample spacing (with zero at the start).  For instance, if 
+    The returned float array `f` contains the frequency bin centers in cycles
+    per unit of the sample spacing (with zero at the start).  For instance, if
     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
     Given a window length `n` and a sample spacing `d`::
@@ -140,7 +140,7 @@ def fftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
-        
+
     Returns
     -------
     f : ndarray
@@ -157,7 +157,7 @@ def fftfreq(n, d=1.0):
     array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
 
     """
-    if not (isinstance(n,int) or isinstance(n, integer)):
+    if not (isinstance(n, int) or isinstance(n, integer)):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     results = empty(n, int)
@@ -172,11 +172,11 @@ def fftfreq(n, d=1.0):
 
 def rfftfreq(n, d=1.0):
     """
-    Return the Discrete Fourier Transform sample frequencies 
+    Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
 
-    The returned float array `f` contains the frequency bin centers in cycles 
-    per unit of the sample spacing (with zero at the start).  For instance, if 
+    The returned float array `f` contains the frequency bin centers in cycles
+    per unit of the sample spacing (with zero at the start).  For instance, if
     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
     Given a window length `n` and a sample spacing `d`::
@@ -213,7 +213,7 @@ def rfftfreq(n, d=1.0):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if not (isinstance(n,int) or isinstance(n, integer)):
+    if not (isinstance(n, int) or isinstance(n, integer)):
         raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1

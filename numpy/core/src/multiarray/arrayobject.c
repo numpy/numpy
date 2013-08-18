@@ -77,7 +77,7 @@ PyArray_Size(PyObject *op)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base) 
+PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     if (base == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -92,7 +92,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     if (PyArray_FailUnlessWriteable(base, "UPDATEIFCOPY base") < 0) {
         goto fail;
     }
-    
+
     /*
      * Any writes to 'arr' will magicaly turn into writes to 'base', so we
      * should warn if necessary.
@@ -145,8 +145,8 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 
     /*
      * Don't allow infinite chains of views, always set the base
-     * to the first owner of the data.  
-     * That is, either the first object which isn't an array, 
+     * to the first owner of the data.
+     * That is, either the first object which isn't an array,
      * or the first object which owns its own data.
      */
 
@@ -157,19 +157,19 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         /* Propagate WARN_ON_WRITE through views. */
         if (PyArray_FLAGS(obj_arr) & NPY_ARRAY_WARN_ON_WRITE) {
             PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
-        }   
+        }
 
         /* If this array owns its own data, stop collapsing */
         if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
             break;
-        }   
+        }
 
         tmp = PyArray_BASE(obj_arr);
         /* If there's no base, stop collapsing */
         if (tmp == NULL) {
             break;
         }
-        /* Stop the collapse new base when the would not be of the same 
+        /* Stop the collapse new base when the would not be of the same
          * type (i.e. different subclass).
          */
         if (Py_TYPE(tmp) != Py_TYPE(arr)) {
@@ -1478,7 +1478,7 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
 
     offset_bounds_from_strides(elsize, nd, dims, newstrides,
                                         &lower_offset, &upper_offset);
-    
+
     if ((upper_offset > end) || (lower_offset < begin)) {
         return NPY_FALSE;
     }

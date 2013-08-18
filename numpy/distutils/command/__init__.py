@@ -24,7 +24,7 @@ distutils_all = [  #'build_py',
                    'bdist_wininst',
                 ]
 
-__import__('distutils.command',globals(),locals(),distutils_all)
+__import__('distutils.command', globals(), locals(), distutils_all)
 
 __all__ = ['build',
            'config_compiler',

@@ -35,11 +35,11 @@ import glob
 # To convert typecharacters we need to
 # Not very safe.  Disabled for now..
 def replacetypechars(astr):
-    astr = astr.replace("'s'","'h'")
-    astr = astr.replace("'b'","'B'")
-    astr = astr.replace("'1'","'b'")
-    astr = astr.replace("'w'","'H'")
-    astr = astr.replace("'u'","'I'")
+    astr = astr.replace("'s'", "'h'")
+    astr = astr.replace("'b'", "'B'")
+    astr = astr.replace("'1'", "'b'")
+    astr = astr.replace("'w'", "'H'")
+    astr = astr.replace("'u'", "'I'")
     return astr
 
 def changeimports(fstr, name, newname):
@@ -49,13 +49,13 @@ def changeimports(fstr, name, newname):
     fromall=0
 
     fstr = fstr.replace(importasstr, 'import %s as ' % newname)
-    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
+    fstr = fstr.replace(importstr, 'import %s as %s' % (newname, name))
 
     ind = 0
     Nlen = len(fromstr)
     Nlen2 = len("from %s import " % newname)
     while True:
-        found = fstr.find(fromstr,ind)
+        found = fstr.find(fromstr, ind)
         if (found < 0):
             break
         ind = found + Nlen
@@ -66,7 +66,7 @@ def changeimports(fstr, name, newname):
     return fstr, fromall
 
 def replaceattr(astr):
-    astr = astr.replace("matrixmultiply","dot")
+    astr = astr.replace("matrixmultiply", "dot")
     return astr
 
 def replaceother(astr):
@@ -131,7 +131,7 @@ def convertall(direc=os.path.curdir):
     <usesnumeric>.py.orig.  A new file named <usesnumeric>.py
     is then written with the updated code.
     """
-    files = glob.glob(os.path.join(direc,'*.py'))
+    files = glob.glob(os.path.join(direc, '*.py'))
     for afile in files:
         convertfile(afile)
 

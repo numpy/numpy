@@ -15,31 +15,31 @@ class TestPythonFloat(TestCase):
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
-        assert_equal(id(ftype),id(ftype2))
+        assert_equal(id(ftype), id(ftype2))
 
 class TestHalf(TestCase):
     def test_singleton(self):
         ftype = finfo(half)
         ftype2 = finfo(half)
-        assert_equal(id(ftype),id(ftype2))
+        assert_equal(id(ftype), id(ftype2))
 
 class TestSingle(TestCase):
     def test_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
-        assert_equal(id(ftype),id(ftype2))
+        assert_equal(id(ftype), id(ftype2))
 
 class TestDouble(TestCase):
     def test_singleton(self):
         ftype = finfo(double)
         ftype2 = finfo(double)
-        assert_equal(id(ftype),id(ftype2))
+        assert_equal(id(ftype), id(ftype2))
 
 class TestLongdouble(TestCase):
     def test_singleton(self,level=2):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
-        assert_equal(id(ftype),id(ftype2))
+        assert_equal(id(ftype), id(ftype2))
 
 class TestIinfo(TestCase):
     def test_basic(self):

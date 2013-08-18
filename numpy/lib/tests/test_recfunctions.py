@@ -660,13 +660,13 @@ class TestJoinBy2(TestCase):
         assert_equal(test, control)
 
     def test_two_keys_two_vars(self):
-        a = np.array(list(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
-                        np.arange(50, 60), np.arange(10,20))),
-                        dtype=[('k', int), ('a', int), ('b', int),('c',int)])
+        a = np.array(list(zip(np.tile([10, 11], 5), np.repeat(np.arange(5), 2),
+                        np.arange(50, 60), np.arange(10, 20))),
+                        dtype=[('k', int), ('a', int), ('b', int), ('c', int)])
 
-        b = np.array(list(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
-                        np.arange(65, 75), np.arange(0,10))),
-                        dtype=[('k', int), ('a', int), ('b', int), ('c',int)])
+        b = np.array(list(zip(np.tile([10, 11], 5), np.repeat(np.arange(5), 2),
+                        np.arange(65, 75), np.arange(0, 10))),
+                        dtype=[('k', int), ('a', int), ('b', int), ('c', int)])
 
         control = np.array([(10, 0, 50, 65, 10, 0), (11, 0, 51, 66, 11, 1),
                             (10, 1, 52, 67, 12, 2), (11, 1, 53, 68, 13, 3),
@@ -675,7 +675,7 @@ class TestJoinBy2(TestCase):
                             (10, 4, 58, 73, 18, 8), (11, 4, 59, 74, 19, 9)],
                       dtype=[('k', int), ('a', int), ('b1', int),
                              ('b2', int), ('c1', int), ('c2', int)])
-        test = join_by(['a','k'], a, b, r1postfix='1', r2postfix='2', jointype='inner')
+        test = join_by(['a', 'k'], a, b, r1postfix='1', r2postfix='2', jointype='inner')
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 

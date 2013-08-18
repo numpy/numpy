@@ -28,7 +28,7 @@ _todelete = ''.join(_todelete)
 
 
 def _eval(astr):
-    return eval(astr.translate(_table,_todelete))
+    return eval(astr.translate(_table, _todelete))
 
 def _convert_from_string(data):
     data.find

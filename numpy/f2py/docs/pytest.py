@@ -4,9 +4,9 @@ from __future__ import division, absolute_import, print_function
 import Numeric
 def foo(a):
     a = Numeric.array(a)
-    m,n = a.shape
+    m, n = a.shape
     for i in range(m):
         for j in range(n):
-            a[i,j] = a[i,j] + 10*(i+1) + (j+1)
+            a[i, j] = a[i, j] + 10*(i+1) + (j+1)
     return a
 #eof

@@ -59,6 +59,6 @@ setup(name        = "NumpyTypemapTests",
       author      = "Bill Spotz",
       py_modules  = ["Array", "Farray", "Vector", "Matrix", "Tensor",
                      "Fortran"],
-      ext_modules = [_Array , _Farray , _Vector , _Matrix , _Tensor,
+      ext_modules = [_Array, _Farray, _Vector, _Matrix, _Tensor,
                      _Fortran]
       )

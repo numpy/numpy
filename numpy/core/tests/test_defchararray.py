@@ -37,14 +37,14 @@ class TestBasic(TestCase):
         assert_array_equal(B, A)
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
-        B[0,0] = 'changed'
-        assert_(B[0,0] != A[0,0])
+        B[0, 0] = 'changed'
+        assert_(B[0, 0] != A[0, 0])
         C = np.char.asarray(A)
         assert_array_equal(C, A)
         assert_equal(C.dtype, A.dtype)
-        C[0,0] = 'changed again'
-        assert_(C[0,0] != B[0,0])
-        assert_(C[0,0] == A[0,0])
+        C[0, 0] = 'changed again'
+        assert_(C[0, 0] != B[0, 0])
+        assert_(C[0, 0] == A[0, 0])
 
     def test_from_unicode_array(self):
         A = np.array([['abc', sixu('Sigma \u03a3')],
@@ -572,9 +572,9 @@ class TestOperations(TestCase):
 
     def test_mul(self):
         A = self.A
-        for r in (2,3,5,7,197):
-            Ar = np.array([[A[0,0]*r, A[0,1]*r],
-                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
+        for r in (2, 3, 5, 7, 197):
+            Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
+                           [A[1, 0]*r, A[1, 1]*r]]).view(np.chararray)
 
             assert_array_equal(Ar, (self.A * r))
 
@@ -588,9 +588,9 @@ class TestOperations(TestCase):
 
     def test_rmul(self):
         A = self.A
-        for r in (2,3,5,7,197):
-            Ar = np.array([[A[0,0]*r, A[0,1]*r],
-                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
+        for r in (2, 3, 5, 7, 197):
+            Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
+                           [A[1, 0]*r, A[1, 1]*r]]).view(np.chararray)
             assert_array_equal(Ar, (r * self.A))
 
         for ob in [object(), 'qrs']:
@@ -603,18 +603,18 @@ class TestOperations(TestCase):
 
     def test_mod(self):
         """Ticket #856"""
-        F = np.array([['%d', '%f'],['%s','%r']]).view(np.chararray)
-        C = np.array([[3,7],[19,1]])
+        F = np.array([['%d', '%f'], ['%s', '%r']]).view(np.chararray)
+        C = np.array([[3, 7], [19, 1]])
         FC = np.array([['3', '7.000000'],
                        ['19', '1']]).view(np.chararray)
         assert_array_equal(FC, F % C)
 
-        A = np.array([['%.3f','%d'],['%s','%r']]).view(np.chararray)
-        A1 = np.array([['1.000','1'],['1','1']]).view(np.chararray)
+        A = np.array([['%.3f', '%d'], ['%s', '%r']]).view(np.chararray)
+        A1 = np.array([['1.000', '1'], ['1', '1']]).view(np.chararray)
         assert_array_equal(A1, (A % 1))
 
-        A2 = np.array([['1.000','2'],['3','4']]).view(np.chararray)
-        assert_array_equal(A2, (A % [[1,2],[3,4]]))
+        A2 = np.array([['1.000', '2'], ['3', '4']]).view(np.chararray)
+        assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
         assert_(("%s" % self.A) == str(self.A))

@@ -164,6 +164,5 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
     >>> plt.show()
 
     """
-    y = linspace(start,stop,num=num,endpoint=endpoint)
-    return _nx.power(base,y)
-
+    y = linspace(start, stop, num=num, endpoint=endpoint)
+    return _nx.power(base, y)

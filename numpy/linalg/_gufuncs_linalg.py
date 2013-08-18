@@ -15,7 +15,7 @@ as the iteration used when used on vectors. This can result in faster
 execution as well.
 
 In addition, there are some ufuncs thrown in that implement fused operations
-over numpy vectors that can result in faster execution on large vector 
+over numpy vectors that can result in faster execution on large vector
 compared to non-fused versions (for example: multiply_add, multiply3).
 
 In fact, gufuncs_linalg is a very thin wrapper of python code that wraps
@@ -73,9 +73,9 @@ Fused Operations
  Error Handling
 ================
 Unlike the numpy.linalg module, this module does not use exceptions to notify
-errors in the execution of the kernels. As these functions are thougth to be 
+errors in the execution of the kernels. As these functions are thougth to be
 used in a vector way it didn't seem appropriate to raise exceptions on failure
-of an element. So instead, when an error computing an element occurs its 
+of an element. So instead, when an error computing an element occurs its
 associated result will be set to an invalid value (all NaNs).
 
 Exceptions can occur if the arguments fail to map properly to the underlying
@@ -91,7 +91,7 @@ That's not always the case, as due to limitations of the gufunc interface some
 functions cannot be mapped straight into a kernel.
 
 Two cases come to mind:
-- An uniform parameter is needed to configure the way the computation is 
+- An uniform parameter is needed to configure the way the computation is
 performed (like UPLO in the functions working on symmetric/hermitian matrices)
 - svd, where it was impossible to map the function to a gufunc signature.
 
@@ -114,9 +114,9 @@ from __future__ import division, absolute_import, print_function
 
 
 __all__ = ['inner1d', 'dotc1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet',
-           'inv', 'cholesky', 'quadratic_form', 'add3', 'multiply3', 
-           'multiply3_add', 'multiply_add', 'multiply_add2', 'multiply4', 
-           'multiply4_add', 'eig', 'eigvals', 'eigh', 'eigvalsh', 'solve', 
+           'inv', 'cholesky', 'quadratic_form', 'add3', 'multiply3',
+           'multiply3_add', 'multiply_add', 'multiply_add2', 'multiply4',
+           'multiply4_add', 'eig', 'eigvals', 'eigh', 'eigvalsh', 'solve',
            'svd', 'chosolve', 'poinv']
 
 import numpy as np
@@ -354,7 +354,7 @@ def slogdet(a, **kwargs):
     Compute the sign and (natural) logarithm of the determinant of an array,
     with broadcasting.
 
-    If an array has a very small or very large determinant, then a call to 
+    If an array has a very small or very large determinant, then a call to
     `det` may overflow or underflow. This routine is more robust against such
     issues, because it computes the logarithm of the determinant rather than
     the determinant itself
@@ -368,7 +368,7 @@ def slogdet(a, **kwargs):
     -------
     sign : (...) array
         An array of numbers representing the sign of the determinants. For real
-        matrices, this is 1, 0, or -1. For complex matrices, this is a complex 
+        matrices, this is 1, 0, or -1. For complex matrices, this is a complex
         number with absolute value 1 (i.e., it is on the unit circle), or else
         0.
     logdet : (...) array
@@ -1398,11 +1398,11 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
 def poinv(A, UPLO='L', **kw_args):
     """
-    Compute the (multiplicative) inverse of symmetric/hermitian positive 
+    Compute the (multiplicative) inverse of symmetric/hermitian positive
     definite matrices, with broadcasting.
 
-    Given a square symmetic/hermitian positive-definite matrix `a`, return 
-    the matrix `ainv` satisfying ``matrix_multiply(a, ainv) = 
+    Given a square symmetic/hermitian positive-definite matrix `a`, return
+    the matrix `ainv` satisfying ``matrix_multiply(a, ainv) =
     matrix_multiply(ainv, a) = Identity matrix``.
 
     Parameters

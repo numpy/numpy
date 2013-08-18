@@ -7,7 +7,7 @@ import nose
 
 def test_slow():
     @dec.slow
-    def slow_func(x,y,z):
+    def slow_func(x, y, z):
         pass
 
     assert_(slow_func.slow)

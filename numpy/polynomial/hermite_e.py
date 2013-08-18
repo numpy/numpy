@@ -184,7 +184,7 @@ def herme2poly(c) :
 #
 
 # Hermite
-hermedomain = np.array([-1,1])
+hermedomain = np.array([-1, 1])
 
 # Hermite coefficients representing zero.
 hermezero = np.array([0])
@@ -228,7 +228,7 @@ def hermeline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1291,7 +1291,7 @@ def hermevander2d(x, y, deg) :
 
     vx = hermevander(x, degx)
     vy = hermevander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1356,7 +1356,7 @@ def hermevander3d(x, y, z, deg) :
     vx = hermevander(x, degx)
     vy = hermevander(y, degy)
     vz = hermevander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1574,13 +1574,13 @@ def hermecompanion(c):
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(np.arange(1,n))))
+    scl = np.hstack((1., np.sqrt(np.arange(1, n))))
     scl = np.multiply.accumulate(scl)
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.sqrt(np.arange(1,n))
+    top[...] = np.sqrt(np.arange(1, n))
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])
     return mat
 
 

@@ -234,7 +234,3 @@ Revision notes
 
   * 08/25/2007 : Creation of this page
   * 01/23/2007 : The package has been moved to the SciPy sandbox, and is regularly updated: please check out your SVN version!
-
-
-
-

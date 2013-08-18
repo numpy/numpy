@@ -118,7 +118,7 @@ Statement of the problem:
 =========================
 
 Consider a M-by-N matrix A of integers, where M and N are the number A
-rows and columns, respectively. 
+rows and columns, respectively.
 
 In Fortran language, the storing array of this matrix can be defined
 as follows:
@@ -192,7 +192,7 @@ if type(obj) is ArrayType:
             set_transpose_strides(obj)  # lazy-transpose
             Py_INCREF(obj);
             return obj
-        set_transpose_strides(obj)       
+        set_transpose_strides(obj)
         if is_contiguous(obj):
             set_transpose_strides(obj)
             Py_INCREF(obj);

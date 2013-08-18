@@ -802,7 +802,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         PyErr_Clear();
     }
 
-    /*    
+    /*
      * For backward compatibility check the number C-Api number protcol
      * This should be removed up the finish label after deprecation.
      */
@@ -1127,7 +1127,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             }
             break;
     }
-   
+
     /*
      * Raise deprecate warning if new type hasn't been
      * set yet and size char is invalid.

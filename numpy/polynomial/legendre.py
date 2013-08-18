@@ -92,7 +92,7 @@ from .polytemplate import polytemplate
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
     'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
+    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d',
     'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d',
     'legcompanion', 'leggauss', 'legweight']
 
@@ -213,7 +213,7 @@ def leg2poly(c) :
 #
 
 # Legendre
-legdomain = np.array([-1,1])
+legdomain = np.array([-1, 1])
 
 # Legendre coefficients representing zero.
 legzero = np.array([0])
@@ -222,7 +222,7 @@ legzero = np.array([0])
 legone = np.array([1])
 
 # Legendre coefficients representing the identity x.
-legx = np.array([0,1])
+legx = np.array([0, 1])
 
 
 def legline(off, scl) :
@@ -256,7 +256,7 @@ def legline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1324,7 +1324,7 @@ def legvander2d(x, y, deg) :
 
     vx = legvander(x, degx)
     vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1389,7 +1389,7 @@ def legvander3d(x, y, z, deg) :
     vx = legvander(x, degx)
     vy = legvander(y, degy)
     vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1605,7 +1605,7 @@ def legcompanion(c):
     bot = mat.reshape(-1)[n::n+1]
     top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
     return mat
 
 

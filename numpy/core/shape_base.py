@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack']
 
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
@@ -100,7 +100,7 @@ def atleast_2d(*arys):
         if len(ary.shape) == 0 :
             result = ary.reshape(1, 1)
         elif len(ary.shape) == 1 :
-            result = ary[newaxis, :]
+            result = ary[newaxis,:]
         else :
             result = ary
         res.append(result)
@@ -162,11 +162,11 @@ def atleast_3d(*arys):
     for ary in arys:
         ary = asanyarray(ary)
         if len(ary.shape) == 0:
-            result = ary.reshape(1,1,1)
+            result = ary.reshape(1, 1, 1)
         elif len(ary.shape) == 1:
-            result = ary[newaxis,:,newaxis]
+            result = ary[newaxis,:, newaxis]
         elif len(ary.shape) == 2:
-            result = ary[:,:,newaxis]
+            result = ary[:,:, newaxis]
         else:
             result = ary
         res.append(result)
@@ -275,4 +275,3 @@ def hstack(tup):
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
-

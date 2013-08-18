@@ -558,4 +558,3 @@ how this can work, have a look at the ``memmap`` class in
 
 """
 from __future__ import division, absolute_import, print_function
-

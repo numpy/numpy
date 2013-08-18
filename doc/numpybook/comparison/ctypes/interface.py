@@ -49,7 +49,7 @@ def add(a, b):
     a = N.require(a, dtype, requires)
     b = N.require(b, dtype, requires)
     c = N.empty_like(a)
-    func(a,b,c,a.size)
+    func(a, b, c, a.size)
     return c
 
 def filter2d(a):

@@ -43,7 +43,7 @@ b = N.zeros_like(a)
 filter.DFILTER2D(a,b)
 """
 
-N = [10,20,30,40,50,100,200,300, 400, 500]
+N = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
 
 res = {}
 
@@ -57,6 +57,6 @@ for kind in ['f2py']:#['ctypes', 'pyrex', 'weave', 'f2py']:
     print(sys.path)
     for n in N:
         print("%s - %d" % (kind, n))
-        t = timeit.Timer(eval('%s_run'%kind), eval('%s_pre %% (%d,%d)'%(kind,n,n)))
-        mytime = min(t.repeat(3,100))
+        t = timeit.Timer(eval('%s_run'%kind), eval('%s_pre %% (%d,%d)'%(kind, n, n)))
+        mytime = min(t.repeat(3, 100))
         res[kind].append(mytime)

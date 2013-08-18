@@ -81,18 +81,18 @@ sepdict={}
 for k in ['decl',
           'frompyobj',
           'cleanupfrompyobj',
-          'topyarr','method',
-          'pyobjfrom','closepyobjfrom',
+          'topyarr', 'method',
+          'pyobjfrom', 'closepyobjfrom',
           'freemem',
           'userincludes',
-          'includes0','includes','typedefs','typedefs_generated',
-          'cppmacros','cfuncs','callbacks',
+          'includes0', 'includes', 'typedefs', 'typedefs_generated',
+          'cppmacros', 'cfuncs', 'callbacks',
           'latexdoc',
           'restdoc',
-          'routine_defs','externroutines',
+          'routine_defs', 'externroutines',
           'initf2pywraphooks',
-          'commonhooks','initcommonhooks',
-          'f90modhooks','initf90modhooks']:
+          'commonhooks', 'initcommonhooks',
+          'f90modhooks', 'initf90modhooks']:
     sepdict[k]='\n'
 
 #################### Rules for C/API module #################
@@ -243,16 +243,16 @@ PyMODINIT_FUNC init#modulename#(void) {
     }
 
 defmod_rules=[
-    {'body':'/*eof body*/',
-     'method':'/*eof method*/',
-     'externroutines':'/*eof externroutines*/',
-     'routine_defs':'/*eof routine_defs*/',
-     'initf90modhooks':'/*eof initf90modhooks*/',
-     'initf2pywraphooks':'/*eof initf2pywraphooks*/',
-     'initcommonhooks':'/*eof initcommonhooks*/',
-     'latexdoc':'',
-     'restdoc':'',
-     'modnote':{hasnote:'#note#',l_not(hasnote):''},
+    {'body': '/*eof body*/',
+     'method': '/*eof method*/',
+     'externroutines': '/*eof externroutines*/',
+     'routine_defs': '/*eof routine_defs*/',
+     'initf90modhooks': '/*eof initf90modhooks*/',
+     'initf2pywraphooks': '/*eof initf2pywraphooks*/',
+     'initcommonhooks': '/*eof initcommonhooks*/',
+     'latexdoc': '',
+     'restdoc': '',
+     'modnote': {hasnote:'#note#',l_not(hasnote):''},
      }
     ]
 
@@ -320,7 +320,7 @@ f2py_stop_clock();
     'doc':'#docreturn##name#(#docsignature#)',
     'docshort':'#docreturn##name#(#docsignatureshort#)',
     'docs':'"\t#docreturn##name#(#docsignature#)\\n"\n',
-    'need':['arrayobject.h','CFUNCSMESS','MINMAX'],
+    'need':['arrayobject.h', 'CFUNCSMESS', 'MINMAX'],
     'cppmacros':{debugcapi:'#define DEBUGCFUNCS'},
     'latexdoc':['\\subsection{Wrapper function \\texttt{#texname#}}\n',
                 """
@@ -338,65 +338,65 @@ f2py_stop_clock();
 
 rout_rules=[
     { # Init
-    'separatorsfor': {'callfortranroutine':'\n','routdebugenter':'\n','decl':'\n',
-                      'routdebugleave':'\n','routdebugfailure':'\n',
-                      'setjmpbuf':' || ',
-                      'docstrreq':'\n','docstropt':'\n','docstrout':'\n',
-                      'docstrcbs':'\n','docstrsigns':'\\n"\n"',
-                      'latexdocstrsigns':'\n',
-                      'latexdocstrreq':'\n','latexdocstropt':'\n',
-                      'latexdocstrout':'\n','latexdocstrcbs':'\n',
+    'separatorsfor': {'callfortranroutine': '\n', 'routdebugenter': '\n', 'decl': '\n',
+                      'routdebugleave': '\n', 'routdebugfailure': '\n',
+                      'setjmpbuf': ' || ',
+                      'docstrreq': '\n', 'docstropt': '\n', 'docstrout': '\n',
+                      'docstrcbs': '\n', 'docstrsigns': '\\n"\n"',
+                      'latexdocstrsigns': '\n',
+                      'latexdocstrreq': '\n', 'latexdocstropt': '\n',
+                      'latexdocstrout': '\n', 'latexdocstrcbs': '\n',
                       },
-    'kwlist':'','kwlistopt':'','callfortran':'','callfortranappend':'',
-    'docsign':'','docsignopt':'','decl':'/*decl*/',
-    'freemem':'/*freemem*/',
-    'docsignshort':'','docsignoptshort':'',
-    'docstrsigns':'','latexdocstrsigns':'',
-    'docstrreq':'\\nParameters\\n----------',
-    'docstropt':'\\nOther Parameters\\n----------------',
-    'docstrout':'\\nReturns\\n-------',
-    'docstrcbs':'\\nNotes\\n-----\\nCall-back functions::\\n',
-    'latexdocstrreq':'\\noindent Required arguments:',
-    'latexdocstropt':'\\noindent Optional arguments:',
-    'latexdocstrout':'\\noindent Return objects:',
-    'latexdocstrcbs':'\\noindent Call-back functions:',
-    'args_capi':'','keys_capi':'','functype':'',
-    'frompyobj':'/*frompyobj*/',
-    'cleanupfrompyobj':['/*end of cleanupfrompyobj*/'], #this list will be reversed
-    'pyobjfrom':'/*pyobjfrom*/',
-    'closepyobjfrom':['/*end of closepyobjfrom*/'], #this list will be reversed
-    'topyarr':'/*topyarr*/','routdebugleave':'/*routdebugleave*/',
-    'routdebugenter':'/*routdebugenter*/',
-    'routdebugfailure':'/*routdebugfailure*/',
-    'callfortranroutine':'/*callfortranroutine*/',
-    'argformat':'','keyformat':'','need_cfuncs':'',
-    'docreturn':'','return':'','returnformat':'','rformat':'',
-    'kwlistxa':'','keys_xa':'','xaformat':'','docsignxa':'','docsignxashort':'',
-    'initf2pywraphook':'',
-    'routnote':{hasnote:'--- #note#',l_not(hasnote):''},
-    },{
+    'kwlist': '', 'kwlistopt': '', 'callfortran': '', 'callfortranappend': '',
+    'docsign': '', 'docsignopt': '', 'decl': '/*decl*/',
+    'freemem': '/*freemem*/',
+    'docsignshort': '', 'docsignoptshort': '',
+    'docstrsigns': '', 'latexdocstrsigns': '',
+    'docstrreq': '\\nParameters\\n----------',
+    'docstropt': '\\nOther Parameters\\n----------------',
+    'docstrout': '\\nReturns\\n-------',
+    'docstrcbs': '\\nNotes\\n-----\\nCall-back functions::\\n',
+    'latexdocstrreq': '\\noindent Required arguments:',
+    'latexdocstropt': '\\noindent Optional arguments:',
+    'latexdocstrout': '\\noindent Return objects:',
+    'latexdocstrcbs': '\\noindent Call-back functions:',
+    'args_capi': '', 'keys_capi': '', 'functype': '',
+    'frompyobj': '/*frompyobj*/',
+    'cleanupfrompyobj': ['/*end of cleanupfrompyobj*/'], #this list will be reversed
+    'pyobjfrom': '/*pyobjfrom*/',
+    'closepyobjfrom': ['/*end of closepyobjfrom*/'], #this list will be reversed
+    'topyarr': '/*topyarr*/', 'routdebugleave': '/*routdebugleave*/',
+    'routdebugenter': '/*routdebugenter*/',
+    'routdebugfailure': '/*routdebugfailure*/',
+    'callfortranroutine': '/*callfortranroutine*/',
+    'argformat': '', 'keyformat': '', 'need_cfuncs': '',
+    'docreturn': '', 'return': '', 'returnformat': '', 'rformat': '',
+    'kwlistxa': '', 'keys_xa': '', 'xaformat': '', 'docsignxa': '', 'docsignxashort': '',
+    'initf2pywraphook': '',
+    'routnote': {hasnote:'--- #note#',l_not(hasnote):''},
+    }, {
         'apiname':'f2py_rout_#modulename#_#name#',
         'pyname':'#modulename#.#name#',
         'decl':'',
         '_check':l_not(ismoduleroutine)
-    },{
+    }, {
         'apiname':'f2py_rout_#modulename#_#f90modulename#_#name#',
         'pyname':'#modulename#.#f90modulename#.#name#',
         'decl':'',
         '_check':ismoduleroutine
-    },{ # Subroutine
-    'functype':'void',
-    'declfortranroutine':{l_and(l_not(l_or(ismoduleroutine,isintent_c)),l_not(isdummyroutine)):'extern void #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
-                          l_and(l_not(ismoduleroutine),isintent_c,l_not(isdummyroutine)):'extern void #fortranname#(#callprotoargument#);',
+    }, { # Subroutine
+    'functype': 'void',
+    'declfortranroutine': {l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)):'extern void #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
+                          l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)):'extern void #fortranname#(#callprotoargument#);',
                           ismoduleroutine:'',
                           isdummyroutine:''
                           },
-    'routine_def':{l_not(l_or(ismoduleroutine,isintent_c,isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
-                   l_and(l_not(ismoduleroutine),isintent_c,l_not(isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},',
-                   l_and(l_not(ismoduleroutine),isdummyroutine):'\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
+    'routine_def': {l_not(l_or(ismoduleroutine, isintent_c, isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
+                   l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},',
+                   l_and(l_not(ismoduleroutine), isdummyroutine): '\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
                    },
-    'need':{l_and(l_not(l_or(ismoduleroutine,isintent_c)),l_not(isdummyroutine)):'F_FUNC'},
-    'callfortranroutine':[
+    'need': {l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)):'F_FUNC'},
+    'callfortranroutine': [
         {debugcapi:["""\tfprintf(stderr,\"debug-capi:Fortran subroutine `#fortranname#(#callfortran#)\'\\n\");"""]},
         {hasexternals:"""\
 \t\tif (#setjmpbuf#) {
@@ -405,21 +405,21 @@ rout_rules=[
         {isthreadsafe:'\t\t\tPy_BEGIN_ALLOW_THREADS'},
         {hascallstatement:'''\t\t\t\t#callstatement#;
 \t\t\t\t/*(*f2py_func)(#callfortran#);*/'''},
-        {l_not(l_or(hascallstatement,isdummyroutine)):'\t\t\t\t(*f2py_func)(#callfortran#);'},
+        {l_not(l_or(hascallstatement, isdummyroutine)):'\t\t\t\t(*f2py_func)(#callfortran#);'},
         {isthreadsafe:'\t\t\tPy_END_ALLOW_THREADS'},
         {hasexternals:"""\t\t}"""}
          ],
-    '_check':l_and(issubroutine,l_not(issubroutine_wrap)),
-    },{ # Wrapped function
-    'functype':'void',
-    'declfortranroutine':{l_not(l_or(ismoduleroutine,isdummyroutine)):'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
-                          isdummyroutine:'',
+    '_check': l_and(issubroutine, l_not(issubroutine_wrap)),
+    }, { # Wrapped function
+    'functype': 'void',
+    'declfortranroutine': {l_not(l_or(ismoduleroutine, isdummyroutine)): 'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
+                          isdummyroutine: '',
                           },
 
-    'routine_def':{l_not(l_or(ismoduleroutine,isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
-                   isdummyroutine:'\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
+    'routine_def': {l_not(l_or(ismoduleroutine, isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
+                   isdummyroutine: '\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
                    },
-    'initf2pywraphook':{l_not(l_or(ismoduleroutine,isdummyroutine)):'''
+    'initf2pywraphook': {l_not(l_or(ismoduleroutine, isdummyroutine)):'''
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
@@ -431,30 +431,30 @@ rout_rules=[
 #endif
     }
     '''},
-    'need':{l_not(l_or(ismoduleroutine,isdummyroutine)):['F_WRAPPEDFUNC','F_FUNC']},
-    'callfortranroutine':[
+    'need': {l_not(l_or(ismoduleroutine, isdummyroutine)):['F_WRAPPEDFUNC', 'F_FUNC']},
+    'callfortranroutine': [
     {debugcapi:["""\tfprintf(stderr,\"debug-capi:Fortran subroutine `f2pywrap#name_lower#(#callfortran#)\'\\n\");"""]},
     {hasexternals:"""\
 \tif (#setjmpbuf#) {
 \t\tf2py_success = 0;
 \t} else {"""},
     {isthreadsafe:'\tPy_BEGIN_ALLOW_THREADS'},
-    {l_not(l_or(hascallstatement,isdummyroutine)):'\t(*f2py_func)(#callfortran#);'},
+    {l_not(l_or(hascallstatement, isdummyroutine)):'\t(*f2py_func)(#callfortran#);'},
     {hascallstatement:'\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
     {isthreadsafe:'\tPy_END_ALLOW_THREADS'},
     {hasexternals:'\t}'}
     ],
-    '_check':isfunction_wrap,
-    },{ # Wrapped subroutine
-    'functype':'void',
-    'declfortranroutine':{l_not(l_or(ismoduleroutine,isdummyroutine)):'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
-                          isdummyroutine:'',
+    '_check': isfunction_wrap,
+    }, { # Wrapped subroutine
+    'functype': 'void',
+    'declfortranroutine': {l_not(l_or(ismoduleroutine, isdummyroutine)): 'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
+                          isdummyroutine: '',
                           },
 
-    'routine_def':{l_not(l_or(ismoduleroutine,isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
-                   isdummyroutine:'\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
+    'routine_def': {l_not(l_or(ismoduleroutine, isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
+                   isdummyroutine: '\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
                    },
-    'initf2pywraphook':{l_not(l_or(ismoduleroutine,isdummyroutine)):'''
+    'initf2pywraphook': {l_not(l_or(ismoduleroutine, isdummyroutine)):'''
     {
       extern void #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
@@ -466,46 +466,46 @@ rout_rules=[
 #endif
     }
     '''},
-    'need':{l_not(l_or(ismoduleroutine,isdummyroutine)):['F_WRAPPEDFUNC','F_FUNC']},
-    'callfortranroutine':[
+    'need': {l_not(l_or(ismoduleroutine, isdummyroutine)):['F_WRAPPEDFUNC', 'F_FUNC']},
+    'callfortranroutine': [
     {debugcapi:["""\tfprintf(stderr,\"debug-capi:Fortran subroutine `f2pywrap#name_lower#(#callfortran#)\'\\n\");"""]},
     {hasexternals:"""\
 \tif (#setjmpbuf#) {
 \t\tf2py_success = 0;
 \t} else {"""},
     {isthreadsafe:'\tPy_BEGIN_ALLOW_THREADS'},
-    {l_not(l_or(hascallstatement,isdummyroutine)):'\t(*f2py_func)(#callfortran#);'},
+    {l_not(l_or(hascallstatement, isdummyroutine)):'\t(*f2py_func)(#callfortran#);'},
     {hascallstatement:'\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
     {isthreadsafe:'\tPy_END_ALLOW_THREADS'},
     {hasexternals:'\t}'}
     ],
-    '_check':issubroutine_wrap,
-    },{ # Function
+    '_check': issubroutine_wrap,
+    }, { # Function
     'functype':'#ctype#',
     'docreturn':{l_not(isintent_hide):'#rname#,'},
     'docstrout':'#pydocsignout#',
     'latexdocstrout':['\\item[]{{}\\verb@#pydocsignout#@{}}',
                       {hasresultnote:'--- #resultnote#'}],
-    'callfortranroutine':[{l_and(debugcapi,isstringfunction):"""\
+    'callfortranroutine':[{l_and(debugcapi, isstringfunction):"""\
 #ifdef USESCOMPAQFORTRAN
 \tfprintf(stderr,\"debug-capi:Fortran function #ctype# #fortranname#(#callcompaqfortran#)\\n\");
 #else
 \tfprintf(stderr,\"debug-capi:Fortran function #ctype# #fortranname#(#callfortran#)\\n\");
 #endif
 """},
-                          {l_and(debugcapi,l_not(isstringfunction)):"""\
+                          {l_and(debugcapi, l_not(isstringfunction)):"""\
 \tfprintf(stderr,\"debug-capi:Fortran function #ctype# #fortranname#(#callfortran#)\\n\");
 """}
                           ],
-    '_check':l_and(isfunction,l_not(isfunction_wrap))
-    },{ # Scalar function
-    'declfortranroutine':{l_and(l_not(l_or(ismoduleroutine,isintent_c)),l_not(isdummyroutine)):'extern #ctype# #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
-                          l_and(l_not(ismoduleroutine),isintent_c,l_not(isdummyroutine)):'extern #ctype# #fortranname#(#callprotoargument#);',
+    '_check':l_and(isfunction, l_not(isfunction_wrap))
+    }, { # Scalar function
+    'declfortranroutine':{l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)):'extern #ctype# #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
+                          l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)):'extern #ctype# #fortranname#(#callprotoargument#);',
                           isdummyroutine:''
                           },
-    'routine_def':{l_and(l_not(l_or(ismoduleroutine,isintent_c)),l_not(isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
-                   l_and(l_not(ismoduleroutine),isintent_c,l_not(isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},',
-                   isdummyroutine:'\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
+    'routine_def':{l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
+                   l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)): '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},',
+                   isdummyroutine: '\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
                    },
     'decl':[{iscomplexfunction_warn:'\t#ctype# #name#_return_value={0,0};',
              l_not(iscomplexfunction):'\t#ctype# #name#_return_value=0;'},
@@ -520,11 +520,11 @@ rout_rules=[
         {hascallstatement:'''\t#callstatement#;
 /*\t#name#_return_value = (*f2py_func)(#callfortran#);*/
 '''},
-        {l_not(l_or(hascallstatement,isdummyroutine)):'\t#name#_return_value = (*f2py_func)(#callfortran#);'},
+        {l_not(l_or(hascallstatement, isdummyroutine)):'\t#name#_return_value = (*f2py_func)(#callfortran#);'},
         {isthreadsafe:'\tPy_END_ALLOW_THREADS'},
         {hasexternals:'\t}'},
-        {l_and(debugcapi,iscomplexfunction):'\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value.r,#name#_return_value.i);'},
-        {l_and(debugcapi,l_not(iscomplexfunction)):'\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value);'}],
+        {l_and(debugcapi, iscomplexfunction):'\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value.r,#name#_return_value.i);'},
+        {l_and(debugcapi, l_not(iscomplexfunction)):'\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value);'}],
     'pyobjfrom':{iscomplexfunction:'\t#name#_return_value_capi = pyobj_from_#ctype#1(#name#_return_value);'},
     'need':[{l_not(isdummyroutine):'F_FUNC'},
     {iscomplexfunction:'pyobj_from_#ctype#1'},
@@ -532,14 +532,14 @@ rout_rules=[
     {islong_doublefunction:'long_double'}],
     'returnformat':{l_not(isintent_hide):'#rformat#'},
     'return':{iscomplexfunction:',#name#_return_value_capi',
-    l_not(l_or(iscomplexfunction,isintent_hide)):',#name#_return_value'},
-    '_check':l_and(isfunction,l_not(isstringfunction),l_not(isfunction_wrap))
-    },{ # String function # in use for --no-wrap
+    l_not(l_or(iscomplexfunction, isintent_hide)):',#name#_return_value'},
+    '_check':l_and(isfunction, l_not(isstringfunction), l_not(isfunction_wrap))
+    }, { # String function # in use for --no-wrap
     'declfortranroutine':'extern void #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
-    'routine_def':{l_not(l_or(ismoduleroutine,isintent_c)):
+    'routine_def':{l_not(l_or(ismoduleroutine, isintent_c)):
 #        '\t{\"#name#\",-1,{{-1}},0,(char *)F_FUNC(#fortranname#,#FORTRANNAME#),(void *)#apiname#,doc_#apiname#},',
         '\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
-        l_and(l_not(ismoduleroutine),isintent_c):
+        l_and(l_not(ismoduleroutine), isintent_c):
 #            '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(void *)#apiname#,doc_#apiname#},'
             '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},'
                    },
@@ -574,8 +574,8 @@ rout_rules=[
     'returnformat':'#rformat#',
     'return':',#name#_return_value',
     'freemem':'\tSTRINGFREE(#name#_return_value);',
-    'need':['F_FUNC','#ctype#','STRINGFREE'],
-    '_check':l_and(isstringfunction,l_not(isfunction_wrap)) # ???obsolete
+    'need':['F_FUNC', '#ctype#', 'STRINGFREE'],
+    '_check':l_and(isstringfunction, l_not(isfunction_wrap)) # ???obsolete
     },
     { # Debugging
     'routdebugenter':'\tfprintf(stderr,"debug-capi:Python C/API function #modulename#.#name#(#docsignature#)\\n");',
@@ -587,17 +587,17 @@ rout_rules=[
 
 ################ Rules for arguments ##################
 
-typedef_need_dict = {islong_long:'long_long',
-                     islong_double:'long_double',
-                     islong_complex:'complex_long_double',
-                     isunsigned_char:'unsigned_char',
-                     isunsigned_short:'unsigned_short',
-                     isunsigned:'unsigned',
-                     isunsigned_long_long:'unsigned_long_long',
-                     isunsigned_chararray:'unsigned_char',
-                     isunsigned_shortarray:'unsigned_short',
-                     isunsigned_long_longarray:'unsigned_long_long',
-                     issigned_long_longarray:'long_long',
+typedef_need_dict = {islong_long: 'long_long',
+                     islong_double: 'long_double',
+                     islong_complex: 'complex_long_double',
+                     isunsigned_char: 'unsigned_char',
+                     isunsigned_short: 'unsigned_short',
+                     isunsigned: 'unsigned',
+                     isunsigned_long_long: 'unsigned_long_long',
+                     isunsigned_chararray: 'unsigned_char',
+                     isunsigned_shortarray: 'unsigned_short',
+                     isunsigned_long_longarray: 'unsigned_long_long',
+                     issigned_long_longarray: 'long_long',
                      }
 
 aux_rules=[
@@ -605,24 +605,24 @@ aux_rules=[
     'separatorsfor':sepdict
     },
     { # Common
-    'frompyobj':['\t/* Processing auxiliary variable #varname# */',
+    'frompyobj': ['\t/* Processing auxiliary variable #varname# */',
                  {debugcapi:'\tfprintf(stderr,"#vardebuginfo#\\n");'},],
-    'cleanupfrompyobj':'\t/* End of cleaning variable #varname# */',
-    'need':typedef_need_dict,
+    'cleanupfrompyobj': '\t/* End of cleaning variable #varname# */',
+    'need': typedef_need_dict,
     },
 # Scalars (not complex)
     { # Common
-    'decl':'\t#ctype# #varname# = 0;',
-    'need':{hasinitvalue:'math.h'},
-    'frompyobj':{hasinitvalue:'\t#varname# = #init#;'},
-    '_check':l_and(isscalar,l_not(iscomplex)),
+    'decl': '\t#ctype# #varname# = 0;',
+    'need': {hasinitvalue:'math.h'},
+    'frompyobj': {hasinitvalue:'\t#varname# = #init#;'},
+    '_check': l_and(isscalar, l_not(iscomplex)),
     },
     {
-    'return':',#varname#',
-    'docstrout':'#pydocsignout#',
-    'docreturn':'#outvarname#,',
-    'returnformat':'#varrformat#',
-    '_check':l_and(isscalar,l_not(iscomplex),isintent_out),
+    'return': ',#varname#',
+    'docstrout': '#pydocsignout#',
+    'docreturn': '#outvarname#,',
+    'returnformat': '#varrformat#',
+    '_check': l_and(isscalar, l_not(iscomplex), isintent_out),
     },
 # Complex scalars
     { # Common
@@ -644,14 +644,14 @@ aux_rules=[
             '\tnpy_intp #varname#_Dims[#rank#] = {#rank*[-1]#};',
             '\tconst int #varname#_Rank = #rank#;',
             ],
-    'need':['len..',{hasinitvalue:'forcomb'},{hasinitvalue:'CFUNCSMESS'}],
+    'need':['len..', {hasinitvalue:'forcomb'}, {hasinitvalue:'CFUNCSMESS'}],
     '_check':isarray
     },
 # Scalararray
     { # Common
-    '_check':l_and(isarray,l_not(iscomplexarray))
-    },{ # Not hidden
-    '_check':l_and(isarray,l_not(iscomplexarray),isintent_nothide)
+    '_check':l_and(isarray, l_not(iscomplexarray))
+    }, { # Not hidden
+    '_check':l_and(isarray, l_not(iscomplexarray), isintent_nothide)
     },
 # Integer*1 array
     {'need':'#ctype#',
@@ -691,37 +691,37 @@ arg_rules=[
     'separatorsfor':sepdict
     },
     { # Common
-    'frompyobj':['\t/* Processing variable #varname# */',
+    'frompyobj': ['\t/* Processing variable #varname# */',
                  {debugcapi:'\tfprintf(stderr,"#vardebuginfo#\\n");'},],
-    'cleanupfrompyobj':'\t/* End of cleaning variable #varname# */',
-    '_depend':'',
-    'need':typedef_need_dict,
+    'cleanupfrompyobj': '\t/* End of cleaning variable #varname# */',
+    '_depend': '',
+    'need': typedef_need_dict,
     },
 # Doc signatures
     {
-    'docstropt':{l_and(isoptional,isintent_nothide):'#pydocsign#'},
-    'docstrreq':{l_and(isrequired,isintent_nothide):'#pydocsign#'},
+    'docstropt':{l_and(isoptional, isintent_nothide):'#pydocsign#'},
+    'docstrreq':{l_and(isrequired, isintent_nothide):'#pydocsign#'},
     'docstrout':{isintent_out:'#pydocsignout#'},
-    'latexdocstropt':{l_and(isoptional,isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
+    'latexdocstropt':{l_and(isoptional, isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                           {hasnote:'--- #note#'}]},
-    'latexdocstrreq':{l_and(isrequired,isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
+    'latexdocstrreq':{l_and(isrequired, isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                           {hasnote:'--- #note#'}]},
     'latexdocstrout':{isintent_out:['\\item[]{{}\\verb@#pydocsignout#@{}}',
-                                    {l_and(hasnote,isintent_hide):'--- #note#',
-                                     l_and(hasnote,isintent_nothide):'--- See above.'}]},
+                                    {l_and(hasnote, isintent_hide):'--- #note#',
+                                     l_and(hasnote, isintent_nothide):'--- See above.'}]},
     'depend':''
     },
 # Required/Optional arguments
     {
     'kwlist':'"#varname#",',
     'docsign':'#varname#,',
-    '_check':l_and(isintent_nothide,l_not(isoptional))
+    '_check':l_and(isintent_nothide, l_not(isoptional))
     },
     {
     'kwlistopt':'"#varname#",',
     'docsignopt':'#varname#=#showinit#,',
     'docsignoptshort':'#varname#,',
-    '_check':l_and(isintent_nothide,isoptional)
+    '_check':l_and(isintent_nothide, isoptional)
     },
 # Docstring/BuildValue
     {
@@ -752,7 +752,7 @@ arg_rules=[
     'keys_xa':',&PyTuple_Type,&#varname#_xa_capi',
     'setjmpbuf':'(setjmp(#cbname#_jmpbuf))',
     'callfortran':{l_not(isintent_callback):'#varname#_cptr,'},
-    'need':['#cbname#','setjmp.h'],
+    'need':['#cbname#', 'setjmp.h'],
     '_check':isexternal
     },
     {
@@ -762,7 +762,7 @@ if(F2PyCapsule_Check(#varname#_capi)) {
 } else {
   #varname#_cptr = #cbname#;
 }
-"""},{isintent_callback:"""\
+"""}, {isintent_callback:"""\
 if (#varname#_capi==Py_None) {
   #varname#_capi = PyObject_GetAttrString(#modulename#_module,\"#varname#\");
   if (#varname#_capi) {
@@ -814,7 +814,7 @@ if (#varname#_capi==Py_None) {
 \t\t#cbname#_nofargs = #varname#_nofargs_capi;
 \t\tmemcpy(&#cbname#_jmpbuf,&#varname#_jmpbuf,sizeof(jmp_buf));
 \t}""",
-    'need':['SWAP','create_cb_arglist'],
+    'need':['SWAP', 'create_cb_arglist'],
     '_check':isexternal,
     '_depend':''
     },
@@ -824,12 +824,12 @@ if (#varname#_capi==Py_None) {
     'pyobjfrom':{debugcapi:'\tfprintf(stderr,"#vardebugshowvalue#\\n",#varname#);'},
     'callfortran':{isintent_c:'#varname#,',l_not(isintent_c):'&#varname#,'},
     'return':{isintent_out:',#varname#'},
-    '_check':l_and(isscalar,l_not(iscomplex))
-    },{
-    'need':{hasinitvalue:'math.h'},
-    '_check':l_and(isscalar,l_not(iscomplex)),
+    '_check':l_and(isscalar, l_not(iscomplex))
+    }, {
+    'need': {hasinitvalue:'math.h'},
+    '_check': l_and(isscalar, l_not(iscomplex)),
     #'_depend':''
-    },{ # Not hidden
+    }, { # Not hidden
     'decl':'\tPyObject *#varname#_capi = Py_None;',
     'argformat':{isrequired:'O'},
     'keyformat':{isoptional:'O'},
@@ -840,8 +840,8 @@ if (#varname#_capi==Py_None) {
 \tif (f2py_success) {"""},
     'closepyobjfrom':{isintent_inout:"\t} /*if (f2py_success) of #varname# pyobjfrom*/"},
     'need':{isintent_inout:'try_pyarr_from_#ctype#'},
-    '_check':l_and(isscalar,l_not(iscomplex),isintent_nothide)
-    },{
+    '_check':l_and(isscalar, l_not(iscomplex), isintent_nothide)
+    }, {
     'frompyobj':[
 # hasinitvalue...
 #   if pyobj is None:
@@ -860,7 +860,7 @@ if (#varname#_capi==Py_None) {
 #
     {hasinitvalue:'\tif (#varname#_capi == Py_None) #varname# = #init#; else',
      '_depend':''},
-    {l_and(isoptional,l_not(hasinitvalue)):'\tif (#varname#_capi != Py_None)',
+    {l_and(isoptional, l_not(hasinitvalue)):'\tif (#varname#_capi != Py_None)',
      '_depend':''},
     {l_not(islogical):'''\
 \t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");
@@ -872,18 +872,18 @@ if (#varname#_capi==Py_None) {
      ],
     'cleanupfrompyobj':'\t} /*if (f2py_success) of #varname#*/',
     'need':{l_not(islogical):'#ctype#_from_pyobj'},
-    '_check':l_and(isscalar,l_not(iscomplex),isintent_nothide),
+    '_check':l_and(isscalar, l_not(iscomplex), isintent_nothide),
     '_depend':''
 #    },{ # Hidden
 #    '_check':l_and(isscalar,l_not(iscomplex),isintent_hide)
-    },{ # Hidden
+    }, { # Hidden
     'frompyobj':{hasinitvalue:'\t#varname# = #init#;'},
     'need':typedef_need_dict,
-    '_check':l_and(isscalar,l_not(iscomplex),isintent_hide),
+    '_check':l_and(isscalar, l_not(iscomplex), isintent_hide),
     '_depend':''
-    },{ # Common
+    }, { # Common
     'frompyobj':{debugcapi:'\tfprintf(stderr,"#vardebugshowvalue#\\n",#varname#);'},
-    '_check':l_and(isscalar,l_not(iscomplex)),
+    '_check':l_and(isscalar, l_not(iscomplex)),
     '_depend':''
     },
 # Complex scalars
@@ -893,7 +893,7 @@ if (#varname#_capi==Py_None) {
     'pyobjfrom':{debugcapi:'\tfprintf(stderr,"#vardebugshowvalue#\\n",#varname#.r,#varname#.i);'},
     'return':{isintent_out:',#varname#_capi'},
     '_check':iscomplex
-    },{ # Not hidden
+    }, { # Not hidden
     'decl':'\tPyObject *#varname#_capi = Py_None;',
     'argformat':{isrequired:'O'},
     'keyformat':{isoptional:'O'},
@@ -904,29 +904,29 @@ if (#varname#_capi==Py_None) {
 \t\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi,&#varname#);
 \t\tif (f2py_success) {"""},
     'closepyobjfrom':{isintent_inout:"\t\t} /*if (f2py_success) of #varname# pyobjfrom*/"},
-    '_check':l_and(iscomplex,isintent_nothide)
-    },{
+    '_check':l_and(iscomplex, isintent_nothide)
+    }, {
     'frompyobj':[{hasinitvalue:'\tif (#varname#_capi==Py_None) {#varname#.r = #init.r#, #varname#.i = #init.i#;} else'},
-                 {l_and(isoptional,l_not(hasinitvalue)):'\tif (#varname#_capi != Py_None)'},
+                 {l_and(isoptional, l_not(hasinitvalue)):'\tif (#varname#_capi != Py_None)'},
 #                 '\t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\\n");'
                  '\t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
                  '\n\tif (f2py_success) {'],
     'cleanupfrompyobj':'\t}  /*if (f2py_success) of #varname# frompyobj*/',
     'need':['#ctype#_from_pyobj'],
-    '_check':l_and(iscomplex,isintent_nothide),
+    '_check':l_and(iscomplex, isintent_nothide),
     '_depend':''
-    },{ # Hidden
+    }, { # Hidden
     'decl':{isintent_out:'\tPyObject *#varname#_capi = Py_None;'},
-    '_check':l_and(iscomplex,isintent_hide)
-    },{
+    '_check':l_and(iscomplex, isintent_hide)
+    }, {
     'frompyobj': {hasinitvalue:'\t#varname#.r = #init.r#, #varname#.i = #init.i#;'},
-    '_check':l_and(iscomplex,isintent_hide),
+    '_check':l_and(iscomplex, isintent_hide),
     '_depend':''
-    },{ # Common
+    }, { # Common
     'pyobjfrom':{isintent_out:'\t#varname#_capi = pyobj_from_#ctype#1(#varname#);'},
     'need':['pyobj_from_#ctype#1'],
     '_check':iscomplex
-    },{
+    }, {
     'frompyobj':{debugcapi:'\tfprintf(stderr,"#vardebugshowvalue#\\n",#varname#.r,#varname#.i);'},
     '_check':iscomplex,
     '_depend':''
@@ -943,7 +943,7 @@ if (#varname#_capi==Py_None) {
     'return':{isintent_out:',#varname#'},
     'need':['len..'],#'STRINGFREE'],
     '_check':isstring
-    },{ # Common
+    }, { # Common
     'frompyobj':"""\
 \tslen(#varname#) = #length#;
 \tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\");
@@ -951,10 +951,10 @@ if (#varname#_capi==Py_None) {
     'cleanupfrompyobj':"""\
 \t\tSTRINGFREE(#varname#);
 \t}  /*if (f2py_success) of #varname#*/""",
-    'need':['#ctype#_from_pyobj','len..','STRINGFREE'],
+    'need':['#ctype#_from_pyobj', 'len..', 'STRINGFREE'],
     '_check':isstring,
     '_depend':''
-    },{ # Not hidden
+    }, { # Not hidden
     'argformat':{isrequired:'O'},
     'keyformat':{isoptional:'O'},
     'args_capi':{isrequired:',&#varname#_capi'},
@@ -964,10 +964,10 @@ if (#varname#_capi==Py_None) {
 \tif (f2py_success) {'''},
     'closepyobjfrom':{isintent_inout:'\t} /*if (f2py_success) of #varname# pyobjfrom*/'},
     'need':{isintent_inout:'try_pyarr_from_#ctype#'},
-    '_check':l_and(isstring,isintent_nothide)
-    },{ # Hidden
-    '_check':l_and(isstring,isintent_hide)
-    },{
+    '_check':l_and(isstring, isintent_nothide)
+    }, { # Hidden
+    '_check':l_and(isstring, isintent_hide)
+    }, {
     'frompyobj':{debugcapi:'\tfprintf(stderr,"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
     '_check':isstring,
     '_depend':''
@@ -984,38 +984,38 @@ if (#varname#_capi==Py_None) {
     'return':{isintent_out:',capi_#varname#_tmp'},
     'need':'len..',
     '_check':isarray
-    },{ # intent(overwrite) array
-    'decl':'\tint capi_overwrite_#varname# = 1;',
-    'kwlistxa':'"overwrite_#varname#",',
-    'xaformat':'i',
-    'keys_xa':',&capi_overwrite_#varname#',
-    'docsignxa':'overwrite_#varname#=1,',
-    'docsignxashort':'overwrite_#varname#,',
-    'docstropt':'overwrite_#varname# : input int, optional\\n    Default: 1',
-    '_check':l_and(isarray,isintent_overwrite),
-    },{
-    'frompyobj':'\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
-    '_check':l_and(isarray,isintent_overwrite),
-    '_depend':'',
+    }, { # intent(overwrite) array
+    'decl': '\tint capi_overwrite_#varname# = 1;',
+    'kwlistxa': '"overwrite_#varname#",',
+    'xaformat': 'i',
+    'keys_xa': ',&capi_overwrite_#varname#',
+    'docsignxa': 'overwrite_#varname#=1,',
+    'docsignxashort': 'overwrite_#varname#,',
+    'docstropt': 'overwrite_#varname# : input int, optional\\n    Default: 1',
+    '_check': l_and(isarray, isintent_overwrite),
+    }, {
+    'frompyobj': '\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
+    '_check': l_and(isarray, isintent_overwrite),
+    '_depend': '',
     },
     { # intent(copy) array
-    'decl':'\tint capi_overwrite_#varname# = 0;',
-     'kwlistxa':'"overwrite_#varname#",',
-     'xaformat':'i',
-     'keys_xa':',&capi_overwrite_#varname#',
-     'docsignxa':'overwrite_#varname#=0,',
-     'docsignxashort':'overwrite_#varname#,',
-     'docstropt':'overwrite_#varname# : input int, optional\\n    Default: 0',
-     '_check':l_and(isarray,isintent_copy),
-     },{
-     'frompyobj':'\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
-     '_check':l_and(isarray,isintent_copy),
-     '_depend':'',
-    },{
-    'need':[{hasinitvalue:'forcomb'},{hasinitvalue:'CFUNCSMESS'}],
+    'decl': '\tint capi_overwrite_#varname# = 0;',
+     'kwlistxa': '"overwrite_#varname#",',
+     'xaformat': 'i',
+     'keys_xa': ',&capi_overwrite_#varname#',
+     'docsignxa': 'overwrite_#varname#=0,',
+     'docsignxashort': 'overwrite_#varname#,',
+     'docstropt': 'overwrite_#varname# : input int, optional\\n    Default: 0',
+     '_check': l_and(isarray, isintent_copy),
+     }, {
+     'frompyobj': '\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
+     '_check': l_and(isarray, isintent_copy),
+     '_depend': '',
+    }, {
+    'need':[{hasinitvalue:'forcomb'}, {hasinitvalue:'CFUNCSMESS'}],
     '_check':isarray,
     '_depend':''
-    },{ # Not hidden
+    }, { # Not hidden
     'decl':'\tPyObject *#varname#_capi = Py_None;',
     'argformat':{isrequired:'O'},
     'keyformat':{isoptional:'O'},
@@ -1036,8 +1036,8 @@ if (#varname#_capi==Py_None) {
 # */
 # """},
 #     'need':{isintent_inout:'copy_ND_array'},
-    '_check':l_and(isarray,isintent_nothide)
-    },{
+    '_check':l_and(isarray, isintent_nothide)
+    }, {
     'frompyobj':['\t#setdims#;',
                  '\tcapi_#varname#_intent |= #intent#;',
                  {isintent_hide:'\tcapi_#varname#_tmp = array_from_pyobj(#atype#,#varname#_Dims,#varname#_Rank,capi_#varname#_intent,Py_None);'},
@@ -1069,10 +1069,10 @@ if (#varname#_capi==Py_None) {
                  ],
     'cleanupfrompyobj':[ # note that this list will be reversed
     '\t}  /*if (capi_#varname#_tmp == NULL) ... else of #varname#*/',
-    {l_not(l_or(isintent_out,isintent_hide)):"""\
+    {l_not(l_or(isintent_out, isintent_hide)):"""\
 \tif((PyObject *)capi_#varname#_tmp!=#varname#_capi) {
 \t\tPy_XDECREF(capi_#varname#_tmp); }"""},
-    {l_and(isintent_hide,l_not(isintent_out)):"""\t\tPy_XDECREF(capi_#varname#_tmp);"""},
+    {l_and(isintent_hide, l_not(isintent_out)):"""\t\tPy_XDECREF(capi_#varname#_tmp);"""},
     {hasinitvalue:'\t}  /*if (f2py_success) of #varname# init*/'},
     ],
     '_check':isarray,
@@ -1084,9 +1084,9 @@ if (#varname#_capi==Py_None) {
 #    },
 # Scalararray
     { # Common
-    '_check':l_and(isarray,l_not(iscomplexarray))
-    },{ # Not hidden
-    '_check':l_and(isarray,l_not(iscomplexarray),isintent_nothide)
+    '_check':l_and(isarray, l_not(iscomplexarray))
+    }, { # Not hidden
+    '_check':l_and(isarray, l_not(iscomplexarray), isintent_nothide)
     },
 # Integer*1 array
     {'need':'#ctype#',
@@ -1127,28 +1127,28 @@ check_rules=[
     {
     'frompyobj':{debugcapi:'\tfprintf(stderr,\"debug-capi:Checking `#check#\'\\n\");'},
     'need':'len..'
-    },{
+    }, {
     'frompyobj':'\tCHECKSCALAR(#check#,\"#check#\",\"#nth# #varname#\",\"#varshowvalue#\",#varname#) {',
     'cleanupfrompyobj':'\t} /*CHECKSCALAR(#check#)*/',
     'need':'CHECKSCALAR',
-    '_check':l_and(isscalar,l_not(iscomplex)),
+    '_check':l_and(isscalar, l_not(iscomplex)),
     '_break':''
-    },{
+    }, {
     'frompyobj':'\tCHECKSTRING(#check#,\"#check#\",\"#nth# #varname#\",\"#varshowvalue#\",#varname#) {',
     'cleanupfrompyobj':'\t} /*CHECKSTRING(#check#)*/',
     'need':'CHECKSTRING',
     '_check':isstring,
     '_break':''
-    },{
+    }, {
     'need':'CHECKARRAY',
     'frompyobj':'\tCHECKARRAY(#check#,\"#check#\",\"#nth# #varname#\") {',
     'cleanupfrompyobj':'\t} /*CHECKARRAY(#check#)*/',
     '_check':isarray,
     '_break':''
-    },{
-    'need':'CHECKGENERIC',
-    'frompyobj':'\tCHECKGENERIC(#check#,\"#check#\",\"#nth# #varname#\") {',
-    'cleanupfrompyobj':'\t} /*CHECKGENERIC(#check#)*/',
+    }, {
+    'need': 'CHECKGENERIC',
+    'frompyobj': '\tCHECKGENERIC(#check#,\"#check#\",\"#nth# #varname#\") {',
+    'cleanupfrompyobj': '\t} /*CHECKGENERIC(#check#)*/',
     }
 ]
 
@@ -1156,16 +1156,16 @@ check_rules=[
 
 #################### Build C/API module #######################
 
-def buildmodule(m,um):
+def buildmodule(m, um):
     """
     Return
     """
-    global f2py_version,options
+    global f2py_version, options
     outmess('\tBuilding module "%s"...\n'%(m['name']))
     ret = {}
     mod_rules=defmod_rules[:]
     vrd=modsign2map(m)
-    rd=dictappend({'f2py_version':f2py_version},vrd)
+    rd=dictappend({'f2py_version':f2py_version}, vrd)
     funcwrappers = []
     funcwrappers2 = [] # F90 codes
     for n in m['interfaced']:
@@ -1182,39 +1182,39 @@ def buildmodule(m,um):
             continue
         nb_list = [nb]
         if 'entry' in nb:
-            for k,a in nb['entry'].items():
+            for k, a in nb['entry'].items():
                 nb1 = copy.deepcopy(nb)
                 del nb1['entry']
                 nb1['name'] = k
                 nb1['args'] = a
                 nb_list.append(nb1)
         for nb in nb_list:
-            api,wrap=buildapi(nb)
+            api, wrap=buildapi(nb)
             if wrap:
                 if ismoduleroutine(nb):
                     funcwrappers2.append(wrap)
                 else:
                     funcwrappers.append(wrap)
-            ar=applyrules(api,vrd)
-            rd=dictappend(rd,ar)
+            ar=applyrules(api, vrd)
+            rd=dictappend(rd, ar)
 
     # Construct COMMON block support
-    cr,wrap = common_rules.buildhooks(m)
+    cr, wrap = common_rules.buildhooks(m)
     if wrap:
         funcwrappers.append(wrap)
-    ar=applyrules(cr,vrd)
-    rd=dictappend(rd,ar)
+    ar=applyrules(cr, vrd)
+    rd=dictappend(rd, ar)
 
     # Construct F90 module support
-    mr,wrap = f90mod_rules.buildhooks(m)
+    mr, wrap = f90mod_rules.buildhooks(m)
     if wrap:
         funcwrappers2.append(wrap)
-    ar=applyrules(mr,vrd)
-    rd=dictappend(rd,ar)
+    ar=applyrules(mr, vrd)
+    rd=dictappend(rd, ar)
 
     for u in um:
-        ar=use_rules.buildusevars(u,m['use'][u['name']])
-        rd=dictappend(rd,ar)
+        ar=use_rules.buildusevars(u, m['use'][u['name']])
+        rd=dictappend(rd, ar)
 
     needs=cfuncs.get_needs()
     code={}
@@ -1248,28 +1248,28 @@ def buildmodule(m,um):
     mod_rules.append(code)
     for r in mod_rules:
         if ('_check' in r and r['_check'](m)) or ('_check' not in r):
-            ar=applyrules(r,vrd,m)
-            rd=dictappend(rd,ar)
-    ar=applyrules(module_rules,rd)
+            ar=applyrules(r, vrd, m)
+            rd=dictappend(rd, ar)
+    ar=applyrules(module_rules, rd)
 
-    fn = os.path.join(options['buildpath'],vrd['coutput'])
+    fn = os.path.join(options['buildpath'], vrd['coutput'])
     ret['csrc'] = fn
-    f=open(fn,'w')
-    f.write(ar['modulebody'].replace('\t',2*' '))
+    f=open(fn, 'w')
+    f.write(ar['modulebody'].replace('\t', 2*' '))
     f.close()
-    outmess('\tWrote C/API module "%s" to file "%s"\n'%(m['name'],fn))
+    outmess('\tWrote C/API module "%s" to file "%s"\n'%(m['name'], fn))
 
     if options['dorestdoc']:
-        fn = os.path.join(options['buildpath'],vrd['modulename']+'module.rest')
-        f=open(fn,'w')
+        fn = os.path.join(options['buildpath'], vrd['modulename']+'module.rest')
+        f=open(fn, 'w')
         f.write('.. -*- rest -*-\n')
         f.write('\n'.join(ar['restdoc']))
         f.close()
-        outmess('\tReST Documentation is saved to file "%s/%smodule.rest"\n'%(options['buildpath'],vrd['modulename']))
+        outmess('\tReST Documentation is saved to file "%s/%smodule.rest"\n'%(options['buildpath'], vrd['modulename']))
     if options['dolatexdoc']:
-        fn = os.path.join(options['buildpath'],vrd['modulename']+'module.tex')
+        fn = os.path.join(options['buildpath'], vrd['modulename']+'module.tex')
         ret['ltx'] = fn
-        f=open(fn,'w')
+        f=open(fn, 'w')
         f.write('%% This file is auto-generated with f2py (version:%s)\n'%(f2py_version))
         if 'shortlatex' not in options:
             f.write('\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
@@ -1277,11 +1277,11 @@ def buildmodule(m,um):
         if 'shortlatex' not in options:
             f.write('\\end{document}')
         f.close()
-        outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n'%(options['buildpath'],vrd['modulename']))
+        outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n'%(options['buildpath'], vrd['modulename']))
     if funcwrappers:
-        wn = os.path.join(options['buildpath'],vrd['f2py_wrapper_output'])
+        wn = os.path.join(options['buildpath'], vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
-        f=open(wn,'w')
+        f=open(wn, 'w')
         f.write('C     -*- fortran -*-\n')
         f.write('C     This file is autogenerated with f2py (version:%s)\n'%(f2py_version))
         f.write('C     It contains Fortran 77 wrappers to fortran functions.\n')
@@ -1293,14 +1293,14 @@ def buildmodule(m,um):
                     l = l[66:]
                 lines.append(l+'\n')
             else: lines.append(l+'\n')
-        lines = ''.join(lines).replace('\n     &\n','\n')
+        lines = ''.join(lines).replace('\n     &\n', '\n')
         f.write(lines)
         f.close()
         outmess('\tFortran 77 wrappers are saved to "%s"\n'%(wn))
     if funcwrappers2:
-        wn = os.path.join(options['buildpath'],'%s-f2pywrappers2.f90'%(vrd['modulename']))
+        wn = os.path.join(options['buildpath'], '%s-f2pywrappers2.f90'%(vrd['modulename']))
         ret['fsrc'] = wn
-        f=open(wn,'w')
+        f=open(wn, 'w')
         f.write('!     -*- f90 -*-\n')
         f.write('!     This file is autogenerated with f2py (version:%s)\n'%(f2py_version))
         f.write('!     It contains Fortran 90 wrappers to fortran functions.\n')
@@ -1314,7 +1314,7 @@ def buildmodule(m,um):
                     l = l[66:]
                 lines.append(l+'\n')
             else: lines.append(l+'\n')
-        lines = ''.join(lines).replace('\n     &\n','\n')
+        lines = ''.join(lines).replace('\n     &\n', '\n')
         f.write(lines)
         f.close()
         outmess('\tFortran 90 wrappers are saved to "%s"\n'%(wn))
@@ -1325,29 +1325,29 @@ def buildmodule(m,um):
 stnd={1:'st',2:'nd',3:'rd',4:'th',5:'th',6:'th',7:'th',8:'th',9:'th',0:'th'}
 
 def buildapi(rout):
-    rout,wrap = func2subr.assubr(rout)
-    args,depargs=getargs2(rout)
+    rout, wrap = func2subr.assubr(rout)
+    args, depargs=getargs2(rout)
     capi_maps.depargs=depargs
     var=rout['vars']
     auxvars = [a for a in var.keys() if isintent_aux(var[a])]
 
     if ismoduleroutine(rout):
-        outmess('\t\t\tConstructing wrapper function "%s.%s"...\n'%(rout['modulename'],rout['name']))
+        outmess('\t\t\tConstructing wrapper function "%s.%s"...\n'%(rout['modulename'], rout['name']))
     else:
         outmess('\t\tConstructing wrapper function "%s"...\n'%(rout['name']))
     # Routine
     vrd=routsign2map(rout)
-    rd=dictappend({},vrd)
+    rd=dictappend({}, vrd)
     for r in rout_rules:
         if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
-            ar=applyrules(r,vrd,rout)
-            rd=dictappend(rd,ar)
+            ar=applyrules(r, vrd, rout)
+            rd=dictappend(rd, ar)
 
     # Args
-    nth,nthk=0,0
+    nth, nthk=0, 0
     savevrd={}
     for a in args:
-        vrd=sign2map(a,var[a])
+        vrd=sign2map(a, var[a])
         if isintent_aux(var[a]):
             _rules = aux_rules
         else:
@@ -1365,8 +1365,8 @@ def buildapi(rout):
             if '_depend' in r:
                 continue
             if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
-                ar=applyrules(r,vrd,var[a])
-                rd=dictappend(rd,ar)
+                ar=applyrules(r, vrd, var[a])
+                rd=dictappend(rd, ar)
                 if '_break' in r:
                     break
     for a in depargs:
@@ -1379,15 +1379,15 @@ def buildapi(rout):
             if '_depend' not in r:
                 continue
             if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
-                ar=applyrules(r,vrd,var[a])
-                rd=dictappend(rd,ar)
+                ar=applyrules(r, vrd, var[a])
+                rd=dictappend(rd, ar)
                 if '_break' in r:
                     break
         if 'check' in var[a]:
             for c in var[a]['check']:
                 vrd['check']=c
-                ar=applyrules(check_rules,vrd,var[a])
-                rd=dictappend(rd,ar)
+                ar=applyrules(check_rules, vrd, var[a])
+                rd=dictappend(rd, ar)
     if isinstance(rd['cleanupfrompyobj'], list):
         rd['cleanupfrompyobj'].reverse()
     if isinstance(rd['closepyobjfrom'], list):
@@ -1401,25 +1401,25 @@ def buildapi(rout):
                                 'docsignopt':rd['docsignoptshort']}
                                ))
     if optargs=='':
-        rd['docsignatureshort']=stripcomma(replace('#docsign#',{'docsign':rd['docsign']}))
+        rd['docsignatureshort']=stripcomma(replace('#docsign#', {'docsign':rd['docsign']}))
     else:
         rd['docsignatureshort']=replace('#docsign#[#docsignopt#]',
-                                        {'docsign':rd['docsign'],
-                                         'docsignopt':optargs,
+                                        {'docsign': rd['docsign'],
+                                         'docsignopt': optargs,
                                          })
-    rd['latexdocsignatureshort']=rd['docsignatureshort'].replace('_','\\_')
-    rd['latexdocsignatureshort']=rd['latexdocsignatureshort'].replace(',',', ')
-    cfs=stripcomma(replace('#callfortran##callfortranappend#',{'callfortran':rd['callfortran'],'callfortranappend':rd['callfortranappend']}))
+    rd['latexdocsignatureshort']=rd['docsignatureshort'].replace('_', '\\_')
+    rd['latexdocsignatureshort']=rd['latexdocsignatureshort'].replace(',', ', ')
+    cfs=stripcomma(replace('#callfortran##callfortranappend#', {'callfortran':rd['callfortran'],'callfortranappend':rd['callfortranappend']}))
     if len(rd['callfortranappend'])>1:
-        rd['callcompaqfortran']=stripcomma(replace('#callfortran# 0,#callfortranappend#',{'callfortran':rd['callfortran'],'callfortranappend':rd['callfortranappend']}))
+        rd['callcompaqfortran']=stripcomma(replace('#callfortran# 0,#callfortranappend#', {'callfortran':rd['callfortran'],'callfortranappend':rd['callfortranappend']}))
     else:
         rd['callcompaqfortran']=cfs
     rd['callfortran']=cfs
     if isinstance(rd['docreturn'], list):
-        rd['docreturn']=stripcomma(replace('#docreturn#',{'docreturn':rd['docreturn']}))+' = '
+        rd['docreturn']=stripcomma(replace('#docreturn#', {'docreturn':rd['docreturn']}))+' = '
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
-    for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
+    for k in ['docstrreq', 'docstropt', 'docstrout', 'docstrcbs']:
         if k in rd and isinstance(rd[k], list):
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
@@ -1434,15 +1434,15 @@ def buildapi(rout):
         if isinstance(argformat, list):
             argformat.append('|')
         else:
-            assert isinstance(argformat, str),repr((argformat, type(argformat)))
+            assert isinstance(argformat, str), repr((argformat, type(argformat)))
             rd['argformat'] += '|'
 
-    ar=applyrules(routine_rules,rd)
+    ar=applyrules(routine_rules, rd)
     if ismoduleroutine(rout):
         outmess('\t\t\t  %s\n'%(ar['docshort']))
     else:
         outmess('\t\t  %s\n'%(ar['docshort']))
-    return ar,wrap
+    return ar, wrap
 
 
 #################### EOF rules.py #######################

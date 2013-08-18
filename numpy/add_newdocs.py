@@ -925,7 +925,7 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     5
     """)
 
-add_newdoc('numpy.core.multiarray','set_typeDict',
+add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
 
     Set the internal dictionary that can look up an array type using a
@@ -1280,10 +1280,10 @@ add_newdoc('numpy.core', 'inner',
 
     """)
 
-add_newdoc('numpy.core','fastCopyAndTranspose',
+add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
 
-add_newdoc('numpy.core.multiarray','correlate',
+add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
 
 add_newdoc('numpy.core.multiarray', 'arange',
@@ -1347,14 +1347,14 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     """)
 
-add_newdoc('numpy.core.multiarray','_get_ndarray_c_version',
+add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
 
     Return the compile time NDARRAY_VERSION number.
 
     """)
 
-add_newdoc('numpy.core.multiarray','_reconstruct',
+add_newdoc('numpy.core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
     Construct an empty array. Used by Pickles.
@@ -2648,7 +2648,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
       or the ultimate owner of the memory exposes a writeable buffer
       interface or is a string.
 
-    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously.
     This is clear for 1-dimensional arrays, but can also be true for higher
     dimensional arrays.
 

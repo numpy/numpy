@@ -57,7 +57,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_ITER_GOTO1D`           :cfunc:`NpyIter_GotoIndex` or
                                        :cfunc:`NpyIter_GotoIterIndex`
 :cfunc:`PyArray_ITER_NOTDONE`          Return value of ``iternext`` function pointer
-*Multi-iterator Functions* 
+*Multi-iterator Functions*
 :cfunc:`PyArray_MultiIterNew`          :cfunc:`NpyIter_MultiNew`
 :cfunc:`PyArray_MultiIter_RESET`       :cfunc:`NpyIter_Reset`
 :cfunc:`PyArray_MultiIter_NEXT`        Function pointer from :cfunc:`NpyIter_GetIterNext`
@@ -69,7 +69,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
 :cfunc:`PyArray_Broadcast`             Handled by :cfunc:`NpyIter_MultiNew`
 :cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
-*Other Functions* 
+*Other Functions*
 :cfunc:`PyArray_ConvertToCommonType`   Iterator flag :cdata:`NPY_ITER_COMMON_DTYPE`
 =====================================  =============================================
 
@@ -649,7 +649,7 @@ Construction and Destruction
     -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
-    
+
     **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling that
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
@@ -1229,7 +1229,7 @@ Functions For Iteration
 
    Gets the array of data pointers directly into the arrays (never
    into the buffers), corresponding to iteration index 0.
-   
+
    These pointers are different from the pointers accepted by
    ``NpyIter_ResetBasePointers``, because the direction along
    some axes may have been reversed.

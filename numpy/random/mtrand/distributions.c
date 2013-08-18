@@ -7,10 +7,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -21,9 +21,9 @@
  */
 
 /* The implementations of rk_hypergeometric_hyp(), rk_hypergeometric_hrua(),
- * and rk_triangular() were adapted from Ivan Frohne's rv.py which has this 
+ * and rk_triangular() were adapted from Ivan Frohne's rv.py which has this
  * license:
- * 
+ *
  *            Copyright 1998 by Ivan Frohne; Wasilla, Alaska, U.S.A.
  *                            All Rights Reserved
  *
@@ -52,8 +52,8 @@
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338328
-#endif 
-/* log-gamma function to support some of these distributions. The 
+#endif
+/* log-gamma function to support some of these distributions. The
  * algorithm comes from SPECFUN by Shanjie Zhang and Jianming Jin and their
  * book "Computation of Special Functions", 1996, John Wiley & Sons, Inc.
  */
@@ -62,7 +62,7 @@ double loggam(double x)
 {
     double x0, x2, xp, gl, gl0;
     long k, n;
-    
+
     static double a[10] = {8.333333333333333e-02,-2.777777777777778e-03,
          7.936507936507937e-04,-5.952380952380952e-04,
          8.417508417508418e-04,-1.917526917526918e-03,
@@ -162,7 +162,7 @@ double rk_standard_gamma(rk_state *state, double shape)
         {
             do
             {
-                X = rk_gauss(state); 
+                X = rk_gauss(state);
                 V = 1.0 + c*X;
             } while (V <= 0.0);
 
@@ -225,7 +225,7 @@ double rk_noncentral_chisquare(rk_state *state, double df, double nonc)
 
 double rk_f(rk_state *state, double dfnum, double dfden)
 {
-    return ((rk_chisquare(state, dfnum) * dfden) / 
+    return ((rk_chisquare(state, dfnum) * dfden) /
             (rk_chisquare(state, dfden) * dfnum));
 }
 
@@ -241,7 +241,7 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     double a,u,v,s,F,rho,t,A,nrq,x1,x2,f1,f2,z,z2,w,w2,x;
     long m,y,k,i;
 
-    if (!(state->has_binomial) || 
+    if (!(state->has_binomial) ||
          (state->nsave != n) ||
          (state->psave != p))
     {
@@ -380,7 +380,7 @@ long rk_binomial_inversion(rk_state *state, long n, double p)
     double q, qn, np, px, U;
     long X, bound;
 
-    if (!(state->has_binomial) || 
+    if (!(state->has_binomial) ||
          (state->nsave != n) ||
          (state->psave != p))
     {
@@ -404,12 +404,12 @@ long rk_binomial_inversion(rk_state *state, long n, double p)
     while (U > px)
     {
         X++;
-        if (X > bound) 
+        if (X > bound)
         {
             X = 0;
             px = qn;
             U = rk_double(state);
-        } else 
+        } else
         {
             U -= px;
             px  = ((n-X+1) * p * px)/(X*q);
@@ -514,7 +514,7 @@ long rk_poisson_ptrs(rk_state *state, double lam)
             return k;
         }
 
-        
+
     }
 
 }
@@ -525,11 +525,11 @@ long rk_poisson(rk_state *state, double lam)
     {
         return rk_poisson_ptrs(state, lam);
     }
-    else if (lam == 0) 
+    else if (lam == 0)
     {
         return 0;
     }
-    else 
+    else
     {
         return rk_poisson_mult(state, lam);
     }
@@ -551,7 +551,7 @@ double rk_standard_t(rk_state *state, double df)
 }
 
 /* Uses the rejection algorithm compared against the wrapped Cauchy
-   distribution suggested by Best and Fisher and documented in 
+   distribution suggested by Best and Fisher and documented in
    Chapter 9 of Luc's Non-Uniform Random Variate Generation.
    http://cg.scs.carleton.ca/~luc/rnbookindex.html
    (but corrected to match the algorithm in R and Python)
@@ -600,7 +600,7 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
         if (neg)
         {
             mod *= -1;
-        }         
+        }
 
         return mod;
     }
@@ -624,12 +624,12 @@ double rk_power(rk_state *state, double a)
 double rk_laplace(rk_state *state, double loc, double scale)
 {
     double U;
-    
+
     U = rk_double(state);
     if (U < 0.5)
     {
         U = loc + scale * log(U + U);
-    } else 
+    } else
     {
         U = loc - scale * log(2.0 - U - U);
     }
@@ -639,7 +639,7 @@ double rk_laplace(rk_state *state, double loc, double scale)
 double rk_gumbel(rk_state *state, double loc, double scale)
 {
     double U;
-    
+
     U = 1.0 - rk_double(state);
     return loc - scale * log(-log(U));
 }
@@ -647,7 +647,7 @@ double rk_gumbel(rk_state *state, double loc, double scale)
 double rk_logistic(rk_state *state, double loc, double scale)
 {
     double U;
-    
+
     U = rk_double(state);
     return loc + scale * log(U/(1.0 - U));
 }
@@ -666,7 +666,7 @@ double rk_wald(rk_state *state, double mean, double scale)
 {
     double U, X, Y;
     double mu_2l;
-    
+
     mu_2l = mean / (2*scale);
     Y = rk_gauss(state);
     Y = mean*Y*Y;
@@ -710,7 +710,7 @@ long rk_geometric_search(rk_state *state, double p)
     double U;
     long X;
     double sum, prod, q;
-    
+
     X = 1;
     sum = prod = p;
     q = 1.0 - p;
@@ -744,10 +744,10 @@ long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample)
 {
     long d1, K, Z;
     double d2, U, Y;
-    
+
     d1 = bad + good - sample;
     d2 = (double)min(bad, good);
-    
+
     Y = d2;
     K = sample;
     while (Y > 0.0)
@@ -772,7 +772,7 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     double d4, d5, d6, d7, d8, d10, d11;
     long Z;
     double T, W, X, Y;
-    
+
     mingoodbad = min(good, bad);
     popsize = good + bad;
     maxgoodbad = max(good, bad);
@@ -783,39 +783,39 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     d7 = sqrt((popsize - m) * sample * d4 *d5 / (popsize-1) + 0.5);
     d8 = D1*d7 + D2;
     d9 = (long)floor((double)((m+1)*(mingoodbad+1))/(popsize+2));
-    d10 = (loggam(d9+1) + loggam(mingoodbad-d9+1) + loggam(m-d9+1) + 
+    d10 = (loggam(d9+1) + loggam(mingoodbad-d9+1) + loggam(m-d9+1) +
            loggam(maxgoodbad-m+d9+1));
     d11 = min(min(m, mingoodbad)+1.0, floor(d6+16*d7));
     /* 16 for 16-decimal-digit precision in D1 and D2 */
-    
+
     while (1)
     {
         X = rk_double(state);
         Y = rk_double(state);
         W = d6 + d8*(Y- 0.5)/X;
-        
+
         /* fast rejection: */
         if ((W < 0.0) || (W >= d11)) continue;
-        
+
         Z = (long)floor(W);
         T = d10 - (loggam(Z+1) + loggam(mingoodbad-Z+1) + loggam(m-Z+1) +
                    loggam(maxgoodbad-m+Z+1));
-        
+
         /* fast acceptance: */
         if ((X*(4.0-X)-3.0) <= T) break;
-        
+
         /* fast rejection: */
         if (X*(X-T) >= 1) continue;
 
         if (2.0*log(X) <= T) break;  /* acceptance */
     }
-    
+
     /* this is a correction to HRUA* by Ivan Frohne in rv.py */
     if (good > bad) Z = m - Z;
-    
+
     /* another fix from rv.py to allow sample to exceed popsize/2 */
     if (m < sample) Z = good - Z;
-    
+
     return Z;
 }
 #undef D1
@@ -836,20 +836,20 @@ double rk_triangular(rk_state *state, double left, double mode, double right)
 {
     double base, leftbase, ratio, leftprod, rightprod;
     double U;
-    
+
     base = right - left;
     leftbase = mode - left;
     ratio = leftbase / base;
     leftprod = leftbase*base;
     rightprod = (right - mode)*base;
-    
+
     U = rk_double(state);
     if (U <= ratio)
     {
         return left + sqrt(U*leftprod);
-    } else 
+    } else
     {
-      return right - sqrt((1.0 - U) * rightprod);  
+      return right - sqrt((1.0 - U) * rightprod);
     }
 }
 
@@ -857,7 +857,7 @@ long rk_logseries(rk_state *state, double p)
 {
     double q, r, U, V;
     long result;
-    
+
     r = log(1.0 - p);
 
     while (1) {

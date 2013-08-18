@@ -101,4 +101,3 @@ Platform information
     Returns the endianness of the current platform.
     One of :cdata:`NPY_CPU_BIG`, :cdata:`NPY_CPU_LITTLE`,
     or :cdata:`NPY_CPU_UNKNOWN_ENDIAN`.
-

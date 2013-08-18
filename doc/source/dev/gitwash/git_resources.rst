@@ -9,9 +9,9 @@ Tutorials and summaries
 
 * `github help`_ has an excellent series of how-to guides.
 * `learn.github`_ has an excellent series of tutorials
-* The `pro git book`_ is a good in-depth book on git. 
+* The `pro git book`_ is a good in-depth book on git.
 * A `git cheat sheet`_ is a page giving summaries of common commands.
-* The `git user manual`_ 
+* The `git user manual`_
 * The `git tutorial`_
 * The `git community book`_
 * `git ready`_ - a nice series of tutorials

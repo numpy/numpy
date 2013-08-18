@@ -3,9 +3,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu',
-           'tril','vander','histogram2d','mask_indices',
-           'tril_indices','tril_indices_from','triu_indices','triu_indices_from',
+__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+           'tril', 'vander', 'histogram2d', 'mask_indices',
+           'tril_indices', 'tril_indices_from', 'triu_indices', 'triu_indices_from',
            ]
 
 from numpy.core.numeric import asanyarray, equal, subtract, arange, \
@@ -113,7 +113,7 @@ def flipud(m):
     m = asanyarray(m)
     if m.ndim < 1:
         raise ValueError("Input must be >= 1-d.")
-    return m[::-1,...]
+    return m[::-1, ...]
 
 def rot90(m, k=1):
     """
@@ -160,12 +160,12 @@ def rot90(m, k=1):
     if k == 0:
         return m
     elif k == 1:
-        return fliplr(m).swapaxes(0,1)
+        return fliplr(m).swapaxes(0, 1)
     elif k == 2:
         return fliplr(flipud(m))
     else:
         # k == 3
-        return fliplr(m.swapaxes(0,1))
+        return fliplr(m.swapaxes(0, 1))
 
 def eye(N, M=None, k=0, dtype=float):
     """
@@ -276,7 +276,7 @@ def diag(v, k=0):
     s = v.shape
     if len(s) == 1:
         n = s[0]+abs(k)
-        res = zeros((n,n), v.dtype)
+        res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
@@ -334,12 +334,12 @@ def diagflat(v, k=0):
     v = asarray(v).ravel()
     s = len(v)
     n = s + abs(k)
-    res = zeros((n,n), v.dtype)
+    res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0,n-k)
+        i = arange(0, n-k)
         fi = i+k+i*n
     else:
-        i = arange(0,n+k)
+        i = arange(0, n+k)
         fi = i+(i-k)*n
     res.flat[fi] = v
     if not wrap:
@@ -385,7 +385,7 @@ def tri(N, M=None, k=0, dtype=float):
     """
     if M is None:
         M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
+    m = greater_equal(subtract.outer(arange(N), arange(M)), -k)
     return m.astype(dtype)
 
 def tril(m, k=0):
@@ -421,7 +421,7 @@ def tril(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype),m)
+    out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype), m)
     return out
 
 def triu(m, k=0):
@@ -510,9 +510,9 @@ def vander(x, N=None):
     x = asarray(x)
     if N is None:
         N=len(x)
-    X = ones( (len(x),N), x.dtype)
+    X = ones( (len(x), N), x.dtype)
     for i in range(N - 1):
-        X[:,i] = x**(N - i - 1)
+        X[:, i] = x**(N - i - 1)
     return X
 
 
@@ -650,7 +650,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     if N != 1 and N != 2:
         xedges = yedges = asarray(bins, float)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x,y], bins, range, normed, weights)
+    hist, edges = histogramdd([x, y], bins, range, normed, weights)
     return hist, edges[0], edges[1]
 
 
@@ -719,7 +719,7 @@ def mask_indices(n, mask_func, k=0):
     array([1, 2, 5])
 
     """
-    m = ones((n,n), int)
+    m = ones((n, n), int)
     a = mask_func(m, k)
     return where(a != 0)
 
@@ -929,4 +929,4 @@ def triu_indices_from(arr, k=0):
     """
     if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
         raise ValueError("input array must be 2-d and square")
-    return triu_indices(arr.shape[0],k)
+    return triu_indices(arr.shape[0], k)

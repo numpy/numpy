@@ -12,7 +12,7 @@ __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
            'cumsum', 'cumproduct', 'compress', 'fromfunction',
            'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
            'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
-           'indices', 'where','sarray','cross_product', 'argmax', 'argmin',
+           'indices', 'where', 'sarray', 'cross_product', 'argmax', 'argmin',
            'average']
 
 def take(a, indicies, axis=0):
@@ -55,7 +55,7 @@ def ones(shape, typecode='l', savespace=0, dtype=None):
     """ones(shape, dtype=int) returns an array of the given
     dimensions which is initialized to all ones.
     """
-    dtype = convtypecode(typecode,dtype)
+    dtype = convtypecode(typecode, dtype)
     a = mu.empty(shape, dtype)
     a.fill(1)
     return a
@@ -64,7 +64,7 @@ def zeros(shape, typecode='l', savespace=0, dtype=None):
     """zeros(shape, dtype=int) returns an array of the given
     dimensions which is initialized to all zeros
     """
-    dtype = convtypecode(typecode,dtype)
+    dtype = convtypecode(typecode, dtype)
     return mu.zeros(shape, dtype)
 
 def identity(n,typecode='l', dtype=None):

@@ -82,9 +82,9 @@ def _add_axis(fstr, name, repl):
            and fstr[start-8:start-1] != 'numerix' \
            and fstr[start-8:start-1] != 'Numeric':
             continue
-        if fstr[start-1] in ['\t',' ']:
+        if fstr[start-1] in ['\t', ' ']:
             k = start-2
-            while fstr[k] in ['\t',' ']:
+            while fstr[k] in ['\t', ' ']:
                 k -= 1
             if fstr[k-2:k+1] == 'def' or \
                fstr[k-4:k+1] == 'class':
@@ -200,8 +200,8 @@ def _import_change(fstr, names):
             ptr += 1
         substr = fstr[ind:ptr]
         found = 0
-        substr = substr.replace('\n',' ')
-        substr = substr.replace('\\','')
+        substr = substr.replace('\n', ' ')
+        substr = substr.replace('\\', '')
         importnames = [x.strip() for x in substr.split(',')]
         # determine if any of names are in importnames
         addnames = []
@@ -277,7 +277,7 @@ def convertall(direc=os.path.curdir, import_change=False):
     <usesnumeric>.py.orig.  A new file named <usesnumeric>.py
     is then written with the updated code.
     """
-    files = glob.glob(os.path.join(direc,'*.py'))
+    files = glob.glob(os.path.join(direc, '*.py'))
     for afile in files:
         convertfile(afile, import_change)
 

@@ -11,7 +11,7 @@ from numpy.testing import *
 class TestMemmap(TestCase):
     def setUp(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
-        self.shape = (3,4)
+        self.shape = (3, 4)
         self.dtype = 'float32'
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
@@ -33,7 +33,7 @@ class TestMemmap(TestCase):
         assert_array_equal(self.data, newfp)
 
     def test_open_with_filename(self):
-        tmpname = mktemp('','mmap')
+        tmpname = mktemp('', 'mmap')
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
@@ -55,7 +55,7 @@ class TestMemmap(TestCase):
         del fp
 
     def test_filename(self):
-        tmpname = mktemp('','mmap')
+        tmpname = mktemp('', 'mmap')
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)

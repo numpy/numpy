@@ -8,7 +8,7 @@ import util
 
 class TestReturnReal(util.F2PyTest):
     def check_function(self, t):
-        if t.__doc__.split()[0] in ['t0','t4','s0','s4']:
+        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
             err = 1e-5
         else:
             err = 0.0
@@ -23,14 +23,14 @@ class TestReturnReal(util.F2PyTest):
         assert_( abs(t(array(234))-234.)<=err)
         assert_( abs(t(array([234]))-234.)<=err)
         assert_( abs(t(array([[234]]))-234.)<=err)
-        assert_( abs(t(array([234],'b'))+22)<=err)
-        assert_( abs(t(array([234],'h'))-234.)<=err)
-        assert_( abs(t(array([234],'i'))-234.)<=err)
-        assert_( abs(t(array([234],'l'))-234.)<=err)
-        assert_( abs(t(array([234],'B'))-234.)<=err)
-        assert_( abs(t(array([234],'f'))-234.)<=err)
-        assert_( abs(t(array([234],'d'))-234.)<=err)
-        if t.__doc__.split()[0] in ['t0','t4','s0','s4']:
+        assert_( abs(t(array([234], 'b'))+22)<=err)
+        assert_( abs(t(array([234], 'h'))-234.)<=err)
+        assert_( abs(t(array([234], 'i'))-234.)<=err)
+        assert_( abs(t(array([234], 'l'))-234.)<=err)
+        assert_( abs(t(array([234], 'B'))-234.)<=err)
+        assert_( abs(t(array([234], 'f'))-234.)<=err)
+        assert_( abs(t(array([234], 'd'))-234.)<=err)
+        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
             assert_( t(1e200)==t(1e300)) # inf
 
         #assert_raises(ValueError, t, array([234], 'S1'))
@@ -44,7 +44,7 @@ class TestReturnReal(util.F2PyTest):
 
         try:
             r = t(10**400)
-            assert_( repr(r) in ['inf','Infinity'],repr(r))
+            assert_( repr(r) in ['inf', 'Infinity'], repr(r))
         except OverflowError:
             pass
 

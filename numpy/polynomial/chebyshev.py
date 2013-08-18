@@ -98,7 +98,7 @@ __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
     'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
     'chebpts1', 'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d',
-    'chebgrid2d', 'chebgrid3d', 'chebvander2d','chebvander3d',
+    'chebgrid2d', 'chebgrid3d', 'chebvander2d', 'chebvander3d',
     'chebcompanion', 'chebgauss', 'chebweight']
 
 chebtrim = pu.trimcoef
@@ -439,7 +439,7 @@ def cheb2poly(c) :
 #
 
 # Chebyshev default domain.
-chebdomain = np.array([-1,1])
+chebdomain = np.array([-1, 1])
 
 # Chebyshev coefficients representing zero.
 chebzero = np.array([0])
@@ -448,7 +448,7 @@ chebzero = np.array([0])
 chebone = np.array([1])
 
 # Chebyshev coefficients representing the identity x.
-chebx = np.array([0,1])
+chebx = np.array([0, 1])
 
 
 def chebline(off, scl) :
@@ -482,7 +482,7 @@ def chebline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1523,7 +1523,7 @@ def chebvander2d(x, y, deg) :
 
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1588,7 +1588,7 @@ def chebvander3d(x, y, z, deg) :
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
     vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1805,7 +1805,7 @@ def chebcompanion(c):
     top[0] = np.sqrt(.5)
     top[1:] = 1/2
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 

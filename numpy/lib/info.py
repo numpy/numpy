@@ -147,5 +147,5 @@ setdiff1d        Set difference of 1D arrays with unique elements.
 """
 from __future__ import division, absolute_import, print_function
 
-depends = ['core','testing']
+depends = ['core', 'testing']
 global_symbols = ['*']

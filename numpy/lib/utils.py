@@ -320,7 +320,7 @@ def who(vardict=None):
     sta = []
     cache = {}
     for name in vardict.keys():
-        if isinstance(vardict[name],ndarray):
+        if isinstance(vardict[name], ndarray):
             var = vardict[name]
             idv = id(var)
             if idv in cache.keys():
@@ -351,9 +351,9 @@ def who(vardict=None):
             totalbytes += int(val[2])
 
     if len(sta) > 0:
-        sp1 = max(10,maxname)
-        sp2 = max(10,maxshape)
-        sp3 = max(10,maxbyte)
+        sp1 = max(10, maxname)
+        sp2 = max(10, maxshape)
+        sp3 = max(10, maxbyte)
         prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
         print(prval + "\n" + "="*(len(prval)+5) + "\n")
 
@@ -409,7 +409,7 @@ def _makenamedict(module='numpy'):
             break
         thisdict = totraverse.pop(0)
         for x in thisdict.keys():
-            if isinstance(thisdict[x],types.ModuleType):
+            if isinstance(thisdict[x], types.ModuleType):
                 modname = thisdict[x].__name__
                 if modname not in dictlist:
                     moddict = thisdict[x].__dict__
@@ -470,7 +470,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
     # Local import to speed up numpy's import time.
     import pydoc, inspect
 
-    if hasattr(object,'_ppimport_importer') or \
+    if hasattr(object, '_ppimport_importer') or \
        hasattr(object, '_ppimport_module'):
         object = object._ppimport_module
     elif hasattr(object, '_ppimport_attr'):
@@ -537,7 +537,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         print(" " + argstr + "\n", file=output)
         doc1 = inspect.getdoc(object)
         if doc1 is None:
-            if hasattr(object,'__init__'):
+            if hasattr(object, '__init__'):
                 print(inspect.getdoc(object.__init__), file=output)
         else:
             print(inspect.getdoc(object), file=output)
@@ -565,7 +565,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
             else:
                 arguments = "()"
 
-            if hasattr(object,'name'):
+            if hasattr(object, 'name'):
                 name = "%s" % object.name
             else:
                 name = "<name>"
@@ -972,7 +972,7 @@ class SafeEval(object):
     if sys.version_info[0] < 3:
         def visit(self, node, **kw):
             cls = node.__class__
-            meth = getattr(self,'visit'+cls.__name__,self.default)
+            meth = getattr(self, 'visit'+cls.__name__, self.default)
             return meth(node, **kw)
 
         def default(self, node, **kw):
@@ -987,7 +987,7 @@ class SafeEval(object):
             return node.value
 
         def visitDict(self, node,**kw):
-            return dict([(self.visit(k),self.visit(v)) for k,v in node.items])
+            return dict([(self.visit(k), self.visit(v)) for k, v in node.items])
 
         def visitTuple(self, node, **kw):
             return tuple([self.visit(i) for i in node.nodes])

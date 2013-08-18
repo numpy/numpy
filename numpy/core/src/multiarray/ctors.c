@@ -1805,8 +1805,8 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
     oldtype = PyArray_DESCR(arr);
     if (newtype == NULL) {
-        /* 
-         * Check if object is of array with Null newtype. 
+        /*
+         * Check if object is of array with Null newtype.
          * If so return it directly instead of checking for casting.
          */
         if (flags == 0) {

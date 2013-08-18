@@ -4,7 +4,7 @@
 =================
 
 F2PY__ is an open source Python package and command line tool developed and
-maintained by Pearu Peterson (me__). 
+maintained by Pearu Peterson (me__).
 
 .. __: http://cens.ioc.ee/projects/f2py2e/
 .. __: http://cens.ioc.ee/~pearu/

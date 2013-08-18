@@ -1613,7 +1613,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
 
     for (i = 0; i < nop; ++i) {
         int type_num;
-        
+
         /* no more ufunc arguments to check */
         if (op[i] == NULL) {
             break;
@@ -2129,5 +2129,3 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     return -1;
 }
-
-

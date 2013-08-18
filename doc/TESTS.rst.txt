@@ -206,7 +206,7 @@ but ``test_evens`` is a generator that returns a series of tests, using
 A problem with generator tests can be that if a test is failing, it's
 hard to see for which parameters.  To avoid this problem, ensure that:
 
-  - No computation related to the features tested is done in the 
+  - No computation related to the features tested is done in the
     ``test_*`` generator function, but delegated to a corresponding
     ``check_*`` function (can be inside the generator, to share namespace).
   - The generators are used *solely* for loops over parameters.
@@ -236,7 +236,7 @@ for numpy.lib::
 The doctests are run as if they are in a fresh Python instance which
 has executed ``import numpy as np``. Tests that are part of a SciPy
 subpackage will have that subpackage already imported. E.g. for a test
-in ``scipy/linalg/tests/``, the namespace will be created such that 
+in ``scipy/linalg/tests/``, the namespace will be created such that
 ``from scipy import linalg`` has already executed.
 
 

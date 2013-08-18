@@ -29,7 +29,7 @@ class PGroupFCompiler(FCompiler):
         'compiler_f77' : ["pgfortran"],
         'compiler_fix' : ["pgfortran", "-Mfixed"],
         'compiler_f90' : ["pgfortran"],
-        'linker_so'    : ["pgfortran","-shared","-fpic"],
+        'linker_so'    : ["pgfortran", "-shared", "-fpic"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -40,7 +40,7 @@ class PGroupFCompiler(FCompiler):
     module_include_switch = '-I'
 
     def get_flags(self):
-        opt = ['-Minform=inform','-Mnosecond_underscore']
+        opt = ['-Minform=inform', '-Mnosecond_underscore']
         return self.pic_flags + opt
     def get_flags_opt(self):
         return ['-fast']

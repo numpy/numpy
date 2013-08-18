@@ -17,7 +17,7 @@ class LaheyFCompiler(FCompiler):
         'compiler_f77' : ["lf95", "--fix"],
         'compiler_fix' : ["lf95", "--fix"],
         'compiler_f90' : ["lf95"],
-        'linker_so'    : ["lf95","-shared"],
+        'linker_so'    : ["lf95", "-shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -28,12 +28,12 @@ class LaheyFCompiler(FCompiler):
     def get_flags_opt(self):
         return ['-O']
     def get_flags_debug(self):
-        return ['-g','--chk','--chkglobal']
+        return ['-g', '--chk', '--chkglobal']
     def get_library_dirs(self):
         opt = []
         d = os.environ.get('LAHEY')
         if d:
-            opt.append(os.path.join(d,'lib'))
+            opt.append(os.path.join(d, 'lib'))
         return opt
     def get_libraries(self):
         opt = []

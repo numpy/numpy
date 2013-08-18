@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_, run_module_suite
 def test_empty():
     x = np.matlib.empty((2,))
     assert_(isinstance(x, np.matrix))
-    assert_(x.shape, (1,2))
+    assert_(x.shape, (1, 2))
 
 def test_ones():
     assert_array_equal(np.matlib.ones((2, 3)),

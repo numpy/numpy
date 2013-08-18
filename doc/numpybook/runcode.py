@@ -131,7 +131,7 @@ def runpycode(lyxstr, name='MyCode'):
 def main(args):
     usage = "%prog {options} filename"
     parser = optparse.OptionParser(usage)
-    parser.add_option('-n','--name', default='MyCode')
+    parser.add_option('-n', '--name', default='MyCode')
 
     options, args = parser.parse_args(args)
     if len(args) < 1:
@@ -143,7 +143,7 @@ def main(args):
     fid.close()
     print("Processing %s" % options.name)
     newstr = runpycode(str, options.name)
-    fid = file(args[0],'w')
+    fid = file(args[0], 'w')
     fid.write(newstr)
     fid.close()
 

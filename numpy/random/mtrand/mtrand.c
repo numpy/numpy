@@ -486,7 +486,7 @@ struct __pyx_obj_6mtrand_RandomState;
 
 /* "mtrand.pyx":107
  *     long rk_logseries(rk_state *state, double p)
- * 
+ *
  * ctypedef double (* rk_cont0)(rk_state *state)             # <<<<<<<<<<<<<<
  * ctypedef double (* rk_cont1)(rk_state *state, double a)
  * ctypedef double (* rk_cont2)(rk_state *state, double a, double b)
@@ -494,7 +494,7 @@ struct __pyx_obj_6mtrand_RandomState;
 typedef double (*__pyx_t_6mtrand_rk_cont0)(rk_state *);
 
 /* "mtrand.pyx":108
- * 
+ *
  * ctypedef double (* rk_cont0)(rk_state *state)
  * ctypedef double (* rk_cont1)(rk_state *state, double a)             # <<<<<<<<<<<<<<
  * ctypedef double (* rk_cont2)(rk_state *state, double a, double b)
@@ -507,7 +507,7 @@ typedef double (*__pyx_t_6mtrand_rk_cont1)(rk_state *, double);
  * ctypedef double (* rk_cont1)(rk_state *state, double a)
  * ctypedef double (* rk_cont2)(rk_state *state, double a, double b)             # <<<<<<<<<<<<<<
  * ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)
- * 
+ *
  */
 typedef double (*__pyx_t_6mtrand_rk_cont2)(rk_state *, double, double);
 
@@ -515,14 +515,14 @@ typedef double (*__pyx_t_6mtrand_rk_cont2)(rk_state *, double, double);
  * ctypedef double (* rk_cont1)(rk_state *state, double a)
  * ctypedef double (* rk_cont2)(rk_state *state, double a, double b)
  * ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)             # <<<<<<<<<<<<<<
- * 
+ *
  * ctypedef long (* rk_disc0)(rk_state *state)
  */
 typedef double (*__pyx_t_6mtrand_rk_cont3)(rk_state *, double, double, double);
 
 /* "mtrand.pyx":112
  * ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)
- * 
+ *
  * ctypedef long (* rk_disc0)(rk_state *state)             # <<<<<<<<<<<<<<
  * ctypedef long (* rk_discnp)(rk_state *state, long n, double p)
  * ctypedef long (* rk_discdd)(rk_state *state, double n, double p)
@@ -530,7 +530,7 @@ typedef double (*__pyx_t_6mtrand_rk_cont3)(rk_state *, double, double, double);
 typedef long (*__pyx_t_6mtrand_rk_disc0)(rk_state *);
 
 /* "mtrand.pyx":113
- * 
+ *
  * ctypedef long (* rk_disc0)(rk_state *state)
  * ctypedef long (* rk_discnp)(rk_state *state, long n, double p)             # <<<<<<<<<<<<<<
  * ctypedef long (* rk_discdd)(rk_state *state, double n, double p)
@@ -552,7 +552,7 @@ typedef long (*__pyx_t_6mtrand_rk_discdd)(rk_state *, double, double);
  * ctypedef long (* rk_discdd)(rk_state *state, double n, double p)
  * ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N)             # <<<<<<<<<<<<<<
  * ctypedef long (* rk_discd)(rk_state *state, double a)
- * 
+ *
  */
 typedef long (*__pyx_t_6mtrand_rk_discnmN)(rk_state *, long, long, long);
 
@@ -560,14 +560,14 @@ typedef long (*__pyx_t_6mtrand_rk_discnmN)(rk_state *, long, long, long);
  * ctypedef long (* rk_discdd)(rk_state *state, double n, double p)
  * ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N)
  * ctypedef long (* rk_discd)(rk_state *state, double a)             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
 typedef long (*__pyx_t_6mtrand_rk_discd)(rk_state *, double);
 
 /* "mtrand.pyx":525
  *     return sum
- * 
+ *
  * cdef class RandomState:             # <<<<<<<<<<<<<<
  *     """
  *     RandomState(seed=None)
@@ -1629,7 +1629,7 @@ static PyObject *__pyx_k_tuple_198;
 
 /* "mtrand.pyx":129
  * import operator
- * 
+ *
  * cdef object cont0_array(rk_state *state, rk_cont0 func, object size):             # <<<<<<<<<<<<<<
  *     cdef double *array_data
  *     cdef ndarray array "arrayObject"
@@ -1654,7 +1654,7 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":135
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state)
  *     else:
@@ -1663,7 +1663,7 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state, __pyx_t_6m
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":136
- * 
+ *
  *     if size is None:
  *         return func(state)             # <<<<<<<<<<<<<<
  *     else:
@@ -1747,7 +1747,7 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state, __pyx_t_6m
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state);
     }
@@ -1756,8 +1756,8 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state, __pyx_t_6m
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state)
  *         return array             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
     __Pyx_XDECREF(__pyx_r);
     __Pyx_INCREF(((PyObject *)arrayObject));
@@ -1782,8 +1782,8 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state, __pyx_t_6m
 }
 
 /* "mtrand.pyx":146
- * 
- * 
+ *
+ *
  * cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a):             # <<<<<<<<<<<<<<
  *     cdef double *array_data
  *     cdef ndarray array "arrayObject"
@@ -1808,7 +1808,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state, __pyx_t
 
   /* "mtrand.pyx":152
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, a)
  *     else:
@@ -1817,7 +1817,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state, __pyx_t
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":153
- * 
+ *
  *     if size is None:
  *         return func(state, a)             # <<<<<<<<<<<<<<
  *     else:
@@ -1901,7 +1901,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_a);
     }
@@ -1910,7 +1910,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object cont1_array(rk_state *state, rk_cont1 func, object size, ndarray oa):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -1937,7 +1937,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state, __pyx_t
 
 /* "mtrand.pyx":162
  *         return array
- * 
+ *
  * cdef object cont1_array(rk_state *state, rk_cont1 func, object size, ndarray oa):             # <<<<<<<<<<<<<<
  *     cdef double *array_data
  *     cdef double *oa_data
@@ -1965,7 +1965,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":171
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         array = <ndarray>PyArray_SimpleNew(PyArray_NDIM(oa),
  *                 PyArray_DIMS(oa) , NPY_DOUBLE)
@@ -2171,7 +2171,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)             # <<<<<<<<<<<<<<
  *     return array
- * 
+ *
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 1);
     }
@@ -2182,7 +2182,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a,
  */
   __Pyx_XDECREF(__pyx_r);
@@ -2209,7 +2209,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state, __pyx_t_6m
 
 /* "mtrand.pyx":193
  *     return array
- * 
+ *
  * cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a,             # <<<<<<<<<<<<<<
  *                            double b):
  *     cdef double *array_data
@@ -2234,7 +2234,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state, __pyx_t
 
   /* "mtrand.pyx":200
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, a, b)
  *     else:
@@ -2243,7 +2243,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state, __pyx_t
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":201
- * 
+ *
  *     if size is None:
  *         return func(state, a, b)             # <<<<<<<<<<<<<<
  *     else:
@@ -2327,7 +2327,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a, b)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_a, __pyx_v_b);
     }
@@ -2336,8 +2336,8 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a, b)
  *         return array             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
     __Pyx_XDECREF(__pyx_r);
     __Pyx_INCREF(((PyObject *)arrayObject));
@@ -2362,8 +2362,8 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state, __pyx_t
 }
 
 /* "mtrand.pyx":211
- * 
- * 
+ *
+ *
  * cdef object cont2_array(rk_state *state, rk_cont2 func, object size,             # <<<<<<<<<<<<<<
  *                         ndarray oa, ndarray ob):
  *     cdef double *array_data
@@ -2390,7 +2390,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":221
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>oa, <void *>ob)
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
@@ -2399,7 +2399,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state, __pyx_t_6m
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":222
- * 
+ *
  *     if size is None:
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>oa, <void *>ob)             # <<<<<<<<<<<<<<
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
@@ -2623,7 +2623,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *             PyArray_MultiIter_NEXTi(multi, 2)             # <<<<<<<<<<<<<<
  *     return array
- * 
+ *
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 2);
     }
@@ -2634,7 +2634,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *             PyArray_MultiIter_NEXTi(multi, 2)
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object cont3_array_sc(rk_state *state, rk_cont3 func, object size, double a,
  */
   __Pyx_XDECREF(__pyx_r);
@@ -2660,10 +2660,10 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state, __pyx_t_6m
 
 /* "mtrand.pyx":244
  *     return array
- * 
+ *
  * cdef object cont3_array_sc(rk_state *state, rk_cont3 func, object size, double a,             # <<<<<<<<<<<<<<
  *                            double b, double c):
- * 
+ *
  */
 
 static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t_6mtrand_rk_cont3 __pyx_v_func, PyObject *__pyx_v_size, double __pyx_v_a, double __pyx_v_b, double __pyx_v_c) {
@@ -2685,7 +2685,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t
 
   /* "mtrand.pyx":252
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, a, b, c)
  *     else:
@@ -2694,7 +2694,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":253
- * 
+ *
  *     if size is None:
  *         return func(state, a, b, c)             # <<<<<<<<<<<<<<
  *     else:
@@ -2778,7 +2778,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a, b, c)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_a, __pyx_v_b, __pyx_v_c);
     }
@@ -2787,7 +2787,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a, b, c)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object cont3_array(rk_state *state, rk_cont3 func, object size, ndarray oa,
  */
     __Pyx_XDECREF(__pyx_r);
@@ -2814,10 +2814,10 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state, __pyx_t
 
 /* "mtrand.pyx":262
  *         return array
- * 
+ *
  * cdef object cont3_array(rk_state *state, rk_cont3 func, object size, ndarray oa,             # <<<<<<<<<<<<<<
  *     ndarray ob, ndarray oc):
- * 
+ *
  */
 
 static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6mtrand_rk_cont3 __pyx_v_func, PyObject *__pyx_v_size, PyArrayObject *__pyx_v_oa, PyArrayObject *__pyx_v_ob, PyArrayObject *__pyx_v_oc) {
@@ -2842,7 +2842,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":274
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         multi = <broadcast> PyArray_MultiIterNew(3, <void *>oa, <void *>ob, <void *>oc)
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
@@ -2851,7 +2851,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6m
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":275
- * 
+ *
  *     if size is None:
  *         multi = <broadcast> PyArray_MultiIterNew(3, <void *>oa, <void *>ob, <void *>oc)             # <<<<<<<<<<<<<<
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
@@ -3084,7 +3084,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0])
  *             PyArray_MultiIter_NEXT(multi)             # <<<<<<<<<<<<<<
  *     return array
- * 
+ *
  */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
@@ -3095,7 +3095,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0])
  *             PyArray_MultiIter_NEXT(multi)
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -3121,7 +3121,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state, __pyx_t_6m
 
 /* "mtrand.pyx":299
  *     return array
- * 
+ *
  * cdef object disc0_array(rk_state *state, rk_disc0 func, object size):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -3146,7 +3146,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":305
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state)
  *     else:
@@ -3155,7 +3155,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state, __pyx_t_6m
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":306
- * 
+ *
  *     if size is None:
  *         return func(state)             # <<<<<<<<<<<<<<
  *     else:
@@ -3234,7 +3234,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state, __pyx_t_6m
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state);
     }
@@ -3243,7 +3243,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state, __pyx_t_6m
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size, long n, double p):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -3270,7 +3270,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state, __pyx_t_6m
 
 /* "mtrand.pyx":315
  *         return array
- * 
+ *
  * cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size, long n, double p):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -3295,7 +3295,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state, __pyx_
 
   /* "mtrand.pyx":321
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, n, p)
  *     else:
@@ -3304,7 +3304,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state, __pyx_
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":322
- * 
+ *
  *     if size is None:
  *         return func(state, n, p)             # <<<<<<<<<<<<<<
  *     else:
@@ -3383,7 +3383,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state, __pyx_
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, p)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_n, __pyx_v_p);
     }
@@ -3392,7 +3392,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state, __pyx_
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, p)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discnp_array(rk_state *state, rk_discnp func, object size, ndarray on, ndarray op):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -3419,7 +3419,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state, __pyx_
 
 /* "mtrand.pyx":331
  *         return array
- * 
+ *
  * cdef object discnp_array(rk_state *state, rk_discnp func, object size, ndarray on, ndarray op):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -3446,7 +3446,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
 
   /* "mtrand.pyx":340
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>on, <void *>op)
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -3455,7 +3455,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":341
- * 
+ *
  *     if size is None:
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>on, <void *>op)             # <<<<<<<<<<<<<<
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -3665,7 +3665,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
  *             array_data[i] = func(state, on_data[0], op_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)             # <<<<<<<<<<<<<<
  *             PyArray_MultiIter_NEXTi(multi, 2)
- * 
+ *
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 1);
 
@@ -3673,7 +3673,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
  *             array_data[i] = func(state, on_data[0], op_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *             PyArray_MultiIter_NEXTi(multi, 2)             # <<<<<<<<<<<<<<
- * 
+ *
  *     return array
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 2);
@@ -3683,9 +3683,9 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
 
   /* "mtrand.pyx":362
  *             PyArray_MultiIter_NEXTi(multi, 2)
- * 
+ *
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discdd_array_sc(rk_state *state, rk_discdd func, object size, double n, double p):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -3711,7 +3711,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state, __pyx_t_6
 
 /* "mtrand.pyx":364
  *     return array
- * 
+ *
  * cdef object discdd_array_sc(rk_state *state, rk_discdd func, object size, double n, double p):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -3736,7 +3736,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state, __pyx_
 
   /* "mtrand.pyx":370
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, n, p)
  *     else:
@@ -3745,7 +3745,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state, __pyx_
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":371
- * 
+ *
  *     if size is None:
  *         return func(state, n, p)             # <<<<<<<<<<<<<<
  *     else:
@@ -3824,7 +3824,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state, __pyx_
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, p)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_n, __pyx_v_p);
     }
@@ -3833,7 +3833,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state, __pyx_
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, p)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discdd_array(rk_state *state, rk_discdd func, object size, ndarray on, ndarray op):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -3860,7 +3860,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state, __pyx_
 
 /* "mtrand.pyx":380
  *         return array
- * 
+ *
  * cdef object discdd_array(rk_state *state, rk_discdd func, object size, ndarray on, ndarray op):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -3887,7 +3887,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
 
   /* "mtrand.pyx":389
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>on, <void *>op)
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -3896,7 +3896,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":390
- * 
+ *
  *     if size is None:
  *         multi = <broadcast> PyArray_MultiIterNew(2, <void *>on, <void *>op)             # <<<<<<<<<<<<<<
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -4106,7 +4106,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
  *             array_data[i] = func(state, on_data[0], op_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)             # <<<<<<<<<<<<<<
  *             PyArray_MultiIter_NEXTi(multi, 2)
- * 
+ *
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 1);
 
@@ -4114,7 +4114,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
  *             array_data[i] = func(state, on_data[0], op_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *             PyArray_MultiIter_NEXTi(multi, 2)             # <<<<<<<<<<<<<<
- * 
+ *
  *     return array
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 2);
@@ -4124,9 +4124,9 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
 
   /* "mtrand.pyx":411
  *             PyArray_MultiIter_NEXTi(multi, 2)
- * 
+ *
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discnmN_array_sc(rk_state *state, rk_discnmN func, object size,
  */
   __Pyx_XDECREF(__pyx_r);
@@ -4152,7 +4152,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state, __pyx_t_6
 
 /* "mtrand.pyx":413
  *     return array
- * 
+ *
  * cdef object discnmN_array_sc(rk_state *state, rk_discnmN func, object size,             # <<<<<<<<<<<<<<
  *     long n, long m, long N):
  *     cdef long *array_data
@@ -4177,7 +4177,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state, __pyx
 
   /* "mtrand.pyx":420
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, n, m, N)
  *     else:
@@ -4186,7 +4186,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state, __pyx
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":421
- * 
+ *
  *     if size is None:
  *         return func(state, n, m, N)             # <<<<<<<<<<<<<<
  *     else:
@@ -4265,7 +4265,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state, __pyx
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, m, N)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_n, __pyx_v_m, __pyx_v_N);
     }
@@ -4274,7 +4274,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state, __pyx
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, n, m, N)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,
  */
     __Pyx_XDECREF(__pyx_r);
@@ -4301,7 +4301,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state, __pyx
 
 /* "mtrand.pyx":430
  *         return array
- * 
+ *
  * cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,             # <<<<<<<<<<<<<<
  *     ndarray on, ndarray om, ndarray oN):
  *     cdef long *array_data
@@ -4329,7 +4329,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
 
   /* "mtrand.pyx":441
  *     cdef broadcast multi
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         multi = <broadcast> PyArray_MultiIterNew(3, <void *>on, <void *>om, <void *>oN)
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -4338,7 +4338,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":442
- * 
+ *
  *     if size is None:
  *         multi = <broadcast> PyArray_MultiIterNew(3, <void *>on, <void *>om, <void *>oN)             # <<<<<<<<<<<<<<
  *         array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
@@ -4557,7 +4557,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
  *             oN_data = <long *>PyArray_MultiIter_DATA(multi, 3)
  *             array_data[i] = func(state, on_data[0], om_data[0], oN_data[0])             # <<<<<<<<<<<<<<
  *             PyArray_MultiIter_NEXT(multi)
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, (__pyx_v_on_data[0]), (__pyx_v_om_data[0]), (__pyx_v_oN_data[0]));
 
@@ -4565,7 +4565,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
  *             oN_data = <long *>PyArray_MultiIter_DATA(multi, 3)
  *             array_data[i] = func(state, on_data[0], om_data[0], oN_data[0])
  *             PyArray_MultiIter_NEXT(multi)             # <<<<<<<<<<<<<<
- * 
+ *
  *     return array
  */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
@@ -4575,9 +4575,9 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
 
   /* "mtrand.pyx":465
  *             PyArray_MultiIter_NEXT(multi)
- * 
+ *
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discd_array_sc(rk_state *state, rk_discd func, object size, double a):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -4603,7 +4603,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state, __pyx_t_
 
 /* "mtrand.pyx":467
  *     return array
- * 
+ *
  * cdef object discd_array_sc(rk_state *state, rk_discd func, object size, double a):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef ndarray array "arrayObject"
@@ -4628,7 +4628,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state, __pyx_t
 
   /* "mtrand.pyx":473
  *     cdef npy_intp i
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         return func(state, a)
  *     else:
@@ -4637,7 +4637,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state, __pyx_t
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":474
- * 
+ *
  *     if size is None:
  *         return func(state, a)             # <<<<<<<<<<<<<<
  *     else:
@@ -4716,7 +4716,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a)             # <<<<<<<<<<<<<<
  *         return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state, __pyx_v_a);
     }
@@ -4725,7 +4725,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state, __pyx_t
  *         for i from 0 <= i < length:
  *             array_data[i] = func(state, a)
  *         return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -4752,7 +4752,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state, __pyx_t
 
 /* "mtrand.pyx":483
  *         return array
- * 
+ *
  * cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa):             # <<<<<<<<<<<<<<
  *     cdef long *array_data
  *     cdef double *oa_data
@@ -4780,7 +4780,7 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state, __pyx_t_6m
 
   /* "mtrand.pyx":492
  *     cdef flatiter itera
- * 
+ *
  *     if size is None:             # <<<<<<<<<<<<<<
  *         array = <ndarray>PyArray_SimpleNew(PyArray_NDIM(oa),
  *                 PyArray_DIMS(oa), NPY_LONG)
@@ -4981,7 +4981,7 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)             # <<<<<<<<<<<<<<
  *     return array
- * 
+ *
  */
       PyArray_MultiIter_NEXTi(__pyx_v_multi, 1);
     }
@@ -4992,7 +4992,7 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state, __pyx_t_6m
  *             array_data[i] = func(state, oa_data[0])
  *             PyArray_MultiIter_NEXTi(multi, 1)
  *     return array             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef double kahan_sum(double *darr, npy_intp n):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -5019,7 +5019,7 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state, __pyx_t_6m
 
 /* "mtrand.pyx":513
  *     return array
- * 
+ *
  * cdef double kahan_sum(double *darr, npy_intp n):             # <<<<<<<<<<<<<<
  *     cdef double c, y, t, sum
  *     cdef npy_intp i
@@ -5096,7 +5096,7 @@ static double __pyx_f_6mtrand_kahan_sum(double *__pyx_v_darr, npy_intp __pyx_v_n
  *         c = (t-sum) - y
  *         sum = t             # <<<<<<<<<<<<<<
  *     return sum
- * 
+ *
  */
     __pyx_v_sum = __pyx_v_t;
   }
@@ -5105,7 +5105,7 @@ static double __pyx_f_6mtrand_kahan_sum(double *__pyx_v_darr, npy_intp __pyx_v_n
  *         c = (t-sum) - y
  *         sum = t
  *     return sum             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef class RandomState:
  */
   __pyx_r = __pyx_v_sum;
@@ -5133,10 +5133,10 @@ static int __pyx_pw_6mtrand_11RandomState_1__init__(PyObject *__pyx_v_self, PyOb
 
     /* "mtrand.pyx":561
  *     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
- * 
+ *
  *     def __init__(self, seed=None):             # <<<<<<<<<<<<<<
  *         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
- * 
+ *
  */
     values[0] = ((PyObject *)Py_None);
     if (unlikely(__pyx_kwds)) {
@@ -5192,19 +5192,19 @@ static int __pyx_pf_6mtrand_11RandomState___init__(struct __pyx_obj_6mtrand_Rand
   __Pyx_RefNannySetupContext("__init__", 0);
 
   /* "mtrand.pyx":562
- * 
+ *
  *     def __init__(self, seed=None):
  *         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))             # <<<<<<<<<<<<<<
- * 
+ *
  *         self.seed(seed)
  */
   __pyx_v_self->internal_state = ((rk_state *)PyMem_Malloc((sizeof(rk_state))));
 
   /* "mtrand.pyx":564
  *         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
- * 
+ *
  *         self.seed(seed)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def __dealloc__(self):
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s__seed); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 564; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -5244,7 +5244,7 @@ static void __pyx_pw_6mtrand_11RandomState_3__dealloc__(PyObject *__pyx_v_self) 
 
 /* "mtrand.pyx":566
  *         self.seed(seed)
- * 
+ *
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         if self.internal_state != NULL:
  *             PyMem_Free(self.internal_state)
@@ -5256,7 +5256,7 @@ static void __pyx_pf_6mtrand_11RandomState_2__dealloc__(struct __pyx_obj_6mtrand
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
   /* "mtrand.pyx":567
- * 
+ *
  *     def __dealloc__(self):
  *         if self.internal_state != NULL:             # <<<<<<<<<<<<<<
  *             PyMem_Free(self.internal_state)
@@ -5270,7 +5270,7 @@ static void __pyx_pf_6mtrand_11RandomState_2__dealloc__(struct __pyx_obj_6mtrand
  *         if self.internal_state != NULL:
  *             PyMem_Free(self.internal_state)             # <<<<<<<<<<<<<<
  *             self.internal_state = NULL
- * 
+ *
  */
     PyMem_Free(__pyx_v_self->internal_state);
 
@@ -5278,7 +5278,7 @@ static void __pyx_pf_6mtrand_11RandomState_2__dealloc__(struct __pyx_obj_6mtrand
  *         if self.internal_state != NULL:
  *             PyMem_Free(self.internal_state)
  *             self.internal_state = NULL             # <<<<<<<<<<<<<<
- * 
+ *
  *     def seed(self, seed=None):
  */
     __pyx_v_self->internal_state = NULL;
@@ -5306,7 +5306,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_5seed(PyObject *__pyx_v_self, Py
 
     /* "mtrand.pyx":571
  *             self.internal_state = NULL
- * 
+ *
  *     def seed(self, seed=None):             # <<<<<<<<<<<<<<
  *         """
  *         seed(seed=None)
@@ -5477,7 +5477,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_4seed(struct __pyx_obj_6mtrand_R
  *             obj = <ndarray>PyArray_ContiguousFromObject(seed, NPY_LONG, 1, 1)
  *             init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
  *                 PyArray_DIM(obj, 0))             # <<<<<<<<<<<<<<
- * 
+ *
  *     def get_state(self):
  */
     init_by_array(__pyx_v_self->internal_state, ((unsigned long *)PyArray_DATA(arrayObject_obj)), PyArray_DIM(arrayObject_obj, 0));
@@ -5513,7 +5513,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_7get_state(PyObject *__pyx_v_sel
 
 /* "mtrand.pyx":604
  *                 PyArray_DIM(obj, 0))
- * 
+ *
  *     def get_state(self):             # <<<<<<<<<<<<<<
  *         """
  *         get_state()
@@ -5617,7 +5617,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_6get_state(struct __pyx_obj_6mtr
  *         state = <ndarray>np.asarray(state, np.uint32)
  *         return ('MT19937', state, self.internal_state.pos,             # <<<<<<<<<<<<<<
  *             self.internal_state.has_gauss, self.internal_state.gauss)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = PyInt_FromLong(__pyx_v_self->internal_state->pos); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 638; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -5627,7 +5627,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_6get_state(struct __pyx_obj_6mtr
  *         state = <ndarray>np.asarray(state, np.uint32)
  *         return ('MT19937', state, self.internal_state.pos,
  *             self.internal_state.has_gauss, self.internal_state.gauss)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def set_state(self, state):
  */
   __pyx_t_2 = PyInt_FromLong(__pyx_v_self->internal_state->has_gauss); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 639; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -5685,7 +5685,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_9set_state(PyObject *__pyx_v_sel
 
 /* "mtrand.pyx":641
  *             self.internal_state.has_gauss, self.internal_state.gauss)
- * 
+ *
  *     def set_state(self, state):             # <<<<<<<<<<<<<<
  *         """
  *         set_state(state)
@@ -5781,11 +5781,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_8set_state(struct __pyx_obj_6mtr
     }
     #if CYTHON_COMPILING_IN_CPYTHON
     if (likely(PyTuple_CheckExact(sequence))) {
-      __pyx_t_3 = PyTuple_GET_ITEM(sequence, 0); 
-      __pyx_t_4 = PyTuple_GET_ITEM(sequence, 1); 
+      __pyx_t_3 = PyTuple_GET_ITEM(sequence, 0);
+      __pyx_t_4 = PyTuple_GET_ITEM(sequence, 1);
     } else {
-      __pyx_t_3 = PyList_GET_ITEM(sequence, 0); 
-      __pyx_t_4 = PyList_GET_ITEM(sequence, 1); 
+      __pyx_t_3 = PyList_GET_ITEM(sequence, 0);
+      __pyx_t_4 = PyList_GET_ITEM(sequence, 1);
     }
     __Pyx_INCREF(__pyx_t_3);
     __Pyx_INCREF(__pyx_t_4);
@@ -5883,11 +5883,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_8set_state(struct __pyx_obj_6mtr
       }
       #if CYTHON_COMPILING_IN_CPYTHON
       if (likely(PyTuple_CheckExact(sequence))) {
-        __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0); 
-        __pyx_t_3 = PyTuple_GET_ITEM(sequence, 1); 
+        __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0);
+        __pyx_t_3 = PyTuple_GET_ITEM(sequence, 1);
       } else {
-        __pyx_t_4 = PyList_GET_ITEM(sequence, 0); 
-        __pyx_t_3 = PyList_GET_ITEM(sequence, 1); 
+        __pyx_t_4 = PyList_GET_ITEM(sequence, 0);
+        __pyx_t_3 = PyList_GET_ITEM(sequence, 1);
       }
       __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(__pyx_t_3);
@@ -6064,7 +6064,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_8set_state(struct __pyx_obj_6mtr
  *         self.internal_state.pos = pos
  *         self.internal_state.has_gauss = has_gauss             # <<<<<<<<<<<<<<
  *         self.internal_state.gauss = cached_gaussian
- * 
+ *
  */
   __pyx_t_7 = __Pyx_PyInt_AsInt(__pyx_v_has_gauss); if (unlikely((__pyx_t_7 == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_self->internal_state->has_gauss = __pyx_t_7;
@@ -6073,7 +6073,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_8set_state(struct __pyx_obj_6mtr
  *         self.internal_state.pos = pos
  *         self.internal_state.has_gauss = has_gauss
  *         self.internal_state.gauss = cached_gaussian             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Pickling support:
  */
   __pyx_t_13 = __pyx_PyFloat_AsDouble(__pyx_v_cached_gaussian); if (unlikely((__pyx_t_13 == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -6112,11 +6112,11 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_11__getstate__(PyObject *__pyx_v
 }
 
 /* "mtrand.pyx":712
- * 
+ *
  *     # Pickling support:
  *     def __getstate__(self):             # <<<<<<<<<<<<<<
  *         return self.get_state()
- * 
+ *
  */
 
 static PyObject *__pyx_pf_6mtrand_11RandomState_10__getstate__(struct __pyx_obj_6mtrand_RandomState *__pyx_v_self) {
@@ -6133,7 +6133,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_10__getstate__(struct __pyx_obj_
  *     # Pickling support:
  *     def __getstate__(self):
  *         return self.get_state()             # <<<<<<<<<<<<<<
- * 
+ *
  *     def __setstate__(self, state):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -6172,10 +6172,10 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_13__setstate__(PyObject *__pyx_v
 
 /* "mtrand.pyx":715
  *         return self.get_state()
- * 
+ *
  *     def __setstate__(self, state):             # <<<<<<<<<<<<<<
  *         self.set_state(state)
- * 
+ *
  */
 
 static PyObject *__pyx_pf_6mtrand_11RandomState_12__setstate__(struct __pyx_obj_6mtrand_RandomState *__pyx_v_self, PyObject *__pyx_v_state) {
@@ -6190,10 +6190,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_12__setstate__(struct __pyx_obj_
   __Pyx_RefNannySetupContext("__setstate__", 0);
 
   /* "mtrand.pyx":716
- * 
+ *
  *     def __setstate__(self, state):
  *         self.set_state(state)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def __reduce__(self):
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s__set_state); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -6236,10 +6236,10 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_15__reduce__(PyObject *__pyx_v_s
 
 /* "mtrand.pyx":718
  *         self.set_state(state)
- * 
+ *
  *     def __reduce__(self):             # <<<<<<<<<<<<<<
  *         return (np.random.__RandomState_ctor, (), self.get_state())
- * 
+ *
  */
 
 static PyObject *__pyx_pf_6mtrand_11RandomState_14__reduce__(struct __pyx_obj_6mtrand_RandomState *__pyx_v_self) {
@@ -6254,10 +6254,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_14__reduce__(struct __pyx_obj_6m
   __Pyx_RefNannySetupContext("__reduce__", 0);
 
   /* "mtrand.pyx":719
- * 
+ *
  *     def __reduce__(self):
  *         return (np.random.__RandomState_ctor, (), self.get_state())             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Basic distributions:
  */
   __Pyx_XDECREF(__pyx_r);
@@ -6319,7 +6319,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_17random_sample(PyObject *__pyx_
     PyObject* values[1] = {0};
 
     /* "mtrand.pyx":722
- * 
+ *
  *     # Basic distributions:
  *     def random_sample(self, size=None):             # <<<<<<<<<<<<<<
  *         """
@@ -6377,10 +6377,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_16random_sample(struct __pyx_obj
   __Pyx_RefNannySetupContext("random_sample", 0);
 
   /* "mtrand.pyx":763
- * 
+ *
  *         """
  *         return cont0_array(self.internal_state, rk_double, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def tomaxint(self, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -6419,7 +6419,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_19tomaxint(PyObject *__pyx_v_sel
 
     /* "mtrand.pyx":765
  *         return cont0_array(self.internal_state, rk_double, size)
- * 
+ *
  *     def tomaxint(self, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         tomaxint(size=None)
@@ -6476,10 +6476,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_18tomaxint(struct __pyx_obj_6mtr
   __Pyx_RefNannySetupContext("tomaxint", 0);
 
   /* "mtrand.pyx":810
- * 
+ *
  *         """
  *         return disc0_array(self.internal_state, rk_long, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def randint(self, low, high=None, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -6520,7 +6520,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_21randint(PyObject *__pyx_v_self
 
     /* "mtrand.pyx":812
  *         return disc0_array(self.internal_state, rk_long, size)
- * 
+ *
  *     def randint(self, low, high=None, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         randint(low, high=None, size=None)
@@ -6606,7 +6606,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":869
  *         cdef npy_intp i
- * 
+ *
  *         if high is None:             # <<<<<<<<<<<<<<
  *             lo = 0
  *             hi = low
@@ -6615,7 +6615,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":870
- * 
+ *
  *         if high is None:
  *             lo = 0             # <<<<<<<<<<<<<<
  *             hi = low
@@ -6641,7 +6641,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
  *         else:
  *             lo = low             # <<<<<<<<<<<<<<
  *             hi = high
- * 
+ *
  */
     __pyx_t_2 = __Pyx_PyInt_AsLong(__pyx_v_low); if (unlikely((__pyx_t_2 == (long)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_lo = __pyx_t_2;
@@ -6650,7 +6650,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
  *         else:
  *             lo = low
  *             hi = high             # <<<<<<<<<<<<<<
- * 
+ *
  *         if lo >= hi :
  */
     __pyx_t_2 = __Pyx_PyInt_AsLong(__pyx_v_high); if (unlikely((__pyx_t_2 == (long)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 874; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -6660,19 +6660,19 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":876
  *             hi = high
- * 
+ *
  *         if lo >= hi :             # <<<<<<<<<<<<<<
  *             raise ValueError("low >= high")
- * 
+ *
  */
   __pyx_t_1 = (__pyx_v_lo >= __pyx_v_hi);
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":877
- * 
+ *
  *         if lo >= hi :
  *             raise ValueError("low >= high")             # <<<<<<<<<<<<<<
- * 
+ *
  *         diff = <unsigned long>hi - <unsigned long>lo - 1UL
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_16), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 877; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -6686,7 +6686,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":879
  *             raise ValueError("low >= high")
- * 
+ *
  *         diff = <unsigned long>hi - <unsigned long>lo - 1UL             # <<<<<<<<<<<<<<
  *         if size is None:
  *             rv = lo + <long>rk_interval(diff, self. internal_state)
@@ -6694,7 +6694,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
   __pyx_v_diff = ((((unsigned long)__pyx_v_hi) - ((unsigned long)__pyx_v_lo)) - 1UL);
 
   /* "mtrand.pyx":880
- * 
+ *
  *         diff = <unsigned long>hi - <unsigned long>lo - 1UL
  *         if size is None:             # <<<<<<<<<<<<<<
  *             rv = lo + <long>rk_interval(diff, self. internal_state)
@@ -6801,7 +6801,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
  *                 rv = lo + <long>rk_interval(diff, self. internal_state)
  *                 array_data[i] = rv             # <<<<<<<<<<<<<<
  *             return array
- * 
+ *
  */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_rv;
     }
@@ -6810,7 +6810,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_20randint(struct __pyx_obj_6mtra
  *                 rv = lo + <long>rk_interval(diff, self. internal_state)
  *                 array_data[i] = rv
  *             return array             # <<<<<<<<<<<<<<
- * 
+ *
  *     def bytes(self, npy_intp length):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -6862,7 +6862,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_23bytes(PyObject *__pyx_v_self, 
 
 /* "mtrand.pyx":892
  *             return array
- * 
+ *
  *     def bytes(self, npy_intp length):             # <<<<<<<<<<<<<<
  *         """
  *         bytes(length)
@@ -6896,7 +6896,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_22bytes(struct __pyx_obj_6mtrand
  *         bytestring = empty_py_bytes(length, &bytes)
  *         rk_fill(bytes, length, self.internal_state)             # <<<<<<<<<<<<<<
  *         return bytestring
- * 
+ *
  */
   rk_fill(__pyx_v_bytes, __pyx_v_length, __pyx_v_self->internal_state);
 
@@ -6904,8 +6904,8 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_22bytes(struct __pyx_obj_6mtrand
  *         bytestring = empty_py_bytes(length, &bytes)
  *         rk_fill(bytes, length, self.internal_state)
  *         return bytestring             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_bytestring);
@@ -6944,8 +6944,8 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_25choice(PyObject *__pyx_v_self,
     PyObject* values[4] = {0,0,0,0};
 
     /* "mtrand.pyx":920
- * 
- * 
+ *
+ *
  *     def choice(self, a, size=None, replace=True, p=None):             # <<<<<<<<<<<<<<
  *         """
  *         choice(a, size=None, replace=True, p=None)
@@ -7054,7 +7054,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
   __Pyx_INCREF(__pyx_v_p);
 
   /* "mtrand.pyx":998
- * 
+ *
  *         # Format and Verify input
  *         a = np.array(a, copy=False)             # <<<<<<<<<<<<<<
  *         if a.ndim == 0:
@@ -7280,7 +7280,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             pop_size = a.shape[0]
  *             if pop_size is 0:             # <<<<<<<<<<<<<<
  *                 raise ValueError("a must be non-empty")
- * 
+ *
  */
     __pyx_t_5 = (__pyx_v_pop_size == __pyx_int_0);
     if (__pyx_t_5) {
@@ -7289,7 +7289,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             pop_size = a.shape[0]
  *             if pop_size is 0:
  *                 raise ValueError("a must be non-empty")             # <<<<<<<<<<<<<<
- * 
+ *
  *         if None != p:
  */
       __pyx_t_4 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_25), NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1012; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -7305,7 +7305,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1014
  *                 raise ValueError("a must be non-empty")
- * 
+ *
  *         if None != p:             # <<<<<<<<<<<<<<
  *             p = np.array(p, dtype=np.double, ndmin=1, copy=False)
  *             if p.ndim != 1:
@@ -7316,7 +7316,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
   if (__pyx_t_5) {
 
     /* "mtrand.pyx":1015
- * 
+ *
  *         if None != p:
  *             p = np.array(p, dtype=np.double, ndmin=1, copy=False)             # <<<<<<<<<<<<<<
  *             if p.ndim != 1:
@@ -7464,7 +7464,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *                 raise ValueError("probabilities are not non-negative")
  *             if not np.allclose(p.sum(), 1):             # <<<<<<<<<<<<<<
  *                 raise ValueError("probabilities do not sum to 1")
- * 
+ *
  */
     __pyx_t_10 = __Pyx_GetModuleGlobalName(__pyx_n_s__np); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1022; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_10);
@@ -7497,7 +7497,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *                 raise ValueError("probabilities are not non-negative")
  *             if not np.allclose(p.sum(), 1):
  *                 raise ValueError("probabilities do not sum to 1")             # <<<<<<<<<<<<<<
- * 
+ *
  *         shape = size
  */
       __pyx_t_1 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_33), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1023; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -7514,7 +7514,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1025
  *                 raise ValueError("probabilities do not sum to 1")
- * 
+ *
  *         shape = size             # <<<<<<<<<<<<<<
  *         if shape is not None:
  *             size = np.prod(shape, dtype=np.intp)
@@ -7523,7 +7523,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
   __pyx_v_shape = __pyx_v_size;
 
   /* "mtrand.pyx":1026
- * 
+ *
  *         shape = size
  *         if shape is not None:             # <<<<<<<<<<<<<<
  *             size = np.prod(shape, dtype=np.intp)
@@ -7574,7 +7574,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             size = np.prod(shape, dtype=np.intp)
  *         else:
  *             size = 1             # <<<<<<<<<<<<<<
- * 
+ *
  *         # Actual sampling
  */
     __Pyx_INCREF(__pyx_int_1);
@@ -7584,7 +7584,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
   __pyx_L21:;
 
   /* "mtrand.pyx":1032
- * 
+ *
  *         # Actual sampling
  *         if replace:             # <<<<<<<<<<<<<<
  *             if None != p:
@@ -7767,7 +7767,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             if size > pop_size:
  *                 raise ValueError("Cannot take a larger sample than "             # <<<<<<<<<<<<<<
  *                                  "population when 'replace=False'")
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_35), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1043; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -7780,7 +7780,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
     /* "mtrand.pyx":1046
  *                                  "population when 'replace=False'")
- * 
+ *
  *             if None != p:             # <<<<<<<<<<<<<<
  *                 if np.sum(p > 0) < size:
  *                     raise ValueError("Fewer non-zero entries in p than size")
@@ -7791,7 +7791,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
     if (__pyx_t_11) {
 
       /* "mtrand.pyx":1047
- * 
+ *
  *             if None != p:
  *                 if np.sum(p > 0) < size:             # <<<<<<<<<<<<<<
  *                     raise ValueError("Fewer non-zero entries in p than size")
@@ -8082,11 +8082,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
           }
           #if CYTHON_COMPILING_IN_CPYTHON
           if (likely(PyTuple_CheckExact(sequence))) {
-            __pyx_t_10 = PyTuple_GET_ITEM(sequence, 0); 
-            __pyx_t_4 = PyTuple_GET_ITEM(sequence, 1); 
+            __pyx_t_10 = PyTuple_GET_ITEM(sequence, 0);
+            __pyx_t_4 = PyTuple_GET_ITEM(sequence, 1);
           } else {
-            __pyx_t_10 = PyList_GET_ITEM(sequence, 0); 
-            __pyx_t_4 = PyList_GET_ITEM(sequence, 1); 
+            __pyx_t_10 = PyList_GET_ITEM(sequence, 0);
+            __pyx_t_4 = PyList_GET_ITEM(sequence, 1);
           }
           __Pyx_INCREF(__pyx_t_10);
           __Pyx_INCREF(__pyx_t_4);
@@ -8236,7 +8236,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *                 idx = self.permutation(pop_size)[:size]
  *                 if shape is not None:             # <<<<<<<<<<<<<<
  *                     idx.shape = shape
- * 
+ *
  */
       __pyx_t_11 = (__pyx_v_shape != Py_None);
       if (__pyx_t_11) {
@@ -8245,7 +8245,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *                 idx = self.permutation(pop_size)[:size]
  *                 if shape is not None:
  *                     idx.shape = shape             # <<<<<<<<<<<<<<
- * 
+ *
  *         if shape is None and isinstance(idx, np.ndarray):
  */
         if (__Pyx_PyObject_SetAttrStr(__pyx_v_idx, __pyx_n_s__shape, __pyx_v_shape) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1069; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -8259,7 +8259,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1071
  *                     idx.shape = shape
- * 
+ *
  *         if shape is None and isinstance(idx, np.ndarray):             # <<<<<<<<<<<<<<
  *             # In most cases a scalar will have been made an array
  *             idx = idx.item(0)
@@ -8283,7 +8283,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *         if shape is None and isinstance(idx, np.ndarray):
  *             # In most cases a scalar will have been made an array
  *             idx = idx.item(0)             # <<<<<<<<<<<<<<
- * 
+ *
  *         #Use samples as indices for a if a is array-like
  */
     __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_idx, __pyx_n_s__item); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1073; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -8299,11 +8299,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
   __pyx_L33:;
 
   /* "mtrand.pyx":1076
- * 
+ *
  *         #Use samples as indices for a if a is array-like
  *         if a.ndim == 0:             # <<<<<<<<<<<<<<
  *             return idx
- * 
+ *
  */
   __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_a, __pyx_n_s__ndim); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1076; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
@@ -8317,7 +8317,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *         #Use samples as indices for a if a is array-like
  *         if a.ndim == 0:
  *             return idx             # <<<<<<<<<<<<<<
- * 
+ *
  *         if shape is not None and idx.ndim == 0:
  */
     __Pyx_XDECREF(__pyx_r);
@@ -8330,7 +8330,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1079
  *             return idx
- * 
+ *
  *         if shape is not None and idx.ndim == 0:             # <<<<<<<<<<<<<<
  *             # If size == () then the user requested a 0-d array as opposed to
  *             # a scalar object when size is None. However a[idx] is always a
@@ -8379,7 +8379,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             res = np.empty((), dtype=a.dtype)
  *             res[()] = a[idx]             # <<<<<<<<<<<<<<
  *             return res
- * 
+ *
  */
     __pyx_t_10 = PyObject_GetItem(__pyx_v_a, __pyx_v_idx); if (!__pyx_t_10) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1086; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_10);
@@ -8390,7 +8390,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
  *             res = np.empty((), dtype=a.dtype)
  *             res[()] = a[idx]
  *             return res             # <<<<<<<<<<<<<<
- * 
+ *
  *         return a[idx]
  */
     __Pyx_XDECREF(__pyx_r);
@@ -8403,10 +8403,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_24choice(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1089
  *             return res
- * 
+ *
  *         return a[idx]             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_10 = PyObject_GetItem(__pyx_v_a, __pyx_v_idx); if (!__pyx_t_10) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1089; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -8467,8 +8467,8 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_27uniform(PyObject *__pyx_v_self
     values[1] = __pyx_k_41;
 
     /* "mtrand.pyx":1092
- * 
- * 
+ *
+ *
  *     def uniform(self, low=0.0, high=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         uniform(low=0.0, high=1.0, size=1)
@@ -8551,7 +8551,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_26uniform(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":1166
  *         cdef object temp
- * 
+ *
  *         flow = PyFloat_AsDouble(low)             # <<<<<<<<<<<<<<
  *         fhigh = PyFloat_AsDouble(high)
  *         if not PyErr_Occurred():
@@ -8559,7 +8559,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_26uniform(struct __pyx_obj_6mtra
   __pyx_v_flow = PyFloat_AsDouble(__pyx_v_low);
 
   /* "mtrand.pyx":1167
- * 
+ *
  *         flow = PyFloat_AsDouble(low)
  *         fhigh = PyFloat_AsDouble(high)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -8674,7 +8674,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_26uniform(struct __pyx_obj_6mtra
  *                         #  rules because EnsureArray steals a reference
  *         odiff = <ndarray>PyArray_EnsureArray(temp)             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff)
- * 
+ *
  */
   __pyx_t_4 = PyArray_EnsureArray(__pyx_v_temp); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1176; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
@@ -8688,7 +8688,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_26uniform(struct __pyx_obj_6mtra
  *                         #  rules because EnsureArray steals a reference
  *         odiff = <ndarray>PyArray_EnsureArray(temp)
  *         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def rand(self, *args):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -8735,7 +8735,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_29rand(PyObject *__pyx_v_self, P
 
 /* "mtrand.pyx":1179
  *         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff)
- * 
+ *
  *     def rand(self, *args):             # <<<<<<<<<<<<<<
  *         """
  *         rand(d0, d1, ..., dn)
@@ -8755,7 +8755,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_28rand(struct __pyx_obj_6mtrand_
   __Pyx_RefNannySetupContext("rand", 0);
 
   /* "mtrand.pyx":1218
- * 
+ *
  *         """
  *         if len(args) == 0:             # <<<<<<<<<<<<<<
  *             return self.random_sample()
@@ -8789,7 +8789,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_28rand(struct __pyx_obj_6mtrand_
  *             return self.random_sample()
  *         else:
  *             return self.random_sample(size=args)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def randn(self, *args):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -8841,7 +8841,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_31randn(PyObject *__pyx_v_self, 
 
 /* "mtrand.pyx":1223
  *             return self.random_sample(size=args)
- * 
+ *
  *     def randn(self, *args):             # <<<<<<<<<<<<<<
  *         """
  *         randn(d0, d1, ..., dn)
@@ -8861,7 +8861,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_30randn(struct __pyx_obj_6mtrand
   __Pyx_RefNannySetupContext("randn", 0);
 
   /* "mtrand.pyx":1275
- * 
+ *
  *         """
  *         if len(args) == 0:             # <<<<<<<<<<<<<<
  *             return self.standard_normal()
@@ -8895,7 +8895,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_30randn(struct __pyx_obj_6mtrand
  *             return self.standard_normal()
  *         else:
  *             return self.standard_normal(args)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def random_integers(self, low, high=None, size=None):
  */
     __Pyx_XDECREF(__pyx_r);
@@ -8949,7 +8949,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_33random_integers(PyObject *__py
 
     /* "mtrand.pyx":1280
  *             return self.standard_normal(args)
- * 
+ *
  *     def random_integers(self, low, high=None, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         random_integers(low, high=None, size=None)
@@ -9026,7 +9026,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_32random_integers(struct __pyx_o
   __Pyx_INCREF(__pyx_v_high);
 
   /* "mtrand.pyx":1352
- * 
+ *
  *         """
  *         if high is None:             # <<<<<<<<<<<<<<
  *             high = low
@@ -9051,7 +9051,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_32random_integers(struct __pyx_o
  *             high = low
  *             low = 1             # <<<<<<<<<<<<<<
  *         return self.randint(low, high+1, size)
- * 
+ *
  */
     __Pyx_INCREF(__pyx_int_1);
     __Pyx_DECREF(__pyx_v_low);
@@ -9064,7 +9064,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_32random_integers(struct __pyx_o
  *             high = low
  *             low = 1
  *         return self.randint(low, high+1, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Complicated, continuous distributions:
  */
   __Pyx_XDECREF(__pyx_r);
@@ -9123,7 +9123,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_35standard_normal(PyObject *__py
     PyObject* values[1] = {0};
 
     /* "mtrand.pyx":1358
- * 
+ *
  *     # Complicated, continuous distributions:
  *     def standard_normal(self, size=None):             # <<<<<<<<<<<<<<
  *         """
@@ -9181,10 +9181,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_34standard_normal(struct __pyx_o
   __Pyx_RefNannySetupContext("standard_normal", 0);
 
   /* "mtrand.pyx":1388
- * 
+ *
  *         """
  *         return cont0_array(self.internal_state, rk_gauss, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def normal(self, loc=0.0, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -9227,7 +9227,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_37normal(PyObject *__pyx_v_self,
 
     /* "mtrand.pyx":1390
  *         return cont0_array(self.internal_state, rk_gauss, size)
- * 
+ *
  *     def normal(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         normal(loc=0.0, scale=1.0, size=None)
@@ -9309,7 +9309,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1475
  *         cdef double floc, fscale
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -9317,7 +9317,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
   /* "mtrand.pyx":1476
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -9350,7 +9350,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_normal, size, floc, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_45), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1479; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -9365,7 +9365,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_normal, size, floc, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -9380,16 +9380,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":1482
  *             return cont2_array_sc(self.internal_state, rk_normal, size, floc, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":1484
  *         PyErr_Clear()
- * 
+ *
  *         oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oscale, 0)):
@@ -9403,7 +9403,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":1485
- * 
+ *
  *         oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oscale, 0)):
@@ -9464,7 +9464,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oscale, 0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale)
- * 
+ *
  */
     __pyx_t_5 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_46), NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1487; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
@@ -9479,7 +9479,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_36normal(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oscale, 0)):
  *             raise ValueError("scale <= 0")
  *         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def beta(self, a, b, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -9525,7 +9525,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_39beta(PyObject *__pyx_v_self, P
 
     /* "mtrand.pyx":1490
  *         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale)
- * 
+ *
  *     def beta(self, a, b, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         beta(a, b, size=None)
@@ -9605,7 +9605,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":1530
  *         cdef double fa, fb
- * 
+ *
  *         fa = PyFloat_AsDouble(a)             # <<<<<<<<<<<<<<
  *         fb = PyFloat_AsDouble(b)
  *         if not PyErr_Occurred():
@@ -9613,7 +9613,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
   /* "mtrand.pyx":1531
- * 
+ *
  *         fa = PyFloat_AsDouble(a)
  *         fb = PyFloat_AsDouble(b)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -9672,7 +9672,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
  *             if fb <= 0:
  *                 raise ValueError("b <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_beta, size, fa, fb)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_50), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -9687,7 +9687,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
  *             if fb <= 0:
  *                 raise ValueError("b <= 0")
  *             return cont2_array_sc(self.internal_state, rk_beta, size, fa, fb)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -9702,16 +9702,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":1539
  *             return cont2_array_sc(self.internal_state, rk_beta, size, fa, fb)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":1541
  *         PyErr_Clear()
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         ob = <ndarray>PyArray_FROM_OTF(b, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oa, 0)):
@@ -9725,7 +9725,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":1542
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         ob = <ndarray>PyArray_FROM_OTF(b, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oa, 0)):
@@ -9844,7 +9844,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
  *         if np.any(np.less_equal(ob, 0)):
  *             raise ValueError("b <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_beta, size, oa, ob)
- * 
+ *
  */
     __pyx_t_4 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_52), NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
@@ -9859,7 +9859,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_38beta(struct __pyx_obj_6mtrand_
  *         if np.any(np.less_equal(ob, 0)):
  *             raise ValueError("b <= 0")
  *         return cont2_array(self.internal_state, rk_beta, size, oa, ob)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def exponential(self, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -9905,7 +9905,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_41exponential(PyObject *__pyx_v_
 
     /* "mtrand.pyx":1549
  *         return cont2_array(self.internal_state, rk_beta, size, oa, ob)
- * 
+ *
  *     def exponential(self, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         exponential(scale=1.0, size=None)
@@ -9977,7 +9977,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
 
   /* "mtrand.pyx":1590
  *         cdef double fscale
- * 
+ *
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fscale <= 0:
@@ -9985,7 +9985,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
   /* "mtrand.pyx":1591
- * 
+ *
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fscale <= 0:
@@ -10009,7 +10009,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_exponential, size, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_54), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1593; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -10024,7 +10024,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont1_array_sc(self.internal_state, rk_exponential, size, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -10039,16 +10039,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
 
   /* "mtrand.pyx":1596
  *             return cont1_array_sc(self.internal_state, rk_exponential, size, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":1598
  *         PyErr_Clear()
- * 
+ *
  *         oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
@@ -10062,7 +10062,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":1599
- * 
+ *
  *         oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oscale, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("scale <= 0")
@@ -10110,7 +10110,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_exponential, size, oscale)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_55), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -10125,7 +10125,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_40exponential(struct __pyx_obj_6
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
  *         return cont1_array(self.internal_state, rk_exponential, size, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def standard_exponential(self, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -10168,7 +10168,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_43standard_exponential(PyObject 
 
     /* "mtrand.pyx":1603
  *         return cont1_array(self.internal_state, rk_exponential, size, oscale)
- * 
+ *
  *     def standard_exponential(self, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         standard_exponential(size=None)
@@ -10225,10 +10225,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_42standard_exponential(struct __
   __Pyx_RefNannySetupContext("standard_exponential", 0);
 
   /* "mtrand.pyx":1629
- * 
+ *
  *         """
  *         return cont0_array(self.internal_state, rk_standard_exponential, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def standard_gamma(self, shape, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -10268,7 +10268,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_45standard_gamma(PyObject *__pyx
 
     /* "mtrand.pyx":1631
  *         return cont0_array(self.internal_state, rk_standard_exponential, size)
- * 
+ *
  *     def standard_gamma(self, shape, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         standard_gamma(shape, size=None)
@@ -10338,7 +10338,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
 
   /* "mtrand.pyx":1701
  *         cdef double fshape
- * 
+ *
  *         fshape = PyFloat_AsDouble(shape)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fshape <= 0:
@@ -10346,7 +10346,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
   __pyx_v_fshape = PyFloat_AsDouble(__pyx_v_shape);
 
   /* "mtrand.pyx":1702
- * 
+ *
  *         fshape = PyFloat_AsDouble(shape)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fshape <= 0:
@@ -10370,7 +10370,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
  *             if fshape <= 0:
  *                 raise ValueError("shape <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_57), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -10385,7 +10385,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
  *             if fshape <= 0:
  *                 raise ValueError("shape <= 0")
  *             return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -10400,7 +10400,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
 
   /* "mtrand.pyx":1707
  *             return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oshape = <ndarray> PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oshape, 0.0)):
@@ -10408,7 +10408,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
   PyErr_Clear();
 
   /* "mtrand.pyx":1708
- * 
+ *
  *         PyErr_Clear()
  *         oshape = <ndarray> PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oshape, 0.0)):
@@ -10471,7 +10471,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
  *         if np.any(np.less_equal(oshape, 0.0)):
  *             raise ValueError("shape <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_standard_gamma, size, oshape)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_58), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -10486,7 +10486,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_44standard_gamma(struct __pyx_ob
  *         if np.any(np.less_equal(oshape, 0.0)):
  *             raise ValueError("shape <= 0")
  *         return cont1_array(self.internal_state, rk_standard_gamma, size, oshape)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def gamma(self, shape, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -10532,7 +10532,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_47gamma(PyObject *__pyx_v_self, 
 
     /* "mtrand.pyx":1713
  *         return cont1_array(self.internal_state, rk_standard_gamma, size, oshape)
- * 
+ *
  *     def gamma(self, shape, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         gamma(shape, scale=1.0, size=None)
@@ -10612,7 +10612,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
 
   /* "mtrand.pyx":1786
  *         cdef double fshape, fscale
- * 
+ *
  *         fshape = PyFloat_AsDouble(shape)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -10620,7 +10620,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
   __pyx_v_fshape = PyFloat_AsDouble(__pyx_v_shape);
 
   /* "mtrand.pyx":1787
- * 
+ *
  *         fshape = PyFloat_AsDouble(shape)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -10679,7 +10679,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_61), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1792; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -10694,7 +10694,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -10709,7 +10709,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
 
   /* "mtrand.pyx":1795
  *             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oshape = <ndarray>PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -10717,7 +10717,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
   PyErr_Clear();
 
   /* "mtrand.pyx":1796
- * 
+ *
  *         PyErr_Clear()
  *         oshape = <ndarray>PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -10855,7 +10855,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_63), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -10870,7 +10870,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_46gamma(struct __pyx_obj_6mtrand
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
  *         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def f(self, dfnum, dfden, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -10916,7 +10916,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_49f(PyObject *__pyx_v_self, PyOb
 
     /* "mtrand.pyx":1804
  *         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale)
- * 
+ *
  *     def f(self, dfnum, dfden, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         f(dfnum, dfden, size=None)
@@ -10996,7 +10996,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
 
   /* "mtrand.pyx":1887
  *         cdef double fdfnum, fdfden
- * 
+ *
  *         fdfnum = PyFloat_AsDouble(dfnum)             # <<<<<<<<<<<<<<
  *         fdfden = PyFloat_AsDouble(dfden)
  *         if not PyErr_Occurred():
@@ -11004,7 +11004,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
   __pyx_v_fdfnum = PyFloat_AsDouble(__pyx_v_dfnum);
 
   /* "mtrand.pyx":1888
- * 
+ *
  *         fdfnum = PyFloat_AsDouble(dfnum)
  *         fdfden = PyFloat_AsDouble(dfden)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -11063,7 +11063,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
  *             if fdfden <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum, fdfden)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_65), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1893; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -11078,7 +11078,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
  *             if fdfden <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum, fdfden)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -11093,16 +11093,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
 
   /* "mtrand.pyx":1896
  *             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum, fdfden)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":1898
  *         PyErr_Clear()
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(odfnum, 0.0)):
@@ -11116,7 +11116,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":1899
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odfnum, 0.0)):
@@ -11239,7 +11239,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
  *         if np.any(np.less_equal(odfden, 0.0)):
  *             raise ValueError("dfden <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_f, size, odfnum, odfden)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_69), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1903; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -11254,7 +11254,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_48f(struct __pyx_obj_6mtrand_Ran
  *         if np.any(np.less_equal(odfden, 0.0)):
  *             raise ValueError("dfden <= 0")
  *         return cont2_array(self.internal_state, rk_f, size, odfnum, odfden)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def noncentral_f(self, dfnum, dfden, nonc, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -11301,7 +11301,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_51noncentral_f(PyObject *__pyx_v
 
     /* "mtrand.pyx":1906
  *         return cont2_array(self.internal_state, rk_f, size, odfnum, odfden)
- * 
+ *
  *     def noncentral_f(self, dfnum, dfden, nonc, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         noncentral_f(dfnum, dfden, nonc, size=None)
@@ -11391,7 +11391,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
 
   /* "mtrand.pyx":1973
  *         cdef double fdfnum, fdfden, fnonc
- * 
+ *
  *         fdfnum = PyFloat_AsDouble(dfnum)             # <<<<<<<<<<<<<<
  *         fdfden = PyFloat_AsDouble(dfden)
  *         fnonc = PyFloat_AsDouble(nonc)
@@ -11399,7 +11399,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
   __pyx_v_fdfnum = PyFloat_AsDouble(__pyx_v_dfnum);
 
   /* "mtrand.pyx":1974
- * 
+ *
  *         fdfnum = PyFloat_AsDouble(dfnum)
  *         fdfden = PyFloat_AsDouble(dfden)             # <<<<<<<<<<<<<<
  *         fnonc = PyFloat_AsDouble(nonc)
@@ -11509,7 +11509,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
  *                 raise ValueError("nonc < 0")
  *             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,             # <<<<<<<<<<<<<<
  *                                   fdfnum, fdfden, fnonc)
- * 
+ *
  */
     __Pyx_XDECREF(__pyx_r);
 
@@ -11517,7 +11517,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
  *                 raise ValueError("nonc < 0")
  *             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,
  *                                   fdfnum, fdfden, fnonc)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __pyx_t_2 = __pyx_f_6mtrand_cont3_array_sc(__pyx_v_self->internal_state, rk_noncentral_f, __pyx_v_size, __pyx_v_fdfnum, __pyx_v_fdfden, __pyx_v_fnonc); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1983; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -11531,16 +11531,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
 
   /* "mtrand.pyx":1986
  *                                   fdfnum, fdfden, fnonc)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":1988
  *         PyErr_Clear()
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -11554,11 +11554,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":1989
- * 
+ *
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
- * 
+ *
  */
   __pyx_t_3 = PyArray_FROM_OTF(__pyx_v_dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1989; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
@@ -11572,7 +11572,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
  *         odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if np.any(np.less_equal(odfnum, 1.0)):
  */
   __pyx_t_2 = PyArray_FROM_OTF(__pyx_v_nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -11585,7 +11585,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
 
   /* "mtrand.pyx":1992
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
- * 
+ *
  *         if np.any(np.less_equal(odfnum, 1.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("dfnum <= 1")
  *         if np.any(np.less_equal(odfden, 0.0)):
@@ -11628,7 +11628,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":1993
- * 
+ *
  *         if np.any(np.less_equal(odfnum, 1.0)):
  *             raise ValueError("dfnum <= 1")             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odfden, 0.0)):
@@ -11768,7 +11768,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
  *             raise ValueError("nonc < 0")
  *         return cont3_array(self.internal_state, rk_noncentral_f, size, odfnum,             # <<<<<<<<<<<<<<
  *             odfden, ononc)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
 
@@ -11776,7 +11776,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_50noncentral_f(struct __pyx_obj_
  *             raise ValueError("nonc < 0")
  *         return cont3_array(self.internal_state, rk_noncentral_f, size, odfnum,
  *             odfden, ononc)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def chisquare(self, df, size=None):
  */
   __pyx_t_3 = __pyx_f_6mtrand_cont3_array(__pyx_v_self->internal_state, rk_noncentral_f, __pyx_v_size, __pyx_v_odfnum, __pyx_v_odfden, __pyx_v_ononc); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -11821,7 +11821,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_53chisquare(PyObject *__pyx_v_se
 
     /* "mtrand.pyx":2001
  *             odfden, ononc)
- * 
+ *
  *     def chisquare(self, df, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         chisquare(df, size=None)
@@ -11891,7 +11891,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":2066
  *         cdef double fdf
- * 
+ *
  *         fdf = PyFloat_AsDouble(df)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fdf <= 0:
@@ -11899,7 +11899,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
   __pyx_v_fdf = PyFloat_AsDouble(__pyx_v_df);
 
   /* "mtrand.pyx":2067
- * 
+ *
  *         fdf = PyFloat_AsDouble(df)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fdf <= 0:
@@ -11923,7 +11923,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_79), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -11938,7 +11938,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")
  *             return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -11953,16 +11953,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":2072
  *             return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2074
  *         PyErr_Clear()
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")
@@ -11976,7 +11976,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2075
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(odf, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("df <= 0")
@@ -12024,7 +12024,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_chisquare, size, odf)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_80), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2076; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -12039,7 +12039,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_52chisquare(struct __pyx_obj_6mt
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")
  *         return cont1_array(self.internal_state, rk_chisquare, size, odf)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def noncentral_chisquare(self, df, nonc, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -12084,7 +12084,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_55noncentral_chisquare(PyObject 
 
     /* "mtrand.pyx":2079
  *         return cont1_array(self.internal_state, rk_chisquare, size, odf)
- * 
+ *
  *     def noncentral_chisquare(self, df, nonc, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         noncentral_chisquare(df, nonc, size=None)
@@ -12247,7 +12247,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
  *                 raise ValueError("nonc <= 0")
  *             return cont2_array_sc(self.internal_state, rk_noncentral_chisquare,             # <<<<<<<<<<<<<<
  *                                   size, fdf, fnonc)
- * 
+ *
  */
     __Pyx_XDECREF(__pyx_r);
 
@@ -12255,7 +12255,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
  *                 raise ValueError("nonc <= 0")
  *             return cont2_array_sc(self.internal_state, rk_noncentral_chisquare,
  *                                   size, fdf, fnonc)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __pyx_t_2 = __pyx_f_6mtrand_cont2_array_sc(__pyx_v_self->internal_state, rk_noncentral_chisquare, __pyx_v_size, __pyx_v_fdf, __pyx_v_fnonc); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -12269,16 +12269,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
 
   /* "mtrand.pyx":2160
  *                                   size, fdf, fnonc)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2162
  *         PyErr_Clear()
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(odf, 0.0)):
@@ -12292,7 +12292,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2163
- * 
+ *
  *         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odf, 0.0)):
@@ -12431,7 +12431,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
  *             raise ValueError("nonc < 0")
  *         return cont2_array(self.internal_state, rk_noncentral_chisquare, size,             # <<<<<<<<<<<<<<
  *             odf, ononc)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
 
@@ -12439,7 +12439,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_54noncentral_chisquare(struct __
  *             raise ValueError("nonc < 0")
  *         return cont2_array(self.internal_state, rk_noncentral_chisquare, size,
  *             odf, ononc)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def standard_cauchy(self, size=None):
  */
   __pyx_t_2 = __pyx_f_6mtrand_cont2_array(__pyx_v_self->internal_state, rk_noncentral_chisquare, __pyx_v_size, __pyx_v_odf, __pyx_v_ononc); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2168; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -12482,7 +12482,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_57standard_cauchy(PyObject *__py
 
     /* "mtrand.pyx":2171
  *             odf, ononc)
- * 
+ *
  *     def standard_cauchy(self, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         standard_cauchy(size=None)
@@ -12539,10 +12539,10 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_56standard_cauchy(struct __pyx_o
   __Pyx_RefNannySetupContext("standard_cauchy", 0);
 
   /* "mtrand.pyx":2230
- * 
+ *
  *         """
  *         return cont0_array(self.internal_state, rk_standard_cauchy, size)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def standard_t(self, df, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -12582,7 +12582,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_59standard_t(PyObject *__pyx_v_s
 
     /* "mtrand.pyx":2232
  *         return cont0_array(self.internal_state, rk_standard_cauchy, size)
- * 
+ *
  *     def standard_t(self, df, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         standard_t(df, size=None)
@@ -12652,7 +12652,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
 
   /* "mtrand.pyx":2320
  *         cdef double fdf
- * 
+ *
  *         fdf = PyFloat_AsDouble(df)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fdf <= 0:
@@ -12660,7 +12660,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
   __pyx_v_fdf = PyFloat_AsDouble(__pyx_v_df);
 
   /* "mtrand.pyx":2321
- * 
+ *
  *         fdf = PyFloat_AsDouble(df)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fdf <= 0:
@@ -12684,7 +12684,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_standard_t, size, fdf)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_87), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2323; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -12699,7 +12699,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")
  *             return cont1_array_sc(self.internal_state, rk_standard_t, size, fdf)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -12714,16 +12714,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
 
   /* "mtrand.pyx":2326
  *             return cont1_array_sc(self.internal_state, rk_standard_t, size, fdf)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         odf = <ndarray> PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2328
  *         PyErr_Clear()
- * 
+ *
  *         odf = <ndarray> PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")
@@ -12737,7 +12737,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2329
- * 
+ *
  *         odf = <ndarray> PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(odf, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("df <= 0")
@@ -12785,7 +12785,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_standard_t, size, odf)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_88), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2330; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -12800,7 +12800,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_58standard_t(struct __pyx_obj_6m
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")
  *         return cont1_array(self.internal_state, rk_standard_t, size, odf)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def vonmises(self, mu, kappa, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -12845,7 +12845,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_61vonmises(PyObject *__pyx_v_sel
 
     /* "mtrand.pyx":2333
  *         return cont1_array(self.internal_state, rk_standard_t, size, odf)
- * 
+ *
  *     def vonmises(self, mu, kappa, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         vonmises(mu, kappa, size=None)
@@ -12925,7 +12925,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":2412
  *         cdef double fmu, fkappa
- * 
+ *
  *         fmu = PyFloat_AsDouble(mu)             # <<<<<<<<<<<<<<
  *         fkappa = PyFloat_AsDouble(kappa)
  *         if not PyErr_Occurred():
@@ -12933,7 +12933,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
   __pyx_v_fmu = PyFloat_AsDouble(__pyx_v_mu);
 
   /* "mtrand.pyx":2413
- * 
+ *
  *         fmu = PyFloat_AsDouble(mu)
  *         fkappa = PyFloat_AsDouble(kappa)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -12966,7 +12966,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
  *             if fkappa < 0:
  *                 raise ValueError("kappa < 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_vonmises, size, fmu, fkappa)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_90), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -12981,7 +12981,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
  *             if fkappa < 0:
  *                 raise ValueError("kappa < 0")
  *             return cont2_array_sc(self.internal_state, rk_vonmises, size, fmu, fkappa)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -12996,16 +12996,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":2419
  *             return cont2_array_sc(self.internal_state, rk_vonmises, size, fmu, fkappa)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2421
  *         PyErr_Clear()
- * 
+ *
  *         omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less(okappa, 0.0)):
@@ -13019,7 +13019,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2422
- * 
+ *
  *         omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less(okappa, 0.0)):
@@ -13082,7 +13082,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
  *         if np.any(np.less(okappa, 0.0)):
  *             raise ValueError("kappa < 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_91), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2424; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -13097,7 +13097,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_60vonmises(struct __pyx_obj_6mtr
  *         if np.any(np.less(okappa, 0.0)):
  *             raise ValueError("kappa < 0")
  *         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def pareto(self, a, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -13142,7 +13142,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_63pareto(PyObject *__pyx_v_self,
 
     /* "mtrand.pyx":2427
  *         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa)
- * 
+ *
  *     def pareto(self, a, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         pareto(a, size=None)
@@ -13212,7 +13212,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":2510
  *         cdef double fa
- * 
+ *
  *         fa = PyFloat_AsDouble(a)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fa <= 0:
@@ -13220,7 +13220,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
   /* "mtrand.pyx":2511
- * 
+ *
  *         fa = PyFloat_AsDouble(a)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fa <= 0:
@@ -13244,7 +13244,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_pareto, size, fa)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_92), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2513; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -13259,7 +13259,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")
  *             return cont1_array_sc(self.internal_state, rk_pareto, size, fa)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -13274,16 +13274,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":2516
  *             return cont1_array_sc(self.internal_state, rk_pareto, size, fa)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2518
  *         PyErr_Clear()
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
@@ -13297,7 +13297,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2519
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oa, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("a <= 0")
@@ -13345,7 +13345,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_pareto, size, oa)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_93), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -13360,7 +13360,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_62pareto(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
  *         return cont1_array(self.internal_state, rk_pareto, size, oa)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def weibull(self, a, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -13404,7 +13404,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_65weibull(PyObject *__pyx_v_self
 
     /* "mtrand.pyx":2523
  *         return cont1_array(self.internal_state, rk_pareto, size, oa)
- * 
+ *
  *     def weibull(self, a, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         weibull(a, size=None)
@@ -13474,7 +13474,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":2610
  *         cdef double fa
- * 
+ *
  *         fa = PyFloat_AsDouble(a)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fa <= 0:
@@ -13482,7 +13482,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
   /* "mtrand.pyx":2611
- * 
+ *
  *         fa = PyFloat_AsDouble(a)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fa <= 0:
@@ -13506,7 +13506,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_weibull, size, fa)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_94), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2613; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -13521,7 +13521,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")
  *             return cont1_array_sc(self.internal_state, rk_weibull, size, fa)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -13536,16 +13536,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":2616
  *             return cont1_array_sc(self.internal_state, rk_weibull, size, fa)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2618
  *         PyErr_Clear()
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
@@ -13559,7 +13559,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2619
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oa, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("a <= 0")
@@ -13607,7 +13607,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_weibull, size, oa)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_95), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2620; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -13622,7 +13622,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_64weibull(struct __pyx_obj_6mtra
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
  *         return cont1_array(self.internal_state, rk_weibull, size, oa)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def power(self, a, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -13666,7 +13666,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_67power(PyObject *__pyx_v_self, 
 
     /* "mtrand.pyx":2623
  *         return cont1_array(self.internal_state, rk_weibull, size, oa)
- * 
+ *
  *     def power(self, a, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         power(a, size=None)
@@ -13736,7 +13736,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
 
   /* "mtrand.pyx":2719
  *         cdef double fa
- * 
+ *
  *         fa = PyFloat_AsDouble(a)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fa <= 0:
@@ -13744,7 +13744,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
   /* "mtrand.pyx":2720
- * 
+ *
  *         fa = PyFloat_AsDouble(a)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fa <= 0:
@@ -13768,7 +13768,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_power, size, fa)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_96), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -13783,7 +13783,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")
  *             return cont1_array_sc(self.internal_state, rk_power, size, fa)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -13798,16 +13798,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
 
   /* "mtrand.pyx":2725
  *             return cont1_array_sc(self.internal_state, rk_power, size, fa)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":2727
  *         PyErr_Clear()
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
@@ -13821,7 +13821,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":2728
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oa, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("a <= 0")
@@ -13869,7 +13869,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_power, size, oa)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_97), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -13884,7 +13884,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_66power(struct __pyx_obj_6mtrand
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")
  *         return cont1_array(self.internal_state, rk_power, size, oa)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def laplace(self, loc=0.0, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -13931,7 +13931,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_69laplace(PyObject *__pyx_v_self
 
     /* "mtrand.pyx":2732
  *         return cont1_array(self.internal_state, rk_power, size, oa)
- * 
+ *
  *     def laplace(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         laplace(loc=0.0, scale=1.0, size=None)
@@ -14013,7 +14013,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":2808
  *         cdef double floc, fscale
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -14021,7 +14021,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
   /* "mtrand.pyx":2809
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -14054,7 +14054,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_laplace, size, floc, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_100), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -14069,7 +14069,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_laplace, size, floc, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -14084,7 +14084,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":2815
  *             return cont2_array_sc(self.internal_state, rk_laplace, size, floc, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14092,7 +14092,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
   PyErr_Clear();
 
   /* "mtrand.pyx":2816
- * 
+ *
  *         PyErr_Clear()
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14166,7 +14166,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_101), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2819; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -14181,7 +14181,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_68laplace(struct __pyx_obj_6mtra
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
  *         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def gumbel(self, loc=0.0, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -14229,7 +14229,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_71gumbel(PyObject *__pyx_v_self,
 
     /* "mtrand.pyx":2822
  *         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale)
- * 
+ *
  *     def gumbel(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         gumbel(loc=0.0, scale=1.0, size=None)
@@ -14311,7 +14311,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":2939
  *         cdef double floc, fscale
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -14319,7 +14319,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
   /* "mtrand.pyx":2940
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -14352,7 +14352,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_104), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2943; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -14367,7 +14367,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -14382,7 +14382,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
 
   /* "mtrand.pyx":2946
  *             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14390,7 +14390,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
   PyErr_Clear();
 
   /* "mtrand.pyx":2947
- * 
+ *
  *         PyErr_Clear()
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14464,7 +14464,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_105), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2950; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -14479,7 +14479,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_70gumbel(struct __pyx_obj_6mtran
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
  *         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def logistic(self, loc=0.0, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -14527,7 +14527,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_73logistic(PyObject *__pyx_v_sel
 
     /* "mtrand.pyx":2953
  *         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale)
- * 
+ *
  *     def logistic(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         logistic(loc=0.0, scale=1.0, size=None)
@@ -14609,7 +14609,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3027
  *         cdef double floc, fscale
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -14617,7 +14617,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
   /* "mtrand.pyx":3028
- * 
+ *
  *         floc = PyFloat_AsDouble(loc)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -14650,7 +14650,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_logistic, size, floc, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_108), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3031; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -14665,7 +14665,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_logistic, size, floc, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -14680,7 +14680,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3034
  *             return cont2_array_sc(self.internal_state, rk_logistic, size, floc, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14688,7 +14688,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
   PyErr_Clear();
 
   /* "mtrand.pyx":3035
- * 
+ *
  *         PyErr_Clear()
  *         oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -14762,7 +14762,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_logistic, size, oloc, oscale)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_109), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -14777,7 +14777,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_72logistic(struct __pyx_obj_6mtr
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")
  *         return cont2_array(self.internal_state, rk_logistic, size, oloc, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def lognormal(self, mean=0.0, sigma=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -14825,7 +14825,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_75lognormal(PyObject *__pyx_v_se
 
     /* "mtrand.pyx":3041
  *         return cont2_array(self.internal_state, rk_logistic, size, oloc, oscale)
- * 
+ *
  *     def lognormal(self, mean=0.0, sigma=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         lognormal(mean=0.0, sigma=1.0, size=None)
@@ -14907,25 +14907,25 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":3146
  *         cdef double fmean, fsigma
- * 
+ *
  *         fmean = PyFloat_AsDouble(mean)             # <<<<<<<<<<<<<<
  *         fsigma = PyFloat_AsDouble(sigma)
- * 
+ *
  */
   __pyx_v_fmean = PyFloat_AsDouble(__pyx_v_mean);
 
   /* "mtrand.pyx":3147
- * 
+ *
  *         fmean = PyFloat_AsDouble(mean)
  *         fsigma = PyFloat_AsDouble(sigma)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if not PyErr_Occurred():
  */
   __pyx_v_fsigma = PyFloat_AsDouble(__pyx_v_sigma);
 
   /* "mtrand.pyx":3149
  *         fsigma = PyFloat_AsDouble(sigma)
- * 
+ *
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fsigma <= 0:
  *                 raise ValueError("sigma <= 0")
@@ -14934,7 +14934,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":3150
- * 
+ *
  *         if not PyErr_Occurred():
  *             if fsigma <= 0:             # <<<<<<<<<<<<<<
  *                 raise ValueError("sigma <= 0")
@@ -14948,7 +14948,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
  *             if fsigma <= 0:
  *                 raise ValueError("sigma <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_lognormal, size, fmean, fsigma)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_113), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3151; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -14963,7 +14963,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
  *             if fsigma <= 0:
  *                 raise ValueError("sigma <= 0")
  *             return cont2_array_sc(self.internal_state, rk_lognormal, size, fmean, fsigma)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -14978,16 +14978,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":3154
  *             return cont2_array_sc(self.internal_state, rk_lognormal, size, fmean, fsigma)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3156
  *         PyErr_Clear()
- * 
+ *
  *         omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         osigma = PyArray_FROM_OTF(sigma, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(osigma, 0.0)):
@@ -14999,7 +14999,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
   __pyx_t_2 = 0;
 
   /* "mtrand.pyx":3157
- * 
+ *
  *         omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         osigma = PyArray_FROM_OTF(sigma, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(osigma, 0.0)):
@@ -15060,7 +15060,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
  *         if np.any(np.less_equal(osigma, 0.0)):
  *             raise ValueError("sigma <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_115), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3159; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -15075,7 +15075,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_74lognormal(struct __pyx_obj_6mt
  *         if np.any(np.less_equal(osigma, 0.0)):
  *             raise ValueError("sigma <= 0.0")
  *         return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def rayleigh(self, scale=1.0, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -15121,7 +15121,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_77rayleigh(PyObject *__pyx_v_sel
 
     /* "mtrand.pyx":3162
  *         return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)
- * 
+ *
  *     def rayleigh(self, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         rayleigh(scale=1.0, size=None)
@@ -15193,16 +15193,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3220
  *         cdef double fscale
- * 
+ *
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if not PyErr_Occurred():
  */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
   /* "mtrand.pyx":3222
  *         fscale = PyFloat_AsDouble(scale)
- * 
+ *
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
@@ -15211,7 +15211,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":3223
- * 
+ *
  *         if not PyErr_Occurred():
  *             if fscale <= 0:             # <<<<<<<<<<<<<<
  *                 raise ValueError("scale <= 0")
@@ -15225,7 +15225,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_rayleigh, size, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_117), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -15240,7 +15240,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont1_array_sc(self.internal_state, rk_rayleigh, size, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -15255,16 +15255,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3227
  *             return cont1_array_sc(self.internal_state, rk_rayleigh, size, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3229
  *         PyErr_Clear()
- * 
+ *
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0.0")
@@ -15278,7 +15278,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3230
- * 
+ *
  *         oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oscale, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("scale <= 0.0")
@@ -15326,7 +15326,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_rayleigh, size, oscale)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_119), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3231; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -15341,7 +15341,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_76rayleigh(struct __pyx_obj_6mtr
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0.0")
  *         return cont1_array(self.internal_state, rk_rayleigh, size, oscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def wald(self, mean, scale, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -15386,7 +15386,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_79wald(PyObject *__pyx_v_self, P
 
     /* "mtrand.pyx":3234
  *         return cont1_array(self.internal_state, rk_rayleigh, size, oscale)
- * 
+ *
  *     def wald(self, mean, scale, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         wald(mean, scale, size=None)
@@ -15466,7 +15466,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":3300
  *         cdef double fmean, fscale
- * 
+ *
  *         fmean = PyFloat_AsDouble(mean)             # <<<<<<<<<<<<<<
  *         fscale = PyFloat_AsDouble(scale)
  *         if not PyErr_Occurred():
@@ -15474,7 +15474,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
   __pyx_v_fmean = PyFloat_AsDouble(__pyx_v_mean);
 
   /* "mtrand.pyx":3301
- * 
+ *
  *         fmean = PyFloat_AsDouble(mean)
  *         fscale = PyFloat_AsDouble(scale)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -15533,7 +15533,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_wald, size, fmean, fscale)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_122), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -15548,7 +15548,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")
  *             return cont2_array_sc(self.internal_state, rk_wald, size, fmean, fscale)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -15563,7 +15563,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":3309
  *             return cont2_array_sc(self.internal_state, rk_wald, size, fmean, fscale)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -15571,7 +15571,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
   PyErr_Clear();
 
   /* "mtrand.pyx":3310
- * 
+ *
  *         PyErr_Clear()
  *         omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -15704,7 +15704,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
  *         elif np.any(np.less_equal(oscale,0.0)):
  *             raise ValueError("scale <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_wald, size, omean, oscale)
- * 
+ *
  */
     __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_125), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3315; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
@@ -15719,8 +15719,8 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_78wald(struct __pyx_obj_6mtrand_
  *         elif np.any(np.less_equal(oscale,0.0)):
  *             raise ValueError("scale <= 0.0")
  *         return cont2_array(self.internal_state, rk_wald, size, omean, oscale)             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2 = __pyx_f_6mtrand_cont2_array(__pyx_v_self->internal_state, rk_wald, __pyx_v_size, __pyx_v_omean, __pyx_v_oscale); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3316; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -15765,8 +15765,8 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_81triangular(PyObject *__pyx_v_s
     PyObject* values[4] = {0,0,0,0};
 
     /* "mtrand.pyx":3320
- * 
- * 
+ *
+ *
  *     def triangular(self, left, mode, right, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         triangular(left, mode, right, size=None)
@@ -15856,7 +15856,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
 
   /* "mtrand.pyx":3380
  *         cdef double fleft, fmode, fright
- * 
+ *
  *         fleft = PyFloat_AsDouble(left)             # <<<<<<<<<<<<<<
  *         fright = PyFloat_AsDouble(right)
  *         fmode = PyFloat_AsDouble(mode)
@@ -15864,7 +15864,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
   __pyx_v_fleft = PyFloat_AsDouble(__pyx_v_left);
 
   /* "mtrand.pyx":3381
- * 
+ *
  *         fleft = PyFloat_AsDouble(left)
  *         fright = PyFloat_AsDouble(right)             # <<<<<<<<<<<<<<
  *         fmode = PyFloat_AsDouble(mode)
@@ -15974,7 +15974,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *                 raise ValueError("left == right")
  *             return cont3_array_sc(self.internal_state, rk_triangular, size, fleft,             # <<<<<<<<<<<<<<
  *                                   fmode, fright)
- * 
+ *
  */
     __Pyx_XDECREF(__pyx_r);
 
@@ -15982,7 +15982,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *                 raise ValueError("left == right")
  *             return cont3_array_sc(self.internal_state, rk_triangular, size, fleft,
  *                                   fmode, fright)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __pyx_t_2 = __pyx_f_6mtrand_cont3_array_sc(__pyx_v_self->internal_state, rk_triangular, __pyx_v_size, __pyx_v_fleft, __pyx_v_fmode, __pyx_v_fright); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3390; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -15996,7 +15996,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
 
   /* "mtrand.pyx":3393
  *                                   fmode, fright)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
  *         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -16004,7 +16004,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
   PyErr_Clear();
 
   /* "mtrand.pyx":3394
- * 
+ *
  *         PyErr_Clear()
  *         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -16023,7 +16023,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
- * 
+ *
  */
   __pyx_t_3 = PyArray_FROM_OTF(__pyx_v_mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3395; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
@@ -16037,7 +16037,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if np.any(np.greater(oleft, omode)):
  */
   __pyx_t_2 = PyArray_FROM_OTF(__pyx_v_right, NPY_DOUBLE, NPY_ARRAY_ALIGNED); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -16050,7 +16050,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
 
   /* "mtrand.pyx":3398
  *         oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
- * 
+ *
  *         if np.any(np.greater(oleft, omode)):             # <<<<<<<<<<<<<<
  *             raise ValueError("left > mode")
  *         if np.any(np.greater(omode, oright)):
@@ -16091,7 +16091,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
   if (__pyx_t_1) {
 
     /* "mtrand.pyx":3399
- * 
+ *
  *         if np.any(np.greater(oleft, omode)):
  *             raise ValueError("left > mode")             # <<<<<<<<<<<<<<
  *         if np.any(np.greater(omode, oright)):
@@ -16227,7 +16227,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *             raise ValueError("left == right")
  *         return cont3_array(self.internal_state, rk_triangular, size, oleft,             # <<<<<<<<<<<<<<
  *             omode, oright)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
 
@@ -16235,7 +16235,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_80triangular(struct __pyx_obj_6m
  *             raise ValueError("left == right")
  *         return cont3_array(self.internal_state, rk_triangular, size, oleft,
  *             omode, oright)             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Complicated, discrete distributions:
  */
   __pyx_t_2 = __pyx_f_6mtrand_cont3_array(__pyx_v_self->internal_state, rk_triangular, __pyx_v_size, __pyx_v_oleft, __pyx_v_omode, __pyx_v_oright); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3404; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -16280,7 +16280,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_83binomial(PyObject *__pyx_v_sel
     PyObject* values[3] = {0,0,0};
 
     /* "mtrand.pyx":3408
- * 
+ *
  *     # Complicated, discrete distributions:
  *     def binomial(self, n, p, size=None):             # <<<<<<<<<<<<<<
  *         """
@@ -16361,7 +16361,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3493
  *         cdef double fp
- * 
+ *
  *         fp = PyFloat_AsDouble(p)             # <<<<<<<<<<<<<<
  *         ln = PyInt_AsLong(n)
  *         if not PyErr_Occurred():
@@ -16369,7 +16369,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
   /* "mtrand.pyx":3494
- * 
+ *
  *         fp = PyFloat_AsDouble(p)
  *         ln = PyInt_AsLong(n)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -16453,7 +16453,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
  *             elif fp > 1:
  *                 raise ValueError("p > 1")             # <<<<<<<<<<<<<<
  *             return discnp_array_sc(self.internal_state, rk_binomial, size, ln, fp)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_140), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -16468,7 +16468,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
  *             elif fp > 1:
  *                 raise ValueError("p > 1")
  *             return discnp_array_sc(self.internal_state, rk_binomial, size, ln, fp)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -16483,16 +16483,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":3504
  *             return discnp_array_sc(self.internal_state, rk_binomial, size, ln, fp)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3506
  *         PyErr_Clear()
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less(n, 0)):
@@ -16506,7 +16506,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3507
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less(n, 0)):
@@ -16683,7 +16683,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
  *         if np.any(np.greater(p, 1)):
  *             raise ValueError("p > 1")             # <<<<<<<<<<<<<<
  *         return discnp_array(self.internal_state, rk_binomial, size, on, op)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_143), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3513; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -16698,7 +16698,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_82binomial(struct __pyx_obj_6mtr
  *         if np.any(np.greater(p, 1)):
  *             raise ValueError("p > 1")
  *         return discnp_array(self.internal_state, rk_binomial, size, on, op)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def negative_binomial(self, n, p, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -16744,7 +16744,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_85negative_binomial(PyObject *__
 
     /* "mtrand.pyx":3516
  *         return discnp_array(self.internal_state, rk_binomial, size, on, op)
- * 
+ *
  *     def negative_binomial(self, n, p, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         negative_binomial(n, p, size=None)
@@ -16824,7 +16824,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
 
   /* "mtrand.pyx":3586
  *         cdef double fp
- * 
+ *
  *         fp = PyFloat_AsDouble(p)             # <<<<<<<<<<<<<<
  *         fn = PyFloat_AsDouble(n)
  *         if not PyErr_Occurred():
@@ -16832,7 +16832,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
   /* "mtrand.pyx":3587
- * 
+ *
  *         fp = PyFloat_AsDouble(p)
  *         fn = PyFloat_AsDouble(n)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
@@ -16932,7 +16932,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
  *                 raise ValueError("p > 1")
  *             return discdd_array_sc(self.internal_state, rk_negative_binomial,             # <<<<<<<<<<<<<<
  *                                    size, fn, fp)
- * 
+ *
  */
     __Pyx_XDECREF(__pyx_r);
 
@@ -16940,7 +16940,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
  *                 raise ValueError("p > 1")
  *             return discdd_array_sc(self.internal_state, rk_negative_binomial,
  *                                    size, fn, fp)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __pyx_t_2 = __pyx_f_6mtrand_discdd_array_sc(__pyx_v_self->internal_state, rk_negative_binomial, __pyx_v_size, __pyx_v_fn, __pyx_v_fp); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -16954,16 +16954,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
 
   /* "mtrand.pyx":3598
  *                                    size, fn, fp)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3600
  *         PyErr_Clear()
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(n, 0)):
@@ -16977,7 +16977,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3601
- * 
+ *
  *         on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(n, 0)):
@@ -17170,7 +17170,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
  *             raise ValueError("p > 1")
  *         return discdd_array(self.internal_state, rk_negative_binomial, size,             # <<<<<<<<<<<<<<
  *                             on, op)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
 
@@ -17178,7 +17178,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_84negative_binomial(struct __pyx
  *             raise ValueError("p > 1")
  *         return discdd_array(self.internal_state, rk_negative_binomial, size,
  *                             on, op)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def poisson(self, lam=1.0, size=None):
  */
   __pyx_t_3 = __pyx_f_6mtrand_discdd_array(__pyx_v_self->internal_state, rk_negative_binomial, __pyx_v_size, __pyx_v_on, __pyx_v_op); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3608; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -17223,7 +17223,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_87poisson(PyObject *__pyx_v_self
 
     /* "mtrand.pyx":3611
  *                             on, op)
- * 
+ *
  *     def poisson(self, lam=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         poisson(lam=1.0, size=None)
@@ -17360,7 +17360,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
  *             if lam > self.poisson_lam_max:
  *                 raise ValueError("lam value too large")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_poisson, size, flam)
- * 
+ *
  */
       __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_155), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3670; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
@@ -17375,7 +17375,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
  *             if lam > self.poisson_lam_max:
  *                 raise ValueError("lam value too large")
  *             return discd_array_sc(self.internal_state, rk_poisson, size, flam)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -17390,16 +17390,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
 
   /* "mtrand.pyx":3673
  *             return discd_array_sc(self.internal_state, rk_poisson, size, flam)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3675
  *         PyErr_Clear()
- * 
+ *
  *         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less(olam, 0)):
  *             raise ValueError("lam < 0")
@@ -17413,7 +17413,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
   __pyx_t_2 = 0;
 
   /* "mtrand.pyx":3676
- * 
+ *
  *         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less(olam, 0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("lam < 0")
@@ -17519,7 +17519,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
  *         if np.any(np.greater(olam, self.poisson_lam_max)):
  *             raise ValueError("lam value too large.")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_poisson, size, olam)
- * 
+ *
  */
     __pyx_t_5 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_158), NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3679; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
@@ -17534,7 +17534,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_86poisson(struct __pyx_obj_6mtra
  *         if np.any(np.greater(olam, self.poisson_lam_max)):
  *             raise ValueError("lam value too large.")
  *         return discd_array(self.internal_state, rk_poisson, size, olam)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def zipf(self, a, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -17578,7 +17578,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_89zipf(PyObject *__pyx_v_self, P
 
     /* "mtrand.pyx":3682
  *         return discd_array(self.internal_state, rk_poisson, size, olam)
- * 
+ *
  *     def zipf(self, a, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         zipf(a, size=None)
@@ -17648,7 +17648,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":3757
  *         cdef double fa
- * 
+ *
  *         fa = PyFloat_AsDouble(a)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fa <= 1.0:
@@ -17656,7 +17656,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
   /* "mtrand.pyx":3758
- * 
+ *
  *         fa = PyFloat_AsDouble(a)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fa <= 1.0:
@@ -17680,7 +17680,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
  *             if fa <= 1.0:
  *                 raise ValueError("a <= 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_zipf, size, fa)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_160), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -17695,7 +17695,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
  *             if fa <= 1.0:
  *                 raise ValueError("a <= 1.0")
  *             return discd_array_sc(self.internal_state, rk_zipf, size, fa)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -17710,16 +17710,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
 
   /* "mtrand.pyx":3763
  *             return discd_array_sc(self.internal_state, rk_zipf, size, fa)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3765
  *         PyErr_Clear()
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(oa, 1.0)):
  *             raise ValueError("a <= 1.0")
@@ -17733,7 +17733,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3766
- * 
+ *
  *         oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(oa, 1.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("a <= 1.0")
@@ -17781,7 +17781,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
  *         if np.any(np.less_equal(oa, 1.0)):
  *             raise ValueError("a <= 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_zipf, size, oa)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_161), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3767; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -17796,7 +17796,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_88zipf(struct __pyx_obj_6mtrand_
  *         if np.any(np.less_equal(oa, 1.0)):
  *             raise ValueError("a <= 1.0")
  *         return discd_array(self.internal_state, rk_zipf, size, oa)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def geometric(self, p, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -17840,7 +17840,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_91geometric(PyObject *__pyx_v_se
 
     /* "mtrand.pyx":3770
  *         return discd_array(self.internal_state, rk_zipf, size, oa)
- * 
+ *
  *     def geometric(self, p, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         geometric(p, size=None)
@@ -17910,7 +17910,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":3818
  *         cdef double fp
- * 
+ *
  *         fp = PyFloat_AsDouble(p)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fp < 0.0:
@@ -17918,7 +17918,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
   /* "mtrand.pyx":3819
- * 
+ *
  *         fp = PyFloat_AsDouble(p)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fp < 0.0:
@@ -17968,7 +17968,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
  *             if fp > 1.0:
  *                 raise ValueError("p > 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_geometric, size, fp)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_165), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3823; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -17983,7 +17983,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
  *             if fp > 1.0:
  *                 raise ValueError("p > 1.0")
  *             return discd_array_sc(self.internal_state, rk_geometric, size, fp)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -17998,16 +17998,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":3826
  *             return discd_array_sc(self.internal_state, rk_geometric, size, fp)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
- * 
+ *
+ *
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3829
- * 
- * 
+ *
+ *
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less(op, 0.0)):
  *             raise ValueError("p < 0.0")
@@ -18021,7 +18021,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3830
- * 
+ *
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less(op, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("p < 0.0")
@@ -18129,7 +18129,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
  *         if np.any(np.greater(op, 1.0)):
  *             raise ValueError("p > 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_geometric, size, op)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_167), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3833; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -18144,7 +18144,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_90geometric(struct __pyx_obj_6mt
  *         if np.any(np.greater(op, 1.0)):
  *             raise ValueError("p > 1.0")
  *         return discd_array(self.internal_state, rk_geometric, size, op)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def hypergeometric(self, ngood, nbad, nsample, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -18190,7 +18190,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_93hypergeometric(PyObject *__pyx
 
     /* "mtrand.pyx":3836
  *         return discd_array(self.internal_state, rk_geometric, size, op)
- * 
+ *
  *     def hypergeometric(self, ngood, nbad, nsample, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         hypergeometric(ngood, nbad, nsample, size=None)
@@ -18281,7 +18281,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
 
   /* "mtrand.pyx":3924
  *         cdef long lngood, lnbad, lnsample
- * 
+ *
  *         lngood = PyInt_AsLong(ngood)             # <<<<<<<<<<<<<<
  *         lnbad = PyInt_AsLong(nbad)
  *         lnsample = PyInt_AsLong(nsample)
@@ -18289,7 +18289,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
   __pyx_v_lngood = PyInt_AsLong(__pyx_v_ngood);
 
   /* "mtrand.pyx":3925
- * 
+ *
  *         lngood = PyInt_AsLong(ngood)
  *         lnbad = PyInt_AsLong(nbad)             # <<<<<<<<<<<<<<
  *         lnsample = PyInt_AsLong(nsample)
@@ -18425,7 +18425,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
  *                 raise ValueError("ngood + nbad < nsample")
  *             return discnmN_array_sc(self.internal_state, rk_hypergeometric, size,             # <<<<<<<<<<<<<<
  *                                     lngood, lnbad, lnsample)
- * 
+ *
  */
     __Pyx_XDECREF(__pyx_r);
 
@@ -18433,7 +18433,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
  *                 raise ValueError("ngood + nbad < nsample")
  *             return discnmN_array_sc(self.internal_state, rk_hypergeometric, size,
  *                                     lngood, lnbad, lnsample)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __pyx_t_2 = __pyx_f_6mtrand_discnmN_array_sc(__pyx_v_self->internal_state, rk_hypergeometric, __pyx_v_size, __pyx_v_lngood, __pyx_v_lnbad, __pyx_v_lnsample); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3936; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -18447,16 +18447,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
 
   /* "mtrand.pyx":3939
  *                                     lngood, lnbad, lnsample)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":3941
  *         PyErr_Clear()
- * 
+ *
  *         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
  *         onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
@@ -18470,7 +18470,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":3942
- * 
+ *
  *         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
  *         onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
@@ -18753,7 +18753,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
  *             raise ValueError("ngood + nbad < nsample")
  *         return discnmN_array(self.internal_state, rk_hypergeometric, size,             # <<<<<<<<<<<<<<
  *             ongood, onbad, onsample)
- * 
+ *
  */
   __Pyx_XDECREF(__pyx_r);
 
@@ -18761,7 +18761,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_92hypergeometric(struct __pyx_ob
  *             raise ValueError("ngood + nbad < nsample")
  *         return discnmN_array(self.internal_state, rk_hypergeometric, size,
  *             ongood, onbad, onsample)             # <<<<<<<<<<<<<<
- * 
+ *
  *     def logseries(self, p, size=None):
  */
   __pyx_t_6 = __pyx_f_6mtrand_discnmN_array(__pyx_v_self->internal_state, rk_hypergeometric, __pyx_v_size, __pyx_v_ongood, __pyx_v_onbad, __pyx_v_onsample); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3952; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -18807,7 +18807,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_95logseries(PyObject *__pyx_v_se
 
     /* "mtrand.pyx":3955
  *             ongood, onbad, onsample)
- * 
+ *
  *     def logseries(self, p, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         logseries(p, size=None)
@@ -18877,7 +18877,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":4032
  *         cdef double fp
- * 
+ *
  *         fp = PyFloat_AsDouble(p)             # <<<<<<<<<<<<<<
  *         if not PyErr_Occurred():
  *             if fp <= 0.0:
@@ -18885,7 +18885,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
   /* "mtrand.pyx":4033
- * 
+ *
  *         fp = PyFloat_AsDouble(p)
  *         if not PyErr_Occurred():             # <<<<<<<<<<<<<<
  *             if fp <= 0.0:
@@ -18935,7 +18935,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
  *             if fp >= 1.0:
  *                 raise ValueError("p >= 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_logseries, size, fp)
- * 
+ *
  */
       __pyx_t_2 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_183), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4037; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
@@ -18950,7 +18950,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
  *             if fp >= 1.0:
  *                 raise ValueError("p >= 1.0")
  *             return discd_array_sc(self.internal_state, rk_logseries, size, fp)             # <<<<<<<<<<<<<<
- * 
+ *
  *         PyErr_Clear()
  */
     __Pyx_XDECREF(__pyx_r);
@@ -18965,16 +18965,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
 
   /* "mtrand.pyx":4040
  *             return discd_array_sc(self.internal_state, rk_logseries, size, fp)
- * 
+ *
  *         PyErr_Clear()             # <<<<<<<<<<<<<<
- * 
+ *
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  */
   PyErr_Clear();
 
   /* "mtrand.pyx":4042
  *         PyErr_Clear()
- * 
+ *
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(op, 0.0)):
  *             raise ValueError("p <= 0.0")
@@ -18988,7 +18988,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
   __pyx_t_3 = 0;
 
   /* "mtrand.pyx":4043
- * 
+ *
  *         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
  *         if np.any(np.less_equal(op, 0.0)):             # <<<<<<<<<<<<<<
  *             raise ValueError("p <= 0.0")
@@ -19096,7 +19096,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
  *         if np.any(np.greater_equal(op, 1.0)):
  *             raise ValueError("p >= 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_logseries, size, op)
- * 
+ *
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_185), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4046; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
@@ -19111,7 +19111,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_94logseries(struct __pyx_obj_6mt
  *         if np.any(np.greater_equal(op, 1.0)):
  *             raise ValueError("p >= 1.0")
  *         return discd_array(self.internal_state, rk_logseries, size, op)             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Multivariate distributions:
  */
   __Pyx_XDECREF(__pyx_r);
@@ -19155,7 +19155,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_97multivariate_normal(PyObject *
     PyObject* values[3] = {0,0,0};
 
     /* "mtrand.pyx":4050
- * 
+ *
  *     # Multivariate distributions:
  *     def multivariate_normal(self, mean, cov, size=None):             # <<<<<<<<<<<<<<
  *         """
@@ -19632,7 +19632,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_96multivariate_normal(struct __p
 
   /* "mtrand.pyx":4172
  *         # decomposition of cov is such an A.
- * 
+ *
  *         from numpy.dual import svd             # <<<<<<<<<<<<<<
  *         # XXX: we really should be doing this by Cholesky decomposition
  *         (u,s,v) = svd(cov)
@@ -19681,13 +19681,13 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_96multivariate_normal(struct __p
     }
     #if CYTHON_COMPILING_IN_CPYTHON
     if (likely(PyTuple_CheckExact(sequence))) {
-      __pyx_t_9 = PyTuple_GET_ITEM(sequence, 0); 
-      __pyx_t_1 = PyTuple_GET_ITEM(sequence, 1); 
-      __pyx_t_2 = PyTuple_GET_ITEM(sequence, 2); 
+      __pyx_t_9 = PyTuple_GET_ITEM(sequence, 0);
+      __pyx_t_1 = PyTuple_GET_ITEM(sequence, 1);
+      __pyx_t_2 = PyTuple_GET_ITEM(sequence, 2);
     } else {
-      __pyx_t_9 = PyList_GET_ITEM(sequence, 0); 
-      __pyx_t_1 = PyList_GET_ITEM(sequence, 1); 
-      __pyx_t_2 = PyList_GET_ITEM(sequence, 2); 
+      __pyx_t_9 = PyList_GET_ITEM(sequence, 0);
+      __pyx_t_1 = PyList_GET_ITEM(sequence, 1);
+      __pyx_t_2 = PyList_GET_ITEM(sequence, 2);
     }
     __Pyx_INCREF(__pyx_t_9);
     __Pyx_INCREF(__pyx_t_1);
@@ -19811,7 +19811,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_96multivariate_normal(struct __p
  *         np.add(mean,x,x)
  *         x.shape = tuple(final_shape)             # <<<<<<<<<<<<<<
  *         return x
- * 
+ *
  */
   __pyx_t_2 = ((PyObject *)PyList_AsTuple(__pyx_v_final_shape)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4179; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
@@ -19822,7 +19822,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_96multivariate_normal(struct __p
  *         np.add(mean,x,x)
  *         x.shape = tuple(final_shape)
  *         return x             # <<<<<<<<<<<<<<
- * 
+ *
  *     def multinomial(self, npy_intp n, object pvals, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -19874,7 +19874,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_99multinomial(PyObject *__pyx_v_
 
     /* "mtrand.pyx":4182
  *         return x
- * 
+ *
  *     def multinomial(self, npy_intp n, object pvals, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         multinomial(n, pvals, size=None)
@@ -19962,7 +19962,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
 
   /* "mtrand.pyx":4241
  *         cdef double Sum
- * 
+ *
  *         d = len(pvals)             # <<<<<<<<<<<<<<
  *         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)
  *         pix = <double*>PyArray_DATA(parr)
@@ -19971,11 +19971,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
   __pyx_v_d = __pyx_t_1;
 
   /* "mtrand.pyx":4242
- * 
+ *
  *         d = len(pvals)
  *         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)             # <<<<<<<<<<<<<<
  *         pix = <double*>PyArray_DATA(parr)
- * 
+ *
  */
   __pyx_t_2 = PyArray_ContiguousFromObject(__pyx_v_pvals, NPY_DOUBLE, 1, 1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -19989,26 +19989,26 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
  *         d = len(pvals)
  *         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)
  *         pix = <double*>PyArray_DATA(parr)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
  */
   __pyx_v_pix = ((double *)PyArray_DATA(arrayObject_parr));
 
   /* "mtrand.pyx":4245
  *         pix = <double*>PyArray_DATA(parr)
- * 
+ *
  *         if kahan_sum(pix, d-1) > (1.0 + 1e-12):             # <<<<<<<<<<<<<<
  *             raise ValueError("sum(pvals[:-1]) > 1.0")
- * 
+ *
  */
   __pyx_t_4 = (__pyx_f_6mtrand_kahan_sum(__pyx_v_pix, (__pyx_v_d - 1)) > (1.0 + 1e-12));
   if (__pyx_t_4) {
 
     /* "mtrand.pyx":4246
- * 
+ *
  *         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
  *             raise ValueError("sum(pvals[:-1]) > 1.0")             # <<<<<<<<<<<<<<
- * 
+ *
  *         if size is None:
  */
     __pyx_t_3 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_195), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -20022,7 +20022,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
 
   /* "mtrand.pyx":4248
  *             raise ValueError("sum(pvals[:-1]) > 1.0")
- * 
+ *
  *         if size is None:             # <<<<<<<<<<<<<<
  *             shape = (d,)
  *         elif type(size) is int:
@@ -20031,7 +20031,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
   if (__pyx_t_4) {
 
     /* "mtrand.pyx":4249
- * 
+ *
  *         if size is None:
  *             shape = (d,)             # <<<<<<<<<<<<<<
  *         elif type(size) is int:
@@ -20086,7 +20086,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
  *             shape = (size, d)
  *         else:
  *             shape = size + (d,)             # <<<<<<<<<<<<<<
- * 
+ *
  *         multin = np.zeros(shape, int)
  */
     __pyx_t_3 = __Pyx_PyInt_to_py_npy_intp(__pyx_v_d); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4253; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -20106,7 +20106,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
 
   /* "mtrand.pyx":4255
  *             shape = size + (d,)
- * 
+ *
  *         multin = np.zeros(shape, int)             # <<<<<<<<<<<<<<
  *         mnarr = <ndarray>multin
  *         mnix = <long*>PyArray_DATA(mnarr)
@@ -20132,7 +20132,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
   __pyx_t_5 = 0;
 
   /* "mtrand.pyx":4256
- * 
+ *
  *         multin = np.zeros(shape, int)
  *         mnarr = <ndarray>multin             # <<<<<<<<<<<<<<
  *         mnix = <long*>PyArray_DATA(mnarr)
@@ -20264,7 +20264,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
  *                 Sum = Sum - pix[j]
  *             if dn > 0:             # <<<<<<<<<<<<<<
  *                 mnix[i+d-1] = dn
- * 
+ *
  */
     __pyx_t_4 = (__pyx_v_dn > 0);
     if (__pyx_t_4) {
@@ -20273,7 +20273,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
  *                 Sum = Sum - pix[j]
  *             if dn > 0:
  *                 mnix[i+d-1] = dn             # <<<<<<<<<<<<<<
- * 
+ *
  *             i = i + d
  */
       (__pyx_v_mnix[((__pyx_v_i + __pyx_v_d) - 1)]) = __pyx_v_dn;
@@ -20283,9 +20283,9 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
 
     /* "mtrand.pyx":4271
  *                 mnix[i+d-1] = dn
- * 
+ *
  *             i = i + d             # <<<<<<<<<<<<<<
- * 
+ *
  *         return multin
  */
     __pyx_v_i = (__pyx_v_i + __pyx_v_d);
@@ -20293,9 +20293,9 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_98multinomial(struct __pyx_obj_6
 
   /* "mtrand.pyx":4273
  *             i = i + d
- * 
+ *
  *         return multin             # <<<<<<<<<<<<<<
- * 
+ *
  *     def dirichlet(self, object alpha, size=None):
  */
   __Pyx_XDECREF(__pyx_r);
@@ -20339,7 +20339,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_101dirichlet(PyObject *__pyx_v_s
 
     /* "mtrand.pyx":4275
  *         return multin
- * 
+ *
  *     def dirichlet(self, object alpha, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         dirichlet(alpha, size=None)
@@ -20420,7 +20420,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
 
   /* "mtrand.pyx":4361
  *         cdef double     acc, invacc
- * 
+ *
  *         k           = len(alpha)             # <<<<<<<<<<<<<<
  *         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
  *         alpha_data  = <double*>PyArray_DATA(alpha_arr)
@@ -20429,11 +20429,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
   __pyx_v_k = __pyx_t_1;
 
   /* "mtrand.pyx":4362
- * 
+ *
  *         k           = len(alpha)
  *         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)             # <<<<<<<<<<<<<<
  *         alpha_data  = <double*>PyArray_DATA(alpha_arr)
- * 
+ *
  */
   __pyx_t_2 = PyArray_ContiguousFromObject(__pyx_v_alpha, NPY_DOUBLE, 1, 1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4362; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -20447,14 +20447,14 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
  *         k           = len(alpha)
  *         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
  *         alpha_data  = <double*>PyArray_DATA(alpha_arr)             # <<<<<<<<<<<<<<
- * 
+ *
  *         if size is None:
  */
   __pyx_v_alpha_data = ((double *)PyArray_DATA(__pyx_v_alpha_arr));
 
   /* "mtrand.pyx":4365
  *         alpha_data  = <double*>PyArray_DATA(alpha_arr)
- * 
+ *
  *         if size is None:             # <<<<<<<<<<<<<<
  *             shape = (k,)
  *         elif type(size) is int:
@@ -20463,7 +20463,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
   if (__pyx_t_4) {
 
     /* "mtrand.pyx":4366
- * 
+ *
  *         if size is None:
  *             shape = (k,)             # <<<<<<<<<<<<<<
  *         elif type(size) is int:
@@ -20518,7 +20518,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
  *             shape = (size, k)
  *         else:
  *             shape = size + (k,)             # <<<<<<<<<<<<<<
- * 
+ *
  *         diric   = np.zeros(shape, np.float64)
  */
     __pyx_t_3 = __Pyx_PyInt_to_py_npy_intp(__pyx_v_k); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4370; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -20538,7 +20538,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
 
   /* "mtrand.pyx":4372
  *             shape = size + (k,)
- * 
+ *
  *         diric   = np.zeros(shape, np.float64)             # <<<<<<<<<<<<<<
  *         val_arr = <ndarray>diric
  *         val_data= <double*>PyArray_DATA(val_arr)
@@ -20569,11 +20569,11 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
   __pyx_t_5 = 0;
 
   /* "mtrand.pyx":4373
- * 
+ *
  *         diric   = np.zeros(shape, np.float64)
  *         val_arr = <ndarray>diric             # <<<<<<<<<<<<<<
  *         val_data= <double*>PyArray_DATA(val_arr)
- * 
+ *
  */
   __Pyx_INCREF(((PyObject *)((PyArrayObject *)__pyx_v_diric)));
   __pyx_v_val_arr = ((PyArrayObject *)__pyx_v_diric);
@@ -20582,14 +20582,14 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
  *         diric   = np.zeros(shape, np.float64)
  *         val_arr = <ndarray>diric
  *         val_data= <double*>PyArray_DATA(val_arr)             # <<<<<<<<<<<<<<
- * 
+ *
  *         i = 0
  */
   __pyx_v_val_data = ((double *)PyArray_DATA(__pyx_v_val_arr));
 
   /* "mtrand.pyx":4376
  *         val_data= <double*>PyArray_DATA(val_arr)
- * 
+ *
  *         i = 0             # <<<<<<<<<<<<<<
  *         totsize = PyArray_SIZE(val_arr)
  *         while i < totsize:
@@ -20597,7 +20597,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
   __pyx_v_i = 0;
 
   /* "mtrand.pyx":4377
- * 
+ *
  *         i = 0
  *         totsize = PyArray_SIZE(val_arr)             # <<<<<<<<<<<<<<
  *         while i < totsize:
@@ -20688,7 +20688,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
  *             for j from 0 <= j < k:
  *                 val_data[i+j]   = val_data[i+j] * invacc             # <<<<<<<<<<<<<<
  *             i = i + k
- * 
+ *
  */
       (__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]) = ((__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]) * __pyx_v_invacc);
     }
@@ -20697,7 +20697,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
  *             for j from 0 <= j < k:
  *                 val_data[i+j]   = val_data[i+j] * invacc
  *             i = i + k             # <<<<<<<<<<<<<<
- * 
+ *
  *         return diric
  */
     __pyx_v_i = (__pyx_v_i + __pyx_v_k);
@@ -20705,9 +20705,9 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_100dirichlet(struct __pyx_obj_6m
 
   /* "mtrand.pyx":4388
  *             i = i + k
- * 
+ *
  *         return diric             # <<<<<<<<<<<<<<
- * 
+ *
  *     # Shuffling and permutations:
  */
   __Pyx_XDECREF(__pyx_r);
@@ -20746,7 +20746,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_103shuffle(PyObject *__pyx_v_sel
 }
 
 /* "mtrand.pyx":4391
- * 
+ *
  *     # Shuffling and permutations:
  *     def shuffle(self, object x):             # <<<<<<<<<<<<<<
  *         """
@@ -20774,16 +20774,16 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_102shuffle(struct __pyx_obj_6mtr
 
   /* "mtrand.pyx":4426
  *         cdef npy_intp i, j
- * 
+ *
  *         i = len(x) - 1             # <<<<<<<<<<<<<<
- * 
+ *
  *         # Logic adapted from random.shuffle()
  */
   __pyx_t_1 = PyObject_Length(__pyx_v_x); if (unlikely(__pyx_t_1 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_i = (__pyx_t_1 - 1);
 
   /* "mtrand.pyx":4429
- * 
+ *
  *         # Logic adapted from random.shuffle()
  *         if isinstance(x, np.ndarray) and x.ndim > 1:             # <<<<<<<<<<<<<<
  *             # For a multi-dimensional ndarray, indexing returns a view onto
@@ -20936,7 +20936,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_102shuffle(struct __pyx_obj_6mtr
  *                 j = rk_interval(i, self.internal_state)
  *                 x[i], x[j] = x[j], x[i]             # <<<<<<<<<<<<<<
  *                 i = i - 1
- * 
+ *
  */
       __pyx_t_8 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_j, sizeof(npy_intp), __Pyx_PyInt_to_py_npy_intp, 0, 1, 1); if (!__pyx_t_8) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4446; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_8);
@@ -20951,7 +20951,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_102shuffle(struct __pyx_obj_6mtr
  *                 j = rk_interval(i, self.internal_state)
  *                 x[i], x[j] = x[j], x[i]
  *                 i = i - 1             # <<<<<<<<<<<<<<
- * 
+ *
  *     def permutation(self, object x):
  */
       __pyx_v_i = (__pyx_v_i - 1);
@@ -20989,7 +20989,7 @@ static PyObject *__pyx_pw_6mtrand_11RandomState_105permutation(PyObject *__pyx_v
 
 /* "mtrand.pyx":4449
  *                 i = i - 1
- * 
+ *
  *     def permutation(self, object x):             # <<<<<<<<<<<<<<
  *         """
  *         permutation(x)
@@ -21009,7 +21009,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_104permutation(struct __pyx_obj_
   __Pyx_RefNannySetupContext("permutation", 0);
 
   /* "mtrand.pyx":4485
- * 
+ *
  *         """
  *         if isinstance(x, (int, long, np.integer)):             # <<<<<<<<<<<<<<
  *             arr = np.arange(x)
@@ -21093,7 +21093,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_104permutation(struct __pyx_obj_
  *             arr = np.array(x)
  *         self.shuffle(arr)             # <<<<<<<<<<<<<<
  *         return arr
- * 
+ *
  */
   __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s__shuffle); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4489; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -21112,7 +21112,7 @@ static PyObject *__pyx_pf_6mtrand_11RandomState_104permutation(struct __pyx_obj_
  *             arr = np.array(x)
  *         self.shuffle(arr)
  *         return arr             # <<<<<<<<<<<<<<
- * 
+ *
  * _rand = RandomState()
  */
   __Pyx_XDECREF(__pyx_r);
@@ -21799,10 +21799,10 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_14));
 
   /* "mtrand.pyx":877
- * 
+ *
  *         if lo >= hi :
  *             raise ValueError("low >= high")             # <<<<<<<<<<<<<<
- * 
+ *
  *         diff = <unsigned long>hi - <unsigned long>lo - 1UL
  */
   __pyx_k_tuple_16 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_15)); if (unlikely(!__pyx_k_tuple_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 877; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -21846,7 +21846,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             pop_size = a.shape[0]
  *             if pop_size is 0:
  *                 raise ValueError("a must be non-empty")             # <<<<<<<<<<<<<<
- * 
+ *
  *         if None != p:
  */
   __pyx_k_tuple_25 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_24)); if (unlikely(!__pyx_k_tuple_25)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1012; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -21890,7 +21890,7 @@ static int __Pyx_InitCachedConstants(void) {
  *                 raise ValueError("probabilities are not non-negative")
  *             if not np.allclose(p.sum(), 1):
  *                 raise ValueError("probabilities do not sum to 1")             # <<<<<<<<<<<<<<
- * 
+ *
  *         shape = size
  */
   __pyx_k_tuple_33 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_32)); if (unlikely(!__pyx_k_tuple_33)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1023; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -21902,7 +21902,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if size > pop_size:
  *                 raise ValueError("Cannot take a larger sample than "             # <<<<<<<<<<<<<<
  *                                  "population when 'replace=False'")
- * 
+ *
  */
   __pyx_k_tuple_35 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_34)); if (unlikely(!__pyx_k_tuple_35)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1043; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_35);
@@ -21923,7 +21923,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if shape is None and isinstance(idx, np.ndarray):
  *             # In most cases a scalar will have been made an array
  *             idx = idx.item(0)             # <<<<<<<<<<<<<<
- * 
+ *
  *         #Use samples as indices for a if a is array-like
  */
   __pyx_k_tuple_38 = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_k_tuple_38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1073; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -21946,7 +21946,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_normal, size, floc, fscale)
- * 
+ *
  */
   __pyx_k_tuple_45 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_45)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1479; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_45);
@@ -21957,7 +21957,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale)
- * 
+ *
  */
   __pyx_k_tuple_46 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_46)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1487; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_46);
@@ -21979,7 +21979,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fb <= 0:
  *                 raise ValueError("b <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_beta, size, fa, fb)
- * 
+ *
  */
   __pyx_k_tuple_50 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_49)); if (unlikely(!__pyx_k_tuple_50)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_50);
@@ -22001,7 +22001,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(ob, 0)):
  *             raise ValueError("b <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_beta, size, oa, ob)
- * 
+ *
  */
   __pyx_k_tuple_52 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_49)); if (unlikely(!__pyx_k_tuple_52)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_52);
@@ -22012,7 +22012,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_exponential, size, fscale)
- * 
+ *
  */
   __pyx_k_tuple_54 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_54)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1593; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_54);
@@ -22023,7 +22023,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_exponential, size, oscale)
- * 
+ *
  */
   __pyx_k_tuple_55 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_55)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_55);
@@ -22034,7 +22034,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fshape <= 0:
  *                 raise ValueError("shape <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape)
- * 
+ *
  */
   __pyx_k_tuple_57 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_56)); if (unlikely(!__pyx_k_tuple_57)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_57);
@@ -22045,7 +22045,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oshape, 0.0)):
  *             raise ValueError("shape <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_standard_gamma, size, oshape)
- * 
+ *
  */
   __pyx_k_tuple_58 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_56)); if (unlikely(!__pyx_k_tuple_58)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_58);
@@ -22067,7 +22067,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape, fscale)
- * 
+ *
  */
   __pyx_k_tuple_61 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_61)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1792; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_61);
@@ -22089,7 +22089,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale)
- * 
+ *
  */
   __pyx_k_tuple_63 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_63)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_63);
@@ -22111,7 +22111,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fdfden <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum, fdfden)
- * 
+ *
  */
   __pyx_k_tuple_65 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_65)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1893; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_65);
@@ -22133,7 +22133,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(odfden, 0.0)):
  *             raise ValueError("dfden <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_f, size, odfnum, odfden)
- * 
+ *
  */
   __pyx_k_tuple_69 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_68)); if (unlikely(!__pyx_k_tuple_69)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1903; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_69);
@@ -22173,7 +22173,7 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_74));
 
   /* "mtrand.pyx":1993
- * 
+ *
  *         if np.any(np.less_equal(odfnum, 1.0)):
  *             raise ValueError("dfnum <= 1")             # <<<<<<<<<<<<<<
  *         if np.any(np.less_equal(odfden, 0.0)):
@@ -22210,7 +22210,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf)
- * 
+ *
  */
   __pyx_k_tuple_79 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_78)); if (unlikely(!__pyx_k_tuple_79)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_79);
@@ -22221,7 +22221,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_chisquare, size, odf)
- * 
+ *
  */
   __pyx_k_tuple_80 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_78)); if (unlikely(!__pyx_k_tuple_80)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2076; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_80);
@@ -22276,7 +22276,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fdf <= 0:
  *                 raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_standard_t, size, fdf)
- * 
+ *
  */
   __pyx_k_tuple_87 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_78)); if (unlikely(!__pyx_k_tuple_87)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2323; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_87);
@@ -22287,7 +22287,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(odf, 0.0)):
  *             raise ValueError("df <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_standard_t, size, odf)
- * 
+ *
  */
   __pyx_k_tuple_88 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_78)); if (unlikely(!__pyx_k_tuple_88)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2330; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_88);
@@ -22298,7 +22298,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fkappa < 0:
  *                 raise ValueError("kappa < 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_vonmises, size, fmu, fkappa)
- * 
+ *
  */
   __pyx_k_tuple_90 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_89)); if (unlikely(!__pyx_k_tuple_90)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_90);
@@ -22309,7 +22309,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less(okappa, 0.0)):
  *             raise ValueError("kappa < 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa)
- * 
+ *
  */
   __pyx_k_tuple_91 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_89)); if (unlikely(!__pyx_k_tuple_91)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2424; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_91);
@@ -22320,7 +22320,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_pareto, size, fa)
- * 
+ *
  */
   __pyx_k_tuple_92 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_92)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2513; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_92);
@@ -22331,7 +22331,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_pareto, size, oa)
- * 
+ *
  */
   __pyx_k_tuple_93 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_93)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_93);
@@ -22342,7 +22342,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_weibull, size, fa)
- * 
+ *
  */
   __pyx_k_tuple_94 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_94)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2613; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_94);
@@ -22353,7 +22353,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_weibull, size, oa)
- * 
+ *
  */
   __pyx_k_tuple_95 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_95)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2620; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_95);
@@ -22364,7 +22364,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fa <= 0:
  *                 raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_power, size, fa)
- * 
+ *
  */
   __pyx_k_tuple_96 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_96)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_96);
@@ -22375,7 +22375,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oa, 0.0)):
  *             raise ValueError("a <= 0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_power, size, oa)
- * 
+ *
  */
   __pyx_k_tuple_97 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_47)); if (unlikely(!__pyx_k_tuple_97)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_97);
@@ -22386,7 +22386,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_laplace, size, floc, fscale)
- * 
+ *
  */
   __pyx_k_tuple_100 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_100)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_100);
@@ -22397,7 +22397,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale)
- * 
+ *
  */
   __pyx_k_tuple_101 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_101)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2819; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_101);
@@ -22408,7 +22408,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc, fscale)
- * 
+ *
  */
   __pyx_k_tuple_104 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_104)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2943; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_104);
@@ -22419,7 +22419,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale)
- * 
+ *
  */
   __pyx_k_tuple_105 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_105)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2950; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_105);
@@ -22430,7 +22430,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_logistic, size, floc, fscale)
- * 
+ *
  */
   __pyx_k_tuple_108 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_108)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3031; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_108);
@@ -22441,7 +22441,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_logistic, size, oloc, oscale)
- * 
+ *
  */
   __pyx_k_tuple_109 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_109)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_109);
@@ -22452,7 +22452,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fsigma <= 0:
  *                 raise ValueError("sigma <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_lognormal, size, fmean, fsigma)
- * 
+ *
  */
   __pyx_k_tuple_113 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_112)); if (unlikely(!__pyx_k_tuple_113)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3151; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_113);
@@ -22463,7 +22463,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(osigma, 0.0)):
  *             raise ValueError("sigma <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)
- * 
+ *
  */
   __pyx_k_tuple_115 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_114)); if (unlikely(!__pyx_k_tuple_115)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3159; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_115);
@@ -22474,7 +22474,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont1_array_sc(self.internal_state, rk_rayleigh, size, fscale)
- * 
+ *
  */
   __pyx_k_tuple_117 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_117)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_117);
@@ -22485,7 +22485,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oscale, 0.0)):
  *             raise ValueError("scale <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont1_array(self.internal_state, rk_rayleigh, size, oscale)
- * 
+ *
  */
   __pyx_k_tuple_119 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_118)); if (unlikely(!__pyx_k_tuple_119)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3231; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_119);
@@ -22507,7 +22507,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fscale <= 0:
  *                 raise ValueError("scale <= 0")             # <<<<<<<<<<<<<<
  *             return cont2_array_sc(self.internal_state, rk_wald, size, fmean, fscale)
- * 
+ *
  */
   __pyx_k_tuple_122 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_44)); if (unlikely(!__pyx_k_tuple_122)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_122);
@@ -22529,7 +22529,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         elif np.any(np.less_equal(oscale,0.0)):
  *             raise ValueError("scale <= 0.0")             # <<<<<<<<<<<<<<
  *         return cont2_array(self.internal_state, rk_wald, size, omean, oscale)
- * 
+ *
  */
   __pyx_k_tuple_125 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_118)); if (unlikely(!__pyx_k_tuple_125)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3315; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_125);
@@ -22569,7 +22569,7 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_131));
 
   /* "mtrand.pyx":3399
- * 
+ *
  *         if np.any(np.greater(oleft, omode)):
  *             raise ValueError("left > mode")             # <<<<<<<<<<<<<<
  *         if np.any(np.greater(omode, oright)):
@@ -22628,7 +22628,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             elif fp > 1:
  *                 raise ValueError("p > 1")             # <<<<<<<<<<<<<<
  *             return discnp_array_sc(self.internal_state, rk_binomial, size, ln, fp)
- * 
+ *
  */
   __pyx_k_tuple_140 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_139)); if (unlikely(!__pyx_k_tuple_140)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_140);
@@ -22661,7 +22661,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.greater(p, 1)):
  *             raise ValueError("p > 1")             # <<<<<<<<<<<<<<
  *         return discnp_array(self.internal_state, rk_binomial, size, on, op)
- * 
+ *
  */
   __pyx_k_tuple_143 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_139)); if (unlikely(!__pyx_k_tuple_143)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3513; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_143);
@@ -22749,7 +22749,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if lam > self.poisson_lam_max:
  *                 raise ValueError("lam value too large")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_poisson, size, flam)
- * 
+ *
  */
   __pyx_k_tuple_155 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_154)); if (unlikely(!__pyx_k_tuple_155)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3670; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_155);
@@ -22771,7 +22771,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.greater(olam, self.poisson_lam_max)):
  *             raise ValueError("lam value too large.")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_poisson, size, olam)
- * 
+ *
  */
   __pyx_k_tuple_158 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_157)); if (unlikely(!__pyx_k_tuple_158)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3679; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_158);
@@ -22782,7 +22782,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fa <= 1.0:
  *                 raise ValueError("a <= 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_zipf, size, fa)
- * 
+ *
  */
   __pyx_k_tuple_160 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_159)); if (unlikely(!__pyx_k_tuple_160)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_160);
@@ -22793,7 +22793,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.less_equal(oa, 1.0)):
  *             raise ValueError("a <= 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_zipf, size, oa)
- * 
+ *
  */
   __pyx_k_tuple_161 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_159)); if (unlikely(!__pyx_k_tuple_161)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3767; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_161);
@@ -22815,7 +22815,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fp > 1.0:
  *                 raise ValueError("p > 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_geometric, size, fp)
- * 
+ *
  */
   __pyx_k_tuple_165 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_164)); if (unlikely(!__pyx_k_tuple_165)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3823; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_165);
@@ -22837,7 +22837,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.greater(op, 1.0)):
  *             raise ValueError("p > 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_geometric, size, op)
- * 
+ *
  */
   __pyx_k_tuple_167 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_164)); if (unlikely(!__pyx_k_tuple_167)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3833; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_167);
@@ -22947,7 +22947,7 @@ static int __Pyx_InitCachedConstants(void) {
  *             if fp >= 1.0:
  *                 raise ValueError("p >= 1.0")             # <<<<<<<<<<<<<<
  *             return discd_array_sc(self.internal_state, rk_logseries, size, fp)
- * 
+ *
  */
   __pyx_k_tuple_183 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_182)); if (unlikely(!__pyx_k_tuple_183)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4037; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_183);
@@ -22969,7 +22969,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         if np.any(np.greater_equal(op, 1.0)):
  *             raise ValueError("p >= 1.0")             # <<<<<<<<<<<<<<
  *         return discd_array(self.internal_state, rk_logseries, size, op)
- * 
+ *
  */
   __pyx_k_tuple_185 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_182)); if (unlikely(!__pyx_k_tuple_185)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4046; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_k_tuple_185);
@@ -23020,10 +23020,10 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_k_slice_192);
 
   /* "mtrand.pyx":4246
- * 
+ *
  *         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
  *             raise ValueError("sum(pvals[:-1]) > 1.0")             # <<<<<<<<<<<<<<
- * 
+ *
  *         if size is None:
  */
   __pyx_k_tuple_195 = PyTuple_Pack(1, ((PyObject *)__pyx_kp_s_194)); if (unlikely(!__pyx_k_tuple_195)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -23045,7 +23045,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     """
  *     cdef rk_state *internal_state
  *     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10             # <<<<<<<<<<<<<<
- * 
+ *
  *     def __init__(self, seed=None):
  */
   __pyx_k_tuple_197 = PyTuple_Pack(1, ((PyObject *)__pyx_n_s__l)); if (unlikely(!__pyx_k_tuple_197)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 559; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -23170,20 +23170,20 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   /*--- Execution code ---*/
 
   /* "mtrand.pyx":124
- * 
+ *
  * # Initialize numpy
  * import_array()             # <<<<<<<<<<<<<<
- * 
+ *
  * import numpy as np
  */
   import_array();
 
   /* "mtrand.pyx":126
  * import_array()
- * 
+ *
  * import numpy as np             # <<<<<<<<<<<<<<
  * import operator
- * 
+ *
  */
   __pyx_t_1 = __Pyx_Import(((PyObject *)__pyx_n_s__numpy), 0, -1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 126; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
@@ -23191,10 +23191,10 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "mtrand.pyx":127
- * 
+ *
  * import numpy as np
  * import operator             # <<<<<<<<<<<<<<
- * 
+ *
  * cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
  */
   __pyx_t_1 = __Pyx_Import(((PyObject *)__pyx_n_s__operator), 0, -1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -23206,7 +23206,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  *     """
  *     cdef rk_state *internal_state
  *     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10             # <<<<<<<<<<<<<<
- * 
+ *
  *     def __init__(self, seed=None):
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s__np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 559; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -23257,8 +23257,8 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   PyType_Modified(__pyx_ptype_6mtrand_RandomState);
 
   /* "mtrand.pyx":920
- * 
- * 
+ *
+ *
  *     def choice(self, a, size=None, replace=True, p=None):             # <<<<<<<<<<<<<<
  *         """
  *         choice(a, size=None, replace=True, p=None)
@@ -23270,8 +23270,8 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __pyx_t_4 = 0;
 
   /* "mtrand.pyx":1092
- * 
- * 
+ *
+ *
  *     def uniform(self, low=0.0, high=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         uniform(low=0.0, high=1.0, size=1)
@@ -23289,7 +23289,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":1390
  *         return cont0_array(self.internal_state, rk_gauss, size)
- * 
+ *
  *     def normal(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         normal(loc=0.0, scale=1.0, size=None)
@@ -23307,7 +23307,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":1549
  *         return cont2_array(self.internal_state, rk_beta, size, oa, ob)
- * 
+ *
  *     def exponential(self, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         exponential(scale=1.0, size=None)
@@ -23320,7 +23320,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":1713
  *         return cont1_array(self.internal_state, rk_standard_gamma, size, oshape)
- * 
+ *
  *     def gamma(self, shape, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         gamma(shape, scale=1.0, size=None)
@@ -23333,7 +23333,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":2732
  *         return cont1_array(self.internal_state, rk_power, size, oa)
- * 
+ *
  *     def laplace(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         laplace(loc=0.0, scale=1.0, size=None)
@@ -23351,7 +23351,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":2822
  *         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale)
- * 
+ *
  *     def gumbel(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         gumbel(loc=0.0, scale=1.0, size=None)
@@ -23369,7 +23369,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":2953
  *         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale)
- * 
+ *
  *     def logistic(self, loc=0.0, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         logistic(loc=0.0, scale=1.0, size=None)
@@ -23387,7 +23387,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":3041
  *         return cont2_array(self.internal_state, rk_logistic, size, oloc, oscale)
- * 
+ *
  *     def lognormal(self, mean=0.0, sigma=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         lognormal(mean=0.0, sigma=1.0, size=None)
@@ -23405,7 +23405,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":3162
  *         return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)
- * 
+ *
  *     def rayleigh(self, scale=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         rayleigh(scale=1.0, size=None)
@@ -23418,7 +23418,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":3611
  *                             on, op)
- * 
+ *
  *     def poisson(self, lam=1.0, size=None):             # <<<<<<<<<<<<<<
  *         """
  *         poisson(lam=1.0, size=None)
@@ -23431,7 +23431,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":4492
  *         return arr
- * 
+ *
  * _rand = RandomState()             # <<<<<<<<<<<<<<
  * seed = _rand.seed
  * get_state = _rand.get_state
@@ -23442,7 +23442,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "mtrand.pyx":4493
- * 
+ *
  * _rand = RandomState()
  * seed = _rand.seed             # <<<<<<<<<<<<<<
  * get_state = _rand.get_state
@@ -23941,7 +23941,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  * rayleigh = _rand.rayleigh
  * wald = _rand.wald             # <<<<<<<<<<<<<<
  * triangular = _rand.triangular
- * 
+ *
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4526; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
@@ -23955,7 +23955,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  * rayleigh = _rand.rayleigh
  * wald = _rand.wald
  * triangular = _rand.triangular             # <<<<<<<<<<<<<<
- * 
+ *
  * binomial = _rand.binomial
  */
   __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4527; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -23968,7 +23968,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":4529
  * triangular = _rand.triangular
- * 
+ *
  * binomial = _rand.binomial             # <<<<<<<<<<<<<<
  * negative_binomial = _rand.negative_binomial
  * poisson = _rand.poisson
@@ -23982,7 +23982,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "mtrand.pyx":4530
- * 
+ *
  * binomial = _rand.binomial
  * negative_binomial = _rand.negative_binomial             # <<<<<<<<<<<<<<
  * poisson = _rand.poisson
@@ -24046,7 +24046,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  * geometric = _rand.geometric
  * hypergeometric = _rand.hypergeometric             # <<<<<<<<<<<<<<
  * logseries = _rand.logseries
- * 
+ *
  */
   __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
@@ -24060,7 +24060,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  * geometric = _rand.geometric
  * hypergeometric = _rand.hypergeometric
  * logseries = _rand.logseries             # <<<<<<<<<<<<<<
- * 
+ *
  * multivariate_normal = _rand.multivariate_normal
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4535; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -24073,7 +24073,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":4537
  * logseries = _rand.logseries
- * 
+ *
  * multivariate_normal = _rand.multivariate_normal             # <<<<<<<<<<<<<<
  * multinomial = _rand.multinomial
  * dirichlet = _rand.dirichlet
@@ -24087,11 +24087,11 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "mtrand.pyx":4538
- * 
+ *
  * multivariate_normal = _rand.multivariate_normal
  * multinomial = _rand.multinomial             # <<<<<<<<<<<<<<
  * dirichlet = _rand.dirichlet
- * 
+ *
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
@@ -24105,7 +24105,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
  * multivariate_normal = _rand.multivariate_normal
  * multinomial = _rand.multinomial
  * dirichlet = _rand.dirichlet             # <<<<<<<<<<<<<<
- * 
+ *
  * shuffle = _rand.shuffle
  */
   __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s___rand); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 4539; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -24118,7 +24118,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
 
   /* "mtrand.pyx":4541
  * dirichlet = _rand.dirichlet
- * 
+ *
  * shuffle = _rand.shuffle             # <<<<<<<<<<<<<<
  * permutation = _rand.permutation
  */
@@ -24131,7 +24131,7 @@ PyMODINIT_FUNC PyInit_mtrand(void)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "mtrand.pyx":4542
- * 
+ *
  * shuffle = _rand.shuffle
  * permutation = _rand.permutation             # <<<<<<<<<<<<<<
  */

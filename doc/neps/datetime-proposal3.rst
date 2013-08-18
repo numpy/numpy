@@ -572,4 +572,3 @@ for this proposal purposes.
 .. coding: utf-8
 .. fill-column: 72
 .. End:
-

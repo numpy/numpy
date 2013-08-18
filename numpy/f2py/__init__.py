@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['run_main','compile','f2py_testing']
+__all__ = ['run_main', 'compile', 'f2py_testing']
 
 import os
 import sys
@@ -32,13 +32,13 @@ def compile(source,
     else:
         fname = source_fn
 
-    f = open(fname,'w')
+    f = open(fname, 'w')
     f.write(source)
     f.close()
 
-    args = ' -c -m %s %s %s'%(modulename,fname,extra_args)
-    c = '%s -c "import numpy.f2py as f2py2e;f2py2e.main()" %s' %(sys.executable,args)
-    s,o = exec_command(c)
+    args = ' -c -m %s %s %s'%(modulename, fname, extra_args)
+    c = '%s -c "import numpy.f2py as f2py2e;f2py2e.main()" %s' %(sys.executable, args)
+    s, o = exec_command(c)
     if source_fn is None:
         try: os.remove(fname)
         except OSError: pass
