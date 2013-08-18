@@ -194,7 +194,7 @@ Notice that `x` is created with a list of tuples. ::
 The fields are returned in the order they are asked for.::
 
  >>> x[['y','x']]
- array([(2.5, 1.5), (4.0, 3.0), (3.0, 1.0)], 
+ array([(2.5, 1.5), (4.0, 3.0), (3.0, 1.0)],
       dtype=[('y', '<f4'), ('x', '<f4')])
 
 Filling structured arrays
@@ -221,4 +221,3 @@ You can find some more information on recarrays and structured  arrays
 
 """
 from __future__ import division, absolute_import, print_function
-

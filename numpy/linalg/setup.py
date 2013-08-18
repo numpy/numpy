@@ -6,7 +6,7 @@ import sys
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
-    config = Configuration('linalg',parent_package,top_path)
+    config = Configuration('linalg', parent_package, top_path)
 
     config.add_data_dir('tests')
 
@@ -15,15 +15,15 @@ def configuration(parent_package='',top_path=None):
     src_dir = 'lapack_lite'
     lapack_lite_src = [
         os.path.join(src_dir, 'python_xerbla.c'),
-        os.path.join(src_dir, 'zlapack_lite.c'), 
+        os.path.join(src_dir, 'zlapack_lite.c'),
         os.path.join(src_dir, 'dlapack_lite.c'),
-        os.path.join(src_dir, 'blas_lite.c'), 
+        os.path.join(src_dir, 'blas_lite.c'),
         os.path.join(src_dir, 'dlamch.c'),
         os.path.join(src_dir, 'f2c_lite.c'),
         os.path.join(src_dir, 'f2c.h'),
     ]
 
-    lapack_info = get_info('lapack_opt',0) # and {}
+    lapack_info = get_info('lapack_opt', 0) # and {}
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
             print("### Warning:  Using unoptimized lapack ###")

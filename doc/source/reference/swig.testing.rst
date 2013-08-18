@@ -15,8 +15,8 @@ this results in 1,427 individual unit tests that are performed when
 
 To facilitate this many similar unit tests, some high-level
 programming techniques are employed, including C and `SWIG`_ macros,
-as well as Python inheritance.  The purpose of this document is to describe 
-the testing infrastructure employed to verify that the ``numpy.i`` 
+as well as Python inheritance.  The purpose of this document is to describe
+the testing infrastructure employed to verify that the ``numpy.i``
 typemaps are working as expected.
 
 Testing Organization
@@ -57,9 +57,9 @@ Two-dimensional arrays are tested in exactly the same manner.  The
 above description applies, but with ``Matrix`` substituted for
 ``Vector``.  For three-dimensional tests, substitute ``Tensor`` for
 ``Vector``.  For four-dimensional tests, substitute ``SuperTensor``
-for ``Vector``.  
+for ``Vector``.
 For the descriptions that follow, we will reference the
-``Vector`` tests, but the same information applies to ``Matrix``, 
+``Vector`` tests, but the same information applies to ``Matrix``,
 ``Tensor`` and ``SuperTensor`` tests.
 
 The command ``make test`` will ensure that all of the test software is
@@ -108,7 +108,7 @@ Testing SWIG Interface Files
 ``Vector.i`` is a `SWIG`_ interface file that defines python module
 ``Vector``.  It follows the conventions for using ``numpy.i`` as
 described in this chapter.  It defines a `SWIG`_ macro
-``%apply_numpy_typemaps`` that has a single argument ``TYPE``.  
+``%apply_numpy_typemaps`` that has a single argument ``TYPE``.
 It uses the `SWIG`_ directive ``%apply`` to apply the provided
 typemaps to the argument signatures found in ``Vector.h``.  This macro
 is then implemented for all of the data types supported by

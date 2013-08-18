@@ -174,10 +174,10 @@ class TestInsert(TestCase):
         assert_equal(insert(a, 0, 1), [1, 1, 2, 3])
         assert_equal(insert(a, 3, 1), [1, 2, 3, 1])
         assert_equal(insert(a, [1, 1, 1], [1, 2, 3]), [1, 1, 2, 3, 2, 3])
-        assert_equal(insert(a, 1,[1,2,3]), [1, 1, 2, 3, 2, 3])
-        assert_equal(insert(a,[1,-1,3],9),[1,9,2,9,3,9])
-        assert_equal(insert(a,slice(-1,None,-1), 9),[9,1,9,2,9,3])
-        assert_equal(insert(a,[-1,1,3], [7,8,9]),[1,8,2,7,3,9])
+        assert_equal(insert(a, 1, [1, 2, 3]), [1, 1, 2, 3, 2, 3])
+        assert_equal(insert(a, [1, -1, 3], 9), [1, 9, 2, 9, 3, 9])
+        assert_equal(insert(a, slice(-1, None, -1), 9), [9, 1, 9, 2, 9, 3])
+        assert_equal(insert(a, [-1, 1, 3], [7, 8, 9]), [1, 8, 2, 7, 3, 9])
         b = np.array([0, 1], dtype=np.float64)
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
         assert_equal(insert(b, [], []), b)
@@ -185,42 +185,42 @@ class TestInsert(TestCase):
         #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
-            assert_equal(insert(a, np.array([True]*4), 9), [1,9,9,9,9,2,3])
+            assert_equal(insert(a, np.array([True]*4), 9), [1, 9, 9, 9, 9, 2, 3])
             assert_(w[0].category is FutureWarning)
 
     def test_multidim(self):
         a = [[1, 1, 1]]
         r = [[2, 2, 2],
              [1, 1, 1]]
-        assert_equal(insert(a, 0, [1]), [1,1,1,1])
+        assert_equal(insert(a, 0, [1]), [1, 1, 1, 1])
         assert_equal(insert(a, 0, [2, 2, 2], axis=0), r)
         assert_equal(insert(a, 0, 2, axis=0), r)
         assert_equal(insert(a, 2, 2, axis=1), [[1, 1, 2, 1]])
 
         a = np.array([[1, 1], [2, 2], [3, 3]])
-        b = np.arange(1,4).repeat(3).reshape(3,3)
-        c = np.concatenate((a[:,0:1], np.arange(1,4).repeat(3).reshape(3,3).T,
-                            a[:,1:2]), axis=1)
-        assert_equal(insert(a, [1], [[1],[2],[3]], axis=1), b)
+        b = np.arange(1, 4).repeat(3).reshape(3, 3)
+        c = np.concatenate((a[:, 0:1], np.arange(1, 4).repeat(3).reshape(3, 3).T,
+                            a[:, 1:2]), axis=1)
+        assert_equal(insert(a, [1], [[1], [2], [3]], axis=1), b)
         assert_equal(insert(a, [1], [1, 2, 3], axis=1), c)
         # scalars behave differently, in this case exactly opposite:
         assert_equal(insert(a, 1, [1, 2, 3], axis=1), b)
-        assert_equal(insert(a, 1, [[1],[2],[3]], axis=1), c)
+        assert_equal(insert(a, 1, [[1], [2], [3]], axis=1), c)
 
-        a = np.arange(4).reshape(2,2)
-        assert_equal(insert(a[:,:1], 1, a[:,1], axis=1), a)
+        a = np.arange(4).reshape(2, 2)
+        assert_equal(insert(a[:, :1], 1, a[:, 1], axis=1), a)
         assert_equal(insert(a[:1,:], 1, a[1,:], axis=0), a)
 
         # negative axis value
-        a = np.arange(24).reshape((2,3,4))
-        assert_equal(insert(a, 1, a[:,:,3], axis=-1),
-                     insert(a, 1, a[:,:,3], axis=2))
-        assert_equal(insert(a, 1, a[:,2,:], axis=-2),
-                     insert(a, 1, a[:,2,:], axis=1))
+        a = np.arange(24).reshape((2, 3, 4))
+        assert_equal(insert(a, 1, a[:,:, 3], axis=-1),
+                     insert(a, 1, a[:,:, 3], axis=2))
+        assert_equal(insert(a, 1, a[:, 2,:], axis=-2),
+                     insert(a, 1, a[:, 2,:], axis=1))
 
         # invalid axis value
-        assert_raises(IndexError, insert, a, 1, a[:,2,:], axis=3)
-        assert_raises(IndexError, insert, a, 1, a[:,2,:], axis=-4)
+        assert_raises(IndexError, insert, a, 1, a[:, 2,:], axis=3)
+        assert_raises(IndexError, insert, a, 1, a[:, 2,:], axis=-4)
 
     def test_0d(self):
         # This is an error in the future
@@ -236,9 +236,9 @@ class TestInsert(TestCase):
         a = np.arange(10).view(SubClass)
         assert_(isinstance(np.insert(a, 0, [0]), SubClass))
         assert_(isinstance(np.insert(a, [], []), SubClass))
-        assert_(isinstance(np.insert(a, [0,1], [1,2]), SubClass))
-        assert_(isinstance(np.insert(a, slice(1,2), [1,2]), SubClass))
-        assert_(isinstance(np.insert(a, slice(1,-2), []), SubClass))
+        assert_(isinstance(np.insert(a, [0, 1], [1, 2]), SubClass))
+        assert_(isinstance(np.insert(a, slice(1, 2), [1, 2]), SubClass))
+        assert_(isinstance(np.insert(a, slice(1, -2), []), SubClass))
         # This is an error in the future:
         a = np.array(1).view(SubClass)
         assert_(isinstance(np.insert(a, 0, [0]), SubClass))
@@ -355,10 +355,10 @@ class TestDiff(TestCase):
 
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
-        out1 = x[:, :, 1:] - x[:, :, :-1]
-        out2 = out1[:, :, 1:] - out1[:, :, :-1]
-        out3 = x[1:, :, :] - x[:-1, :, :]
-        out4 = out3[1:, :, :] - out3[:-1, :, :]
+        out1 = x[:,:, 1:] - x[:,:, :-1]
+        out2 = out1[:,:, 1:] - out1[:,:, :-1]
+        out3 = x[1:,:,:] - x[:-1,:,:]
+        out4 = out3[1:,:,:] - out3[:-1,:,:]
         assert_array_equal(diff(x), out1)
         assert_array_equal(diff(x, n=2), out2)
         assert_array_equal(diff(x, axis=0), out3)
@@ -368,7 +368,7 @@ class TestDiff(TestCase):
 class TestDelete(TestCase):
     def setUp(self):
         self.a = np.arange(5)
-        self.nd_a = np.arange(5).repeat(2).reshape(1,5,2)
+        self.nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
 
     def _check_inverse_of_slicing(self, indices):
         a_del = delete(self.a, indices)
@@ -380,8 +380,8 @@ class TestDelete(TestCase):
             indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices,]), self.a,
                            err_msg=msg)
-        xor = setxor1d(nd_a_del[0,:,0], self.nd_a[0,indices,0])
-        assert_array_equal(xor, self.nd_a[0,:,0], err_msg=msg)
+        xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
+        assert_array_equal(xor, self.nd_a[0,:, 0], err_msg=msg)
 
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
@@ -394,7 +394,7 @@ class TestDelete(TestCase):
 
     def test_fancy(self):
         # Deprecation/FutureWarning tests should be kept after change.
-        self._check_inverse_of_slicing(np.array([[0,1],[2,1]]))
+        self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
         assert_raises(DeprecationWarning, delete, self.a, [100])
         assert_raises(DeprecationWarning, delete, self.a, [-100])
         with warnings.catch_warnings(record=True) as w:
@@ -422,9 +422,9 @@ class TestDelete(TestCase):
         a = self.a.view(SubClass)
         assert_(isinstance(delete(a, 0), SubClass))
         assert_(isinstance(delete(a, []), SubClass))
-        assert_(isinstance(delete(a, [0,1]), SubClass))
-        assert_(isinstance(delete(a, slice(1,2)), SubClass))
-        assert_(isinstance(delete(a, slice(1,-2)), SubClass))
+        assert_(isinstance(delete(a, [0, 1]), SubClass))
+        assert_(isinstance(delete(a, slice(1, 2)), SubClass))
+        assert_(isinstance(delete(a, slice(1, -2)), SubClass))
 
 class TestGradient(TestCase):
     def test_basic(self):
@@ -598,7 +598,7 @@ class TestVectorize(TestCase):
             while _p:
                 res = res*x + _p.pop(0)
             return res
-        vpolyval = np.vectorize(mypolyval, excluded=['p',1])
+        vpolyval = np.vectorize(mypolyval, excluded=['p', 1])
         ans = [3, 6]
         assert_array_equal(ans, vpolyval(x=[0, 1], p=[1, 2, 3]))
         assert_array_equal(ans, vpolyval([0, 1], p=[1, 2, 3]))
@@ -776,18 +776,18 @@ class TestTrapz(TestCase):
         wz[0] /= 2
         wz[-1] /= 2
 
-        q = x[:, None, None] + y[None, :, None] + z[None, None, :]
+        q = x[:, None, None] + y[None,:, None] + z[None, None,:]
 
         qx = (q * wx[:, None, None]).sum(axis=0)
-        qy = (q * wy[None, :, None]).sum(axis=1)
-        qz = (q * wz[None, None, :]).sum(axis=2)
+        qy = (q * wy[None,:, None]).sum(axis=1)
+        qz = (q * wz[None, None,:]).sum(axis=2)
 
         # n-d `x`
         r = trapz(q, x=x[:, None, None], axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y[None, :, None], axis=1)
+        r = trapz(q, x=y[None,:, None], axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z[None, None, :], axis=2)
+        r = trapz(q, x=z[None, None,:], axis=2)
         assert_almost_equal(r, qz)
 
         # 1-d `x`
@@ -1052,7 +1052,7 @@ class TestHistogramdd(TestCase):
     def test_identical_samples(self):
         x = np.zeros((10, 2), int)
         hist, edges = histogramdd(x, bins=2)
-        assert_array_equal(edges[0], np.array([-0.5, 0. , 0.5]))
+        assert_array_equal(edges[0], np.array([-0.5, 0., 0.5]))
 
     def test_empty(self):
         a, b = histogramdd([[], []], bins=([0, 1], [0, 1]))
@@ -1114,23 +1114,23 @@ class TestCheckFinite(TestCase):
 class TestCorrCoef(TestCase):
     A = np.array([[ 0.15391142, 0.18045767, 0.14197213],
                [ 0.70461506, 0.96474128, 0.27906989],
-               [ 0.9297531 , 0.32296769, 0.19267156]])
-    B = np.array([[ 0.10377691, 0.5417086 , 0.49807457],
+               [ 0.9297531, 0.32296769, 0.19267156]])
+    B = np.array([[ 0.10377691, 0.5417086, 0.49807457],
                [ 0.82872117, 0.77801674, 0.39226705],
-               [ 0.9314666 , 0.66800209, 0.03538394]])
-    res1 = np.array([[ 1.        , 0.9379533 , -0.04931983],
-               [ 0.9379533 , 1.        , 0.30007991],
+               [ 0.9314666, 0.66800209, 0.03538394]])
+    res1 = np.array([[ 1., 0.9379533, -0.04931983],
+               [ 0.9379533, 1., 0.30007991],
                [-0.04931983, 0.30007991, 1.        ]])
-    res2 = np.array([[ 1.        , 0.9379533 , -0.04931983,
+    res2 = np.array([[ 1., 0.9379533, -0.04931983,
                  0.30151751, 0.66318558, 0.51532523],
-               [ 0.9379533 , 1.        , 0.30007991,
+               [ 0.9379533, 1., 0.30007991,
                  - 0.04781421, 0.88157256, 0.78052386],
-               [-0.04931983, 0.30007991, 1.        ,
+               [-0.04931983, 0.30007991, 1.,
                  - 0.96717111, 0.71483595, 0.83053601],
                [ 0.30151751, -0.04781421, -0.96717111,
-                 1.        , -0.51366032, -0.66173113],
+                 1., -0.51366032, -0.66173113],
                [ 0.66318558, 0.88157256, 0.71483595,
-                 - 0.51366032, 1.        , 0.98317823],
+                 - 0.51366032, 1., 0.98317823],
                [ 0.51532523, 0.78052386, 0.83053601,
                  - 0.66173113, 0.98317823, 1.        ]])
 
@@ -1160,10 +1160,10 @@ class TestCov(TestCase):
 class Test_I0(TestCase):
     def test_simple(self):
         assert_almost_equal(i0(0.5), np.array(1.0634833707413234))
-        A = np.array([ 0.49842636, 0.6969809 , 0.22011976, 0.0155549])
+        A = np.array([ 0.49842636, 0.6969809, 0.22011976, 0.0155549])
         assert_almost_equal(i0(A),
                             np.array([ 1.06307822, 1.12518299, 1.01214991, 1.00006049]))
-        B = np.array([[ 0.827002  , 0.99959078],
+        B = np.array([[ 0.827002, 0.99959078],
                    [ 0.89694769, 0.39298162],
                    [ 0.37954418, 0.05206293],
                    [ 0.36465447, 0.72446427],
@@ -1173,7 +1173,7 @@ class Test_I0(TestCase):
                                    [ 1.21147086, 1.0389829 ],
                                    [ 1.03633899, 1.00067775],
                                    [ 1.03352052, 1.13557954],
-                                   [ 1.0588429 , 1.06432317]]))
+                                   [ 1.0588429, 1.06432317]]))
 
 
 class TestKaiser(TestCase):
@@ -1182,10 +1182,10 @@ class TestKaiser(TestCase):
         assert_(np.isfinite(kaiser(1, 1.0)))
         assert_almost_equal(kaiser(2, 1.0), np.array([ 0.78984831, 0.78984831]))
         assert_almost_equal(kaiser(5, 1.0),
-                            np.array([ 0.78984831, 0.94503323, 1.        ,
+                            np.array([ 0.78984831, 0.94503323, 1.,
                                     0.94503323, 0.78984831]))
         assert_almost_equal(kaiser(5, 1.56789),
-                            np.array([ 0.58285404, 0.88409679, 1.        ,
+                            np.array([ 0.58285404, 0.88409679, 1.,
                                     0.88409679, 0.58285404]))
 
     def test_int_beta(self):

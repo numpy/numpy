@@ -1,7 +1,7 @@
 From: Phil Garner (garner@signal.dra.hmg.gb)
- Subject: In place matrix transpose 
+ Subject: In place matrix transpose
  Newsgroups: sci.math.num-analysis
- Date: 1993-08-05 06:35:06 PST 
+ Date: 1993-08-05 06:35:06 PST
 
 
 Someone was talking about matrix transposes earlier on.  It's a
@@ -161,16 +161,16 @@ int trans(scalar *a, unsigned m, unsigned n, int *move, int iwrk)
 `-0---0-'  `-0--0-'    `--OO-------------------O-----'     `---0---' `-0---0-'
 
  From: Murray Dow (mld900@anusf.anu.edu.au)
- Subject: Re: In place matrix transpose 
+ Subject: Re: In place matrix transpose
  Newsgroups: sci.math.num-analysis
- Date: 1993-08-09 19:45:57 PST 
+ Date: 1993-08-09 19:45:57 PST
 
 
 In article <23qmp3INN3gl@mentor.dra.hmg.gb>, garner@signal.dra.hmg.gb (Phil Garner) writes:
 |> Someone was talking about matrix transposes earlier on.  It's a
 |> curious subject.  I found that an in-place transpose is about 12 times
 |> slower than the trivial copying method.
-|> 
+|>
 
 Algorithm 380 from CACM is sloweer than ALG 467. Here are my times
 from a VP2200 vector computer. Note that the CACM algorithms are scalar.
@@ -188,7 +188,7 @@ My Alg    Matrix copy
 Conclusions: dont use Alg 380 from Netlib. If you have the available memory,
 do a matrix copy. If you don't have the memory, I will send you my algorithm
 when I have published it.
--- 
+--
 Murray Dow                         GPO Box 4 Canberra ACT 2601 Australia
 Supercomputer Facility             Phone: +61 6 2495028
 Australian National University     Fax:   +61 6 2473425
@@ -197,16 +197,16 @@ mld900@anusf.anu.edu.au
 =============================================================================
 
 From: Mark Smotherman (mark@hubcap.clemson.edu)
- Subject: Matrix transpose benchmark [was Re: MIPS R8000 == TFP?] 
+ Subject: Matrix transpose benchmark [was Re: MIPS R8000 == TFP?]
  Newsgroups: comp.arch, comp.benchmarks, comp.sys.super
- Date: 1994-07-01 06:35:51 PST 
+ Date: 1994-07-01 06:35:51 PST
 
 
 mccalpin@perelandra.cms.udel.edu (John D. McCalpin) writes:
 
-> 
->Of course, these results are all for the naive algorithm.  I would be 
->interested to see what an efficient blocked algorithm looks like.  
+>
+>Of course, these results are all for the naive algorithm.  I would be
+>interested to see what an efficient blocked algorithm looks like.
 >Anyone care to offer one?  There is clearly a lot of performance
 >to be gained by the effort....
 
@@ -225,15 +225,15 @@ Enjoy!
         Matrix Transpose Generator
 
         Copyright 1993, Dept. of Computer Science, Clemson University
- 
+
         Permission to use, copy, modify, and distribute this software and
         its documentation for any purpose and without fee is hereby granted,
         provided that the above copyright notice appears in all copies.
- 
+
         Clemson University and its Dept. of Computer Science make no
         representations about the suitability of this software for any
         purpose.  It is provided "as is" without express or implied warranty.
- 
+
         Original author: Mark Smotherman
 
   -------------------------------------------------------------------------*/
@@ -624,14 +624,14 @@ void processstmt()
     }
   }
 }
--- 
+--
 Mark Smotherman, Computer Science Dept., Clemson University, Clemson, SC
 
 =======================================================================
 From: has (h.genceli@bre.com)
- Subject: transpose of a nxm matrix stored in a vector !!! 
+ Subject: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 If I have a matrix nrows x ncols, I can store it in a vector.
@@ -657,9 +657,9 @@ can give me a lead here, thanks.
 Has
 
  From: wei-choon ng (wng@ux8.cso.uiuc.edu)
- Subject: Re: transpose of a nxm matrix stored in a vector !!! 
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 has <h.genceli@bre.com> wrote:
@@ -674,12 +674,12 @@ no need to explicitly store the transpose matrix in another array and
 doubling the storage!
 
 W.C.
--- 
+--
 
  From: Robin Becker (robin@jessikat.fsnet.co.uk)
- Subject: Re: transpose of a nxm matrix stored in a vector !!! 
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 In article <snr532fo3j1180@corp.supernews.com>, has <h.genceli@bre.com>
@@ -737,13 +737,13 @@ void dmx_transpose(unsigned n, unsigned m, double* a, double* b)
                         }
                 }
 }
--- 
+--
 Robin Becker
 
  From: E. Robert Tisdale (edwin@netwood.net)
- Subject: Re: transpose of a nxm matrix stored in a vector !!! 
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 Take a look at
@@ -798,14 +798,14 @@ The C++ Scalar, Vector, Matrix and Tensor class library
 Read the rest of this message... (50 more lines)
 
  From: Victor Eijkhout (eijkhout@disco.cs.utk.edu)
- Subject: Re: transpose of a nxm matrix stored in a vector !!! 
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 "Alan Miller" <amiller @ vic.bigpond.net.au> writes:
 
-> The attached routine does an in situ transpose. 
+> The attached routine does an in situ transpose.
 > begin 666 Dtip.f90
 > M4U5"4D]55$E.12!D=&EP("AA+"!N,2P@;C(L(&YD:6TI#0HA("TM+2TM+2TM
 
@@ -814,22 +814,22 @@ Hm. F90? You're not silently allocating a temporary I hope?
 (Why did you have to encode this? Now I have to save, this decode, ...
 and all for plain ascii?)
 
--- 
+--
 Victor Eijkhout
 "When I was coming up, [..] we knew exactly who the they were. It was us
-versus them, and it was clear who the them was were. Today, we are not 
+versus them, and it was clear who the them was were. Today, we are not
 so sure who the they are, but we know they're there." [G.W. Bush]
 
  From: Alan Miller (amiller_@_vic.bigpond.net.au)
- Subject: Re: transpose of a nxm matrix stored in a vector !!! 
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
  Newsgroups: sci.math.num-analysis
- Date: 2000/07/25 
+ Date: 2000/07/25
 
 
 Victor Eijkhout wrote in message ...
 >"Alan Miller" <amiller @ vic.bigpond.net.au> writes:
 >
->> The attached routine does an in situ transpose. 
+>> The attached routine does an in situ transpose.
 >> begin 666 Dtip.f90
 >> M4U5"4D]55$E.12!D=&EP("AA+"!N,2P@;C(L(&YD:6TI#0HA("TM+2TM+2TM
 >
@@ -862,13 +862,13 @@ http://users.bigpond.net.au/amiller/
 =================================================================
 
 From: Darran Edmundson (dedmunds@sfu.ca)
- Subject: array reordering algorithm? 
+ Subject: array reordering algorithm?
  Newsgroups: sci.math.num-analysis
- Date: 1995/04/30 
+ Date: 1995/04/30
 
 
-A code I've written refers to a complex array as two separate real arrays.  
-However, I have a canned subroutine which expects a single array where the 
+A code I've written refers to a complex array as two separate real arrays.
+However, I have a canned subroutine which expects a single array where the
 real and imaginary values alternate.  Essentially I have a case of mismatched
 data structures, yet for reasons that I'd rather not go into, I'm stuck with them.
 
@@ -878,7 +878,7 @@ space, what I need is a porting subroutine that remaps the data from one format
 to the other - using as little space as possible.
 
 I think of the problem as follows.  Imagine an array of dimension 10 containing
-the values 1,3,5,7,9,2,4,6,8,10 in this order.  
+the values 1,3,5,7,9,2,4,6,8,10 in this order.
 
  A(1) /  1   \  C(1)
  A(2) |  3   |  C(2)
@@ -892,18 +892,18 @@ the values 1,3,5,7,9,2,4,6,8,10 in this order.
  B(4) |  8   |  C(9)
  B(5) \ 10   /  C(10)
 
-Given that I know this initial pattern, I want to sort the array C in-place *without 
-making comparisons*.  That is, the algorithm can only depend on the initial 
+Given that I know this initial pattern, I want to sort the array C in-place *without
+making comparisons*.  That is, the algorithm can only depend on the initial
 knowledge of the pattern.  Do you see what a sort is going to do?  It will
 make the A and B arrays alternate, i.e. C(1)=A(1), C(2)=B(1), C(3)=A(2),
-C(4)=B(2), etc.  It's not a real sort though because I can't actually refer to the 
+C(4)=B(2), etc.  It's not a real sort though because I can't actually refer to the
 values above (i.e. no comparisons) because A and B will be holding real data,
 not this contrived pattern.  The pattern above exists though - it's the
 natural ordering in memory of A and B.
 
-Either pair swapping only or a small amount of workspace can be used.  The 
-in-place is important - imagine scaling this problem up to an 
-array of 32 or 64 million double precision values and you can easily see how 
+Either pair swapping only or a small amount of workspace can be used.  The
+in-place is important - imagine scaling this problem up to an
+array of 32 or 64 million double precision values and you can easily see how
 duplicating the array is not a feasible solution.
 
 Any ideas?  I've been stumped on this for a day and a half now.
@@ -912,9 +912,9 @@ Darran Edmundson
 dedmunds@sfu.ca
 
  From: Roger Critchlow (rec@elf115.elf.org)
- Subject: Re: array reordering algorithm? 
+ Subject: Re: array reordering algorithm?
  Newsgroups: sci.math.num-analysis
- Date: 1995/04/30 
+ Date: 1995/04/30
 
 
    Any ideas?  I've been stumped on this for a day and a half now.
@@ -1026,7 +1026,7 @@ int test_matrix_cols(a, m, n) TYPE *a; int m, n;
       o += a[i*n+j] != j*m+i;
   return o;
 }
- 
+
 /* print a matrix */
 void print_matrix(a, m, n) TYPE *a; int m, n;
 {
@@ -1121,7 +1121,6 @@ main(argc, argv) int argc; char *argv[];
 
   return 0;
 }
-     
-#endif
-#endif
 
+#endif
+#endif

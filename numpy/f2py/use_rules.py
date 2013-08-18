@@ -53,7 +53,7 @@ capi_fail:
 
 ################
 
-def buildusevars(m,r):
+def buildusevars(m, r):
     ret={}
     outmess('\t\tBuilding use variable hooks for module "%s" (feature only for F90/F95)...\n'%(m['name']))
     varsmap={}
@@ -61,7 +61,7 @@ def buildusevars(m,r):
     if 'map' in r:
         for k in r['map'].keys():
             if r['map'][k] in revmap:
-                outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n'%(r['map'][k],k,revmap[r['map'][k]]))
+                outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n'%(r['map'][k], k, revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]]=k
     if 'only' in r and r['only']:
@@ -71,9 +71,9 @@ def buildusevars(m,r):
                 if revmap[r['map'][v]]==v:
                     varsmap[v]=r['map'][v]
                 else:
-                    outmess('\t\t\tIgnoring map "%s=>%s". See above.\n'%(v,r['map'][v]))
+                    outmess('\t\t\tIgnoring map "%s=>%s". See above.\n'%(v, r['map'][v]))
             else:
-                outmess('\t\t\tNo definition for variable "%s=>%s". Skipping.\n'%(v,r['map'][v]))
+                outmess('\t\t\tNo definition for variable "%s=>%s". Skipping.\n'%(v, r['map'][v]))
     else:
         for v in m['vars'].keys():
             if v in revmap:
@@ -81,29 +81,29 @@ def buildusevars(m,r):
             else:
                 varsmap[v]=v
     for v in varsmap.keys():
-        ret=dictappend(ret,buildusevar(v,varsmap[v],m['vars'],m['name']))
+        ret=dictappend(ret, buildusevar(v, varsmap[v], m['vars'], m['name']))
     return ret
-def buildusevar(name,realname,vars,usemodulename):
-    outmess('\t\t\tConstructing wrapper function for variable "%s=>%s"...\n'%(name,realname))
+def buildusevar(name, realname, vars, usemodulename):
+    outmess('\t\t\tConstructing wrapper function for variable "%s=>%s"...\n'%(name, realname))
     ret={}
     vrd={'name':name,
          'realname':realname,
          'REALNAME':realname.upper(),
          'usemodulename':usemodulename,
          'USEMODULENAME':usemodulename.upper(),
-         'texname':name.replace('_','\\_'),
-         'begintitle':gentitle('%s=>%s'%(name,realname)),
-         'endtitle':gentitle('end of %s=>%s'%(name,realname)),
-         'apiname':'#modulename#_use_%s_from_%s'%(realname,usemodulename)
+         'texname':name.replace('_', '\\_'),
+         'begintitle':gentitle('%s=>%s'%(name, realname)),
+         'endtitle':gentitle('end of %s=>%s'%(name, realname)),
+         'apiname':'#modulename#_use_%s_from_%s'%(realname, usemodulename)
          }
     nummap={0:'Ro',1:'Ri',2:'Rii',3:'Riii',4:'Riv',5:'Rv',6:'Rvi',7:'Rvii',8:'Rviii',9:'Rix'}
     vrd['texnamename']=name
     for i in nummap.keys():
-        vrd['texnamename']=vrd['texnamename'].replace(repr(i),nummap[i])
+        vrd['texnamename']=vrd['texnamename'].replace(repr(i), nummap[i])
     if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
-    rd=dictappend({},vrd)
+    rd=dictappend({}, vrd)
     var=vars[realname]
 
-    print(name,realname,vars[realname])
-    ret=applyrules(usemodule_rules,rd)
+    print(name, realname, vars[realname])
+    ret=applyrules(usemodule_rules, rd)
     return ret

@@ -35,7 +35,7 @@ class IBMFCompiler(FCompiler):
             lslpp = find_executable('lslpp')
             xlf = find_executable('xlf')
             if os.path.exists(xlf) and os.path.exists(lslpp):
-                s,o = exec_command(lslpp + ' -Lc xlfcmp')
+                s, o = exec_command(lslpp + ' -Lc xlfcmp')
                 m = re.search('xlfcmp:(?P<version>\d+([.]\d+)+)', o)
                 if m: version = m.group('version')
 
@@ -47,7 +47,7 @@ class IBMFCompiler(FCompiler):
             # let's try another method:
             l = sorted(os.listdir(xlf_dir))
             l.reverse()
-            l = [d for d in l if os.path.isfile(os.path.join(xlf_dir,d,'xlf.cfg'))]
+            l = [d for d in l if os.path.isfile(os.path.join(xlf_dir, d, 'xlf.cfg'))]
             if l:
                 from distutils.version import LooseVersion
                 self.version = version = LooseVersion(l[0])
@@ -65,7 +65,7 @@ class IBMFCompiler(FCompiler):
             opt.append('-Wl,-bundle,-flat_namespace,-undefined,suppress')
         else:
             opt.append('-bshared')
-        version = self.get_version(ok_status=[0,40])
+        version = self.get_version(ok_status=[0, 40])
         if version is not None:
             if sys.platform.startswith('aix'):
                 xlf_cfg = '/etc/xlf.cfg'
@@ -73,7 +73,7 @@ class IBMFCompiler(FCompiler):
                 xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
             fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
             log.info('Creating '+new_cfg)
-            fi = open(xlf_cfg,'r')
+            fi = open(xlf_cfg, 'r')
             crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
             for line in fi:
                 m = crt1_match(line)

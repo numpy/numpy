@@ -15,7 +15,7 @@ of the API) that will need to be changed:
 
 * If you used any of the function pointers in the ``PyArray_Descr``
   structure you will have to modify your usage of those.  First,
-  the pointers are all under the member named ``f``.  So ``descr->cast`` 
+  the pointers are all under the member named ``f``.  So ``descr->cast``
   is now ``descr->f->cast``.  In addition, the
   casting functions have eliminated the strides argument (use
   ``PyArray_CastTo`` if you need strided casting). All functions have
@@ -238,7 +238,7 @@ segfaults may result.
 There are 6 (binary) flags that describe the memory area used by the
 data buffer.  These constants are defined in ``arrayobject.h`` and
 determine the bit-position of the flag.  Python exposes a nice attribute-
-based interface as well as a dictionary-like interface for getting 
+based interface as well as a dictionary-like interface for getting
 (and, if appropriate, setting) these flags.
 
 Memory areas of all kinds can be pointed to by an ndarray, necessitating
@@ -254,7 +254,7 @@ PyArray_FromAny function.
 ``NPY_FORTRAN``
     True if the array is (Fortran-style) contiguous in memory.
 
-Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN`` contiguous 
+Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN`` contiguous
 and C contiguous. Both of these flags can be checked and are convenience
 flags only as whether or not an array is ``NPY_CONTIGUOUS`` or ``NPY_FORTRAN``
 can be determined by the ``strides``, ``dimensions``, and ``itemsize``

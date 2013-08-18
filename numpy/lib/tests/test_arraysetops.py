@@ -61,8 +61,8 @@ class TestSetOps(TestCase):
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
-        aa = np.array(list(zip(a,a)), dt)
-        bb = np.array(list(zip(b,b)), dt)
+        aa = np.array(list(zip(a, a)), dt)
+        bb = np.array(list(zip(b, b)), dt)
         check_all(aa, bb, i1, i2, dt)
 
 
@@ -83,7 +83,7 @@ class TestSetOps(TestCase):
         c = intersect1d( a, b )
         assert_array_equal( c, ed )
 
-        assert_array_equal([], intersect1d([],[]))
+        assert_array_equal([], intersect1d([], []))
 
     def test_setxor1d( self ):
         a = np.array( [5, 7, 1, 2] )
@@ -107,19 +107,19 @@ class TestSetOps(TestCase):
         c = setxor1d( a, b )
         assert_array_equal( c, ec )
 
-        assert_array_equal([], setxor1d([],[]))
+        assert_array_equal([], setxor1d([], []))
 
     def test_ediff1d(self):
         zero_elem = np.array([])
         one_elem = np.array([1])
-        two_elem = np.array([1,2])
+        two_elem = np.array([1, 2])
 
-        assert_array_equal([],ediff1d(zero_elem))
-        assert_array_equal([0],ediff1d(zero_elem,to_begin=0))
-        assert_array_equal([0],ediff1d(zero_elem,to_end=0))
-        assert_array_equal([-1,0],ediff1d(zero_elem,to_begin=-1,to_end=0))
-        assert_array_equal([],ediff1d(one_elem))
-        assert_array_equal([1],ediff1d(two_elem))
+        assert_array_equal([], ediff1d(zero_elem))
+        assert_array_equal([0], ediff1d(zero_elem, to_begin=0))
+        assert_array_equal([0], ediff1d(zero_elem, to_end=0))
+        assert_array_equal([-1, 0], ediff1d(zero_elem, to_begin=-1, to_end=0))
+        assert_array_equal([], ediff1d(one_elem))
+        assert_array_equal([1], ediff1d(two_elem))
 
     def test_in1d(self):
         # we use two different sizes for the b array here to test the
@@ -182,8 +182,8 @@ class TestSetOps(TestCase):
         assert_array_equal(in1d([], []), [])
 
     def test_in1d_char_array( self ):
-        a = np.array(['a', 'b', 'c','d','e','c','e','b'])
-        b = np.array(['a','c'])
+        a = np.array(['a', 'b', 'c', 'd', 'e', 'c', 'e', 'b'])
+        b = np.array(['a', 'c'])
 
         ec = np.array([True, False, True, False, False, True, False, False])
         c = in1d(a, b)
@@ -202,9 +202,9 @@ class TestSetOps(TestCase):
     def test_in1d_ravel(self):
         # Test that in1d ravels its input arrays. This is not documented
         # behavior however. The test is to ensure consistentency.
-        a = np.arange(6).reshape(2,3)
-        b = np.arange(3,9).reshape(3,2)
-        long_b = np.arange(3, 63).reshape(30,2)
+        a = np.arange(6).reshape(2, 3)
+        b = np.arange(3, 9).reshape(3, 2)
+        long_b = np.arange(3, 63).reshape(30, 2)
         ec = np.array([False, False, False, True, True, True])
 
         assert_array_equal(in1d(a, b, assume_unique=True), ec)
@@ -220,7 +220,7 @@ class TestSetOps(TestCase):
         c = union1d( a, b )
         assert_array_equal( c, ec )
 
-        assert_array_equal([], union1d([],[]))
+        assert_array_equal([], union1d([], []))
 
     def test_setdiff1d( self ):
         a = np.array( [6, 5, 4, 7, 1, 2, 7, 4] )
@@ -236,12 +236,12 @@ class TestSetOps(TestCase):
         c = setdiff1d( a, b )
         assert_array_equal( c, ec )
 
-        assert_array_equal([], setdiff1d([],[]))
+        assert_array_equal([], setdiff1d([], []))
 
     def test_setdiff1d_char_array(self):
-        a = np.array(['a','b','c'])
-        b = np.array(['a','b','s'])
-        assert_array_equal(setdiff1d(a,b),np.array(['c']))
+        a = np.array(['a', 'b', 'c'])
+        b = np.array(['a', 'b', 's'])
+        assert_array_equal(setdiff1d(a, b), np.array(['c']))
 
     def test_manyways( self ):
         a = np.array( [5, 7, 1, 2, 8] )

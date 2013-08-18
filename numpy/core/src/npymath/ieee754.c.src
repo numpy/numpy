@@ -21,7 +21,7 @@ double npy_copysign(double x, double y)
 /*
  The below code is provided for compilers which do not yet provide C11 compatibility (gcc 4.5 and older)
  */
-#ifndef LDBL_TRUE_MIN  
+#ifndef LDBL_TRUE_MIN
 #define LDBL_TRUE_MIN __LDBL_DENORM_MIN__
 #endif
 
@@ -678,4 +678,3 @@ void npy_set_floatstatus_invalid(void)
 }
 
 #endif
-

@@ -6,7 +6,7 @@ It is for backwards compatibility only.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution',
+__all__ = ['CreateGenerator', 'ExponentialDistribution', 'LogNormalDistribution',
            'NormalDistribution', 'UniformDistribution', 'error', 'ranf',
            'default_distribution', 'random_sample', 'standard_generator']
 
@@ -21,7 +21,7 @@ class Distribution(object):
         self._meth = meth
         self._args = args
 
-    def density(self,x):
+    def density(self, x):
         raise NotImplementedError
 
     def __call__(self, x):
@@ -61,7 +61,7 @@ class LogNormalDistribution(Distribution):
         self._fac = 1.0/math.sqrt(2*math.pi)/self._sn
 
     def density(x):
-        m,s = self._args
+        m, s = self._args
         y = (math.log(x)-self._mn)/self._sn
         return self._fac*math.exp(-0.5*y*y)/x
 
@@ -76,7 +76,7 @@ class NormalDistribution(Distribution):
         self._fac = 1.0/math.sqrt(2*math.pi)/s
 
     def density(x):
-        m,s = self._args
+        m, s = self._args
         y = (x-m)/s
         return self._fac*math.exp(-0.5*y*y)
 
@@ -97,7 +97,7 @@ class UniformDistribution(Distribution):
         else:
             return self._fac
 
-default_distribution = UniformDistribution(0.0,1.0)
+default_distribution = UniformDistribution(0.0, 1.0)
 
 class CreateGenerator(object):
     def __init__(self, seed, dist=None):

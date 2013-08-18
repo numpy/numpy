@@ -54,7 +54,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                   force=0):
 
         distutils.cygwinccompiler.CygwinCCompiler.__init__ (self,
-                                                       verbose,dry_run, force)
+                                                       verbose, dry_run, force)
 
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
@@ -64,7 +64,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
             p.stdout.close()
-            result = re.search('(\d+\.\d+)',out_string)
+            result = re.search('(\d+\.\d+)', out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
 
@@ -215,11 +215,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             # added these lines to strip off windows drive letters
             # without it, .o files are placed next to .c files
             # instead of the build directory
-            drv,base = os.path.splitdrive(base)
+            drv, base = os.path.splitdrive(base)
             if drv:
                 base = base[1:]
 
-            if ext not in (self.src_extensions + ['.rc','.res']):
+            if ext not in (self.src_extensions + ['.rc', '.res']):
                 raise UnknownFileError(
                       "unknown file type '%s' (from '%s')" % \
                       (ext, src_name))
@@ -391,7 +391,7 @@ def _build_import_library_amd64():
         return
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
-    def_file = os.path.join(sys.prefix,'libs',def_name)
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
 
     log.info('Building import library (arch=AMD64): "%s" (from %s)' \
              % (out_file, dll_file))
@@ -405,9 +405,9 @@ def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
-    lib_file = os.path.join(sys.prefix,'libs',lib_name)
+    lib_file = os.path.join(sys.prefix, 'libs', lib_name)
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix,'libs',out_name)
+    out_file = os.path.join(sys.prefix, 'libs', out_name)
     if not os.path.isfile(lib_file):
         log.warn('Cannot build import library: "%s" not found' % (lib_file))
         return
@@ -419,14 +419,14 @@ def _build_import_library_x86():
     from numpy.distutils import lib2def
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
-    def_file = os.path.join(sys.prefix,'libs',def_name)
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
     nm_cmd = '%s %s' % (lib2def.DEFAULT_NM, lib_file)
     nm_output = lib2def.getnm(nm_cmd)
     dlist, flist = lib2def.parse_nm(nm_output)
     lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
 
     dll_name = "python%d%d.dll" % tuple(sys.version_info[:2])
-    args = (dll_name,def_file,out_file)
+    args = (dll_name, def_file, out_file)
     cmd = 'dlltool --dllname %s --def %s --output-lib %s' % args
     status = os.system(cmd)
     # for now, fail silently
@@ -465,7 +465,7 @@ if sys.platform == 'win32':
         # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0 on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
         if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
-            major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".",2)
+            major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
             _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
             del major, minor, rest
     except ImportError:

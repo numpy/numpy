@@ -688,7 +688,7 @@ def npv(rate, values):
 
     """
     values = np.asarray(values)
-    return (values / (1+rate)**np.arange(0,len(values))).sum(axis=0)
+    return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
 
 def mirr(values, finance_rate, reinvest_rate):
     """

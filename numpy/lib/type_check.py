@@ -3,9 +3,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
-           'isreal','nan_to_num','real','real_if_close',
-           'typename','asfarray','mintypecode','asscalar',
+__all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
+           'isreal', 'nan_to_num', 'real', 'real_if_close',
+           'typename', 'asfarray', 'mintypecode', 'asscalar',
            'common_type']
 
 import numpy.core.numeric as _nx
@@ -68,7 +68,7 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     l = []
     for t in intersection:
         i = _typecodes_by_elsize.index(t)
-        l.append((i,t))
+        l.append((i, t))
     l.sort()
     return l[0][1]
 
@@ -102,7 +102,7 @@ def asfarray(a, dtype=_nx.float_):
     dtype = _nx.obj2sctype(dtype)
     if not issubclass(dtype, _nx.inexact):
         dtype = _nx.float_
-    return asarray(a,dtype=dtype)
+    return asarray(a, dtype=dtype)
 
 def real(val):
     """
@@ -603,4 +603,3 @@ def common_type(*arrays):
         return array_type[1][precision]
     else:
         return array_type[0][precision]
-

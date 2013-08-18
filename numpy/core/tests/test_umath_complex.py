@@ -484,7 +484,7 @@ class TestCarg(object):
 
         # carg(+- 0 + yi) returns -pi/2 for y < 0
         yield check_real_value, ncu._arg, np.PZERO, -1, 0.5 * np.pi, False
-        yield check_real_value, ncu._arg, np.NZERO, -1,-0.5 * np.pi, False
+        yield check_real_value, ncu._arg, np.NZERO, -1, -0.5 * np.pi, False
 
     #def test_branch_cuts(self):
     #    _check_branch_cut(ncu._arg, -1, 1j, -1, 1)

@@ -19,7 +19,7 @@ class SunFCompiler(FCompiler):
         'compiler_f77' : ["f90"],
         'compiler_fix' : ["f90", "-fixed"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["<F90>","-Bdynamic","-G"],
+        'linker_so'    : ["<F90>", "-Bdynamic", "-G"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -35,12 +35,12 @@ class SunFCompiler(FCompiler):
             ret.append("-fixed")
         return ret
     def get_opt(self):
-        return ['-fast','-dalign']
+        return ['-fast', '-dalign']
     def get_arch(self):
         return ['-xtarget=generic']
     def get_libraries(self):
         opt = []
-        opt.extend(['fsu','sunmath','mvec'])
+        opt.extend(['fsu', 'sunmath', 'mvec'])
         return opt
 
 if __name__ == '__main__':

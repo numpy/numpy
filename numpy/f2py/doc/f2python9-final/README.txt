@@ -23,9 +23,9 @@ Note that this file includes the following JPG images
 
 PS:
 The HTML file f2python9.html is generated using TTH (http://hutchinson.belmont.ma.us/tth/)
-from the LaTeX source file `python9.tex'. The source can be found in the 
+from the LaTeX source file `python9.tex'. The source can be found in the
      src/
-directory. This directory contains also the following EPS files 
+directory. This directory contains also the following EPS files
      flow.eps
      structure.eps
      aerostructure.eps

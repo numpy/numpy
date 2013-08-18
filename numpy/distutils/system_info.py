@@ -1829,7 +1829,7 @@ class agg2_info(system_info):
         info = {'libraries':
                 [('agg2_src',
                   {'sources': agg2_srcs,
-                   'include_dirs':[os.path.join(src_dir, 'include')],
+                   'include_dirs': [os.path.join(src_dir, 'include')],
                   }
                  )],
                 'include_dirs': [os.path.join(src_dir, 'include')],

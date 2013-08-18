@@ -39,7 +39,7 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
-/* 
+/*
  * Returns -1 and sets an exception if *index is an invalid index for
  * an array of size max_item, otherwise adjusts it in place to be
  * 0 <= *index < max_item, and returns 0.

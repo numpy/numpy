@@ -13,5 +13,5 @@ Building modules...
         l,u = exp1([n])
   Wrote C/API module "foo" to file "foomodule.c"
   Documentation is saved to file "foomodule.tex"
-Run GNU make to build shared modules: 
+Run GNU make to build shared modules:
         gmake -f Makefile-<modulename> [test]

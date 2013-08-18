@@ -347,7 +347,7 @@ __ http://www.openexr.com/about.html
 
     Returns the value of x with the sign bit copied from y.  Works for any value,
     including Inf and NaN.
-    
+
 .. cfunction:: npy_half npy_half_spacing(npy_half h)
 
     This is the same for half-precision float as npy_spacing and npy_spacingf
@@ -376,5 +376,4 @@ __ http://www.openexr.com/about.html
 .. cfunction:: npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
 
    Low-level function which converts a 16-bit half-precision float
-   into a 64-bit double-precision float, stored as a uint64. 
-
+   into a 64-bit double-precision float, stored as a uint64.

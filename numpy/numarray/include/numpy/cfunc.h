@@ -75,4 +75,3 @@ typedef struct {
    CFUNC_DESCR(name, CFUNC_NSTRIDING, 0, 2, 1, 0, 0, 0, 0, 0, 0)
 
 #endif
-

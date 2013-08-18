@@ -100,7 +100,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  *
  * strides[0] == itemsize
  * strides[i] == shape[i - 1] * strides[i - 1]
- * 
+ *
  * According to these rules, a 0- or 1-dimensional array is either both
  * C- and F-contiguous, or neither; and an array with 2+ dimensions
  * can be C- or F- contiguous, or neither, but not both. Though there

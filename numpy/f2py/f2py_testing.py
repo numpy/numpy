@@ -15,10 +15,10 @@ def cmdline():
         else:
             args.append(a)
     f2py_opts = ' '.join(args)
-    return repeat,f2py_opts
+    return repeat, f2py_opts
 
 def run(runtest,test_functions,repeat=1):
-    l = [(t,repr(t.__doc__.split('\n')[1].strip())) for t in test_functions]
+    l = [(t, repr(t.__doc__.split('\n')[1].strip())) for t in test_functions]
     #l = [(t,'') for t in test_functions]
     start_memusage = memusage()
     diff_memusage = None
@@ -26,7 +26,7 @@ def run(runtest,test_functions,repeat=1):
     i = 0
     while i<repeat:
         i += 1
-        for t,fname in l:
+        for t, fname in l:
             runtest(t)
             if start_memusage is None: continue
             if diff_memusage is None:
@@ -39,8 +39,8 @@ def run(runtest,test_functions,repeat=1):
                           fname)
                     diff_memusage = diff_memusage2
     current_memusage = memusage()
-    print('run',repeat*len(test_functions),'tests',\
+    print('run', repeat*len(test_functions), 'tests',\
           'in %.2f seconds' % ((jiffies()-start_jiffies)/100.0))
     if start_memusage:
-        print('initial virtual memory size:',start_memusage,'bytes')
-        print('current virtual memory size:',current_memusage,'bytes')
+        print('initial virtual memory size:', start_memusage, 'bytes')
+        print('current virtual memory size:', current_memusage, 'bytes')

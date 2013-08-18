@@ -11,7 +11,7 @@ from numpy.compat import long, basestring
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
-writeable_filemodes = ["r+","w+"]
+writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
     "readonly":"r",
@@ -204,7 +204,7 @@ class memmap(ndarray):
                 raise ValueError("mode must be one of %s" %
                                  (valid_filemodes + list(mode_equivalents.keys())))
 
-        if hasattr(filename,'read'):
+        if hasattr(filename, 'read'):
             fid = filename
             own_file = False
         else:

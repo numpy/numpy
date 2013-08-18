@@ -866,9 +866,9 @@ for NumPy 2.0.
 The new behavior fits the conventional definition of correlation: inputs are
 never swapped, and the second argument is conjugated for complex arrays.""",
             DeprecationWarning)
-        return multiarray.correlate(a,v,mode)
+        return multiarray.correlate(a, v, mode)
     else:
-        return multiarray.correlate2(a,v,mode)
+        return multiarray.correlate2(a, v, mode)
 
 def convolve(a,v,mode='full'):
     """
@@ -953,7 +953,7 @@ def convolve(a,v,mode='full'):
     array([ 2.5])
 
     """
-    a,v = array(a, ndmin=1),array(v, ndmin=1)
+    a, v = array(a, ndmin=1), array(v, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
     if len(a) == 0 :
@@ -963,7 +963,7 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
-def outer(a,b):
+def outer(a, b):
     """
     Compute the outer product of two vectors.
 
@@ -1037,7 +1037,7 @@ def outer(a,b):
     """
     a = asarray(a)
     b = asarray(b)
-    return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
+    return a.ravel()[:, newaxis]*b.ravel()[newaxis,:]
 
 # try to import blas optimized dot if available
 try:
@@ -1169,8 +1169,8 @@ def tensordot(a, b, axes=2):
     try:
         iter(axes)
     except:
-        axes_a = list(range(-axes,0))
-        axes_b = list(range(0,axes))
+        axes_a = list(range(-axes, 0))
+        axes_b = list(range(0, axes))
     else:
         axes_a, axes_b = axes
     try:
@@ -1346,7 +1346,7 @@ def rollaxis(a, axis, start=0):
         start -= 1
     if axis==start:
         return a
-    axes = list(range(0,n))
+    axes = list(range(0, n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
@@ -1462,12 +1462,12 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     """
     if axis is not None:
-        axisa,axisb,axisc=(axis,)*3
+        axisa, axisb, axisc=(axis,)*3
     a = asarray(a).swapaxes(axisa, 0)
     b = asarray(b).swapaxes(axisb, 0)
     msg = "incompatible dimensions for cross product\n"\
           "(dimension must be 2 or 3)"
-    if (a.shape[0] not in [2,3]) or (b.shape[0] not in [2,3]):
+    if (a.shape[0] not in [2, 3]) or (b.shape[0] not in [2, 3]):
         raise ValueError(msg)
     if a.shape[0] == 2:
         if (b.shape[0] == 2):
@@ -1489,11 +1489,11 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             x = -a[2]*b[1]
             y = a[2]*b[0]
             z = a[0]*b[1] - a[1]*b[0]
-    cp = array([x,y,z])
+    cp = array([x, y, z])
     if cp.ndim == 1:
         return cp
     else:
-        return cp.swapaxes(0,axisc)
+        return cp.swapaxes(0, axisc)
 
 
 #Use numarray's printing function
@@ -1742,10 +1742,10 @@ def indices(dimensions, dtype=int):
     dimensions = tuple(dimensions)
     N = len(dimensions)
     if N == 0:
-        return array([],dtype=dtype)
+        return array([], dtype=dtype)
     res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        tmp = arange(dim,dtype=dtype)
+        tmp = arange(dim, dtype=dtype)
         tmp.shape = (1,)*i + (dim,)+(1,)*(N-i-1)
         newdim = dimensions[:i] + (1,)+ dimensions[i+1:]
         val = zeros(newdim, dtype)
@@ -2019,7 +2019,7 @@ def _maketup(descr, val):
     if fields is None:
         return val
     else:
-        res = [_maketup(fields[name][0],val) for name in dt.names]
+        res = [_maketup(fields[name][0], val) for name in dt.names]
         return tuple(res)
 
 def identity(n, dtype=None):
@@ -2699,7 +2699,7 @@ class errstate(object):
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement
     def __init__(self, **kwargs):
-        self.call = kwargs.pop('call',_Unspecified)
+        self.call = kwargs.pop('call', _Unspecified)
         self.kwargs = kwargs
 
     def __enter__(self):

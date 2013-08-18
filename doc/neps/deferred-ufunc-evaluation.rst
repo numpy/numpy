@@ -97,7 +97,7 @@ Here's how it might be used in NumPy.::
 There may be some surprising behavior, though.::
 
     with np.deferredstate(True):
-    
+
         d = a + b + c
         # d is deferred
 
@@ -159,7 +159,7 @@ The API would be expanded with a number of functions.
 ``int PyArray_CalculateAllDeferred()``
 
     This function forces all currently deferred calculations to occur.
-    
+
     For example, if the error state is set to ignore all, and
     np.seterr({all='raise'}), this would change what happens
     to already deferred expressions.  Thus, all the existing
@@ -185,7 +185,7 @@ The API would be expanded with a number of functions.
     as an operand.
 
 The Python API would be expanded as follows.
- 
+
  ``numpy.setdeferred(state)``
 
     Enables or disables deferred evaluation. True means to always
@@ -266,7 +266,7 @@ Other Implementation Details
 ============================
 
 When a deferred array is created, it gets references to all the
-operands of the UFunc, along with the UFunc itself.  The 
+operands of the UFunc, along with the UFunc itself.  The
 'DeferredUsageCount' is incremented for each operand, and later
 gets decremented when the deferred expression is calculated or
 the deferred array is destroyed.

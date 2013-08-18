@@ -50,7 +50,7 @@ def convertall(direc=os.path.curdir):
     <usesnumeric>.py.orig.  A new file named <usesnumeric>.py
     is then written with the updated code.
     """
-    files = glob.glob(os.path.join(direc,'*.py'))
+    files = glob.glob(os.path.join(direc, '*.py'))
     for afile in files:
         convertfile(afile)
 

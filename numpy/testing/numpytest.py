@@ -15,7 +15,7 @@ def importall(package):
     warnings.warn("`importall is deprecated, and will be remobed in numpy 1.9.0",
                   DeprecationWarning)
 
-    if isinstance(package,str):
+    if isinstance(package, str):
         package = __import__(package)
 
     package_name = package.__name__
@@ -24,7 +24,7 @@ def importall(package):
         subdir = os.path.join(package_dir, subpackage_name)
         if not os.path.isdir(subdir):
             continue
-        if not os.path.isfile(os.path.join(subdir,'__init__.py')):
+        if not os.path.isfile(os.path.join(subdir, '__init__.py')):
             continue
         name = package_name+'.'+subpackage_name
         try:

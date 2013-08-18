@@ -20,8 +20,8 @@ Pdescr = [
 # A plain list of tuples with values for testing:
 PbufferT = [
     # x     y                  z
-    ([3,2], [[6.,4.],[6.,4.]], 8),
-    ([4,3], [[7.,5.],[7.,5.]], 9),
+    ([3, 2], [[6., 4.], [6., 4.]], 8),
+    ([4, 3], [[7., 5.], [7., 5.]], 9),
     ]
 
 
@@ -60,8 +60,8 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3,2], (6j, 6., (asbytes('nn'), [6j,4j], [6.,4.], [1,2]), asbytes('NN'), True), asbytes('cc'), (asunicode('NN'), 6j), [[6.,4.],[6.,4.]], 8),
-    ([4,3], (7j, 7., (asbytes('oo'), [7j,5j], [7.,5.], [2,1]), asbytes('OO'), False), asbytes('dd'), (asunicode('OO'), 7j), [[7.,5.],[7.,5.]], 9),
+    ([3, 2], (6j, 6., (asbytes('nn'), [6j, 4j], [6., 4.], [1, 2]), asbytes('NN'), True), asbytes('cc'), (asunicode('NN'), 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., (asbytes('oo'), [7j, 5j], [7., 5.], [2, 1]), asbytes('OO'), False), asbytes('dd'), (asunicode('OO'), 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 
@@ -74,7 +74,7 @@ def normalize_descr(descr):
     for item in descr:
         dtype = item[1]
         if isinstance(dtype, str):
-            if dtype[0] not in ['|','<','>']:
+            if dtype[0] not in ['|', '<', '>']:
                 onebyte = dtype[1:] == "1"
                 if onebyte or dtype[0] in ['S', 'V', 'b']:
                     dtype = "|" + dtype
@@ -125,13 +125,13 @@ class create_zeros(object):
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
-        h = np.zeros((2,3), dtype=self._descr)
+        h = np.zeros((2, 3), dtype=self._descr)
         self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         self.assertTrue(h.dtype['z'].name == 'uint8')
         self.assertTrue(h.dtype['z'].char == 'B')
         self.assertTrue(h.dtype['z'].type == np.uint8)
         # A small check that data is ok
-        assert_equal(h['z'], np.zeros((2,3), dtype='u1'))
+        assert_equal(h['z'], np.zeros((2, 3), dtype='u1'))
 
 
 class test_create_zeros_plain(create_zeros, TestCase):
@@ -160,7 +160,7 @@ class create_values(object):
         h = np.array([self._buffer], dtype=self._descr)
         self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assertTrue(h.shape == (1,2))
+            self.assertTrue(h.shape == (1, 2))
         else:
             self.assertTrue(h.shape == (1,))
 
@@ -169,9 +169,9 @@ class create_values(object):
         h = np.array([[self._buffer]], dtype=self._descr)
         self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assertTrue(h.shape == (1,1,2))
+            self.assertTrue(h.shape == (1, 1, 2))
         else:
-            self.assertTrue(h.shape == (1,1))
+            self.assertTrue(h.shape == (1, 1))
 
 
 class test_create_values_plain_single(create_values, TestCase):
@@ -338,37 +338,37 @@ class test_read_values_nested_multiple(read_values_nested, TestCase):
 class TestEmptyField(TestCase):
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
-        a.dtype = [("int",   "<0i4"),("float", "<2f4")]
-        assert_(a['int'].shape == (5,0))
-        assert_(a['float'].shape == (5,2))
+        a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
+        assert_(a['int'].shape == (5, 0))
+        assert_(a['float'].shape == (5, 2))
 
 class TestCommonType(TestCase):
     def test_scalar_loses1(self):
-        res = np.find_common_type(['f4','f4','i2'],['f8'])
+        res = np.find_common_type(['f4', 'f4', 'i2'], ['f8'])
         assert_(res == 'f4')
     def test_scalar_loses2(self):
-        res = np.find_common_type(['f4','f4'],['i8'])
+        res = np.find_common_type(['f4', 'f4'], ['i8'])
         assert_(res == 'f4')
     def test_scalar_wins(self):
-        res = np.find_common_type(['f4','f4','i2'],['c8'])
+        res = np.find_common_type(['f4', 'f4', 'i2'], ['c8'])
         assert_(res == 'c8')
     def test_scalar_wins2(self):
-        res = np.find_common_type(['u4','i4','i4'],['f4'])
+        res = np.find_common_type(['u4', 'i4', 'i4'], ['f4'])
         assert_(res == 'f8')
     def test_scalar_wins3(self): # doesn't go up to 'f16' on purpose
-        res = np.find_common_type(['u8','i8','i8'],['f8'])
+        res = np.find_common_type(['u8', 'i8', 'i8'], ['f8'])
         assert_(res == 'f8')
 
 class TestMultipleFields(TestCase):
     def setUp(self):
-        self.ary = np.array([(1,2,3,4),(5,6,7,8)], dtype='i4,f4,i2,c8')
+        self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
     def _bad_call(self):
-        return self.ary['f0','f1']
+        return self.ary['f0', 'f1']
     def test_no_tuple(self):
         self.assertRaises(ValueError, self._bad_call)
     def test_return(self):
-        res = self.ary[['f0','f2']].tolist()
-        assert_(res == [(1,3), (5,7)])
+        res = self.ary[['f0', 'f2']].tolist()
+        assert_(res == [(1, 3), (5, 7)])
 
 if __name__ == "__main__":
     run_module_suite()

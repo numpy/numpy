@@ -170,7 +170,7 @@ class GnuFCompiler(FCompiler):
         if d is not None:
             g2c = self.g2c + '-pic'
             f = self.static_lib_format % (g2c, self.static_lib_extension)
-            if not os.path.isfile(os.path.join(d,f)):
+            if not os.path.isfile(os.path.join(d, f)):
                 g2c = self.g2c
         else:
             g2c = self.g2c

@@ -19,9 +19,9 @@ if __name__ == '__main__':
     subprocess.check_call(['python', 'prepare_bootstrap.py', '-p', pyver])
 
     # Build binaries
-    subprocess.check_call(['python', 'build.py', '-p', pyver], 
+    subprocess.check_call(['python', 'build.py', '-p', pyver],
                           cwd = 'bootstrap-%s' % pyver)
 
     # Build installer using nsis
-    subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'], 
+    subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'],
                           cwd = 'bootstrap-%s' % pyver)

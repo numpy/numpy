@@ -14,13 +14,13 @@ C expertise is required for using this tool.
 Features include:
 
    *** All basic Fortran types are supported:
-         integer[ | *1 | *2 | *4 | *8 ], logical[ | *1 | *2 | *4 | *8 ], 
+         integer[ | *1 | *2 | *4 | *8 ], logical[ | *1 | *2 | *4 | *8 ],
          character[ | *(*) | *1 | *2 | *3 | ... ]
          real[ | *4 | *8 | *16 ], double precision,
          complex[ | *8 | *16 | *32 ]
 
    *** Multi-dimensional arrays of (almost) all basic types.
-       Dimension specifications: 
+       Dimension specifications:
 		 <dim> | <start>:<end> | * | :
 
    *** Supported attributes:
@@ -63,7 +63,7 @@ Features include:
 
    *** f2py users list is available for support, feedback, etc.
 
-More information about f2py, see 
+More information about f2py, see
 
      http://cens.ioc.ee/projects/f2py2e/
 

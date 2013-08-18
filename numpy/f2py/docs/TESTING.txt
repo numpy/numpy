@@ -35,7 +35,7 @@ Tests
   about the failure.
 
 * Test intent(in), intent(out) scalar arguments,
-  scalars returned by F77 functions 
+  scalars returned by F77 functions
   and F90 module functions::
 
     tests/f77/return_integer.py

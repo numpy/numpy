@@ -121,4 +121,3 @@ typedef enum
 #define MSK_NEG_ZERO BIT(NEG_ZERO_BIT)
 #define MSK_INDETERM BIT(INDETERM_BIT)
 #define MSK_BUG      BIT(BUG_BIT)
-

@@ -500,7 +500,7 @@ half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
 static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
 static void
-@name@_ctype_power(@type@ a, @type@ b, @type@ *out) 
+@name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = _basic_@name@_pow(a, b);
 }

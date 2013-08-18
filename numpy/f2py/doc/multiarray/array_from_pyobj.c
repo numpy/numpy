@@ -311,9 +311,9 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
 	if (arr->dimensions[i]!=dims[i]) {
 	  fprintf(stderr,"%d-th dimension must be fixed to %d but got %d\n",
 		  i,dims[i],arr->dimensions[i]);
-	  return 1;	
+	  return 1;
 	}
-	if (!dims[i]) dims[i] = 1;	
+	if (!dims[i]) dims[i] = 1;
       } else
 	dims[i] = arr->dimensions[i];
   }

@@ -39,7 +39,7 @@ class TestIndexing(TestCase):
     def test_ellipsis_index(self):
         # Ellipsis index does not create a view
         a = np.array([[1, 2, 3],
-                      [4 ,5, 6],
+                      [4, 5, 6],
                       [7, 8, 9]])
         assert_equal(a[...], a)
         assert_(a[...] is a)
@@ -47,7 +47,7 @@ class TestIndexing(TestCase):
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
         assert_equal(a[0, ...], a[0])
-        assert_equal(a[0, ...], a[0, :])
+        assert_equal(a[0, ...], a[0,:])
         assert_equal(a[..., 0], a[:, 0])
 
         # Slicing with ellipsis always results
@@ -57,7 +57,7 @@ class TestIndexing(TestCase):
     def test_single_int_index(self):
         # Single integer index selects one row
         a = np.array([[1, 2, 3],
-                      [4 ,5, 6],
+                      [4, 5, 6],
                       [7, 8, 9]])
 
         assert_equal(a[0], [1, 2, 3])
@@ -71,7 +71,7 @@ class TestIndexing(TestCase):
     def test_single_bool_index(self):
         # Single boolean index
         a = np.array([[1, 2, 3],
-                      [4 ,5, 6],
+                      [4, 5, 6],
                       [7, 8, 9]])
 
         # Python boolean converts to integer
@@ -108,7 +108,7 @@ class TestIndexing(TestCase):
         # Indexing a 2-dimensional array with
         # 2-dimensional boolean array
         a = np.array([[1, 2, 3],
-                      [4 ,5, 6],
+                      [4, 5, 6],
                       [7, 8, 9]])
         b = np.array([[ True, False,  True],
                       [False,  True, False],
@@ -140,8 +140,8 @@ class TestMultiIndexingAutomated(TestCase):
              will usually not be the same one. They are *not* tested.
     """
     def setUp(self):
-        self.a = np.arange(np.prod([3,1,5,6])).reshape(3,1,5,6)
-        self.b = np.empty((3,0,5,6))
+        self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
+        self.b = np.empty((3, 0, 5, 6))
         self.complex_indices = ['skip', Ellipsis,
             0,
             # Boolean indices, up to 3-d for some special cases of eating up
@@ -154,19 +154,19 @@ class TestMultiIndexingAutomated(TestCase):
             slice(-5, 5, 2),
             slice(1, 1, 100),
             slice(4, -1, -2),
-            slice(None,None,-3),
+            slice(None, None, -3),
             # Some Fancy indexes:
-            np.empty((0,1,1), dtype=np.intp), # empty broadcastable
-            np.array([0,1,-2]),
-            np.array([[2],[0],[1]]),
-            np.array([[0,-1], [0,1]]),
-            np.array([2,-1]),
+            np.empty((0, 1, 1), dtype=np.intp), # empty broadcastable
+            np.array([0, 1, -2]),
+            np.array([[2], [0], [1]]),
+            np.array([[0, -1], [0, 1]]),
+            np.array([2, -1]),
             np.zeros([1]*31, dtype=int), # trigger too large array.
             np.array([0., 1.])] # invalid datatype
         # Some simpler indices that still cover a bit more
         self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
         # Very simple ones to fill the rest:
-        self.fill_indices = [slice(None,None), 0]
+        self.fill_indices = [slice(None, None), 0]
 
 
     def _get_multi_index(self, arr, indices):
@@ -226,7 +226,7 @@ class TestMultiIndexingAutomated(TestCase):
                 if ellipsis_pos is None:
                     ellipsis_pos = i
                     continue # do not increment ndim counter
-                in_indices[i] = slice(None,None)
+                in_indices[i] = slice(None, None)
                 ndim += 1
                 continue
             if isinstance(indx, slice):
@@ -258,7 +258,7 @@ class TestMultiIndexingAutomated(TestCase):
             return arr.copy(), no_copy
 
         if ellipsis_pos is not None:
-            in_indices[ellipsis_pos:ellipsis_pos+1] = [slice(None,None)] * (arr.ndim - ndim)
+            in_indices[ellipsis_pos:ellipsis_pos+1] = [slice(None, None)] * (arr.ndim - ndim)
 
         for ax, indx in enumerate(in_indices):
             if isinstance(indx, slice):
@@ -481,8 +481,8 @@ class TestMultiIndexingAutomated(TestCase):
         # consistency with arr[boolean_array,] also no broadcasting
         # is done at all
         self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool),))
-        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[...,0],))
-        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[None,...],))
+        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
+        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
 
 
     def test_multidim(self):
@@ -492,7 +492,7 @@ class TestMultiIndexingAutomated(TestCase):
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file seperatly.
             warnings.filterwarnings('error', '', DeprecationWarning)
-            for simple_pos in [0,2,3]:
+            for simple_pos in [0, 2, 3]:
                 tocheck = [self.fill_indices, self.complex_indices,
                            self.fill_indices, self.fill_indices]
                 tocheck[simple_pos] = self.simple_indices
@@ -502,13 +502,13 @@ class TestMultiIndexingAutomated(TestCase):
                     self._check_multi_index(self.b, index)
 
         # Check very simple item getting:
-        self._check_multi_index(self.a, (0,0,0,0))
-        self._check_multi_index(self.b, (0,0,0,0))
+        self._check_multi_index(self.a, (0, 0, 0, 0))
+        self._check_multi_index(self.b, (0, 0, 0, 0))
         # Also check (simple cases of) too many indices:
-        assert_raises(IndexError, self.a.__getitem__, (0,0,0,0,0))
-        assert_raises(IndexError, self.a.__setitem__, (0,0,0,0,0), 0)
-        assert_raises(IndexError, self.a.__getitem__, (0,0,[1],0,0))
-        assert_raises(IndexError, self.a.__setitem__, (0,0,[1],0,0), 0)
+        assert_raises(IndexError, self.a.__getitem__, (0, 0, 0, 0, 0))
+        assert_raises(IndexError, self.a.__setitem__, (0, 0, 0, 0, 0), 0)
+        assert_raises(IndexError, self.a.__getitem__, (0, 0, [1], 0, 0))
+        assert_raises(IndexError, self.a.__setitem__, (0, 0, [1], 0, 0), 0)
 
 
     def test_1d(self):

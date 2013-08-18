@@ -20,5 +20,5 @@ def filter(a):
     }
     """
     b = zeros_like(a)
-    weave.inline(code,['a','b'])
+    weave.inline(code, ['a', 'b'])
     return b

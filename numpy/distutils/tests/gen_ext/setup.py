@@ -28,16 +28,16 @@ C END FILE FIB3.F
 def source_func(ext, build_dir):
     import os
     from distutils.dep_util import newer
-    target = os.path.join(build_dir,'fib3.f')
+    target = os.path.join(build_dir, 'fib3.f')
     if newer(__file__, target):
-        f = open(target,'w')
+        f = open(target, 'w')
         f.write(fib3_f)
         f.close()
     return [target]
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('gen_ext',parent_package,top_path)
+    config = Configuration('gen_ext', parent_package, top_path)
     config.add_extension('fib3',
                          [source_func]
                          )

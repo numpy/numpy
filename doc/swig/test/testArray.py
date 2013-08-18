@@ -115,7 +115,7 @@ class Array1TestCase(unittest.TestCase):
         a = self.array1.view()
         self.failUnless(isinstance(a, np.ndarray))
         self.failUnless(len(a) == self.length)
-        self.failUnless((a == [1,2,3,4,5]).all())
+        self.failUnless((a == [1, 2, 3, 4, 5]).all())
 
 ######################################################################
 
@@ -138,7 +138,7 @@ class Array2TestCase(unittest.TestCase):
 
     def testConstructor2(self):
         "Test Array2 array constructor"
-        na = np.zeros((3,4), dtype="l")
+        na = np.zeros((3, 4), dtype="l")
         aa = Array.Array2(na)
         self.failUnless(isinstance(aa, Array.Array2))
 

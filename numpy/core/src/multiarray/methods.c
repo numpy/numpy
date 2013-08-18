@@ -1992,7 +1992,7 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static PyObject *numpycore = NULL;
     char * kwords[] = {"b", "out", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwords, &b, &out)) { 
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwords, &b, &out)) {
         return NULL;
     }
 

@@ -65,7 +65,7 @@ When applied to a variable, one would get:
 
 int foo(int * NPY_UNUSED(dummy))
 
-expanded to 
+expanded to
 
 int foo(int * __NPY_UNUSED_TAGGEDdummy __COMP_NPY_UNUSED)
 

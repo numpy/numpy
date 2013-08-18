@@ -331,11 +331,11 @@ for scalar in scalars:
             # 1-D
             basic,
             # 2-D C-contiguous
-            basic.reshape((3,5)),
+            basic.reshape((3, 5)),
             # 2-D F-contiguous
-            basic.reshape((3,5)).T,
+            basic.reshape((3, 5)).T,
             # 2-D non-contiguous
-            basic.reshape((3,5))[::-1,::2],
+            basic.reshape((3, 5))[::-1, ::2],
         ])
 
 # More complicated record arrays.
@@ -354,8 +354,8 @@ Pdescr = [
 # A plain list of tuples with values for testing:
 PbufferT = [
     # x     y                  z
-    ([3,2], [[6.,4.],[6.,4.]], 8),
-    ([4,3], [[7.,5.],[7.,5.]], 9),
+    ([3, 2], [[6., 4.], [6., 4.]], 8),
+    ([4, 3], [[7., 5.], [7., 5.]], 9),
     ]
 
 
@@ -394,8 +394,8 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc', ('NN', 6j), [[6.,4.],[6.,4.]], 8),
-    ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd', ('OO', 7j), [[7.,5.],[7.,5.]], 9),
+    ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True), 'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False), 'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 record_arrays = [
@@ -520,7 +520,7 @@ def test_bad_magic_args():
 def test_large_header():
     s = BytesIO()
     d = {'a':1,'b':2}
-    format.write_array_header_1_0(s,d)
+    format.write_array_header_1_0(s, d)
 
     s = BytesIO()
     d = {'a':1,'b':2,'c':'x'*256*256}
@@ -538,18 +538,18 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
-    d = {"shape":(1,2),
+    d = {"shape":(1, 2),
          "descr":"x"}
     s = BytesIO()
-    format.write_array_header_1_0(s,d)
+    format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
-    d = {"shape":(1,2),
+    d = {"shape":(1, 2),
          "fortran_order":False,
          "descr":"x",
          "extrakey":-1}
     s = BytesIO()
-    format.write_array_header_1_0(s,d)
+    format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
 if __name__ == "__main__":

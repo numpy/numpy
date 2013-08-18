@@ -400,5 +400,3 @@ Miscellanea
    ma.ediff1d
    ma.indices
    ma.where
-
-

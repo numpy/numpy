@@ -69,12 +69,12 @@ def changeimports(fstr, name, newname):
 
     name_ = name
     if ('.' in name):
-        name_ = name.replace('.','_')
+        name_ = name.replace('.', '_')
 
     fstr = re.sub(r'(import\s+[^,\n\r]+,\s*)(%s)' % name,
                   "\\1%s as %s" % (newname, name), fstr)
     fstr = fstr.replace(importasstr, 'import %s as ' % newname)
-    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name_))
+    fstr = fstr.replace(importstr, 'import %s as %s' % (newname, name_))
     if (name_ != name):
         fstr = fstr.replace(name, name_)
 
@@ -82,7 +82,7 @@ def changeimports(fstr, name, newname):
     Nlen = len(fromstr)
     Nlen2 = len("from %s import " % newname)
     while True:
-        found = fstr.find(fromstr,ind)
+        found = fstr.find(fromstr, ind)
         if (found < 0):
             break
         ind = found + Nlen
@@ -106,16 +106,16 @@ def addimport(astr):
 
 def replaceattr(astr):
     astr = astr.replace(".imaginary", ".imag")
-    astr = astr.replace(".byteswapped()",".byteswap(False)")
+    astr = astr.replace(".byteswapped()", ".byteswap(False)")
     astr = astr.replace(".byteswap()", ".byteswap(True)")
     astr = astr.replace(".isaligned()", ".flags.aligned")
-    astr = astr.replace(".iscontiguous()",".flags.contiguous")
-    astr = astr.replace(".is_fortran_contiguous()",".flags.fortran")
-    astr = astr.replace(".itemsize()",".itemsize")
-    astr = astr.replace(".size()",".size")
-    astr = astr.replace(".nelements()",".size")
-    astr = astr.replace(".typecode()",".dtype.char")
-    astr = astr.replace(".stddev()",".std()")
+    astr = astr.replace(".iscontiguous()", ".flags.contiguous")
+    astr = astr.replace(".is_fortran_contiguous()", ".flags.fortran")
+    astr = astr.replace(".itemsize()", ".itemsize")
+    astr = astr.replace(".size()", ".size")
+    astr = astr.replace(".nelements()", ".size")
+    astr = astr.replace(".typecode()", ".dtype.char")
+    astr = astr.replace(".stddev()", ".std()")
     astr = astr.replace(".getshape()", ".shape")
     astr = astr.replace(".getflat()", ".ravel()")
     astr = astr.replace(".getreal", ".real")
@@ -123,9 +123,9 @@ def replaceattr(astr):
     astr = astr.replace(".getimaginary", ".imag")
 
     # preserve uses of flat that should be o.k.
-    tmpstr = flatindex_re.sub(r"@@@@\2",astr)
+    tmpstr = flatindex_re.sub(r"@@@@\2", astr)
     # replace other uses of flat
-    tmpstr = tmpstr.replace(".flat",".ravel()")
+    tmpstr = tmpstr.replace(".flat", ".ravel()")
     # put back .flat where it was valid
     astr = tmpstr.replace("@@@@", ".flat")
     return astr
@@ -222,7 +222,7 @@ def convertall(direc=os.path.curdir, orig=1):
     <usesnumeric>.py.orig.  A new file named <usesnumeric>.py
     is then written with the updated code.
     """
-    files = glob.glob(os.path.join(direc,'*.py'))
+    files = glob.glob(os.path.join(direc, '*.py'))
     for afile in files:
         if afile[-8:] == 'setup.py': continue
         convertfile(afile, orig)
@@ -234,16 +234,16 @@ def convertsrc(direc=os.path.curdir, ext=None, orig=1):
     directory with extension give by list ext (if ext is None, then all files are
     replaced)."""
     if ext is None:
-        files = glob.glob(os.path.join(direc,'*'))
+        files = glob.glob(os.path.join(direc, '*'))
     else:
         files = []
         for aext in ext:
-            files.extend(glob.glob(os.path.join(direc,"*.%s" % aext)))
+            files.extend(glob.glob(os.path.join(direc, "*.%s" % aext)))
     for afile in files:
         fid = open(afile)
         fstr = fid.read()
         fid.close()
-        fstr, n = header_re.subn(r'numpy/libnumarray.h',fstr)
+        fstr, n = header_re.subn(r'numpy/libnumarray.h', fstr)
         if n > 0:
             if orig:
                 base, ext = os.path.splitext(afile)
@@ -254,7 +254,7 @@ def convertsrc(direc=os.path.curdir, ext=None, orig=1):
 
 def _func(arg, dirname, fnames):
     convertall(dirname, orig=0)
-    convertsrc(dirname, ['h','c'], orig=0)
+    convertsrc(dirname, ['h', 'c'], orig=0)
 
 def converttree(direc=os.path.curdir):
     """Convert all .py files in the tree given

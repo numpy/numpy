@@ -16,7 +16,7 @@ else:          BadListError = ValueError
 # Add the distutils-generated build directory to the python search path and then
 # import the extension module
 libDir = "lib.%s-%s" % (get_platform(), sys.version[:3])
-sys.path.insert(0,os.path.join("build", libDir))
+sys.path.insert(0, os.path.join("build", libDir))
 import Farray
 
 ######################################################################
@@ -36,7 +36,7 @@ class FarrayTestCase(unittest.TestCase):
         "Test Farray copy constructor"
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i,j] = i + j
+                self.array[i, j] = i + j
         arrayCopy = Farray.Farray(self.array)
         self.failUnless(arrayCopy == self.array)
 
@@ -66,10 +66,10 @@ class FarrayTestCase(unittest.TestCase):
         n = self.ncols
         for i in range(m):
             for j in range(n):
-                self.array[i,j] = i*j
+                self.array[i, j] = i*j
         for i in range(m):
             for j in range(n):
-                self.failUnless(self.array[i,j] == i*j)
+                self.failUnless(self.array[i, j] == i*j)
 
     def testSetBad1(self):
         "Test Farray __setitem__ method, negative row"
@@ -114,7 +114,7 @@ class FarrayTestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i,j] = i+j
+                self.array[i, j] = i+j
         self.failUnless(self.array.asString() == result)
 
     def testStr(self):
@@ -128,20 +128,20 @@ class FarrayTestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i,j] = i-j
+                self.array[i, j] = i-j
         self.failUnless(str(self.array) == result)
 
     def testView(self):
         "Test Farray view method"
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i,j] = i+j
+                self.array[i, j] = i+j
         a = self.array.view()
         self.failUnless(isinstance(a, np.ndarray))
         self.failUnless(a.flags.f_contiguous)
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.failUnless(a[i,j] == i+j)
+                self.failUnless(a[i, j] == i+j)
 
 ######################################################################
 

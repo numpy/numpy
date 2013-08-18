@@ -142,7 +142,7 @@ The sections of the docstring are:
 2. **Deprecation warning**
 
    A section (use if applicable) to warn users that the object is deprecated.
-   Section contents should include: 
+   Section contents should include:
 
    * In what Numpy version the object was deprecated, and when it will be
      removed.
@@ -150,7 +150,7 @@ The sections of the docstring are:
    * Reason for deprecation if this is useful information (e.g., object
      is superseded, duplicates functionality found elsewhere, etc.).
 
-   * New recommended way of obtaining the same functionality. 
+   * New recommended way of obtaining the same functionality.
 
    This section should use the note Sphinx directive instead of an
    underlined section header.
@@ -182,7 +182,7 @@ The sections of the docstring are:
      x : type
          Description of parameter `x`.
 
-   Enclose variables in single backticks.  The colon must be preceded 
+   Enclose variables in single backticks.  The colon must be preceded
    by a space, or omitted if the type is absent.
 
    For the parameter types, be as precise as possible.  Below are a
@@ -195,7 +195,7 @@ The sections of the docstring are:
      filename : str
      copy : bool
      dtype : data-type
-     iterable : iterable object     
+     iterable : iterable object
      shape : int or tuple of int
      files : list of str
 
@@ -370,7 +370,7 @@ The sections of the docstring are:
    Referencing sources of a temporary nature, like web pages, is
    discouraged.  References are meant to augment the docstring, but
    should not be required to understand it.  References are numbered, starting
-   from one, in the order in which they are cited.  
+   from one, in the order in which they are cited.
 
 11. **Examples**
 
@@ -397,7 +397,7 @@ The sections of the docstring are:
 
      >>> import numpy.random
      >>> np.random.rand(2)
-     array([ 0.35773152,  0.38568979])  #random     
+     array([ 0.35773152,  0.38568979])  #random
 
    You can run examples as doctests using::
 
@@ -427,7 +427,7 @@ The sections of the docstring are:
    *matplotlib* for plotting, but should import it explicitly, e.g.,
    ``import matplotlib.pyplot as plt``.
 
-   
+
 Documenting classes
 -------------------
 
@@ -498,7 +498,7 @@ Document these as you would any other function.  Do not include
 ``self`` in the list of parameters.  If a method has an equivalent function
 (which is the case for many ndarray methods for example), the function
 docstring should contain the detailed documentation, and the method docstring
-should refer to it.  Only put brief summary and **See Also** sections in the 
+should refer to it.  Only put brief summary and **See Also** sections in the
 method docstring.
 
 
@@ -514,7 +514,7 @@ instances a useful docstring, we do the following:
 * Multiple instances: If multiple instances are exposed, docstrings
   for each instance are written and assigned to the instances'
   ``__doc__`` attributes at run time. The class is documented as usual, and
-  the exposed instances can be mentioned in the **Notes** and **See Also** 
+  the exposed instances can be mentioned in the **Notes** and **See Also**
   sections.
 
 
@@ -553,16 +553,16 @@ hard to get a good overview of all functionality provided by looking at the
 source file(s) or the ``__all__`` dict.
 
 Note that license and author info, while often included in source files, do not
-belong in docstrings. 
+belong in docstrings.
 
 
 Other points to keep in mind
 ----------------------------
-* Equations : as discussed in the **Notes** section above, LaTeX formatting 
-  should be kept to a minimum.  Often it's possible to show equations as 
-  Python code or pseudo-code instead, which is much more readable in a 
-  terminal.  For inline display use double backticks (like ``y = np.sin(x)``). 
-  For display with blank lines above and below, use a double colon and indent 
+* Equations : as discussed in the **Notes** section above, LaTeX formatting
+  should be kept to a minimum.  Often it's possible to show equations as
+  Python code or pseudo-code instead, which is much more readable in a
+  terminal.  For inline display use double backticks (like ``y = np.sin(x)``).
+  For display with blank lines above and below, use a double colon and indent
   the code, like::
 
     end of previous sentence::
@@ -597,7 +597,7 @@ output. New paragraphs are marked with a blank line.
 
 Use *italics*, **bold**, and ``monospace`` if needed in any explanations
 (but not for variable names and doctest code or multi-line code).
-Variable, module, function, and class names should be written between 
+Variable, module, function, and class names should be written between
 single back-ticks (```numpy```).
 
 A more extensive example of reST markup can be found in `this example

@@ -987,7 +987,7 @@ array_subscript_fancy(PyArrayObject *self, PyObject *op, int fancy)
     int oned;
     PyObject *other;
     PyArrayMapIterObject *mit;
-    
+
     oned = ((PyArray_NDIM(self) == 1) &&
             !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
 
@@ -1030,7 +1030,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
 {
     int fancy;
     npy_intp vals[NPY_MAXDIMS];
-    
+
     /* Integer index */
     if (PyArray_IsIntegerScalar(op) || (PyIndex_Check(op) &&
                                     !PySequence_Check(op))) {
@@ -1212,7 +1212,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                         "0-dimensional arrays can't be indexed");
         return NULL;
     }
-    
+
     else {
         fancy = fancy_indexing_check(op);
         if (fancy != SOBJ_NOTFANCY) {
@@ -1226,8 +1226,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     if (ret == NULL) {
         return NULL;
     }
-    
-    if (PyArray_Check(ret) && PyArray_NDIM((PyArrayObject *)ret) == 0 
+
+    if (PyArray_Check(ret) && PyArray_NDIM((PyArrayObject *)ret) == 0
                                                 && !_check_ellipses(op)) {
         return PyArray_Return((PyArrayObject *)ret);
     }
@@ -2002,7 +2002,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
      */
 
     /* convert all inputs to iterators */
-    if (PyArray_Check(indexobj) && PyArray_ISBOOL(indexobj) 
+    if (PyArray_Check(indexobj) && PyArray_ISBOOL(indexobj)
                                 && !PyArray_IsZeroDim(indexobj)) {
         mit->numiter = _nonzero_indices(indexobj, mit->iters);
         if (mit->numiter < 0) {
@@ -2124,10 +2124,10 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     int fancy = fancy_indexing_check(index);
 
     /*
-     * MapIterNew supports a special mode that allows more efficient 1-d iteration, 
-     * but clients that want to make use of this need to use a different API just 
+     * MapIterNew supports a special mode that allows more efficient 1-d iteration,
+     * but clients that want to make use of this need to use a different API just
      * for the one-d cases. For the public interface this is confusing, so we
-     * unconditionally disable the 1-d optimized mode, and use the generic 
+     * unconditionally disable the 1-d optimized mode, and use the generic
      * implementation in all cases.
      */
     int oned = 0;

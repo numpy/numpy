@@ -10,32 +10,32 @@ rlevel = 1
 class TestRegression(TestCase):
     def test_masked_array_create(self,level=rlevel):
         """Ticket #17"""
-        x = np.ma.masked_array([0,1,2,3,0,4,5,6],mask=[0,0,0,1,1,1,0,0])
-        assert_array_equal(np.ma.nonzero(x),[[1,2,6,7]])
+        x = np.ma.masked_array([0, 1, 2, 3, 0, 4, 5, 6], mask=[0, 0, 0, 1, 1, 1, 0, 0])
+        assert_array_equal(np.ma.nonzero(x), [[1, 2, 6, 7]])
 
     def test_masked_array(self,level=rlevel):
         """Ticket #61"""
-        x = np.ma.array(1,mask=[1])
+        x = np.ma.array(1, mask=[1])
 
     def test_mem_masked_where(self,level=rlevel):
         """Ticket #62"""
         from numpy.ma import masked_where, MaskType
-        a = np.zeros((1,1))
+        a = np.zeros((1, 1))
         b = np.zeros(a.shape, MaskType)
-        c = masked_where(b,a)
+        c = masked_where(b, a)
         a-c
 
     def test_masked_array_multiply(self,level=rlevel):
         """Ticket #254"""
-        a = np.ma.zeros((4,1))
-        a[2,0] = np.ma.masked
-        b = np.zeros((4,2))
+        a = np.ma.zeros((4, 1))
+        a[2, 0] = np.ma.masked
+        b = np.zeros((4, 2))
         a*b
         b*a
 
     def test_masked_array_repeat(self, level=rlevel):
         """Ticket #271"""
-        np.ma.array([1],mask=False).repeat(10)
+        np.ma.array([1], mask=False).repeat(10)
 
     def test_masked_array_repr_unicode(self):
         """Ticket #1256"""
@@ -63,8 +63,8 @@ class TestRegression(TestCase):
 
     def test_ddof_corrcoef(self):
         # See gh-3336
-        x = np.ma.masked_equal([1,2,3,4,5], 4)
-        y = np.array([2,2.5,3.1,3,5])
+        x = np.ma.masked_equal([1, 2, 3, 4, 5], 4)
+        y = np.array([2, 2.5, 3.1, 3, 5])
         r0 = np.ma.corrcoef(x, y, ddof=0)
         r1 = np.ma.corrcoef(x, y, ddof=1)
         # ddof should not have an effect (it gets cancelled out)

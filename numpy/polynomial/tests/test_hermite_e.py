@@ -9,15 +9,15 @@ from numpy.polynomial.polynomial import polyval
 from numpy.testing import *
 
 He0 = np.array([ 1 ])
-He1 = np.array([ 0 , 1 ])
-He2 = np.array([ -1 ,0 , 1 ])
-He3 = np.array([ 0 , -3 ,0 , 1 ])
-He4 = np.array([ 3 ,0 , -6 ,0 , 1 ])
-He5 = np.array([ 0 , 15 ,0 , -10 ,0 , 1 ])
-He6 = np.array([ -15 ,0 , 45 ,0 , -15 ,0 , 1 ])
-He7 = np.array([ 0 , -105 ,0 , 105 ,0 , -21 ,0 , 1 ])
-He8 = np.array([ 105 ,0 , -420 ,0 , 210 ,0 , -28 ,0 , 1 ])
-He9 = np.array([ 0 , 945 ,0 , -1260 ,0 , 378 ,0 , -36 ,0 , 1 ])
+He1 = np.array([ 0, 1 ])
+He2 = np.array([ -1, 0, 1 ])
+He3 = np.array([ 0, -3, 0, 1 ])
+He4 = np.array([ 3, 0, -6, 0, 1 ])
+He5 = np.array([ 0, 15, 0, -10, 0, 1 ])
+He6 = np.array([ -15, 0, 45, 0, -15, 0, 1 ])
+He7 = np.array([ 0, -105, 0, 105, 0, -21, 0, 1 ])
+He8 = np.array([ 105, 0, -420, 0, 210, 0, -28, 0, 1 ])
+He9 = np.array([ 0, 945, 0, -1260, 0, 378, 0, -36, 0, 1 ])
 
 Helist = [He0, He1, He2, He3, He4, He5, He6, He7, He8, He9]
 
@@ -46,8 +46,8 @@ class TestArithmetic(TestCase) :
     def test_hermeadd(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
                 res = herme.hermeadd([0]*i + [1], [0]*j + [1])
@@ -56,8 +56,8 @@ class TestArithmetic(TestCase) :
     def test_hermesub(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
                 res = herme.hermesub([0]*i + [1], [0]*j + [1])
@@ -65,7 +65,7 @@ class TestArithmetic(TestCase) :
 
     def test_hermemulx(self):
         assert_equal(herme.hermemulx([0]), [0])
-        assert_equal(herme.hermemulx([1]), [0,1])
+        assert_equal(herme.hermemulx([1]), [0, 1])
         for i in range(1, 5):
             ser = [0]*i + [1]
             tgt = [0]*(i - 1) + [i, 0, 1]
@@ -77,7 +77,7 @@ class TestArithmetic(TestCase) :
             pol1 = [0]*i + [1]
             val1 = herme.hermeval(self.x, pol1)
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 pol2 = [0]*j + [1]
                 val2 = herme.hermeval(self.x, pol2)
                 pol3 = herme.hermemul(pol1, pol2)
@@ -88,7 +88,7 @@ class TestArithmetic(TestCase) :
     def test_hermediv(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = herme.hermeadd(ci, cj)
@@ -113,7 +113,7 @@ class TestEvaluation(TestCase) :
         assert_equal(herme.hermeval([], [1]).size, 0)
 
         #check normal input)
-        x = np.linspace(-1,1)
+        x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Helist]
         for i in range(10) :
             msg = "At i=%d" % i
@@ -127,8 +127,8 @@ class TestEvaluation(TestCase) :
             dims = [2]*i
             x = np.zeros(dims)
             assert_equal(herme.hermeval(x, [1]).shape, dims)
-            assert_equal(herme.hermeval(x, [1,0]).shape, dims)
-            assert_equal(herme.hermeval(x, [1,0,0]).shape, dims)
+            assert_equal(herme.hermeval(x, [1, 0]).shape, dims)
+            assert_equal(herme.hermeval(x, [1, 0, 0]).shape, dims)
 
     def test_hermeval2d(self):
         x1, x2, x3 = self.x
@@ -143,9 +143,9 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herme.hermeval2d(z, z, self.c2d)
-        assert_(res.shape == (2,3))
+        assert_(res.shape == (2, 3))
 
     def test_hermeval3d(self):
         x1, x2, x3 = self.x
@@ -160,9 +160,9 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herme.hermeval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2,3))
+        assert_(res.shape == (2, 3))
 
     def test_hermegrid2d(self):
         x1, x2, x3 = self.x
@@ -174,7 +174,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herme.hermegrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3)*2)
 
@@ -188,7 +188,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herme.hermegrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3)*3)
 
@@ -199,7 +199,7 @@ class TestIntegral(TestCase):
         # check exceptions
         assert_raises(ValueError, herme.hermeint, [0], .5)
         assert_raises(ValueError, herme.hermeint, [0], -1)
-        assert_raises(ValueError, herme.hermeint, [0], 1, [0,0])
+        assert_raises(ValueError, herme.hermeint, [0], 1, [0, 0])
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -237,7 +237,7 @@ class TestIntegral(TestCase):
 
         # check multiple integrations with default k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -247,7 +247,7 @@ class TestIntegral(TestCase):
 
         # check multiple integrations with defined k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -257,7 +257,7 @@ class TestIntegral(TestCase):
 
         # check multiple integrations with lbnd
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -267,7 +267,7 @@ class TestIntegral(TestCase):
 
         # check multiple integrations with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -307,14 +307,14 @@ class TestDerivative(TestCase) :
 
         # check that derivation is the inverse of integration
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = herme.hermeder(herme.hermeint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check derivation with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = herme.hermeder(herme.hermeint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
@@ -396,10 +396,10 @@ class TestFitting(TestCase):
         assert_raises(TypeError,  herme.hermefit, [1, 2], [1],      0)
         assert_raises(TypeError,  herme.hermefit, [1],    [1, 2],   0)
         assert_raises(TypeError,  herme.hermefit, [1],    [1],   0, w=[[1]])
-        assert_raises(TypeError,  herme.hermefit, [1],    [1],   0, w=[1,1])
+        assert_raises(TypeError,  herme.hermefit, [1],    [1],   0, w=[1, 1])
 
         # Test fit
-        x = np.linspace(0,2)
+        x = np.linspace(0, 2)
         y = f(x)
         #
         coef3 = herme.hermefit(x, y, 3)
@@ -410,8 +410,8 @@ class TestFitting(TestCase):
         assert_equal(len(coef4), 5)
         assert_almost_equal(herme.hermeval(x, coef4), y)
         #
-        coef2d = herme.hermefit(x, np.array([y,y]).T, 3)
-        assert_almost_equal(coef2d, np.array([coef3,coef3]).T)
+        coef2d = herme.hermefit(x, np.array([y, y]).T, 3)
+        assert_almost_equal(coef2d, np.array([coef3, coef3]).T)
         # test weighting
         w = np.zeros_like(x)
         yw = y.copy()
@@ -420,8 +420,8 @@ class TestFitting(TestCase):
         wcoef3 = herme.hermefit(x, yw, 3, w=w)
         assert_almost_equal(wcoef3, coef3)
         #
-        wcoef2d = herme.hermefit(x, np.array([yw,yw]).T, 3, w=w)
-        assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
+        wcoef2d = herme.hermefit(x, np.array([yw, yw]).T, 3, w=w)
+        assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
         # test scaling with complex values x points whose square
         # is zero when summed.
         x = [1, 1j, -1, -1j]
@@ -454,7 +454,7 @@ class TestGauss(TestCase):
         v = herme.hermevander(x, 99)
         vv = np.dot(v.T * w, v)
         vd = 1/np.sqrt(vv.diagonal())
-        vv = vd[:,None] * vv * vd
+        vv = vd[:, None] * vv * vd
         assert_almost_equal(vv, np.eye(100))
 
         # check that the integral of 1 is correct
@@ -467,7 +467,7 @@ class TestMisc(TestCase) :
     def test_hermefromroots(self) :
         res = herme.hermefromroots([])
         assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
+        for i in range(1, 5) :
             roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
             pol = herme.hermefromroots(roots)
             res = herme.hermeval(roots, pol)
@@ -479,7 +479,7 @@ class TestMisc(TestCase) :
     def test_hermeroots(self) :
         assert_almost_equal(herme.hermeroots([1]), [])
         assert_almost_equal(herme.hermeroots([1, 1]), [-1])
-        for i in range(2,5) :
+        for i in range(2, 5) :
             tgt = np.linspace(-1, 1, i)
             res = herme.hermeroots(herme.hermefromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
@@ -496,7 +496,7 @@ class TestMisc(TestCase) :
         assert_equal(herme.hermetrim(coef, 2), [0])
 
     def test_hermeline(self) :
-        assert_equal(herme.hermeline(3,4), [3, 4])
+        assert_equal(herme.hermeline(3, 4), [3, 4])
 
     def test_herme2poly(self) :
         for i in range(10) :

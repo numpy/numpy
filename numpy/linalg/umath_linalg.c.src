@@ -1056,7 +1056,7 @@ static void
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
    #typ=npy_float,npy_double,COMPLEX_t,DOUBLECOMPLEX_t#
    #add=FLOAT_add,DOUBLE_add,CFLOAT_add,CDOUBLE_add#
-   #mul=FLOAT_mul,DOUBLE_mul,CFLOAT_mul,CDOUBLE_mul# 
+   #mul=FLOAT_mul,DOUBLE_mul,CFLOAT_mul,CDOUBLE_mul#
    #zero=s_zero, d_zero,c_zero,z_zero#
 */
 
@@ -2483,7 +2483,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     @typ@ work_size_query;
     fortran_int do_size_query = -1;
     fortran_int rv;
-    size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size; 
+    size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size;
 
     mem_buff = malloc(total_size);
     if (!mem_buff)
@@ -3860,7 +3860,7 @@ static char eigh_types[] = {
 static char eighvals_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
-    NPY_CFLOAT, NPY_FLOAT, 
+    NPY_CFLOAT, NPY_FLOAT,
     NPY_CDOUBLE, NPY_DOUBLE
 };
 
@@ -3941,7 +3941,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "slogdet",
-        "(m,m)->(),()", 
+        "(m,m)->(),()",
         "slogdet on the last two dimensions and broadcast on the rest. \n"\
         "Results in two arrays, one with sign and the other with log of the"\
         " determinants. \n"\

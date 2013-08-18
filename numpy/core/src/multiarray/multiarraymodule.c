@@ -488,7 +488,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         shape += sizes[iarrays] = PyArray_SIZE(arrays[iarrays]);
         /* Check for overflow */
-        if (shape < 0) { 
+        if (shape < 0) {
             PyErr_SetString(PyExc_ValueError,
                             "total number of elements "
                             "too large to concatenate");

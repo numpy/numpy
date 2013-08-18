@@ -6,4 +6,3 @@
 
 
 2. Allow structured arrays to be sliced by their column  (i.e. one additional indexing option for structured arrays) so that a[:4, 'foo':'bar']  would be allowed.
-

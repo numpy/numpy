@@ -214,7 +214,7 @@ def _leading_trailing(a):
             l = [_leading_trailing(a[i]) for i in range(
                 min(len(a), _summaryEdgeItems))]
             l.extend([_leading_trailing(a[-i]) for i in range(
-                min(len(a), _summaryEdgeItems),0,-1)])
+                min(len(a), _summaryEdgeItems), 0, -1)])
         else:
             l = [_leading_trailing(a[i]) for i in range(0, len(a))]
         b = _nc.concatenate(tuple(l))
@@ -510,7 +510,7 @@ def _formatArray(a, format_function, rank, max_line_len,
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
+            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
 
         if summary_insert1:
             s += next_line_prefix + summary_insert1 + "\n"
@@ -521,7 +521,7 @@ def _formatArray(a, format_function, rank, max_line_len,
             s += _formatArray(a[-i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
+            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
         if leading_items or trailing_items > 1:
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
@@ -750,4 +750,3 @@ class TimedeltaFormat(object):
 
     def __call__(self, x):
         return self.format % x.astype('i8')
-

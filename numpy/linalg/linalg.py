@@ -13,7 +13,7 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError']
 
 import warnings
@@ -271,7 +271,7 @@ def tensorsolve(a, b, axes=None):
     True
 
     """
-    a,wrap = _makearray(a)
+    a, wrap = _makearray(a)
     b = asarray(b)
     an = a.ndim
 
@@ -766,7 +766,7 @@ def qr(a, mode='reduced'):
 
     # handle modes that don't return q
     if mode == 'r':
-        r = _fastCopyAndTranspose(result_t, a[:,:mn])
+        r = _fastCopyAndTranspose(result_t, a[:, :mn])
         return wrap(triu(r))
 
     if mode == 'raw':
@@ -808,7 +808,7 @@ def qr(a, mode='reduced'):
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     q = _fastCopyAndTranspose(result_t, q[:mc])
-    r = _fastCopyAndTranspose(result_t, a[:,:mc])
+    r = _fastCopyAndTranspose(result_t, a[:, :mc])
 
     return wrap(q), wrap(triu(r))
 
@@ -1415,10 +1415,10 @@ def cond(x, p=None):
     """
     x = asarray(x) # in case we have a matrix
     if p is None:
-        s = svd(x,compute_uv=False)
+        s = svd(x, compute_uv=False)
         return s[0]/s[-1]
     else:
-        return norm(x,p)*norm(inv(x),p)
+        return norm(x, p)*norm(inv(x), p)
 
 
 def matrix_rank(M, tol=None):
@@ -1585,7 +1585,7 @@ def pinv(a, rcond=1e-15 ):
             s[i] = 1./s[i]
         else:
             s[i] = 0.;
-    res = dot(transpose(vt), multiply(s[:, newaxis],transpose(u)))
+    res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
@@ -1824,7 +1824,7 @@ def lstsq(a, b, rcond=-1):
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
-    bstar[:b.shape[0],:n_rhs] = b.copy()
+    bstar[:b.shape[0], :n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)

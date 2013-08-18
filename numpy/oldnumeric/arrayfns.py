@@ -43,21 +43,21 @@ def interp(y, x, z, typ=None):
     raise error("incompatible typecode")
 
 def nz(x):
-    x = asarray(x,dtype=np.ubyte)
+    x = asarray(x, dtype=np.ubyte)
     if x.ndim != 1:
         raise TypeError("intput must have 1 dimension.")
     indxs = np.flatnonzero(x != 0)
     return indxs[-1].item()+1
 
 def reverse(x, n):
-    x = asarray(x,dtype='d')
+    x = asarray(x, dtype='d')
     if x.ndim != 2:
         raise ValueError("input must be 2-d")
     y = np.empty_like(x)
     if n == 0:
         y[...] = x[::-1,:]
     elif n == 1:
-        y[...] = x[:,::-1]
+        y[...] = x[:, ::-1]
     return y
 
 def span(lo, hi, num, d2=0):
@@ -65,7 +65,7 @@ def span(lo, hi, num, d2=0):
     if d2 <= 0:
         return x
     else:
-        ret = np.empty((d2,num),x.dtype)
+        ret = np.empty((d2, num), x.dtype)
         ret[...] = x
         return ret
 
@@ -84,7 +84,7 @@ def zmin_zmax(z, ireg):
     nix = np.r_[ix, x1m[i1], x1m[i1], ix[i2] ]
     niy = np.r_[iy, iy[i1],  y1m[i3], y1m[i2]]
     # remove any negative indices
-    zres = z[nix,niy]
+    zres = z[nix, niy]
     return zres.min().item(), zres.max().item()
 
 

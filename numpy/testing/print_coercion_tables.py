@@ -54,7 +54,7 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
                 if use_promote_types:
                     char = np.promote_types(rowvalue.dtype, colvalue.dtype).char
                 else:
-                    value = np.add(rowvalue,colvalue)
+                    value = np.add(rowvalue, colvalue)
                     if isinstance(value, np.ndarray):
                         char = value.dtype.char
                     else:

@@ -40,7 +40,7 @@ except:
 try: fi=sys.argv[1]
 except: fi=()
 if not stdoutflag:
-    sys.stdout=open(fn,'w')
+    sys.stdout=open(fn, 'w')
 
 nonverb=r'[\w\s\\&=\^\*\.\{\(\)\[\?\+\$/]*(?!\\verb.)'
 input=re.compile(nonverb+r'\\(input|include)\*?\s*\{?.*}?')
@@ -59,12 +59,12 @@ for l in fileinput.input(fi):
         if l[-1]=='}': l=l[:-1]
         i=m.end()-2
         sys.stderr.write('>>>>>>')
-        while i>-1 and (l[i] not in [' ','{']): i=i-1
+        while i>-1 and (l[i] not in [' ', '{']): i=i-1
         if i>-1:
             fn=l[i+1:]
-            try: f=open(fn,'r'); flag=1; f.close()
+            try: f=open(fn, 'r'); flag=1; f.close()
             except:
-                try: f=open(fn+'.tex','r'); flag=1;fn=fn+'.tex'; f.close()
+                try: f=open(fn+'.tex', 'r'); flag=1;fn=fn+'.tex'; f.close()
                 except: flag=0
             if flag==0:
                 sys.stderr.write('Could not open a file: '+fn+'\n')

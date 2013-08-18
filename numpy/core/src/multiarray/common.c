@@ -108,7 +108,7 @@ _array_find_python_scalar_type(PyObject *op)
         }
     }
     else if (PyLong_Check(op)) {
-        /* check to see if integer can fit into a longlong or ulonglong 
+        /* check to see if integer can fit into a longlong or ulonglong
            and return that --- otherwise return object */
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
@@ -117,14 +117,14 @@ _array_find_python_scalar_type(PyObject *op)
             return PyArray_DescrFromType(NPY_LONGLONG);
         }
 
-        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
+        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1)
             && PyErr_Occurred()){
             PyErr_Clear();
-        } 
+        }
         else {
             return PyArray_DescrFromType(NPY_ULONGLONG);
-        } 
-        
+        }
+
         return PyArray_DescrFromType(NPY_OBJECT);
     }
     return NULL;
@@ -381,7 +381,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyObject_GetBuffer(obj, &buffer_view,
                                PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
             PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
-    
+
             PyErr_Clear();
             dtype = _descriptor_from_pep3118_format(buffer_view.format);
             PyBuffer_Release(&buffer_view);
@@ -391,7 +391,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
                  PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-    
+
             PyErr_Clear();
             dtype = PyArray_DescrNewFromType(NPY_VOID);
             dtype->elsize = buffer_view.itemsize;

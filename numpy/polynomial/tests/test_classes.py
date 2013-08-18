@@ -155,12 +155,12 @@ def check_fit(Poly) :
 
     def f(x) :
         return x*(x - 1)*(x - 2)
-    x = np.linspace(0,3)
+    x = np.linspace(0, 3)
     y = f(x)
 
     # check default value of domain and window
     p = Poly.fit(x, y, 3)
-    assert_almost_equal(p.domain, [0,3])
+    assert_almost_equal(p.domain, [0, 3])
     assert_almost_equal(p(x), y)
     assert_equal(p.degree(), 3)
 
@@ -441,7 +441,7 @@ def check_deriv(Poly):
 def check_linspace(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
-    p = Poly([1,2,3], domain=d, window=w)
+    p = Poly([1, 2, 3], domain=d, window=w)
     # check default domain
     xtgt = np.linspace(d[0], d[1], 20)
     ytgt = p(xtgt)
