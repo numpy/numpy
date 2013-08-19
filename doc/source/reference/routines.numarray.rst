@@ -1,5 +1,5 @@
-**********************************************
-Numarray compatibility (:mod:`numpy.numarray`)
-**********************************************
+**********************
+Numarray compatibility
+**********************
 
-.. automodule:: numpy.numarray
+The numarray module was removed in Numpy 1.9.
