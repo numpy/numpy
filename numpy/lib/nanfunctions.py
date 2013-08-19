@@ -478,18 +478,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=0):
 
     """
     a, mask = _replace_nan(a, 0)
-    # In version 1.9 uncomment the following line and delete the rest.
-    #return a.sum(axis, dtype, out, keepdims)
-    warnings.warn("In Numpy 1.9 the sum along empty slices will be zero.",
-            FutureWarning)
-
-    if mask is None:
-        return a.sum(axis, dtype, out, keepdims)
-    mask = mask.all(axis, keepdims=keepdims)
-    tot = np.add.reduce(a, axis, dtype, out, keepdims)
-    if mask.any():
-        tot = _copyto(tot, np.nan, mask)
-    return tot
+    return a.sum(axis, dtype, out, keepdims)
 
 
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
