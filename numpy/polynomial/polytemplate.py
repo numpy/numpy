@@ -15,7 +15,6 @@ API.
 from __future__ import division, absolute_import, print_function
 
 import string
-import sys
 
 polytemplate = string.Template('''
 # Code below this point is generated at build time from the template
