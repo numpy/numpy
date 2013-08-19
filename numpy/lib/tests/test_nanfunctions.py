@@ -244,36 +244,20 @@ class TestNanFunctions_Sum(TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             res = nansum([np.nan]*3, axis=None)
-            if np.__version__[:3] < '1.9':
-                assert_(np.isnan(res), 'result is not NaN')
-                assert_(len(w) == 1, 'no warning raised')
-                assert_(issubclass(w[0].category, FutureWarning))
-            else:
-                assert_(res == 0, 'result is not 0')
-                assert_(len(w) == 0, 'warning raised')
+            assert_(res == 0, 'result is not 0')
+            assert_(len(w) == 0, 'warning raised')
 
     def test_empty(self):
         mat = np.zeros((0, 3))
-        if np.__version__[:3] < '1.9':
-            tgt = [np.nan]*3
-            res = nansum(mat, axis=0)
-            assert_equal(res, tgt)
-            tgt = []
-            res = nansum(mat, axis=1)
-            assert_equal(res, tgt)
-            tgt = np.nan
-            res = nansum(mat, axis=None)
-            assert_equal(res, tgt)
-        else:
-            tgt = [0]*3
-            res = nansum(mat, axis=0)
-            assert_equal(res, tgt)
-            tgt = []
-            res = nansum(mat, axis=1)
-            assert_equal(res, tgt)
-            tgt = 0
-            res = nansum(mat, axis=None)
-            assert_equal(res, tgt)
+        tgt = [0]*3
+        res = nansum(mat, axis=0)
+        assert_equal(res, tgt)
+        tgt = []
+        res = nansum(mat, axis=1)
+        assert_equal(res, tgt)
+        tgt = 0
+        res = nansum(mat, axis=None)
+        assert_equal(res, tgt)
 
 
 class TestNanFunctions_MeanVarStd(TestCase):
