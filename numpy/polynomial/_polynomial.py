@@ -65,7 +65,6 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
 polytrim = pu.trimcoef
 
@@ -1489,5 +1488,3 @@ def polyroots(c):
 #
 # polynomial class
 #
-
-exec(polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]'))

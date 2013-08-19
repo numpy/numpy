@@ -63,7 +63,6 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
 __all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
     'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
@@ -1746,5 +1745,3 @@ def hermweight(x):
 #
 # Hermite series class
 #
-
-exec(polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]'))
