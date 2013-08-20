@@ -91,6 +91,21 @@
 #libraries = lapack, ptf77blas, ptcblas, atlas
 
 
+# Openblas
+# --------
+# If you choose to use openblas, then use this section instead of the above,
+# adjusting as needed for your configuration. You may need to set the LAPACK
+# and BLAS environmental variables to point to your openblas static library. 
+# E.g., export BLAS=/path/to/libopenblas.a
+#       export LAPACK=/path/to/libopenblas.a
+#
+# [openblas]
+# libraries = openblas
+#
+# [lapack_opt]
+# libraries = openblas
+
+
 # UMFPACK
 # -------
 # The UMFPACK library is used in scikits.umfpack to factor large sparse matrices. 
