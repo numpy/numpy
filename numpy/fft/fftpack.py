@@ -412,7 +412,7 @@ def irfft(a, n=None, axis=-1):
 
 def hfft(a, n=None, axis=-1):
     """
-    Compute the FFT of a signal whose spectrum has Hermitian symmetry.
+    Compute the FFT of a signal which has Hermitian symmetry (real spectrum).
 
     Parameters
     ----------
@@ -437,8 +437,8 @@ def hfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal is real in the frequency domain and has
-    Hermite symmetry in the time domain. So here it's `hfft` for which
+    opposite case: here the signal has Hermite symmetry in the time domain 
+    and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
 
@@ -463,7 +463,7 @@ def hfft(a, n=None, axis=-1):
 
 def ihfft(a, n=None, axis=-1):
     """
-    Compute the inverse FFT of a signal whose spectrum has Hermitian symmetry.
+    Compute the inverse FFT of a signal which has Hermitian symmetry (real spectrum).
 
     Parameters
     ----------
@@ -487,8 +487,8 @@ def ihfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal is real in the frequency domain and has
-    Hermite symmetry in the time domain. So here it's `hfft` for which
+    opposite case: here the signal has Hermite symmetry in the time domain
+    and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
 
