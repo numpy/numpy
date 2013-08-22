@@ -166,25 +166,6 @@ class TestConversion(TestCase):
             assert_raises(OverflowError, Overflow_error_func, code)
 
 
-    def test_long_os_behaviour(self):
-        long_iinfo = np.iinfo('l')
-        ulong_iinfo = np.iinfo('L')
-        if (sys.platform == "win32" or sys.platform == "win64" or
-                platform.architecture()[0] == "32bit"):
-            assert_equal(long_iinfo.max, 2**31-1)
-            assert_equal(long_iinfo.min, -2**31)            
-            assert_equal(ulong_iinfo.max, 2**32-1)
-            assert_equal(ulong_iinfo.min, 0)
-        elif platform.architecture()[0] == "64bit":
-            assert_equal(long_iinfo.max, 2**63-1)
-            assert_equal(long_iinfo.min, -2**63)
-            assert_equal(ulong_iinfo.max, 2**64-1)
-            assert_equal(ulong_iinfo.min, 0)
-
-
-
-
-
 #class TestRepr(TestCase):
 #    def test_repr(self):
 #        for t in types:
