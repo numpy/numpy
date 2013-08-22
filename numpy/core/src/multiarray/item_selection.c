@@ -2341,14 +2341,13 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
         return NULL;
     }
 
-    /* For backwards compatibility, during the deprecation period: */
-    copy = PyArray_NewCopy(ret, NPY_KEEPORDER);
-    Py_DECREF(ret);
-    if (!copy) {
-        return NULL;
-    }
-    PyArray_ENABLEFLAGS((PyArrayObject *)copy, NPY_ARRAY_WARN_ON_WRITE);
-    return copy;
+    /*
+     * For numpy 1.9 the diagonal view is not writeable.
+     * This line needs to be removed in 1.10.
+     */
+    PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
+
+    return ret;
 }
 
 /*NUMPY_API
