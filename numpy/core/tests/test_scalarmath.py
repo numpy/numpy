@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import platform
 from numpy.testing import *
 from numpy.testing.utils import gen_alignment_data
 import numpy as np
@@ -137,6 +138,32 @@ class TestConversion(TestCase):
 
         a = np.array(l[:3], dtype=np.uint64)
         assert_equal([int(_m) for _m in a], li[:3])
+
+
+    def test_iinfo_long_values(self):
+        for code in 'bBhH':
+            res = np.array(np.iinfo(code).max + 1, dtype=code)
+            tgt = np.iinfo(code).min
+            assert_(res == tgt)
+
+        for code in np.typecodes['AllInteger']:
+            res = np.array(np.iinfo(code).max, dtype=code)
+            tgt = np.iinfo(code).max
+            assert_(res == tgt)
+
+        for code in np.typecodes['AllInteger']:
+            res = np.typeDict[code](np.iinfo(code).max)
+            tgt = np.iinfo(code).max
+            assert_(res == tgt)
+
+
+    def test_int_raise_behaviour(self):
+
+        def Overflow_error_func(dtype): 
+            res = np.typeDict[dtype](np.iinfo(dtype).max + 1)
+
+        for code in 'lLqQ':
+            assert_raises(OverflowError, Overflow_error_func, code)
 
 
 #class TestRepr(TestCase):
