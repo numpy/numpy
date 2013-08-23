@@ -352,7 +352,8 @@ def irfft(a, n=None, axis=-1):
         it is padded with zeros.  If `n` is not given, it is determined from
         the length of the input (along the axis specified by `axis`).
     axis : int, optional
-        Axis over which to compute the inverse FFT.
+        Axis over which to compute the inverse FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
@@ -388,7 +389,6 @@ def irfft(a, n=None, axis=-1):
     thus resample a series to `m` points via Fourier interpolation by:
     ``a_resamp = irfft(rfft(a), m)``.
 
-
     Examples
     --------
     >>> np.fft.ifft([1, -1j, -1, 1j])
@@ -419,15 +419,28 @@ def hfft(a, n=None, axis=-1):
     a : array_like
         The input array.
     n : int, optional
-        The length of the FFT.
+        Length of the transformed axis of the output.
+        For `n` output points, ``n//2+1`` input points are necessary.  If the
+        input is longer than this, it is cropped.  If it is shorter than this,
+        it is padded with zeros.  If `n` is not given, it is determined from
+        the length of the input (along the axis specified by `axis`).
     axis : int, optional
-        The axis over which to compute the FFT, assuming Hermitian symmetry
-        of the spectrum. Default is the last axis.
+        Axis over which to compute the FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
     out : ndarray
-        The transformed input.
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        The length of the transformed axis is `n`, or, if `n` is not given,
+        ``2*(m-1)`` where `m` is the length of the transformed axis of the
+        input. To get an odd number of output points, `n` must be specified.
+
+    Raises
+    ------
+    IndexError
+        If `axis` is larger than the last axis of `a`.
 
     See also
     --------
@@ -437,13 +450,22 @@ def hfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal has Hermite symmetry in the time domain 
+    opposite case: here the signal has Hermite symmetry in the time domain
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
 
     Examples
     --------
+    >>> signal = np.array([1, 2, 3, 4, 3, 2])
+    >>> np.fft.fft(signal)
+    array([ 15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j])
+    >>> np.fft.hfft(signal[:4]) # Input first half of signal
+    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
+    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+
+
     >>> signal = np.array([[1, 1.j], [-1.j, 2]])
     >>> np.conj(signal.T) - signal   # check Hermitian symmetry
     array([[ 0.-0.j,  0.+0.j],
@@ -463,7 +485,7 @@ def hfft(a, n=None, axis=-1):
 
 def ihfft(a, n=None, axis=-1):
     """
-    Compute the inverse FFT of a signal which has Hermitian symmetry (real spectrum).
+    Compute the inverse FFT of a signal which has Hermitian symmetry.
 
     Parameters
     ----------
@@ -471,14 +493,21 @@ def ihfft(a, n=None, axis=-1):
         Input array.
     n : int, optional
         Length of the inverse FFT.
+        Number of points along transformation axis in the input to use.
+        If `n` is smaller than the length of the input, the input is cropped.
+        If it is larger, the input is padded with zeros. If `n` is not given,
+        the length of the input (along the axis specified by `axis`) is used.
     axis : int, optional
-        Axis over which to compute the inverse FFT, assuming Hermitian
-        symmetry of the spectrum. Default is the last axis.
+        Axis over which to compute the inverse FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
-    out : ndarray
-        The transformed input.
+    out : complex ndarray
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        If `n` is even, the length of the transformed axis is ``(n/2)+1``.
+        If `n` is odd, the length is ``(n+1)/2``.
 
     See also
     --------
@@ -491,6 +520,14 @@ def ihfft(a, n=None, axis=-1):
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+
+    Examples
+    --------
+    >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
+    >>> np.fft.ifft(spectrum)
+    array([ 1.+0.j,  2.-0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.-0.j])
+    >>> np.fft.ihfft(spectrum)
+    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
 
     """
 
