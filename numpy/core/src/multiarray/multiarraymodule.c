@@ -53,6 +53,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
+#include "private/ufunc_override.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -2079,8 +2080,29 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 static PyObject *
 array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
+    int errval;
+    static PyObject *cached_npy_dot = NULL;
+    PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
     char* kwlist[] = {"a", "b", "out", NULL };
+    PyObject *module;
+    
+    if (cached_npy_dot == NULL) {
+        module = PyImport_ImportModule("numpy.core.multiarray");
+        cached_npy_dot = PyDict_GetItemString(PyModule_GetDict(module), "dot");
+
+        Py_INCREF(cached_npy_dot);
+        Py_DECREF(module);
+    }
+
+    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__", args, kwds,
+                                   &override, 2);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist, &a, &v, &o)) {
         return NULL;
