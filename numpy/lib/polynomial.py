@@ -470,10 +470,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     in the equations::
 
-        x[0]**n * p[n] + ... + x[0] * p[1] + p[0] = y[0]
-        x[1]**n * p[n] + ... + x[1] * p[1] + p[0] = y[1]
+        x[0]**n * p[0] + ... + x[0] * p[n-1] + p[n] = y[0]
+        x[1]**n * p[0] + ... + x[1] * p[n-1] + p[n] = y[1]
         ...
-        x[k]**n * p[n] + ... + x[k] * p[1] + p[0] = y[k]
+        x[k]**n * p[0] + ... + x[k] * p[n-1] + p[n] = y[k]
 
     The coefficient matrix of the coefficients `p` is a Vandermonde matrix.
 
