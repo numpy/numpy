@@ -1099,7 +1099,7 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
                                         PyArray_DIMS((PyArrayObject *)a),
                                         dtype, 0);
     Py_INCREF(a);
-    if (PyArray_SetUpdateIfCopyBase(ret, a) < 0) {
+    if (PyArray_SetUpdateIfCopyBase(ret, (PyArrayObject *)a) < 0) {
         Py_DECREF(ret);
         return NULL;
     }

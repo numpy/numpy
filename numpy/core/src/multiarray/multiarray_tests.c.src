@@ -478,7 +478,8 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_map_binop add_inp
     }
 
     if ((it = (PyArrayIterObject *)\
-            PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd)) == NULL) {
+            PyArray_BroadcastToShape((PyObject *)arr, mit->dimensions,
+                                     mit->nd)) == NULL) {
         Py_DECREF(arr);
 
         return -1;
