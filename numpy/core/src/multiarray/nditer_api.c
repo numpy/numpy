@@ -1837,7 +1837,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
+    char **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
 
