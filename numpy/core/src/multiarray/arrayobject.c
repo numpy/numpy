@@ -221,8 +221,13 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
         n_new = PyArray_DIMS(dest)[PyArray_NDIM(dest)-1];
         n_old = PyString_Size(src_object);
         if (n_new > n_old) {
-            new_string = (char *)malloc(n_new);
-            memmove(new_string, PyString_AS_STRING(src_object), n_old);
+            new_string = malloc(n_new);
+            if (new_string == NULL) {
+                Py_DECREF(src_object);
+                PyErr_NoMemory();
+                return -1;
+            }
+            memcpy(new_string, PyString_AS_STRING(src_object), n_old);
             memset(new_string + n_old, ' ', n_new - n_old);
             tmp = PyString_FromStringAndSize(new_string, n_new);
             free(new_string);

@@ -60,12 +60,15 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
  * beginning and end. This simplifies the separator-skipping code below.
  */
 static char *
-swab_separator(char *sep)
+swab_separator(const char *sep)
 {
     int skip_space = 0;
     char *s, *start;
 
     s = start = malloc(strlen(sep)+3);
+    if (s == NULL) {
+        return NULL;
+    }
     /* add space to front if there isn't one */
     if (*sep != '\0' && !isspace(*sep)) {
         *s = ' '; s++;
@@ -3146,6 +3149,11 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         return NULL;
     }
     clean_sep = swab_separator(sep);
+    if (clean_sep == NULL) {
+        err = 1;
+        goto fail;
+    }
+
     NPY_BEGIN_ALLOW_THREADS;
     totalbytes = bytes = size * dtype->elsize;
     dptr = PyArray_DATA(r);
@@ -3183,6 +3191,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     }
     NPY_END_ALLOW_THREADS;
     free(clean_sep);
+
+fail:
     if (err == 1) {
         PyErr_NoMemory();
     }

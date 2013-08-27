@@ -102,27 +102,26 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 /* Fast string 'class' */
 typedef struct {
     char *s;
-    int allocated;
-    int pos;
+    size_t allocated;
+    size_t pos;
 } _tmp_string_t;
+
+#define INIT_SIZE   16
 
 static int
 _append_char(_tmp_string_t *s, char c)
 {
-    char *p;
-    if (s->s == NULL) {
-        s->s = (char*)malloc(16);
-        s->pos = 0;
-        s->allocated = 16;
-    }
     if (s->pos >= s->allocated) {
-        p = (char*)realloc(s->s, 2*s->allocated);
+        char *p;
+        size_t to_alloc = (s->allocated == 0) ? INIT_SIZE : (2 * s->allocated);
+
+        p = realloc(s->s, to_alloc);
         if (p == NULL) {
             PyErr_SetString(PyExc_MemoryError, "memory allocation failed");
             return -1;
         }
         s->s = p;
-        s->allocated *= 2;
+        s->allocated = to_alloc;
     }
     s->s[s->pos] = c;
     ++s->pos;
@@ -130,11 +129,12 @@ _append_char(_tmp_string_t *s, char c)
 }
 
 static int
-_append_str(_tmp_string_t *s, char *c)
+_append_str(_tmp_string_t *s, char const *p)
 {
-    while (*c != '\0') {
-        if (_append_char(s, *c)) return -1;
-        ++c;
+    for (; *p != '\0'; p++) {
+        if (_append_char(s, *p) != 0) {
+            return -1;
+        }
     }
     return 0;
 }
@@ -446,12 +446,14 @@ _buffer_info_new(PyArrayObject *arr)
     _tmp_string_t fmt = {0,0,0};
     int k;
 
-    info = (_buffer_info_t*)malloc(sizeof(_buffer_info_t));
+    info = malloc(sizeof(_buffer_info_t));
+    if (info == NULL) {
+        goto fail;
+    }
 
     /* Fill in format */
     if (_buffer_format_string(PyArray_DESCR(arr), &fmt, arr, NULL, NULL) != 0) {
-        free(info);
-        return NULL;
+        goto fail;
     }
     _append_char(&fmt, '\0');
     info->format = fmt.s;
@@ -464,8 +466,10 @@ _buffer_info_new(PyArrayObject *arr)
         info->strides = NULL;
     }
     else {
-        info->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
-                                          * PyArray_NDIM(arr) * 2 + 1);
+        info->shape = malloc(sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2 + 1);
+        if (info->shape == NULL) {
+            goto fail;
+        }
         info->strides = info->shape + PyArray_NDIM(arr);
         for (k = 0; k < PyArray_NDIM(arr); ++k) {
             info->shape[k] = PyArray_DIMS(arr)[k];
@@ -474,6 +478,10 @@ _buffer_info_new(PyArrayObject *arr)
     }
 
     return info;
+
+fail:
+    free(info);
+    return NULL;
 }
 
 /* Compare two info structures */
@@ -515,7 +523,7 @@ _buffer_info_free(_buffer_info_t *info)
 static _buffer_info_t*
 _buffer_get_info(PyObject *arr)
 {
-    PyObject *key, *item_list, *item;
+    PyObject *key = NULL, *item_list = NULL, *item = NULL;
     _buffer_info_t *info = NULL, *old_info = NULL;
 
     if (_buffer_info_cache == NULL) {
@@ -533,6 +541,9 @@ _buffer_get_info(PyObject *arr)
 
     /* Check if it is identical with an old one; reuse old one, if yes */
     key = PyLong_FromVoidPtr((void*)arr);
+    if (key == NULL) {
+        goto fail;
+    }
     item_list = PyDict_GetItem(_buffer_info_cache, key);
 
     if (item_list != NULL) {
@@ -549,12 +560,20 @@ _buffer_get_info(PyObject *arr)
     }
     else {
         item_list = PyList_New(0);
-        PyDict_SetItem(_buffer_info_cache, key, item_list);
+        if (item_list == NULL) {
+            goto fail;
+        }
+        if (PyDict_SetItem(_buffer_info_cache, key, item_list) != 0) {
+            goto fail;
+        }
     }
 
     if (info != old_info) {
         /* Needs insertion */
         item = PyLong_FromVoidPtr((void*)info);
+        if (item == NULL) {
+            goto fail;
+        }
         PyList_Append(item_list, item);
         Py_DECREF(item);
     }
@@ -562,6 +581,14 @@ _buffer_get_info(PyObject *arr)
     Py_DECREF(item_list);
     Py_DECREF(key);
     return info;
+
+fail:
+    if (info != NULL && info != old_info) {
+        _buffer_info_free(info);
+    }
+    Py_XDECREF(item_list);
+    Py_XDECREF(key);
+    return NULL;
 }
 
 /* Clear buffer info from the global dictionary */
@@ -754,7 +781,10 @@ _descriptor_from_pep3118_format(char *s)
     }
 
     /* Strip whitespace, except from field names */
-    buf = (char*)malloc(strlen(s) + 1);
+    buf = malloc(strlen(s) + 1);
+    if (buf == NULL) {
+        return NULL;
+    }
     p = buf;
     while (*s != '\0') {
         if (*s == ':') {
