@@ -72,10 +72,10 @@ static int
 _does_loop_use_arrays(void *data);
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result);
+assign_reduce_identity_zero(PyArrayObject *result, void *data);
 
 static int
-assign_reduce_identity_one(PyArrayObject *result);
+assign_reduce_identity_one(PyArrayObject *result, void *data);
 
 /*
  * fpstatus is the ufunc_formatted hardware status
@@ -755,7 +755,8 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         obj = PyTuple_GET_ITEM(args, i);
 
         if (PyArray_Check(obj)) {
-            out_op[i] = (PyArrayObject *)PyArray_FromArray(obj,NULL,0);
+            PyArrayObject *obj_a = (PyArrayObject *)obj;
+            out_op[i] = (PyArrayObject *)PyArray_FromArray(obj_a, NULL, 0);
         }
         else {
             if (!PyArray_IsScalar(obj, Generic)) {
@@ -2180,10 +2181,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             if (PyArray_SIZE(op[i]) != 0) {
                 switch (ufunc->identity) {
                     case PyUFunc_Zero:
-                        assign_reduce_identity_zero(op[i]);
+                        assign_reduce_identity_zero(op[i], NULL);
                         break;
                     case PyUFunc_One:
-                        assign_reduce_identity_one(op[i]);
+                        assign_reduce_identity_one(op[i], NULL);
                         break;
                     case PyUFunc_None:
                     case PyUFunc_ReorderableNone:
@@ -2641,13 +2642,13 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result)
+assign_reduce_identity_zero(PyArrayObject *result, void *NPY_UNUSED(data))
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_False);
 }
 
 static int
-assign_reduce_identity_one(PyArrayObject *result)
+assign_reduce_identity_one(PyArrayObject *result, void *NPY_UNUSED(data))
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_True);
 }
@@ -4529,7 +4530,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             result = -1;
         }
         else {
-            PyUFunc_Loop1d *current, *prev = NULL;
+            PyUFunc_Loop1d *current;
             int cmp = 1;
             current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
             while (current != NULL) {
@@ -4538,7 +4539,6 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 if (cmp >= 0 && current->arg_dtypes == NULL) {
                     break;
                 }
-                prev = current;
                 current = current->next;
             }
             if (cmp == 0 && current->arg_dtypes == NULL) {
