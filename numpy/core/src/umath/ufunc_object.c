@@ -72,10 +72,10 @@ static int
 _does_loop_use_arrays(void *data);
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result);
+assign_reduce_identity_zero(PyArrayObject *result, void *data);
 
 static int
-assign_reduce_identity_one(PyArrayObject *result);
+assign_reduce_identity_one(PyArrayObject *result, void *data);
 
 /*
  * fpstatus is the ufunc_formatted hardware status
@@ -2180,10 +2180,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             if (PyArray_SIZE(op[i]) != 0) {
                 switch (ufunc->identity) {
                     case PyUFunc_Zero:
-                        assign_reduce_identity_zero(op[i]);
+                        assign_reduce_identity_zero(op[i], NULL);
                         break;
                     case PyUFunc_One:
-                        assign_reduce_identity_one(op[i]);
+                        assign_reduce_identity_one(op[i], NULL);
                         break;
                     case PyUFunc_None:
                     case PyUFunc_ReorderableNone:
@@ -2641,13 +2641,13 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result)
+assign_reduce_identity_zero(PyArrayObject *result, void *NPY_UNUSED(data))
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_False);
 }
 
 static int
-assign_reduce_identity_one(PyArrayObject *result)
+assign_reduce_identity_one(PyArrayObject *result, void *NPY_UNUSED(data))
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_True);
 }
