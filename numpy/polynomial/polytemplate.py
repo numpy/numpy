@@ -79,6 +79,8 @@ class $name(pu.PolyBase) :
     window = np.array($domain)
     # Don't let participate in array operations. Value doesn't matter.
     __array_priority__ = 1000
+    # Not hashable
+    __hash__ = None
 
     def has_samecoef(self, other):
         """Check if coefficients match.
