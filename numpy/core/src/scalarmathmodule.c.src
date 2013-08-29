@@ -783,13 +783,19 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 
 #if PY_VERSION_HEX < 0x03000000
     if (PyInt_CheckExact(a)) {
-        *arg1 = PyInt_AS_LONG(a);
-        return 0;
+        *arg1 = PyInt_AsLong(a);
+        if (*arg1 == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
     }
 #endif
 
     if(PyLong_CheckExact(a)) {
-        if ((*arg1 = PyLong_AsUnsignedLong(a)) == -1 && PyErr_Occurred()) {
+        *arg1 = PyLong_AsUnsignedLong(a);
+        if (*arg1 == -1 && PyErr_Occurred()) {
             return -1;
         }
         else {
@@ -847,13 +853,19 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 
 #if PY_VERSION_HEX < 0x03000000
     if (PyInt_CheckExact(a)) {
-        *arg1 = PyInt_AS_LONG(a);
-        return 0;
+        *arg1 = PyInt_AsLong(a);
+        if (*arg1 == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
     }
 #endif
 
     if(PyLong_CheckExact(a)) {
-        if ((*arg1 = PyLong_AsLong(a)) == -1 && PyErr_Occurred()) {
+        *arg1 = PyLong_AsLong(a);
+        if (*arg1 == -1 && PyErr_Occurred()) {
             return -1;
         }
         else {
@@ -909,16 +921,21 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 {
     PyObject *temp;
 
-
 #if PY_VERSION_HEX < 0x03000000
     if (PyInt_CheckExact(a)) {
-        *arg1 = PyInt_AS_LONG(a);
-        return 0;
+        *arg1 = PyInt_AsLong(a);
+        if (*arg1 == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
     }
 #endif
 
     if (PyLong_CheckExact(a)) {
-        if ((*arg1 = @PYEXTRACTCTYPE@(a)) == -1 && PyErr_Occurred()) {
+        *arg1 = @PYEXTRACTCTYPE@(a);
+        if (*arg1 == (@type@)-1 && PyErr_Occurred()) {
             return -1;
         }
         else {
