@@ -19,6 +19,8 @@ Future Changes
 Compatibility notes
 ===================
 
+numpy.percentile returns an array instead of a list.
+
 
 New Features
 ============
