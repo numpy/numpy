@@ -75,7 +75,8 @@ def fftshift(x, axes=None):
 
 def ifftshift(x, axes=None):
     """
-    The inverse of fftshift.
+    The inverse of `fftshift`. Although identical for even-length `x`, the
+    functions differ by one sample for odd-length `x`.
 
     Parameters
     ----------
