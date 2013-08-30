@@ -795,7 +795,7 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 
     if(PyLong_CheckExact(a)) {
         *arg1 = PyLong_AsUnsignedLong(a);
-        if (*arg1 == -1 && PyErr_Occurred()) {
+        if (*arg1 == (unsigned long)-1 && PyErr_Occurred()) {
             return -1;
         }
         else {
