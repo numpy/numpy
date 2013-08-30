@@ -361,7 +361,7 @@ def irfft(a, n=None, axis=-1):
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
-        ``2*(m-1)`` where `m` is the length of the transformed axis of the
+        ``2*(m-1)`` where ``m`` is the length of the transformed axis of the
         input. To get an odd number of output points, `n` must be specified.
 
     Raises
@@ -434,7 +434,7 @@ def hfft(a, n=None, axis=-1):
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
-        ``2*(m-1)`` where `m` is the length of the transformed axis of the
+        ``2*(m-1)`` where ``m`` is the length of the transformed axis of the
         input. To get an odd number of output points, `n` must be specified.
 
     Raises
@@ -1077,7 +1077,7 @@ def irfftn(a, s=None, axes=None):
         The length of each transformed axis is as given by the corresponding
         element of `s`, or the length of the input in every axis except for the
         last one if `s` is not given.  In the final transformed axis the length
-        of the output when `s` is not given is ``2*(m-1)`` where `m` is the
+        of the output when `s` is not given is ``2*(m-1)`` where ``m`` is the
         length of the final transformed axis of the input.  To get an odd
         number of output points in the final axis, `s` must be specified.
 
