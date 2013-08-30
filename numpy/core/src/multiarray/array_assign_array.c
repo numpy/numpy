@@ -381,7 +381,6 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
          }
     }
 
-finish:
     if (copied_src) {
         Py_DECREF(src);
     }

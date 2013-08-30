@@ -221,8 +221,13 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
         n_new = PyArray_DIMS(dest)[PyArray_NDIM(dest)-1];
         n_old = PyString_Size(src_object);
         if (n_new > n_old) {
-            new_string = (char *)malloc(n_new);
-            memmove(new_string, PyString_AS_STRING(src_object), n_old);
+            new_string = malloc(n_new);
+            if (new_string == NULL) {
+                Py_DECREF(src_object);
+                PyErr_NoMemory();
+                return -1;
+            }
+            memcpy(new_string, PyString_AS_STRING(src_object), n_old);
             memset(new_string + n_old, ' ', n_new - n_old);
             tmp = PyString_FromStringAndSize(new_string, n_new);
             free(new_string);
@@ -552,7 +557,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
     max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
 
-    if ((string = (char *)PyArray_malloc(max_n)) == NULL) {
+    if ((string = PyArray_malloc(max_n)) == NULL) {
         return PyErr_NoMemory();
     }
 
@@ -1653,9 +1658,8 @@ array_iter(PyArrayObject *arr)
 static PyObject *
 array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
-    PyObject *obj;
     /* nitems will always be 0 */
-    obj = (PyObject *)PyArray_malloc(type->tp_basicsize);
+    PyObject *obj = PyArray_malloc(type->tp_basicsize);
     PyObject_Init(obj, type);
     return obj;
 }

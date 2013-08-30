@@ -3496,7 +3496,7 @@ PyDataMem_NEW(size_t size)
         }
         PyGILState_Release(gilstate);
     }
-    return (char *)result;
+    return result;
 }
 
 /*NUMPY_API
@@ -3516,7 +3516,7 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
         }
         PyGILState_Release(gilstate);
     }
-    return (char *)result;
+    return result;
 }
 
 /*NUMPY_API
@@ -3553,7 +3553,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
         }
         PyGILState_Release(gilstate);
     }
-    return (char *)result;
+    return result;
 }
 
 static PyObject *

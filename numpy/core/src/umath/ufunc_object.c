@@ -4849,6 +4849,17 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
+/* Helper for ufunc_at, below */
+static NPY_INLINE PyArrayObject *
+new_array_op(PyArrayObject *op_array, char *data)
+{
+    npy_intp dims[1] = {1};
+    PyObject *r = PyArray_NewFromDescr(&PyArray_Type, PyArray_DESCR(op_array),
+                                       1, dims, NULL, data,
+                                       NPY_ARRAY_WRITEABLE, NULL);
+    return (PyArrayObject *)r;
+}
+
 /*
  * Call ufunc only on selected array items and store result in first operand.
  * For add ufunc, method call is equivalent to op1[idx] += op2 with no
@@ -4872,7 +4883,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
     PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
-    npy_intp dims[1] = {1};
 
     int needs_api;
 
@@ -4912,9 +4922,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    op1_array = op1;
+    op1_array = (PyArrayObject *)op1;
 
-    iter = PyArray_MapIterArray(op1_array, idx);
+    iter = (PyArrayMapIterObject *)PyArray_MapIterArray(op1_array, idx);
     if (iter == NULL) {
         goto fail;
     }
@@ -4987,31 +4997,16 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     stride[0] = 1;
 
     Py_INCREF(PyArray_DESCR(op1_array));
-    array_operands[0] = PyArray_NewFromDescr(&PyArray_Type,
-                                       PyArray_DESCR(op1_array),
-                                       1, dims, NULL, iter->dataptr,
-                                       NPY_ARRAY_WRITEABLE, NULL);
+    array_operands[0] = new_array_op(op1_array, iter->dataptr);
     if (iter2 != NULL) {
         Py_INCREF(PyArray_DESCR(op2_array));
-        array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
-                                           PyArray_DESCR(op2_array),
-                                           1, dims, NULL,
-                                           PyArray_ITER_DATA(iter2),
-                                           NPY_ARRAY_WRITEABLE, NULL);
+        array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
         Py_INCREF(PyArray_DESCR(op1_array));
-        array_operands[2] = PyArray_NewFromDescr(&PyArray_Type,
-                                           PyArray_DESCR(op1_array),
-                                           1, dims, NULL,
-                                           iter->dataptr,
-                                           NPY_ARRAY_WRITEABLE, NULL);
+        array_operands[2] = new_array_op(op1_array, iter->dataptr);
     }
     else {
         Py_INCREF(PyArray_DESCR(op1_array));
-        array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
-                                           PyArray_DESCR(op1_array),
-                                           1, dims, NULL,
-                                           iter->dataptr,
-                                           NPY_ARRAY_WRITEABLE, NULL);
+        array_operands[2] = new_array_op(op1_array, iter->dataptr);
         array_operands[2] = NULL;
     }
 
