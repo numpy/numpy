@@ -2586,11 +2586,22 @@ PyArray_Nonzero(PyArrayObject *self)
         stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
         count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
 
-        for (j = 0; j < count; ++j) {
-            if (nonzero(data, self)) {
-                *multi_index++ = j;
+        if (PyArray_ISBOOL(self)) {
+            /* avoid function call for bool */
+            for (j = 0; j < count; ++j) {
+                if (*data != 0) {
+                    *multi_index++ = j;
+                }
+                data += stride;
             }
-            data += stride;
+        }
+        else {
+            for (j = 0; j < count; ++j) {
+                if (nonzero(data, self)) {
+                    *multi_index++ = j;
+                }
+                data += stride;
+            }
         }
 
         goto finish;
@@ -2630,12 +2641,23 @@ PyArray_Nonzero(PyArrayObject *self)
         multi_index = (npy_intp *)PyArray_DATA(ret);
 
         /* Get the multi-index for each non-zero element */
-        do {
-            if (nonzero(*dataptr, self)) {
-                get_multi_index(iter, multi_index);
-                multi_index += ndim;
-            }
-        } while(iternext(iter));
+        if (PyArray_ISBOOL(self)) {
+            /* avoid function call for bool */
+            do {
+                if (**dataptr != 0) {
+                    get_multi_index(iter, multi_index);
+                    multi_index += ndim;
+                }
+            } while(iternext(iter));
+        }
+        else {
+            do {
+                if (nonzero(*dataptr, self)) {
+                    get_multi_index(iter, multi_index);
+                    multi_index += ndim;
+                }
+            } while(iternext(iter));
+        }
     }
 
     NpyIter_Deallocate(iter);
