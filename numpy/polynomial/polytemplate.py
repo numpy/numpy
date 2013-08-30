@@ -4,9 +4,9 @@ Template for the Polynomial classes.
 This module houses a Python string module Template object (see, e.g.,
 http://docs.python.org/library/string.html#template-strings) used to
 generate the code for the `polynomial`, `chebyshev`, `hermite`,
-`hermite_e`, `laguerre`, and `lengendre` modules, to implement their
+`hermite_e`, `laguerre`, and `legendre` modules, to implement their
 respective `Polynomial`, `Chebyshev`, `Hermite`, `HermiteE`,
-`Laguerre`, and `Lengendre` classes. It provides a mechanism for
+`Laguerre`, and `Legendre` classes. It provides a mechanism for
 easily creating additional specific polynomial classes (e.g., Jacobi,
 etc.) in the future, such that all these classes will have a common
 API.
