@@ -2671,8 +2671,27 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     """
     a = np.asarray(a)
-    if axis is not None and axis >= a.ndim:
-        raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
+    if axis is not None:
+        if np.isscalar(axis):
+            if abs(axis) >= a.ndim:
+                raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
+        else:
+            sax = set()
+            nd = a.ndim
+            for x in axis:
+                if x >= nd or x < -nd:
+                    raise IndexError("axis %d out of bounds (%d)" % (x, nd))
+                if x in sax:
+                    raise ValueError("duplicate value in axis")
+                sax.add(x % nd)
+            keep = sax.symmetric_difference(frozenset(range(nd)))
+            nkeep = len(keep)
+            # swap axis that should not be reduced to front
+            for i, s in enumerate(sorted(keep)):
+                a = a.swapaxes(i, s)
+            # merge reduced axis
+            a = a.reshape(a.shape[:nkeep] + (np.prod(a.shape[nkeep:]),))
+            axis = -1
 
     if overwrite_input:
         if axis is None:

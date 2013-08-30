@@ -1528,6 +1528,44 @@ class TestMedian(TestCase):
         assert_almost_equal(np.median(x2), 2)
         assert_allclose(np.median(x2, axis=0), x)
 
+    def test_extended_axis(self):
+        o = np.random.normal(size=(71, 23))
+        x = np.dstack([o] * 10)
+        assert_equal(np.median(x, axis=(0, 1)), np.median(o))
+        x = np.rollaxis(x, -1, 0)
+        assert_equal(np.median(x, axis=(-2, -1)), np.median(o))
+        x = x.swapaxes(0, 1).copy()
+        assert_equal(np.median(x, axis=(0, -1)), np.median(o))
+
+        assert_equal(np.median(x, axis=(0, 1, 2)), np.median(x, axis=None))
+        assert_equal(np.median(x, axis=(0, )), np.median(x, axis=0))
+        assert_equal(np.median(x, axis=(-1, )), np.median(x, axis=-1))
+
+        d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
+        np.random.shuffle(d)
+        assert_equal(np.median(d, axis=(0, 1, 2))[0],
+                     np.median(d[:, :, :, 0].flatten()))
+        assert_equal(np.median(d, axis=(0, 1, 3))[1],
+                     np.median(d[:, :, 1, :].flatten()))
+        assert_equal(np.median(d, axis=(3, 1, -4))[2],
+                     np.median(d[:, :, 2, :].flatten()))
+        assert_equal(np.median(d, axis=(3, 1, 2))[2],
+                     np.median(d[2, :, :, :].flatten()))
+        assert_equal(np.median(d, axis=(3, 2))[2, 1],
+                     np.median(d[2, 1, :, :].flatten()))
+        assert_equal(np.median(d, axis=(1, -2))[2, 1],
+                     np.median(d[2, :, :, 1].flatten()))
+        assert_equal(np.median(d, axis=(1, 3))[2, 2],
+                     np.median(d[2, :, 2, :].flatten()))
+
+    def test_extended_axis_invalid(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_raises(IndexError, np.median, d, axis=-5)
+        assert_raises(IndexError, np.median, d, axis=(0, -5))
+        assert_raises(IndexError, np.median, d, axis=4)
+        assert_raises(IndexError, np.median, d, axis=(0, 4))
+        assert_raises(ValueError, np.median, d, axis=(1, 1))
+
 
 class TestAdd_newdoc_ufunc(TestCase):
 
