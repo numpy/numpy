@@ -96,7 +96,7 @@ def fft(a, n=None, axis=-1):
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros.  If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
@@ -190,7 +190,7 @@ def ifft(a, n=None, axis=-1):
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros.  If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
         See notes about padding issues.
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
@@ -263,7 +263,7 @@ def rfft(a, n=None, axis=-1):
         Number of points along transformation axis in the input to use.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros. If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
@@ -350,7 +350,7 @@ def irfft(a, n=None, axis=-1):
         For `n` output points, ``n//2+1`` input points are necessary.  If the
         input is longer than this, it is cropped.  If it is shorter than this,
         it is padded with zeros.  If `n` is not given, it is determined from
-        the length of the input (along the axis specified by `axis`).
+        the length of the input along the axis specified by `axis`.
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
@@ -423,7 +423,7 @@ def hfft(a, n=None, axis=-1):
         For `n` output points, ``n//2+1`` input points are necessary.  If the
         input is longer than this, it is cropped.  If it is shorter than this,
         it is padded with zeros.  If `n` is not given, it is determined from
-        the length of the input (along the axis specified by `axis`).
+        the length of the input along the axis specified by `axis`.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
@@ -496,7 +496,7 @@ def ihfft(a, n=None, axis=-1):
         Number of points along transformation axis in the input to use.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros. If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
@@ -584,8 +584,8 @@ def fftn(a, s=None, axes=None):
         This corresponds to `n` for `fft(x, n)`.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -685,8 +685,8 @@ def ifftn(a, s=None, axes=None):
         This corresponds to ``n`` for ``ifft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.  See notes for issue on `ifft` zero padding.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.  See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
         Axes over which to compute the IFFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -770,8 +770,8 @@ def fft2(a, s=None, axes=(-2, -1)):
         This corresponds to `n` for `fft(x, n)`.
         Along each axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
@@ -858,8 +858,8 @@ def ifft2(a, s=None, axes=(-2, -1)):
         ``s[1]`` to axis 1, etc.).  This corresponds to `n` for ``ifft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.  See notes for issue on `ifft` zero padding.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.  See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
@@ -936,8 +936,8 @@ def rfftn(a, s=None, axes=None):
         for the remaining axes, it corresponds to `n` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -1060,8 +1060,8 @@ def irfftn(a, s=None, axes=None):
         where ``s[-1]//2+1`` points of the input are used.
         Along any axis, if the shape indicated by `s` is smaller than that of
         the input, the input is cropped.  If it is larger, the input is padded
-        with zeros. If `s` is not given, the shape of the input (along the
-        axes specified by `axes`) is used.
+        with zeros. If `s` is not given, the shape of the input along the
+        axes specified by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
         `len(s)` axes are used, or all axes if `s` is also not specified.
