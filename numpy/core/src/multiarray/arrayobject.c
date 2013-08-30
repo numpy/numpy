@@ -557,7 +557,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
     max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
 
-    if ((string = (char *)PyArray_malloc(max_n)) == NULL) {
+    if ((string = PyArray_malloc(max_n)) == NULL) {
         return PyErr_NoMemory();
     }
 
@@ -1658,9 +1658,8 @@ array_iter(PyArrayObject *arr)
 static PyObject *
 array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
-    PyObject *obj;
     /* nitems will always be 0 */
-    obj = (PyObject *)PyArray_malloc(type->tp_basicsize);
+    PyObject *obj = PyArray_malloc(type->tp_basicsize);
     PyObject_Init(obj, type);
     return obj;
 }

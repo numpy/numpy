@@ -292,7 +292,7 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 int
 npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
 {
-    char *tmp = (char *) malloc(size);
+    char *tmp = malloc(size);
     char *a = (char *) base - size;
     size_t i, j, l;
 
