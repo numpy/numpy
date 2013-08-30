@@ -292,7 +292,7 @@ def rfft(a, n=None, axis=-1):
     Notes
     -----
     When the DFT is computed for purely real input, the output is
-    Hermite-symmetric, i.e. the negative frequency terms are just the complex
+    Hermitian-symmetric, i.e. the negative frequency terms are just the complex
     conjugates of the corresponding positive-frequency terms, and the
     negative-frequency terms are therefore redundant.  This function does not
     compute the negative frequency terms, and the length of the transformed
@@ -338,7 +338,7 @@ def irfft(a, n=None, axis=-1):
     The input is expected to be in the form returned by `rfft`, i.e. the
     real zero-frequency term followed by the complex positive frequency terms
     in order of increasing frequency.  Since the discrete Fourier Transform of
-    real input is Hermite-symmetric, the negative frequency terms are taken
+    real input is Hermitian-symmetric, the negative frequency terms are taken
     to be the complex conjugates of the corresponding positive frequency terms.
 
     Parameters
@@ -381,7 +381,7 @@ def irfft(a, n=None, axis=-1):
     -----
     Returns the real valued `n`-point inverse discrete Fourier transform
     of `a`, where `a` contains the non-negative frequency terms of a
-    Hermite-symmetric sequence. `n` is the length of the result, not the
+    Hermitian-symmetric sequence. `n` is the length of the result, not the
     input.
 
     If you specify an `n` such that `a` must be zero-padded or truncated, the
@@ -450,7 +450,7 @@ def hfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal has Hermite symmetry in the time domain
+    opposite case: here the signal has Hermitian symmetry in the time domain
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
@@ -516,7 +516,7 @@ def ihfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal has Hermite symmetry in the time domain
+    opposite case: here the signal has Hermitian symmetry in the time domain
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
