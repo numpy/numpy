@@ -237,20 +237,13 @@ def test_concatenate_sloppy0():
     r4 = list(range(4))
     r3 = list(range(3))
     assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
-    warnings.simplefilter('ignore', DeprecationWarning)
-    try:
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
         assert_array_equal(concatenate((r4, r3), -10), r4 + r3)
         assert_array_equal(concatenate((r4, r3), 10), r4 + r3)
-    finally:
-        warnings.filters.pop(0)
-    # Confirm DepractionWarning raised
-    warnings.simplefilter('always', DeprecationWarning)
-    warnings.simplefilter('error', DeprecationWarning)
-    try:
+        # Confirm DeprecationWarning raised
+        warnings.simplefilter('error', DeprecationWarning)
         assert_raises(DeprecationWarning, concatenate, (r4, r3), 10)
-    finally:
-        warnings.filters.pop(0)
-        warnings.filters.pop(0)
 
 
 if __name__ == "__main__":
