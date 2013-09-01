@@ -395,10 +395,12 @@ class TestDelete(TestCase):
     def test_fancy(self):
         # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        assert_raises(DeprecationWarning, delete, self.a, [100])
-        assert_raises(DeprecationWarning, delete, self.a, [-100])
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', category=DeprecationWarning)
+            assert_raises(DeprecationWarning, delete, self.a, [100])
+            assert_raises(DeprecationWarning, delete, self.a, [-100])
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
+            warnings.filterwarnings('always', category=FutureWarning)
             self._check_inverse_of_slicing([0, -1, 2, 2])
             obj = np.array([True, False, False], dtype=bool)
             self._check_inverse_of_slicing(obj)
