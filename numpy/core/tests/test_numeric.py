@@ -4,6 +4,7 @@ import sys
 import platform
 from decimal import Decimal
 import warnings
+import itertools
 
 import numpy as np
 from numpy.core import *
@@ -1493,8 +1494,7 @@ class TestStdVarComplex(TestCase):
 
 
 class TestCreationFuncs(TestCase):
-
-    '''Test ones, zeros, empty and filled'''
+    #Test ones, zeros, empty and filled
 
     def setUp(self):
         self.dtypes = ('b', 'i', 'u', 'f', 'c', 'S', 'a', 'U', 'V')
@@ -1502,36 +1502,41 @@ class TestCreationFuncs(TestCase):
         self.ndims = 10
 
     def check_function(self, func, fill_value=None):
+        par = (
+            (0, 1, 2),
+            range(self.ndims),
+            self.orders,
+            self.dtypes,
+            2**np.arange(9)
+        )
         fill_kwarg = {}
         if fill_value is not None:
             fill_kwarg = {'fill_value': fill_value}
-        for size in (0, 1, 2): # size in one dimension
-            for ndims in range(self.ndims): # [], [size], [size, size] etc.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            for size, ndims, order, type, bytes in itertools.product(*par):
                 shape = ndims * [size]
-                for order in self.orders: # C, F
-                    for type in self.dtypes: # bool, int, float etc.
-                        for bytes in 2**np.arange(9): # byte size for type
-                            try:
-                                dtype = np.dtype('{0}{1}'.format(type, bytes))
-                            except TypeError: # dtype combination does not exist
-                                continue
-                            else:
-                                # do not fill void type
-                                if fill_value is not None and type in 'V':
-                                    continue
+                try:
+                    dtype = np.dtype('{0}{1}'.format(type, bytes))
+                except TypeError: # dtype combination does not exist
+                    continue
+                else:
+                    # do not fill void type
+                    if fill_value is not None and type in 'V':
+                        continue
 
-                                arr = func(shape, order=order, dtype=dtype,
-                                           **fill_kwarg)
+                    arr = func(shape, order=order, dtype=dtype,
+                               **fill_kwarg)
 
-                                assert arr.dtype == dtype
-                                assert getattr(arr.flags, self.orders[order])
+                    assert_(arr.dtype == dtype)
+                    assert_(getattr(arr.flags, self.orders[order]))
 
-                                if fill_value is not None:
-                                    if dtype.str.startswith('|S'):
-                                        val = str(fill_value)
-                                    else:
-                                        val = fill_value
-                                    assert_equal(arr, dtype.type(val))
+                    if fill_value is not None:
+                        if dtype.str.startswith('|S'):
+                            val = str(fill_value)
+                        else:
+                            val = fill_value
+                        assert_equal(arr, dtype.type(val))
 
     def test_zeros(self):
         self.check_function(np.zeros)
