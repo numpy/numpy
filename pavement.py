@@ -99,17 +99,17 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.9.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'v1.6.0'
+LOG_START = 'v1.8.0b1'
 LOG_END = 'master'
 
 
 #-------------------------------------------------------
 # Hardcoded build/install dirs, virtualenv options, etc.
 #-------------------------------------------------------
-DEFAULT_PYTHON = "2.6"
+DEFAULT_PYTHON = "2.7"
 
 # Where to put the final installers, as put on sourceforge
 SUPERPACK_BUILD = 'build-superpack'
@@ -134,10 +134,8 @@ options(bootstrap=Bunch(bootstrap_dir="bootstrap"),
 )
 
 MPKG_PYTHON = {
-        "2.5": ["/Library/Frameworks/Python.framework/Versions/2.5/bin/python"],
         "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"],
         "2.7": ["/Library/Frameworks/Python.framework/Versions/2.7/bin/python"],
-        "3.1": ["/Library/Frameworks/Python.framework/Versions/3.1/bin/python3"],
         "3.2": ["/Library/Frameworks/Python.framework/Versions/3.2/bin/python3"],
         "3.3": ["/Library/Frameworks/Python.framework/Versions/3.3/bin/python3"],
 }
@@ -152,10 +150,8 @@ if sys.platform =="darwin":
     WINDOWS_PYTHON = {
         "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
-        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     WINDOWS_ENV["DYLD_FALLBACK_LIBRARY_PATH"] = "/usr/X11/lib:/usr/lib"
@@ -164,10 +160,8 @@ elif sys.platform == "win32":
     WINDOWS_PYTHON = {
         "3.3": ["C:\Python33\python.exe"],
         "3.2": ["C:\Python32\python.exe"],
-        "3.1": ["C:\Python31\python.exe"],
         "2.7": ["C:\Python27\python.exe"],
         "2.6": ["C:\Python26\python.exe"],
-        "2.5": ["C:\Python25\python.exe"],
     }
     # XXX: find out which env variable is necessary to avoid the pb with python
     # 2.6 and random module when importing tempfile
@@ -177,10 +171,8 @@ else:
     WINDOWS_PYTHON = {
         "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
-        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
