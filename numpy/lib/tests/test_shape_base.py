@@ -5,14 +5,17 @@ from numpy.lib import *
 from numpy.core import *
 from numpy import matrix, asmatrix
 
+
 class TestApplyAlongAxis(TestCase):
     def test_simple(self):
         a = ones((20, 10), 'd')
-        assert_array_equal(apply_along_axis(len, 0, a), len(a)*ones(shape(a)[1]))
+        assert_array_equal(
+            apply_along_axis(len, 0, a), len(a)*ones(shape(a)[1]))
 
-    def test_simple101(self,level=11):
+    def test_simple101(self, level=11):
         a = ones((10, 101), 'd')
-        assert_array_equal(apply_along_axis(len, 0, a), len(a)*ones(shape(a)[1]))
+        assert_array_equal(
+            apply_along_axis(len, 0, a), len(a)*ones(shape(a)[1]))
 
     def test_3d(self):
         a = arange(27).reshape((3, 3, 3))
@@ -32,7 +35,7 @@ class TestArraySplit(TestCase):
         a = arange(10)
         try:
             res = array_split(a, 0)
-            assert_(0) # it should have thrown a value error
+            assert_(0)  # it should have thrown a value error
         except ValueError:
             pass
 
@@ -55,27 +58,32 @@ class TestArraySplit(TestCase):
         compare_results(res, desired)
 
         res = array_split(a, 5)
-        desired = [arange(2), arange(2, 4), arange(4, 6), arange(6, 8), arange(8, 10)]
+        desired = [arange(
+            2), arange(2, 4), arange(4, 6), arange(6, 8), arange(8, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 6)
-        desired = [arange(2), arange(2, 4), arange(4, 6), arange(6, 8), arange(8, 9),
-                   arange(9, 10)]
+        desired = [arange(
+            2), arange(2, 4), arange(4, 6), arange(6, 8), arange(8, 9),
+            arange(9, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 7)
-        desired = [arange(2), arange(2, 4), arange(4, 6), arange(6, 7), arange(7, 8),
-                   arange(8, 9), arange(9, 10)]
+        desired = [arange(
+            2), arange(2, 4), arange(4, 6), arange(6, 7), arange(7, 8),
+            arange(8, 9), arange(9, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 8)
-        desired = [arange(2), arange(2, 4), arange(4, 5), arange(5, 6), arange(6, 7),
-                   arange(7, 8), arange(8, 9), arange(9, 10)]
+        desired = [arange(
+            2), arange(2, 4), arange(4, 5), arange(5, 6), arange(6, 7),
+            arange(7, 8), arange(8, 9), arange(9, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 9)
-        desired = [arange(2), arange(2, 3), arange(3, 4), arange(4, 5), arange(5, 6),
-                   arange(6, 7), arange(7, 8), arange(8, 9), arange(9, 10)]
+        desired = [arange(
+            2), arange(2, 3), arange(3, 4), arange(4, 5), arange(5, 6),
+            arange(6, 7), arange(7, 8), arange(8, 9), arange(9, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 10)
@@ -151,44 +159,50 @@ class TestSplit(TestCase):
         a = arange(10)
         try:
             res = split(a, 3)
-            assert_(0) # should raise an error
+            assert_(0)  # should raise an error
         except ValueError:
             pass
 
 
 class TestDstack(TestCase):
     def test_0D_array(self):
-        a = array(1); b = array(2);
-        res=dstack([a, b])
+        a = array(1)
+        b = array(2)
+        res = dstack([a, b])
         desired = array([[[1, 2]]])
         assert_array_equal(res, desired)
 
     def test_1D_array(self):
-        a = array([1]); b = array([2]);
-        res=dstack([a, b])
+        a = array([1])
+        b = array([2])
+        res = dstack([a, b])
         desired = array([[[1, 2]]])
         assert_array_equal(res, desired)
 
     def test_2D_array(self):
-        a = array([[1], [2]]); b = array([[1], [2]]);
-        res=dstack([a, b])
-        desired = array([[[1, 1]], [[2, 2,]]])
+        a = array([[1], [2]])
+        b = array([[1], [2]])
+        res = dstack([a, b])
+        desired = array([[[1, 1]], [[2, 2, ]]])
         assert_array_equal(res, desired)
 
     def test_2D_array2(self):
-        a = array([1, 2]); b = array([1, 2]);
-        res=dstack([a, b])
+        a = array([1, 2])
+        b = array([1, 2])
+        res = dstack([a, b])
         desired = array([[[1, 1], [2, 2]]])
         assert_array_equal(res, desired)
 
 """ array_split has more comprehensive test of splitting.
     only do simple test on hsplit, vsplit, and dsplit
 """
+
+
 class TestHsplit(TestCase):
     """ only testing for integer splits.
     """
     def test_0D_array(self):
-        a= array(1)
+        a = array(1)
         try:
             hsplit(a, 2)
             assert_(0)
@@ -196,13 +210,13 @@ class TestHsplit(TestCase):
             pass
 
     def test_1D_array(self):
-        a= array([1, 2, 3, 4])
+        a = array([1, 2, 3, 4])
         res = hsplit(a, 2)
         desired = [array([1, 2]), array([3, 4])]
         compare_results(res, desired)
 
     def test_2D_array(self):
-        a= array([[1, 2, 3, 4],
+        a = array([[1, 2, 3, 4],
                   [1, 2, 3, 4]])
         res = hsplit(a, 2)
         desired = [array([[1, 2], [1, 2]]), array([[3, 4], [3, 4]])]
@@ -213,7 +227,7 @@ class TestVsplit(TestCase):
     """ only testing for integer splits.
     """
     def test_1D_array(self):
-        a= array([1, 2, 3, 4])
+        a = array([1, 2, 3, 4])
         try:
             vsplit(a, 2)
             assert_(0)
@@ -221,7 +235,7 @@ class TestVsplit(TestCase):
             pass
 
     def test_2D_array(self):
-        a= array([[1, 2, 3, 4],
+        a = array([[1, 2, 3, 4],
                   [1, 2, 3, 4]])
         res = vsplit(a, 2)
         desired = [array([[1, 2, 3, 4]]), array([[1, 2, 3, 4]])]
@@ -232,7 +246,7 @@ class TestDsplit(TestCase):
     """ only testing for integer splits.
     """
     def test_2D_array(self):
-        a= array([[1, 2, 3, 4],
+        a = array([[1, 2, 3, 4],
                   [1, 2, 3, 4]])
         try:
             dsplit(a, 2)
@@ -241,7 +255,7 @@ class TestDsplit(TestCase):
             pass
 
     def test_3D_array(self):
-        a= array([[[1, 2, 3, 4],
+        a = array([[[1, 2, 3, 4],
                    [1, 2, 3, 4]],
                   [[1, 2, 3, 4],
                    [1, 2, 3, 4]]])
@@ -276,6 +290,7 @@ class TestKron(TestCase):
         assert_equal(type(kron(m, m)), matrix)
         assert_equal(type(kron(a, m)), matrix)
         assert_equal(type(kron(m, a)), matrix)
+
         class myarray(ndarray):
             __array_priority__ = 0.0
         ma = myarray(a.shape, a.dtype, a.data)
@@ -295,7 +310,7 @@ class TestTile(TestCase):
         assert_equal(tile(b, 2), [[1, 2, 1, 2], [3, 4, 3, 4]])
         assert_equal(tile(b, (2, 1)), [[1, 2], [3, 4], [1, 2], [3, 4]])
         assert_equal(tile(b, (2, 2)), [[1, 2, 1, 2], [3, 4, 3, 4],
-                                    [1, 2, 1, 2], [3, 4, 3, 4]])
+                                       [1, 2, 1, 2], [3, 4, 3, 4]])
 
     def test_empty(self):
         a = array([[[]]])
@@ -304,8 +319,8 @@ class TestTile(TestCase):
 
     def test_kroncompare(self):
         import numpy.random as nr
-        reps=[(2,), (1, 2), (2, 1), (2, 2), (2, 3, 2), (3, 2)]
-        shape=[(3,), (2, 3), (3, 4, 3), (3, 2, 3), (4, 3, 2, 4), (2, 2)]
+        reps = [(2,), (1, 2), (2, 1), (2, 2), (2, 3, 2), (3, 2)]
+        shape = [(3,), (2, 3), (3, 4, 3), (3, 2, 3), (4, 3, 2, 4), (2, 2)]
         for s in shape:
             b = nr.randint(0, 10, size=s)
             for r in reps:

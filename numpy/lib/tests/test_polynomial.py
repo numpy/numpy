@@ -81,6 +81,7 @@ poly1d([ 2.])
 from numpy.testing import *
 import numpy as np
 
+
 class TestDocs(TestCase):
     def test_doctests(self):
         return rundocs()
@@ -100,7 +101,7 @@ class TestDocs(TestCase):
         p[1] = 0
         assert_equal(str(p), " \n0")
 
-    def test_polyfit(self) :
+    def test_polyfit(self):
         c = np.array([3., 2., 1.])
         x = np.linspace(0, 2, 7)
         y = np.polyval(c, x)
@@ -118,9 +119,9 @@ class TestDocs(TestCase):
 
         m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
         assert_almost_equal([4.8927, -1.0177,  1.7768], m2, decimal=4)
-        val = [[  8.7929, -10.0103,   0.9756],
+        val = [[8.7929, -10.0103,   0.9756],
                [-10.0103,  13.6134,  -1.8178],
-               [  0.9756,  -1.8178,   0.6674]]
+               [0.9756,  -1.8178,   0.6674]]
         assert_almost_equal(val, cov2, decimal=4)
 
         # check 2D (n,1) case
@@ -135,8 +136,8 @@ class TestDocs(TestCase):
         m, cov = np.polyfit(x, yy + np.array(err)[:, np.newaxis], 2, cov=True)
         assert_almost_equal(est, m[:, 0], decimal=4)
         assert_almost_equal(est, m[:, 1], decimal=4)
-        assert_almost_equal(val0, cov[:,:, 0], decimal=4)
-        assert_almost_equal(val0, cov[:,:, 1], decimal=4)
+        assert_almost_equal(val0, cov[:, :, 0], decimal=4)
+        assert_almost_equal(val0, cov[:, :, 1], decimal=4)
 
     def test_objects(self):
         from decimal import Decimal
@@ -160,7 +161,8 @@ class TestDocs(TestCase):
     def test_integ_coeffs(self):
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
-        assert_((p2.coeffs == [1/4./5., 1/3./4., 1/2./3., 9/1./2., 7, 6]).all())
+        assert_(
+            (p2.coeffs == [1/4./5., 1/3./4., 1/2./3., 9/1./2., 7, 6]).all())
 
     def test_zero_dims(self):
         try:

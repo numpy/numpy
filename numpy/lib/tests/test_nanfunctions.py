@@ -14,19 +14,19 @@ from numpy.lib import (
 
 
 _ndat = np.array(
-        [[ 0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
-         [ 0.5351, 0.9403, np.nan,  0.2100, 0.4759, 0.2833],
-         [ np.nan, np.nan, np.nan,  0.1042, np.nan, 0.5954],
-         [ 0.161, np.nan, np.nan,  0.1859, 0.3146, np.nan]]
-        )
+    [[0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
+     [0.5351, 0.9403, np.nan,  0.2100, 0.4759, 0.2833],
+     [np.nan, np.nan, np.nan,  0.1042, np.nan, 0.5954],
+     [0.161,  np.nan, np.nan,  0.1859, 0.3146, np.nan]]
+)
 
 # rows of _ndat with nans removed
 _rdat = [
-        np.array([ 0.6244, 0.2692, 0.0116, 0.1170]),
-        np.array([ 0.5351, 0.9403, 0.2100, 0.4759, 0.2833]),
-        np.array([ 0.1042, 0.5954]),
-        np.array([ 0.1610, 0.1859, 0.3146])
-       ]
+    np.array([0.6244, 0.2692, 0.0116, 0.1170]),
+    np.array([0.5351, 0.9403, 0.2100, 0.4759, 0.2833]),
+    np.array([0.1042, 0.5954]),
+    np.array([0.1610, 0.1859, 0.3146])
+]
 
 
 class TestNanFunctions_MinMax(TestCase):
@@ -143,8 +143,8 @@ class TestNanFunctions_ArgminArgmax(TestCase):
 class TestNanFunctions_IntTypes(TestCase):
 
     int_types = (
-            np.int8, np.int16, np.int32, np.int64, np.uint8,
-            np.uint16, np.uint32, np.uint64)
+        np.int8, np.int16, np.int32, np.int64, np.uint8,
+        np.uint16, np.uint32, np.uint64)
 
     def setUp(self, *args, **kwargs):
         self.mat = np.array([127, 39,  93,  87, 46])
@@ -275,13 +275,13 @@ class TestNanFunctions_MeanVarStd(TestCase):
     def test_dtype_error(self):
         for f in self.nanfuncs:
             for dtype in [np.bool_, np.int_, np.object]:
-                assert_raises( TypeError, f, _ndat, axis=1, dtype=np.int)
+                assert_raises(TypeError, f, _ndat, axis=1, dtype=np.int)
 
     def test_out_dtype_error(self):
         for f in self.nanfuncs:
             for dtype in [np.bool_, np.int_, np.object]:
                 out = np.empty(_ndat.shape[0], dtype=dtype)
-                assert_raises( TypeError, f, _ndat, axis=1, out=out)
+                assert_raises(TypeError, f, _ndat, axis=1, out=out)
 
     def test_keepdims(self):
         mat = np.eye(3)

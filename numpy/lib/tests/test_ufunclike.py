@@ -5,6 +5,7 @@ import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing.decorators import deprecated
 
+
 class TestUfunclike(TestCase):
 
     def test_isposinf(self):
@@ -32,7 +33,7 @@ class TestUfunclike(TestCase):
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
         out = nx.zeros(a.shape, float)
-        tgt = nx.array([[ 1., 1., 1., 1.], [-1., -1., -1., -1.]])
+        tgt = nx.array([[1., 1., 1., 1.], [-1., -1., -1., -1.]])
 
         res = ufl.fix(a)
         assert_equal(res, tgt)
@@ -47,6 +48,7 @@ class TestUfunclike(TestCase):
                 res = nx.array(data, copy=True).view(cls)
                 res.metadata = metadata
                 return res
+
             def __array_wrap__(self, obj, context=None):
                 obj.metadata = self.metadata
                 return obj

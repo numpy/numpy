@@ -9,13 +9,14 @@ from numpy.compat import unicode
 
 rlevel = 1
 
+
 class TestRegression(TestCase):
-    def test_poly1d(self,level=rlevel):
+    def test_poly1d(self, level=rlevel):
         """Ticket #28"""
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
                      np.poly1d([-1, 1]))
 
-    def test_cov_parameters(self,level=rlevel):
+    def test_cov_parameters(self, level=rlevel):
         """Ticket #91"""
         x = np.random.random((3, 3))
         y = x.copy()
@@ -23,13 +24,13 @@ class TestRegression(TestCase):
         np.cov(y, rowvar=0)
         assert_array_equal(x, y)
 
-    def test_mem_digitize(self,level=rlevel):
+    def test_mem_digitize(self, level=rlevel):
         """Ticket #95"""
         for i in range(100):
             np.digitize([1, 2, 3, 4], [1, 3])
             np.digitize([0, 1, 2, 3, 4], [1, 3])
 
-    def test_unique_zero_sized(self,level=rlevel):
+    def test_unique_zero_sized(self, level=rlevel):
         """Ticket #205"""
         assert_array_equal([], np.unique(np.array([])))
 
@@ -37,7 +38,8 @@ class TestRegression(TestCase):
         """Ticket #325"""
         vt = np.vectorize(lambda *args: args)
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)))
-        vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)), np.zeros((2, 2)))
+        vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1,
+           1, 2)), np.zeros((2, 2)))
 
     def test_mgrid_single_element(self, level=rlevel):
         """Ticket #339"""
@@ -46,7 +48,8 @@ class TestRegression(TestCase):
 
     def test_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
-        def p(x, y): return 123
+        def p(x, y):
+            return 123
         v = np.vectorize(p)
         _assert_valid_refcount(v)
 
@@ -85,7 +88,7 @@ class TestRegression(TestCase):
     def test_polyfit_build(self):
         """Ticket #628"""
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,
-                9.95368241e+00, -3.14526520e+02]
+               9.95368241e+00, -3.14526520e+02]
         x = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
              104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
              116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 129,
@@ -103,8 +106,7 @@ class TestRegression(TestCase):
         tested = np.polyfit(x, y, 4)
         assert_array_almost_equal(ref, tested)
 
-
-    def test_polydiv_type(self) :
+    def test_polydiv_type(self):
         """Make polydiv work for complex types"""
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=np.complex)
@@ -115,11 +117,11 @@ class TestRegression(TestCase):
         q, r = np.polydiv(x, x)
         assert_(q.dtype == np.float, msg)
 
-    def test_histogramdd_too_many_bins(self) :
+    def test_histogramdd_too_many_bins(self):
         """Ticket 928."""
         assert_raises(ValueError, np.histogramdd, np.ones((1, 10)), bins=2**10)
 
-    def test_polyint_type(self) :
+    def test_polyint_type(self):
         """Ticket #944"""
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=np.complex)
@@ -141,11 +143,13 @@ class TestRegression(TestCase):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
         thesize = int((2**nbits)**(1.0/5.0)+1)
+
         def dp():
             n = 3
             a = np.ones((n,)*5)
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)] = 0
+
         def dp2():
             n = 3
             a = np.ones((n,)*5)
@@ -159,15 +163,16 @@ class TestRegression(TestCase):
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
-    def test_who_with_0dim_array(self, level=rlevel) :
+    def test_who_with_0dim_array(self, level=rlevel):
         """ticket #1243"""
-        import os, sys
+        import os
+        import sys
 
         oldstdout = sys.stdout
         sys.stdout = open(os.devnull, 'w')
         try:
             try:
-                tmp = np.who({'foo' : np.array(1)})
+                tmp = np.who({'foo': np.array(1)})
             except:
                 raise AssertionError("ticket #1243")
         finally:

@@ -291,9 +291,12 @@ from numpy.compat import asbytes, asbytes_nested
 tempdir = None
 
 # Module-level setup.
+
+
 def setup_module():
     global tempdir
     tempdir = tempfile.mkdtemp()
+
 
 def teardown_module():
     global tempdir
@@ -394,8 +397,10 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True), 'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
-    ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False), 'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
+    ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
+     'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
+     'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 record_arrays = [
@@ -405,12 +410,14 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
 ]
 
+
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
+
 
 def assert_equal(o1, o2):
     assert_(o1 == o2)
@@ -420,6 +427,7 @@ def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
+
 
 def test_memmap_roundtrip():
     # XXX: test crashes nose on windows. Fix this
@@ -437,9 +445,10 @@ def test_memmap_roundtrip():
             finally:
                 fp.close()
 
-            fortran_order = (arr.flags.f_contiguous and not arr.flags.c_contiguous)
+            fortran_order = (
+                arr.flags.f_contiguous and not arr.flags.c_contiguous)
             ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
-                shape=arr.shape, fortran_order=fortran_order)
+                                    shape=arr.shape, fortran_order=fortran_order)
             ma[...] = arr
             del ma
 
@@ -501,15 +510,18 @@ malformed_magic = asbytes_nested([
     '',
 ])
 
+
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
         yield raises(ValueError)(format.read_magic), f
 
+
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
         yield raises(ValueError)(format.read_array), f
+
 
 def test_bad_magic_args():
     assert_raises(ValueError, format.magic, -1, 1)
@@ -517,14 +529,16 @@ def test_bad_magic_args():
     assert_raises(ValueError, format.magic, 1, -1)
     assert_raises(ValueError, format.magic, 1, 256)
 
+
 def test_large_header():
     s = BytesIO()
-    d = {'a':1,'b':2}
+    d = {'a': 1, 'b': 2}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d = {'a':1,'b':2,'c':'x'*256*256}
+    d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
+
 
 def test_bad_header():
     # header of length less than 2 should fail
@@ -538,16 +552,16 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
-    d = {"shape":(1, 2),
-         "descr":"x"}
+    d = {"shape": (1, 2),
+         "descr": "x"}
     s = BytesIO()
     format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
-    d = {"shape":(1, 2),
-         "fortran_order":False,
-         "descr":"x",
-         "extrakey":-1}
+    d = {"shape": (1, 2),
+         "fortran_order": False,
+         "descr": "x",
+         "extrakey": -1}
     s = BytesIO()
     format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
