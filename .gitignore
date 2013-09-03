@@ -60,6 +60,10 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 
+# Paver generated files #
+#########################
+release/
+
 # Logs and databases #
 ######################
 *.log
