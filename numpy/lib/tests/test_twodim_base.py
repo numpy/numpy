@@ -5,55 +5,73 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
 
-from numpy import ( arange, rot90, add, fliplr, flipud, zeros, ones, eye,
-                    array, diag, histogram2d, tri, mask_indices, triu_indices,
-                    triu_indices_from, tril_indices, tril_indices_from )
+from numpy import (arange, rot90, add, fliplr, flipud, zeros, ones, eye,
+                   array, diag, histogram2d, tri, mask_indices, triu_indices,
+                   triu_indices_from, tril_indices, tril_indices_from)
 
 import numpy as np
 from numpy.compat import asbytes, asbytes_nested
+
 
 def get_mat(n):
     data = arange(n)
     data = add.outer(data, data)
     return data
 
+
 class TestEye(TestCase):
     def test_basic(self):
-        assert_equal(eye(4), array([[1, 0, 0, 0],
-                                   [0, 1, 0, 0],
-                                   [0, 0, 1, 0],
-                                   [0, 0, 0, 1]]))
-        assert_equal(eye(4, dtype='f'), array([[1, 0, 0, 0],
-                                                [0, 1, 0, 0],
-                                                [0, 0, 1, 0],
-                                                [0, 0, 0, 1]], 'f'))
-        assert_equal(eye(3) == 1, eye(3, dtype=bool))
+        assert_equal(eye(4),
+                     array([[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 0, 0, 1]]))
+
+        assert_equal(eye(4, dtype='f'),
+                     array([[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 0, 0, 1]], 'f'))
+
+        assert_equal(eye(3) == 1,
+                     eye(3, dtype=bool))
 
     def test_diag(self):
-        assert_equal(eye(4, k=1), array([[0, 1, 0, 0],
-                                       [0, 0, 1, 0],
-                                       [0, 0, 0, 1],
-                                       [0, 0, 0, 0]]))
-        assert_equal(eye(4, k=-1), array([[0, 0, 0, 0],
-                                        [1, 0, 0, 0],
-                                        [0, 1, 0, 0],
-                                        [0, 0, 1, 0]]))
+        assert_equal(eye(4, k=1),
+                     array([[0, 1, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 0, 0, 1],
+                            [0, 0, 0, 0]]))
+
+        assert_equal(eye(4, k=-1),
+                     array([[0, 0, 0, 0],
+                            [1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0]]))
+
     def test_2d(self):
-        assert_equal(eye(4, 3), array([[1, 0, 0],
-                                     [0, 1, 0],
-                                     [0, 0, 1],
-                                     [0, 0, 0]]))
-        assert_equal(eye(3, 4), array([[1, 0, 0, 0],
-                                     [0, 1, 0, 0],
-                                     [0, 0, 1, 0]]))
+        assert_equal(eye(4, 3),
+                     array([[1, 0, 0],
+                            [0, 1, 0],
+                            [0, 0, 1],
+                            [0, 0, 0]]))
+
+        assert_equal(eye(3, 4),
+                     array([[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0]]))
+
     def test_diag2d(self):
-        assert_equal(eye(3, 4, k=2), array([[0, 0, 1, 0],
-                                         [0, 0, 0, 1],
-                                         [0, 0, 0, 0]]))
-        assert_equal(eye(4, 3, k=-2), array([[0, 0, 0],
-                                          [0, 0, 0],
-                                          [1, 0, 0],
-                                          [0, 1, 0]]))
+        assert_equal(eye(3, 4, k=2),
+                     array([[0, 0, 1, 0],
+                            [0, 0, 0, 1],
+                            [0, 0, 0, 0]]))
+
+        assert_equal(eye(4, 3, k=-2),
+                     array([[0, 0, 0],
+                            [0, 0, 0],
+                            [1, 0, 0],
+                            [0, 1, 0]]))
 
     def test_eye_bounds(self):
         assert_equal(eye(2, 2,  1), [[0, 1], [0, 0]])
@@ -72,6 +90,7 @@ class TestEye(TestCase):
 
     def test_bool(self):
         assert_equal(eye(2, 2, dtype=bool), [[True, False], [False, True]])
+
 
 class TestDiag(TestCase):
     def test_vector(self):
@@ -119,6 +138,7 @@ class TestDiag(TestCase):
     def test_failure(self):
         self.assertRaises(ValueError, diag, [[[1]]])
 
+
 class TestFliplr(TestCase):
     def test_basic(self):
         self.assertRaises(ValueError, fliplr, ones(4))
@@ -131,16 +151,18 @@ class TestFliplr(TestCase):
              [5, 4, 3]]
         assert_equal(fliplr(a), b)
 
+
 class TestFlipud(TestCase):
     def test_basic(self):
         a = get_mat(4)
-        b = a[::-1,:]
+        b = a[::-1, :]
         assert_equal(flipud(a), b)
         a = [[0, 1, 2],
              [3, 4, 5]]
         b = [[3, 4, 5],
              [0, 1, 2]]
         assert_equal(flipud(a), b)
+
 
 class TestRot90(TestCase):
     def test_basic(self):
@@ -172,22 +194,26 @@ class TestRot90(TestCase):
         a = ones((50, 40, 3))
         assert_equal(rot90(a).shape, (40, 50, 3))
 
+
 class TestHistogram2d(TestCase):
     def test_simple(self):
-        x = array([ 0.41702200,  0.72032449,  0.00011437481, 0.302332573,  0.146755891])
-        y = array([ 0.09233859,  0.18626021,  0.34556073,  0.39676747,  0.53881673])
+        x = array(
+            [0.41702200, 0.72032449, 1.1437481e-4, 0.302332573, 0.146755891])
+        y = array(
+            [0.09233859, 0.18626021, 0.34556073, 0.39676747, 0.53881673])
         xedges = np.linspace(0, 1, 10)
         yedges = np.linspace(0, 1, 10)
         H = histogram2d(x, y, (xedges, yedges))[0]
-        answer = array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [1, 0, 1, 0, 0, 0, 0, 0, 0],
-                           [0, 1, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        answer = array(
+            [[0, 0, 0, 1, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 1, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 0, 1, 0, 0, 0, 0, 0, 0],
+             [0, 1, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0]])
         assert_array_equal(H.T, answer)
         H = histogram2d(x, y, xedges)[0]
         assert_array_equal(H.T, answer)
@@ -199,23 +225,27 @@ class TestHistogram2d(TestCase):
     def test_asym(self):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
-        H, xed, yed = histogram2d(x, y, (6, 5), range = [[0, 6], [0, 5]], normed=True)
-        answer = array([[0., 0, 0, 0, 0],
-                        [0, 1, 0, 1, 0],
-                        [0, 0, 1, 0, 0],
-                        [1, 0, 0, 0, 0],
-                        [0, 1, 1, 1, 0],
-                        [0, 0, 0, 0, 1]])
+        H, xed, yed = histogram2d(
+            x, y, (6, 5), range=[[0, 6], [0, 5]], normed=True)
+        answer = array(
+            [[0., 0, 0, 0, 0],
+             [0, 1, 0, 1, 0],
+             [0, 0, 1, 0, 0],
+             [1, 0, 0, 0, 0],
+             [0, 1, 1, 1, 0],
+             [0, 0, 0, 0, 1]])
         assert_array_almost_equal(H, answer/8., 3)
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
+
     def test_norm(self):
         x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])
         y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])
-        H, xed, yed = histogram2d(x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
-        answer=array([[1, 1, .5],
-                     [1, 1, .5],
-                     [.5, .5, .25]])/9.
+        H, xed, yed = histogram2d(
+            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
+        answer = array([[1,  1,  .5],
+                        [1,  1,  .5],
+                        [.5, .5, .25]])/9.
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
@@ -225,7 +255,7 @@ class TestHistogram2d(TestCase):
 
     def test_empty(self):
         a, edge1, edge2 = histogram2d([], [], bins=([0, 1], [0, 1]))
-        assert_array_max_ulp(a, array([[ 0.]]))
+        assert_array_max_ulp(a, array([[0.]]))
 
         a, edge1, edge2 = histogram2d([], [], bins=4)
         assert_array_max_ulp(a, np.zeros((4, 4)))
@@ -267,30 +297,30 @@ def test_tril_indices():
     il1 = tril_indices(4)
     il2 = tril_indices(4, 2)
 
-    a = np.array([[1, 2, 3, 4],
-                  [5, 6, 7, 8],
-                  [9, 10, 11, 12],
+    a = np.array([[1,  2,  3,  4],
+                  [5,  6,  7,  8],
+                  [9,  10, 11, 12],
                   [13, 14, 15, 16]])
 
     # indexing:
     yield (assert_array_equal, a[il1],
-           array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16]) )
+           array([1,  5,  6,  9, 10, 11, 13, 14, 15, 16]))
 
     # And for assigning values:
     a[il1] = -1
     yield (assert_array_equal, a,
-    array([[-1,  2,  3,  4],
-           [-1, -1,  7,  8],
-           [-1, -1, -1, 12],
-           [-1, -1, -1, -1]]) )
+           array([[-1,  2,  3, 4],
+                  [-1, -1,  7, 8],
+                  [-1, -1, -1, 12],
+                  [-1, -1, -1, -1]]))
 
     # These cover almost the whole array (two diagonals right of the main one):
     a[il2] = -10
     yield (assert_array_equal, a,
-    array([[-10, -10, -10,   4],
-           [-10, -10, -10, -10],
-           [-10, -10, -10, -10],
-           [-10, -10, -10, -10]]) )
+           array([[-10, -10, -10, 4],
+                  [-10, -10, -10, -10],
+                  [-10, -10, -10, -10],
+                  [-10, -10, -10, -10]]))
 
 
 class TestTriuIndices(object):
@@ -298,9 +328,9 @@ class TestTriuIndices(object):
         iu1 = triu_indices(4)
         iu2 = triu_indices(4, 2)
 
-        a = np.array([[1, 2, 3, 4],
-                      [5, 6, 7, 8],
-                      [9, 10, 11, 12],
+        a = np.array([[1,  2,  3,  4],
+                      [5,  6,  7,  8],
+                      [9,  10, 11, 12],
                       [13, 14, 15, 16]])
 
         # Both for indexing:
@@ -311,17 +341,17 @@ class TestTriuIndices(object):
         a[iu1] = -1
         yield (assert_array_equal, a,
                array([[-1, -1, -1, -1],
-                      [ 5, -1, -1, -1],
-                      [ 9, 10, -1, -1],
-                      [13, 14, 15, -1]])  )
+                      [5,  -1, -1, -1],
+                      [9,  10, -1, -1],
+                      [13, 14, 15, -1]]))
 
         # These cover almost the whole array (two diagonals right of the main one):
         a[iu2] = -10
-        yield ( assert_array_equal, a,
-                array([[ -1,  -1, -10, -10],
-                       [  5,  -1,  -1, -10],
-                       [  9,  10,  -1,  -1],
-                       [ 13,  14,  15,  -1]]) )
+        yield (assert_array_equal, a,
+               array([[-1,  -1, -10, -10],
+                      [5,   -1, -1,  -10],
+                      [9,   10, -1,  -1],
+                      [13,  14, 15,  -1]]))
 
 
 class TestTrilIndicesFrom(object):

@@ -5,7 +5,7 @@ from numpy.core import *
 from numpy.random import rand
 from numpy.compat import asbytes, long
 from numpy.testing import (
-        TestCase, assert_, assert_equal, assert_array_equal, run_module_suite)
+    TestCase, assert_, assert_equal, assert_array_equal, run_module_suite)
 
 try:
     import ctypes
@@ -29,7 +29,6 @@ class TestCommonType(TestCase):
         assert_(common_type(af64) == float64)
         assert_(common_type(acs) == csingle)
         assert_(common_type(acd) == cdouble)
-
 
 
 class TestMintypecode(TestCase):
@@ -121,6 +120,7 @@ class TestIscomplex(TestCase):
         z = array([-1, 0, 1])
         res = iscomplex(z)
         assert_(not sometrue(res, axis=0))
+
     def test_pass(self):
         z = array([-1j, 1, 0])
         res = iscomplex(z)
@@ -133,6 +133,7 @@ class TestIsreal(TestCase):
         z = array([-1, 0, 1j])
         res = isreal(z)
         assert_array_equal(res, [1, 1, 0])
+
     def test_fail(self):
         z = array([-1j, 1, 0])
         res = isreal(z)
@@ -146,7 +147,6 @@ class TestIscomplexobj(TestCase):
         assert_(not iscomplexobj(z))
         z = array([-1j, 0, -1])
         assert_(iscomplexobj(z))
-
 
 
 class TestIsrealobj(TestCase):
