@@ -2,9 +2,10 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
 import numpy as np
-from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
-                    ndenumerate, fill_diagonal, diag_indices,
-                    diag_indices_from, s_, index_exp, ndindex )
+from numpy import (array, ones, r_, mgrid, unravel_index, zeros, where,
+                   ndenumerate, fill_diagonal, diag_indices,
+                   diag_indices_from, s_, index_exp, ndindex)
+
 
 class TestRavelUnravelIndex(TestCase):
     def test_basic(self):
@@ -22,53 +23,65 @@ class TestRavelUnravelIndex(TestCase):
         assert_raises(TypeError, np.ravel_multi_index, (0.1, 0.), (2, 2))
 
         assert_equal(np.unravel_index((2*3 + 1)*6 + 4, (4, 3, 6)), [2, 1, 4])
-        assert_equal(np.ravel_multi_index([2, 1, 4], (4, 3, 6)), (2*3 + 1)*6 + 4)
+        assert_equal(
+            np.ravel_multi_index([2, 1, 4], (4, 3, 6)), (2*3 + 1)*6 + 4)
 
         arr = np.array([[3, 6, 6], [4, 5, 1]])
         assert_equal(np.ravel_multi_index(arr, (7, 6)), [22, 41, 37])
-        assert_equal(np.ravel_multi_index(arr, (7, 6), order='F'), [31, 41, 13])
-        assert_equal(np.ravel_multi_index(arr, (4, 6), mode='clip'), [22, 23, 19])
+        assert_equal(
+            np.ravel_multi_index(arr, (7, 6), order='F'), [31, 41, 13])
+        assert_equal(
+            np.ravel_multi_index(arr, (4, 6), mode='clip'), [22, 23, 19])
         assert_equal(np.ravel_multi_index(arr, (4, 4), mode=('clip', 'wrap')),
-                        [12, 13, 13])
+                     [12, 13, 13])
         assert_equal(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)), 1621)
 
         assert_equal(np.unravel_index(np.array([22, 41, 37]), (7, 6)),
-                        [[3, 6, 6], [4, 5, 1]])
-        assert_equal(np.unravel_index(np.array([31, 41, 13]), (7, 6), order='F'),
-                        [[3, 6, 6], [4, 5, 1]])
+                     [[3, 6, 6], [4, 5, 1]])
+        assert_equal(
+            np.unravel_index(np.array([31, 41, 13]), (7, 6), order='F'),
+            [[3, 6, 6], [4, 5, 1]])
         assert_equal(np.unravel_index(1621, (6, 7, 8, 9)), [3, 1, 4, 1])
 
     def test_dtypes(self):
         # Test with different data types
         for dtype in [np.int16, np.uint16, np.int32,
                       np.uint32, np.int64, np.uint64]:
-            coords = np.array([[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0]], dtype=dtype)
+            coords = np.array(
+                [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0]], dtype=dtype)
             shape = (5, 8)
             uncoords = 8*coords[0]+coords[1]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
             uncoords = coords[0]+5*coords[1]
-            assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
+            assert_equal(
+                np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
 
-            coords = np.array([[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0], [1, 3, 1, 0, 9, 5]],
-                              dtype=dtype)
+            coords = np.array(
+                [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0], [1, 3, 1, 0, 9, 5]],
+                dtype=dtype)
             shape = (5, 8, 10)
             uncoords = 10*(8*coords[0]+coords[1])+coords[2]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
             uncoords = coords[0]+5*(coords[1]+8*coords[2])
-            assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
+            assert_equal(
+                np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
 
     def test_clipmodes(self):
         # Test clipmodes
-        assert_equal(np.ravel_multi_index([5, 1, -1, 2], (4, 3, 7, 12), mode='wrap'),
-                     np.ravel_multi_index([1, 1, 6, 2], (4, 3, 7, 12)))
+        assert_equal(
+            np.ravel_multi_index([5, 1, -1, 2], (4, 3, 7, 12), mode='wrap'),
+            np.ravel_multi_index([1, 1, 6, 2], (4, 3, 7, 12)))
         assert_equal(np.ravel_multi_index([5, 1, -1, 2], (4, 3, 7, 12),
-                                 mode=('wrap', 'raise', 'clip', 'raise')),
+                                          mode=(
+                                              'wrap', 'raise', 'clip', 'raise')),
                      np.ravel_multi_index([1, 1, 0, 2], (4, 3, 7, 12)))
-        assert_raises(ValueError, np.ravel_multi_index, [5, 1, -1, 2], (4, 3, 7, 12))
+        assert_raises(
+            ValueError, np.ravel_multi_index, [5, 1, -1, 2], (4, 3, 7, 12))
+
 
 class TestGrid(TestCase):
     def test_basic(self):
@@ -93,12 +106,12 @@ class TestGrid(TestCase):
         d = mgrid[-1:1:0.1, -2:2:0.2]
         assert_(c.shape == (2, 10, 10))
         assert_(d.shape == (2, 20, 20))
-        assert_array_equal(c[0][0,:], -ones(10, 'd'))
+        assert_array_equal(c[0][0, :], -ones(10, 'd'))
         assert_array_equal(c[1][:, 0], -2*ones(10, 'd'))
-        assert_array_almost_equal(c[0][-1,:], ones(10, 'd'), 11)
+        assert_array_almost_equal(c[0][-1, :], ones(10, 'd'), 11)
         assert_array_almost_equal(c[1][:, -1], 2*ones(10, 'd'), 11)
-        assert_array_almost_equal(d[0, 1,:]-d[0, 0,:], 0.1*ones(20, 'd'), 11)
-        assert_array_almost_equal(d[1,:, 1]-d[1,:, 0], 0.2*ones(20, 'd'), 11)
+        assert_array_almost_equal(d[0, 1, :]-d[0, 0, :], 0.1*ones(20, 'd'), 11)
+        assert_array_almost_equal(d[1, :, 1]-d[1, :, 0], 0.2*ones(20, 'd'), 11)
 
 
 class TestConcatenator(TestCase):
@@ -125,8 +138,8 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:, 5:], c)
         d = r_[b, c]
         assert_(d.shape == (10, 5))
-        assert_array_equal(d[:5,:], b)
-        assert_array_equal(d[5:,:], c)
+        assert_array_equal(d[:5, :], b)
+        assert_array_equal(d[5:, :], c)
 
 
 class TestNdenumerate(TestCase):
@@ -149,9 +162,11 @@ class TestIndexExpression(TestCase):
         assert_equal(a[:, :3, [1, 2]], a[index_exp[:, :3, [1, 2]]])
         assert_equal(a[:, :3, [1, 2]], a[s_[:, :3, [1, 2]]])
 
+
 def test_c_():
     a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
+
 
 def test_fill_diagonal():
     a = zeros((3, 3), int)
@@ -208,16 +223,16 @@ def test_fill_diagonal():
 
 def test_diag_indices():
     di = diag_indices(4)
-    a = array([[1, 2, 3, 4],
-               [5, 6, 7, 8],
-               [9, 10, 11, 12],
+    a = array([[1,  2,  3,  4],
+               [5,  6,  7,  8],
+               [9,  10, 11, 12],
                [13, 14, 15, 16]])
     a[di] = 100
     yield (assert_array_equal, a,
-           array([[100,   2,   3,   4],
-                  [  5, 100,   7,   8],
-                  [  9,  10, 100,  12],
-                  [ 13,  14,  15, 100]]))
+           array([[100, 2,   3,   4],
+                  [5,   100, 7,   8],
+                  [9,   10,  100, 12],
+                  [13,  14,  15,  100]]))
 
     # Now, we create indices to manipulate a 3-d array:
     d3 = diag_indices(2, 3)
@@ -230,7 +245,8 @@ def test_diag_indices():
                    [0, 0]],
 
                   [[0, 0],
-                   [0, 1]]]) )
+                   [0, 1]]]))
+
 
 def test_diag_indices_from():
     x = np.random.random((4, 4))
