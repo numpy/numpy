@@ -2596,7 +2596,7 @@ def msort(a):
     b.sort(0)
     return b
 
-def median(a, axis=None, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     """
     Compute the median along the specified axis.
 
@@ -2621,6 +2621,12 @@ def median(a, axis=None, out=None, overwrite_input=False):
        but it will probably be fully or partially sorted. Default is
        False. Note that, if `overwrite_input` is True and the input
        is not already an ndarray, an error will be raised.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -2672,18 +2678,21 @@ def median(a, axis=None, out=None, overwrite_input=False):
     """
     a = np.asarray(a)
     if axis is not None:
+        keepdim = list(a.shape)
+        nd = a.ndim
         if np.isscalar(axis):
-            if abs(axis) >= a.ndim:
+            if axis >= nd or axis < -nd:
                 raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
+            keepdim[axis] = 1
         else:
             sax = set()
-            nd = a.ndim
             for x in axis:
                 if x >= nd or x < -nd:
                     raise IndexError("axis %d out of bounds (%d)" % (x, nd))
                 if x in sax:
                     raise ValueError("duplicate value in axis")
                 sax.add(x % nd)
+                keepdim[x] = 1
             keep = sax.symmetric_difference(frozenset(range(nd)))
             nkeep = len(keep)
             # swap axis that should not be reduced to front
@@ -2692,6 +2701,8 @@ def median(a, axis=None, out=None, overwrite_input=False):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (np.prod(a.shape[nkeep:]),))
             axis = -1
+    else:
+        keepdim = [1] * a.ndim
 
     if overwrite_input:
         if axis is None:
@@ -2733,7 +2744,11 @@ def median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
     # Use mean in odd and even case to coerce data type
     # and check, use out array.
-    return mean(part[indexer], axis=axis, out=out)
+    r = mean(part[indexer], axis=axis, out=out)
+    if keepdims:
+        return r.reshape(keepdim)
+    else:
+        return r
 
 def percentile(a, q, axis=None, out=None, overwrite_input=False):
     """

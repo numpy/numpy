@@ -1460,6 +1460,7 @@ class TestMedian(TestCase):
         assert_allclose(np.median(a1), 0.5)
         assert_allclose(np.median(a2), 2.5)
         assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
+        assert_allclose(np.median(a2, axis=-2), [1.5,  2.5,  3.5])
         assert_allclose(np.median(a2, axis=1), [1, 4])
         assert_allclose(np.median(a2, axis=None), 2.5)
 
@@ -1565,6 +1566,21 @@ class TestMedian(TestCase):
         assert_raises(IndexError, np.median, d, axis=4)
         assert_raises(IndexError, np.median, d, axis=(0, 4))
         assert_raises(ValueError, np.median, d, axis=(1, 1))
+
+    def test_keepdims(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_equal(np.median(d, axis=None, keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.median(d, axis=(0, 1), keepdims=True).shape,
+                     (1, 1, 7, 11))
+        assert_equal(np.median(d, axis=(0, 3), keepdims=True).shape,
+                     (1, 5, 7, 1))
+        assert_equal(np.median(d, axis=(1,), keepdims=True).shape,
+                     (3, 1, 7, 11))
+        assert_equal(np.median(d, axis=(0, 1, 2, 3), keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.median(d, axis=(0, 1, 3), keepdims=True).shape,
+                     (1, 1, 7, 1))
 
 
 class TestAdd_newdoc_ufunc(TestCase):
