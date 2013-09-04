@@ -726,9 +726,9 @@ NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-    npy_long long_value = -1;
+    long long long_value = -1;
 #else
-    npy_longlong long_value = -1;
+    long long_value = -1;
 #endif
     PyObject *obj, *err;
     static char *msg = "an integer is required";
