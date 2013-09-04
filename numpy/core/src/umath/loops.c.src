@@ -1357,20 +1357,89 @@ NPY_NO_EXPORT void
  *  #C = F, , L#
  */
 
+/*
+ * pairwise summation, rounding error O(log(n)) instead of O(n)
+ * iterative version of:
+ *
+ * pw_sum(a, n):
+ *   if n < blocksize:
+ *     return normal_sum(a, n)
+ *  else:
+ *     n2 = n / 2;
+ *     return pw_sum(a, n2) + pw_sum(a + n2, n - n2)
+ *
+ */
+static @type@
+pairwise_add_@TYPE@(@type@ * a, npy_uintp n, npy_uintp stride)
+{
+    /* stack holding sum of pairs, log2(n) required */
+    @type@ dstack[200];
+    /* stack holding how many summations each stack member has done */
+    int ostack[200];
+    /* position in stack */
+    int npos = 0;
+    npy_intp i = 0;
+    /* cutoff for pairwise summation */
+    int bs = 128;
+
+    while (i < n) {
+        /* sum a block with an unrolled loop */
+        @type@ r[4] = {0};
+        npy_uintp j;
+        for (j = i; j < MIN(i + bs, n - (n % 4)); j+=4) {
+            r[0] += a[(j + 0) * stride];
+            r[1] += a[(j + 1) * stride];
+            r[2] += a[(j + 2) * stride];
+            r[3] += a[(j + 3) * stride];
+        }
+        for (; j < MIN(i + bs, n); j++) {
+            r[0] += a[j * stride];
+        }
+        i = j;
+
+        /* add to top of stack */
+        dstack[npos] = (r[0] + r[1]) + (r[2] + r[3]);
+        ostack[npos] = 1;
+
+        /* reduce stack by summing entries with same summation counter */
+        while (npos > 0 && ostack[npos] == ostack[npos - 1]) {
+            dstack[npos - 1] += dstack[npos];
+            npos--;
+            ostack[npos]++;
+        }
+        npos++;
+    }
+
+    /* sum remainder */
+    for (i = 1; i < npos; i++) {
+        dstack[0] += dstack[i];
+    }
+
+    return dstack[0];
+}
 
 /**begin repeat1
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
+#if @PW@
+        @type@ * iop1 = (@type@ *)args[0];
+        npy_intp n = dimensions[0];
+
+        *iop1 @OP@= pairwise_add_@TYPE@((@type@ *)args[1], n,
+                                        steps[1] / sizeof(@type@));
+#else
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
         }
         *((@type@ *)iop1) = io1;
+#endif
     }
     else if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
         BINARY_LOOP {
