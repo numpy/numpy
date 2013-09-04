@@ -12,6 +12,7 @@ classes are available:
   lapack_atlas_info
   blas_info
   lapack_info
+  openblas_info
   blas_opt_info       # usage recommended
   lapack_opt_info     # usage recommended
   fftw_info,dfftw_info,sfftw_info
@@ -1366,7 +1367,22 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
 
-        if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
+        openblas_info = get_info('openblas')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
+        lapack_mkl_info = get_info('lapack_mkl')
+        if lapack_mkl_info:
+            self.set_info(**lapack_mkl_info)
+            return
+
+        atlas_info = get_info('atlas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas')
+
+        if sys.platform == 'darwin' and not atlas_info:
+            # Use the system lapack from Accelerate or vecLib under OSX
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
@@ -1394,14 +1410,6 @@ class lapack_opt_info(system_info):
                               define_macros=[('NO_ATLAS_INFO', 3)])
                 return
 
-        lapack_mkl_info = get_info('lapack_mkl')
-        if lapack_mkl_info:
-            self.set_info(**lapack_mkl_info)
-            return
-
-        atlas_info = get_info('atlas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas')
         #atlas_info = {} ## uncomment for testing
         need_lapack = 0
         need_blas = 0
@@ -1455,7 +1463,22 @@ class blas_opt_info(system_info):
 
     def calc_info(self):
 
-        if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
+        blas_mkl_info = get_info('blas_mkl')
+        if blas_mkl_info:
+            self.set_info(**blas_mkl_info)
+            return
+
+        openblas_info = get_info('openblas')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
+        atlas_info = get_info('atlas_blas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_blas')
+
+        if sys.platform == 'darwin'and not atlas_info:
+            # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
@@ -1487,19 +1510,6 @@ class blas_opt_info(system_info):
                               define_macros=[('NO_ATLAS_INFO', 3)])
                 return
 
-        blas_mkl_info = get_info('blas_mkl')
-        if blas_mkl_info:
-            self.set_info(**blas_mkl_info)
-            return
-
-        openblas_info = get_info('openblas')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
-        atlas_info = get_info('atlas_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas')
         need_blas = 0
         info = {}
         if atlas_info:
