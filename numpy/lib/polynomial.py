@@ -1030,6 +1030,8 @@ class poly1d(object):
     coeffs = None
     order = None
     variable = None
+    __hash__ = None
+
     def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
             for key in c_or_r.__dict__.keys():
