@@ -63,33 +63,46 @@
 #library_dirs = /usr/local/lib
 #include_dirs = /usr/local/include
 
-# Optimized BLAS and LAPACK
-# -------------------------
-# Use the blas_opt and lapack_opt sections to give any settings that are
-# required to link against your chosen BLAS and LAPACK, including the regular
-# FORTRAN reference BLAS and also ATLAS. Some other sections still exist for
-# linking against certain optimized libraries (e.g. [atlas], [lapack_atlas]),
-# however, they are now deprecated and should not be used.
+# Atlas
+# -----
+# Atlas is an open source optimized implementation of the BLAS and Lapack
+# routines. Numpy will try to build against Atlas by default when available in
+# the system library dirs. To build numpy against a custom installation of
+# Atlas you can add an explicit section such as the following. Here we assume
+# that Atlas was configured with ``prefix=/opt/atlas``.
 #
-# These are typical configurations for ATLAS (assuming that the library and
-# include directories have already been set in [DEFAULT]; the include directory
-# is important for the BLAS C interface):
-#
-#[blas_opt]
-#libraries = f77blas, cblas, atlas
-#
-#[lapack_opt]
-#libraries = lapack, f77blas, cblas, atlas
-#
-# If your ATLAS was compiled with pthreads, the names of the libraries might be
-# different:
-#
-#[blas_opt]
-#libraries = ptf77blas, ptcblas, atlas
-#
-#[lapack_opt]
-#libraries = lapack, ptf77blas, ptcblas, atlas
+# [atlas]
+# library_dirs = /opt/atlas/lib
+# include_dirs = /opt/atlas/include
 
+# OpenBLAS
+# --------
+# OpenBLAS is another open source optimized implementation of BLAS and Lapack
+# and can be seen as an alternative to Atlas. To build numpy against OpenBLAS
+# instead of Atlas, use this section instead of the above, adjusting as needed
+# for your configuration (in the following example we installed OpenBLAS with
+# ``make install PREFIX=/opt/OpenBLAS``.
+#
+# [openblas]
+# libraries = openblas
+# library_dirs = /opt/OpenBLAS/lib
+# include_dirs = /opt/OpenBLAS/include
+
+# MKL
+#----
+# MKL is Intel's very optimized yet proprietary implementation of BLAS and
+# Lapack.
+# For recent (9.0.21, for example) mkl, you need to change the names of the
+# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
+# [mkl]
+# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
+# lapack_libs = mkl_lapack
+#
+# For 10.*, on 32 bits machines:
+# [mkl]
+# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
+# lapack_libs = mkl_lapack
+# mkl_libs = mkl, guide
 
 # UMFPACK
 # -------
@@ -110,7 +123,6 @@
 #[umfpack]
 #umfpack_libs = umfpack
 
-
 # FFT libraries
 # -------------
 # There are two FFT libraries that we can configure here: FFTW (2 and 3) and djbfft.
@@ -128,18 +140,3 @@
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
- 
- 
-# MKL
-#----
-# For recent (9.0.21, for example) mkl, you need to change the names of the
-# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
-# [mkl]
-# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
-# lapack_libs = mkl_lapack
-#
-# For 10.*, on 32 bits machines:
-# [mkl]
-# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
-# lapack_libs = mkl_lapack
-# mkl_libs = mkl, guide
