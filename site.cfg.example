@@ -81,12 +81,12 @@
 # and can be seen as an alternative to Atlas. To build numpy against OpenBLAS
 # instead of Atlas, use this section instead of the above, adjusting as needed
 # for your configuration (in the following example we installed OpenBLAS with
-# ``make install PREFIX=/opt/openblas``.
+# ``make install PREFIX=/opt/OpenBLAS``.
 #
 # [openblas]
 # libraries = openblas
-# library_dirs = /opt/openblas/lib
-# include_dirs = /opt/openblas/include
+# library_dirs = /opt/OpenBLAS/lib
+# include_dirs = /opt/OpenBLAS/include
 
 # MKL
 #----
