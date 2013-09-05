@@ -2767,8 +2767,8 @@ def median(a, axis=None, out=None, overwrite_input=False):
     return mean(part[indexer], axis=axis, out=out)
 
 
-def percentile(a, q, limit=None, interpolation='linear', axis=None,
-               out=None, overwrite_input=False):
+def percentile(a, q, interpolation='linear', axis=None, out=None,
+               overwrite_input=False):
     """
     Compute the qth percentile of the data along the specified axis.
 
@@ -2780,17 +2780,15 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
         Percentile to compute which must be between 0 and 100 inclusive.
-    limit : tuple, optional
-        Tuple of two scalars, the lower and upper limits within which to
-        compute the percentile. Values outside of this range are ommitted from
-        the percentile calculation. None includes all values in calculation.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint'}, optional
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'closest'}
         This optional parameter specifies the interpolation method to use,
         when the desired quantile lies between two data points `i` and `j`:
             * linear: `i + (j - i) * fraction`, where `fraction` is the
               fractional part of the index surrounded by `i` and `j`.
             * lower: `i`.
             * higher: `j`.
+            * closest: `i` or `j` whichever is closest.
+            * midpoint: (`i` + `j`) / 2.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the percentiles along a flattened version of the array.
@@ -2860,10 +2858,6 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
 
     """
     a = asarray(a)
-
-    if limit:  # filter a based on limits
-        a = a[(limit[0] <= a) & (a <= limit[1])]
-
     q = atleast_1d(q)
     q = q / 100.0
     if (q < 0).any() or (q > 1).any():
@@ -2892,14 +2886,18 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
         indices = floor(indices).astype(intp)
     elif interpolation == 'higher':
         indices = ceil(indices).astype(intp)
+    elif interpolation == 'midpoint':
+        indices = floor(indices) + 0.5
+    elif interpolation == 'closest':
+        indices = around(indices).astype(intp)
     elif interpolation == 'linear':
         pass  # keep index as fraction and interpolate
     else:
         raise ValueError("interpolation can only be 'linear', 'lower' "
-                         "or 'higher'")
+                         "'higher', 'midpoint', or 'closest'")
 
     if indices.dtype == intp:  # take the points along axis
-        ap.partition(indices.copy(), axis=axis)
+        ap.partition(indices, axis=axis)
         return take(ap, indices, axis=axis, out=out)
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)

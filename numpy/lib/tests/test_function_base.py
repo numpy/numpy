@@ -1456,37 +1456,14 @@ class TestScoreatpercentile(TestCase):
                      [1, 1, 1]])
         assert_array_equal(np.percentile(x, 50, axis=0), [[1, 1, 1]])
 
-    def test_limit(self):
-        x = np.arange(10)
-        assert_equal(np.percentile(x, 50, limit=(2, 5)), 3.5)
-        assert_equal(np.percentile([2, 3, 4, 5], 50), 3.5)
-
-        assert_equal(np.percentile(x, 50, limit=(-1, 8)), 4)
-        assert_equal(np.percentile([0, 1, 2, 3, 4, 5, 6, 7, 8], 50), 4)
-
-        assert_equal(np.percentile(x, 50, limit=(4, 11)), 6.5)
-        assert_equal(np.percentile([4, 5, 6, 7, 8, 9], 50, ), 6.5)
-
     def test_linear(self):
 
         # Test defaults
         assert_equal(np.percentile(range(10), 50), 4.5)
-        assert_equal(np.percentile(range(10), 50, (2, 7)), 4.5)
-        assert_equal(np.percentile(range(100), 50, limit=(1, 8)), 4.5)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (10, 100)), 55)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (1, 10)), 5.5)
 
         # explicitly specify interpolation_method 'fraction' (the default)
         assert_equal(np.percentile(range(10), 50,
                                    interpolation='linear'), 4.5)
-        assert_equal(np.percentile(range(10), 50, limit=(2, 7),
-                                   interpolation='linear'), 4.5)
-        assert_equal(np.percentile(range(100), 50, limit=(1, 8),
-                                   interpolation='linear'), 4.5)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (10, 100),
-                                   interpolation='linear'), 55)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (1, 10),
-                                   interpolation='linear'), 5.5)
 
     def test_lower_higher(self):
 
@@ -1495,22 +1472,16 @@ class TestScoreatpercentile(TestCase):
                                    interpolation='lower'), 4)
         assert_equal(np.percentile(range(10), 50,
                                    interpolation='higher'), 5)
-        assert_equal(np.percentile(range(10), 50, (2, 7),
-                                   interpolation='lower'), 4)
-        assert_equal(np.percentile(range(10), 50, limit=(2, 7),
-                                   interpolation='higher'), 5)
-        assert_equal(np.percentile(range(100), 50, (1, 8),
-                                   interpolation='lower'), 4)
-        assert_equal(np.percentile(range(100), 50, (1, 8),
-                                   interpolation='higher'), 5)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (10, 100),
-                                   interpolation='lower'), 10)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, limit=(10, 100),
-                                   interpolation='higher'), 100)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, (1, 10),
-                                   interpolation='lower'), 1)
-        assert_equal(np.percentile(np.array([1, 10, 100]), 50, limit=(1, 10),
-                                   interpolation='higher'), 10)
+
+    def test_midpoint(self):
+        assert_equal(np.percentile(range(10), 51,
+                                   interpolation='midpoint'), 4.5)
+
+    def test_closest(self):
+        assert_equal(np.percentile(range(10), 51,
+                                   interpolation='closest'), 5)
+        assert_equal(np.percentile(range(10), 49,
+                                   interpolation='closest'), 4)
 
     def test_sequence(self):
         x = np.arange(8) * 0.5
