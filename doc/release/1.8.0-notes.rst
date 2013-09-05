@@ -136,6 +136,10 @@ of the mirr function remains unchanged.
 New Features
 ============
 
+Building against OpenBLAS
+~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to build numpy against OpenBLAS by editing site.cfg.
+
 New constant
 ~~~~~~~~~~~~
 Euler's constant is now exposed in numpy as euler_gamma.
