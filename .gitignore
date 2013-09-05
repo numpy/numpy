@@ -62,7 +62,7 @@ MANIFEST
 
 # Paver generated files #
 #########################
-release/
+/release
 
 # Logs and databases #
 ######################
