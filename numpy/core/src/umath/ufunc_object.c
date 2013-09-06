@@ -44,6 +44,7 @@
 #include "reduction.h"
 
 #include "ufunc_object.h"
+#include "ufunc_override.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -706,7 +707,6 @@ fail:
     }
     return -1;
 }
-
 
 /********* GENERIC UFUNC USING ITERATOR *********/
 
@@ -4043,6 +4043,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *retobj[NPY_MAXARGS];
     PyObject *wraparr[NPY_MAXARGS];
     PyObject *res;
+    PyObject *override = NULL;
     int errval;
 
     /*
@@ -4051,6 +4052,18 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
      */
     for (i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
+    }
+
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override, 
+                                   ufunc->nin);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        for (i = 0; i < ufunc->nargs; i++) {
+            PyArray_XDECREF_ERR(mps[i]);
+        }
+        return override;
     }
 
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
@@ -4834,18 +4847,51 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 static PyObject *
 ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
+    int errval;
+    PyObject *override = NULL;
+
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 
+                                   ufunc->nin);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCE);
 }
 
 static PyObject *
 ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
+    int errval;
+    PyObject *override = NULL;
+
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 
+                                   ufunc->nin);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_ACCUMULATE);
 }
 
 static PyObject *
 ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
+    int errval;
+    PyObject *override = NULL;
+
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 
+                                   ufunc->nin);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 

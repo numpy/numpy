@@ -2,11 +2,14 @@
  * This module provides a BLAS optimized\nmatrix multiply,
  * inner product and dot for numpy arrays
  */
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "Python.h"
-#include "npy_config.h"
+
 #include "numpy/arrayobject.h"
+#include "npy_config.h"
+#include "npy_pycompat.h"
+#include "private/ufunc_override.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif
@@ -215,8 +218,12 @@ _bad_strides(PyArrayObject *ap)
 static PyObject *
 dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwargs)
 {
+    static PyObject *cached_npy_dot = NULL;
+    PyObject *override = NULL;
+    PyObject *module;
     PyObject *op1, *op2;
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *out = NULL, *ret = NULL;
+    int errval;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
     npy_intp ap1stride = 0;
@@ -231,6 +238,23 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
     PyArray_Descr *dtype;
     MatrixShape ap1shape, ap2shape;
     char* kwords[] = {"a", "b", "out", NULL };
+
+    if (cached_npy_dot == NULL) {
+        module = PyImport_ImportModule("numpy.core._dotblas");
+        cached_npy_dot = PyDict_GetItemString(PyModule_GetDict(module), "dot");
+
+        Py_INCREF(cached_npy_dot);
+        Py_DECREF(module);
+    }
+
+    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__", args, kwargs, 
+                                   &override, 2);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|O", kwords,
                                     &op1, &op2, &out)) {
