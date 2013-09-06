@@ -370,8 +370,12 @@ typedef struct _loop1d_info {
 #define UFUNC_NOFPE _control87(MCW_EM, MCW_EM);
 #endif
 
+/* windows enables sse on 32 bit, so check both flags */
 #define UFUNC_CHECK_STATUS(ret) { \
-        int fpstatus = (int) _clearfp(); \
+        int fpstatus, fpstatus2; \
+        _statusfp2(&fpstatus, &fpstatus2); \
+        _clearfp(); \
+        fpstatus |= fpstatus2; \
          \
         ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
