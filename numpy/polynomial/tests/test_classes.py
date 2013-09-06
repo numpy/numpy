@@ -7,17 +7,17 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.polynomial import (
-        Polynomial, Legendre, Chebyshev, Laguerre,
-        Hermite, HermiteE)
+    Polynomial, Legendre, Chebyshev, Laguerre,
+    Hermite, HermiteE)
 from numpy.testing import (
-        TestCase, assert_almost_equal, assert_raises,
-        assert_equal, assert_, run_module_suite, dec)
+    TestCase, assert_almost_equal, assert_raises,
+    assert_equal, assert_, run_module_suite, dec)
 from numpy.testing.noseclasses import KnownFailure
 
 
 classes = (
-        Polynomial, Legendre, Chebyshev, Laguerre,
-        Hermite, HermiteE)
+    Polynomial, Legendre, Chebyshev, Laguerre,
+    Hermite, HermiteE)
 
 
 def test_class_methods():
@@ -52,12 +52,11 @@ def test_class_methods():
         yield check_trim, Poly
 
 
-
 #
 # helper functions
 #
-
 random = np.random.random
+
 
 def assert_poly_almost_equal(p1, p2, msg=""):
     try:
@@ -113,7 +112,7 @@ def check_cast(Poly1, Poly2):
 #
 
 
-def check_identity(Poly) :
+def check_identity(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     x = np.linspace(d[0], d[1], 11)
@@ -151,9 +150,9 @@ def check_fromroots(Poly):
     assert_almost_equal(p2.coef[-1], 1)
 
 
-def check_fit(Poly) :
+def check_fit(Poly):
 
-    def f(x) :
+    def f(x):
         return x*(x - 1)*(x - 2)
     x = np.linspace(0, 3)
     y = f(x)
@@ -186,7 +185,7 @@ def check_fit(Poly) :
     assert_almost_equal(p1(x), p2(x))
 
 
-def check_equal(Poly) :
+def check_equal(Poly):
     p1 = Poly([1, 2, 3], domain=[0, 1], window=[2, 3])
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
@@ -197,7 +196,7 @@ def check_equal(Poly) :
     assert_(not p1 == p4)
 
 
-def check_not_equal(Poly) :
+def check_not_equal(Poly):
     p1 = Poly([1, 2, 3], domain=[0, 1], window=[2, 3])
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
@@ -208,7 +207,7 @@ def check_not_equal(Poly) :
     assert_(p1 != p4)
 
 
-def check_add(Poly) :
+def check_add(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -230,8 +229,7 @@ def check_add(Poly) :
         assert_raises(TypeError, p1.__add__, Polynomial([0]))
 
 
-
-def check_sub(Poly) :
+def check_sub(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -253,7 +251,7 @@ def check_sub(Poly) :
         assert_raises(TypeError, p1.__sub__, Polynomial([0]))
 
 
-def check_mul(Poly) :
+def check_mul(Poly):
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
     p1 = Poly(c1)
@@ -276,7 +274,7 @@ def check_mul(Poly) :
         assert_raises(TypeError, p1.__mul__, Polynomial([0]))
 
 
-def check_floordiv(Poly) :
+def check_floordiv(Poly):
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
     c3 = list(random((2,)) + .5)
@@ -294,15 +292,17 @@ def check_floordiv(Poly) :
     assert_poly_almost_equal(np.array(c4) // p2, p1)
     assert_poly_almost_equal(2 // p2, Poly([0]))
     assert_poly_almost_equal(p2 // 2, 0.5*p2)
-    assert_raises(TypeError, p1.__floordiv__, Poly([0], domain=Poly.domain + 1))
-    assert_raises(TypeError, p1.__floordiv__, Poly([0], window=Poly.window + 1))
+    assert_raises(
+        TypeError, p1.__floordiv__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(
+        TypeError, p1.__floordiv__, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
         assert_raises(TypeError, p1.__floordiv__, Chebyshev([0]))
     else:
         assert_raises(TypeError, p1.__floordiv__, Polynomial([0]))
 
 
-def check_mod(Poly) :
+def check_mod(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -329,7 +329,7 @@ def check_mod(Poly) :
         assert_raises(TypeError, p1.__mod__, Polynomial([0]))
 
 
-def check_divmod(Poly) :
+def check_divmod(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -397,7 +397,7 @@ def check_copy(Poly):
     assert_(p1.window is not p2.window)
 
 
-def check_integ(Poly) :
+def check_integ(Poly):
     P = Polynomial
     # Check defaults
     p0 = Poly.cast(P([1*2, 2*3, 3*4]))
@@ -456,19 +456,19 @@ def check_linspace(Poly):
     assert_almost_equal(yres, ytgt)
 
 
-def check_pow(Poly) :
+def check_pow(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     tgt = Poly([1], domain=d, window=d)
     tst = Poly([1, 2, 3], domain=d, window=d)
-    for i in range(5) :
+    for i in range(5):
         assert_poly_almost_equal(tst**i, tgt)
         tgt = tgt * tst
     assert_raises(ValueError, tgt.__pow__, 1.5)
     assert_raises(ValueError, tgt.__pow__, -1)
 
 
-def check_call(Poly) :
+def check_call(Poly):
     P = Polynomial
     d = Poly.domain
     x = np.linspace(d[0], d[1], 11)
@@ -480,7 +480,7 @@ def check_call(Poly) :
     assert_almost_equal(res, tgt)
 
 
-def check_cutdeg(Poly) :
+def check_cutdeg(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.cutdeg, .5)
     assert_raises(ValueError, p.cutdeg, -1)
@@ -490,7 +490,7 @@ def check_cutdeg(Poly) :
     assert_equal(len(p.cutdeg(0)), 1)
 
 
-def check_truncate(Poly) :
+def check_truncate(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.truncate, .5)
     assert_raises(ValueError, p.truncate, 0)
@@ -500,7 +500,7 @@ def check_truncate(Poly) :
     assert_equal(len(p.truncate(1)), 1)
 
 
-def check_trim(Poly) :
+def check_trim(Poly):
     c = [1, 1e-6, 1e-12, 0]
     p = Poly(c)
     assert_equal(p.trim().coef, c[:3])
@@ -508,7 +508,7 @@ def check_trim(Poly) :
     assert_equal(p.trim(1e-5).coef, c[:1])
 
 
-def check_mapparms(Poly) :
+def check_mapparms(Poly):
     # check with defaults. Should be identity.
     d = Poly.domain
     w = Poly.window
