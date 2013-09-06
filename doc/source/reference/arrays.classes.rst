@@ -38,6 +38,40 @@ Special attributes and methods
 Numpy provides several hooks that subclasses of :class:`ndarray` can
 customize:
 
+.. function:: __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
+
+   Any class (ndarray subclass or not) can define this method to
+   override behavior of Numpy's ufuncs. This works quite similarly to
+   Python's ``__mul__`` and other binary operation routines.
+
+   - *ufunc* is the ufunc object that was called. 
+   - *method* is a string indicating which Ufunc method was called
+     (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
+     ``"accumulate"``, ``"outer"``, ``"inner"``). 
+   - *i* is the index of *self* in *inputs*.
+   - *inputs* is a tuple of the input arguments to the ``ufunc``
+   - *kwargs* is a dictionary containing the optional input arguments
+     of the ufunc. The ``out`` argument is always contained in
+     *kwargs*, if given.
+
+   The method should return either the result of the operation, or
+   :obj:`NotImplemented` if the operation requested is not
+   implemented.
+
+   If one of the arguments has a :func:`__numpy_ufunc__` method, it is
+   executed *instead* of the ufunc.  If more than one of the input
+   arguments implements :func:`__numpy_ufunc__`, they are tried in the
+   order: subclasses before superclasses, otherwise left to right. The
+   first routine returning something else than :obj:`NotImplemented`
+   determines the result. If all of the :func:`__numpy_ufunc__`
+   operations returns :obj:`NotImplemented`, a :exc:`TypeError` is
+   raised.
+
+   If an :class:`ndarray` subclass defines the :func:`__numpy_ufunc__`
+   method, this disables the :func:`__array_wrap__`,
+   :func:`__array_prepare__`, :data:`__array_priority__` mechanism
+   described below.
+
 .. function:: __array_finalize__(self)
 
    This method is called whenever the system internally allocates a

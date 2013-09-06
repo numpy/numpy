@@ -23,6 +23,14 @@ Compatibility notes
 New Features
 ============
 
+Ufunc and Dot Overrides
+~~~~~~~~~~~~~~~~~~~~~~~
+
+For better compatibility with external objects you can now override universal
+functions (ufuncs), ``numpy.core._dotblas.dot``, and
+``numpy.core.multiarray.dot`` (the numpy.dot functions). By defining a
+``__numpy_ufunc__`` method.
+
 
 Improvements
 ============
