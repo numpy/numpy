@@ -24,6 +24,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "array_assign.h"
+#include "mapping.h" /* for array_item_asarray */
 
 /*
  * Reading from a file or a string.
@@ -396,13 +397,25 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 }
 
-/* adapted from Numarray */
+/*
+ * adapted from Numarray,
+ * a: destination array
+ * s: source object, array or sequence
+ * dim: current recursion dimension, must be 0 on first call
+ * dst: must be NULL on first call
+ * it is a view on the destination array viewing the place where to put the
+ * data of the current recursion
+ */
 static int
 setArrayFromSequence(PyArrayObject *a, PyObject *s,
-                        int dim, npy_intp offset)
+                        int dim, PyArrayObject * dst)
 {
     Py_ssize_t i, slen;
     int res = 0;
+
+    /* first recursion, view equal destination */
+    if (dst == NULL)
+        dst = a;
 
     /*
      * This code is to ensure that the sequence access below will
@@ -412,17 +425,26 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
 
-    if (PyArray_Check(s) && !(PyArray_CheckExact(s))) {
-      /*
-       * FIXME:  This could probably copy the entire subarray at once here using
-       * a faster algorithm.  Right now, just make sure a base-class array is
-       * used so that the dimensionality reduction assumption is correct.
-       */
-        /* This will DECREF(s) if replaced */
-        s = PyArray_EnsureArray(s);
-        if (s == NULL) {
+    if (PyArray_Check(s)) {
+        if (!(PyArray_CheckExact(s))) {
+            /*
+             * make sure a base-class array is used so that the dimensionality
+             * reduction assumption is correct.
+             */
+            /* This will DECREF(s) if replaced */
+            s = PyArray_EnsureArray(s);
+            if (s == NULL) {
+                goto fail;
+            }
+        }
+
+        /* dst points to correct array subsection */
+        if (PyArray_CopyInto(dst, (PyArrayObject *)s) < 0) {
             goto fail;
         }
+
+        Py_DECREF(s);
+        return 0;
     }
 
     if (dim > PyArray_NDIM(a)) {
@@ -458,17 +480,23 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
 
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
-                res = setArrayFromSequence(a, o, dim+1, offset);
+                PyArrayObject * tmp =
+                    (PyArrayObject *)array_item_asarray(dst, i);
+                if (tmp == NULL) {
+                    goto fail;
+                }
+
+                res = setArrayFromSequence(a, o, dim+1, tmp);
+                Py_DECREF(tmp);
             }
             else {
-                res = PyArray_DESCR(a)->f->setitem(o,
-                                        (PyArray_BYTES(a) + offset), a);
+                char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
+                res = PyArray_DESCR(dst)->f->setitem(o, b, dst);
             }
             if (res < 0) {
                 Py_DECREF(o);
                 goto fail;
             }
-            offset += PyArray_STRIDES(a)[dim];
         }
         Py_DECREF(o);
     }
@@ -480,17 +508,23 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 goto fail;
             }
             if ((PyArray_NDIM(a) - dim) > 1) {
-                res = setArrayFromSequence(a, o, dim+1, offset);
+                PyArrayObject * tmp =
+                    (PyArrayObject *)array_item_asarray(dst, i);
+                if (tmp == NULL) {
+                    goto fail;
+                }
+
+                res = setArrayFromSequence(a, o, dim+1, tmp);
+                Py_DECREF(tmp);
             }
             else {
-                res = PyArray_DESCR(a)->f->setitem(o,
-                                 (PyArray_BYTES(a) + offset), a);
+                char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
+                res = PyArray_DESCR(dst)->f->setitem(o, b, dst);
             }
             Py_DECREF(o);
             if (res < 0) {
                 goto fail;
             }
-            offset += PyArray_STRIDES(a)[dim];
         }
     }
 
@@ -515,7 +549,7 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
                         "assignment to 0-d array");
         return -1;
     }
-    return setArrayFromSequence(self, v, 0, 0);
+    return setArrayFromSequence(self, v, 0, NULL);
 }
 
 /*

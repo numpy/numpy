@@ -176,6 +176,48 @@ class TestAttributes(TestCase):
         assert_array_equal(x['a'], [3.5, 3.5])
         assert_array_equal(x['b'], [-2, -2])
 
+
+class TestArrayConstruction(TestCase):
+    def test_array(self):
+        d = np.ones(6)
+        r = np.array([d, d])
+        assert_equal(r, np.ones((2, 6)))
+
+        d = np.ones(6)
+        tgt = np.ones((2, 6))
+        r = np.array([d, d])
+        assert_equal(r, tgt)
+        tgt[1] = 2
+        r = np.array([d, d + 1])
+        assert_equal(r, tgt)
+
+        d = np.ones(6)
+        r = np.array([[d, d]])
+        assert_equal(r, np.ones((1, 2, 6)))
+
+        d = np.ones(6)
+        r = np.array([[d, d], [d, d]])
+        assert_equal(r, np.ones((2, 2, 6)))
+
+        d = np.ones((6, 6))
+        r = np.array([d, d])
+        assert_equal(r, np.ones((2, 6, 6)))
+
+        d = np.ones((6, ))
+        r = np.array([[d, d + 1], d + 2])
+        assert_equal(len(r), 2)
+        assert_equal(r[0], [d, d + 1])
+        assert_equal(r[1], d + 2)
+
+        tgt = np.ones((2, 3), dtype=np.bool)
+        tgt[0, 2] = False
+        tgt[1, 0:2] = False
+        r = np.array([[True, True, False], [False, False, True]])
+        assert_equal(r, tgt)
+        r = np.array([[True, False], [True, False], [False, True]])
+        assert_equal(r, tgt.T)
+
+
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):
         a = np.arange(6).reshape(2, 3)
