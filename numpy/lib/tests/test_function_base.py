@@ -466,7 +466,7 @@ class TestGradient(TestCase):
              '1910-10-12', '1910-12-12', '1912-12-12'],
             dtype='datetime64[D]')
         dx = np.array(
-            [-5,  -3,   0,  31,  61, 396, 731],
+            [-7, -3, 0, 31, 61, 396, 1066],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
         assert_(dx.dtype == np.dtype('timedelta64[D]'))
@@ -477,10 +477,22 @@ class TestGradient(TestCase):
             [-5, -3, 10, 12, 61, 321, 300],
             dtype='timedelta64[D]')
         dx = np.array(
-            [2, 7, 7, 25, 154, 119, -21],
+            [-3, 7, 7, 25, 154, 119, -161],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
         assert_(dx.dtype == np.dtype('timedelta64[D]'))
+
+    def test_second_order_accurate(self):
+        # Testing that the relative numerical error is less that 3% for
+        # this example problem. This corresponds to second order
+        # accurate finite differences for all interior and boundary
+        # points.
+        x = np.linspace(0, 1, 10)
+        dx = x[1] - x[0]
+        y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
+        analytical = 6 * x ** 2 + 8 * x + 2
+        num_error = np.abs((np.gradient(y, dx) / analytical) - 1)
+        assert_(np.all(num_error < 0.03) == True)
 
 
 class TestAngle(TestCase):

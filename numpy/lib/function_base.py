@@ -835,9 +835,10 @@ def gradient(f, *varargs):
     """
     Return the gradient of an N-dimensional array.
 
-    The gradient is computed using central differences in the interior
-    and first differences at the boundaries. The returned gradient hence has
-    the same shape as the input array.
+    The gradient is computed using second order accurate central differences
+    in the interior and second order accurate one-sides (forward or backwards)
+    differences at the boundaries. The returned gradient hence has the same
+    shape as the input array.
 
     Parameters
     ----------
@@ -846,7 +847,6 @@ def gradient(f, *varargs):
     `*varargs` : scalars
       0, 1, or N scalars specifying the sample distances in each direction,
       that is: `dx`, `dy`, `dz`, ... The default distance is 1.
-
 
     Returns
     -------
@@ -868,6 +868,11 @@ def gradient(f, *varargs):
     array([[ 1. ,  2.5,  4. ],
            [ 1. ,  1. ,  1. ]])]
 
+    >>> x = np.array([0,1,2,3,4])
+    >>> dx = gradient(x)
+    >>> y = x**2
+    >>> gradient(y,dx)
+    array([0.,  2.,  4.,  6.,  8.])
     """
     f = np.asanyarray(f)
     N = len(f.shape)  # number of dimensions
@@ -882,7 +887,8 @@ def gradient(f, *varargs):
         raise SyntaxError(
                 "invalid number of arguments")
 
-    # use central differences on interior and first differences on endpoints
+    # use central differences on interior and one-sided differences on the
+    # endpoints. This preserves second order-accuracy over the full domain.
 
     outvals = []
 
@@ -890,6 +896,7 @@ def gradient(f, *varargs):
     slice1 = [slice(None)]*N
     slice2 = [slice(None)]*N
     slice3 = [slice(None)]*N
+    slice4 = [slice(None)]*N
 
     otype = f.dtype.char
     if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
@@ -903,24 +910,66 @@ def gradient(f, *varargs):
         # Needs to keep the specific units, can't be a general unit
         otype = f.dtype
 
+    # Convert datetime64 data into ints. Make dummy variable `y`
+    # that is a view of ints if the data is datetime64, otherwise
+    # just set y equal to the the array `f`.
+    if f.dtype.char in ["M", "m"]:
+        y = f.view('int64')
+    else:
+        y = f
+
     for axis in range(N):
-        # select out appropriate parts for this dimension
-        out = np.empty_like(f, dtype=otype)
-        slice1[axis] = slice(1, -1)
-        slice2[axis] = slice(2, None)
-        slice3[axis] = slice(None, -2)
-        # 1D equivalent -- out[1:-1] = (f[2:] - f[:-2])/2.0
-        out[slice1] = (f[slice2] - f[slice3])/2.0
-        slice1[axis] = 0
-        slice2[axis] = 1
-        slice3[axis] = 0
-        # 1D equivalent -- out[0] = (f[1] - f[0])
-        out[slice1] = (f[slice2] - f[slice3])
-        slice1[axis] = -1
-        slice2[axis] = -1
-        slice3[axis] = -2
-        # 1D equivalent -- out[-1] = (f[-1] - f[-2])
-        out[slice1] = (f[slice2] - f[slice3])
+
+        if y.shape[axis] < 2:
+            raise ValueError("Shape of array too small to calculate a numerical gradient, at least two elements are required.")
+
+        # Numerical differentiation: 1st order edges, 2nd order interior
+        if y.shape[axis] == 2:
+            # Use first order differences for time data
+            out = np.empty_like(y, dtype=otype)
+
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+
+            slice1[axis] = 0
+            slice2[axis] = 1
+            slice3[axis] = 0
+            # 1D equivalent -- out[0] = (y[1] - y[0])
+            out[slice1] = (y[slice2] - y[slice3])
+
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
+            out[slice1] = (y[slice2] - y[slice3])
+
+        # Numerical differentiation: 2st order edges, 2nd order interior
+        else:
+            # Use second order differences where possible
+            out = np.empty_like(y, dtype=otype)
+
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+
+            slice1[axis] = 0
+            slice2[axis] = 0
+            slice3[axis] = 1
+            slice4[axis] = 2
+            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] + y[2]) / 2.0
+            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            slice4[axis] = -3
+            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] + y[-3])
+            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
 
         # divide by step size
         outvals.append(out / dx[axis])
@@ -929,12 +978,12 @@ def gradient(f, *varargs):
         slice1[axis] = slice(None)
         slice2[axis] = slice(None)
         slice3[axis] = slice(None)
+        slice4[axis] = slice(None)
 
     if N == 1:
         return outvals[0]
     else:
         return outvals
-
 
 def diff(a, n=1, axis=-1):
     """
