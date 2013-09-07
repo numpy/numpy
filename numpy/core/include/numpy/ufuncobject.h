@@ -365,11 +365,21 @@ typedef struct _loop1d_info {
 
 #include <float.h>
 
-  /* Clear the floating point exception default of Borland C++ */
+/* Clear the floating point exception default of Borland C++ */
 #if defined(__BORLANDC__)
 #define UFUNC_NOFPE _control87(MCW_EM, MCW_EM);
 #endif
 
+#if defined(_WIN64)
+#define UFUNC_CHECK_STATUS(ret) { \
+        int fpstatus = (int) _clearfp(); \
+         \
+        ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        }
+#else
 /* windows enables sse on 32 bit, so check both flags */
 #define UFUNC_CHECK_STATUS(ret) { \
         int fpstatus, fpstatus2; \
@@ -382,6 +392,7 @@ typedef struct _loop1d_info {
                 | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
                 | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
         }
+#endif
 
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
