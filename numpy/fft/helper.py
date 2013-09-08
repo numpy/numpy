@@ -4,7 +4,7 @@ Discrete Fourier Transforms - helper.py
 """
 from __future__ import division, absolute_import, print_function
 
-import numpy.core.numerictypes as nt
+from numpy.compat import integer_types
 from numpy.core import (
         asarray, concatenate, arange, take, integer, empty
         )
@@ -12,6 +12,8 @@ from numpy.core import (
 # Created by Pearu Peterson, September 2002
 
 __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
+
+integer_types = integer_types + (integer,)
 
 
 def fftshift(x, axes=None):
@@ -62,7 +64,7 @@ def fftshift(x, axes=None):
     ndim = len(tmp.shape)
     if axes is None:
         axes = list(range(ndim))
-    elif isinstance(axes, (int, nt.integer)):
+    elif isinstance(axes, integer_types):
         axes = (axes,)
     y = tmp
     for k in axes:
@@ -111,7 +113,7 @@ def ifftshift(x, axes=None):
     ndim = len(tmp.shape)
     if axes is None:
         axes = list(range(ndim))
-    elif isinstance(axes, (int, nt.integer)):
+    elif isinstance(axes, integer_types):
         axes = (axes,)
     y = tmp
     for k in axes:
@@ -158,7 +160,7 @@ def fftfreq(n, d=1.0):
     array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
 
     """
-    if not (isinstance(n, int) or isinstance(n, integer)):
+    if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     results = empty(n, int)
@@ -214,7 +216,7 @@ def rfftfreq(n, d=1.0):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if not (isinstance(n, int) or isinstance(n, integer)):
+    if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1
