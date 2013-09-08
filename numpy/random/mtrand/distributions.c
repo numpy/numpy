@@ -53,12 +53,13 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338328
 #endif
-/* log-gamma function to support some of these distributions. The
+
+/*
+ * log-gamma function to support some of these distributions. The
  * algorithm comes from SPECFUN by Shanjie Zhang and Jianming Jin and their
  * book "Computation of Special Functions", 1996, John Wiley & Sons, Inc.
  */
-extern double loggam(double x);
-double loggam(double x)
+static double loggam(double x)
 {
     double x0, x2, xp, gl, gl0;
     long k, n;
