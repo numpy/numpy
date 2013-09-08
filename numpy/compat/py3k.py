@@ -6,7 +6,8 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1', 'long', 'basestring', 'sixu']
+           'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
+           'integer_types']
 
 import sys
 
