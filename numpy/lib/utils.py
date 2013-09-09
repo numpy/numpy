@@ -1092,6 +1092,9 @@ class SafeEval(object):
             else:
                 raise SyntaxError("Unknown name: %s" % node.id)
 
+        def visitNameConstant(self, node):
+            return node.value
+
 def safe_eval(source):
     """
     Protected string evaluation.
