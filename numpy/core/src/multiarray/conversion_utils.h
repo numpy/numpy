@@ -1,6 +1,8 @@
 #ifndef _NPY_PRIVATE_CONVERSION_UTILS_H_
 #define _NPY_PRIVATE_CONVERSION_UTILS_H_
 
+#include <numpy/ndarraytypes.h>
+
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
@@ -36,6 +38,9 @@ PyArray_TypestrConvert(int itemsize, int gentype);
 
 NPY_NO_EXPORT PyObject *
 PyArray_IntTupleFromIntp(int len, npy_intp *vals);
+
+NPY_NO_EXPORT int
+PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 
 /*
  * Converts an axis parameter into an ndim-length C-array of
