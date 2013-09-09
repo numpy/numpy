@@ -274,6 +274,10 @@ def test_ndindex():
     x = list(np.ndindex(()))
     assert_equal(x, [()])
 
+    # Make sure 0-sized ndindex works correctly
+    x = list(np.ndindex(*[0]))
+    assert_equal(x, [])
+
 
 if __name__ == "__main__":
     run_module_suite()
