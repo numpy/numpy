@@ -46,5 +46,9 @@ def test_deprecate_fn():
     assert_('old_func3' in new_func3.__doc__)
     assert_('new_func3' in new_func3.__doc__)
 
+def test_safe_eval_nameconstant():
+    # Test if safe_eval supports Python 3.4 _ast.NameConstant
+    utils.safe_eval('None')
+
 if __name__ == "__main__":
     run_module_suite()
