@@ -216,7 +216,7 @@ class TestUnique(TestCase):
         for dt in types:
             aa = np.array(a, dt)
             bb = np.array(b, dt)
-            self.run_1d_tests(aa, bb, i1, i2, dt)
+            self._run_1d_tests(aa, bb, i1, i2, dt)
 
         # test for object arrays
         dt = 'O'
@@ -224,15 +224,15 @@ class TestUnique(TestCase):
         aa[:] = a
         bb = np.empty(len(b), dt)
         bb[:] = b
-        self.run_1d_tests(aa, bb, i1, i2, dt)
+        self._run_1d_tests(aa, bb, i1, i2, dt)
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
         aa = np.array(list(zip(a, a)), dt)
         bb = np.array(list(zip(b, b)), dt)
-        self.run_1d_tests(aa, bb, i1, i2, dt)
+        self._run_1d_tests(aa, bb, i1, i2, dt)
 
-    def run_1d_tests(self, a, b, i1, i2, dt):
+    def _run_1d_tests(self, a, b, i1, i2, dt):
         msg = "check values failed for type '%s'" % dt
         v = unique(a)
         assert_array_equal(v, b, msg)
@@ -254,9 +254,12 @@ class TestUnique(TestCase):
         assert_array_equal(j2, i2, msg)
 
     def test_unique_axis_errors(self):
-        assert_raises(TypeError, self.run_axis_tests, object)
-        assert_raises(TypeError, self.run_axis_tests, 
+        assert_raises(TypeError, self._run_axis_tests, object)
+        assert_raises(TypeError, self._run_axis_tests, 
                       [('a', int), ('b', object)])
+
+        assert_raises(ValueError, unique, np.arange(10), axis=2)
+        assert_raises(ValueError, unique, np.arange(10), axis=-2)
 
     def test_unique_axis(self):
         types = []
@@ -268,7 +271,7 @@ class TestUnique(TestCase):
         types.append([('a', int), ('b', float)])
 
         for dtype in types:
-            self.run_axis_tests(dtype)
+            self._run_axis_tests(dtype)
 
         msg = 'Non-bitwise-equal booleans test failed'
         data = np.arange(10, dtype=np.uint8).reshape(-1, 2).view(bool)
@@ -280,7 +283,7 @@ class TestUnique(TestCase):
         result = np.array([[-0.0, 0.0]])
         assert_array_equal(unique(data, axis=0), result, msg)
 
-    def run_axis_tests(self, dtype):
+    def _run_axis_tests(self, dtype):
         data = np.array([[0, 1, 0, 0],
                          [1, 0, 0, 0],
                          [0, 1, 0, 0],
