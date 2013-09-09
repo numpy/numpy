@@ -170,8 +170,10 @@ def unique(ar, return_index=False, return_inverse=False, axis=None):
     array([1, 2, 6, 4, 2, 3, 2])
 
     """
-    if axis is None or ar.ndim == 1:
+    if axis is None:
         return _unique1d(ar, return_index, return_inverse)
+    if abs(axis) > ar.ndim:
+        raise ValueError('Invalid axis kwarg specified for unique')
  
     ar = np.swapaxes(ar, axis, 0)
     orig_shape, orig_dtype = ar.shape, ar.dtype
