@@ -143,7 +143,7 @@ def unique(ar, return_index=False, return_inverse=False, axis=None):
 
     >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
     >>> np.unique(a, axis=0)
-    array([[1, 1, 0], [2, 3, 4]])
+    array([[1, 0, 0], [2, 3, 4]])
 
     Return the indices of the original array that give the unique values:
 
