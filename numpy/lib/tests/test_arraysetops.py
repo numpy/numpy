@@ -12,121 +12,6 @@ import warnings
 
 class TestSetOps(TestCase):
 
-    def test_unique(self):
-
-        def check_all(a, b, i1, i2, dt):
-            msg = "check values failed for type '%s'" % dt
-            v = unique(a)
-            assert_array_equal(v, b, msg)
-
-            msg = "check indexes failed for type '%s'" % dt
-            v, j = unique(a, 1, 0)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i1, msg)
-
-            msg = "check reverse indexes failed for type '%s'" % dt
-            v, j = unique(a, 0, 1)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i2, msg)
-
-            msg = "check with all indexes failed for type '%s'" % dt
-            v, j1, j2 = unique(a, 1, 1)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, i2, msg)
-
-        a = [5, 7, 1, 2, 1, 5, 7]*10
-        b = [1, 2, 5, 7]
-        i1 = [2, 3, 0, 1]
-        i2 = [2, 3, 0, 1, 0, 2, 3]*10
-
-        # test for numeric arrays
-        types = []
-        types.extend(np.typecodes['AllInteger'])
-        types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
-        for dt in types:
-            aa = np.array(a, dt)
-            bb = np.array(b, dt)
-            check_all(aa, bb, i1, i2, dt)
-
-        # test for object arrays
-        dt = 'O'
-        aa = np.empty(len(a), dt)
-        aa[:] = a
-        bb = np.empty(len(b), dt)
-        bb[:] = b
-        check_all(aa, bb, i1, i2, dt)
-
-        # test for structured arrays
-        dt = [('', 'i'), ('', 'i')]
-        aa = np.array(list(zip(a, a)), dt)
-        bb = np.array(list(zip(b, b)), dt)
-        check_all(aa, bb, i1, i2, dt)
-
-    def test_unique_axis(self):
-        def run_axis_tests(dtype):
-            data = np.array([[0, 1, 0, 0],
-                             [1, 0, 0, 0],
-                             [0, 1, 0, 0],
-                             [1, 0, 0, 0]]).astype(dtype)
-
-            msg = 'Unique with 1d array and axis=0 failed'
-            result = np.array([0,1])
-            assert_array_equal(unique(data), result.astype(dtype), msg)
-
-            msg = 'Unique with 2d array and axis=0 failed'
-            result = np.array([[0, 1, 0, 0], [1, 0, 0, 0]])
-            assert_array_equal(unique(data, axis=0), result.astype(dtype), msg)
-
-            msg = 'Unique with 2d array and axis=1 failed'
-            result = np.array([[0, 0, 1], [0, 1, 0], [0, 0, 1], [0, 1, 0]])
-            assert_array_equal(unique(data, axis=1), result.astype(dtype), msg)
-
-            msg = 'Unique with 3d array and axis=2 failed'
-            data3d = np.dstack([data] * 3)
-            result = data3d[..., :1]
-            assert_array_equal(unique(data3d, axis=2), result, msg)
-
-            uniq, idx, inv = unique(data, axis=0, return_index=True, 
-                                    return_inverse=True)
-            msg = "Unique's return_index=True failed with axis=0"
-            assert_array_equal(data[idx], uniq, msg)
-            msg = "Unique's return_inverse=True failed with axis=0"
-            assert_array_equal(uniq[inv], data)
-
-            uniq, idx, inv = unique(data, axis=1, return_index=True, 
-                                    return_inverse=True)
-            msg = "Unique's return_index=True failed with axis=1"
-            assert_array_equal(data[:,idx], uniq)
-            msg = "Unique's return_inverse=True failed with axis=1"
-            assert_array_equal(uniq[:,inv], data)
-
-        types = []
-        types.extend(np.typecodes['AllInteger'])
-        types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
-        types.append([('a', int), ('b', int)])
-        types.append([('a', int), ('b', float)])
-
-        for dtype in types:
-            run_axis_tests(dtype)
-
-        assert_raises(TypeError, run_axis_tests, object)
-        assert_raises(TypeError, run_axis_tests, [('a', int), ('b', object)])
-
-        msg = 'Non-bitwise-equal booleans test failed'
-        data = np.arange(10, dtype=np.uint8).reshape(-1, 2).view(bool)
-        result = np.array([[False, True], [True, True]], dtype=bool)
-        assert_array_equal(unique(data, axis=0), result, msg)
-
-        msg = 'Negative zero equality test failed'
-        data = np.array([[-0.0, 0.0], [0.0, -0.0], [-0.0, 0.0], [0.0, -0.0]])
-        result = np.array([[-0.0, 0.0]])
-        assert_array_equal(unique(data, axis=0), result, msg)
-
     def test_intersect1d(self):
         # unique inputs
         a = np.array([5, 7, 1, 2])
@@ -314,6 +199,123 @@ class TestSetOps(TestCase):
         c2 = setdiff1d(aux2, aux1)
         assert_array_equal(c1, c2)
 
+class TestUnique(TestCase):
+
+    def test_1d_functionality(self):
+        a = [5, 7, 1, 2, 1, 5, 7]*10
+        b = [1, 2, 5, 7]
+        i1 = [2, 3, 0, 1]
+        i2 = [2, 3, 0, 1, 0, 2, 3]*10
+
+        # test for numeric arrays
+        types = []
+        types.extend(np.typecodes['AllInteger'])
+        types.extend(np.typecodes['AllFloat'])
+        types.append('datetime64[D]')
+        types.append('timedelta64[D]')
+        for dt in types:
+            aa = np.array(a, dt)
+            bb = np.array(b, dt)
+            self.run_1d_tests(aa, bb, i1, i2, dt)
+
+        # test for object arrays
+        dt = 'O'
+        aa = np.empty(len(a), dt)
+        aa[:] = a
+        bb = np.empty(len(b), dt)
+        bb[:] = b
+        self.run_1d_tests(aa, bb, i1, i2, dt)
+
+        # test for structured arrays
+        dt = [('', 'i'), ('', 'i')]
+        aa = np.array(list(zip(a, a)), dt)
+        bb = np.array(list(zip(b, b)), dt)
+        self.run_1d_tests(aa, bb, i1, i2, dt)
+
+    def run_1d_tests(self, a, b, i1, i2, dt):
+        msg = "check values failed for type '%s'" % dt
+        v = unique(a)
+        assert_array_equal(v, b, msg)
+
+        msg = "check indexes failed for type '%s'" % dt
+        v, j = unique(a, 1, 0)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i1, msg)
+
+        msg = "check reverse indexes failed for type '%s'" % dt
+        v, j = unique(a, 0, 1)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i2, msg)
+
+        msg = "check with all indexes failed for type '%s'" % dt
+        v, j1, j2 = unique(a, 1, 1)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, i2, msg)
+
+    def test_unique_axis_errors(self):
+        assert_raises(TypeError, self.run_axis_tests, object)
+        assert_raises(TypeError, self.run_axis_tests, 
+                      [('a', int), ('b', object)])
+
+    def test_unique_axis(self):
+        types = []
+        types.extend(np.typecodes['AllInteger'])
+        types.extend(np.typecodes['AllFloat'])
+        types.append('datetime64[D]')
+        types.append('timedelta64[D]')
+        types.append([('a', int), ('b', int)])
+        types.append([('a', int), ('b', float)])
+
+        for dtype in types:
+            self.run_axis_tests(dtype)
+
+        msg = 'Non-bitwise-equal booleans test failed'
+        data = np.arange(10, dtype=np.uint8).reshape(-1, 2).view(bool)
+        result = np.array([[False, True], [True, True]], dtype=bool)
+        assert_array_equal(unique(data, axis=0), result, msg)
+
+        msg = 'Negative zero equality test failed'
+        data = np.array([[-0.0, 0.0], [0.0, -0.0], [-0.0, 0.0], [0.0, -0.0]])
+        result = np.array([[-0.0, 0.0]])
+        assert_array_equal(unique(data, axis=0), result, msg)
+
+    def run_axis_tests(self, dtype):
+        data = np.array([[0, 1, 0, 0],
+                         [1, 0, 0, 0],
+                         [0, 1, 0, 0],
+                         [1, 0, 0, 0]]).astype(dtype)
+
+        msg = 'Unique with 1d array and axis=0 failed'
+        result = np.array([0,1])
+        assert_array_equal(unique(data), result.astype(dtype), msg)
+
+        msg = 'Unique with 2d array and axis=0 failed'
+        result = np.array([[0, 1, 0, 0], [1, 0, 0, 0]])
+        assert_array_equal(unique(data, axis=0), result.astype(dtype), msg)
+
+        msg = 'Unique with 2d array and axis=1 failed'
+        result = np.array([[0, 0, 1], [0, 1, 0], [0, 0, 1], [0, 1, 0]])
+        assert_array_equal(unique(data, axis=1), result.astype(dtype), msg)
+
+        msg = 'Unique with 3d array and axis=2 failed'
+        data3d = np.dstack([data] * 3)
+        result = data3d[..., :1]
+        assert_array_equal(unique(data3d, axis=2), result, msg)
+
+        uniq, idx, inv = unique(data, axis=0, return_index=True, 
+                                return_inverse=True)
+        msg = "Unique's return_index=True failed with axis=0"
+        assert_array_equal(data[idx], uniq, msg)
+        msg = "Unique's return_inverse=True failed with axis=0"
+        assert_array_equal(uniq[inv], data)
+
+        uniq, idx, inv = unique(data, axis=1, return_index=True, 
+                                return_inverse=True)
+        msg = "Unique's return_index=True failed with axis=1"
+        assert_array_equal(data[:,idx], uniq)
+        msg = "Unique's return_inverse=True failed with axis=1"
+        assert_array_equal(uniq[:,inv], data)
 
 if __name__ == "__main__":
     run_module_suite()
