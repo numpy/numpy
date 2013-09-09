@@ -53,12 +53,15 @@ def broadcast_arrays(*args):
     --------
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[1],[2],[3]])
-    >>> np.broadcast_arrays(x, y)
-    [array([[1, 2, 3],
+    >>> (broadcasted_x, broadcasted_y) = np.broadcast_arrays(x, y)
+    >>> broadcasted_x
+    array([[1, 2, 3],
            [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
+           [1, 2, 3]])
+    >>> broadcasted_y
+    array([[1, 1, 1],
            [2, 2, 2],
-           [3, 3, 3]])]
+           [3, 3, 3]])
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.

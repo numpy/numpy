@@ -157,17 +157,42 @@ class TestSelect(TestCase):
         return output
 
     def test_basic(self):
+
         choices = [np.array([1, 2, 3]),
                    np.array([4, 5, 6]),
                    np.array([7, 8, 9])]
-        conditions = [np.array([0, 0, 0]),
-                      np.array([0, 1, 0]),
-                      np.array([0, 0, 1])]
-        assert_array_equal(select(conditions, choices, default=15),
-                           self._select(conditions, choices, default=15))
+
+        int_conditions = [np.array([0, 0, 0]),
+                          np.array([0, 1, 0]),
+                          np.array([0, 0, 1])]
+ 
+        bool_conditions = [item.astype(bool) for item in int_conditions] 
+
+        # Test normal use case
 
         assert_equal(len(choices), 3)
-        assert_equal(len(conditions), 3)
+        assert_equal(len(int_conditions), 3)
+   
+        assert_array_equal(select(bool_conditions, choices, default=15),
+                           self._select(bool_conditions, choices, default=15))
+
+        # Confirm DeprecationWarning raised when int ndarray is used. 
+
+        warnings.simplefilter('always', DeprecationWarning)
+        try:
+            assert_warns(DeprecationWarning, select, int_conditions, choices, default=15)
+        finally:
+             warnings.filters.pop(0)
+
+        # Check deprecated int ndarray workaround works.
+
+        warnings.simplefilter('ignore', DeprecationWarning)
+        try:
+            assert_array_equal(select(int_conditions, choices, default=15),
+                               self._select(int_conditions, choices, default=15))
+        finally:
+            warnings.filters.pop(0)
+
 
 
 class TestInsert(TestCase):
