@@ -1,4 +1,5 @@
 """ Test functions for linalg module
+
 """
 from __future__ import division, absolute_import, print_function
 
@@ -868,64 +869,52 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
-def _is_xerbla_safe():
-    """
-    Check that running the xerbla test is safe --- if python_xerbla
-    is not successfully linked in, the standard xerbla routine is called,
-    which aborts the process.
-
-    """
+def test_xerbla_override():
+    # Check that our xerbla has been successfully linked in. If it is not,
+    # the default xerbla routine is called, which prints a message to stdout
+    # and may, or may not, abort the process depending on the LAPACK package.
+    from nose import SkipTest
 
     try:
         pid = os.fork()
     except (OSError, AttributeError):
         # fork failed, or not running on POSIX
-        return False
+        raise SkipTest("Not POSIX or fork failed.")
 
     if pid == 0:
         # child; close i/o file handles
         os.close(1)
         os.close(0)
-        # avoid producing core files
+        # Avoid producing core files.
         import resource
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        # these calls may abort
+        # These calls may abort.
+        try:
+            np.linalg.lapack_lite.xerbla()
+        except ValueError:
+            pass
+        except:
+            os._exit(os.EX_CONFIG)
+
         try:
             a = np.array([[1]])
             np.linalg.lapack_lite.dgetrf(
                 1, 1, a.astype(np.double),
                 0, # <- invalid value
                 a.astype(np.intc), 0)
-        except:
-            pass
-        try:
-            np.linalg.lapack_lite.xerbla()
-        except:
-            pass
-        os._exit(111)
+        except ValueError as e:
+            if "DGETRF parameter number 4" in str(e):
+                # success
+                os._exit(os.EX_OK)
+
+        # Did not abort, but our xerbla was not linked in.
+        os._exit(os.EX_CONFIG)
     else:
         # parent
         pid, status = os.wait()
-        if os.WEXITSTATUS(status) == 111 and not os.WIFSIGNALED(status):
-            return True
-    return False
+        if os.WEXITSTATUS(status) != os.EX_OK or os.WIFSIGNALED(status):
+            raise SkipTest('Numpy xerbla not linked in.')
 
-@dec.skipif(not _is_xerbla_safe(), "python_xerbla not found")
-def test_xerbla():
-    # Test that xerbla works (with GIL)
-    a = np.array([[1]])
-    try:
-        np.linalg.lapack_lite.dgetrf(
-            1, 1, a.astype(np.double),
-            0, # <- invalid value
-            a.astype(np.intc), 0)
-    except ValueError as e:
-        assert_("DGETRF parameter number 4" in str(e))
-    else:
-        assert_(False)
-
-    # Test that xerbla works (without GIL)
-    assert_raises(ValueError, np.linalg.lapack_lite.xerbla)
 
 if __name__ == "__main__":
     run_module_suite()
