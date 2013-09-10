@@ -540,7 +540,8 @@ class ndindex(object):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
         x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index'], order='C')
+        self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
+                              order='C')
 
     def __iter__(self):
         return self
