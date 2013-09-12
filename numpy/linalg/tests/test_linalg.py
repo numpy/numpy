@@ -7,20 +7,26 @@ import os
 import sys
 
 import numpy as np
-from numpy.testing import (TestCase, assert_, assert_equal, assert_raises,
-                           assert_array_equal, assert_almost_equal,
-                           run_module_suite, dec)
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank
+from numpy.testing import (
+    TestCase, assert_, assert_equal, assert_raises, assert_array_equal,
+    assert_almost_equal, run_module_suite, dec
+)
+
 
 def ifthen(a, b):
     return not a or b
 
-old_assert_almost_equal = assert_almost_equal
+
 def imply(a, b):
     return not a or b
+
+
+old_assert_almost_equal = assert_almost_equal
+
 
 def assert_almost_equal(a, b, **kw):
     if asarray(a).dtype.type in (single, csingle):
@@ -29,9 +35,11 @@ def assert_almost_equal(a, b, **kw):
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
+
 def get_real_dtype(dtype):
     return {single: single, double: double,
             csingle: single, cdouble: double}[dtype]
+
 
 def get_complex_dtype(dtype):
     return {single: csingle, double: cdouble,
@@ -727,7 +735,6 @@ def test_reduced_rank():
 
 class TestQR(TestCase):
 
-
     def check_qr(self, a):
         # This test expects the argument `a` to be an ndarray or
         # a subclass of an ndarray of inexact type.
@@ -748,7 +755,6 @@ class TestQR(TestCase):
         assert_almost_equal(dot(q.T.conj(), q), np.eye(m))
         assert_almost_equal(np.triu(r), r)
 
-
         # mode == 'reduced'
         q1, r1 = linalg.qr(a, mode='reduced')
         assert_(q1.dtype == a_dtype)
@@ -767,51 +773,32 @@ class TestQR(TestCase):
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-
-
     def test_qr_empty(self):
         a = np.zeros((0, 2))
         self.assertRaises(linalg.LinAlgError, linalg.qr, a)
 
-
     def test_mode_raw(self):
+        # The factorization is not unique and varies between libraries,
+        # so it is not possible to check against known values. Functional
+        # testing is a possibility, but awaits the exposure of more
+        # of the functions in lapack_lite. Consequently, this test is
+        # very limited in scope. Note that the results are in FORTRAN
+        # order, hence the h arrays are transposed.
         a = array([[1, 2], [3, 4], [5, 6]], dtype=np.double)
         b = a.astype(np.single)
-
-        # m > n
-        h1, tau1 = (
-                array([[-5.91607978,  0.43377175,  0.72295291],
-                      [-7.43735744,  0.82807867,  0.89262383]]),
-                array([ 1.16903085,  1.113104  ])
-                )
-        # m > n
-        h2, tau2 = (
-                array([[-2.23606798,  0.61803399],
-                       [-4.91934955, -0.89442719],
-                       [-7.60263112, -1.78885438]]),
-                array([ 1.4472136,  0.       ])
-                )
 
         # Test double
         h, tau = linalg.qr(a, mode='raw')
         assert_(h.dtype == np.double)
         assert_(tau.dtype == np.double)
-        old_assert_almost_equal(h, h1, decimal=8)
-        old_assert_almost_equal(tau, tau1, decimal=8)
+        assert_(h.shape == (2, 3))
+        assert_(tau.shape == (2,))
 
         h, tau = linalg.qr(a.T, mode='raw')
         assert_(h.dtype == np.double)
         assert_(tau.dtype == np.double)
-        old_assert_almost_equal(h, h2, decimal=8)
-        old_assert_almost_equal(tau, tau2, decimal=8)
-
-        # Test single
-        h, tau = linalg.qr(b, mode='raw')
-        assert_(h.dtype == np.double)
-        assert_(tau.dtype == np.double)
-        old_assert_almost_equal(h, h1, decimal=8)
-        old_assert_almost_equal(tau, tau1, decimal=8)
-
+        assert_(h.shape == (3, 2))
+        assert_(tau.shape == (2,))
 
     def test_mode_all_but_economic(self):
         a = array([[1, 2], [3, 4]])
@@ -830,9 +817,6 @@ class TestQR(TestCase):
             self.check_qr(m2)
             self.check_qr(m2.T)
             self.check_qr(matrix(m1))
-
-
-
 
 
 def test_byteorder_check():
