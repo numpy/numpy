@@ -1072,14 +1072,15 @@ goto capi_fail;
 \t}
 \t/* Get the number of optional arguments */
 #if PY_VERSION_HEX >= 0x03000000
-\tif (PyObject_HasAttrString(tmp_fun,\"__defaults__\"))
+\tif (PyObject_HasAttrString(tmp_fun,\"__defaults__\")) {
 \t\tif (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"__defaults__\")))
 #else
-\tif (PyObject_HasAttrString(tmp_fun,\"func_defaults\"))
+\tif (PyObject_HasAttrString(tmp_fun,\"func_defaults\")) {
 \t\tif (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"func_defaults\")))
 #endif
 \t\t\topt = PyTuple_Size(tmp);
 \t\tPy_XDECREF(tmp);
+\t}
 \t/* Get the number of extra arguments */
 \tif (xa != NULL)
 \t\text = PyTuple_Size((PyObject *)xa);
