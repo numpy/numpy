@@ -595,7 +595,7 @@ sse2_sqrt_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16) {
         op[i] = @scalarf@(ip[i]);
     }
-    assert(npy_is_aligned(&op[i], 16));
+    assert(n < (16 / sizeof(@type@)) || npy_is_aligned(&op[i], 16));
     if (npy_is_aligned(&ip[i], 16)) {
         LOOP_BLOCKED(@type@, 16) {
             @vtype@ d = @vpre@_load_@vsuf@(&ip[i]);
@@ -630,7 +630,7 @@ sse2_absolute_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
         /* add 0 to clear -0.0 */
         op[i] = tmp + 0;
     }
-    assert(npy_is_aligned(&op[i], 16));
+    assert(n < (16 / sizeof(@type@)) || npy_is_aligned(&op[i], 16));
     if (npy_is_aligned(&ip[i], 16)) {
         LOOP_BLOCKED(@type@, 16) {
             @vtype@ a = @vpre@_load_@vsuf@(&ip[i]);
@@ -663,7 +663,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, 16) {
         *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
-    assert(npy_is_aligned(&ip[i], 16));
+    assert(n < (16 / sizeof(@type@)) || npy_is_aligned(&ip[i], 16));
     if (i + 2 * 16 / sizeof(@type@) <= n) {
         /* load the first elements */
         @vtype@ c = @vpre@_load_@vsuf@((@type@*)&ip[i]);
