@@ -351,6 +351,7 @@ nc_pow@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
             *r = npy_cpack@c@(0., 0.);
         }
         else {
+            volatile @ftype@ tmp = NPY_INFINITY;
             /* NB: there are four complex zeros; c0 = (+-0, +-0), so that unlike
              *     for reals, c0**p, with `p` negative is in general
              *     ill-defined.
@@ -360,8 +361,8 @@ nc_pow@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
             *r = npy_cpack@c@(NPY_NAN, NPY_NAN);
 
             /* Raise invalid */
-            ar = NPY_INFINITY;
-            ar = ar - ar;
+            tmp -= NPY_INFINITY;
+            ar = tmp;
         }
         return;
     }
