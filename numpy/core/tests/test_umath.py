@@ -161,12 +161,13 @@ class TestPower(TestCase):
 
         # zero power
         assert_complex_equal(np.power(zero, 0), one)
-        assert_complex_equal(np.power(zero, 0+1j), cnan)
+        with np.errstate(invalid="ignore"):
+            assert_complex_equal(np.power(zero, 0+1j), cnan)
 
-        # negative power
-        for p in [0.33, 0.5, 1, 1.5, 2, 3, 4, 5, 6.6]:
-            assert_complex_equal(np.power(zero, -p), cnan)
-        assert_complex_equal(np.power(zero, -1+0.2j), cnan)
+            # negative power
+            for p in [0.33, 0.5, 1, 1.5, 2, 3, 4, 5, 6.6]:
+                assert_complex_equal(np.power(zero, -p), cnan)
+            assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
