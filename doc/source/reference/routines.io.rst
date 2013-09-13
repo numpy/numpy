@@ -11,6 +11,7 @@ NPZ files
    load
    save
    savez
+   savez_compressed
 
 Text files
 ----------
