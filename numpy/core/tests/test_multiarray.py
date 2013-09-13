@@ -448,6 +448,17 @@ class TestCreation(TestCase):
             assert_equal(np.count_nonzero(d), 0)
             assert_equal(d.sum(), 0)
 
+            d = np.zeros(2, dtype='(2,4)i4')
+            assert_equal(np.count_nonzero(d), 0)
+            assert_equal(d.sum(), 0)
+
+            d = np.zeros(2, dtype='4i4')
+            assert_equal(np.count_nonzero(d), 0)
+            assert_equal(d.sum(), 0)
+
+            d = np.zeros(2, dtype='(2,4)i4, (2,4)i4')
+            assert_equal(np.count_nonzero(d), 0)
+
     def test_zeros_obj(self):
         # test initialization from PyLong(0)
         d = np.zeros((13,), dtype=object)
