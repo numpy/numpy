@@ -863,15 +863,16 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     return 0;
 }
 
-/*NUMPY_API
+/*
  * Generic new array creation routine.
+ * Internal variant with calloc argument for PyArray_Zeros.
  *
  * steals a reference to descr (even on failure)
  */
-NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                     npy_intp *dims, npy_intp *strides, void *data,
-                     int flags, PyObject *obj)
+static PyObject *
+PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+                         npy_intp *dims, npy_intp *strides, void *data,
+                         int flags, PyObject *obj, int zeroed)
 {
     PyArrayObject_fields *fa;
     int i;
@@ -890,9 +891,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
         nd =_update_descr_and_dimensions(&descr, newdims,
                                          newstrides, nd);
-        ret = PyArray_NewFromDescr(subtype, descr, nd, newdims,
-                                   newstrides,
-                                   data, flags, obj);
+        ret = PyArray_NewFromDescr_int(subtype, descr, nd, newdims,
+                                       newstrides,
+                                       data, flags, obj, zeroed);
         return ret;
     }
 
@@ -1026,7 +1027,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * It is bad to have unitialized OBJECT pointers
          * which could also be sub-fields of a VOID array
          */
-        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+        if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
             data = PyDataMem_NEW_ZEROED(sd, 1);
         }
         else {
@@ -1100,6 +1101,22 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  fail:
     Py_DECREF(fa);
     return NULL;
+}
+
+
+/*NUMPY_API
+ * Generic new array creation routine.
+ *
+ * steals a reference to descr (even on failure)
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+                     npy_intp *dims, npy_intp *strides, void *data,
+                     int flags, PyObject *obj)
+{
+    return PyArray_NewFromDescr_int(subtype, descr, nd,
+                                    dims, strides, data,
+                                    flags, obj, 0);
 }
 
 /*NUMPY_API
@@ -2722,22 +2739,16 @@ NPY_NO_EXPORT PyObject *
 PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
-    int need_init;
 
     if (!type) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
 
-    /* set init flag on copy of the descriptor to get zero memory */
-    PyArray_DESCR_REPLACE(type);
-    need_init = PyDataType_FLAGCHK(type, NPY_NEEDS_INIT);
-    type->flags |= NPY_NEEDS_INIT;
-
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                                type,
-                                                nd, dims,
-                                                NULL, NULL,
-                                                is_f_order, NULL);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
+                                                    type,
+                                                    nd, dims,
+                                                    NULL, NULL,
+                                                    is_f_order, NULL, 1);
 
     if (ret == NULL) {
         return NULL;
@@ -2751,13 +2762,6 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
         }
     }
 
-    /*
-     * drop init flag again if its not needed,
-     * e.g. avoids unnecessary initializations of nditer buffers
-     */
-    if (!need_init) {
-        PyArray_DESCR(ret)->flags &= ~NPY_NEEDS_INIT;
-    }
 
     return (PyObject *)ret;
 
