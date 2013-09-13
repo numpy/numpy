@@ -2800,10 +2800,11 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         If True, then allow use of memory of input array `a` for
         calculations. The input array will be modified by the call to
         percentile. This will save memory when you do not need to preserve
-        the contents of the input array. Treat the input as undefined,
-        but it will probably be fully or partially sorted.
-        Default is False. Note that, if `overwrite_input` is True and the
-        input is not already an array, an error will be raised.
+        the contents of the input array. In this case you should not make
+        any assumptions about the content of the passed in array `a` after
+        this function completes -- treat it as undefined. Default is False.
+        Note that, if `overwrite_input` is True and the input is not
+        already an array, an error will be raised.
 
     Returns
     -------
@@ -2821,40 +2822,41 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
     Notes
     -----
     Given a vector V of length N, the qth percentile of V is the qth ranked
-    value in a sorted copy of V. A weighted average of the two nearest
-    neighbors is used if the normalized ranking does not match q exactly.
-    The same as the median if ``q=50``, the same as the minimum if ``q=0``
-    and the same as the maximum if ``q=100``.
+    value in a sorted copy of V.  The values and distances of the two nearest
+    neighbors as well as the `interpolation` parameter will determine the
+    percentile if the normalized ranking does not match q exactly. This
+    function is the same as the median if ``q=50``, the same as the minimum
+    if ``q=0``and the same as the maximum if ``q=100``.
 
     Examples
     --------
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
-    array([[10, 7, 4],
-    [ 3, 2, 1]])
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
     >>> np.percentile(a, 50)
-    array([3.5])
+    array([ 3.5])
     >>> np.percentile(a, 50, axis=0)
-    array([ 6.5, 4.5, 2.5])
+    array([[ 6.5,  4.5,  2.5]])
     >>> np.percentile(a, 50, axis=1)
     array([[ 7.],
-    [2.]])
+           [ 2.]])
 
     >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.percentile(a, 50, axis=0, out=m)
-    array([ 6.5, 4.5, 2.5])
+    array([[ 6.5,  4.5,  2.5]])
     >>> m
-    array([ 6.5, 4.5, 2.5])
+    array([[ 6.5,  4.5,  2.5]])
 
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
-    array([[ 7.,
-    [2.]])
+    array([[ 7.],
+           [ 2.]])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=None, overwrite_input=True)
-    array([3.5])
+    array([ 3.5])
 
     """
     a = asarray(a)
