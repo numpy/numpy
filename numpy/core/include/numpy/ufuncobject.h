@@ -348,36 +348,74 @@ typedef struct _loop1d_info {
 
 #include <machine/fpu.h>
 
-#define UFUNC_CHECK_STATUS(ret) { \
+#define UFUNC_CHECK_STATUS(ret) do { \
         unsigned long fpstatus; \
-         \
         fpstatus = ieee_get_fp_control(); \
+        if (fpstatus == 0) { \
+           ret = 0; \
+        } else { \
+            ret =   ((IEEE_STATUS_DZE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                    | ((IEEE_STATUS_OVF & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                    | ((IEEE_STATUS_UNF & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                    | ((IEEE_STATUS_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        } \
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \
         /* clear status bits as well as disable exception mode if on */ \
-        ieee_set_fp_control( 0 ); \
-        ret = ((IEEE_STATUS_DZE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
-                | ((IEEE_STATUS_OVF & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
-                | ((IEEE_STATUS_UNF & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((IEEE_STATUS_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-        }
+        ieee_set_fp_control( 0 ); \     
+}
+
 
 /* MS Windows -----------------------------------------------------*/
 #elif defined(_MSC_VER)
 
 #include <float.h>
 
-  /* Clear the floating point exception default of Borland C++ */
+/* Clear the floating point exception default of Borland C++ */
 #if defined(__BORLANDC__)
 #define UFUNC_NOFPE _control87(MCW_EM, MCW_EM);
 #endif
 
-#define UFUNC_CHECK_STATUS(ret) { \
-        int fpstatus = (int) _clearfp(); \
-         \
-        ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
-                | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
-                | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-        }
+#if defined(_WIN64)
+#define UFUNC_CHECK_STATUS(ret) do { \
+        int fpstatus = (int) _statusfp(); \
+        if (fpstatus == 0) { \
+            ret = 0; \
+        } else { \
+            ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                    | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                    | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                    | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        } \
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \
+    _clearfp(); \ 
+}
+
+#else
+/* windows enables sse on 32 bit, so check both flags */
+#define UFUNC_CHECK_STATUS(ret) do { \
+        int fpstatus, fpstatus2; \
+        _statusfp2(&fpstatus, &fpstatus2); \
+        fpstatus |= fpstatus2; \
+        if (fpstatus == 0) { \
+            ret = 0; \
+        } else { \
+            ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                    | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                    | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                    | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        } \
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \ 
+         _clearfp(); \  
+}
+
+
+#endif
 
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
@@ -387,16 +425,23 @@ typedef struct _loop1d_info {
       defined(__NetBSD__)
 #include <ieeefp.h>
 
-#define UFUNC_CHECK_STATUS(ret) { \
+#define UFUNC_CHECK_STATUS(ret) do { \
         int fpstatus; \
-         \
         fpstatus = (int) fpgetsticky(); \
-        ret = ((FP_X_DZ  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
-                | ((FP_X_OFL & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
-                | ((FP_X_UFL & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-        (void) fpsetsticky(0); \
-        }
+        if (fpstatus == 0) { \
+           ret = 0;\
+        } else { \
+            ret =   ((FP_X_DZ  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                    | ((FP_X_OFL & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                    | ((FP_X_UFL & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                    | ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        }\
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \
+        (void) fpsetsticky(0); \      
+}
+
 
 #elif defined(__GLIBC__) || defined(__APPLE__) || \
       defined(__CYGWIN__) || defined(__MINGW32__) || \
@@ -409,15 +454,22 @@ typedef struct _loop1d_info {
 #include "numpy/fenv/fenv.h"
 #endif
 
-#define UFUNC_CHECK_STATUS(ret) { \
-        int fpstatus = (int) fetestexcept(FE_DIVBYZERO | FE_OVERFLOW | \
+#define UFUNC_CHECK_STATUS(ret) do { \
+    int fpstatus = (int) fetestexcept(FE_DIVBYZERO | FE_OVERFLOW | \
                                           FE_UNDERFLOW | FE_INVALID); \
-        ret = ((FE_DIVBYZERO  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+    if (fpstatus == 0) { \
+       ret = 0;\
+    } else { \
+         ret =    ((FE_DIVBYZERO  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((FE_OVERFLOW   & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
                 | ((FE_UNDERFLOW  & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((FE_INVALID    & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+                | ((FE_INVALID    & fpstatus) ? UFUNC_FPE_INVALID : 0); \  
+    }\
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \
         (void) feclearexcept(FE_DIVBYZERO | FE_OVERFLOW | \
-                             FE_UNDERFLOW | FE_INVALID); \
+                            FE_UNDERFLOW | FE_INVALID); \       
 }
 
 #elif defined(_AIX)
@@ -425,15 +477,21 @@ typedef struct _loop1d_info {
 #include <float.h>
 #include <fpxcp.h>
 
-#define UFUNC_CHECK_STATUS(ret) { \
+#define UFUNC_CHECK_STATUS(ret) do { \
         fpflag_t fpstatus; \
- \
         fpstatus = fp_read_flag(); \
-        ret = ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
-                | ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)   \
-                | ((FP_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-        fp_swap_flag(0); \
+        if (fpstatus == 0) { \
+           ret = 0;\
+        } else { \
+             ret =  ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                    | ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)   \
+                    | ((FP_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                    | ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);
+        }\
+} while (0)
+
+#define UFUNC_CLEAR_STATUS() { \ 
+        fp_swap_flag(0); \  
 }
 
 #else
@@ -442,6 +500,9 @@ typedef struct _loop1d_info {
 #define UFUNC_CHECK_STATUS(ret) { \
     ret = 0; \
   }
+
+#define UFUNC_CLEAR_STATUS() { \   
+}
 
 #endif
 

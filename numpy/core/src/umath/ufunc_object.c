@@ -169,16 +169,6 @@ fail:
     return -1;
 }
 
-
-/*UFUNC_API*/
-NPY_NO_EXPORT int
-PyUFunc_getfperr(void)
-{
-    int retstatus;
-    UFUNC_CHECK_STATUS(retstatus);
-    return retstatus;
-}
-
 #define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) {        \
             handle = errmask & UFUNC_MASK_##NAME;                       \
             if (handle &&                                               \
@@ -203,13 +193,23 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 
 #undef HANDLEIT
 
+/*UFUNC_API*/
+NPY_NO_EXPORT int
+PyUFunc_getfperr(void)
+{
+    int retstatus;
+    UFUNC_CHECK_STATUS(retstatus); 
+    if (retstatus) {    
+        PyUFunc_clearfperr();
+    }
+    return retstatus;
+}
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
     int retstatus;
-
     /* 1. check hardware flag --- this is platform dependent code */
     retstatus = PyUFunc_getfperr();
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
@@ -221,8 +221,13 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 NPY_NO_EXPORT void
 PyUFunc_clearfperr()
 {
-    PyUFunc_getfperr();
+    int retstatus;
+    UFUNC_CHECK_STATUS(retstatus);
+    if (retstatus) {
+        UFUNC_CLEAR_STATUS();
+    }
 }
+
 
 /*
  * This function analyzes the input arguments
