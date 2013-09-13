@@ -1530,6 +1530,9 @@ class TestScoreatpercentile(TestCase):
         np.percentile(a, [50], overwrite_input=False)
         assert_equal(a, np.array([2, 3, 4, 1]))
 
+        np.percentile(a, [50])
+        assert_equal(a, np.array([2, 3, 4, 1]))
+
 
 class TestMedian(TestCase):
     def test_basic(self):
