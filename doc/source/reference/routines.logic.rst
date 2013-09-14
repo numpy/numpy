@@ -50,6 +50,7 @@ Comparison
    :toctree: generated/
 
    allclose
+   isclose
    array_equal
    array_equiv
 
