@@ -576,6 +576,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     --------
     ndarray.partition : Method to sort an array in-place.
     argpartition : Indirect partition.
+    sort : Full sorting
 
     Notes
     -----
@@ -659,6 +660,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     --------
     partition : Describes partition algorithms used.
     ndarray.partition : Inplace partition.
+    argsort : Full indirect sort
 
     Notes
     -----
@@ -707,6 +709,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     argsort : Indirect sort.
     lexsort : Indirect stable sort on multiple keys.
     searchsorted : Find elements in a sorted array.
+    partition : Partial sort.
 
     Notes
     -----
@@ -819,6 +822,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     sort : Describes sorting algorithms used.
     lexsort : Indirect stable sort with multiple keys.
     ndarray.sort : Inplace sort.
+    argpartition : Indirect partial sort.
 
     Notes
     -----

@@ -2083,7 +2083,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
     See Also
     --------
-    all, any, alltrue, sometrue
+    isclose, all, any
 
     Notes
     -----
