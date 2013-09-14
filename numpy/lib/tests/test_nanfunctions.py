@@ -248,6 +248,9 @@ class TestNanFunctions_Sum(TestCase):
                 assert_(np.isnan(res), 'result is not NaN')
                 assert_(len(w) == 1, 'no warning raised')
                 assert_(issubclass(w[0].category, FutureWarning))
+                # Check there is no warning for not all-nan
+                nansum([0]*3, axis=None)
+                assert_(len(w) == 1, 'unwanted warning raised')
             else:
                 assert_(res == 0, 'result is not 0')
                 assert_(len(w) == 0, 'warning raised')
