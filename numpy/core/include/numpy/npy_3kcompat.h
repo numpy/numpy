@@ -397,6 +397,19 @@ simple_capsule_dtor(void *ptr)
 
 #endif
 
+/*
+ * Hash value compatibility.
+ * As of Python 3.2 hash values are of type Py_hash_t.
+ * Previous versions use C long.
+ */
+#if PY_VERSION_HEX < 0x03020000
+typedef long npy_hash_t;
+#define NPY_SIZEOF_HASH_T NPY_SIZEOF_LONG
+#else
+typedef Py_hash_t npy_hash_t;
+#define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
+#endif
+
 #ifdef __cplusplus
 }
 #endif
