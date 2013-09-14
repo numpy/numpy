@@ -2864,10 +2864,10 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
  * #lname = bool, ubyte, ushort#
  * #name = Bool,UByte, UShort#
  */
-static long
+static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return (long)(((Py@name@ScalarObject *)obj)->obval);
+    return (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
 }
 /**end repeat**/
 
@@ -2875,10 +2875,10 @@ static long
  * #lname = byte, short, uint, ulong#
  * #name = Byte, Short, UInt, ULong#
  */
-static long
+static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    long x = (long)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
     if (x == -1) {
         x = -2;
     }
@@ -2887,10 +2887,10 @@ static long
 /**end repeat**/
 
 #if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
-static long
+static npy_hash_t
 int_arrtype_hash(PyObject *obj)
 {
-    long x = (long)(((PyIntScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(((PyIntScalarObject *)obj)->obval);
     if (x == -1) {
         x = -2;
     }
@@ -2903,16 +2903,16 @@ int_arrtype_hash(PyObject *obj)
  * #Char = ,U#
  * #ext = && (x >= LONG_MIN),#
  */
-#if NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+#if NPY_SIZEOF_HASH_T != NPY_SIZEOF_LONGLONG
 /* we assume NPY_SIZEOF_LONGLONG=2*NPY_SIZEOF_LONG */
-static long
+static npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
-    long y;
+    npy_hash_t y;
     npy_@char@longlong x = (((Py@Char@LongLongScalarObject *)obj)->obval);
 
     if ((x <= LONG_MAX)@ext@) {
-        y = (long) x;
+        y = (npy_hash_t) x;
     }
     else {
         union Mask {
@@ -2930,10 +2930,10 @@ static long
 }
 #else
 
-static long
+static npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
-    long x = (long)(((Py@Char@LongLongScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(((Py@Char@LongLongScalarObject *)obj)->obval);
     if (x == -1) {
         x = -2;
     }
@@ -2948,25 +2948,25 @@ static long
  * #lname = datetime, timedelta#
  * #name = Datetime, Timedelta#
  */
-#if NPY_SIZEOF_LONG==NPY_SIZEOF_DATETIME
-static long
+#if NPY_SIZEOF_HASH_T==NPY_SIZEOF_DATETIME
+static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    long x = (long)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
     if (x == -1) {
         x = -2;
     }
     return x;
 }
 #elif NPY_SIZEOF_LONGLONG==NPY_SIZEOF_DATETIME
-static long
+static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    long y;
+    npy_hash_t y;
     npy_longlong x = (((Py@name@ScalarObject *)obj)->obval);
 
     if ((x <= LONG_MAX)) {
-        y = (long) x;
+        y = (npy_hash_t) x;
     }
     else {
         union Mask {
@@ -2993,17 +2993,17 @@ static long
  * #lname = float, longdouble#
  * #name = Float, LongDouble#
  */
-static long
+static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     return _Py_HashDouble((double) ((Py@name@ScalarObject *)obj)->obval);
 }
 
 /* borrowed from complex_hash */
-static long
+static npy_hash_t
 c@lname@_arrtype_hash(PyObject *obj)
 {
-    long hashreal, hashimag, combined;
+    npy_hash_t hashreal, hashimag, combined;
     hashreal = _Py_HashDouble((double)
             (((PyC@name@ScalarObject *)obj)->obval).real);
 
@@ -3023,13 +3023,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 }
 /**end repeat**/
 
-static long
+static npy_hash_t
 half_arrtype_hash(PyObject *obj)
 {
     return _Py_HashDouble(npy_half_to_double(((PyHalfScalarObject *)obj)->obval));
 }
 
-static long
+static npy_hash_t
 object_arrtype_hash(PyObject *obj)
 {
     return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
@@ -3038,14 +3038,14 @@ object_arrtype_hash(PyObject *obj)
 /* we used to just hash the pointer */
 /* now use tuplehash algorithm using voidtype_item to get the object
 */
-static long
+static npy_hash_t
 void_arrtype_hash(PyObject *obj)
 {
-    register long x, y;
-    register Py_ssize_t len, n;
-    register PyVoidScalarObject *p;
-    register PyObject *element;
-    long mult = 1000003L;
+    npy_hash_t x, y;
+    Py_ssize_t len, n;
+    PyVoidScalarObject *p;
+    PyObject *element;
+    npy_hash_t mult = 1000003L;
     x = 0x345678L;
     p = (PyVoidScalarObject *)obj;
     /* Cannot hash mutable void scalars */
@@ -3061,7 +3061,7 @@ void_arrtype_hash(PyObject *obj)
         if (y == -1)
            return -1;
         x = (x ^ y) * mult;
-        mult += (long)(82520L + len + len);
+        mult += (npy_hash_t)(82520L + len + len);
     }
     x += 97531L;
     if (x == -1)
