@@ -4191,6 +4191,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     argsort : Indirect sort.
     lexsort : Indirect stable sort on multiple keys.
     searchsorted : Find elements in sorted array.
+    partition: Partial sort.
 
     Notes
     -----
@@ -4255,6 +4256,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     --------
     numpy.partition : Return a parititioned copy of an array.
     argpartition : Indirect partition.
+    sort : Full sort.
 
     Notes
     -----
