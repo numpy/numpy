@@ -139,7 +139,6 @@ class TestConversion(TestCase):
         a = np.array(l[:3], dtype=np.uint64)
         assert_equal([int(_m) for _m in a], li[:3])
 
-
     def test_iinfo_long_values(self):
         for code in 'bBhH':
             res = np.array(np.iinfo(code).max + 1, dtype=code)
@@ -156,14 +155,19 @@ class TestConversion(TestCase):
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
-
     def test_int_raise_behaviour(self):
-
         def Overflow_error_func(dtype): 
             res = np.typeDict[dtype](np.iinfo(dtype).max + 1)
 
         for code in 'lLqQ':
             assert_raises(OverflowError, Overflow_error_func, code)
+
+    def test_int_relaion_operation(self):
+        for code in 'bhlq':
+            assert_(True == (-1 < np.array(1, dtype=code)))
+            assert_(False == (-1 > np.array(1, dtype=code)))
+            assert_(True == (np.array(-1, dtype=code) < np.array(1, dtype=code)))
+            assert_(False == (np.array(-1, dtype=code) > np.array(1, dtype=code)))
 
 
 #class TestRepr(TestCase):
