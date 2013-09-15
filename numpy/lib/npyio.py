@@ -138,19 +138,19 @@ class NpzFile(object):
     archive provided on construction.
 
     `NpzFile` is used to load files in the NumPy ``.npz`` data archive
-    format. It assumes that files in the archive have a ".npy" extension,
+    format. It assumes that files in the archive have a ``.npy`` extension,
     other files are ignored.
 
     The arrays and file strings are lazily loaded on either
     getitem access using ``obj['key']`` or attribute lookup using
-    ``obj.f.key``. A list of all files (without ".npy" extensions) can
+    ``obj.f.key``. A list of all files (without ``.npy`` extensions) can
     be obtained with ``obj.files`` and the ZipFile object itself using
     ``obj.zip``.
 
     Attributes
     ----------
     files : list of str
-        List of all files in the archive with a ".npy" extension.
+        List of all files in the archive with a ``.npy`` extension.
     zip : ZipFile instance
         The ZipFile object initialized with the zipped archive.
     f : BagObj instance
@@ -270,7 +270,7 @@ class NpzFile(object):
             yield (f, self[f])
 
     def keys(self):
-        """Return files in the archive with a ".npy" extension."""
+        """Return files in the archive with a ``.npy`` extension."""
         return self.files
 
     def iterkeys(self):
@@ -283,7 +283,7 @@ class NpzFile(object):
 
 def load(file, mmap_mode=None):
     """
-    Load an array(s) or pickled objects from .npy, .npz, or pickled files.
+    Load an array(s) or pickled objects from ``.npy``, ``.npz``, or pickled files.
 
     Parameters
     ----------
@@ -301,7 +301,7 @@ def load(file, mmap_mode=None):
     Returns
     -------
     result : array, tuple, dict, etc.
-        Data stored in the file. For '.npz' files, the returned instance of
+        Data stored in the file. For ``.npz`` files, the returned instance of
         NpzFile class must be closed to avoid leaking file descriptors.
 
     Raises
@@ -457,7 +457,7 @@ def savez(file, *args, **kwds):
     Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
-    names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
+    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword arguments
     are given, the corresponding variable names, in the ``.npz`` file will
     match the keyword names.
 
@@ -484,7 +484,7 @@ def savez(file, *args, **kwds):
     --------
     save : Save a single array to a binary file in NumPy format.
     savetxt : Save an array to a file as plain text.
-    savez_compressed : Save several arrays into a compressed .npz file format
+    savez_compressed : Save several arrays into a compressed ``.npz`` file format
 
     Notes
     -----
@@ -540,7 +540,7 @@ def savez_compressed(file, *args, **kwds):
     Parameters
     ----------
     file : str
-        File name of .npz file.
+        File name of ``.npz`` file.
     args : Arguments
         Function arguments.
     kwds : Keyword arguments
@@ -548,7 +548,7 @@ def savez_compressed(file, *args, **kwds):
 
     See Also
     --------
-    numpy.savez : Save several arrays into an uncompressed .npz file format
+    numpy.savez : Save several arrays into an uncompressed ``.npz`` file format
 
     """
     _savez(file, args, kwds, True)
@@ -923,7 +923,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     See Also
     --------
     save : Save an array to a binary file in NumPy ``.npy`` format
-    savez : Save several arrays into a ``.npz`` compressed archive
+    savez : Save several arrays into a uncompressed ``.npz`` archive
+    savez_compressed : Save several arrays into a compressed ``.npz`` file format
 
     Notes
     -----
