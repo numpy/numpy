@@ -923,7 +923,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     See Also
     --------
     save : Save an array to a binary file in NumPy ``.npy`` format
-    savez : Save several arrays into a uncompressed ``.npz`` archive
+    savez : Save several arrays into an uncompressed ``.npz`` archive
     savez_compressed : Save several arrays into a compressed ``.npz`` file format
 
     Notes
