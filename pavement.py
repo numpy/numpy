@@ -24,8 +24,7 @@ as follows::
 Building a simple (no-superpack) windows installer from wine
 ============================================================
 
-It assumes that blas/lapack are in c:\local\lib inside drive_c. Build python
-2.5 and python 2.6 installers.
+It assumes that blas/lapack are in c:\local\lib inside drive_c.
 
     paver bdist_wininst_simple
 
@@ -437,12 +436,9 @@ def _build_mpkg(pyver):
         ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch x86_64 -Wl,-search_paths_first"
     else:
         ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
-    ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
 
-    if pyver == "2.5":
-        sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
-    else:
-        sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
+    ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
+    sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
 
 @task
 def simple_dmg():
