@@ -1477,11 +1477,11 @@ class TestScoreatpercentile(TestCase):
         assert_equal(np.percentile(range(10), 51,
                                    interpolation='midpoint'), 4.5)
 
-    def test_closest(self):
+    def test_nearest(self):
         assert_equal(np.percentile(range(10), 51,
-                                   interpolation='closest'), 5)
+                                   interpolation='nearest'), 5)
         assert_equal(np.percentile(range(10), 49,
-                                   interpolation='closest'), 4)
+                                   interpolation='nearest'), 4)
 
     def test_sequence(self):
         x = np.arange(8) * 0.5

@@ -2780,14 +2780,14 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
         Percentile to compute which must be between 0 and 100 inclusive.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'closest'}
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to use,
         when the desired quantile lies between two data points `i` and `j`:
             * linear: `i + (j - i) * fraction`, where `fraction` is the
               fractional part of the index surrounded by `i` and `j`.
             * lower: `i`.
             * higher: `j`.
-            * closest: `i` or `j` whichever is closest.
+            * nearest: `i` or `j` whichever is nearest.
             * midpoint: (`i` + `j`) / 2.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
@@ -2890,13 +2890,13 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         indices = ceil(indices).astype(intp)
     elif interpolation == 'midpoint':
         indices = floor(indices) + 0.5
-    elif interpolation == 'closest':
+    elif interpolation == 'nearest':
         indices = around(indices).astype(intp)
     elif interpolation == 'linear':
         pass  # keep index as fraction and interpolate
     else:
         raise ValueError("interpolation can only be 'linear', 'lower' "
-                         "'higher', 'midpoint', or 'closest'")
+                         "'higher', 'midpoint', or 'nearest'")
 
     if indices.dtype == intp:  # take the points along axis
         ap.partition(indices, axis=axis)
