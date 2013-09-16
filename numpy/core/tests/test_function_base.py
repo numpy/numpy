@@ -1,23 +1,35 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
-from numpy import logspace, linspace
+from numpy import logspace, linspace, dtype
+
 
 class TestLogspace(TestCase):
+
     def test_basic(self):
         y = logspace(0, 6)
-        assert_(len(y)==50)
+        assert_(len(y) == 50)
         y = logspace(0, 6, num=100)
-        assert_(y[-1] == 10**6)
+        assert_(y[-1] == 10 ** 6)
         y = logspace(0, 6, endpoint=0)
-        assert_(y[-1] < 10**6)
+        assert_(y[-1] < 10 ** 6)
         y = logspace(0, 6, num=7)
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
 
+    def test_dtype(self):
+        y = logspace(0, 6, dtype='float32')
+        assert_equal(y.dtype, dtype('float32'))
+        y = logspace(0, 6, dtype='float64')
+        assert_equal(y.dtype, dtype('float64'))
+        y = logspace(0, 6, dtype='int32')
+        assert_equal(y.dtype, dtype('int32'))
+
+
 class TestLinspace(TestCase):
+
     def test_basic(self):
         y = linspace(0, 10)
-        assert_(len(y)==50)
+        assert_(len(y) == 50)
         y = linspace(2, 10, num=100)
         assert_(y[-1] == 10)
         y = linspace(2, 10, endpoint=0)
@@ -35,3 +47,11 @@ class TestLinspace(TestCase):
         t3 = linspace(0, 1, 2).dtype
         assert_equal(t1, t2)
         assert_equal(t2, t3)
+
+    def test_dtype(self):
+        y = linspace(0, 6, dtype='float32')
+        assert_equal(y.dtype, dtype('float32'))
+        y = linspace(0, 6, dtype='float64')
+        assert_equal(y.dtype, dtype('float64'))
+        y = linspace(0, 6, dtype='int32')
+        assert_equal(y.dtype, dtype('int32'))
