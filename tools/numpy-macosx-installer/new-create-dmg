@@ -58,7 +58,7 @@ DMG_DIR="$(cd $DMG_DIRNAME > /dev/null; pwd)"
 DMG_NAME="$(basename "$DMG_PATH")"
 DMG_TEMP_NAME="$DMG_DIR/rw.${DMG_NAME}"
 SRC_FOLDER="$(cd "$2" > /dev/null; pwd)"
-DMG_SIZE=12m
+DMG_SIZE=16m
 test -z "$VOLUME_NAME" && VOLUME_NAME="$(basename "$DMG_PATH" .dmg)"
 
 # AUX_PATH="$(cd "$(dirname $0)"; pwd)/support"

@@ -51,7 +51,6 @@ paver bdist_superpack -p 3.2
 paver bdist_superpack -p 3.1
 paver bdist_superpack -p 2.7
 paver bdist_superpack -p 2.6
-paver bdist_superpack -p 2.5
 
 
 #--------------------------------------------
@@ -60,8 +59,6 @@ paver bdist_superpack -p 2.5
 #export MACOSX_DEPLOYMENT_TARGET=10.3
 #paver dmg -p 2.6
 #paver dmg -p 2.7  # 32-bit version
-#export CC=/usr/bin/gcc-4.0  # necessary on 10.6, not sure about 10.5
-#paver dmg -p 2.5
 
 
 paver write_release_and_log
@@ -70,7 +67,6 @@ paver write_release_and_log
 #-------------------------------------------------------
 # Build basic (no SSE) Windows installers to put on PyPi
 #-------------------------------------------------------
-paver bdist_wininst_simple -p 2.5
 paver bdist_wininst_simple -p 2.6
 paver bdist_wininst_simple -p 2.7
 paver bdist_wininst_simple -p 3.1
