@@ -2803,8 +2803,9 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         the contents of the input array. In this case you should not make
         any assumptions about the content of the passed in array `a` after
         this function completes -- treat it as undefined. Default is False.
-        Note that, if `overwrite_input` is True and the input is not
-        already an array, an error will be raised.
+        Note that, if the `a` input is not already an array this parameter
+        will have no effect, `a` will be converted to an array internally
+        regardless of the value of this parameter.
 
     Returns
     -------

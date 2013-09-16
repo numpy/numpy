@@ -1530,8 +1530,18 @@ class TestScoreatpercentile(TestCase):
         np.percentile(a, [50], overwrite_input=False)
         assert_equal(a, np.array([2, 3, 4, 1]))
 
+        a = np.array([2, 3, 4, 1])
         np.percentile(a, [50])
         assert_equal(a, np.array([2, 3, 4, 1]))
+
+    def test_percentile_overwrite(self):
+        a = np.array([2, 3, 4, 1])
+        b = np.percentile(a, [50], overwrite_input=True)
+        assert_equal(b, np.array([2.5]))
+
+        b = np.percentile([2, 3, 4, 1], [50], overwrite_input=True)
+        assert_equal(b, np.array([2.5]))
+
 
 
 class TestMedian(TestCase):
