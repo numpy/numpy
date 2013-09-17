@@ -162,12 +162,71 @@ class TestConversion(TestCase):
         for code in 'lLqQ':
             assert_raises(OverflowError, Overflow_error_func, code)
 
-    def test_int_relaion_operation(self):
-        for code in 'bhlq':
-            assert_(True == (-1 < np.array(1, dtype=code)))
-            assert_(False == (-1 > np.array(1, dtype=code)))
-            assert_(True == (np.array(-1, dtype=code) < np.array(1, dtype=code)))
-            assert_(False == (np.array(-1, dtype=code) > np.array(1, dtype=code)))
+    def test_int_relational_operation(self):
+        #All integer
+        for code in np.typecodes['AllInteger']:
+            assert_(1 > np.array(0, dtype=code), "type %s failed" % (code,))
+            assert_(not 1 < np.array(0, dtype=code), "type %s failed" % (code,))
+
+            for code2 in np.typecodes['AllInteger']:
+                assert_(np.array(1, dtype=code) > np.array(0, dtype=code2), "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code) < np.array(0, dtype=code2), "type %s and %s failed" % (code, code2))
+
+        #Unsigned integers
+        for code in 'BHILQP':
+            assert_(1 < np.array(-1, dtype=code), "type %s failed" % (code,))
+            assert_(not 1 > np.array(-1, dtype=code), "type %s failed" % (code,))
+            assert_(-1 != np.array(-1, dtype=code), "type %s failed" % (code,))
+
+            for code2 in 'BHILQP':
+                assert_(np.array(1, dtype=code) < np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code) > np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+                assert_(np.array(1, dtype=code) != np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+
+        #Signed integers and floats
+        for code in 'bhlqp'+np.typecodes['Float']:
+            assert_(1 > np.array(-1, dtype=code), "type %s failed" % (code,))
+            assert_(not 1 < np.array(-1, dtype=code), "type %s failed" % (code,))
+            assert_(-1 == np.array(-1, dtype=code), "type %s failed" % (code,))
+
+            for code2 in 'bhlqp'+np.typecodes['Float']:
+                assert_(np.array(1, dtype=code) > np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code) < np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+                assert_(np.array(-1, dtype=code) == np.array(-1, dtype=code2), "type %s and %s failed" % (code, code2))
+
+
+    def test_scalar_relational_operators(self):
+         #All integer
+        for code in np.typecodes['AllInteger']:
+            assert_(1 > np.array(0, dtype=code)[()], "type %s failed" % (code,))
+            assert_(not 1 < np.array(0, dtype=code)[()], "type %s failed" % (code,))
+
+            for code2 in np.typecodes['AllInteger']:
+                assert_(np.array(1, dtype=code)[()] > np.array(0, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code)[()] < np.array(0, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+
+        #Unsigned integers
+        for code in 'BHILQP':
+            assert_(1 < np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+            assert_(not 1 > np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+            assert_(-1 != np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+
+            for code2 in 'BHILQP':
+                assert_(np.array(1, dtype=code)[()] < np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code)[()] > np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+                assert_(np.array(1, dtype=code)[()] != np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+
+        #Signed integers and floats
+        for code in 'bhlqp'+np.typecodes['Float']:
+            assert_(1 > np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+            assert_(not 1 < np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+            assert_(-1 == np.array(-1, dtype=code)[()], "type %s failed" % (code,))
+
+            for code2 in 'bhlqp'+np.typecodes['Float']:
+                assert_(np.array(1, dtype=code)[()] > np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+                assert_(not np.array(1, dtype=code)[()] < np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+                assert_(np.array(-1, dtype=code)[()] == np.array(-1, dtype=code2)[()], "type %s and %s failed" % (code, code2))
+
 
 
 #class TestRepr(TestCase):
