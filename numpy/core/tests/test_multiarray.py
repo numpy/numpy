@@ -3418,6 +3418,48 @@ class TestArrayAttributeDeletion(object):
         for s in attr:
             assert_raises(AttributeError, delattr, a, s)
 
+
+    def test_multiarra_relational_operators(self):
+         #All integer
+        for dt1 in np.typecodes['AllInteger']:
+            assert_(1 > np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not 1 < np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
+
+            for dt2 in np.typecodes['AllInteger']:
+                assert_(np.array(1, dtype=dt1)[()] > np.array(0, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+                assert_(not np.array(1, dtype=dt1)[()] < np.array(0, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+
+        #Unsigned integers
+        for dt1 in 'BHILQP':
+            assert_(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+
+            #unsigned vs signed
+            for dt2 in 'bhilqp':
+                assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+                assert_(not np.array(1, dtype=dt1)[()] < np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+                assert_(np.array(1, dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+
+        #Signed integers and floats
+        for dt1 in 'bhlqp'+np.typecodes['Float']:
+            assert_(1 > np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not 1 < np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(-1 == np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+
+            for dt2 in 'bhlqp'+np.typecodes['Float']:
+                assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+                assert_(not np.array(1, dtype=dt1)[()] < np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+                assert_(np.array(-1, dtype=dt1)[()] == np.array(-1, dtype=dt2)[()],
+                    "type %s and %s failed" % (dt1, dt2))
+
 def test_array_interface():
     # Test scalar coercion within the array interface
     class Foo(object):
