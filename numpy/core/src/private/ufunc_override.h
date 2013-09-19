@@ -2,7 +2,7 @@
 #define __UFUNC_OVERRIDE_H
 #include <npy_config.h>
 #include "numpy/arrayobject.h"
-#include "multiarray/common.h"
+#include "common.h"
 
 /*
  * Check a set of args for the `__numpy_ufunc__` method.  If more than one of

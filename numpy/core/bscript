@@ -502,7 +502,7 @@ def pre_build(context):
             pattern="umath_generated",
             name="umath_gen")
 
-        includes = ["src/umath", "src/private"]
+        includes = ["src/umath", "src/multiarray", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
             sources = [
                     pjoin("src", "umath", "loops.c.src"),
@@ -525,5 +525,6 @@ def pre_build(context):
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            return context.default_builder(extension, use="CBLAS", includes=["src/private"])
+            return context.default_builder(extension, use="CBLAS",
+                                           includes=["src/multiarray", "src/private"])
     context.register_builder("_dotblas", build_dotblas)
