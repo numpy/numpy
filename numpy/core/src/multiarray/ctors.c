@@ -558,7 +558,7 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
  */
 
 static int
-discover_itemsize(PyObject *s, int nd, int *itemsize, int size_as_string)
+discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
 {
     int n, r, i;
 
@@ -576,8 +576,19 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int size_as_string)
             PyUnicode_Check(s)) {
 
         /* If an object has no length, leave it be */
-        if (size_as_string && s != NULL && !PyString_Check(s)) {
-            PyObject *s_string = PyObject_Str(s);
+        if (string_type && s != NULL &&
+                !PyString_Check(s) && !PyUnicode_Check(s)) {
+            PyObject *s_string = NULL;
+            if (string_type == NPY_STRING) {
+                s_string = PyObject_Str(s);
+            }
+            else {
+#if defined(NPY_PY3K)
+                s_string = PyObject_Str(s);
+#else
+                s_string = PyObject_Unicode(s);
+#endif
+            }
             if (s_string) {
                 n = PyObject_Length(s_string);
                 Py_DECREF(s_string);
@@ -606,7 +617,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int size_as_string)
             return -1;
         }
 
-        r = discover_itemsize(e, nd - 1, itemsize, size_as_string);
+        r = discover_itemsize(e, nd - 1, itemsize, string_type);
         Py_DECREF(e);
         if (r == -1) {
             return -1;
@@ -1584,12 +1595,12 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         if ((*out_dtype)->elsize == 0 &&
                             PyTypeNum_ISEXTENDED((*out_dtype)->type_num)) {
             int itemsize = 0;
-            int size_as_string = 0;
+            int string_type = 0;
             if ((*out_dtype)->type_num == NPY_STRING ||
                     (*out_dtype)->type_num == NPY_UNICODE) {
-                size_as_string = 1;
+                string_type = (*out_dtype)->type_num;
             }
-            if (discover_itemsize(op, *out_ndim, &itemsize, size_as_string) < 0) {
+            if (discover_itemsize(op, *out_ndim, &itemsize, string_type) < 0) {
                 Py_DECREF(*out_dtype);
                 if (PyErr_Occurred() &&
                         PyErr_GivenExceptionMatches(PyErr_Occurred(),
