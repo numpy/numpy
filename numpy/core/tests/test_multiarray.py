@@ -1141,6 +1141,17 @@ class TestMethods(TestCase):
             assert_array_equal(d[np.argpartition(d, -6, kind=k)],
                                np.partition(d, 41, kind=k))
 
+            # median of 3 killer, O(n^2) on pure median 3 pivot quickselect
+            # exercises the median of median of 5 code used to keep O(n)
+            d = np.arange(1000000)
+            x = np.roll(d, d.size // 2)
+            mid = x.size // 2 + 1
+            assert_equal(np.partition(x, mid)[mid], mid)
+            d = np.arange(1000001)
+            x = np.roll(d, d.size // 2 + 1)
+            mid = x.size // 2 + 1
+            assert_equal(np.partition(x, mid)[mid], mid)
+
             # equal elements
             d = np.arange((47)) % 7
             tgt = np.sort(np.arange((47)) % 7)
