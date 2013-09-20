@@ -1,3 +1,5 @@
+.. _arrays.classes:
+
 #########################
 Standard array subclasses
 #########################
@@ -35,10 +37,11 @@ Special attributes and methods
 
 .. seealso:: :ref:`Subclassing ndarray <basics.subclassing>`
 
-Numpy provides several hooks that subclasses of :class:`ndarray` can
-customize:
+Numpy provides several hooks that classes can customize:
 
-.. function:: __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
+.. function:: class.__numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
+
+   .. versionadded:: 1.9
 
    Any class (ndarray subclass or not) can define this method to
    override behavior of Numpy's ufuncs. This works quite similarly to
@@ -52,7 +55,8 @@ customize:
    - *inputs* is a tuple of the input arguments to the ``ufunc``
    - *kwargs* is a dictionary containing the optional input arguments
      of the ufunc. The ``out`` argument is always contained in
-     *kwargs*, if given.
+     *kwargs*, if given. See the discussion in :ref:`ufuncs` for
+     details.
 
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not
@@ -64,7 +68,7 @@ customize:
    order: subclasses before superclasses, otherwise left to right. The
    first routine returning something else than :obj:`NotImplemented`
    determines the result. If all of the :func:`__numpy_ufunc__`
-   operations returns :obj:`NotImplemented`, a :exc:`TypeError` is
+   operations return :obj:`NotImplemented`, a :exc:`TypeError` is
    raised.
 
    If an :class:`ndarray` subclass defines the :func:`__numpy_ufunc__`
@@ -72,7 +76,11 @@ customize:
    :func:`__array_prepare__`, :data:`__array_priority__` mechanism
    described below.
 
-.. function:: __array_finalize__(self)
+   .. note:: In addition to ufuncs, :func:`__numpy_ufunc__` also
+      overrides the behavior of :func:`numpy.dot` even though it is
+      not an Ufunc.
+
+.. function:: class.__array_finalize__(self)
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
@@ -81,7 +89,7 @@ customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. function:: __array_prepare__(array, context=None)
+.. function:: class.__array_prepare__(array, context=None)
 
    At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
    method is called on the input object with the highest array
@@ -93,7 +101,7 @@ customize:
    the subclass and update metadata before returning the array to the
    ufunc for computation.
 
-.. function:: __array_wrap__(array, context=None)
+.. function:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -105,18 +113,21 @@ customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-.. data:: __array_priority__
+.. data:: class.__array_priority__
 
    The value of this attribute is used to determine what type of
    object to return in situations where there is more than one
    possibility for the Python type of the returned object. Subclasses
    inherit a default value of 1.0 for this attribute.
 
-.. function:: __array__([dtype])
+.. function:: class.__array__([dtype])
 
-   If a class having the :obj:`__array__` method is used as the output
-   object of an :ref:`ufunc <ufuncs.output-type>`, results will be
-   written to the object returned by :obj:`__array__`.
+   If a class (ndarray subclass or not) having the :func:`__array__`
+   method is used as the output object of an :ref:`ufunc
+   <ufuncs.output-type>`, results will be written to the object
+   returned by :func:`__array__`. Similar conversion is done on 
+   input arrays.
+
 
 Matrix objects
 ==============

@@ -274,6 +274,15 @@ types, are interpreted accordingly in ufuncs) without worrying about
 whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
+
+Overriding Ufunc behavior
+=========================
+
+Classes (including ndarray subclasses) can override how ufuncs act on
+them by defining certain special methods.  For details, see
+:ref:`arrays.classes`.
+
+
 :class:`ufunc`
 ==============
 
