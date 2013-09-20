@@ -1448,13 +1448,20 @@ class TestScoreatpercentile(TestCase):
         assert_equal(np.percentile(x, 100), 3.5)
         assert_equal(np.percentile(x, 50), 1.75)
 
+    def test_api(self):
+        d = np.ones(5)
+        np.percentile(d, 5, None, None, False)
+        np.percentile(d, 5, None, None, False, 'linear')
+        o = np.ones((1,))
+        np.percentile(d, 5, None, o, False, 'linear')
+
     def test_2D(self):
         x = np.array([[1, 1, 1],
                      [1, 1, 1],
                      [4, 4, 3],
                      [1, 1, 1],
                      [1, 1, 1]])
-        assert_array_equal(np.percentile(x, 50, axis=0), [[1, 1, 1]])
+        assert_array_equal(np.percentile(x, 50, axis=0), [1, 1, 1])
 
     def test_linear(self):
 
@@ -1496,7 +1503,79 @@ class TestScoreatpercentile(TestCase):
         assert_equal(np.percentile(x, (25, 50, 100), axis=0), r0)
 
         r1 = [[0.75, 1.5, 3], [4.75, 5.5, 7], [8.75, 9.5, 11]]
-        assert_equal(np.percentile(x, (25, 50, 100), axis=1), r1)
+        assert_equal(np.percentile(x, (25, 50, 100), axis=1), np.array(r1).T)
+
+        # ensure qth axis is always first as with np.array(old_percentile(..))
+        x = np.arange(3 * 4 * 5 * 6).reshape(3, 4, 5, 6)
+        assert_equal(np.percentile(x, (25, 50)).shape, (2,))
+        assert_equal(np.percentile(x, (25, 50, 75)).shape, (3,))
+        assert_equal(np.percentile(x, (25, 50), axis=0).shape, (2, 4, 5, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=1).shape, (2, 3, 5, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=2).shape, (2, 3, 4, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=3).shape, (2, 3, 4, 5))
+        assert_equal(np.percentile(x, (25, 50, 75), axis=1).shape, (3, 3, 5, 6))
+        assert_equal(np.percentile(x, (25, 50),
+                                   interpolation="higher").shape, (2,))
+        assert_equal(np.percentile(x, (25, 50, 75),
+                                   interpolation="higher").shape, (3,))
+        assert_equal(np.percentile(x, (25, 50), axis=0,
+                                   interpolation="higher").shape, (2, 4, 5, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=1,
+                                   interpolation="higher").shape, (2, 3, 5, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=2,
+                                   interpolation="higher").shape, (2, 3, 4, 6))
+        assert_equal(np.percentile(x, (25, 50), axis=3,
+                                   interpolation="higher").shape, (2, 3, 4, 5))
+        assert_equal(np.percentile(x, (25, 50, 75), axis=1,
+                                   interpolation="higher").shape, (3, 3, 5, 6))
+
+    def test_scalar_q(self):
+        # test for no empty dimensions for compatiblity with old percentile
+        x = np.arange(12).reshape(3, 4)
+        assert_equal(np.percentile(x, 50), 5.5)
+        self.assertTrue(np.isscalar(np.percentile(x, 50)))
+        r0 = np.array([ 4.,  5.,  6.,  7.])
+        assert_equal(np.percentile(x, 50, axis=0), r0)
+        assert_equal(np.percentile(x, 50, axis=0).shape, r0.shape)
+        r1 = np.array([ 1.5,  5.5,  9.5])
+        assert_almost_equal(np.percentile(x, 50, axis=1), r1)
+        assert_equal(np.percentile(x, 50, axis=1).shape, r1.shape)
+
+        out = np.empty(1)
+        assert_equal(np.percentile(x, 50, out=out), 5.5)
+        assert_equal(out, 5.5)
+        out = np.empty(4)
+        assert_equal(np.percentile(x, 50, axis=0, out=out), r0)
+        assert_equal(out, r0)
+        out = np.empty(3)
+        assert_equal(np.percentile(x, 50, axis=1, out=out), r1)
+        assert_equal(out, r1)
+
+        # test for no empty dimensions for compatiblity with old percentile
+        x = np.arange(12).reshape(3, 4)
+        assert_equal(np.percentile(x, 50, interpolation='lower'), 5.)
+        self.assertTrue(np.isscalar(np.percentile(x, 50)))
+        r0 = np.array([ 4.,  5.,  6.,  7.])
+        c0 = np.percentile(x, 50, interpolation='lower', axis=0)
+        assert_equal(c0, r0)
+        assert_equal(c0.shape, r0.shape)
+        r1 = np.array([ 1.,  5.,  9.])
+        c1 = np.percentile(x, 50, interpolation='lower', axis=1)
+        assert_almost_equal(c1, r1)
+        assert_equal(c1.shape, r1.shape)
+
+        out = np.empty((), dtype=x.dtype)
+        c = np.percentile(x, 50, interpolation='lower', out=out)
+        assert_equal(c, 5)
+        assert_equal(out, 5)
+        out = np.empty(4, dtype=x.dtype)
+        c = np.percentile(x, 50, interpolation='lower', axis=0, out=out)
+        assert_equal(c, r0)
+        assert_equal(out, r0)
+        out = np.empty(3, dtype=x.dtype)
+        c = np.percentile(x, 50, interpolation='lower', axis=1, out=out)
+        assert_equal(c, r1)
+        assert_equal(out, r1)
 
     def test_exception(self):
         assert_raises(ValueError, np.percentile, [1, 2], 56,
@@ -1521,9 +1600,61 @@ class TestScoreatpercentile(TestCase):
         np.percentile(x, p, axis=0, out=y)
         assert_equal(y, np.percentile(x, p, axis=0))
 
-        y = np.zeros((2, 3))
+        y = np.zeros((3, 2))
         np.percentile(x, p, axis=1, out=y)
         assert_equal(y, np.percentile(x, p, axis=1))
+
+        x = np.arange(12).reshape(3, 4)
+        # q.dim > 1, float
+        r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
+        out = np.empty((2, 4))
+        assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
+        assert_equal(out, r0)
+        r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
+        out = np.empty((2, 3))
+        assert_equal(np.percentile(x, (25, 50), axis=1, out=out), r1)
+        assert_equal(out, r1)
+
+        # q.dim > 1, int
+        r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
+        out = np.empty((2, 4), dtype=x.dtype)
+        c = np.percentile(x, (25, 50), interpolation='lower', axis=0, out=out)
+        assert_equal(c, r0)
+        assert_equal(out, r0)
+        r1 = np.array([[0,  4,  8], [1,  5,  9]])
+        out = np.empty((2, 3), dtype=x.dtype)
+        c = np.percentile(x, (25, 50), interpolation='lower', axis=1, out=out)
+        assert_equal(c, r1)
+        assert_equal(out, r1)
+
+    def test_percentile_empty_dim(self):
+        # empty dims are preserved
+        d = np.arange(11*2).reshape(11, 1, 2, 1)
+        assert_array_equal(np.percentile(d, 50, axis=0).shape, (1, 2, 1))
+        assert_array_equal(np.percentile(d, 50, axis=1).shape, (11, 2, 1))
+        assert_array_equal(np.percentile(d, 50, axis=2).shape, (11, 1, 1))
+        assert_array_equal(np.percentile(d, 50, axis=3).shape, (11, 1, 2))
+        assert_array_equal(np.percentile(d, 50, axis=-1).shape, (11, 1, 2))
+        assert_array_equal(np.percentile(d, 50, axis=-2).shape, (11, 1, 1))
+        assert_array_equal(np.percentile(d, 50, axis=-3).shape, (11, 2, 1))
+        assert_array_equal(np.percentile(d, 50, axis=-4).shape, (1, 2, 1))
+
+        assert_array_equal(np.percentile(d, 50, axis=2,
+                                         interpolation='midpoint').shape,
+                           (11, 1, 1))
+        assert_array_equal(np.percentile(d, 50, axis=-2,
+                                         interpolation='midpoint').shape,
+                           (11, 1, 1))
+
+        assert_array_equal(np.array(np.percentile(d, [10, 50], axis=0)).shape,
+                           (2, 1, 2, 1))
+        assert_array_equal(np.array(np.percentile(d, [10, 50], axis=1)).shape,
+                           (2, 11, 2, 1))
+        assert_array_equal(np.array(np.percentile(d, [10, 50], axis=2)).shape,
+                           (2, 11, 1, 1))
+        assert_array_equal(np.array(np.percentile(d, [10, 50], axis=3)).shape,
+                           (2, 11, 1, 2))
+
 
     def test_percentile_no_overwrite(self):
         a = np.array([2, 3, 4, 1])

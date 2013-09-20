@@ -2812,8 +2812,8 @@ def median(a, axis=None, out=None, overwrite_input=False):
     return mean(part[indexer], axis=axis, out=out)
 
 
-def percentile(a, q, interpolation='linear', axis=None, out=None,
-               overwrite_input=False):
+def percentile(a, q, axis=None, out=None,
+               overwrite_input=False, interpolation='linear'):
     """
     Compute the qth percentile of the data along the specified axis.
 
@@ -2825,15 +2825,6 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
         Percentile to compute which must be between 0 and 100 inclusive.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to use,
-        when the desired quantile lies between two data points `i` and `j`:
-            * linear: `i + (j - i) * fraction`, where `fraction` is the
-              fractional part of the index surrounded by `i` and `j`.
-            * lower: `i`.
-            * higher: `j`.
-            * nearest: `i` or `j` whichever is nearest.
-            * midpoint: (`i` + `j`) / 2.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the percentiles along a flattened version of the array.
@@ -2851,15 +2842,28 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         Note that, if the `a` input is not already an array this parameter
         will have no effect, `a` will be converted to an array internally
         regardless of the value of this parameter.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to use,
+        when the desired quantile lies between two data points `i` and `j`:
+            * linear: `i + (j - i) * fraction`, where `fraction` is the
+              fractional part of the index surrounded by `i` and `j`.
+            * lower: `i`.
+            * higher: `j`.
+            * nearest: `i` or `j` whichever is nearest.
+            * midpoint: (`i` + `j`) / 2.
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
-    percentile : ndarray
-        A new array holding the result (unless `out` is specified, in
-        which case that array is returned instead). If the input contains
-        integers, or floats of smaller precision than 64, then the output
-        data-type is float64. Otherwise, the output data-type is the same
-        as that of the input.
+    percentile : scalar or ndarray
+        If a single percentile `q` is given and axis=None a scalar is returned.
+        If multiple percentiles `q` are given an array holding the result is
+        returned. The results are listed in the first axis.
+        (If `out` is specified, in which case that array is returned instead).
+        If the input contains integers, or floats of smaller precision than 64,
+        then the output data-type is float64. Otherwise, the output data-type
+        is the same as that of the input.
 
     See Also
     --------
@@ -2906,7 +2910,14 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
 
     """
     a = asarray(a)
-    q = atleast_1d(q)
+    q = asarray(q)
+    if q.ndim == 0:
+        # Do not allow 0-d arrays because following code fails for scalar
+        zerod = True
+        q = q[None]
+    else:
+        zerod = False
+
     q = q / 100.0
     if (q < 0).any() or (q > 1).any():
         raise ValueError(
@@ -2948,7 +2959,13 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
 
     if indices.dtype == intp:  # take the points along axis
         ap.partition(indices, axis=axis)
-        return take(ap, indices, axis=axis, out=out)
+        # ensure axis with qth is first
+        ap = np.rollaxis(ap, axis, 0)
+        axis = 0
+
+        if zerod:
+            indices = indices[0]
+        r = take(ap, indices, axis=axis, out=out)
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
         indices_above = indices_below + 1
@@ -2966,10 +2983,20 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
         x1 = take(ap, indices_below, axis=axis) * weights_below
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
+        # ensure axis with qth is first
+        x1 = np.rollaxis(x1, axis, 0)
+        x2 = np.rollaxis(x2, axis, 0)
+
+        if zerod:
+            x1 = x1.squeeze(0)
+            x2 = x2.squeeze(0)
+
         if out is not None:
-            return add(x1, x2, out=out)
+            r = add(x1, x2, out=out)
         else:
-            return add(x1, x2)
+            r = add(x1, x2)
+
+    return r
 
 
 def trapz(y, x=None, dx=1.0, axis=-1):
