@@ -18,6 +18,14 @@
 #define NPY_GCC_UNROLL_LOOPS
 #endif
 
+#if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
+#define NPY_HAVE_SSE_INTRINSICS
+#endif
+
+#if defined HAVE_EMMINTRIN_H && defined HAVE__MM_LOAD_PD
+#define NPY_HAVE_SSE2_INTRINSICS
+#endif
+
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
