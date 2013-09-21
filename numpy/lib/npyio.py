@@ -283,7 +283,7 @@ class NpzFile(object):
 
 def load(file, mmap_mode=None):
     """
-    Load an array(s) or pickled objects from ``.npy``, ``.npz``, or pickled files.
+    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
     Parameters
     ----------
@@ -457,9 +457,9 @@ def savez(file, *args, **kwds):
     Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
-    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword arguments
-    are given, the corresponding variable names, in the ``.npz`` file will
-    match the keyword names.
+    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
+    arguments are given, the corresponding variable names, in the ``.npz``
+    file will match the keyword names.
 
     Parameters
     ----------
@@ -484,7 +484,7 @@ def savez(file, *args, **kwds):
     --------
     save : Save a single array to a binary file in NumPy format.
     savetxt : Save an array to a file as plain text.
-    savez_compressed : Save several arrays into a compressed ``.npz`` file format
+    savez_compressed : Save several arrays into a compressed ``.npz`` archive
 
     Notes
     -----
@@ -924,7 +924,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     --------
     save : Save an array to a binary file in NumPy ``.npy`` format
     savez : Save several arrays into an uncompressed ``.npz`` archive
-    savez_compressed : Save several arrays into a compressed ``.npz`` file format
+    savez_compressed : Save several arrays into a compressed ``.npz`` archive
 
     Notes
     -----
