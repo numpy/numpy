@@ -14,16 +14,16 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 #include <numpy/halffloat.h>
 #include <npy_pycompat.h>
-#include <npy_config.h>
 
 #include <ctype.h>
 
 #include "convert.h"
 
-#ifdef HAVE_XMMINTRIN_H
+#ifdef NPY_HAVE_SSE_INTRINSICS
 #define EINSUM_USE_SSE1 1
 #else
 #define EINSUM_USE_SSE1 0
@@ -32,7 +32,7 @@
 /*
  * TODO: Only some SSE2 for float64 is implemented.
  */
-#ifdef HAVE_EMMINTRIN_H
+#ifdef NPY_HAVE_SSE2_INTRINSICS
 #define EINSUM_USE_SSE2 1
 #else
 #define EINSUM_USE_SSE2 0
