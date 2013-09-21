@@ -49,6 +49,7 @@ poisson              Poisson distribution.
 power                Power distribution.
 rayleigh             Rayleigh distribution.
 triangular           Triangular distribution.
+trapezoidal          Trapezoidal distribution.
 uniform              Uniform distribution.
 vonmises             Von Mises circular distribution.
 wald                 Wald (inverse Gaussian) distribution.
@@ -127,6 +128,7 @@ __all__ = [
     'standard_normal',
     'standard_t',
     'triangular',
+    'trapezoidal',
     'uniform',
     'vonmises',
     'wald',

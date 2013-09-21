@@ -64,6 +64,7 @@ Distributions
    standard_normal
    standard_t
    triangular
+   trapezoidal
    uniform
    vonmises
    wald

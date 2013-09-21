@@ -53,6 +53,7 @@ poisson              Poisson distribution.
 power                Power distribution.
 rayleigh             Rayleigh distribution.
 triangular           Triangular distribution.
+trapezoidal          Trapezoidal distribution.
 uniform              Uniform distribution.
 vonmises             Von Mises circular distribution.
 wald                 Wald (inverse Gaussian) distribution.

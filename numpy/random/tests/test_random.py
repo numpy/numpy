@@ -517,6 +517,15 @@ class TestRandomDist(TestCase):
                          [ 11.20400690911820263,  14.4978144835829923 ]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
+    def test_trapezoidal(self):
+        np.random.seed(self.seed)
+        actual = np.random.trapezoidal(left = 0.11, mode1 = 0.23, mode2 = 0.58,
+                                      right = 1.3, m = 2, n = 1, alpha = 3, size = (3, 2))
+        desired = np.array([[ 0.69007163453708797,  0.64659780441559467],
+                          [ 1.12189374247119455,  1.12664768018497297],
+                          [ 0.46796827690432086,  0.94510092937495538]])
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
+
     def test_uniform(self):
         np.random.seed(self.seed)
         actual = np.random.uniform(low = 1.23, high=10.54, size = (3, 2))

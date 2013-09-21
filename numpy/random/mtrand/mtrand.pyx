@@ -91,6 +91,7 @@ cdef extern from "distributions.h":
     double rk_rayleigh(rk_state *state, double mode)
     double rk_wald(rk_state *state, double mean, double scale)
     double rk_triangular(rk_state *state, double left, double mode, double right)
+    double rk_trapezoidal(rk_state *state, double a, double b, double c, double d, double m, double n, double alpha)
 
     long rk_binomial(rk_state *state, long n, double p)
     long rk_binomial_btpe(rk_state *state, long n, double p)
@@ -108,6 +109,8 @@ ctypedef double (* rk_cont0)(rk_state *state)
 ctypedef double (* rk_cont1)(rk_state *state, double a)
 ctypedef double (* rk_cont2)(rk_state *state, double a, double b)
 ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)
+ctypedef double (* rk_cont7)(rk_state *state, double a, double b, double c, double d, 
+                             double e, double f, double g)
 
 ctypedef long (* rk_disc0)(rk_state *state)
 ctypedef long (* rk_discnp)(rk_state *state, long n, double p)
@@ -293,6 +296,77 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, ndarray oa,
             ob_data = <double *>PyArray_MultiIter_DATA(multi, 2)
             oc_data = <double *>PyArray_MultiIter_DATA(multi, 3)
             array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0])
+            PyArray_MultiIter_NEXT(multi)
+    return array
+
+cdef object cont7_array_sc(rk_state *state, rk_cont7 func, object size, double a, 
+                           double b, double c, double d, double e, double f, double g):
+
+    cdef double *array_data
+    cdef ndarray array "arrayObject"
+    cdef npy_intp length
+    cdef npy_intp i
+
+    if size is None:
+        return func(state, a, b, c, d, e, f, g)
+    else:
+        array = <ndarray>np.empty(size, np.float64)
+        length = PyArray_SIZE(array)
+        array_data = <double *>PyArray_DATA(array)
+        for i from 0 <= i < length:
+            array_data[i] = func(state, a, b, c, d, e, f, g)
+        return array
+
+cdef object cont7_array(rk_state *state, rk_cont7 func, object size, ndarray oa,
+    ndarray ob, ndarray oc, ndarray od, ndarray oe, ndarray of, ndarray og):
+
+    cdef double *array_data
+    cdef double *oa_data
+    cdef double *ob_data
+    cdef double *oc_data
+    cdef double *od_data
+    cdef double *oe_data
+    cdef double *of_data
+    cdef double *og_data
+    cdef ndarray array "arrayObject"
+    cdef npy_intp length
+    cdef npy_intp i
+    cdef broadcast multi
+
+    if size is None:
+        multi = <broadcast> PyArray_MultiIterNew(7, <void *>oa, <void *>ob, <void *>oc, <void *>od,
+                                                 <void *>oe, <void *>of, <void *> og)
+        array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
+        array_data = <double *>PyArray_DATA(array)
+        for i from 0 <= i < multi.size:
+            oa_data = <double *>PyArray_MultiIter_DATA(multi, 0)
+            ob_data = <double *>PyArray_MultiIter_DATA(multi, 1)
+            oc_data = <double *>PyArray_MultiIter_DATA(multi, 2)
+            od_data = <double *>PyArray_MultiIter_DATA(multi, 3)
+            oe_data = <double *>PyArray_MultiIter_DATA(multi, 4)
+            of_data = <double *>PyArray_MultiIter_DATA(multi, 5)
+            og_data = <double *>PyArray_MultiIter_DATA(multi, 6)
+            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], od_data[0],
+                                 oe_data[0], of_data[0], og_data[0])
+            PyArray_MultiIter_NEXT(multi)
+    else:
+        array = <ndarray>np.empty(size, np.float64)
+        array_data = <double *>PyArray_DATA(array)
+        multi = <broadcast>PyArray_MultiIterNew(8, <void*>array, <void *>oa,
+                                                <void *>ob, <void *>oc, <void *>od,
+                                                <void *>oe, <void *>of, <void *>og)
+        if (multi.size != PyArray_SIZE(array)):
+            raise ValueError("size is not compatible with inputs")
+        for i from 0 <= i < multi.size:
+            oa_data = <double *>PyArray_MultiIter_DATA(multi, 1)
+            ob_data = <double *>PyArray_MultiIter_DATA(multi, 2)
+            oc_data = <double *>PyArray_MultiIter_DATA(multi, 3)
+            od_data = <double *>PyArray_MultiIter_DATA(multi, 4)
+            oe_data = <double *>PyArray_MultiIter_DATA(multi, 5)
+            of_data = <double *>PyArray_MultiIter_DATA(multi, 6)
+            og_data = <double *>PyArray_MultiIter_DATA(multi, 7)
+            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], od_data[0],
+                                 oe_data[0], of_data[0], og_data[0])
             PyArray_MultiIter_NEXT(multi)
     return array
 
@@ -3404,6 +3478,148 @@ cdef class RandomState:
         return cont3_array(self.internal_state, rk_triangular, size, oleft,
             omode, oright)
 
+    def trapezoidal(self, left, mode1, mode2, right, size=None, m=2, n=2, alpha=1):
+        """
+        trapezoidal(left, mode1, mode2, right, size=None, m=2, n=2, alpha=1)
+
+        Draw samples from the generalized trapezoidal distribution.
+
+        The trapezoidal distribution is defined by minimum (``left``), lower mode (``mode1``), upper
+        mode (``mode1``), and maximum (``right``) parameters. The generalized trapezoidal distribution
+        adds three more parameters: the growth rate (``m``), decay rate (``n``), and boundary
+        ratio (``alpha``) parameters. The generalized trapezoidal distribution simplifies 
+        to the trapezoidal distribution when ``m = n = 2`` and ``alpha = 1``. It further 
+        simplifies to a triangular distribution when ``mode1 == mode2``.
+
+        Parameters
+        ----------
+        left : scalar
+            Lower limit.
+        mode1 : scalar
+            The value where the first peak of the distribution occurs.
+            The value should fulfill the condition ``left <= mode1 <= mode2``.
+        mode2 : scalar
+            The value where the first peak of the distribution occurs.
+            The value should fulfill the condition ``mode1 <= mode2 <= right``. 
+        right : scalar
+            Upper limit, should be larger than `mode2`.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
+        m : scalar, optional
+            Growth parameter.
+        n : scalar, optional
+            Decay parameter.
+        alpha : scalar, optional
+            Boundary ratio parameter.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The returned samples all lie in the interval [left, right].
+
+        Notes
+        -----
+        With ``left``, ``mode1``, ``mode2``, ``right``, ``m``, ``n``, and ``alpha`` parameterized as 
+        :math:`a, b, c, d, m, n, \\text{ and } \\alpha`, respectively, 
+        the probability density function for the generalized trapezoidal distribution is
+
+        .. math:: 
+                  f{\\scriptscriptstyle X}(x\mid\theta) = \\mathcal{C}(\\Theta) \\times
+                      \\begin{cases}
+                          \\alpha \\left(\\frac{x - \\alpha}{b - \\alpha} \\right)^{m - 1}, & \\text{for } a \\leq x < b \\\\
+                          (1 - \\alpha) \\left(\frac{x - b}{c - b} \\right) + \\alpha, & \\text{for } b \\leq x < c \\\\
+                          \\left(\\frac{d - x}{d - c} \\right)^{n-1}, & \\text{for } c \\leq x \\leq d
+                      \\end{cases}
+        
+        with the normalizing constant :math:`\\mathcal{C}(\\Theta)` defined as
+        
+        ..math::
+                \\mathcal{C}(\\Theta) = 
+                    \\frac{2mn}
+                    {2 \\alpha \\left(b - a\\right) n + 
+                        \\left(\\alpha + 1 \\right) \\left(c - b \\right)mn +
+                        2 \\left(d - c \\right)m}
+        
+        and where the parameter vector :math:`\\Theta = \\{a, b, c, d, m, n, \\alpha \\}, \\text{ } a \\leq b \\leq c \\leq d, \\text{ and } m, n, \\alpha >0`. 
+
+        Similar to the triangular distribution, the trapezoidal distribution may be used where the
+        underlying distribution is not known, but some knowledge of the limits and
+        mode exists. The trapezoidal distribution generalizes the triangular distribution by allowing 
+        the modal values to be expressed as a range instead of a point estimate. The growth, decay, and 
+        boundary ratio parameters of the generalized trapezoidal distribution further allow for non-linear
+        behavior to be specified.
+
+        References
+        ----------
+        .. [1] van Dorp, J. R. and Kotz, S. (2003) Generalized trapezoidal distributions. 
+                Metrika. 58(1):85–97. 
+                Preprint available: http://www.seas.gwu.edu/~dorpjr/Publications/JournalPapers/Metrika2003VanDorp.pdf
+        .. [2] van Dorp, J. R., Rambaud, S.C., Perez, J. G., and Pleguezuelo, R. H. (2007) 
+                An elicitation proce-dure for the generalized trapezoidal distribution with a uniform central stage. 
+                Decision AnalysisJournal. 4:156–166. 
+                Preprint available: http://www.seas.gwu.edu/~dorpjr/Publications/JournalPapers/DA2007.pdf
+
+        Examples
+        --------
+        Draw values from the distribution and plot the histogram:
+
+        >>> import matplotlib.pyplot as plt
+        >>> h = plt.hist(np.random.triangular(0, 0.25, 0.75, 1, 100000), bins=200,
+        ...              normed=True)
+        >>> plt.show()
+
+        """
+        cdef ndarray oleft, omode1, omode2, oright, on, om, oalpha
+        cdef double fleft, fmode1, fmode2, fright, fn, fm, falpha
+
+        fleft = PyFloat_AsDouble(left)
+        fmode1 = PyFloat_AsDouble(mode1)
+        fmode2 = PyFloat_AsDouble(mode2)
+        fright = PyFloat_AsDouble(right)
+        fm = PyFloat_AsDouble(m)
+        fn = PyFloat_AsDouble(n)
+        falpha = PyFloat_AsDouble(alpha)
+        if not PyErr_Occurred():
+            if fleft > fmode1:
+                raise ValueError("left > mode1")
+            if fmode1 > fmode2:
+                raise ValueError("mode1 > mode2")
+            if fmode2 > fright:
+                raise ValueError("mode2 > right")
+            if fm <= 0:
+                raise ValueError("m <= 0")
+            if fn <= 0:
+                raise ValueError("n <= 0")
+            if falpha <= 0:
+                raise ValueError("alpha <= 0")
+            return cont7_array_sc(self.internal_state, rk_trapezoidal, size, fleft,
+                                  fmode1, fmode2, fright, fm, fn, falpha)
+
+        PyErr_Clear()
+        oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        omode1 = <ndarray>PyArray_FROM_OTF(mode1, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        omode2 = <ndarray>PyArray_FROM_OTF(mode2, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        om = <ndarray>PyArray_FROM_OTF(m, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oalpha = <ndarray>PyArray_FROM_OTF(alpha, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if np.any(np.greater(oleft, omode1)):
+            raise ValueError("left > mode1")
+        if np.any(np.greater(omode1, omode2)):
+            raise ValueError("mode1 > mode2")
+        if np.any(np.greater(omode2, oright)):
+            raise ValueError("mode2 > right")
+        if np.any(np.less_equal(om, 0)):
+            raise ValueError("m <= 0")
+        if np.any(np.less_equal(on, 0)):
+            raise ValueError("n <= 0")
+        if np.any(np.less_equal(oalpha, 0)):
+            raise ValueError("alpha <= 0")
+        return cont7_array(self.internal_state, rk_trapezoidal, size, oleft,
+            omode1, omode2, oright, om, on, oalpha)
+
     # Complicated, discrete distributions:
     def binomial(self, n, p, size=None):
         """
@@ -4525,6 +4741,7 @@ lognormal = _rand.lognormal
 rayleigh = _rand.rayleigh
 wald = _rand.wald
 triangular = _rand.triangular
+trapezoidal = _rand.trapezoidal
 
 binomial = _rand.binomial
 negative_binomial = _rand.negative_binomial

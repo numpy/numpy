@@ -26219,6 +26219,18 @@ triangular (left, mode, right, size=None)
 \end_layout
 
 \begin_layout Description
+trapezoidal (left, mode1, mode2, right, size=None, m=2, n=2, alpha=1)
+\end_layout
+
+\begin_layout Description
+\InsetSpace ~
+ Returns random numbers according to a trapezoidal density that
+ starts at left, peaks at mode1 and mode2, and ends at right. 
+ Non-linear behavior can be explored by changing m, n, and alpha from their 
+ default values. 
+\end_layout
+
+\begin_layout Description
 uniform (low=0.0, high=1.0, size=None)
 \end_layout
 
