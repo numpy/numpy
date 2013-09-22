@@ -11,18 +11,20 @@ __all__ = [
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
 
 import warnings
-import types
 import sys
+import collections
+
+import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import linspace
-from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-        asarray, asanyarray, empty, empty_like, ndarray, around, floor, \
-        ceil, take
-from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
-        integer, isscalar
-from numpy.core.umath import pi, multiply, add, arctan2,  \
-        frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
-from numpy.core.fromnumeric import ravel, nonzero, choose, sort, partition, mean
+from numpy.core.numeric import (ones, zeros, arange, concatenate, array,
+                                asarray, asanyarray, empty, empty_like,
+                                ndarray, around, floor, ceil, take, ScalarType,
+                                dot, where, newaxis, intp, integer, isscalar)
+from numpy.core.umath import (pi, multiply, add, arctan2, frompyfunc, isnan,
+                              cos, less_equal, sqrt, sin, mod, exp, log10)
+from numpy.core.fromnumeric import (ravel, nonzero, choose, sort, partition,
+                                    mean)
 from numpy.core.numerictypes import typecodes, number
 from numpy.core import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
@@ -30,13 +32,12 @@ from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
 from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
-import numpy as np
-import collections
 from numpy.compat import long
 
 # Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
     range = xrange
+
 
 def iterable(y):
     """
@@ -62,11 +63,15 @@ def iterable(y):
     0
 
     """
-    try: iter(y)
-    except: return 0
+    try:
+        iter(y)
+    except:
+        return 0
     return 1
 
-def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
+
+def histogram(a, bins=10, range=None, normed=False, weights=None,
+              density=None):
     """
     Compute the histogram of a set of data.
 
@@ -154,16 +159,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
     if weights is not None:
         weights = asarray(weights)
         if np.any(weights.shape != a.shape):
-            raise ValueError(
-                    'weights should have the same shape as a.')
+            raise ValueError('weights should have the same shape as a.')
         weights = weights.ravel()
-    a =  a.ravel()
+    a = a.ravel()
 
     if (range is not None):
         mn, mx = range
         if (mn > mx):
-            raise AttributeError(
-                'max must be larger than min in range parameter.')
+            raise AttributeError('max must be larger than min in range'
+                                 'parameter.')
 
     if not iterable(bins):
         if np.isscalar(bins) and bins < 1:
@@ -182,8 +186,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
     else:
         bins = asarray(bins)
         if (np.diff(bins) < 0).any():
-            raise AttributeError(
-                    'bins must increase monotonically.')
+            raise AttributeError('bins must increase monotonically.')
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -196,8 +199,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
     if weights is None:
         for i in arange(0, len(a), block):
             sa = sort(a[i:i+block])
-            n += np.r_[sa.searchsorted(bins[:-1], 'left'), \
-                sa.searchsorted(bins[-1], 'right')]
+            n += np.r_[sa.searchsorted(bins[:-1], 'left'),
+                       sa.searchsorted(bins[-1], 'right')]
     else:
         zero = array(0, dtype=ntype)
         for i in arange(0, len(a), block):
@@ -206,9 +209,9 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
             sorting_index = np.argsort(tmp_a)
             sa = tmp_a[sorting_index]
             sw = tmp_w[sorting_index]
-            cw = np.concatenate(([zero,], sw.cumsum()))
-            bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'), \
-                sa.searchsorted(bins[-1], 'right')]
+            cw = np.concatenate(([zero, ], sw.cumsum()))
+            bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'),
+                              sa.searchsorted(bins[-1], 'right')]
             n += cw[bin_index]
 
     n = np.diff(n)
@@ -297,9 +300,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     try:
         M = len(bins)
         if M != D:
-            raise AttributeError(
-                    'The dimension of bins must be equal'\
-                    ' to the dimension of the sample x.')
+            raise AttributeError('The dimension of bins must be equal to the '
+                                 'dimension of the sample x.')
     except TypeError:
         # bins is an integer
         bins = D*[bins]
@@ -332,7 +334,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             if bins[i] < 1:
                 raise ValueError("Element at index %s in `bins` should be "
                                  "a positive integer." % i)
-            nbin[i] = bins[i] + 2 # +2 for outlier bins
+            nbin[i] = bins[i] + 2  # +2 for outlier bins
             edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
         else:
             edges[i] = asarray(bins[i], float)
@@ -343,7 +345,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             Found bin edge of size <= 0. Did you specify `bins` with
             non-monotonic sequence?""")
 
-    nbin =  asarray(nbin)
+    nbin = asarray(nbin)
 
     # Handle empty input.
     if N == 0:
@@ -363,8 +365,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         if not np.isinf(mindiff):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
-            on_edge = where(around(sample[:, i], decimal) == around(edges[i][-1],
-                                                                   decimal))[0]
+            on_edge = where(around(sample[:, i], decimal) ==
+                            around(edges[i][-1], decimal))[0]
             # Shift these points one bin to the left.
             Ncount[i][on_edge] -= 1
 
@@ -410,8 +412,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         hist /= s
 
     if (hist.shape != nbin - 2).any():
-        raise RuntimeError(
-                "Internal Shape Error")
+        raise RuntimeError("Internal Shape Error")
     return hist, edges
 
 
@@ -489,38 +490,34 @@ def average(a, axis=None, weights=None, returned=False):
     TypeError: Axis must be specified when shapes of a and weights differ.
 
     """
-    if not isinstance(a, np.matrix) :
+    if not isinstance(a, np.matrix):
         a = np.asarray(a)
 
-    if weights is None :
+    if weights is None:
         avg = a.mean(axis)
         scl = avg.dtype.type(a.size/avg.size)
-    else :
+    else:
         a = a + 0.0
         wgt = np.array(weights, dtype=a.dtype, copy=0)
 
         # Sanity checks
-        if a.shape != wgt.shape :
-            if axis is None :
-                raise TypeError(
-                        "Axis must be specified when shapes of a "\
-                        "and weights differ.")
-            if wgt.ndim != 1 :
-                raise TypeError(
-                        "1D weights expected when shapes of a and "\
-                        "weights differ.")
-            if wgt.shape[0] != a.shape[axis] :
-                raise ValueError(
-                        "Length of weights not compatible with "\
-                        "specified axis.")
+        if a.shape != wgt.shape:
+            if axis is None:
+                raise TypeError("Axis must be specified when shapes of a "
+                                "and weights differ.")
+            if wgt.ndim != 1:
+                raise TypeError("1D weights expected when shapes of a and "
+                                "weights differ.")
+            if wgt.shape[0] != a.shape[axis]:
+                raise ValueError("Length of weights not compatible with "
+                                 "specified axis.")
 
             # setup wgt to broadcast along axis
             wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis)
         if (scl == 0.0).any():
-            raise ZeroDivisionError(
-                    "Weights sum to zero, can't be normalized")
+            raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
         avg = np.multiply(a, wgt).sum(axis)/scl
 
@@ -529,6 +526,7 @@ def average(a, axis=None, weights=None, returned=False):
         return avg, scl
     else:
         return avg
+
 
 def asarray_chkfinite(a, dtype=None, order=None):
     """
@@ -592,9 +590,9 @@ def asarray_chkfinite(a, dtype=None, order=None):
     """
     a = asarray(a, dtype=dtype, order=order)
     if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
-        raise ValueError(
-                "array must not contain infs or NaNs")
+        raise ValueError("array must not contain infs or NaNs")
     return a
+
 
 def piecewise(x, condlist, funclist, *args, **kw):
     """
@@ -679,9 +677,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     """
     x = asanyarray(x)
     n2 = len(funclist)
-    if isscalar(condlist) or \
-           not (isinstance(condlist[0], list) or
-                isinstance(condlist[0], ndarray)):
+    if (isscalar(condlist) or not (isinstance(condlist[0], list) or
+                                   isinstance(condlist[0], ndarray))):
         condlist = [condlist]
     condlist = [asarray(c, dtype=bool) for c in condlist]
     n = len(condlist)
@@ -692,8 +689,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist.append(~totlist)
         n += 1
     if (n != n2):
-        raise ValueError(
-                "function list and condition list must be the same")
+        raise ValueError("function list and condition list must be the same")
     zerod = False
     # This is a hack to work around problems with NumPy's
     #  handling of 0-d arrays and boolean indexing with
@@ -722,6 +718,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     if zerod:
         y = y.squeeze()
     return y
+
 
 def select(condlist, choicelist, default=0):
     """
@@ -763,8 +760,8 @@ def select(condlist, choicelist, default=0):
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
-        raise ValueError(
-                "list of cases must be same length as list of conditions")
+        raise ValueError("list of cases must be same length as list of "
+                         "conditions")
     choicelist = [default] + choicelist
     S = 0
     pfac = 1
@@ -774,7 +771,7 @@ def select(condlist, choicelist, default=0):
             pfac *= (1-asarray(condlist[k-1]))
     # handle special case of a 1-element condition but
     #  a multi-element choice
-    if type(S) in ScalarType or max(asarray(S).shape)==1:
+    if type(S) in ScalarType or max(asarray(S).shape) == 1:
         pfac = asarray(1)
         for k in range(n2+1):
             pfac = pfac + asarray(choicelist[k])
@@ -783,6 +780,7 @@ def select(condlist, choicelist, default=0):
         else:
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
+
 
 def copy(a, order='K'):
     """
@@ -831,6 +829,7 @@ def copy(a, order='K'):
     return array(a, order=order, copy=True)
 
 # Basic operations
+
 
 def gradient(f, *varargs):
     """
@@ -885,8 +884,7 @@ def gradient(f, *varargs):
     elif n == N:
         dx = list(varargs)
     else:
-        raise SyntaxError(
-                "invalid number of arguments")
+        raise SyntaxError("invalid number of arguments")
 
     # use central differences on interior and one-sided differences on the
     # endpoints. This preserves second order-accuracy over the full domain.
@@ -904,10 +902,10 @@ def gradient(f, *varargs):
         otype = 'd'
 
     # Difference of datetime64 elements results in timedelta64
-    if otype == 'M' :
+    if otype == 'M':
         # Need to use the full dtype name because it contains unit information
         otype = f.dtype.name.replace('datetime', 'timedelta')
-    elif otype == 'm' :
+    elif otype == 'm':
         # Needs to keep the specific units, can't be a general unit
         otype = f.dtype
 
@@ -922,7 +920,9 @@ def gradient(f, *varargs):
     for axis in range(N):
 
         if y.shape[axis] < 2:
-            raise ValueError("Shape of array too small to calculate a numerical gradient, at least two elements are required.")
+            raise ValueError("Shape of array too small to calculate a "
+                             "numerical gradient, at least two elements are "
+                             "required.")
 
         # Numerical differentiation: 1st order edges, 2nd order interior
         if y.shape[axis] == 2:
@@ -986,6 +986,7 @@ def gradient(f, *varargs):
     else:
         return outvals
 
+
 def diff(a, n=1, axis=-1):
     """
     Calculate the n-th order discrete difference along given axis.
@@ -1032,8 +1033,7 @@ def diff(a, n=1, axis=-1):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError(
-                "order must be non-negative but got " + repr(n))
+        raise ValueError("order must be non-negative but got " + repr(n))
     a = asanyarray(a)
     nd = len(a.shape)
     slice1 = [slice(None)]*nd
@@ -1046,6 +1046,7 @@ def diff(a, n=1, axis=-1):
         return diff(a[slice1]-a[slice2], n-1, axis=axis)
     else:
         return a[slice1]-a[slice2]
+
 
 def interp(x, xp, fp, left=None, right=None):
     """
@@ -1169,6 +1170,7 @@ def angle(z, deg=0):
         zreal = z
     return arctan2(zimag, zreal) * fact
 
+
 def unwrap(p, discont=pi, axis=-1):
     """
     Unwrap by changing deltas between values to 2*pi complement.
@@ -1216,12 +1218,13 @@ def unwrap(p, discont=pi, axis=-1):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     ddmod = mod(dd+pi, 2*pi)-pi
-    _nx.copyto(ddmod, pi, where=(ddmod==-pi) & (dd > 0))
-    ph_correct = ddmod - dd;
-    _nx.copyto(ph_correct, 0, where=abs(dd)<discont)
+    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    ph_correct = ddmod - dd
+    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
+
 
 def sort_complex(a):
     """
@@ -1257,6 +1260,7 @@ def sort_complex(a):
             return b.astype('D')
     else:
         return b
+
 
 def trim_zeros(filt, trim='fb'):
     """
@@ -1295,18 +1299,19 @@ def trim_zeros(filt, trim='fb'):
     trim = trim.upper()
     if 'F' in trim:
         for i in filt:
-            if i != 0.: break
-            else: first = first + 1
+            if i != 0.:
+                break
+            else:
+                first = first + 1
     last = len(filt)
     if 'B' in trim:
         for i in filt[::-1]:
-            if i != 0.: break
-            else: last = last - 1
+            if i != 0.:
+                break
+            else:
+                last = last - 1
     return filt[first:last]
 
-import sys
-if sys.hexversion < 0x2040000:
-    from sets import Set as set
 
 @deprecate
 def unique(x):
@@ -1319,11 +1324,12 @@ def unique(x):
         if tmp.size == 0:
             return tmp
         tmp.sort()
-        idx = concatenate(([True], tmp[1:]!=tmp[:-1]))
+        idx = concatenate(([True], tmp[1:] != tmp[:-1]))
         return tmp[idx]
     except AttributeError:
         items = sorted(set(x))
         return asarray(items)
+
 
 def extract(condition, arr):
     """
@@ -1373,6 +1379,7 @@ def extract(condition, arr):
     """
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
+
 def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
@@ -1410,6 +1417,7 @@ def place(arr, mask, vals):
     """
     return _insert(arr, mask, vals)
 
+
 def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
@@ -1443,7 +1451,6 @@ def disp(mesg, device=None, linefeed=True):
 
     """
     if device is None:
-        import sys
         device = sys.stdout
     if linefeed:
         device.write('%s\n' % mesg)
@@ -1451,6 +1458,7 @@ def disp(mesg, device=None, linefeed=True):
         device.write('%s' % mesg)
     device.flush()
     return
+
 
 class vectorize(object):
     """
@@ -1558,14 +1566,15 @@ class vectorize(object):
     If `otypes` is not specified, then a call to the function with the first
     argument will be used to determine the number of outputs.  The results of
     this call will be cached if `cache` is `True` to prevent calling the
-    function twice.  However, to implement the cache, the original function must
-    be wrapped which will slow down subsequent calls, so only do this if your
-    function is expensive.
+    function twice.  However, to implement the cache, the original function
+    must be wrapped which will slow down subsequent calls, so only do this if
+    your function is expensive.
 
     The new keyword argument interface and `excluded` argument support further
     degrades performance.
     """
-    def __init__(self, pyfunc, otypes='', doc=None, excluded=None, cache=False):
+    def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
+                 cache=False):
         self.pyfunc = pyfunc
         self.cache = cache
 
@@ -1610,6 +1619,7 @@ class vectorize(object):
             names = [_n for _n in kwargs if _n not in excluded]
             inds = [_i for _i in range(nargs) if _i not in excluded]
             the_args = list(args)
+
             def func(*vargs):
                 for _n, _i in enumerate(inds):
                     the_args[_i] = vargs[_n]
@@ -1645,11 +1655,13 @@ class vectorize(object):
             inputs = [asarray(_a).flat[0] for _a in args]
             outputs = func(*inputs)
 
-            # Performance note: profiling indicates that -- for simple functions
-            # at least -- this wrapping can almost double the execution time.
+            # Performance note: profiling indicates that -- for simple
+            # functions at least -- this wrapping can almost double the
+            # execution time.
             # Hence we make it optional.
             if self.cache:
                 _cache = [outputs]
+
                 def _func(*vargs):
                     if _cache:
                         return _cache.pop()
@@ -1694,6 +1706,7 @@ class vectorize(object):
                 _res = tuple([array(_x, copy=False, subok=True, dtype=_t)
                               for _x, _t in zip(outputs, otypes)])
         return _res
+
 
 def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     """
@@ -1791,7 +1804,6 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         axis = 1
         tup = (newaxis, slice(None))
 
-
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=float)
         X = concatenate((X, y), axis)
@@ -1868,9 +1880,10 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         return c
     try:
         d = diag(c)
-    except ValueError: # scalar covariance
+    except ValueError:  # scalar covariance
         return 1
     return c/sqrt(multiply.outer(d, d))
+
 
 def blackman(M):
     """
@@ -1968,6 +1981,7 @@ def blackman(M):
         return ones(1, float)
     n = arange(0, M)
     return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+
 
 def bartlett(M):
     """
@@ -2075,6 +2089,7 @@ def bartlett(M):
     n = arange(0, M)
     return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0-2.0*n/(M-1))
 
+
 def hanning(M):
     """
     Return the Hanning window.
@@ -2172,6 +2187,7 @@ def hanning(M):
         return ones(1, float)
     n = arange(0, M)
     return 0.5-0.5*cos(2.0*pi*n/(M-1))
+
 
 def hamming(M):
     """
@@ -2272,64 +2288,63 @@ def hamming(M):
 
 ## Code from cephes for i0
 
-_i0A = [
--4.41534164647933937950E-18,
- 3.33079451882223809783E-17,
--2.43127984654795469359E-16,
- 1.71539128555513303061E-15,
--1.16853328779934516808E-14,
- 7.67618549860493561688E-14,
--4.85644678311192946090E-13,
- 2.95505266312963983461E-12,
--1.72682629144155570723E-11,
- 9.67580903537323691224E-11,
--5.18979560163526290666E-10,
- 2.65982372468238665035E-9,
--1.30002500998624804212E-8,
- 6.04699502254191894932E-8,
--2.67079385394061173391E-7,
- 1.11738753912010371815E-6,
--4.41673835845875056359E-6,
- 1.64484480707288970893E-5,
--5.75419501008210370398E-5,
- 1.88502885095841655729E-4,
--5.76375574538582365885E-4,
- 1.63947561694133579842E-3,
--4.32430999505057594430E-3,
- 1.05464603945949983183E-2,
--2.37374148058994688156E-2,
- 4.93052842396707084878E-2,
--9.49010970480476444210E-2,
- 1.71620901522208775349E-1,
--3.04682672343198398683E-1,
- 6.76795274409476084995E-1]
+_i0A = [-4.41534164647933937950E-18,
+        3.33079451882223809783E-17,
+        -2.43127984654795469359E-16,
+        1.71539128555513303061E-15,
+        -1.16853328779934516808E-14,
+        7.67618549860493561688E-14,
+        -4.85644678311192946090E-13,
+        2.95505266312963983461E-12,
+        -1.72682629144155570723E-11,
+        9.67580903537323691224E-11,
+        -5.18979560163526290666E-10,
+        2.65982372468238665035E-9,
+        -1.30002500998624804212E-8,
+        6.04699502254191894932E-8,
+        -2.67079385394061173391E-7,
+        1.11738753912010371815E-6,
+        -4.41673835845875056359E-6,
+        1.64484480707288970893E-5,
+        -5.75419501008210370398E-5,
+        1.88502885095841655729E-4,
+        -5.76375574538582365885E-4,
+        1.63947561694133579842E-3,
+        -4.32430999505057594430E-3,
+        1.05464603945949983183E-2,
+        -2.37374148058994688156E-2,
+        4.93052842396707084878E-2,
+        -9.49010970480476444210E-2,
+        1.71620901522208775349E-1,
+        -3.04682672343198398683E-1,
+        6.76795274409476084995E-1]
 
-_i0B = [
--7.23318048787475395456E-18,
--4.83050448594418207126E-18,
- 4.46562142029675999901E-17,
- 3.46122286769746109310E-17,
--2.82762398051658348494E-16,
--3.42548561967721913462E-16,
- 1.77256013305652638360E-15,
- 3.81168066935262242075E-15,
--9.55484669882830764870E-15,
--4.15056934728722208663E-14,
- 1.54008621752140982691E-14,
- 3.85277838274214270114E-13,
- 7.18012445138366623367E-13,
--1.79417853150680611778E-12,
--1.32158118404477131188E-11,
--3.14991652796324136454E-11,
- 1.18891471078464383424E-11,
- 4.94060238822496958910E-10,
- 3.39623202570838634515E-9,
- 2.26666899049817806459E-8,
- 2.04891858946906374183E-7,
- 2.89137052083475648297E-6,
- 6.88975834691682398426E-5,
- 3.36911647825569408990E-3,
- 8.04490411014108831608E-1]
+_i0B = [-7.23318048787475395456E-18,
+        -4.83050448594418207126E-18,
+        4.46562142029675999901E-17,
+        3.46122286769746109310E-17,
+        -2.82762398051658348494E-16,
+        -3.42548561967721913462E-16,
+        1.77256013305652638360E-15,
+        3.81168066935262242075E-15,
+        -9.55484669882830764870E-15,
+        -4.15056934728722208663E-14,
+        1.54008621752140982691E-14,
+        3.85277838274214270114E-13,
+        7.18012445138366623367E-13,
+        -1.79417853150680611778E-12,
+        -1.32158118404477131188E-11,
+        -3.14991652796324136454E-11,
+        1.18891471078464383424E-11,
+        4.94060238822496958910E-10,
+        3.39623202570838634515E-9,
+        2.26666899049817806459E-8,
+        2.04891858946906374183E-7,
+        2.89137052083475648297E-6,
+        6.88975834691682398426E-5,
+        3.36911647825569408990E-3,
+        8.04490411014108831608E-1]
+
 
 def _chbevl(x, vals):
     b0 = vals[0]
@@ -2342,11 +2357,14 @@ def _chbevl(x, vals):
 
     return 0.5*(b0 - b2)
 
+
 def _i0_1(x):
     return exp(x) * _chbevl(x/2.0-2, _i0A)
 
+
 def _i0_2(x):
     return exp(x) * _chbevl(32.0/x - 2.0, _i0B) / sqrt(x)
+
 
 def i0(x):
     """
@@ -2404,15 +2422,16 @@ def i0(x):
     """
     x = atleast_1d(x).copy()
     y = empty_like(x)
-    ind = (x<0)
+    ind = (x < 0)
     x[ind] = -x[ind]
-    ind = (x<=8.0)
+    ind = (x <= 8.0)
     y[ind] = _i0_1(x[ind])
     ind2 = ~ind
     y[ind2] = _i0_2(x[ind2])
     return y.squeeze()
 
 ## End of cephes code for i0
+
 
 def kaiser(M, beta):
     """
@@ -2541,6 +2560,7 @@ def kaiser(M, beta):
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
 
+
 def sinc(x):
     """
     Return the sinc function.
@@ -2616,8 +2636,9 @@ def sinc(x):
 
     """
     x = np.asanyarray(x)
-    y = pi* where(x == 0, 1.0e-20, x)
+    y = pi * where(x == 0, 1.0e-20, x)
     return sin(y)/y
+
 
 def msort(a):
     """
@@ -2645,6 +2666,7 @@ def msort(a):
     b = array(a, subok=True, copy=True)
     b.sort(0)
     return b
+
 
 def median(a, axis=None, out=None, overwrite_input=False):
     """
@@ -3003,12 +3025,13 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
-        ret = (d * (y[slice1] +y [slice2]) / 2.0).sum(axis)
-    except ValueError: # Operations didn't work, cast to ndarray
+        ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
+    except ValueError:  # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
         ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
     return ret
+
 
 #always succeed
 def add_newdoc(place, obj, doc):
@@ -3083,14 +3106,14 @@ def meshgrid(*xi, **kwargs):
 
     Notes
     -----
-    This function supports both indexing conventions through the indexing keyword
-    argument.  Giving the string 'ij' returns a meshgrid with matrix indexing,
-    while 'xy' returns a meshgrid with Cartesian indexing.  In the 2-D case
-    with inputs of length M and N, the outputs are of shape (N, M) for 'xy'
-    indexing and (M, N) for 'ij' indexing.  In the 3-D case with inputs of
-    length M, N and P, outputs are of shape (N, M, P) for 'xy' indexing and (M,
-    N, P) for 'ij' indexing.  The difference is illustrated by the following
-    code snippet::
+    This function supports both indexing conventions through the indexing
+    keyword argument.  Giving the string 'ij' returns a meshgrid with matrix
+    indexing, while 'xy' returns a meshgrid with Cartesian indexing.  In the
+    2-D case with inputs of length M and N, the outputs are of shape (N, M) for
+    'xy' indexing and (M, N) for 'ij' indexing.  In the 3-D case with inputs of
+    length M, N and P, outputs are of shape (N, M, P) for 'xy' indexing and
+    (M, N, P) for 'ij' indexing.  The difference is illustrated by the
+    following code snippet::
 
         xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
@@ -3138,8 +3161,8 @@ def meshgrid(*xi, **kwargs):
 
     """
     if len(xi) < 2:
-        msg = 'meshgrid() takes 2 or more arguments (%d given)' % int(len(xi) > 0)
-        raise ValueError(msg)
+        raise ValueError('meshgrid() takes 2 or more arguments'
+                         ' (%d given)' % int(len(xi) > 0))
 
     args = np.atleast_1d(*xi)
     ndim = len(args)
@@ -3151,7 +3174,8 @@ def meshgrid(*xi, **kwargs):
         raise ValueError("Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
-    output = [x.reshape(s0[:i] + (-1,) + s0[i + 1::]) for i, x in enumerate(args)]
+    output = [x.reshape(s0[:i] + (-1,) + s0[i + 1::])
+              for i, x in enumerate(args)]
 
     shape = [x.size for x in output]
 
@@ -3242,8 +3266,8 @@ def delete(arr, obj, axis=None):
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
-        ndim = arr.ndim;
-        axis = ndim-1;
+        ndim = arr.ndim
+        axis = ndim-1
     if ndim == 0:
         warnings.warn("in the future the special handling of scalars "
                       "will be removed from delete and raise an error",
@@ -3319,11 +3343,12 @@ def delete(arr, obj, axis=None):
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
         obj = obj.item()
-        if (obj < -N or obj >=N):
+        if (obj < -N or obj >= N):
             raise IndexError("index %i is out of bounds for axis "
                              "%i with size %i" % (obj, axis, N))
-        if (obj < 0): obj += N
-        newshape[axis]-=1;
+        if (obj < 0):
+            obj += N
+        newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
@@ -3338,7 +3363,8 @@ def delete(arr, obj, axis=None):
             # obj.size = 1 special case always failed and would just
             # give superfluous warnings.
             warnings.warn("using a non-integer array as obj in delete "
-                "will result in an error in the future", DeprecationWarning)
+                          "will result in an error in the future",
+                          DeprecationWarning)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
@@ -3355,7 +3381,7 @@ def delete(arr, obj, axis=None):
                           "by `numpy.delete`.", FutureWarning)
             obj = obj[positive_indices]
 
-        keep[obj,] = False
+        keep[obj, ] = False
         slobj[axis] = keep
         new = arr[slobj]
 
@@ -3469,7 +3495,8 @@ def insert(arr, obj, values, axis=None):
         if ndim > 0 and (axis < -ndim or axis >= ndim):
             raise IndexError("axis %i is out of bounds for an array "
                              "of dimension %i" % (axis, ndim))
-        if (axis < 0): axis += ndim
+        if (axis < 0):
+            axis += ndim
     if (ndim == 0):
         warnings.warn("in the future the special handling of scalars "
                       "will be removed from insert and raise an error",
@@ -3486,7 +3513,7 @@ def insert(arr, obj, values, axis=None):
 
     if isinstance(obj, slice):
         # turn it into a range object
-        indices = arange(*obj.indices(N),**{'dtype':intp})
+        indices = arange(*obj.indices(N), **{'dtype': intp})
     else:
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
@@ -3509,7 +3536,8 @@ def insert(arr, obj, values, axis=None):
         if index < -N or index > N:
             raise IndexError("index %i is out of bounds for axis "
                              "%i with size %i" % (obj, axis, N))
-        if (index < 0): index += N
+        if (index < 0):
+            index += N
 
         values = array(values, copy=False, ndmin=arr.ndim)
         if indices.ndim == 0:
@@ -3544,7 +3572,7 @@ def insert(arr, obj, values, axis=None):
     indices[indices < 0] += N
 
     numnew = len(indices)
-    order = indices.argsort(kind='mergesort') # stable sort
+    order = indices.argsort(kind='mergesort')   # stable sort
     indices[order] += np.arange(numnew)
 
     newshape[axis] += numnew
@@ -3561,6 +3589,7 @@ def insert(arr, obj, values, axis=None):
     if wrap:
         return wrap(new)
     return new
+
 
 def append(arr, values, axis=None):
     """
