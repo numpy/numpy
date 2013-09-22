@@ -155,14 +155,20 @@ PyUFunc_CheckOverride(PyObject *ufunc, char *method,
             Py_DECREF(numpy_ufunc);
             Py_DECREF(override_args);
 
-            /* Remove this arg if it gives not implemented */
+	    if (*result == NULL) {
+	    	/* Exception occurred */
+		Py_XDECREF(normal_args);
+	        Py_XDECREF(normal_kwds);
+	    	goto fail;
+	    }
             if (*result == Py_NotImplemented) {
+		/* Remove this arg if it gives not implemented */
                 with_override[pos_in_with_override] = NULL;
                 Py_DECREF(*result);
                 continue;
             }
-            /* Good result. */
             else {
+		/* Good result. */
                 break;
             }
         }

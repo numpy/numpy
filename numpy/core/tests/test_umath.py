@@ -1051,6 +1051,14 @@ class TestSpecialMethods(TestCase):
         assert_equal(res4['out'], 'out_arg')
         assert_equal(res5['out'], 'out_arg')
 
+    def test_ufunc_override_exception(self):
+        class A(object):
+            def __numpy_ufunc__(self, *a, **kwargs):
+                raise ValueError("oops")
+        a = A()
+        for func in [np.divide, np.dot]:
+            assert_raises(ValueError, func, a, a)
+
 class TestChoose(TestCase):
     def test_mixed(self):
         c = np.array([True, True])
