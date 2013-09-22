@@ -10,6 +10,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 
+#include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
@@ -564,7 +565,7 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
-#ifdef HAVE_EMMINTRIN_H
+#ifdef NPY_HAVE_SSE2_INTRINSICS
         /*
          * stick with our variant for more reliable performance, only known
          * platform which outperforms it by ~20% is an i7 with glibc 2.17
