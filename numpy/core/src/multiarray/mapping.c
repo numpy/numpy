@@ -1391,9 +1391,9 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Ellipsis index */
-    if (ind == Py_Ellipsis || (PyTuple_Check(ind) && 
-                               1 == PyTuple_GET_SIZE(ind) && 
-                               Py_Ellipsis == PyTuple_GET_ITEM(ind, 0))) {
+    if (ind == Py_Ellipsis ||
+        (PyTuple_Check(ind) && 1 == PyTuple_GET_SIZE(ind) &&
+         Py_Ellipsis == PyTuple_GET_ITEM(ind, 0))) {
         /*
          * Doing "a[...] += 1" triggers assigning an array to itself,
          * so this check is needed.
