@@ -3239,6 +3239,29 @@ class TestNewBufferProtocol(object):
         x = np.array(half_list, dtype='<e')
         self._check_roundtrip(x)
 
+    def test_roundtrip_single_types(self):
+        for typ in np.typeDict.values():
+            dtype = np.dtype(typ)
+
+            if dtype.char in 'Mm':
+                # datetimes cannot be used in buffers
+                continue
+            if dtype.char == 'V':
+                # skip void
+                continue
+
+            x = np.zeros(4, dtype=dtype)
+            self._check_roundtrip(x)
+
+            if dtype.char not in 'qQgG':
+                dt = dtype.newbyteorder('<')
+                x = np.zeros(4, dtype=dt)
+                self._check_roundtrip(x)
+
+                dt = dtype.newbyteorder('>')
+                x = np.zeros(4, dtype=dt)
+                self._check_roundtrip(x)
+
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')
         y = memoryview(x)
