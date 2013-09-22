@@ -3499,7 +3499,7 @@ cdef class RandomState:
             The value where the first peak of the distribution occurs.
             The value should fulfill the condition ``left <= mode1 <= mode2``.
         mode2 : scalar
-            The value where the first peak of the distribution occurs.
+            The value where the second peak of the distribution occurs.
             The value should fulfill the condition ``mode1 <= mode2 <= right``. 
         right : scalar
             Upper limit, should be larger than or equal to `mode2`.
