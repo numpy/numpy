@@ -234,6 +234,9 @@ def check_math_runtime(conf):
             features=features, mandatory=False, use="M")
     conf.check_functions_at_once(C99_FUNCS_EXTENDED,
             features=features, mandatory=False, use="M")
+    # TODO: add OPTIONAL_HEADERS, OPTIONAL_INTRINSICS and
+    # OPTIONAL_GCC_ATTRIBUTES (see setup.py and gh-3766).  These are
+    # performance optimizations for GCC.
 
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         try:
