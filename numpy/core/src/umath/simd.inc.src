@@ -16,10 +16,10 @@
 #define __NPY_SIMD_INC
 
 #include "lowlevel_strided_loops.h"
-#include "npy_config.h"
+#include "numpy/npy_common.h"
 /* for NO_FLOATING_POINT_SUPPORT */
 #include "numpy/ufuncobject.h"
-#ifdef HAVE_EMMINTRIN_H
+#ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
 #include <assert.h>
@@ -140,7 +140,7 @@ static const npy_int32 fanout_4[] = {
  * #name = unary, unary, unary_reduce, unary_reduce#
  */
 
-#if @vector@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
 
 /* prototypes */
 static void
@@ -151,7 +151,7 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 static NPY_INLINE int
 run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if @vector@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (@check@(sizeof(@type@), 16)) {
         sse2_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0]);
         return 1;
@@ -167,7 +167,7 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
  * # kind = add, subtract, multiply, divide#
  */
 
-#if @vector@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
 
 /* prototypes */
 static void
@@ -185,7 +185,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
 static NPY_INLINE int
 run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if @vector@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
     @type@ * ip2 = (@type@ *)args[1];
     @type@ * op = (@type@ *)args[2];
@@ -216,7 +216,7 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
  * #simd = 1, 1, 1, 1, 1, 1, 0, 0#
  */
 
-#if @vector@ && @simd@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
 
 /* prototypes */
 static void
@@ -234,7 +234,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
 static NPY_INLINE int
 run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if @vector@ && @simd@ && defined HAVE_EMMINTRIN_H
+#if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
     @type@ * ip2 = (@type@ *)args[1];
     npy_bool * op = (npy_bool *)args[2];
@@ -278,7 +278,7 @@ sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
 static NPY_INLINE int
 run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if defined HAVE_EMMINTRIN_H
+#if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_BINARY(sizeof(npy_bool), 16)) {
         sse2_binary_@kind@_BOOL((npy_bool*)args[2], (npy_bool*)args[0],
                                (npy_bool*)args[1], dimensions[0]);
@@ -295,7 +295,7 @@ sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
 static NPY_INLINE int
 run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if defined HAVE_EMMINTRIN_H
+#if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_REDUCE(sizeof(npy_bool), 16)) {
         sse2_reduce_@kind@_BOOL((npy_bool*)args[0], (npy_bool*)args[1],
                                 dimensions[0]);
@@ -317,7 +317,7 @@ sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
 static NPY_INLINE int
 run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if defined HAVE_EMMINTRIN_H
+#if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_UNARY(sizeof(npy_bool), 16)) {
         sse2_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
         return 1;
@@ -328,7 +328,7 @@ run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 
 /**end repeat**/
 
-#ifdef HAVE_EMMINTRIN_H
+#ifdef NPY_HAVE_SSE2_INTRINSICS
 
 /*
  * Vectorized operations
@@ -843,6 +843,6 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 
 /**end repeat**/
 
-#endif /* HAVE_EMMINTRIN_H */
+#endif /* NPY_HAVE_SSE2_INTRINSICS */
 
 #endif
