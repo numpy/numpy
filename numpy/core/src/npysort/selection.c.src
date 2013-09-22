@@ -176,12 +176,8 @@ static npy_intp @name@median5_@suff@(
         }
     }
     else {
-        if (@TYPE@_LT(v[IDX(2)], v[IDX(1)])) {
-            return 1;
-        }
-        else {
-            return 2;
-        }
+        /* v[1] and v[2] swapped into order above */
+        return 2;
     }
 }
 
