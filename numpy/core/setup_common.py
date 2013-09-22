@@ -107,7 +107,8 @@ OPTIONAL_HEADERS = [
                 "emmintrin.h", # SSE2
 ]
 
-# optional gcc compiler builtins and their call arguments
+# optional gcc compiler builtins and their call arguments and optional a
+# required header
 # call arguments are required as the compiler will do strict signature checking
 OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_isinf", '5.'),
@@ -115,6 +116,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
+                       ("_mm_load_ps", '(float*)0', "xmmintrin.h"), # SSE
+                       ("_mm_load_pd", '(double*)0', "emmintrin.h"), # SSE2
                        ]
 
 # gcc function attributes
