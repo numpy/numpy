@@ -3480,21 +3480,22 @@ cdef class RandomState:
         return cont3_array(self.internal_state, rk_triangular, size, oleft,
             omode, oright)
 
-    def trapezoidal(self, left, mode1, mode2, right, size=None, m=2, n=2, 
-                    alpha=1):
+    def trapezoidal(self, left, mode1, mode2, right, size=None, 
+                    growth=2, decay=2, ratio=1):
         """
-        trapezoidal(left, mode1, mode2, right, size=None, m=2, n=2, alpha=1)
+        trapezoidal(left, mode1, mode2, right, size=None, 
+                    growth=2, decay=2, ratio=1)
 
         Draw samples from the generalized trapezoidal distribution.
 
         The trapezoidal distribution is defined by minimum (``left``), lower 
         mode (``mode1``), upper mode (``mode1``), and maximum (``right``) 
         parameters. The generalized trapezoidal distribution adds three more 
-        parameters: the growth rate (``m``), decay rate (``n``), and boundary 
-        ratio (``alpha``) parameters. The generalized trapezoidal distribution 
-        simplifies to the trapezoidal distribution when ``m = n = 2`` and 
-        ``alpha = 1``. It further simplifies to a triangular distribution when 
-        ``mode1 == mode2`` and to a uniform distribution when 
+        parameters: growth rate, decay rate, and boundary 
+        ratio  parameters. The generalized trapezoidal distribution 
+        simplifies to the trapezoidal distribution when ``growth = decay = 2`` 
+        and ``ratio = 1``. It further simplifies to a triangular distribution 
+        when ``mode1 == mode2`` and to a uniform distribution when 
         ``min == mode1`` and ``mode2 == max``.
 
         Parameters
@@ -3512,12 +3513,12 @@ cdef class RandomState:
         size : int or tuple of ints, optional
             Output shape. Default is None, in which case a single value is
             returned.
-        m : scalar, optional
-            Growth parameter.
-        n : scalar, optional
-            Decay parameter.
-        alpha : scalar, optional
-            Boundary ratio parameter.
+        growth : scalar, optional
+            Growth parameter, should be larger than 0.
+        decay : scalar, optional
+            Decay parameter, should be larger than 0.
+        ratio : scalar, optional
+            Boundary ratio parameter, should be larger than 0.
 
         Returns
         -------
@@ -3526,8 +3527,8 @@ cdef class RandomState:
 
         Notes
         -----
-        With ``left``, ``mode1``, ``mode2``, ``right``, ``m``, ``n``, and 
-        ``alpha`` parameterized as
+        With ``left``, ``mode1``, ``mode2``, ``right``, ``growth``, ``decay``, 
+        and ``ratio`` parameterized as
         :math:`a, b, c, d, m, n, \\text{ and } \\alpha`, respectively, 
         the probability density function for the generalized trapezoidal 
         distribution is 
@@ -3589,16 +3590,16 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef ndarray oleft, omode1, omode2, oright, on, om, oalpha
-        cdef double fleft, fmode1, fmode2, fright, fn, fm, falpha
+        cdef ndarray oleft, omode1, omode2, oright, ogrowth, odecay, oratio
+        cdef double fleft, fmode1, fmode2, fright, fgrowth, fdecay, fratio
 
         fleft = PyFloat_AsDouble(left)
         fmode1 = PyFloat_AsDouble(mode1)
         fmode2 = PyFloat_AsDouble(mode2)
         fright = PyFloat_AsDouble(right)
-        fm = PyFloat_AsDouble(m)
-        fn = PyFloat_AsDouble(n)
-        falpha = PyFloat_AsDouble(alpha)
+        fgrowth = PyFloat_AsDouble(growth)
+        fdecay = PyFloat_AsDouble(decay)
+        fratio = PyFloat_AsDouble(ratio)
         if not PyErr_Occurred():
             if fleft > fmode1:
                 raise ValueError("left > mode1")
@@ -3606,23 +3607,25 @@ cdef class RandomState:
                 raise ValueError("mode1 > mode2")
             if fmode2 > fright:
                 raise ValueError("mode2 > right")
-            if fm <= 0:
-                raise ValueError("m <= 0")
-            if fn <= 0:
-                raise ValueError("n <= 0")
-            if falpha <= 0:
-                raise ValueError("alpha <= 0")
+            if fgrowth <= 0:
+                raise ValueError("growth <= 0")
+            if fdecay <= 0:
+                raise ValueError("decay <= 0")
+            if fratio <= 0:
+                raise ValueError("ratio <= 0")
             return cont7_array_sc(self.internal_state, rk_trapezoidal, size, 
-                                  fleft, fmode1, fmode2, fright, fm, fn, falpha)
+                                  fleft, fmode1, fmode2, fright, 
+                                  fgrowth, fdecay, fratio)
 
         PyErr_Clear()
         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         omode1 = <ndarray>PyArray_FROM_OTF(mode1, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         omode2 = <ndarray>PyArray_FROM_OTF(mode2, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        om = <ndarray>PyArray_FROM_OTF(m, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oalpha = <ndarray>PyArray_FROM_OTF(alpha, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        ogrowth = <ndarray>PyArray_FROM_OTF(growth, NPY_DOUBLE, 
+                                            NPY_ARRAY_ALIGNED)
+        odecay = <ndarray>PyArray_FROM_OTF(decay, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oratio = <ndarray>PyArray_FROM_OTF(ratio, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
         if np.any(np.greater(oleft, omode1)):
             raise ValueError("left > mode1")
@@ -3630,14 +3633,14 @@ cdef class RandomState:
             raise ValueError("mode1 > mode2")
         if np.any(np.greater(omode2, oright)):
             raise ValueError("mode2 > right")
-        if np.any(np.less_equal(om, 0)):
-            raise ValueError("m <= 0")
-        if np.any(np.less_equal(on, 0)):
-            raise ValueError("n <= 0")
-        if np.any(np.less_equal(oalpha, 0)):
-            raise ValueError("alpha <= 0")
+        if np.any(np.less_equal(ogrowth, 0)):
+            raise ValueError("growth <= 0")
+        if np.any(np.less_equal(odecay, 0)):
+            raise ValueError("decay <= 0")
+        if np.any(np.less_equal(oratio, 0)):
+            raise ValueError("ratio <= 0")
         return cont7_array(self.internal_state, rk_trapezoidal, size, oleft,
-                           omode1, omode2, oright, om, on, oalpha)
+                           omode1, omode2, oright, ogrowth, odecay, oratio)
 
     # Complicated, discrete distributions:
     def binomial(self, n, p, size=None):
