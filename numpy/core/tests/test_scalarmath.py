@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 from numpy.testing import *
-from numpy.testing.utils import gen_alignment_data
+from numpy.testing.utils import _gen_alignment_data
 import numpy as np
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -48,11 +48,12 @@ class TestTypes(TestCase):
 
 class TestBaseMath(TestCase):
     def test_blocked(self):
-        #test alignments offsets for simd instructions
-        for dt in [np.float32, np.float64]:
-            for out, inp1, inp2, msg in gen_alignment_data(dtype=dt,
-                                                           type='binary',
-                                                           max_size=12):
+        # test alignments offsets for simd instructions
+        # alignments for vz + 2 * (vs - 1) + 1
+        for dt, sz in [(np.float32, 11), (np.float64, 7)]:
+            for out, inp1, inp2, msg in _gen_alignment_data(dtype=dt,
+                                                            type='binary',
+                                                            max_size=sz):
                 exp1 = np.ones_like(inp1)
                 inp1[...] = np.ones_like(inp1)
                 inp2[...] = np.zeros_like(inp2)
