@@ -857,48 +857,47 @@ double rk_triangular(rk_state *state, double left, double mode, double right)
 double rk_trapezoidal(rk_state *state, double a, double b, double c, double d,
                       double m, double n, double alpha)
 {
-	double U = rk_double(state);
+    double U = rk_double(state);
 
-	/* Calculate pi1, pi2, and pi3 */
-	double pi1 = (2*alpha*(b - a)*n) /((2*alpha*(b - a)*n) +
-	    ((alpha + 1)*(c - b)*m*n) +	(2*(d - c)*m));
-	double pi2 = ((alpha + 1)*(c - b)*m*n)/((2*alpha*(b - a)*n) +
-	    ((alpha + 1)*(c - b)*m*n) + (2*(d - c)*m));
-	double pi3 = (2*(d - c)*m)/((2*alpha*(b - a)*n) + ((alpha + 1)*
-	    (c - b)*m*n) + (2*(d - c)*m));
+    /* Calculate pi1, pi2, and pi3 */
+    double pi1 = (2*alpha*(b - a)*n) /((2*alpha*(b - a)*n) +
+        ((alpha + 1)*(c - b)*m*n) +	(2*(d - c)*m));
+    double pi2 = ((alpha + 1)*(c - b)*m*n)/((2*alpha*(b - a)*n) +
+        ((alpha + 1)*(c - b)*m*n) + (2*(d - c)*m));
+    double pi3 = (2*(d - c)*m)/((2*alpha*(b - a)*n) + ((alpha + 1)*
+        (c - b)*m*n) + (2*(d - c)*m));
 
-	/* Return trapezoidal random deviate conditional on U */
-	if ((0 <= U) && (U <= pi1)) {
-		return pow(((U*(2*alpha*(b - a)*n +
-			(alpha + 1)*(c - b)*m*n + 2*(d - c)*m))/(2*alpha*(b - a)*n)),
-			(1/m))*(b - a) + a;
-	}
-	else if ((pi1 < U) && (U <= (1 - pi3)) && (alpha != 1)) {
-		return ((sqrt(pow((((-2)*b*m*n*(1 - alpha))/(2*(c - b)) +
+    /* Return trapezoidal random deviate conditional on U */
+    if ((0 <= U) && (U <= pi1)) {
+        return pow(((U*(2*alpha*(b - a)*n +
+            (alpha + 1)*(c - b)*m*n + 2*(d - c)*m))/(2*alpha*(b - a)*n)),
+            (1/m))*(b - a) + a;
+    }
+    else if ((pi1 < U) && (U <= (1 - pi3)) && (alpha != 1)) {
+        return ((sqrt(pow((((-2)*b*m*n*(1 - alpha))/(2*(c - b)) +
             2*m*n*(((2*c - b)*(alpha - 1))/(2*(c - b)) + 1)),2)/
-			pow((2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d - c)*m),2) -
-			(((2*alpha*(b - a)*n +
-			(-2)*b*m*n*(((2*c - b)*(alpha - 1))/(2*(c - b)) + 1))/
-			(2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d - c)*m) -
-			U)*4*2*m*n*(1 - alpha))/(2*(c - b)*(2*alpha*(b - a)*n +
-			(alpha + 1)*(c - b)*m*n + 2*(d - c)*m))) -
-			(((-2)*b*m*n*(1 - alpha))/(2*(c - b)) +
-			2*m*n*(((2*c - b)*(alpha - 1))/(2*(c - b)) + 1))/
-			(2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d-c)*m))*
-			2*(c - b)*(2*alpha*(b-a)*n + (alpha + 1)*(c-b)*m*n + 2*(d - c)*m))/
-			(2*2*m*n*(1 - alpha));
-	}
-	else if ((pi1 < U) && (U <= (1 - pi3)) && (alpha == 1)) {
-		return b + (((U - pi1) / (pi2)) * (c - b));
-	}
-	else if (((1 - pi3) < U) && (U <= 1)) {
-		return d-pow((((1 - U)*(2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n +
-		    2*(d - c)*m))/(2*(d - c)*m)),(1/n))*(d - c);
-	}
-	else
-	{
-		return NAN;
-	}
+            pow((2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d - c)*m),2) -
+            (((2*alpha*(b - a)*n +
+            (-2)*b*m*n*(((2*c - b)*(alpha - 1))/(2*(c - b)) + 1))/
+            (2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d - c)*m) -
+            U)*4*2*m*n*(1 - alpha))/(2*(c - b)*(2*alpha*(b - a)*n +
+            (alpha + 1)*(c - b)*m*n + 2*(d - c)*m))) -
+            (((-2)*b*m*n*(1 - alpha))/(2*(c - b)) +
+            2*m*n*(((2*c - b)*(alpha - 1))/(2*(c - b)) + 1))/
+            (2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 2*(d-c)*m))*
+            2*(c - b)*(2*alpha*(b-a)*n + (alpha + 1)*(c-b)*m*n + 2*(d - c)*m))/
+            (2*2*m*n*(1 - alpha));
+    }
+    else if ((pi1 < U) && (U <= (1 - pi3)) && (alpha == 1)) {
+        return b + (((U - pi1) / (pi2)) * (c - b));
+    }
+    else if (((1 - pi3) < U) && (U <= 1)) {
+        return d-pow((((1 - U)*(2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n +
+            2*(d - c)*m))/(2*(d - c)*m)),(1/n))*(d - c);
+    }
+    else {
+        return NAN;
+    }
 }
 
 long rk_logseries(rk_state *state, double p)
