@@ -427,8 +427,10 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     except ValueError:
         usecomplex = False
 
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal))
+    def _build_err_msg():
+        header = ('Arrays are not almost equal to %d decimals' % decimal)
+        return build_err_msg([actual, desired], err_msg, verbose=verbose,
+                             header=header)
 
     if usecomplex:
         if iscomplexobj(actual):
@@ -447,7 +449,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             assert_almost_equal(actualr, desiredr, decimal=decimal)
             assert_almost_equal(actuali, desiredi, decimal=decimal)
         except AssertionError:
-            raise AssertionError(msg)
+            raise AssertionError(_build_err_msg())
 
     if isinstance(actual, (ndarray, tuple, list)) \
             or isinstance(desired, (ndarray, tuple, list)):
@@ -459,15 +461,15 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         if not (gisfinite(desired) and gisfinite(actual)):
             if gisnan(desired) or gisnan(actual):
                 if not (gisnan(desired) and gisnan(actual)):
-                    raise AssertionError(msg)
+                    raise AssertionError(_build_err_msg())
             else:
                 if not desired == actual:
-                    raise AssertionError(msg)
+                    raise AssertionError(_build_err_msg())
             return
     except (NotImplementedError, TypeError):
         pass
     if round(abs(desired - actual), decimal) != 0 :
-        raise AssertionError(msg)
+        raise AssertionError(_build_err_msg())
 
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
