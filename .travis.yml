@@ -26,6 +26,7 @@ before_install:
   - pip install nose
   # pip install coverage
   - python -V
+  - sudo apt-get install -qq gfortran
   - popd
 install:
   # We used to use 'setup.py install' here, but that has the terrible
