@@ -540,6 +540,16 @@ class TestRandomDist(TestCase):
         
         # isosceles triangle
         np.random.seed(self.seed)
+        actual = np.random.trapezoidal(left = 0, mode1 = 0.5, 
+                                       mode2 = 0.5 right = 1, growth = 2,
+                                       decay = 2, ratio = 1, size = (3, 2))
+        np.random.seed(self.seed)
+        desired = np.random.triangular(left = 0, mode = 0.5, right = 1,
+                                       size = (3, 2))
+        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        
+        # skewed triangle
+        np.random.seed(self.seed)
         actual = np.random.trapezoidal(left = 5.12, mode1 = 10.23, 
                                        mode2 = 10.23, right = 20.34, growth = 2,
                                        decay = 2, ratio = 1, size = (3, 2))
