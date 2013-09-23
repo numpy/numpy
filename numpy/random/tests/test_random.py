@@ -541,7 +541,7 @@ class TestRandomDist(TestCase):
         # isosceles triangle
         np.random.seed(self.seed)
         actual = np.random.trapezoidal(left = 0, mode1 = 0.5, 
-                                       mode2 = 0.5 right = 1, growth = 2,
+                                       mode2 = 0.5, right = 1, growth = 2,
                                        decay = 2, ratio = 1, size = (3, 2))
         np.random.seed(self.seed)
         desired = np.random.triangular(left = 0, mode = 0.5, right = 1,
