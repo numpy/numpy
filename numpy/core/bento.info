@@ -32,3 +32,12 @@ Library:
     Extension: _dotblas
         Sources:
             blasdot/_dotblas.c
+    Extension: test_rational
+        Sources:
+            src/umath/test_rational.c.src
+    Extension: struct_ufunc_test
+        Sources:
+            src/umath/struct_ufunc_test.c.src
+    Extension: operand_flag_tests
+        Sources:
+            src/umath/operand_flag_tests.c.src

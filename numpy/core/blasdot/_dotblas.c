@@ -9,7 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
-#include "private/ufunc_override.h"
+#include "ufunc_override.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif

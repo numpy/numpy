@@ -53,7 +53,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "private/ufunc_override.h"
+#include "ufunc_override.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
