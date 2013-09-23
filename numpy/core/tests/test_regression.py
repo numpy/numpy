@@ -1665,6 +1665,14 @@ class TestRegression(TestCase):
         a[...] += 1
         assert_equal(a, 1)
 
+    def test_object_array_self_copy(self):
+        # An object array being copied into itself DECREF'ed before INCREF'ing
+        # causing segmentation faults (gh-3787) 
+        a = np.array(object(), dtype=object)
+        np.copyto(a, a)
+        assert_equal(sys.getrefcount(a[()]), 2)
+        a[()].__class__ # will segfault if object was deleted
+
     def test_zerosize_accumulate(self):
         "Ticket #1733"
         x = np.array([[42, 0]], dtype=np.uint32)
