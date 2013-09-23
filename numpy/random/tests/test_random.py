@@ -518,14 +518,44 @@ class TestRandomDist(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_trapezoidal(self):
+        # isosceles trapezoid
+        np.random.seed(self.seed)
+        actual = np.random.trapezoidal(left = 0, mode1 = 0.25, mode2 = 0.75, 
+                                       right = 1, growth = 2, decay = 2, 
+                                       ratio = 1, size = (3, 2))
+        desired = np.array([[ 0.58909607868926006,  0.56871772081980998],
+                            [ 0.79568736184877409,  0.79843251761098233],
+                            [ 0.46817561152239973,  0.70864106064451038]])
+        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        
+        # skewed trapezoid
         np.random.seed(self.seed)
         actual = np.random.trapezoidal(left = 0.11, mode1 = 0.23, mode2 = 0.58,
-                                      right = 1.3, growth = 2, decay = 1, 
-                                      ratio = 3, size = (3, 2))
-        desired = np.array([[ 0.69007163453708797,  0.64659780441559467],
-                          [ 1.12189374247119455,  1.12664768018497297],
-                          [ 0.46796827690432086,  0.94510092937495538]])
+                                       right = 1.3, growth = 2.1, decay = 3.4, 
+                                       ratio = 5.5, size = (3, 2))
+        desired = np.array([[ 0.38990765558594259,  0.37709004775126514],
+                            [ 0.60785407185596629,  0.61333971877508253],
+                            [ 0.32091591412311993,  0.48311388085070645]])
+        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        
+        # isosceles triangle
+        np.random.seed(self.seed)
+        actual = np.random.trapezoidal(left = 5.12, mode1 = 10.23, 
+                                       mode2 = 10.23, right = 20.34, growth = 2,
+                                       decay = 2, ratio = 1, size = (3, 2))
+        np.random.seed(self.seed)
+        desired = np.random.triangular(left = 5.12, mode = 10.23, right = 20.34,
+                                       size = (3, 2))
         np.testing.assert_array_almost_equal(actual, desired, decimal=14)
+        
+        # uniform
+        np.random.seed(self.seed)
+        actual = np.random.trapezoidal(left = 1.23, mode1 = 1.23, mode2 = 10.54, 
+                                       right = 10.54, growth = 2, decay = 2, 
+                                       ratio = 1, size = (3, 2))
+        np.random.seed(self.seed)
+        desired = np.random.uniform(low = 1.23, high=10.54, size = (3, 2))
+        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_uniform(self):
         np.random.seed(self.seed)
