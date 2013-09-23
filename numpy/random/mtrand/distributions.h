@@ -175,7 +175,8 @@ extern long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sa
 extern double rk_triangular(rk_state *state, double left, double mode, double right);
 
 /* Trapezoidal distribution */
-extern double rk_trapezoidal(rk_state *state, double a, double b, double c, double d, double m, double n, double alpha);
+extern double rk_trapezoidal(rk_state *state, double a, double b, double c,
+                             double d, double m, double n, double alpha);
 
 /* Logarithmic series distribution */
 extern long rk_logseries(rk_state *state, double p);

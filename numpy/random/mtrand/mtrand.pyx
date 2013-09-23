@@ -91,7 +91,8 @@ cdef extern from "distributions.h":
     double rk_rayleigh(rk_state *state, double mode)
     double rk_wald(rk_state *state, double mean, double scale)
     double rk_triangular(rk_state *state, double left, double mode, double right)
-    double rk_trapezoidal(rk_state *state, double a, double b, double c, double d, double m, double n, double alpha)
+    double rk_trapezoidal(rk_state *state, double a, double b, double c, 
+                          double d, double m, double n, double alpha)
 
     long rk_binomial(rk_state *state, long n, double p)
     long rk_binomial_btpe(rk_state *state, long n, double p)
@@ -353,8 +354,9 @@ cdef object cont7_array(rk_state *state, rk_cont7 func, object size, ndarray oa,
         array = <ndarray>np.empty(size, np.float64)
         array_data = <double *>PyArray_DATA(array)
         multi = <broadcast>PyArray_MultiIterNew(8, <void*>array, <void *>oa,
-                                                <void *>ob, <void *>oc, <void *>od,
-                                                <void *>oe, <void *>of, <void *>og)
+                                                   <void *>ob,   <void *>oc, 
+                                                   <void *>od,   <void *>oe, 
+                                                   <void *>of,   <void *>og)
         if (multi.size != PyArray_SIZE(array)):
             raise ValueError("size is not compatible with inputs")
         for i from 0 <= i < multi.size:
@@ -3478,18 +3480,22 @@ cdef class RandomState:
         return cont3_array(self.internal_state, rk_triangular, size, oleft,
             omode, oright)
 
-    def trapezoidal(self, left, mode1, mode2, right, size=None, m=2, n=2, alpha=1):
+    def trapezoidal(self, left, mode1, mode2, right, size=None, m=2, n=2, 
+                    alpha=1):
         """
         trapezoidal(left, mode1, mode2, right, size=None, m=2, n=2, alpha=1)
 
         Draw samples from the generalized trapezoidal distribution.
 
-        The trapezoidal distribution is defined by minimum (``left``), lower mode (``mode1``), upper
-        mode (``mode1``), and maximum (``right``) parameters. The generalized trapezoidal distribution
-        adds three more parameters: the growth rate (``m``), decay rate (``n``), and boundary
-        ratio (``alpha``) parameters. The generalized trapezoidal distribution simplifies 
-        to the trapezoidal distribution when ``m = n = 2`` and ``alpha = 1``. It further 
-        simplifies to a triangular distribution when ``mode1 == mode2``.
+        The trapezoidal distribution is defined by minimum (``left``), lower 
+        mode (``mode1``), upper mode (``mode1``), and maximum (``right``) 
+        parameters. The generalized trapezoidal distribution adds three more 
+        parameters: the growth rate (``m``), decay rate (``n``), and boundary 
+        ratio (``alpha``) parameters. The generalized trapezoidal distribution 
+        simplifies to the trapezoidal distribution when ``m = n = 2`` and 
+        ``alpha = 1``. It further simplifies to a triangular distribution when 
+        ``mode1 == mode2`` and to a uniform distribution when 
+        ``min == mode1`` and ``mode2 == max``.
 
         Parameters
         ----------
@@ -3520,53 +3526,66 @@ cdef class RandomState:
 
         Notes
         -----
-        With ``left``, ``mode1``, ``mode2``, ``right``, ``m``, ``n``, and ``alpha`` parameterized as 
+        With ``left``, ``mode1``, ``mode2``, ``right``, ``m``, ``n``, and 
+        ``alpha`` parameterized as
         :math:`a, b, c, d, m, n, \\text{ and } \\alpha`, respectively, 
-        the probability density function for the generalized trapezoidal distribution is
+        the probability density function for the generalized trapezoidal 
+        distribution is 
 
         .. math:: 
-                  f{\\scriptscriptstyle X}(x\mid\theta) = \\mathcal{C}(\\Theta) \\times
-                      \\begin{cases}
-                          \\alpha \\left(\\frac{x - \\alpha}{b - \\alpha} \\right)^{m - 1}, & \\text{for } a \\leq x < b \\\\
-                          (1 - \\alpha) \\left(\frac{x - b}{c - b} \\right) + \\alpha, & \\text{for } b \\leq x < c \\\\
-                          \\left(\\frac{d - x}{d - c} \\right)^{n-1}, & \\text{for } c \\leq x \\leq d
-                      \\end{cases}
+            f{\\scriptscriptstyle X}(x\\mid\\theta) = 
+                \\mathcal{C}(\\Theta) \\times
+                \\begin{cases}
+                    \\alpha \\left(\\frac{x - \\alpha}{b - \\alpha} 
+                        \\right)^{m - 1}, & \\text{for } a \\leq x < b \\\\
+                    (1 - \\alpha) \\left(\\frac{x - b}{c - b} \\right) +  
+                        \\alpha, & \\text{for } b \\leq x < c \\\\
+                    \\left(\\frac{d - x}{d - c} \\right)^{n-1}, & 
+                        \\text{for } c \\leq x \\leq d
+                \\end{cases}
         
         with the normalizing constant :math:`\\mathcal{C}(\\Theta)` defined as
         
         ..math::
-                \\mathcal{C}(\\Theta) = 
-                    \\frac{2mn}
+            \\mathcal{C}(\\Theta) = 
+                \\frac{2mn}
                     {2 \\alpha \\left(b - a\\right) n + 
                         \\left(\\alpha + 1 \\right) \\left(c - b \\right)mn +
-                        2 \\left(d - c \\right)m}
+                            2 \\left(d - c \\right)m}
         
-        and where the parameter vector :math:`\\Theta = \\{a, b, c, d, m, n, \\alpha \\}, \\text{ } a \\leq b \\leq c \\leq d, \\text{ and } m, n, \\alpha >0`. 
+        and where the parameter vector 
+        :math:`\\Theta = \\{a, b, c, d, m, n, \\alpha \\}, \\text{ } a 
+        \\leq b \\leq c \\leq d, \\text{ and } m, n, \\alpha >0`. 
 
-        Similar to the triangular distribution, the trapezoidal distribution may be used where the
-        underlying distribution is not known, but some knowledge of the limits and
-        mode exists. The trapezoidal distribution generalizes the triangular distribution by allowing 
-        the modal values to be expressed as a range instead of a point estimate. The growth, decay, and 
-        boundary ratio parameters of the generalized trapezoidal distribution further allow for non-linear
-        behavior to be specified.
+        Similar to the triangular distribution, the trapezoidal distribution 
+        may be used where the underlying distribution is not known, but some 
+        knowledge of the limits and mode exists. The trapezoidal distribution 
+        generalizes the triangular distribution by allowing the modal values 
+        to be expressed as a range instead of a point estimate. The growth, 
+        decay, and boundary ratio parameters of the generalized trapezoidal 
+        distribution further allow for non-linear behavior to be specified.
 
         References
         ----------
-        .. [1] van Dorp, J. R. and Kotz, S. (2003) Generalized trapezoidal distributions. 
-                Metrika. 58(1):85–97. 
-                Preprint available: http://www.seas.gwu.edu/~dorpjr/Publications/JournalPapers/Metrika2003VanDorp.pdf
-        .. [2] van Dorp, J. R., Rambaud, S.C., Perez, J. G., and Pleguezuelo, R. H. (2007) 
-                An elicitation proce-dure for the generalized trapezoidal distribution with a uniform central stage. 
-                Decision AnalysisJournal. 4:156–166. 
-                Preprint available: http://www.seas.gwu.edu/~dorpjr/Publications/JournalPapers/DA2007.pdf
+        .. [1] van Dorp, J. R. and Kotz, S. (2003) Generalized trapezoidal 
+                distributions. Metrika. 58(1):85-97. 
+                Preprint available: http://www.seas.gwu.edu/
+                    ~dorpjr/Publications/JournalPapers/Metrika2003VanDorp.pdf
+        .. [2] van Dorp, J. R., Rambaud, S.C., Perez, J. G., and Pleguezuelo, 
+                R. H. (2007) 
+                An elicitation proce-dure for the generalized trapezoidal 
+                distribution with a uniform central stage. 
+                Decision AnalysisJournal. 4:156-166. 
+                Preprint available: http://www.seas.gwu.edu/
+                    ~dorpjr/Publications/JournalPapers/DA2007.pdf
 
         Examples
         --------
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.triangular(0, 0.25, 0.75, 1, 100000), bins=200,
-        ...              normed=True)
+        >>> h = plt.hist(np.random.triangular(0, 0.25, 0.75, 1, 100000), 
+        ...              bins=200, normed=True)
         >>> plt.show()
 
         """
@@ -3593,8 +3612,8 @@ cdef class RandomState:
                 raise ValueError("n <= 0")
             if falpha <= 0:
                 raise ValueError("alpha <= 0")
-            return cont7_array_sc(self.internal_state, rk_trapezoidal, size, fleft,
-                                  fmode1, fmode2, fright, fm, fn, falpha)
+            return cont7_array_sc(self.internal_state, rk_trapezoidal, size, 
+                                  fleft, fmode1, fmode2, fright, fm, fn, falpha)
 
         PyErr_Clear()
         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -3618,7 +3637,7 @@ cdef class RandomState:
         if np.any(np.less_equal(oalpha, 0)):
             raise ValueError("alpha <= 0")
         return cont7_array(self.internal_state, rk_trapezoidal, size, oleft,
-            omode1, omode2, oright, om, on, oalpha)
+                           omode1, omode2, oright, om, on, oalpha)
 
     # Complicated, discrete distributions:
     def binomial(self, n, p, size=None):
