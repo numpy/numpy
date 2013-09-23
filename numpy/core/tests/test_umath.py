@@ -4,7 +4,7 @@ import sys
 import platform
 
 from numpy.testing import *
-from numpy.testing.utils import gen_alignment_data
+from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
 import numpy as np
 
@@ -98,15 +98,15 @@ class TestPower(TestCase):
         assert_almost_equal(x**(-1), [1., 0.5, 1./3])
         assert_almost_equal(x**(0.5), [1., ncu.sqrt(2), ncu.sqrt(3)])
 
-        for out, inp, msg in gen_alignment_data(dtype=np.float32,
-                                                type='unary'):
+        for out, inp, msg in _gen_alignment_data(dtype=np.float32,
+                                                 type='unary'):
             exp = [ncu.sqrt(i) for i in inp]
             assert_almost_equal(inp**(0.5), exp, err_msg=msg)
             np.sqrt(inp, out=out)
             assert_equal(out, exp, err_msg=msg)
 
-        for out, inp, msg in gen_alignment_data(dtype=np.float64,
-                                                type='unary'):
+        for out, inp, msg in _gen_alignment_data(dtype=np.float64,
+                                                 type='unary'):
             exp = [ncu.sqrt(i) for i in inp]
             assert_almost_equal(inp**(0.5), exp, err_msg=msg)
             np.sqrt(inp, out=out)
@@ -670,8 +670,8 @@ class TestMinMax(TestCase):
     def test_minmax_blocked(self):
         "simd tests on max/min"
         for dt in [np.float32, np.float64]:
-            for out, inp, msg in gen_alignment_data(dtype=dt, type='unary',
-                                                    max_size=17):
+            for out, inp, msg in _gen_alignment_data(dtype=dt, type='unary',
+                                                     max_size=17):
                 for i in range(inp.size):
                     inp[:] = np.arange(inp.size, dtype=dt)
                     inp[i] = np.nan
@@ -691,8 +691,8 @@ class TestAbsolute(TestCase):
     def test_abs_blocked(self):
         "simd tests on abs"
         for dt in [np.float32, np.float64]:
-            for out, inp, msg in gen_alignment_data(dtype=dt, type='unary',
-                                                    max_size=17):
+            for out, inp, msg in _gen_alignment_data(dtype=dt, type='unary',
+                                                     max_size=17):
                 tgt = [ncu.absolute(i) for i in inp]
                 np.absolute(inp, out=out)
                 assert_equal(out, tgt, err_msg=msg)
