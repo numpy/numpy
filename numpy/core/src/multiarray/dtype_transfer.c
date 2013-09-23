@@ -127,14 +127,14 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
-        /* Release the reference in dst */
-        NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
-        Py_XDECREF(dst_ref);
         /* Copy the reference */
         NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
         NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
         /* Claim the reference */
         Py_XINCREF(src_ref);
+        /* Release the reference in dst */
+        NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
+        Py_XDECREF(dst_ref);
 
         src += src_stride;
         dst += dst_stride;
