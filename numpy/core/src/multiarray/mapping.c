@@ -1391,7 +1391,9 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Ellipsis index */
-    if (ind == Py_Ellipsis) {
+    if (ind == Py_Ellipsis ||
+        (PyTuple_Check(ind) && 1 == PyTuple_GET_SIZE(ind) &&
+         Py_Ellipsis == PyTuple_GET_ITEM(ind, 0))) {
         /*
          * Doing "a[...] += 1" triggers assigning an array to itself,
          * so this check is needed.
@@ -1408,7 +1410,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         /*
          * Several different exceptions to the 0-d no-indexing rule
          *
-         *  1) ellipses (handled above generally)
+         *  1) ellipses or tuple with ellipses (handled above generally)
          *  2) empty tuple
          *  3) Using newaxis (None)
          *  4) Boolean mask indexing
