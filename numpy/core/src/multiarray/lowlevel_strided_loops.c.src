@@ -20,6 +20,17 @@
 
 #include "lowlevel_strided_loops.h"
 
+/* used for some alignment checks */
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
+
+
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
  * assume all data is aligned to its size by the C standard. This means it can
@@ -118,6 +129,11 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
+#if @is_aligned@ && @elsize@ != 16
+    /* sanity check */
+    assert(npy_is_aligned(dst, _ALIGN(@type@)));
+    assert(npy_is_aligned(src, _ALIGN(@type@)));
+#endif
     /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
     while (N > 0) {
 #if @is_aligned@
@@ -182,6 +198,11 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
+#if @is_aligned@ && @elsize@ != 16
+    /* sanity check */
+    assert(npy_is_aligned(dst, _ALIGN(@type@)));
+    assert(npy_is_aligned(src, _ALIGN(@type@)));
+#endif
 #if @elsize@ == 1 && @dst_contig@
     memset(dst, *src, N);
 #else
@@ -785,6 +806,16 @@ static void
     _TYPE2 dst_value;
 #endif
 
+#if @aligned@
+   /* sanity check */
+#  if !@is_complex1@
+    assert(npy_is_aligned(src, _ALIGN(_TYPE1)));
+#  endif
+#  if !@is_complex2@
+    assert(npy_is_aligned(dst, _ALIGN(_TYPE2)));
+#  endif
+#endif
+
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
 
     while (N--) {
@@ -792,8 +823,6 @@ static void
 #  if @is_complex1@
         src_value[0] = ((_TYPE1 *)src)[0];
         src_value[1] = ((_TYPE1 *)src)[1];
-#  elif !@aligned@
-        src_value = *((_TYPE1 *)src);
 #  endif
 #else
         memmove(&src_value, src, sizeof(src_value));
@@ -836,8 +865,6 @@ static void
 #  if @is_complex2@
         ((_TYPE2 *)dst)[0] = dst_value[0];
         ((_TYPE2 *)dst)[1] = dst_value[1];
-#  elif !@aligned@
-        *((_TYPE2 *)dst) = dst_value;
 #  endif
 #else
         memmove(dst, &dst_value, sizeof(dst_value));
