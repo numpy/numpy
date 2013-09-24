@@ -335,9 +335,11 @@ cdef object cont7_array(rk_state *state, rk_cont7 func, object size, ndarray oa,
     cdef broadcast multi
 
     if size is None:
-        multi = <broadcast> PyArray_MultiIterNew(7, <void *>oa, <void *>ob, <void *>oc, <void *>od,
-                                                 <void *>oe, <void *>of, <void *> og)
-        array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_DOUBLE)
+        multi = <broadcast> PyArray_MultiIterNew(
+            7, <void *>oa, <void *>ob, <void *>oc, <void *>od, <void *>oe, 
+            <void *>of, <void *> og)
+        array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, 
+                                            NPY_DOUBLE)
         array_data = <double *>PyArray_DATA(array)
         for i from 0 <= i < multi.size:
             oa_data = <double *>PyArray_MultiIter_DATA(multi, 0)
@@ -347,16 +349,15 @@ cdef object cont7_array(rk_state *state, rk_cont7 func, object size, ndarray oa,
             oe_data = <double *>PyArray_MultiIter_DATA(multi, 4)
             of_data = <double *>PyArray_MultiIter_DATA(multi, 5)
             og_data = <double *>PyArray_MultiIter_DATA(multi, 6)
-            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], od_data[0],
-                                 oe_data[0], of_data[0], og_data[0])
+            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], 
+                                 od_data[0], oe_data[0], of_data[0], og_data[0])
             PyArray_MultiIter_NEXT(multi)
     else:
         array = <ndarray>np.empty(size, np.float64)
         array_data = <double *>PyArray_DATA(array)
-        multi = <broadcast>PyArray_MultiIterNew(8, <void*>array, <void *>oa,
-                                                   <void *>ob,   <void *>oc, 
-                                                   <void *>od,   <void *>oe, 
-                                                   <void *>of,   <void *>og)
+        multi = <broadcast>PyArray_MultiIterNew(
+            8, <void*>array, <void *>oa, <void *>ob, <void *>oc, <void *>od,
+            <void *>oe, <void *>of, <void *>og)
         if (multi.size != PyArray_SIZE(array)):
             raise ValueError("size is not compatible with inputs")
         for i from 0 <= i < multi.size:
@@ -367,8 +368,8 @@ cdef object cont7_array(rk_state *state, rk_cont7 func, object size, ndarray oa,
             oe_data = <double *>PyArray_MultiIter_DATA(multi, 5)
             of_data = <double *>PyArray_MultiIter_DATA(multi, 6)
             og_data = <double *>PyArray_MultiIter_DATA(multi, 7)
-            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], od_data[0],
-                                 oe_data[0], of_data[0], og_data[0])
+            array_data[i] = func(state, oa_data[0], ob_data[0], oc_data[0], 
+                                 od_data[0], oe_data[0], of_data[0], og_data[0])
             PyArray_MultiIter_NEXT(multi)
     return array
 
