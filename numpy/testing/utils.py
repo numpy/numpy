@@ -1512,7 +1512,7 @@ def assert_no_warnings(func, *args, **kw):
     return result
 
 
-def gen_alignment_data(dtype=float32, type='binary', max_size=24):
+def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
     """
     generator producing data with different alignment and offsets
     to test simd vectorization
