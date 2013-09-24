@@ -339,8 +339,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     for i in arange(D):
         if isscalar(bins[i]):
             if bins[i] < 1:
-                raise ValueError("Element at index %s in `bins` should be "
-                                 "a positive integer." % i)
+                raise ValueError(
+                    "Element at index %s in `bins` should be a positive "
+                    "integer." % i)
             nbin[i] = bins[i] + 2  # +2 for outlier bins
             edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
         else:
@@ -348,9 +349,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
         if np.any(np.asarray(dedges[i]) <= 0):
-            raise ValueError("""
-            Found bin edge of size <= 0. Did you specify `bins` with
-            non-monotonic sequence?""")
+            raise ValueError(
+            "Found bin edge of size <= 0. Did you specify `bins` with"
+            "non-monotonic sequence?")
 
     nbin = asarray(nbin)
 
@@ -700,7 +701,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist.append(~totlist)
         n += 1
     if (n != n2):
-        raise ValueError("function list and condition list must be the same")
+        raise ValueError(
+            "function list and condition list must be the same")
     zerod = False
     # This is a hack to work around problems with NumPy's
     #  handling of 0-d arrays and boolean indexing with
@@ -771,8 +773,8 @@ def select(condlist, choicelist, default=0):
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
-        raise ValueError("list of cases must be same length as list of "
-                         "conditions")
+        raise ValueError(
+            "list of cases must be same length as list of conditions")
     choicelist = [default] + choicelist
     S = 0
     pfac = 1
@@ -1600,11 +1602,13 @@ class vectorize(object):
             self.otypes = otypes
             for char in self.otypes:
                 if char not in typecodes['All']:
-                    raise ValueError("Invalid otype specified: %s" % (char,))
+                    raise ValueError(
+                        "Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
             self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
-            raise ValueError("Invalid otype specification")
+            raise ValueError(
+                "Invalid otype specification")
 
         # Excluded variable support
         if excluded is None:
@@ -2938,8 +2942,9 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
     elif interpolation == 'linear':
         pass  # keep index as fraction and interpolate
     else:
-        raise ValueError("interpolation can only be 'linear', 'lower' "
-                         "'higher', 'midpoint', or 'nearest'")
+        raise ValueError(
+            "interpolation can only be 'linear', 'lower' 'higher', "
+            "'midpoint', or 'nearest'")
 
     if indices.dtype == intp:  # take the points along axis
         ap.partition(indices, axis=axis)
@@ -3182,8 +3187,9 @@ def meshgrid(*xi, **kwargs):
 
     """
     if len(xi) < 2:
-        raise ValueError('meshgrid() takes 2 or more arguments'
-                         ' (%d given)' % int(len(xi) > 0))
+        raise ValueError(
+            'meshgrid() takes 2 or more arguments '
+            '(%d given)' % int(len(xi) > 0))
 
     args = np.atleast_1d(*xi)
     ndim = len(args)
@@ -3192,7 +3198,8 @@ def meshgrid(*xi, **kwargs):
     sparse = kwargs.get('sparse', False)
     indexing = kwargs.get('indexing', 'xy')
     if not indexing in ['xy', 'ij']:
-        raise ValueError("Valid values for `indexing` are 'xy' and 'ij'.")
+        raise ValueError(
+            "Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
     output = [x.reshape(s0[:i] + (-1,) + s0[i + 1::])
@@ -3290,9 +3297,9 @@ def delete(arr, obj, axis=None):
         ndim = arr.ndim
         axis = ndim - 1
     if ndim == 0:
-        warnings.warn("in the future the special handling of scalars "
-                      "will be removed from delete and raise an error",
-                      DeprecationWarning)
+        warnings.warn(
+            "in the future the special handling of scalars will be removed "
+            "from delete and raise an error", DeprecationWarning)
         if wrap:
             return wrap(arr)
         else:
