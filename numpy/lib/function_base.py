@@ -16,17 +16,20 @@ import collections
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import linspace
-from numpy.core.numeric import (ones, zeros, arange, concatenate, array,
-                                asarray, asanyarray, empty, empty_like,
-                                ndarray, around, floor, ceil, take, ScalarType,
-                                dot, where, newaxis, intp, integer, isscalar)
-from numpy.core.umath import (pi, multiply, add, arctan2, frompyfunc, isnan,
-                              cos, less_equal, sqrt, sin, mod, exp, log10)
-from numpy.core.fromnumeric import (ravel, nonzero, choose, sort, partition,
-                                    mean)
+from numpy.core import linspace, atleast_1d, atleast_2d
+from numpy.core.numeric import (
+    ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
+    empty_like, ndarray, around, floor, ceil, take, ScalarType, dot, where,
+    newaxis, intp, integer, isscalar
+    )
+from numpy.core.umath import (
+    pi, multiply, add, arctan2, frompyfunc, isnan, cos, less_equal, sqrt, sin,
+    mod, exp, log10
+    )
+from numpy.core.fromnumeric import (
+    ravel, nonzero, choose, sort, partition, mean
+    )
 from numpy.core.numerictypes import typecodes, number
-from numpy.core import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
@@ -159,34 +162,37 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if weights is not None:
         weights = asarray(weights)
         if np.any(weights.shape != a.shape):
-            raise ValueError('weights should have the same shape as a.')
+            raise ValueError(
+                'weights should have the same shape as a.')
         weights = weights.ravel()
     a = a.ravel()
 
     if (range is not None):
         mn, mx = range
         if (mn > mx):
-            raise AttributeError('max must be larger than min in range'
-                                 'parameter.')
+            raise AttributeError(
+                'max must be larger than min in range parameter.')
 
     if not iterable(bins):
         if np.isscalar(bins) and bins < 1:
-            raise ValueError("`bins` should be a positive integer.")
+            raise ValueError(
+                '`bins` should be a positive integer.')
         if range is None:
             if a.size == 0:
                 # handle empty arrays. Can't determine range, so use 0-1.
                 range = (0, 1)
             else:
                 range = (a.min(), a.max())
-        mn, mx = [mi+0.0 for mi in range]
+        mn, mx = [mi + 0.0 for mi in range]
         if mn == mx:
             mn -= 0.5
             mx += 0.5
-        bins = linspace(mn, mx, bins+1, endpoint=True)
+        bins = linspace(mn, mx, bins + 1, endpoint=True)
     else:
         bins = asarray(bins)
         if (np.diff(bins) < 0).any():
-            raise AttributeError('bins must increase monotonically.')
+            raise AttributeError(
+                'bins must increase monotonically.')
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -300,8 +306,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     try:
         M = len(bins)
         if M != D:
-            raise AttributeError('The dimension of bins must be equal to the '
-                                 'dimension of the sample x.')
+            raise AttributeError(
+                'The dimension of bins must be equal to the dimension of the '
+                ' sample x.')
     except TypeError:
         # bins is an integer
         bins = D*[bins]
@@ -338,7 +345,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
         else:
             edges[i] = asarray(bins[i], float)
-            nbin[i] = len(edges[i])+1  # +1 for outlier bins
+            nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
         if np.any(np.asarray(dedges[i]) <= 0):
             raise ValueError("""
@@ -412,7 +419,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         hist /= s
 
     if (hist.shape != nbin - 2).any():
-        raise RuntimeError("Internal Shape Error")
+        raise RuntimeError(
+            "Internal Shape Error")
     return hist, edges
 
 
@@ -503,21 +511,23 @@ def average(a, axis=None, weights=None, returned=False):
         # Sanity checks
         if a.shape != wgt.shape:
             if axis is None:
-                raise TypeError("Axis must be specified when shapes of a "
-                                "and weights differ.")
+                raise TypeError(
+                    "Axis must be specified when shapes of a and weights "
+                    "differ.")
             if wgt.ndim != 1:
-                raise TypeError("1D weights expected when shapes of a and "
-                                "weights differ.")
+                raise TypeError(
+                    "1D weights expected when shapes of a and weights differ.")
             if wgt.shape[0] != a.shape[axis]:
-                raise ValueError("Length of weights not compatible with "
-                                 "specified axis.")
+                raise ValueError(
+                    "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
             wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis)
         if (scl == 0.0).any():
-            raise ZeroDivisionError("Weights sum to zero, can't be normalized")
+            raise ZeroDivisionError(
+                "Weights sum to zero, can't be normalized")
 
         avg = np.multiply(a, wgt).sum(axis)/scl
 
@@ -590,7 +600,8 @@ def asarray_chkfinite(a, dtype=None, order=None):
     """
     a = asarray(a, dtype=dtype, order=order)
     if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
-        raise ValueError("array must not contain infs or NaNs")
+        raise ValueError(
+            "array must not contain infs or NaNs")
     return a
 
 
@@ -682,7 +693,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist = [condlist]
     condlist = [asarray(c, dtype=bool) for c in condlist]
     n = len(condlist)
-    if n == n2-1:  # compute the "otherwise" condition.
+    if n == n2 - 1:  # compute the "otherwise" condition.
         totlist = condlist[0]
         for k in range(1, n):
             totlist |= condlist[k]
@@ -884,7 +895,8 @@ def gradient(f, *varargs):
     elif n == N:
         dx = list(varargs)
     else:
-        raise SyntaxError("invalid number of arguments")
+        raise SyntaxError(
+            "invalid number of arguments")
 
     # use central differences on interior and one-sided differences on the
     # endpoints. This preserves second order-accuracy over the full domain.
@@ -920,9 +932,9 @@ def gradient(f, *varargs):
     for axis in range(N):
 
         if y.shape[axis] < 2:
-            raise ValueError("Shape of array too small to calculate a "
-                             "numerical gradient, at least two elements are "
-                             "required.")
+            raise ValueError(
+                "Shape of array too small to calculate a numerical gradient, "
+                "at least two elements are required.")
 
         # Numerical differentiation: 1st order edges, 2nd order interior
         if y.shape[axis] == 2:
@@ -1033,7 +1045,8 @@ def diff(a, n=1, axis=-1):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError("order must be non-negative but got " + repr(n))
+        raise ValueError(
+            "order must be non-negative but got " + repr(n))
     a = asanyarray(a)
     nd = len(a.shape)
     slice1 = [slice(None)]*nd
@@ -1217,7 +1230,7 @@ def unwrap(p, discont=pi, axis=-1):
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
-    ddmod = mod(dd+pi, 2*pi)-pi
+    ddmod = mod(dd + pi, 2*pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
@@ -1789,7 +1802,8 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
-        raise ValueError("ddof must be integer")
+        raise ValueError(
+            "ddof must be integer")
 
     X = array(m, ndmin=2, dtype=float)
     if X.size == 0:
@@ -1980,7 +1994,7 @@ def blackman(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+    return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
 
 
 def bartlett(M):
@@ -2087,7 +2101,7 @@ def bartlett(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0-2.0*n/(M-1))
+    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
 
 
 def hanning(M):
@@ -2186,7 +2200,7 @@ def hanning(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.5-0.5*cos(2.0*pi*n/(M-1))
+    return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
 
 
 def hamming(M):
@@ -2284,66 +2298,70 @@ def hamming(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.54-0.46*cos(2.0*pi*n/(M-1))
+    return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
 
 ## Code from cephes for i0
 
-_i0A = [-4.41534164647933937950E-18,
-        3.33079451882223809783E-17,
-        -2.43127984654795469359E-16,
-        1.71539128555513303061E-15,
-        -1.16853328779934516808E-14,
-        7.67618549860493561688E-14,
-        -4.85644678311192946090E-13,
-        2.95505266312963983461E-12,
-        -1.72682629144155570723E-11,
-        9.67580903537323691224E-11,
-        -5.18979560163526290666E-10,
-        2.65982372468238665035E-9,
-        -1.30002500998624804212E-8,
-        6.04699502254191894932E-8,
-        -2.67079385394061173391E-7,
-        1.11738753912010371815E-6,
-        -4.41673835845875056359E-6,
-        1.64484480707288970893E-5,
-        -5.75419501008210370398E-5,
-        1.88502885095841655729E-4,
-        -5.76375574538582365885E-4,
-        1.63947561694133579842E-3,
-        -4.32430999505057594430E-3,
-        1.05464603945949983183E-2,
-        -2.37374148058994688156E-2,
-        4.93052842396707084878E-2,
-        -9.49010970480476444210E-2,
-        1.71620901522208775349E-1,
-        -3.04682672343198398683E-1,
-        6.76795274409476084995E-1]
+_i0A = [
+    -4.41534164647933937950E-18,
+    3.33079451882223809783E-17,
+    -2.43127984654795469359E-16,
+    1.71539128555513303061E-15,
+    -1.16853328779934516808E-14,
+    7.67618549860493561688E-14,
+    -4.85644678311192946090E-13,
+    2.95505266312963983461E-12,
+    -1.72682629144155570723E-11,
+    9.67580903537323691224E-11,
+    -5.18979560163526290666E-10,
+    2.65982372468238665035E-9,
+    -1.30002500998624804212E-8,
+    6.04699502254191894932E-8,
+    -2.67079385394061173391E-7,
+    1.11738753912010371815E-6,
+    -4.41673835845875056359E-6,
+    1.64484480707288970893E-5,
+    -5.75419501008210370398E-5,
+    1.88502885095841655729E-4,
+    -5.76375574538582365885E-4,
+    1.63947561694133579842E-3,
+    -4.32430999505057594430E-3,
+    1.05464603945949983183E-2,
+    -2.37374148058994688156E-2,
+    4.93052842396707084878E-2,
+    -9.49010970480476444210E-2,
+    1.71620901522208775349E-1,
+    -3.04682672343198398683E-1,
+    6.76795274409476084995E-1
+    ]
 
-_i0B = [-7.23318048787475395456E-18,
-        -4.83050448594418207126E-18,
-        4.46562142029675999901E-17,
-        3.46122286769746109310E-17,
-        -2.82762398051658348494E-16,
-        -3.42548561967721913462E-16,
-        1.77256013305652638360E-15,
-        3.81168066935262242075E-15,
-        -9.55484669882830764870E-15,
-        -4.15056934728722208663E-14,
-        1.54008621752140982691E-14,
-        3.85277838274214270114E-13,
-        7.18012445138366623367E-13,
-        -1.79417853150680611778E-12,
-        -1.32158118404477131188E-11,
-        -3.14991652796324136454E-11,
-        1.18891471078464383424E-11,
-        4.94060238822496958910E-10,
-        3.39623202570838634515E-9,
-        2.26666899049817806459E-8,
-        2.04891858946906374183E-7,
-        2.89137052083475648297E-6,
-        6.88975834691682398426E-5,
-        3.36911647825569408990E-3,
-        8.04490411014108831608E-1]
+_i0B = [
+    -7.23318048787475395456E-18,
+    -4.83050448594418207126E-18,
+    4.46562142029675999901E-17,
+    3.46122286769746109310E-17,
+    -2.82762398051658348494E-16,
+    -3.42548561967721913462E-16,
+    1.77256013305652638360E-15,
+    3.81168066935262242075E-15,
+    -9.55484669882830764870E-15,
+    -4.15056934728722208663E-14,
+    1.54008621752140982691E-14,
+    3.85277838274214270114E-13,
+    7.18012445138366623367E-13,
+    -1.79417853150680611778E-12,
+    -1.32158118404477131188E-11,
+    -3.14991652796324136454E-11,
+    1.18891471078464383424E-11,
+    4.94060238822496958910E-10,
+    3.39623202570838634515E-9,
+    2.26666899049817806459E-8,
+    2.04891858946906374183E-7,
+    2.89137052083475648297E-6,
+    6.88975834691682398426E-5,
+    3.36911647825569408990E-3,
+    8.04490411014108831608E-1
+    ]
 
 
 def _chbevl(x, vals):
@@ -2744,7 +2762,8 @@ def median(a, axis=None, out=None, overwrite_input=False):
     """
     a = np.asarray(a)
     if axis is not None and axis >= a.ndim:
-        raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
+        raise IndexError(
+            "axis %d out of bounds (%d)" % (axis, a.ndim))
 
     if overwrite_input:
         if axis is None:
@@ -2886,7 +2905,8 @@ def percentile(a, q, interpolation='linear', axis=None, out=None,
     q = atleast_1d(q)
     q = q / 100.0
     if (q < 0).any() or (q > 1).any():
-        raise ValueError("Percentiles must be in the range [0,100]")
+        raise ValueError(
+            "Percentiles must be in the range [0,100]")
 
     # prepare a for partioning
     if overwrite_input:
@@ -3026,7 +3046,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice2[axis] = slice(None, -1)
     try:
         ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
-    except ValueError:  # Operations didn't work, cast to ndarray
+    except ValueError:
+        # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
         ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
@@ -3267,7 +3288,7 @@ def delete(arr, obj, axis=None):
         if ndim != 1:
             arr = arr.ravel()
         ndim = arr.ndim
-        axis = ndim-1
+        axis = ndim - 1
     if ndim == 0:
         warnings.warn("in the future the special handling of scalars "
                       "will be removed from delete and raise an error",
@@ -3336,16 +3357,17 @@ def delete(arr, obj, axis=None):
     # After removing the special handling of booleans and out of
     # bounds values, the conversion to the array can be removed.
     if obj.dtype == bool:
-        warnings.warn("in the future insert will treat boolean arrays "
-                      "and array-likes as boolean index instead "
-                      "of casting it to integer", FutureWarning)
+        warnings.warn(
+            "in the future insert will treat boolean arrays and array-likes "
+            "as boolean index instead of casting it to integer", FutureWarning)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
         obj = obj.item()
         if (obj < -N or obj >= N):
-            raise IndexError("index %i is out of bounds for axis "
-                             "%i with size %i" % (obj, axis, N))
+            raise IndexError(
+                "index %i is out of bounds for axis %i with "
+                "size %i" % (obj, axis, N))
         if (obj < 0):
             obj += N
         newshape[axis] -= 1
@@ -3362,23 +3384,25 @@ def delete(arr, obj, axis=None):
         if not np.can_cast(obj, intp, 'same_kind'):
             # obj.size = 1 special case always failed and would just
             # give superfluous warnings.
-            warnings.warn("using a non-integer array as obj in delete "
-                          "will result in an error in the future",
-                          DeprecationWarning)
+            warnings.warn(
+                "using a non-integer array as obj in delete will result in an "
+                "error in the future", DeprecationWarning)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
         # Test if there are out of bound indices, this is deprecated
         inside_bounds = (obj < N) & (obj >= -N)
         if not inside_bounds.all():
-            warnings.warn("in the future out of bounds indices will raise an "
-                          "error instead of being ignored by `numpy.delete`.",
-                          DeprecationWarning)
+            warnings.warn(
+                "in the future out of bounds indices will raise an error "
+                "instead of being ignored by `numpy.delete`.",
+                DeprecationWarning)
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
-            warnings.warn("in the future negative indices will not be ignored "
-                          "by `numpy.delete`.", FutureWarning)
+            warnings.warn(
+                "in the future negative indices will not be ignored by "
+                "`numpy.delete`.", FutureWarning)
             obj = obj[positive_indices]
 
         keep[obj, ] = False
@@ -3490,17 +3514,18 @@ def insert(arr, obj, values, axis=None):
         if ndim != 1:
             arr = arr.ravel()
         ndim = arr.ndim
-        axis = ndim-1
+        axis = ndim - 1
     else:
         if ndim > 0 and (axis < -ndim or axis >= ndim):
-            raise IndexError("axis %i is out of bounds for an array "
-                             "of dimension %i" % (axis, ndim))
+            raise IndexError(
+                "axis %i is out of bounds for an array of "
+                "dimension %i" % (axis, ndim))
         if (axis < 0):
             axis += ndim
     if (ndim == 0):
-        warnings.warn("in the future the special handling of scalars "
-                      "will be removed from insert and raise an error",
-                      DeprecationWarning)
+        warnings.warn(
+            "in the future the special handling of scalars will be removed "
+            "from insert and raise an error", DeprecationWarning)
         arr = arr.copy()
         arr[...] = values
         if wrap:
@@ -3519,9 +3544,10 @@ def insert(arr, obj, values, axis=None):
         indices = np.array(obj)
         if indices.dtype == bool:
             # See also delete
-            warnings.warn("in the future insert will treat boolean arrays "
-                          "and array-likes as a boolean index instead "
-                          "of casting it to integer", FutureWarning)
+            warnings.warn(
+                "in the future insert will treat boolean arrays and "
+                "array-likes as a boolean index instead of casting it to "
+                "integer", FutureWarning)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
@@ -3529,13 +3555,15 @@ def insert(arr, obj, values, axis=None):
             #                     'must be one dimensional')
             #indices = np.flatnonzero(obj)
         elif indices.ndim > 1:
-            raise ValueError("index array argument obj to insert must "
-                             "be one dimensional or scalar")
+            raise ValueError(
+                "index array argument obj to insert must be one dimensional "
+                "or scalar")
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
-            raise IndexError("index %i is out of bounds for axis "
-                             "%i with size %i" % (obj, axis, N))
+            raise IndexError(
+                "index %i is out of bounds for axis %i with "
+                "size %i" % (obj, axis, N))
         if (index < 0):
             index += N
 
@@ -3564,9 +3592,9 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if not np.can_cast(indices, intp, 'same_kind'):
-        warnings.warn("using a non-integer array as obj in insert "
-                      "will result in an error in the future",
-                      DeprecationWarning)
+        warnings.warn(
+            "using a non-integer array as obj in insert will result in an "
+            "error in the future", DeprecationWarning)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N
