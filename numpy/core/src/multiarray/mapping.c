@@ -829,17 +829,21 @@ prepare_index(PyArrayObject *self, PyObject *index,
     *num = curr_idx;
     *ndim = new_ndim + fancy_ndim;
 
+    if (make_tuple) {
+        Py_DECREF(index);
+    }
+
     return index_type;
 
-    failed_building_indices:
-        for (i=0; i < curr_idx; i++) {
-            Py_XDECREF(indices[i].object);
-        }
-    fail:
-        if (make_tuple) {
-            Py_DECREF(index);
-        }
-        return -1;
+  failed_building_indices:
+    for (i=0; i < curr_idx; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+  fail:
+    if (make_tuple) {
+        Py_DECREF(index);
+    }
+    return -1;
 }
 
 
