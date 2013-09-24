@@ -606,20 +606,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
         indices[curr_idx].object = NULL;
 
         if (!PyArray_Check(obj)) {
-            obj = PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
-            if (obj == NULL) {
-                goto failed_building_indices;
-            }
-
-            /*
-             * If casting to array seems to have just wrapped the
-             * index into an object array, give a more useful/general error.
-             */
-            if ((PyArray_NDIM(obj) == 0) && PyArray_ISOBJECT(obj)) {
-                PyErr_SetString(PyExc_IndexError,
-                        "only integers, slices (`:`), ellipsis (`...`), "
-                        "numpy.newaxis (`None`) and integer or boolean "
-                        "arrays are valid indices.");
+            PyObject *tmp_arr;
+            tmp_arr = PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            if (tmp_arr == NULL) {
+                /* TODO: Should maybe replace the error here? */
                 goto failed_building_indices;
             }
 
@@ -627,10 +617,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
              */
-            if (PyArray_SIZE((PyArrayObject *)obj) == 0) {
+            if (PyArray_SIZE((PyArrayObject *)tmp_arr) == 0) {
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-                arr = (PyArrayObject *)PyArray_FromAny(obj, indtype, 0, 0,
+                /* TODO: Is the force-cast the right way? */
+                arr = (PyArrayObject *)PyArray_FromAny(tmp_arr, indtype, 0, 0,
                                         NPY_ARRAY_FORCECAST, NULL);
+                if (arr == NULL) {
+                    Py_DECREF(tmp_arr);
+                    goto failed_building_indices;
+                }
             }
             else {
                 /*
@@ -638,14 +633,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * they should then be either correct already or error out
                  * later just like a normal array.
                  */
-                if (PyArray_ISBOOL((PyArrayObject *)obj)) {
+                if (PyArray_ISBOOL((PyArrayObject *)tmp_arr)) {
                     if (DEPRECATE_FUTUREWARNING(
                             "in the future, boolean array-likes will be "
                             "handled as a boolean array index") < 0) {
+                        Py_DECREF(tmp_arr);
                         goto failed_building_indices;  
                     }
                 }
-                else if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
+                else if (!PyArray_ISINTEGER((PyArrayObject *)tmp_arr)) {
                     if (DEPRECATE(
                             "non integer (and non boolean) array-likes will "
                             "not be accepted as indices in the future") < 0) {
@@ -655,19 +651,22 @@ prepare_index(PyArrayObject *self, PyObject *index,
                          * (do not actually attempt it, because it might
                          * actually work for example for strings)
                          */
-                        PyErr_SetString(PyExc_ValueError,
+                        PyErr_SetString(PyExc_IndexError,
                             "non integer (and non boolean) array-likes will "
                             "not be accepted as indices in the future");
+                        Py_DECREF(tmp_arr);
                         goto failed_building_indices;  
                     }
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-                arr = (PyArrayObject *)PyArray_FromAny(obj, indtype, 0, 0,
+                arr = (PyArrayObject *)PyArray_FromAny(tmp_arr, indtype, 0, 0,
                                         NPY_ARRAY_FORCECAST, NULL);
-                Py_DECREF(obj);
+
                 if (arr == NULL) {
-                    goto failed_building_indices;
+                    /* Since this will be removed, handle this later */
+                    PyErr_Clear();
+                    arr = tmp_arr;
                 }
             }
         }
@@ -710,6 +709,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             if (PyArray_NDIM(arr) == 0) {
                 /*
+                 * TODO, WARNING: This code block cannot be used due to
+                 *                FutureWarnings at this time. So instead
+                 *                just raise an IndexError.
+                 */
+                PyErr_SetString(PyExc_IndexError,
+                        "in the future, 0-d boolean arrays will be "
+                        "interpreted as a valid boolean index");
+                goto failed_building_indices;
+                /*
                  * This can actually be well defined. A new axis is added,
                  * but at the same time no axis is "used". So if we have True,
                  * we add a new axis (a bit like with np.newaxis). If it is
@@ -718,7 +726,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                 indices[curr_idx].type = HAS_0D_BOOL;
 
-                /* TODO: Possibly replace with something faster (can't fail?) */
+                /* TODO: This can't fail, right? Is there a faster way? */
                 if (PyObject_IsTrue(arr)) {
                     n = 1;
                 }
@@ -782,11 +790,19 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /*
          * The array does not have a valid type.
-         * TODO: Should we differentiate objects that were not arrays
-         *       originally?
          */
-        PyErr_SetString(PyExc_IndexError,
+        if (arr == obj) {
+            /* The input was an array already */
+            PyErr_SetString(PyExc_IndexError,
                 "arrays used as indices must be of integer (or boolean) type");
+        }
+        else {
+            /* The input was not an array, so give a general error message */
+            PyErr_SetString(PyExc_IndexError,
+                    "only integers, slices (`:`), ellipsis (`...`), "
+                    "numpy.newaxis (`None`) and integer or boolean "
+                    "arrays are valid indices.");
+        }
         goto failed_building_indices;
     }
 
