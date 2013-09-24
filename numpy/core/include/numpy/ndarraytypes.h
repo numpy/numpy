@@ -1266,10 +1266,7 @@ typedef struct {
      * Object of index: slice, array, or NULL. Owns a reference.
      */
     PyObject *object;
-    /*
-     * Value of an integer index, number of slices an Ellipsis is worth
-     * or whether it is a False or True 0-d boolean index.
-     */
+    /* Value of an integer index or number of slices an Ellipsis is worth */
     npy_intp value;
     int type;       /* kind of index, see magic values in mapping.c */
 } npy_index_info;

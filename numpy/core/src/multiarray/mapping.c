@@ -531,7 +531,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             continue;
         }
 
-        /* np.newaxis/None */
+        /* Index is np.newaxis/None */
         else if (obj == Py_None) {
             index_type |= HAS_NEWAXIS;
 
@@ -582,8 +582,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
              }
         }
 
-        /* Index is a slice object */
-        else if (PySlice_Check(obj)) {
+        /* Index is a slice object. (Not else, int check is a try/except) */
+        if (PySlice_Check(obj)) {
             index_type |= HAS_SLICE;
 
             Py_INCREF(obj);
@@ -598,6 +598,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         /*
          * At this point, we must have an index array (or array-like).
          * It might still be a (purely) bool special case though.
+         * (Or complete nonsense...)
          */
         index_type |= HAS_FANCY;
         indices[curr_idx].type = HAS_FANCY;
@@ -608,6 +609,19 @@ prepare_index(PyArrayObject *self, PyObject *index,
             if (obj == NULL) {
                 goto failed_building_indices;
             }
+
+            /*
+             * If casting to array seems to have just wrapped the
+             * index into an object array, give a more useful/general error.
+             */
+            if ((PyArray_NDIM(obj) == 0) && PyArray_ISOBJECT(obj)) {
+                PyErr_SetString(PyExc_IndexError,
+                        "only integers, slices (`:`), ellipsis (`...`), "
+                        "numpy.newaxis (`None`) and integer or boolean "
+                        "arrays are valid indices.");
+                goto failed_building_indices;
+            }
+
             /*
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
@@ -620,16 +634,22 @@ prepare_index(PyArrayObject *self, PyObject *index,
             else {
                 /*
                  * These Checks can be removed after deprecation, since
-                 * they should now be either correct already or error out
-                 * like a usual array.
+                 * they should then be either correct already or error out
+                 * later just like a normal array.
                  */
-
-                /* Check for backwards compatibility */
                 if (PyArray_ISBOOL((PyArrayObject *)obj)) {
-                    printf("Give a future warning here.\n");
+                    if (DEPRECATE_FUTUREWARNING(
+                            "in the future, boolean array-likes will be "
+                            "handled as a boolean array index") < 0) {
+                        goto failed_building_indices;  
+                    }
                 }
                 else if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
-                    printf("Give a deprecation warning here.\n");
+                    if (DEPRECATE(
+                            "non-integer (and non-boolean) array-likes will "
+                            "not be accepted as indices in the future") < 0) {
+                        goto failed_building_indices;
+                    }
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
@@ -664,23 +684,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * and only the result of nonzero is checked for legality.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
-                        && PyArray_SIZE(arr) == PyArray_SIZE(self)
-                        /* Handle 0darray[boolean,] later; TODO: Really? */
-                        && ((PyArray_NDIM(arr) != 0) || (index == obj))) {
+                        && PyArray_SIZE(arr) == PyArray_SIZE(self)) {
 
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;
                     indices[curr_idx].object = (PyObject *)arr;
 
-                    used_ndim += PyArray_NDIM(self);
-                    if (fancy_ndim < PyArray_NDIM(self)) {
-                        fancy_ndim = PyArray_NDIM(self);
-                    }
+                    /* keep track anyway, even if it is trivial */
+                    used_ndim = PyArray_NDIM(self);
+                    fancy_ndim = PyArray_NDIM(self);
                     curr_idx += 1;
-                    /*
-                     * No need to keep track of anything much here.
-                     * This also covers the 0-d special case.
-                     */
                     break;
                 }
             }
@@ -689,13 +702,13 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 /*
                  * This can actually be well defined. A new axis is added,
                  * but at the same time no axis is "used". So if we have True,
-                 * we add a new axis (much like with np.newaxis). If it is
+                 * we add a new axis (a bit like with np.newaxis). If it is
                  * False, we add a new axis, but this axis has 0 entries.
                  */
 
                 indices[curr_idx].type = HAS_0D_BOOL;
 
-                /* TODO: Possibly replace with something faster (can't fail) */
+                /* TODO: Possibly replace with something faster (can't fail?) */
                 if (PyObject_IsTrue(arr)) {
                     n = 1;
                 }
@@ -728,6 +741,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                                 "too many indices for array");
                 goto failed_building_indices;
             }
+
             /* assign the arrays from the nonzero result */
             for (i=0; i < n; i++) {
                 indices[curr_idx].type = HAS_FANCY;
@@ -736,12 +750,14 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 used_ndim += 1;
                 curr_idx += 1;
             }
+
             /* All added indices have 1 dimension */
             if (fancy_ndim < 1) {
                 fancy_ndim = 1;
             }
             continue;
         }
+
         /* Normal case of an integer array */
         else if PyArray_ISINTEGER(arr) {
             indices[curr_idx].object = (PyObject *)arr;
@@ -754,11 +770,13 @@ prepare_index(PyArrayObject *self, PyObject *index,
             continue;
         }
 
-        /* No valid index was found */
+        /*
+         * The array does not have a valid type.
+         * TODO: Should we differentiate objects that were not arrays
+         *       originally?     
+         */
         PyErr_SetString(PyExc_IndexError,
-                        "only integers, slices, ellipsis (`...`), "
-                        "numpy.newaxis (`None`) and integer or boolean "
-                        "arrays are valid indices");
+                "arrays used as indices must be of integer (or boolean) type");
         goto failed_building_indices;
     }
 
