@@ -35,6 +35,7 @@
  */
 #define HAS_0D_BOOL (HAS_FANCY | 128)
 
+
 static int
 _nonzero_indices(PyObject *myBool, PyArrayObject **arrays);
 
@@ -491,8 +492,18 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /* Index is an ellipsis (`...`) */
         if (obj == Py_Ellipsis) {
-            /* If there is more then one Ellipsis, it is replaced */
+            /*
+             * If there is more then one Ellipsis, it is replaced. Deprecated,
+             * since it is hard to imagine anyone using two Ellipsis and
+             * actually planning on all but the first being automatically
+             * replaced with a slice.
+             */
             if (index_type & HAS_ELLIPSIS) {
+                if (DEPRECATE(
+                        "an index can only have a single Ellipsis (`...`); "
+                        "replace all but one with slices (`:`).") < 0) {
+                    goto failed_building_indices;
+                }
                 index_type |= HAS_SLICE;
 
                 indices[curr_idx].type = HAS_SLICE;
@@ -572,7 +583,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
 
         /* Index is a slice object */
-        if (PySlice_Check(obj)) {
+        else if (PySlice_Check(obj)) {
             index_type |= HAS_SLICE;
 
             Py_INCREF(obj);
@@ -586,7 +597,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /*
          * At this point, we must have an index array (or array-like).
-         * It might still be a bool special case though.
+         * It might still be a (purely) bool special case though.
          */
         index_type |= HAS_FANCY;
         indices[curr_idx].type = HAS_FANCY;
@@ -872,8 +883,6 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * For any index, get a view of the subspace into the original
  * array. If there are no fancy indices, this is the result of
  * the indexing operation.
- *
- * This also fills the value of slices to the start item.
  */
 static int
 get_view_from_index(PyArrayObject *self, PyArrayObject **view,
@@ -962,6 +971,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
         Py_DECREF(*view);
         return -1;
     }
+    /* TODO: Don't have to update all? */
     PyArray_UpdateFlags(*view, NPY_ARRAY_UPDATE_ALL);
     return 0;
 }
@@ -1375,9 +1385,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
     /* If it is only a single ellipsis, just return self */
     else if (index_type == HAS_ELLIPSIS) {
         /*
-         * TODO: Should this be a view or not, only reason not would be
-         * optimization of array[...] += 1 I think.
-         * FIXME: Changing to view makes a test segfault... that can't be good.
+         * TODO: Should this be a view or not? The only reason not would be
+         *       optimization (i.e. of array[...] += 1) I think.
+         *       This is currently impossible to do a bug, PR to fix that
+         *       is pending.
+         *       Before, it was a view, with the exception of the single
+         *       Ellipsis special case, which however is removed here...
          */
         result = self;
         Py_INCREF(self);
@@ -1762,33 +1775,6 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
     return -1;
 }
 
-/* convert an indexing object to an INTP indexing array iterator
-   if possible -- otherwise, it is a Slice, Ellipsis or None object
-   and has to be interpreted on bind to a particular
-   array so leave it NULL for now.
-*/
-static int
-_convert_obj(PyObject *obj, PyArrayIterObject **iter)
-{
-    PyArray_Descr *indtype;
-    PyObject *arr;
-
-    /*
-     * Note: if the array already is owned by the indexing
-     *       we could skip the copy.
-     */
-    indtype = PyArray_DescrFromType(NPY_INTP);
-    arr = PyArray_FromAny(obj, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-    if (arr == NULL) {
-        return -1;
-    }
-    *iter = (PyArrayIterObject *)PyArray_IterNew(arr);
-    Py_DECREF(arr);
-    if (*iter == NULL) {
-        return -1;
-    }
-    return 1;
-}
 
 /* Reset the map iterator to the beginning */
 NPY_NO_EXPORT void
@@ -2083,8 +2069,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 {
-    //printf("Running MapIterArray!\n");
-
     PyArrayMapIterObject * mit = NULL;
     PyArrayObject *subspace = NULL;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
@@ -2103,7 +2087,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 
     /* If it is not a pure fancy index, need to get the subspace */
     if (index_type != HAS_FANCY) {
-        //printf("Getting subspace\n");
         if (get_view_from_index(a, &subspace, indices, index_num, 1) < 0) {
             Py_DECREF((PyObject *)mit);
             goto fail;

@@ -1258,18 +1258,22 @@ typedef struct {
 /*
  * Struct into which indices are parsed.
  * I.e. integer ones should only be parsed once, slices and arrays
- * need to be parsed later and for the ellipsis we need to find the
- * ndim for each index to calculate the correct "dim".
+ * need to be validated later and for the ellipsis we need to find how
+ * many slices it represents.
  */
 typedef struct {
     /*
-     * Object of index, slice or array or NULL.
-     * Refcounting is only done on arrays, slices borrow the reference.
+     * Object of index: slice, array, or NULL. Owns a reference.
      */
     PyObject *object;
-    npy_intp value; /* Value of an integer index (to save conversion) */
-    int type;       /* kind of index */
+    /*
+     * Value of an integer index, number of slices an Ellipsis is worth
+     * or whether it is a False or True 0-d boolean index.
+     */
+    npy_intp value;
+    int type;       /* kind of index, see magic values in mapping.c */
 } npy_index_info;
+
 
 /* Store the information needed for fancy-indexing over an array */
 typedef struct {
