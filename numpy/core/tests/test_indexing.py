@@ -54,6 +54,11 @@ class TestIndexing(TestCase):
         # in an array, not a scalar
         assert_equal(a[0, ..., 1], np.array(2))
 
+        # Assignment with `(Ellipsis,)` on 0-d arrays
+        b = np.array(1)
+        b[(Ellipsis,)] = 2
+        assert_equal(b, 2)
+
     def test_single_int_index(self):
         # Single integer index selects one row
         a = np.array([[1, 2, 3],
