@@ -1465,8 +1465,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
          */
         if (index_type & HAS_SCALAR_ARRAY) {
             result = PyArray_NewCopy(view, NPY_ANYORDER);
-            Py_DECREF(view);
-            goto finish;
+            goto finish_view;
         }
     }
 
@@ -1482,22 +1481,24 @@ array_subscript(PyArrayObject *self, PyObject *op)
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices,
                                                      index_num, index_type);
     if (mit == NULL) {
-        goto finish;
+        goto finish_view;
     }
 
     if (PyArray_MapIterBind(mit, view, self, indices, index_num) < 0) {
         Py_DECREF((PyObject *)mit);
-        goto finish;
+        goto finish_view;
     }
 
     result = (PyObject *)PyArray_GetMap(mit);
     Py_DECREF(mit);
     if (result == NULL) {
-        goto finish;
+        goto finish_view;
     }
 
+  finish_view:
+    Py_XDECREF(view);
     /* Clean up indices */
- finish:
+  finish:
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
@@ -2142,6 +2143,8 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     }
 
     if (PyArray_MapIterBind(mit, subspace, a, indices, index_num) < 0) {
+        Py_XDECREF(subspace);
+        Py_DECREF((PyObject *)mit);
         goto fail;
     }
     Py_XDECREF(subspace);
