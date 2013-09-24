@@ -651,9 +651,17 @@ prepare_index(PyArrayObject *self, PyObject *index,
                          * (do not actually attempt it, because it might
                          * actually work for example for strings)
                          */
-                        PyErr_SetString(PyExc_IndexError,
-                            "non integer (and non boolean) array-likes will "
-                            "not be accepted as indices in the future");
+                        if (PyArray_NDIM(tmp_arr) == 0) {
+                            PyErr_SetString(PyExc_IndexError,
+                                "only integers, slices (`:`), ellipsis (`...`), "
+                                "numpy.newaxis (`None`) and integer or boolean "
+                                "arrays are valid indices.");
+                        }
+                        else {
+                            PyErr_SetString(PyExc_IndexError,
+                                "non integer (and non boolean) array-likes will "
+                                "not be accepted as indices in the future");
+                        }
                         Py_DECREF(tmp_arr);
                         goto failed_building_indices;  
                     }
@@ -1199,8 +1207,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
     }
 
     /* Tweak the strides for 0-dim and broadcasting cases */
-    if (PyArray_NDIM(v) > 0 && PyArray_DIMS(v)[0] > 1) {
-        v_stride = PyArray_STRIDES(v)[0];
+    if (PyArray_NDIM(v) > 0 && PyArray_DIMS(v)[0] != 1) {
         if (size != PyArray_DIMS(v)[0]) {
             PyErr_Format(PyExc_ValueError,
                     "NumPy boolean array indexing assignment "
@@ -1209,6 +1216,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
                     (int)PyArray_DIMS(v)[0], (int)size);
             return -1;
         }
+        v_stride = PyArray_STRIDES(v)[0];
     }
     else {
         v_stride = 0;
