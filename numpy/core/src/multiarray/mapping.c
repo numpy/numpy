@@ -467,6 +467,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * Parse all indices into the `indices` array of index_info structs
      */
     used_ndim = 0;
+    new_ndim = 0;
+    fancy_ndim = 0;
     get_idx = 0;
     curr_idx = 0;
 
@@ -501,6 +503,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 }
 
                 used_ndim += 1;
+                new_ndim += 1;
                 curr_idx += 1;
                 continue;
             }
@@ -511,6 +514,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].value = 0; /* init to 0 */
 
             ellipsis_pos = curr_idx;
+            used_ndim += 0; /* We don't know yet */
             used_ndim += 0;
             curr_idx += 1;
             continue;
@@ -524,6 +528,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].object = NULL;
 
             used_ndim += 0;
+            new_ndim += 1;
             curr_idx += 1;
             continue;
         }
@@ -544,6 +549,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 indices[curr_idx].value = i;
                 indices[curr_idx].type = HAS_INTEGER;
                 used_ndim += 1;
+                new_ndim += 0;
                 curr_idx += 1;
                 continue;
             }
@@ -559,6 +565,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  indices[curr_idx].value = i;
                  indices[curr_idx].type = HAS_INTEGER;
                  used_ndim += 1;
+                 new_ndim += 0;
                  curr_idx += 1;
                  continue;
              }
@@ -572,6 +579,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].object = obj;
             indices[curr_idx].type = HAS_SLICE;
             used_ndim += 1;
+            new_ndim += 1;
             curr_idx += 1;
             continue;
         }
@@ -654,6 +662,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     indices[curr_idx].object = (PyObject *)arr;
 
                     used_ndim += PyArray_NDIM(self);
+                    if (fancy_ndim < PyArray_NDIM(self)) {
+                        fancy_ndim = PyArray_NDIM(self);
+                    }
                     curr_idx += 1;
                     /*
                      * No need to keep track of anything much here.
@@ -687,6 +698,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 }
 
                 used_ndim += 0;
+                if (fancy_ndim < 1) {
+                    fancy_ndim = 1;
+                }
                 curr_idx += 1;
                 continue;
             }
@@ -711,6 +725,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 used_ndim += 1;
                 curr_idx += 1;
             }
+            /* All added indices have 1 dimension */
+            if (fancy_ndim < 1) {
+                fancy_ndim = 1;
+            }
             continue;
         }
         /* Normal case of an integer array */
@@ -718,6 +736,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].object = (PyObject *)arr;
 
             used_ndim += 1;
+            if (fancy_ndim < PyArray_NDIM(arr)) {
+                fancy_ndim = PyArray_NDIM(arr);
+            }
             curr_idx += 1;
             continue;
         }
@@ -738,6 +759,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
        if (index_type & HAS_ELLIPSIS) {
            indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
            used_ndim = PyArray_NDIM(self);
+           new_ndim += indices[ellipsis_pos].value;
        }
        else {
            /*
@@ -750,8 +772,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
            indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
            ellipsis_pos = curr_idx;
 
-           curr_idx += 1;
            used_ndim = PyArray_NDIM(self);
+           new_ndim += indices[curr_idx].value;
+           curr_idx += 1;
        }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
@@ -765,13 +788,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
          * We consider this an integer index. Which means it will return
          * the scalar.
          * This makes sense, because then array[...] gives
-         * an array (self) and array[()] gives the scalar.
-         * There is no way -- and there never was -- to get a view, though.
+         * an array and array[()] gives the scalar.
          */
         used_ndim = 0;
         index_type = HAS_INTEGER;
     }
-    new_ndim = used_ndim;
 
     /* HAS_SCALAR_ARRAY requires cleaning up the index_type */
     if (index_type & HAS_SCALAR_ARRAY) {
@@ -791,28 +812,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * then is possible.
      *
      * Check this now so we do not have to worry about it later.
-     * It can happen for fancy indexing or with None's.
+     * It can happen for fancy indexing or with newaxis.
      * This means broadcasting errors in the case of too many dimensions
      * take less priority.
      */
-    fancy_ndim = 0;
     if (index_type & (HAS_NEWAXIS | HAS_FANCY)) {
-        for (i=0; i < curr_idx; i++) {
-            if (indices[i].type & HAS_NEWAXIS) {
-                new_ndim += 1;
-            }
-            else if (indices[i].type & HAS_FANCY) {
-                new_ndim -= 1;
-                if (fancy_ndim < PyArray_NDIM((PyArrayObject *)indices[i].object)) {
-                    fancy_ndim = PyArray_NDIM((PyArrayObject *)indices[i].object);
-                }
-            }
-            else if (indices[i].type & HAS_0D_BOOL) {
-                if (fancy_ndim < 1) {
-                    fancy_ndim = 1;
-                }
-            }
-        }
         if (new_ndim + fancy_ndim > NPY_MAXDIMS) {
             PyErr_Format(PyExc_IndexError,
                          "number of dimensions must be within [0, %d], "
