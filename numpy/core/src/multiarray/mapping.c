@@ -522,7 +522,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             indices[curr_idx].type = HAS_ELLIPSIS;
             indices[curr_idx].object = NULL;
-            indices[curr_idx].value = 0; /* init to 0 */
+            /* number of slices it is worth, won't update if it is 0: */
+            indices[curr_idx].value = 0;
 
             ellipsis_pos = curr_idx;
             used_ndim += 0; /* We don't know yet */
@@ -646,9 +647,18 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 }
                 else if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
                     if (DEPRECATE(
-                            "non-integer (and non-boolean) array-likes will "
+                            "non integer (and non boolean) array-likes will "
                             "not be accepted as indices in the future") < 0) {
-                        goto failed_building_indices;
+
+                        /*
+                         * raise ValueError, similar to conversion failure
+                         * (do not actually attempt it, because it might
+                         * actually work for example for strings)
+                         */
+                        PyErr_SetString(PyExc_ValueError,
+                            "non integer (and non boolean) array-likes will "
+                            "not be accepted as indices in the future");
+                        goto failed_building_indices;  
                     }
                 }
 
@@ -742,7 +752,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 goto failed_building_indices;
             }
 
-            /* assign the arrays from the nonzero result */
+            /* Add the arrays from the nonzero result to the index */
             for (i=0; i < n; i++) {
                 indices[curr_idx].type = HAS_FANCY;
                 indices[curr_idx].object = (PyObject *)nonzero_result[i];
@@ -773,7 +783,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         /*
          * The array does not have a valid type.
          * TODO: Should we differentiate objects that were not arrays
-         *       originally?     
+         *       originally?
          */
         PyErr_SetString(PyExc_IndexError,
                 "arrays used as indices must be of integer (or boolean) type");
@@ -1405,13 +1415,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
         /*
          * TODO: Should this be a view or not? The only reason not would be
          *       optimization (i.e. of array[...] += 1) I think.
-         *       This is currently impossible to do a bug, PR to fix that
-         *       is pending.
-         *       Before, it was a view, with the exception of the single
-         *       Ellipsis special case, which however is removed here...
+         *       Before, it was just self for a single Ellipis.
          */
-        result = self;
-        Py_INCREF(self);
+        result = PyArray_View(self, NULL, NULL);
         /* A single ellipsis, so no need to decref */
         return result;
     }
