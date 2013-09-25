@@ -294,8 +294,8 @@ class TestZeroRank(TestCase):
         a, b = self.d
         self.assertEqual(a[...], 0)
         self.assertEqual(b[...], 'x')
-        self.assertTrue(a[...] is a)
-        self.assertTrue(b[...] is b)
+        self.assertTrue(a[...].base is a) # `a[...] is a` in numpy <1.9.
+        self.assertTrue(b[...].base is b) # `b[...] is b` in numpy <1.9.
 
     def test_empty_subscript(self):
         a, b = self.d
