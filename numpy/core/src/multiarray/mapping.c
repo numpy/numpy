@@ -551,7 +551,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
      */
     if (!PyTuple_CheckExact(index)
             /* Next three are just to avoid slow checks */
+#if !defined(NPY_PY3K)
             && (!PyInt_CheckExact(index))
+#else
+            && (!PyLong_CheckExact(index))
+#endif
             && (index != Py_None)
             && (!PySlice_Check(index))
             && (!PyArray_Check(index))
@@ -714,7 +718,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
          * It could be an array, a 0-d array is handled
          * a bit weird however, so need to special case it.
          */
+#if !defined(NPY_PY3K)
         else if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
+#else
+        else if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
+#endif
             i = PyArray_PyIntAsIntp(obj);
             if ((i == -1) && PyErr_Occurred()) {
                 PyErr_Clear();
