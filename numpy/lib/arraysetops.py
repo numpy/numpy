@@ -90,7 +90,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     return ed
 
-def unique(ar, return_index=False, return_inverse=False):
+def unique(ar, return_index=False, return_inverse=False, axis=None):
     """
     Find the unique elements of an array.
 
@@ -102,13 +102,18 @@ def unique(ar, return_index=False, return_inverse=False):
     Parameters
     ----------
     ar : array_like
-        Input array. This will be flattened if it is not already 1-D.
+        Input array. Unless `axis` is specified, this will be flattened if it
+        is not already 1-D.
     return_index : bool, optional
-        If True, also return the indices of `ar` that result in the unique
-        array.
+        If True, also return the indices of `ar` along the specified axis that
+        result in the unique array.
     return_inverse : bool, optional
-        If True, also return the indices of the unique array that can be used
-        to reconstruct `ar`.
+        If True, also return the indices of the unique array along the
+        specified axis that can be used to reconstruct `ar`.
+    axis : int or None, optional
+        The axis to operate on. If None, `ar` will be flattened beforehand.
+        Object arrays or structured arrays that contain objects are not 
+        supported if the `axis` kwarg is used.
 
     Returns
     -------
@@ -134,6 +139,12 @@ def unique(ar, return_index=False, return_inverse=False):
     >>> np.unique(a)
     array([1, 2, 3])
 
+    Return the unique rows of a 2D array
+
+    >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
+    >>> np.unique(a, axis=0)
+    array([[1, 0, 0], [2, 3, 4]])
+
     Return the indices of the original array that give the unique values:
 
     >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
@@ -158,6 +169,47 @@ def unique(ar, return_index=False, return_inverse=False):
     >>> u[indices]
     array([1, 2, 6, 4, 2, 3, 2])
 
+    """
+    if axis is None:
+        return _unique1d(ar, return_index, return_inverse)
+    if abs(axis) > ar.ndim:
+        raise ValueError('Invalid axis kwarg specified for unique')
+ 
+    ar = np.swapaxes(ar, axis, 0)
+    orig_shape, orig_dtype = ar.shape, ar.dtype
+    # Must reshape to a contiguous 2D array for this to work...
+    ar = ar.reshape(orig_shape[0], -1)
+    ar = np.ascontiguousarray(ar)
+
+    if ar.dtype.char in (np.typecodes['AllInteger'] + 'S'):
+        # Optimization inspired by <http://stackoverflow.com/a/16973510/325565>
+        dtype = np.dtype((np.void, ar.dtype.itemsize * ar.shape[1]))
+    else:
+        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+ 
+    try:
+        consolidated = ar.view(dtype)
+    except TypeError:
+        # There's no good way to do this for object arrays, etc...
+        msg = 'The axis argument to unique is not supported for dtype {dt}'
+        raise TypeError(msg.format(dt=ar.dtype))
+
+    def reshape_uniq(uniq):
+        uniq = uniq.view(orig_dtype)
+        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = np.swapaxes(uniq, 0, axis)
+        return uniq
+
+    output = _unique1d(consolidated, return_index, return_inverse)
+    if not (return_index or return_inverse):
+        return reshape_uniq(output)
+    else:
+        uniq = reshape_uniq(output[0])
+        return tuple([uniq] + list(output[1:]))
+ 
+def _unique1d(ar, return_index=False, return_inverse=False):
+    """
+    Find the unique elements of an array.
     """
     try:
         ar = ar.flatten()
