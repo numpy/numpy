@@ -501,9 +501,10 @@ OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     PyObject *obj;
 
     NPY_COPY_PYOBJECT_PTR(&obj, ov);
-    Py_XDECREF(obj);
 
     Py_INCREF(op);
+    Py_XDECREF(obj);
+
     NPY_COPY_PYOBJECT_PTR(ov, &op);
 
     return PyErr_Occurred() ? -1 : 0;
@@ -1158,9 +1159,11 @@ static void
 {
     npy_intp i;
     int skip = @skip@;
+    PyObject *tmp;
     for (i = 0; i < n; i++, ip +=skip, op++) {
-        Py_XDECREF(*op);
+        tmp = *op;
         *op = @FROMTYPE@_getitem((char *)ip, aip);
+        Py_XDECREF(tmp);
     }
 }
 /**end repeat**/
@@ -1866,10 +1869,10 @@ OBJECT_copyswapn(PyObject **dst, npy_intp dstride, PyObject **src,
             dstp = (unsigned char*)dst;
             srcp = (unsigned char*)src;
             for (i = 0; i < n; i++) {
-                NPY_COPY_PYOBJECT_PTR(&tmp, dstp);
-                Py_XDECREF(tmp);
                 NPY_COPY_PYOBJECT_PTR(&tmp, srcp);
                 Py_XINCREF(tmp);
+                NPY_COPY_PYOBJECT_PTR(&tmp, dstp);
+                Py_XDECREF(tmp);
                 NPY_COPY_PYOBJECT_PTR(dstp, srcp);
                 dstp += dstride;
                 srcp += sstride;
@@ -1894,10 +1897,10 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap),
         }
         else {
             PyObject *tmp;
-            NPY_COPY_PYOBJECT_PTR(&tmp, dst);
-            Py_XDECREF(tmp);
             NPY_COPY_PYOBJECT_PTR(&tmp, src);
             Py_XINCREF(tmp);
+            NPY_COPY_PYOBJECT_PTR(&tmp, dst);
+            Py_XDECREF(tmp);
             NPY_COPY_PYOBJECT_PTR(dst, src);
         }
     }
@@ -3222,8 +3225,8 @@ OBJECT_fillwithscalar(PyObject **buffer, npy_intp length, PyObject **value,
     npy_intp i;
     PyObject *val = *value;
     for (i = 0; i < length; i++) {
-        Py_XDECREF(buffer[i]);
         Py_XINCREF(val);
+        Py_XDECREF(buffer[i]);
         buffer[i] = val;
     }
 }
