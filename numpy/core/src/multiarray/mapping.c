@@ -216,38 +216,39 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 }
 
 
-#define SET_MIT_DATAPTR()                                       \
-    mit->dataptr = mit->baseoffset;                             \
-    for (j = 0; j < mit->numiter; j++) {                        \
-        offset_add = *((npy_intp*)mit->iterptrs[j]);            \
-        mit->iterptrs[j] += mit->iterstrides[j];                \
-        if (offset_add < 0) {                                   \
-            offset_add += mit->outer_dims[j];                   \
-        }                                                       \
-        mit->dataptr += offset_add * mit->outer_strides[j];     \
-    }                                                           \
+#define SET_MIT_DATAPTR_CHECK_INDEX()                               \
+    mit->dataptr = mit->baseoffset;                                 \
+    for (j = 0; j < mit->numiter; j++) {                            \
+        indval = *((npy_intp*)mit->iterptrs[j]);                    \
+        if (check_and_adjust_index(&indval,                         \
+                    mit->outer_dims[j], mit->iteraxes[j]) < 0) {    \
+            goto fail;                                              \
+        }                                                           \
+        mit->iterptrs[j] += mit->iterstrides[j];                    \
+        mit->dataptr += indval * mit->outer_strides[j];             \
+    }                                                               \
 
-#define SET_MIT_DATAPTR_1_NUMITER()                             \
-    mit->dataptr = mit->baseoffset;                             \
-    offset_add = *((npy_intp*)mit->iterptrs[0]);                \
-    mit->iterptrs[0] += mit->iterstrides[0];                    \
-    if (offset_add < 0) {                                       \
-        offset_add += mit->outer_dims[0];                       \
-    }                                                           \
-    mit->dataptr += offset_add * mit->outer_strides[0]          \
+#define SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX()                     \
+    mit->dataptr = mit->baseoffset;                                 \
+    indval = *((npy_intp*)mit->iterptrs[0]);                        \
+    if (check_and_adjust_index(&indval,                             \
+                mit->outer_dims[0], mit->iteraxes[0]) < 0) {        \
+        goto fail;                                                  \
+    }                                                               \
+    mit->iterptrs[0] += mit->iterstrides[0];                        \
+    mit->dataptr += indval * mit->outer_strides[0]                  \
 
 
 static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
 {
-
     PyArrayObject *ret, *temp;
     PyArrayIterObject *it;
     npy_intp counter;
     int swap, j;
     PyArray_CopySwapFunc *copyswap;
 
-    npy_intp innersize, offset_add;
+    npy_intp innersize, indval;
 
     /* Unbound map iterator --- Bind should have been called */
     if (mit->ait == NULL) {
@@ -278,6 +279,69 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     }
 
     /*
+     * Make use of fast_take if possible!
+     * 
+     * Fast take could actually handle more cases, since it can take
+     * along any axis, making the contiguity requirements slightly
+     * less strict. But that would take a lot more to check for these.
+     */
+    if ((mit->numiter == 1) &&
+            ((mit->subspace == NULL) ||
+                    PyArray_IS_C_CONTIGUOUS(mit->subspace->ao)) &&
+            PyArray_IS_C_CONTIGUOUS(ret) &&
+            PyArray_IS_C_CONTIGUOUS(NpyIter_GetOperandArray(mit->outer)[0]) &&
+            !NpyIter_RequiresBuffering(mit->outer) &&
+            (PyArray_DESCR(temp)->f->fasttake != NULL)) {
+
+        char *src, *dst;
+        int err;
+        npy_intp *indices;
+        npy_intp n, m, nelem;
+
+        /* Number of subspace elements (after index; n=1, so all are after) */
+        if (mit->subspace == NULL) {
+            nelem = 1;
+        }
+        else {
+            nelem = PyArray_SIZE(mit->subspace->ao);
+        }
+
+        /*
+         * We can only do this, if the strides add up to be "contiguous".
+         */
+        if (nelem * PyArray_ITEMSIZE(temp) == mit->outer_strides[0]) {
+            src = mit->baseoffset;
+            dst = PyArray_DATA(ret);
+            indices = PyArray_DATA(NpyIter_GetOperandArray(mit->outer)[0]);
+
+            /*
+             * Always 1 since we would have axis=0 implicitely wit contiguous
+             * subspace (i.e. the first axes are for the index, before transpose):
+             */
+            n = 1;
+            /* Here, indices size: */
+            m = PyArray_SIZE(NpyIter_GetOperandArray(mit->outer)[0]);
+
+            err = PyArray_DESCR(temp)->f->fasttake(dst, src, indices,
+                        mit->outer_dims[0], n, m, nelem, NPY_RAISE);
+
+            if (err) {
+                /*
+                 * Error message won't include axis, but there is only one
+                 * fancy index...
+                 */
+                goto fail;
+            }
+
+            /* check for consecutive axes */
+            if (mit->consec) {
+                PyArray_MapIterSwapAxes(mit, &ret, 1);
+            }
+            return (PyObject *)ret;
+        }
+    }
+
+    /*
      * Now just iterate through the new array filling it in
      * with the next object from the original array as
      * defined by the mapping iterator
@@ -292,13 +356,18 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     copyswap = PyArray_DESCR(ret)->f->copyswap;
     PyArray_MapIterReset(mit);
 
-    if (mit->numiter == 1) {
+    /*
+     * TODO: Could add special cases for iteration of return array
+     *       as well as subspace iteration. Should add special case
+     *       to make use of strided dtype transfer functions!
+     */
+    if ((mit->numiter == 1)) {
         if ((mit->subspace == NULL) || (PyArray_SIZE(mit->subspace->ao) == 1)) {
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize--) {
-                    SET_MIT_DATAPTR_1_NUMITER();
+                    SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX();
                     copyswap(it->dataptr, mit->dataptr, swap, ret);
                     PyArray_ITER_NEXT(it);
                 }
@@ -309,7 +378,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize--) {
-                    SET_MIT_DATAPTR_1_NUMITER();
+                    SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX();
                     counter = mit->subspace->size;
                     PyArray_ITER_RESET(mit->subspace);
                     mit->subspace->dataptr = mit->dataptr;
@@ -328,7 +397,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize-- > 0) {
-                    SET_MIT_DATAPTR();
+                    SET_MIT_DATAPTR_CHECK_INDEX();
                     copyswap(it->dataptr, mit->dataptr, swap, ret);
                     PyArray_ITER_NEXT(it);
                 }
@@ -339,7 +408,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize-- > 0) {
-                    SET_MIT_DATAPTR();
+                    SET_MIT_DATAPTR_CHECK_INDEX();
                     counter = mit->subspace->size;
                     PyArray_ITER_RESET(mit->subspace);
                     mit->subspace->dataptr = mit->dataptr;
@@ -360,6 +429,10 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
         PyArray_MapIterSwapAxes(mit, &ret, 1);
     }
     return (PyObject *)ret;
+  fail:
+    Py_DECREF(it);
+    Py_DECREF(ret);
+    return NULL;
 }
 
 
@@ -476,7 +549,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
      *
      * TODO: Refactor into its own function.
      */
-    if ((!PyTuple_Check(index))
+    if (!PyTuple_CheckExact(index)
+            /* Next three are just to avoid slow checks */
+            && (!PyInt_CheckExact(index))
+            && (index != Py_None)
+            && (!PySlice_Check(index))
             && (!PyArray_Check(index))
             && (PySequence_Check(index))) {
         /*
@@ -488,6 +565,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
          * This check is historically as is.
          */
 
+        if (PyTuple_Check(index)) {
+            /* If it is already a tuple, make it an exact tuple anyway */
+            n = 0;
+            make_tuple = 1;
+        }
         n = PySequence_Size(index);
         if (n < 0 || n >= NPY_MAXDIMS) {
             n = 0;
@@ -518,7 +600,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     }
 
     /* If the index is not a tuple, handle it the same as (index,) */
-    if (!PyTuple_Check(index)) {
+    if (!PyTuple_CheckExact(index)) {
         obj = index;
         index_ndim = 1;
     }
@@ -614,6 +696,19 @@ prepare_index(PyArrayObject *self, PyObject *index,
             continue;
         }
 
+        /* Index is a slice object. */
+        else if (PySlice_Check(obj)) {
+            index_type |= HAS_SLICE;
+
+            Py_INCREF(obj);
+            indices[curr_idx].object = obj;
+            indices[curr_idx].type = HAS_SLICE;
+            used_ndim += 1;
+            new_ndim += 1;
+            curr_idx += 1;
+            continue;
+        }
+
         /*
          * Single integer index, there are two cases here.
          * It could be an array, a 0-d array is handled
@@ -650,19 +745,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  curr_idx += 1;
                  continue;
              }
-        }
-
-        /* Index is a slice object. (Not else, int check is a try/except) */
-        if (PySlice_Check(obj)) {
-            index_type |= HAS_SLICE;
-
-            Py_INCREF(obj);
-            indices[curr_idx].object = obj;
-            indices[curr_idx].type = HAS_SLICE;
-            used_ndim += 1;
-            new_ndim += 1;
-            curr_idx += 1;
-            continue;
         }
 
         /*
@@ -709,31 +791,50 @@ prepare_index(PyArrayObject *self, PyObject *index,
                         Py_DECREF(tmp_arr);
                         goto failed_building_indices;  
                     }
+                    if (PyArray_NDIM(tmp_arr) == 0) {
+                        /*
+                         * Need to raise an error here, since the
+                         * DeprecationWarning before was not triggered.
+                         * TODO: A `False` triggers a Deprecation *not* a
+                         *       a FutureWarning.
+                         */
+                         PyErr_SetString(PyExc_IndexError,
+                                "in the future, 0-d boolean arrays will be "
+                                "interpreted as a valid boolean index");
+                        goto failed_building_indices;
+                    }
                 }
                 else if (!PyArray_ISINTEGER((PyArrayObject *)tmp_arr)) {
-                    if (DEPRECATE(
-                            "non integer (and non boolean) array-likes will "
-                            "not be accepted as indices in the future") < 0) {
+                    if (PyArray_NDIM(tmp_arr) == 0) {
+                        /* match integer deprecation warning */
+                        if (DEPRECATE(
+                                    "using a non-integer number instead of an "
+                                    "integer will result in an error in the "
+                                    "future") < 0) {
 
-                        /*
-                         * raise ValueError, similar to conversion failure
-                         * (do not actually attempt it, because it might
-                         * actually work for example for strings)
-                         */
-                        if (PyArray_NDIM(tmp_arr) == 0) {
+                            /* The error message raised in the future */
                             PyErr_SetString(PyExc_IndexError,
                                 "only integers, slices (`:`), ellipsis (`...`), "
                                 "numpy.newaxis (`None`) and integer or boolean "
-                                "arrays are valid indices.");
+                                "arrays are valid indices");
+                            Py_DECREF(tmp_arr);
+                            goto failed_building_indices; 
                         }
-                        else {
+                    }
+                    else {
+                        if (DEPRECATE(
+                                    "non integer (and non boolean) array-likes "
+                                    "will not be accepted as indices in the "
+                                    "future") < 0) {
+
+                            /* Error message to be raised in the future */
                             PyErr_SetString(PyExc_IndexError,
                                 "non integer (and non boolean) array-likes will "
                                 "not be accepted as indices in the future");
+                            Py_DECREF(tmp_arr);
+                            goto failed_building_indices;  
                         }
-                        Py_DECREF(tmp_arr);
-                        goto failed_building_indices;  
-                    }
+                    }   
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
@@ -744,6 +845,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     /* Since this will be removed, handle this later */
                     PyErr_Clear();
                     arr = tmp_arr;
+                }
+                else {
+                    Py_DECREF(tmp_arr);
                 }
             }
         }
@@ -878,7 +982,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             PyErr_SetString(PyExc_IndexError,
                     "only integers, slices (`:`), ellipsis (`...`), "
                     "numpy.newaxis (`None`) and integer or boolean "
-                    "arrays are valid indices.");
+                    "arrays are valid indices");
         }
         goto failed_building_indices;
     }
@@ -1092,8 +1196,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
         Py_DECREF(*view);
         return -1;
     }
-    /* TODO: Don't have to update all? */
-    PyArray_UpdateFlags(*view, NPY_ARRAY_UPDATE_ALL);
+
     return 0;
 }
 
@@ -1392,73 +1495,76 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
     PyArrayObject *view = NULL;
     PyObject *result = NULL;
-    
-    /* Check for single field access */
-    if (PyString_Check(op) || PyUnicode_Check(op)) {
-        PyObject *temp, *obj;
-
-        if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
-            obj = PyDict_GetItem(PyArray_DESCR(self)->fields, op);
-            if (obj != NULL) {
-                PyArray_Descr *descr;
-                int offset;
-                PyObject *title;
-
-                if (PyArg_ParseTuple(obj, "Oi|O", &descr, &offset, &title)) {
-                    Py_INCREF(descr);
-                    return PyArray_GetField(self, descr, offset);
-                }
-            }
-        }
-
-        temp = op;
-        if (PyUnicode_Check(op)) {
-            temp = PyUnicode_AsUnicodeEscapeString(op);
-        }
-        PyErr_Format(PyExc_ValueError,
-                     "field named %s not found",
-                     PyBytes_AsString(temp));
-        if (temp != op) {
-            Py_DECREF(temp);
-        }
-        return NULL;
-    }
 
     /* Check for multiple field access */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self)) &&
-                        PySequence_Check(op) &&
-                        !PyTuple_Check(op)) {
-        int seqlen, i;
-        PyObject *obj;
-        seqlen = PySequence_Size(op);
-        for (i = 0; i < seqlen; i++) {
-            obj = PySequence_GetItem(op, i);
-            if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
-                Py_DECREF(obj);
-                break;
-            }
-            Py_DECREF(obj);
-        }
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self)))
+        /* Check for single field access */
         /*
-         * Extract multiple fields if all elements in sequence
-         * are either string or unicode (i.e. no break occurred).
+         * TODO: Moving this code block into the HASFIELDS, might have
+         *       consequences for strings that can be interpreted as ints?
          */
-        fancy = ((seqlen > 0) && (i == seqlen));
-        if (fancy) {
-            PyObject *_numpy_internal;
-            _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-            if (_numpy_internal == NULL) {
-                return NULL;
+        if (PyString_Check(op) || PyUnicode_Check(op)) {
+            PyObject *temp, *obj;
+
+            if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
+                obj = PyDict_GetItem(PyArray_DESCR(self)->fields, op);
+                if (obj != NULL) {
+                    PyArray_Descr *descr;
+                    int offset;
+                    PyObject *title;
+
+                    if (PyArg_ParseTuple(obj, "Oi|O", &descr, &offset, &title)) {
+                        Py_INCREF(descr);
+                        return PyArray_GetField(self, descr, offset);
+                    }
+                }
             }
-            obj = PyObject_CallMethod(_numpy_internal,
-                    "_index_fields", "OO", self, op);
-            Py_DECREF(_numpy_internal);
-            if (obj == NULL) {
-                return NULL;
+
+            temp = op;
+            if (PyUnicode_Check(op)) {
+                temp = PyUnicode_AsUnicodeEscapeString(op);
             }
-            PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
-            return obj;
+            PyErr_Format(PyExc_ValueError,
+                         "field named %s not found",
+                         PyBytes_AsString(temp));
+            if (temp != op) {
+                Py_DECREF(temp);
+            }
+            return NULL;
         }
+
+        else if (PySequence_Check(op) && !PyTuple_Check(op)) {
+            int seqlen, i;
+            PyObject *obj;
+            seqlen = PySequence_Size(op);
+            for (i = 0; i < seqlen; i++) {
+                obj = PySequence_GetItem(op, i);
+                if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
+                    Py_DECREF(obj);
+                    break;
+                }
+                Py_DECREF(obj);
+            }
+            /*
+             * Extract multiple fields if all elements in sequence
+             * are either string or unicode (i.e. no break occurred).
+             */
+            fancy = ((seqlen > 0) && (i == seqlen));
+            if (fancy) {
+                PyObject *_numpy_internal;
+                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+                if (_numpy_internal == NULL) {
+                    return NULL;
+                }
+                obj = PyObject_CallMethod(_numpy_internal,
+                        "_index_fields", "OO", self, op);
+                Py_DECREF(_numpy_internal);
+                if (obj == NULL) {
+                    return NULL;
+                }
+                PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
+                return obj;
+            }
     }
 
     /* Prepare the indices */
@@ -1472,7 +1578,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Full integer index */
-    if (index_type == HAS_INTEGER) {
+    else if (index_type == HAS_INTEGER) {
         char *item;
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             goto finish;
@@ -1541,7 +1647,13 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish_view;
     }
 
-    if (PyArray_MapIterBind(mit, view, self, indices, index_num, 1) < 0) {
+    /*
+     * Bind mapiter. If no refcheck is needed, do not check the index
+     * up front. TODO: otherwise check twice, to avoid having to do error
+     * handling
+     */
+    if (PyArray_MapIterBind(mit, view, self, indices, index_num,
+                (!PyDataType_REFCHK(PyArray_DESCR(self)) ? 1 : 0)) < 0) {
         Py_DECREF((PyObject *)mit);
         goto finish_view;
     }
@@ -1964,11 +2076,15 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *
  * Let's do it at bind time and also convert all <0 values to >0 here
  * as well.
+ *
+ * delayed_check causes the MapIterBind to not check the indices.
+ * Since GetMap always has a fresh output array, it does not need to
+ * check the indices beforehand.
  */
 NPY_NO_EXPORT int
 PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
                     PyArrayObject *arr, npy_index_info *indices, int index_num,
-                    int delayed_check)
+                    int delayed_index_check)
 {
     int subnd;
     int i, j, n, curr_dim, result_dim, consec_status;
@@ -2082,7 +2198,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
         return -1;
     }
 
-    if (delayed_check) {
+    if (delayed_index_check) {
         return 0;
     }
 
@@ -2131,7 +2247,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     PyArray_Descr *dtypes[NPY_MAXDIMS];
     npy_uint32 op_flags[NPY_MAXDIMS];
     PyArrayMapIterObject *mit;
-    int i, requires_buffer = 0;
+    int i, dummy_array=0;
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
@@ -2147,29 +2263,46 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
             index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
             dtypes[mit->numiter] = PyArray_DescrFromType(NPY_INTP);
 
-            if (!PyArray_ISBEHAVED_RO(index_arrays[mit->numiter])) {
-                requires_buffer |= NPY_ITER_BUFFERED;
-            }
-            else if (PyArray_DESCR(index_arrays[mit->numiter])->type_num != NPY_INTP) {
-                requires_buffer |= NPY_ITER_BUFFERED;
-            }
-
             // | NPY_ITER_COPY; Copying seems quite a bit faster then buffering...
             op_flags[mit->numiter] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
             mit->numiter += 1;
         }
-    }    
+    }
+
+    if (mit->numiter == 0) {
+        /*
+         * For MapIterArray, it is possible that there is no fancy index.
+         * to support this case, add a little cludgy a dummy iterator.
+         * Since it is 0-d its transpose, etc. does not matter.
+         */
+        dummy_array = 1; /* signal necessity to decref... */
+        index_arrays[0] = PyArray_Zeros(0, NULL,
+                                        PyArray_DescrFromType(NPY_INTP), 0);
+        if (index_arrays[0] == NULL) {
+            return NULL;
+        }
+        dtypes[0] = PyArray_DescrFromType(NPY_INTP);
+        op_flags[0] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
+
+        mit->outer_strides[0] = 0;
+        mit->outer_dims[0] = 1;
+        mit->numiter = 1;
+    }
 
     //printf("Creating MultiNew\n");
     mit->outer = NpyIter_MultiNew(mit->numiter,
                                   index_arrays,
                                   NPY_ITER_ZEROSIZE_OK |
                                   NPY_ITER_MULTI_INDEX | /* To force shape */
-                                  requires_buffer,
+                                  NPY_ITER_BUFFERED,
                                   NPY_CORDER,
                                   NPY_SAME_KIND_CASTING,
                                   op_flags,
                                   dtypes);
+
+    if (dummy_array) {
+        Py_DECREF(index_arrays[0]);
+    }
 
     if (mit->outer == NULL) {
         //printf("Allocating multiNew failed!\n");
@@ -2229,7 +2362,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         }
     }
 
-    if (PyArray_MapIterBind(mit, subspace, a, indices, index_num) < 0) {
+    if (PyArray_MapIterBind(mit, subspace, a, indices, index_num, 0) < 0) {
         Py_XDECREF(subspace);
         Py_DECREF((PyObject *)mit);
         goto fail;
@@ -2262,8 +2395,8 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 #undef HAS_SCALAR_ARRAY
 #undef HAS_0D_BOOL
 
-#undef SET_MIT_DATAPTR
-#undef SET_MIT_DATAPTR_0_NUMITER
+#undef SET_MIT_DATAPTR_CHECK_INDEX
+#undef SET_MIT_DATAPTR_0_NUMITER_CHECK_INDEX
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
