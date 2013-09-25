@@ -4930,7 +4930,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
     PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
 
-    int needs_api;
+    int needs_api = 0;
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
