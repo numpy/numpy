@@ -2708,8 +2708,8 @@ class TestRecord(TestCase):
             # byte string indexing fails gracefully
             assert_raises(ValueError, a.__setitem__, asbytes('f1'), 1)
             assert_raises(ValueError, a.__getitem__, asbytes('f1'))
-            assert_raises(ValueError, a['f1'].__setitem__, asbytes('sf1'), 1)
-            assert_raises(ValueError, a['f1'].__getitem__, asbytes('sf1'))
+            assert_raises(IndexError, a['f1'].__setitem__, asbytes('sf1'), 1)
+            assert_raises(IndexError, a['f1'].__getitem__, asbytes('sf1'))
         else:
             funcs = (str, unicode)
         for func in funcs:
