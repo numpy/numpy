@@ -1730,17 +1730,17 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                     return PyArray_SetField(self, descr, offset, op);
                 }
             }
-        }
 #if defined(NPY_PY3K)
-        PyErr_Format(PyExc_ValueError,
+            PyErr_Format(PyExc_ValueError,
                      "field named %S not found",
                      ind);
 #else
-        PyErr_Format(PyExc_ValueError,
+            PyErr_Format(PyExc_ValueError,
                      "field named %s not found",
                      PyString_AsString(ind));
 #endif
-        return -1;
+            return -1;
+        }
     }
 
 
