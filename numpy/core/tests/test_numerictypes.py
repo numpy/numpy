@@ -365,7 +365,7 @@ class TestMultipleFields(TestCase):
     def _bad_call(self):
         return self.ary['f0', 'f1']
     def test_no_tuple(self):
-        self.assertRaises(ValueError, self._bad_call)
+        self.assertRaises(IndexError, self._bad_call)
     def test_return(self):
         res = self.ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])
