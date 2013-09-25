@@ -748,6 +748,12 @@ add_newdoc('numpy.core.multiarray', 'empty',
         Whether to store multi-dimensional data in C (row-major) or
         Fortran (column-major) order in memory.
 
+    Returns
+    -------
+    out : ndarray
+        Array of uninitialized (arbitrary) data with the given
+        shape, dtype, and order.
+
     See Also
     --------
     empty_like, zeros, ones
