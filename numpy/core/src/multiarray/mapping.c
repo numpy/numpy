@@ -457,7 +457,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     if (arr == NULL) {
         return -1;
     }
-    if ((mit->subspace != NULL) && (mit->consec)) {
+    if (mit->consec) {
         PyArray_MapIterSwapAxes(mit, &arr, 0);
         if (arr == NULL) {
             return -1;
@@ -1718,17 +1718,17 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                     return PyArray_SetField(self, descr, offset, op);
                 }
             }
-        }
 #if defined(NPY_PY3K)
-        PyErr_Format(PyExc_ValueError,
+            PyErr_Format(PyExc_ValueError,
                      "field named %S not found",
                      ind);
 #else
-        PyErr_Format(PyExc_ValueError,
+            PyErr_Format(PyExc_ValueError,
                      "field named %s not found",
                      PyString_AsString(ind));
 #endif
-        return -1;
+            return -1;
+        }
     }
 
 
@@ -2036,6 +2036,14 @@ mapiter_outernext(PyArrayMapIterObject *mit)
     int j;
     npy_intp offset_add;
     mit->dataptr = mit->baseoffset;
+    if ((--mit->itersize) == 0) {
+        if (mit->iternext(mit->outer)) {;
+            mit->itersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
+        }
+        else {
+            return;
+        }
+    }
     for (j = 0; j < mit->numiter; j++) {
         mit->iterptrs[j] += mit->iterstrides[j];
         offset_add = *((npy_intp*)mit->iterptrs[j]);
@@ -2043,10 +2051,6 @@ mapiter_outernext(PyArrayMapIterObject *mit)
             offset_add += mit->outer_dims[j];
         }
         mit->dataptr += offset_add * mit->outer_strides[j];
-    }
-    if ((--mit->itersize) == 0) {
-        mit->iternext(mit->outer);
-        mit->itersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
     }
 }
 
@@ -2365,14 +2369,13 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     /* If it is not a pure fancy index, need to get the subspace */
     if (index_type != HAS_FANCY) {
         if (get_view_from_index(a, &subspace, indices, index_num, 1) < 0) {
-            Py_DECREF((PyObject *)mit);
+            Py_XDECREF(subspace);
             goto fail;
         }
     }
 
     if (PyArray_MapIterBind(mit, subspace, a, indices, index_num, 0) < 0) {
         Py_XDECREF(subspace);
-        Py_DECREF((PyObject *)mit);
         goto fail;
     }
     Py_XDECREF(subspace);
@@ -2437,7 +2440,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* ob_size */
 #endif
     "numpy.mapiter",                            /* tp_name */
-    sizeof(PyArrayIterObject),                  /* tp_basicsize */
+    sizeof(PyArrayMapIterObject),               /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)arraymapiter_dealloc,           /* tp_dealloc */
