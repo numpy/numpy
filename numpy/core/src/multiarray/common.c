@@ -13,6 +13,7 @@
 
 #include "common.h"
 #include "buffer.h"
+#include "array_assign.h" /* for raw_array_is_aligned */
 
 /*
  * The casting to use for implicit assignment operations resulting from
@@ -675,37 +676,9 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i, aligned = 1;
-    const unsigned int alignment = PyArray_DESCR(ap)->alignment;
-
-    /* The special casing for STRING and VOID types was removed
-     * in accordance with http://projects.scipy.org/numpy/ticket/1227
-     * It used to be that IsAligned always returned True for these
-     * types, which is indeed the case when they are created using
-     * PyArray_DescrConverter(), but not necessarily when using
-     * PyArray_DescrAlignConverter(). */
-
-    if (alignment == 1) {
-        return 1;
-    }
-    aligned = npy_is_aligned(PyArray_DATA(ap), alignment);
-
-    for (i = 0; i < PyArray_NDIM(ap); i++) {
-#if NPY_RELAXED_STRIDES_CHECKING
-        if (PyArray_DIM(ap, i) > 1) {
-            /* if shape[i] == 1, the stride is never used */
-            aligned &= npy_is_aligned((void*)PyArray_STRIDES(ap)[i],
-                                      alignment);
-        }
-        else if (PyArray_DIM(ap, i) == 0) {
-            /* an array with zero elements is always aligned */
-            return 1;
-        }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-        aligned &= npy_is_aligned((void*)PyArray_STRIDES(ap)[i], alignment);
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
-    }
-    return aligned != 0;
+    return raw_array_is_aligned(PyArray_NDIM(ap), PyArray_DATA(ap),
+                                PyArray_STRIDES(ap),
+                                PyArray_DESCR(ap)->alignment);
 }
 
 NPY_NO_EXPORT npy_bool
