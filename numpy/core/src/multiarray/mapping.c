@@ -1715,8 +1715,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Single field access */
-    if (PyString_Check(ind) || PyUnicode_Check(ind)) {
-        if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
+        if (PyString_Check(ind) || PyUnicode_Check(ind)) {
             PyObject *obj;
 
             obj = PyDict_GetItem(PyArray_DESCR(self)->fields, ind);
