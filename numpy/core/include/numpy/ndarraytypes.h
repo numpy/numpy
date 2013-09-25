@@ -1298,7 +1298,9 @@ typedef struct {
         char                  *baseoffset;
 
         NpyIter_IterNextFunc  *iternext;
-        npy_intp              **outerptr;
+        char                  **iterptrs;
+        npy_intp              *iterstrides;
+        npy_intp              itersize; /* store innersize for MapIterNext */
         int                   nd_fancy;
 
         /*
