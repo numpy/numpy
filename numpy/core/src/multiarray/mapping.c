@@ -791,31 +791,50 @@ prepare_index(PyArrayObject *self, PyObject *index,
                         Py_DECREF(tmp_arr);
                         goto failed_building_indices;  
                     }
+                    if (PyArray_NDIM(tmp_arr) == 0) {
+                        /*
+                         * Need to raise an error here, since the
+                         * DeprecationWarning before was not triggered.
+                         * TODO: A `False` triggers a Deprecation *not* a
+                         *       a FutureWarning.
+                         */
+                         PyErr_SetString(PyExc_IndexError,
+                                "in the future, 0-d boolean arrays will be "
+                                "interpreted as a valid boolean index");
+                        goto failed_building_indices;
+                    }
                 }
                 else if (!PyArray_ISINTEGER((PyArrayObject *)tmp_arr)) {
-                    if (DEPRECATE(
-                            "non integer (and non boolean) array-likes will "
-                            "not be accepted as indices in the future") < 0) {
+                    if (PyArray_NDIM(tmp_arr) == 0) {
+                        /* match integer deprecation warning */
+                        if (DEPRECATE(
+                                    "using a non-integer number instead of an "
+                                    "integer will result in an error in the "
+                                    "future") < 0) {
 
-                        /*
-                         * raise ValueError, similar to conversion failure
-                         * (do not actually attempt it, because it might
-                         * actually work for example for strings)
-                         */
-                        if (PyArray_NDIM(tmp_arr) == 0) {
+                            /* The error message raised in the future */
                             PyErr_SetString(PyExc_IndexError,
                                 "only integers, slices (`:`), ellipsis (`...`), "
                                 "numpy.newaxis (`None`) and integer or boolean "
-                                "arrays are valid indices.");
+                                "arrays are valid indices");
+                            Py_DECREF(tmp_arr);
+                            goto failed_building_indices; 
                         }
-                        else {
+                    }
+                    else {
+                        if (DEPRECATE(
+                                    "non integer (and non boolean) array-likes "
+                                    "will not be accepted as indices in the "
+                                    "future") < 0) {
+
+                            /* Error message to be raised in the future */
                             PyErr_SetString(PyExc_IndexError,
                                 "non integer (and non boolean) array-likes will "
                                 "not be accepted as indices in the future");
+                            Py_DECREF(tmp_arr);
+                            goto failed_building_indices;  
                         }
-                        Py_DECREF(tmp_arr);
-                        goto failed_building_indices;  
-                    }
+                    }   
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
@@ -826,6 +845,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     /* Since this will be removed, handle this later */
                     PyErr_Clear();
                     arr = tmp_arr;
+                }
+                else {
+                    Py_DECREF(tmp_arr);
                 }
             }
         }
@@ -960,7 +982,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             PyErr_SetString(PyExc_IndexError,
                     "only integers, slices (`:`), ellipsis (`...`), "
                     "numpy.newaxis (`None`) and integer or boolean "
-                    "arrays are valid indices.");
+                    "arrays are valid indices");
         }
         goto failed_building_indices;
     }
@@ -2237,7 +2259,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     PyArray_Descr *dtypes[NPY_MAXDIMS];
     npy_uint32 op_flags[NPY_MAXDIMS];
     PyArrayMapIterObject *mit;
-    int i;
+    int i, dummy_array=0;
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
@@ -2265,6 +2287,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
          * to support this case, add a little cludgy a dummy iterator.
          * Since it is 0-d its transpose, etc. does not matter.
          */
+        dummy_array = 1; /* signal necessity to decref... */
         index_arrays[0] = PyArray_Zeros(0, NULL,
                                         PyArray_DescrFromType(NPY_INTP), 0);
         if (index_arrays[0] == NULL) {
@@ -2288,6 +2311,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
                                   NPY_SAME_KIND_CASTING,
                                   op_flags,
                                   dtypes);
+
+    if (dummy_array) {
+        Py_DECREF(index_arrays[0]);
+    }
 
     if (mit->outer == NULL) {
         //printf("Allocating multiNew failed!\n");
