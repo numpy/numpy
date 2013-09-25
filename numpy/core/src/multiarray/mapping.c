@@ -216,38 +216,39 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 }
 
 
-#define SET_MIT_DATAPTR()                                       \
-    mit->dataptr = mit->baseoffset;                             \
-    for (j = 0; j < mit->numiter; j++) {                        \
-        offset_add = *((npy_intp*)mit->iterptrs[j]);            \
-        mit->iterptrs[j] += mit->iterstrides[j];                \
-        if (offset_add < 0) {                                   \
-            offset_add += mit->outer_dims[j];                   \
-        }                                                       \
-        mit->dataptr += offset_add * mit->outer_strides[j];     \
-    }                                                           \
+#define SET_MIT_DATAPTR_CHECK_INDEX()                               \
+    mit->dataptr = mit->baseoffset;                                 \
+    for (j = 0; j < mit->numiter; j++) {                            \
+        indval = *((npy_intp*)mit->iterptrs[j]);                    \
+        if (check_and_adjust_index(&indval,                         \
+                    mit->outer_dims[j], mit->iteraxes[j]) < 0) {    \
+            goto fail;                                              \
+        }                                                           \
+        mit->iterptrs[j] += mit->iterstrides[j];                    \
+        mit->dataptr += indval * mit->outer_strides[j];             \
+    }                                                               \
 
-#define SET_MIT_DATAPTR_1_NUMITER()                             \
-    mit->dataptr = mit->baseoffset;                             \
-    offset_add = *((npy_intp*)mit->iterptrs[0]);                \
-    mit->iterptrs[0] += mit->iterstrides[0];                    \
-    if (offset_add < 0) {                                       \
-        offset_add += mit->outer_dims[0];                       \
-    }                                                           \
-    mit->dataptr += offset_add * mit->outer_strides[0]          \
+#define SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX()                     \
+    mit->dataptr = mit->baseoffset;                                 \
+    indval = *((npy_intp*)mit->iterptrs[0]);                        \
+    if (check_and_adjust_index(&indval,                             \
+                mit->outer_dims[0], mit->iteraxes[0]) < 0) {        \
+        goto fail;                                                  \
+    }                                                               \
+    mit->iterptrs[0] += mit->iterstrides[0];                        \
+    mit->dataptr += indval * mit->outer_strides[0]                  \
 
 
 static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
 {
-
     PyArrayObject *ret, *temp;
     PyArrayIterObject *it;
     npy_intp counter;
     int swap, j;
     PyArray_CopySwapFunc *copyswap;
 
-    npy_intp innersize, offset_add;
+    npy_intp innersize, indval;
 
     /* Unbound map iterator --- Bind should have been called */
     if (mit->ait == NULL) {
@@ -278,6 +279,60 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     }
 
     /*
+     * Make use of fast_take if possible!
+     * TODO: Fast take can actually handle MORE cases, since it can take
+     *       along any axis, so that it does not need the contiguity of ret,
+     *       but only the contiguity of ret before the SwapAxes. I.e. this
+     *       only uses take logic for axis=0.
+     */
+    if ((mit->numiter == 1) &&
+            ((mit->subspace == NULL) ||
+                    PyArray_IS_C_CONTIGUOUS(mit->subspace->ao)) &&
+            PyArray_IS_C_CONTIGUOUS(ret) && PyArray_IS_C_CONTIGUOUS(temp) &&
+            PyArray_IS_C_CONTIGUOUS(NpyIter_GetOperandArray(mit->outer)[0]) &&
+            !NpyIter_IsBuffered(mit->outer) &&
+            (PyArray_DESCR(temp)->f->fasttake != NULL)) {
+
+        char *src, *dst;
+        int err;
+        npy_intp *indices;
+        npy_intp n, m, nelem;
+
+        src = PyArray_DATA(temp);
+        dst = PyArray_DATA(ret);
+        indices = PyArray_DATA(NpyIter_GetOperandArray(mit->outer)[0]);
+
+        n = 1; /* Always since we would have axis=0 in take */
+        /* Here, indices size: */
+        m = PyArray_SIZE(NpyIter_GetOperandArray(mit->outer)[0]);
+
+        /* Number of subspace elements (after index; n=1, so all are after) */
+        if (mit->subspace == NULL) {
+            nelem = 1;
+        }
+        else {
+            nelem = PyArray_SIZE(mit->subspace->ao);
+        }
+
+        err = PyArray_DESCR(temp)->f->fasttake(dst, src, indices,
+                    mit->outer_dims[0], n, m, nelem, NPY_RAISE);
+
+        if (err) {
+            /*
+             * Error message won't include axis, but there is only one
+             * fancy index...
+             */
+            goto fail;
+        }
+
+        /* check for consecutive axes */
+        if (mit->consec) {
+            PyArray_MapIterSwapAxes(mit, &ret, 1);
+        }
+        return (PyObject *)ret;
+    }
+
+    /*
      * Now just iterate through the new array filling it in
      * with the next object from the original array as
      * defined by the mapping iterator
@@ -292,13 +347,18 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     copyswap = PyArray_DESCR(ret)->f->copyswap;
     PyArray_MapIterReset(mit);
 
-    if (mit->numiter == 1) {
+    /*
+     * TODO: Could add special cases for iteration of return array
+     *       as well as subspace iteration. Should add special case
+     *       to make use of strided dtype transfer functions!
+     */
+    if ((mit->numiter == 1)) {
         if ((mit->subspace == NULL) || (PyArray_SIZE(mit->subspace->ao) == 1)) {
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize--) {
-                    SET_MIT_DATAPTR_1_NUMITER();
+                    SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX();
                     copyswap(it->dataptr, mit->dataptr, swap, ret);
                     PyArray_ITER_NEXT(it);
                 }
@@ -309,7 +369,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize--) {
-                    SET_MIT_DATAPTR_1_NUMITER();
+                    SET_MIT_DATAPTR_1_NUMITER_CHECK_INDEX();
                     counter = mit->subspace->size;
                     PyArray_ITER_RESET(mit->subspace);
                     mit->subspace->dataptr = mit->dataptr;
@@ -328,7 +388,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize-- > 0) {
-                    SET_MIT_DATAPTR();
+                    SET_MIT_DATAPTR_CHECK_INDEX();
                     copyswap(it->dataptr, mit->dataptr, swap, ret);
                     PyArray_ITER_NEXT(it);
                 }
@@ -339,7 +399,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
                 innersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
                 while (innersize-- > 0) {
-                    SET_MIT_DATAPTR();
+                    SET_MIT_DATAPTR_CHECK_INDEX();
                     counter = mit->subspace->size;
                     PyArray_ITER_RESET(mit->subspace);
                     mit->subspace->dataptr = mit->dataptr;
@@ -360,6 +420,10 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
         PyArray_MapIterSwapAxes(mit, &ret, 1);
     }
     return (PyObject *)ret;
+  fail:
+    Py_DECREF(it);
+    Py_DECREF(ret);
+    return NULL;
 }
 
 
@@ -1092,8 +1156,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
         Py_DECREF(*view);
         return -1;
     }
-    /* TODO: Don't have to update all? */
-    PyArray_UpdateFlags(*view, NPY_ARRAY_UPDATE_ALL);
+
     return 0;
 }
 
@@ -1484,7 +1547,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Full integer index */
-    if (index_type == HAS_INTEGER) {
+    else if (index_type == HAS_INTEGER) {
         char *item;
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             goto finish;
@@ -1553,7 +1616,13 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish_view;
     }
 
-    if (PyArray_MapIterBind(mit, view, self, indices, index_num, 1) < 0) {
+    /*
+     * Bind mapiter. If no refcheck is needed, do not check the index
+     * up front. TODO: otherwise check twice, to avoid having to do error
+     * handling
+     */
+    if (PyArray_MapIterBind(mit, view, self, indices, index_num,
+                (!PyDataType_REFCHK(PyArray_DESCR(self)) ? 1 : 0)) < 0) {
         Py_DECREF((PyObject *)mit);
         goto finish_view;
     }
@@ -1976,11 +2045,15 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *
  * Let's do it at bind time and also convert all <0 values to >0 here
  * as well.
+ *
+ * delayed_check causes the MapIterBind to not check the indices.
+ * Since GetMap always has a fresh output array, it does not need to
+ * check the indices beforehand.
  */
 NPY_NO_EXPORT int
 PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
                     PyArrayObject *arr, npy_index_info *indices, int index_num,
-                    int delayed_check)
+                    int delayed_index_check)
 {
     int subnd;
     int i, j, n, curr_dim, result_dim, consec_status;
@@ -2094,7 +2167,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
         return -1;
     }
 
-    if (delayed_check) {
+    if (delayed_index_check) {
         return 0;
     }
 
@@ -2241,7 +2314,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         }
     }
 
-    if (PyArray_MapIterBind(mit, subspace, a, indices, index_num) < 0) {
+    if (PyArray_MapIterBind(mit, subspace, a, indices, index_num, 0) < 0) {
         Py_XDECREF(subspace);
         Py_DECREF((PyObject *)mit);
         goto fail;
@@ -2274,8 +2347,8 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 #undef HAS_SCALAR_ARRAY
 #undef HAS_0D_BOOL
 
-#undef SET_MIT_DATAPTR
-#undef SET_MIT_DATAPTR_0_NUMITER
+#undef SET_MIT_DATAPTR_CHECK_INDEX
+#undef SET_MIT_DATAPTR_0_NUMITER_CHECK_INDEX
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
