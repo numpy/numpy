@@ -243,7 +243,7 @@ static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
 {
     PyArrayObject *ret, *temp;
-    PyArrayIterObject *it;
+    PyArrayIterObject *it = NULL;
     npy_intp counter;
     int swap, j;
     PyArray_CopySwapFunc *copyswap;
@@ -255,9 +255,10 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
         return NULL;
     }
 
-    /* This relies on the map iterator object telling us the shape
-       of the new array in nd and dimensions.
-    */
+    /*
+     * This relies on the map iterator object telling us the shape
+     * of the new array in nd and dimensions.
+     */
     temp = mit->ait->ao;
     Py_INCREF(PyArray_DESCR(temp));
     ret = (PyArrayObject *)
@@ -275,7 +276,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
         if (mit->consec) {
             PyArray_MapIterSwapAxes(mit, &ret, 1);
         }
-        return ret;
+        return (PyObject *)ret;
     }
 
     /*
@@ -430,7 +431,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     }
     return (PyObject *)ret;
   fail:
-    Py_DECREF(it);
+    Py_XDECREF(it);
     Py_DECREF(ret);
     return NULL;
 }
@@ -765,8 +766,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
         indices[curr_idx].object = NULL;
 
         if (!PyArray_Check(obj)) {
-            PyObject *tmp_arr;
-            tmp_arr = PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            PyArrayObject *tmp_arr;
+            tmp_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
             if (tmp_arr == NULL) {
                 /* TODO: Should maybe replace the error here? */
                 goto failed_building_indices;
@@ -776,11 +777,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
              */
-            if (PyArray_SIZE((PyArrayObject *)tmp_arr) == 0) {
+            if (PyArray_SIZE(tmp_arr) == 0) {
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
                 /* TODO: Is the force-cast the right way? */
-                arr = (PyArrayObject *)PyArray_FromAny(tmp_arr, indtype, 0, 0,
-                                        NPY_ARRAY_FORCECAST, NULL);
+                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
+                                                         NPY_ARRAY_FORCECAST);
                 if (arr == NULL) {
                     Py_DECREF(tmp_arr);
                     goto failed_building_indices;
@@ -792,7 +793,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * they should then be either correct already or error out
                  * later just like a normal array.
                  */
-                if (PyArray_ISBOOL((PyArrayObject *)tmp_arr)) {
+                if (PyArray_ISBOOL(tmp_arr)) {
                     if (DEPRECATE_FUTUREWARNING(
                             "in the future, boolean array-likes will be "
                             "handled as a boolean array index") < 0) {
@@ -812,7 +813,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                         goto failed_building_indices;
                     }
                 }
-                else if (!PyArray_ISINTEGER((PyArrayObject *)tmp_arr)) {
+                else if (!PyArray_ISINTEGER(tmp_arr)) {
                     if (PyArray_NDIM(tmp_arr) == 0) {
                         /* match integer deprecation warning */
                         if (DEPRECATE(
@@ -825,7 +826,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                                 "only integers, slices (`:`), ellipsis (`...`), "
                                 "numpy.newaxis (`None`) and integer or boolean "
                                 "arrays are valid indices");
-                            Py_DECREF(tmp_arr);
+                            Py_DECREF((PyObject *)tmp_arr);
                             goto failed_building_indices; 
                         }
                     }
@@ -839,15 +840,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
                             PyErr_SetString(PyExc_IndexError,
                                 "non integer (and non boolean) array-likes will "
                                 "not be accepted as indices in the future");
-                            Py_DECREF(tmp_arr);
+                            Py_DECREF((PyObject *)tmp_arr);
                             goto failed_building_indices;  
                         }
                     }   
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-                arr = (PyArrayObject *)PyArray_FromAny(tmp_arr, indtype, 0, 0,
-                                        NPY_ARRAY_FORCECAST, NULL);
+                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
+                                                         NPY_ARRAY_FORCECAST);
 
                 if (arr == NULL) {
                     /* Since this will be removed, handle this later */
@@ -855,7 +856,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     arr = tmp_arr;
                 }
                 else {
-                    Py_DECREF(tmp_arr);
+                    Py_DECREF((PyObject *)tmp_arr);
                 }
             }
         }
@@ -916,7 +917,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 indices[curr_idx].type = HAS_0D_BOOL;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
-                if (PyObject_IsTrue(arr)) {
+                if (PyObject_IsTrue((PyObject *)arr)) {
                     n = 1;
                 }
                 else {
@@ -937,7 +938,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             }
 
             /* Convert the boolean array into multiple integer ones */
-            n = _nonzero_indices(arr, nonzero_result);
+            n = _nonzero_indices((PyObject *)arr, nonzero_result);
             if (n < 0) {
                 goto failed_building_indices;
             }
@@ -980,7 +981,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         /*
          * The array does not have a valid type.
          */
-        if (arr == obj) {
+        if ((PyObject *)arr == obj) {
             /* The input was an array already */
             PyErr_SetString(PyExc_IndexError,
                 "arrays used as indices must be of integer (or boolean) type");
@@ -1505,7 +1506,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     PyObject *result = NULL;
 
     /* Check for multiple field access */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self)))
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         /* Check for single field access */
         /*
          * TODO: Moving this code block into the HASFIELDS, might have
@@ -1573,13 +1574,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
                 return obj;
             }
+        }
     }
 
     /* Prepare the indices */
-    //printf("preparing indices for getting\n");
     index_type = prepare_index(self, op, indices, &index_num, &ndim, 1);
-    //PyObject_Print(op, stdout, 0);
-    //printf("getting index_type %d, index_num %d, ndim %d\n", index_type, index_num, ndim);
 
     if (index_type < 0) {
         return NULL;
@@ -1733,9 +1732,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
 
     /* Prepare the indices */
-    //printf("preparing indices\n");
     index_type = prepare_index(self, ind, indices, &index_num, &ndim, 1);
-    //printf("setting index_type %d, index_num %d, ndim %d\n", index_type, index_num, ndim);
 
     if (index_type < 0) {
         return -1;
@@ -1777,28 +1774,14 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto success;
     }
 
-    /*
-     * WARNING: There is a huge special case here. If this is not a
-     *          base class array, we have to get the view through its
-     *          very own index machinery.
-     *          I find this weird, but not sure if there is a way to
-     *          deprecate. (why does the class not implement getitem too?)
-     */
-    else if (!(index_type & HAS_FANCY) && !PyArray_CheckExact(self)) {
-        view = PyObject_GetItem((PyObject *)self, ind);
-        if (view == NULL) {
-            goto fail;
-        }
-        if (!PyArray_Check(view)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Getitem not returning array");
-            goto fail;
-        }
-    }
 
-    /* Single ellipsis index, no need to create a new view */
+    /*
+     * Single ellipsis index, no need to create a new view.
+     * Note that here, we do *not* go through self.__getitem__ for subclasses
+     * (defchar array failed then, due to uninitialized values...)
+     */
     else if (index_type == HAS_ELLIPSIS) {
-        if (self == op) {
+        if ((PyObject *)self == op) {
             /*
              * CopyObject does not handle this case gracefully and
              * there is nothing to do. Removing the special case
@@ -1810,6 +1793,25 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* we can just use self, but incref for error handling */
         Py_INCREF((PyObject *)self);
         view = self;
+    }
+
+    /*
+     * WARNING: There is a huge special case here. If this is not a
+     *          base class array, we have to get the view through its
+     *          very own index machinery.
+     *          I find this weird, but not sure if there is a way to
+     *          deprecate. (why does the class not implement getitem too?)
+     */
+    else if (!(index_type & HAS_FANCY) && !PyArray_CheckExact(self)) {
+        view = (PyArrayObject *)PyObject_GetItem((PyObject *)self, ind);
+        if (view == NULL) {
+            goto fail;
+        }
+        if (!PyArray_Check(view)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Getitem not returning array");
+            goto fail;
+        }
     }
 
     /*
@@ -2006,7 +2008,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 NPY_NO_EXPORT void
 PyArray_MapIterReset(PyArrayMapIterObject *mit)
 {
-    int i,j;
+    int j;
     npy_intp offset_add;
     mit->index = 0;
 
@@ -2098,11 +2100,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
                     PyArrayObject *arr, npy_index_info *indices, int index_num,
                     int delayed_index_check)
 {
-    int subnd;
     int i, j, n, curr_dim, result_dim, consec_status;
-    PyArrayIterObject *it;
-    npy_intp *indptr;
-
     npy_intp indval;
     npy_intp *outer_dims = mit->outer_dims;
     int *outer_axis = mit->iteraxes;
@@ -2115,7 +2113,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
 
     if (subspace != NULL) {
         /* Get subspace iterator */
-        subnd = PyArray_NDIM(subspace);
         mit->baseoffset = PyArray_BYTES(subspace);
         mit->subspace = (PyArrayIterObject *)PyArray_IterNew((PyObject *)subspace);
         if (mit->subspace == NULL) {
@@ -2131,12 +2128,10 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
     }
     else {
         /*
-         * FIXME: This means if subspace is a scalar, we still need to use it.
-         *        It is however probably no worse then before when all scalars
-         *        were promoted to iterator arrays of the outer iteration.
+         * This means if subspace is a scalar, we still need to use it.
+         * It might be possible to optimize this already here...
          */
-        subnd = 0;
-        mit->subspace == NULL;
+        mit->subspace = NULL;
         mit->baseoffset = PyArray_BYTES(arr);
     }
 
@@ -2196,7 +2191,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
         }
     }
 
- finish:
     /* Here check the indexes (now that we have iteraxes) */
     mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (mit->size < 0) {
@@ -2275,7 +2269,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
             index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
             dtypes[mit->numiter] = PyArray_DescrFromType(NPY_INTP);
 
-            // | NPY_ITER_COPY; Copying seems quite a bit faster then buffering...
             op_flags[mit->numiter] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
             mit->numiter += 1;
         }
@@ -2288,7 +2281,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
          * Since it is 0-d its transpose, etc. does not matter.
          */
         dummy_array = 1; /* signal necessity to decref... */
-        index_arrays[0] = PyArray_Zeros(0, NULL,
+        index_arrays[0] = (PyArrayObject *)PyArray_Zeros(0, NULL,
                                         PyArray_DescrFromType(NPY_INTP), 0);
         if (index_arrays[0] == NULL) {
             return NULL;
@@ -2301,7 +2294,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
         mit->numiter = 1;
     }
 
-    //printf("Creating MultiNew\n");
     mit->outer = NpyIter_MultiNew(mit->numiter,
                                   index_arrays,
                                   NPY_ITER_ZEROSIZE_OK |
@@ -2317,7 +2309,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     }
 
     if (mit->outer == NULL) {
-        //printf("Allocating multiNew failed!\n");
         goto fail;
     }
 
@@ -2336,7 +2327,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     mit->iterptrs = NpyIter_GetDataPtrArray(mit->outer);
     mit->iterstrides = NpyIter_GetInnerStrideArray(mit->outer);
 
-    //printf("Done mapiternew\n");
     return (PyObject *)mit;
 
  fail:
@@ -2412,7 +2402,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
-    int i;
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
     if (mit->outer != NULL) {
