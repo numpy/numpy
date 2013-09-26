@@ -1789,6 +1789,27 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto success;
     }
 
+
+    /*
+     * Single ellipsis index, no need to create a new view.
+     * Note that here, we do *not* go through self.__getitem__ for subclasses
+     * (defchar array failed then, due to uninitialized values...)
+     */
+    else if (index_type == HAS_ELLIPSIS) {
+        if (self == op) {
+            /*
+             * CopyObject does not handle this case gracefully and
+             * there is nothing to do. Removing the special case
+             * will cause segfaults, though it is unclear what exactly
+             * happens.
+             */
+            return 0;
+        }
+        /* we can just use self, but incref for error handling */
+        Py_INCREF((PyObject *)self);
+        view = self;
+    }
+
     /*
      * WARNING: There is a huge special case here. If this is not a
      *          base class array, we have to get the view through its
@@ -1806,22 +1827,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                             "Getitem not returning array");
             goto fail;
         }
-    }
-
-    /* Single ellipsis index, no need to create a new view */
-    else if (index_type == HAS_ELLIPSIS) {
-        if (self == op) {
-            /*
-             * CopyObject does not handle this case gracefully and
-             * there is nothing to do. Removing the special case
-             * will cause segfaults, though it is unclear what exactly
-             * happens.
-             */
-            return 0;
-        }
-        /* we can just use self, but incref for error handling */
-        Py_INCREF((PyObject *)self);
-        view = self;
     }
 
     /*
