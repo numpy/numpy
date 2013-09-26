@@ -328,7 +328,7 @@ def load(file, mmap_mode=None):
         with load('foo.npz') as data:
             a = data['a']
 
-      The underlyling file descriptor is closed when exiting the 'with' block.
+      The underlying file descriptor is closed when exiting the 'with' block.
 
     Examples
     --------
@@ -934,7 +934,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     flags:
         ``-`` : left justify
 
-        ``+`` : Forces to preceed result with + or -.
+        ``+`` : Forces to precede result with + or -.
 
         ``0`` : Left pad the number with zeros instead of space (see width).
 
