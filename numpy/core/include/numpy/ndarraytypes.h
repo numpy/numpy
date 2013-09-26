@@ -1273,7 +1273,11 @@ typedef struct {
 } npy_index_info;
 
 
-/* Store the information needed for fancy-indexing over an array */
+/*
+ * Store the information needed for fancy-indexing over an array. The
+ * fields are slightly unordered to keep consec, dataptr and subspace
+ * where they were originally.
+ */
 typedef struct {
         PyObject_HEAD
         /*
@@ -1290,18 +1294,13 @@ typedef struct {
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
         NpyIter               *outer;                  /* index objects
                                                           iterator */
+        void                  *unused[NPY_MAXDIMS - 1];
         PyArrayIterObject     *ait;                    /* flat Iterator for
-                                                          underlying array */
+                                                          underlying array;
+                                                          should not be used */
 
-        /* flat iterator for subspace (when numiter < nd) */
+        /* flat iterator for subspace */
         PyArrayIterObject     *subspace;
-        char                  *baseoffset;
-
-        NpyIter_IterNextFunc  *iternext;
-        char                  **iterptrs;
-        npy_intp              *iterstrides;
-        npy_intp              itersize; /* store innersize for MapIterNext */
-        int                   nd_fancy;
 
         /*
          * if subspace iteration, then this is the array of axes in
@@ -1309,7 +1308,9 @@ typedef struct {
          */
         int                   iteraxes[NPY_MAXDIMS];
         npy_intp              outer_strides[NPY_MAXDIMS];
-        npy_intp              outer_dims[NPY_MAXDIMS];
+
+        /* pointer when all fancy indices are 0 */
+        char                  *baseoffset;
 
         /*
          * after binding consec denotes at which axis the fancy axes
@@ -1317,6 +1318,17 @@ typedef struct {
          */
         int                   consec;
         char                  *dataptr;
+
+        int                   nd_fancy;
+        npy_intp              outer_dims[NPY_MAXDIMS];
+
+        /*
+         * Information about the iteration state.
+         */
+        NpyIter_IterNextFunc  *iternext;
+        char                  **iterptrs;
+        npy_intp              *iterstrides;
+        npy_intp              itersize;    /* store innersize for MapIterNext */
 
 } PyArrayMapIterObject;
 
