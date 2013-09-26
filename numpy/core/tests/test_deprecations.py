@@ -151,7 +151,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[0.0,:])
         assert_deprecated(lambda: a[:, 0.0])
         assert_deprecated(lambda: a[:, 0.0,:])
-        assert_deprecated(lambda: a[0.0,:,:], num=2) # [1]
+        assert_deprecated(lambda: a[0.0,:,:])
         assert_deprecated(lambda: a[0, 0, 0.0])
         assert_deprecated(lambda: a[0.0, 0, 0])
         assert_deprecated(lambda: a[0, 0.0, 0])
@@ -161,11 +161,10 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[-1.4,:])
         assert_deprecated(lambda: a[:, -1.4])
         assert_deprecated(lambda: a[:, -1.4,:])
-        assert_deprecated(lambda: a[-1.4,:,:], num=2) # [1]
+        assert_deprecated(lambda: a[-1.4,:,:])
         assert_deprecated(lambda: a[0, 0, -1.4])
         assert_deprecated(lambda: a[-1.4, 0, 0])
         assert_deprecated(lambda: a[0, -1.4, 0])
-        # [1] These are duplicate because of the _tuple_of_integers quick check
 
         # Test that the slice parameter deprecation warning doesn't mask
         # the scalar index warning.

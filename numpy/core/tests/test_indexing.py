@@ -42,7 +42,7 @@ class TestIndexing(TestCase):
                       [4, 5, 6],
                       [7, 8, 9]])
         assert_equal(a[...], a)
-        assert_(a[...] is a)
+        assert_(a[...].base is a) # `a[...]` was `a` in numpy <1.9.)
 
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
@@ -85,8 +85,15 @@ class TestIndexing(TestCase):
         #assert_equal(a[False], a[0])
 
         # Same with NumPy boolean scalar
-        assert_equal(a[np.array(True)], a[1])
-        assert_equal(a[np.array(False)], a[0])
+        # Before DEPRECATE:
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            assert_equal(a[np.array(True)], a[1])
+            assert_equal(a[np.array(False)], a[0])
+        # After DEPRECATE:
+        #assert_equal(a[np.array(True)], a[None])
+        #assert_equal(a[np.array(False), a[None][0:0]])
+
 
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
@@ -231,9 +238,7 @@ class TestMultiIndexingAutomated(TestCase):
                 if ellipsis_pos is None:
                     ellipsis_pos = i
                     continue # do not increment ndim counter
-                in_indices[i] = slice(None, None)
-                ndim += 1
-                continue
+                raise IndexError
             if isinstance(indx, slice):
                 ndim += 1
                 continue
@@ -303,6 +308,19 @@ class TestMultiIndexingAutomated(TestCase):
                     # make sense (even outide the 0-d indexed array case)
                     # Note that originally this is could be interpreted as
                     # integer in the full integer special case.
+                    raise IndexError
+            else:
+                # If the index is a singleton, the bounds check is done
+                # before the broadcasting. This used to be different in <1.9
+                if indx.ndim == 0:
+                    if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
+                        raise IndexError
+            if indx.ndim == 0:
+                # The index is a scalar. This used to be two fold, but if fancy
+                # indexing was active, the check was done later, possibly
+                # after broadcasting it away (1.7. or earlier). Now it is always
+                # done.
+                if indx >= arr.shape[ax] or indx < - arr.shape[ax]:
                     raise IndexError
             if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
                 # NOTE: There could still have been a 0-sized Ellipsis
@@ -522,7 +540,6 @@ class TestMultiIndexingAutomated(TestCase):
             warnings.filterwarnings('error', '', DeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
-
 
 
 if __name__ == "__main__":
