@@ -1588,10 +1588,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Prepare the indices */
-    //printf("preparing indices for getting\n");
     index_type = prepare_index(self, op, indices, &index_num, &ndim, 1);
-    //PyObject_Print(op, stdout, 0);
-    //printf("getting index_type %d, index_num %d, ndim %d\n", index_type, index_num, ndim);
 
     if (index_type < 0) {
         return NULL;
@@ -1745,9 +1742,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
 
     /* Prepare the indices */
-    //printf("preparing indices\n");
     index_type = prepare_index(self, ind, indices, &index_num, &ndim, 1);
-    //printf("setting index_type %d, index_num %d, ndim %d\n", index_type, index_num, ndim);
 
     if (index_type < 0) {
         return -1;
@@ -2292,7 +2287,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
             index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
             dtypes[mit->numiter] = PyArray_DescrFromType(NPY_INTP);
 
-            // | NPY_ITER_COPY; Copying seems quite a bit faster then buffering...
             op_flags[mit->numiter] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
             mit->numiter += 1;
         }
@@ -2318,7 +2312,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
         mit->numiter = 1;
     }
 
-    //printf("Creating MultiNew\n");
     mit->outer = NpyIter_MultiNew(mit->numiter,
                                   index_arrays,
                                   NPY_ITER_ZEROSIZE_OK |
@@ -2334,7 +2327,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     }
 
     if (mit->outer == NULL) {
-        //printf("Allocating multiNew failed!\n");
         goto fail;
     }
 
@@ -2353,7 +2345,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
     mit->iterptrs = NpyIter_GetDataPtrArray(mit->outer);
     mit->iterstrides = NpyIter_GetInnerStrideArray(mit->outer);
 
-    //printf("Done mapiternew\n");
     return (PyObject *)mit;
 
  fail:
