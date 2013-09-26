@@ -322,7 +322,7 @@ class TestMultiIndexingAutomated(TestCase):
                     raise IndexError
             else:
                 # If the index is a singleton, the bounds check is done
-                # before the broadcasting. This used to be different in <1.8
+                # before the broadcasting. This used to be different in <1.9
                 if indx.ndim == 0:
                     if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
                         raise IndexError
