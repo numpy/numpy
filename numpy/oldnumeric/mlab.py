@@ -15,7 +15,8 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
      angle, roots, ptp as _Nptp, kaiser, cumprod as _Ncumprod, \
      diag, msort, prod as _Nprod, std as _Nstd, hamming, flipud, \
      amax as _Nmax, amin as _Nmin, blackman, bartlett, \
-     squeeze, sinc, median, fliplr, mean as _Nmean, transpose
+     squeeze, sinc, median, fliplr, mean as _Nmean, transpose, \
+     sqrt, multiply, __version__
 
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
@@ -92,7 +93,6 @@ def cov(m, y=None, rowvar=0, bias=0):
         fact = N-1.0
     return squeeze(dot(transpose(m), conjugate(y)) / fact)
 
-from numpy import sqrt, multiply
 def corrcoef(x, y=None):
     c = cov(x, y)
     d = diag(c)
@@ -104,25 +104,21 @@ from .precision import *
 from .ufuncs import *
 from .misc import *
 
-from . import compat
-from . import precision
-from . import functions
-from . import misc
-from . import ufuncs
-
-import numpy
-__version__ = numpy.__version__
-del numpy
+from .compat import __all__ as compat_all
+from .functions import __all__ as functions_all
+from .precision import __all__ as precision_all
+from .ufuncs import __all__ as ufuncs_all
+from .misc import __all__ as misc_all
 
 __all__ += ['__version__']
-__all__ += compat.__all__
-__all__ += precision.__all__
-__all__ += functions.__all__
-__all__ += ufuncs.__all__
-__all__ += misc.__all__
+__all__ += compat_all
+__all__ += precision_all
+__all__ += functions_all
+__all__ += ufuncs_all
+__all__ += misc_all
 
-del compat
-del functions
-del precision
-del ufuncs
-del misc
+del compat_all
+del precision_all
+del functions_all
+del ufuncs_all
+del misc_all
