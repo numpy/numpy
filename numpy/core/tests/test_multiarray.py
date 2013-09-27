@@ -593,6 +593,17 @@ class TestBool(TestCase):
         self.assertTrue(array([True])[0] is a1)
         self.assertTrue(array(True)[()] is a1)
 
+    def test_sum(self):
+        d = np.ones(101, dtype=np.bool);
+        assert_equal(d.sum(), d.size)
+        assert_equal(d[::2].sum(), d[::2].size)
+        assert_equal(d[::-2].sum(), d[::-2].size)
+
+        d = np.frombuffer(b'\xff\xff' * 100, dtype=bool)
+        assert_equal(d.sum(), d.size)
+        assert_equal(d[::2].sum(), d[::2].size)
+        assert_equal(d[::-2].sum(), d[::-2].size)
+
 
 class TestMethods(TestCase):
     def test_test_round(self):

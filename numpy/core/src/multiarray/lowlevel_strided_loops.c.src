@@ -759,7 +759,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 
 #else
 
-#  if @is_bool2@
+#  if @is_bool2@ || @is_bool1@
 #    define _CONVERT_FN(x) ((npy_bool)(x != 0))
 #  else
 #    define _CONVERT_FN(x) ((_TYPE2)x)
