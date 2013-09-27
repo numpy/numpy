@@ -463,21 +463,28 @@ class TestCreation(TestCase):
             assert_equal(np.count_nonzero(d), 0)
             # true for ieee floats
             assert_equal(d.sum(), 0)
-
-            d = np.zeros((30 * 1024**2,), dtype=dt)
-            assert_equal(np.count_nonzero(d), 0)
-            assert_equal(d.sum(), 0)
+            assert_(not d.any())
 
             d = np.zeros(2, dtype='(2,4)i4')
             assert_equal(np.count_nonzero(d), 0)
             assert_equal(d.sum(), 0)
+            assert_(not d.any())
 
             d = np.zeros(2, dtype='4i4')
             assert_equal(np.count_nonzero(d), 0)
             assert_equal(d.sum(), 0)
+            assert_(not d.any())
 
             d = np.zeros(2, dtype='(2,4)i4, (2,4)i4')
             assert_equal(np.count_nonzero(d), 0)
+
+    @dec.slow
+    def test_zeros_big(self):
+        # test big array as they might be allocated different by the sytem
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        for dt in types:
+            d = np.zeros((30 * 1024**2,), dtype=dt)
+            assert_(not d.any())
 
     def test_zeros_obj(self):
         # test initialization from PyLong(0)
