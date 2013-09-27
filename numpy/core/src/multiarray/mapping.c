@@ -715,45 +715,57 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
 
         /*
-         * Single integer index, there are two cases here.
-         * It could be an array, a 0-d array is handled
-         * a bit weird however, so need to special case it.
+         * Special case to allow 0-d boolean indexing with scalars.
+         * Should be removed after boolean as integer deprecation.
+         * Since this is always an error if it was not a boolean, we can
+         * allow the 0-d special case before the rest.
          */
+        else if (PyArray_NDIM(self) != 0) {
+            /*
+             * Single integer index, there are two cases here.
+             * It could be an array, a 0-d array is handled
+             * a bit weird however, so need to special case it.
+             */
 #if !defined(NPY_PY3K)
-        else if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
+            if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
 #else
-        else if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
+            if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
 #endif
-            i = PyArray_PyIntAsIntp(obj);
-            if ((i == -1) && PyErr_Occurred()) {
-                PyErr_Clear();
+                i = PyArray_PyIntAsIntp(obj);
+                if ((i == -1) && PyErr_Occurred()) {
+                    PyErr_Clear();
+                }
+                else {
+                    index_type |= HAS_INTEGER;
+                    indices[curr_idx].object = NULL;
+                    indices[curr_idx].value = i;
+                    indices[curr_idx].type = HAS_INTEGER;
+                    used_ndim += 1;
+                    new_ndim += 0;
+                    curr_idx += 1;
+                    continue;
+                }
             }
-            else {
-                index_type |= HAS_INTEGER;
-                indices[curr_idx].object = NULL;
-                indices[curr_idx].value = i;
-                indices[curr_idx].type = HAS_INTEGER;
-                used_ndim += 1;
-                new_ndim += 0;
-                curr_idx += 1;
-                continue;
+            /*
+             * After `__index__` deprecation, this can be removed in favor
+             * of a simple PyArray_PyIntAsIntp try and except.
+             */
+            else if (PyArray_NDIM((PyArrayObject *)obj) == 0) {
+                 i = PyArray_PyIntAsIntp(obj);
+                 if ((i == -1) && PyErr_Occurred()) {
+                     PyErr_Clear();
+                 }
+                 else {
+                     index_type |= (HAS_INTEGER | HAS_SCALAR_ARRAY);
+                     indices[curr_idx].object = NULL;
+                     indices[curr_idx].value = i;
+                     indices[curr_idx].type = HAS_INTEGER;
+                     used_ndim += 1;
+                     new_ndim += 0;
+                     curr_idx += 1;
+                     continue;
+                 }
             }
-        }
-        else if (PyArray_NDIM((PyArrayObject *)obj) == 0) {
-             i = PyArray_PyIntAsIntp(obj);
-             if ((i == -1) && PyErr_Occurred()) {
-                 PyErr_Clear();
-             }
-             else {
-                 index_type |= (HAS_INTEGER | HAS_SCALAR_ARRAY);
-                 indices[curr_idx].object = NULL;
-                 indices[curr_idx].value = i;
-                 indices[curr_idx].type = HAS_INTEGER;
-                 used_ndim += 1;
-                 new_ndim += 0;
-                 curr_idx += 1;
-                 continue;
-             }
         }
 
         /*
@@ -787,6 +799,17 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     goto failed_building_indices;
                 }
             }
+            /*
+             * Special case to allow 0-d boolean indexing with
+             * scalars. Should be removed after boolean-array
+             * like as integer-array like deprecation.
+             * (does not cover ufunc.at, but that should not matter...)
+             * Since 0-d arrays (but 0-d booleans) always error out, we
+             * do not need to bother about casting to int in that case...
+             */
+            else if (PyArray_NDIM(self) == 0) {
+                arr = tmp_arr;
+            }
             else {
                 /*
                  * These Checks can be removed after deprecation, since
@@ -811,6 +834,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                                 "in the future, 0-d boolean arrays will be "
                                 "interpreted as a valid boolean index");
                         goto failed_building_indices;
+                    }
+                    else {
+                        arr = tmp_arr;
                     }
                 }
                 else if (!PyArray_ISINTEGER(tmp_arr)) {
