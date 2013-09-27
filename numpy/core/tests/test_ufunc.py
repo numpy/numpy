@@ -787,6 +787,30 @@ class TestUfunc(TestCase):
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
         assert_array_equal(a, [4, 5, 6])
 
+        # There's no way to propagate exceptions from the place where we issue
+        # this deprecation warning, so we must throw the exception away
+        # entirely rather than cause it to be raised at some other point, or
+        # trigger some other unsuspecting if (PyErr_Occurred()) { ...} at some
+        # other location entirely.
+        import warnings
+        import sys
+        if sys.version_info[0] >= 3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            old_stderr = sys.stderr
+            try:
+                sys.stderr = StringIO()
+                # No error, but dumps to stderr
+                a += 1.1
+                # No error on the next bit of code executed either
+                1 + 1
+                assert_("Implicitly casting" in sys.stderr.getvalue())
+            finally:
+                sys.stderr = old_stderr
+
     def test_ufunc_custom_out(self):
         # Test ufunc with built in input types and custom output type
 
