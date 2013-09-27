@@ -793,12 +793,23 @@ class TestUfunc(TestCase):
         # trigger some other unsuspecting if (PyErr_Occurred()) { ...} at some
         # other location entirely.
         import warnings
+        import sys
+        if sys.version_info[0] >= 3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
         with warnings.catch_warnings():
             warnings.simplefilter("error")
-            # No error
-            a += 1.1
-            # No error on the next bit of code executed either
-            1 + 1
+            old_stderr = sys.stderr
+            try:
+                sys.stderr = StringIO()
+                # No error, but dumps to stderr
+                a += 1.1
+                # No error on the next bit of code executed either
+                1 + 1
+                assert_("Implicitly casting" in sys.stderr.getvalue())
+            finally:
+                sys.stderr = old_stderr
 
     def test_ufunc_custom_out(self):
         # Test ufunc with built in input types and custom output type

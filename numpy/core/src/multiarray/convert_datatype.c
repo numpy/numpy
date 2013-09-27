@@ -583,12 +583,18 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         same_kind_ok = PyArray_CanCastTypeTo_impl(from, to,
                                                   NPY_SAME_KIND_CASTING);
         if (unsafe_ok && !same_kind_ok) {
-            if (DEPRECATE("Implicitly casting between incompatible kinds. In "
-                          "a future numpy release, this will raise an error. "
-                          "Use casting=\"unsafe\" if this is intentional.")
-                < 0) {
+            char * msg = "Implicitly casting between incompatible kinds. In "
+                "a future numpy release, this will raise an error. "
+                "Use casting=\"unsafe\" if this is intentional.";
+            if (DEPRECATE(msg) < 0) {
                 /* We have no way to propagate an exception :-( */
                 PyErr_Clear();
+                PySys_WriteStderr("Sorry, you requested this warning "
+                                  "be raised as an error, but we couldn't "
+                                  "do it. (See issue #3806 in the numpy "
+                                  "bug tracker.) So FYI, it was: "
+                                  "DeprecationWarning: %s\n",
+                                  msg);
             }
         }
         return unsafe_ok;
