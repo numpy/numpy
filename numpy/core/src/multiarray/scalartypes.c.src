@@ -2872,8 +2872,8 @@ static npy_hash_t
 /**end repeat**/
 
 /**begin repeat
- * #lname = byte, short, uint, ulong#
- * #name = Byte, Short, UInt, ULong#
+ * #lname = byte, short, uint#
+ * #name = Byte, Short, UInt#
  */
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
@@ -2885,6 +2885,15 @@ static npy_hash_t
     return x;
 }
 /**end repeat**/
+
+static npy_hash_t
+ulong_arrtype_hash(PyObject *obj)
+{
+    PyObject * l = PyLong_FromUnsignedLong(((PyULongScalarObject*)obj)->obval);
+    npy_hash_t x = PyObject_Hash(l);
+    Py_DECREF(l);
+    return x;
+}
 
 #if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
 static npy_hash_t
@@ -2898,49 +2907,31 @@ int_arrtype_hash(PyObject *obj)
 }
 #endif
 
+#if defined(NPY_PY3K)
+static npy_hash_t
+long_arrtype_hash(PyObject *obj)
+{
+    PyObject * l = PyLong_FromLong(((PyLongScalarObject*)obj)->obval);
+    npy_hash_t x = PyObject_Hash(l);
+    Py_DECREF(l);
+    return x;
+}
+#endif
+
 /**begin repeat
  * #char = ,u#
  * #Char = ,U#
- * #ext = && (x >= LONG_MIN),#
+ * #Word = ,Unsigned#
  */
-#if NPY_SIZEOF_HASH_T != NPY_SIZEOF_LONGLONG
-/* we assume NPY_SIZEOF_LONGLONG=2*NPY_SIZEOF_LONG */
 static npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t y;
-    npy_@char@longlong x = (((Py@Char@LongLongScalarObject *)obj)->obval);
-
-    if ((x <= LONG_MAX)@ext@) {
-        y = (npy_hash_t) x;
-    }
-    else {
-        union Mask {
-            long hashvals[2];
-            npy_@char@longlong v;
-        } both;
-
-        both.v = x;
-        y = both.hashvals[0] + (1000003)*both.hashvals[1];
-    }
-    if (y == -1) {
-        y = -2;
-    }
-    return y;
-}
-#else
-
-static npy_hash_t
-@char@longlong_arrtype_hash(PyObject *obj)
-{
-    npy_hash_t x = (npy_hash_t)(((Py@Char@LongLongScalarObject *)obj)->obval);
-    if (x == -1) {
-        x = -2;
-    }
+    PyObject * l = PyLong_From@Word@LongLong(
+                                 ((Py@Char@LongLongScalarObject*)obj)->obval);
+    npy_hash_t x = PyObject_Hash(l);
+    Py_DECREF(l);
     return x;
 }
-
-#endif
 /**end repeat**/
 
 
@@ -4079,7 +4070,7 @@ initialize_numeric_types(void)
 
 #if defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
-    PyLongArrType_Type.tp_hash = int_arrtype_hash;
+    PyLongArrType_Type.tp_hash = long_arrtype_hash;
 #endif
 
 #if (NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG) || defined(NPY_PY3K)

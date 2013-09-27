@@ -59,6 +59,26 @@ class TestFlags(TestCase):
         assert_equal(self.a.flags.aligned, True)
         assert_equal(self.a.flags.updateifcopy, False)
 
+class TestHash(TestCase):
+    # see #3793
+    def test_int(self):
+        for st, ut, s in [(np.int8, np.uint8, 8),
+                          (np.int16, np.uint16, 16),
+                          (np.int32, np.uint32, 32),
+                          (np.int64, np.uint64, 64)]:
+            for i in range(1, s):
+                assert_equal(hash(st(-2**i)), hash(-2**i),
+                             err_msg="%r: -2**%d" % (st, i))
+                assert_equal(hash(st(2**(i - 1))), hash(2**(i - 1)),
+                             err_msg="%r: 2**%d" % (st, i - 1))
+                assert_equal(hash(st(2**i - 1)), hash(2**i - 1),
+                             err_msg="%r: 2**%d - 1" % (st, i))
+
+                i = max(i - 1, 1)
+                assert_equal(hash(ut(2**(i - 1))), hash(2**(i - 1)),
+                             err_msg="%r: 2**%d" % (ut, i - 1))
+                assert_equal(hash(ut(2**i - 1)), hash(2**i - 1),
+                             err_msg="%r: 2**%d - 1" % (ut, i))
 
 class TestAttributes(TestCase):
     def setUp(self):
