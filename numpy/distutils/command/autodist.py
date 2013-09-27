@@ -35,8 +35,8 @@ def check_compiler_gcc4(cmd):
 int
 main()
 {
-#ifndef __GNUC__ && (__GNUC__ >= 4)
-die in an horrible death
+#if (! defined __GNUC__) || (__GNUC__ < 4)
+#error gcc >= 4 required
 #endif
 }
 """
