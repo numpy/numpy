@@ -261,6 +261,11 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
      */
     temp = mit->ait->ao;
     Py_INCREF(PyArray_DESCR(temp));
+    /*
+     * TODO: This is historically a bug. If we have a subclass, the subclass
+     *       might mess with the shape (i.e. matrix). And this makes transposing
+     *       buggy!
+     */
     ret = (PyArrayObject *)
         PyArray_NewFromDescr(Py_TYPE(temp),
                              PyArray_DESCR(temp),
@@ -453,6 +458,13 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
     descr = PyArray_DESCR(mit->ait->ao);
     Py_INCREF(descr);
+    /*
+     * TODO: This is not ideal, since it makes problems for example when
+     *       the dtype is object and it is not already an array
+     *       (nested objects) or for dtypes with fields.
+     *       Should probably create a temporary array and use
+     *       PyArray_CopyObject.
+     */
     arr = (PyArrayObject *)PyArray_FromAny(op, descr,
                                 0, 0, NPY_ARRAY_FORCECAST, NULL);
     if (arr == NULL) {
@@ -915,7 +927,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     indices[curr_idx].type = HAS_BOOL;
                     indices[curr_idx].object = (PyObject *)arr;
 
-                    /* keep track anyway, even if it is trivial */
+                    /* keep track anyway, just to be complete */
                     used_ndim = PyArray_NDIM(self);
                     fancy_ndim = PyArray_NDIM(self);
                     curr_idx += 1;
@@ -2065,8 +2077,16 @@ mapiter_outernext(PyArrayMapIterObject *mit)
     npy_intp offset_add;
     mit->dataptr = mit->baseoffset;
     if ((--mit->itersize) == 0) {
-        if (mit->iternext(mit->outer)) {;
+        if (mit->iternext(mit->outer)) {
             mit->itersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
+            for (j = 0; j < mit->numiter; j++) {
+                offset_add = *((npy_intp*)mit->iterptrs[j]);
+                if (offset_add < 0) {
+                    offset_add += mit->outer_dims[j];
+                }
+                mit->dataptr += offset_add * mit->outer_strides[j];
+            }
+            return;
         }
         else {
             return;
