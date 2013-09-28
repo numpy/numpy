@@ -11,6 +11,7 @@ Highlights
 Dropped Support
 ===============
 
+The oldnumeric and numarray modules have been removed.
 
 Future Changes
 ==============

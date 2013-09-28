@@ -180,10 +180,10 @@ class TestRegression(TestCase):
             sys.stdout = oldstdout
 
     def test_include_dirs(self):
-        """As a sanity check, just test that get_include and
-        get_numarray_include include something reasonable.  Somewhat
-        related to ticket #1405."""
-        include_dirs = [np.get_include(), np.get_numarray_include()]
+        # As a sanity check, just test that get_include
+        # includes something reasonable.  Somewhat
+        # related to ticket #1405."""
+        include_dirs = [np.get_include()]
         for path in include_dirs:
             assert_(isinstance(path, (str, unicode)))
             assert_(path != '')

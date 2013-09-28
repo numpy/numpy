@@ -1,7 +1,7 @@
-***************************************************
-Old Numeric compatibility (:mod:`numpy.oldnumeric`)
-***************************************************
+*************************
+Old Numeric compatibility
+*************************
 
 .. currentmodule:: numpy
 
-.. automodule:: numpy.oldnumeric
+The oldnumeric module was removed in Numpy 1.9.0.

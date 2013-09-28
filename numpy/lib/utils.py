@@ -8,10 +8,11 @@ import re
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import product, ndarray, ufunc
 
-__all__ = ['issubclass_', 'issubsctype', 'issubdtype',
-        'deprecate', 'deprecate_with_doc', 'get_numarray_include',
-        'get_include', 'info', 'source', 'who', 'lookfor', 'byte_bounds',
-        'safe_eval']
+__all__ = [
+    'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
+    'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
+    'lookfor', 'byte_bounds', 'safe_eval'
+]
 
 def get_include():
     """
@@ -41,47 +42,6 @@ def get_include():
         import numpy.core as core
         d = os.path.join(os.path.dirname(core.__file__), 'include')
     return d
-
-def get_numarray_include(type=None):
-    """
-    Return the directory that contains the numarray \\*.h header files.
-
-    Extension modules that need to compile against numarray should use this
-    function to locate the appropriate include directory.
-
-    Parameters
-    ----------
-    type : any, optional
-        If `type` is not None, the location of the NumPy headers is returned
-        as well.
-
-    Returns
-    -------
-    dirs : str or list of str
-        If `type` is None, `dirs` is a string containing the path to the
-        numarray headers.
-        If `type` is not None, `dirs` is a list of strings with first the
-        path(s) to the numarray headers, followed by the path to the NumPy
-        headers.
-
-    Notes
-    -----
-    Useful when using ``distutils``, for example in ``setup.py``.
-    ::
-
-        import numpy as np
-        ...
-        Extension('extension_name', ...
-                include_dirs=[np.get_numarray_include()])
-        ...
-
-    """
-    from numpy.numarray import get_numarray_include_dirs
-    include_dirs = get_numarray_include_dirs()
-    if type is None:
-        return include_dirs[0]
-    else:
-        return include_dirs + [get_include()]
 
 
 def _set_function_name(func, name):
@@ -418,6 +378,55 @@ def _makenamedict(module='numpy'):
                     thedict[modname] = moddict
     return thedict, dictlist
 
+
+def _info(obj, output=sys.stdout):
+    """Provide information about ndarray obj.
+
+    Parameters
+    ----------
+    obj: ndarray
+        Must be ndarray, not checked.
+    output:
+        Where printed output goes.
+
+    Notes
+    -----
+    Copied over from the numarray module prior to its removal.
+    Adapted somewhat as only numpy is an option now.
+
+    Called by info.
+
+    """
+    extra = ""
+    tic = ""
+    bp = lambda x: x
+    cls = getattr(obj, '__class__', type(obj))
+    nm = getattr(cls, '__name__', cls)
+    strides = obj.strides
+    endian = obj.dtype.byteorder
+
+    print("class: ", nm, file=output)
+    print("shape: ", obj.shape, file=output)
+    print("strides: ", strides, file=output)
+    print("itemsize: ", obj.itemsize, file=output)
+    print("aligned: ", bp(obj.flags.aligned), file=output)
+    print("contiguous: ", bp(obj.flags.contiguous), file=output)
+    print("fortran: ", obj.flags.fortran, file=output)
+    print("data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra), file=output)
+    print("byteorder: ", end=' ', file=output)
+    if endian in ['|', '=']:
+        print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
+        byteswap = False
+    elif endian == '>':
+        print("%sbig%s" % (tic, tic), file=output)
+        byteswap = sys.byteorder != "big"
+    else:
+        print("%slittle%s" % (tic, tic), file=output)
+        byteswap = sys.byteorder != "little"
+    print("byteswap: ", bp(byteswap), file=output)
+    print("type: %s" % obj.dtype, file=output)
+
+
 def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
     """
     Get help information for a function, class, or module.
@@ -479,8 +488,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
     if object is None:
         info(info)
     elif isinstance(object, ndarray):
-        import numpy.numarray as nn
-        nn.info(object, output=output, numpy=1)
+        _info(object, output=output)
     elif isinstance(object, str):
         if _namedict is None:
             _namedict, _dictlist = _makenamedict(toplevel)

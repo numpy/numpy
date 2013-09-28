@@ -1294,10 +1294,6 @@ class Configuration(object):
         else:
             self.include_dirs.extend(include_dirs)
 
-    def add_numarray_include_dirs(self):
-        import numpy.numarray.util as nnu
-        self.add_include_dirs(*nnu.get_numarray_include_dirs())
-
     def add_headers(self,*files):
         """Add installable headers to configuration.
 

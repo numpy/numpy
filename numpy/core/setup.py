@@ -762,7 +762,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'arrayscalars.h'),
             join('include', 'numpy', 'noprefix.h'),
             join('include', 'numpy', 'npy_interrupt.h'),
-            join('include', 'numpy', 'oldnumeric.h'),
             join('include', 'numpy', 'npy_3kcompat.h'),
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),

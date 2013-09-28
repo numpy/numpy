@@ -10,8 +10,6 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('f2py')
     config.add_subpackage('core')
     config.add_subpackage('lib')
-    config.add_subpackage('oldnumeric')
-    config.add_subpackage('numarray')
     config.add_subpackage('fft')
     config.add_subpackage('linalg')
     config.add_subpackage('random')

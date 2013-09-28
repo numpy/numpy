@@ -1419,12 +1419,6 @@ class TestRegression(TestCase):
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
 
-    def test_numeric_handleError(self):
-        """Ticket #1405"""
-        from numpy import numarray
-        # Just make sure this doesn't throw an exception
-        numarray.handleError(0, "")
-
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
         np.asarray('x', '>c')
