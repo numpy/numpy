@@ -115,7 +115,6 @@ NPY_NO_EXPORT npy_intp
 PyArray_OverflowMultiplyList(npy_intp *l1, int n)
 {
     npy_intp prod = 1;
-    npy_intp imax = NPY_MAX_INTP;
     int i;
 
     for (i = 0; i < n; i++) {
@@ -124,11 +123,9 @@ PyArray_OverflowMultiplyList(npy_intp *l1, int n)
         if (dim == 0) {
             return 0;
         }
-        if (dim > imax) {
+        if (npy_mul_with_overflow_intp(&prod, prod, dim)) {
             return -1;
         }
-        imax /= dim;
-        prod *= dim;
     }
     return prod;
 }

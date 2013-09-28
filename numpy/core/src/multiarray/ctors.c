@@ -888,7 +888,6 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     PyArrayObject_fields *fa;
     int i;
     size_t sd;
-    npy_intp largest;
     npy_intp size;
 
     if (descr->subarray) {
@@ -937,7 +936,6 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
     }
 
-    largest = NPY_MAX_INTP / sd;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -960,17 +958,14 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         /*
          * Care needs to be taken to avoid integer overflow when
          * multiplying the dimensions together to get the total size of the
-         * array. Hence before each multiplication we first check that the
-         * product will not exceed the maximum allowable size.
+         * array.
          */
-        if (dim > largest) {
+        if (npy_mul_with_overflow_intp(&size, size, dim)) {
             PyErr_SetString(PyExc_ValueError,
                             "array is too big.");
             Py_DECREF(descr);
             return NULL;
         }
-        size *= dim;
-        largest /= dim;
     }
 
     fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
