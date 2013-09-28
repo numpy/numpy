@@ -1386,6 +1386,7 @@ class lapack_opt_info(system_info):
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
                'i386' in platform.platform():
                 intel = 1
             else:
@@ -1482,6 +1483,7 @@ class blas_opt_info(system_info):
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
                'i386' in platform.platform():
                 intel = 1
             else:
