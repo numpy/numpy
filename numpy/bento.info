@@ -17,8 +17,6 @@ Library:
         linalg,
         ma,
         matrixlib,
-        numarray,
-        oldnumeric,
         polynomial,
         random,
         testing
