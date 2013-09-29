@@ -1619,7 +1619,7 @@ _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
     _one_to_n_data *d = (_one_to_n_data *)data;
     PyArray_StridedUnaryOp *subtransfer = d->stransfer,
                 *stransfer_finish_src = d->stransfer_finish_src;
-    NpyAuxData *subdata = d->data, *data_finish_src = data_finish_src;
+    NpyAuxData *subdata = d->data, *data_finish_src = d->data_finish_src;
     npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
 
     while (N > 0) {
