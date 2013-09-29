@@ -2868,7 +2868,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     return 1;
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    free(mem_buff2);
+    free(mem_buff);
     free(mem_buff2);
     memset(params, 0, sizeof(*params));
 
