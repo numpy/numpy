@@ -1970,12 +1970,12 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     }
 
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
-    /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject));
-    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
     if (mit == NULL) {
         return NULL;
     }
+    /* set all attributes of mapiter to zero */
+    memset(mit, 0, sizeof(PyArrayMapIterObject));
+    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
     /* initialize mapiter attributes */
     mit->consec = 1;
 
