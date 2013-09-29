@@ -2148,7 +2148,7 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     }
 
     *subscripts = PyBytes_AsString(subscripts_str);
-    if (subscripts == NULL) {
+    if (*subscripts == NULL) {
         Py_XDECREF(*str_obj);
         *str_obj = NULL;
         return -1;
