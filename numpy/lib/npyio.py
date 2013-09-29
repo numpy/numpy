@@ -1,29 +1,26 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from . import format
 import sys
 import os
 import re
-import sys
 import itertools
 import warnings
 import weakref
 from operator import itemgetter
 
+import numpy as np
+from . import format
 from ._datasource import DataSource
 from ._compiled_base import packbits, unpackbits
-
 from ._iotools import (
-        LineSplitter, NameValidator, StringConverter,
-        ConverterError, ConverterLockError, ConversionWarning,
-        _is_string_like, has_nested_fields, flatten_dtype,
-        easy_dtype, _bytes_to_name
-        )
+    LineSplitter, NameValidator, StringConverter, ConverterError,
+    ConverterLockError, ConversionWarning, _is_string_like, has_nested_fields,
+    flatten_dtype, easy_dtype, _bytes_to_name
+    )
 
 from numpy.compat import (
-        asbytes, asstr, asbytes_nested, bytes, basestring, unicode
-        )
+    asbytes, asstr, asbytes_nested, bytes, basestring, unicode
+    )
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -33,11 +30,11 @@ else:
 
 loads = pickle.loads
 
-__all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-           'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-           'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
+__all__ = [
+    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
+    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
-_string_like = _is_string_like
 
 def seek_gzip_factory(f):
     """Use this factory to produce the class so that we can do a lazy
@@ -67,7 +64,6 @@ def seek_gzip_factory(f):
         def tell(self):
             return self.offset
 
-
     if isinstance(f, str):
         f = GzipFile(f)
     elif isinstance(f, gzip.GzipFile):
@@ -84,7 +80,6 @@ def seek_gzip_factory(f):
         f.mode = mode
 
     return f
-
 
 
 class BagObj(object):
@@ -119,16 +114,19 @@ class BagObj(object):
     def __init__(self, obj):
         # Use weakref to make NpzFile objects collectable by refcount
         self._obj = weakref.proxy(obj)
+
     def __getattribute__(self, key):
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
             raise AttributeError(key)
 
+
 def zipfile_factory(*args, **kwargs):
     import zipfile
     kwargs['allowZip64'] = True
     return zipfile.ZipFile(*args, **kwargs)
+
 
 class NpzFile(object):
     """
@@ -187,8 +185,8 @@ class NpzFile(object):
 
     """
     def __init__(self, fid, own_fid=False):
-        # Import is postponed to here since zipfile depends on gzip, an optional
-        # component of the so-called standard library.
+        # Import is postponed to here since zipfile depends on gzip, an
+        # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
@@ -221,7 +219,7 @@ class NpzFile(object):
         if self.fid is not None:
             self.fid.close()
             self.fid = None
-        self.f = None # break reference cycle
+        self.f = None  # break reference cycle
 
     def __del__(self):
         self.close()
@@ -252,7 +250,6 @@ class NpzFile(object):
                 return self.zip.read(key)
         else:
             raise KeyError("%s is not a file in the archive" % key)
-
 
     def __iter__(self):
         return iter(self.files)
@@ -376,7 +373,7 @@ def load(file, mmap_mode=None):
         _ZIP_PREFIX = asbytes('PK\x03\x04')
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
-        fid.seek(-N, 1) # back-up
+        fid.seek(-N, 1)  # back-up
         if magic.startswith(_ZIP_PREFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
@@ -399,6 +396,7 @@ def load(file, mmap_mode=None):
     finally:
         if own_fid:
             fid.close()
+
 
 def save(file, arr):
     """
@@ -451,6 +449,7 @@ def save(file, arr):
     finally:
         if own_fid:
             fid.close()
+
 
 def savez(file, *args, **kwds):
     """
@@ -529,6 +528,7 @@ def savez(file, *args, **kwds):
     """
     _savez(file, args, kwds, False)
 
+
 def savez_compressed(file, *args, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
@@ -553,6 +553,7 @@ def savez_compressed(file, *args, **kwds):
     """
     _savez(file, args, kwds, True)
 
+
 def _savez(file, args, kwds, compress):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
@@ -568,7 +569,8 @@ def _savez(file, args, kwds, compress):
     for i, val in enumerate(args):
         key = 'arr_%d' % i
         if key in namedict.keys():
-            raise ValueError("Cannot use un-named variables and keyword %s" % key)
+            raise ValueError(
+                "Cannot use un-named variables and keyword %s" % key)
         namedict[key] = val
 
     if compress:
@@ -576,7 +578,7 @@ def _savez(file, args, kwds, compress):
     else:
         compression = zipfile.ZIP_STORED
 
-    zip = zipfile_factory(file, mode="w", compression=compression)
+    zipf = zipfile_factory(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
@@ -589,18 +591,18 @@ def _savez(file, args, kwds, compress):
                 format.write_array(fid, np.asanyarray(val))
                 fid.close()
                 fid = None
-                zip.write(tmpfile, arcname=fname)
+                zipf.write(tmpfile, arcname=fname)
             finally:
                 if fid:
                     fid.close()
     finally:
         os.remove(tmpfile)
 
-    zip.close()
+    zipf.close()
 
-# Adapted from matplotlib
 
 def _getconv(dtype):
+    """ Find the correct dtype converter. Adapted from matplotlib """
     typ = dtype.type
     if issubclass(typ, np.bool_):
         return lambda x: bool(int(x))
@@ -618,7 +620,6 @@ def _getconv(dtype):
         return bytes
     else:
         return str
-
 
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -764,7 +765,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def pack_items(items, packing):
         """Pack items into nested lists based on re-packing info."""
-        if packing == None:
+        if packing is None:
             return items[0]
         elif packing is tuple:
             return tuple(items)
@@ -878,7 +879,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
-        footer='', comments='# '):
+            footer='', comments='# '):
     """
     Save an array to a text file.
 
@@ -1036,7 +1037,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
                 if iscomplex_X:
-                    fmt = [' (%s+%sj)' % (fmt, fmt),] * ncol
+                    fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
                 else:
                     fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
@@ -1066,6 +1067,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     finally:
         if own_fh:
             fh.close()
+
 
 def fromregex(file, regexp, dtype):
     """
@@ -1150,12 +1152,9 @@ def fromregex(file, regexp, dtype):
             file.close()
 
 
-
-
 #####--------------------------------------------------------------------------
 #---- --- ASCII functions ---
 #####--------------------------------------------------------------------------
-
 
 
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -1321,9 +1320,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Check the input dictionary of converters
     user_converters = converters or {}
     if not isinstance(user_converters, dict):
-        errmsg = "The input argument 'converter' should be a valid dictionary "\
+        raise TypeError(
+            "The input argument 'converter' should be a valid dictionary "
             "(got '%s' instead)"
-        raise TypeError(errmsg % type(user_converters))
+            % type(user_converters))
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
@@ -1334,8 +1334,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             fhd = iter(fname)
     except TypeError:
-        raise TypeError("fname mustbe a string, filehandle, or generator. "\
-                        "(got %s instead)" % type(fname))
+        raise TypeError(
+            "fname mustbe a string, filehandle, or generator. "
+            "(got %s instead)" % type(fname))
 
     split_line = LineSplitter(delimiter=delimiter, comments=comments,
                               autostrip=autostrip)._handyman
@@ -1346,9 +1347,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Get the first valid lines after the first skiprows ones ..
     if skiprows:
-        warnings.warn(\
-            "The use of `skiprows` is deprecated, it will be removed in numpy 2.0.\n" \
-            "Please use `skip_header` instead.",
+        warnings.warn(
+            "The use of `skiprows` is deprecated, it will be removed in "
+            "numpy 2.0.\nPlease use `skip_header` instead.",
             DeprecationWarning)
         skip_header = skiprows
     # Skip the first `skip_header` rows
@@ -1403,7 +1404,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if names is not None:
         names = list(names)
 
-
     if usecols:
         for (i, current) in enumerate(usecols):
             # if usecols is a list of names, convert to a list of indices
@@ -1422,7 +1422,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     elif (names is not None) and (dtype is not None):
         names = list(dtype.names)
 
-
     # Process the missing values ...............................
     # Rename missing_values for convenience
     user_missing_values = missing_values or ()
@@ -1440,7 +1439,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Transform it into an integer
                     key = names.index(key)
                 except ValueError:
-                    # We couldn't find it: the name must have been dropped, then
+                    # We couldn't find it: the name must have been dropped
                     continue
             # Redefine the key as needed if it's a column number
             if usecols:
@@ -1478,9 +1477,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the deprecated `missing`
     if missing != asbytes(''):
-        warnings.warn(\
-            "The use of `missing` is deprecated, it will be removed in Numpy 2.0.\n" \
-            "Please use `missing_values` instead.",
+        warnings.warn(
+            "The use of `missing` is deprecated, it will be removed in "
+            "Numpy 2.0.\nPlease use `missing_values` instead.",
             DeprecationWarning)
         values = [str(_) for _ in missing.split(asbytes(","))]
         for entry in missing_values:
@@ -1499,7 +1498,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Transform it into an integer
                     key = names.index(key)
                 except ValueError:
-                    # We couldn't find it: the name must have been dropped, then
+                    # We couldn't find it: the name must have been dropped,
                     continue
             # Redefine the key if it's a column number and usecols is defined
             if usecols:
@@ -1532,9 +1531,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if len(dtype_flat) > 1:
             # Flexible type : get a converter from each dtype
             zipit = zip(dtype_flat, missing_values, filling_values)
-            converters = [StringConverter(dt, locked=True,
-                                          missing_values=miss, default=fill)
-                           for (dt, miss, fill) in zipit]
+            converters = [
+                StringConverter(dt, locked=True, missing_values=miss,
+                                default=fill)
+                for (dt, miss, fill) in zipit
+                ]
         else:
             # Set to a default converter (but w/ different missing values)
             zipit = zip(missing_values, filling_values)
@@ -1570,7 +1571,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_converters.update(uc_update)
 
     miss_chars = [_.missing_values for _ in converters]
-
 
     # Initialize the output lists ...
     # ... rows
@@ -1713,15 +1713,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             dtype.names = names
         # Case 1. We have a structured type
         if len(dtype_flat) > 1:
-            # Nested dtype, eg  [('a', int), ('b', [('b0', int), ('b1', 'f4')])]
+            # Nested dtype, eg [('a', int), ('b', [('b0', int), ('b1', 'f4')])]
             # First, create the array using a flattened dtype:
             # [('a', int), ('b1', int), ('b2', float)]
             # Then, view the array using the specified dtype.
             if 'O' in (_.char for _ in dtype_flat):
                 if has_nested_fields(dtype):
-                    errmsg = "Nested fields involving objects "\
-                             "are not supported..."
-                    raise NotImplementedError(errmsg)
+                    raise NotImplementedError(
+                        "Nested fields involving objects are not supported...")
                 else:
                     output = np.array(data, dtype=dtype)
             else:
@@ -1729,9 +1728,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 output = rows.view(dtype)
             # Now, process the rowmasks the same way
             if usemask:
-                rowmasks = np.array(masks,
-                                    dtype=np.dtype([('', np.bool)
-                                    for t in dtype_flat]))
+                rowmasks = np.array(
+                    masks, dtype=np.dtype([('', np.bool) for t in dtype_flat]))
                 # Construct the new dtype
                 mdtype = make_mask_descr(dtype)
                 outputmask = rowmasks.view(mdtype)
@@ -1781,7 +1779,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if unpack:
         return output.squeeze().T
     return output.squeeze()
-
 
 
 def ndfromtxt(fname, **kwargs):
