@@ -1844,7 +1844,7 @@ def recfromtxt(fname, **kwargs):
     array will be determined from the data.
 
     """
-    kwargs.update(dtype=kwargs.get('dtype', None))
+    kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
     if usemask:
@@ -1872,16 +1872,18 @@ def recfromcsv(fname, **kwargs):
     numpy.genfromtxt : generic function to load ASCII data.
 
     """
-    case_sensitive = kwargs.get('case_sensitive', "lower") or "lower"
-    names = kwargs.get('names', True)
-    if names is None:
-        names = True
-    kwargs.update(dtype=kwargs.get('update', None),
-                  delimiter=kwargs.get('delimiter', ",") or ",",
-                  names=names,
-                  case_sensitive=case_sensitive)
-    usemask = kwargs.get("usemask", False)
+    # Set default kwargs as relevant to csv import.
+    # These seem to be undocumented. (case_sensitive is mentioned in basics.io)
+    kwargs.setdefault("case_sensitive", "lower")
+    # previously, names were set to True if they were not set or if they
+    # were set to None, overriding the user's choice.
+    kwargs.setdefault("names", True)
+    kwargs.setdefault("delimiter", ",")
+    kwargs.setdefault("dtype", None)
+
     output = genfromtxt(fname, **kwargs)
+
+    usemask = kwargs.get("usemask", False)
     if usemask:
         from numpy.ma.mrecords import MaskedRecords
         output = output.view(MaskedRecords)
