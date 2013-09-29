@@ -121,6 +121,12 @@ class ModuleDeprecationWarning(DeprecationWarning):
     pass
 
 
+# oldnumeric and numarray were removed in 1.9. In case some packages import
+# but do not use them, we define them here for backward compatibility.
+oldnumeric = 'removed'
+numarray = 'removed'
+
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
