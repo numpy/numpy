@@ -132,6 +132,14 @@ fix changes the returned value. The mirr function called the npv function,
 but worked around the problem, so that was also fixed and the return value
 of the mirr function remains unchanged.
 
+Runtime warnings when comparing NaN numbers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Comparing ``NaN`` floating point numbers now raises the ``invalid`` runtime
+warning. If a ``NaN`` is expected the warning can be ignored using np.errstate.
+E.g.::
+
+  with np.errstate(invalid='ignore'):
+      operation()
 
 New Features
 ============
