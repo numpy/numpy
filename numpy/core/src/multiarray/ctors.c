@@ -2960,7 +2960,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     }
     if (len > 0) {
         *next = PyNumber_Add(start, step);
-        if (!next) {
+        if (!*next) {
             return -1;
         }
     }
