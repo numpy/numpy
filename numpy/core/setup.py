@@ -220,6 +220,29 @@ def check_complex(config, mathlibs):
             else:
                 priv.extend([(fname2def(f), 1) for f in flist])
 
+            flist = [f + prec for f in C99_COMPLEX_FUNCS_CHECKED]
+            decl = dict([(f, True) for f in flist])
+            exists = []
+            if not config.check_funcs_once(flist, call=decl, decl=decl,
+                                           libraries=mathlibs):
+                for f in C99_COMPLEX_FUNCS_CHECKED:
+                    if config.check_func(f + prec, call=True, decl=True,
+                                         libraries=mathlibs):
+                        exists.append(f)
+            else:
+                exists.extend(C99_COMPLEX_FUNCS_CHECKED)
+                
+            if len(exists) > 0:
+                fp = open('./numpy/core/test_c99complex.c', 'r')
+                obody = fp.read()
+                fp.close()
+                precname = {'f':'FLOAT', '':'DOUBLE', 'l':'LONGDOUBLE'}[prec]
+            for f in exists:
+                print("ERIC1")
+                body = obody.replace('PYTESTPRECISION', precname).replace('PYTESTFUNC', f.upper())
+                if config.try_run(body, libraries=mathlibs):
+                    priv.append((fname2def(f + prec), 1))
+
         check_prec('')
         check_prec('f')
         check_prec('l')
