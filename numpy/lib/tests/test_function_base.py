@@ -1621,6 +1621,19 @@ class TestMedian(TestCase):
         assert_almost_equal(np.median(x2), 2)
         assert_allclose(np.median(x2, axis=0), x)
 
+    def test_subclass(self):
+        # gh-3846
+        class MySubClass(np.ndarray):
+            def __new__(cls, input_array, info=None):
+                obj = np.asarray(input_array).view(cls)
+                obj.info = info
+                return obj
+
+            def mean(self, axis=None, dtype=None, out=None):
+                return -7
+
+        a = MySubClass([1,2,3])
+        assert_equal(np.median(a), -7)
 
 class TestAdd_newdoc_ufunc(TestCase):
 
