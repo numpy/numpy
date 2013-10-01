@@ -158,6 +158,88 @@ If none of the input arguments has a ``__numpy_ufunc__`` method, the
 execution falls back on the default ufunc behaviour.
 
 
+In combination with Python's binary operations
+----------------------------------------------
+
+The ``__numpy_ufunc__`` mechanism is fully independent of Python's
+standard operator override mechanism, and the two do not interact
+directly.
+
+They however have indirect interactions, because Numpy's ``ndarray``
+type implements its binary operations via Ufuncs. Effectively, we have::
+
+    class ndarray(object):
+        ...
+        def __mul__(self, other):
+            return np.multiply(self, other)
+
+Suppose now we have a second class::
+
+    class MyObject(object):
+        def __numpy_ufunc__(self, *a, **kw):
+            return "ufunc"
+        def __mul__(self, other):
+            return 1234
+        def __rmul__(self, other):
+            return 4321
+
+In this case, standard Python override rules combined with the above
+discussion imply::
+
+    a = MyObject()
+    b = np.array([0])
+
+    a * b    # == 1234       OK
+    b * a    # == "ufunc"    surprising
+
+This is not what would be naively expected, and is therefore somewhat
+undesirable behavior.
+
+The reason why this occurs is: because ``MyObject`` is not an ndarray
+subclass, Python resolves the expression ``b * a`` by calling first
+``b.__mul__``. Since Numpy implements this via an Ufunc, the call is
+forwarded to ``__numpy_ufunc__`` and not to ``__rmul__``.  Note that if
+``MyObject`` is a subclass of ``ndarray``, Python calls ``a.__rmul__``
+first. The issue is therefore that ``__numpy_ufunc__`` implements
+"virtual subclassing" of ndarray behavior, without actual subclassing.
+
+This issue can be resolved by a modification of the binary operation
+methods in Numpy::
+
+    class ndarray(object):
+        ...
+        def __mul__(self, other):
+            if (not isinstance(other, self.__class__) 
+                    and hasattr(other, '__numpy_ufunc__') 
+                    and hasattr(other, '__rmul__')):
+                return NotImplemented
+            return np.multiply(self, other)
+
+        def __imul__(self, other):
+            if (other.__class__ is not self.__class__
+                    and hasattr(other, '__numpy_ufunc__') 
+                    and hasattr(other, '__rmul__')):
+                return NotImplemented
+            return np.multiply(self, other, out=self)
+
+    b * a    # == 4321    OK
+
+The rationale here is the following: since the user class explicitly
+defines both ``__numpy_ufunc__`` and ``__rmul__``, the implementor has
+very likely made sure that the ``__rmul__`` method can process ndarrays.
+If not, the special case is simple to deal with (just call
+``np.multiply``).
+
+The exclusion of subclasses of self can be made because Python itself
+calls the right-hand method first in this case. Moreover, it is
+desirable that ndarray subclasses are able to inherit the right-hand
+binary operation methods from ndarray.
+
+The same priority shuffling needs to be done also for the in-place
+operations, so that ``MyObject.__rmul__`` is prioritized over
+``ndarray.__imul__``.
+
+
 Demo
 ====
 
