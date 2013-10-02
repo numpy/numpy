@@ -482,7 +482,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=0):
     if mask is None:
         return a.sum(axis, dtype, out, keepdims)
     mask = mask.all(axis, keepdims=keepdims)
-    tot = np.add.reduce(a, axis, dtype, out, keepdims)
+    tot = a.sum(axis, dtype, out, keepdims)
     if mask.any():
         tot = _copyto(tot, np.nan, mask)
         warnings.warn("In Numpy 1.9 the sum along empty slices will be zero.",
