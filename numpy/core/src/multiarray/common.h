@@ -84,6 +84,51 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
     }
 }
 
+/*
+ * memchr with stride and invert argument
+ * intended for small searches where a call out to libc memchr is costly.
+ * stride must be a multiple of size.
+ * compared to memchr it returns one stride past end instead of NULL if needle
+ * is not found.
+ */
+static NPY_INLINE char *
+npy_memchr(char * haystack, char needle,
+           npy_intp stride, npy_intp size, npy_intp * subloopsize, int invert)
+{
+    char * p = haystack;
+    char * const end = haystack + size;
+    if (stride == 0) {
+        if (!invert) {
+            p = (*p != needle) ? end : haystack;
+        }
+        else {
+            p = (*p == needle) ? end : haystack;
+        }
+        *subloopsize = (p - haystack);
+        return haystack;
+    }
+
+    if (!invert) {
+        while (p < end && *p != needle) {
+            p += stride;
+        }
+    }
+    else {
+        while (p < end && *p == needle) {
+            p += stride;
+        }
+    }
+
+    /* division is very expensive */
+    if (NPY_LIKELY(stride == 1)) {
+        *subloopsize = (p - haystack);
+    }
+    else {
+        *subloopsize = (p - haystack) / stride;
+    }
+    return p;
+}
+
 #include "ucsnarrow.h"
 
 #endif

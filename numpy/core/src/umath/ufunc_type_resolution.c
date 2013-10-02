@@ -23,6 +23,7 @@
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
+#include "common.h"
 
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
@@ -1343,11 +1344,7 @@ unmasked_ufunc_loop_as_masked(
     /* Process the data as runs of unmasked values */
     do {
         /* Skip masked values */
-        subloopsize = 0;
-        while (subloopsize < loopsize && !*mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 1);
         for (iargs = 0; iargs < nargs; ++iargs) {
             dataptrs[iargs] += subloopsize * strides[iargs];
         }
@@ -1356,11 +1353,7 @@ unmasked_ufunc_loop_as_masked(
          * Process unmasked values (assumes unmasked loop doesn't
          * mess with the 'args' pointer values)
          */
-        subloopsize = 0;
-        while (subloopsize < loopsize && *mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 0);
         unmasked_innerloop(dataptrs, &subloopsize, strides,
                                         unmasked_innerloopdata);
         for (iargs = 0; iargs < nargs; ++iargs) {
