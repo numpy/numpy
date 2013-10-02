@@ -238,7 +238,6 @@ def check_complex(config, mathlibs):
                 fp.close()
                 precname = {'f':'FLOAT', '':'DOUBLE', 'l':'LONGDOUBLE'}[prec]
             for f in exists:
-                print("ERIC1")
                 body = obody.replace('PYTESTPRECISION', precname).replace('PYTESTFUNC', f.upper())
                 if config.try_run(body, libraries=mathlibs):
                     priv.append((fname2def(f + prec), 1))
