@@ -556,7 +556,7 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
      * approximation sinh^2(huge) ~= exp(2*huge) / 4.
      * We use a modified formula to avoid spurious overflow.
      */
-    if (x >= TANH@C@_HUGE) {
+    if (npy_fabs@c@(x) >= TANH@C@_HUGE) {
         @type@ exp_mx = npy_exp@c@(-npy_fabs@c@(x));
         return (npy_cpack@c@(npy_copysign@c@(1, x),
             4 * npy_sin@c@(y) * npy_cos@c@(y) * exp_mx * exp_mx));
