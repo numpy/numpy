@@ -123,6 +123,11 @@ class TestCexp(object):
         # cexp(nan + nani) is nan + nani
         yield check, f, np.nan, np.nan, np.nan, np.nan
 
+        # cexp(nan +-0) is nan +-0
+        yield check, f, np.nan, np.PZERO, np.nan, np.PZERO, True
+        yield check, f, np.nan, np.NZERO, np.nan, np.NZERO, True
+
+
     @dec.knownfailureif(True, "cexp(nan + 0I) is wrong on most implementations")
     def test_special_values2(self):
         # XXX: most implementations get it wrong here (including glibc <= 2.10)
