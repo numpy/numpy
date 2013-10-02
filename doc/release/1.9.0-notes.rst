@@ -20,11 +20,25 @@ Future Changes
 Compatibility notes
 ===================
 
-numpy.percentile returns an array instead of a list.
+Percentile output changes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+If given more than one percentile to compute numpy.percentile returns an array
+instead of a list. A single percentile still returns a scalar.
+The array is equivalent to converting the the list returned in older versions
+to an array via `np.array`.
+
+If the `overwrite_input` option is used the input is only partially instead of
+fully sorted.
 
 
 New Features
 ============
+
+Percentile supports more interpolation options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.percentile` now has the interpolation keyword argument to specify in which
+way points should be interpolated if the percentiles fall between two values.
+See the documentation for the available options.
 
 Ufunc and Dot Overrides
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +55,18 @@ can now be specificed using the dtype parameter.
 
 Improvements
 ============
+
+Percentile implemented in terms of `np.partition`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.percentile` has been implemented interms of `np.partition` which only
+partially sorts the data via a selection algorithm. This improves the time
+complexcity from `O(nlog(n))` to `O(n)`.
+
+Performance improvement for `np.array`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The performance of converting lists containing arrays to arrays using
+`np.array` has been improved. It is now equivalent in speed to
+`np.vstack(list)`.
 
 
 Changes
