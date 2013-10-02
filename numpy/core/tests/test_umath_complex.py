@@ -517,6 +517,16 @@ class TestCarg(object):
         yield check_real_value, ncu._arg, np.nan, np.inf, np.nan, False
         yield check_real_value, ncu._arg, np.inf, np.nan, np.nan, False
 
+class TestCtan(object):
+    def test_simple(self):
+        check_complex_value(ncu.tan, 0, 1000, 0, 1, True)
+        check_complex_value(ncu.tan, 0, -1000, 0, -1, True)
+
+class TestCtanh(object):
+    def test_simple(self):
+        check_complex_value(ncu.tanh, 1000, 0, 1, 0, True)
+        check_complex_value(ncu.tanh, -1000, 0, -1, 0, True)
+
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
     if exact:
