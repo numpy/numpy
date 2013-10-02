@@ -246,6 +246,24 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
         assert_raises(ValueError, linalg.solve, a[0:0], b[0:0])
         assert_raises(ValueError, linalg.solve, a[:, 0:0, 0:0], b)
 
+    def test_0_size_k(self):
+        # test zero multiple equation (K=0) case.
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.arange(4).reshape(1, 2, 2)
+        b = np.arange(6).reshape(3, 2, 1).view(ArraySubclass)
+
+        expected = linalg.solve(a, b)[:,:, 0:0]
+        result = linalg.solve(a, b[:,:, 0:0])
+        assert_array_equal(result, expected)
+        assert_(isinstance(result, ArraySubclass))
+
+        # test both zero.
+        expected = linalg.solve(a, b)[:, 0:0, 0:0]
+        result = linalg.solve(a[:, 0:0, 0:0], b[:,0:0, 0:0])
+        assert_array_equal(result, expected)
+        assert_(isinstance(result, ArraySubclass))
+
 
 class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
