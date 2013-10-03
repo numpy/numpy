@@ -3,14 +3,15 @@ NumPy 1.8.0 Release Notes
 
 This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 
-
 Highlights
 ==========
 
-Python 2 and Python 3 are supported by the same code base. The
-2to3 fixer is no longer run.
-
-
+* Python 2 and Python 3 are supported by the same code base. The
+  2to3 fixer is no longer run.
+* ``full`` and ``full_like`` to create value initialized arrays.
+* ``partition`` partial sorting via selection.
+* inplace fancy indexing for ufuncs with the ``.at`` method.
+* Numerous performance improvements in many areas.
 
 Dropped Support
 ===============
@@ -178,7 +179,8 @@ Advanced indexing using `np.newaxis`
 
 It is now possible to use `np.newaxis`/`None` together with index
 arrays instead of only in simple indices. This means that
-``array[np.newaxis, [0, 1]]`` will now work as expected.
+``array[np.newaxis, [0, 1]]`` will now work as expected and select the first
+two rows while prepending a new axis to the array.
 
 New functions `full` and `full_like`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,11 +193,17 @@ New functions `partition` and `argpartition`
 
 New functions to partially sort arrays via a selection algorithm.
 
-Partial sorting moves the value of selected elements into their position if the
-array would be sorted. In the resulting array all elements smaller than the
-sorted elements will placed before the it and all equal or greater behind it.
-This has a linear time complexity of ``O(n)`` compared to ``O(n log(n))`` of a
-full sort.
+A ``partition`` by index ``k`` moves the ``k`` smallest element to the front of
+an array.  All elements before ``k`` are then smaller or equal than the value
+in position ``k`` and all elements following ``k`` are then greater or equal
+than the value in position ``k``. The ordering of the values within these
+bounds is undefined.
+A sequence of indices can be provided to sort all of them into their sorted
+position at once iterative partitioning.
+This can be used to efficiently obtain order statistics like median or
+percentiles of samples.
+``partition`` has a linear time complexity of ``O(n)`` while a full sort has
+``O(n log(n))``.
 
 New functions `nanmean`, `nanvar` and `nanstd`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,6 +293,22 @@ reduces its time complexity from O(n log(n)) to O(n).
 If used with the `overwrite_input` option the array will now only be partially
 sorted instead of fully sorted.
 
+
+Overrideable operand flags in ufunc C-API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When creating a ufunc, the default ufunc operand flags can be overridden
+via the new op_flags attribute of the ufunc object. For example, to set
+the operand flag for the first input to read/write:
+
+PyObject \*ufunc = PyUFunc_FromFuncAndData(...);
+ufunc->op_flags[0] = NPY_ITER_READWRITE;
+
+This allows a ufunc to perform an operation in place. Also, global nditer flags
+can be overridden via the new iter_flags attribute of the ufunc object.
+For example, to set the reduce flag for a ufunc:
+
+ufunc->iter_flags = NPY_ITER_REDUCE_OK;
+
 Changes
 =======
 
@@ -327,8 +351,6 @@ One new function has been added to the ufunc C-API that allows to register
 an inner loop for user types using the descr.
 * PyUFunc_RegisterLoopForDescr
 
-
-
 Deprecations
 ============
 
@@ -342,24 +364,3 @@ deprecated. Previously float indices and function arguments such as axes or
 shapes were truncated to integers without warning. For example
 `arr.reshape(3., -1)` or `arr[0.]` will trigger a deprecation warning in
 NumPy 1.8., and in some future version of NumPy they will raise an error.
-
-C-API
-~~~~~
-
-None
-
-New Features
-============
-
-When creating a ufunc, the default ufunc operand flags can be overridden
-via the new op_flags attribute of the ufunc object. For example, to set
-the operand flag for the first input to read/write:
-
-PyObject \*ufunc = PyUFunc_FromFuncAndData(...);
-ufunc->op_flags[0] = NPY_ITER_READWRITE;
-
-This allows a ufunc to perform an operation in place. Also, global nditer flags
-can be overridden via the new iter_flags attribute of the ufunc object.
-For example, to set the reduce flag for a ufunc:
-
-ufunc->iter_flags = NPY_ITER_REDUCE_OK;
