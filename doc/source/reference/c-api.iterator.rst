@@ -204,7 +204,7 @@ is used to control the memory layout of the allocated result, typically
          * Make a copy of the iternext function pointer and
          * a few other variables the inner loop needs.
          */
-        iternext = NpyIter_GetIterNext(iter);
+        iternext = NpyIter_GetIterNext(iter, NULL);
         innerstride = NpyIter_GetInnerStrideArray(iter)[0];
         itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
         /*
