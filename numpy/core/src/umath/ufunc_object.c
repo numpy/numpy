@@ -2226,12 +2226,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
 fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
-    if (inner_strides) {
-        PyArray_free(inner_strides);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyArray_free(inner_strides);
+    NpyIter_Deallocate(iter);
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
@@ -3170,12 +3166,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
-    if (iter_inner != NULL) {
-        NpyIter_Deallocate(iter_inner);
-    }
+    NpyIter_Deallocate(iter);
+    NpyIter_Deallocate(iter_inner);
 
     Py_XDECREF(errobj);
 
@@ -3185,12 +3177,8 @@ fail:
     Py_XDECREF(out);
     Py_XDECREF(op_dtypes[0]);
 
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
-    if (iter_inner != NULL) {
-        NpyIter_Deallocate(iter_inner);
-    }
+    NpyIter_Deallocate(iter);
+    NpyIter_Deallocate(iter_inner);
 
     Py_XDECREF(errobj);
 
@@ -3580,9 +3568,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    NpyIter_Deallocate(iter);
 
     Py_XDECREF(errobj);
 
@@ -3592,9 +3578,7 @@ fail:
     Py_XDECREF(out);
     Py_XDECREF(op_dtypes[0]);
 
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    NpyIter_Deallocate(iter);
 
     Py_XDECREF(errobj);
 
@@ -4709,24 +4693,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)
 {
-    if (ufunc->core_num_dims) {
-        PyArray_free(ufunc->core_num_dims);
-    }
-    if (ufunc->core_dim_ixs) {
-        PyArray_free(ufunc->core_dim_ixs);
-    }
-    if (ufunc->core_offsets) {
-        PyArray_free(ufunc->core_offsets);
-    }
-    if (ufunc->core_signature) {
-        PyArray_free(ufunc->core_signature);
-    }
-    if (ufunc->ptr) {
-        PyArray_free(ufunc->ptr);
-    }
-    if (ufunc->op_flags) {
-        PyArray_free(ufunc->op_flags);
-    }
+    PyArray_free(ufunc->core_num_dims);
+    PyArray_free(ufunc->core_dim_ixs);
+    PyArray_free(ufunc->core_offsets);
+    PyArray_free(ufunc->core_signature);
+    PyArray_free(ufunc->ptr);
+    PyArray_free(ufunc->op_flags);
     Py_XDECREF(ufunc->userloops);
     Py_XDECREF(ufunc->obj);
     PyArray_free(ufunc);

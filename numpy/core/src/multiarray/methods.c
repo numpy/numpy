@@ -1692,9 +1692,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        if (PyArray_DATA(self) != NULL) {
-            PyDataMem_FREE(PyArray_DATA(self));
-        }
+        PyDataMem_FREE(PyArray_DATA(self));
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -1781,9 +1779,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (PyArray_DATA(self) == NULL) {
             fa->nd = 0;
             fa->data = PyDataMem_NEW(PyArray_DESCR(self)->elsize);
-            if (PyArray_DIMS(self)) {
-                PyDimMem_FREE(PyArray_DIMS(self));
-            }
+            PyDimMem_FREE(PyArray_DIMS(self));
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {

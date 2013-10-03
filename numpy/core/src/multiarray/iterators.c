@@ -2085,9 +2085,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
             Py_DECREF(*(PyObject**)iter->constant);
         }
     }
-    if (iter->constant != NULL) {
-        PyDataMem_FREE(iter->constant);
-    }
+    PyDataMem_FREE(iter->constant);
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);

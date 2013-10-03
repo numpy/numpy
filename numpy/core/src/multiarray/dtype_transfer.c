@@ -719,9 +719,7 @@ typedef struct {
 void _strided_datetime_cast_data_free(NpyAuxData *data)
 {
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
-    if (d->tmp_buffer != NULL) {
-        PyArray_free(d->tmp_buffer);
-    }
+    PyArray_free(d->tmp_buffer);
     PyArray_free(data);
 }
 
@@ -2296,9 +2294,7 @@ get_subarray_transfer_function(int aligned,
     if (PyDataType_HASSUBARRAY(dst_dtype)) {
        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
                                             &dst_shape))) {
-            if (src_shape.ptr != NULL) {
-                PyDimMem_FREE(src_shape.ptr);
-            }
+            PyDimMem_FREE(src_shape.ptr);
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
             return NPY_FAIL;
