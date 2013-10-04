@@ -157,16 +157,20 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
  *
  * This is based on the technique used in FreeBSD's __frexp_exp and
  * __ldexp_(c)exp functions by David Schultz.
+ *
+ * SCALED_CEXP_LOWER = log(FLT_MAX)
+ * SCALED_CEXP_UPPER = log(2) + log(FLT_MAX) - log(FLT_TRUE_MIN),
+ * where FLT_TRUE_MIN is the smallest possible subnormal number.
  */
 
 #define SCALED_CEXP_LOWERF 88.722839f
-#define SCALED_CEXP_UPPERF 192.69492
-#define SCALED_CEXP_LOWER  710.47586007394386
+#define SCALED_CEXP_UPPERF 192.69492f
+#define SCALED_CEXP_LOWER 710.47586007394386
 #define SCALED_CEXP_UPPER 1454.9159319953251
 #define SCALED_CEXP_LOWERL 11357.216553474703895L
 #define SCALED_CEXP_UPPERL 22756.021937783004509L
 
-static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, int expt)
+static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
 {
 #if @precision@ == 1
     const npy_int k = 235;
@@ -291,7 +295,7 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, int expt)
     @type@ ax = npy_fabs@c@(npy_creal@c@(z));
     @type@ ay = npy_fabs@c@(npy_cimag@c@(z));
     @type@ rr, ri;
-    
+
     if (ax > @TMAX@/4 || ay > @TMAX@/4) {
         rr = npy_log@c@(npy_hypot@c@(ax/2, ay/2)) + NPY_LOGE2@c@;
     }
@@ -470,10 +474,8 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, int expt)
 #ifndef HAVE_CCOS@C@
 @ctype@ npy_ccos@c@(@ctype@ z)
 {
-    @type@ x, y;
-    x = npy_creal@c@(z);
-    y = npy_cimag@c@(z);
-    return npy_cpack@c@(npy_cos@c@(x) * npy_cosh@c@(y), -(npy_sin@c@(x) * npy_sinh@c@(y)));
+    /* ccos(z) = ccosh(I * z) */
+    return npy_ccosh@c@(npy_cpack@c@(-npy_cimag@c@(z), npy_creal@c@(z)));
 }
 #endif
 
@@ -493,17 +495,135 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, int expt)
     /* ctan(z) = -I * ctanh(I * z) */
     z = npy_ctanh@c@(npy_cpack@c@(-npy_cimag@c@(z), npy_creal@c@(z)));
     return (npy_cpack@c@(npy_cimag@c@(z), -npy_creal@c@(z)));
-}   
+}
 #endif
 
 #ifndef HAVE_CCOSH@C@
+/*
+ * Taken from the msun library in FreeBSD, rev 226599.
+ *
+ * Hyperbolic cosine of a complex argument z = x + i y.
+ *
+ * cosh(z) = cosh(x+iy)
+ *         = cosh(x) cos(y) + i sinh(x) sin(y).
+ *
+ * Exceptional values are noted in the comments within the source code.
+ * These values and the return value were taken from n1124.pdf.
+ *
+ * CCOSH_BIG is chosen such that
+ * spacing(0.5 * exp(CCOSH_BIG)) > 0.5*exp(-CCOSH_BIG)
+ * although the exact value assigned to CCOSH_BIG is not so important
+ */
+#if @precision@ == 1
+#define CCOSH_BIG 9.0f
+#define CCOSH_HUGE 1.70141183e+38f
+#endif
+#if @precision@ == 2
+#define CCOSH_BIG 22.0
+#define CCOSH_HUGE 8.9884656743115795e+307
+#endif
+#if @precision@ >= 3
+#define CCOSH_BIG 24.0L
+#define CCOSH_HUGE 5.94865747678615882543e+4931L
+#endif
+
 @ctype@ npy_ccosh@c@(@ctype@ z)
 {
-    @type@ x, y;
+    @type@  x, y, h, absx;
+    npy_int xfinite, yfinite;
+
     x = npy_creal@c@(z);
     y = npy_cimag@c@(z);
-    return npy_cpack@c@(npy_cos@c@(y)*npy_cosh@c@(x), npy_sin@c@(y)*npy_sinh@c@(x));
+
+    xfinite = npy_isfinite(x);
+    yfinite = npy_isfinite(y);
+
+    /* Handle the nearly-non-exceptional cases where x and y are finite. */
+    if (xfinite && yfinite) {
+        if (y == 0)
+            return npy_cpack@c@(npy_cosh@c@(x), x * y);
+        absx = npy_fabs@c@(x);
+        if (absx < CCOSH_BIG)   /* small x: normal case */
+            return npy_cpack@c@(npy_cosh@c@(x) * npy_cos@c@(y), npy_sinh@c@(x) * npy_sin@c@(y));
+
+        /* |x| >= 22, so cosh(x) ~= exp(|x|) */
+        if (absx < SCALED_CEXP_LOWER@C@) {
+            /* x < 710: exp(|x|) won't overflow */
+            h = npy_exp@c@(absx) * 0.5;
+            return npy_cpack@c@(h * npy_cos@c@(y), npy_copysign@c@(h, x) * npy_sin@c@(y));
+        } else if (absx < SCALED_CEXP_UPPER@C@) {
+            /* x < 1455: scale to avoid overflow */
+            z = _npy_scaled_cexp@c@(absx, y, -1);
+            return npy_cpack@c@(npy_creal@c@(z), npy_cimag@c@(z) * npy_copysign@c@(1, x));
+        } else {
+            /* x >= 1455: the result always overflows */
+            h = CCOSH_HUGE * x;
+            return npy_cpack@c@(h * h * npy_cos@c@(y), h * npy_sin@c@(y));
+        }
+    }
+
+    /*
+     * cosh(+-0 +- I Inf) = dNaN + I sign(d(+-0, dNaN))0.
+     * The sign of 0 in the result is unspecified.  Choice = normally
+     * the same as dNaN.  Raise the invalid floating-point exception.
+     *
+     * cosh(+-0 +- I NaN) = d(NaN) + I sign(d(+-0, NaN))0.
+     * The sign of 0 in the result is unspecified.  Choice = normally
+     * the same as d(NaN).
+     */
+    if (x == 0 && !yfinite)
+        return npy_cpack@c@(y - y, npy_copysign@c@(0, x * (y - y)));
+
+    /*
+     * cosh(+-Inf +- I 0) = +Inf + I (+-)(+-)0.
+     *
+     * cosh(NaN +- I 0)   = d(NaN) + I sign(d(NaN, +-0))0.
+     * The sign of 0 in the result is unspecified.
+     */
+    if (y == 0 && !xfinite)
+        return npy_cpack@c@(x * x, npy_copysign@c@(0, x) * y);
+
+    /*
+     * cosh(x +- I Inf) = dNaN + I dNaN.
+     * Raise the invalid floating-point exception for finite nonzero x.
+     *
+     * cosh(x + I NaN) = d(NaN) + I d(NaN).
+     * Optionally raises the invalid floating-point exception for finite
+     * nonzero x.  Choice = don't raise (except for signaling NaNs).
+     */
+    if (xfinite && !yfinite)
+        return npy_cpack@c@(y - y, x * (y - y));
+
+    /*
+     * cosh(+-Inf + I NaN)  = +Inf + I d(NaN).
+     *
+     * cosh(+-Inf +- I Inf) = +Inf + I dNaN.
+     * The sign of Inf in the result is unspecified.  Choice = always +.
+     * Raise the invalid floating-point exception.
+     *
+     * cosh(+-Inf + I y)   = +Inf cos(y) +- I Inf sin(y)
+     */
+    if (npy_isinf(x)) {
+        if (!yfinite)
+            return npy_cpack@c@(x * x, x * (y - y));
+        return npy_cpack@c@((x * x) * npy_cos@c@(y), x * npy_sin@c@(y));
+    }
+
+    /*
+     * cosh(NaN + I NaN)  = d(NaN) + I d(NaN).
+     *
+     * cosh(NaN +- I Inf) = d(NaN) + I d(NaN).
+     * Optionally raises the invalid floating-point exception.
+     * Choice = raise.
+     *
+     * cosh(NaN + I y)    = d(NaN) + I d(NaN).
+     * Optionally raises the invalid floating-point exception for finite
+     * nonzero y.  Choice = don't raise (except for signaling NaNs).
+     */
+    return npy_cpack@c@((x * x) * (y - y), (x + x) * (y - y));
 }
+#undef CCOSH_BIG
+#undef CCOSH_HUGE
 #endif
 
 #ifndef HAVE_CSINH@C@
