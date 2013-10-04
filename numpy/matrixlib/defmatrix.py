@@ -929,7 +929,7 @@ class matrix(N.ndarray):
         """
         Returns the transpose of the matrix.
 
-        Does *not* conjugate!  For the complex conjugate transpose, use `getH`.
+        Does *not* conjugate!  For the complex conjugate transpose, use ``.H``.
 
         Parameters
         ----------
@@ -991,11 +991,11 @@ class matrix(N.ndarray):
         else:
             return self.transpose()
 
-    T = property(getT, None, doc="transpose")
-    A = property(getA, None, doc="base array")
-    A1 = property(getA1, None, doc="1-d base array")
-    H = property(getH, None, doc="hermitian (conjugate) transpose")
-    I = property(getI, None, doc="inverse")
+    T = property(getT, None)
+    A = property(getA, None)
+    A1 = property(getA1, None)
+    H = property(getH, None)
+    I = property(getI, None)
 
 def _from_string(str, gdict, ldict):
     rows = str.split(';')
