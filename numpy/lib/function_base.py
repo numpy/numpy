@@ -20,7 +20,7 @@ from numpy.core import linspace, atleast_1d, atleast_2d
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, ScalarType, dot, where,
-    newaxis, intp, integer, isscalar
+    newaxis, intp, integer, isscalar, power
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -1725,7 +1725,7 @@ class vectorize(object):
         return _res
 
 
-def cov(m, y=None, rowvar=1, bias=0, ddof=None):
+def cov(m, y=None, rowvar=1, bias=0, ddof=None, weights=None, repeat_weights=0):
     """
     Estimate a covariance matrix, given data.
 
@@ -1759,6 +1759,16 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by
         ``bias``. The default value is ``None``.
+    weights : array-like, optional
+        A 1-D array of weights with a length equal to the number of
+        observations.
+    repeat_weights : int, optional
+        The default treatment of weights in the weighted covariance is to first
+        normalize them to unit sum and use the biased weighted covariance
+        equation. If `repeat_weights` is 1 then the weights must represent an
+        integer number of occurrences of each observation and both a biased and
+        unbiased weighted covariance is defined because the total sample size
+        can be determined.
 
     Returns
     -------
@@ -1833,23 +1843,47 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
             ddof = 1
         else:
             ddof = 0
-    fact = float(N - ddof)
-    if fact <= 0:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
-        fact = 0.0
 
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=dtype)
         X = concatenate((X, y), axis)
 
-    X -= X.mean(axis=1-axis)[tup]
-    if not rowvar:
-        return (dot(X.T, X.conj()) / fact).squeeze()
+    if weights is not None:
+        weights = array(weights, dtype=float)
+        weights_sum = weights.sum()
+        if weights_sum <= 0:
+            raise ValueError(
+                "sum of weights is non-positive")
+        X -= average(X, axis=1-axis, weights=weights)[tup]
+
+        if repeat_weights:
+            # each weight represents a number of repetitions of an observation
+            # the total sample size can be determined in this case and we have
+            # both an unbiased and biased weighted covariance
+            fact = weights_sum - ddof
+        else:
+            # normalize weights so they sum to unity
+            weights /= weights_sum
+            # unbiased weighted covariance is not defined if the weights are
+            # not integral frequencies (repeat-type)
+            fact = (1. - power(weights, 2).sum())
     else:
-        return (dot(X, X.T.conj()) / fact).squeeze()
+        weights = 1
+        X -= X.mean(axis=1-axis)[tup]
+        fact = float(N - ddof)
+
+    if fact <= 0:
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        fact = 0.0
+
+    if not rowvar:
+        return (dot(weights * X.T, X.conj()) / fact).squeeze()
+    else:
+        return (dot(weights * X, X.T.conj()) / fact).squeeze()
 
 
-def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
+def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None, weights=None,
+             repeat_weights=0):
     """
     Return correlation coefficients.
 
@@ -1885,6 +1919,16 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by
         ``bias``. The default value is ``None``.
+    weights : array-like, optional
+        A 1-D array of weights with a length equal to the number of
+        observations.
+    repeat_weights : int, optional
+        The default treatment of weights in the weighted covariance is to first
+        normalize them to unit sum and use the biased weighted covariance
+        equation. If `repeat_weights` is 1 then the weights must represent an
+        integer number of occurrences of each observation and both a biased and
+        unbiased weighted covariance is defined because the total sample size
+        can be determined.
 
     Returns
     -------
@@ -1896,7 +1940,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     cov : Covariance matrix
 
     """
-    c = cov(x, y, rowvar, bias, ddof)
+    c = cov(x, y, rowvar, bias, ddof, weights, repeat_weights)
     try:
         d = diag(c)
     except ValueError:  # scalar covariance
