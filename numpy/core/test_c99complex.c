@@ -11,7 +11,7 @@
 #define TYPE float
 #define SUFFIX f
 #define EPS FLT_EPSILON
-#define CLOSE_ATOL 3
+#define CLOSE_ATOL 0
 #define CLOSE_RTOL 1e-5
 #define FMT "%.8e"
 #define NPY_PI_2 1.570796326794896619231321691639751442f
@@ -126,7 +126,7 @@ const TYPE NZERO =  -1.0 * 0.0;
         TYPE der4 = er4; \
         TYPE dei4 = ei4; \
         TYPE complex x = cpack(dxr, dxi); \
-        TYPE complex r = func(x); \
+        TYPE complex r = ADDSUFFIX(func)(x); \
         TYPE rr = ADDSUFFIX(creal)(r); \
         TYPE ri = ADDSUFFIX(cimag)(r); \
         if (!((isequal(rr, der1) && isequal(ri, dei1)) || \
@@ -307,7 +307,7 @@ typedef TYPE (*realfunc)(TYPE);
 int check_branch_cut(complexfunc cfunc, TYPE complex x0, TYPE complex dx, 
                      int re_sign, int im_sign, int sig_zero_ok)
 {
-    const TYPE scale = EPS * 1e3;
+    const TYPE scale = EPS * 1e2;
     const TYPE atol = 1e-4;
     
     TYPE complex shift = dx*scale*ADDSUFFIX(cabs)(x0)/ADDSUFFIX(cabs)(dx);
