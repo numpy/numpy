@@ -147,6 +147,50 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
 }
 #endif
 
+/* cexp and (ccos, csin)h functions need to calculate exp scaled by another
+ * number.  This can be difficult if exp(x) overflows.  By doing this way, we
+ * don't risk overflowing exp. This likely raises floating-point exceptions,
+ * if we decide that we care.
+ *
+ * This is only useful over a limited range, (see below) an expects that the
+ * input values are in this range.
+ *
+ * This is based on the technique used in FreeBSD's __frexp_exp and
+ * __ldexp_(c)exp functions by David Schultz.
+ */
+
+#define SCALED_CEXP_LOWERF 88.722839f
+#define SCALED_CEXP_UPPERF 192.69492
+#define SCALED_CEXP_LOWER  710.47586007394386
+#define SCALED_CEXP_UPPER 1454.9159319953251
+#define SCALED_CEXP_LOWERL 11357.216553474703895L
+#define SCALED_CEXP_UPPERL 22756.021937783004509L
+
+static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, int expt)
+{
+#if @precision@ == 1
+    const npy_int k = 235;
+#endif
+#if @precision@ == 2
+    const npy_int k = 1799;
+#endif
+#if @precision@ == 3
+    const npy_int k = 19547;
+#endif
+    const @type@ kln2 = k * NPY_LOGE2;
+    @type@ mant, mantcos, mantsin;
+    npy_int ex, excos, exsin;
+
+    mant = npy_frexp@c@(npy_exp@c@(x - kln2), &ex);
+    mantcos = npy_frexp@c@(npy_cos@c@(y), &excos);
+    mantsin = npy_frexp@c@(npy_sin@c@(y), &exsin);
+
+    expt += ex + k;
+    return npy_cpack@c@( npy_ldexp@c@(mant * mantcos, expt + excos),
+                         npy_ldexp@c@(mant * mantsin, expt + exsin));
+}
+
+
 #ifndef HAVE_CEXP@C@
 @ctype@ npy_cexp@c@(@ctype@ z)
 {
@@ -158,15 +202,20 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
     i = npy_cimag@c@(z);
 
     if (npy_isfinite(r)) {
-        x = npy_exp@c@(r);
+        if (r >= SCALED_CEXP_LOWER@C@ && r <= SCALED_CEXP_UPPER@C@) {
+            ret = _npy_scaled_cexp@c@(r, i, 0);
+        }
+        else {
+            x = npy_exp@c@(r);
 
-        c = npy_cos@c@(i);
-        s = npy_sin@c@(i);
+            c = npy_cos@c@(i);
+            s = npy_sin@c@(i);
 
-        if (npy_isfinite(i)) {
-            ret = npy_cpack@c@(x * c, x * s);
-        } else {
-            ret = npy_cpack@c@(NPY_NAN, npy_copysign@c@(NPY_NAN, i));
+            if (npy_isfinite(i)) {
+                ret = npy_cpack@c@(x * c, x * s);
+            } else {
+                ret = npy_cpack@c@(NPY_NAN, npy_copysign@c@(NPY_NAN, i));
+            }
         }
 
     } else  if (npy_isnan(r)) {
