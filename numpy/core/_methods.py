@@ -91,8 +91,9 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         arrmean = arrmean.dtype.type(arrmean / rcount)
 
     # Compute sum of squared deviations from mean
-    # Note that x may not be inexact
-    x = arr - arrmean
+    # Note that x may not be inexact and that we need it to be an array,
+    # not a scalar.
+    x = asanyarray(arr - arrmean)
     if issubclass(arr.dtype.type, nt.complexfloating):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
