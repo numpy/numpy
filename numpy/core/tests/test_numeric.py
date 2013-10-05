@@ -1473,6 +1473,10 @@ class TestStdVar(TestCase):
         assert_almost_equal(var(self.A), self.real_var)
         assert_almost_equal(std(self.A)**2, self.real_var)
 
+    def test_scalars(self):
+        assert_equal(var(1), 0)
+        assert_equal(std(1), 0)
+
     def test_ddof1(self):
         assert_almost_equal(var(self.A, ddof=1),
                             self.real_var*len(self.A)/float(len(self.A)-1))
@@ -1491,6 +1495,10 @@ class TestStdVarComplex(TestCase):
         real_var = 1
         assert_almost_equal(var(A), real_var)
         assert_almost_equal(std(A)**2, real_var)
+
+    def test_scalars(self):
+        assert_equal(var(1j), 0)
+        assert_equal(std(1j), 0)
 
 
 class TestCreationFuncs(TestCase):
