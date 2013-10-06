@@ -2,6 +2,9 @@
 #define __NPY_MATH_C99_H_
 
 #include <math.h>
+#ifdef __SUNPRO_CC
+#include <sunmath.h>
+#endif
 #include <numpy/npy_common.h>
 
 /*
