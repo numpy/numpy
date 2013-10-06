@@ -6,11 +6,12 @@ This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 Highlights
 ==========
 
-* Python 2 and Python 3 are supported by the same code base. The
-  2to3 fixer is no longer run.
-* ``full`` and ``full_like`` to create value initialized arrays.
-* ``partition`` partial sorting via selection.
-* inplace fancy indexing for ufuncs with the ``.at`` method.
+* Python 2 and Python 3 are supported by common code base, no 2to3 needed.
+* New ``full`` and ``full_like`` to create value initialized arrays.
+* New ``partition`` partial sorting via selection.
+* New inplace fancy indexing for ufuncs with the ``.at`` method.
+* New nan functions ``nanmean``, ``nanvar``, and ``nanstd``.
+* New gufuncs for linear algebra.
 * Numerous performance improvements in many areas.
 
 Dropped Support
@@ -264,18 +265,15 @@ Performance improvements via SSE2 vectorization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Several functions have been optimized to make use of SSE2 CPU SIMD instructions.
 
- * Float32 and float64:
-
-   * base math (`add`, `subtract`, `divide`, `multiply`)
-   * `sqrt`
-   * `minimum/maximum`
-   * `absolute`
-
- * Bool:
-
-   * `logical_or`
-   * `logical_and`
-   * `logical_not`
+* Float32 and float64:
+    * base math (`add`, `subtract`, `divide`, `multiply`)
+    * `sqrt`
+    * `minimum/maximum`
+    * `absolute`
+* Bool:
+    * `logical_or`
+    * `logical_and`
+    * `logical_not`
 
 This improves performance of these operations up to 4x/2x for float32/float64
 and up to 10x for bool depending on the location of the data in the CPU caches.
@@ -320,6 +318,7 @@ The function np.take now allows 0-d arrays as indices.
 The separate compilation mode is now enabled by default.
 
 Several changes to np.insert and np.delete:
+
 * Previously, negative indices and indices that pointed past the end of
   the array were simply ignored. Now, this will raise a Future or Deprecation
   Warning. In the future they will be treated like normal indexing treats
@@ -338,7 +337,8 @@ Padded regions from np.pad are now correctly rounded, not truncated.
 C-API Array Additions
 ~~~~~~~~~~~~~~~~~~~~~
 
-Three new functions have been added to the array C-API.
+Four new functions have been added to the array C-API.
+
 * PyArray_Partition
 * PyArray_ArgPartition
 * PyArray_SelectkindConverter
@@ -349,6 +349,7 @@ C-API Ufunc Additions
 
 One new function has been added to the ufunc C-API that allows to register
 an inner loop for user types using the descr.
+
 * PyUFunc_RegisterLoopForDescr
 
 Deprecations
