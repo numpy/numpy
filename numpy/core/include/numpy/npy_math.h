@@ -6,10 +6,14 @@ extern "C" {
 #endif
 
 #include <math.h>
+#ifdef __SUNPRO_CC
+#include <sunmath.h>
+#endif
 #ifdef HAVE_NPY_CONFIG_H
 #include <npy_config.h>
 #endif
 #include <numpy/npy_common.h>
+
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
