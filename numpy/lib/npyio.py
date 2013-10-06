@@ -1322,8 +1322,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if not isinstance(user_converters, dict):
         raise TypeError(
             "The input argument 'converter' should be a valid dictionary "
-            "(got '%s' instead)"
-            % type(user_converters))
+            "(got '%s' instead)" % type(user_converters))
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
@@ -1531,11 +1530,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if len(dtype_flat) > 1:
             # Flexible type : get a converter from each dtype
             zipit = zip(dtype_flat, missing_values, filling_values)
-            converters = [
-                StringConverter(dt, locked=True, missing_values=miss,
-                                default=fill)
-                for (dt, miss, fill) in zipit
-                ]
+            converters = [StringConverter(dt, locked=True,
+                                          missing_values=miss, default=fill)
+                          for (dt, miss, fill) in zipit]
         else:
             # Set to a default converter (but w/ different missing values)
             zipit = zip(missing_values, filling_values)
