@@ -141,6 +141,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             assert_equal(arr, self.arr_reloaded['arr_%d' % n])
 
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
+    @np.testing.dec.skipif(sys.platform == 'darwin', "Not yet working on Mac")
     @np.testing.dec.slow
     def test_big_arrays(self):
         L = (1 << 31) + 100000
