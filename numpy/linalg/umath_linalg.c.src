@@ -819,9 +819,17 @@ linearize_@TYPE@_matrix(void *dst_in,
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
         for (i=0; i< data->rows; i++) {
-            FNAME(@copy@)(&columns,
-                          (void*)src, &column_strides,
-                          (void*)dst, &one);
+            if (column_strides >= 0) {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &column_strides,
+                              (void*)dst, &one);
+            }
+            else {
+                FNAME(@copy@)(&columns,
+                              (void*)((@typ@*)src + (columns-1)*column_strides),
+                              &column_strides,
+                              (void*)dst, &one);
+            }
             src += data->row_strides/sizeof(@typ@);
             dst += data->columns;
         }
@@ -847,9 +855,17 @@ delinearize_@TYPE@_matrix(void *dst_in,
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
         for (i=0; i < data->rows; i++) {
-            FNAME(@copy@)(&columns,
-                          (void*)src, &one,
-                          (void*)dst, &column_strides);
+            if (column_strides >= 0) {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &one,
+                              (void*)dst, &column_strides);
+            }
+            else {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &one,
+                              (void*)((@typ@*)dst + (columns-1)*column_strides),
+                              &column_strides);
+            }
             src += data->columns;
             dst += data->row_strides/sizeof(@typ@);
         }
@@ -877,45 +893,6 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
     }
 }
 
-static inline void
-make_symmetric_@TYPE@_matrix(char UPLO,
-                             fortran_int n,
-                             void *matrix)
-{
-    /*
-       note: optimized assuming that sequential write is better than
-       sequential read
-    */
-    fortran_int i;
-    fortran_int one = 1;
-
-    /* note: 'L' and 'U' are interpreted considering *fortran* order */
-    if ('L' == UPLO) {
-        @typ@ *dst = (@typ@ *) matrix;
-        @typ@ *src = (@typ@ *) matrix;
-        src += 1;
-        dst += n;
-        for (i = 1; i < n; ++i) {
-            FNAME(@copy@)(&i,
-                          (void *)src, &n,
-                          (void *)dst, &one);
-            src += 1;
-            dst += n;
-        }
-    } else { /* assume U */
-        @typ@ *dst = (@typ@ *) matrix;
-        @typ@ *src = (@typ@ *) matrix;
-        src += n;
-        dst += 1;
-        for (i = n - 1; i > 0; --i) {
-            FNAME(@copy@)(&i,
-                          (void *)src, &n,
-                          (void *)dst, &one);
-            src += n + 1;
-            dst += n + 1;
-        }
-    }
-}
 /**end repeat**/
 
                /* identity square matrix generation */
@@ -947,19 +924,6 @@ identity_@TYPE@_matrix(void *ptr, size_t n)
    #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
    #cblas_type=s,d,c,z#
  */
-static inline void
-tril_@TYPE@_matrix(void *ptr, size_t n)
-{
-    size_t i,j;
-    @typ@ *matrix = (@typ@*)ptr;
-    matrix++;
-    for (i = n-1; i > 0; --i) {
-        for (j = 0; j < i; ++j) {
-            *matrix = @cblas_type@_zero;
-        }
-        matrix += n + 1;
-    }
-}
 
 static inline void
 triu_@TYPE@_matrix(void *ptr, size_t n)
@@ -972,337 +936,6 @@ triu_@TYPE@_matrix(void *ptr, size_t n)
             matrix[j] = @cblas_type@_zero;
         }
         matrix += n;
-    }
-}
-/**end repeat**/
-
-/*
- *****************************************************************************
- **                             UFUNC LOOPS                                 **
- *****************************************************************************
- */
-
-/**begin repeat
-   #typ=npy_float,npy_double,COMPLEX_t,DOUBLECOMPLEX_t,COMPLEX_t,DOUBLECOMPLEX_t#
-   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex,fortran_complex,fortran_doublecomplex#
-   #add=FLOAT_add,DOUBLE_add,CFLOAT_add,CDOUBLE_add,CFLOAT_add,CDOUBLE_add#
-   #mul=FLOAT_mul,DOUBLE_mul,CFLOAT_mul,CDOUBLE_mul,CFLOAT_mulc,CDOUBLE_mulc#
-   #dot=sdot,ddot,cdotu,zdotu,cdotc,zdotc#
-   #zero=s_zero, d_zero,c_zero,z_zero,c_zero,z_zero#
- */
-
-static inline void
-@dot@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps)
-{
-    const size_t sot = sizeof(@typ@);
-    int dim = (int)dimensions[0];
-    INIT_OUTER_LOOP_3
-    /*
-     * use blas if the stride is a multiple of datatype size in the inputs
-     * it should be the common case
-     */
-    if ((0 == (steps[3] % sot)) &&
-        (0 == (steps[4] % sot))) {
-        /* use blas */
-
-        int is1 = (int)(steps[0]/sot), is2 = (int)(steps[1]/sot);
-        BEGIN_OUTER_LOOP_3
-            @ftyp@ * ip1 = (@ftyp@*)args[0], *ip2 = (@ftyp@*)args[1];
-            *(@ftyp@*)(args[2]) = BLAS(@dot@)(&dim, ip1, &is1, ip2, &is2);
-        END_OUTER_LOOP
-    } else {
-        /* use standard version */
-        npy_intp is1=steps[0], is2=steps[1];
-        BEGIN_OUTER_LOOP_3
-            int i;
-            char *ip1=args[0], *ip2=args[1], *op=args[2];
-            @typ@ sum = @zero@;
-            for (i = 0; i < dim; i++) {
-                @typ@ prod = @mul@(*(@typ@ *)ip1, *(@typ@*)ip2);
-                sum = @add@(sum, prod);
-                ip1 += is1;
-                ip2 += is2;
-            }
-            *(@typ@ *)op = sum;
-        END_OUTER_LOOP
-    }
-}
-
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #dot=sdot,ddot,cdotu,zdotu#
-   #dotc=sdot,ddot,cdotc,zdotc#
- */
-static void
-@TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps,
-               void *NPY_UNUSED(func))
-{
-    @dot@_inner1d(args, dimensions, steps);
-}
-
-static void
-@TYPE@_dotc1d(char **args, npy_intp *dimensions, npy_intp *steps,
-              void *NPY_UNUSED(func))
-{
-    @dotc@_inner1d(args, dimensions, steps);
-}
-/**end repeat**/
-
-/* -------------------------------------------------------------------------- */
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #add=FLOAT_add,DOUBLE_add,CFLOAT_add,CDOUBLE_add#
-   #mul=FLOAT_mul,DOUBLE_mul,CFLOAT_mul,CDOUBLE_mul#
-   #zero=s_zero, d_zero,c_zero,z_zero#
-*/
-
-/*
- *  This implements the function
- *        out[n] = sum_i { in1[n, i] * in2[n, i] * in3[n, i] }.
- */
-
-static void
-@TYPE@_innerwt(char **args,
-               npy_intp *dimensions,
-               npy_intp *steps,
-               void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    npy_intp di = dimensions[0];
-    npy_intp i;
-    npy_intp is1=steps[0], is2=steps[1], is3=steps[2];
-    BEGIN_OUTER_LOOP_4
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
-        @typ@ sum = @zero@;
-        for (i = 0; i < di; i++) {
-            @typ@ prod = @mul@(@mul@(*(@typ@*)ip1, *(@typ@*)ip2),*(@typ@*)ip3);
-            sum = @add@(sum, prod);
-            ip1 += is1;
-            ip2 += is2;
-            ip3 += is3;
-        }
-        *(@typ@ *)op = sum;
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
-
-
-/* -------------------------------------------------------------------------- */
-                        /* Matrix Multiply */
-
-typedef struct gemm_params_struct
-{
-    void *A;
-    void *B;
-    void *C;
-    fortran_int LDA;
-    fortran_int LDB;
-    fortran_int LDC;
-    fortran_int M;
-    fortran_int K;
-    fortran_int N;
-    char TRANSA;
-    char TRANSB;
-
-    void *allocated_data;
-} GEMM_PARAMS_t;
-
-static inline void
-dump_gemm_params(const char* name, const GEMM_PARAMS_t* params)
-{
-    TRACE_TXT("\n%s\n"
-              "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
-              "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
-              "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
-              "%14s: %15c'%c'\n" "%14s: %15c'%c'\n",
-              name,
-              "A", params->A, "B", params->B, "C", params->C,
-              "LDA", params->LDA, "LDB", params->LDB, "LDC", params->LDC,
-              "M", params->M, "K", params->K, "N", params->N,
-              "TRANSA", ' ', params->TRANSA, "TRANSB", ' ', params->TRANSB);
-}
-
-
-typedef struct _matrix_desc {
-    int need_buff;
-    fortran_int lead;
-    size_t size;
-    void *buff;
-} matrix_desc;
-
-static inline void
-matrix_desc_init(matrix_desc *mtxd,
-                 npy_intp* steps,
-                 size_t sot,
-                 fortran_int rows,
-                 fortran_int columns)
-/* initialized a matrix desc based on the information in steps
-   it will fill the matrix desc with the values needed.
-   steps[0] contains column step
-   steps[1] contains row step
-*/
-{
-    /* if column step is not element step, a copy will be needed
-       to arrange the array in a way compatible with blas
-    */
-    mtxd->need_buff = steps[0] != sot;
-
-    if (!mtxd->need_buff) {
-        if (steps[1]) {
-            mtxd->lead = (fortran_int) steps[1] / sot;
-        } else {
-            /* step is 0, this means either it is only 1 column or
-               there is a step trick around*/
-            if (columns > 1) {
-                /* step tricks not supported in gemm... make a copy */
-                mtxd->need_buff = 1;
-            } else {
-                /* lead must be at least 1 */
-                mtxd->lead = rows;
-            }
-        }
-    }
-
-    /* if a copy is performed, the lead is the number of columns */
-    if (mtxd->need_buff) {
-        mtxd->lead = rows;
-    }
-
-    mtxd->size = rows*columns*sot*mtxd->need_buff;
-    mtxd->buff = NULL;
-}
-
-static inline npy_uint8 *
-matrix_desc_assign_buff(matrix_desc* mtxd, npy_uint8 *p)
-{
-    if (mtxd->need_buff) {
-        mtxd->buff = p;
-        return p + mtxd->size;
-    } else {
-        return p;
-    }
-}
-
-static inline int
-init_gemm_params(GEMM_PARAMS_t *params,
-                 fortran_int m,
-                 fortran_int k,
-                 fortran_int n,
-                 npy_intp* steps,
-                 size_t sot)
-{
-    npy_uint8 *mem_buff = NULL;
-    matrix_desc a, b, c;
-    matrix_desc_init(&a, steps + 0, sot, m, k);
-    matrix_desc_init(&b, steps + 2, sot, k, n);
-    matrix_desc_init(&c, steps + 4, sot, m, n);
-
-    if (a.size + b.size + c.size)
-    {
-        npy_uint8 *current;
-        /* need to allocate some buffer */
-        mem_buff = malloc(a.size + b.size + c.size);
-        if (!mem_buff)
-            goto error;
-
-        current = mem_buff;
-        current = matrix_desc_assign_buff(&a, current);
-        current = matrix_desc_assign_buff(&b, current);
-        current = matrix_desc_assign_buff(&c, current);
-    }
-
-    params->A = a.buff;
-    params->B = b.buff;
-    params->C = c.buff;
-    params->LDA = a.lead;
-    params->LDB = b.lead;
-    params->LDC = c.lead;
-    params->M = m;
-    params->N = n;
-    params->K = k;
-    params->TRANSA='N';
-    params->TRANSB='N';
-
-    params->allocated_data = mem_buff;
-
-    return 1;
- error:
-    free(mem_buff);
-    memset(params, 0, sizeof(*params));
-    return 0;
-}
-
-static inline void
-release_gemm_params(GEMM_PARAMS_t * params)
-{
-    free(params->allocated_data);
-    params->allocated_data = NULL;
-}
-
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #one=s_one,d_one,c_one.array,z_one.array#
-   #zero=s_zero,d_zero,c_zero.array,z_zero.array#
-   #GEMM=sgemm,dgemm,cgemm,zgemm#
-*/
-
-static void
-@TYPE@_matrix_multiply(char **args,
-                       npy_intp *dimensions,
-                       npy_intp *steps,
-                       void *NPY_UNUSED(func))
-{
-    /*
-     * everything is setup in a way that makes things work. BLAS gemm can be
-     * be called without rearranging nor using weird stuff, as matrices are
-     * in the expected way in memory.
-     * This is just a loop calling blas.
-     */
-    GEMM_PARAMS_t params;
-    fortran_int m, k, n;
-
-    INIT_OUTER_LOOP_3
-
-    m = (fortran_int) dimensions[0];
-    k = (fortran_int) dimensions[1];
-    n = (fortran_int) dimensions[2];
-
-    if (init_gemm_params(&params, m, k, n, steps, sizeof(@typ@)))
-    {
-        LINEARIZE_DATA_t a_in, b_in, c_out;
-
-        if (params.A)
-            init_linearize_data(&a_in, k, m, steps[1], steps[0]);
-        if (params.B)
-            init_linearize_data(&b_in, n, k, steps[3], steps[2]);
-        if (params.C)
-            init_linearize_data(&c_out, n, m, steps[5], steps[4]);
-
-        BEGIN_OUTER_LOOP_3
-            /* just call the appropriate multiply and update pointers */
-            @typ@ *A = linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            @typ@ *B = linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            @typ@ *C = params.C ? (@typ@*)params.C : (@typ@ *) args[2];
-
-            /* linearize source operands if needed */
-            FNAME(@GEMM@)(&params.TRANSA, &params.TRANSB,
-                          &params.M, &params.N, &params.K,
-                          (void*)&@one@, // alpha
-                          (void*)A, &params.LDA,
-                          (void*)B, &params.LDB,
-                          (void*)&@zero@, // beta
-                          (void*)C, &params.LDC);
-            delinearize_@TYPE@_matrix(args[2], params.C, &c_out);
-        END_OUTER_LOOP
-
-        release_gemm_params(&params);
     }
 }
 /**end repeat**/
@@ -2152,6 +1785,8 @@ static void
     fortran_int n;
     INIT_OUTER_LOOP_2
 
+    assert(uplo == 'L');
+
     n = (fortran_int)dimensions[0];
     if (init_@lapack_func@(&params, uplo, n))
     {
@@ -2177,20 +1812,11 @@ static void
 }
 
 static void
-@TYPE@_cholesky_up(char **args, npy_intp *dimensions, npy_intp *steps,
-                void *NPY_UNUSED(func))
-{
-    @TYPE@_cholesky('U', args, dimensions, steps);
-}
-
-static void
 @TYPE@_cholesky_lo(char **args, npy_intp *dimensions, npy_intp *steps,
                 void *NPY_UNUSED(func))
 {
     @TYPE@_cholesky('L', args, dimensions, steps);
 }
-
-
 
 /**end repeat**/
 
@@ -2589,6 +2215,8 @@ static inline void
     size_t op_count = 2;
     int error_occurred = get_fp_invalid_and_clear();
     GEEV_PARAMS_t geev_params;
+
+    assert(JOBVL == 'N');
 
     STACK_TRACE;
     op_count += 'V'==JOBVL?1:0;
@@ -3140,581 +2768,6 @@ static void
 
 /**end repeat**/
 
-/* -------------------------------------------------------------------------- */
-               /* some basic ufuncs */
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
- */
-
-static void
-@TYPE@_add3(char **args,
-            npy_intp *dimensions,
-            npy_intp* steps,
-            void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    BEGIN_OUTER_LOOP_4
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ tmp;
-        tmp   = @TYPE@_add(*op1p, *op2p);
-        *op4p = @TYPE@_add(tmp, *op3p);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply3(char **args,
-                 npy_intp *dimensions,
-                 npy_intp* steps,
-                 void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    BEGIN_OUTER_LOOP_4
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ tmp;
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        *op4p = @TYPE@_mul(tmp, *op3p);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply3_add(char **args,
-                     npy_intp *dimensions,
-                     npy_intp* steps,
-                     void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_5
-    BEGIN_OUTER_LOOP_5
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ *op5p = (@typ@ *) args[4];
-        @typ@ tmp, tmp2;
-
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        tmp2  = @TYPE@_mul(tmp, *op3p);
-        *op5p = @TYPE@_add(tmp2, *op4p);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply_add(char **args,
-                    npy_intp *dimensions,
-                    npy_intp* steps,
-                    void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    BEGIN_OUTER_LOOP_4
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ tmp;
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        *op4p = @TYPE@_add(tmp, *op3p);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply_add2(char **args,
-                     npy_intp *dimensions,
-                     npy_intp* steps,
-                     void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_5
-    BEGIN_OUTER_LOOP_5
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ *op5p = (@typ@ *) args[4];
-        @typ@ tmp, tmp2;
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        tmp2  = @TYPE@_add(*op3p, *op4p);
-        *op5p = @TYPE@_add(tmp, tmp2);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply4(char **args,
-                 npy_intp *dimensions,
-                 npy_intp* steps,
-                 void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_5
-    BEGIN_OUTER_LOOP_5
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ *op5p = (@typ@ *) args[4];
-        @typ@ tmp, tmp2;
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        tmp2  = @TYPE@_mul(*op3p, *op4p);
-        *op5p = @TYPE@_mul(tmp, tmp2);
-    END_OUTER_LOOP
-}
-
-static void
-@TYPE@_multiply4_add(char **args,
-                     npy_intp *dimensions,
-                     npy_intp* steps,
-                     void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_6
-    BEGIN_OUTER_LOOP_6
-        @typ@ *op1p = (@typ@ *) args[0];
-        @typ@ *op2p = (@typ@ *) args[1];
-        @typ@ *op3p = (@typ@ *) args[2];
-        @typ@ *op4p = (@typ@ *) args[3];
-        @typ@ *op5p = (@typ@ *) args[4];
-        @typ@ *op6p = (@typ@ *) args[5];
-        @typ@ tmp, tmp2, tmp3;
-        tmp   = @TYPE@_mul(*op1p, *op2p);
-        tmp2  = @TYPE@_mul(*op3p, *op4p);
-        tmp3  = @TYPE@_mul(tmp, tmp2);
-        *op6p = @TYPE@_add(tmp3, *op5p);
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
-
-/* -------------------------------------------------------------------------- */
-             /* quadratic form */
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
-   #zero=s_zero,d_zero,c_zero,z_zero#
-   #blas_dot=FNAME(sdot),FNAME(ddot),FNAME(cdotu),FNAME(zdotu)#
- */
-
-static inline @typ@
-@TYPE@_dot_blas(size_t count,
-                void *X, intptr_t X_byte_step,
-                void *Y, intptr_t Y_byte_step)
-{
-    @ftyp@ result;
-    fortran_int N = (fortran_int) count;
-    fortran_int INCX = X_byte_step/sizeof(@ftyp@);
-    fortran_int INCY = Y_byte_step/sizeof(@ftyp@);
-
-    result = @blas_dot@(&N, X, &INCX, Y, &INCY);
-
-    return *(@typ@ *)&result;
-}
-
-static inline @typ@
-@TYPE@_dot_std(size_t count,
-               void *X, intptr_t X_byte_step,
-               void *Y, intptr_t Y_byte_step)
-{
-    size_t i;
-    @typ@ acc, *x_ptr, *y_ptr;
-    x_ptr = (@typ@ *)X;
-    y_ptr = (@typ@ *)Y;
-
-    acc = @TYPE@_mul(*x_ptr, *y_ptr);
-    x_ptr = offset_ptr(x_ptr, X_byte_step);
-    y_ptr = offset_ptr(y_ptr, Y_byte_step);
-
-    for (i = 1; i < count; i++) {
-        @typ@ tmp;
-
-        tmp = @TYPE@_mul(*x_ptr, *y_ptr);
-        acc = @TYPE@_add(acc, tmp);
-
-        x_ptr = offset_ptr(x_ptr, X_byte_step);
-        y_ptr = offset_ptr(y_ptr, Y_byte_step);
-    }
-
-    return acc;
-}
-
-/* uQv, where u and v are vectors and Q is a matrix */
-static void
-@TYPE@_quadratic_form(char **args,
-                      npy_intp *dimensions,
-                      npy_intp* steps,
-                      void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    size_t m = (size_t)dimensions[0];
-    size_t n = (size_t)dimensions[1];
-    ptrdiff_t u_step = (ptrdiff_t)steps[0];
-    ptrdiff_t Q_row_step = (ptrdiff_t)steps[1];
-    ptrdiff_t Q_column_step = (ptrdiff_t)steps[2];
-    ptrdiff_t v_step = (ptrdiff_t)steps[3];
-
-    if ((0 == (Q_row_step % sizeof(@ftyp@))) &&
-        (0 == (u_step % sizeof(@ftyp@)))) {
-        /* use blas loops for dot */
-        BEGIN_OUTER_LOOP_4
-            size_t column;
-            npy_uint8 *u, *Q, *v;
-            @typ@ *r;
-            @typ@ accum = @zero@;
-
-            u = (npy_uint8 *)args[0]; /* u (m)   [in] */
-            Q = (npy_uint8 *)args[1]; /* Q (m,n) [in] */
-            v = (npy_uint8 *)args[2]; /* v (n)   [in] */
-            r = (@typ@ *)args[3];   /* result  [out] */
-            /* sum (compute u * Q[i] * v[i]) for all i.
-               Q[i] are the different columns on Q */
-
-            for (column = 0; column < n; ++column) {
-                @typ@ tmp, tmp2;
-                tmp = @TYPE@_dot_blas(m,
-                                      Q, Q_row_step,
-                                      u, u_step);
-                tmp2  = @TYPE@_mul(tmp, *(@typ@*)v);
-                accum = @TYPE@_add(accum, tmp2);
-                Q += Q_column_step;
-                v += v_step;
-            }
-
-            *r = accum;
-        END_OUTER_LOOP
-    } else {
-        BEGIN_OUTER_LOOP_4
-            size_t column;
-            npy_uint8 *u, *Q, *v;
-            @typ@ *r;
-            @typ@ accum = @zero@;
-            u = (npy_uint8 *)args[0]; /* u (m)   [in] */
-            Q = (npy_uint8 *)args[1]; /* Q (m,n) [in] */
-            v = (npy_uint8 *)args[2]; /* v (n)   [in] */
-            r = (@typ@ *)args[3];   /* result  [out] */
-            /* sum (compute u * Q[i] * v[i]) for all i.
-               Q[i] are the different columns on Q */
-
-            for (column = 0; column < n; ++column) {
-                @typ@ tmp, tmp2;
-                tmp = @TYPE@_dot_std(m, Q, Q_row_step, u, u_step);
-                tmp2 = @TYPE@_mul(tmp, *(@typ@*)v);
-                accum = @TYPE@_add(accum, tmp2);
-                Q += Q_column_step;
-                v += v_step;
-            }
-
-            *r = accum;
-        END_OUTER_LOOP
-    }
-}
-/**end repeat**/
-
-/* -------------------------------------------------------------------------- */
-             /* chosolve (using potrs) */
-
-typedef struct potrs_params_struct {
-    void *A;
-    void *B;
-    fortran_int N;
-    fortran_int NRHS;
-    fortran_int LDA;
-    fortran_int LDB;
-    char UPLO;
-} POTRS_PARAMS_t;
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #ftyp=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #lapack_func_2=spotrf,dpotrf,cpotrf,zpotrf#
-   #lapack_func=spotrs,dpotrs,cpotrs,zpotrs#
- */
-
-
-static inline int
-init_@lapack_func@(POTRS_PARAMS_t *params,
-                   char UPLO,
-                   fortran_int N,
-                   fortran_int NRHS)
-{
-    npy_uint8 *mem_buff = NULL;
-    npy_uint8 *a, *b;
-    size_t a_size, b_size;
-
-    a_size = N*N*sizeof(@ftyp@);
-    b_size = N*NRHS*sizeof(@ftyp@);
-    mem_buff = malloc(a_size + b_size);
-    if (!mem_buff)
-      goto error;
-
-    a = mem_buff;
-    b = a + a_size;
-
-    params->A = (void*)a;
-    params->B = (void*)b;
-    params->N = N;
-    params->NRHS = NRHS;
-    params->LDA = N;
-    params->LDB = N;
-    params->UPLO = UPLO;
-
-    return 1;
-
- error:
-    free(mem_buff);
-    memset(params, 0, sizeof(*params));
-
-    return 0;
-}
-
-static inline void
-release_@lapack_func@(POTRS_PARAMS_t *params)
-{
-    free(params->A);
-    memset(params,0,sizeof(*params));
-    return;
-}
-
-static inline int
-call_@lapack_func@(POTRS_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func_2@)(&params->UPLO,
-                            &params->N,
-                            params->A, &params->LDA,
-                            &rv);
-    if (0 != rv)
-        return rv;
-
-    LAPACK(@lapack_func@)(&params->UPLO,
-                          &params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->B, &params->LDB,
-                          &rv);
-    return rv;
-}
-
-
-/* uplo: either 'U' or 'L'
-   ndim: use 1 to get nrhs from dimensions (matrix), 0 to use 1 (vector)
- */
-static void
-@TYPE@_chosolve(char uplo, char ndim,
-                char **args,
-                npy_intp *dimensions,
-                npy_intp* steps
-                )
-{
-    POTRS_PARAMS_t params;
-    int error_occurred = get_fp_invalid_and_clear();
-    fortran_int n, nrhs;
-    INIT_OUTER_LOOP_3
-
-    n = (fortran_int)dimensions[0];
-    nrhs = ndim?(fortran_int)dimensions[1]:1;
-    if (init_@lapack_func@(&params, uplo, n, nrhs)) {
-        LINEARIZE_DATA_t a_in, b_in, r_out;
-
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        if (ndim) {
-            init_linearize_data(&b_in,  nrhs, n, steps[3], steps[2]);
-            init_linearize_data(&r_out, nrhs, n, steps[5], steps[4]);
-        } else {
-            init_linearize_data(&b_in,  1, n, 0, steps[2]);
-            init_linearize_data(&r_out, 1, n, 0, steps[3]);
-        }
-
-        BEGIN_OUTER_LOOP_3
-            int not_ok;
-            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            not_ok = call_@lapack_func@(&params);
-            if (!not_ok) {
-                delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
-            } else {
-                error_occurred = 1;
-                nan_@TYPE@_matrix(args[2], &r_out);
-            }
-        END_OUTER_LOOP
-
-        release_@lapack_func@(&params);
-    }
-
-    set_fp_invalid_or_clear(error_occurred);
-}
-
-static void
-@TYPE@_chosolve_up(char **args,
-                   npy_intp *dimensions,
-                   npy_intp* steps,
-                   void *NPY_UNUSED(func))
-{
-    @TYPE@_chosolve('U', 1, args, dimensions, steps);
-}
-
-static void
-@TYPE@_chosolve_lo(char **args,
-                   npy_intp *dimensions,
-                   npy_intp* steps,
-                   void *NPY_UNUSED(func))
-{
-    @TYPE@_chosolve('L', 1, args, dimensions, steps);
-}
-
-static void
-@TYPE@_chosolve1_up(char **args,
-                    npy_intp *dimensions,
-                    npy_intp* steps,
-                    void *NPY_UNUSED(func))
-{
-    @TYPE@_chosolve('U', 0, args, dimensions, steps);
-}
-
-static void
-@TYPE@_chosolve1_lo(char **args,
-                    npy_intp *dimensions,
-                    npy_intp* steps,
-                    void *NPY_UNUSED(func))
-{
-    @TYPE@_chosolve('L', 0, args, dimensions, steps);
-}
-
-/**end repeat**/
-
-/* -------------------------------------------------------------------------- */
-                 /* poinv  */
-
-typedef struct potri_params_struct {
-    void *A;
-    fortran_int N;
-    fortran_int LDA;
-    char UPLO;
-} POTRI_PARAMS_t;
-
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #ftyp=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #potrf=spotrf,dpotrf,cpotrf,zpotrf#
-   #potri=spotri,dpotri,cpotri,zpotri#
- */
-static inline int
-init_@potri@(POTRI_PARAMS_t *params,
-             char UPLO,
-             fortran_int N)
-{
-    npy_uint8 *mem_buff = NULL;
-    npy_uint8 *a;
-    size_t a_size;
-
-    a_size = N*N*sizeof(@ftyp@);
-    mem_buff = malloc(a_size);
-    if (!mem_buff)
-      goto error;
-
-    a = mem_buff;
-
-    params->A = (void*)a;
-    params->N = N;
-    params->LDA = N;
-    params->UPLO = UPLO;
-
-    return 1;
-
- error:
-    free(mem_buff);
-    memset(params, 0, sizeof(*params));
-
-    return 0;
-}
-
-static inline void
-release_@potri@(POTRI_PARAMS_t *params)
-{
-    free(params->A);
-    memset(params,0,sizeof(*params));
-    return;
-}
-
-static inline int
-call_@potri@(POTRI_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@potrf@)(&params->UPLO,
-                    &params->N,
-                    params->A, &params->LDA,
-                    &rv);
-    if (0!= rv) {
-      return rv;
-    }
-
-    LAPACK(@potri@)(&params->UPLO,
-                    &params->N,
-                    params->A, &params->LDA,
-                    &rv);
-    return rv;
-}
-
-
-static inline void
-@TYPE@_poinv(char uplo,
-             char **args,
-             npy_intp *dimensions,
-             npy_intp *steps)
-{
-    POTRI_PARAMS_t params;
-    int error_occurred = get_fp_invalid_and_clear();
-    fortran_int n;
-    INIT_OUTER_LOOP_2
-
-    n = (fortran_int)dimensions[0];
-    if (init_@potri@(&params, uplo, n)) {
-        LINEARIZE_DATA_t a_in, r_out;
-
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
-
-        BEGIN_OUTER_LOOP_2
-            int not_ok;
-            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            not_ok = call_@potri@(&params);
-            if (!not_ok) {
-                make_symmetric_@TYPE@_matrix(params.UPLO, params.N, params.A);
-                delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
-            } else {
-                error_occurred = 1;
-                nan_@TYPE@_matrix(args[1], &r_out);
-            }
-        END_OUTER_LOOP
-
-        release_@potri@(&params);
-    }
-
-    set_fp_invalid_or_clear(error_occurred);
-}
-
-static void
-@TYPE@_poinv_up(char **args,
-                npy_intp *dimensions,
-                npy_intp *steps,
-                void *NPY_UNUSED(func))
-{
-    @TYPE@_poinv('U', args, dimensions, steps);
-}
-
-static void
-@TYPE@_poinv_lo(char **args,
-                npy_intp *dimensions,
-                npy_intp *steps,
-                void *NPY_UNUSED(func))
-{
-    @TYPE@_poinv('L', args, dimensions, steps);
-}
-
-/**end repeat**/
-
 #pragma GCC diagnostic pop
 
 /* -------------------------------------------------------------------------- */
@@ -3772,10 +2825,6 @@ static void *array_of_nulls[] = {
     }
 
 
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inner1d);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(dotc1d);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(innerwt);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(matrix_multiply);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(slogdet);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(det);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighlo);
@@ -3785,27 +2834,12 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
 GUFUNC_FUNC_ARRAY_EIG(eig);
 GUFUNC_FUNC_ARRAY_EIG(eigvals);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(quadratic_form);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(add3);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply3);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply3_add);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add2);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4_add);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve_up);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve_lo);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_up);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_lo);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_up);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_lo);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -3902,43 +2936,6 @@ typedef struct gufunc_descriptor_struct {
 } GUFUNC_DESCRIPTOR_t;
 
 GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
-    {
-        "inner1d",
-        "(i),(i)->()",
-        "inner on the last dimension and broadcast on the rest \n"\
-        "    \"(i),(i)->()\" \n",
-        4, 2, 1,
-        FUNC_ARRAY_NAME(inner1d),
-        equal_3_types
-    },
-    {
-        "dotc1d",
-        "(i),(i)->()",
-        "inner on the last dimension and broadcast on the rest \n"\
-        "    \"(i),(i)->()\" \n",
-        4, 2, 1,
-        FUNC_ARRAY_NAME(dotc1d),
-        equal_3_types
-    },
-    {
-        "innerwt",
-        "(i),(i),(i)->()",
-        "inner on the last dimension using 3 operands and broadcast on the"\
-        " rest \n"\
-        "    \"(i),(i),(i)->()\" \n",
-        2, 3, 1,
-        FUNC_ARRAY_NAME(innerwt),
-        equal_4_types
-    },
-    {
-        "matrix_multiply",
-        "(m,k),(k,n)->(m,n)",
-        "dot on the last two dimensions and broadcast on the rest \n"\
-        "    \"(m,k),(k,n)->(m,n)\" \n",
-        4, 2, 1,
-        FUNC_ARRAY_NAME(matrix_multiply),
-        equal_3_types
-    },
     {
         "slogdet",
         "(m,m)->(),()",
@@ -4041,16 +3038,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         equal_2_types
     },
     {
-        "cholesky_up",
-        "(m,m)->(m,m)",
-        "cholesky decomposition of hermitian positive-definite matrices. \n"\
-        "Broadcast to all outer dimensions. \n"\
-        "    \"(m,m)->(m,m)\" \n",
-        4, 1, 1,
-        FUNC_ARRAY_NAME(cholesky_up),
-        equal_2_types
-    },
-    {
         "cholesky_lo",
         "(m,m)->(m,m)",
         "cholesky decomposition of hermitian positive-definite matrices. \n"\
@@ -4128,128 +3115,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         3, 1, 1,
         FUNC_ARRAY_NAME(eigvals),
         eigvals_types
-    },
-    {
-        "quadratic_form",
-        "(m),(m,n),(n)->()",
-        "computes the quadratic form uQv in the inner dimensions, broadcast"\
-        "to the rest \n"\
-        "Results in the result of uQv for each element of the broadcasted"\
-        "dimensions. \n"\
-        "    \"(m),(m,n),(n)->()",
-        4,3,1,
-        FUNC_ARRAY_NAME(quadratic_form),
-        equal_4_types
-    },
-    {
-        "add3",
-        "(),(),()->()",
-        "3-way element-wise addition. a,b,c -> a+b+c for all elements. \n",
-        4,3,1,
-        FUNC_ARRAY_NAME(add3),
-        equal_4_types
-    },
-    {
-        "multiply3",
-        "(),(),()->()",
-        "3-way element-wise product. a,b,c -> a*b*c for all elements. \n",
-        4,3,1,
-        FUNC_ARRAY_NAME(multiply3),
-        equal_4_types
-    },
-    {
-        "multiply3_add",
-        "(),(),(),()->()",
-        "3-way element-wise product plus addition. a,b,c,d -> a*b*c+d"\
-        " for all elements. \n",
-        4,4,1,
-        FUNC_ARRAY_NAME(multiply3_add),
-        equal_5_types
-    },
-    {
-        "multiply_add",
-        "(),(),()->()",
-        "element-wise multiply-add. a,b,c -> a*b+c for all elements. \n",
-        4,3,1,
-        FUNC_ARRAY_NAME(multiply_add),
-        equal_4_types
-    },
-    {
-        "multiply_add2",
-        "(),(),(),()->()",
-        "element-wise product with 2 additions. a,b,c,d -> a*b+c+d for"\
-        " all elements. \n",
-        4,4,1,
-        FUNC_ARRAY_NAME(multiply_add2),
-        equal_5_types
-    },
-    {
-        "multiply4",
-        "(),(),(),()->()",
-        "4-way element-wise product. a,b,c,d -> a*b*c*d for all elements. \n",
-        4,4,1,
-        FUNC_ARRAY_NAME(multiply4),
-        equal_5_types
-    },
-    {
-        "multiply4_add",
-        "(),(),(),(),()->()",
-        "4-way element-wise product and addition. a,b,c,d,e -> a*b*c*d+e. \n",
-        4,5,1,
-        FUNC_ARRAY_NAME(multiply4_add),
-        equal_6_types
-    },
-    {  /* solve using cholesky decomposition (lapack potrs) */
-        "chosolve_up",
-        "(m,m),(m,n)->(m,n)",
-        "solve for symmetric/hermitian matrices using cholesky"\
-        " factorization. \n",
-        4,2,1,
-        FUNC_ARRAY_NAME(chosolve_up),
-        equal_3_types
-    },
-    {  /* solve using choleske decomposition (lapack potrs) */
-        "chosolve_lo",
-        "(m,m),(m,n)->(m,n)",
-        "solve for symmetric/hermitian matrices using cholesky"\
-        " factorization. \n",
-        4,2,1,
-        FUNC_ARRAY_NAME(chosolve_lo),
-        equal_3_types
-    },
-    {   /* solve using cholesky decomposition (lapack potrs) */
-        "chosolve1_up",
-        "(m,m),(m)->(m)",
-        "solve a system using cholesky decomposition. \n",
-        4,2,1,
-        FUNC_ARRAY_NAME(chosolve1_up),
-        equal_3_types
-    },
-    {   /* solve using cholesky decomposition (lapack potrs) */
-        "chosolve1_lo",
-        "(m,m),(m)->(m)",
-        "solve a system using cholesky decomposition. \n",
-        4,2,1,
-        FUNC_ARRAY_NAME(chosolve1_lo),
-        equal_3_types
-    },
-    {   /* inverse using cholesky decomposition (lapack potri) */
-        "poinv_up",
-        "(m,m)->(m,m)",
-        "inverse using cholesky decomposition for symmetric/hermitian"\
-        " matrices. \n",
-        4,1,1,
-        FUNC_ARRAY_NAME(poinv_up),
-        equal_2_types
-    },
-    {   /* inverse using cholesky decomposition (lapack potri) */
-        "poinv_lo",
-        "(m,m)->(m,m)",
-        "inverse using cholesky decomposition for symmetric/hermitian"\
-        " matrices. \n",
-        4,1,1,
-        FUNC_ARRAY_NAME(poinv_lo),
-        equal_2_types
     },
 };
 
