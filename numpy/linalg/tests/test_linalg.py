@@ -5,6 +5,8 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import itertools
+import traceback
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
@@ -12,8 +14,9 @@ from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank
 from numpy.testing import (
-    TestCase, assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, run_module_suite, dec
+    assert_, assert_equal, assert_raises, assert_array_equal,
+    assert_almost_equal, assert_allclose, run_module_suite,
+    dec
 )
 
 
@@ -45,162 +48,287 @@ def get_complex_dtype(dtype):
     return {single: csingle, double: cdouble,
             csingle: csingle, cdouble: cdouble}[dtype]
 
+def get_rtol(dtype):
+    return 0.1 * np.sqrt(np.finfo(dtype).eps)
+
+class LinalgCase(object):
+    def __init__(self, name, a, b, exception_cls=None):
+        assert isinstance(name, str)
+        self.name = name
+        self.a = a
+        self.b = b
+        self.exception_cls = exception_cls
+
+    def check(self, do):
+        if self.exception_cls is None:
+            do(self.a, self.b)
+        else:
+            assert_raises(self.exception_cls, do, self.a, self.b)
+
+    def __repr__(self):
+        return "<LinalgCase: %s>" % (self.name,)
+
+
+#
+# Base test cases
+#
+
+SQUARE_CASES = [
+    LinalgCase("single",
+               array([[1., 2.], [3., 4.]], dtype=single),
+               array([2., 1.], dtype=single)),
+    LinalgCase("double",
+               array([[1., 2.], [3., 4.]], dtype=double),
+               array([2., 1.], dtype=double)),
+    LinalgCase("double_2",
+               array([[1., 2.], [3., 4.]], dtype=double),
+               array([[2., 1., 4.], [3., 4., 6.]], dtype=double)),
+    LinalgCase("csingle",
+               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=csingle),
+               array([2.+1j, 1.+2j], dtype=csingle)),
+    LinalgCase("cdouble",
+               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble),
+               array([2.+1j, 1.+2j], dtype=cdouble)),
+    LinalgCase("cdouble_2",
+               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble),
+               array([[2.+1j, 1.+2j, 1+3j], [1-2j, 1-3j, 1-6j]], dtype=cdouble)),
+    LinalgCase("empty",
+               atleast_2d(array([], dtype = double)),
+               atleast_2d(array([], dtype = double)),
+               linalg.LinAlgError),
+    LinalgCase("nonarray",
+               [[1, 2], [3, 4]],
+               [2, 1]),
+    LinalgCase("matrix_b_only",
+               array([[1., 2.], [3., 4.]]),
+               matrix([2., 1.]).T),
+    LinalgCase("matrix_a_and_b",
+               matrix([[1., 2.], [3., 4.]]),
+               matrix([2., 1.]).T),
+]
+
+NONSQUARE_CASES = [
+    LinalgCase("single_nsq_1",
+               array([[1., 2., 3.], [3., 4., 6.]], dtype=single),
+               array([2., 1.], dtype=single)),
+    LinalgCase("single_nsq_2",
+               array([[1., 2.], [3., 4.], [5., 6.]], dtype=single),
+               array([2., 1., 3.], dtype=single)),
+    LinalgCase("double_nsq_1",
+               array([[1., 2., 3.], [3., 4., 6.]], dtype=double),
+               array([2., 1.], dtype=double)),
+    LinalgCase("double_nsq_2",
+               array([[1., 2.], [3., 4.], [5., 6.]], dtype=double),
+               array([2., 1., 3.], dtype=double)),
+    LinalgCase("csingle_nsq_1",
+               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=csingle),
+               array([2.+1j, 1.+2j], dtype=csingle)),
+    LinalgCase("csingle_nsq_2",
+               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=csingle),
+               array([2.+1j, 1.+2j, 3.-3j], dtype=csingle)),
+    LinalgCase("cdouble_nsq_1",
+               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble),
+               array([2.+1j, 1.+2j], dtype=cdouble)),
+    LinalgCase("cdouble_nsq_2",
+               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble),
+               array([2.+1j, 1.+2j, 3.-3j], dtype=cdouble)),
+    LinalgCase("cdouble_nsq_1_2",
+               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble),
+               array([[2.+1j, 1.+2j], [1-1j, 2-2j]], dtype=cdouble)),
+    LinalgCase("cdouble_nsq_2_2",
+               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble),
+               array([[2.+1j, 1.+2j], [1-1j, 2-2j], [1-1j, 2-2j]], dtype=cdouble)),
+]
+
+HERMITIAN_CASES = [
+    LinalgCase("hsingle",
+               array([[1., 2.], [2., 1.]], dtype=single),
+               None),
+    LinalgCase("hdouble",
+               array([[1., 2.], [2., 1.]], dtype=double),
+               None),
+    LinalgCase("hcsingle",
+               array([[1., 2+3j], [2-3j, 1]], dtype=csingle),
+               None),
+    LinalgCase("hcdouble",
+               array([[1., 2+3j], [2-3j, 1]], dtype=cdouble),
+               None),
+    LinalgCase("hempty",
+               atleast_2d(array([], dtype = double)),
+               None,
+               linalg.LinAlgError),
+    LinalgCase("hnonarray",
+               [[1, 2], [2, 1]],
+               None),
+    LinalgCase("matrix_b_only",
+               array([[1., 2.], [2., 1.]]),
+               None),
+    LinalgCase("hmatrix_a_and_b",
+               matrix([[1., 2.], [2., 1.]]),
+               None)
+]
+
+
+#
+# Gufunc test cases
+#
+
+GENERALIZED_SQUARE_CASES = []
+GENERALIZED_NONSQUARE_CASES = []
+GENERALIZED_HERMITIAN_CASES = []
+
+for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
+                 (GENERALIZED_NONSQUARE_CASES, NONSQUARE_CASES),
+                 (GENERALIZED_HERMITIAN_CASES, HERMITIAN_CASES)):
+    for case in src:
+        if not isinstance(case.a, np.ndarray):
+            continue
+        
+        a = np.array([case.a, 2*case.a, 3*case.a])
+        if case.b is None:
+            b = None
+        else:
+            b = np.array([case.b, 7*case.b, 6*case.b])
+        new_case = LinalgCase(case.name + "_tile3", a, b,
+                              case.exception_cls)
+        tgt.append(new_case)
+
+        a = np.array([case.a]*2*3).reshape((3, 2) + case.a.shape)
+        if case.b is None:
+            b = None
+        else:
+            b = np.array([case.b]*2*3).reshape((3, 2) + case.b.shape)
+        new_case = LinalgCase(case.name + "_tile213", a, b,
+                              case.exception_cls)
+        tgt.append(new_case)
+
+#
+# Generate stride combination variations of the above
+#
+
+def _stride_comb_iter(x):
+    """
+    Generate cartesian product of strides for all axes
+    """
+
+    if not isinstance(x, np.ndarray):
+        yield x, "nop"
+        return
+
+    stride_set = [(1,)]*x.ndim
+    stride_set[-1] = (1, 3, -4)
+    if x.ndim > 1:
+        stride_set[-2] = (1, 3, -4)
+    if x.ndim > 2:
+        stride_set[-3] = (1, -4)
+
+    for repeats in itertools.product(*tuple(stride_set)):
+        new_shape = [abs(a*b) for a, b in zip(x.shape, repeats)]
+        slices = tuple([slice(None, None, repeat) for repeat in repeats])
+
+        # new array with different strides, but same data
+        xi = np.empty(new_shape, dtype=x.dtype)
+        xi.view(np.uint32).fill(0xdeadbeef)
+        xi = xi[slices]
+        xi[...] = x
+        xi = xi.view(x.__class__)
+        assert np.all(xi == x)
+        yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+
+for src in (SQUARE_CASES,
+            NONSQUARE_CASES,
+            HERMITIAN_CASES,
+            GENERALIZED_SQUARE_CASES,
+            GENERALIZED_NONSQUARE_CASES,
+            GENERALIZED_HERMITIAN_CASES):
+
+    new_cases = []
+    for case in src:
+        for a, a_tag in _stride_comb_iter(case.a):
+            for b, b_tag in _stride_comb_iter(case.b):
+                new_case = LinalgCase(case.name + "_" + a_tag + "_" + b_tag, a, b,
+                                      exception_cls=case.exception_cls)
+                new_cases.append(new_case)
+    src.extend(new_cases)
+
+
+#
+# Test different routines against the above cases
+#
+
+def _check_cases(func, cases):
+    for case in cases:
+        try:
+            case.check(func)
+        except:
+            msg = "In test case: %r\n\n" % case
+            msg += traceback.format_exc()
+            raise AssertionError(msg)
 
 class LinalgTestCase(object):
-    def test_single(self):
-        a = array([[1., 2.], [3., 4.]], dtype=single)
-        b = array([2., 1.], dtype=single)
-        self.do(a, b)
-
-    def test_double(self):
-        a = array([[1., 2.], [3., 4.]], dtype=double)
-        b = array([2., 1.], dtype=double)
-        self.do(a, b)
-
-    def test_double_2(self):
-        a = array([[1., 2.], [3., 4.]], dtype=double)
-        b = array([[2., 1., 4.], [3., 4., 6.]], dtype=double)
-        self.do(a, b)
-
-    def test_csingle(self):
-        a = array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=csingle)
-        b = array([2.+1j, 1.+2j], dtype=csingle)
-        self.do(a, b)
-
-    def test_cdouble(self):
-        a = array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble)
-        b = array([2.+1j, 1.+2j], dtype=cdouble)
-        self.do(a, b)
-
-    def test_cdouble_2(self):
-        a = array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble)
-        b = array([[2.+1j, 1.+2j, 1+3j], [1-2j, 1-3j, 1-6j]], dtype=cdouble)
-        self.do(a, b)
-
-    def test_empty(self):
-        a = atleast_2d(array([], dtype = double))
-        b = atleast_2d(array([], dtype = double))
-        try:
-            self.do(a, b)
-            raise AssertionError("%s should fail with empty matrices", self.__name__[5:])
-        except linalg.LinAlgError as e:
-            pass
-
-    def test_nonarray(self):
-        a = [[1, 2], [3, 4]]
-        b = [2, 1]
-        self.do(a, b)
-
-    def test_matrix_b_only(self):
-        """Check that matrix type is preserved."""
-        a = array([[1., 2.], [3., 4.]])
-        b = matrix([2., 1.]).T
-        self.do(a, b)
-
-    def test_matrix_a_and_b(self):
-        """Check that matrix type is preserved."""
-        a = matrix([[1., 2.], [3., 4.]])
-        b = matrix([2., 1.]).T
-        self.do(a, b)
+    def test_sq_cases(self):
+        _check_cases(self.do, SQUARE_CASES)
 
 
 class LinalgNonsquareTestCase(object):
-    def test_single_nsq_1(self):
-        a = array([[1., 2., 3.], [3., 4., 6.]], dtype=single)
-        b = array([2., 1.], dtype=single)
-        self.do(a, b)
-
-    def test_single_nsq_2(self):
-        a = array([[1., 2.], [3., 4.], [5., 6.]], dtype=single)
-        b = array([2., 1., 3.], dtype=single)
-        self.do(a, b)
-
-    def test_double_nsq_1(self):
-        a = array([[1., 2., 3.], [3., 4., 6.]], dtype=double)
-        b = array([2., 1.], dtype=double)
-        self.do(a, b)
-
-    def test_double_nsq_2(self):
-        a = array([[1., 2.], [3., 4.], [5., 6.]], dtype=double)
-        b = array([2., 1., 3.], dtype=double)
-        self.do(a, b)
-
-    def test_csingle_nsq_1(self):
-        a = array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=csingle)
-        b = array([2.+1j, 1.+2j], dtype=csingle)
-        self.do(a, b)
-
-    def test_csingle_nsq_2(self):
-        a = array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=csingle)
-        b = array([2.+1j, 1.+2j, 3.-3j], dtype=csingle)
-        self.do(a, b)
-
-    def test_cdouble_nsq_1(self):
-        a = array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble)
-        b = array([2.+1j, 1.+2j], dtype=cdouble)
-        self.do(a, b)
-
-    def test_cdouble_nsq_2(self):
-        a = array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble)
-        b = array([2.+1j, 1.+2j, 3.-3j], dtype=cdouble)
-        self.do(a, b)
-
-    def test_cdouble_nsq_1_2(self):
-        a = array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble)
-        b = array([[2.+1j, 1.+2j], [1-1j, 2-2j]], dtype=cdouble)
-        self.do(a, b)
-
-    def test_cdouble_nsq_2_2(self):
-        a = array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble)
-        b = array([[2.+1j, 1.+2j], [1-1j, 2-2j], [1-1j, 2-2j]], dtype=cdouble)
-        self.do(a, b)
+    def test_sq_cases(self):
+        _check_cases(self.do, NONSQUARE_CASES)
 
 
-def _generalized_testcase(new_cls_name, old_cls):
-    def get_method(old_name, new_name):
-        def method(self):
-            base = old_cls()
-            def do(a, b):
-                a = np.array([a, a, a])
-                b = np.array([b, b, b])
-                self.do(a, b)
-            base.do = do
-            getattr(base, old_name)()
-        method.__name__ = new_name
-        return method
+class LinalgGeneralizedTestCase(object):
+    @dec.slow
+    def test_generalized_sq_cases(self):
+        _check_cases(self.do, GENERALIZED_SQUARE_CASES)
 
-    dct = dict()
-    for old_name in dir(old_cls):
-        if old_name.startswith('test_'):
-            new_name = old_name + '_generalized'
-            dct[new_name] = get_method(old_name, new_name)
 
-    return type(new_cls_name, (object,), dct)
+class LinalgGeneralizedNonsquareTestCase(object):
+    @dec.slow
+    def test_generalized_nonsq_cases(self):
+        _check_cases(self.do, GENERALIZED_NONSQUARE_CASES)
 
-LinalgGeneralizedTestCase = _generalized_testcase(
-    'LinalgGeneralizedTestCase', LinalgTestCase)
-LinalgGeneralizedNonsquareTestCase = _generalized_testcase(
-    'LinalgGeneralizedNonsquareTestCase', LinalgNonsquareTestCase)
+
+class HermitianTestCase(object):
+    def test_herm_cases(self):
+        _check_cases(self.do, HERMITIAN_CASES)
+
+
+class HermitianGeneralizedTestCase(object):
+    @dec.slow
+    def test_generalized_herm_cases(self):
+        _check_cases(self.do, GENERALIZED_HERMITIAN_CASES)
 
 
 def dot_generalized(a, b):
     a = asarray(a)
-    if a.ndim == 3:
-        return np.array([dot(ax, bx) for ax, bx in zip(a, b)])
-    elif a.ndim > 3:
-        raise ValueError("Not implemented...")
-    return dot(a, b)
+    if a.ndim >= 3:
+        if a.ndim == b.ndim:
+            # matrix x matrix
+            new_shape = a.shape[:-1] + b.shape[-1:]
+        elif a.ndim == b.ndim + 1:
+            # matrix x vector
+            new_shape = a.shape[:-1]
+        else:
+            raise ValueError("Not implemented...")
+        r = np.empty(new_shape, dtype=np.common_type(a, b))
+        for c in itertools.product(*map(range, a.shape[:-2])):
+            r[c] = dot(a[c], b[c])
+        return r
+    else:
+        return dot(a, b)
+
 
 def identity_like_generalized(a):
     a = asarray(a)
-    if a.ndim == 3:
-        return np.array([identity(a.shape[-2]) for ax in a])
-    elif a.ndim > 3:
-        raise ValueError("Not implemented...")
-    return identity(a.shape[0])
+    if a.ndim >= 3:
+        r = np.empty(a.shape, dtype=a.dtype)
+        for c in itertools.product(*map(range, a.shape[:-2])):
+            r[c] = identity(a.shape[-2])
+        return r
+    else:
+        return identity(a.shape[0])
 
 
-class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
@@ -265,7 +393,7 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
         assert_(isinstance(result, ArraySubclass))
 
 
-class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestInv(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
@@ -295,7 +423,7 @@ class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
         assert_equal(a.shape, res.shape)
 
 
-class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
@@ -311,13 +439,12 @@ class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             yield check, dtype
 
 
-class TestEig(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestEig(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
-        if evectors.ndim == 3:
-            assert_almost_equal(dot_generalized(a, evectors), evectors * evalues[:, None,:])
-        else:
-            assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
+        assert_allclose(dot_generalized(a, evectors),
+                        np.asarray(evectors) * np.asarray(evalues)[...,None,:],
+                        rtol=get_rtol(evalues.dtype))
         assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
     def test_types(self):
@@ -333,16 +460,15 @@ class TestEig(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             assert_equal(v.dtype, get_complex_dtype(dtype))
 
         for dtype in [single, double, csingle, cdouble]:
-            yield dtype
+            yield check, dtype
 
 
-class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
-        if u.ndim == 3:
-            assert_almost_equal(a, dot_generalized(u * s[:, None,:], vt))
-        else:
-            assert_almost_equal(a, dot(multiply(u, s), vt))
+        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[...,None,:],
+                                           np.asarray(vt)),
+                        rtol=get_rtol(u.dtype))
         assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
         assert_(imply(isinstance(a, matrix), isinstance(vt, matrix)))
 
@@ -360,34 +486,34 @@ class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             yield check, dtype
 
 
-class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
 
 
-class TestCond2(LinalgTestCase, TestCase):
+class TestCond2(LinalgTestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a, 2), decimal=5)
 
 
-class TestCondInf(TestCase):
+class TestCondInf(object):
     def test(self):
         A = array([[1., 0, 0], [0, -2., 0], [0, 0, 3.]])
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgTestCase, TestCase):
+class TestPinv(LinalgTestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
-class TestDet(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         d = linalg.det(a)
         (s, ld) = linalg.slogdet(a)
@@ -421,12 +547,15 @@ class TestDet(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def test_types(self):
         def check(dtype):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(np.linalg.det(x), get_real_dtype(dtype))
+            assert_equal(np.linalg.det(x).dtype, dtype)
+            ph, s = np.linalg.slogdet(x)
+            assert_equal(s.dtype, get_real_dtype(dtype))
+            assert_equal(ph.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
 
 
-class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
+class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase):
     def do(self, a, b):
         arr = np.asarray(a)
         m, n = arr.shape
@@ -506,70 +635,38 @@ class TestMatrixPower(object):
                       lambda: matrix_power(self.noninv, -1))
 
 
-class TestBoolPower(TestCase):
+class TestBoolPower(object):
     def test_square(self):
         A = array([[True, False], [True, True]])
         assert_equal(matrix_power(A, 2), A)
 
 
-class HermitianTestCase(object):
-    def test_single(self):
-        a = array([[1., 2.], [2., 1.]], dtype=single)
-        self.do(a, None)
-
-    def test_double(self):
-        a = array([[1., 2.], [2., 1.]], dtype=double)
-        self.do(a, None)
-
-    def test_csingle(self):
-        a = array([[1., 2+3j], [2-3j, 1]], dtype=csingle)
-        self.do(a, None)
-
-    def test_cdouble(self):
-        a = array([[1., 2+3j], [2-3j, 1]], dtype=cdouble)
-        self.do(a, None)
-
-    def test_empty(self):
-        a = atleast_2d(array([], dtype = double))
-        assert_raises(linalg.LinAlgError, self.do, a, None)
-
-    def test_nonarray(self):
-        a = [[1, 2], [2, 1]]
-        self.do(a, None)
-
-    def test_matrix_b_only(self):
-        """Check that matrix type is preserved."""
-        a = array([[1., 2.], [2., 1.]])
-        self.do(a, None)
-
-    def test_matrix_a_and_b(self):
-        """Check that matrix type is preserved."""
-        a = matrix([[1., 2.], [2., 1.]])
-        self.do(a, None)
-
-
-HermitianGeneralizedTestCase = _generalized_testcase(
-    'HermitianGeneralizedTestCase', HermitianTestCase)
-
-class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
+class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b):
         # note that eigenvalue arrays must be sorted since
         # their order isn't guaranteed.
-        ev = linalg.eigvalsh(a)
+        ev = linalg.eigvalsh(a, 'L')
         evalues, evectors = linalg.eig(a)
         ev.sort(axis=-1)
         evalues.sort(axis=-1)
-        assert_almost_equal(ev, evalues)
+        assert_allclose(ev, evalues,
+                        rtol=get_rtol(ev.dtype))
+
+        ev2 = linalg.eigvalsh(a, 'U')
+        ev2.sort(axis=-1)
+        assert_allclose(ev2, evalues,
+                        rtol=get_rtol(ev.dtype))
 
     def test_types(self):
         def check(dtype):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(np.linalg.eigvalsh(x), get_real_dtype(dtype))
+            w = np.linalg.eigvalsh(x)
+            assert_equal(w.dtype, get_real_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
 
 
-class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
+class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b):
         # note that eigenvalue arrays must be sorted since
         # their order isn't guaranteed.
@@ -579,17 +676,29 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
         evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
 
+        assert_allclose(dot_generalized(a, evc),
+                        np.asarray(ev)[...,None,:] * np.asarray(evc),
+                        rtol=get_rtol(ev.dtype))
+
+        ev2, evc2 = linalg.eigh(a, 'U')
+        ev2.sort(axis=-1)
+        assert_almost_equal(ev2, evalues)
+
+        assert_allclose(dot_generalized(a, evc2),
+                        np.asarray(ev2)[...,None,:] * np.asarray(evc2),
+                        rtol=get_rtol(ev.dtype))
+
     def test_types(self):
         def check(dtype):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w, v = np.linalg.eig(x)
-            assert_equal(w, get_real_dtype(dtype))
-            assert_equal(v, dtype)
+            w, v = np.linalg.eigh(x)
+            assert_equal(w.dtype, get_real_dtype(dtype))
+            assert_equal(v.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
 
 
-class _TestNorm(TestCase):
+class _TestNorm(object):
 
     dt = None
     dec = None
@@ -640,9 +749,9 @@ class _TestNorm(TestCase):
         assert_almost_equal(norm(A, 2), 9.1231056256176615)
         assert_almost_equal(norm(A, -2), 0.87689437438234041)
 
-        self.assertRaises(ValueError, norm, A, 'nofro')
-        self.assertRaises(ValueError, norm, A, -3)
-        self.assertRaises(ValueError, norm, A, 0)
+        assert_raises(ValueError, norm, A, 'nofro')
+        assert_raises(ValueError, norm, A, -3)
+        assert_raises(ValueError, norm, A, 0)
 
     def test_axis(self):
         # Vector norms.
@@ -687,20 +796,20 @@ class _TestNorm(TestCase):
         # Using `axis=<integer>` or passing in a 1-D array implies vector
         # norms are being computed, so also using `ord='fro'` raises a
         # ValueError.
-        self.assertRaises(ValueError, norm, A, 'fro', 0)
-        self.assertRaises(ValueError, norm, [3, 4], 'fro', None)
+        assert_raises(ValueError, norm, A, 'fro', 0)
+        assert_raises(ValueError, norm, [3, 4], 'fro', None)
 
         # Similarly, norm should raise an exception when ord is any finite
         # number other than 1, 2, -1 or -2 when computing matrix norms.
         for order in [0, 3]:
-            self.assertRaises(ValueError, norm, A, order, None)
-            self.assertRaises(ValueError, norm, A, order, (0, 1))
-            self.assertRaises(ValueError, norm, B, order, (1, 2))
+            assert_raises(ValueError, norm, A, order, None)
+            assert_raises(ValueError, norm, A, order, (0, 1))
+            assert_raises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
-        self.assertRaises(ValueError, norm, B, None, 3)
-        self.assertRaises(ValueError, norm, B, None, (2, 3))
-        self.assertRaises(ValueError, norm, B, None, (0, 1, 2))
+        assert_raises(ValueError, norm, B, None, 3)
+        assert_raises(ValueError, norm, B, None, (2, 3))
+        assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
 
 class TestNormDouble(_TestNorm):
@@ -751,7 +860,7 @@ def test_reduced_rank():
         assert_equal(matrix_rank(X), 8)
 
 
-class TestQR(TestCase):
+class TestQR(object):
 
     def check_qr(self, a):
         # This test expects the argument `a` to be an ndarray or
@@ -793,7 +902,7 @@ class TestQR(TestCase):
 
     def test_qr_empty(self):
         a = np.zeros((0, 2))
-        self.assertRaises(linalg.LinAlgError, linalg.qr, a)
+        assert_raises(linalg.LinAlgError, linalg.qr, a)
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
