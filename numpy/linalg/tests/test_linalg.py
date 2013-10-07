@@ -49,7 +49,11 @@ def get_complex_dtype(dtype):
             csingle: csingle, cdouble: cdouble}[dtype]
 
 def get_rtol(dtype):
-    return 0.1 * np.sqrt(np.finfo(dtype).eps)
+    # Choose a safe rtol
+    if dtype in (np.single, csingle):
+        return 1e-5
+    else:
+        return 1e-11
 
 class LinalgCase(object):
     def __init__(self, name, a, b, exception_cls=None):
