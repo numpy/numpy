@@ -73,6 +73,8 @@ class LinalgCase(object):
 # Base test cases
 #
 
+np.random.seed(1234)
+
 SQUARE_CASES = [
     LinalgCase("single",
                array([[1., 2.], [3., 4.]], dtype=single),
@@ -96,6 +98,9 @@ SQUARE_CASES = [
                atleast_2d(array([], dtype = double)),
                atleast_2d(array([], dtype = double)),
                linalg.LinAlgError),
+    LinalgCase("8x8",
+               np.random.rand(8, 8),
+               np.random.rand(8)),
     LinalgCase("nonarray",
                [[1, 2], [3, 4]],
                [2, 1]),
@@ -138,6 +143,9 @@ NONSQUARE_CASES = [
     LinalgCase("cdouble_nsq_2_2",
                array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble),
                array([[2.+1j, 1.+2j], [1-1j, 2-2j], [1-1j, 2-2j]], dtype=cdouble)),
+    LinalgCase("8x11",
+               np.random.rand(8, 11),
+               np.random.rand(11)),
 ]
 
 HERMITIAN_CASES = [
@@ -260,7 +268,7 @@ def _check_cases(func, cases):
     for case in cases:
         try:
             case.check(func)
-        except:
+        except Exception:
             msg = "In test case: %r\n\n" % case
             msg += traceback.format_exc()
             raise AssertionError(msg)
