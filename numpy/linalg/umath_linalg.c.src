@@ -819,9 +819,17 @@ linearize_@TYPE@_matrix(void *dst_in,
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
         for (i=0; i< data->rows; i++) {
-            FNAME(@copy@)(&columns,
-                          (void*)src, &column_strides,
-                          (void*)dst, &one);
+            if (column_strides >= 0) {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &column_strides,
+                              (void*)dst, &one);
+            }
+            else {
+                FNAME(@copy@)(&columns,
+                              (void*)((@typ@*)src + (columns-1)*column_strides),
+                              &column_strides,
+                              (void*)dst, &one);
+            }
             src += data->row_strides/sizeof(@typ@);
             dst += data->columns;
         }
@@ -847,9 +855,17 @@ delinearize_@TYPE@_matrix(void *dst_in,
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
         for (i=0; i < data->rows; i++) {
-            FNAME(@copy@)(&columns,
-                          (void*)src, &one,
-                          (void*)dst, &column_strides);
+            if (column_strides >= 0) {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &one,
+                              (void*)dst, &column_strides);
+            }
+            else {
+                FNAME(@copy@)(&columns,
+                              (void*)src, &one,
+                              (void*)((@typ@*)dst + (columns-1)*column_strides),
+                              &column_strides);
+            }
             src += data->columns;
             dst += data->row_strides/sizeof(@typ@);
         }
