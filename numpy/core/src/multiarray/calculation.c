@@ -589,29 +589,29 @@ NPY_NO_EXPORT PyObject *
 PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
 {
     PyObject *f, *ret = NULL, *tmp, *op1, *op2;
-    int ret_int=0;
     PyArray_Descr *my_descr;
+    PyObject *arr;
     if (out && (PyArray_SIZE(out) != PyArray_SIZE(a))) {
         PyErr_SetString(PyExc_ValueError,
                         "invalid output shape");
         return NULL;
     }
+
+    if (out != NULL) {
+        arr = (PyObject *)out;
+        Py_INCREF(arr);
+    }
+    else {
+        arr = PyArray_Copy(a);
+        if (arr == NULL ) {
+            return NULL;
+        }
+    }
+
     if (PyArray_ISCOMPLEX(a)) {
         PyObject *part;
         PyObject *round_part;
-        PyObject *arr;
         int res;
-
-        if (out) {
-            arr = (PyObject *)out;
-            Py_INCREF(arr);
-        }
-        else {
-            arr = PyArray_Copy(a);
-            if (arr == NULL) {
-                return NULL;
-            }
-        }
 
         /* arr.real = a.real.round(decimals) */
         part = PyObject_GetAttrString(arr, "real");
@@ -660,23 +660,15 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     if (decimals >= 0) {
         if (PyArray_ISINTEGER(a)) {
             if (out) {
-                if (PyArray_AssignArray(out, a,
+                if (PyArray_AssignArray(arr, a,
                             NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {
                     return NULL;
                 }
-                Py_INCREF(out);
-                return (PyObject *)out;
             }
-            else {
-                Py_INCREF(a);
-                return (PyObject *)a;
-            }
+            return arr;
         }
         if (decimals == 0) {
-            if (out) {
-                return PyObject_CallFunction(n_ops.rint, "OO", a, out);
-            }
-            return PyObject_CallFunction(n_ops.rint, "O", a);
+            return PyObject_CallFunction(n_ops.rint, "OO", a, arr);
         }
         op1 = n_ops.multiply;
         op2 = n_ops.true_divide;
@@ -686,59 +678,55 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         op2 = n_ops.multiply;
         decimals = -decimals;
     }
-    if (!out) {
-        if (PyArray_ISINTEGER(a)) {
-            ret_int = 1;
-            my_descr = PyArray_DescrFromType(NPY_DOUBLE);
-        }
-        else {
-            Py_INCREF(PyArray_DESCR(a));
-            my_descr = PyArray_DESCR(a);
-        }
-        out = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
-                                             my_descr,
-                                             PyArray_ISFORTRAN(a));
-        if (out == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        Py_INCREF(out);
-    }
     f = PyFloat_FromDouble(power_of_ten(decimals));
     if (f == NULL) {
+        Py_DECREF(arr);
         return NULL;
     }
-    ret = PyObject_CallFunction(op1, "OOO", a, f, out);
+
+    if (PyArray_ISINTEGER(a)) {
+        my_descr = PyArray_DescrFromType(NPY_DOUBLE);
+    }
+    else {
+        Py_INCREF(PyArray_DESCR(a));
+        my_descr = PyArray_DESCR(a);
+    }
+
+    tmp = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
+            my_descr,
+            PyArray_ISFORTRAN(a));
+
+    ret = PyObject_CallFunction(op1, "OOO", a, f, tmp);
     if (ret == NULL) {
+        Py_DECREF(arr);
+        arr = NULL;
         goto finish;
     }
-    tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
-    if (tmp == NULL) {
-        Py_DECREF(ret);
-        ret = NULL;
-        goto finish;
-    }
+    ret = PyObject_CallFunction(n_ops.rint, "OO", tmp, tmp);
     Py_DECREF(tmp);
-    tmp = PyObject_CallFunction(op2, "OOO", ret, f, ret);
-    if (tmp == NULL) {
-        Py_DECREF(ret);
-        ret = NULL;
+    if (ret == NULL) {
+        Py_DECREF(arr);
+        arr = NULL;
         goto finish;
     }
+    ret = PyObject_CallFunction(op2, "OOO", tmp, f, tmp);
     Py_DECREF(tmp);
+    if (ret == NULL) {
+        Py_DECREF(arr);
+        arr = NULL;
+        goto finish;
+    }
+
+    if (0!=PyArray_CastTo(arr, tmp)) {
+        Py_DECREF(arr);
+        arr = NULL;
+        goto finish;
+    }
 
  finish:
     Py_DECREF(f);
-    Py_DECREF(out);
-    if (ret_int) {
-        Py_INCREF(PyArray_DESCR(a));
-        tmp = PyArray_CastToType((PyArrayObject *)ret,
-                                 PyArray_DESCR(a), PyArray_ISFORTRAN(a));
-        Py_DECREF(ret);
-        return tmp;
-    }
-    return ret;
+    Py_DECREF(tmp);
+    return arr;
 }
 
 

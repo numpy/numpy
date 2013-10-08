@@ -614,10 +614,79 @@ class TestBool(TestCase):
 
 class TestMethods(TestCase):
     def test_test_round(self):
+        # test basic float rounding
         assert_equal(array([1.2, 1.5]).round(), [1, 2])
         assert_equal(array(1.5).round(), 2)
         assert_equal(array([12.2, 15.5]).round(-1), [10, 20])
         assert_equal(array([12.15, 15.51]).round(1), [12.2, 15.5])
+        # test basic rounding and that return value is not another reference to
+        # the input, for floats
+        a = array([1, 1.5, 2.36, 14.52])
+        b = a.round(decimals=2)
+        self.assertTrue(a is not b)
+        assert_equal(b, a)
+        b = a.round(decimals=1)
+        self.assertTrue(a is not b)
+        assert_equal(b, [1, 1.5, 2.4, 14.5])
+        b = a.round(decimals=0)
+        self.assertTrue(a is not b)
+        assert_equal(b, [1, 2, 2, 15])
+        b = a.round(decimals=-1)
+        self.assertTrue(a is not b)
+        assert_equal(b, [0, 0, 0, 10])
+        # test basic rounding and that return value is not another reference to
+        # the input, for integers
+        a = array([1, 28, 392])
+        b = a.round(decimals=1)
+        self.assertTrue(a is not b)
+        assert_equal(a, b)
+        b = a.round(decimals=0)
+        self.assertTrue(a is not b)
+        assert_equal(a, b)
+        b = a.round(decimals=-1)
+        self.assertTrue(a is not b)
+        assert_equal(b, [0, 30, 390])
+        # test in-place rounding
+        a = array([1, 1.5, 2.36, 16])
+        a.round(decimals=1, out=a)
+        assert_equal(a, [1, 1.5, 2.4, 16])
+        a = array([1, 1.5, 2.36, 16])
+        a.round(decimals=0, out=a)
+        assert_equal(a, [1, 2, 2, 16])
+        a = array([1, 1.5, 2.36, 16])
+        a.round(decimals=-1, out=a)
+        assert_equal(a, [0, 0, 0, 20])
+        # test out-of-place rounding when output is integer
+        a = array([1, 28, 392])
+        b = array([0, 0, 0])
+        a.round(decimals=-1, out=b)
+        c = a.round(decimals=-1)
+        assert_equal(b, c)
+        assert_equal(b, array([0, 30, 390]))
+        a = array([1, 28, 392])
+        b = array([0, 0, 0])
+        a.round(decimals=0, out=b)
+        c = a.round(decimals=0)
+        assert_equal(a, b)
+        assert_equal(b, c)
+        # test issue 3540
+        class c(np.ndarray): pass
+        a = arange(4).view(c)
+        b = a.round(decimals=-1)
+        self.assertTrue(type(b) == c)
+        b = a.round(decimals=0)
+        self.assertTrue(type(b) == c)
+        b = a.round(decimals=1)
+        self.assertTrue(type(b) == c)
+        a = arange(4, dtype=float).view(c)
+        b = a.round(decimals=-1)
+        self.assertTrue(type(b) == c)
+        b = a.round(decimals=0)
+        self.assertTrue(type(b) == c)
+        b = a.round(decimals=1)
+        self.assertTrue(type(b) == c)
+
+
 
     def test_transpose(self):
         a = array([[1, 2], [3, 4]])
