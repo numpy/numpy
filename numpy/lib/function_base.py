@@ -1810,10 +1810,13 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         raise ValueError(
             "ddof must be integer")
 
-    if iscomplexobj(m):
-        X = array(m, ndmin=2, dtype=complex)
+    # Handles complex arrays too
+    if y is None:
+        dtype = np.result_type(m, np.float64)
     else:
-        X = array(m, ndmin=2, dtype=float)
+        dtype = np.result_type(m, y, np.float64)
+    X = array(m, ndmin=2, dtype=dtype)
+
     if X.size == 0:
         # handle empty arrays
         return np.array(m)
@@ -1827,7 +1830,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         tup = (newaxis, slice(None))
 
     if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=float)
+        y = array(y, copy=False, ndmin=2, dtype=dtype)
         X = concatenate((X, y), axis)
 
     X -= X.mean(axis=1-axis)[tup]
