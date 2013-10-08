@@ -30,6 +30,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, choose, sort, partition, mean
     )
 from numpy.core.numerictypes import typecodes, number
+from numpy.lib import iscomplexobj
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
@@ -1809,7 +1810,10 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         raise ValueError(
             "ddof must be integer")
 
-    X = array(m, ndmin=2, dtype=float)
+    if iscomplexobj(m):
+        X = array(m, ndmin=2, dtype=complex)
+    else:
+        X = array(m, ndmin=2, dtype=float)
     if X.size == 0:
         # handle empty arrays
         return np.array(m)
