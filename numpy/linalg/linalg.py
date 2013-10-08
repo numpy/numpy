@@ -965,7 +965,7 @@ def eigvalsh(a, UPLO='L'):
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
-    return w.astype(result_t)
+    return w.astype(_realType(result_t))
 
 def _convertarray(a):
     t, result_t = _commonType(a)
