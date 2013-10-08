@@ -23,7 +23,7 @@ from numpy.core.numeric import (
     newaxis, intp, integer, isscalar
     )
 from numpy.core.umath import (
-    pi, multiply, add, arctan2, frompyfunc, isnan, cos, less_equal, sqrt, sin,
+    pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, log10
     )
 from numpy.core.fromnumeric import (
@@ -350,8 +350,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         dedges[i] = diff(edges[i])
         if np.any(np.asarray(dedges[i]) <= 0):
             raise ValueError(
-            "Found bin edge of size <= 0. Did you specify `bins` with"
-            "non-monotonic sequence?")
+                "Found bin edge of size <= 0. Did you specify `bins` with"
+                "non-monotonic sequence?")
 
     nbin = asarray(nbin)
 
@@ -1809,36 +1809,40 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         raise ValueError(
             "ddof must be integer")
 
-    X = array(m, ndmin=2, dtype=float)
-    if X.size == 0:
-        # handle empty arrays
-        return np.array(m)
+    # Handles complex arrays too
+    if y is None:
+        dtype = np.result_type(m, np.float64)
+    else:
+        dtype = np.result_type(m, y, np.float64)
+    X = array(m, ndmin=2, dtype=dtype)
+
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
+        N = X.shape[1]
         axis = 0
         tup = (slice(None), newaxis)
     else:
+        N = X.shape[0]
         axis = 1
         tup = (newaxis, slice(None))
 
-    if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=float)
-        X = concatenate((X, y), axis)
-
-    X -= X.mean(axis=1-axis)[tup]
-    if rowvar:
-        N = X.shape[1]
-    else:
-        N = X.shape[0]
-
+    # check ddof
     if ddof is None:
         if bias == 0:
             ddof = 1
         else:
             ddof = 0
     fact = float(N - ddof)
+    if fact <= 0:
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        fact = 0.0
 
+    if y is not None:
+        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        X = concatenate((X, y), axis)
+
+    X -= X.mean(axis=1-axis)[tup]
     if not rowvar:
         return (dot(X.T, X.conj()) / fact).squeeze()
     else:
@@ -1893,14 +1897,12 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
 
     """
     c = cov(x, y, rowvar, bias, ddof)
-    if c.size == 0:
-        # handle empty arrays
-        return c
     try:
         d = diag(c)
     except ValueError:  # scalar covariance
-        return 1
-    return c/sqrt(multiply.outer(d, d))
+        # nan if incorrect value (nan, inf, 0), 1 otherwise
+        return c / c
+    return c / sqrt(multiply.outer(d, d))
 
 
 def blackman(M):
