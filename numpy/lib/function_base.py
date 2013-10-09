@@ -1816,15 +1816,16 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         dtype = np.result_type(m, y, np.float64)
     X = array(m, ndmin=2, dtype=dtype)
 
-    if X.size == 0:
-        # handle empty arrays
-        return np.array(m)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
         N = X.shape[1]
+        axis = 0
+        tup = (slice(None), newaxis)
     else:
         N = X.shape[0]
+        axis = 1
+        tup = (newaxis, slice(None))
 
     # check ddof
     if ddof is None:
@@ -1836,13 +1837,6 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
         fact = 0.0
-
-    if rowvar:
-        axis = 0
-        tup = (slice(None), newaxis)
-    else:
-        axis = 1
-        tup = (newaxis, slice(None))
 
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=dtype)
@@ -1903,14 +1897,14 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
 
     """
     c = cov(x, y, rowvar, bias, ddof)
-    if c.size == 0:
-        # handle empty arrays
-        return c
     try:
         d = diag(c)
     except ValueError:  # scalar covariance
-        return 1
-    return c/sqrt(multiply.outer(d, d))
+        if np.isnan(c):  # cov returns nan for empty arrays
+            return np.nan
+        else:
+            return 1
+    return c / sqrt(multiply.outer(d, d))
 
 
 def blackman(M):

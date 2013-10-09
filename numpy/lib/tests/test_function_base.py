@@ -1190,8 +1190,10 @@ class TestCorrCoef(TestCase):
         assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
 
     def test_empty(self):
-        assert_equal(corrcoef(np.array([])).size, 0)
-        assert_equal(corrcoef(np.array([]).reshape(0, 2)).shape, (0, 2))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_equal(corrcoef(np.array([])), np.nan)
+            assert_equal(corrcoef(np.array([]).reshape(0, 2)), np.nan)
 
 
 class TestCov(TestCase):
@@ -1209,8 +1211,10 @@ class TestCov(TestCase):
         assert_allclose(np.cov(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        assert_equal(cov(np.array([])).size, 0)
-        assert_equal(cov(np.array([]).reshape(0, 2)).shape, (0, 2))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_equal(cov(np.array([])), np.nan)
+            assert_equal(cov(np.array([]).reshape(0, 2)), np.nan)
 
 
 class Test_I0(TestCase):
