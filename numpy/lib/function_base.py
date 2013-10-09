@@ -1822,6 +1822,22 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
+        N = X.shape[1]
+    else:
+        N = X.shape[0]
+
+    # check ddof
+    if ddof is None:
+        if bias == 0:
+            ddof = 1
+        else:
+            ddof = 0
+    fact = float(N - ddof)
+    if fact <= 0:
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        fact = 0.0
+
+    if rowvar:
         axis = 0
         tup = (slice(None), newaxis)
     else:
@@ -1833,18 +1849,6 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         X = concatenate((X, y), axis)
 
     X -= X.mean(axis=1-axis)[tup]
-    if rowvar:
-        N = X.shape[1]
-    else:
-        N = X.shape[0]
-
-    if ddof is None:
-        if bias == 0:
-            ddof = 1
-        else:
-            ddof = 0
-    fact = float(N - ddof)
-
     if not rowvar:
         return (dot(X.T, X.conj()) / fact).squeeze()
     else:
