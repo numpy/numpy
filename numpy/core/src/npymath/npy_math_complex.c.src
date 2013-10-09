@@ -7,6 +7,7 @@
  * 2009), under the following license:
  *
  * Copyright (c) 2007, 2011 David Schultz <das@FreeBSD.ORG>
+ * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +42,7 @@
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  * #TMIN = FLT_MIN, DBL_MIN, LDBL_MIN#
  * #TMANT_DIG = FLT_MANT_DIG, DBL_MANT_DIG, LDBL_MANT_DIG#
+ * #TEPS = FLT_EPSILON, DBL_EPSILON, LDBL_EPSILON#
  * #precision = 1, 2, 3#
  */
 
@@ -193,7 +195,6 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
     return npy_cpack@c@( npy_ldexp@c@(mant * mantcos, expt + excos),
                          npy_ldexp@c@(mant * mantsin, expt + exsin));
 }
-
 
 #ifndef HAVE_CEXP@C@
 @ctype@ npy_cexp@c@(@ctype@ z)
@@ -922,38 +923,9 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
 #ifndef HAVE_CATAN@C@
 @ctype@ npy_catan@c@(@ctype@ z)
 {
-    @type@ x, y;
-    x = npy_creal@c@(z);
-    y = npy_cimag@c@(z);
-
-    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
-        /* catan(z) = 0.5*i * log((i+z)/(i-z)) */
-        @ctype@ ip, im;
-        ip = cadd@c@(c_i@c@, z);
-        im = csub@c@(c_i@c@, z);
-        return cmul@c@(c_ihalf@c@, npy_clog@c@(cdiv@c@(ip, im)));
-    }
-    else {
-        /*
-         * Small arguments: series expansion, to avoid loss of precision
-         * atan(x) = x [1 - (1/3) x^2 [1 - (3/5) x^2 [1 - ...]]]
-         *
-         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
-         */
-        @ctype@ z2, r;
-        z2 = cmul@c@(z, z);
-        r = c_1@c@;
-#if @precision@ >= 3
-        SERIES_HORNER_TERM@C@(r, z2, -9.0@C@/11);
-        SERIES_HORNER_TERM@C@(r, z2, -7.0@C@/9);
-#endif
-#if @precision@ >= 2
-        SERIES_HORNER_TERM@C@(r, z2, -5.0@C@/7);
-#endif
-        SERIES_HORNER_TERM@C@(r, z2, -3.0@C@/5);
-        SERIES_HORNER_TERM@C@(r, z2, -1.0@C@/3);
-        return cmul@c@(r, z);
-     }
+    /* catan(z) = I * conj( catanh(I * conj(z)) ) */
+    z = npy_catanh@c@(npy_cpack@c@(npy_cimag@c@(z), npy_creal@c@(z)));
+    return npy_cpack@c@(npy_cimag@c@(z), npy_creal@c@(z));
 }
 #endif
 
@@ -1007,41 +979,208 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
 #endif
 
 #ifndef HAVE_CATANH@C@
+/*
+ * sum_squares(x,y) = x*x + y*y (or just x*x if y*y would underflow).
+ * Assumes x*x and y*y will not overflow.
+ * Assumes x and y are finite.
+ * Assumes y is non-negative.
+ * Assumes fabs(x) >= DBL_EPSILON.
+ */
+static inline @type@ _sum_squares@c@(@type@ x, @type@ y)
+{
+#if @precision@ == 1
+const npy_float SQRT_MIN = 1.0842022e-19f;
+#endif
+#if @precision@ == 2
+const npy_double SQRT_MIN = 1.4916681462400413e-154; /* sqrt(DBL_MIN) */
+#endif
+#if @precision@ == 3
+/* this is correct for 80 bit long doubles */
+const npy_longdouble SQRT_MIN = 1.8336038675548471656e-2466l;
+#endif
+    /* Avoid underflow when y is small. */
+    if (y < SQRT_MIN)
+        return (x * x);
+
+    return (x * x + y * y);
+}
+
+/*
+ * real_part_reciprocal(x, y) = Re(1/(x+I*y)) = x/(x*x + y*y).
+ * Assumes x and y are not NaN, and one of x and y is larger than
+ * RECIP_EPSILON.  We avoid unwarranted underflow.  It is important to not use
+ * the code creal(1/z), because the imaginary part may produce an unwanted
+ * underflow.
+ * This is only called in a context where inexact is always raised before
+ * the call, so no effort is made to avoid or force inexact.
+ */
+#if @precision@ == 1
+#define BIAS (FLT_MAX_EXP - 1)
+#define CUTOFF (FLT_MANT_DIG / 2 + 1)
+static inline npy_float _real_part_reciprocalf(npy_float x, npy_float y)
+{
+    npy_float scale;
+    npy_uint32 hx, hy;
+    npy_int32 ix, iy;
+
+    GET_FLOAT_WORD(hx, x);
+    ix = hx & 0x7f800000;
+    GET_FLOAT_WORD(hy, y);
+    iy = hy & 0x7f800000;
+    if (ix - iy >= CUTOFF << 23 || npy_isinf(x))
+        return (1 / x);
+    if (iy - ix >= CUTOFF << 23)
+        return (x / y / y);
+    if (ix <= (BIAS + FLT_MAX_EXP / 2 - CUTOFF) << 23)
+        return (x / (x * x + y * y));
+    SET_FLOAT_WORD(scale, 0x7f800000 - ix);
+    x *= scale;
+    y *= scale;
+    return (x / (x * x + y * y) * scale);
+}
+#undef BIAS
+#undef CUTOFF
+#endif
+#if @precision@ == 2
+#define BIAS (DBL_MAX_EXP - 1)
+/* XXX more guard digits are useful iff there is extra precision. */
+#define CUTOFF (DBL_MANT_DIG / 2 + 1)  /* just half or 1 guard digit */
+static inline npy_double _real_part_reciprocal(npy_double x, npy_double y)
+{
+    npy_double scale;
+    npy_uint32 hx, hy;
+    npy_int32 ix, iy;
+
+    /*
+     * This code is inspired by the C99 document n1124.pdf, Section G.5.1,
+     * example 2.
+     */
+    GET_HIGH_WORD(hx, x);
+    ix = hx & 0x7ff00000;
+    GET_HIGH_WORD(hy, y);
+    iy = hy & 0x7ff00000;
+    if (ix - iy >= CUTOFF << 20 || npy_isinf(x))
+        return (1 / x);     /* +-Inf -> +-0 is special */
+    if (iy - ix >= CUTOFF << 20)
+        return (x / y / y); /* should avoid double div, but hard */
+    if (ix <= (BIAS + DBL_MAX_EXP / 2 - CUTOFF) << 20)
+        return (x / (x * x + y * y));
+    scale = 1;
+    SET_HIGH_WORD(scale, 0x7ff00000 - ix);  /* 2**(1-ilogb(x)) */
+    x *= scale;
+    y *= scale;
+    return (x / (x * x + y * y) * scale);
+}
+#undef BIAS
+#undef CUTOFF
+#endif
+#if @precision@ == 3
+#define BIAS (LDBL_MAX_EXP - 1)
+#define CUTOFF (LDBL_MANT_DIG / 2 + 1)
+static inline npy_longdouble _real_part_reciprocall(npy_longdouble x, npy_longdouble y)
+{
+    npy_longdouble scale;
+    union IEEEl2bitsrep ux, uy, us;
+    npy_int32 ix, iy;
+
+    ux.e = x;
+    ix = GET_LDOUBLE_EXP(ux);
+    uy.e = y;
+    iy = GET_LDOUBLE_EXP(uy);
+    if (ix - iy >= CUTOFF || npy_isinf(x))
+        return (1/x);
+    if (iy - ix >= CUTOFF)
+        return (x/y/y);
+    if (ix <= BIAS + LDBL_MAX_EXP / 2 - CUTOFF)
+        return (x/(x*x + y*y));
+    us.e = 1;
+    SET_LDOUBLE_EXP(us, 0x7fff - ix);
+    scale = us.e;
+    x *= scale;
+    y *= scale;
+    return (x/(x*x + y*y) * scale);
+}
+#undef BIAS
+#undef CUTOFF
+#endif
+
 @ctype@ npy_catanh@c@(@ctype@ z)
 {
-    @type@ x, y;
+#if @precision@ == 1
+    /* this is sqrt(3*EPS) */
+    const npy_float SQRT_3_EPSILON = 5.9801995673e-4f;
+    /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
+    const volatile float pio2_lo = 7.5497899549e-9f;
+#endif
+#if @precision@ == 2
+    const npy_double SQRT_3_EPSILON = 2.5809568279517849e-8;
+    const volatile npy_double pio2_lo = 6.1232339957367659e-17;
+#endif
+#if @precision@ == 3
+    const npy_longdouble SQRT_3_EPSILON = 5.70316273435758915310e-10;
+    const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
+#endif
+    const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
+    const @type@ pio2_hi = NPY_PI_2@c@;
+    const volatile float tiny =  3.9443045e-31f;
+    @type@ x, y, ax, ay, rx, ry;
 
     x = npy_creal@c@(z);
     y = npy_cimag@c@(z);
+    ax = npy_fabs@c@(x);
+    ay = npy_fabs@c@(y);
 
-    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
-        /* catanh(z) = 0.5 * log((1+z)/(1-z)) */
-        @ctype@ p1, m1;
-        p1 = cadd@c@(c_1@c@, z);
-        m1 = csub@c@(c_1@c@, z);
-        return cmul@c@(c_half@c@, npy_clog@c@(cdiv@c@(p1, m1)));
-    }
-    else {
+    /* This helps handle many cases. */
+    if (y == 0 && ax <= 1)
+        return npy_cpack@c@(npy_atanh@c@(x), y);
+
+    /* To ensure the same accuracy as atan(), and to filter out z = 0. */
+    if (x == 0)
+        return npy_cpack@c@(x, npy_atan@c@(y));
+
+    if (npy_isnan(x) || npy_isnan(y)) {
+        /* catanh(+-Inf + I*NaN) = +-0 + I*NaN */
+        if (npy_isinf(x))
+            return npy_cpack@c@(npy_copysign@c@(0, x), y + y);
+        /* catanh(NaN + I*+-Inf) = sign(NaN)0 + I*+-PI/2 */
+        if (npy_isinf(y))
+            return npy_cpack@c@(npy_copysign@c@(0, x),
+                npy_copysign@c@(pio2_hi + pio2_lo, y));
         /*
-         * Small arguments: series expansion, to avoid loss of precision
-         * atan(x) = x [1 + (1/3) x^2 [1 + (3/5) x^2 [1 + ...]]]
-         *
-         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         * All other cases involving NaN return NaN + I*NaN.
+         * C99 leaves it optional whether to raise invalid if one of
+         * the arguments is not NaN, so we opt not to raise it.
          */
-        @ctype@ z2, r;
-        z2 = cmul@c@(z, z);
-        r = c_1@c@;
-#if @precision@ >= 3
-        SERIES_HORNER_TERM@C@(r, z2, 9.0@C@/11);
-        SERIES_HORNER_TERM@C@(r, z2, 7.0@C@/9);
-#endif
-#if @precision@ >= 2
-        SERIES_HORNER_TERM@C@(r, z2, 5.0@C@/7);
-#endif
-        SERIES_HORNER_TERM@C@(r, z2, 3.0@C@/5);
-        SERIES_HORNER_TERM@C@(r, z2, 1.0@C@/3);
-        return cmul@c@(z, r);
-     }
+        return npy_cpack@c@(x + 0.0L + (y + 0), x + 0.0L + (y + 0));
+    }
+
+    if (ax > RECIP_EPSILON || ay > RECIP_EPSILON)
+        return npy_cpack@c@(_real_part_reciprocal@c@(x, y),
+            npy_copysign@c@(pio2_hi + pio2_lo, y));
+
+    if (ax < SQRT_3_EPSILON / 2 && ay < SQRT_3_EPSILON / 2) {
+        /*
+         * z = 0 was filtered out above.  All other cases must raise
+         * inexact, but this is the only only that needs to do it
+         * explicitly.
+         */
+        volatile npy_float junk = 1 + tiny;
+        return (z);
+    }
+
+    if (ax == 1 && ay < @TEPS@)
+        rx = (NPY_LOGE2@c@ - npy_log@c@(ay)) / 2;
+    else
+        rx = npy_log1p@c@(4 * ax / _sum_squares@c@(ax - 1, ay)) / 4;
+
+    if (ax == 1)
+        ry = npy_atan2@c@(2, -ay) / 2;
+    else if (ay < @TEPS@)
+        ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax)) / 2;
+    else
+        ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax) - ay * ay) / 2;
+
+    return npy_cpack@c@(npy_copysign@c@(rx, x), npy_copysign@c@(ry, y));
 }
 #endif
 /**end repeat**/

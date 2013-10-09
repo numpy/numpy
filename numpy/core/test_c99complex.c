@@ -91,7 +91,7 @@ const TYPE NZERO =  -1.0 * 0.0;
 #define TEST_CC(func, xr, xi, er, ei) \
     TEST_INT(func, xr, xi, er, ei, isclose, isclose)
 
-#define TEST_UNSPECIFIED2(func, xr, xi, er1, ei1, er2, ei2) \
+#define TEST_UNSPECIFIED2_INT(func, xr, xi, er1, ei1, er2, ei2, rtest, itest) \
     do { \
         TYPE dxr = xr; \
         TYPE dxi = xi; \
@@ -103,8 +103,8 @@ const TYPE NZERO =  -1.0 * 0.0;
         TYPE complex r = ADDSUFFIX(func)(x); \
         TYPE rr = ADDSUFFIX(creal)(r); \
         TYPE ri = ADDSUFFIX(cimag)(r); \
-        if (!((isequal(rr, der1) && isequal(ri, dei1)) || \
-              (isequal(rr, der2) && isequal(ri, dei2)))) { \
+        if (!((rtest(rr, der1) && itest(ri, dei1)) || \
+              (rtest(rr, der2) && itest(ri, dei2)))) { \
             ret = 0; \
             TEST_PRINTF(func, dxr, dxi, der1, dei1, rr, ri); \
             printf("or"); \
@@ -112,6 +112,15 @@ const TYPE NZERO =  -1.0 * 0.0;
         } \
     } \
     while(0)
+
+#define TEST_UNSPECIFIED2(func, xr, xi, er1, ei1, er2, ei2) \
+    TEST_UNSPECIFIED2_INT(func, xr, xi, er1, ei1, er2, ei2, isequal, isequal) \
+
+#define TEST_UNSPECIFIED2_CE(func, xr, xi, er1, ei1, er2, ei2) \
+    TEST_UNSPECIFIED2_INT(func, xr, xi, er1, ei1, er2, ei2, isclose, isequal) \
+
+#define TEST_UNSPECIFIED2_EC(func, xr, xi, er1, ei1, er2, ei2) \
+    TEST_UNSPECIFIED2_INT(func, xr, xi, er1, ei1, er2, ei2, isequal, isclose) \
 
 #define TEST_UNSPECIFIED4(func, xr, xi, er1, ei1, er2, ei2, er3, ei3, er4, ei4)\
     do { \
@@ -309,7 +318,7 @@ int check_branch_cut(complexfunc cfunc, TYPE complex x0, TYPE complex dx,
 {
     const TYPE scale = EPS * 1e2;
     const TYPE atol = 1e-4;
-    
+
     TYPE complex shift = dx*scale*ADDSUFFIX(cabs)(x0)/ADDSUFFIX(cabs)(dx);
     TYPE complex y0 = cfunc(x0);
     TYPE complex yp = cfunc(x0 + shift);
@@ -420,7 +429,7 @@ int clp_internal(complexfunc cfunc, realfunc rfunc, int real, TYPE x)
     }
     return ADDSUFFIX(fabs)(num/den - 1);
 }
-         
+
 int check_loss_of_precision(complexfunc cfunc, realfunc rfunc, int real,
                             const char* fname)
 {
@@ -439,7 +448,7 @@ int check_loss_of_precision(complexfunc cfunc, realfunc rfunc, int real,
     TYPE x, ratio;
     int k;
     int ret = 1;
-    
+
     for(k = 0; k < n_series; k++) {
         x = ADDSUFFIX(pow)(10.0, xsb + k*dxs);
         ratio = clp_internal(cfunc, rfunc, real, x);
@@ -479,7 +488,7 @@ int test_cacos()
 
     TEST_CE(cacos, 0, NAN, NPY_PI_2, NAN);
     TEST_CE(cacos, NZERO, NAN, NPY_PI_2, NAN);
-    
+
     TEST_CE(cacos, 2.0, INFINITY, NPY_PI_2, -INFINITY);
     TEST_CE(cacos, 2.0, -INFINITY, NPY_PI_2, INFINITY);
 
@@ -517,7 +526,7 @@ int test_cacos()
     TEST_BRANCH_CUT(cacos, 0, 2, 1, 0, 1, 1, 1);
 
     TEST_CC(cacos, 0.5, 0.0, ADDSUFFIX(acos)(0.5), 0.0);
-    
+
     return ret;
 }
 #endif
@@ -557,7 +566,7 @@ int test_casin()
 
     TEST_EE(casin, 0, NAN, 0, NAN);
     TEST_EE(casin, NZERO, NAN, NZERO, NAN);
-    
+
     /* can raise FE_INVALID or not */
     TEST_EE(casin, -2.0, NAN, NAN, NAN);
     TEST_EE(casin, 2.0, NAN, NAN, NAN);
@@ -567,7 +576,7 @@ int test_casin()
     TEST_UNSPECIFIED2(casin, INFINITY, NAN, NAN, INFINITY, NAN, -INFINITY);
 
     TEST_EE(casin, NAN, NAN, NAN, NAN);
-    
+
     TEST_LOSS_OF_PRECISION(casin, asin, 0);
 
     TEST_CC(casin, 1e-5, 1e-5, 9.999999999666666667e-6, 1.0000000000333333333e-5);
@@ -592,7 +601,7 @@ int test_catan()
     TEST_EE(catan, 0, NZERO, 0, NZERO);
     TEST_EE(catan, NZERO, 0, NZERO, 0);
     TEST_EE(catan, NZERO, NZERO, NZERO, NZERO);
-    
+
     TEST_EE(catan, NAN, 0, NAN, 0);
     TEST_EE(catan, NAN, NZERO, NAN, NZERO);
 
@@ -628,8 +637,8 @@ int test_catan()
     TEST_EE(catan, 2.0, NAN, NAN, NAN);
 
     /* sign of real part is unspecified */
-    TEST_UNSPECIFIED2(catan, -INFINITY, NAN, -NPY_PI_2, 0, -NPY_PI_2, NZERO);
-    TEST_UNSPECIFIED2(catan, INFINITY, NAN, NPY_PI_2, 0, NPY_PI_2, NZERO);
+    TEST_UNSPECIFIED2_CE(catan, -INFINITY, NAN, -NPY_PI_2, 0, -NPY_PI_2, NZERO);
+    TEST_UNSPECIFIED2_CE(catan, INFINITY, NAN, NPY_PI_2, 0, NPY_PI_2, NZERO);
 
     TEST_EE(catan, NAN, NAN, NAN, NAN);
 
@@ -638,7 +647,7 @@ int test_catan()
     TEST_CC(catan, 1e-5, 1e-5, 1.000000000066666666e-5, 9.999999999333333333e-6);
 
     TEST_BRANCH_CUT(catan, 0, -2, 1, 0, -1, 1, 1);
-    TEST_BRANCH_CUT(catan, 0, 2, -1, 0, -1, 1, 1);
+    TEST_BRANCH_CUT(catan, 0, 2, 1, 0, -1, 1, 1);
     TEST_BRANCH_CUT(catan, -2, 0, 0, 1, 1, 1, 1);
     TEST_BRANCH_CUT(catan, 2, 0, 0, 1, 1, 1, 1);
 
@@ -673,7 +682,7 @@ int test_cacosh()
 
     TEST_EC(cacosh, -INFINITY, INFINITY, INFINITY, 0.75*NPY_PI);
     TEST_EC(cacosh, -INFINITY, -INFINITY, INFINITY, -0.75*NPY_PI);
-    
+
     TEST_EC(cacosh, INFINITY, INFINITY, INFINITY, 0.25*NPY_PI);
     TEST_EC(cacosh, INFINITY, -INFINITY, INFINITY, -0.25*NPY_PI);
 
@@ -731,10 +740,10 @@ int test_casinh()
 
     TEST_EE(casinh, INFINITY, NAN, INFINITY, NAN);
     TEST_EE(casinh, -INFINITY, NAN, -INFINITY, NAN);
-    
+
     TEST_EE(casinh, NAN, 0, NAN, 0);
     TEST_EE(casinh, NAN, NZERO, NAN, NZERO);
-    
+
     /* can raise FE_INVALID or not */
     TEST_EE(casinh, NAN, 2.0, NAN, NAN);
     TEST_EE(casinh, NAN, -2.0, NAN, NAN);
@@ -770,7 +779,7 @@ int test_catanh()
     TEST_EE(catanh, 0, NZERO, 0, NZERO);
     TEST_EE(catanh, NZERO, 0, NZERO, 0);
     TEST_EE(catanh, NZERO, NZERO, NZERO, NZERO);
-    
+
     TEST_EE(catanh, 0, NAN, 0, NAN);
     TEST_EE(catanh, NZERO, NAN, NZERO, NAN);
 
@@ -806,10 +815,9 @@ int test_catanh()
     TEST_EE(catanh, NAN, -2.0, NAN, NAN);
 
     /* sign of real part is unspecified */
-    TEST_UNSPECIFIED2(catanh, NAN, INFINITY, 0, NPY_PI_2, NZERO, NPY_PI_2);
-    TEST_UNSPECIFIED2(catanh, NAN, -INFINITY, 0, -NPY_PI_2, NZERO, -NPY_PI_2);
+    TEST_UNSPECIFIED2_EC(catanh, NAN, INFINITY, 0, NPY_PI_2, NZERO, NPY_PI_2);
+    TEST_UNSPECIFIED2_EC(catanh, NAN, -INFINITY, 0, -NPY_PI_2, NZERO, -NPY_PI_2);
 
-    /* TEST(catanh, NAN, INFINITY, 0, NPY_PI_2); */
     TEST_EE(catanh, NAN, NAN, NAN, NAN);
 
     TEST_LOSS_OF_PRECISION(catanh, atanh, 1);
@@ -817,7 +825,7 @@ int test_catanh()
     TEST_CC(catanh, 1e-5, 1e-5, 9.999999999333333333e-6, 1.000000000066666666e-5);
 
     TEST_BRANCH_CUT(catanh, -2, 0, 0, 1, 1, -1, 1);
-    TEST_BRANCH_CUT(catanh, 2, 0, 0, -1, 1, -1, 1);
+    TEST_BRANCH_CUT(catanh, 2, 0, 0, 1, 1, -1, 1);
     TEST_BRANCH_CUT(catanh, 0, -2, 1, 0, 1, 1, 1);
     TEST_BRANCH_CUT(catanh, 0, 2, 1, 0, 1, 1, 1);
     TEST_BRANCH_CUT(catanh, 0, 0, 0, 1, 1, 1, 1);
@@ -967,7 +975,7 @@ int test_csin()
     TEST_EE(csin, NAN, NAN, NAN, NAN);
 
     TEST_CC(csin, 0.5, 0, ADDSUFFIX(sin)(0.5), 0);
-    
+
     return ret;
 }
 #endif
@@ -1165,7 +1173,7 @@ int test_csinh()
     TEST_EE(csinh, NAN, NAN, NAN, NAN);
 
     TEST_CC(csinh, 0.5, 0, ADDSUFFIX(sinh)(0.5), 0);
-    
+
     return ret;
 }
 #endif
@@ -1281,7 +1289,7 @@ int test_cexp()
 
     TEST_EE(cexp, NAN, 0, NAN, 0);
     TEST_EE(cexp, NAN, NZERO, NAN, NZERO);
- 
+
     /* can raise FE_INVALID or not */
     TEST_EE(cexp, NAN, 2.0, NAN, NAN);
     TEST_EE(cexp, NAN, -2.0, NAN, NAN);
@@ -1317,7 +1325,7 @@ int test_clog()
 
     TEST_EC(clog, -INFINITY, 2.0, INFINITY, NPY_PI);
     TEST_EC(clog, -INFINITY, -2.0, INFINITY, -NPY_PI);
-    
+
     TEST_EE(clog, INFINITY, 2.0, INFINITY, 0);
     TEST_EE(clog, INFINITY, -2.0, INFINITY, NZERO);
 
@@ -1338,7 +1346,7 @@ int test_clog()
     TEST_EE(clog, NAN, -INFINITY, INFINITY, NAN);
 
     TEST_EE(clog, NAN, NAN, NAN, NAN);
-    
+
     TEST_BRANCH_CUT(clog, -0.5, 0, 0, 1, 1, -1, 1);
 
     TEST_CC(clog, 0.5, 0, ADDSUFFIX(log)(0.5), 0);
@@ -1390,7 +1398,7 @@ int test_cpow()
     TEST_CPOW_CC(1, 2, -3, 0, -11.0/125.0, 2.0/125.0);
     TEST_CPOW_CC(2, 3, -3, 0, -46.0/2197.0, -9.0/2197.0);
     TEST_CPOW_CC(3, 4, -3, 0, -117.0/15625.0, -44.0/15625.0);
-    
+
     TEST_CPOW_CC(1, 2, 0.5, 0, 1.272019649514069, 0.7861513777574233);
     TEST_CPOW_CC(2, 3, 0.5, 0, 1.6741492280355401, 0.895977476129838);
     TEST_CPOW_CC(3, 4, 0.5, 0, 2, 1);
@@ -1406,7 +1414,7 @@ int test_cpow()
     TEST_CPOW_EE(1, INFINITY, 1, 0, 1, INFINITY);
     TEST_CPOW_EE(1, INFINITY, 2, 0, -INFINITY, INFINITY);
     TEST_CPOW_EE(1, INFINITY, 3, 0, -INFINITY, NAN);
-    
+
     /* tests from test_umath.py: TestPower: test_power_zero */
     TEST_CPOW_CC(0, 0, 0.33, 0, 0, 0);
     TEST_CPOW_CC(0, 0, 0.5, 0, 0, 0);
@@ -1494,7 +1502,7 @@ int test_csqrt()
 
     TEST_EE(csqrt, NAN, INFINITY, INFINITY, INFINITY);
     TEST_EE(csqrt, NAN, -INFINITY, INFINITY, -INFINITY);
-    
+
     TEST_EE(csqrt, INFINITY, INFINITY, INFINITY, INFINITY);
     TEST_EE(csqrt, INFINITY, -INFINITY, INFINITY, -INFINITY);
 
@@ -1509,7 +1517,7 @@ int test_csqrt()
 
     TEST_EE(csqrt, INFINITY, 2.0, INFINITY, 0);
     TEST_EE(csqrt, INFINITY, -2.0, INFINITY, NZERO);
-    
+
     /* sign of imaginary part is unspecified */
     TEST_UNSPECIFIED2(csqrt, -INFINITY, NAN, NAN, INFINITY, NAN, -INFINITY);
 
