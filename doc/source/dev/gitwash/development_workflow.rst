@@ -369,7 +369,7 @@ Rewriting commit history
 
    Do this only for your own feature branches.
 
-There's an embarassing typo in a commit you made? Or perhaps the you
+There's an embarrassing typo in a commit you made? Or perhaps the you
 made several false starts you would like the posterity not to see.
 
 This can be done via *interactive rebasing*.
@@ -506,5 +506,63 @@ To see a linear list of commits for this branch::
 
 You can also look at the `network graph visualizer`_ for your github_
 repo.
+
+Backporting
+===========
+
+Backporting is the process of copying new feature/fixes committed in
+`numpy/master`_ back to stable release branches. To do this you make a branch
+off the branch you are backporting to, cherry pick the commits you want from
+``numpy/master``, and then submit a pull request for the branch containing the
+backport.
+
+1. Assuming you already have a fork of NumPy on Github. We need to
+   update it from upstream::
+
+    # Add upstream.
+    git remote add upstream https://github.com/numpy/numpy.git
+
+    # Get the latest updates.
+    git fetch upstream
+
+    # Make sure you are on master.
+    git checkout master
+
+    # Apply the updates locally.
+    git rebase upstream/master
+
+    # Push the updated code to your github repo.
+    git push origin
+
+2. Next you need to make the branch you will work on. This needs to be
+   based on the older version of NumPy (not master)::
+
+    # Make a new branch based on numpy/maintenance/1.8.x,
+    # backport-3324 is our new name for the branch.
+    git checkout -b backport-3324 upstream/maintenance/1.8.x
+
+3. Now you need to apply the changes from master to this branch using
+   `git cherry-pick`_::
+
+    # This pull request included commits aa7a047 to c098283 (inclusive)
+    # so you use the .. syntax (for a range of commits), the ^ makes the
+    # range inclusive.
+    git cherry-pick aa7a047^..c098283
+    ...
+    # Fix any conflicts, then if needed:
+    git cherry-pick --continue
+
+4. You might run into some conflicts cherry picking here. These are
+   resolved the same way as merge/rebase conflicts. Except here you can
+   use `git blame`_ to see the difference between master and the
+   backported branch to make sure nothing gets screwed up.
+
+5. Push the new branch to your Github repository::
+
+    git push -u origin backport-3324
+
+6. Finally make a pull request using Github. Make sure it is against the
+   maintenance branch and not master, Github will usually suggest you
+   make the pull request against master.
 
 .. include:: git_links.inc
