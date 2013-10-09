@@ -23,14 +23,13 @@ from numpy.core.numeric import (
     newaxis, intp, integer, isscalar
     )
 from numpy.core.umath import (
-    pi, multiply, add, arctan2, frompyfunc, isnan, cos, less_equal, sqrt, sin,
+    pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, log10
     )
 from numpy.core.fromnumeric import (
     ravel, nonzero, choose, sort, partition, mean
     )
 from numpy.core.numerictypes import typecodes, number
-from numpy.lib import iscomplexobj
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
