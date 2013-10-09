@@ -350,8 +350,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         dedges[i] = diff(edges[i])
         if np.any(np.asarray(dedges[i]) <= 0):
             raise ValueError(
-            "Found bin edge of size <= 0. Did you specify `bins` with"
-            "non-monotonic sequence?")
+                "Found bin edge of size <= 0. Did you specify `bins` with"
+                "non-monotonic sequence?")
 
     nbin = asarray(nbin)
 
