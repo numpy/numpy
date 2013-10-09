@@ -1120,22 +1120,22 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
 
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1
-        yield _check_branch_cut, np.arctan, [-2j, 2j],  [1,  1 ], -1, 1
+        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 0-1j], 1, -1
+        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 0-1j], 1, -1
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1
 
-        yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [-1,   1], -1, 1
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1
 
         # check against bogus branch cuts: assert continuity between quadrants
-        yield _check_branch_cut, np.arcsin, [-2j, 2j], [ 1,  1], 1, 1
-        yield _check_branch_cut, np.arccos, [-2j, 2j], [ 1,  1], 1, 1
+        yield _check_branch_cut, np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1
+        yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1
         yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1
 
         yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1
-        yield _check_branch_cut, np.arccosh, [-2j, 2j, 2], [1,  1,  1j], 1, 1
-        yield _check_branch_cut, np.arctanh, [-2j, 2j, 0], [1,  1,  1j], 1, 1
+        yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1
+        yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1
 
     @dec.knownfailureif(True, "These branch cuts are known to fail")
     def test_branch_cuts_failing(self):
@@ -1149,8 +1149,8 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1, True
         yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1, True
-        yield _check_branch_cut, np.arctan, [-2j, 2j],  [1,  1 ], -1, 1, True
-        yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1, True
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [-1,   1], -1, 1, True
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True
 
