@@ -1201,12 +1201,12 @@ class TestCov(TestCase):
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
-        assert_allclose(np.cov(x), np.array([[1., -1.j], [ 1.j, 1.]]))
+        assert_allclose(np.cov(x), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
         y = np.array([[1j, 2j, 3j]])
-        assert_allclose(np.cov(x, y), np.array([[1., -1.j], [ 1.j, 1.]]))
+        assert_allclose(np.cov(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
         assert_equal(cov(np.array([])).size, 0)
