@@ -1900,10 +1900,8 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     try:
         d = diag(c)
     except ValueError:  # scalar covariance
-        if np.isnan(c):  # cov returns nan for empty arrays
-            return np.nan
-        else:
-            return 1
+        # nan if incorrect value (nan, inf, 0), 1 otherwise
+        return c / c
     return c / sqrt(multiply.outer(d, d))
 
 
