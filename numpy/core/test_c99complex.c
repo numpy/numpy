@@ -395,8 +395,7 @@ int check_near_crossover(complexfunc cfunc, const char* fname)
 
             diff = ADDSUFFIX(cabs)(czp - czm);
             if ( diff > 2*EPS || czp == czm) {
-                printf(fname);
-                printf(": Loss of precision: j = %d, k = %d\n", j, k);
+                printf("%s: Loss of precision: j = %d, k = %d\n",fname, j, k);
                 printf("zp = (" FMT " + " FMT "j) -> (" FMT " + " FMT "j)\n", \
                        ADDSUFFIX(creal)(zp), ADDSUFFIX(cimag)(zp),     \
                        ADDSUFFIX(creal)(czp), ADDSUFFIX(cimag)(czp));
@@ -453,8 +452,7 @@ int check_loss_of_precision(complexfunc cfunc, realfunc rfunc, int real,
         x = ADDSUFFIX(pow)(10.0, xsb + k*dxs);
         ratio = clp_internal(cfunc, rfunc, real, x);
         if (ratio > rtol) {
-            printf(fname);
-            printf(": Loss of precision vs real:\n");
+            printf("%s: Loss of precision vs real:\n", fname);
             printf("x = " FMT "\n", x);
             printf("ratio = " FMT "\n", ratio);
             ret = 0;
@@ -465,8 +463,7 @@ int check_loss_of_precision(complexfunc cfunc, realfunc rfunc, int real,
         x = ADDSUFFIX(pow)(10.0, xbb + k*dxb);
         ratio = clp_internal(cfunc, rfunc, real, x);
         if (ratio > rtol) {
-            printf(fname);
-            printf(": Loss of precision vs. real:\n");
+            printf("%s: Loss of precision vs. real:\n", fname);
             printf("x = " FMT "\n", x);
             printf("ratio = " FMT "\n", ratio);
             ret = 0;
