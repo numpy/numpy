@@ -2048,7 +2048,8 @@ def norm(x, ord=None, axis=None):
 
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
-        return sqrt(add.reduce((x.conj() * x).real, axis=None))
+        xr = x.ravel()
+        return sqrt(dot(xr, xr.conj()).real)
 
     # Normalize the `axis` argument to a tuple.
     nd = x.ndim
