@@ -251,6 +251,8 @@ class TestRegression(TestCase):
         out = open(os.devnull, 'w')
         try:
             np.info(C(), output=out)
+        except AttributeError:
+            raise AssertionError()
         finally:
             out.close()
 
