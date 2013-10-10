@@ -231,7 +231,7 @@ def check_complex(config, mathlibs):
                         exists.append(f)
             else:
                 exists.extend(C99_COMPLEX_FUNCS_CHECKED)
-                
+
             if len(exists) > 0:
                 fp = open('./numpy/core/test_c99complex.c', 'r')
                 obody = fp.read()

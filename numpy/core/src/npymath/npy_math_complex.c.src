@@ -536,17 +536,20 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
             return npy_cpack@c@(npy_cosh@c@(x), x * y);
         absx = npy_fabs@c@(x);
         if (absx < CCOSH_BIG)   /* small x: normal case */
-            return npy_cpack@c@(npy_cosh@c@(x) * npy_cos@c@(y), npy_sinh@c@(x) * npy_sin@c@(y));
+            return npy_cpack@c@(npy_cosh@c@(x) * npy_cos@c@(y),
+                                npy_sinh@c@(x) * npy_sin@c@(y));
 
         /* |x| >= 22, so cosh(x) ~= exp(|x|) */
         if (absx < SCALED_CEXP_LOWER@C@) {
             /* x < 710: exp(|x|) won't overflow */
             h = npy_exp@c@(absx) * 0.5;
-            return npy_cpack@c@(h * npy_cos@c@(y), npy_copysign@c@(h, x) * npy_sin@c@(y));
+            return npy_cpack@c@(h * npy_cos@c@(y),
+                                npy_copysign@c@(h, x) * npy_sin@c@(y));
         } else if (absx < SCALED_CEXP_UPPER@C@) {
             /* x < 1455: scale to avoid overflow */
             z = _npy_scaled_cexp@c@(absx, y, -1);
-            return npy_cpack@c@(npy_creal@c@(z), npy_cimag@c@(z) * npy_copysign@c@(1, x));
+            return npy_cpack@c@(npy_creal@c@(z),
+                                npy_cimag@c@(z) * npy_copysign@c@(1, x));
         } else {
             /* x >= 1455: the result always overflows */
             h = CCOSH_HUGE * x;
@@ -661,17 +664,20 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
             return npy_cpack@c@(npy_sinh@c@(x), y);
         absx = npy_fabs@c@(x);
         if (absx < CSINH_BIG) /* small x: normal case */
-            return npy_cpack@c@(npy_sinh@c@(x) * npy_cos@c@(y), npy_cosh@c@(x) * npy_sin@c@(y));
+            return npy_cpack@c@(npy_sinh@c@(x) * npy_cos@c@(y),
+                                npy_cosh@c@(x) * npy_sin@c@(y));
 
         /* |x| >= 22, so cosh(x) ~= exp(|x|) */
         if (absx < SCALED_CEXP_LOWER@C@) {
             /* x < 710: exp(|x|) won't overflow */
             h = npy_exp@c@(npy_fabs@c@(x)) * 0.5;
-            return npy_cpack@c@(npy_copysign@c@(h, x) * npy_cos@c@(y), h * npy_sin@c@(y));
+            return npy_cpack@c@(npy_copysign@c@(h, x) * npy_cos@c@(y),
+                                h * npy_sin@c@(y));
         } else if (x < SCALED_CEXP_UPPER@C@) {
             /* x < 1455: scale to avoid overflow */
             z = _npy_scaled_cexp@c@(absx, y, -1);
-            return npy_cpack@c@(npy_creal@c@(z) * npy_copysign@c@(1, x), npy_cimag@c@(z));
+            return npy_cpack@c@(npy_creal@c@(z) * npy_copysign@c@(1, x),
+                                npy_cimag@c@(z));
         } else {
             /* x >= 1455: the result always overflows */
             h = CSINH_HUGE * x;
@@ -1058,7 +1064,8 @@ static inline void _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
 /*
  * Optimized version of clog() for |z| finite and larger than ~RECIP_EPSILON.
  */
-static inline void _clog_for_large_values@c@(@type@ x, @type@ y, @type@ *rr, @type@ *ri)
+static inline void _clog_for_large_values@c@(@type@ x, @type@ y,
+    @type@ *rr, @type@ *ri)
 {
 #if @precision@ == 1
     const npy_float QUARTER_SQRT_MAX = 0x1p61f;
@@ -1387,7 +1394,7 @@ static inline npy_float _real_part_reciprocalf(npy_float x, npy_float y)
 #endif
 #if @precision@ == 2
 #define BIAS (DBL_MAX_EXP - 1)
-/* XXX more guard digits are useful iff there is extra precision. */
+/*  more guard digits are useful iff there is extra precision. */
 #define CUTOFF (DBL_MANT_DIG / 2 + 1)  /* just half or 1 guard digit */
 static inline npy_double _real_part_reciprocal(npy_double x, npy_double y)
 {
@@ -1421,7 +1428,8 @@ static inline npy_double _real_part_reciprocal(npy_double x, npy_double y)
 #if @precision@ == 3
 #define BIAS (LDBL_MAX_EXP - 1)
 #define CUTOFF (LDBL_MANT_DIG / 2 + 1)
-static inline npy_longdouble _real_part_reciprocall(npy_longdouble x, npy_longdouble y)
+static inline npy_longdouble _real_part_reciprocall(npy_longdouble x,
+    npy_longdouble y)
 {
     npy_longdouble scale;
     union IEEEl2bitsrep ux, uy, us;
