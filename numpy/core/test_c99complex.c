@@ -11,8 +11,10 @@
 #define TYPE float
 #define SUFFIX f
 #define EPS FLT_EPSILON
-#define CLOSE_ATOL 0
-#define CLOSE_RTOL 1e-5
+#define CLOSE_ATOL 0.0f
+#define CLOSE_RTOL 1e-5f
+#define BRANCH_SCALE 1e2f
+#define BRANCH_ATOL 1e-2f
 #define FMT "%.8e"
 #define NPY_PI_2 1.570796326794896619231321691639751442f
 #define NPY_PI 3.141592653589793238462643383279502884f
@@ -23,8 +25,10 @@
 #define TYPE double
 #define SUFFIX 
 #define EPS DBL_EPSILON
-#define CLOSE_ATOL 0
+#define CLOSE_ATOL 0.0
 #define CLOSE_RTOL 1e-12
+#define BRANCH_SCALE 1e3
+#define BRANCH_ATOL 1e-4
 #define FMT "%.16e"
 #define NPY_PI_2 1.570796326794896619231321691639751442
 #define NPY_PI 3.141592653589793238462643383279502884 
@@ -34,9 +38,11 @@
 #ifdef LONGDOUBLE
 #define TYPE long double
 #define SUFFIX l
-#define EPS 50*LDBL_EPSILON
-#define CLOSE_ATOL 0
-#define CLOSE_RTOL 1e-12
+#define EPS LDBL_EPSILON
+#define CLOSE_ATOL 0.0l
+#define CLOSE_RTOL 1e-12l
+#define BRANCH_SCALE 1e3l
+#define BRANCH_ATOL 1e-4l
 #define FMT "%.18Le"
 #define NPY_PI_2 1.570796326794896619231321691639751442L
 #define NPY_PI 3.141592653589793238462643383279502884L 
@@ -248,9 +254,9 @@ const TYPE NZERO =  -1.0 * 0.0;
         if (!q) { \
             ret = 0; \
             printf(STRINGIZE(func) STRINGIZE(SUFFIX) ": branch cut failure: " \
-                   "x = " FMT " + " FMT "j, dx = " FMT " + " FMT "j, rsign = %d, " \
-                   "isign = %d, check_sign_zero = %d\n", vxr, vxi, \
-                   vdxr, vdxi, vrsign, visign, vcksignzero); \
+                   "x = " FMT " + " FMT "j, dx = " FMT " + " FMT \
+                   "j, rsign = %d, isign = %d, check_sign_zero = %d\n", vxr, \
+                   vxi, vdxr, vdxi, vrsign, visign, vcksignzero); \
         } \
     } \
     while(0)
@@ -316,8 +322,8 @@ typedef TYPE (*realfunc)(TYPE);
 int check_branch_cut(complexfunc cfunc, TYPE complex x0, TYPE complex dx, 
                      int re_sign, int im_sign, int sig_zero_ok)
 {
-    const TYPE scale = EPS * 1e2;
-    const TYPE atol = 1e-4;
+    const TYPE scale = EPS * BRANCH_SCALE;
+    const TYPE atol = BRANCH_ATOL;
 
     TYPE complex shift = dx*scale*ADDSUFFIX(cabs)(x0)/ADDSUFFIX(cabs)(dx);
     TYPE complex y0 = cfunc(x0);
@@ -502,7 +508,7 @@ int test_cacos()
     TEST_CE(cacos, -INFINITY, -INFINITY, 0.75 * NPY_PI, INFINITY);
 
     TEST_CE(cacos, INFINITY, INFINITY, 0.25 * NPY_PI, -INFINITY);
-    TEST_CE(cacos, INFINITY, -INFINITY, 0.25 * NPY_PI, -INFINITY);
+    TEST_CE(cacos, INFINITY, -INFINITY, 0.25 * NPY_PI, INFINITY);
 
     /* sign of imaginary part is unspecified. */
     TEST_UNSPECIFIED2(cacos, INFINITY, NAN, NAN, INFINITY, NAN, -INFINITY);
@@ -518,7 +524,7 @@ int test_cacos()
     TEST_EE(cacos, NAN, NAN, NAN, NAN);
 
     TEST_BRANCH_CUT(cacos, -2, 0, 0, 1, 1, -1, 1);
-    TEST_BRANCH_CUT(cacos, 2, 0, 0, -1, 1, -1, 1);
+    TEST_BRANCH_CUT(cacos, 2, 0, 0, 1, 1, -1, 1);
     TEST_BRANCH_CUT(cacos, 0, -2, 1, 0, 1, 1, 1);
     TEST_BRANCH_CUT(cacos, 0, 2, 1, 0, 1, 1, 1);
 
@@ -579,7 +585,7 @@ int test_casin()
     TEST_CC(casin, 1e-5, 1e-5, 9.999999999666666667e-6, 1.0000000000333333333e-5);
 
     TEST_BRANCH_CUT(casin, -2, 0, 0, 1, 1, -1, 1);
-    TEST_BRANCH_CUT(casin, 2, 0, 0, -1, 1, -1, 1);
+    TEST_BRANCH_CUT(casin, 2, 0, 0, 1, 1, -1, 1);
     TEST_BRANCH_CUT(casin, 0, -2, 1, 0, 1, 1, 1);
     TEST_BRANCH_CUT(casin, 0, 2, 1, 0, 1, 1, 1);
 
@@ -755,7 +761,7 @@ int test_casinh()
 
     TEST_CC(casinh, 1e-5, 1e-5, 1.0000000000333333333e-5, 9.999999999666666667e-6);
 
-    TEST_BRANCH_CUT(casinh, 0, -2, -1, 0, -1, 1, 1);
+    TEST_BRANCH_CUT(casinh, 0, -2, 1, 0, -1, 1, 1);
     TEST_BRANCH_CUT(casinh, 0, 2, 1, 0, -1, 1, 1);
     TEST_BRANCH_CUT(casinh, -2, 0, 0, 1, 1, 1, 1);
     TEST_BRANCH_CUT(casinh, 2, 0, 0, 1, 1, 1, 1);

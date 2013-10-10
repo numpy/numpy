@@ -34,6 +34,9 @@
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
+static npy_float tiny = 3.9443045e-31f;
+#define raise_inexact() do { volatile npy_float junk = 1 + tiny; } while(0)
+
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
@@ -56,7 +59,7 @@ static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
 
 /*==========================================================
  * Helper functions
- * 
+ *
  * These are necessary because we do not count on using a 
  * C99 compiler.
  *=========================================================*/
@@ -109,7 +112,7 @@ static NPY_INLINE @ctype@ cdiv@c@(@ctype@ a, @ctype@ b)
         return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
     }
 }
-    
+
 static NPY_INLINE @ctype@ cneg@c@(@ctype@ a)
 {
     return npy_cpack@c@(-npy_creal@c@(a), -npy_cimag@c@(a));
@@ -119,17 +122,6 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
 {
     return npy_cpack@c@(-npy_cimag@c@(a), npy_creal@c@(a));
 }
-
-/*
- * Perform the operation result := 1 + coef * x * result,
- * with real coefficient `coef`.
- */
-#define SERIES_HORNER_TERM@C@(r, x, c)                          \
-    do {                                                        \
-        r = cmul@c@(r, x);                                      \
-        r = npy_cpack@c@(c*npy_creal@c@(r), c*npy_cimag@c@(r)); \
-        r = cadd@c@(c_1@c@, r);                                 \
-    } while(0)
 
 /*==========================================================
  * Custom implementation of missing complex C99 functions
@@ -864,59 +856,348 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
 #undef TANHL_HUGE
 #endif
 
+#if !defined (HAVE_CACOS@C@) || !defined (HAVE_CASINH@C@)
+/*
+ * Complex inverse trig functions taken from the msum library in FreeBSD
+ * revision 251404
+ *
+ * The algorithm is very close to that in "Implementing the complex arcsine
+ * and arccosine functions using exception handling" by T. E. Hull, Thomas F.
+ * Fairgrieve, and Ping Tak Peter Tang, published in ACM Transactions on
+ * Mathematical Software, Volume 23 Issue 3, 1997, Pages 299-335,
+ * http://dl.acm.org/citation.cfm?id=275324.
+ *
+ * Throughout we use the convention z = x + I*y.
+ *
+ * casinh(z) = sign(x)*log(A+sqrt(A*A-1)) + I*asin(B)
+ * where
+ * A = (|z+I| + |z-I|) / 2
+ * B = (|z+I| - |z-I|) / 2 = y/A
+ *
+ * These formulas become numerically unstable:
+ *   (a) for Re(casinh(z)) when z is close to the line segment [-I, I] (that
+ *       is, Re(casinh(z)) is close to 0);
+ *   (b) for Im(casinh(z)) when z is close to either of the intervals
+ *       [I, I*infinity) or (-I*infinity, -I] (that is, |Im(casinh(z))| is
+ *       close to PI/2).
+ *
+ * These numerical problems are overcome by defining
+ * f(a, b) = (hypot(a, b) - b) / 2 = a*a / (hypot(a, b) + b) / 2
+ * Then if A < A_crossover, we use
+ *   log(A + sqrt(A*A-1)) = log1p((A-1) + sqrt((A-1)*(A+1)))
+ *   A-1 = f(x, 1+y) + f(x, 1-y)
+ * and if B > B_crossover, we use
+ *   asin(B) = atan2(y, sqrt(A*A - y*y)) = atan2(y, sqrt((A+y)*(A-y)))
+ *   A-y = f(x, y+1) + f(x, y-1)
+ * where without loss of generality we have assumed that x and y are
+ * non-negative.
+ *
+ * Much of the difficulty comes because the intermediate computations may
+ * produce overflows or underflows.  This is dealt with in the paper by Hull
+ * et al by using exception handling.  We do this by detecting when
+ * computations risk underflow or overflow.  The hardest part is handling the
+ * underflows when computing f(a, b).
+ *
+ * Note that the function f(a, b) does not appear explicitly in the paper by
+ * Hull et al, but the idea may be found on pages 308 and 309.  Introducing the
+ * function f(a, b) allows us to concentrate many of the clever tricks in this
+ * paper into one function.
+ */
+
+/*
+ * Function f(a, b, hypot_a_b) = (hypot(a, b) - b) / 2.
+ * Pass hypot(a, b) as the third argument.
+ */
+static inline @type@ _f@c@(@type@ a, @type@ b, @type@ hypot_a_b)
+{
+    if (b < 0)
+        return ((hypot_a_b - b) / 2);
+    if (b == 0)
+        return (a / 2);
+    return (a * a / (hypot_a_b + b) / 2);
+}
+
+/*
+ * All the hard work is contained in this function.
+ * x and y are assumed positive or zero, and less than RECIP_EPSILON.
+ * Upon return:
+ * rx = Re(casinh(z)) = -Im(cacos(y + I*x)).
+ * B_is_usable is set to 1 if the value of B is usable.
+ * If B_is_usable is set to 0, sqrt_A2my2 = sqrt(A*A - y*y), and new_y = y.
+ * If returning sqrt_A2my2 has potential to result in an underflow, it is
+ * rescaled, and new_y is similarly rescaled.
+ */
+static inline void _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
+    npy_int *B_is_usable, @type@ *B, @type@ *sqrt_A2my2, @type@ *new_y)
+{
+#if @precision@ == 1
+    const npy_float A_crossover = 10.0f;
+    const npy_float B_crossover = 0.6417f;
+    const npy_float FOUR_SQRT_MIN = 0x1p-61f;
+#endif
+#if @precision@ == 2
+    const npy_double A_crossover = 10.0;
+    const npy_double B_crossover = 0.6417;
+    const npy_double FOUR_SQRT_MIN = 0x1p-509;
+#endif
+#if @precision@ == 3
+    const npy_longdouble A_crossover = 10.0l;
+    const npy_longdouble B_crossover = 0.6417l;
+    const npy_longdouble FOUR_SQRT_MIN = 0x1p-8189l;
+#endif
+    @type@ R, S, A; /* A, B, R, and S are as in Hull et al. */
+    @type@ Am1, Amy; /* A-1, A-y. */
+
+    R = npy_hypot@c@(x, y + 1);        /* |z+I| */
+    S = npy_hypot@c@(x, y - 1);        /* |z-I| */
+
+    /* A = (|z+I| + |z-I|) / 2 */
+    A = (R + S) / 2;
+    /*
+     * Mathematically A >= 1.  There is a small chance that this will not
+     * be so because of rounding errors.  So we will make certain it is
+     * so.
+     */
+    if (A < 1)
+        A = 1;
+
+    if (A < A_crossover) {
+        /*
+         * Am1 = fp + fm, where fp = f(x, 1+y), and fm = f(x, 1-y).
+         * rx = log1p(Am1 + sqrt(Am1*(A+1)))
+         */
+        if (y == 1 && x < @TEPS@ * @TEPS@ / 128) {
+            /*
+             * fp is of order x^2, and fm = x/2.
+             * A = 1 (inexactly).
+             */
+            *rx = npy_sqrt@c@(x);
+        } else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
+            /*
+             * Underflow will not occur because
+             * x >= DBL_EPSILON^2/128 >= FOUR_SQRT_MIN
+             */
+            Am1 = _f@c@(x, 1 + y, R) + _f@c@(x, 1 - y, S);
+            *rx = npy_log1p@c@(Am1 + npy_sqrt@c@(Am1 * (A + 1)));
+        } else if (y < 1) {
+            /*
+             * fp = x*x/(1+y)/4, fm = x*x/(1-y)/4, and
+             * A = 1 (inexactly).
+             */
+            *rx = x / npy_sqrt@c@((1 - y) * (1 + y));
+        } else {        /* if (y > 1) */
+            /*
+             * A-1 = y-1 (inexactly).
+             */
+            *rx = npy_log1p@c@((y - 1) + npy_sqrt@c@((y - 1) * (y + 1)));
+        }
+    } else {
+        *rx = npy_log@c@(A + npy_sqrt@c@(A * A - 1));
+    }
+
+    *new_y = y;
+
+    if (y < FOUR_SQRT_MIN) {
+        /*
+         * Avoid a possible underflow caused by y/A.  For casinh this
+         * would be legitimate, but will be picked up by invoking atan2
+         * later on.  For cacos this would not be legitimate.
+         */
+        *B_is_usable = 0;
+        *sqrt_A2my2 = A * (2 / @TEPS@);
+        *new_y = y * (2 / @TEPS@);
+        return;
+    }
+
+    /* B = (|z+I| - |z-I|) / 2 = y/A */
+    *B = y / A;
+    *B_is_usable = 1;
+
+    if (*B > B_crossover) {
+        *B_is_usable = 0;
+        /*
+         * Amy = fp + fm, where fp = f(x, y+1), and fm = f(x, y-1).
+         * sqrt_A2my2 = sqrt(Amy*(A+y))
+         */
+        if (y == 1 && x < @TEPS@ / 128) {
+            /*
+             * fp is of order x^2, and fm = x/2.
+             * A = 1 (inexactly).
+             */
+            *sqrt_A2my2 = npy_sqrt@c@(x) * npy_sqrt@c@((A + y) / 2);
+        } else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
+            /*
+             * Underflow will not occur because
+             * x >= DBL_EPSILON/128 >= FOUR_SQRT_MIN
+             * and
+             * x >= DBL_EPSILON^2 >= FOUR_SQRT_MIN
+             */
+            Amy = _f@c@(x, y + 1, R) + _f@c@(x, y - 1, S);
+            *sqrt_A2my2 = npy_sqrt@c@(Amy * (A + y));
+        } else if (y > 1) {
+            /*
+             * fp = x*x/(y+1)/4, fm = x*x/(y-1)/4, and
+             * A = y (inexactly).
+             *
+             * y < RECIP_EPSILON.  So the following
+             * scaling should avoid any underflow problems.
+             */
+            *sqrt_A2my2 = x * (4 / @TEPS@ / @TEPS@) * y /
+                npy_sqrt@c@((y + 1) * (y - 1));
+            *new_y = y * (4 / @TEPS@ / @TEPS@);
+        } else {        /* if (y < 1) */
+            /*
+             * fm = 1-y >= DBL_EPSILON, fp is of order x^2, and
+             * A = 1 (inexactly).
+             */
+            *sqrt_A2my2 = npy_sqrt@c@((1 - y) * (1 + y));
+        }
+    }
+}
+
+/*
+ * Optimized version of clog() for |z| finite and larger than ~RECIP_EPSILON.
+ */
+static inline void _clog_for_large_values@c@(@type@ x, @type@ y, @type@ *rr, @type@ *ri)
+{
+#if @precision@ == 1
+    const npy_float QUARTER_SQRT_MAX = 0x1p61f;
+    const npy_float SQRT_MIN = 0x1p-63f;
+#endif
+#if @precision@ == 2
+    const npy_double QUARTER_SQRT_MAX = 0x1p509;
+    const npy_double SQRT_MIN = 0x1p-511;
+#endif
+#if @precision@ == 3
+    const npy_longdouble QUARTER_SQRT_MAX = 0x1p8189l;
+    const npy_longdouble SQRT_MIN = 0x1p-8191l;
+#endif
+    @type@ ax, ay, t;
+
+    ax = npy_fabs@c@(x);
+    ay = npy_fabs@c@(y);
+    if (ax < ay) {
+        t = ax;
+        ax = ay;
+        ay = t;
+    }
+
+    /*
+     * Avoid overflow in hypot() when x and y are both very large.
+     * Divide x and y by E, and then add 1 to the logarithm.  This depends
+     * on E being larger than sqrt(2).
+     * Dividing by E causes an insignificant loss of accuracy; however
+     * this method is still poor since it is uneccessarily slow.
+     */
+    if (ax > @TMAX@ / 2) { 
+        *rr = npy_log@c@(npy_hypot@c@(x / NPY_E@c@, y / NPY_E@c@)) + 1;
+    }
+    /*
+     * Avoid overflow when x or y is large.  Avoid underflow when x or
+     * y is small.
+     */
+    else if (ax > QUARTER_SQRT_MAX || ay < SQRT_MIN) {
+        *rr = npy_log@c@(npy_hypot@c@(x, y));
+    }
+    else {
+        *rr = npy_log@c@(ax * ax + ay * ay) / 2;
+    }
+    *ri = npy_atan2@c@(y, x);
+}
+#endif
+
 #ifndef HAVE_CACOS@C@
 @ctype@ npy_cacos@c@(@ctype@ z)
 {
-    @ctype@ r;
-    r = cmul@c@(z,z);
-    r = csub@c@(c_1@c@, r);
-    r = npy_csqrt@c@(r);
-    r = cmuli@c@(r);
-    r = cadd@c@(z, r);
-    r = npy_clog@c@(r);
-    r = cmuli@c@(r);
-    r = cneg@c@(r);
-    return r;
+#if @precision@ == 1
+    /* this is sqrt(6*EPS) */
+    const npy_float SQRT_6_EPSILON = 8.4572793338e-4f;
+    /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
+    const volatile npy_float pio2_lo = 7.5497899549e-9f;
+#endif
+#if @precision@ == 2
+    const npy_double SQRT_6_EPSILON = 3.65002414998885671e-08;
+    const volatile npy_double pio2_lo = 6.1232339957367659e-17;
+#endif
+#if @precision@ == 3
+    const npy_longdouble SQRT_6_EPSILON = 8.0654900873493277169e-10l;
+    const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
+#endif
+    const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
+    const @type@ pio2_hi = NPY_PI_2@c@;
+    @type@ x, y, ax, ay, wx, wy, rx, ry, B, sqrt_A2mx2, new_x;
+    npy_int sx, sy;
+    npy_int B_is_usable;
+
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+    sx = npy_signbit(x);
+    sy = npy_signbit(y);
+    ax = npy_fabs@c@(x);
+    ay = npy_fabs@c@(y);
+
+    if (npy_isnan(x) || npy_isnan(y)) {
+        /* cacos(+-Inf + I*NaN) = NaN + I*opt(-)Inf */
+        if (npy_isinf(x))
+            return npy_cpack@c@(y + y, -INFINITY);
+        /* cacos(NaN + I*+-Inf) = NaN + I*-+Inf */
+        if (npy_isinf(y))
+            return npy_cpack@c@(x + x, -y);
+        /* cacos(0 + I*NaN) = PI/2 + I*NaN with inexact */
+        if (x == 0)
+            return npy_cpack@c@(pio2_hi + pio2_lo, y + y);
+        /*
+         * All other cases involving NaN return NaN + I*NaN.
+         * C99 leaves it optional whether to raise invalid if one of
+         * the arguments is not NaN, so we opt not to raise it.
+         */
+        return npy_cpack@c@(x + 0.0L + (y + 0), x + 0.0L + (y + 0));
+    }
+
+    if (ax > RECIP_EPSILON || ay > RECIP_EPSILON) {
+        /* clog...() will raise inexact unless x or y is infinite. */
+        _clog_for_large_values@c@(x, y, &wx, &wy);
+        rx = npy_fabs@c@(wy);
+        ry = wx + NPY_LOGE2@c@;
+        if (sy == 0)
+            ry = -ry;
+        return npy_cpack@c@(rx, ry);
+    }
+
+    /* Avoid spuriously raising inexact for z = 1. */
+    if (x == 1 && y == 0)
+        return npy_cpack@c@(0, -y);
+
+    /* All remaining cases are inexact. */
+    raise_inexact();
+
+    if (ax < SQRT_6_EPSILON / 4 && ay < SQRT_6_EPSILON / 4)
+        return npy_cpack@c@(pio2_hi - (x - pio2_lo), -y);
+
+    _do_hard_work@c@(ay, ax, &ry, &B_is_usable, &B, &sqrt_A2mx2, &new_x);
+    if (B_is_usable) {
+        if (sx == 0)
+            rx = npy_acos@c@(B);
+        else
+            rx = npy_acos@c@(-B);
+    } else {
+        if (sx == 0)
+            rx = npy_atan2@c@(sqrt_A2mx2, new_x);
+        else
+            rx = npy_atan2@c@(sqrt_A2mx2, -new_x);
+    }
+    if (sy == 0)
+        ry = -ry;
+    return npy_cpack@c@(rx, ry);
 }
 #endif
 
 #ifndef HAVE_CASIN@C@
 @ctype@ npy_casin@c@(@ctype@ z)
 {
-    @type@ x, y;
-    x = npy_creal@c@(z);
-    y = npy_cimag@c@(z);
-
-    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
-        /* casin(z) = -i * log( i*z + sqrt(1-z**2)) */
-        @ctype@ m1, iz, r;
-        m1 = npy_csqrt@c@(csub@c@(c_1@c@, cmul@c@(z,z)));
-        iz = cmuli@c@(z);
-        r = npy_clog@c@(cadd@c@(iz, m1));
-        r = cmuli@c@(r);
-        return cneg@c@(r);
-    }
-    else {
-        /*
-         * Small arguments: series expansion, to avoid loss of precision
-         * asin(x) = x [1 + (1/6) x^2 [1 + (9/20) x^2 [1 + ...]]]
-         *
-         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
-         */
-        @ctype@ z2, r;
-        z2 = cmul@c@(z, z);
-        r = c_1@c@;
-#if @precision@ >= 3
-        SERIES_HORNER_TERM@C@(r, z2, 81.0@C@/110);
-        SERIES_HORNER_TERM@C@(r, z2, 49.0@C@/72);
-#endif
-#if @precision@ >= 2
-        SERIES_HORNER_TERM@C@(r, z2, 25.0@C@/42);
-#endif
-        SERIES_HORNER_TERM@C@(r, z2, 9.0@C@/20);
-        SERIES_HORNER_TERM@C@(r, z2, 1.0@C@/6);
-        return cmul@c@(r, z);
-    }
+    /* casin(z) = I * conj( casinh(I * conj(z)) ) */
+    z = npy_casinh@c@(npy_cpack@c@(npy_cimag@c@(z), npy_creal@c@(z)));
+    return npy_cpack@c@(npy_cimag@c@(z), npy_creal@c@(z));
 }
 #endif
 
@@ -932,49 +1213,112 @@ static @ctype@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
 #ifndef HAVE_CACOSH@C@
 @ctype@ npy_cacosh@c@(@ctype@ z)
 {
-    /* cacosh(z) = log( z + sqrt(z+1)*sqrt(z-1)) */
-    @ctype@ p1, m1;
-    p1 = npy_csqrt@c@(cadd@c@(z, c_1@c@));
-    m1 = npy_csqrt@c@(csub@c@(z, c_1@c@));
-    return npy_clog@c@(cadd@c@(z, cmul@c@(p1,m1)));
+    /*
+     * cacosh(z) = I*cacos(z) or -I*cacos(z)
+     * where the sign is chosen so Re(cacosh(z)) >= 0.
+     */
+    @ctype@  w;
+    @type@ rx, ry;
+
+    w = npy_cacos@c@(z);
+    rx = npy_creal@c@(w);
+    ry = npy_cimag@c@(w);
+    /* cacosh(NaN + I*NaN) = NaN + I*NaN */
+    if (npy_isnan(rx) && npy_isnan(ry))
+        return npy_cpack@c@(ry, rx);
+    /* cacosh(NaN + I*+-Inf) = +Inf + I*NaN */
+    /* cacosh(+-Inf + I*NaN) = +Inf + I*NaN */
+    if (npy_isnan(rx))
+        return npy_cpack@c@(npy_fabs@c@(ry), rx);
+    /* cacosh(0 + I*NaN) = NaN + I*NaN */
+    if (npy_isnan(ry))
+        return npy_cpack@c@(ry, ry);
+    return npy_cpack@c@(npy_fabs@c@(ry), npy_copysign@c@(rx, npy_cimag@c@(z)));
 }
 #endif
 
 #ifndef HAVE_CASINH@C@
+/*
+ * casinh(z) = z + O(z^3)   as z -> 0
+ *
+ * casinh(z) = sign(x)*clog(sign(x)*z) + O(1/z^2)   as z -> infinity
+ * The above formula works for the imaginary part as well, because
+ * Im(casinh(z)) = sign(x)*atan2(sign(x)*y, fabs(x)) + O(y/z^3)
+ *    as z -> infinity, uniformly in y
+ */
 @ctype@ npy_casinh@c@(@ctype@ z)
 {
-    @type@ x, y;
+#if @precision@ == 1
+    /* this is sqrt(6*EPS) */
+    const npy_float SQRT_6_EPSILON = 8.4572793338e-4f;
+    /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
+    const volatile npy_float pio2_lo = 7.5497899549e-9f;
+#endif
+#if @precision@ == 2
+    const npy_double SQRT_6_EPSILON = 3.65002414998885671e-08;
+    const volatile npy_double pio2_lo = 6.1232339957367659e-17;
+#endif
+#if @precision@ == 3
+    const npy_longdouble SQRT_6_EPSILON = 8.0654900873493277169e-10l;
+    const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
+#endif
+    const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
+    const @type@ pio2_hi = NPY_PI_2@c@;
+    @type@ x, y, ax, ay, wx, wy, rx, ry, B, sqrt_A2my2, new_y;
+    npy_int B_is_usable;
 
     x = npy_creal@c@(z);
     y = npy_cimag@c@(z);
+    ax = npy_fabs@c@(x);
+    ay = npy_fabs@c@(y);
 
-    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
-        /* casinh(z) = log( z + sqrt(1 + z**2)) */
-        @ctype@ p1;
-        p1 = npy_csqrt@c@(cadd@c@(c_1@c@, cmul@c@(z, z)));
-        return npy_clog@c@(cadd@c@(p1, z));
-    }
-    else {
+    if (npy_isnan(x) || npy_isnan(y)) {
+        /* casinh(+-Inf + I*NaN) = +-Inf + I*NaN */
+        if (npy_isinf(x))
+            return npy_cpack@c@(x, y + y);
+        /* casinh(NaN + I*+-Inf) = opt(+-)Inf + I*NaN */
+        if (npy_isinf(y))
+            return npy_cpack@c@(y, x + x);
+        /* casinh(NaN + I*0) = NaN + I*0 */
+        if (y == 0)
+            return npy_cpack@c@(x + x, y);
         /*
-         * Small arguments: series expansion, to avoid loss of precision
-         * asinh(x) = x [1 - (1/6) x^2 [1 - (9/20) x^2 [1 - ...]]]
-         *
-         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         * All other cases involving NaN return NaN + I*NaN.
+         * C99 leaves it optional whether to raise invalid if one of
+         * the arguments is not NaN, so we opt not to raise it.
          */
-        @ctype@ z2, r;
-        z2 = cmul@c@(z, z);
-        r = c_1@c@;
-#if @precision@ >= 3
-        SERIES_HORNER_TERM@C@(r, z2, -81.0@C@/110);
-        SERIES_HORNER_TERM@C@(r, z2, -49.0@C@/72);
-#endif
-#if @precision@ >= 2
-        SERIES_HORNER_TERM@C@(r, z2, -25.0@C@/42);
-#endif
-        SERIES_HORNER_TERM@C@(r, z2, -9.0@C@/20);
-        SERIES_HORNER_TERM@C@(r, z2, -1.0@C@/6);
-        return cmul@c@(z, r);
+        return npy_cpack@c@(x + 0.0L + (y + 0), x + 0.0L + (y + 0));
     }
+
+    if (ax > RECIP_EPSILON || ay > RECIP_EPSILON) {
+        /* clog...() will raise inexact unless x or y is infinite. */
+        if (npy_signbit(x) == 0) {
+            _clog_for_large_values@c@(x, y, &wx, &wy);
+            wx += NPY_LOGE2@c@;
+        }
+        else {
+            _clog_for_large_values@c@(-x, -y, &wx, &wy);
+            wx += NPY_LOGE2@c@;
+        }
+        return npy_cpack@c@(npy_copysign@c@(wx, x), npy_copysign@c@(wy, y));
+    }
+
+    /* Avoid spuriously raising inexact for z = 0. */
+    if (x == 0 && y == 0)
+        return (z);
+
+    /* All remaining cases are inexact. */
+    raise_inexact();
+
+    if (ax < SQRT_6_EPSILON / 4 && ay < SQRT_6_EPSILON / 4)
+        return (z);
+
+    _do_hard_work@c@(ax, ay, &rx, &B_is_usable, &B, &sqrt_A2my2, &new_y);
+    if (B_is_usable)
+        ry = npy_asin@c@(B);
+    else
+        ry = npy_atan2@c@(new_y, sqrt_A2my2);
+    return npy_cpack@c@(npy_copysign@c@(rx, x), npy_copysign@c@(ry, y));
 }
 #endif
 
@@ -1110,19 +1454,18 @@ static inline npy_longdouble _real_part_reciprocall(npy_longdouble x, npy_longdo
     /* this is sqrt(3*EPS) */
     const npy_float SQRT_3_EPSILON = 5.9801995673e-4f;
     /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
-    const volatile float pio2_lo = 7.5497899549e-9f;
+    const volatile npy_float pio2_lo = 7.5497899549e-9f;
 #endif
 #if @precision@ == 2
     const npy_double SQRT_3_EPSILON = 2.5809568279517849e-8;
     const volatile npy_double pio2_lo = 6.1232339957367659e-17;
 #endif
 #if @precision@ == 3
-    const npy_longdouble SQRT_3_EPSILON = 5.70316273435758915310e-10;
+    const npy_longdouble SQRT_3_EPSILON = 5.70316273435758915310e-10l;
     const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
 #endif
     const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
     const @type@ pio2_hi = NPY_PI_2@c@;
-    const volatile float tiny =  3.9443045e-31f;
     @type@ x, y, ax, ay, rx, ry;
 
     x = npy_creal@c@(z);
@@ -1164,7 +1507,7 @@ static inline npy_longdouble _real_part_reciprocall(npy_longdouble x, npy_longdo
          * inexact, but this is the only only that needs to do it
          * explicitly.
          */
-        volatile npy_float junk = 1 + tiny;
+        raise_inexact();
         return (z);
     }
 

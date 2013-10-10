@@ -1120,11 +1120,11 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
 
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 0-1j], 1, -1
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 0-1j], 1, -1
+        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1
+        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1
         yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1
 
-        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [-1,   1], -1, 1
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1
 
@@ -1147,10 +1147,10 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
         # XXX: signed zeros are not OK for sqrt or for the arc* functions
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1, True
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1, True
+        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True
+        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True
         yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True
-        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [-1,   1], -1, 1, True
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True
 
