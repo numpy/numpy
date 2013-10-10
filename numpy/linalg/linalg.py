@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product,
-    broadcast
+    broadcast, einsum
     )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -2048,7 +2048,11 @@ def norm(x, ord=None, axis=None):
 
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
-        return sqrt(add.reduce((x.conj() * x).real, axis=None))
+        if x.ndim == 1:
+            sqnorm = einsum('i,i->', x, x.conj())
+        elif x.ndim == 2:
+            sqnorm = einsum('ij,ij->', x, x.conj())
+        return sqrt(sqnorm).real
 
     # Normalize the `axis` argument to a tuple.
     nd = x.ndim
