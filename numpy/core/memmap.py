@@ -66,7 +66,9 @@ class memmap(ndarray):
         measured in bytes, it should normally be a multiple of the byte-size
         of `dtype`. When ``mode != 'r'``, even positive offsets beyond end of
         file are valid; The file will be extended to accommodate the
-        additional data. The default offset is 0.
+        additional data. By default, ``memmap`` will start at the beginning of
+        the file, even if ``filename`` is a file pointer ``fp`` and
+        ``fp.tell() != 0``.
     shape : tuple, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
