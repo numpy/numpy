@@ -3,26 +3,33 @@ NumPy 1.8.0 Release Notes
 
 This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 
+
 Highlights
 ==========
 
-* Python 2 and Python 3 are supported by common code base, no 2to3 needed.
-* New ``full`` and ``full_like`` to create value initialized arrays.
-* New ``partition`` partial sorting via selection.
-* New inplace fancy indexing for ufuncs with the ``.at`` method.
-* New nan functions ``nanmean``, ``nanvar``, and ``nanstd``.
-* New gufuncs for linear algebra.
+
+* New, no 2to3, Python 2 and Python 3 are supported by a common code base.
+* New, gufuncs for linear algebra, enabling operations on stacked arrays.
+* New, inplace fancy indexing for ufuncs with the ``.at`` method.
+* New, ``partition`` function, partial sorting via selection for fast median.
+* New, ``nanmean``, ``nanvar``, and ``nanstd`` functions skipping NaNs.
+* New, ``full`` and ``full_like`` functions to create value initialized arrays.
+* New, ``PyUFunc_RegisterLoopForDescr``, better ufunc support for user dtypes.
 * Numerous performance improvements in many areas.
+
 
 Dropped Support
 ===============
+
 
 Support for Python versions 2.4 and 2.5 has been dropped,
 
 Support for SCons has been removed.
 
+
 Future Changes
 ==============
+
 
 The Datetime64 type remains experimental in this release. In 1.9 there will
 probably be some changes to make it more useable.
@@ -37,8 +44,10 @@ readonly view.
 The numpy/oldnumeric and numpy/numarray compatibility modules will be
 removed in 1.9.
 
+
 Compatibility notes
 ===================
+
 
 The doc/sphinxext content has been moved into its own github repository,
 and is included in numpy as a submodule. See the instructions in
@@ -104,7 +113,6 @@ section in the documentation.
 
 Binary operations with non-arrays as second argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Binary operations of the form ``<array-or-subclass> * <non-array-subclass>``
 where ``<non-array-subclass>`` declares an ``__array_priority__`` higher than
 that of ``<array-or-subclass>`` will now unconditionally return
@@ -122,7 +130,6 @@ be partially sorted instead of fully sorted.
 
 Fix to financial.npv
 ~~~~~~~~~~~~~~~~~~~~
-
 The npv function had a bug. Contrary to what the documentation stated, it
 summed from indexes ``1`` to ``M`` instead of from ``0`` to ``M - 1``. The
 fix changes the returned value. The mirr function called the npv function,
@@ -138,8 +145,67 @@ E.g.::
   with np.errstate(invalid='ignore'):
       operation()
 
+
 New Features
 ============
+
+
+Support for linear algebra on stacked arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The gufunc machinery is now used for np.linalg, allowing operations on
+stacked arrays and vectors. For example::
+
+    >>> a
+    array([[[ 1.,  1.],
+            [ 0.,  1.]],
+
+           [[ 1.,  1.],
+            [ 0.,  1.]]])
+
+    >>> np.linalg.inv(a)
+    array([[[ 1., -1.],
+            [ 0.,  1.]],
+
+           [[ 1., -1.],
+            [ 0.,  1.]]])
+
+In place fancy indexing for ufuncs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function ``at`` has been added to ufunc objects to allow in place
+ufuncs with no buffering when fancy indexing is used. For example, the
+following will increment the first and second items in the array, and will
+increment the third item twice: ``numpy.add.at(arr, [0, 1, 2, 2], 1)``
+
+This is what many have mistakenly thought ``arr[[0, 1, 2, 2]] += 1`` would do,
+but that does not work as the incremented value of ``arr[2]`` is simply copied
+into the third slot in ``arr`` twice, not incremented twice.
+
+New functions `partition` and `argpartition`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New functions to partially sort arrays via a selection algorithm.
+
+A ``partition`` by index ``k`` moves the ``k`` smallest element to the front of
+an array.  All elements before ``k`` are then smaller or equal than the value
+in position ``k`` and all elements following ``k`` are then greater or equal
+than the value in position ``k``. The ordering of the values within these
+bounds is undefined.
+A sequence of indices can be provided to sort all of them into their sorted
+position at once iterative partitioning.
+This can be used to efficiently obtain order statistics like median or
+percentiles of samples.
+``partition`` has a linear time complexity of ``O(n)`` while a full sort has
+``O(n log(n))``.
+
+New functions `nanmean`, `nanvar` and `nanstd`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New nan aware statistical functions are added. In these functions the
+results are what would be obtained if nan values were ommited from all
+computations.
+
+New functions `full` and `full_like`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New convenience functions to create arrays filled with a specific value;
+complementary to the existing `zeros` and `zeros_like` functions.
 
 IO compatibility with large files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,62 +237,20 @@ than the 'raw' mode.
 
 New `invert` argument to `in1d`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 The function `in1d` now accepts a `invert` argument which, when `True`,
 causes the returned array to be inverted.
 
 Advanced indexing using `np.newaxis`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 It is now possible to use `np.newaxis`/`None` together with index
 arrays instead of only in simple indices. This means that
 ``array[np.newaxis, [0, 1]]`` will now work as expected and select the first
 two rows while prepending a new axis to the array.
 
-New functions `full` and `full_like`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-New convenience functions to create arrays filled with a specific value;
-complementary to the existing `zeros` and `zeros_like` functions.
-
-New functions `partition` and `argpartition`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-New functions to partially sort arrays via a selection algorithm.
-
-A ``partition`` by index ``k`` moves the ``k`` smallest element to the front of
-an array.  All elements before ``k`` are then smaller or equal than the value
-in position ``k`` and all elements following ``k`` are then greater or equal
-than the value in position ``k``. The ordering of the values within these
-bounds is undefined.
-A sequence of indices can be provided to sort all of them into their sorted
-position at once iterative partitioning.
-This can be used to efficiently obtain order statistics like median or
-percentiles of samples.
-``partition`` has a linear time complexity of ``O(n)`` while a full sort has
-``O(n log(n))``.
-
-New functions `nanmean`, `nanvar` and `nanstd`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-New nan aware statistical functions are added. In these functions the
-results are what would be obtained if nan values were ommited from all
-computations.
-
-In place fancy indexing for ufuncs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The function ``at`` has been added to ufunc objects to allow in place
-ufuncs with no buffering when fancy indexing is used. For example, the
-following will increment the first and second items in the array, and will
-increment the third item twice:
-numpy.add.at(array, [0, 1, 2, 2], 1)
-
-This is similar to doing array[[0, 1, 2, 2]] += 1
 
 C-API
 ~~~~~
-
-New ufuncs can now be registered with built in input types and a custom
+New ufuncs can now be registered with builtin input types and a custom
 output type. Before this change, NumPy wouldn't be able to find the right
 ufunc loop function when the ufunc was called from Python, because the ufunc
 loop signature matching logic wasn't looking at the output operand type.
@@ -235,7 +259,6 @@ argument with the correct output type.
 
 runtests.py
 ~~~~~~~~~~~
-
 A simple test runner script ``runtests.py`` was added. It also builds Numpy via
 ``setup.py build`` and can be used to run tests easily during development.
 
@@ -245,7 +268,6 @@ Improvements
 
 IO performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Performance in reading large files was improved by chunking (see also IO compatibility).
 
 Performance improvements to `pad`
@@ -307,12 +329,13 @@ For example, to set the reduce flag for a ufunc:
 
 ufunc->iter_flags = NPY_ITER_REDUCE_OK;
 
+
 Changes
 =======
 
+
 General
 ~~~~~~~
-
 The function np.take now allows 0-d arrays as indices.
 
 The separate compilation mode is now enabled by default.
@@ -336,7 +359,6 @@ Padded regions from np.pad are now correctly rounded, not truncated.
 
 C-API Array Additions
 ~~~~~~~~~~~~~~~~~~~~~
-
 Four new functions have been added to the array C-API.
 
 * PyArray_Partition
@@ -346,7 +368,6 @@ Four new functions have been added to the array C-API.
 
 C-API Ufunc Additions
 ~~~~~~~~~~~~~~~~~~~~~
-
 One new function has been added to the ufunc C-API that allows to register
 an inner loop for user types using the descr.
 
@@ -359,7 +380,6 @@ The 'full' and 'economic' modes of qr factorization are deprecated.
 
 General
 ~~~~~~~
-
 The use of non-integer for indices and most integer arguments has been
 deprecated. Previously float indices and function arguments such as axes or
 shapes were truncated to integers without warning. For example
