@@ -1334,7 +1334,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fhd = iter(fname)
     except TypeError:
         raise TypeError(
-            "fname mustbe a string, filehandle, or generator. "
+            "fname must be a string, filehandle, or generator. "
             "(got %s instead)" % type(fname))
 
     split_line = LineSplitter(delimiter=delimiter, comments=comments,
