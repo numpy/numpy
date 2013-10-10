@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import os
 import sys
 
 import numpy as np
@@ -239,6 +240,21 @@ class TestRegression(TestCase):
             np.nansum(a)
         except:
             raise AssertionError()
+
+    def test_py3_compat(self):
+        # gh-2561
+        # Test if the oldstyle class test is bypassed in python3
+        class C():
+            """Old-style class in python2, normal class in python3"""
+            pass
+
+        out = open(os.devnull, 'w')
+        try:
+            np.info(C(), output=out)
+        except AttributeError:
+            raise AssertionError()
+        finally:
+            out.close()
 
 
 if __name__ == "__main__":
