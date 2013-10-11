@@ -10,16 +10,6 @@
 #undef HAVE_HYPOT
 #endif
 
-/* Safe to use ldexp and frexp for long double for MSVC builds */
-#if (NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE) || defined(_MSC_VER)
-    #ifdef HAVE_LDEXP
-        #define HAVE_LDEXPL 1
-    #endif
-    #ifdef HAVE_FREXP
-        #define HAVE_FREXPL 1
-    #endif
-#endif
-
 /* Disable broken Sun Workshop Pro math functions */
 #ifdef __SUNPRO_C
 #undef HAVE_ATAN2
