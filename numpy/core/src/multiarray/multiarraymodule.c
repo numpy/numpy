@@ -2605,9 +2605,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     ret = PyArray_NewFromDescr(subtype, dtype,
             (int)shape.len, shape.ptr, NULL, NULL, 0, NULL);
-    if (shape.ptr) {
-        PyDimMem_FREE(shape.ptr);
-    }
+    PyDimMem_FREE(shape.ptr);
 
     evil_global_disable_warn_O4O8_flag = 0;
 
@@ -2617,9 +2615,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     evil_global_disable_warn_O4O8_flag = 0;
 
     Py_XDECREF(dtype);
-    if (shape.ptr) {
-        PyDimMem_FREE(shape.ptr);
-    }
+    PyDimMem_FREE(shape.ptr);
     return NULL;
 }
 

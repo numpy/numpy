@@ -3522,12 +3522,8 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     return 0;
 
 fail:
-    if (tmp_buffer != NULL) {
-        PyArray_free(tmp_buffer);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyArray_free(tmp_buffer);
+    NpyIter_Deallocate(iter);
 
     return -1;
 }

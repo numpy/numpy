@@ -1627,19 +1627,13 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     PyDimMem_FREE(dims.ptr);
-    if (strides.ptr) {
-        PyDimMem_FREE(strides.ptr);
-    }
+    PyDimMem_FREE(strides.ptr);
     return (PyObject *)ret;
 
  fail:
     Py_XDECREF(descr);
-    if (dims.ptr) {
-        PyDimMem_FREE(dims.ptr);
-    }
-    if (strides.ptr) {
-        PyDimMem_FREE(strides.ptr);
-    }
+    PyDimMem_FREE(dims.ptr);
+    PyDimMem_FREE(strides.ptr);
     return NULL;
 }
 

@@ -639,12 +639,20 @@ NpyIter_Copy(NpyIter *iter)
 NPY_NO_EXPORT int
 NpyIter_Deallocate(NpyIter *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_uint32 itflags;
     /*int ndim = NIT_NDIM(iter);*/
-    int iop, nop = NIT_NOP(iter);
+    int iop, nop;
+    PyArray_Descr **dtype;
+    PyArrayObject **object;
 
-    PyArray_Descr **dtype = NIT_DTYPES(iter);
-    PyArrayObject **object = NIT_OPERANDS(iter);
+    if (iter == NULL) {
+        return NPY_SUCCEED;
+    }
+
+    itflags = NIT_ITFLAGS(iter);
+    nop = NIT_NOP(iter);
+    dtype = NIT_DTYPES(iter);
+    object = NIT_OPERANDS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {

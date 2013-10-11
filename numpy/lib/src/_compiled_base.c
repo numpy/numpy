@@ -980,12 +980,8 @@ fail:
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    if (dimensions.ptr) {
-        PyDimMem_FREE(dimensions.ptr);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
     return NULL;
 }
 
@@ -1247,12 +1243,8 @@ fail:
     Py_XDECREF(ret_arr);
     Py_XDECREF(dtype);
     Py_XDECREF(indices);
-    if (dimensions.ptr) {
-        PyDimMem_FREE(dimensions.ptr);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
     return NULL;
 }
 
