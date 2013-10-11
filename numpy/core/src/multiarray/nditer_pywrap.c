@@ -742,9 +742,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     &op_axes_in,
                     PyArray_IntpConverter, &itershape,
                     &buffersize)) {
-        if (itershape.ptr != NULL) {
-            PyDimMem_FREE(itershape.ptr);
-        }
+        PyDimMem_FREE(itershape.ptr);
         return -1;
     }
 
@@ -816,9 +814,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
-    if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
-    }
+    PyDimMem_FREE(itershape.ptr);
 
     /* Release the references we got to the ops and dtypes */
     for (iop = 0; iop < nop; ++iop) {
@@ -829,9 +825,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
-    if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
-    }
+    PyDimMem_FREE(itershape.ptr);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);
