@@ -143,7 +143,7 @@ check_object(PyObject *ob, int t, char *obname,
 static PyObject *
 lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     char jobvl;
     char jobvr;
     int n;
@@ -169,7 +169,7 @@ lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(vr,NPY_DOUBLE,"vr","NPY_DOUBLE","dgeev"));
     TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeev"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dgeev)(&jobvl,&jobvr,&n,DDATA(a),&lda,DDATA(wr),DDATA(wi),
                          DDATA(vl),&ldvl,DDATA(vr),&ldvr,DDATA(work),&lwork,
                          &info);
@@ -178,7 +178,7 @@ lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","dgeev_",
-                         lapack_lite_status__,"jobvl",jobvl,"jobvr",jobvr,
+                         lapack_lite_status,"jobvl",jobvl,"jobvr",jobvr,
                          "n",n,"lda",lda,"ldvl",ldvl,"ldvr",ldvr,
                          "lwork",lwork,"info",info);
 }
@@ -245,7 +245,7 @@ lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
     /*                off-diagonal elements of an intermediate tridiagonal */
     /*                form did not converge to zero. */
 
-    int  lapack_lite_status__;
+    int lapack_lite_status;
 
     TRY(PyArg_ParseTuple(args,"cciOiOOiOii",
                          &jobz,&uplo,&n,&a,&lda,&w,&work,&lwork,
@@ -256,7 +256,7 @@ lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dsyevd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dsyevd"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dsyevd)(&jobz,&uplo,&n,DDATA(a),&lda,DDATA(w),DDATA(work),
                           &lwork,IDATA(iwork),&liwork,&info);
     if (PyErr_Occurred()) {
@@ -264,7 +264,7 @@ lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i}","dsyevd_",
-                         lapack_lite_status__,"jobz",jobz,"uplo",uplo,
+                         lapack_lite_status,"jobz",jobz,"uplo",uplo,
                          "n",n,"lda",lda,"lwork",lwork,"liwork",liwork,"info",info);
 }
 
@@ -334,7 +334,7 @@ lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
     /*                off-diagonal elements of an intermediate tridiagonal */
     /*                form did not converge to zero. */
 
-    int  lapack_lite_status__;
+    int lapack_lite_status;
 
     TRY(PyArg_ParseTuple(args,"cciOiOOiOiOii",
                          &jobz,&uplo,&n,&a,&lda,&w,&work,&lwork,&rwork,
@@ -346,15 +346,15 @@ lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(w,NPY_DOUBLE,"rwork","NPY_DOUBLE","zheevd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zheevd"));
 
-    lapack_lite_status__ = \
-    FNAME(zheevd)(&jobz,&uplo,&n,ZDATA(a),&lda,DDATA(w),ZDATA(work),
-                  &lwork,DDATA(rwork),&lrwork,IDATA(iwork),&liwork,&info);
+    lapack_lite_status =
+        FNAME(zheevd)(&jobz,&uplo,&n,ZDATA(a),&lda,DDATA(w),ZDATA(work),
+                      &lwork,DDATA(rwork),&lrwork,IDATA(iwork),&liwork,&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","zheevd_",
-                         lapack_lite_status__,"jobz",jobz,"uplo",uplo,"n",n,
+                         lapack_lite_status,"jobz",jobz,"uplo",uplo,"n",n,
                          "lda",lda,"lwork",lwork,"lrwork",lrwork,
                          "liwork",liwork,"info",info);
 }
@@ -362,7 +362,7 @@ lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int m;
     int n;
     int nrhs;
@@ -387,7 +387,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgelsd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dgelsd"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dgelsd)(&m,&n,&nrhs,DDATA(a),&lda,DDATA(b),&ldb,
                           DDATA(s),&rcond,&rank,DDATA(work),&lwork,
                           IDATA(iwork),&info);
@@ -396,7 +396,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:d,s:i,s:i,s:i}","dgelsd_",
-                         lapack_lite_status__,"m",m,"n",n,"nrhs",nrhs,
+                         lapack_lite_status,"m",m,"n",n,"nrhs",nrhs,
                          "lda",lda,"ldb",ldb,"rcond",rcond,"rank",rank,
                          "lwork",lwork,"info",info);
 }
@@ -404,7 +404,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_dgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int n;
     int nrhs;
     PyObject *a;
@@ -419,21 +419,21 @@ lapack_lite_dgesv(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","dgesv"));
     TRY(check_object(b,NPY_DOUBLE,"b","NPY_DOUBLE","dgesv"));
 
-    lapack_lite_status__ = \
-    FNAME(dgesv)(&n,&nrhs,DDATA(a),&lda,IDATA(ipiv),DDATA(b),&ldb,&info);
+    lapack_lite_status =
+        FNAME(dgesv)(&n,&nrhs,DDATA(a),&lda,IDATA(ipiv),DDATA(b),&ldb,&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgesv_",
-                         lapack_lite_status__,"n",n,"nrhs",nrhs,"lda",lda,
+                         lapack_lite_status,"n",n,"nrhs",nrhs,"lda",lda,
                          "ldb",ldb,"info",info);
 }
 
 static PyObject *
 lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     char jobz;
     int m;
     int n;
@@ -459,7 +459,7 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgesdd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dgesdd"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dgesdd)(&jobz,&m,&n,DDATA(a),&lda,DDATA(s),DDATA(u),&ldu,
                           DDATA(vt),&ldvt,DDATA(work),&lwork,IDATA(iwork),
                           &info);
@@ -482,19 +482,19 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
                     work0 = PyArray_MAX(work0,3*mn + PyArray_MAX(mx,6*mn)+500);
                     break;
             case 'O':
-                    work0 = PyArray_MAX(work0,3*mn*mn +                 \
+                    work0 = PyArray_MAX(work0,3*mn*mn +
                                 PyArray_MAX(mx,5*mn*mn+4*mn+500));
                     break;
             case 'S':
             case 'A':
-                    work0 = PyArray_MAX(work0,3*mn*mn +                 \
+                    work0 = PyArray_MAX(work0,3*mn*mn +
                                 PyArray_MAX(mx,4*mn*(mn+1))+500);
                     break;
             }
             *DDATA(work) = (double) work0;
     }
     return Py_BuildValue("{s:i,s:c,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","dgesdd_",
-                         lapack_lite_status__,"jobz",jobz,"m",m,"n",n,
+                         lapack_lite_status,"jobz",jobz,"m",m,"n",n,
                          "lda",lda,"ldu",ldu,"ldvt",ldvt,"lwork",lwork,
                          "info",info);
 }
@@ -502,7 +502,7 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_dgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int m;
     int n;
     PyObject *a;
@@ -514,20 +514,20 @@ lapack_lite_dgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgetrf"));
     TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","dgetrf"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dgetrf)(&m,&n,DDATA(a),&lda,IDATA(ipiv),&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
-    return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i}","dgetrf_",lapack_lite_status__,
+    return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i}","dgetrf_", lapack_lite_status,
                          "m",m,"n",n,"lda",lda,"info",info);
 }
 
 static PyObject *
 lapack_lite_dpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int n;
     PyObject *a;
     int lda;
@@ -537,20 +537,20 @@ lapack_lite_dpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(PyArg_ParseTuple(args,"ciOii",&uplo,&n,&a,&lda,&info));
     TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dpotrf"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(dpotrf)(&uplo,&n,DDATA(a),&lda,&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
-    return Py_BuildValue("{s:i,s:i,s:i,s:i}","dpotrf_",lapack_lite_status__,
+    return Py_BuildValue("{s:i,s:i,s:i,s:i}","dpotrf_", lapack_lite_status,
                          "n",n,"lda",lda,"info",info);
 }
 
 static PyObject *
 lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-        int  lapack_lite_status__;
+        int lapack_lite_status;
         int m, n, lwork;
         PyObject *a, *tau, *work;
         int lda;
@@ -563,7 +563,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dgeqrf"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeqrf"));
 
-        lapack_lite_status__ = \
+        lapack_lite_status =
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
 	if (PyErr_Occurred()) {
@@ -571,7 +571,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 	}
 
         return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgeqrf_",
-                             lapack_lite_status__,"m",m,"n",n,"lda",lda,
+                             lapack_lite_status,"m",m,"n",n,"lda",lda,
                              "lwork",lwork,"info",info);
 }
 
@@ -579,7 +579,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-        int  lapack_lite_status__;
+        int lapack_lite_status;
         int m, n, k, lwork;
         PyObject *a, *tau, *work;
         int lda;
@@ -589,13 +589,14 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
-        lapack_lite_status__ = \
-        FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work), &lwork, &info);
+        lapack_lite_status =
+            FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work),
+                          &lwork, &info);
 	if (PyErr_Occurred()) {
             return NULL;
 	}
 
-        return Py_BuildValue("{s:i,s:i}","dorgqr_",lapack_lite_status__,
+        return Py_BuildValue("{s:i,s:i}","dorgqr_",lapack_lite_status,
                              "info",info);
 }
 
@@ -603,7 +604,7 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     char jobvl;
     char jobvr;
     int n;
@@ -629,7 +630,7 @@ lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeev"));
     TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgeev"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
             FNAME(zgeev)(&jobvl,&jobvr,&n,ZDATA(a),&lda,ZDATA(w),ZDATA(vl),
                          &ldvl,ZDATA(vr),&ldvr,ZDATA(work),&lwork,
                          DDATA(rwork),&info);
@@ -638,7 +639,7 @@ lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","zgeev_",
-                         lapack_lite_status__,"jobvl",jobvl,"jobvr",jobvr,
+                         lapack_lite_status,"jobvl",jobvl,"jobvr",jobvr,
                          "n",n,"lda",lda,"ldvl",ldvl,"ldvr",ldvr,
                          "lwork",lwork,"info",info);
 }
@@ -646,7 +647,7 @@ lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int m;
     int n;
     int nrhs;
@@ -673,22 +674,22 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgelsd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zgelsd"));
 
-    lapack_lite_status__ = \
-    FNAME(zgelsd)(&m,&n,&nrhs,ZDATA(a),&lda,ZDATA(b),&ldb,DDATA(s),&rcond,
-                  &rank,ZDATA(work),&lwork,DDATA(rwork),IDATA(iwork),&info);
+    lapack_lite_status =
+        FNAME(zgelsd)(&m,&n,&nrhs,ZDATA(a),&lda,ZDATA(b),&ldb,DDATA(s),&rcond,
+                      &rank,ZDATA(work),&lwork,DDATA(rwork),IDATA(iwork),&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","zgelsd_",
-                         lapack_lite_status__,"m",m,"n",n,"nrhs",nrhs,"lda",lda,
+                         lapack_lite_status,"m",m,"n",n,"nrhs",nrhs,"lda",lda,
                          "ldb",ldb,"rank",rank,"lwork",lwork,"info",info);
 }
 
 static PyObject *
 lapack_lite_zgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int  lapack_lite_status;
     int n;
     int nrhs;
     PyObject *a;
@@ -703,21 +704,21 @@ lapack_lite_zgesv(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","zgesv"));
     TRY(check_object(b,NPY_CDOUBLE,"b","NPY_CDOUBLE","zgesv"));
 
-    lapack_lite_status__ = \
-    FNAME(zgesv)(&n,&nrhs,ZDATA(a),&lda,IDATA(ipiv),ZDATA(b),&ldb,&info);
+    lapack_lite_status =
+        FNAME(zgesv)(&n,&nrhs,ZDATA(a),&lda,IDATA(ipiv),ZDATA(b),&ldb,&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgesv_",
-                         lapack_lite_status__,"n",n,"nrhs",nrhs,"lda",lda,
+                         lapack_lite_status,"n",n,"nrhs",nrhs,"lda",lda,
                          "ldb",ldb,"info",info);
 }
 
 static PyObject *
 lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     char jobz;
     int m;
     int n;
@@ -745,7 +746,7 @@ lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgesdd"));
     TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zgesdd"));
 
-    lapack_lite_status__ = \
+    lapack_lite_status =
     FNAME(zgesdd)(&jobz,&m,&n,ZDATA(a),&lda,DDATA(s),ZDATA(u),&ldu,
                   ZDATA(vt),&ldvt,ZDATA(work),&lwork,DDATA(rwork),
                   IDATA(iwork),&info);
@@ -754,7 +755,7 @@ lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     return Py_BuildValue("{s:i,s:c,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","zgesdd_",
-                         lapack_lite_status__,"jobz",jobz,"m",m,"n",n,
+                         lapack_lite_status,"jobz",jobz,"m",m,"n",n,
                          "lda",lda,"ldu",ldu,"ldvt",ldvt,"lwork",lwork,
                          "info",info);
 }
@@ -762,7 +763,7 @@ lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 lapack_lite_zgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int m;
     int n;
     PyObject *a;
@@ -774,20 +775,20 @@ lapack_lite_zgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgetrf"));
     TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","zgetrf"));
 
-    lapack_lite_status__ = \
-    FNAME(zgetrf)(&m,&n,ZDATA(a),&lda,IDATA(ipiv),&info);
+    lapack_lite_status =
+        FNAME(zgetrf)(&m,&n,ZDATA(a),&lda,IDATA(ipiv),&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i}","zgetrf_",
-                         lapack_lite_status__,"m",m,"n",n,"lda",lda,"info",info);
+                         lapack_lite_status,"m",m,"n",n,"lda",lda,"info",info);
 }
 
 static PyObject *
 lapack_lite_zpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    int  lapack_lite_status__;
+    int lapack_lite_status;
     int n;
     PyObject *a;
     int lda;
@@ -796,20 +797,20 @@ lapack_lite_zpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
     TRY(PyArg_ParseTuple(args,"ciOii",&uplo,&n,&a,&lda,&info));
     TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zpotrf"));
-    lapack_lite_status__ = \
-    FNAME(zpotrf)(&uplo,&n,ZDATA(a),&lda,&info);
+    lapack_lite_status =
+        FNAME(zpotrf)(&uplo,&n,ZDATA(a),&lda,&info);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i}","zpotrf_",
-                         lapack_lite_status__,"n",n,"lda",lda,"info",info);
+                         lapack_lite_status,"n",n,"lda",lda,"info",info);
 }
 
 static PyObject *
 lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-        int  lapack_lite_status__;
+        int lapack_lite_status;
         int m, n, lwork;
         PyObject *a, *tau, *work;
         int lda;
@@ -822,20 +823,21 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zgeqrf"));
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeqrf"));
 
-        lapack_lite_status__ = \
-        FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), &lwork, &info);
+        lapack_lite_status =
+            FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
+                          &lwork, &info);
 	if (PyErr_Occurred()) {
             return NULL;
 	}
 
-        return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgeqrf_",lapack_lite_status__,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
+        return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgeqrf_",lapack_lite_status,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
 }
 
 
 static PyObject *
 lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-        int  lapack_lite_status__;
+        int lapack_lite_status;
         int m, n, k, lwork;
         PyObject *a, *tau, *work;
         int lda;
@@ -847,14 +849,14 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
 
 
-        lapack_lite_status__ = \
-        FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
-                      &lwork, &info);
+        lapack_lite_status =
+            FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
+                          &lwork, &info);
 	if (PyErr_Occurred()) {
             return NULL;
 	}
 
-        return Py_BuildValue("{s:i,s:i}","zungqr_",lapack_lite_status__,
+        return Py_BuildValue("{s:i,s:i}","zungqr_",lapack_lite_status,
                              "info",info);
 }
 
