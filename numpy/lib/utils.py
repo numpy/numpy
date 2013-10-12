@@ -588,7 +588,10 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
                     methstr, other = pydoc.splitdoc(inspect.getdoc(thisobj) or "None")
                 print >> output, "  %s  --  %s" % (meth, methstr)
 
-    elif type(object) is types.InstanceType: ## check for __call__ method
+    elif (sys.version_info[0] < 3
+            and isinstance(object, types.InstanceType)):
+        # check for __call__ method
+        # types.InstanceType is the type of the instances of oldstyle classes
         print >> output, "Instance of class: ", object.__class__.__name__
         print >> output
         if hasattr(object, '__call__'):
