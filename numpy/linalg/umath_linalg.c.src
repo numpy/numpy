@@ -831,9 +831,11 @@ linearize_@TYPE@_matrix(void *dst_in,
                               (void*)dst, &one);
             }
             else {
-                /* Zero stride has undefined behavior in some BLAS
-                   implementations (e.g. OSX Accelerate), so do it
-                   manually */
+                /*
+                 * Zero stride has undefined behavior in some BLAS
+                 * implementations (e.g. OSX Accelerate), so do it
+                 * manually
+                 */
                 for (j = 0; j < columns; ++j) {
                     memcpy((@typ@*)dst + j, (@typ@*)src, sizeof(@typ@));
                 }
@@ -875,9 +877,11 @@ delinearize_@TYPE@_matrix(void *dst_in,
                               &column_strides);
             }
             else {
-                /* Zero stride has undefined behavior in some BLAS
-                   implementations (e.g. OSX Accelerate), so do it
-                   manually */
+                /*
+                 * Zero stride has undefined behavior in some BLAS
+                 * implementations (e.g. OSX Accelerate), so do it
+                 * manually
+                 */
                 if (columns > 0) {
                     memcpy((@typ@*)dst, (@typ@*)src + (columns-1), sizeof(@typ@));
                 }
