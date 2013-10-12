@@ -1,6 +1,7 @@
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
 import numpy as np
+import os
 
 rlevel = 1
 
@@ -225,6 +226,21 @@ class TestRegression(TestCase):
             np.nansum(a)
         except:
             raise AssertionError()
+
+    def test_py3_compat(self):
+        # gh-2561
+        # Test if the oldstyle class test is bypassed in python3
+        class C():
+            """Old-style class in python2, normal class in python3"""
+            pass
+
+        out = open(os.devnull, 'w')
+        try:
+            np.info(C(), output=out)
+        except AttributeError:
+            raise AssertionError()
+        finally:
+            out.close()
 
 
 if __name__ == "__main__":
