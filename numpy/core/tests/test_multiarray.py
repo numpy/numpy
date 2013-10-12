@@ -4,6 +4,11 @@ import tempfile
 import sys
 import os
 import warnings
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
 
 import numpy as np
 from nose import SkipTest
@@ -611,6 +616,31 @@ class TestBool(TestCase):
         assert_equal(d[::2].sum(), d[::2].size)
         assert_equal(d[::-2].sum(), d[::-2].size)
 
+    def check_count_nonzero(self, power, length):
+        powers = [2 ** i for i in range(length)]
+        for i in range(2**power):
+            l = [(i & x) != 0 for x in powers]
+            a = np.array(l, dtype=np.bool)
+            c = builtins.sum(l)
+            self.assertEqual(np.count_nonzero(a), c)
+            av = a.view(np.uint8)
+            av *= 3
+            self.assertEqual(np.count_nonzero(a), c)
+            av *= 4
+            self.assertEqual(np.count_nonzero(a), c)
+            av[av != 0] = 0xFF
+            self.assertEqual(np.count_nonzero(a), c)
+
+    def test_count_nonzero(self):
+        # check all 12 bit combinations in a length 17 array
+        # covers most cases of the 16 byte unrolled code
+        self.check_count_nonzero(12, 17)
+
+    @dec.slow
+    def test_count_nonzero_all(self):
+        # check all combinations in a length 17 array
+        # covers all cases of the 16 byte unrolled code
+        self.check_count_nonzero(17, 17)
 
 class TestMethods(TestCase):
     def test_test_round(self):
