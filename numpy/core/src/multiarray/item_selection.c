@@ -2395,6 +2395,44 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 }
 
 /*
+ * count number of nonzero bytes in 16 byte block
+ * w must be aligned to 8 bytes
+ *
+ * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
+ * but a 32 bit type version would make it even faster on these platforms
+ */
+static NPY_INLINE int
+count_nonzero_bytes_128(npy_uint64 * w)
+{
+    npy_uint64 w1 = w[0];
+    npy_uint64 w2 = w[1];
+
+    /*
+     * bytes not exclusively 0 or 1, sum them individually.
+     * should only happen if one does weird stuff with views or external
+     * buffers.
+     */
+    if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
+        /* reload from pointer to avoid a unnecessary stack spill with gcc */
+        char * c = w;
+        npy_uintp i, count = 0;
+        for (i = 0; i < 16; i++) {
+            count += (c[i] != 0);
+        }
+        return count;
+    }
+
+    /*
+     * last part of sideways add popcount, first three bisections can be
+     * skipped as we are dealing with bytes.
+     * multiplication equivalent to (x + (x>>8) + (x>>16) + (x>>24)) & 0xFF
+     * multiplication overflow well defined for unsigned types.
+     * w1 + w2 guaranteed to not overflow as we only have 0 and 1 data.
+     */
+    return ((w1 + w2) * 0x0101010101010101ULL) >> 56ULL;
+}
+
+/*
  * Counts the number of True values in a raw boolean array. This
  * is a low-overhead function which does no heap allocations.
  *
@@ -2425,9 +2463,16 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            char *d = data;
             /* Process the innermost dimension */
-            for (i = 0; i < shape[0]; ++i, ++d) {
+            char * d = data;
+            char * e = data + shape[0];
+            if (npy_is_aligned(data, sizeof(npy_uint64))) {
+                npy_uintp stride = 2 * sizeof(npy_uint64);
+                for (; d < e - (shape[0]  % stride); d += stride) {
+                    count += count_nonzero_bytes_128(d);
+                }
+            }
+            for (; d < e; ++d) {
                 count += (*d != 0);
             }
         } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
