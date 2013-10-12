@@ -105,6 +105,9 @@ SQUARE_CASES = [
     LinalgCase("8x8",
                np.random.rand(8, 8),
                np.random.rand(8)),
+    LinalgCase("1x1",
+               np.random.rand(1, 1),
+               np.random.rand(1)),
     LinalgCase("nonarray",
                [[1, 2], [3, 4]],
                [2, 1]),
@@ -150,6 +153,12 @@ NONSQUARE_CASES = [
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(11)),
+    LinalgCase("1x5",
+               np.random.rand(1, 5),
+               np.random.rand(5)),
+    LinalgCase("5x1",
+               np.random.rand(5, 1),
+               np.random.rand(1)),
 ]
 
 HERMITIAN_CASES = [
@@ -177,7 +186,10 @@ HERMITIAN_CASES = [
                None),
     LinalgCase("hmatrix_a_and_b",
                matrix([[1., 2.], [2., 1.]]),
-               None)
+               None),
+    LinalgCase("hmatrix_1x1",
+               np.random.rand(1, 1),
+               None),
 ]
 
 
@@ -246,6 +258,24 @@ def _stride_comb_iter(x):
         xi = xi.view(x.__class__)
         assert np.all(xi == x)
         yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+
+        # generate also zero strides if possible
+        if x.ndim >= 1 and x.shape[-1] == 1:
+            s = list(x.strides)
+            s[-1] = 0
+            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            yield xi, "stride_xxx_0"
+        if x.ndim >= 2 and x.shape[-2] == 1:
+            s = list(x.strides)
+            s[-2] = 0
+            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            yield xi, "stride_xxx_0_x"
+        if x.ndim >= 2 and x.shape[:-2] == (1, 1):
+            s = list(x.strides)
+            s[-1] = 0
+            s[-2] = 0
+            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            yield xi, "stride_xxx_0_0"
 
 for src in (SQUARE_CASES,
             NONSQUARE_CASES,
