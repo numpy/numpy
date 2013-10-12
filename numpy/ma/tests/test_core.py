@@ -1663,14 +1663,15 @@ class TestUfuncs(TestCase):
         self.assertTrue(not isinstance(test.mask, MaskedArray))
 
     def test_treatment_of_NotImplemented(self):
-        "Check we return NotImplemented if ufunc cannot deal with other"
+        "Check any NotImplemented returned by umath.<ufunc> is passed on"
         a = masked_array([1., 2.], mask=[1, 0])
-        # basic test
-        assert a.__mul__('abc') == NotImplemented  # _MaskedBinaryOperation
-        assert multiply.outer(a, 'abc') == NotImplemented
-        assert a.__div__('abc') == NotImplemented  # _DomainedBinaryOperation
+        # basic tests for _MaskedBinaryOperation
+        assert_(a.__mul__('abc') is NotImplemented)
+        assert_(multiply.outer(a, 'abc') is NotImplemented)
+        # and for _DomainedBinaryOperation
+        assert_(a.__div__('abc') is NotImplemented)
 
-        # also check that rmul of another class can be accessed
+        # also check explicitly that rmul of another class can be accessed
         class MyClass(str):
             def __mul__(self, other):
                 return "My mul"
@@ -1679,8 +1680,8 @@ class TestUfuncs(TestCase):
                 return "My rmul"
 
         me = MyClass()
-        assert me * a == "My mul"
-        assert a * me == "My rmul"
+        assert_(me * a == "My mul")
+        assert_(a * me == "My rmul")
 
 #------------------------------------------------------------------------------
 
