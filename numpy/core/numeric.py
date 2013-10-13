@@ -820,13 +820,8 @@ def correlate(a, v, mode='valid', old_behavior=False):
     """
     Cross-correlation of two 1-dimensional sequences.
 
-    This function computes the correlation as generally defined in signal
-    processing texts::
-
-        z[k] = sum_n a[n] * conj(v[n+k])
-
-    with a and v sequences being zero-padded where necessary and conj being
-    the conjugate.
+    This function computes the cross-correlation of two sequences a and v
+    as generally defined in signal processing text.
 
     Parameters
     ----------
@@ -841,9 +836,29 @@ def correlate(a, v, mode='valid', old_behavior=False):
         for complex arrays). If False, uses the conventional signal
         processing definition.
 
+    Returns
+    -------
+    out : ndarray
+        Discrete cross-correlation of `a` and `v`.
+
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
+
+    Notes
+    -----
+    The discrete cross-correlation of two sequences a and v is defined as
+
+    .. math:: c_{av}[k] = \\sum_{n = -\\infty}^{\\infty} a[n+k] v^{*}[n]
+
+    where :math:`v^{*}[n]` is the complex conjugate of :math:`v[n]`.
+
+    Note that sometimes correlation may be defined differently.
+    Another common definition is
+
+    .. math:: c'_{av}[k] = \\sum_{n = -\\infty}^{\\infty} a[n] v^{*}[n+k]
+
+    which is related to :math:`c_{av}[k]` by :math:`c'_{av}[k] = c_{av}[-k]`.
 
     Examples
     --------
@@ -853,6 +868,18 @@ def correlate(a, v, mode='valid', old_behavior=False):
     array([ 2. ,  3.5,  3. ])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], "full")
     array([ 0.5,  2. ,  3.5,  3. ,  0. ])
+
+    Using complex sequences:
+
+    >>> np.correlate([1+1j, 2, 3-1j], [0, 1, 0.5j], 'full')
+    array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
+
+    Note that you get the time reversed, complex conjugated result
+    when the two input sequences change places, i.e.,
+    :math:`c_{va}[k] = c^{*}_{av}[-k]`:
+
+    >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
+    array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
     mode = _mode_from_name(mode)
