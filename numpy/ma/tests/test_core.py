@@ -1338,7 +1338,7 @@ class TestFillingValues(TestCase):
 
         #.....Using an object-array shouldn't matter either
         fill_val = np.ndarray(shape=(1,), dtype=object)
-        fill_val[0] = (-999, -12345678.9, "???")
+        fill_val[0] = (-999, -12345678.9, asbytes("???"))
         fval = _check_fill_value(fill_val, object)
         self.assertTrue(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])

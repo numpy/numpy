@@ -13,14 +13,14 @@ import pickle
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
-from numpy.core.records import \
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+from numpy.core.records import (fromrecords as recfromrecords,
+                                fromarrays as recfromarrays)
 
 from numpy.compat import asbytes, asbytes_nested
 from numpy.ma.testutils import *
 from numpy.ma import masked, nomask
-from numpy.ma.mrecords import \
-    MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords, addfield
+from numpy.ma.mrecords import (MaskedRecords, mrecarray, fromarrays,
+                               fromtextfile, fromrecords, addfield)
 
 
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
@@ -354,8 +354,9 @@ class TestMRecords(TestCase):
         mult[0] = masked
         mult[1] = (1, 1, 1)
         mult.filled(0)
-        assert_equal_records(mult.filled(0), np.array([(0, 0, 0), (1, 1, 1)],
-                                                      dtype=mult.dtype))
+        assert_equal_records(mult.filled(0),
+                             np.array([(0, 0, 0), (1, 1, 1)],
+                                      dtype=mult.dtype))
 
 
 class TestView(TestCase):
