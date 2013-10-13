@@ -293,10 +293,9 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
      */
     if ((mit->numiter == 1) &&
             ((mit->subspace == NULL) ||
-                    PyArray_IS_C_CONTIGUOUS(mit->subspace->ao)) &&
-            PyArray_IS_C_CONTIGUOUS(ret) &&
-            PyArray_IS_C_CONTIGUOUS(NpyIter_GetOperandArray(mit->outer)[0]) &&
-            !NpyIter_RequiresBuffering(mit->outer) &&
+                    PyArray_ISCARRAY(mit->subspace->ao)) &&
+            PyArray_ISCARRAY(ret) &&
+            PyArray_ISCARRAY(NpyIter_GetOperandArray(mit->outer)[0]) &&
             (PyArray_DESCR(temp)->f->fasttake != NULL)) {
 
         char *src, *dst;
@@ -446,80 +445,121 @@ static int
 PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 {
     PyArrayObject *arr = NULL;
-    PyArrayIterObject *it;
+    NpyIter *it;
+    char **it_dataptr;
+    npy_intp it_stride;
+    NpyIter_IterNextFunc *it_next;
     npy_intp counter;
-    int swap;
-    PyArray_CopySwapFunc *copyswap;
     PyArray_Descr *descr;
+    npy_uint32 op_flags;
+    int op_axes[1] = {NULL};
 
     /* Unbound Map Iterator */
     if (mit->ait == NULL) {
         return -1;
     }
     descr = PyArray_DESCR(mit->ait->ao);
-    Py_INCREF(descr);
-    /*
-     * TODO: This is not ideal, since it makes problems for example when
-     *       the dtype is object and it is not already an array
-     *       (nested objects) or for dtypes with fields.
-     *       Should probably create a temporary array and use
-     *       PyArray_CopyObject.
-     */
-    arr = (PyArrayObject *)PyArray_FromAny(op, descr,
-                                0, 0, NPY_ARRAY_FORCECAST, NULL);
-    if (arr == NULL) {
-        return -1;
+
+    if (!PyArray_Check(op)) {
+        /*
+         * If `op` is not yet an array, we create a dummy array that is
+         * identical to arr[indices], then copy into that and only *then*
+         * set the real values. This is to be able to use the CopyObject logic.
+         *
+         * TODO: Should *not* do this always, only when we have fields or
+         *       objects or such (i.e. non-basic, problematic types).
+         */
+        Py_INCREF(descr);
+        arr = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                             descr,
+                                             mit->nd, mit->dimensions,
+                                             NULL, NULL, 0, NULL);
+        if (arr == NULL) {
+            return -1;
+        }
+
+        if (mit->consec) {
+            PyArray_MapIterSwapAxes(mit, &arr, 1);
+        }
+
+        if (PyArray_CopyObject(arr, op) < 0) {
+            return -1;
+        }
     }
-    if (mit->consec) {
-        PyArray_MapIterSwapAxes(mit, &arr, 0);
+    else {
+        /* We need to swap axes, and subclasses may not take that kindly */
+        arr = PyArray_View((PyArrayObject *)op, NULL, NULL);
         if (arr == NULL) {
             return -1;
         }
     }
 
-    /* Be sure values array is "broadcastable"
-       to shape of mit->dimensions, mit->nd */
+    if (mit->consec) {
+        PyArray_MapIterSwapAxes(mit, &arr, 0);
+        if (arr == NULL) {
+            Py_DECREF(arr);
+            return -1;
+        }
+    }
 
-    if ((it = (PyArrayIterObject *)\
-         PyArray_BroadcastToShape((PyObject *)arr,
-                                    mit->dimensions, mit->nd))==NULL) {
+    op_flags = NPY_ITER_READONLY;
+    it = NpyIter_AdvancedNew(1, &arr,
+                        NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP |
+                        NPY_ITER_ZEROSIZE_OK,
+                        NPY_CORDER, NPY_SAFE_CASTING, &op_flags,
+                        &descr, mit->nd, op_axes, mit->dimensions, 0);
+    if (it == NULL) {
         Py_DECREF(arr);
         return -1;
     }
 
-    counter = mit->size;
-    swap = (PyArray_ISNOTSWAPPED(mit->ait->ao) !=
-            (PyArray_ISNOTSWAPPED(arr)));
-    copyswap = PyArray_DESCR(arr)->f->copyswap;
+    if (mit->size == 0) {
+        Py_DECREF(arr);
+        NpyIter_Deallocate(it);
+        return -1;
+    }
+
+    it_next = NpyIter_GetIterNext(it, NULL);
+    if (it_next == NULL) {
+        Py_DECREF(arr);
+        NpyIter_Deallocate(it);
+        return -1;
+    }
+
+    it_dataptr = NpyIter_GetDataPtrArray(it);
+    it_stride = NpyIter_GetInnerStrideArray(it)[0];
+    NpyIter_Reset(it, NULL);
+
     PyArray_MapIterReset(mit);
     /* Need to decref arrays with objects in them */
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
-        while (counter--) {
-            PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));
-            PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
-            memmove(mit->dataptr, it->dataptr, PyArray_ITEMSIZE(arr));
-            /* ignored unless VOID array with object's */
-            if (swap) {
-                copyswap(mit->dataptr, NULL, swap, arr);
+        do {
+            counter = *NpyIter_GetInnerLoopSizePtr(it);
+            while (counter-- > 0) {
+                PyArray_Item_INCREF(*it_dataptr, PyArray_DESCR(arr));
+                PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
+                memmove(mit->dataptr, *it_dataptr, PyArray_ITEMSIZE(arr));
+                PyArray_MapIterNext(mit);
+                *it_dataptr += it_stride;
             }
-            PyArray_MapIterNext(mit);
-            PyArray_ITER_NEXT(it);
-        }
+        } while (it_next(it));
         Py_DECREF(arr);
-        Py_DECREF(it);
+        NpyIter_Deallocate(it);
         return 0;
     }
     else {
-        while(counter--) {
-            memmove(mit->dataptr, it->dataptr, PyArray_ITEMSIZE(arr));
-            if (swap) {
-                copyswap(mit->dataptr, NULL, swap, arr);
+        do {
+            counter = *NpyIter_GetInnerLoopSizePtr(it);
+            while (counter-- > 0) {
+                memmove(mit->dataptr, *it_dataptr, PyArray_ITEMSIZE(arr));
+
+                PyArray_MapIterNext(mit);
+                *it_dataptr += it_stride;
             }
-            PyArray_MapIterNext(mit);
-            PyArray_ITER_NEXT(it);
-        }
+        } while (it_next(it));
+
         Py_DECREF(arr);
-        Py_DECREF(it);
+        NpyIter_Deallocate(it);
         return 0;
     }
 }
