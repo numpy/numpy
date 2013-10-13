@@ -17,10 +17,11 @@ __date__ = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 import numpy as np
 from numpy.testing import TestCase, run_module_suite
 from numpy.ma.testutils import (rand, assert_, assert_array_equal,
-    assert_equal, assert_almost_equal)
+                                assert_equal, assert_almost_equal)
 from numpy.ma.core import (array, arange, masked, MaskedArray, masked_array,
-    getmaskarray, shape, nomask, ones, zeros, count)
-from numpy.ma.extras import (atleast_2d, mr_, dot, polyfit,
+                           getmaskarray, shape, nomask, ones, zeros, count)
+from numpy.ma.extras import (
+    atleast_2d, mr_, dot, polyfit,
     cov, corrcoef, median, average,
     unique, setxor1d, setdiff1d, union1d, intersect1d, in1d, ediff1d,
     apply_over_axes, apply_along_axis,
@@ -33,7 +34,7 @@ from numpy.ma.extras import (atleast_2d, mr_, dot, polyfit,
 class TestGeneric(TestCase):
     #
     def test_masked_all(self):
-        "Tests masked_all"
+        # Tests masked_all
         # Standard dtype
         test = masked_all((2,), dtype=float)
         control = array([1, 1], mask=[1, 1], dtype=float)
@@ -52,18 +53,18 @@ class TestGeneric(TestCase):
         dt = np.dtype([('a', 'f'), ('b', [('ba', 'f'), ('bb', 'f')])])
         test = masked_all((2,), dtype=dt)
         control = array([(1, (1, 1)), (1, (1, 1))],
-                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
+                        mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
         assert_equal(test, control)
         test = masked_all((2,), dtype=dt)
         control = array([(1, (1, 1)), (1, (1, 1))],
-                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
+                        mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
         assert_equal(test, control)
         test = masked_all((1, 1), dtype=dt)
         control = array([[(1, (1, 1))]], mask=[[(1, (1, 1))]], dtype=dt)
         assert_equal(test, control)
 
     def test_masked_all_like(self):
-        "Tests masked_all"
+        # Tests masked_all
         # Standard dtype
         base = array([1, 2], dtype=float)
         test = masked_all_like(base)
@@ -83,7 +84,7 @@ class TestGeneric(TestCase):
         assert_equal(test, control)
 
     def test_clump_masked(self):
-        "Test clump_masked"
+        # Test clump_masked
         a = masked_array(np.arange(10))
         a[[0, 1, 2, 6, 8, 9]] = masked
         #
@@ -92,7 +93,7 @@ class TestGeneric(TestCase):
         assert_equal(test, control)
 
     def test_clump_unmasked(self):
-        "Test clump_unmasked"
+        # Test clump_unmasked
         a = masked_array(np.arange(10))
         a[[0, 1, 2, 6, 8, 9]] = masked
         test = clump_unmasked(a)
@@ -100,7 +101,7 @@ class TestGeneric(TestCase):
         assert_equal(test, control)
 
     def test_flatnotmasked_contiguous(self):
-        "Test flatnotmasked_contiguous"
+        # Test flatnotmasked_contiguous
         a = arange(10)
         # No mask
         test = flatnotmasked_contiguous(a)
@@ -116,9 +117,9 @@ class TestGeneric(TestCase):
 
 
 class TestAverage(TestCase):
-    "Several tests of average. Why so many ? Good point..."
+    # Several tests of average. Why so many ? Good point...
     def test_testAverage1(self):
-        "Test of average."
+        # Test of average.
         ott = array([0., 1., 2., 3.], mask=[True, False, False, False])
         assert_equal(2.0, average(ott, axis=0))
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
@@ -137,7 +138,7 @@ class TestAverage(TestCase):
         assert_equal(wts, [1., 0.])
 
     def test_testAverage2(self):
-        "More tests of average."
+        # More tests of average.
         w1 = [0, 1, 1, 1, 1, 0]
         w2 = [[0, 1, 1, 1, 1, 0], [1, 0, 0, 0, 0, 1]]
         x = arange(6, dtype=np.float_)
@@ -171,7 +172,7 @@ class TestAverage(TestCase):
                      [0., 1., 99., 99., 4.0, 10.0])
 
     def test_testAverage3(self):
-        "Yet more tests of average!"
+        # Yet more tests of average!
         a = arange(6)
         b = arange(6) * 3
         r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
@@ -195,7 +196,7 @@ class TestAverage(TestCase):
         assert_equal(a2dma, [1.5, 4.0])
 
     def test_onintegers_with_mask(self):
-        "Test average on integers with mask"
+        # Test average on integers with mask
         a = average(array([1, 2]))
         assert_equal(a, 1.5)
         a = average(array([1, 2, 3, 4], mask=[False, False, True, True]))
@@ -206,7 +207,7 @@ class TestAverage(TestCase):
         # (Regression test for https://github.com/numpy/numpy/issues/2684)
         mask = np.array([[0, 0, 0, 1, 0],
                          [0, 1, 0, 0, 0]], dtype=bool)
-        a = masked_array([[0,  1+2j, 3+4j, 5+6j, 7+8j],
+        a = masked_array([[0, 1+2j, 3+4j, 5+6j, 7+8j],
                           [9j, 0+1j, 2+3j, 4+5j, 7+7j]],
                          mask=mask)
 
@@ -247,12 +248,10 @@ class TestAverage(TestCase):
 
 
 class TestConcatenator(TestCase):
-    """
-    Tests for mr_, the equivalent of r_ for masked arrays.
-    """
+    # Tests for mr_, the equivalent of r_ for masked arrays.
 
     def test_1d(self):
-        "Tests mr_ on 1D arrays."
+        # Tests mr_ on 1D arrays.
         assert_array_equal(mr_[1, 2, 3, 4, 5, 6], array([1, 2, 3, 4, 5, 6]))
         b = ones(5)
         m = [1, 0, 0, 0, 0]
@@ -263,14 +262,15 @@ class TestConcatenator(TestCase):
         assert_array_equal(c.mask, mr_[m, 0, 0, m])
 
     def test_2d(self):
-        "Tests mr_ on 2D arrays."
+        # Tests mr_ on 2D arrays.
         a_1 = rand(5, 5)
         a_2 = rand(5, 5)
         m_1 = np.round_(rand(5, 5), 0)
         m_2 = np.round_(rand(5, 5), 0)
         b_1 = masked_array(a_1, mask=m_1)
         b_2 = masked_array(a_2, mask=m_2)
-        d = mr_['1', b_1, b_2]  # append columns
+        # append columns
+        d = mr_['1', b_1, b_2]
         self.assertTrue(d.shape == (5, 10))
         assert_array_equal(d[:, :5], b_1)
         assert_array_equal(d[:, 5:], b_2)
@@ -283,12 +283,10 @@ class TestConcatenator(TestCase):
 
 
 class TestNotMasked(TestCase):
-    """
-    Tests notmasked_edges and notmasked_contiguous.
-    """
+    # Tests notmasked_edges and notmasked_contiguous.
 
     def test_edges(self):
-        "Tests unmasked_edges"
+        # Tests unmasked_edges
         data = masked_array(np.arange(25).reshape(5, 5),
                             mask=[[0, 0, 1, 0, 0],
                                   [0, 0, 0, 1, 1],
@@ -322,7 +320,7 @@ class TestNotMasked(TestCase):
         assert_equal(test[1], [(0, 1, 2, 4), (4, 2, 4, 4)])
 
     def test_contiguous(self):
-        "Tests notmasked_contiguous"
+        # Tests notmasked_contiguous
         a = masked_array(np.arange(24).reshape(3, 8),
                          mask=[[0, 0, 0, 0, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 1, 1, 1],
@@ -346,9 +344,9 @@ class TestNotMasked(TestCase):
 
 
 class Test2DFunctions(TestCase):
-    "Tests 2D functions"
+    # Tests 2D functions
     def test_compress2d(self):
-        "Tests compress2d"
+        # Tests compress2d
         x = array(np.arange(9).reshape(3, 3),
                   mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
         assert_equal(compress_rowcols(x), [[4, 5], [7, 8]])
@@ -368,7 +366,7 @@ class Test2DFunctions(TestCase):
         assert_equal(compress_rowcols(x, 1).size, 0)
 
     def test_mask_rowcols(self):
-        "Tests mask_rowcols."
+        # Tests mask_rowcols.
         x = array(np.arange(9).reshape(3, 3),
                   mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
         assert_equal(mask_rowcols(x).mask,
@@ -400,7 +398,7 @@ class Test2DFunctions(TestCase):
         self.assertTrue(mask_rowcols(x, 1).mask.all())
 
     def test_dot(self):
-        "Tests dot product"
+        # Tests dot product
         n = np.arange(1, 7)
         #
         m = [1, 0, 0, 0, 0, 0]
@@ -471,17 +469,19 @@ class Test2DFunctions(TestCase):
 
 
 class TestApplyAlongAxis(TestCase):
-    "Tests 2D functions"
+    # Tests 2D functions
     def test_3d(self):
         a = arange(12.).reshape(2, 2, 3)
+
         def myfunc(b):
             return b[1]
+
         xa = apply_along_axis(myfunc, 2, a)
         assert_equal(xa, [[1, 4], [7, 10]])
 
 
 class TestApplyOverAxes(TestCase):
-    "Tests apply_over_axes"
+    # Tests apply_over_axes
     def test_basic(self):
         a = arange(24).reshape(2, 3, 4)
         test = apply_over_axes(np.sum, a, [0, 2])
@@ -495,7 +495,7 @@ class TestApplyOverAxes(TestCase):
 class TestMedian(TestCase):
 
     def test_2d(self):
-        "Tests median w/ 2D"
+        # Tests median w/ 2D
         (n, p) = (101, 30)
         x = masked_array(np.linspace(-1., 1., n),)
         x[:10] = x[-10:] = masked
@@ -511,7 +511,7 @@ class TestMedian(TestCase):
         assert_equal(median(z.T, axis=1), np.zeros(p))
 
     def test_2d_waxis(self):
-        "Tests median w/ 2D arrays and different axis."
+        # Tests median w/ 2D arrays and different axis.
         x = masked_array(np.arange(30).reshape(10, 3))
         x[:3] = x[-3:] = masked
         assert_equal(median(x), 14.5)
@@ -520,7 +520,7 @@ class TestMedian(TestCase):
         assert_equal(median(x, axis=1).mask, [1, 1, 1, 0, 0, 0, 0, 1, 1, 1])
 
     def test_3d(self):
-        "Tests median w/ 3D"
+        # Tests median w/ 3D
         x = np.ma.arange(24).reshape(3, 4, 2)
         x[x % 3 == 0] = masked
         assert_equal(median(x, 0), [[12, 9], [6, 15], [12, 9], [18, 15]])
@@ -537,7 +537,7 @@ class TestCov(TestCase):
         self.data = array(np.random.rand(12))
 
     def test_1d_wo_missing(self):
-        "Test cov on 1D variable w/o missing values"
+        # Test cov on 1D variable w/o missing values
         x = self.data
         assert_almost_equal(np.cov(x), cov(x))
         assert_almost_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
@@ -545,7 +545,7 @@ class TestCov(TestCase):
                             cov(x, rowvar=False, bias=True))
 
     def test_2d_wo_missing(self):
-        "Test cov on 1 2D variable w/o missing values"
+        # Test cov on 1 2D variable w/o missing values
         x = self.data.reshape(3, 4)
         assert_almost_equal(np.cov(x), cov(x))
         assert_almost_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
@@ -553,7 +553,7 @@ class TestCov(TestCase):
                             cov(x, rowvar=False, bias=True))
 
     def test_1d_w_missing(self):
-        "Test cov 1 1D variable w/missing values"
+        # Test cov 1 1D variable w/missing values
         x = self.data
         x[-1] = masked
         x -= x.mean()
@@ -577,7 +577,7 @@ class TestCov(TestCase):
                             cov(x, x[::-1], rowvar=False, bias=True))
 
     def test_2d_w_missing(self):
-        "Test cov on 2D variable w/ missing value"
+        # Test cov on 2D variable w/ missing value
         x = self.data
         x[-1] = masked
         x = x.reshape(3, 4)
@@ -604,12 +604,12 @@ class TestCorrcoef(TestCase):
         self.data = array(np.random.rand(12))
 
     def test_ddof(self):
-        "Test ddof keyword"
+        # Test ddof keyword
         x = self.data
         assert_almost_equal(np.corrcoef(x, ddof=0), corrcoef(x, ddof=0))
 
     def test_1d_wo_missing(self):
-        "Test cov on 1D variable w/o missing values"
+        # Test cov on 1D variable w/o missing values
         x = self.data
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
@@ -618,7 +618,7 @@ class TestCorrcoef(TestCase):
                             corrcoef(x, rowvar=False, bias=True))
 
     def test_2d_wo_missing(self):
-        "Test corrcoef on 1 2D variable w/o missing values"
+        # Test corrcoef on 1 2D variable w/o missing values
         x = self.data.reshape(3, 4)
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
@@ -627,7 +627,7 @@ class TestCorrcoef(TestCase):
                             corrcoef(x, rowvar=False, bias=True))
 
     def test_1d_w_missing(self):
-        "Test corrcoef 1 1D variable w/missing values"
+        # Test corrcoef 1 1D variable w/missing values
         x = self.data
         x[-1] = masked
         x -= x.mean()
@@ -652,7 +652,7 @@ class TestCorrcoef(TestCase):
                             corrcoef(x, x[::-1], rowvar=False, bias=True))
 
     def test_2d_w_missing(self):
-        "Test corrcoef on 2D variable w/ missing value"
+        # Test corrcoef on 2D variable w/ missing value
         x = self.data
         x[-1] = masked
         x = x.reshape(3, 4)
@@ -665,7 +665,7 @@ class TestCorrcoef(TestCase):
 class TestPolynomial(TestCase):
     #
     def test_polyfit(self):
-        "Tests polyfit"
+        # Tests polyfit
         # On ndarrays
         x = np.random.rand(10)
         y = np.random.rand(20).reshape(-1, 2)
@@ -707,7 +707,7 @@ class TestPolynomial(TestCase):
 class TestArraySetOps(TestCase):
 
     def test_unique_onlist(self):
-        "Test unique on list"
+        # Test unique on list
         data = [1, 1, 1, 2, 2, 3]
         test = unique(data, return_index=True, return_inverse=True)
         self.assertTrue(isinstance(test[0], MaskedArray))
@@ -716,7 +716,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test[2], [0, 0, 0, 1, 1, 2])
 
     def test_unique_onmaskedarray(self):
-        "Test unique on masked data w/use_mask=True"
+        # Test unique on masked data w/use_mask=True
         data = masked_array([1, 1, 1, 2, 2, 3], mask=[0, 0, 1, 0, 1, 0])
         test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
@@ -724,22 +724,22 @@ class TestArraySetOps(TestCase):
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
         #
         data.fill_value = 3
-        data = masked_array([1, 1, 1, 2, 2, 3],
-                       mask=[0, 0, 1, 0, 1, 0], fill_value=3)
+        data = masked_array(data=[1, 1, 1, 2, 2, 3],
+                            mask=[0, 0, 1, 0, 1, 0], fill_value=3)
         test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
         assert_equal(test[1], [0, 3, 5, 2])
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
 
     def test_unique_allmasked(self):
-        "Test all masked"
+        # Test all masked
         data = masked_array([1, 1, 1], mask=True)
         test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, ], mask=[True]))
         assert_equal(test[1], [0])
         assert_equal(test[2], [0, 0, 0])
         #
-        "Test masked"
+        # Test masked
         data = masked
         test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array(masked))
@@ -747,7 +747,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test[2], [0])
 
     def test_ediff1d(self):
-        "Tests mediff1d"
+        # Tests mediff1d
         x = masked_array(np.arange(5), mask=[1, 0, 0, 0, 1])
         control = array([1, 1, 1, 4], mask=[1, 0, 0, 1])
         test = ediff1d(x)
@@ -756,7 +756,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin(self):
-        "Test ediff1d w/ to_begin"
+        # Test ediff1d w/ to_begin
         x = masked_array(np.arange(5), mask=[1, 0, 0, 0, 1])
         test = ediff1d(x, to_begin=masked)
         control = array([0, 1, 1, 1, 4], mask=[1, 1, 0, 0, 1])
@@ -771,7 +771,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_toend(self):
-        "Test ediff1d w/ to_end"
+        # Test ediff1d w/ to_end
         x = masked_array(np.arange(5), mask=[1, 0, 0, 0, 1])
         test = ediff1d(x, to_end=masked)
         control = array([1, 1, 1, 4, 0], mask=[1, 0, 0, 1, 1])
@@ -786,7 +786,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin_toend(self):
-        "Test ediff1d w/ to_begin and to_end"
+        # Test ediff1d w/ to_begin and to_end
         x = masked_array(np.arange(5), mask=[1, 0, 0, 0, 1])
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 4, 0], mask=[1, 1, 0, 0, 1, 1])
@@ -802,7 +802,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_ndarray(self):
-        "Test ediff1d w/ a ndarray"
+        # Test ediff1d w/ a ndarray
         x = np.arange(5)
         test = ediff1d(x)
         control = array([1, 1, 1, 1], mask=[0, 0, 0, 0])
@@ -818,7 +818,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test.mask, control.mask)
 
     def test_intersect1d(self):
-        "Test intersect1d"
+        # Test intersect1d
         x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
         y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
         test = intersect1d(x, y)
@@ -826,7 +826,7 @@ class TestArraySetOps(TestCase):
         assert_equal(test, control)
 
     def test_setxor1d(self):
-        "Test setxor1d"
+        # Test setxor1d
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
         b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = setxor1d(a, b)
@@ -852,7 +852,7 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], setxor1d([], []))
 
     def test_in1d(self):
-        "Test in1d"
+        # Test in1d
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
         b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = in1d(a, b)
@@ -866,7 +866,7 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], in1d([], []))
 
     def test_in1d_invert(self):
-        "Test in1d's invert parameter"
+        # Test in1d's invert parameter
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
         b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         assert_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
@@ -878,7 +878,7 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], in1d([], [], invert=True))
 
     def test_union1d(self):
-        "Test union1d"
+        # Test union1d
         a = array([1, 2, 5, 7, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = union1d(a, b)
@@ -888,7 +888,7 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], union1d([], []))
 
     def test_setdiff1d(self):
-        "Test setdiff1d"
+        # Test setdiff1d
         a = array([6, 5, 4, 7, 7, 1, 2, 1], mask=[0, 0, 0, 0, 0, 0, 0, 1])
         b = array([2, 4, 3, 3, 2, 1, 5])
         test = setdiff1d(a, b)
@@ -899,7 +899,7 @@ class TestArraySetOps(TestCase):
         assert_equal(setdiff1d(a, b), array([8, 9]))
 
     def test_setdiff1d_char_array(self):
-        "Test setdiff1d_charray"
+        # Test setdiff1d_charray
         a = np.array(['a', 'b', 'c'])
         b = np.array(['a', 'b', 's'])
         assert_array_equal(setdiff1d(a, b), np.array(['c']))
@@ -908,7 +908,7 @@ class TestArraySetOps(TestCase):
 class TestShapeBase(TestCase):
     #
     def test_atleast2d(self):
-        "Test atleast_2d"
+        # Test atleast_2d
         a = masked_array([0, 1, 2], mask=[0, 1, 0])
         b = atleast_2d(a)
         assert_equal(b.shape, (1, 3))
