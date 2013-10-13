@@ -936,6 +936,9 @@ class _MaskedBinaryOperation:
             result = self.f(da, db, *args, **kwargs)
         finally:
             np.seterr(**err_status_ini)
+        # check it worked
+        if result is NotImplemented:
+            return NotImplemented
         # Case 1. : scalar
         if not result.ndim:
             if m:
@@ -1005,6 +1008,9 @@ class _MaskedBinaryOperation:
             return masked
         (da, db) = (getdata(a), getdata(b))
         d = self.f.outer(da, db)
+        # check it worked
+        if d is NotImplemented:
+            return NotImplemented
         if m is not nomask:
             np.copyto(d, da, where=m)
         if d.shape:
@@ -1074,6 +1080,9 @@ class _DomainedBinaryOperation:
             result = self.f(da, db, *args, **kwargs)
         finally:
             np.seterr(**err_status_ini)
+        # check it worked
+        if result is NotImplemented:
+            return NotImplemented
         # Get the mask as a combination of ma, mb and invalid
         m = ~umath.isfinite(result)
         m |= ma
