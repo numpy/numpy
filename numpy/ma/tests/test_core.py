@@ -1113,23 +1113,25 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test.mask, [False, False])
 
     def test_eq_w_None(self):
+        # Really, comparisons with None should not be done, but
+        # check them anyway
         # With partial mask
         a = array([1, 2], mask=[0, 1])
-        assert_equal(a is None, False)
-        assert_equal(a.data is None, False)
-        assert_equal(a.mask is None, False)
-        assert_equal(a is not None, True)
+        assert_equal(a == None, False)
+        assert_equal(a.data == None, False)
+        assert_equal(a.mask == None, False)
+        assert_equal(a != None, True)
         # With nomask
         a = array([1, 2], mask=False)
-        assert_equal(a is None, False)
-        assert_equal(a is not None, True)
+        assert_equal(a == None, False)
+        assert_equal(a != None, True)
         # With complete mask
         a = array([1, 2], mask=True)
-        assert_equal(a is None, False)
-        assert_equal(a is not None, True)
-        # With masked
+        assert_equal(a == None, False)
+        assert_equal(a != None, True)
+        # Fully masked, even comparison to None should return "masked"
         a = masked
-        assert_equal(a == 1, masked)
+        assert_equal(a == None, masked)
 
     def test_eq_w_scalar(self):
         a = array(1)
