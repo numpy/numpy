@@ -24,17 +24,26 @@ class SubArray(np.ndarray):
     # in the  dictionary `info`.
     def __new__(cls,arr,info={}):
         x = np.asanyarray(arr).view(cls)
-        x.info = info
+        x.info = info.copy()
         return x
 
     def __array_finalize__(self, obj):
-        self.info = getattr(obj, 'info', {})
+        if callable(getattr(super(SubArray, self),
+                            '__array_finalize__', None)):
+            super(SubArray, self).__array_finalize__(obj)
+        self.info = getattr(obj, 'info', {}).copy()
         return
 
     def __add__(self, other):
-        result = np.ndarray.__add__(self, other)
-        result.info.update({'added':result.info.pop('added', 0)+1})
+        result = super(SubArray, self).__add__(other)
+        result.info['added'] = result.info.get('added', 0) + 1
         return result
+
+    def __iadd__(self, other):
+        result = super(SubArray, self).__iadd__(other)
+        result.info['iadded'] = result.info.get('iadded', 0) + 1
+        return result
+
 
 subarray = SubArray
 
@@ -46,11 +55,6 @@ class MSubArray(SubArray, MaskedArray):
         _data = MaskedArray.__new__(cls, data=subarr, mask=mask)
         _data.info = subarr.info
         return _data
-
-    def __array_finalize__(self, obj):
-        MaskedArray.__array_finalize__(self, obj)
-        SubArray.__array_finalize__(self, obj)
-        return
 
     def _get_series(self):
         _view = self.view(MaskedArray)
@@ -82,8 +86,11 @@ class MMatrix(MaskedArray, np.matrix,):
 mmatrix = MMatrix
 
 
-# also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
+# Also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
 # setting to non-class values (and thus np.ma.core.masked_print_option)
+# and overrides __array_wrap__, updating the info dict, to check that this
+# doesn't get destroyed by MaskedArray._update_from.  But this one also needs
+# its own iterator...
 class CSAIterator(object):
     """
     Flat iterator object that uses its own setter/getter
@@ -149,6 +156,13 @@ class ComplicatedSubArray(SubArray):
     def flat(self, value):
         y = self.ravel()
         y[:] = value
+
+    def __array_wrap__(self, obj, context=None):
+        obj = super(ComplicatedSubArray, self).__array_wrap__(obj, context)
+        if context is not None and context[0] is np.multiply:
+            obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
+
+        return obj
 
 
 class TestSubclassing(TestCase):
@@ -218,6 +232,12 @@ class TestSubclassing(TestCase):
         self.assertTrue(isinstance(z, MSubArray))
         self.assertTrue(isinstance(z._data, SubArray))
         self.assertTrue(z._data.info['added'] > 0)
+        # Test that inplace methods from data get used (gh-4617)
+        ym += 1
+        self.assertTrue(isinstance(ym, MaskedArray))
+        self.assertTrue(isinstance(ym, MSubArray))
+        self.assertTrue(isinstance(ym._data, SubArray))
+        self.assertTrue(ym._data.info['iadded'] > 0)
         #
         ym._set_mask([1, 0, 0, 0, 1])
         assert_equal(ym._mask, [1, 0, 0, 0, 1])

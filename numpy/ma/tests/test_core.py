@@ -1754,6 +1754,29 @@ class TestUfuncs(TestCase):
         assert_(me * a == "My mul")
         assert_(a * me == "My rmul")
 
+        # and that __array_priority__ is respected
+        class MyClass2(object):
+            __array_priority__ = 100
+
+            def __mul__(self, other):
+                return "Me2mul"
+
+            def __rmul__(self, other):
+                return "Me2rmul"
+
+            def __rdiv__(self, other):
+                return "Me2rdiv"
+
+            __rtruediv__ = __rdiv__
+
+        me_too = MyClass2()
+        assert_(a.__mul__(me_too) is NotImplemented)
+        assert_(all(multiply.outer(a, me_too) == "Me2rmul"))
+        assert_(a.__truediv__(me_too) is NotImplemented)
+        assert_(me_too * a == "Me2mul")
+        assert_(a * me_too == "Me2rmul")
+        assert_(a / me_too == "Me2rdiv")
+
 
 #------------------------------------------------------------------------------
 class TestMaskedArrayInPlaceArithmetics(TestCase):
