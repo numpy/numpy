@@ -1430,7 +1430,7 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), .3)
 
     def test_if_len_x_is_small(self):
-        xp = np.arange(0, 1000, 0.0001)
+        xp = np.arange(0, 10, 0.0001)
         fp = np.sin(xp)
         assert_almost_equal(np.interp(np.pi, xp, fp), 0.0)
 
