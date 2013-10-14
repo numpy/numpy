@@ -675,7 +675,8 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i, aligned = 1;
+    unsigned int i;
+    npy_uintp aligned;
     const unsigned int alignment = PyArray_DESCR(ap)->alignment;
 
     /* The special casing for STRING and VOID types was removed
@@ -688,24 +689,24 @@ _IsAligned(PyArrayObject *ap)
     if (alignment == 1) {
         return 1;
     }
-    aligned = npy_is_aligned(PyArray_DATA(ap), alignment);
+    aligned = (npy_uintp)PyArray_DATA(ap);
 
     for (i = 0; i < PyArray_NDIM(ap); i++) {
 #if NPY_RELAXED_STRIDES_CHECKING
+        /* skip dim == 1 as it is not required to have stride 0 */
         if (PyArray_DIM(ap, i) > 1) {
             /* if shape[i] == 1, the stride is never used */
-            aligned &= npy_is_aligned((void*)PyArray_STRIDES(ap)[i],
-                                      alignment);
+            aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
         }
         else if (PyArray_DIM(ap, i) == 0) {
             /* an array with zero elements is always aligned */
             return 1;
         }
 #else /* not NPY_RELAXED_STRIDES_CHECKING */
-        aligned &= npy_is_aligned((void*)PyArray_STRIDES(ap)[i], alignment);
+        aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
 #endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
-    return aligned != 0;
+    return npy_is_aligned(aligned, alignment);
 }
 
 NPY_NO_EXPORT npy_bool

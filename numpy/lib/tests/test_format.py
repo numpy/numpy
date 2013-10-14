@@ -429,6 +429,7 @@ def test_roundtrip():
         yield assert_array_equal, arr, arr2
 
 
+@dec.slow
 def test_memmap_roundtrip():
     # XXX: test crashes nose on windows. Fix this
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
