@@ -452,7 +452,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     npy_intp counter;
     PyArray_Descr *descr;
     npy_uint32 op_flags;
-    int op_axes[1] = {NULL};
+    int *op_axes[1] = {NULL};
 
     /* Unbound Map Iterator */
     if (mit->ait == NULL) {
@@ -461,33 +461,45 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     descr = PyArray_DESCR(mit->ait->ao);
 
     if (!PyArray_Check(op)) {
-        /*
-         * If `op` is not yet an array, we create a dummy array that is
-         * identical to arr[indices], then copy into that and only *then*
-         * set the real values. This is to be able to use the CopyObject logic.
-         *
-         * TODO: Should *not* do this always, only when we have fields or
-         *       objects or such (i.e. non-basic, problematic types).
-         */
-        Py_INCREF(descr);
-        arr = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                             descr,
-                                             mit->nd, mit->dimensions,
-                                             NULL, NULL, 0, NULL);
-        if (arr == NULL) {
-            return -1;
-        }
+        if ((PyDataType_HASFIELDS(descr) || PyDataType_REFCHK(descr))
+                    && PySequence_Check(op)) {
+            /*
+             * If `op` is not yet an array, we create a dummy array that is
+             * identical to arr[indices], then copy into that and only *then*
+             * set the real values. This is to be able to use the CopyObject
+             * logic. This should not be necessary if it is not of object
+             * type or has fields or if `op` is not a sequence.
+             */
+            /* TODO: Add test: a = np.array([1], object); a[[0]] = [(1,2,3)] */
+            Py_INCREF(descr);
+            arr = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                                 descr,
+                                                 mit->nd, mit->dimensions,
+                                                 NULL, NULL, 0, NULL);
+            if (arr == NULL) {
+                return -1;
+            }
 
-        if (mit->consec) {
-            PyArray_MapIterSwapAxes(mit, &arr, 1);
-        }
+            if (mit->consec) {
+                PyArray_MapIterSwapAxes(mit, &arr, 1);
+            }
 
-        if (PyArray_CopyObject(arr, op) < 0) {
-            return -1;
+            if (PyArray_CopyObject(arr, op) < 0) {
+                return -1;
+            }
+        }
+        else {
+            Py_INCREF(descr);
+            arr = PyArray_FromAny(op, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+            if (arr == NULL) {
+                return -1;
+            }
         }
     }
     else {
-        /* We need to swap axes, and subclasses may not take that kindly */
+        /*
+         * We need to swap axes, and subclasses may not take that kindly
+         */
         arr = PyArray_View((PyArrayObject *)op, NULL, NULL);
         if (arr == NULL) {
             return -1;
@@ -503,10 +515,17 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
 
     op_flags = NPY_ITER_READONLY;
+    /*
+     * TODO: Used to be not always forced casting (1-d special case).
+     *       Also the casting error (if it can be triggered ever) mentions
+     *       "operand 0".
+     * TODO: Broadcasting as enforced here is *correct*, but more strict then
+     *       it was historically for fancy indexing. (one way broadcasting)
+     */
     it = NpyIter_AdvancedNew(1, &arr,
                         NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP |
-                        NPY_ITER_ZEROSIZE_OK,
-                        NPY_CORDER, NPY_SAFE_CASTING, &op_flags,
+                        NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK,
+                        NPY_CORDER, NPY_UNSAFE_CASTING, &op_flags,
                         &descr, mit->nd, op_axes, mit->dimensions, 0);
     if (it == NULL) {
         Py_DECREF(arr);
@@ -516,7 +535,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     if (mit->size == 0) {
         Py_DECREF(arr);
         NpyIter_Deallocate(it);
-        return -1;
+        return 0;
     }
 
     it_next = NpyIter_GetIterNext(it, NULL);
@@ -571,9 +590,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
  * It already handles the boolean array special case for fancy indexing,
  * i.e. if the index type is boolean, it is exactly one matching boolean
  * array. If the index type is fancy, the boolean array is already
- * converted to single arrays. There is (as before) no checking of the
- * boolean dimension. For this to be implemented, the index_info struct
- * would require a new field to save the original corresponding shape.
+ * converted to integer arrays. There is (as before) no checking of the
+ * boolean dimension.
  *
  * Checks everything but the bounds.
  *
@@ -591,7 +609,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
     npy_bool make_tuple = 0;
     PyObject *obj = NULL;
     PyArrayObject *arr;
-    PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
     int index_type = 0;
     int ellipsis_pos = -1;
@@ -952,6 +969,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * If this is not the case, it is instead expanded into (multiple)
              * integer array indices.
              */
+            PyArrayObject *nonzero_result[NPY_MAXDIMS];
+
             if ((index_ndim == 1) && allow_boolean) {
                 /*
                  * If ndim and size match, this can be optimized as a single
@@ -1967,7 +1986,6 @@ NPY_NO_EXPORT int
 array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
 {
     PyObject * ind = PyLong_FromLong(i); /* Fix this */
-    Py_INCREF(ind); /* TODO: Should not be needed! */
     return array_ass_sub(self, ind, v);
 }
 
