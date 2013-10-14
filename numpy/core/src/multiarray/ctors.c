@@ -25,6 +25,7 @@
 #include "datetime_strings.h"
 #include "array_assign.h"
 #include "mapping.h" /* for array_item_asarray */
+#include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
 
 /*
  * Reading from a file or a string.
