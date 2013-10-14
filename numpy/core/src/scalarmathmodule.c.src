@@ -16,129 +16,7 @@
 #include "npy_pycompat.h"
 
 #include "numpy/halffloat.h"
-
-/** numarray adapted routines.... **/
-
-/*
- * Note that the C standard requires signed/unsigned integral
- * types of the same rank to have the same width.
- */
-
-#if NPY_SIZEOF_LONGLONG == 64
-
-static int
-ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
-{
-    npy_ulonglong ah, al, bh, bl, w, x, y, z;
-    unsigned long long mask = 0xFFFFFFFFL;
-
-    ah = (a >> 32);
-    al = (a & mask);
-    bh = (b >> 32);
-    bl = (b & mask);
-
-    /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
-    w = al*bl;
-    x = bh*al;
-    y = ah*bl;
-    z = ah*bh;
-
-    /* *c = ((x + y)<<32) + w; */
-    return z || (x >> 32) || (y >> 32) ||
-        (((x & mask) + (y & mask) + (w >> 32)) >> 32);
-}
-
-static int
-slonglong_overflow(npy_longlong a0, npy_longlong b0)
-{
-    npy_ulonglong a, b;
-    npy_ulonglong ah, al, bh, bl, w, x, y, z;
-    long long mask = 0xFFFFFFFFL;
-
-    a = (a0 < 0) ? -a0 : a0;
-    b = (b0 < 0) ? -b0 : b0;
-
-    ah = (a >> 32);
-    al = (a & mask);
-    bh = (b >> 32);
-    bl = (b & mask);
-
-    w = al*bl;
-    x = bh*al;
-    y = ah*bl;
-    z = ah*bh;
-
-    return z || (x >> 31) || (y >> 31) ||
-        (((x & mask) + (y & mask) + (w >> 32)) >> 31);
-}
-
-#elif NPY_SIZEOF_LONGLONG == 128
-
-static int
-ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
-{
-    npy_ulonglong ah, al, bh, bl, w, x, y, z;
-    unsigned long long mask = 0xFFFFFFFFFFFFFFFFL;
-
-    ah = (a >> 64);
-    al = (a & mask);
-    bh = (b >> 64);
-    bl = (b & mask);
-
-    /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
-    w = al*bl;
-    x = bh*al;
-    y = ah*bl;
-    z = ah*bh;
-
-    /* *c = ((x + y)<<32) + w; */
-    return z || (x >> 64) || (y >> 64) ||
-        (((x & mask) + (y & mask) + (w >> 64)) >> 64);
-}
-
-static int
-slonglong_overflow(npy_longlong a0, npy_longlong b0)
-{
-    npy_ulonglong a, b;
-    npy_ulonglong ah, al, bh, bl, w, x, y, z;
-    long long mask = 0xFFFFFFFFFFFFFFFFL;
-
-    a = (a0 < 0) ? -a0 : a0;
-    b = (b0 < 0) ? -b0 : b0;
-
-    ah = (a >> 64);
-    al = (a & mask);
-    bh = (b >> 64);
-    bl = (b & mask);
-
-    w = al*bl;
-    x = bh*al;
-    y = ah*bl;
-    z = ah*bh;
-
-    return z || (x >> 63) || (y >> 63) ||
-        (((x & mask) + (y & mask) + (w >> 64)) >> 63);
-}
-
-#else
-
-static int
-ulonglong_overflow(npy_ulonglong NPY_UNUSED(a), npy_ulonglong NPY_UNUSED(b))
-{
-        return 0;
-}
-
-static int
-slonglong_overflow(npy_longlong NPY_UNUSED(a0), npy_longlong NPY_UNUSED(b0))
-{
-    return 0;
-}
-
-#endif
-
-
-/** end direct numarray code **/
-
+#include "scalarmathmodule.h"
 
 /* Basic operations:
  *
@@ -245,13 +123,11 @@ static void
  * #type = npy_int, npy_uint, npy_long, npy_ulong,
  *         npy_longlong, npy_ulonglong#
  * #SIZE = INT*2, LONG*2, LONGLONG*2#
- * #char = (s, u)*3#
  */
 #if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_@SIZE@
 static void
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
-    *out = a * b;
-    if (@char@longlong_overflow(a, b)) {
+    if (npy_mul_with_overflow_@name@(out, a, b)) {
         npy_set_floatstatus_overflow();
     }
     return;

@@ -29,6 +29,7 @@ Library:
             src/umath/umath_tests.c.src
     Extension: scalarmath
         Sources:
+            src/private/scalarmathmodule.h.src
             src/scalarmathmodule.c.src
     Extension: _dotblas
         Sources:

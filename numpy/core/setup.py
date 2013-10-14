@@ -767,6 +767,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
+            join('src', 'private', 'scalarmathmodule.h.src'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -923,6 +924,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('scalarmath',
                          sources = [join('src', 'scalarmathmodule.c.src'),
+                                    join('src', 'private', 'scalarmathmodule.h.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
