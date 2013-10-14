@@ -84,30 +84,6 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
     }
 }
 
-/*
- * writes result of a * b into r
- * returns 1 if a * b overflowed else returns 0
- */
-static NPY_INLINE int
-npy_mul_with_overflow_intp(npy_intp * r, npy_intp a, npy_intp b)
-{
-    const npy_intp half_sz = (((npy_intp)1 << (sizeof(a) * 8 / 2)) - 1);
-
-    *r = a * b;
-
-    /*
-     * avoid expensive division on common no overflow case
-     * could be improved via compiler intrinsics e.g. via clang
-     * __builtin_mul_with_overflow, gcc __int128 or cpu overflow flags
-     */
-    if (NPY_UNLIKELY((a | b) >= half_sz) &&
-        a != 0 && b > NPY_MAX_INTP / a) {
-        return 1;
-    }
-
-    return 0;
-}
-
 #include "ucsnarrow.h"
 
 #endif
