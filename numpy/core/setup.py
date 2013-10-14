@@ -529,6 +529,10 @@ def configuration(parent_package='',top_path=None):
 
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
+        # put private include directory in build_dir on search path
+        # allows using code generation in headers headers
+        config.add_include_dirs(join(build_dir, "src", "private"))
+
         target = join(build_dir, header_dir, '_numpyconfig.h')
         d = os.path.dirname(target)
         if not os.path.exists(d):
@@ -697,10 +701,17 @@ def configuration(parent_package='',top_path=None):
 
     # This library is created for the build but it is not installed
     config.add_library('npysort',
-            sources = [join('src', 'npysort', 'quicksort.c.src'),
-                       join('src', 'npysort', 'mergesort.c.src'),
-                       join('src', 'npysort', 'heapsort.c.src'),
-                       join('src', 'npysort', 'selection.c.src')])
+                       sources=[join('src', 'npysort', 'quicksort.c.src'),
+                                join('src', 'npysort', 'mergesort.c.src'),
+                                join('src', 'npysort', 'heapsort.c.src'),
+                                join('src','private', 'npy_partition.h.src'),
+                                join('src', 'npysort', 'selection.c.src')],
+                       deps=[join('src', 'npysort', 'quicksort.c'),
+                             join('src', 'npysort', 'mergesort.c'),
+                             join('src', 'npysort', 'heapsort.c'),
+                             join('src', 'private', 'npy_partition.h'),
+                             join('src', 'npysort', 'selection.c')],
+                       include_dirs=[])
 
 
     #######################################################################
