@@ -1746,7 +1746,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     /* TODO: Add 1-dim and 1 index special case */
     PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices,
-                                                     index_num, index_type);
+                                                     index_num, index_type,
+                                                     0, NULL, NULL);
     if (mit == NULL) {
         goto finish_view;
     }
@@ -1949,7 +1950,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* TODO: Add 1-dim and 1 index special case */
     PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices,
-                                                     index_num, index_type);
+                                                     index_num, index_type, 0,
+                                                     NULL, NULL);
     if (mit == NULL) {
         goto fail;
     }
@@ -2206,8 +2208,14 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
 {
     int i, j, n, curr_dim, result_dim, consec_status;
     npy_intp indval;
-    npy_intp *outer_dims = mit->outer_dims;
-    int *outer_axis = mit->iteraxes;
+    npy_intp outer_dim;
+    int outer_axis;
+    NpyIter *op_iter;
+    NpyIter_IterNextFunc *op_iternext;
+    npy_intp itersize;
+    npy_intp *iterstride;
+    char **iterptr;
+    PyArray_Descr *intp_type;
 
     /* Note: ait is probably never really used. */
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
@@ -2312,52 +2320,85 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *subspace,
         return 0;
     }
 
-    PyArray_MapIterReset(mit); /* TODO: can probably remove this */
-
-    if (NpyIter_GetIterSize(mit->outer) > 0) {
-        if (mit->numiter == 1) {
-            do {
-                mit->itersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
-                while (mit->itersize--) {
-                    indval = *((npy_intp*)mit->iterptrs[0]);
-                    if (check_and_adjust_index(&indval,
-                                *(outer_dims), *(outer_axis)) < 0) {
-                        return -1;
-                    }
-                    mit->iterptrs[0] += mit->iterstrides[0];
-                }
-            } while (mit->iternext(mit->outer));
-        }
-        else {
-            do {
-                mit->itersize = *NpyIter_GetInnerLoopSizePtr(mit->outer);
-                while (mit->itersize--) {
-                    for (j=0; j<mit->numiter; j++) {
-                        indval = *((npy_intp*)mit->iterptrs[j]);
-                        if (check_and_adjust_index(&indval,
-                                    *(outer_dims++), *(outer_axis++)) < 0) {
-                            return -1;
-                        }
-                        mit->iterptrs[j] += mit->iterstrides[j];
-                    }
-                    outer_dims -= mit->numiter;
-                    outer_axis -= mit->numiter;
-                }
-            } while (mit->iternext(mit->outer));
-        }
+    if (mit->size == 0) {
+        /* All indices got broadcasted away, do *not* check as it always was */
+        return 0;
     }
+
+    intp_type = PyArray_DescrFromType(NPY_INTP);
+    for (i=0; i < mit->numiter; i++) {
+        op_iter = NpyIter_New(NpyIter_GetOperandArray(mit->outer)[i],
+                        NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
+                        NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
+                        NPY_ITER_READONLY, /* Can't be zero size */
+                        NPY_ANYORDER, NPY_SAME_KIND_CASTING, intp_type);
+
+        if (op_iter == NULL) {
+            /* Should be impossible */
+            Py_DECREF(intp_type);
+            return -1;
+        }
+
+        op_iternext = NpyIter_GetIterNext(op_iter, NULL);
+        if (op_iternext == NULL) {
+            Py_DECREF(intp_type);
+            NpyIter_Deallocate(op_iter);
+            return -1;
+        }
+
+        outer_dim = mit->outer_dims[i];
+        outer_axis = mit->iteraxes[i];
+
+        iterptr = NpyIter_GetDataPtrArray(op_iter);
+        iterstride = NpyIter_GetInnerStrideArray(op_iter);
+        do {
+            itersize = *NpyIter_GetInnerLoopSizePtr(op_iter);
+            while (itersize--) {
+                indval = *((npy_intp*)*iterptr);
+                if (check_and_adjust_index(&indval, outer_dim, outer_axis) < 0) {
+                    Py_DECREF(intp_type);
+                    NpyIter_Deallocate(op_iter);
+                    return -1;
+                }
+                *iterptr += *iterstride;
+            }
+        } while (op_iternext(op_iter));
+    }
+
+    Py_DECREF(intp_type);
+    NpyIter_Deallocate(op_iter);
     return 0;
 }
 
 
+/*
+ * Create new mapiter.
+ *
+ * @param Index information filled by prepare_index.
+ * @param Number of indices (gotten through prepare_index).
+ * @param Kind of index (gotten through preprare_index).
+ * @param NpyIter flags for an extra array. If 0 assume that there is no
+ *        extra operand. NPY_ITER_ALLOCATE can make sense here.
+ * @param Extra operand. For getmap, this would be the result, for setmap
+ *        this would be the arrays to get from. Can be NULL, and will be
+ *        allocated by NpyIter in that case.
+ * @param Dtype for the extra operand, *steals* the reference and must not
+ *        be NULL (if extra_op_flags is not 0).
+ *
+ * @return A new MapIter (PyObject *) which still requires binding or NULL.
+ */
 NPY_NO_EXPORT PyObject *
-PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
+PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
+                   PyArrayObject *subspace,
+                   npy_uint32 extra_op_flags, PyArrayObject *extra_op,
+                   PyArray_Descr *extra_op_dtype)
 {
     PyArrayObject *index_arrays[NPY_MAXDIMS];
     PyArray_Descr *dtypes[NPY_MAXDIMS];
     npy_uint32 op_flags[NPY_MAXDIMS];
     PyArrayMapIterObject *mit;
     int i, dummy_array=0;
+    npy_intp nops;
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
@@ -2373,9 +2414,24 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
             index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
             dtypes[mit->numiter] = PyArray_DescrFromType(NPY_INTP);
 
-            op_flags[mit->numiter] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
+            op_flags[mit->numiter] = (NPY_ITER_NBO |
+                                      NPY_ITER_ALIGNED |
+                                      NPY_ITER_READONLY;
             mit->numiter += 1;
         }
+    }
+
+    if (mit->numiter > NPY_MAXDIMS - 1) {
+        /*
+         * We did not check this before, since it is an implementation detail
+         * here. Since the boolean special case will not have the problem,
+         * this should not be a problem at all.
+         */
+        PyErr_Format(PyExc_IndexError,
+                     "number of index arrays cannot be above %d, "
+                     "but %d index arrays given",
+                     NPY_MAXDIMS - 1, mit->numiter);
+        return NULL;
     }
 
     if (mit->numiter == 0) {
@@ -2398,7 +2454,16 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
         mit->numiter = 1;
     }
 
-    mit->outer = NpyIter_MultiNew(mit->numiter,
+    if (extra_op_flags != 0) {
+        nops = mit->numiter + 1;
+        dtypes[mit->numiter] = extra_op_dtype;
+        op_flags[mit->numiter] = extra_op_flags;
+    }
+    else {
+        nops = mit->numiter;
+    }
+
+    mit->outer = NpyIter_MultiNew(nops,
                                   index_arrays,
                                   NPY_ITER_ZEROSIZE_OK |
                                   NPY_ITER_MULTI_INDEX | /* To force shape */
@@ -2407,6 +2472,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type)
                                   NPY_SAME_KIND_CASTING,
                                   op_flags,
                                   dtypes);
+
+    for (i=0; i++; i < nops) {
+        Py_DECREF(dtypes[i]);
+    }
 
     if (dummy_array) {
         Py_DECREF(index_arrays[0]);
@@ -2455,7 +2524,8 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     }
 
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(indices, index_num,
-                                                            index_type);
+                                                            index_type,
+                                                            0, NULL, NULL);
     if (mit == NULL) {
         goto fail;
     }
