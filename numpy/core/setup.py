@@ -683,12 +683,12 @@ def configuration(parent_package='',top_path=None):
         subst_dict["posix_mathlib"] = posix_mlib
         subst_dict["msvc_mathlib"] = msvc_mlib
 
+    npymath_sources = [join('src', 'npymath', 'npy_math.c.src'),
+                       join('src', 'npymath', 'ieee754.c.src'),
+                       join('src', 'npymath', 'npy_math_complex.c.src'),
+                       join('src', 'npymath', 'halffloat.c')]
     config.add_installed_library('npymath',
-            sources=[join('src', 'npymath', 'npy_math.c.src'),
-                     join('src', 'npymath', 'ieee754.c.src'),
-                     join('src', 'npymath', 'npy_math_complex.c.src'),
-                     join('src', 'npymath', 'halffloat.c'),
-                     get_mathlib_info],
+            sources=npymath_sources + [get_mathlib_info],
             install_dir='lib')
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
@@ -700,17 +700,13 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     # This library is created for the build but it is not installed
+    npysort_sources=[join('src', 'npysort', 'quicksort.c.src'),
+                     join('src', 'npysort', 'mergesort.c.src'),
+                     join('src', 'npysort', 'heapsort.c.src'),
+                     join('src','private', 'npy_partition.h.src'),
+                     join('src', 'npysort', 'selection.c.src')]
     config.add_library('npysort',
-                       sources=[join('src', 'npysort', 'quicksort.c.src'),
-                                join('src', 'npysort', 'mergesort.c.src'),
-                                join('src', 'npysort', 'heapsort.c.src'),
-                                join('src','private', 'npy_partition.h.src'),
-                                join('src', 'npysort', 'selection.c.src')],
-                       deps=[join('src', 'npysort', 'quicksort.c'),
-                             join('src', 'npysort', 'mergesort.c'),
-                             join('src', 'npysort', 'heapsort.c'),
-                             join('src', 'private', 'npy_partition.h'),
-                             join('src', 'npysort', 'selection.c')],
+                       sources=npysort_sources,
                        include_dirs=[])
 
 
@@ -767,7 +763,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
-            join('src', 'private', 'scalarmathmodule.h.src'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -786,7 +781,9 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'ndarraytypes.h'),
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
             join('include', 'numpy', '_numpyconfig.h.in'),
-            ]
+            # add library sources as distuils does not consider libraries
+            # dependencies
+            ] + npysort_sources + npymath_sources
 
     multiarray_src = [
             join('src', 'multiarray', 'arrayobject.c'),
@@ -899,7 +896,7 @@ def configuration(parent_package='',top_path=None):
             generate_umath_py,
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
-            join('src', 'private', 'ufunc_override.h')]
+            join('src', 'private', 'ufunc_override.h')] + npymath_sources
 
     if not ENABLE_SEPARATE_COMPILATION:
         umath_deps.extend(umath_src)
@@ -929,7 +926,7 @@ def configuration(parent_package='',top_path=None):
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   generate_ufunc_api],
-                         depends = deps,
+                         depends = deps + npymath_sources,
                          libraries = ['npymath'],
                          )
 
