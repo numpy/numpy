@@ -1832,8 +1832,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                     *reduce_outeraxisdata = NULL;
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
-    npy_intp transfersize = NBF_SIZE(bufferdata),
-                buffersize = NBF_BUFFERSIZE(bufferdata);
+    npy_intp transfersize = NBF_SIZE(bufferdata);
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
