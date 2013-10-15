@@ -118,10 +118,6 @@ double npy_tanh(double x);
 double npy_asin(double x);
 double npy_acos(double x);
 double npy_atan(double x);
-double npy_aexp(double x);
-double npy_alog(double x);
-double npy_asqrt(double x);
-double npy_afabs(double x);
 
 double npy_log(double x);
 double npy_log10(double x);
