@@ -315,6 +315,12 @@ class TestUfunc(TestCase):
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
 
+    def test_sum_stability(self):
+        a = np.ones(500, dtype=np.float32)
+        assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 4)
+
+        a = np.ones(500, dtype=np.float64)
+        assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))

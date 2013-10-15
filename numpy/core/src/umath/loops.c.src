@@ -1358,64 +1358,35 @@ NPY_NO_EXPORT void
  */
 
 /*
- * pairwise summation, rounding error O(log(n)) instead of O(n)
- * iterative version of:
- *
- * pw_sum(a, n):
- *   if n < blocksize:
- *     return normal_sum(a, n)
- *  else:
- *     n2 = n / 2;
- *     return pw_sum(a, n2) + pw_sum(a + n2, n - n2)
- *
+ * Pairwise summation, rounding error O(lg n) instead of O(n).
+ * The recursion depth is O(lg n) as well.
  */
+#define PW_BLOCKSIZE    128
+
 static @type@
-pairwise_add_@TYPE@(@type@ * a, npy_uintp n, npy_uintp stride)
+pairwise_add_@TYPE@(@type@ *a, npy_uintp n, npy_intp stride)
 {
-    /* stack holding sum of pairs, log2(n) required */
-    @type@ dstack[200];
-    /* stack holding how many summations each stack member has done */
-    int ostack[200];
-    /* position in stack */
-    int npos = 0;
-    npy_intp i = 0;
-    /* cutoff for pairwise summation */
-    int bs = 128;
-
-    while (i < n) {
-        /* sum a block with an unrolled loop */
+    if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
         @type@ r[4] = {0};
-        npy_uintp j;
-        for (j = i; j < MIN(i + bs, n - (n % 4)); j+=4) {
-            r[0] += a[(j + 0) * stride];
-            r[1] += a[(j + 1) * stride];
-            r[2] += a[(j + 2) * stride];
-            r[3] += a[(j + 3) * stride];
-        }
-        for (; j < MIN(i + bs, n); j++) {
-            r[0] += a[j * stride];
-        }
-        i = j;
 
-        /* add to top of stack */
-        dstack[npos] = (r[0] + r[1]) + (r[2] + r[3]);
-        ostack[npos] = 1;
-
-        /* reduce stack by summing entries with same summation counter */
-        while (npos > 0 && ostack[npos] == ostack[npos - 1]) {
-            dstack[npos - 1] += dstack[npos];
-            npos--;
-            ostack[npos]++;
+        /* sum a block with an unrolled loop */
+        for (i = 0; i < n - n % 4; i += 4) {
+            r[0] += a[(i + 0) * stride];
+            r[1] += a[(i + 1) * stride];
+            r[2] += a[(i + 2) * stride];
+            r[3] += a[(i + 3) * stride];
         }
-        npos++;
+        for (; i < n; i++) {
+            r[i % 4] += a[i * stride];
+        }
+        return (r[0] + r[1]) + (r[2] + r[3]);
     }
-
-    /* sum remainder */
-    for (i = 1; i < npos; i++) {
-        dstack[0] += dstack[i];
+    else {
+        npy_intp n2 = n / 2;
+        return pairwise_add_@TYPE@(a, n2, stride)
+             + pairwise_add_@TYPE@(a + n2, n - n2, stride);
     }
-
-    return dstack[0];
 }
 
 /**begin repeat1
