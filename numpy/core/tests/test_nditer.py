@@ -2579,5 +2579,14 @@ def test_0d_nested_iter():
     assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
 
+def test_iter_too_large():
+    # The total size of the iterator must not exceed the maximum intp due
+    # to broadcasting. Dividing by 1024 will keep it small enough to
+    # give a legal array.
+    size = np.iinfo(np.intp).max // 1024
+    arr = np.lib.stride_tricks.as_strided(np.zeros(1), (size,), (0,))
+    assert_raises(ValueError, nditer, (arr, arr[:, None]))
+
+
 if __name__ == "__main__":
     run_module_suite()
