@@ -2792,13 +2792,13 @@ cdef class RandomState:
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 30, normed=True)
         >>> x = np.arange(-8., 8., .01)
-        >>> pdf = np.exp(-abs(x-loc/scale))/(2.*scale)
+        >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
 
         Plot Gaussian for comparison:
 
         >>> g = (1/(scale * np.sqrt(2 * np.pi)) * 
-        ...      np.exp( - (x - loc)**2 / (2 * scale**2) ))
+        ...      np.exp(-(x - loc)**2 / (2 * scale**2)))
         >>> plt.plot(x,g)
 
         """
