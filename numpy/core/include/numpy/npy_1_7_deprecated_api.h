@@ -8,7 +8,7 @@
 #if defined(_WIN32)
 #define _WARN___STR2__(x) #x
 #define _WARN___STR1__(x) _WARN___STR2__(x)
-#define _WARN___LOC__ __FILE__ "("_WARN___STR1__(__LINE__)") : Warning Msg: "
+#define _WARN___LOC__ __FILE__ "(" _WARN___STR1__(__LINE__) ") : Warning Msg: "
 #pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it by " \
                          "#defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
 #elif defined(__GNUC__)
