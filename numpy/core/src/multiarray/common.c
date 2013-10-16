@@ -706,7 +706,7 @@ _IsAligned(PyArrayObject *ap)
         aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
 #endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
-    return npy_is_aligned(aligned, alignment);
+    return npy_is_aligned((void *)aligned, alignment);
 }
 
 NPY_NO_EXPORT npy_bool
