@@ -2216,7 +2216,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         cond[~finite] = (x[~finite] == y[~finite])
         if equal_nan:
             # Make NaN == NaN
-            cond[isnan(x) & isnan(y)] = True
+            both_nan = isnan(x) & isnan(y)
+            cond[both_nan] = both_nan[both_nan]
         return cond
 
 def array_equal(a1, a2):
