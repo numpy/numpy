@@ -1,6 +1,7 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
 #include <numpy/npy_common.h>
+#include <numpy/npy_cpu.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -109,11 +110,31 @@ npy_memchr(char * haystack, char needle,
     }
 
     if (!invert) {
+        /*
+         * this is usually the path to determine elements to process,
+         * performance less important here.
+         * memchr has large setup cost if 0 byte is close to start.
+         */
         while (p < end && *p != needle) {
             p += stride;
         }
     }
     else {
+        /* usually find elements to skip path */
+#if (defined HAVE___BUILTIN_CTZ && defined NPY_CPU_HAVE_UNALIGNED_ACCESS)
+        if (needle == 0 && stride == 1) {
+            while (p < end - ((npy_uintp)end % sizeof(unsigned int))) {
+                unsigned int  v = *(unsigned int*)p;
+                if (v == 0) {
+                    p += sizeof(unsigned int);
+                    continue;
+                }
+                p += __builtin_ctz(v) / 8;
+                *subloopsize = (p - haystack) / stride;
+                return p;
+            }
+        }
+#endif
         while (p < end && *p == needle) {
             p += stride;
         }
