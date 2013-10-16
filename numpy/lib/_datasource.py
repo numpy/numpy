@@ -288,6 +288,7 @@ class DataSource (object):
                     copyfileobj(openedurl, f)
                 finally:
                     f.close()
+                    openedurl.close()
             except URLError:
                 raise URLError("URL not found: %s" % path)
         else:
@@ -430,6 +431,7 @@ class DataSource (object):
         if self._isurl(path):
             try:
                 netfile = urlopen(path)
+                netfile.close()
                 del(netfile)
                 return True
             except URLError:
