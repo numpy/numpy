@@ -198,6 +198,11 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
+#  if @elsize@ != 16
+    @type@ temp;
+#  else
+    npy_uint64 temp0, temp1;
+#endif
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
     assert(npy_is_aligned(dst, _ALIGN(@type@)));
@@ -208,9 +213,8 @@ static void
 #else
 
 #  if @elsize@ != 16
-    @type@ temp = @swap@@elsize@(*((@type@ *)src));
+    temp = @swap@@elsize@(*((@type@ *)src));
 #  else
-    npy_uint64 temp0, temp1;
 #    if @is_swap@ == 0
         temp0 = (*((npy_uint64 *)src));
         temp1 = (*((npy_uint64 *)src + 1));
