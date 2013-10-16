@@ -1189,19 +1189,61 @@ class TestCorrCoef(TestCase):
         assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
         assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
 
+    def test_complex(self):
+        x = np.array([[1, 2, 3], [1j, 2j, 3j]])
+        assert_allclose(corrcoef(x), np.array([[1., -1.j], [1.j, 1.]]))
+
+    def test_xy(self):
+        x = np.array([[1, 2, 3]])
+        y = np.array([[1j, 2j, 3j]])
+        assert_allclose(np.corrcoef(x, y), np.array([[1., -1.j], [1.j, 1.]]))
+
     def test_empty(self):
-        assert_equal(corrcoef(np.array([])).size, 0)
-        assert_equal(corrcoef(np.array([]).reshape(0, 2)).shape, (0, 2))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_array_equal(corrcoef(np.array([])), np.nan)
+            assert_array_equal(corrcoef(np.array([]).reshape(0, 2)),
+                               np.array([]).reshape(0, 0))
+            assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
+                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+
+    def test_wrong_ddof(self):
+        x = np.array([[0, 2], [1, 1], [2, 0]]).T
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_array_equal(corrcoef(x, ddof=5),
+                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
 
 class TestCov(TestCase):
     def test_basic(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        assert_allclose(np.cov(x), np.array([[1., -1.], [-1., 1.]]))
+        assert_allclose(cov(x), np.array([[1., -1.], [-1., 1.]]))
+
+    def test_complex(self):
+        x = np.array([[1, 2, 3], [1j, 2j, 3j]])
+        assert_allclose(cov(x), np.array([[1., -1.j], [1.j, 1.]]))
+
+    def test_xy(self):
+        x = np.array([[1, 2, 3]])
+        y = np.array([[1j, 2j, 3j]])
+        assert_allclose(cov(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        assert_equal(cov(np.array([])).size, 0)
-        assert_equal(cov(np.array([]).reshape(0, 2)).shape, (0, 2))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_array_equal(cov(np.array([])), np.nan)
+            assert_array_equal(cov(np.array([]).reshape(0, 2)),
+                               np.array([]).reshape(0, 0))
+            assert_array_equal(cov(np.array([]).reshape(2, 0)),
+                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+
+    def test_wrong_ddof(self):
+        x = np.array([[0, 2], [1, 1], [2, 0]]).T
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            assert_array_equal(cov(x, ddof=5),
+                               np.array([[np.inf, -np.inf], [-np.inf, np.inf]]))
 
 
 class Test_I0(TestCase):
