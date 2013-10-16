@@ -1018,6 +1018,16 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('operand_flag_tests',
                     sources = [join('src', 'umath', 'operand_flag_tests.c.src')])
 
+    #######################################################################
+    #                        npymath_tests module                         #
+    #######################################################################
+
+    config.add_extension('npymath_tests',
+                    sources = [join('src', 'npymath', 'npymath_tests.c')],
+                    depends = ['test_c99complex.c'],
+                    libraries = ['npymath']
+                    )
+
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')
 

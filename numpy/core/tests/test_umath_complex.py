@@ -1,4 +1,5 @@
 from __future__ import division, absolute_import, print_function
+from numpy.core.npymath_tests import *
 
 import sys
 import platform
@@ -6,6 +7,8 @@ import platform
 from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
+
+import numpy.core.npymath_tests as ncn
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -531,6 +534,151 @@ class TestCtanh(object):
     def test_simple(self):
         check_complex_value(ncu.tanh, 1000, 0, 1, 0, True)
         check_complex_value(ncu.tanh, -1000, 0, -1, 0, True)
+
+class TestNPyMath(object):
+    def test_cacosf(self):
+        ncn.test_cacosf()
+
+    def test_cacos(self):
+        ncn.test_cacos()
+
+    def test_cacosl(self):
+        ncn.test_cacosl()
+
+    def test_casinf(self):
+        ncn.test_casinf()
+
+    def test_casin(self):
+        ncn.test_casin()
+
+    def test_casinl(self):
+        ncn.test_casinl()
+
+    def test_catanf(self):
+        ncn.test_catanf()
+
+    def test_catan(self):
+        ncn.test_catan()
+
+    def test_catanl(self):
+        ncn.test_catanl()
+
+    def test_cacoshf(self):
+        ncn.test_cacoshf()
+
+    def test_cacosh(self):
+        ncn.test_cacosh()
+
+    def test_cacoshl(self):
+        ncn.test_cacoshl()
+
+    def test_casinhf(self):
+        ncn.test_casinhf()
+
+    def test_casinh(self):
+        ncn.test_casinh()
+
+    def test_casinhl(self):
+        ncn.test_casinhl()
+
+    def test_catanhf(self):
+        ncn.test_catanhf()
+
+    def test_catanh(self):
+        ncn.test_catanh()
+
+    def test_catanhl(self):
+        ncn.test_catanhl()
+
+    def test_ccosf(self):
+        ncn.test_ccosf()
+
+    def test_ccos(self):
+        ncn.test_ccos()
+
+    def test_ccosl(self):
+        ncn.test_ccosl()
+
+    def test_csinf(self):
+        ncn.test_csinf()
+
+    def test_csin(self):
+        ncn.test_csin()
+
+    def test_csinl(self):
+        ncn.test_csinl()
+
+    def test_ctanf(self):
+        ncn.test_ctanf()
+
+    def test_ctan(self):
+        ncn.test_ctan()
+
+    def test_ctanl(self):
+        ncn.test_ctanl()
+
+    def test_ccoshf(self):
+        ncn.test_ccoshf()
+
+    def test_ccosh(self):
+        ncn.test_ccosh()
+
+    def test_ccoshl(self):
+        ncn.test_ccoshl()
+
+    def test_csinhf(self):
+        ncn.test_csinhf()
+
+    def test_csinh(self):
+        ncn.test_csinh()
+
+    def test_csinhl(self):
+        ncn.test_csinhl()
+
+    def test_ctanhf(self):
+        ncn.test_ctanhf()
+
+    def test_catanh(self):
+        ncn.test_ctanh()
+
+    def test_ctanhl(self):
+        ncn.test_ctanhl()
+
+    def test_cexpf(self):
+        ncn.test_cexpf()
+
+    def test_cexp(self):
+        ncn.test_cexp()
+
+    def test_cexpl(self):
+        ncn.test_cexpl()
+
+    def test_clogf(self):
+        ncn.test_clogf()
+
+    def test_clog(self):
+        ncn.test_clog()
+
+    def test_clogl(self):
+        ncn.test_clogl()
+
+    def test_cpowf(self):
+        ncn.test_cpowf()
+
+    def test_cpow(self):
+        ncn.test_cpow()
+
+    def test_cpowl(self):
+        ncn.test_cpowl()
+
+    def test_csqrtf(self):
+        ncn.test_csqrtf()
+
+    def test_csqrt(self):
+        ncn.test_csqrt()
+
+    def test_csqrtl(self):
+        ncn.test_csqrtl()
 
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
