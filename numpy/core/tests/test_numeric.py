@@ -1454,6 +1454,12 @@ class TestIsclose(object):
         # Ensure that the mask isn't modified...
         assert_array_equal([True, True, False], y.mask)
 
+        x = np.ma.masked_where([True, True, False], [nan, nan, nan])
+        y = isclose(x, x, equal_nan=True)
+        assert_(type(x) is type(y))
+        # Ensure that the mask isn't modified...
+        assert_array_equal([True, True, False], y.mask)
+
     def test_scalar_return(self):
         assert_(isscalar(isclose(1, 1)))
 
