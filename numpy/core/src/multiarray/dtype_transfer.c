@@ -3059,22 +3059,14 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
 
     while (N > 0) {
         /* Skip masked values, still calling decsrcref for move_references */
-        subloopsize = 0;
-        while (subloopsize < N && !*mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr((char *)mask, 0, mask_stride, N, &subloopsize, 1);
         decsrcref_stransfer(NULL, 0, src, src_stride,
                             subloopsize, src_itemsize, decsrcref_transferdata);
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
         /* Process unmasked values */
-        subloopsize = 0;
-        while (subloopsize < N && *mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr((char *)mask, 0, mask_stride, N, &subloopsize, 0);
         unmasked_stransfer(dst, dst_stride, src, src_stride,
                             subloopsize, src_itemsize, unmasked_transferdata);
         dst += subloopsize * dst_stride;
@@ -3102,20 +3094,12 @@ void _strided_masked_wrapper_transfer_function(
 
     while (N > 0) {
         /* Skip masked values */
-        subloopsize = 0;
-        while (subloopsize < N && !*mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr((char *)mask, 0, mask_stride, N, &subloopsize, 1);
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
         /* Process unmasked values */
-        subloopsize = 0;
-        while (subloopsize < N && *mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr((char *)mask, 0, mask_stride, N, &subloopsize, 0);
         unmasked_stransfer(dst, dst_stride, src, src_stride,
                             subloopsize, src_itemsize, unmasked_transferdata);
         dst += subloopsize * dst_stride;

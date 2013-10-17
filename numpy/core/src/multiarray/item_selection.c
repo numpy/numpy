@@ -2414,7 +2414,7 @@ count_nonzero_bytes_128(npy_uint64 * w)
      */
     if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
         /* reload from pointer to avoid a unnecessary stack spill with gcc */
-        char * c = w;
+        char * c = (char *)w;
         npy_uintp i, count = 0;
         for (i = 0; i < 16; i++) {
             count += (c[i] != 0);
@@ -2469,7 +2469,7 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
             if (npy_is_aligned(data, sizeof(npy_uint64))) {
                 npy_uintp stride = 2 * sizeof(npy_uint64);
                 for (; d < e - (shape[0]  % stride); d += stride) {
-                    count += count_nonzero_bytes_128(d);
+                    count += count_nonzero_bytes_128((npy_uint64 *)d);
                 }
             }
             for (; d < e; ++d) {

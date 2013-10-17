@@ -108,4 +108,8 @@
     #endif
 #endif
 
+#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+#define NPY_CPU_HAVE_UNALIGNED_ACCESS
+#endif
+
 #endif

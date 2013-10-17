@@ -331,6 +331,51 @@ def test_copyto():
     # 'dst' must be an array
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
+def test_copyto_permut():
+    # test all permutation of possible masks, 9 should be sufficient for
+    # current 4 byte unrolled code
+    power = 9
+    d = np.ones(power)
+    for i in range(2**power):
+        r = np.zeros(power)
+        l = [(i & x) != 0 for x in range(power)]
+        mask = np.array(l)
+        np.copyto(r, d, where=mask)
+        assert_array_equal(r == 1, l)
+        assert_equal(r.sum(), sum(l))
+
+        r = np.zeros(power)
+        np.copyto(r, d, where=mask[::-1])
+        assert_array_equal(r == 1, l[::-1])
+        assert_equal(r.sum(), sum(l))
+
+        r = np.zeros(power)
+        np.copyto(r[::2], d[::2], where=mask[::2])
+        assert_array_equal(r[::2] == 1, l[::2])
+        assert_equal(r[::2].sum(), sum(l[::2]))
+
+        r = np.zeros(power)
+        np.copyto(r[::2], d[::2], where=mask[::-2])
+        assert_array_equal(r[::2] == 1, l[::-2])
+        assert_equal(r[::2].sum(), sum(l[::-2]))
+
+        for c in [0xFF, 0x7F, 0x02, 0x10]:
+            r = np.zeros(power)
+            mask = np.array(l)
+            imask = np.array(l).view(np.uint8)
+            imask[mask != 0] = 0xFF
+            np.copyto(r, d, where=mask)
+            assert_array_equal(r == 1, l)
+            assert_equal(r.sum(), sum(l))
+
+    r = np.zeros(power)
+    np.copyto(r, d, where=True)
+    assert_equal(r.sum(), r.size)
+    r = np.ones(power)
+    d = np.zeros(power)
+    np.copyto(r, d, where=False)
+    assert_equal(r.sum(), r.size)
+
 def test_copy_order():
     a = np.arange(24).reshape(2, 1, 3, 4)
     b = a.copy(order='F')

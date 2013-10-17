@@ -1,6 +1,7 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
 #include <numpy/npy_common.h>
+#include <numpy/npy_cpu.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -82,6 +83,71 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
     else {
         return ((npy_uintp)(p) % alignment) == 0;
     }
+}
+
+/*
+ * memchr with stride and invert argument
+ * intended for small searches where a call out to libc memchr is costly.
+ * stride must be a multiple of size.
+ * compared to memchr it returns one stride past end instead of NULL if needle
+ * is not found.
+ */
+static NPY_INLINE char *
+npy_memchr(char * haystack, char needle,
+           npy_intp stride, npy_intp size, npy_intp * subloopsize, int invert)
+{
+    char * p = haystack;
+    char * const end = haystack + size;
+    if (stride == 0) {
+        if (!invert) {
+            p = (*p != needle) ? end : haystack;
+        }
+        else {
+            p = (*p == needle) ? end : haystack;
+        }
+        *subloopsize = (p - haystack);
+        return haystack;
+    }
+
+    if (!invert) {
+        /*
+         * this is usually the path to determine elements to process,
+         * performance less important here.
+         * memchr has large setup cost if 0 byte is close to start.
+         */
+        while (p < end && *p != needle) {
+            p += stride;
+        }
+    }
+    else {
+        /* usually find elements to skip path */
+#if (defined HAVE___BUILTIN_CTZ && defined NPY_CPU_HAVE_UNALIGNED_ACCESS)
+        if (needle == 0 && stride == 1) {
+            while (p < end - ((npy_uintp)end % sizeof(unsigned int))) {
+                unsigned int  v = *(unsigned int*)p;
+                if (v == 0) {
+                    p += sizeof(unsigned int);
+                    continue;
+                }
+                p += __builtin_ctz(v) / 8;
+                *subloopsize = (p - haystack) / stride;
+                return p;
+            }
+        }
+#endif
+        while (p < end && *p == needle) {
+            p += stride;
+        }
+    }
+
+    /* division is very expensive */
+    if (NPY_LIKELY(stride == 1)) {
+        *subloopsize = (p - haystack);
+    }
+    else {
+        *subloopsize = (p - haystack) / stride;
+    }
+    return p;
 }
 
 #include "ucsnarrow.h"

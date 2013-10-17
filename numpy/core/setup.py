@@ -894,6 +894,7 @@ def configuration(parent_package='',top_path=None):
 
     umath_deps = [
             generate_umath_py,
+            join('src', 'multiarray', 'common.h'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources

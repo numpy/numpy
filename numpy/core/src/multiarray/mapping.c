@@ -725,19 +725,13 @@ array_boolean_subscript(PyArrayObject *self,
 
             while (innersize > 0) {
                 /* Skip masked values */
-                subloopsize = 0;
-                while (subloopsize < innersize && *bmask_data == 0) {
-                    ++subloopsize;
-                    bmask_data += bmask_stride;
-                }
+                bmask_data = npy_memchr(bmask_data, 0, bmask_stride,
+                                        innersize, &subloopsize, 1);
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 /* Process unmasked values */
-                subloopsize = 0;
-                while (subloopsize < innersize && *bmask_data != 0) {
-                    ++subloopsize;
-                    bmask_data += bmask_stride;
-                }
+                bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
+                                        &subloopsize, 0);
                 stransfer(ret_data, itemsize, self_data, self_stride,
                             subloopsize, itemsize, transferdata);
                 innersize -= subloopsize;
@@ -884,19 +878,13 @@ array_ass_boolean_subscript(PyArrayObject *self,
 
             while (innersize > 0) {
                 /* Skip masked values */
-                subloopsize = 0;
-                while (subloopsize < innersize && *bmask_data == 0) {
-                    ++subloopsize;
-                    bmask_data += bmask_stride;
-                }
+                bmask_data = npy_memchr(bmask_data, 0, bmask_stride,
+                                        innersize, &subloopsize, 1);
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 /* Process unmasked values */
-                subloopsize = 0;
-                while (subloopsize < innersize && *bmask_data != 0) {
-                    ++subloopsize;
-                    bmask_data += bmask_stride;
-                }
+                bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
+                                        &subloopsize, 0);
                 stransfer(self_data, self_stride, v_data, v_stride,
                             subloopsize, src_itemsize, transferdata);
                 innersize -= subloopsize;
