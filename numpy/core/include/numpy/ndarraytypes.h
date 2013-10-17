@@ -1294,7 +1294,9 @@ typedef struct {
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
         NpyIter               *outer;                  /* index objects
                                                           iterator */
-        void                  *unused[NPY_MAXDIMS - 1];
+        PyArrayObject         *extra_op;
+        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
+        void                  *unused[NPY_MAXDIMS - 3];
         PyArrayIterObject     *ait;                    /* flat Iterator for
                                                           underlying array;
                                                           should not be used */
