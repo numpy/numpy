@@ -1908,8 +1908,8 @@ class TestRegression(TestCase):
 
     def test_fortran_order_buffer(self):
         import numpy as np
-        a = np.array([['Hello', 'Foob']], dtype='<U5', order='F')
-        arr = np.ndarray(shape=[1, 2, 5], dtype='<U1', buffer=a)
+        a = np.array([['Hello', 'Foob']], dtype='U5', order='F')
+        arr = np.ndarray(shape=[1, 2, 5], dtype='U1', buffer=a)
         arr2 = np.array([[[sixu('H'), sixu('e'), sixu('l'), sixu('l'), sixu('o')],
                           [sixu('F'), sixu('o'), sixu('o'), sixu('b'), sixu('')]]])
         assert_array_equal(arr, arr2)
