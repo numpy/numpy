@@ -1,3 +1,5 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #include "Python.h"
 #include "math.h"
 #include "numpy/ndarraytypes.h"
@@ -106,7 +108,7 @@ PyMODINIT_FUNC initstruct_ufunc_test(void)
     dtypes[1] = dtype;
     dtypes[2] = dtype;
 
-    PyUFunc_RegisterLoopForDescr(add_triplet,
+    PyUFunc_RegisterLoopForDescr((PyUFuncObject *)add_triplet,
                                 dtype,
                                 &add_uint64_triplet,
                                 dtypes,
