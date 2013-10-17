@@ -26,16 +26,7 @@ NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);
 
 NPY_NO_EXPORT int
-array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v);
-
-/* SIZEOF_SIZE_T is nowhere defined, Py_ssize_t perhaps?*/
-#if SIZEOF_SIZE_T == NPY_SIZEOF_INTP
-#define array_ass_item array_ass_big_item
-#else
-NPY_NO_EXPORT int
-_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
-#define array_ass_item _array_ass_item
-#endif
+array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 
 NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *,  int);
