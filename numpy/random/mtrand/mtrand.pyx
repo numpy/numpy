@@ -4047,9 +4047,9 @@ cdef class RandomState:
         return discd_array(self.internal_state, rk_logseries, size, op)
 
     # Multivariate distributions:
-    def multivariate_normal(self, mean, cov, size=None):
+    def multivariate_normal(self, mean, cov, size=None, decomposition='cholesky'):
         """
-        multivariate_normal(mean, cov[, size])
+        multivariate_normal(mean, cov, size=None, decomposition='cholesky')
 
         Draw random samples from a multivariate normal distribution.
 
@@ -4072,6 +4072,8 @@ cdef class RandomState:
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
             each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
             If no shape is specified, a single (`N`-D) sample is returned.
+        decomposition: string, the name of the decomposition method to use. 
+            Must be either 'cholesky' or 'svd'.
 
         Returns
         -------
@@ -4113,7 +4115,12 @@ cdef class RandomState:
         >>> x,y = np.random.multivariate_normal(mean,cov,5000).T
         >>> plt.plot(x,y,'x'); plt.axis('equal'); plt.show()
 
-        Note that the covariance matrix must be non-negative definite.
+        Note that by default (when cholesky decomposition is), the covariance 
+        matrix must be non-negative definite. When SVD is used for decomposition,
+        no exception or warning will occur if the covariance matrix has a 
+        negative determinant, but the covariance of the resulting variables may 
+        diverge considerably from what's expected.
+
 
         References
         ----------
@@ -4168,11 +4175,17 @@ cdef class RandomState:
         # Then the matrix products of the rows of x and A has the desired
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
+        # Decomposition is accomplished via either SVD or Cholesky.
 
-        from numpy.dual import svd
-        # XXX: we really should be doing this by Cholesky decomposition
-        (u,s,v) = svd(cov)
-        x = np.dot(x*np.sqrt(s),v)
+        if decomposition == 'svd':
+            from numpy.dual import svd
+            (u,s,v) = svd(cov)
+            x = np.dot(x*np.sqrt(s),v)
+        elif decomposition == 'cholesky':
+            from numpy.linalg import cholesky
+            x = cholesky(cov).dot(x.T).T
+        else:
+            raise ValueError("decomposition must be 'cholesky' or 'svd'.")
         # The rows of x now have the correct covariance but mean 0. Add
         # mean to each row. Then each row will have mean mean.
         np.add(mean,x,x)
