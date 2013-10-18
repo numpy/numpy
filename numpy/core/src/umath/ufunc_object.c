@@ -384,56 +384,62 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 {
     PyObject *retval;
 
-    *errobj = NULL;
     if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
         PyErr_Format(PyExc_TypeError,
                 "%s must be a length 3 list.", UFUNC_PYVALS_NAME);
         return -1;
     }
 
-    *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
-    if ((*bufsize == -1) && PyErr_Occurred()) {
-        return -1;
-    }
-    if ((*bufsize < NPY_MIN_BUFSIZE) ||
-            (*bufsize > NPY_MAX_BUFSIZE) ||
-            (*bufsize % 16 != 0)) {
-        PyErr_Format(PyExc_ValueError,
-                "buffer size (%d) is not in range "
-                "(%"NPY_INTP_FMT" - %"NPY_INTP_FMT") or not a multiple of 16",
-                *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
-                (npy_intp) NPY_MAX_BUFSIZE);
-        return -1;
-    }
-
-    *errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
-    if (*errmask < 0) {
-        if (PyErr_Occurred()) {
+    if (bufsize != NULL) {
+        *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
+        if ((*bufsize == -1) && PyErr_Occurred()) {
             return -1;
         }
-        PyErr_Format(PyExc_ValueError,
-                     "invalid error mask (%d)",
-                     *errmask);
-        return -1;
-    }
-
-    retval = PyList_GET_ITEM(ref, 2);
-    if (retval != Py_None && !PyCallable_Check(retval)) {
-        PyObject *temp;
-        temp = PyObject_GetAttrString(retval, "write");
-        if (temp == NULL || !PyCallable_Check(temp)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "python object must be callable or have " \
-                            "a callable write method");
-            Py_XDECREF(temp);
+        if ((*bufsize < NPY_MIN_BUFSIZE) ||
+                (*bufsize > NPY_MAX_BUFSIZE) ||
+                (*bufsize % 16 != 0)) {
+            PyErr_Format(PyExc_ValueError,
+                    "buffer size (%d) is not in range "
+                    "(%"NPY_INTP_FMT" - %"NPY_INTP_FMT") or not a multiple of 16",
+                    *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
+                    (npy_intp) NPY_MAX_BUFSIZE);
             return -1;
         }
-        Py_DECREF(temp);
     }
 
-    *errobj = Py_BuildValue("NO", PyBytes_FromString(name), retval);
-    if (*errobj == NULL) {
-        return -1;
+    if (errmask != NULL) {
+        *errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
+        if (*errmask < 0) {
+            if (PyErr_Occurred()) {
+                return -1;
+            }
+            PyErr_Format(PyExc_ValueError,
+                         "invalid error mask (%d)",
+                         *errmask);
+            return -1;
+        }
+    }
+
+    if (errobj != NULL) {
+        *errobj = NULL;
+        retval = PyList_GET_ITEM(ref, 2);
+        if (retval != Py_None && !PyCallable_Check(retval)) {
+            PyObject *temp;
+            temp = PyObject_GetAttrString(retval, "write");
+            if (temp == NULL || !PyCallable_Check(temp)) {
+                PyErr_SetString(PyExc_TypeError,
+                                "python object must be callable or have " \
+                                "a callable write method");
+                Py_XDECREF(temp);
+                return -1;
+            }
+            Py_DECREF(temp);
+        }
+
+        *errobj = Py_BuildValue("NO", PyBytes_FromString(name), retval);
+        if (*errobj == NULL) {
+            return -1;
+        }
     }
     return 0;
 }
@@ -1715,6 +1721,37 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
     }
 }
 
+static int 
+_check_ufunc_err(int errmask, PyObject *extobj, char* ufunc_name, int *first) {
+    int fperr;
+    PyObject *errobj = NULL;
+    if (!errmask) {
+        return 0;
+    }
+    fperr = PyUFunc_getfperr();
+    if (!fperr) {
+        return 0;
+    }
+
+    /* Get error object globals */
+    if (extobj == NULL) {
+        if (PyUFunc_GetPyValues(ufunc_name,
+                                NULL, NULL, &errobj) < 0) {
+            Py_XDECREF(errobj);
+            return -1;
+        }
+    }
+    else {
+        if (_extract_pyvals(extobj, ufunc_name,
+                            NULL, NULL, &errobj) < 0) {
+            Py_XDECREF(errobj);
+            return -1;
+        }
+    }
+
+    return PyUFunc_handlefperr(errmask, errobj, fperr, first);
+}
+
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
@@ -1740,7 +1777,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
-    PyObject *errobj = NULL;
     int first_error = 1;
 
     /* The selected inner loop */
@@ -1944,17 +1980,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         core_dim_ixs_size += ufunc->core_num_dims[i];
     }
 
-    /* Get the buffersize, errormask, and error object globals */
+    /* Get the buffersize and errormask */
     if (extobj == NULL) {
-        if (PyUFunc_GetPyValues(ufunc_name,
-                                &buffersize, &errormask, &errobj) < 0) {
+        if (PyUFunc_GetPyValues(NULL,
+                                &buffersize, &errormask, NULL) < 0) {
             retval = -1;
             goto fail;
         }
     }
     else {
-        if (_extract_pyvals(extobj, ufunc_name,
-                                &buffersize, &errormask, &errobj) < 0) {
+        if (_extract_pyvals(extobj, NULL,
+                                &buffersize, &errormask, NULL) < 0) {
             retval = -1;
             goto fail;
         }
@@ -2203,8 +2239,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Check whether any errors occurred during the loop */
-    if (PyErr_Occurred() || (errormask &&
-            PyUFunc_checkfperr(errormask, errobj, &first_error))) {
+    if (PyErr_Occurred() || _check_ufunc_err(errormask, extobj, ufunc_name, &first_error) < 0) {
         retval = -1;
         goto fail;
     }
@@ -2216,7 +2251,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
@@ -2234,7 +2268,6 @@ fail:
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
@@ -2263,7 +2296,6 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
-    PyObject *errobj = NULL;
     int first_error = 1;
 
     /* The mask provided in the 'where=' parameter */
@@ -2326,17 +2358,17 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         need_fancy = 1;
     }
 
-    /* Get the buffersize, errormask, and error object globals */
+    /* Get the buffersize and errormask */
     if (extobj == NULL) {
-        if (PyUFunc_GetPyValues(ufunc_name,
-                                &buffersize, &errormask, &errobj) < 0) {
+        if (PyUFunc_GetPyValues(NULL,
+                                &buffersize, &errormask, NULL) < 0) {
             retval = -1;
             goto fail;
         }
     }
     else {
-        if (_extract_pyvals(extobj, ufunc_name,
-                                &buffersize, &errormask, &errobj) < 0) {
+        if (_extract_pyvals(extobj, NULL,
+                                &buffersize, &errormask, NULL) < 0) {
             retval = -1;
             goto fail;
         }
@@ -2449,18 +2481,17 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     }
 
     /* Check whether any errors occurred during the loop */
-    if (PyErr_Occurred() || (errormask &&
-            PyUFunc_checkfperr(errormask, errobj, &first_error))) {
+    if (PyErr_Occurred() || _check_ufunc_err(errormask, extobj, ufunc_name, &first_error) < 0) {
         retval = -1;
         goto fail;
     }
+
 
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
     Py_XDECREF(wheremask);
@@ -2477,7 +2508,6 @@ fail:
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
     Py_XDECREF(wheremask);
