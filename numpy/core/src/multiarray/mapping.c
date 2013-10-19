@@ -226,6 +226,25 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     int i;
     char *self_ptr;
 
+    /* Cached mit info */
+    int numiter = mit->numiter;
+    /* Constant information */
+    npy_intp fancy_dims[NPY_MAXDIMS];
+    npy_intp fancy_strides[NPY_MAXDIMS];
+    int iteraxes[NPY_MAXDIMS];
+
+    char *baseoffset = mit->baseoffset;
+    char **outer_ptrs = mit->outer_ptrs;
+    npy_intp *outer_strides = mit->outer_strides;
+    PyArrayObject *extra_op = mit->extra_op;
+
+    /* Fill constant information */
+    for (i = 0; i < numiter; i++) {
+        fancy_dims[i] = mit->fancy_dims[i];
+        fancy_strides[i] = mit->fancy_strides[i];
+        iteraxes[i] = mit->iteraxes[i];
+    }
+
     if (mit->size == 0) {
         return 0;
     }
@@ -238,44 +257,72 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     if (mit->subspace == NULL) {
         /* We have only one iterator handling everything */
         counter = NpyIter_GetInnerLoopSizePtr(mit->outer);
-        do {
-            count = *counter;
-            while (count--) {
-                self_ptr = mit->baseoffset;
-                for (i=0; i < mit->numiter; i++) {
-                    indval = *((npy_intp*)mit->outer_ptrs[i]);
-                    if (check_and_adjust_index(&indval, mit->fancy_dims[i],
-                                               mit->iteraxes[i]) < 0 ) {
+
+        if (mit->numiter == 1) {
+            do {
+                count = *counter;
+                while (count--) {
+                    self_ptr = baseoffset;
+                    indval = *((npy_intp*)outer_ptrs[0]);
+                    if (check_and_adjust_index(&indval, fancy_dims[0],
+                                               iteraxes[0]) < 0 ) {
                         return -1;
                     }
-                    self_ptr += indval * mit->fancy_strides[i];
+                    self_ptr += indval * fancy_strides[0];
 
                     /* advance indexing arrays */
-                    mit->outer_ptrs[i] += mit->outer_strides[i];
+                    outer_ptrs[0] += outer_strides[0];
+
+                    /* TODO: Can optimize with memcpy! */
+                    copyswap(outer_ptrs[1], self_ptr, 0, extra_op);
+
+                    /* advance extra operand */
+                    outer_ptrs[1] += outer_strides[1];
                 }
+            } while (mit->outer_next(mit->outer));
+        }
+        else {
+            do {
+                count = *counter;
+                while (count--) {
+                    self_ptr = baseoffset;
+                    for (i=0; i < numiter; i++) {
+                        indval = *((npy_intp*)outer_ptrs[i]);
+                        if (check_and_adjust_index(&indval, fancy_dims[i],
+                                                   iteraxes[i]) < 0 ) {
+                            return -1;
+                        }
+                        self_ptr += indval * fancy_strides[i];
 
-                /* TODO: Can optimize with memcpy! */
-                copyswap(mit->outer_ptrs[i], self_ptr, 0, mit->extra_op);
+                        /* advance indexing arrays */
+                        outer_ptrs[i] += outer_strides[i];
+                    }
 
-                /* advance extra operand */
-                mit->outer_ptrs[i] += mit->outer_strides[i];
-            }
-        } while (mit->outer_next(mit->outer));
+                    /* TODO: Can optimize with memcpy! */
+                    copyswap(outer_ptrs[i], self_ptr, 0, extra_op);
+
+                    /* advance extra operand */
+                    outer_ptrs[i] += outer_strides[i];
+                }
+            } while (mit->outer_next(mit->outer));
+        }
     }
     else {
         /* We have a nested iter situation */
         char *subspace_baseptrs[2];
+        char **subspace_ptrs = mit->subspace_ptrs;
+        npy_intp *subspace_strides = mit->subspace_strides;
 
         do {
-            self_ptr = mit->baseoffset;
-            for (i=0; i < mit->numiter; i++) {
-                indval = *((npy_intp*)mit->outer_ptrs[i]);
-                if (check_and_adjust_index(&indval, mit->fancy_dims[i],
-                                           mit->iteraxes[i]) < 0 ) {
+            self_ptr = baseoffset;
+            for (i=0; i < numiter; i++) {
+                indval = *((npy_intp*)outer_ptrs[i]);
+                if (check_and_adjust_index(&indval, fancy_dims[i],
+                                           iteraxes[i]) < 0 ) {
                     return -1;
                 }
 
-                self_ptr += indval * mit->fancy_strides[i];
+                self_ptr += indval * fancy_strides[i];
             }
 
             subspace_baseptrs[0] = self_ptr;
@@ -286,9 +333,9 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
             counter = NpyIter_GetInnerLoopSizePtr(mit->subspace);
 
             do {
-                copyswapn(mit->subspace_ptrs[1], mit->subspace_strides[1],
-                          mit->subspace_ptrs[0], mit->subspace_strides[0],
-                          *counter, 0, mit->extra_op);
+                copyswapn(subspace_ptrs[1], subspace_strides[1],
+                          subspace_ptrs[0], subspace_strides[0],
+                          *counter, 0, extra_op);
             } while (mit->subspace_next(mit->subspace));
 
             mit->extra_op_next(mit->extra_op_iter);
@@ -1566,7 +1613,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
     result = (PyObject *)mit->extra_op;
     Py_INCREF(result);
 
-    PyArray_MapIterSwapAxes(mit, (PyArrayObject **)&result, 1);
+    if (mit->consec) {
+        PyArray_MapIterSwapAxes(mit, (PyArrayObject **)&result, 1);
+    }
 
     Py_DECREF(mit);
   finish_view:
@@ -2177,6 +2226,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     int i, dummy_array=0;
     int nops;
     int uses_subspace;
+    npy_uint32 buffer;
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
@@ -2382,8 +2432,9 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                      extra_op_flags ? NPY_KEEPORDER : NPY_CORDER,
                                      NPY_UNSAFE_CASTING,
                                      op_flags, dtypes,
-                                     mit->nd_fancy, op_axes,
-                                     NULL, 0);
+                                     /* TODO: make micro-optimizations look nicer: */
+                                     (extra_op_flags && subspace != NULL) ? mit->nd_fancy : -1,
+                                     (extra_op_flags && subspace != NULL) ? op_axes : NULL, NULL, 0);
 
     for (i=0; i < nops; i++) {
         Py_DECREF(dtypes[i]);
@@ -2441,7 +2492,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                                  NPY_CORDER,
                                                  NPY_UNSAFE_CASTING,
                                                  &extra_op_flags,
-                                                 &extra_op_dtype,
+                                                 NULL,
                                                  mit->nd_fancy, op_axes,
                                                  mit->dimensions, 0);
 
@@ -2508,11 +2559,22 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         nops = 1;
     }
 
+    /*
+     * In this case we obviously do not need buffering, this is a huge
+     * speed improvement in some cases.
+     */
+    if (PyArray_DESCR(index_arrays[1]) == dtypes[1]) {
+        buffer = 0;
+    }
+    else {
+        buffer = NPY_ITER_BUFFERED;
+    }
+
     mit->subspace = NpyIter_AdvancedNew(nops, index_arrays,
                                         NPY_ITER_ZEROSIZE_OK |
-                                        NPY_ITER_BUFFERED |
                                         NPY_ITER_GROWINNER |
                                         NPY_ITER_EXTERNAL_LOOP |
+                                        NPY_ITER_BUFFERED |
                                         /*
                                          * TODO: closer look and document the
                                          *       need for delayed buffer alloc.
