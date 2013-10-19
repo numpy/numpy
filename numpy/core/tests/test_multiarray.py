@@ -3553,6 +3553,10 @@ def test_flat_element_deletion():
     except:
         raise AssertionError
 
+def test_scalar_element_deletion():
+    a = np.zeros(2, dtype=[('x', 'int'), ('y', 'int')])
+    assert_raises(ValueError, a[0].__delitem__, 'x')
+
 class TestMemEventHook(TestCase):
     def test_mem_seteventhook(self):
         # The actual tests are within the C code in
