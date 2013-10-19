@@ -53,6 +53,13 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
 
     /* We do not need to check for special attributes on trivial types */
     if (obj == Py_None ||
+            /* Basic number types */
+#if !defined(NPY_PY3K)
+            PyInt_CheckExact(obj) ||
+#endif
+            PyLong_CheckExact(obj) ||
+            PyFloat_CheckExact(obj) ||
+            /* Basic sequence types */
             PyList_CheckExact(obj) ||
             PyTuple_CheckExact(obj)) {
         return NULL;
