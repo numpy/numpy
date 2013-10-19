@@ -409,6 +409,36 @@ class TestSeterr(TestCase):
             seterr(divide='ignore')
             array([1.]) / array([0.])
 
+    def test_errobj(self):
+        olderrobj = np.geterrobj()
+        self.called = 0
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                with errstate(divide='warn'):
+                    np.seterrobj([20000, 1, None])
+                    array([1.]) / array([0.])
+                    self.assertEqual(len(w), 1)
+
+            def log_err(*args):
+                self.called += 1
+                extobj_err = args
+                assert (len(extobj_err) == 2)
+                assert ("divide" in extobj_err[0])
+
+            with errstate(divide='ignore'):
+                np.seterrobj([20000, 3, log_err])
+                array([1.]) / array([0.])
+            self.assertEqual(self.called, 1)
+
+            np.seterrobj(olderrobj)
+            with errstate(divide='ignore'):
+                np.divide(1., 0., extobj=[20000, 3, log_err])
+            self.assertEqual(self.called, 2)
+        finally:
+            np.seterrobj(olderrobj)
+            del self.called
+
 
 class TestFloatExceptions(TestCase):
     def assert_raises_fpe(self, fpeerr, flop, x, y):
@@ -433,7 +463,7 @@ class TestFloatExceptions(TestCase):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()]);
 
-    @dec.knownfailureif(True, "See ticket 1755")
+    @dec.knownfailureif(True, "See ticket #2350")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
@@ -487,6 +517,25 @@ class TestFloatExceptions(TestCase):
                         lambda a, b:a+b, ftype(np.inf), ftype(-np.inf))
                 self.assert_raises_fpe(invalid,
                         lambda a, b:a*b, ftype(0), ftype(np.inf))
+
+    def test_warnings(self):
+        # test warning code path
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            with np.errstate(all="warn"):
+                np.divide(1, 0.)
+                self.assertEqual(len(w), 1)
+                self.assertTrue("divide by zero" in str(w[0].message))
+                np.array(1e300) * np.array(1e300)
+                self.assertEqual(len(w), 2)
+                self.assertTrue("overflow" in str(w[-1].message))
+                np.array(np.inf) - np.array(np.inf)
+                self.assertEqual(len(w), 3)
+                self.assertTrue("invalid value" in str(w[-1].message))
+                np.array(1e-300) * np.array(1e-300)
+                self.assertEqual(len(w), 4)
+                self.assertTrue("underflow" in str(w[-1].message))
+
 
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):
