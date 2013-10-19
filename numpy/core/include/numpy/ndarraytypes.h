@@ -1295,12 +1295,14 @@ typedef struct {
         NpyIter               *outer;                  /* index objects
                                                           iterator */
         void                  *unused[NPY_MAXDIMS - 1];
-        PyArrayIterObject     *ait;                    /* flat Iterator for
-                                                          underlying array;
-                                                          should not be used */
+        /* Flat iterator for the indexed array. For compatibility solely. */
+        PyArrayIterObject     *ait;
 
-        /* flat iterator for subspace */
-        NpyIter              *subspace;
+        /*
+         * Subspace array. For binary compatibility (was an iterator,
+         * but only the check for NULL should be used).
+         */
+        PyArrayObject         *subspace;
 
         /*
          * if subspace iteration, then this is the array of axes in
@@ -1339,14 +1341,17 @@ typedef struct {
         NpyIter_IterNextFunc  *outer_next;
         char                  **outer_ptrs;
         npy_intp              *outer_strides;
-        npy_intp              itersize;    /* store innersize for MapIterNext */
 
         /*
          * Information about the subspace iterator.
          */
+        NpyIter               *subspace_iter;
         NpyIter_IterNextFunc  *subspace_next;
         char                  **subspace_ptrs;
         npy_intp              *subspace_strides;
+
+        /* Count for the external loop (which ever it is) for API iteration */
+        npy_intp              iter_count;
 
 } PyArrayMapIterObject;
 

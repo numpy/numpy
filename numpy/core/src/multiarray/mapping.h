@@ -48,7 +48,7 @@ NPY_NO_EXPORT PyObject*
 PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    int ndim, int fancy_ndim,
                    PyArrayObject *arr, PyArrayObject *subspace,
-                   npy_uint32 subspace_flags,
+                   npy_uint32 subspace_iter_flags,npy_uint32 subspace_flags,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype);
 #endif
