@@ -678,10 +678,9 @@ class TestMinMax(TestCase):
                 for i in range(inp.size):
                     inp[:] = np.arange(inp.size, dtype=dt)
                     inp[i] = np.nan
-                    self.assertTrue(np.isnan(inp.max()),
-                                    msg=repr(inp) + '\n' + msg)
-                    self.assertTrue(np.isnan(inp.min()),
-                                    msg=repr(inp) + '\n' + msg)
+                    emsg = lambda: '%r\n%s' % (inp, msg)
+                    assert_(np.isnan(inp.max()), msg=emsg)
+                    assert_(np.isnan(inp.min()), msg=emsg)
 
                     inp[i] = 1e10
                     assert_equal(inp.max(), 1e10, err_msg=msg)

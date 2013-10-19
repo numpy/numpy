@@ -138,6 +138,7 @@ static const npy_int32 fanout_4[] = {
  * #func = sqrt, absolute, minimum, maximum#
  * #check = IS_BLOCKABLE_UNARY, IS_BLOCKABLE_UNARY, IS_BLOCKABLE_REDUCE, IS_BLOCKABLE_REDUCE#
  * #name = unary, unary, unary_reduce, unary_reduce#
+ * #minmax = 0, 0, 1, 1#
  */
 
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -151,6 +152,9 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 static NPY_INLINE int
 run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
 {
+#if @minmax@ && (defined NO_FLOATING_POINT_SUPPORT)
+    return 0;
+#else
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (@check@(sizeof(@type@), 16)) {
         sse2_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0]);
@@ -158,6 +162,7 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     }
 #endif
     return 0;
+#endif
 }
 
 /**end repeat1**/
@@ -660,42 +665,33 @@ sse2_absolute_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
 static void
 sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 {
+    const size_t stride = 16 / sizeof(@type@);
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, 16) {
         *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
-    assert(n < (16 / sizeof(@type@)) || npy_is_aligned(&ip[i], 16));
-    if (i + 2 * 16 / sizeof(@type@) <= n) {
+    assert(n < (stride) || npy_is_aligned(&ip[i], 16));
+    if (i + 3 * stride <= n) {
         /* load the first elements */
-        @vtype@ c = @vpre@_load_@vsuf@((@type@*)&ip[i]);
-#ifdef NO_FLOATING_POINT_SUPPORT
-        @vtype@ cnan = @vpre@_cmpneq_@vsuf@(c, c);
-#else
+        @vtype@ c1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
+        @vtype@ c2 = @vpre@_load_@vsuf@((@type@*)&ip[i + stride]);
+        i += 2 * stride;
+
         /* minps/minpd will set invalid flag if nan is encountered */
         PyUFunc_clearfperr();
-#endif
-        i += 16 / sizeof(@type@);
-
-        LOOP_BLOCKED(@type@, 16) {
-            @vtype@ v = @vpre@_load_@vsuf@((@type@*)&ip[i]);
-            c = @vpre@_@VOP@_@vsuf@(c, v);
-#ifdef NO_FLOATING_POINT_SUPPORT
-            /* check for nan, breaking the loop makes non nan case slow */
-            cnan = @vpre@_or_@vsuf@(@vpre@_cmpneq_@vsuf@(v, v), cnan);
+        LOOP_BLOCKED(@type@, 32) {
+            @vtype@ v1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
+            @vtype@ v2 = @vpre@_load_@vsuf@((@type@*)&ip[i + stride]);
+            c1 = @vpre@_@VOP@_@vsuf@(c1, v1);
+            c2 = @vpre@_@VOP@_@vsuf@(c2, v2);
         }
+        c1 = @vpre@_@VOP@_@vsuf@(c1, c2);
 
-        if (@vpre@_movemask_@vsuf@(cnan)) {
+        if (PyUFunc_getfperr() & UFUNC_FPE_INVALID) {
             *op = @nan@;
-            return;
         }
-#else
-        }
-#endif
-        {
-            @type@ tmp = sse2_horizontal_@VOP@_@vtype@(c);
-            if (PyUFunc_getfperr() & UFUNC_FPE_INVALID)
-                *op = @nan@;
-            else
-                *op  = (*op @OP@ tmp || npy_isnan(*op)) ? *op : tmp;
+        else {
+            @type@ tmp = sse2_horizontal_@VOP@_@vtype@(c1);
+            *op  = (*op @OP@ tmp || npy_isnan(*op)) ? *op : tmp;
         }
     }
     LOOP_BLOCKED_END {

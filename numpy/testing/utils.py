@@ -33,6 +33,7 @@ verbose = 0
 def assert_(val, msg='') :
     """
     Assert that works in release mode.
+    Accepts callable msg to allow deferring evaluation until failure.
 
     The Python built-in ``assert`` does not work when executing code in
     optimized mode (the ``-O`` flag) - no byte-code is generated for it.
@@ -41,7 +42,11 @@ def assert_(val, msg='') :
 
     """
     if not val :
-        raise AssertionError(msg)
+        try:
+            smsg = msg()
+        except TypeError:
+            smsg = msg
+        raise AssertionError(smsg)
 
 def gisnan(x):
     """like isnan, but always raise an error if type not supported instead of
