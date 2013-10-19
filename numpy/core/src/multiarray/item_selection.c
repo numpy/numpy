@@ -1209,7 +1209,7 @@ partition_prep_kth_array(PyArrayObject * ktharray,
         PyErr_Format(PyExc_ValueError, "kth array must have dimension <= 1");
         return NULL;
     }
-    kthrvl = PyArray_Cast(ktharray, NPY_INTP);
+    kthrvl = (PyArrayObject *)PyArray_Cast(ktharray, NPY_INTP);
 
     if (kthrvl == NULL)
         return NULL;
@@ -2236,10 +2236,9 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     char *data;
     npy_intp diag_size;
-    PyArrayObject *ret;
     PyArray_Descr *dtype;
+    PyObject *ret;
     npy_intp ret_shape[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
-    PyObject *copy;
 
     if (ndim < 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -2325,7 +2324,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     /* Create the diagonal view */
     dtype = PyArray_DTYPE(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = PyArray_NewFromDescr(Py_TYPE(self),
                                dtype,
                                ndim-1, ret_shape,
                                ret_strides,
@@ -2336,7 +2335,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)self) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -2345,7 +2344,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
      * For numpy 1.9 the diagonal view is not writeable.
      * This line needs to be removed in 1.10.
      */
-    PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
+    PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
 
     return ret;
 }
@@ -2402,10 +2401,11 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
  * but a 32 bit type version would make it even faster on these platforms
  */
 static NPY_INLINE int
-count_nonzero_bytes_128(npy_uint64 * w)
+count_nonzero_bytes_128(const char *w)
 {
-    npy_uint64 w1 = w[0];
-    npy_uint64 w2 = w[1];
+    const npy_uint64 *w64 = (const npy_uint64 *)w;
+    npy_uint64 w1 = w64[0];
+    npy_uint64 w2 = w64[1];
 
     /*
      * bytes not exclusively 0 or 1, sum them individually.
@@ -2414,7 +2414,7 @@ count_nonzero_bytes_128(npy_uint64 * w)
      */
     if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
         /* reload from pointer to avoid a unnecessary stack spill with gcc */
-        char * c = (char *)w;
+        const char *c = w;
         npy_uintp i, count = 0;
         for (i = 0; i < 16; i++) {
             count += (c[i] != 0);
@@ -2464,8 +2464,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             /* Process the innermost dimension */
-            char * d = data;
-            char * e = data + shape[0];
+            const char *d = data;
+            const char *e = data + shape[0];
             if (npy_is_aligned(data, sizeof(npy_uint64))) {
                 npy_uintp stride = 2 * sizeof(npy_uint64);
                 for (; d < e - (shape[0]  % stride); d += stride) {

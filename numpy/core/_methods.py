@@ -1,5 +1,5 @@
 """
-Array methods which are called by the both the C-code for the method
+Array methods which are called by both the C-code for the method
 and the Python code for the NumPy-namespace function
 
 """

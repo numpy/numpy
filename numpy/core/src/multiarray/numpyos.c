@@ -26,7 +26,7 @@
  * in length.
  */
 static void
-_ensure_minimum_exponent_length(char* buffer, size_t buf_size)
+ensure_minimum_exponent_length(char* buffer, size_t buf_size)
 {
     char *p = strpbrk(buffer, "eE");
     if (p && (*(p + 1) == '-' || *(p + 1) == '+')) {
@@ -101,7 +101,7 @@ _ensure_minimum_exponent_length(char* buffer, size_t buf_size)
  * will not be in the current locale, it will always be '.'
  */
 static void
-_ensure_decimal_point(char* buffer, size_t buf_size)
+ensure_decimal_point(char* buffer, size_t buf_size)
 {
     int insert_count = 0;
     char* chars_to_insert;
@@ -163,7 +163,7 @@ _ensure_decimal_point(char* buffer, size_t buf_size)
  * longer, no need for a maximum buffer size parameter.
  */
 static void
-_change_decimal_from_locale_to_dot(char* buffer)
+change_decimal_from_locale_to_dot(char* buffer)
 {
     struct lconv *locale_data = localeconv();
     const char *decimal_point = locale_data->decimal_point;
@@ -194,7 +194,7 @@ _change_decimal_from_locale_to_dot(char* buffer)
  * Check that the format string is a valid one for NumPyOS_ascii_format*
  */
 static int
-_check_ascii_format(const char *format)
+check_ascii_format(const char *format)
 {
     char format_char;
     size_t format_len = strlen(format);
@@ -238,13 +238,13 @@ _check_ascii_format(const char *format)
  * PyOS_ascii_formatd
  */
 static char*
-_fix_ascii_format(char* buf, size_t buflen, int decimal)
+fix_ascii_format(char* buf, size_t buflen, int decimal)
 {
     /*
      * Get the current locale, and find the decimal point string.
      * Convert that string back to a dot.
      */
-    _change_decimal_from_locale_to_dot(buf);
+    change_decimal_from_locale_to_dot(buf);
 
     /*
      * If an exponent exists, ensure that the exponent is at least
@@ -253,10 +253,10 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
      * MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
      * back to MIN_EXPONENT_DIGITS
      */
-    _ensure_minimum_exponent_length(buf, buflen);
+    ensure_minimum_exponent_length(buf, buflen);
 
     if (decimal != 0) {
-        _ensure_decimal_point(buf, buflen);
+        ensure_decimal_point(buf, buflen);
     }
 
     return buf;
@@ -282,18 +282,18 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
  *
  * Return value: The pointer to the buffer with the converted string.
  */
-#define _ASCII_FORMAT(type, suffix, print_type)                         \
+#define ASCII_FORMAT(type, suffix, print_type)                          \
     NPY_NO_EXPORT char*                                                 \
     NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size,       \
                                    const char *format,                  \
                                    type val, int decimal)               \
     {                                                                   \
         if (npy_isfinite(val)) {                                        \
-            if(_check_ascii_format(format)) {                           \
+            if (check_ascii_format(format)) {                           \
                 return NULL;                                            \
             }                                                           \
             PyOS_snprintf(buffer, buf_size, format, (print_type)val);   \
-            return _fix_ascii_format(buffer, buf_size, decimal);        \
+            return fix_ascii_format(buffer, buf_size, decimal);         \
         }                                                               \
         else if (npy_isnan(val)){                                       \
             if (buf_size < 4) {                                         \
@@ -318,12 +318,12 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
         return buffer;                                                  \
     }
 
-_ASCII_FORMAT(float, f, float)
-_ASCII_FORMAT(double, d, double)
+ASCII_FORMAT(float, f, float)
+ASCII_FORMAT(double, d, double)
 #ifndef FORCE_NO_LONG_DOUBLE_FORMATTING
-_ASCII_FORMAT(long double, l, long double)
+ASCII_FORMAT(long double, l, long double)
 #else
-_ASCII_FORMAT(long double, l, double)
+ASCII_FORMAT(long double, l, double)
 #endif
 
 /*
@@ -380,8 +380,8 @@ NumPyOS_ascii_isalnum(char c)
  *
  * Same as tolower under C locale
  */
-static char
-NumPyOS_ascii_tolower(char c)
+static int
+NumPyOS_ascii_tolower(int c)
 {
     if (c >= 'A' && c <= 'Z') {
         return c + ('a'-'A');
@@ -398,10 +398,8 @@ NumPyOS_ascii_tolower(char c)
 static int
 NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
 {
-    int diff;
     while (len > 0 && *s1 != '\0' && *s2 != '\0') {
-        diff = ((int)NumPyOS_ascii_tolower(*s1)) -
-            ((int)NumPyOS_ascii_tolower(*s2));
+        int diff = NumPyOS_ascii_tolower(*s1) - NumPyOS_ascii_tolower(*s2);
         if (diff != 0) {
             return diff;
         }
@@ -410,13 +408,13 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
         --len;
     }
     if (len > 0) {
-        return ((int)*s1) - ((int)*s2);
+        return *s1 - *s2;
     }
     return 0;
 }
 
 /*
- * _NumPyOS_ascii_strtod_plain:
+ * NumPyOS_ascii_strtod_plain:
  *
  * PyOS_ascii_strtod work-alike, with no enhanced features,
  * for forward compatibility with Python >= 2.7

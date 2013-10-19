@@ -221,8 +221,10 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
            * - https://github.com/numpy/numpy/issues/3502
            * - https://github.com/numpy/numpy/issues/3503
            */
-          double m1_prio = PyArray_GetPriority(m1, NPY_SCALAR_PRIORITY);
-          double m2_prio = PyArray_GetPriority(m2, NPY_SCALAR_PRIORITY);
+          double m1_prio = PyArray_GetPriority((PyObject *)m1,
+                                               NPY_SCALAR_PRIORITY);
+          double m2_prio = PyArray_GetPriority((PyObject *)m2,
+                                               NPY_SCALAR_PRIORITY);
           if (m1_prio < m2_prio) {
               Py_INCREF(Py_NotImplemented);
               return Py_NotImplemented;
