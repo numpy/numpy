@@ -40,16 +40,6 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
-/*
- * Returns -1 and sets an exception if *index is an invalid index for
- * an array of size max_item, otherwise adjusts it in place to be
- * 0 <= *index < max_item, and returns 0.
- * 'axis' should be the array axis that is being indexed over, if known. If
- * unknown, use -1.
- */
-NPY_NO_EXPORT int
-check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis);
-
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i);
 
@@ -66,6 +56,41 @@ NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
+
+
+/*
+ * Returns -1 and sets an exception if *index is an invalid index for
+ * an array of size max_item, otherwise adjusts it in place to be
+ * 0 <= *index < max_item, and returns 0.
+ * 'axis' should be the array axis that is being indexed over, if known. If
+ * unknown, use -1.
+ */
+static NPY_INLINE int
+check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
+{
+    /* Check that index is valid, taking into account negative indices */
+    if ((*index < -max_item) || (*index >= max_item)) {
+        /* Try to be as clear as possible about what went wrong. */
+        if (axis >= 0) {
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %"NPY_INTP_FMT,
+                         *index, axis, max_item);
+        } else {
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for size %"NPY_INTP_FMT,
+                         *index, max_item);
+        }
+        return -1;
+    }
+    /* adjust negative indices */
+    if (*index < 0) {
+        *index += max_item;
+    }
+    return 0;
+}
+
 
 /*
  * return true if pointer is aligned to 'alignment'
