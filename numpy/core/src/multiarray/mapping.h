@@ -28,12 +28,6 @@ array_subscript(PyArrayObject *self, PyObject *op);
 NPY_NO_EXPORT int
 array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 
-NPY_NO_EXPORT PyObject *
-add_new_axes_0d(PyArrayObject *,  int);
-
-NPY_NO_EXPORT int
-count_new_axes_0d(PyObject *tuple);
-
 /*
  * Prototypes for Mapping calls --- not part of the C-API
  * because only useful as part of a getitem call.
@@ -45,13 +39,16 @@ NPY_NO_EXPORT void
 PyArray_MapIterNext(PyArrayMapIterObject *mit);
 
 NPY_NO_EXPORT int
-PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *subspace,
-                    PyArrayObject *, npy_index_info *indices, int index_num,
-                    int delayed_index_check);
+PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit);
+
+NPY_NO_EXPORT void
+PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap);
 
 NPY_NO_EXPORT PyObject*
 PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
-                   PyArrayObject *subspace,
-                   npy_uint32 extra_op_flags,
-                   PyArrayObject *extra_op, PyArray_Descr *extra_op_dtype);
+                   int ndim, int fancy_ndim,
+                   PyArrayObject *arr, PyArrayObject *subspace,
+                   npy_uint32 subspace_flags,
+                   npy_uint32 extra_op_flags, PyArrayObject *extra_op,
+                   PyArray_Descr *extra_op_dtype);
 #endif

@@ -1294,22 +1294,20 @@ typedef struct {
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
         NpyIter               *outer;                  /* index objects
                                                           iterator */
-        PyArrayObject         *extra_op;
-        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
-        void                  *unused[NPY_MAXDIMS - 3];
+        void                  *unused[NPY_MAXDIMS - 1];
         PyArrayIterObject     *ait;                    /* flat Iterator for
                                                           underlying array;
                                                           should not be used */
 
         /* flat iterator for subspace */
-        PyArrayIterObject     *subspace;
+        NpyIter              *subspace;
 
         /*
          * if subspace iteration, then this is the array of axes in
          * the underlying array represented by the index objects
          */
         int                   iteraxes[NPY_MAXDIMS];
-        npy_intp              outer_strides[NPY_MAXDIMS];
+        npy_intp              fancy_strides[NPY_MAXDIMS];
 
         /* pointer when all fancy indices are 0 */
         char                  *baseoffset;
@@ -1322,15 +1320,33 @@ typedef struct {
         char                  *dataptr;
 
         int                   nd_fancy;
-        npy_intp              outer_dims[NPY_MAXDIMS];
+        npy_intp              fancy_dims[NPY_MAXDIMS];
+
+        /*
+         * Extra op information.
+         */
+        PyArrayObject         *extra_op;
+        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
+        npy_uint32            *extra_op_flags;         /* Iterator flags */
+
+        NpyIter               *extra_op_iter;
+        NpyIter_IterNextFunc  *extra_op_next;
+        char                  **extra_op_ptrs;
 
         /*
          * Information about the iteration state.
          */
-        NpyIter_IterNextFunc  *iternext;
-        char                  **iterptrs;
-        npy_intp              *iterstrides;
+        NpyIter_IterNextFunc  *outer_next;
+        char                  **outer_ptrs;
+        npy_intp              *outer_strides;
         npy_intp              itersize;    /* store innersize for MapIterNext */
+
+        /*
+         * Information about the subspace iterator.
+         */
+        NpyIter_IterNextFunc  *subspace_next;
+        char                  **subspace_ptrs;
+        npy_intp              *subspace_strides;
 
 } PyArrayMapIterObject;
 
