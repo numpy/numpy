@@ -136,6 +136,8 @@ def main(argv):
         extra_argv += ['--cover-html',
                        '--cover-html-dir='+dst_dir]
 
+    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
+
     if args.build_only:
         sys.exit(0)
     elif args.submodule:
@@ -147,19 +149,26 @@ def main(argv):
             print("Cannot run tests for %s" % modname)
             sys.exit(2)
     elif args.tests:
+        def fix_test_path(x):
+            # fix up test path
+            p = x.split(':')
+            p[0] = os.path.relpath(os.path.abspath(p[0]),
+                                   test_dir)
+            return ':'.join(p)
+
+        tests = [fix_test_path(x) for x in args.tests]
+
         def test(*a, **kw):
             extra_argv = kw.pop('extra_argv', ())
-            extra_argv = extra_argv + args.tests[1:]
+            extra_argv = extra_argv + tests[1:]
             kw['extra_argv'] = extra_argv
             from numpy.testing import Tester
-            return Tester(args.tests[0]).test(*a, **kw)
+            return Tester(tests[0]).test(*a, **kw)
     else:
         __import__(PROJECT_MODULE)
         test = sys.modules[PROJECT_MODULE].test
 
     # Run the tests under build/test
-    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
-
     try:
         shutil.rmtree(test_dir)
     except OSError:
