@@ -4,11 +4,11 @@ import tempfile
 import sys
 import os
 import warnings
+import operator
 if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
-
 
 import numpy as np
 from nose import SkipTest
@@ -1460,7 +1460,7 @@ class TestMethods(TestCase):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
-        
+
         class B(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return NotImplemented
@@ -1546,6 +1546,185 @@ class TestMethods(TestCase):
         # 'K' doesn't reverse the axes of negative strides
         assert_equal(a.ravel(order='K'), [2, 3, 0, 1])
         assert_(a.ravel(order='K').flags.owndata)
+
+
+class TestBinop(object):
+    def test_ufunc_override_rop_precedence(self):
+        # Check that __rmul__ and other right-hand operations have
+        # precedence over __numpy_ufunc__
+
+        ops = {
+            '__add__':      ('__radd__', np.add, True),
+            '__sub__':      ('__rsub__', np.subtract, True),
+            '__mul__':      ('__rmul__', np.multiply, True),
+            '__truediv__':  ('__rtruediv__', np.true_divide, True),
+            '__floordiv__': ('__rfloordiv__', np.floor_divide, True),
+            '__mod__':      ('__rmod__', np.remainder, True),
+            '__divmod__':   ('__rdivmod__', None, False),
+            '__pow__':      ('__rpow__', np.power, True),
+            '__lshift__':   ('__rlshift__', np.left_shift, True),
+            '__rshift__':   ('__rrshift__', np.right_shift, True),
+            '__and__':      ('__rand__', np.bitwise_and, True),
+            '__xor__':      ('__rxor__', np.bitwise_xor, True),
+            '__or__':       ('__ror__', np.bitwise_or, True),
+            '__ge__':       ('__le__', np.less_equal, False),
+            '__gt__':       ('__lt__', np.less, False),
+            '__le__':       ('__ge__', np.greater_equal, False),
+            '__lt__':       ('__gt__', np.greater, False),
+            '__eq__':       ('__eq__', np.equal, False),
+            '__ne__':       ('__ne__', np.not_equal, False),
+        }
+
+        class OtherNdarraySubclass(ndarray):
+            pass
+
+        class OtherNdarraySubclassWithOverride(ndarray):
+            def __numpy_ufunc__(self, *a, **kw):
+                raise AssertionError(("__numpy_ufunc__ %r %r shouldn't have "
+                                      "been called!") % (a, kw))
+
+        def check(op_name, ndsubclass):
+            rop_name, np_op, has_iop = ops[op_name]
+
+            if has_iop:
+                iop_name = '__i' + op_name[2:]
+                iop = getattr(operator, iop_name)
+
+            if op_name == "__divmod__":
+                op = divmod
+            else:
+                op = getattr(operator, op_name)
+
+            # Dummy class
+            def __init__(self, *a, **kw):
+                pass
+
+            def __numpy_ufunc__(self, *a, **kw):
+                raise AssertionError(("__numpy_ufunc__ %r %r shouldn't have "
+                                      "been called!") % (a, kw))
+
+            def __op__(self, *other):
+                return "op"
+
+            def __rop__(self, *other):
+                return "rop"
+
+            if ndsubclass:
+                bases = (ndarray,)
+            else:
+                bases = (object,)
+
+            dct = {'__init__': __init__,
+                   '__numpy_ufunc__': __numpy_ufunc__,
+                   op_name: __op__}
+            if op_name != rop_name:
+                dct[rop_name] = __rop__
+
+            cls = type("Rop" + rop_name, bases, dct)
+
+            # Check behavior against both bare ndarray objects and a
+            # ndarray subclasses with and without their own override
+            obj = cls((1,))
+
+            arr_objs = [np.array([1]),
+                        np.array([2]).view(OtherNdarraySubclass),
+                        np.array([3]).view(OtherNdarraySubclassWithOverride),
+                        ]
+
+            for arr in arr_objs:
+                err_msg = "%r %r" % (op_name, arr,)
+
+                # Check that ndarray op gives up if it sees a non-subclass
+                if not isinstance(obj, arr.__class__):
+                    assert_equal(getattr(arr, op_name)(obj),
+                                 NotImplemented, err_msg=err_msg)
+
+                # Check that the Python binops have priority
+                assert_equal(op(obj, arr), "op", err_msg=err_msg)
+                if op_name == rop_name:
+                    assert_equal(op(arr, obj), "op", err_msg=err_msg)
+                else:
+                    assert_equal(op(arr, obj), "rop", err_msg=err_msg)
+
+                # Check that Python binops have priority also for in-place ops
+                if has_iop:
+                    assert_equal(getattr(arr, iop_name)(obj),
+                                 NotImplemented, err_msg=err_msg)
+                    if op_name != "__pow__":
+                        # inplace pow requires the other object to be
+                        # integer-like?
+                        assert_equal(iop(arr, obj), "rop", err_msg=err_msg)
+
+                # Check that ufunc call __numpy_ufunc__ normally
+                if np_op is not None:
+                    assert_raises(AssertionError, np_op, arr, obj,
+                                  err_msg=err_msg)
+                    assert_raises(AssertionError, np_op, obj, arr,
+                                  err_msg=err_msg)
+
+        # Check all binary operations
+        for op_name in sorted(ops.keys()):
+            yield check, op_name, True
+            yield check, op_name, False
+
+    def test_ufunc_override_rop_simple(self):
+        # Check parts of the binary op overriding behavior in an
+        # explicit test case that is easier to understand.
+
+        class SomeClass(object):
+            def __numpy_ufunc__(self, *a, **kw):
+                return "ufunc"
+            def __mul__(self, other):
+                return 123
+            def __rmul__(self, other):
+                return 321
+            def __gt__(self, other):
+                return "yep"
+            def __lt__(self, other):
+                return "nope"
+
+        class SomeClass2(SomeClass, ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                if ufunc is np.multiply:
+                    return "ufunc"
+                else:
+                    inputs = list(inputs)
+                    inputs[i] = np.asarray(self)
+                    func = getattr(ufunc, method)
+                    r = func(*inputs, **kw)
+                    if 'out' in kw:
+                        return r
+                    else:
+                        x = SomeClass2(r.shape, dtype=r.dtype)
+                        x[...] = r
+                        return x
+
+        arr = np.array([0])
+        obj = SomeClass()
+        obj2 = SomeClass2((1,), dtype=np.int_)
+        obj2[0] = 9
+
+        assert_equal(obj * arr, 123)
+        assert_equal(arr * obj, 321)
+        assert_equal(arr > obj, "nope")
+        assert_equal(arr < obj, "yep")
+        assert_equal(np.multiply(arr, obj), "ufunc")
+        arr *= obj
+        assert_equal(arr, 321)
+
+        assert_equal(obj2 * arr, 123)
+        assert_equal(arr * obj2, 321)
+        assert_equal(arr > obj2, "nope")
+        assert_equal(arr < obj2, "yep")
+        assert_equal(np.multiply(arr, obj2), "ufunc")
+        arr *= obj2
+        assert_equal(arr, 321)
+
+        obj2 += 33
+        assert_equal(obj2[0], 42)
+        assert_equal(obj2.sum(), 42)
+        assert_(isinstance(obj2, SomeClass2))
+
 
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):

@@ -80,6 +80,35 @@ Numpy provides several hooks that classes can customize:
       overrides the behavior of :func:`numpy.dot` even though it is
       not an Ufunc.
 
+   .. note:: If you also define right-hand binary operator override
+      methods (such as ``__rmul__``) or comparison operations (such as
+      ``__gt__``) in your class, they take precedence over the
+      :func:`__numpy_ufunc__` mechanism when resolving results of
+      binary operations (such as ``ndarray_obj * your_obj``).
+
+      The technical special case is: ``ndarray.__mul__`` returns
+      ``NotImplemented`` if the other object is *not* a subclass of
+      :class:`ndarray`, and defines both ``__numpy_ufunc__`` and
+      ``__rmul__``. Similar exception applies for the other operations
+      than multiplication.
+
+      In such a case, when computing a binary operation such as
+      ``ndarray_obj * your_obj``, your ``__numpy_ufunc__`` method
+      *will not* be called.  Instead, the execution passes on to your
+      right-hand ``__rmul__`` operation, as per standard Python
+      operator override rules.
+
+      Similar special case applies to *in-place operations*: If you
+      define ``__rmul__``, then ``ndarray_obj *= your_obj`` *will not*
+      call your ``__numpy_ufunc__`` implementation. Instead, the
+      default Python behavior ``ndarray_obj = ndarray_obj * your_obj``
+      occurs.
+
+      Note that the above discussion applies only to Python's builtin
+      binary operation mechanism. ``np.multiply(ndarray_obj,
+      your_obj)`` always calls only your ``__numpy_ufunc__``, as
+      expected.
+
 .. function:: class.__array_finalize__(self)
 
    This method is called whenever the system internally allocates a
