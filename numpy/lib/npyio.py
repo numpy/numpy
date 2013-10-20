@@ -1045,6 +1045,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 raise error
             else:
                 format = fmt
+        else:
+            raise ValueError('invalid fmt: %r' % (fmt,))
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
