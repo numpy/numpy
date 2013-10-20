@@ -2348,12 +2348,12 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
-    /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject));
-    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
     if (mit == NULL) {
         return NULL;
     }
+    /* set all attributes of mapiter to zero */
+    memset(mit, 0, sizeof(PyArrayMapIterObject));
+    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
     Py_XINCREF(subspace);
     mit->subspace = subspace;
