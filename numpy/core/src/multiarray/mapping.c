@@ -2635,7 +2635,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                      NPY_ITER_MULTI_INDEX |
                                      NPY_ITER_BUFFERED |
                                      NPY_ITER_DELAY_BUFALLOC |
-                                     NPY_ITER_GROWINNER,
+                                     NPY_ITER_GROWINNER |
+                                     NPY_ITER_DONT_NEGATE_STRIDES,
                                      /* C-order if extra op is not used */
                                      extra_op_flags ? NPY_KEEPORDER : NPY_CORDER,
                                      NPY_UNSAFE_CASTING,
