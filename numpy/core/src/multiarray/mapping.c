@@ -1859,8 +1859,15 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
      *          very own index machinery.
      *          I find this weird, but not sure if there is a way to
      *          deprecate. (why does the class not implement getitem too?)
+     *
+     * TODO|FIXME: The HAS_SCALAR_ARRAY special case here will break matrix
+     *          for `matrix[:,np.array(1)] = vals`  (found by scipy test),
+     *          this should not be that bad. This could be fixed by not
+     *          returning a copy for __getitem__ here, always, or for
+     *          subclasses.
      */
-    else if (!(index_type & HAS_FANCY) && !PyArray_CheckExact(self)) {
+    else if (!(index_type & (HAS_FANCY | HAS_SCALAR_ARRAY))
+                && !PyArray_CheckExact(self)) {
         view = (PyArrayObject *)PyObject_GetItem((PyObject *)self, ind);
         if (view == NULL) {
             goto fail;
@@ -2636,6 +2643,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                      NPY_ITER_BUFFERED |
                                      NPY_ITER_DELAY_BUFALLOC |
                                      NPY_ITER_GROWINNER |
+                                     /* TODO: Just for scipy... */
                                      NPY_ITER_DONT_NEGATE_STRIDES,
                                      /* C-order if extra op is not used */
                                      extra_op_flags ? NPY_KEEPORDER : NPY_CORDER,
