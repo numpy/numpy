@@ -1294,7 +1294,8 @@ typedef struct {
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
         NpyIter               *outer;                  /* index objects
                                                           iterator */
-        void                  *unused[NPY_MAXDIMS - 1];
+        void                  *unused[NPY_MAXDIMS - 2];
+        PyArrayObject         *array;
         /* Flat iterator for the indexed array. For compatibility solely. */
         PyArrayIterObject     *ait;
 
@@ -1323,6 +1324,9 @@ typedef struct {
 
         int                   nd_fancy;
         npy_intp              fancy_dims[NPY_MAXDIMS];
+
+        /* Whether the iterator (any of the iterators) requires API */
+        int                   needs_api;
 
         /*
          * Extra op information.
