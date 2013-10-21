@@ -287,6 +287,10 @@ class TestSaveTxt(TestCase):
         lines = c.readlines()
         assert_equal(lines, asbytes_nested(['01 : 2.0\n', '03 : 4.0\n']))
 
+        # Bad fmt, should raise a ValueError
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, a, fmt=99)
+
     def test_header_footer(self):
         """
         Test the functionality of the header and footer keyword argument.
