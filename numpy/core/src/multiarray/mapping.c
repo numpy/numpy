@@ -1186,6 +1186,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     return -1;
                 }
                 if (n_steps <= 0) {
+                    /* TODO: Always points start then, could change that */
                     n_steps = 0;
                     step = 1;
                     start = 0;
@@ -1857,14 +1858,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
      * WARNING: There is a huge special case here. If this is not a
      *          base class array, we have to get the view through its
      *          very own index machinery.
-     *          I find this weird, but not sure if there is a way to
-     *          deprecate. (why does the class not implement getitem too?)
-     *
-     * TODO|FIXME: The HAS_SCALAR_ARRAY special case here will break matrix
-     *          for `matrix[:,np.array(1)] = vals` (found by scipy test),
-     *          this should not be that bad. This could be fixed by not
-     *          returning a copy for __getitem__ here, always, or for
-     *          subclasses.
+     *          I find this a bit weird (why not use __getitem__).
+     *          This is/can only be done if the index is not fancy.
      */
     else if (!(index_type & (HAS_FANCY | HAS_SCALAR_ARRAY))
                 && !PyArray_CheckExact(self)) {
@@ -2497,11 +2492,16 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype)
 {
+    PyObject *errmsg, *tmp;
+
     PyArrayObject *index_arrays[NPY_MAXDIMS];
     PyArray_Descr *dtypes[NPY_MAXDIMS];
+
     npy_uint32 op_flags[NPY_MAXDIMS];
     npy_uint32 outer_flags;
+
     PyArrayMapIterObject *mit;
+
     int single_op_axis[NPY_MAXDIMS];
     int *op_axes[NPY_MAXDIMS] = {NULL};
     int i, j, dummy_array=0;
@@ -2603,6 +2603,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             Py_INCREF(extra_op);
         }
 
+        if (PyArray_NDIM(extra_op) > mit->nd) {
+            /* TODO: Add a test. */
+            goto broadcast_error;
+        }
+
         /*
          * If dimensions need to be prepended (and no swapaxis is needed,
          * use op_axes after extra_op is allocated for sure.
@@ -2611,6 +2616,26 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             PyArray_MapIterSwapAxes(mit, &extra_op, 0);
             if (extra_op == NULL) {
                 goto fail;
+            }
+        }
+
+        if (subspace && !uses_subspace) {
+            /*
+             * We are not using the subspace, so its size is 1.
+             * All dimensions of the extra_op corresponding to the
+             * subspace must be equal to 1.
+             */
+            /* TODO: Add a test for this special case! */
+            if (PyArray_NDIM(subspace) <= PyArray_NDIM(extra_op)) {
+                j = PyArray_NDIM(subspace);
+            }
+            else {
+                j = PyArray_NDIM(extra_op);
+            }
+            for (i = 1; i < j + 1; i++) {
+                if (PyArray_DIM(extra_op, PyArray_NDIM(extra_op) - i) != 1) {
+                    goto broadcast_error;
+                }
             }
         }
     }
@@ -2925,61 +2950,64 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      * in that case, since the NpyIter error speaks of iterators and
      * remapped axes, etc...
      */
-    if (extra_op) {
-        PyObject *errmsg, *tmp;
-
-        j = mit->nd;
-        for (i = PyArray_NDIM(extra_op) - 1; i >= 0; i--) {
-            j--;
-            if ((PyArray_DIM(extra_op, i) != 1)
-                    &&  (PyArray_DIM(extra_op, i) != mit->dimensions[j])) {
-                /* extra_op cannot be broadcasted to the indexing result */
-
-
-                errmsg = PyUString_FromString("shape mismatch: value array "
-                                "of shape ");
-                if (errmsg == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-
-                tmp = get_shape_string(PyArray_NDIM(extra_op),
-                                       PyArray_DIMS(extra_op), " ");
-                if (tmp == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-
-                tmp = PyUString_FromString("could not be broadcast to indexing "
-                                "result of shape ");
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-
-                tmp = get_shape_string(mit->nd, mit->dimensions, "");
-                if (tmp == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    Py_DECREF(mit);
-                    return NULL;
-                }
-
-                PyErr_SetObject(PyExc_ValueError, errmsg);
-                Py_DECREF(errmsg);
-            }
-        }
+    if (extra_op == NULL) {
+        goto no_broadcast_error;
     }
 
+    j = mit->nd;
+    for (i = PyArray_NDIM(extra_op) - 1; i >= 0; i--) {
+        j--;
+        if ((PyArray_DIM(extra_op, i) != 1)
+                &&  (PyArray_DIM(extra_op, i) != mit->dimensions[j])) {
+            /* extra_op cannot be broadcasted to the indexing result */
+            goto broadcast_error;
+        }
+    }
+    goto no_broadcast_error;
+
+  broadcast_error:
+    errmsg = PyUString_FromString("shape mismatch: value array "
+                    "of shape ");
+    if (errmsg == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+
+    tmp = get_shape_string(PyArray_NDIM(extra_op),
+                           PyArray_DIMS(extra_op), " ");
+    if (tmp == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+    PyUString_ConcatAndDel(&errmsg, tmp);
+    if (errmsg == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+
+    tmp = PyUString_FromString("could not be broadcast to indexing "
+                    "result of shape ");
+    PyUString_ConcatAndDel(&errmsg, tmp);
+    if (errmsg == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+
+    tmp = get_shape_string(mit->nd, mit->dimensions, "");
+    if (tmp == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+    PyUString_ConcatAndDel(&errmsg, tmp);
+    if (errmsg == NULL) {
+        Py_DECREF(mit);
+        return NULL;
+    }
+
+    PyErr_SetObject(PyExc_ValueError, errmsg);
+    Py_DECREF(errmsg);
+
+  no_broadcast_error:
     Py_DECREF(mit);
     return NULL;
 }
@@ -3025,7 +3053,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         goto fail;
     }
 
-    /* Kludge for backward compatibility */
+    /* Required for backward compatibility */
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)a);
     if (mit->ait == NULL) {
         goto fail;
