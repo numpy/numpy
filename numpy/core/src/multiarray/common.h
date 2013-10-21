@@ -148,7 +148,7 @@ npy_memchr(char * haystack, char needle,
         /* usually find elements to skip path */
 #if (defined HAVE___BUILTIN_CTZ && defined NPY_CPU_HAVE_UNALIGNED_ACCESS)
         if (needle == 0 && stride == 1) {
-            while (p < end - ((npy_uintp)end % sizeof(unsigned int))) {
+            while (p < end - (size % sizeof(unsigned int))) {
                 unsigned int  v = *(unsigned int*)p;
                 if (v == 0) {
                     p += sizeof(unsigned int);
