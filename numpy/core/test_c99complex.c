@@ -99,11 +99,16 @@
 
 #define RETTYPE PyObject*
 
+/* MSVC #defines copysign as _copysign. This conflicts with our prefixing */
+#ifdef _MSC_VER
+#undef copysign
+#endif
+
 #define INIT_FUNC() \
     PyObject *ret = PyList_New(0); \
     PyObject *entry; \
     const size_t bsize = 4096; \
-    char buf[bsize]; \
+    char buf[4096]; \
     int used_size
 
 #define TEST_FAILED_INT(printexpr) \
