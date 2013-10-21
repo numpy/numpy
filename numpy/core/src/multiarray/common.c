@@ -782,3 +782,58 @@ _is_basic_python_type(PyObject * obj)
 
     return 0;
 }
+
+
+NPY_NO_EXPORT PyObject *
+get_shape_string(npy_intp n, npy_intp *vals, char *ending)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if it's a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    i = 0;
+    while (i < n && vals[i] < 0) {
+        ++i;
+    }
+
+    if (i == n) {
+        return PyUString_FromFormat("()%s", ending);
+    }
+    else {
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyUString_FromString(",newaxis");
+        }
+        else {
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+        }
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        PyUString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    if (i == 1) {
+        tmp = PyUString_FromFormat(",)%s", ending);
+    }
+    else {
+        tmp = PyUString_FromFormat(")%s", ending);
+        }
+    PyUString_ConcatAndDel(&ret, tmp);
+    return ret;
+}

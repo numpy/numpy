@@ -657,9 +657,9 @@ def test_iter_broadcasting_errors():
         # The message should contain "shape->remappedshape" for each operand
         assert_(msg.find('(2,3)->(2,3)') >= 0,
             'Message "%s" doesn\'t contain operand shape (2,3)->(2,3)' % msg)
-        assert_(msg.find('(2)->(2,newaxis)') >= 0,
+        assert_(msg.find('(2,)->(2,newaxis)') >= 0,
                 ('Message "%s" doesn\'t contain remapped operand shape' +
-                '(2)->(2,newaxis)') % msg)
+                '(2,)->(2,newaxis)') % msg)
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
                 'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)

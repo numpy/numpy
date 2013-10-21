@@ -751,10 +751,9 @@ class TestRegression(TestCase):
         s = np.ones(10, dtype=float)
         x = np.array((15,), dtype=float)
         def ia(x, s, v): x[(s>0)]=v
-        # Before 1.9. was ValueError (a special case not used anymore)
-        self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
-        self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
-        # However, this still uses that special case:
+        self.assertRaises(ValueError, ia, x, s, np.zeros(9, dtype=float))
+        self.assertRaises(ValueError, ia, x, s, np.zeros(11, dtype=float))
+        # Old special case (different code path):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
 
     def test_mem_scalar_indexing(self, level=rlevel):
