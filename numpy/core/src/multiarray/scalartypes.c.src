@@ -2185,6 +2185,12 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         return -1;
     }
 
+    if (!val) {
+        PyErr_SetString(PyExc_ValueError,
+                "cannot delete scalar field");
+        return -1;
+    }
+
 #if defined(NPY_PY3K)
     if (PyUString_Check(ind)) {
 #else
