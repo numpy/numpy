@@ -1565,6 +1565,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
         NAD_SHAPE(axisdata) = 1;
         NAD_INDEX(axisdata) = 0;
         memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
+        memset(NAD_STRIDES(axisdata), 0, NPY_SIZEOF_INTP*nop);
     }
 
     /* Now process the operands, filling in the axisdata */
