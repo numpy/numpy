@@ -3,8 +3,8 @@
  *
  * Implement some C99-compatible complex math functions
  *
- * Most of the code is taken from the msun library in FreeBSD (HEAD @ 30th June
- * 2009), under the following license:
+ * Most of the code is taken from the msun library in FreeBSD (HEAD @ 4th
+ * October 2013), under the following license:
  *
  * Copyright (c) 2007, 2011 David Schultz <das@FreeBSD.ORG>
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
