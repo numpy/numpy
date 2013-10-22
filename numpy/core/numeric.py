@@ -2741,7 +2741,7 @@ class errstate(object):
 
 
 def _setdef():
-    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
+    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     umath.seterrobj(defval)
 
 # set the default values

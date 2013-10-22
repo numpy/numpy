@@ -8,6 +8,7 @@ import itertools
 
 import numpy as np
 from numpy.core import *
+from numpy.core import umath
 from numpy.random import rand, randint, randn
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
@@ -438,6 +439,24 @@ class TestSeterr(TestCase):
         finally:
             np.seterrobj(olderrobj)
             del self.called
+
+    def test_errobj_noerrmask(self):
+        # errmask = 0 has a special code path for the default
+        olderrobj = np.geterrobj()
+        try:
+            # set errobj to something non default
+            np.seterrobj([umath.UFUNC_BUFSIZE_DEFAULT,
+                         umath.ERR_DEFAULT + 1, None])
+            #call a ufunc
+            np.isnan(np.array([6]))
+            # same with the default, lots of times to get rid of possible
+            # pre-existing stack in the code
+            for i in range(10000):
+                np.seterrobj([umath.UFUNC_BUFSIZE_DEFAULT, umath.ERR_DEFAULT,
+                             None])
+            np.isnan(np.array([6]))
+        finally:
+            np.seterrobj(olderrobj)
 
 
 class TestFloatExceptions(TestCase):
