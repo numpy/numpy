@@ -432,10 +432,17 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 {
     PyObject *retval;
 
+    /* default errobj case, skips dictionary lookup */
     if (ref == NULL) {
-        *errmask = UFUNC_ERR_DEFAULT;
-        *errobj = Py_BuildValue("NO", PyBytes_FromString(name), Py_None);
-        *bufsize = NPY_BUFSIZE;
+        if (errmask) {
+            *errmask = UFUNC_ERR_DEFAULT;
+        }
+        if (errobj) {
+            *errobj = Py_BuildValue("NO", PyBytes_FromString(name), Py_None);
+        }
+        if (bufsize) {
+            *bufsize = NPY_BUFSIZE;
+        }
         return 0;
     }
 
