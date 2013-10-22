@@ -326,6 +326,12 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 PyArray_MaskedStridedUnaryOp *stransfer,
                 NpyAuxData *data);
 
+NPY_NO_EXPORT int
+mapiter_get(PyArrayMapIterObject *mit);
+
+NPY_NO_EXPORT int
+mapiter_set(PyArrayMapIterObject *mit);
+
 /*
  * Prepares shape and strides for a simple raw array iteration.
  * This sorts the strides into FORTRAN order, reverses any negative
