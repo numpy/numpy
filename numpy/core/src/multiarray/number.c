@@ -115,7 +115,7 @@ has_ufunc_attr(PyObject * obj) {
 
 NPY_NO_EXPORT int
 needs_right_binop_forward(PyObject *self, PyObject *other,
-                          char *right_name, int inplace_op)
+                          const char *right_name, int inplace_op)
 {
     if (other == NULL ||
         self == NULL ||
@@ -127,7 +127,7 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
          */
         return 0;
     }
-    if (!inplace_op && PyType_IsSubtype(Py_TYPE(other), Py_TYPE(self)) ||
+    if ((!inplace_op && PyType_IsSubtype(Py_TYPE(other), Py_TYPE(self))) ||
         !PyArray_Check(self)) {
         /*
          * Bail out if Python would already have called the right-hand
@@ -146,7 +146,8 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
 
 #define GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, left_name, right_name, inplace)  \
     do {                                                                \
-        if (needs_right_binop_forward(m1, m2, right_name, inplace)) {   \
+        if (needs_right_binop_forward((PyObject *)m1, m2, right_name,   \
+                                      inplace)) {                       \
             Py_INCREF(Py_NotImplemented);                               \
             return Py_NotImplemented;                                   \
         }                                                               \
