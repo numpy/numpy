@@ -258,14 +258,11 @@ typedef struct _tagPyUFuncObject {
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
 
-/* Error mode that avoids look-up (no checking) */
-#define UFUNC_ERR_DEFAULT       0
-
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
 
    /* Default user error mode */
-#define UFUNC_ERR_DEFAULT2                               \
+#define UFUNC_ERR_DEFAULT                               \
         (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
         (UFUNC_ERR_WARN << UFUNC_SHIFT_OVERFLOW) +      \
         (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
