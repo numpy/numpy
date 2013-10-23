@@ -615,7 +615,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         a = asanyarray(a).flatten()
         axis = 0
     else:
-        a = asanyarray(a).copy()
+        a = asanyarray(a).copy(order="K")
     a.partition(kth, axis=axis, kind=kind, order=order)
     return a
 
@@ -784,7 +784,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         a = asanyarray(a).flatten()
         axis = 0
     else:
-        a = asanyarray(a).copy()
+        a = asanyarray(a).copy(order="K")
     a.sort(axis, kind, order)
     return a
 
