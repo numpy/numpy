@@ -493,11 +493,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
              */
             if (PyArray_SIZE(tmp_arr) == 0) {
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-                /* TODO: Is the force-cast the right way? */
+
                 arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
                                                          NPY_ARRAY_FORCECAST);
+                Py_DECREF(tmp_arr);
                 if (arr == NULL) {
-                    Py_DECREF(tmp_arr);
                     goto failed_building_indices;
                 }
             }
@@ -532,9 +532,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
                          * TODO: A `False` triggers a Deprecation *not* a
                          *       a FutureWarning.
                          */
-                         PyErr_SetString(PyExc_IndexError,
+                        PyErr_SetString(PyExc_IndexError,
                                 "in the future, 0-d boolean arrays will be "
                                 "interpreted as a valid boolean index");
+                        Py_DECREF(tmp_arr);
                         goto failed_building_indices;
                     }
                     else {
@@ -642,6 +643,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 PyErr_SetString(PyExc_IndexError,
                         "in the future, 0-d boolean arrays will be "
                         "interpreted as a valid boolean index");
+                Py_DECREF((PyObject *)arr);
                 goto failed_building_indices;
                 /*
                  * This can actually be well defined. A new axis is added,
@@ -661,6 +663,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 }
                 indices[curr_idx].object = PyArray_Zeros(1, &n,
                                             PyArray_DescrFromType(NPY_INTP), 0);
+                Py_DECREF(arr);
+
                 if (indices[curr_idx].object == NULL) {
                     goto failed_building_indices;
                 }
@@ -675,6 +679,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             /* Convert the boolean array into multiple integer ones */
             n = _nonzero_indices((PyObject *)arr, nonzero_result);
+            Py_DECREF(arr);
+
             if (n < 0) {
                 goto failed_building_indices;
             }
@@ -683,6 +689,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
             if (curr_idx + n >= NPY_MAXDIMS * 2) {
                 PyErr_SetString(PyExc_IndexError,
                                 "too many indices for array");
+                for (i=0; i < n; i++) {
+                    Py_DECREF(nonzero_result[i]);
+                }
                 goto failed_building_indices;
             }
 
@@ -729,6 +738,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     "numpy.newaxis (`None`) and integer or boolean "
                     "arrays are valid indices");
         }
+        Py_DECREF(arr);
         goto failed_building_indices;
     }
 
@@ -1661,9 +1671,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* fancy indexing has to be used. And view is the subspace. */
 
     /*
-     * TODO: Ideally, do not use buffering in subspace but
-     *       the strided dtype transfer functions.
-     *
      * NOTE: The NPY_ITER_READWRITE is necessary for automatic
      *       allocation. Readwrite would not allow broadcasting
      *       correctly, but such an operand always has the full
@@ -1716,20 +1723,20 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     goto success;
 
     /* Clean up temporary variables and indices */
-    fail:
-        Py_XDECREF((PyObject *)view);
-        Py_XDECREF((PyObject *)tmp_arr);
-        for (i=0; i < index_num; i++) {
-            Py_XDECREF(indices[i].object);
-        }
-        return -1;
-    success:
-        Py_XDECREF((PyObject *)view);
-        Py_XDECREF((PyObject *)tmp_arr);
-        for (i=0; i < index_num; i++) {
-            Py_XDECREF(indices[i].object);
-        }
-        return 0;
+  fail:
+    Py_XDECREF((PyObject *)view);
+    Py_XDECREF((PyObject *)tmp_arr);
+    for (i=0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+    return -1;
+  success:
+    Py_XDECREF((PyObject *)view);
+    Py_XDECREF((PyObject *)tmp_arr);
+    for (i=0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+    return 0;
 }
 
 
@@ -1861,6 +1868,10 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     npy_intp indval;
     char *baseptrs[2];
     int i;
+
+    if (mit->size == 0) {
+        return;
+    }
 
     NpyIter_Reset(mit->outer, NULL);
     if (mit->extra_op_iter) {
@@ -2175,6 +2186,8 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 indval = *((npy_intp*)*iterptr);
                 if (check_and_adjust_index(&indval,
                                            outer_dim, outer_axis) < 0 ) {
+
+                    NpyIter_Deallocate(op_iter);
                     return -1;
                 }
                 *iterptr += *iterstride;
@@ -2268,6 +2281,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->nd = ndim;
     mit->nd_fancy = fancy_ndim;
     if (mapiter_fill_info(mit, indices, index_num, arr) < 0) {
+        Py_DECREF(mit);
         return NULL;
     }
 
@@ -2753,6 +2767,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     Py_DECREF(errmsg);
 
   no_broadcast_error:
+    Py_XDECREF(extra_op);
     Py_DECREF(mit);
     return NULL;
 }
