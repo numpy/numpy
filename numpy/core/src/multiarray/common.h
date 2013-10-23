@@ -137,19 +137,18 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-#if (defined HAVE___BUILTIN_CTZ && defined NPY_CPU_HAVE_UNALIGNED_ACCESS)
+#if defined NPY_CPU_HAVE_UNALIGNED_ACCESS
         if (needle == 0 && stride == 1) {
-            char * const end = haystack + size;
-            while (p < end - (size % sizeof(unsigned int))) {
+            /* iterate until last multiple of 4 */
+            char * block_end = haystack + size - (size % sizeof(unsigned int));
+            while (p < block_end) {
                 unsigned int  v = *(unsigned int*)p;
-                if (v == 0) {
-                    p += sizeof(unsigned int);
-                    continue;
+                if (v != 0) {
+                    break;
                 }
-                p += __builtin_ctz(v) / 8;
-                *psubloopsize = (p - haystack);
-                return p;
+                p += sizeof(unsigned int);
             }
+            /* handle rest */
             subloopsize = (p - haystack);
         }
 #endif
