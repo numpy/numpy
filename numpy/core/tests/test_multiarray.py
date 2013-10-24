@@ -1624,7 +1624,7 @@ class TestBinop(object):
 
             # Check behavior against both bare ndarray objects and a
             # ndarray subclasses with and without their own override
-            obj = cls((1,))
+            obj = cls((1,), buffer=np.ones(1,))
 
             arr_objs = [np.array([1]),
                         np.array([2]).view(OtherNdarraySubclass),

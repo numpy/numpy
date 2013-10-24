@@ -616,7 +616,7 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase):
                 expect_resids.shape = (1,)
                 assert_equal(residuals.shape, expect_resids.shape)
         else:
-            expect_resids = type(x)([])
+            expect_resids = np.array([]).view(type(x))
         assert_almost_equal(residuals, expect_resids)
         assert_(np.issubdtype(residuals.dtype, np.floating))
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
