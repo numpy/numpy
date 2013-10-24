@@ -558,12 +558,37 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 
 /*
  * Functions to set the floating point status word.
+ * keep in sync with NO_FLOATING_POINT_SUPPORT in ufuncobject.h
  */
 
+#if (defined(__unix__) || defined(unix)) && !defined(USG)
+#include <sys/param.h>
+#endif
+
+/* Solaris --------------------------------------------------------*/
+/* --------ignoring SunOS ieee_flags approach, someone else can
+**         deal with that! */
 #if defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || \
     (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || \
     defined(__NetBSD__)
 #include <ieeefp.h>
+
+int npy_get_floatstatus(void)
+{
+    int fpstatus = fpgetsticky();
+    return ((FP_X_DZ  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((FP_X_OFL & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((FP_X_UFL & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((FP_X_INV & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus(void)
+{
+    int fpstatus = npy_get_floatstatus();
+    fpsetsticky(0);
+
+    return fpstatus;
+}
 
 void npy_set_floatstatus_divbyzero(void)
 {
@@ -597,6 +622,30 @@ void npy_set_floatstatus_invalid(void)
 #  include "numpy/fenv/fenv.h"
 # endif
 
+int npy_get_floatstatus(void)
+{
+    int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
+                                FE_UNDERFLOW | FE_INVALID);
+
+    return ((FE_DIVBYZERO  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((FE_OVERFLOW   & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((FE_UNDERFLOW  & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus(void)
+{
+    /* testing float status is 50-100 times faster than clearing on x86 */
+    int fpstatus = npy_get_floatstatus();
+    if (fpstatus != 0) {
+        feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |
+                      FE_UNDERFLOW | FE_INVALID);
+    }
+
+    return fpstatus;
+}
+
+
 void npy_set_floatstatus_divbyzero(void)
 {
     feraiseexcept(FE_DIVBYZERO);
@@ -621,6 +670,23 @@ void npy_set_floatstatus_invalid(void)
 #include <float.h>
 #include <fpxcp.h>
 
+int npy_get_floatstatus(void)
+{
+    int fpstatus = fp_read_flag();
+    return ((FP_DIV_BY_ZERO & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((FP_OVERFLOW & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((FP_UNDERFLOW & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((FP_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus(void)
+{
+    int fpstatus = npy_get_floatstatus();
+    fp_swap_flag(0);
+
+    return fpstatus;
+}
+
 void npy_set_floatstatus_divbyzero(void)
 {
     fp_raise_xcp(FP_DIV_BY_ZERO);
@@ -642,6 +708,73 @@ void npy_set_floatstatus_invalid(void)
 }
 
 #else
+
+/* MS Windows -----------------------------------------------------*/
+#if defined(_MSC_VER)
+
+#include <float.h>
+
+
+int npy_get_floatstatus(void)
+{
+#if defined(_WIN64)
+    int fpstatus = _statusfp();
+#else
+    /* windows enables sse on 32 bit, so check both flags */
+    int fpstatus, fpstatus2;
+    _statusfp2(&fpstatus, &fpstatus2);
+    fpstatus |= fpstatus2;
+#endif
+    return ((SW_ZERODIVIDE & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((SW_OVERFLOW & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((SW_UNDERFLOW & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((SW_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus(void)
+{
+    int fpstatus = npy_get_floatstatus();
+    _clearfp();
+
+    return fpstatus;
+}
+
+/*  OSF/Alpha (Tru64)  ---------------------------------------------*/
+#elif defined(__osf__) && defined(__alpha)
+
+#include <machine/fpu.h>
+
+int npy_get_floatstatus(void)
+{
+    unsigned long fpstatus = ieee_get_fp_control();
+    return  ((IEEE_STATUS_DZE & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+            ((IEEE_STATUS_OVF & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+            ((IEEE_STATUS_UNF & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+            ((IEEE_STATUS_INV & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus(void)
+{
+    long fpstatus = npy_get_floatstatus();
+    /* clear status bits as well as disable exception mode if on */
+    ieee_set_fp_control(0);
+
+    return fpstatus;
+}
+
+#else
+
+int npy_get_floatstatus(void)
+{
+    return 0;
+}
+
+int npy_clear_floatstatus(void)
+{
+    return 0;
+}
+
+#endif
 
 /*
  * By using a volatile floating point value,

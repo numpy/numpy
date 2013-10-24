@@ -150,6 +150,47 @@ Those can be useful for precise floating point comparison.
 
     .. versionadded:: 1.4.0
 
+.. cfunction:: void npy_set_floatstatus_divbyzero()
+
+    Set the divide by zero floating point exception
+
+    .. versionadded:: 1.6.0
+
+.. cfunction:: void npy_set_floatstatus_overflow()
+
+    Set the overflow floating point exception
+
+    .. versionadded:: 1.6.0
+
+.. cfunction:: void npy_set_floatstatus_underflow()
+
+    Set the underflow floating point exception
+
+    .. versionadded:: 1.6.0
+
+.. cfunction:: void npy_set_floatstatus_invalid()
+
+    Set the invalid floating point exception
+
+    .. versionadded:: 1.6.0
+
+.. cfunction:: int npy_get_floatstatus()
+
+    Get floating point status. Returns a bitmask with following possible flags:
+
+    * NPY_FPE_DIVIDEBYZERO
+    * NPY_FPE_OVERFLOW
+    * NPY_FPE_UNDERFLOW
+    * NPY_FPE_INVALID
+
+    .. versionadded:: 1.9.0
+
+.. cfunction:: int npy_clear_floatstatus()
+
+    Clears the floating point status. Returns the previous status mask.
+
+    .. versionadded:: 1.9.0
+
 Complex functions
 ~~~~~~~~~~~~~~~~~
 

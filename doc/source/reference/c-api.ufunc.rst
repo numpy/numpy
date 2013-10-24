@@ -54,6 +54,8 @@ Macros
 
 .. cfunction:: UFUNC_CHECK_STATUS(ret)
 
+    Deprecated: use npy_clear_floatstatus from npy_math.h instead.
+
     A macro that expands to platform-dependent code. The *ret*
     variable can can be any integer. The :cdata:`UFUNC_FPE_{ERR}` bits are
     set in *ret* according to the status of the corresponding error

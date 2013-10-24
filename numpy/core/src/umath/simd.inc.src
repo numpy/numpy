@@ -19,15 +19,13 @@
 #include "numpy/npy_common.h"
 /* for NO_FLOATING_POINT_SUPPORT */
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
-
-int PyUFunc_getfperr(void);
-void PyUFunc_clearfperr(void);
 
 /*
  * stride is equal to element size and input and destination are equal or
@@ -677,7 +675,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         i += 2 * stride;
 
         /* minps/minpd will set invalid flag if nan is encountered */
-        PyUFunc_clearfperr();
+        npy_clear_floatstatus();
         LOOP_BLOCKED(@type@, 32) {
             @vtype@ v1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
             @vtype@ v2 = @vpre@_load_@vsuf@((@type@*)&ip[i + stride]);
@@ -686,7 +684,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         }
         c1 = @vpre@_@VOP@_@vsuf@(c1, c2);
 
-        if (PyUFunc_getfperr() & UFUNC_FPE_INVALID) {
+        if (npy_get_floatstatus() & NPY_FPE_INVALID) {
             *op = @nan@;
         }
         else {

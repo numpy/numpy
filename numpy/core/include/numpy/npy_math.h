@@ -456,6 +456,17 @@ npy_clongdouble npy_csinl(npy_clongdouble z);
  * status word.
  */
 
+/*
+ * platform-dependent code translates floating point
+ * status to an integer sum of these values
+ */
+#define NPY_FPE_DIVIDEBYZERO  1
+#define NPY_FPE_OVERFLOW      2
+#define NPY_FPE_UNDERFLOW     4
+#define NPY_FPE_INVALID       8
+
+int npy_get_floatstatus(void);
+int npy_clear_floatstatus(void);
 void npy_set_floatstatus_divbyzero(void);
 void npy_set_floatstatus_overflow(void);
 void npy_set_floatstatus_underflow(void);
