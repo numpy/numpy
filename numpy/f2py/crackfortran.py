@@ -2402,7 +2402,7 @@ def expr2name(a, block, args=[]):
         na='e_'
         for c in a:
             c = c.lower()
-            if c not in string.lowercase+string.digits: c='_'
+            if c not in string.ascii_lowercase+string.digits: c='_'
             na=na+c
         if na[-1]=='_': na=na+'e'
         else: na=na+'_e'
