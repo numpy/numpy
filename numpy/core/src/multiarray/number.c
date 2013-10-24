@@ -833,14 +833,19 @@ array_long(PyArrayObject *v)
         return NULL;
     }
     pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    if (pv == NULL) {
+        return NULL;
+    }
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
+        Py_DECREF(pv);
         return NULL;
     }
     if (Py_TYPE(pv)->tp_as_number->nb_long == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to long");
+        Py_DECREF(pv);
         return NULL;
     }
     /*
@@ -869,14 +874,19 @@ array_oct(PyArrayObject *v)
         return NULL;
     }
     pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    if (pv == NULL) {
+        return NULL;
+    }
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
+        Py_DECREF(pv);
         return NULL;
     }
     if (Py_TYPE(pv)->tp_as_number->nb_oct == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to oct");
+        Py_DECREF(pv);
         return NULL;
     }
     /*
@@ -905,14 +915,19 @@ array_hex(PyArrayObject *v)
         return NULL;
     }
     pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    if (pv == NULL) {
+        return NULL;
+    }
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
+        Py_DECREF(pv);
         return NULL;
     }
     if (Py_TYPE(pv)->tp_as_number->nb_hex == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to hex");
+        Py_DECREF(pv);
         return NULL;
     }
     /*
