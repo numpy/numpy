@@ -1161,11 +1161,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
 
         /* Check the readonly/writeonly flags, and fill in op_itflags */
         if (!npyiter_check_per_op_flags(op_flags[iop], &op_itflags[iop])) {
-            for (i = 0; i <= iop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
-            return 0;
+            goto fail_iop;
         }
 
         /* Extract the operand which is for masked iteration */
@@ -1174,11 +1170,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 PyErr_SetString(PyExc_ValueError,
                         "Only one iterator operand may receive an "
                         "ARRAYMASK flag");
-                for (i = 0; i <= iop; ++i) {
-                    Py_XDECREF(op[i]);
-                    Py_XDECREF(op_dtype[i]);
-                }
-                return 0;
+                goto fail_iop;
             }
 
             maskop = iop;
@@ -1199,11 +1191,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                         &op_dtype[iop],
                         flags,
                         op_flags[iop], &op_itflags[iop])) {
-            for (i = 0; i <= iop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
-            return 0;
+            goto fail_iop;
         }
     }
 
@@ -1217,13 +1205,9 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
             }
         }
         if (all_null) {
-            for (i = 0; i < nop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
             PyErr_SetString(PyExc_ValueError,
                     "At least one iterator operand must be non-NULL");
-            return 0;
+            goto fail_nop;
         }
     }
 
@@ -1232,17 +1216,26 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 "An iterator operand was flagged as WRITEMASKED, "
                 "but no ARRAYMASK operand was given to supply "
                 "the mask");
-        return 0;
+        goto fail_nop;
     }
     else if (!any_writemasked_ops && maskop >= 0) {
         PyErr_SetString(PyExc_ValueError,
                 "An iterator operand was flagged as the ARRAYMASK, "
                 "but no WRITEMASKED operands were given to use "
                 "the mask");
-        return 0;
+        goto fail_nop;
     }
 
     return 1;
+
+  fail_nop:
+    iop = nop;
+  fail_iop:
+    for (i = 0; i < iop; ++i) {
+        Py_XDECREF(op[i]);
+        Py_XDECREF(op_dtype[i]);
+    }
+    return 0;
 }
 
 static const char *

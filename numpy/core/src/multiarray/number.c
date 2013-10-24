@@ -771,6 +771,7 @@ array_int(PyArrayObject *v)
                 PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
+        Py_DECREF(pv);
         return NULL;
     }
 
@@ -812,6 +813,7 @@ array_float(PyArrayObject *v)
                     PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
+        Py_DECREF(pv);
         return NULL;
     }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_float(pv);
@@ -849,6 +851,7 @@ array_long(PyArrayObject *v)
                     PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
+        Py_DECREF(pv);
         return NULL;
     }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_long(pv);
@@ -884,6 +887,7 @@ array_oct(PyArrayObject *v)
                     PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
+        Py_DECREF(pv);
         return NULL;
     }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_oct(pv);
@@ -919,6 +923,7 @@ array_hex(PyArrayObject *v)
                     PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
+        Py_DECREF(pv);
         return NULL;
     }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_hex(pv);

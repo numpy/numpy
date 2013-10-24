@@ -1654,6 +1654,14 @@ class TestRegression(TestCase):
         assert_raises(TypeError, oct, a)
         assert_raises(TypeError, hex, a)
 
+        # Test the same for a circular reference.
+        b = np.array(a, dtype=object)
+        a[()] = b
+        assert_raises(TypeError, int, a)
+        # Numpy has no tp_traverse currently, so circular references
+        # cannot be detected. So resolve it:
+        a[()] = 0
+
         # This was causing a to become like the above
         a = np.array(0, dtype=object)
         a[...] += 1
@@ -1661,7 +1669,7 @@ class TestRegression(TestCase):
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
-        # causing segmentation faults (gh-3787) 
+        # causing segmentation faults (gh-3787)
         a = np.array(object(), dtype=object)
         np.copyto(a, a)
         assert_equal(sys.getrefcount(a[()]), 2)

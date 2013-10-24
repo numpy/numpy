@@ -1242,12 +1242,15 @@ PyMODINIT_FUNC inittest_rational(void) {
             PyErr_Format(PyExc_AssertionError, \
                          "ufunc %s takes %d arguments, our loop takes %ld", \
                          #name, ufunc->nargs, sizeof(_types)/sizeof(int)); \
+            Py_DECREF(ufunc); \
             goto fail; \
         } \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational, \
                 rational_ufunc_##name, _types, 0) < 0) { \
+            Py_DECREF(ufunc); \
             goto fail; \
         } \
+        Py_DECREF(ufunc); \
     }
     #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
         REGISTER_UFUNC(name, {npy_rational, npy_rational, npy_rational})
