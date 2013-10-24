@@ -1444,6 +1444,7 @@ static inline npy_double _real_part_reciprocal(npy_double x, npy_double y)
 #undef CUTOFF
 #endif
 #if @precision@ == 3
+#ifndef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
 #define BIAS (LDBL_MAX_EXP - 1)
 #define CUTOFF (LDBL_MANT_DIG / 2 + 1)
 static inline npy_longdouble _real_part_reciprocall(npy_longdouble x,
@@ -1472,6 +1473,13 @@ static inline npy_longdouble _real_part_reciprocall(npy_longdouble x,
 }
 #undef BIAS
 #undef CUTOFF
+#else
+static inline npy_longdouble _real_part_reciprocall(npy_longdouble x,
+    npy_longdouble y)
+{
+    return x/(x*x + y*y);
+}
+#endif
 #endif
 
 @ctype@ npy_catanh@c@(@ctype@ z)
