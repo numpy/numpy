@@ -1548,6 +1548,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                         PyArray_FLAGS(arr),
                         (PyObject *)arr);
     if (ret == NULL) {
+        Py_DECREF(arr);
         return NULL;
     }
     /* steals a reference to arr --- so don't increment here */

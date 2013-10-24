@@ -1396,7 +1396,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
             break;
         }
         case NPY_CLONGDOUBLE: {
-            npy_cdouble value = *(npy_cdouble *)valueptr;
+            npy_clongdouble value = *(npy_clongdouble *)valueptr;
             /*
             if (value.imag == 0) {
                 return min_scalar_type_num((char *)&value.real,

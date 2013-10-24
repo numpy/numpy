@@ -122,13 +122,13 @@ def test_array_array():
 
     # Try with lists...
     assert_equal(np.array([None] * 10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64) + np.nan)
+                 np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([[None]] * 10, dtype=np.float64),
-                 np.empty((10, 1), dtype=np.float64) + np.nan)
+                 np.full((10, 1), np.nan, dtype=np.float64))
     assert_equal(np.array([[None] * 10], dtype=np.float64),
-                 np.empty((1, 10), dtype=np.float64) + np.nan)
+                 np.full((1, 10), np.nan, dtype=np.float64))
     assert_equal(np.array([[None] * 10] * 10, dtype=np.float64),
-                 np.empty((10, 10), dtype=np.float64) + np.nan)
+                 np.full((10, 10), np.nan, dtype=np.float64))
 
     assert_equal(np.array([1.0] * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
@@ -141,13 +141,13 @@ def test_array_array():
 
     # Try with tuples
     assert_equal(np.array((None,) * 10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64) + np.nan)
+                 np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,)] * 10, dtype=np.float64),
-                 np.empty((10, 1), dtype=np.float64) + np.nan)
+                 np.full((10, 1), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,) * 10], dtype=np.float64),
-                 np.empty((1, 10), dtype=np.float64) + np.nan)
+                 np.full((1, 10), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,) * 10] * 10, dtype=np.float64),
-                 np.empty((10, 10), dtype=np.float64) + np.nan)
+                 np.full((10, 10), np.nan, dtype=np.float64))
 
     assert_equal(np.array((1.0,) * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
