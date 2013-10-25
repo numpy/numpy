@@ -332,6 +332,14 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
 def test_copyto_permut():
+    # test explicit overflow case
+    pad = 500
+    l = [True] * pad + [True, True, True, True]
+    r = np.zeros(len(l)-pad)
+    d = np.ones(len(l)-pad)
+    mask = np.array(l)[pad:]
+    np.copyto(r, d, where=mask[::-1])
+
     # test all permutation of possible masks, 9 should be sufficient for
     # current 4 byte unrolled code
     power = 9

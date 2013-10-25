@@ -119,20 +119,10 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
  */
 static NPY_INLINE char *
 npy_memchr(char * haystack, char needle,
-           npy_intp stride, npy_intp size, npy_intp * subloopsize, int invert)
+           npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
 {
     char * p = haystack;
-    char * const end = haystack + size;
-    if (stride == 0) {
-        if (!invert) {
-            p = (*p != needle) ? end : haystack;
-        }
-        else {
-            p = (*p == needle) ? end : haystack;
-        }
-        *subloopsize = (p - haystack);
-        return haystack;
-    }
+    npy_intp subloopsize = 0;
 
     if (!invert) {
         /*
@@ -140,38 +130,36 @@ npy_memchr(char * haystack, char needle,
          * performance less important here.
          * memchr has large setup cost if 0 byte is close to start.
          */
-        while (p < end && *p != needle) {
+        while (subloopsize < size && *p != needle) {
+            subloopsize++;
             p += stride;
         }
     }
     else {
         /* usually find elements to skip path */
-#if (defined HAVE___BUILTIN_CTZ && defined NPY_CPU_HAVE_UNALIGNED_ACCESS)
+#if defined NPY_CPU_HAVE_UNALIGNED_ACCESS
         if (needle == 0 && stride == 1) {
-            while (p < end - (size % sizeof(unsigned int))) {
+            /* iterate until last multiple of 4 */
+            char * block_end = haystack + size - (size % sizeof(unsigned int));
+            while (p < block_end) {
                 unsigned int  v = *(unsigned int*)p;
-                if (v == 0) {
-                    p += sizeof(unsigned int);
-                    continue;
+                if (v != 0) {
+                    break;
                 }
-                p += __builtin_ctz(v) / 8;
-                *subloopsize = (p - haystack) / stride;
-                return p;
+                p += sizeof(unsigned int);
             }
+            /* handle rest */
+            subloopsize = (p - haystack);
         }
 #endif
-        while (p < end && *p == needle) {
+        while (subloopsize < size && *p == needle) {
+            subloopsize++;
             p += stride;
         }
     }
 
-    /* division is very expensive */
-    if (NPY_LIKELY(stride == 1)) {
-        *subloopsize = (p - haystack);
-    }
-    else {
-        *subloopsize = (p - haystack) / stride;
-    }
+    *psubloopsize = subloopsize;
+
     return p;
 }
 
