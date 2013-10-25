@@ -50,7 +50,7 @@ def get_complex_dtype(dtype):
 
 def get_rtol(dtype):
     # Choose a safe rtol
-    if dtype in (np.single, csingle):
+    if dtype in (single, csingle):
         return 1e-5
     else:
         return 1e-11
@@ -707,6 +707,34 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
 
+    def test_invalid(self):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
+        assert_raises(ValueError, np.linalg.eigvalsh, x, UPLO="lrong")
+        assert_raises(ValueError, np.linalg.eigvalsh, x, "lower")
+        assert_raises(ValueError, np.linalg.eigvalsh, x, "upper")
+
+    def test_UPLO(self):
+        Klo = np.array([[0, 0],[1, 0]], dtype=np.double)
+        Kup = np.array([[0, 1],[0, 0]], dtype=np.double)
+        tgt = np.array([-1, 1], dtype=np.double)
+        rtol = get_rtol(np.double)
+
+        # Check default is 'L'
+        w = np.linalg.eigvalsh(Klo)
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'L'
+        w = np.linalg.eigvalsh(Klo, UPLO='L')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'l'
+        w = np.linalg.eigvalsh(Klo, UPLO='l')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'U'
+        w = np.linalg.eigvalsh(Kup, UPLO='U')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'u'
+        w = np.linalg.eigvalsh(Kup, UPLO='u')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b):
@@ -744,47 +772,28 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_raises(ValueError, np.linalg.eigh, x, UPLO="lrong")
         assert_raises(ValueError, np.linalg.eigh, x, "lower")
         assert_raises(ValueError, np.linalg.eigh, x, "upper")
-        assert_raises(ValueError, np.linalg.eigvalsh, x, UPLO="lrong")
-        assert_raises(ValueError, np.linalg.eigvalsh, x, "lower")
-        assert_raises(ValueError, np.linalg.eigvalsh, x, "upper")
 
-    def test_half_filled(self):
-        expect = np.array([-0.33333333, -0.33333333, -0.33333333, 0.99999999])
-        K = np.array([[ 0.        ,  0.        ,  0.        ,  0.        ],
-                      [-0.33333333,  0.        ,  0.        ,  0.        ],
-                      [ 0.33333333, -0.33333333,  0.        ,  0.        ],
-                      [ 0.33333333, -0.33333333,  0.33333333,  0.        ]])
-        Kr = np.rot90(K, k=2)
+    def test_UPLO(self):
+        Klo = np.array([[0, 0],[1, 0]], dtype=np.double)
+        Kup = np.array([[0, 1],[0, 0]], dtype=np.double)
+        tgt = np.array([-1, 1], dtype=np.double)
+        rtol = get_rtol(np.double)
 
-        w, V = np.linalg.eigh(K)
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-
-        w, V = np.linalg.eigh(UPLO='L', a=K)
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-        w, V = np.linalg.eigh(K, 'l')
-        w2, V2 = np.linalg.eigh(K, 'L')
-        assert_allclose(w, w2, rtol=get_rtol(K.dtype))
-        assert_allclose(V, V2, rtol=get_rtol(K.dtype))
-
-        w, V = np.linalg.eigh(Kr, 'U')
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-        w, V = np.linalg.eigh(Kr, 'u')
-        w2, V2 = np.linalg.eigh(Kr, 'u')
-        assert_allclose(w, w2, rtol=get_rtol(K.dtype))
-        assert_allclose(V, V2, rtol=get_rtol(K.dtype))
-
-        w = np.linalg.eigvalsh(K)
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-
-        w = np.linalg.eigvalsh(UPLO='L', a=K)
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-        assert_allclose(np.linalg.eigvalsh(K, 'L'),
-                        np.linalg.eigvalsh(K, 'l'), rtol=get_rtol(K.dtype))
-
-        w = np.linalg.eigvalsh(Kr, 'U')
-        assert_allclose(np.sort(w), expect, rtol=get_rtol(K.dtype))
-        assert_allclose(np.linalg.eigvalsh(Kr, 'U'),
-                        np.linalg.eigvalsh(Kr, 'u'), rtol=get_rtol(K.dtype))
+        # Check default is 'L'
+        w, v = np.linalg.eigh(Klo)
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'L'
+        w, v = np.linalg.eigh(Klo, UPLO='L')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'l'
+        w, v = np.linalg.eigh(Klo, UPLO='l')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'U'
+        w, v = np.linalg.eigh(Kup, UPLO='U')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        # Check 'u'
+        w, v = np.linalg.eigh(Kup, UPLO='u')
+        assert_allclose(np.sort(w), tgt, rtol=rtol)
 
 
 class _TestNorm(object):
