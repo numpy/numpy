@@ -950,13 +950,13 @@ def eigvalsh(a, UPLO='L'):
     array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
-    UPLO = asbytes(UPLO.upper())
-    if UPLO not in (b'L', b'U'):
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if UPLO == _L:
+    if UPLO == 'L':
         gufunc = _umath_linalg.eigvalsh_lo
     else:
         gufunc = _umath_linalg.eigvalsh_up
@@ -1197,8 +1197,8 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
-    UPLO = asbytes(UPLO.upper())
-    if UPLO not in (b'L', b'U'):
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
@@ -1208,7 +1208,7 @@ def eigh(a, UPLO='L'):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if _L == UPLO:
+    if UPLO == 'L':
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
