@@ -908,8 +908,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
-            footer='', comments='# '):
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=os.linesep,
+            header='', footer='', comments='# '):
     """
     Save an array to a text file.
 
@@ -1034,10 +1034,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             import gzip
             fh = gzip.open(fname, 'wb')
         else:
-            if sys.version_info[0] >= 3:
-                fh = open(fname, 'wb')
-            else:
-                fh = open(fname, 'w')
+            fh = open(fname, 'wb')
     elif hasattr(fname, 'write'):
         fh = fname
     else:
