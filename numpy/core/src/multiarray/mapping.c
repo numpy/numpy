@@ -1365,7 +1365,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
-    /* If it is only a single ellipsis, just return self */
+    /* If it is only a single ellipsis, just return a view */
     else if (index_type == HAS_ELLIPSIS) {
         /*
          * TODO: Should this be a view or not? The only reason not would be
@@ -1406,6 +1406,46 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
+    /*
+     * Special case for very simple 1-d fancy indexing, which however
+     * is quite common. This saves not only a lot of setup time in the
+     * iterator, but also is faster (must be exactly fancy because
+     * we don't support 0-d booleans here)
+     */
+    if (index_type == HAS_FANCY &&
+            index_num == 1) {
+        /* The array being indexed has one dimension and it is a fancy index */
+        PyArrayObject *ind = indices[0].object;
+
+        /* Check if the index is simple enough */
+        if (PyArray_TRIVIALLY_ITERABLE(ind) &&
+                PyArray_DESCR(ind)->type_num == NPY_INTP &&
+                PyArray_ISALIGNED(ind) && PyArray_ISNBO(PyArray_DESCR(ind))) {
+
+            Py_INCREF(PyArray_DESCR(self));
+            result = PyArray_NewFromDescr(&PyArray_Type,
+                                          PyArray_DESCR(self),
+                                          PyArray_NDIM(ind),
+                                          PyArray_SHAPE(ind),
+                                          NULL, NULL,
+                                          /* Same order as indices */
+                                          PyArray_ISFORTRAN(ind) ?
+                                              NPY_ARRAY_F_CONTIGUOUS : 0,
+                                          NULL);
+            if (result == NULL) {
+                goto finish;
+            }
+
+            if (mapiter_trivial_get(self, ind, (PyArrayObject *)result) < 0) {
+                Py_DECREF(result);
+                result = NULL;
+                goto finish;
+            }
+
+            goto wrap_out_array;
+        }
+    }
+
     /* fancy indexing has to be used. And view is the subspace. */
     PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices, index_num,
@@ -1439,6 +1479,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
     Py_DECREF(mit);
 
+  wrap_out_array:
     if (!PyArray_CheckExact(self)) {
         /*
          * Need to create a new array as if the old one never existed.
@@ -1666,6 +1707,39 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     else {
         Py_INCREF(op);
         tmp_arr = (PyArrayObject *)op;
+    }
+
+    /*
+     * Special case for very simple 1-d fancy indexing, which however
+     * is quite common. This saves not only a lot of setup time in the
+     * iterator, but also is faster (must be exactly fancy because
+     * we don't support 0-d booleans here)
+     */
+    if (index_type == HAS_FANCY &&
+            index_num == 1 && tmp_arr) {
+        /* The array being indexed has one dimension and it is a fancy index */
+        PyArrayObject *ind = indices[0].object;
+
+        /* Check if the type is equivalent */
+        if (PyArray_EquivTypes(PyArray_DESCR(self),
+                                   PyArray_DESCR(tmp_arr)) &&
+                /*
+                 * Either they are equivalent, or the values must
+                 * be a scalar
+                 */
+                (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr) ||
+                 (PyArray_NDIM(tmp_arr) == 0 &&
+                        PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
+                /* Check the type/alginment of the index */
+                PyArray_DESCR(ind)->type_num == NPY_INTP &&
+                PyArray_ISALIGNED(ind) && PyArray_ISNBO(PyArray_DESCR(ind))) {
+
+            /* trivial_set checks the index for us */
+            if (mapiter_trivial_set(self, ind, tmp_arr) < 0) {
+                goto fail;
+            }
+            goto success;
+        }
     }
 
     /* fancy indexing has to be used. And view is the subspace. */
@@ -2139,6 +2213,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
 NPY_NO_EXPORT int
 PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 {
+    PyArrayObject *op;
     NpyIter *op_iter;
     NpyIter_IterNextFunc *op_iternext;
     npy_intp outer_dim, indval;
@@ -2155,15 +2230,41 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     }
 
     intp_type = PyArray_DescrFromType(NPY_INTP);
+
     for (i=0; i < mit->numiter; i++) {
-        op_iter = NpyIter_New(NpyIter_GetOperandArray(mit->outer)[i],
+        op = NpyIter_GetOperandArray(mit->outer)[i];
+
+        outer_dim = mit->fancy_dims[i];
+        outer_axis = mit->iteraxes[i];
+
+        /* See if it is possible to just trivially iterate the array */
+        if (PyArray_TRIVIALLY_ITERABLE(op) &&
+                PyArray_DESCR(op)->type_num == NPY_INTP &&
+                PyArray_ISALIGNED(op) && PyArray_ISNBO(PyArray_DESCR(op))) {
+            char *data;
+            npy_intp stride;
+
+            PyArray_PREPARE_TRIVIAL_ITERATION(op, itersize, data, stride);
+
+            while (itersize--) {
+                indval = *((npy_intp*)data);
+                if (check_and_adjust_index(&indval,
+                                           outer_dim, outer_axis) < 0 ) {
+                    return -1;
+                }
+                data += stride;
+            }
+            continue;
+        }
+
+        /* Use NpyIter if the trivial iteration is not possible */
+        op_iter = NpyIter_New(op,
                         NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
                         NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
                         NPY_ITER_READONLY,
                         NPY_KEEPORDER, NPY_SAFE_CASTING, intp_type);
 
         if (op_iter == NULL) {
-            /* Should be impossible */
             Py_DECREF(intp_type);
             return -1;
         }
@@ -2174,9 +2275,6 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             NpyIter_Deallocate(op_iter);
             return -1;
         }
-
-        outer_dim = mit->fancy_dims[i];
-        outer_axis = mit->iteraxes[i];
 
         iterptr = NpyIter_GetDataPtrArray(op_iter);
         iterstride = NpyIter_GetInnerStrideArray(op_iter);
