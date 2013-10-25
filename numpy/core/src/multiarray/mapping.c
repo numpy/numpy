@@ -1265,6 +1265,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     PyArrayObject *view = NULL;
     PyObject *result = NULL;
 
+    PyArrayMapIterObject * mit = NULL;
+
     /* Check for multiple field access */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         /* Check for single field access */
@@ -1396,13 +1398,14 @@ array_subscript(PyArrayObject *self, PyObject *op)
          */
         if (index_type & HAS_SCALAR_ARRAY) {
             result = PyArray_NewCopy(view, NPY_KEEPORDER);
-            goto finish_view;
+            goto finish;
         }
     }
 
     /* If there is no fancy indexing, we have the result */
     if (!(index_type & HAS_FANCY)) {
         result = (PyObject *)view;
+        Py_INCREF(result);
         goto finish;
     }
 
@@ -1412,8 +1415,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
      * iterator, but also is faster (must be exactly fancy because
      * we don't support 0-d booleans here)
      */
-    if (index_type == HAS_FANCY &&
-            index_num == 1) {
+    if (index_type == HAS_FANCY && index_num == 1) {
         /* The array being indexed has one dimension and it is a fancy index */
         PyArrayObject *ind = indices[0].object;
 
@@ -1447,7 +1449,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* fancy indexing has to be used. And view is the subspace. */
-    PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices, index_num,
                                                      index_type,
                                                      ndim, fancy_ndim,
@@ -1456,28 +1457,35 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                                      NPY_ITER_WRITEONLY,
                                                      NULL, PyArray_DESCR(self));
     if (mit == NULL) {
-        goto finish_view;
+        goto finish;
+    }
+
+    if (mit->numiter > 1) {
+        /*
+         * If it is one, the inner loop checks indices, otherwise
+         * check indices beforehand, because it is much faster if
+         * broadcasting occurs and most likely no big overhead
+         */
+        if (PyArray_MapIterCheckIndices(mit) < 0) {
+            goto finish;
+        }
     }
 
     /* Reset the outer iterator */
     if (NpyIter_Reset(mit->outer, NULL) < 0) {
-        goto finish_view;
+        goto finish;
     }
 
     if (mapiter_get(mit) < 0) {
-        /* TODO: Check if safe for object types. */
-        Py_DECREF(mit);
-        goto finish_view;
+        goto finish;
     }
 
     result = (PyObject *)mit->extra_op;
-
     Py_INCREF(result);
+
     if (mit->consec) {
         PyArray_MapIterSwapAxes(mit, (PyArrayObject **)&result, 1);
     }
-
-    Py_DECREF(mit);
 
   wrap_out_array:
     if (!PyArray_CheckExact(self)) {
@@ -1498,20 +1506,20 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
         if (result == NULL) {
             Py_DECREF(tmp_arr);
-            goto finish_view;
+            goto finish;
         }
         /* TODO: Could attempt to steal the data from the old result */
         if (PyArray_SetBaseObject((PyArrayObject *)result,
                                   (PyObject *)tmp_arr) < 0) {
             Py_DECREF(tmp_arr);
-            goto finish_view;
+            goto finish;
         }
     }
 
-  finish_view:
+  finish:
+    Py_XDECREF(mit);
     Py_XDECREF(view);
     /* Clean up indices */
-  finish:
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
@@ -1529,6 +1537,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     PyArrayObject *view = NULL;
     PyArrayObject *tmp_arr = NULL;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
+
+    PyArrayMapIterObject *mit = NULL;
 
     if (op == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1750,7 +1760,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
      *       correctly, but such an operand always has the full
      *       size anyway.
      */
-    PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *)PyArray_MapIterNew(indices,
                                              index_num, index_type,
                                              ndim, fancy_ndim, self,
@@ -1769,7 +1778,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* Fill extra op */
 
         if (PyArray_CopyObject(mit->extra_op, op) < 0) {
-            Py_DECREF((PyObject *)mit);
             goto fail;
         }
     }
@@ -1780,7 +1788,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
-        Py_DECREF((PyObject *)mit);
         goto fail;
     }
 
@@ -1800,6 +1807,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
   fail:
     Py_XDECREF((PyObject *)view);
     Py_XDECREF((PyObject *)tmp_arr);
+    Py_XDECREF((PyObject *)mit);
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
