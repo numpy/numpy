@@ -914,7 +914,7 @@ def eigvalsh(a, UPLO='L'):
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
-        Same as `lower`, wth 'L' for lower and 'U' for upper triangular.
+        Same as `lower`, with 'L' for lower and 'U' for upper triangular.
         Deprecated.
 
     Returns
@@ -950,10 +950,13 @@ def eigvalsh(a, UPLO='L'):
     array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
+    UPLO = asbytes(UPLO.upper())
+    if UPLO not in (b'L', b'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if UPLO == 'L':
+    if UPLO == _L:
         gufunc = _umath_linalg.eigvalsh_lo
     else:
         gufunc = _umath_linalg.eigvalsh_up
@@ -1194,7 +1197,9 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
-    UPLO = asbytes(UPLO)
+    UPLO = asbytes(UPLO.upper())
+    if UPLO not in (b'L', b'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
@@ -1203,7 +1208,7 @@ def eigh(a, UPLO='L'):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if 'L' == UPLO:
+    if _L == UPLO:
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
