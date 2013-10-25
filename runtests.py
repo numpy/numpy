@@ -12,6 +12,16 @@ Examples::
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
 
+Run a debugger:
+
+    $ gdb --args python runtests.py [...other args...]
+
+Generate C code coverage listing under build/lcov/:
+(requires http://ltp.sourceforge.net/coverage/lcov.php)
+
+    $ python runtests.py --gcov [...other args...]
+    $ python runtests.py --lcov-html
+
 """
 
 #
@@ -64,6 +74,13 @@ def main(argv):
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
+    parser.add_argument("--gcov", action="store_true", default=False,
+                        help=("enable C code coverage via gcov (requires GCC). "
+                              "gcov output goes to build/**/*.gc*"))
+    parser.add_argument("--lcov-html", action="store_true", default=False,
+                        help=("produce HTML for C code coverage information "
+                              "from a previous run with --gcov. "
+                              "HTML output goes to build/lcov/"))
     parser.add_argument("--mode", "-m", default="fast",
                         help="'fast', 'full', or something that could be "
                              "passed to nosetests -A [default: fast]")
@@ -87,9 +104,17 @@ def main(argv):
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
 
+    if args.lcov_html:
+        # generate C code coverage output
+        lcov_generate()
+        sys.exit(0)
+
     if args.pythonpath:
         for p in reversed(args.pythonpath.split(os.pathsep)):
             sys.path.insert(0, p)
+
+    if args.gcov:
+        gcov_reset_counters()
 
     if not args.no_build:
         site_dir = build_project(args)
@@ -194,6 +219,7 @@ def main(argv):
     else:
         sys.exit(1)
 
+
 def build_project(args):
     """
     Build a dev version of the project.
@@ -220,10 +246,21 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
 
-    if args.debug:
+    if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
         env['FOPT'] = '-O0 -ggdb'
+        if args.gcov:
+            import distutils.sysconfig
+            cvars = distutils.sysconfig.get_config_vars()
+            env['OPT'] = '-O0 -ggdb'
+            env['FOPT'] = '-O0 -ggdb'
+            env['CC'] = cvars['CC'] + ' --coverage'
+            env['CXX'] = cvars['CXX'] + ' --coverage'
+            env['F77'] = 'gfortran --coverage '
+            env['F90'] = 'gfortran --coverage '
+            env['LDSHARED'] = cvars['LDSHARED'] + ' --coverage'
+            env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
         cmd += ["build"]
 
     cmd += ['install', '--prefix=' + dst_dir]
@@ -269,6 +306,52 @@ def build_project(args):
     site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
 
     return site_dir
+
+
+#
+# GCOV support
+#
+def gcov_reset_counters():
+    print("Removing previous GCOV .gcda files...")
+    build_dir = os.path.join(ROOT_DIR, 'build')
+    for dirpath, dirnames, filenames in os.walk(build_dir):
+        for fn in filenames:
+            if fn.endswith('.gcda') or fn.endswith('.da'):
+                pth = os.path.join(dirpath, fn)
+                os.unlink(pth)
+
+#
+# LCOV support
+#
+
+LCOV_OUTPUT_FILE = os.path.join(ROOT_DIR, 'build', 'lcov.out')
+LCOV_HTML_DIR = os.path.join(ROOT_DIR, 'build', 'lcov')
+
+def lcov_generate():
+    try: os.unlink(LCOV_OUTPUT_FILE)
+    except OSError: pass
+    try: shutil.rmtree(LCOV_HTML_DIR)
+    except OSError: pass
+
+    print("Capturing lcov info...")
+    subprocess.call(['lcov', '-q', '-c',
+                     '-d', os.path.join(ROOT_DIR, 'build'),
+                     '-b', ROOT_DIR,
+                     '--output-file', LCOV_OUTPUT_FILE])
+
+    print("Generating lcov HTML output...")
+    ret = subprocess.call(['genhtml', '-q', LCOV_OUTPUT_FILE, 
+                           '--output-directory', LCOV_HTML_DIR, 
+                           '--legend', '--highlight'])
+    if ret != 0:
+        print("genhtml failed!")
+    else:
+        print("HTML output generated under build/lcov/")
+
+
+#
+# Python 3 support
+#
 
 if sys.version_info[0] >= 3:
     import builtins
