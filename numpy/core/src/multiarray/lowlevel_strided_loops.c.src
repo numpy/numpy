@@ -1356,7 +1356,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
 
 
 /***************************************************************************/
-/****************** Mapiter (Advanced indexing) Get/Set ********************/
+/****************** MapIter (Advanced indexing) Get/Set ********************/
 /***************************************************************************/
 
 /**begin repeat
@@ -1472,7 +1472,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     /* Constant information */
     npy_intp fancy_dims[NPY_MAXDIMS];
     npy_intp fancy_strides[NPY_MAXDIMS];
-    int iteraxes[NPY_MAXDIMS];
+    int iteraxis;
 
     char *baseoffset = mit->baseoffset;
     char **outer_ptrs = mit->outer_ptrs;
@@ -1480,10 +1480,10 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     PyArrayObject *array= mit->array;
 
     /* Fill constant information */
+    iteraxis = mit->iteraxes[0];
     for (i = 0; i < numiter; i++) {
         fancy_dims[i] = mit->fancy_dims[i];
         fancy_strides[i] = mit->fancy_strides[i];
-        iteraxes[i] = mit->iteraxes[i];
     }
 
     /*
@@ -1510,11 +1510,15 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         /************ Optimized inner loops without subspace *************/
 
 /**begin repeat1
- * #is_one_dim = 1, 0#
+ * #one_iter = 1, 0#
  * #numiter = 1, numiter#
- * #numiter_op = ==, >#
  */
-        if (numiter @numiter_op@ 1) {
+
+#if @one_iter@
+        if (numiter == 1) {
+#else
+        else {
+#endif
 
             /* Optimization for aligned types that do not need the api */
             switch ((is_aligned && !needs_api) ? PyArray_ITEMSIZE(array) : 0) {
@@ -1545,9 +1549,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                         for (i=0; i < @numiter@; i++) {
                             indval = *((npy_intp*)outer_ptrs[i]);
 
-#if @isget@ && @is_one_dim@
+#if @isget@ && @one_iter@
                             if (check_and_adjust_index(&indval, fancy_dims[i],
-                                                       iteraxes[i]) < 0 ) {
+                                                       iteraxis) < 0 ) {
                                 return -1;
                             }
 #else
@@ -1567,7 +1571,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #else
                         copyswap(outer_ptrs[i], self_ptr, 0, array);
 #endif
-
 #else /* !@isget@ */
 #if @elsize@
                         *(@copytype@ *)self_ptr = *(@copytype@ *)(outer_ptrs[i]);
@@ -1584,7 +1587,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
 /**end repeat2**/
             }
-        return 0;
         }
 /**end repeat1**/
     }
@@ -1631,20 +1633,24 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         }
 
 /**begin repeat1
- * #is_one_dim = 1, 0#
+ * #one_iter = 1, 0#
  * #numiter = 1, numiter#
- * #numiter_op = ==, >#
  */
-        if (numiter @numiter_op@ 1) {
+
+#if @one_iter@
+        if (numiter == 1) {
+#else
+        else {
+#endif
 
             do {
                 self_ptr = baseoffset;
                 for (i=0; i < @numiter@; i++) {
                     indval = *((npy_intp*)outer_ptrs[i]);
 
-#if @isget@ && @is_one_dim@
+#if @isget@ && @one_iter@
                     if (check_and_adjust_index(&indval, fancy_dims[i],
-                                               iteraxes[i]) < 0 ) {
+                                               iteraxis) < 0 ) {
                         NPY_AUXDATA_FREE(transferdata);
                         return -1;
                     }
@@ -1706,10 +1712,10 @@ mapiter_@name@(PyArrayMapIterObject *mit)
             } while (mit->outer_next(mit->outer));
 
             NPY_AUXDATA_FREE(transferdata);
-            return 0;
         }
 /**end repeat1**/
     }
+    return 0;
 }
 
 /**end repeat**/
