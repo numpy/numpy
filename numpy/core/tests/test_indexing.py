@@ -147,6 +147,49 @@ class TestIndexing(TestCase):
                          [0, 8, 0]])
 
 
+class TestBroadcastedAssignments(TestCase):
+    def assign(self, a, ind, val):
+        a[ind] = val
+
+
+    def test_non_fancy(self):
+        assign = self.assign
+        s_ = np.s_
+
+        a = np.zeros((1,2,0))
+
+        assert_raises(ValueError, assign, a, s_[...], np.ones((1,2,3)))
+        # Too large should raise
+        assert_raises(ValueError, assign, a, s_[...], np.ones((1,1,1,1)))
+        a[...] = np.ones((1,1,1))
+
+    def test_fancy_no_subspace(self):
+        assign = self.assign
+        s_ = np.s_
+
+        a = np.zeros(5)
+
+        a[[1,2,3]] = 0
+        assert_raises(ValueError, a, s_[[1,2,3]], [1,2,3,4])
+
+        # values can be extended, result cannot
+        a[[[1,2,3]]] = [1,2,3]
+        assert_raises(ValueError, a, s_[[1,2,3]], [[1,2,3]])
+
+    def test_fancy_with_ignored_subspace(self):
+        assign = self.assign
+        s_ = np.s_
+
+        a = np.zeros(1,5,1)
+
+        a[:,[1,2,3],:] = [1,2,3]
+        assert_array_equal(a, [[[1], [2], [3]]])
+        assert_raises(ValueError, assign, a, s_[:,[1],:], np.ones((1,) * 4))
+
+    def test_fancy_with_subspace(self):
+        pass
+
+
 class TestMultiIndexingAutomated(TestCase):
     """
      These test use code to mimic the C-Code indexing for selection.
