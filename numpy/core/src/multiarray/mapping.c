@@ -1421,8 +1421,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
         /* Check if the index is simple enough */
         if (PyArray_TRIVIALLY_ITERABLE(ind) &&
-                PyArray_DESCR(ind)->type_num == NPY_INTP &&
-                PyArray_ISALIGNED(ind) && PyArray_ISNBO(PyArray_DESCR(ind))) {
+                /* Check if the type is equivalent to INTP */
+                PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
+                PyArray_DESCR(ind)->kind == 'i' &&
+                PyArray_ISALIGNED(ind) &&
+                PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             Py_INCREF(PyArray_DESCR(self));
             result = PyArray_NewFromDescr(&PyArray_Type,
@@ -1740,9 +1743,11 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                 (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
                         PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
-                /* Check the type/alginment of the index */
-                PyArray_DESCR(ind)->type_num == NPY_INTP &&
-                PyArray_ISALIGNED(ind) && PyArray_ISNBO(PyArray_DESCR(ind))) {
+                /* Check if the type is equivalent to INTP */
+                PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
+                PyArray_DESCR(ind)->kind == 'i' &&
+                PyArray_ISALIGNED(ind) &&
+                PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             /* trivial_set checks the index for us */
             if (mapiter_trivial_set(self, ind, tmp_arr) < 0) {
@@ -2247,8 +2252,11 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 
         /* See if it is possible to just trivially iterate the array */
         if (PyArray_TRIVIALLY_ITERABLE(op) &&
-                PyArray_DESCR(op)->type_num == NPY_INTP &&
-                PyArray_ISALIGNED(op) && PyArray_ISNBO(PyArray_DESCR(op))) {
+                /* Check if the type is equivalent to INTP */
+                PyArray_ITEMSIZE(op) == sizeof(npy_intp) &&
+                PyArray_DESCR(op)->kind == 'i' &&
+                PyArray_ISALIGNED(op) &&
+                PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
             npy_intp stride;
 
@@ -2499,6 +2507,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      * If subspace is not NULL, NpyIter cannot allocate extra_op for us.
      */
     else if (extra_op_flags && (subspace != NULL)) {
+        npy_uint32 tmp_op_flags[NPY_MAXDIMS];
+        for (i=0; i < mit->numiter; i++) {
+            tmp_op_flags[i] = NPY_ITER_READONLY;
+        }
+
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
 
@@ -2514,7 +2527,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                     NPY_ITER_MULTI_INDEX,
                                     NPY_KEEPORDER,
                                     NPY_UNSAFE_CASTING,
-                                    op_flags, NULL);
+                                    tmp_op_flags, NULL);
         if (tmp_iter == NULL) {
             goto fail;
         }

@@ -668,7 +668,7 @@ npy_bswap8_unaligned(char * x)
                                              PyArray_DIMS(arr2), \
                                              PyArray_NDIM(arr1)) && \
                         (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                      NPY_ARRAY_F_CONTIGUOUS)) == \
+                                      NPY_ARRAY_F_CONTIGUOUS)) & \
                                 (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
                                               NPY_ARRAY_F_CONTIGUOUS)) \
                         )
@@ -679,12 +679,12 @@ npy_bswap8_unaligned(char * x)
                     PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
                     )
 #define PyArray_PREPARE_TRIVIAL_ITERATION(arr, count, data, stride) \
-                    count = PyArray_SIZE(arr), \
-                    data = PyArray_BYTES(arr), \
+                    count = PyArray_SIZE(arr); \
+                    data = PyArray_BYTES(arr); \
                     stride = ((PyArray_NDIM(arr) == 0) ? 0 : \
                                     ((PyArray_NDIM(arr) == 1) ? \
                                             PyArray_STRIDE(arr, 0) : \
-                                            PyArray_ITEMSIZE(arr))) \
+                                            PyArray_ITEMSIZE(arr)));
 
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\

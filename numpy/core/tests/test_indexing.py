@@ -182,8 +182,8 @@ class TestMultiIndexingAutomated(TestCase):
             np.empty((0, 1, 1), dtype=np.intp), # empty broadcastable
             np.array([0, 1, -2]),
             np.array([[2], [0], [1]]),
-            np.array([[0, -1], [0, 1]]),
-            np.array([2, -1]),
+            np.array([[0, -1], [0, 1]], dtype=np.dtype('intp').newbyteorder()),
+            np.array([2, -1], dtype=np.int8),
             np.zeros([1]*31, dtype=int), # trigger too large array.
             np.array([0., 1.])] # invalid datatype
         # Some simpler indices that still cover a bit more
