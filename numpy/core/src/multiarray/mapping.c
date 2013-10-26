@@ -1817,6 +1817,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         Py_XDECREF(indices[i].object);
     }
     return -1;
+
   success:
     Py_XDECREF((PyObject *)view);
     Py_XDECREF((PyObject *)tmp_arr);
@@ -2355,6 +2356,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    PyArray_Descr *extra_op_dtype)
 {
     PyObject *errmsg, *tmp;
+    /* For shape reporting on error */
+    PyArrayObject *original_extra_op = extra_op;
 
     PyArrayObject *index_arrays[NPY_MAXDIMS];
     PyArray_Descr *dtypes[NPY_MAXDIMS];
@@ -2467,8 +2470,25 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
 
         if (PyArray_NDIM(extra_op) > mit->nd) {
-            /* TODO: Add a test. */
-            goto broadcast_error;
+            /*
+             * Usual assignments allows removal of trailing one dimensions.
+             * (or equivalently adding of one dimensions to the array being
+             * assigned to). To implement this, reshape the array. It is a bit
+             * of a hack.
+             * This should maybe be done differently, or even not be allowed.
+             */
+            PyArrayObject *tmp_arr;
+            PyArray_Dims permute;
+
+            permute.len = mit->nd;
+            permute.ptr = &PyArray_DIMS(extra_op)[
+                                            PyArray_NDIM(extra_op) - mit->nd];
+            tmp_arr = PyArray_Newshape(extra_op, &permute, NPY_CORDER);
+            if (tmp_arr == NULL) {
+                goto broadcast_error;
+            }
+            Py_DECREF(extra_op);
+            extra_op = tmp_arr;
         }
 
         /*
@@ -2630,7 +2650,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                          "when no subspace is given, the number of index "
                          "arrays cannot be above %d, but %d index arrays found",
                          NPY_MAXDIMS - 1, mit->numiter);
-            return NULL;
+            goto fail;
         }
 
         nops += 1;
@@ -2695,19 +2715,17 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (extra_op_flags) {
         if (extra_op == NULL) {
             mit->extra_op = NpyIter_GetOperandArray(mit->outer)[mit->numiter];
-            Py_INCREF(mit->extra_op);
         }
         else {
             mit->extra_op = extra_op;
         }
+        Py_INCREF(mit->extra_op);
     }
 
     /*
      * If extra_op is being tracked but subspace is used, we need
      * to create a dedicated iterator for the outer iteration of
      * the extra operand.
-     *
-     * Also create the external op offset iteration.
      */
     if (extra_op_flags && uses_subspace) {
         op_axes[0] = single_op_axis;
@@ -2751,6 +2769,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /* Can now return early if no subspace is being used */
     if (!uses_subspace) {
+        Py_XDECREF(extra_op);
         return (PyObject *)mit;
     }
 
@@ -2789,17 +2808,17 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     mit->subspace_iter = NpyIter_AdvancedNew(nops, index_arrays,
-                                        NPY_ITER_ZEROSIZE_OK |
-                                        NPY_ITER_REFS_OK |
-                                        NPY_ITER_GROWINNER |
-                                        NPY_ITER_EXTERNAL_LOOP |
-                                        NPY_ITER_DELAY_BUFALLOC |
-                                        subspace_iter_flags,
-                                        (nops == 1 ? NPY_CORDER : NPY_KEEPORDER),
-                                        NPY_UNSAFE_CASTING,
-                                        op_flags, dtypes,
-                                        PyArray_NDIM(subspace), op_axes,
-                                        &mit->dimensions[mit->nd_fancy], 0);
+                                    NPY_ITER_ZEROSIZE_OK |
+                                    NPY_ITER_REFS_OK |
+                                    NPY_ITER_GROWINNER |
+                                    NPY_ITER_EXTERNAL_LOOP |
+                                    NPY_ITER_DELAY_BUFALLOC |
+                                    subspace_iter_flags,
+                                    (nops == 1 ? NPY_CORDER : NPY_KEEPORDER),
+                                    NPY_UNSAFE_CASTING,
+                                    op_flags, dtypes,
+                                    PyArray_NDIM(subspace), op_axes,
+                                    &mit->dimensions[mit->nd_fancy], 0);
 
     if (mit->subspace_iter == NULL) {
         goto fail;
@@ -2820,72 +2839,74 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
          */
     }
 
+    Py_XDECREF(extra_op);
     return (PyObject *)mit;
 
   fail:
     /*
      * Check whether the operand was not broadcastable and replace the error
-     * in that case, since the NpyIter error speaks of iterators and
-     * remapped axes, etc...
+     * in that case. This should however normally be found early with a
+     * direct goto to broadcast_error
      */
     if (extra_op == NULL) {
-        goto no_broadcast_error;
+        goto finish;
     }
 
     j = mit->nd;
     for (i = PyArray_NDIM(extra_op) - 1; i >= 0; i--) {
         j--;
-        if ((PyArray_DIM(extra_op, i) != 1)
-                &&  (PyArray_DIM(extra_op, i) != mit->dimensions[j])) {
+        if ((PyArray_DIM(extra_op, i) != 1) &&
+                /* (j < 0 is currently impossible, extra_op is reshaped) */
+                j >= 0 &&
+                PyArray_DIM(extra_op, i) != mit->dimensions[j]) {
             /* extra_op cannot be broadcasted to the indexing result */
             goto broadcast_error;
         }
     }
-    goto no_broadcast_error;
+    goto finish;
 
   broadcast_error:
     errmsg = PyUString_FromString("shape mismatch: value array "
                     "of shape ");
     if (errmsg == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
 
-    tmp = get_shape_string(PyArray_NDIM(extra_op),
-                           PyArray_DIMS(extra_op), " ");
+    /* Report the shape of the original array if it exists */
+    if (original_extra_op == NULL) {
+        original_extra_op = extra_op;
+    }
+
+    tmp = get_shape_string(PyArray_NDIM(original_extra_op),
+                           PyArray_DIMS(original_extra_op), " ");
     if (tmp == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
     PyUString_ConcatAndDel(&errmsg, tmp);
     if (errmsg == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
 
     tmp = PyUString_FromString("could not be broadcast to indexing "
                     "result of shape ");
     PyUString_ConcatAndDel(&errmsg, tmp);
     if (errmsg == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
 
     tmp = get_shape_string(mit->nd, mit->dimensions, "");
     if (tmp == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
     PyUString_ConcatAndDel(&errmsg, tmp);
     if (errmsg == NULL) {
-        Py_DECREF(mit);
-        return NULL;
+        goto finish;
     }
 
     PyErr_SetObject(PyExc_ValueError, errmsg);
     Py_DECREF(errmsg);
 
-  no_broadcast_error:
+  finish:
     Py_XDECREF(extra_op);
     Py_DECREF(mit);
     return NULL;

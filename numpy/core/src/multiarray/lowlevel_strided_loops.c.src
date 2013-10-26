@@ -1614,13 +1614,15 @@ mapiter_@name@(PyArrayMapIterObject *mit)
          * buffers, this is safe.
          */
         NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
+
         if (PyArray_GetDTypeTransferFunction(is_aligned,
 #if @isget@
                         fixed_strides[0], fixed_strides[1],
+                        PyArray_DESCR(array), PyArray_DESCR(mit->extra_op),
 #else
                         fixed_strides[1], fixed_strides[0],
+                         PyArray_DESCR(mit->extra_op), PyArray_DESCR(array),
 #endif
-                        PyArray_DESCR(array), PyArray_DESCR(mit->extra_op),
                         0,
                         &stransfer, &transferdata,
                         &needs_api) != NPY_SUCCEED) {
@@ -1710,10 +1712,10 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
                 mit->extra_op_next(mit->extra_op_iter);
             } while (mit->outer_next(mit->outer));
-
-            NPY_AUXDATA_FREE(transferdata);
         }
 /**end repeat1**/
+
+        NPY_AUXDATA_FREE(transferdata);
     }
     return 0;
 }

@@ -150,44 +150,97 @@ class TestIndexing(TestCase):
 class TestBroadcastedAssignments(TestCase):
     def assign(self, a, ind, val):
         a[ind] = val
+        return a
+
+    def test_prepending_ones(self):
+        a = np.zeros((3, 2))
+
+        a[...] = np.ones((1, 3, 2))
+        # Fancy with subspace with and without transpose
+        a[[0, 1, 2], :] = np.ones((1, 3, 2))
+        a[:, [0, 1]] = np.ones((1, 3, 2))
+        # Fancy without subspace (with broadcasting)
+        a[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
 
 
-    def test_non_fancy(self):
-        assign = self.assign
-        s_ = np.s_
-
-        a = np.zeros((1,2,0))
-
-        assert_raises(ValueError, assign, a, s_[...], np.ones((1,2,3)))
-        # Too large should raise
-        assert_raises(ValueError, assign, a, s_[...], np.ones((1,1,1,1)))
-        a[...] = np.ones((1,1,1))
-
-    def test_fancy_no_subspace(self):
+    def test_prepend_not_one(self):
         assign = self.assign
         s_ = np.s_
 
         a = np.zeros(5)
 
-        a[[1,2,3]] = 0
-        assert_raises(ValueError, a, s_[[1,2,3]], [1,2,3,4])
+        # Too large and not only ones.
+        assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[1, 2, 3],],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
 
-        # values can be extended, result cannot
-        a[[[1,2,3]]] = [1,2,3]
-        assert_raises(ValueError, a, s_[[1,2,3]], [[1,2,3]])
 
-    def test_fancy_with_ignored_subspace(self):
+    def test_simple_broadcasting_errors(self):
         assign = self.assign
         s_ = np.s_
 
-        a = np.zeros(1,5,1)
+        a = np.zeros((5, 1))
+        assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 2)))
+        assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 0)))
 
-        a[:,[1,2,3],:] = [1,2,3]
-        assert_array_equal(a, [[[1], [2], [3]]])
-        assert_raises(ValueError, assign, a, s_[:,[1],:], np.ones((1,) * 4))
+        assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 2)))
+        assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
 
-    def test_fancy_with_subspace(self):
-        pass
+        assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
+
+
+def test_reverse_strides_and_subspace_bufferinit():
+    # This tests that the strides are not reversed for simple and
+    # subspace fancy indexing.
+    a = np.ones(5)
+    b = np.zeros(5, dtype=np.intp)[::-1]
+    c = np.arange(5)[::-1]
+
+    a[b] = c
+    # If the strides are not reversed, the 0 in the arange comes last.
+    assert_equal(a[0], 0)
+
+    # This also tests that the subspace buffer is initiliazed:
+    a = np.ones((5, 2))
+    c = np.arange(10).reshape(5, 2)[::-1]
+    a[b, :] = c
+    assert_equal(a[0], [0, 1])
+
+
+def test_too_many_fancy_indices_special_case():
+    a = np.ones((1,) * 32) # 32 is NPY_MAXDIMS
+    assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+
+
+class TestFancyIndexingEquivalence(TestCase):
+    def test_object_assign(self):
+        # Check that the field and object special case using copyto is active
+        # The right hand side cannot be converted to an array here.
+        a = np.arange(5, dtype=object)
+        b = a.copy()
+        a[:3] = [1, (1,2), 3]
+        b[[0, 1, 2]] = [1, (1,2), 3]
+        assert_array_equal(a, b)
+
+        # test same for subspace fancy indexing
+        b = np.arange(5, dtype=object)[None, :]
+        b[[0], :3] = [[1, (1,2), 3]]
+        assert_array_equal(a, b[0])
+
+
+    def test_cast_equivalence(self):
+        # Yes, normal slicing uses unsafe casting.
+        a = np.arange(5)
+        b = a.copy()
+
+        a[:3] = np.array(['2', '-3', '-1'])
+        b[[0, 2, 1]] = np.array(['2', '-1', '-3'])
+        assert_array_equal(a, b)
+
+        # test the same for subspace fancy indexing
+        b = np.arange(5)[None, :]
+        b[[0], :3] = np.array([['2', '-3', '-1']])
+        assert_array_equal(a, b[0])
 
 
 class TestMultiIndexingAutomated(TestCase):
