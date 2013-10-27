@@ -523,7 +523,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                             "in the future, boolean array-likes will be "
                             "handled as a boolean array index") < 0) {
                         Py_DECREF(tmp_arr);
-                        goto failed_building_indices;  
+                        goto failed_building_indices;
                     }
                     if (PyArray_NDIM(tmp_arr) == 0) {
                         /*
@@ -562,7 +562,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                                 "numpy.newaxis (`None`) and integer or boolean "
                                 "arrays are valid indices");
                             Py_DECREF((PyObject *)tmp_arr);
-                            goto failed_building_indices; 
+                            goto failed_building_indices;
                         }
                     }
                     else {
@@ -576,9 +576,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                                 "non integer (and non boolean) array-likes will "
                                 "not be accepted as indices in the future");
                             Py_DECREF((PyObject *)tmp_arr);
-                            goto failed_building_indices;  
+                            goto failed_building_indices;
                         }
-                    }   
+                    }
                 }
 
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
@@ -984,8 +984,8 @@ array_boolean_subscript(PyArrayObject *self,
     /* Allocate the output of the boolean indexing */
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1, &size,
-                                NULL, NULL, 0, (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
+                                NULL, NULL, 0, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -1072,6 +1072,24 @@ array_boolean_subscript(PyArrayObject *self,
 
         NpyIter_Deallocate(iter);
         NPY_AUXDATA_FREE(transferdata);
+    }
+
+    if (!PyArray_CheckExact(self)) {
+        PyArrayObject *tmp = ret;
+
+        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
+                            &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
+                            0, (PyObject *)self);
+
+        if (ret == NULL) {
+            Py_DECREF(tmp);
+            return NULL;
+        }
+
+        if (PyArray_SetBaseObject(ret, tmp) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
 
     return ret;
@@ -1511,10 +1529,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(tmp_arr);
             goto finish;
         }
-        /* TODO: Could attempt to steal the data from the old result */
+
         if (PyArray_SetBaseObject((PyArrayObject *)result,
                                   (PyObject *)tmp_arr) < 0) {
-            Py_DECREF(tmp_arr);
+            Py_DECREF(result);
+            result = NULL;
             goto finish;
         }
     }
@@ -1686,15 +1705,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     /* If there is no fancy indexing, we have the array to assign to */
     if (!(index_type & HAS_FANCY)) {
-        /*
-         * CopyObject handles all weirdness for us, this however also
-         * means that other array assignments which convert more strictly
-         * do *not* handle all weirdnesses correctly.
-         * TODO: To have other assignments handle them correctly, we
-         *       should copy into a temporary array of the correct shape
-         *       if it is not an array yet!
-         * TODO: We could use PyArray_SETITEM if it is 0-d?
-         */
         if (PyArray_CopyObject(view, op) < 0) {
             goto fail;
         }
@@ -1702,9 +1712,13 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     if (!PyArray_Check(op)) {
-        if ((PyDataType_HASFIELDS(descr) || PyDataType_REFCHK(descr))
-                    && PySequence_Check(op)) {
-            /* Allocate array through MapIter to fill with CopyObject */
+        /*
+         * If the array is of object converting the values to an array
+         * might not be legal even though normal assignment works.
+         * So allocate a temporary array of the right size and use the
+         * normal assignment to handle this case.
+         */
+        if (PyDataType_REFCHK(descr) && PySequence_Check(op)) {
             tmp_arr = NULL;
         }
         else {
@@ -2446,17 +2460,16 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      *   2. Subspace iteration is necessary, so the extra op is iterated
      *      independendly, and the iteration order is fixed at C (could
      *      also use Fortran order if the array is Fortran order).
-     *      In this case the subspace iterator is buffered, so that even
-     *      the array being iterated *is* buffered!
+     *      In this case the subspace iterator is not buffered.
      *   3. Subspace iteration is necessary and an extra_op was given.
-     *      In this case it needs to be transposed!
+     *      In this case it may need transposing, etc.
      */
 
     /*
      * If we have an extra_op given, need to prepare it.
      *   1. Subclasses might mess with the shape, so need a baseclass
      *   2. Need to make sure the shape is compatible
-     *   3. May need to transpose it.
+     *   3. May need to remove leading 1s and transpose dimensions.
      */
     if (extra_op != NULL) {
         if (!PyArray_CheckExact(extra_op)) {
@@ -2471,10 +2484,9 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
         if (PyArray_NDIM(extra_op) > mit->nd) {
             /*
-             * Usual assignments allows removal of trailing one dimensions.
+             * Usual assignments allows removal of leading one dimensions.
              * (or equivalently adding of one dimensions to the array being
-             * assigned to). To implement this, reshape the array. It is a bit
-             * of a hack.
+             * assigned to). To implement this, reshape the array.
              * This should maybe be done differently, or even not be allowed.
              */
             PyArrayObject *tmp_arr;

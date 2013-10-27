@@ -147,10 +147,58 @@ class TestIndexing(TestCase):
                          [0, 8, 0]])
 
 
+    def test_reverse_strides_and_subspace_bufferinit(self):
+        # This tests that the strides are not reversed for simple and
+        # subspace fancy indexing.
+        a = np.ones(5)
+        b = np.zeros(5, dtype=np.intp)[::-1]
+        c = np.arange(5)[::-1]
+
+        a[b] = c
+        # If the strides are not reversed, the 0 in the arange comes last.
+        assert_equal(a[0], 0)
+
+        # This also tests that the subspace buffer is initiliazed:
+        a = np.ones((5, 2))
+        c = np.arange(10).reshape(5, 2)[::-1]
+        a[b, :] = c
+        assert_equal(a[0], [0, 1])
+
+
+    def test_too_many_fancy_indices_special_case(self):
+        # Just documents behaviour, this is a small limitation.
+        a = np.ones((1,) * 32) # 32 is NPY_MAXDIMS
+        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+
+
+    def test_scalar_array_bool(self):
+        # Numpy bools can be used as boolean index (python ones as of yet not)
+        a = np.array(1)
+        assert_equal(a[np.bool_(True)], a[np.array(True)])
+        assert_equal(a[np.bool_(False)], a[np.array(False)])
+
+        # After deprecating bools as integers:
+        #a = np.array([0,1,2])
+        #assert_equal(a[True, :], a[None, :])
+        #assert_equal(a[:, True], a[:, None])
+        #
+        #assert_(not np.may_share_memory(a, a[True, :]))
+
+
+    def test_everything_returns_views(self):
+        # Before `...` would return a itself.
+        a = np.arange(5)
+
+        assert_(a is not a[()])
+        assert_(a is not a[...])
+        assert_(a is not a[:])
+
+
 class TestBroadcastedAssignments(TestCase):
     def assign(self, a, ind, val):
         a[ind] = val
         return a
+
 
     def test_prepending_ones(self):
         a = np.zeros((3, 2))
@@ -189,27 +237,60 @@ class TestBroadcastedAssignments(TestCase):
         assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
 
 
-def test_reverse_strides_and_subspace_bufferinit():
-    # This tests that the strides are not reversed for simple and
-    # subspace fancy indexing.
-    a = np.ones(5)
-    b = np.zeros(5, dtype=np.intp)[::-1]
-    c = np.arange(5)[::-1]
+    def test_index_is_larger(self):
+        # Simple case of fancy index broadcastin of the index.
+        a = np.zeros((5, 5))
+        a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
 
-    a[b] = c
-    # If the strides are not reversed, the 0 in the arange comes last.
-    assert_equal(a[0], 0)
-
-    # This also tests that the subspace buffer is initiliazed:
-    a = np.ones((5, 2))
-    c = np.arange(10).reshape(5, 2)[::-1]
-    a[b, :] = c
-    assert_equal(a[0], [0, 1])
+        assert_((a[:3, :3] == [2, 3, 4]).all())
 
 
-def test_too_many_fancy_indices_special_case():
-    a = np.ones((1,) * 32) # 32 is NPY_MAXDIMS
-    assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+class TestSubclasses(TestCase):
+    def test_basic(self):
+        class SubClass(np.ndarray):
+            pass
+
+        s = np.arange(5).view(SubClass)
+        assert_(isinstance(s[:3], SubClass))
+        assert_(s[:3].base is s)
+
+        assert_(isinstance(s[[0, 1, 2]], SubClass))
+        assert_(isinstance(s[s > 0], SubClass))
+
+
+    def test_matrix_fancy(self):
+        # The matrix class messes with the shape. While this is always
+        # weird (getitem is not used, it does not have setitem nor knows
+        # about fancy indexing), this tests gh-3110
+        m = np.matrix([[1, 2], [3, 4]])
+
+        assert_(isinstance(m[[0,1,0], :], np.matrix))
+
+        # gh-3110. Note the transpose currently because matrices do *not*
+        # support dimension fixing for fancy indexing correctly.
+        x = np.asmatrix(np.arange(50).reshape(5,10))
+        assert_equal(x[:2, np.array(-1)], x[:2, -1].T)
+
+
+    def test_finalize_gets_full_info(self):
+        # Array finalize should be called on the filled array.
+        class SubClass(np.ndarray):
+            def __array_finalize__(self, old):
+                self.finalize_status = np.array(self)
+                self.old = old
+
+        s = np.arange(10).view(SubClass)
+        new_s = s[:3]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
+
+        new_s = s[[0,1,2,3]]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
+
+        new_s = s[s > 0]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
 
 
 class TestFancyIndexingEquivalence(TestCase):
