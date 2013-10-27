@@ -116,6 +116,7 @@ class TestIndexing(TestCase):
         a[b] = 1.
         assert_equal(a, [[1., 1., 1.]])
 
+
     def test_boolean_assignment_value_mismatch(self):
         # A boolean assignment should fail when the shape of the values
         # cannot be broadcasted to the subscription. (see also gh-3458)
@@ -126,6 +127,7 @@ class TestIndexing(TestCase):
         assert_raises(ValueError, f, a, [])
         assert_raises(ValueError, f, a, [1, 2, 3])
         assert_raises(ValueError, f, a[:1], [1, 2, 3])
+
 
     def test_boolean_indexing_twodim(self):
         # Indexing a 2-dimensional array with
@@ -192,6 +194,24 @@ class TestIndexing(TestCase):
         assert_(a is not a[()])
         assert_(a is not a[...])
         assert_(a is not a[:])
+
+
+    def test_broaderrors_indexing(self):
+        a = np.zeros((5, 5))
+        assert_raises(IndexError, a.__getitem__, ([0, 1], [0, 1, 2]))
+        assert_raises(IndexError, a.__setitem__, ([0, 1], [0, 1, 2]), 0)
+
+
+    def test_trivial_fancy_out_of_bounds(self):
+        a = np.zeros(5)
+        ind = np.ones(20, dtype=np.intp)
+        ind[-1] = 10
+        assert_raises(IndexError, a.__getitem__, ind)
+        assert_raises(IndexError, a.__setitem__, ind, 0)
+        ind = np.ones(20, dtype=np.intp)
+        ind[0] = 11
+        assert_raises(IndexError, a.__getitem__, ind)
+        assert_raises(IndexError, a.__setitem__, ind, 0)
 
 
 class TestBroadcastedAssignments(TestCase):
