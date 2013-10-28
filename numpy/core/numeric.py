@@ -28,9 +28,9 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'isfortran', 'empty_like', 'zeros_like', 'ones_like',
            'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
-           'array2string', 'get_printoptions', 'set_printoptions',
-           'array_repr', 'array_str', 'set_string_function',
-           'little_endian', 'require',
+           'array2string', 'PrintOptions', 'get_printoptions',
+           'set_printoptions', 'array_repr', 'array_str',
+           'set_string_function', 'little_endian', 'require',
            'fromiter', 'array_equal', 'array_equiv',
            'indices', 'fromfunction', 'isclose',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
@@ -1523,7 +1523,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
 
 #Use numarray's printing function
-from .arrayprint import array2string, get_printoptions, set_printoptions
+from .arrayprint import (PrintOptions, array2string, get_printoptions,
+                         set_printoptions)
 
 _typelessdata = [int_, float_, complex_]
 if issubclass(intc, int):
@@ -1545,7 +1546,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         characters split the string appropriately after array elements.
     precision : int, optional
         Floating point precision. Default is the current printing precision
-        (usually 8), which can be altered using `set_printoptions`.
+        (usually 8), which can be altered using `PrintOptions`.
     suppress_small : bool, optional
         Represent very small numbers as zero, default is False. Very small
         is defined by `precision`, if the precision is 8 then
@@ -1558,7 +1559,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     See Also
     --------
-    array_str, array2string, set_printoptions
+    array_str, array2string, PrintOptions
 
     Examples
     --------
@@ -1621,7 +1622,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
         default is, indirectly, 75.
     precision : int, optional
         Floating point precision.  Default is the current printing precision
-        (usually 8), which can be altered using `set_printoptions`.
+        (usually 8), which can be altered using `PrintOptions`.
     suppress_small : bool, optional
         Represent numbers "very close" to zero as zero; default is False.
         Very close is defined by precision: if the precision is 8, e.g.,
@@ -1630,7 +1631,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
 
     See Also
     --------
-    array2string, array_repr, set_printoptions
+    array2string, array_repr, PrintOptions
 
     Examples
     --------
@@ -1658,7 +1659,7 @@ def set_string_function(f, repr=True):
 
     See Also
     --------
-    set_printoptions, get_printoptions
+    PrintOptions
 
     Examples
     --------

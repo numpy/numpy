@@ -98,7 +98,7 @@ def runpycode(lyxstr, name='MyCode'):
     indx.append(len(lyxstr))
     edic = {}
     exec('from numpy import *', edic)
-    exec('set_printoptions(linewidth=65)', edic)
+    exec('PrintOptions(linewidth=65).apply()', edic)
     # indx now contains [st0,en0, ..., stN,enN]
     #  where stX is the start of code segment X
     #  and enX is the start of \layout MyCode for
@@ -113,7 +113,7 @@ def runpycode(lyxstr, name='MyCode'):
             if mat:
                 edic = {}
                 exec('from numpy import *', edic)
-                exec('set_printoptions(linewidth=65)', edic)
+                exec('PrintOptions(linewidth=65).apply()', edic)
         # now find the code in the code segment
         # endoutput will contain the index just past any output
         #  already present in the lyx string.
