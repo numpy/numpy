@@ -37,17 +37,18 @@ def product(x, y): return x*y
 # TODO: A ChainMap (Python 3.3+) would be more elegant than a dict for
 # implementing PrintOptions.
 _printoptions = dict(
-    edgeitems=3,  # repr N leading and trailing items of each dimension
-    threshold=1000,  # total items > triggers array summarization
     precision=8,
-    suppress=False,
+    threshold=1000,  # total items > triggers array summarization
+    edgeitems=3,  # repr N leading and trailing items of each dimension
     linewidth=75,
+    suppress=False,
     nanstr='nan',
     infstr='inf',
     formatter=None,  # formatting function for array elements
     )
 
 
+# PrintOptions derives from Mapping rather than dict so that it is read-only.
 class PrintOptions(Mapping):
     """
     PrintOptions(**kwargs)
@@ -154,12 +155,17 @@ class PrintOptions(Mapping):
 
     >>> np.PrintOptions(edgeitems=3,infstr='inf',
     ... linewidth=75, nanstr='nan', precision=8,
-    ... suppress=False, threshold=1000, formatter=None).defaults
+    ... suppress=False, threshold=1000, formatter=None).apply()
     """
     def __init__(self, **kwargs):
         for key in kwargs:
             if key not in _printoptions:
                 raise ValueError(key + ' is an invalid printing option.')
+        # Remove having keys having None as a value...
+        kwargs = {k: v
+                  for k, v in kwargs.items()
+                  if v is not None}
+        # ...except 'formatter', which is always overridden.
         kwargs.setdefault('formatter', None)
         self.overridden_options = kwargs
         self.old_options = dict(_printoptions)
@@ -317,7 +323,7 @@ def get_printoptions():
     PrintOptions, set_printoptions, set_string_function
 
     """
-    return PrintOptions()
+    return dict(PrintOptions())
 
 def _leading_trailing(a):
     from . import numeric as _nc
@@ -325,7 +331,7 @@ def _leading_trailing(a):
     if a.ndim == 1:
         if len(a) > 2*edgeitems:
             b = _nc.concatenate((a[:edgeitems],
-                                     a[-edgeitems:]))
+                                 a[-edgeitems:]))
         else:
             b = a
     else:
@@ -373,6 +379,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     nanstr = _printoptions['nanstr']
     infstr = _printoptions['infstr']
+    edgeitems = _printoptions['edgeitems']
 
     formatdict = {'bool': _boolFormatter,
                   'int': IntegerFormat(data),
@@ -449,8 +456,8 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     next_line_prefix += " "*len(prefix)
 
     lst = _formatArray(a, format_function, len(a.shape), max_line_width,
-                       next_line_prefix, separator,
-                       _printoptions['edgeitems'], summary_insert)[:-1]
+                       next_line_prefix, separator, edgeitems,
+                       summary_insert)[:-1]
     return lst
 
 def _convert_arrays(obj):
