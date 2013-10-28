@@ -2094,6 +2094,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *
  * @param MapIterObject
  * @param The parsed indices object
+ * @param Number of indices
  * @param The array that is being iterated
  *
  * Sets the following information:
