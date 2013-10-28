@@ -214,6 +214,28 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__setitem__, ind, 0)
 
 
+    def test_nonbaseclass_values(self):
+        class SubClass(np.ndarray):
+            def __array_finalize__(self, old):
+                # Have array finalize do funny things
+                self.fill(99)
+
+        a = np.zeros((5, 5))
+        s = a.copy().view(type=SubClass)
+        s.fill(1)
+
+        a[[0, 1, 2, 3, 4], :] = s
+        assert_((a == 1).all())
+
+        # Subspace is last, so transposing might want to finalize
+        a[:, [0, 1, 2, 3, 4]] = s
+        assert_((a == 1).all())
+
+        a.fill(0)
+        a[...] = s
+        assert_((a == 1).all())
+
+
 class TestBroadcastedAssignments(TestCase):
     def assign(self, a, ind, val):
         a[ind] = val

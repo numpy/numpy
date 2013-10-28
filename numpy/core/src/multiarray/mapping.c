@@ -2474,7 +2474,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      */
     if (extra_op != NULL) {
         if (!PyArray_CheckExact(extra_op)) {
-            extra_op = (PyArrayObject *)PyArray_View(extra_op, NULL, NULL);
+            extra_op = (PyArrayObject *)PyArray_View(extra_op, NULL,
+                                                     &PyArray_Type);
             if (extra_op == NULL) {
                 goto fail;
             }
