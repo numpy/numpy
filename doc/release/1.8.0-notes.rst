@@ -385,3 +385,133 @@ deprecated. Previously float indices and function arguments such as axes or
 shapes were truncated to integers without warning. For example
 `arr.reshape(3., -1)` or `arr[0.]` will trigger a deprecation warning in
 NumPy 1.8., and in some future version of NumPy they will raise an error.
+
+
+Authors
+=======
+
+This release contains work by the following people who contributed at least
+one patch to this release. The names are in alphabetical order by first name:
+
+* 87
+* Adam Ginsburg +
+* Adam Griffiths +
+* Alexander Belopolsky +
+* Alex Barth +
+* Alex Ford +
+* Andreas Hilboll +
+* Andreas Kloeckner +
+* Andreas Schwab +
+* Andrew Horton +
+* argriffing +
+* Arink Verma +
+* Bago Amirbekian +
+* Bartosz Telenczuk +
+* bebert218 +
+* Benjamin Root +
+* Bill Spotz +
+* Bradley M. Froehle
+* Carwyn Pelley +
+* Charles Harris
+* Chris
+* Christian Brueffer +
+* Christoph Dann +
+* Christoph Gohlke
+* Dan Hipschman +
+* Daniel +
+* Dan Miller +
+* daveydave400 +
+* David Cournapeau
+* David Warde-Farley
+* Denis Laxalde
+* dmuellner +
+* Edward Catmur +
+* Egor Zindy +
+* endolith
+* Eric Firing
+* Eric Fode
+* Eric Moore +
+* Eric Price +
+* Fazlul Shahriar +
+* Félix Hartmann +
+* Fernando Perez
+* Frank B +
+* Frank Breitling +
+* Frederic
+* Gabriel
+* GaelVaroquaux
+* Guillaume Gay +
+* Han Genuit
+* HaroldMills +
+* hklemm +
+* jamestwebber +
+* Jason Madden +
+* Jay Bourque
+* jeromekelleher +
+* Jesús Gómez +
+* jmozmoz +
+* jnothman +
+* Johannes Schönberger +
+* John Benediktsson +
+* John Salvatier +
+* John Stechschulte +
+* Jonathan Waltman +
+* Joon Ro +
+* Jos de Kloe +
+* Joseph Martinot-Lagarde +
+* Josh Warner (Mac) +
+* Jostein Bø Fløystad +
+* Juan Luis Cano Rodríguez +
+* Julian Taylor +
+* Julien Phalip +
+* K.-Michael Aye +
+* Kumar Appaiah +
+* Lars Buitinck
+* Leon Weber +
+* Luis Pedro Coelho
+* Marcin Juszkiewicz
+* Mark Wiebe
+* Marten van Kerkwijk +
+* Martin Baeuml +
+* Martin Spacek
+* Martin Teichmann +
+* Matt Davis +
+* Matthew Brett
+* Maximilian Albert +
+* m-d-w +
+* Michael Droettboom
+* mwtoews +
+* Nathaniel J. Smith
+* Nicolas Scheffer +
+* Nils Werner +
+* ochoadavid +
+* Ondřej Čertík
+* ovillellas +
+* Paul Ivanov
+* Pauli Virtanen
+* peterjc
+* Ralf Gommers
+* Raul Cota +
+* Richard Hattersley +
+* Robert Costa +
+* Robert Kern
+* Rob Ruana +
+* Ronan Lamy
+* Sandro Tosi
+* Sascha Peilicke +
+* Sebastian Berg
+* Skipper Seabold
+* Stefan van der Walt
+* Steve +
+* Takafumi Arakaki +
+* Thomas Robitaille +
+* Tomas Tomecek +
+* Travis E. Oliphant
+* Valentin Haenel
+* Vladimir Rutsky +
+* Warren Weckesser
+* Yaroslav Halchenko
+* Yury V. Zaytsev +
+
+A total of 119 people contributed to this release.
+People with a "+" by their names contributed a patch for the first time.
