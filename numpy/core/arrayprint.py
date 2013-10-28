@@ -158,16 +158,13 @@ class PrintOptions(Mapping):
     ... suppress=False, threshold=1000, formatter=None).apply()
     """
     def __init__(self, **kwargs):
-        for key in kwargs:
+        overridden_options = {'formatter': None}
+        for key, value in kwargs.items():
             if key not in _printoptions:
                 raise ValueError(key + ' is an invalid printing option.')
-        # Remove having keys having None as a value...
-        kwargs = {k: v
-                  for k, v in kwargs.items()
-                  if v is not None}
-        # ...except 'formatter', which is always overridden.
-        kwargs.setdefault('formatter', None)
-        self.overridden_options = kwargs
+            if value is not None:
+                overridden_options[key] = value
+        self.overridden_options = overridden_options
         self.old_options = dict(_printoptions)
 
     def __enter__(self):
