@@ -3,14 +3,17 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
-           'tril', 'vander', 'histogram2d', 'mask_indices',
-           'tril_indices', 'tril_indices_from', 'triu_indices', 'triu_indices_from',
+__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
+           'triu', 'tril', 'vander', 'histogram2d', 'mask_indices',
+           'tril_indices', 'tril_indices_from', 'triu_indices',
+           'triu_indices_from',
            ]
 
-from numpy.core.numeric import asanyarray, equal, subtract, arange, \
-     zeros, greater_equal, multiply, ones, asarray, alltrue, where, \
-     empty, diagonal
+from numpy.core.numeric import (
+    asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
+    asarray, where,
+    )
+
 
 def fliplr(m):
     """
@@ -61,6 +64,7 @@ def fliplr(m):
     if m.ndim < 2:
         raise ValueError("Input must be >= 2-d.")
     return m[:, ::-1]
+
 
 def flipud(m):
     """
@@ -115,6 +119,7 @@ def flipud(m):
         raise ValueError("Input must be >= 1-d.")
     return m[::-1, ...]
 
+
 def rot90(m, k=1):
     """
     Rotate an array by 90 degrees in the counter-clockwise direction.
@@ -167,6 +172,7 @@ def rot90(m, k=1):
         # k == 3
         return fliplr(m.swapaxes(0, 1))
 
+
 def eye(N, M=None, k=0, dtype=float):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
@@ -217,6 +223,7 @@ def eye(N, M=None, k=0, dtype=float):
         i = (-k) * M
     m[:M-k].flat[i::M+1] = 1
     return m
+
 
 def diag(v, k=0):
     """
@@ -288,6 +295,7 @@ def diag(v, k=0):
     else:
         raise ValueError("Input must be 1- or 2-d.")
 
+
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -346,6 +354,7 @@ def diagflat(v, k=0):
         return res
     return wrap(res)
 
+
 def tri(N, M=None, k=0, dtype=float):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
@@ -388,6 +397,7 @@ def tri(N, M=None, k=0, dtype=float):
     m = greater_equal(subtract.outer(arange(N), arange(M)), -k)
     return m.astype(dtype)
 
+
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -424,6 +434,7 @@ def tril(m, k=0):
     out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype), m)
     return out
 
+
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -450,13 +461,16 @@ def triu(m, k=0):
     out = multiply((1 - tri(m.shape[0], m.shape[1], k - 1, dtype=m.dtype)), m)
     return out
 
-# borrowed from John Hunter and matplotlib
-def vander(x, N=None):
-    """
-    Generate a Van der Monde matrix.
 
-    The columns of the output matrix are decreasing powers of the input
-    vector.  Specifically, the `i`-th output column is the input vector
+# Originally borrowed from John Hunter and matplotlib
+def vander(x, N=None, order='decreasing'):
+    """
+    Generate a Vandermonde matrix.
+
+    The columns of the output matrix are powers of the input vector.  The
+    order of the powers is determined by the `order` argument, either
+    "decreasing" (the default) or "increasing".  Specifically, when
+    `order` is "decreasing", the `i`-th output column is the input vector
     raised element-wise to the power of ``N - i - 1``.  Such a matrix with
     a geometric progression in each row is named for Alexandre-Theophile
     Vandermonde.
@@ -466,14 +480,22 @@ def vander(x, N=None):
     x : array_like
         1-D input array.
     N : int, optional
-        Order of (number of columns in) the output.  If `N` is not specified,
-        a square array is returned (``N = len(x)``).
+        Number of columns in the output.  If `N` is not specified, a square
+        array is returned (``N = len(x)``).
+    order : str, optional
+        Order of the powers of the columns.  Must be either 'decreasing'
+        (the default) or 'increasing'.
 
     Returns
     -------
     out : ndarray
-        Van der Monde matrix of order `N`.  The first column is ``x^(N-1)``,
-        the second ``x^(N-2)`` and so forth.
+        Vandermonde matrix.  If `order` is "decreasing", the first column is
+        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `order` is
+        "increasing", the columns are ``x^0, x^1, ..., x^(N-1)``.
+
+    See Also
+    --------
+    polynomial.polynomial.polyvander
 
     Examples
     --------
@@ -497,6 +519,11 @@ def vander(x, N=None):
            [  8,   4,   2,   1],
            [ 27,   9,   3,   1],
            [125,  25,   5,   1]])
+    >>> np.vander(x, order='increasing')
+    array([[  1,   1,   1,   1],
+           [  1,   2,   4,   8],
+           [  1,   3,   9,  27],
+           [  1,   5,  25, 125]])
 
     The determinant of a square Vandermonde matrix is the product
     of the differences between the values of the input vector:
@@ -507,13 +534,22 @@ def vander(x, N=None):
     48
 
     """
+    if order not in ['decreasing', 'increasing']:
+        raise ValueError("Invalid order %r; order must be either "
+                         "'decreasing' or 'increasing'." % (order,))
     x = asarray(x)
+    if x.ndim != 1:
+        raise ValueError("x must be a one-dimensional array or sequence.")
     if N is None:
-        N=len(x)
-    X = ones( (len(x), N), x.dtype)
-    for i in range(N - 1):
-        X[:, i] = x**(N - i - 1)
-    return X
+        N = len(x)
+    if order == "decreasing":
+        powers = arange(N - 1, -1, -1)
+    else:
+        powers = arange(N)
+
+    V = x.reshape(-1, 1) ** powers
+
+    return V
 
 
 def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
@@ -530,7 +566,8 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         The bin specification:
 
           * If int, the number of bins for the two dimensions (nx=ny=bins).
-          * If [int, int], the number of bins in each dimension (nx, ny = bins).
+          * If [int, int], the number of bins in each dimension
+            (nx, ny = bins).
           * If array_like, the bin edges for the two dimensions
             (x_edges=y_edges=bins).
           * If [array, array], the bin edges in each dimension
