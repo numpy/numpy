@@ -3,7 +3,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
+from numpy.testing import (TestCase, run_module_suite, assert_equal,
+    assert_array_equal, assert_array_max_ulp, assert_array_almost_equal,
+    assert_raises, rand)
 
 from numpy import (arange, rot90, add, fliplr, flipud, zeros, ones, eye,
                    array, diag, histogram2d, tri, mask_indices, triu_indices,
