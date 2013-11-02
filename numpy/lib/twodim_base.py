@@ -9,8 +9,10 @@ __all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
            'triu_indices_from',
            ]
 
-from numpy.core.numeric import (asanyarray, subtract, arange, zeros,
-                                greater_equal, multiply, ones, asarray, where)
+from numpy.core.numeric import (
+    asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
+    asarray, where,
+    )
 
 
 def fliplr(m):

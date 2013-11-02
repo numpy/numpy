@@ -3,13 +3,16 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import (TestCase, run_module_suite, assert_equal,
-    assert_array_equal, assert_array_max_ulp, assert_array_almost_equal,
-    assert_raises, rand)
+from numpy.testing import (
+    TestCase, run_module_suite, assert_equal, assert_array_equal,
+    assert_array_max_ulp, assert_array_almost_equal, assert_raises, rand,
+    )
 
-from numpy import (arange, rot90, add, fliplr, flipud, zeros, ones, eye,
-                   array, diag, histogram2d, tri, mask_indices, triu_indices,
-                   triu_indices_from, tril_indices, tril_indices_from, vander)
+from numpy import (
+    arange, rot90, add, fliplr, flipud, zeros, ones, eye, array, diag,
+    histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
+    tril_indices, tril_indices_from, vander,
+    )
 
 import numpy as np
 from numpy.compat import asbytes, asbytes_nested
@@ -347,7 +350,8 @@ class TestTriuIndices(object):
                       [9,  10, -1, -1],
                       [13, 14, 15, -1]]))
 
-        # These cover almost the whole array (two diagonals right of the main one):
+        # These cover almost the whole array (two diagonals right of the
+        # main one):
         a[iu2] = -10
         yield (assert_array_equal, a,
                array([[-1,  -1, -10, -10],
@@ -372,7 +376,7 @@ class TestTriuIndicesFrom(object):
 
 class TestVander(object):
     def test_basic(self):
-        c = np.array([0,1,-2, 3])
+        c = np.array([0, 1, -2, 3])
         v = vander(c)
         powers = np.array([[ 0,  0, 0,  0, 1],
                            [ 1,  1, 1,  1, 1],
