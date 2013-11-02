@@ -9,8 +9,8 @@ __all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
            'triu_indices_from',
            ]
 
-from numpy.core.numeric import (asanyarray, subtract, arange,
-    zeros, greater_equal, multiply, ones, asarray, where)
+from numpy.core.numeric import (asanyarray, subtract, arange, zeros,
+                                greater_equal, multiply, ones, asarray, where)
 
 
 def fliplr(m):
@@ -491,6 +491,10 @@ def vander(x, N=None, order='decreasing'):
         ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `order` is
         "increasing", the columns are ``x^0, x^1, ..., x^(N-1)``.
 
+    See Also
+    --------
+    polynomial.polynomial.polyvander
+
     Examples
     --------
     >>> x = np.array([1, 2, 3, 5])
@@ -537,7 +541,7 @@ def vander(x, N=None, order='decreasing'):
     if N is None:
         N = len(x)
     if order == "decreasing":
-        powers = arange(N-1, -1, -1)
+        powers = arange(N - 1, -1, -1)
     else:
         powers = arange(N)
 
