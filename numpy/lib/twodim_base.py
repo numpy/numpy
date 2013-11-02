@@ -3,14 +3,15 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
-           'tril', 'vander', 'histogram2d', 'mask_indices',
-           'tril_indices', 'tril_indices_from', 'triu_indices', 'triu_indices_from',
+__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
+           'triu', 'tril', 'vander', 'histogram2d', 'mask_indices',
+           'tril_indices', 'tril_indices_from', 'triu_indices',
+           'triu_indices_from',
            ]
 
-from numpy.core.numeric import asanyarray, equal, subtract, arange, \
-     zeros, greater_equal, multiply, ones, asarray, alltrue, where, \
-     empty, diagonal
+from numpy.core.numeric import (asanyarray, subtract, arange,
+    zeros, greater_equal, multiply, ones, asarray, where)
+
 
 def fliplr(m):
     """
@@ -61,6 +62,7 @@ def fliplr(m):
     if m.ndim < 2:
         raise ValueError("Input must be >= 2-d.")
     return m[:, ::-1]
+
 
 def flipud(m):
     """
@@ -115,6 +117,7 @@ def flipud(m):
         raise ValueError("Input must be >= 1-d.")
     return m[::-1, ...]
 
+
 def rot90(m, k=1):
     """
     Rotate an array by 90 degrees in the counter-clockwise direction.
@@ -167,6 +170,7 @@ def rot90(m, k=1):
         # k == 3
         return fliplr(m.swapaxes(0, 1))
 
+
 def eye(N, M=None, k=0, dtype=float):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
@@ -217,6 +221,7 @@ def eye(N, M=None, k=0, dtype=float):
         i = (-k) * M
     m[:M-k].flat[i::M+1] = 1
     return m
+
 
 def diag(v, k=0):
     """
@@ -288,6 +293,7 @@ def diag(v, k=0):
     else:
         raise ValueError("Input must be 1- or 2-d.")
 
+
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -346,6 +352,7 @@ def diagflat(v, k=0):
         return res
     return wrap(res)
 
+
 def tri(N, M=None, k=0, dtype=float):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
@@ -388,6 +395,7 @@ def tri(N, M=None, k=0, dtype=float):
     m = greater_equal(subtract.outer(arange(N), arange(M)), -k)
     return m.astype(dtype)
 
+
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -424,6 +432,7 @@ def tril(m, k=0):
     out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype), m)
     return out
 
+
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -449,6 +458,7 @@ def triu(m, k=0):
     m = asanyarray(m)
     out = multiply((1 - tri(m.shape[0], m.shape[1], k - 1, dtype=m.dtype)), m)
     return out
+
 
 # Originally borrowed from John Hunter and matplotlib
 def vander(x, N=None, order='decreasing'):
@@ -550,7 +560,8 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         The bin specification:
 
           * If int, the number of bins for the two dimensions (nx=ny=bins).
-          * If [int, int], the number of bins in each dimension (nx, ny = bins).
+          * If [int, int], the number of bins in each dimension
+            (nx, ny = bins).
           * If array_like, the bin edges for the two dimensions
             (x_edges=y_edges=bins).
           * If [array, array], the bin edges in each dimension
