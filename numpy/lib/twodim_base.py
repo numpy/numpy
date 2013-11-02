@@ -450,13 +450,15 @@ def triu(m, k=0):
     out = multiply((1 - tri(m.shape[0], m.shape[1], k - 1, dtype=m.dtype)), m)
     return out
 
-# borrowed from John Hunter and matplotlib
-def vander(x, N=None):
+# Originally borrowed from John Hunter and matplotlib
+def vander(x, N=None, order='decreasing'):
     """
-    Generate a Van der Monde matrix.
+    Generate a Vandermonde matrix.
 
-    The columns of the output matrix are decreasing powers of the input
-    vector.  Specifically, the `i`-th output column is the input vector
+    The columns of the output matrix are powers of the input vector.  The
+    order of the powers is determined by the `order` argument, either
+    "decreasing" (the default) or "increasing".  Specifically, when
+    `order` is "decreasing", the `i`-th output column is the input vector
     raised element-wise to the power of ``N - i - 1``.  Such a matrix with
     a geometric progression in each row is named for Alexandre-Theophile
     Vandermonde.
@@ -466,14 +468,18 @@ def vander(x, N=None):
     x : array_like
         1-D input array.
     N : int, optional
-        Order of (number of columns in) the output.  If `N` is not specified,
-        a square array is returned (``N = len(x)``).
+        Number of columns in the output.  If `N` is not specified, a square
+        array is returned (``N = len(x)``).
+    order : str, optional
+        Order of the powers of the columns.  Must be either 'decreasing'
+        (the default) or 'increasing'.
 
     Returns
     -------
     out : ndarray
-        Van der Monde matrix of order `N`.  The first column is ``x^(N-1)``,
-        the second ``x^(N-2)`` and so forth.
+        Vandermonde matrix.  If `order` is "decreasing", the first column is
+        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `order` is
+        "increasing", the columns are ``x^0, x^1, ..., x^(N-1)``.
 
     Examples
     --------
@@ -497,6 +503,11 @@ def vander(x, N=None):
            [  8,   4,   2,   1],
            [ 27,   9,   3,   1],
            [125,  25,   5,   1]])
+    >>> np.vander(x, order='increasing')
+    array([[  1,   1,   1,   1],
+           [  1,   2,   4,   8],
+           [  1,   3,   9,  27],
+           [  1,   5,  25, 125]])
 
     The determinant of a square Vandermonde matrix is the product
     of the differences between the values of the input vector:
@@ -507,13 +518,22 @@ def vander(x, N=None):
     48
 
     """
+    if order not in ['decreasing', 'increasing']:
+        raise ValueError("Invalid order %r; order must be either "
+                         "'decreasing' or 'increasing'." % (order,))
     x = asarray(x)
+    if x.ndim != 1:
+        raise ValueError("x must be a one-dimensional array or sequence.")
     if N is None:
-        N=len(x)
-    X = ones( (len(x), N), x.dtype)
-    for i in range(N - 1):
-        X[:, i] = x**(N - i - 1)
-    return X
+        N = len(x)
+    if order == "decreasing":
+        powers = arange(N-1, -1, -1)
+    else:
+        powers = arange(N)
+
+    V = x.reshape(-1, 1) ** powers
+
+    return V
 
 
 def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):

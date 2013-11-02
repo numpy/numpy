@@ -9,7 +9,7 @@ from numpy.testing import (TestCase, run_module_suite, assert_equal,
 
 from numpy import (arange, rot90, add, fliplr, flipud, zeros, ones, eye,
                    array, diag, histogram2d, tri, mask_indices, triu_indices,
-                   triu_indices_from, tril_indices, tril_indices_from)
+                   triu_indices_from, tril_indices, tril_indices_from, vander)
 
 import numpy as np
 from numpy.compat import asbytes, asbytes_nested
@@ -368,6 +368,40 @@ class TestTriuIndicesFrom(object):
         assert_raises(ValueError, triu_indices_from, np.ones((2,)))
         assert_raises(ValueError, triu_indices_from, np.ones((2, 2, 2)))
         assert_raises(ValueError, triu_indices_from, np.ones((2, 3)))
+
+
+class TestVander(object):
+    def test_basic(self):
+        c = np.array([0,1,-2, 3])
+        v = vander(c)
+        powers = np.array([[ 0,  0, 0,  0, 1],
+                           [ 1,  1, 1,  1, 1],
+                           [16, -8, 4, -2, 1],
+                           [81, 27, 9,  3, 1]])
+        # Check default value of N:
+        yield (assert_array_equal, v, powers[:, 1:])
+        # Check a range of N values, including 0 and 5 (greater than default)
+        m = powers.shape[1]
+        for n in range(6):
+            v = vander(c, N=n)
+            yield (assert_array_equal, v, powers[:, m-n:m])
+
+    def test_dtypes(self):
+        c = array([11, -12, 13], dtype=np.int8)
+        v = vander(c)
+        expected = np.array([[121,  11, 1],
+                             [144, -12, 1],
+                             [169,  13, 1]])
+        yield (assert_array_equal, v, expected)
+
+        c = array([1.0+1j, 1.0-1j])
+        v = vander(c, N=3)
+        expected = np.array([[ 2j, 1+1j, 1],
+                             [-2j, 1-1j, 1]])
+        # The data is floating point, but the values are small integers,
+        # so assert_array_equal *should* be safe here (rather than, say,
+        # assert_array_almost_equal).
+        yield (assert_array_equal, v, expected)
 
 
 if __name__ == "__main__":
