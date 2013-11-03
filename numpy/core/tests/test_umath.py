@@ -338,6 +338,11 @@ class TestHypotSpecialValues(TestCase):
         assert_hypot_isinf(np.inf, np.nan)
         assert_hypot_isinf(np.inf, 0)
         assert_hypot_isinf(0, np.inf)
+        assert_hypot_isinf(np.inf, np.inf)
+        assert_hypot_isinf(np.inf, 23.0)
+
+    def test_no_fpe(self):
+        assert_no_warnings(ncu.hypot, np.inf, 0)
 
 
 def assert_arctan2_isnan(x, y):
