@@ -1,6 +1,5 @@
-=========================
 NumPy 1.7.0 Release Notes
-=========================
+*************************
 
 This release includes several new features as well as numerous bug fixes and
 refactorings. It supports Python 2.4 - 2.7 and 3.1 - 3.3 and is the last
@@ -67,7 +66,7 @@ New features
 ============
 
 Reduction UFuncs Generalize axis= Parameter
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Any ufunc.reduce function call, as well as other reductions like sum, prod,
 any, all, max and min support the ability to choose a subset of the axes to
@@ -76,7 +75,7 @@ axis=# to pick a single axis.  Now, one can also say axis=(#,#) to pick a
 list of axes for reduction.
 
 Reduction UFuncs New keepdims= Parameter
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is a new keepdims= parameter, which if set to True, doesn't throw
 away the reduction axes but instead sets them to have size one.  When this
@@ -84,7 +83,7 @@ option is set, the reduction result will broadcast correctly to the
 original operand which was reduced.
 
 Datetime support
-----------------
+~~~~~~~~~~~~~~~~
 
 .. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
    in future versions of NumPy.
@@ -105,26 +104,26 @@ The notes in `doc/source/reference/arrays.datetime.rst <https://github.com/numpy
 consulted for more details.
 
 Custom formatter for printing arrays
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See the new ``formatter`` parameter of the ``numpy.set_printoptions``
 function.
 
 New function numpy.random.choice
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A generic sampling function has been added which will generate samples from
 a given array-like. The samples can be with or without replacement, and
 with uniform or given non-uniform probabilities.
 
 New function isclose
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Returns a boolean array where two arrays are element-wise equal within a
 tolerance. Both relative and absolute tolerance can be specified.
 
 Preliminary multi-dimensional support in the polynomial package
----------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Axis keywords have been added to the integration and differentiation
 functions and a tensor keyword was added to the evaluation functions.
@@ -135,7 +134,7 @@ pseudo-Vandermonde matrices that can be used for fitting.
 
 
 Ability to pad rank-n arrays
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A pad module containing functions for padding n-dimensional arrays has been
 added. The various private padding functions are exposed as options to a
@@ -149,18 +148,18 @@ Current modes are ``constant``, ``edge``, ``linear_ramp``, ``maximum``,
 
 
 New argument to searchsorted
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The function searchsorted now accepts a 'sorter' argument that is a
 permutation array that sorts the array to search.
 
 Build system
-------------
+~~~~~~~~~~~~
 
 Added experimental support for the AArch64 architecture.
 
 C API
------
+~~~~~
 
 New function ``PyArray_RequireWriteable`` provides a consistent interface
 for checking array writeability -- any C code which works with arrays whose
@@ -173,7 +172,7 @@ Changes
 =======
 
 General
--------
+~~~~~~~
 
 The function np.concatenate tries to match the layout of its input arrays.
 Previously, the layout did not follow any particular reason, and depended
@@ -214,7 +213,7 @@ and so the collapsing process only continues so long as it encounters other
 ``b`` is the last entry in that list which is a ``matrix`` object.
 
 Casting Rules
--------------
+~~~~~~~~~~~~~
 
 Casting rules have undergone some changes in corner cases, due to the
 NA-related work. In particular for combinations of scalar+scalar:
@@ -256,7 +255,7 @@ Deprecations
 ============
 
 General
--------
+~~~~~~~
 
 Specifying a custom string formatter with a `_format` array attribute is
 deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
@@ -269,7 +268,7 @@ Versions of numpy < 1.7.0 ignored axis argument value for 1D arrays. We
 allow this for now, but in due course we will raise an error.
 
 C-API
------
+~~~~~
 
 Direct access to the fields of PyArrayObject* has been deprecated. Direct
 access has been recommended against for many releases. Expect similar
