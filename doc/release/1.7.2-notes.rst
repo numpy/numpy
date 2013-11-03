@@ -43,3 +43,5 @@ Issues fixed
 * gh-2052: del scalar subscript causes segfault
 * gh-3832: fix a few uninitialized uses and memleaks
 * gh-3971: f2py changed string.lowercase to string.ascii_lowercase for python3
+* gh-3480: numpy.random.binomial raised ValueError for n == 0
+* gh-3992: hypot(inf, 0) shouldn't raise a warning, hypot(inf, inf) wrong result
