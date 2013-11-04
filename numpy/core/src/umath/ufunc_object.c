@@ -2652,7 +2652,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
      * resolution.
      */
     if (odtype != NULL) {
-        type_tup = Py_BuildValue("OOO", odtype, odtype, Py_None);
+        type_tup = PyTuple_Pack(3, odtype, odtype, Py_None);
         if (type_tup == NULL) {
             return -1;
         }
