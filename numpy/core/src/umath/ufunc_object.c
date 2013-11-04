@@ -515,7 +515,6 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 NPY_NO_EXPORT int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
-    PyObject *thedict;
     PyObject *ref = _get_global_ext_obj(name);
 
     return _extract_pyvals(ref, name, bufsize, errmask, errobj);
