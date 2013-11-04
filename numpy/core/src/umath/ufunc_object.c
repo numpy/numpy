@@ -2825,7 +2825,6 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
-    PyObject *errobj = NULL;
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.reduce\n", ufunc_name);
 
@@ -2879,13 +2878,12 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             return NULL;
     }
 
-    if (PyUFunc_GetPyValues("reduce", &buffersize, &errormask, &errobj) < 0) {
+    if (_get_bufsize_errmask(NULL, "reduce", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
     /* Get the reduction dtype */
     if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
-        Py_XDECREF(errobj);
         return NULL;
     }
 
@@ -2898,7 +2896,6 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                    ufunc, buffersize, ufunc_name);
 
     Py_DECREF(dtype);
-    Py_XDECREF(errobj);
     return result;
 }
 
@@ -2925,7 +2922,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
-    PyObject *errobj = NULL;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -2937,7 +2933,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     printf("\n");
 #endif
 
-    if (PyUFunc_GetPyValues("accumulate", &buffersize, &errormask, &errobj) < 0) {
+    if (_get_bufsize_errmask(NULL, "accumulate", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3228,8 +3224,6 @@ finish:
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
 
-    Py_XDECREF(errobj);
-
     return (PyObject *)out;
 
 fail:
@@ -3238,8 +3232,6 @@ fail:
 
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
-
-    Py_XDECREF(errobj);
 
     return NULL;
 }
@@ -3290,7 +3282,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
-    PyObject *errobj = NULL;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -3317,7 +3308,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     printf("Index size is %d\n", (int)ind_size);
 #endif
 
-    if (PyUFunc_GetPyValues(opname, &buffersize, &errormask, &errobj) < 0) {
+    if (_get_bufsize_errmask(NULL, opname, &buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3629,8 +3620,6 @@ finish:
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
 
-    Py_XDECREF(errobj);
-
     return (PyObject *)out;
 
 fail:
@@ -3638,8 +3627,6 @@ fail:
     Py_XDECREF(op_dtypes[0]);
 
     NpyIter_Deallocate(iter);
-
-    Py_XDECREF(errobj);
 
     return NULL;
 }
@@ -4974,7 +4961,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     npy_uint32 op_flags[NPY_MAXARGS];
     int buffersize;
     int errormask = 0;
-    PyObject *errobj = NULL;
     NPY_BEGIN_THREADS_DEF;
 
     if (ufunc->nin > 2) {
@@ -5108,7 +5094,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                       NPY_ITER_NO_SUBTYPE;
     }
 
-    PyUFunc_GetPyValues(ufunc->name, &buffersize, &errormask, &errobj);
+    if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
+        goto fail;
+    }
 
     /*
      * Create NpyIter object to "iterate" over single element of each input
@@ -5207,7 +5195,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(array_operands[0]);
     Py_XDECREF(array_operands[1]);
     Py_XDECREF(array_operands[2]);
-    Py_XDECREF(errobj);
 
     if (needs_api && PyErr_Occurred()) {
         return NULL;
@@ -5224,7 +5211,6 @@ fail:
     Py_XDECREF(array_operands[0]);
     Py_XDECREF(array_operands[1]);
     Py_XDECREF(array_operands[2]);
-    Py_XDECREF(errobj);
 
     return NULL;
 }
