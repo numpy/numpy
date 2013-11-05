@@ -1500,6 +1500,10 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
     PyArray_Descr *d1, *d2;
     npy_bool ret;
 
+    if (typenum1 == typenum2) {
+        return NPY_SUCCEED;
+    }
+
     d1 = PyArray_DescrFromType(typenum1);
     d2 = PyArray_DescrFromType(typenum2);
     ret = PyArray_EquivTypes(d1, d2);
