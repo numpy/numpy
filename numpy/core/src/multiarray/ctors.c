@@ -1293,8 +1293,8 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         descr->elsize = view->itemsize;
     }
 
+    nd = view->ndim;
     if (view->shape != NULL) {
-        nd = view->ndim;
         if (nd >= NPY_MAXDIMS || nd < 0) {
             goto fail;
         }
@@ -1318,9 +1318,17 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         }
     }
     else {
-        nd = 1;
-        shape[0] = view->len / view->itemsize;
-        strides[0] = view->itemsize;
+        if (nd == 1) {
+            shape[0] = view->len / view->itemsize;
+            strides[0] = view->itemsize;
+        }
+        else if (nd > 1) {
+            PyErr_WarnEx(PyExc_RuntimeWarning,
+                         "ndim computed from the PEP 3118 buffer format "
+                         "is greater than 1, but shape is NULL.",
+                         0);
+            goto fail;
+        }
     }
 
     flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
@@ -2082,7 +2090,7 @@ PyArray_FromInterface(PyObject *origin)
     /* Get the strides */
 
     iface = PyArray_GetAttrString_SuppressException(origin,
-						    "__array_interface__");
+                                                    "__array_interface__");
     if (iface == NULL) {
         return Py_NotImplemented;
     }

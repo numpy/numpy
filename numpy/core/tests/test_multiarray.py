@@ -3407,9 +3407,13 @@ class TestNewBufferProtocol(object):
         y2 = np.array(x)
         assert_(not y.flags.owndata)
         assert_(y2.flags.owndata)
+
         assert_equal(y.dtype, obj.dtype)
+        assert_equal(y.shape, obj.shape)
         assert_array_equal(obj, y)
+
         assert_equal(y2.dtype, obj.dtype)
+        assert_equal(y2.shape, obj.shape)
         assert_array_equal(obj, y2)
 
     def test_roundtrip(self):
@@ -3519,6 +3523,10 @@ class TestNewBufferProtocol(object):
                 dt = dtype.newbyteorder('>')
                 x = np.zeros(4, dtype=dt)
                 self._check_roundtrip(x)
+
+    def test_roundtrip_scalar(self):
+        # Issue #4015.
+        self._check_roundtrip(0)
 
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')
