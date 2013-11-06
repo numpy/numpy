@@ -24,7 +24,7 @@ def is_win64():
 
 if is_win64():
     #_EXTRAFLAGS = ["-fno-leading-underscore"]
-    _EXTRAFLAGS = []
+    _EXTRAFLAGS = ['-fno-stack-check', '-fno-stack-protector', '-mno-stack-arg-probe']
 else:
     _EXTRAFLAGS = []
 
@@ -328,7 +328,7 @@ class Gnu95FCompiler(GnuFCompiler):
             if is_win64():
                 c_compiler = self.c_compiler
                 if c_compiler and c_compiler.compiler_type == "msvc":
-                    return []
+                    return ['gfortran.dll']
                 else:
                     raise NotImplementedError("Only MS compiler supported with gfortran on win64")
         return opt
