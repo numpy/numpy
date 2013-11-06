@@ -378,8 +378,8 @@ static inline int
 get_fp_invalid_and_clear(void)
 {
     int status;
-    status = PyUFunc_getfperr();
-    return !!(status & UFUNC_FPE_INVALID);
+    status = npy_clear_floatstatus();
+    return !!(status & NPY_FPE_INVALID);
 }
 
 static inline void
@@ -389,7 +389,7 @@ set_fp_invalid_or_clear(int error_occurred)
         npy_set_floatstatus_invalid();
     }
     else {
-        PyUFunc_getfperr();
+        npy_clear_floatstatus();
     }
 }
 

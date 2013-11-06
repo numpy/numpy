@@ -180,12 +180,14 @@ fail:
 NPY_NO_EXPORT int
 PyUFunc_getfperr(void)
 {
-    int retstatus;
-    UFUNC_CHECK_STATUS(retstatus);
-    return retstatus;
+    /*
+     * non-clearing get was only added in 1.9 so this function always cleared
+     * keep it so just in case third party code relied on the clearing
+     */
+    return npy_clear_floatstatus();
 }
 
-#define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) {        \
+#define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
             handle = errmask & UFUNC_MASK_##NAME;                       \
             if (handle &&                                               \
                 _error_handler(handle >> UFUNC_SHIFT_##NAME,            \
@@ -214,10 +216,9 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
-    int retstatus;
+    /* clearing is done for backward compatiblity */
+    int retstatus = npy_clear_floatstatus();
 
-    /* 1. check hardware flag --- this is platform dependent code */
-    retstatus = PyUFunc_getfperr();
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
 }
 
@@ -227,7 +228,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 NPY_NO_EXPORT void
 PyUFunc_clearfperr()
 {
-    PyUFunc_getfperr();
+    npy_clear_floatstatus();
 }
 
 
