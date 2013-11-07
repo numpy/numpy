@@ -233,7 +233,8 @@ def check_complex(config, mathlibs):
                 exists.extend(C99_COMPLEX_FUNCS_CHECKED)
 
             if len(exists) > 0:
-                fp = open(join('.', 'numpy', 'core', 'test_c99complex.c'), 'r')
+                fp = open(join('.', 'numpy', 'core', 'src', 'npymath',
+                              'test_c99complex.c'), 'r')
                 obody = fp.read()
                 fp.close()
                 precname = {'f':'FLOAT', '':'DOUBLE', 'l':'LONGDOUBLE'}[prec]

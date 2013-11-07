@@ -25,15 +25,15 @@
 #define HAVE_NUMPY 1
 
 #define FLOAT 1
-#include "../../test_c99complex.c"
+#include "test_c99complex.c"
 #undef FLOAT
 
 #define DOUBLE 1
-#include "../../test_c99complex.c"
+#include "test_c99complex.c"
 #undef DOUBLE
 
 #define LONGDOUBLE 1
-#include "../../test_c99complex.c"
+#include "test_c99complex.c"
 #undef LONGDOUBLE
 
 #define TESTFUNC_INT(func, suffix) \
