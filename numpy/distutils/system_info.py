@@ -271,7 +271,7 @@ def get_standard_file(fname):
     # Home directory
     # And look for the user config file
     try:
-        f = os.environ['HOME']
+        f = os.path.expanduser('~')
     except KeyError:
         pass
     else:
