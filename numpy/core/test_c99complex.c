@@ -1,11 +1,16 @@
-#include <fenv.h>
-#include <float.h>
+#ifdef HAVE_NUMPY
+#include <numpy/npy_3kcompat.h>
+#include <numpy/npy_math.h>
+#else
 #include <stdio.h>
 #include <math.h>
 #ifdef __SUNPRO_CC
 #include <sunmath.h>
 #endif
 #include <complex.h>
+#endif
+
+#include <float.h>
 
 #define PYTESTPRECISION 1
 #define PYTESTFUNC 1
@@ -154,6 +159,18 @@
         FMT "j\n", __LINE__, xr, xi, er1, ei1, er2, ei2, er3, ei3, er4, ei4, \
         rr, ri))
 
+#define TEST_RAISES_FAILED(func, xr, xi, er, ei, rr, ri, efpe, rfpe) \
+    TEST_FAILED_INT(PyOS_snprintf(buf, bsize, "%d: " STRINGIZE(func) \
+        "(" FMT " + " FMT "j): expected: " FMT " + " FMT "j: received: " FMT \
+        " + " FMT "j, required FPE: %d, recieved: %d\n", __LINE__, xr, xi, \
+        er, ei, rr, ri, efpe, rfpe))
+
+#define TEST_RAISES_FAILED2(func, xr, xi, er1, ei1, er2, ei2, rr, ri, efpe, rfpe) \
+    TEST_FAILED_INT(PyOS_snprintf(buf, bsize, "%d: " STRINGIZE(func) \
+        "(" FMT " + " FMT "j): expected: " FMT " + " FMT "j or " FMT " + " FMT \
+        "j: received: " FMT " + " FMT "j, required FPE: %d, recieved: %d\n", \
+        __LINE__, xr, xi, er1, ei1, er2, ei2, rr, ri, efpe, rfpe))
+
 #define TEST_CPOW_FAILED(func, xr, xi, yr, yi, er, ei, rr, ri) \
     TEST_FAILED_INT(PyOS_snprintf(buf, bsize, "%d: " STRINGIZE(func) "(" FMT  \
         " + " FMT "j, " FMT " + " FMT "j): expected: " FMT " + " FMT \
@@ -239,6 +256,18 @@
 #define NPY_PI_2l     1.570796326794896619231321691639751442L /* pi/2 */
 #define NPY_SQRT2l    1.414213562373095048801688724209698079L /* sqrt(2) */
 
+#define NPY_FPE_DIVIDEBYZERO  1
+#define NPY_FPE_OVERFLOW      2
+#define NPY_FPE_UNDERFLOW     4
+#define NPY_FPE_INVALID       8
+
+/* Including this directly is the easiest way to get npy_clear_floatstatus and
+ * npy_get_float_status during config tests. Defining CONFIG_TESTS makes this 
+ * independent of numpy.
+ */
+#define CONFIG_TESTS
+#include <fpstatus.c> 
+
 #define PREFIX
 
 #define RETTYPE int
@@ -270,6 +299,25 @@
                " + " FMT "j or " FMT " + " FMT "j or " FMT " + " FMT "j or " \
                FMT " + " FMT "j: received: " FMT " + " FMT "j\n", __LINE__, \
                xr, xi, er1, ei1, er2, ei2, er3, ei3, er4, ei4, rr, ri); \
+    } \
+    while(0)
+
+#define TEST_RAISES_FAILED(func, xr, xi, er, ei, rr, ri, efpe, rfpe) \
+    do { \
+        ret = 0; \
+        printf("%d: " STRINGIZE(func) "(" FMT " + " FMT "j): expected: " FMT \
+        " + " FMT "j: received: " FMT " + " FMT "j, required FPE: %d, " \
+        "recieved: %d\n", __LINE__, xr, xi, er, ei, rr, ri, efpe, rfpe); \
+    } \
+    while(0)
+
+#define TEST_RAISES_FAILED2(func, xr, xi, er1, ei1, er2, ei2, rr, ri, efpe, rfpe) \
+    do { \
+        ret = 0; \
+        printf("%d: " STRINGIZE(func) "(" FMT " + " FMT "j): expected: " FMT \
+               " + " FMT "j or " FMT " + " FMT "j: received: " FMT " + " FMT \
+               "j, required FPE: %d, recieved: %d\n", __LINE__, xr, xi, er1, \
+               ei1, er2, ei2, rr, ri, efpe, rfpe); \
     } \
     while(0)
 
@@ -440,14 +488,14 @@
         CTYPE r; \
         CTYPE x = FUNC(cpack)(xr, xi); \
         TYPE rr, ri; \
-        feclearexcept(FE_ALL_EXCEPT); \
+        npy_clear_floatstatus(); \
         r = FUNC(func)(x); \
-        except = fetestexcept(fpe); \
+        except = npy_get_floatstatus(); \
         rr = FUNC(creal)(r); \
         ri = FUNC(cimag)(r); \
         if (!(except & fpe && ADDSUFFIX(isequal)(rr, der) \
             && ADDSUFFIX(isequal)(ri, dei))) { \
-            TEST_FAILED(FUNC(func), dxr, dxi, der, dei, rr, ri); \
+            TEST_RAISES_FAILED(FUNC(func), dxr, dxi, der, dei, rr, ri, fpe, except); \
         } \
     } \
     while(0)
@@ -464,15 +512,15 @@
         CTYPE r; \
         CTYPE x = FUNC(cpack)(xr, xi); \
         TYPE rr, ri; \
-        feclearexcept(FE_ALL_EXCEPT); \
+        npy_clear_floatstatus(); \
         r = FUNC(func)(x); \
-        except = fetestexcept(fpe); \
+        except = npy_get_floatstatus(); \
         rr = FUNC(creal)(r); \
         ri = FUNC(cimag)(r); \
         if (!(except & fpe && \
             ((ADDSUFFIX(isequal)(rr, der1) && ADDSUFFIX(isequal)(ri, dei1)) || \
             (ADDSUFFIX(isequal)(rr, der2) && ADDSUFFIX(isequal)(ri, dei2))))) {\
-            TEST_FAILED2(FUNC(func), dxr, dxi, der1, dei1, der2, dei2, rr, ri);\
+            TEST_RAISES_FAILED2(FUNC(func), dxr, dxi, der1, dei1, der2, dei2, rr, ri, fpe, except);\
         } \
     } \
     while(0)
@@ -828,10 +876,10 @@ RETTYPE ADDSUFFIX(test_catan)(void)
     TEST_EE(catan, NAN, 0, NAN, 0);
     TEST_EE(catan, NAN, NZERO, NAN, NZERO);
 
-    TEST_RAISES(catan, NZERO, 1, NZERO, INFINITY, FE_DIVBYZERO);
-    TEST_RAISES(catan, 0, 1, 0, INFINITY, FE_DIVBYZERO);
-    TEST_RAISES(catan, NZERO, -1, NZERO, -INFINITY, FE_DIVBYZERO);
-    TEST_RAISES(catan, 0, -1, 0, -INFINITY, FE_DIVBYZERO);
+    TEST_RAISES(catan, NZERO, 1, NZERO, INFINITY, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catan, 0, 1, 0, INFINITY, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catan, NZERO, -1, NZERO, -INFINITY, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catan, 0, -1, 0, -INFINITY, NPY_FPE_DIVIDEBYZERO);
 
     TEST_CE(catan, -INFINITY, 2.0, -ADDSUFFIX(NPY_PI_2), 0);
     TEST_CE(catan, INFINITY, 2.0, ADDSUFFIX(NPY_PI_2), 0);
@@ -1006,10 +1054,10 @@ RETTYPE ADDSUFFIX(test_catanh)(void)
     TEST_EE(catanh, 0, NAN, 0, NAN);
     TEST_EE(catanh, NZERO, NAN, NZERO, NAN);
 
-    TEST_RAISES(catanh, 1, 0, INFINITY, 0, FE_DIVBYZERO);
-    TEST_RAISES(catanh, 1, NZERO, INFINITY, NZERO, FE_DIVBYZERO);
-    TEST_RAISES(catanh, -1, 0, -INFINITY, 0, FE_DIVBYZERO);
-    TEST_RAISES(catanh, -1, NZERO, -INFINITY, NZERO, FE_DIVBYZERO);
+    TEST_RAISES(catanh, 1, 0, INFINITY, 0, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catanh, 1, NZERO, INFINITY, NZERO, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catanh, -1, 0, -INFINITY, 0, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(catanh, -1, NZERO, -INFINITY, NZERO, NPY_FPE_DIVIDEBYZERO);
 
     TEST_EC(catanh, 2.0, INFINITY, 0, ADDSUFFIX(NPY_PI_2));
     TEST_EC(catanh, 2.0, -INFINITY, 0, -ADDSUFFIX(NPY_PI_2));
@@ -1071,16 +1119,16 @@ RETTYPE ADDSUFFIX(test_ccos)(void)
 
     /* sign of imaginary part is unspecified */
     TEST_RAISES_UNSPECIFIED2(ccos, -INFINITY, 0, NAN, 0, \
-                             NAN, NZERO, FE_INVALID);
+                             NAN, NZERO, NPY_FPE_INVALID);
 
     /* sign of imaginary part is unspecified */
     TEST_UNSPECIFIED2(ccos, NAN, 0, NAN, 0, NAN, NZERO);
     TEST_UNSPECIFIED2(ccos, NAN, NZERO, NAN, 0, NAN, NZERO);
 
-    TEST_RAISES(ccos, -INFINITY, 2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccos, INFINITY, 2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccos, -INFINITY, -2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccos, INFINITY, -2.0, NAN, NAN, FE_INVALID);
+    TEST_RAISES(ccos, -INFINITY, 2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccos, INFINITY, 2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccos, -INFINITY, -2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccos, INFINITY, -2.0, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(ccos, NAN, 2.0, NAN, NAN);
@@ -1110,7 +1158,7 @@ RETTYPE ADDSUFFIX(test_ccos)(void)
 
     /* sign of real part is unspecified */
     TEST_RAISES_UNSPECIFIED2(ccos, -INFINITY, INFINITY, INFINITY, NAN, \
-                             -INFINITY, NAN, FE_INVALID);
+                             -INFINITY, NAN, NPY_FPE_INVALID);
 
     TEST_EE(ccos, NAN, INFINITY, INFINITY, NAN);
     TEST_EE(ccos, NAN, -INFINITY, INFINITY, NAN);
@@ -1143,16 +1191,16 @@ RETTYPE ADDSUFFIX(test_csin)(void)
 
     /* sign of imaginary part is unspecified */
     TEST_RAISES_UNSPECIFIED2(csin, -INFINITY, 0, NAN, 0, \
-                             NAN, NZERO, FE_INVALID);
+                             NAN, NZERO, NPY_FPE_INVALID);
 
     /* sign of imaginary part is unspecified */
     TEST_UNSPECIFIED2(csin, NAN, 0, NAN, 0, NAN, NZERO);
     TEST_UNSPECIFIED2(csin, NAN, NZERO, NAN, 0, NAN, NZERO);
 
-    TEST_RAISES(csin, -INFINITY, 2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csin, INFINITY, 2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csin, -INFINITY, -2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csin, INFINITY, -2.0, NAN, NAN, FE_INVALID);
+    TEST_RAISES(csin, -INFINITY, 2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csin, INFINITY, 2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csin, -INFINITY, -2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csin, INFINITY, -2.0, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(csin, NAN, 2.0, NAN, NAN);
@@ -1182,7 +1230,7 @@ RETTYPE ADDSUFFIX(test_csin)(void)
 
     /* sign of imaginary part is unspecified */
     TEST_RAISES_UNSPECIFIED2(csin, -INFINITY, INFINITY, NAN, INFINITY, \
-                             NAN, -INFINITY, FE_INVALID);
+                             NAN, -INFINITY, NPY_FPE_INVALID);
 
     /* sign of imaginary part is unspecified */
     TEST_UNSPECIFIED2(csin, NAN, INFINITY, NAN, INFINITY, NAN, -INFINITY);
@@ -1213,8 +1261,8 @@ RETTYPE ADDSUFFIX(test_ctan)(void)
     TEST_EE(ctan, NZERO, 0, NZERO, 0);
     TEST_EE(ctan, NZERO, NZERO, NZERO, NZERO);
 
-    TEST_RAISES(ctan, -INFINITY, 2.0, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ctan, -INFINITY, -2.0, NAN, NAN, FE_INVALID);
+    TEST_RAISES(ctan, -INFINITY, 2.0, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ctan, -INFINITY, -2.0, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(ctan, NAN, 2.0, NAN, NAN);
@@ -1269,16 +1317,16 @@ RETTYPE ADDSUFFIX(test_ccosh)(void)
 
     /* sign of imaginary part is unspecified */
     TEST_RAISES_UNSPECIFIED2(ccosh, 0, INFINITY, NAN, 0, \
-                             NAN, NZERO, FE_INVALID);
+                             NAN, NZERO, NPY_FPE_INVALID);
 
     /* sign of imaginary part is unspecified */
     TEST_UNSPECIFIED2(ccosh, 0, NAN, NAN, 0, NAN, NZERO);
     TEST_UNSPECIFIED2(ccosh, NZERO, NAN, NAN, 0, NAN, NZERO);
 
-    TEST_RAISES(ccosh, 2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccosh, 2.0, -INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccosh, -2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ccosh, -2.0, -INFINITY, NAN, NAN, FE_INVALID);
+    TEST_RAISES(ccosh, 2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccosh, 2.0, -INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccosh, -2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ccosh, -2.0, -INFINITY, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(ccosh, 2.0, NAN, NAN, NAN);
@@ -1308,7 +1356,7 @@ RETTYPE ADDSUFFIX(test_ccosh)(void)
 
     /* sign of real part is unspecified */
     TEST_RAISES_UNSPECIFIED2(ccosh, INFINITY, INFINITY, INFINITY, NAN, \
-                             -INFINITY, NAN, FE_INVALID);
+                             -INFINITY, NAN, NPY_FPE_INVALID);
 
     TEST_EE(ccosh, INFINITY, NAN, INFINITY, NAN);
     TEST_EE(ccosh, -INFINITY, NAN, INFINITY, NAN);
@@ -1341,16 +1389,16 @@ RETTYPE ADDSUFFIX(test_csinh)(void)
 
     /* sign of real part is unspecified */
     TEST_RAISES_UNSPECIFIED2(csinh, 0, INFINITY, 0, NAN, \
-                             NZERO, NAN, FE_INVALID);
+                             NZERO, NAN, NPY_FPE_INVALID);
 
     /* sign of real part is unspecified */
     TEST_UNSPECIFIED2(csinh, 0, NAN, 0, NAN, NZERO, NAN);
     TEST_UNSPECIFIED2(csinh, NZERO, NAN, 0, NAN, NZERO, NAN);
 
-    TEST_RAISES(csinh, 2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csinh, 2.0, -INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csinh, -2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(csinh, -2.0, -INFINITY, NAN, NAN, FE_INVALID);
+    TEST_RAISES(csinh, 2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csinh, 2.0, -INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csinh, -2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(csinh, -2.0, -INFINITY, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(csinh, 2.0, NAN, NAN, NAN);
@@ -1380,7 +1428,7 @@ RETTYPE ADDSUFFIX(test_csinh)(void)
 
     /* sign of real part is unspecified */
     TEST_RAISES_UNSPECIFIED2(csinh, INFINITY, INFINITY, INFINITY, NAN, \
-                             -INFINITY, NAN, FE_INVALID);
+                             -INFINITY, NAN, NPY_FPE_INVALID);
 
     /* sign of real part is unspecified */
     TEST_UNSPECIFIED2(csinh, INFINITY, NAN, INFINITY, NAN, -INFINITY, NAN);
@@ -1411,8 +1459,8 @@ RETTYPE ADDSUFFIX(test_ctanh)(void)
     TEST_EE(ctanh, NZERO, 0, NZERO, 0);
     TEST_EE(ctanh, NZERO, NZERO, NZERO, NZERO);
 
-    TEST_RAISES(ctanh, 2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(ctanh, -2.0, INFINITY, NAN, NAN, FE_INVALID);
+    TEST_RAISES(ctanh, 2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(ctanh, -2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID or not */
     TEST_EE(ctanh, 2.0, NAN, NAN, NAN);
@@ -1466,8 +1514,8 @@ RETTYPE ADDSUFFIX(test_cexp)(void)
     TEST_EE(cexp, NZERO, 0, 1, 0);
     TEST_EE(cexp, NZERO, NZERO, 1, NZERO);
 
-    TEST_RAISES(cexp, 2.0, INFINITY, NAN, NAN, FE_INVALID);
-    TEST_RAISES(cexp, 2.0, -INFINITY, NAN, NAN, FE_INVALID);
+    TEST_RAISES(cexp, 2.0, INFINITY, NAN, NAN, NPY_FPE_INVALID);
+    TEST_RAISES(cexp, 2.0, -INFINITY, NAN, NAN, NPY_FPE_INVALID);
 
     /* can raise FE_INVALID  or not */
     TEST_EE(cexp, 42.0, NAN, NAN, NAN);
@@ -1501,7 +1549,7 @@ RETTYPE ADDSUFFIX(test_cexp)(void)
 
     /* sign of real part is unspecifed */
     TEST_RAISES_UNSPECIFIED2(cexp, INFINITY, INFINITY, INFINITY, \
-                             NAN, -INFINITY, NAN, FE_INVALID);
+                             NAN, -INFINITY, NAN, NPY_FPE_INVALID);
 
     /* signs of both parts are unspecified */
     TEST_UNSPECIFIED4(cexp, -INFINITY, NAN, 0, 0, NZERO, 0, \
@@ -1534,11 +1582,11 @@ RETTYPE ADDSUFFIX(test_clog)(void)
 {
     INIT_FUNC();
     /* clog(conj(z)) = conj(clog(z)) */
-    TEST_RAISES(clog, NZERO, 0, -INFINITY, ADDSUFFIX(NPY_PI), FE_DIVBYZERO);
-    TEST_RAISES(clog, NZERO, NZERO, -INFINITY, -ADDSUFFIX(NPY_PI), FE_DIVBYZERO);
+    TEST_RAISES(clog, NZERO, 0, -INFINITY, ADDSUFFIX(NPY_PI), NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(clog, NZERO, NZERO, -INFINITY, -ADDSUFFIX(NPY_PI), NPY_FPE_DIVIDEBYZERO);
 
-    TEST_RAISES(clog, 0, 0, -INFINITY, 0, FE_DIVBYZERO);
-    TEST_RAISES(clog, 0, NZERO, -INFINITY, NZERO, FE_DIVBYZERO);
+    TEST_RAISES(clog, 0, 0, -INFINITY, 0, NPY_FPE_DIVIDEBYZERO);
+    TEST_RAISES(clog, 0, NZERO, -INFINITY, NZERO, NPY_FPE_DIVIDEBYZERO);
 
     TEST_EC(clog, 2.0, INFINITY, INFINITY, ADDSUFFIX(NPY_PI_2));
     TEST_EC(clog, 2.0, -INFINITY, INFINITY, -ADDSUFFIX(NPY_PI_2));

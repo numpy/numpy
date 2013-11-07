@@ -3,7 +3,12 @@
  * keep in sync with NO_FLOATING_POINT_SUPPORT in ufuncobject.h
  */
 
+/* This include is wrapped so that these functions can also be called when
+ * doing config tests.
+ */
+#ifndef CONFIG_TESTS
 #include "npy_math_common.h"
+#endif
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
 #include <sys/param.h>

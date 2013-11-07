@@ -233,13 +233,16 @@ def check_complex(config, mathlibs):
                 exists.extend(C99_COMPLEX_FUNCS_CHECKED)
 
             if len(exists) > 0:
-                fp = open('./numpy/core/test_c99complex.c', 'r')
+                fp = open(join('.', 'numpy', 'core', 'test_c99complex.c'), 'r')
                 obody = fp.read()
                 fp.close()
                 precname = {'f':'FLOAT', '':'DOUBLE', 'l':'LONGDOUBLE'}[prec]
             for f in exists:
-                body = obody.replace('PYTESTPRECISION', precname).replace('PYTESTFUNC', f.upper())
-                if config.try_run(body, libraries=mathlibs):
+                body = obody.replace('PYTESTPRECISION', precname) \
+                            .replace('PYTESTFUNC', f.upper())
+                inc_dir = join('.', 'numpy', 'core', 'src', 'npymath')
+                if config.try_run(body, libraries=mathlibs,
+                                  include_dirs=[inc_dir]):
                     priv.append((fname2def(f + prec), 1))
 
         check_prec('')
