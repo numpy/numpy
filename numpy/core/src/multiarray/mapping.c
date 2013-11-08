@@ -227,7 +227,15 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
  *
  * Checks everything but the bounds.
  *
- * Returns the index_type or -1 on failure and fills the number of indices.
+ * @param the array being indexed
+ * @param the index object
+ * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param number of indices found
+ * @param dimension of the indexing result
+ * @param dimension of the fancy/advanced indices part
+ * @param whether to allow the boolean special case
+ *
+ * @returns the index_type or -1 on failure and fills the number of indices.
  */
 NPY_NO_EXPORT int
 prepare_index(PyArrayObject *self, PyObject *index,
@@ -908,7 +916,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     return -1;
                 }
                 if (n_steps <= 0) {
-                    /* TODO: Always points start then, could change that */
+                    /* TODO: Always points to start then, could change that */
                     n_steps = 0;
                     step = 1;
                     start = 0;
@@ -1289,8 +1297,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         /* Check for single field access */
         /*
-         * TODO: Moving this code block into the HASFIELDS, might have
-         *       consequences for strings that can be interpreted as ints?
+         * TODO: Moving this code block into the HASFIELDS, means that
+         *       string integers temporarily work as indices.
          */
         if (PyString_Check(op) || PyUnicode_Check(op)) {
             PyObject *temp, *obj;
@@ -2522,7 +2530,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
              * All dimensions of the extra_op corresponding to the
              * subspace must be equal to 1.
              */
-            /* TODO: Add a test for this special case! */
             if (PyArray_NDIM(subspace) <= PyArray_NDIM(extra_op)) {
                 j = PyArray_NDIM(subspace);
             }
@@ -2646,7 +2653,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      * For a single 1-d operand, guarantee itertion order
      * (scipy used this), note subspace may be True (otherwise as of
      * writing this, NpyIter does not negate the external loop)
-     * TODO: Add test.
      */
     if ((mit->numiter == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
         outer_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
