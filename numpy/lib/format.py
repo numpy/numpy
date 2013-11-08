@@ -464,7 +464,7 @@ def read_array(fp):
             # non-chunked case count < max_read_count, so only one read is
             # performed.
 
-            max_read_count = BUFFER_SIZE // dtype.itemsize
+            max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
             array = numpy.empty(count, dtype=dtype)
 
