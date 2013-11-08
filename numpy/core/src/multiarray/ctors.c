@@ -412,7 +412,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                         int dim, PyArrayObject * dst)
 {
     Py_ssize_t i, slen;
-    int res = 0;
+    int res = -1;
 
     /* first recursion, view equal destination */
     if (dst == NULL)
