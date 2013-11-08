@@ -399,7 +399,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                         int dim, npy_intp offset)
 {
     Py_ssize_t i, slen;
-    int res = 0;
+    int res = -1;
 
     /*
      * This code is to ensure that the sequence access below will
