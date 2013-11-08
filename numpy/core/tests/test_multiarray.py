@@ -3524,8 +3524,8 @@ class TestNewBufferProtocol(object):
                 x = np.zeros(4, dtype=dt)
                 self._check_roundtrip(x)
 
-    # Issue #4015.
     def test_roundtrip_scalar(self):
+        # Issue #4015.
         self._check_roundtrip(0)
 
     def test_export_simple_1d(self):
