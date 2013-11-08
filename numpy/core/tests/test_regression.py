@@ -1922,5 +1922,12 @@ class TestRegression(TestCase):
                           [sixu('F'), sixu('o'), sixu('o'), sixu('b'), sixu('')]]])
         assert_array_equal(arr, arr2)
 
+    def test_assign_from_sequence_error(self):
+        # Ticket #4024.
+        arr = np.array([1, 2, 3])
+        assert_raises(ValueError, arr.__setitem__, slice(None), [9, 9])
+        arr.__setitem__(slice(None), [9])
+        assert_equal(arr, [9, 9, 9])
+
 if __name__ == "__main__":
     run_module_suite()
