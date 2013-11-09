@@ -428,6 +428,9 @@ def test_roundtrip():
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
 
+def test_long_str():
+    long_str_arr = np.ones(1, dtype=np.dtype((str, format.BUFFER_SIZE+1)))
+    long_str_arr2 = roundtrip(long_str_arr)
 
 @dec.slow
 def test_memmap_roundtrip():
