@@ -1108,27 +1108,38 @@ def pad(array, pad_width, mode=None, **kwargs):
     mode : {str, function}
         One of the following string values or a user supplied function.
 
-        'constant'      Pads with a constant value.
-        'edge'          Pads with the edge values of array.
-        'linear_ramp'   Pads with the linear ramp between end_value and the
-                        array edge value.
-        'maximum'       Pads with the maximum value of all or part of the
-                        vector along each axis.
-        'mean'          Pads with the mean value of all or part of the
-                        vector along each axis.
-        'median'        Pads with the median value of all or part of the
-                        vector along each axis.
-        'minimum'       Pads with the minimum value of all or part of the
-                        vector along each axis.
-        'reflect'       Pads with the reflection of the vector mirrored on
-                        the first and last values of the vector along each
-                        axis.
-        'symmetric'     Pads with the reflection of the vector mirrored
-                        along the edge of the array.
-        'wrap'          Pads with the wrap of the vector along the axis.
-                        The first values are used to pad the end and the
-                        end values are used to pad the beginning.
-        <function>      Padding function, see Notes.
+        'constant'
+            Pads with a constant value.
+        'edge'
+            Pads with the edge values of array.
+        'linear_ramp'
+            Pads with the linear ramp between end_value and the
+            array edge value.
+        'maximum'
+            Pads with the maximum value of all or part of the
+            vector along each axis.
+        'mean'
+            Pads with the mean value of all or part of the
+            vector along each axis.
+        'median'
+            Pads with the median value of all or part of the
+            vector along each axis.
+        'minimum'
+            Pads with the minimum value of all or part of the
+            vector along each axis.
+        'reflect'
+            Pads with the reflection of the vector mirrored on
+            the first and last values of the vector along each
+            axis.
+        'symmetric'
+            Pads with the reflection of the vector mirrored
+            along the edge of the array.
+        'wrap'
+            Pads with the wrap of the vector along the axis.
+            The first values are used to pad the end and the
+            end values are used to pad the beginning.
+        <function>
+            Padding function, see Notes.
     stat_length : {sequence, int}, optional
         Used in 'maximum', 'mean', 'median', and 'minimum'.  Number of
         values at edge of each axis used to calculate the statistic value.
@@ -1194,7 +1205,7 @@ def pad(array, pad_width, mode=None, **kwargs):
 
     The padding function, if used, should return a rank 1 array equal in
     length to the vector argument with padded values replaced. It has the
-    following signature:
+    following signature::
 
         padding_func(vector, iaxis_pad_width, iaxis, **kwargs)
 
@@ -1275,7 +1286,6 @@ def pad(array, pad_width, mode=None, **kwargs):
            [10, 10,  3,  4,  5, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
-
     """
 
     narray = np.array(array)
