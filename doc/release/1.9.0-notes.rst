@@ -81,6 +81,11 @@ None
 Deprecations
 ============
 
+Non-integer scalars for sequence repetition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using non-integer numpy scalars to repeat python sequences is deprecated.
+For example `np.float_(2) * [1]` will be an error in the future.
+
 C-API
 ~~~~~
 
