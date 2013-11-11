@@ -134,5 +134,14 @@ the previous operations:
 >>> swapped_end_arr.tostring() == big_end_str
 False
 
+An easier way of casting the data to a specific dtype and byte ordering
+can be achieved with the ndarray astype method:
+
+>>> swapped_end_arr = big_end_arr.astype('<i2')
+>>> swapped_end_arr[0]
+1
+>>> swapped_end_arr.tostring() == big_end_str
+False
+
 """
 from __future__ import division, absolute_import, print_function
