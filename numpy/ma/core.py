@@ -6186,10 +6186,10 @@ def compressed(x):
         Equivalent method.
 
     """
-    if getmask(x) is nomask:
-        return np.asanyarray(x)
-    else:
-        return x.compressed()
+    if not isinstance(x, MaskedArray):
+        x = asanyarray(x)
+    return x.compressed()
+
 
 def concatenate(arrays, axis=0):
     """
