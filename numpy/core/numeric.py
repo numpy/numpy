@@ -906,6 +906,8 @@ def convolve(a,v,mode='full'):
     distributed according to the convolution of their individual
     distributions.
 
+    If `v` is longer than `a`, the arrays are swapped before computation.
+
     Parameters
     ----------
     a : (N,) array_like
@@ -944,7 +946,7 @@ def convolve(a,v,mode='full'):
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (f * g)[n] = \\sum_{m = -\\infty}^{\\infty} f[m] g[n - m]
+    .. math:: (a * v)[n] = \\sum_{m = -\\infty}^{\\infty} a[m] v[n - m]
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
