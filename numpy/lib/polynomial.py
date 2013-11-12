@@ -4,7 +4,7 @@ Functions to operate on polynomials.
 """
 from __future__ import division
 
-__all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
+__all__ = ['linfit', 'poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit', 'RankWarning']
 
