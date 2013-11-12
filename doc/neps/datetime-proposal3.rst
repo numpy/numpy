@@ -258,7 +258,7 @@ Compatibility issues
 
 This will be fully compatible with the ``timedelta`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other units, the conversion process will loose
+microseconds.  For other units, the conversion process will lose
 precision or will overflow as needed.
 
 
