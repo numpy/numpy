@@ -12,6 +12,7 @@
 #include "npy_pycompat.h"
 
 #include "number.h"
+#include "common.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
@@ -85,6 +86,17 @@ PyArray_SetNumericOps(PyObject *dict)
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
 
+static int
+has_ufunc_attr(PyObject * obj) {
+    /* attribute check is expensive for scalar operations, avoid if possible */
+    if (PyArray_CheckExact(obj) || _is_basic_python_type(obj)) {
+        return 0;
+    }
+    else {
+        return PyObject_HasAttrString(obj, "__numpy_ufunc__");
+    }
+}
+
 /*
  * Check whether the operation needs to be forwarded to the right-hand binary
  * operation.
@@ -123,7 +135,7 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
          */
         return 0;
     }
-    if (PyObject_HasAttrString(other, "__numpy_ufunc__") &&
+    if (has_ufunc_attr(other) &&
         PyObject_HasAttrString(other, right_name)) {
         return 1;
     }
@@ -266,7 +278,7 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
         return Py_NotImplemented;
     }
 
-    if (!PyArray_Check(m2) && !PyObject_HasAttrString(m2, "__numpy_ufunc__")) {
+    if (!PyArray_Check(m2) && !has_ufunc_attr(m2)) {
           /*
            * Catch priority inversion and punt, but only if it's guaranteed
            * that we were called through m1 and the other guy is not an array

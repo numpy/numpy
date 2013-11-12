@@ -52,16 +52,7 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
     PyObject *res = (PyObject *)NULL;
 
     /* We do not need to check for special attributes on trivial types */
-    if (obj == Py_None ||
-            /* Basic number types */
-#if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-#endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj)) {
+    if (_is_basic_python_type(obj)) {
         return NULL;
     }
 
@@ -767,4 +758,27 @@ offset_bounds_from_strides(const int itemsize, const int nd,
     upper += itemsize;
     *lower_offset = lower;
     *upper_offset = upper;
+}
+
+
+NPY_NO_EXPORT int
+_is_basic_python_type(PyObject * obj)
+{
+    if (obj == Py_None ||
+            /* Basic number types */
+#if !defined(NPY_PY3K)
+            PyInt_CheckExact(obj) ||
+#endif
+            PyLong_CheckExact(obj) ||
+            PyFloat_CheckExact(obj) ||
+            PyComplex_CheckExact(obj) ||
+            /* Basic sequence types */
+            PyList_CheckExact(obj) ||
+            PyTuple_CheckExact(obj) ||
+            PyDict_CheckExact(obj) ||
+            PyAnySet_CheckExact(obj)) {
+        return 1;
+    }
+
+    return 0;
 }
