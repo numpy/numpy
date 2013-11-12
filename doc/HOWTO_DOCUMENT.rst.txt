@@ -42,8 +42,11 @@ Additional PEPs of interest regarding documentation of code:
 
 Use a code checker:
  * `pylint <http://www.logilab.org/857>`_
- * `pyflakes` easy_install pyflakes
+ * `pyflakes <https://pypi.python.org/pypi/pyflakes>`_
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`_
+ * `flake8 <https://pypi.python.org/pypi/flake8>`_
+ * `vim-flake8 <https://github.com/nvie/vim-flake8>`_ plugin for
+   automatically checking syntax and style with flake8
 
 The following import conventions are used throughout the NumPy source
 and documentation::
@@ -260,7 +263,7 @@ The sections of the docstring are:
      LinAlgException
          If the matrix is not numerically invertible.
 
-   This section should be used judiciously, i.e only for errors
+   This section should be used judiciously, i.e., only for errors
    that are non-obvious or have a large chance of getting raised.
 
 8. **See Also**
