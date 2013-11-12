@@ -270,29 +270,29 @@ __ FAQ.html#q-how-to-test-if-f2py-is-working-correctly
 The documentation of the F2PY project is collected in ``f2py2e/docs/``
 directory. It contains the following documents:
 
-`README.txt`_ (in CVS__)
+`README.txt`_ (on GitHub__)
   The first thing to read about F2PY -- this document.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/README.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/README.txt
 
 `usersguide/index.txt`_, `usersguide/f2py_usersguide.pdf`_
   F2PY Users Guide and Reference Manual. Contains lots of examples.
 
-`FAQ.txt`_ (in CVS__)
+`FAQ.txt`_ (on GitHub__)
   F2PY Frequently Asked Questions.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/FAQ.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/FAQ.txt
 
-`TESTING.txt`_ (in CVS__)
+`TESTING.txt`_ (on GitHub__)
   About F2PY testing site. What tests are available and how to run them.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/TESTING.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/TESTING.txt
 
-`HISTORY.txt`_ (in CVS__)
+`HISTORY.txt`_ (on GitHub__)
   A list of latest changes in F2PY. This is the most up-to-date
   document on F2PY.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/HISTORY.txt
 
 `THANKS.txt`_
   Acknowledgments.
