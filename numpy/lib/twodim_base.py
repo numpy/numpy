@@ -256,7 +256,7 @@ def diag(v, k=0):
     diagflat : Create a 2-D array with the flattened input as a diagonal.
     trace : Sum along diagonals.
     triu : Upper triangle of an array.
-    tril : Lower triange of an array.
+    tril : Lower triangle of an array.
 
     Examples
     --------
