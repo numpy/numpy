@@ -184,11 +184,24 @@ class TestMaskedArray(TestCase):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         xm.fill_value = -9999
         xm._hardmask = True
-        xmm = asarray(xm)
+        xmm = asarray(xm, xm.dtype)
         assert_equal(xmm._data, xm._data)
         assert_equal(xmm._mask, xm._mask)
         assert_equal(xmm.fill_value, xm.fill_value)
         assert_equal(xmm._hardmask, xm._hardmask)
+        # address gh-4043
+        self.assertTrue(xm is asarray(xm))
+
+    def test_asanyarray(self):
+        class M(MaskedArray):
+            pass
+        xm = M([])
+        self.assertTrue(xm is not asarray(xm))
+        # address gh-4043
+        self.assertTrue(xm is asanyarray(xm))
+        test = asanyarray(xm, np.int64)
+        self.assertTrue(isinstance(test, M))
+        assert_equal(test.dtype, np.int64)
 
     def test_fix_invalid(self):
         # Checks fix_invalid.
