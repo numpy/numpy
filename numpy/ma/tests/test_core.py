@@ -3308,6 +3308,34 @@ class TestMaskedArrayFunctions(TestCase):
         test = np.ma.compress(cond, marr, axis=0)
         assert_equal(test, control)
 
+    def test_compressed(self):
+        # Test ma.compressed function.
+        # Address gh-4026
+        a = np.ma.array([1, 2])
+        test = np.ma.compressed(a)
+        assert_(type(test) is np.ndarray)
+        # Test case when input data is ndarray subclass
+        class A(np.ndarray):
+            pass
+        a = np.ma.array(A(shape=0))
+        test = np.ma.compressed(a)
+        assert_(type(test) is A)
+        # Test that compress flattens
+        test = np.ma.compressed([[1],[2]])
+        assert_equal(test.ndim, 1)
+        test = np.ma.compressed([[[[[1]]]]])
+        assert_equal(test.ndim, 1)
+        # Test case when input is MaskedArray subclass
+        class M(MaskedArray):
+            pass
+        test = np.ma.compressed(M(shape=(0,1,2)))
+        assert_equal(test.ndim, 1)
+        # with .compessed() overriden
+        class M(MaskedArray):
+            def compressed(self):
+                return 42
+        test = np.ma.compressed(M(shape=(0,1,2)))
+        assert_equal(test, 42)
 
 #------------------------------------------------------------------------------
 class TestMaskedFields(TestCase):
