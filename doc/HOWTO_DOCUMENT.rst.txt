@@ -25,7 +25,7 @@ A Guide to NumPy/SciPy Documentation
      <https://github.com/numpy/numpy/blob/master/doc/sphinxext/numpydoc.py>`_
 
    Details of how to use it can be found `here
-   <https://github.com/numpy/numpy/blob/master/doc/sphinxext/README.txt>`__ and
+   <https://github.com/numpy/numpydoc/blob/master/README.txt>`__ and
    `here
    <https://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`__
 
