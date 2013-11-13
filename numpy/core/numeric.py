@@ -29,6 +29,7 @@ import umath
 from umath import *
 import numerictypes
 from numerictypes import *
+from numpy.testing.utils import WarningManager
 
 
 if sys.version_info[0] < 3:
@@ -1983,7 +1984,15 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
         x = x[~xinf]
         y = y[~xinf]
 
-    return all(less_equal(abs(x-y), atol + rtol * abs(y)))
+    warn_ctx = WarningManager()
+    warn_ctx.__enter__()
+    try:
+        warnings.filterwarnings('ignore', "invalid value")
+        ret = all(less_equal(abs(x-y), atol + rtol * abs(y)))
+    finally:
+        warn_ctx.__exit__()
+
+    return ret
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
