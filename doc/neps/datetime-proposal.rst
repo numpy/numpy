@@ -66,20 +66,20 @@ table:
 ------------------------- ----------------------- --------------------------
   Code       Meaning         Relative Time             Absolute Time
 ======== ================ ======================= ==========================
-   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AC]
-   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AC]
-   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AC]
-   B       business day     +- 3.5e16 years         [3.5e16 BC, 3.5e16 AC]
-   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AC]
-   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AC]
-   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AC]
-   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AC]
-   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AC]
-   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AC]
-   ns      nanosecond       +- 292 years            [  1678 AC,   2262 AC]
-   ps      picosecond       +- 106 days             [  1969 AC,   1970 AC]
-   fs      femtosecond      +- 2.6 hours            [  1969 AC,   1970 AC]
-   as      attosecond       +- 9.2 seconds          [  1969 AC,   1970 AC]
+   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
+   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
+   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AD]
+   B       business day     +- 3.5e16 years         [3.5e16 BC, 3.5e16 AD]
+   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AD]
+   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AD]
+   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AD]
+   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AD]
+   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AD]
+   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AD]
+   ns      nanosecond       +- 292 years            [  1678 AD,   2262 AD]
+   ps      picosecond       +- 106 days             [  1969 AD,   1970 AD]
+   fs      femtosecond      +- 2.6 hours            [  1969 AD,   1970 AD]
+   as      attosecond       +- 9.2 seconds          [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
 A time unit is specified by a string consisting of a base-type given in
@@ -301,7 +301,7 @@ Compatibility issues
 
 This will be fully compatible with the ``timedelta`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other units, the conversion process will loose
+microseconds.  For other units, the conversion process will lose
 precision or will overflow as needed.
 
 

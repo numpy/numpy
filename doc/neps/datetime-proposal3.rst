@@ -67,18 +67,18 @@ corresponding time spans.
 ------------------------- --------------------------
   Code       Meaning
 ======== ================ ==========================
-   Y       year             [9.2e18 BC, 9.2e18 AC]
-   M       month            [7.6e17 BC, 7.6e17 AC]
-   W       week             [1.7e17 BC, 1.7e17 AC]
-   B       business day     [3.5e16 BC, 3.5e16 AC]
-   D       day              [2.5e16 BC, 2.5e16 AC]
-   h       hour             [1.0e15 BC, 1.0e15 AC]
-   m       minute           [1.7e13 BC, 1.7e13 AC]
-   s       second           [ 2.9e9 BC,  2.9e9 AC]
-   ms      millisecond      [ 2.9e6 BC,  2.9e6 AC]
-   us      microsecond      [290301 BC, 294241 AC]
-   c#      ticks (100ns)    [  2757 BC,  31197 AC]
-   ns      nanosecond       [  1678 AC,   2262 AC]
+   Y       year             [9.2e18 BC, 9.2e18 AD]
+   M       month            [7.6e17 BC, 7.6e17 AD]
+   W       week             [1.7e17 BC, 1.7e17 AD]
+   B       business day     [3.5e16 BC, 3.5e16 AD]
+   D       day              [2.5e16 BC, 2.5e16 AD]
+   h       hour             [1.0e15 BC, 1.0e15 AD]
+   m       minute           [1.7e13 BC, 1.7e13 AD]
+   s       second           [ 2.9e9 BC,  2.9e9 AD]
+   ms      millisecond      [ 2.9e6 BC,  2.9e6 AD]
+   us      microsecond      [290301 BC, 294241 AD]
+   c#      ticks (100ns)    [  2757 BC,  31197 AD]
+   ns      nanosecond       [  1678 AD,   2262 AD]
 ======== ================ ==========================
 
 The value of an absolute date is thus *an integer number of units of the
@@ -258,7 +258,7 @@ Compatibility issues
 
 This will be fully compatible with the ``timedelta`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other units, the conversion process will loose
+microseconds.  For other units, the conversion process will lose
 precision or will overflow as needed.
 
 
