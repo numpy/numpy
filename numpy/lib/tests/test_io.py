@@ -15,7 +15,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import (ConverterError, ConverterLockError,
                                 ConversionWarning)
-from numpy.compat import asbytes, asbytes_nested, bytes, asstr
+from numpy.compat import asbytes, asbytes_nested, bytes, asstr, sixu
 from nose import SkipTest
 from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
                                 assert_raises, run_module_suite)
@@ -330,6 +330,19 @@ class TestSaveTxt(TestCase):
         # Bad fmt, should raise a ValueError
         c = BytesIO()
         assert_raises(ValueError, np.savetxt, c, a, fmt=99)
+        
+        # Unicode fmt is casted if possible
+        c1 = BytesIO()
+        c2 = BytesIO()
+        np.savetxt(c1, a, fmt='%02d : %3.1f')
+        np.savetxt(c2, a, fmt=sixu('%02d : %3.1f'))
+        c1.seek(0)
+        c2.seek(0)
+        assert_equal(c1.readlines(), c2.readlines())
+
+        # ... but raises an error if not.
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt(c, a, fmt=u'ç'))
 
     def test_header_footer(self):
         """

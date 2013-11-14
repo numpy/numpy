@@ -1032,7 +1032,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = asstr(delimiter).join(map(asstr, fmt))
-        elif isinstance(fmt, str):
+        elif isinstance(fmt, basestring):
+            if isinstance(fmt, unicode):
+                try:
+                    fmt = fmt.encode('ascii')
+                except UnicodeEncodeError:
+                    raise ValueError('invalid unicode in fmt: %r' % (fmt,))
+
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
