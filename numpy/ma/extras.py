@@ -842,9 +842,9 @@ def mask_rowcols(a, axis=None):
           fill_value=999999)
 
     """
-    a = asarray(a)
+    a = array(a, subok=False)
     if a.ndim != 2:
-        raise NotImplementedError("compress2d works for 2D arrays only.")
+        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
     m = getmask(a)
     # Nothing is masked: return a
     if m is nomask or not m.any():
