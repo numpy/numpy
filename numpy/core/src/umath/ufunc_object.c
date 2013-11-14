@@ -4952,7 +4952,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
-    npy_intp count[1], stride[1];
     int i;
     int nop;
 
@@ -5056,9 +5055,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
 
-    count[0] = 1;
-    stride[0] = 1;
-
     Py_INCREF(PyArray_DESCR(op1_array));
     array_operands[0] = new_array_op(op1_array, iter->dataptr);
     if (iter2 != NULL) {
@@ -5144,6 +5140,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     {
         char *dataptr[3];
         char **buffer_dataptr;
+        /* one element at a time, no stride required but read by innerloop */
+        npy_intp count[3] = {1, 0xDEADBEEF, 0xDEADBEEF};
+        npy_intp stride[3] = {0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF};
 
         /*
          * Set up data pointers for either one or two input operands.

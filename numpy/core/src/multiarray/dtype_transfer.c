@@ -884,7 +884,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
                         NpyAuxData *data)
 {
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
-    npy_int64 dt;
+    npy_int64 dt = ~NPY_DATETIME_NAT;
     npy_datetimestruct dts;
     char *tmp_buffer = d->tmp_buffer;
     char *tmp;
