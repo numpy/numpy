@@ -16,52 +16,6 @@
 __ usersguide/index.html
 __ FAQ.html
 
--------------------------------
-
-.. topic:: NEWS!!!
-
-  January 5, 2006
-
-    WARNING -- these notes are out of date! The package structure for NumPy and
-    SciPy has changed considerably.  Much of this information is now incorrect.
-
-  January 30, 2005
-
-    Latest F2PY release (version 2.45.241_1926).
-    New features: wrapping unsigned integers, support for ``.pyf.src`` template files,
-    callback arguments can now be CObjects, fortran objects, built-in functions.
-    Introduced ``intent(aux)`` attribute. Wrapped objects have ``_cpointer``
-    attribute holding C pointer to wrapped functions or variables.
-    Many bug fixes and improvements, updated documentation.
-    `Differences with the previous release (version 2.43.239_1831)`__.
-
-  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.163&r2=1.137&f=h
-
-  October 4, 2004
-    F2PY bug fix release (version 2.43.239_1831).
-    Better support for 64-bit platforms.
-    Introduced ``--help-link`` and ``--link-<resource>`` options.
-    Bug fixes.
-    `Differences with the previous release (version 2.43.239_1806)`__.
-
-  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.137&r2=1.131&f=h
-
-  September 25, 2004
-    Latest F2PY release (version 2.43.239_1806).
-    Support for ``ENTRY`` statement. New attributes:
-    ``intent(inplace)``, ``intent(callback)``. Supports Numarray 1.1.
-    Introduced ``-*- fix -*-`` header content. Improved ``PARAMETER`` support.
-    Documentation updates. `Differences with the previous release
-    (version 2.39.235-1693)`__.
-
-  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.131&r2=1.98&f=h
-
-  `History of NEWS`__
-
-  __ OLDNEWS.html
-
--------------------------------
-
 .. Contents::
 
 ==============
@@ -316,29 +270,29 @@ __ FAQ.html#q-how-to-test-if-f2py-is-working-correctly
 The documentation of the F2PY project is collected in ``f2py2e/docs/``
 directory. It contains the following documents:
 
-`README.txt`_ (in CVS__)
+`README.txt`_ (on GitHub__)
   The first thing to read about F2PY -- this document.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/README.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/README.txt
 
 `usersguide/index.txt`_, `usersguide/f2py_usersguide.pdf`_
   F2PY Users Guide and Reference Manual. Contains lots of examples.
 
-`FAQ.txt`_ (in CVS__)
+`FAQ.txt`_ (on GitHub__)
   F2PY Frequently Asked Questions.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/FAQ.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/FAQ.txt
 
-`TESTING.txt`_ (in CVS__)
+`TESTING.txt`_ (on GitHub__)
   About F2PY testing site. What tests are available and how to run them.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/TESTING.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/TESTING.txt
 
-`HISTORY.txt`_ (in CVS__)
+`HISTORY.txt`_ (on GitHub__)
   A list of latest changes in F2PY. This is the most up-to-date
   document on F2PY.
 
-__ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt?rev=HEAD&content-type=text/x-cvsweb-markup
+__ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/HISTORY.txt
 
 `THANKS.txt`_
   Acknowledgments.

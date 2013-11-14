@@ -41,21 +41,25 @@ Q: When to report bugs?
 
 * After checking that your C and Fortran compilers work correctly.
 
-
 Q: How to report bugs?
 ----------------------
 
-You can send bug reports directly to me. Please, include information
-about your platform (operating system, version) and
-compilers/linkers, e.g. the output (both stdout/stderr) of
+F2PY is part of NumPy. Report bugs on the NumPy issue tracker at
+__ https://github.com/numpy/numpy/issues
+Please, include information about your platform (operating system, 
+version) and compilers/linkers, e.g. the output (both stdout/stderr) of
 ::
 
-  python -c 'import f2py2e.diagnose;f2py2e.diagnose.run()'
+  python -c 'import numpy.f2py.diagnose;numpy.f2py.diagnose.run()'
 
 Feel free to add any other relevant information.  However, avoid
 sending the output of F2PY generated ``.pyf`` files (unless they are
 manually modified) or any binary files like shared libraries or object
 codes.
+
+N.B. You may notice that other F2PY issues are tagged 'f2py'. Only the
+admins can add tags to issues, don't waste time trying to work out how
+to tag it yourself.
 
 While reporting bugs, you may find the following notes useful:
 
@@ -93,31 +97,22 @@ If upgrading from F2PY version 2.3.321 or earlier then remove all f2py
 specific files from ``/path/to/python/bin`` directory before
 running installation command.
 
-Q: How to get/upgrade numpy_distutils when using F2PY from CVS?
+Q: How to get/upgrade numpy and F2PY from git?
 ---------------------------------------------------------------
 
-To get numpy_distutils from SciPy CVS repository, run
+The numpy code repository is hosted on GitHub at
+__ http://github.com/numpy/numpy
+
+You can check it out with
 ::
+    git clone git://github.com/numpy/numpy.git numpy
 
-  cd cvs/f2py2e/
-  make numpy_distutils
+Installation information is at
+__ http://www.scipy.org/scipylib/download.html
 
-This will checkout numpy_distutils to the current directory.
+Information for developers is at
+__ http://www.scipy.org/scipylib/dev-zone.html
 
-You can upgrade numpy_distutils by executing
-::
-
-  cd cvs/f2py2e/numpy_distutils
-  cvs update -Pd
-
-and install it by executing
-::
-
-  cd cvs/f2py2e/numpy_distutils
-  python setup_numpy_distutils.py install
-
-In most of the time, f2py2e and numpy_distutils can be upgraded
-independently.
 
 Testing
 =======
@@ -142,13 +137,6 @@ section in `README.txt`_.
 __ index.html#usage
 
 For running F2PY unit tests, see `TESTING.txt`_.
-
-
-Q: How to run tests and examples in f2py2e/test-suite/ directory?
----------------------------------------------------------------------
-
-You shouldn't. These tests are obsolete and I have no intention to
-make them work. They will be removed in future.
 
 
 Compiler/Platform-specific issues
