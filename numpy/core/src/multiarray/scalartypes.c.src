@@ -246,27 +246,28 @@ static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
     PyObject *ret = NULL;
-    long repeat;
+    npy_intp repeat;
 
     if (!PyArray_IsScalar(m1, Generic) &&
             ((Py_TYPE(m1)->tp_as_number == NULL) ||
              (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m2 to an int and try sequence repeat */
-        repeat = PyInt_AsLong(m2);
+        repeat = PyArray_PyIntAsIntp(m2);
         if (repeat == -1 && PyErr_Occurred()) {
             return NULL;
         }
-        ret = PySequence_Repeat(m1, (int) repeat);
+        /* Note that npy_intp is compatible to Py_Ssize_t */
+        ret = PySequence_Repeat(m1, repeat);
     }
     else if (!PyArray_IsScalar(m2, Generic) &&
             ((Py_TYPE(m2)->tp_as_number == NULL) ||
              (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m1 to an int and try sequence repeat */
-        repeat = PyInt_AsLong(m1);
+        repeat = PyArray_PyIntAsIntp(m1);
         if (repeat == -1 && PyErr_Occurred()) {
             return NULL;
         }
-        ret = PySequence_Repeat(m2, (int) repeat);
+        ret = PySequence_Repeat(m2, repeat);
     }
     if (ret == NULL) {
         PyErr_Clear(); /* no effect if not set */

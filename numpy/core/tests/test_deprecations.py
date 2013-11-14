@@ -241,6 +241,14 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.take, args=(a, [0], np.float64(1.)))
 
 
+    def test_non_integer_sequence_multiplication(self):
+        # Numpy scalar sequence multiply should not work with non-integers
+        def mult(a, b):
+            return a * b
+        self.assert_deprecated(mult, args=([1], np.float_(3)))
+        self.assert_not_deprecated(mult, args=([1], np.int_(3)))
+
+
 class TestBooleanArgumentDeprecation(_DeprecationTestCase):
     """This tests that using a boolean as integer argument/indexing is
     deprecated.
