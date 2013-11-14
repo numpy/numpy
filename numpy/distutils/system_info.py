@@ -217,21 +217,22 @@ else:
     import subprocess as sp
     tmp = None
     try:
-        # Explicitly open/close file to avoid ResourceWarning when
-        # tests are run in debug mode Python 3.
-        tmp = open(os.devnull, 'w')
-        p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
-                stderr=tmp)
-    except (OSError, DistutilsError):
-        # OSError if gcc is not installed, or SandboxViolation (DistutilsError
-        # subclass) if an old setuptools bug is triggered (see gh-3160).
-        pass
-    else:
-        triplet = str(p.communicate()[0].decode().strip())
-        if p.returncode == 0:
-            # gcc supports the "-print-multiarch" option
-            default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
-            default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+        try:
+            # Explicitly open/close file to avoid ResourceWarning when
+            # tests are run in debug mode Python 3.
+            tmp = open(os.devnull, 'w')
+            p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
+                    stderr=tmp)
+        except (OSError, DistutilsError):
+            # OSError if gcc is not installed, or SandboxViolation (DistutilsError
+            # subclass) if an old setuptools bug is triggered (see gh-3160).
+            pass
+        else:
+            triplet = str(p.communicate()[0].decode().strip())
+            if p.returncode == 0:
+                # gcc supports the "-print-multiarch" option
+                default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+                default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
     finally:
         if tmp is not None:
             tmp.close()
