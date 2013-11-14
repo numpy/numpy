@@ -52,6 +52,9 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+NPY_NO_EXPORT int
+_is_basic_python_type(PyObject * obj);
+
 NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
