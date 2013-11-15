@@ -654,7 +654,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     >>> im = plt.imshow(H, interpolation='nearest', origin='low',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
 
-    pcolormesh can displaying exact bin edges:
+    pcolormesh can display exact bin edges:
 
     >>> ax = fig.add_subplot(132)
     >>> ax.set_title('pcolormesh:\nexact bin edges')
