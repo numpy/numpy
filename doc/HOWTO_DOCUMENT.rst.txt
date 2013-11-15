@@ -21,11 +21,10 @@ A Guide to NumPy/SciPy Documentation
    It is available from:
 
    * `numpydoc on PyPI <http://pypi.python.org/pypi/numpydoc>`_
-   * `numpydoc on GitHub (in main numpy repository)
-     <https://github.com/numpy/numpy/blob/master/doc/sphinxext/numpydoc.py>`_
+   * `numpydoc on GitHub <https://github.com/numpy/numpydoc/>`_
 
    Details of how to use it can be found `here
-   <https://github.com/numpy/numpy/blob/master/doc/sphinxext/README.txt>`__ and
+   <https://github.com/numpy/numpydoc/blob/master/README.txt>`__ and
    `here
    <https://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`__
 
