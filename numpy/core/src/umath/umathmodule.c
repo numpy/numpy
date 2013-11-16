@@ -27,6 +27,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
@@ -293,6 +294,30 @@ InitOtherOperators(PyObject *dictionary) {
     return;
 }
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_wrap = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_finalize = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_ufunc = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_pyvals_name = NULL;
+
+/* intern some strings used in ufuncs */
+static int
+intern_strings(void)
+{
+    npy_um_str_out = PyUString_FromString("out");
+    npy_um_str_subok = PyUString_FromString("subok");
+    npy_um_str_array_prepare = PyUString_FromString("__array_prepare__");
+    npy_um_str_array_wrap = PyUString_FromString("__array_wrap__");
+    npy_um_str_array_finalize = PyUString_FromString("__array_finalize__");
+    npy_um_str_ufunc = PyUString_FromString("__numpy_ufunc__");
+    npy_um_str_pyvals_name = PyUString_FromString(UFUNC_PYVALS_NAME);
+
+    return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&
+        npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
+}
+
 /* Setup the umath module */
 /* Remove for time being, it is declared in __ufunc_api.h */
 /*static PyTypeObject PyUFunc_Type;*/
@@ -436,6 +461,10 @@ PyMODINIT_FUNC initumath(void)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
+
+    if (!intern_strings()) {
+        goto err;
+    }
 
     return RETVAL;
 
