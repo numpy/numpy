@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
+#include "numpy/npy_cpu.h"
 
 #include "npy_config.h"
 
@@ -2401,11 +2402,10 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
  * but a 32 bit type version would make it even faster on these platforms
  */
 static NPY_INLINE int
-count_nonzero_bytes_128(const char *w)
+count_nonzero_bytes_128(const npy_uint64 * w)
 {
-    const npy_uint64 *w64 = (const npy_uint64 *)w;
-    npy_uint64 w1 = w64[0];
-    npy_uint64 w2 = w64[1];
+    const npy_uint64 w1 = w[0];
+    const npy_uint64 w2 = w[1];
 
     /*
      * bytes not exclusively 0 or 1, sum them individually.
@@ -2414,7 +2414,7 @@ count_nonzero_bytes_128(const char *w)
      */
     if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
         /* reload from pointer to avoid a unnecessary stack spill with gcc */
-        const char *c = w;
+        const char * c = (const char *)w;
         npy_uintp i, count = 0;
         for (i = 0; i < 16; i++) {
             count += (c[i] != 0);
@@ -2466,10 +2466,11 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
             /* Process the innermost dimension */
             const char *d = data;
             const char *e = data + shape[0];
-            if (npy_is_aligned(data, sizeof(npy_uint64))) {
+            if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
+                    npy_is_aligned(d, sizeof(npy_uint64))) {
                 npy_uintp stride = 2 * sizeof(npy_uint64);
-                for (; d < e - (shape[0]  % stride); d += stride) {
-                    count += count_nonzero_bytes_128((npy_uint64 *)d);
+                for (; d < e - (shape[0] % stride); d += stride) {
+                    count += count_nonzero_bytes_128((const npy_uint64 *)d);
                 }
             }
             for (; d < e; ++d) {
