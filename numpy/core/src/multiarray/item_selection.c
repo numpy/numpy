@@ -8,7 +8,6 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
-#include "numpy/npy_cpu.h"
 
 #include "npy_config.h"
 
@@ -2463,17 +2462,20 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            /* Process the innermost dimension */
+            /* Process the innermost dimension, in blocks of 128 bits. */
+            enum { stride128 = 2 * sizeof(npy_uint64) };
             const char *d = data;
+            const char *d_align64 = d + (npy_uintp)d % sizeof(npy_uint64);
             const char *e = data + shape[0];
-            if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
-                    npy_is_aligned(d, sizeof(npy_uint64))) {
-                npy_uintp stride = 2 * sizeof(npy_uint64);
-                for (; d < e - (shape[0] % stride); d += stride) {
-                    count += count_nonzero_bytes_128((const npy_uint64 *)d);
-                }
+            const char *e_align128 = e - (npy_uintp)e % stride128;
+
+            for (; d < d_align64; d++) {
+                count += (*d != 0);
             }
-            for (; d < e; ++d) {
+            for (; d < e_align128; d += stride128) {
+                count += count_nonzero_bytes_128((const npy_uint64 *)d);
+            }
+            for (; d < e; d++) {
                 count += (*d != 0);
             }
         } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
