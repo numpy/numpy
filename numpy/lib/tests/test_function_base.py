@@ -1808,6 +1808,7 @@ class TestMedian(TestCase):
         a = MySubClass([1,2,3])
         assert_equal(np.median(a), -7)
 
+
 class TestAdd_newdoc_ufunc(TestCase):
 
     def test_ufunc_arg(self):
@@ -1816,6 +1817,15 @@ class TestAdd_newdoc_ufunc(TestCase):
 
     def test_string_arg(self):
         assert_raises(TypeError, add_newdoc_ufunc, np.add, 3)
+
+
+class TestAdd_newdoc(TestCase):
+    def test_add_doc(self):
+        # test np.add_newdoc
+        tgt = "Current flat index into the array."
+        self.assertEqual(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
+        self.assertTrue(len(np.core.ufunc.identity.__doc__) > 300)
+        self.assertTrue(len(np.lib.index_tricks.mgrid.__doc__) > 300)
 
 
 if __name__ == "__main__":
