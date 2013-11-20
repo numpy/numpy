@@ -3110,15 +3110,14 @@ def add_newdoc(place, obj, doc):
     that the docstrings were changed.
        """
     try:
-        new = {}
-        exec('from %s import %s' % (place, obj), new)
+        new = getattr(__import__(place, globals(), {}, [obj]), obj)
         if isinstance(doc, str):
-            add_docstring(new[obj], doc.strip())
+            add_docstring(new, doc.strip())
         elif isinstance(doc, tuple):
-            add_docstring(getattr(new[obj], doc[0]), doc[1].strip())
+            add_docstring(getattr(new, doc[0]), doc[1].strip())
         elif isinstance(doc, list):
             for val in doc:
-                add_docstring(getattr(new[obj], val[0]), val[1].strip())
+                add_docstring(getattr(new, val[0]), val[1].strip())
     except:
         pass
 
