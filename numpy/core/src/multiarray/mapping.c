@@ -2210,7 +2210,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
     return 0;
 
   broadcast_error:
-     /*
+    /*
      * Attempt to set a meaningful exception. Could also find out
      * if a boolean index was converted.
      */
@@ -2365,7 +2365,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
  * @param Dtype for the extra operand, borrows the reference and must not
  *        be NULL (if extra_op_flags is not 0).
  *
- * @return A new MapIter (PyObject *) which still requires binding or NULL.
+ * @return A new MapIter (PyObject *) or NULL.
  *
  * NOTE: The outer iteration (and subspace if requested buffered) is
  *       created with DELAY_BUFALLOC. It must be reset before usage!
