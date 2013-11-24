@@ -806,6 +806,8 @@ def polymul(a1, a2):
     poly1d : A one-dimensional polynomial class.
     poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
     polyval
+    convolve : Array convolution. Same output as polymul, but has parameter
+               for overlap mode.
 
     Examples
     --------
