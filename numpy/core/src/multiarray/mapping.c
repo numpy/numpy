@@ -883,13 +883,14 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
     int orig_dim = 0;
     char *data_ptr = PyArray_BYTES(self);
 
-    npy_intp start, stop, step, n_steps; /* for slice parsing */
+    /* for slice parsing */
+    npy_intp start, stop, step, n_steps;
 
     for (i=0; i < index_num; i++) {
         switch (indices[i].type) {
             case HAS_INTEGER:
                 if ((check_and_adjust_index(&indices[i].value,
-                                    PyArray_DIMS(self)[orig_dim], i)) < 0) {
+                                PyArray_DIMS(self)[orig_dim], orig_dim)) < 0) {
                     return -1;
                 }
                 data_ptr += PyArray_STRIDE(self, orig_dim) * indices[i].value;
@@ -910,8 +911,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                                      PyArray_DIMS(self)[orig_dim],
                                      &start, &stop, &step, &n_steps) < 0) {
                     if (!PyErr_Occurred()) {
-                        PyErr_SetString(PyExc_IndexError,
-                                        "invalid slice");
+                        PyErr_SetString(PyExc_IndexError, "invalid slice");
                     }
                     return -1;
                 }
