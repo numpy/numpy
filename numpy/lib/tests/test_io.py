@@ -104,18 +104,34 @@ class RoundtripTest(object):
         self.arr = arr
         self.arr_reloaded = arr_reloaded
 
-    def test_array(self):
-        a = np.array([[1, 2], [3, 4]], float)
+    def check_roundtrips(self, a):
         self.roundtrip(a)
+        self.roundtrip(a, file_on_disk=True)
+        self.roundtrip(np.asfortranarray(a))
+        self.roundtrip(np.asfortranarray(a), file_on_disk=True)
+        if a.shape[0] > 1:
+            # neither C nor Fortran contiguous for 2D arrays or more
+            self.roundtrip(np.asfortranarray(a)[1:])
+            self.roundtrip(np.asfortranarray(a)[1:], file_on_disk=True)
+
+    def test_array(self):
+        a = np.array([], float)
+        self.check_roundtrips(a)
+
+        a = np.array([[1, 2], [3, 4]], float)
+        self.check_roundtrips(a)
 
         a = np.array([[1, 2], [3, 4]], int)
-        self.roundtrip(a)
+        self.check_roundtrips(a)
+
+        a = np.array([[1, 2], [3, 4]], object)
+        self.check_roundtrips(a)
 
         a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.csingle)
-        self.roundtrip(a)
+        self.check_roundtrips(a)
 
         a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.cdouble)
-        self.roundtrip(a)
+        self.check_roundtrips(a)
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
@@ -126,22 +142,31 @@ class RoundtripTest(object):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
 
+        a = np.asfortranarray([[1, 2.5], [4, 7.3]])
+        self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
+
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
-        self.roundtrip(a)
+        self.check_roundtrips(a)
 
 
 class TestSaveLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
         assert_equal(self.arr[0], self.arr_reloaded)
-
+        assert_equal(self.arr[0].flags['F_CONTIGUOUS'],
+                     self.arr_reloaded.flags['F_CONTIGUOUS'])
+        assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
 
 class TestSavezLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         for n, arr in enumerate(self.arr):
-            assert_equal(arr, self.arr_reloaded['arr_%d' % n])
+            reloaded = self.arr_reloaded['arr_%d' % n]
+            assert_equal(arr, reloaded)
+            assert_equal(arr.dtype, reloaded.dtype)
+            assert_equal(arr.flags['F_CONTIGUOUS'],
+                         reloaded.flags['F_CONTIGUOUS'])
 
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @np.testing.dec.slow
