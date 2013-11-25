@@ -124,14 +124,17 @@ class RoundtripTest(object):
         a = np.array([[1, 2], [3, 4]], int)
         self.check_roundtrips(a)
 
-        a = np.array([[1, 2], [3, 4]], object)
-        self.check_roundtrips(a)
-
         a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.csingle)
         self.check_roundtrips(a)
 
         a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.cdouble)
         self.check_roundtrips(a)
+
+    def test_array_object(self):
+        if sys.version_info[:2] >= (2, 7):
+            a = np.array([[1, 2], [3, 4]], object)
+            self.check_roundtrips(a)
+        # Fails with UnpicklingError: could not find MARK on Python 2.6
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
