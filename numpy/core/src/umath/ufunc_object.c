@@ -278,6 +278,7 @@ _get_bufsize_errmask(PyObject * extobj, char * ufunc_name,
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
+ * Assumes subok is already true if check_subok is false.
  *
  * If an output argument is provided, then it is prepped
  * with its own __array_prepare__ not with the one determined by
@@ -292,7 +293,8 @@ _get_bufsize_errmask(PyObject * extobj, char * ufunc_name,
  */
 static void
 _find_array_prepare(PyObject *args, PyObject *kwds,
-                    PyObject **output_prep, int nin, int nout)
+                    PyObject **output_prep, int nin, int nout,
+                    int check_subok)
 {
     Py_ssize_t nargs;
     int i;
@@ -300,8 +302,11 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
     PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
     PyObject *obj, *prep = NULL;
 
-    /* If a 'subok' parameter is passed and isn't True, don't wrap */
-    if (kwds != NULL &&
+    /*
+     * If a 'subok' parameter is passed and isn't True, don't wrap
+     * if check_subok is false it assumed subok in kwds keyword is True
+     */
+    if (check_subok && kwds != NULL &&
         (obj = PyDict_GetItem(kwds, npy_um_str_subok)) != NULL) {
         if (obj != Py_True) {
             for (i = 0; i < nout; i++) {
@@ -2091,7 +2096,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
@@ -2465,7 +2470,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
