@@ -157,9 +157,10 @@ class TestSaveLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
         assert_equal(self.arr[0], self.arr_reloaded)
-        assert_equal(self.arr[0].flags['F_CONTIGUOUS'],
-                     self.arr_reloaded.flags['F_CONTIGUOUS'])
         assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
+        # Check that fortran alignment is preserved even with relaxed strides
+        assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
+
 
 class TestSavezLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
@@ -168,8 +169,9 @@ class TestSavezLoad(RoundtripTest, TestCase):
             reloaded = self.arr_reloaded['arr_%d' % n]
             assert_equal(arr, reloaded)
             assert_equal(arr.dtype, reloaded.dtype)
-            assert_equal(arr.flags['F_CONTIGUOUS'],
-                         reloaded.flags['F_CONTIGUOUS'])
+            # Check that fortran alignment is preserved even with relaxed
+            # strides
+            assert_equal(arr.flags.fnc, reloaded.flags.fnc)
 
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @np.testing.dec.slow
