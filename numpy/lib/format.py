@@ -399,6 +399,10 @@ def write_array(fp, array, version=(1, 0)):
         raise ValueError(msg % (version,))
     fp.write(magic(*version))
     write_array_header_1_0(fp, header_data_from_array_1_0(array))
+
+    # Set buffer size to 16 MiB to hide the Python loop overhead.
+    buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
+
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
         # Instead, we will pickle it out with version 2 of the pickle protocol.
@@ -407,14 +411,19 @@ def write_array(fp, array, version=(1, 0)):
         if isfileobj(fp):
             array.T.tofile(fp)
         else:
-            fp.write(array.T.tostring('C'))
+            for chunk in numpy.nditer(
+                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                    buffersize=buffersize, order='F'):
+                fp.write(chunk.tostring('C'))
     else:
         if isfileobj(fp):
             array.tofile(fp)
         else:
-            # XXX: We could probably chunk this using something like
-            # arrayterator.
-            fp.write(array.tostring('C'))
+            for chunk in numpy.nditer(
+                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                    buffersize=buffersize, order='C'):
+                fp.write(chunk.tostring('C'))
+
 
 def read_array(fp):
     """
