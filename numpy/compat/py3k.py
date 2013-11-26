@@ -7,9 +7,16 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
-           'integer_types']
+           'integer_types', 'memoryview_or_buffer']
 
 import sys
+
+# Use memoryview on 2.7+ and fallback to the old buffer callable on Python 2.6
+try:
+    memoryview_or_buffer = memoryview
+except NameError:
+    memoryview_or_buffer = buffer
+
 
 if sys.version_info[0] >= 3:
     import io
@@ -46,7 +53,6 @@ if sys.version_info[0] >= 3:
 
     strchar = 'U'
 
-
 else:
     bytes = str
     long = long
@@ -56,7 +62,6 @@ else:
     asbytes = str
     asstr = str
     strchar = 'S'
-
 
     def isfileobj(f):
         return isinstance(f, file)

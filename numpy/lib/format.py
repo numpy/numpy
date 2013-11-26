@@ -140,6 +140,7 @@ import numpy
 import sys
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj, long, basestring
+from numpy.compat import memoryview_or_buffer
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -407,14 +408,24 @@ def write_array(fp, array, version=(1, 0)):
         if isfileobj(fp):
             array.T.tofile(fp)
         else:
-            fp.write(array.T.tostring('C'))
+            # Use the Python buffer protocol to stream the bytes to the file
+            # object without memory copy (the transposed f_contiguous array
+            # is guaranteed to be c_contiguous)
+            fp.write(memoryview_or_buffer(array.T))
     else:
         if isfileobj(fp):
             array.tofile(fp)
         else:
-            # XXX: We could probably chunk this using something like
-            # arrayterator.
-            fp.write(array.tostring('C'))
+            if array.flags.c_contiguous:
+                # Use the Python buffer protocol to stream the bytes to the
+                # file object without memory copy.
+                fp.write(memoryview_or_buffer(array))
+            else:
+                # The file object write method expects contiguous buffers or
+                # byte strings.
+                # XXX: We could probably chunk this using something like
+                # arrayterator.
+                fp.write(array.tostring('C'))
 
 def read_array(fp):
     """
