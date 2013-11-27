@@ -145,12 +145,11 @@ def poly(seq_of_zeros):
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
         roots = NX.asarray(seq_of_zeros, complex)
-        pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
-        neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0, roots)))
-        if (len(pos_roots) == len(neg_roots) and
-                NX.alltrue(neg_roots == pos_roots)):
-            a = a.real.copy()
+        pos_roots = NX.compress(roots.imag > 0, roots)
+        neg_roots = NX.conjugate(NX.compress(roots.imag < 0, roots))
+        if len(pos_roots) == len(neg_roots):
+            if NX.all(sort_complex(neg_roots) == sort_complex(pos_roots)):
+                a = a.real.copy()
 
     return a
 
