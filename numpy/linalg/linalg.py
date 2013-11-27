@@ -2205,7 +2205,7 @@ def LDL(A):
     """
 
     _assertSquareness(A)
-    A = array(A)0
+    A = array(A)
     n = A.shape[1]
     L = array(eye(n))
     D = zeros((n, 1))
