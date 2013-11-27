@@ -1302,7 +1302,8 @@ def get_atlas_version(**config):
     info = {}
     try:
         s, o = c.get_output(atlas_version_c_text,
-                            libraries=libraries, library_dirs=library_dirs)
+                            libraries=libraries, library_dirs=library_dirs,
+                            use_tee=0)
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
