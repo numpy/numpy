@@ -2154,7 +2154,7 @@ def norm(x, ord=None, axis=None):
         raise ValueError("Improper number of dimensions to norm.")
 
 
-def LDL(A):
+def ldl(A):
     """
     LDL decomposition,
 
