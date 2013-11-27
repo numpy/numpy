@@ -2159,7 +2159,7 @@ def LDL(A):
     LDL decomposition.
 
     Returns the LDL decomposition, ``L D L.T``, of the square matrix `A`,
-    where `L` is lower-triangular, `L*` is it's transpose and `D` is a diagonal Matrix.
+    where `L` is lower-triangular, `L.T` is it's transpose and `D` is a diagonal Matrix.
     `A` must be a square matrix.
 
     Parameters
