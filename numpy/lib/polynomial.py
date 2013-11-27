@@ -23,7 +23,7 @@ class RankWarning(UserWarning):
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
 
     For more information, a way to suppress the warning, and an example of
-    `RankWarning` being issued, see `polyfit`.
+    `RankWarning` being issued, see `polyfit`. 
 
     """
     pass
