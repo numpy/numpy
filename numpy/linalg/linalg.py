@@ -2156,10 +2156,10 @@ def norm(x, ord=None, axis=None):
 
 def LDL(A):
     """
-    LDL decomposition,
+    LDL decomposition.
 
-    Return the LDL decomposition, `LDL*`, of the square matrix `A`,
-    where `L` is lower-triangular, `L*` is it's transpose and D is a diagonal Matrix.
+    Returns the LDL decomposition, ``L D L.T``, of the square matrix `A`,
+    where `L` is lower-triangular, `L*` is it's transpose and `D` is a diagonal Matrix.
     `A` must be a square matrix.
 
     Parameters
@@ -2170,7 +2170,6 @@ def LDL(A):
     -------
     L : ndarray, Lower-triangular matrix
     D : ndarray, Diagonal matrix
-    T : ndarray, Transpose of L
 
     Raises
     ------
@@ -2217,5 +2216,4 @@ def LDL(A):
         D[i] = A[i, i] - dot(L[i, 0:i] ** 2, D[0:i])
         for j in range(i + 1, n):
             L[j, i] = (A[j, i] - dot(L[j, 0:i] * L[i, 0:i], D[0:i])) / D[i]
-    D = array(eye(n)) * D
-    return [L, D, L.T]
+    return [L, D]
