@@ -24,7 +24,7 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product,
     broadcast
-    )
+)
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -40,7 +40,10 @@ _L = asbytes('L')
 fortran_int = intc
 
 # Error object
+
+
 class LinAlgError(Exception):
+
     """
     Generic Python-exception-derived object raised by linalg functions.
 
@@ -73,6 +76,7 @@ class LinAlgError(Exception):
 
 _linalg_error_extobj = None
 
+
 def _determine_error_states():
     global _linalg_error_extobj
     errobj = geterrobj()
@@ -86,55 +90,66 @@ def _determine_error_states():
 
 _determine_error_states()
 
+
 def _raise_linalgerror_singular(err, flag):
     raise LinAlgError("Singular matrix")
+
 
 def _raise_linalgerror_nonposdef(err, flag):
     raise LinAlgError("Matrix is not positive definite")
 
+
 def _raise_linalgerror_eigenvalues_nonconvergence(err, flag):
     raise LinAlgError("Eigenvalues did not converge")
 
+
 def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
+
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)
     extobj[2] = callback
     return extobj
 
+
 def _makearray(a):
     new = asarray(a)
     wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
+
 def isComplexType(t):
     return issubclass(t, complexfloating)
 
-_real_types_map = {single : single,
-                   double : double,
-                   csingle : single,
-                   cdouble : double}
+_real_types_map = {single: single,
+                   double: double,
+                   csingle: single,
+                   cdouble: double}
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
+_complex_types_map = {single: csingle,
+                      double: cdouble,
+                      csingle: csingle,
+                      cdouble: cdouble}
+
 
 def _realType(t, default=double):
     return _real_types_map.get(t, default)
 
+
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
+
 
 def _linalgRealType(t):
     """Cast the type t to either double or cdouble."""
     return double
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
+_complex_types_map = {single: csingle,
+                      double: cdouble,
+                      csingle: csingle,
+                      cdouble: cdouble}
+
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
@@ -148,7 +163,7 @@ def _commonType(*arrays):
             if rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                               (a.dtype.name,))
         else:
             rt = double
         if rt is double:
@@ -165,6 +180,7 @@ def _commonType(*arrays):
 
 _fastCT = fastCopyAndTranspose
 
+
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
@@ -176,6 +192,7 @@ def _to_native_byte_order(*arrays):
         return ret[0]
     else:
         return ret
+
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -189,32 +206,38 @@ def _fastCopyAndTranspose(type, *arrays):
     else:
         return cast_arrays
 
+
 def _assertRank2(*arrays):
     for a in arrays:
         if len(a.shape) != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % len(a.shape))
+                              'two-dimensional' % len(a.shape))
+
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
         if len(a.shape) < 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % len(a.shape))
+                              'at least two-dimensional' % len(a.shape))
+
 
 def _assertSquareness(*arrays):
     for a in arrays:
         if max(a.shape) != min(a.shape):
             raise LinAlgError('Array must be square')
 
+
 def _assertNdSquareness(*arrays):
     for a in arrays:
         if max(a.shape[-2:]) != min(a.shape[-2:]):
             raise LinAlgError('Last 2 dimensions of the array must be square')
 
+
 def _assertFinite(*arrays):
     for a in arrays:
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
+
 
 def _assertNoEmpty2d(*arrays):
     for a in arrays:
@@ -282,7 +305,7 @@ def tensorsolve(a, b, axes=None):
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
 
-    oldshape = a.shape[-(an-b.ndim):]
+    oldshape = a.shape[-(an - b.ndim):]
     prod = 1
     for k in oldshape:
         prod *= k
@@ -292,6 +315,7 @@ def tensorsolve(a, b, axes=None):
     res = wrap(solve(a, b))
     res.shape = oldshape
     return res
+
 
 def solve(a, b):
     """
@@ -370,7 +394,7 @@ def solve(a, b):
     else:
         if b.size == 0:
             if (a.shape[-1] == 0 and b.shape[-2] == 0) or b.shape[-1] == 0:
-                a = a[:,:1].reshape(a.shape[:-1] + (1,))
+                a = a[:, :1].reshape(a.shape[:-1] + (1,))
                 bc = broadcast(a, b)
                 return wrap(empty(bc.shape, dtype=result_t))
 
@@ -604,6 +628,7 @@ def cholesky(a):
 
 # QR decompostion
 
+
 def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
@@ -724,8 +749,8 @@ def qr(a, mode='reduced'):
     if mode not in ('reduced', 'complete', 'r', 'raw'):
         if mode in ('f', 'full'):
             msg = "".join((
-                    "The 'full' option is deprecated in favor of 'reduced'.\n",
-                    "For backward compatibility let mode default."))
+                "The 'full' option is deprecated in favor of 'reduced'.\n",
+                "For backward compatibility let mode default."))
             warnings.warn(msg, DeprecationWarning)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
@@ -774,7 +799,7 @@ def qr(a, mode='reduced'):
         return a, tau
 
     if mode == 'economic':
-        if t != result_t :
+        if t != result_t:
             a = a.astype(result_t)
         return wrap(a.T)
 
@@ -902,6 +927,7 @@ def eigvals(a):
 
     return w.astype(result_t)
 
+
 def eigvalsh(a, UPLO='L'):
     """
     Compute the eigenvalues of a Hermitian or real symmetric matrix.
@@ -969,6 +995,7 @@ def eigvalsh(a, UPLO='L'):
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t))
+
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1340,6 +1367,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         s = s.astype(_realType(result_t))
         return s
 
+
 def cond(x, p=None):
     """
     Compute the condition number of a matrix.
@@ -1419,12 +1447,12 @@ def cond(x, p=None):
     0.70710678118654746
 
     """
-    x = asarray(x) # in case we have a matrix
+    x = asarray(x)  # in case we have a matrix
     if p is None:
         s = svd(x, compute_uv=False)
-        return s[0]/s[-1]
+        return s[0] / s[-1]
     else:
-        return norm(x, p)*norm(inv(x), p)
+        return norm(x, p) * norm(inv(x), p)
 
 
 def matrix_rank(M, tol=None):
@@ -1507,7 +1535,7 @@ def matrix_rank(M, tol=None):
     if M.ndim > 2:
         raise TypeError('array should have 2 or fewer dimensions')
     if M.ndim < 2:
-        return int(not all(M==0))
+        return int(not all(M == 0))
     S = svd(M, compute_uv=False)
     if tol is None:
         tol = S.max() * max(M.shape) * finfo(S.dtype).eps
@@ -1516,7 +1544,7 @@ def matrix_rank(M, tol=None):
 
 # Generalized inverse
 
-def pinv(a, rcond=1e-15 ):
+def pinv(a, rcond=1e-15):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -1585,16 +1613,17 @@ def pinv(a, rcond=1e-15 ):
     u, s, vt = svd(a, 0)
     m = u.shape[0]
     n = vt.shape[1]
-    cutoff = rcond*maximum.reduce(s)
+    cutoff = rcond * maximum.reduce(s)
     for i in range(min(n, m)):
         if s[i] > cutoff:
-            s[i] = 1./s[i]
+            s[i] = 1. / s[i]
         else:
-            s[i] = 0.;
+            s[i] = 0.
     res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
+
 
 def slogdet(a):
     """
@@ -1676,6 +1705,7 @@ def slogdet(a):
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     return sign.astype(result_t), logdet.astype(real_t)
 
+
 def det(a):
     """
     Compute the determinant of an array.
@@ -1729,6 +1759,7 @@ def det(a):
     return _umath_linalg.det(a, signature=signature).astype(result_t)
 
 # Linear Least Squares
+
 
 def lstsq(a, b, rcond=-1):
     """
@@ -1820,8 +1851,8 @@ def lstsq(a, b, rcond=-1):
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
-    m  = a.shape[0]
-    n  = a.shape[1]
+    m = a.shape[0]
+    n = a.shape[1]
     n_rhs = b.shape[1]
     ldb = max(n, m)
     if m != b.shape[0]:
@@ -1834,8 +1865,8 @@ def lstsq(a, b, rcond=-1):
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
-    nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
-    iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
+    nlvl = max(0, int(math.log(float(min(m, n)) / 2.)) + 1)
+    iwork = zeros((3 * min(m, n) * nlvl + 11 * min(m, n),), fortran_int)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgelsd
         lwork = 1
@@ -1872,19 +1903,19 @@ def lstsq(a, b, rcond=-1):
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
             if isComplexType(t):
-                resids = array([sum(abs(ravel(bstar)[n:])**2)],
+                resids = array([sum(abs(ravel(bstar)[n:]) ** 2)],
                                dtype=result_real_t)
             else:
-                resids = array([sum((ravel(bstar)[n:])**2)],
+                resids = array([sum((ravel(bstar)[n:]) ** 2)],
                                dtype=result_real_t)
     else:
-        x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
+        x = array(transpose(bstar)[:n, :], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
             if isComplexType(t):
-                resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum(abs(transpose(bstar)[n:, :]) ** 2, axis=0).astype(
                     result_real_t)
             else:
-                resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum((transpose(bstar)[n:, :]) ** 2, axis=0).astype(
                     result_real_t)
 
     st = s[:min(n, m)].copy().astype(result_real_t)
@@ -2087,7 +2118,7 @@ def norm(x, ord=None, axis=None):
                 # float results.  Don't apply asfarray to longdouble arrays,
                 # because it will downcast to float64.
                 absx = asfarray(abs(x))
-            return add.reduce(absx**ord, axis=axis)**(1.0/ord)
+            return add.reduce(absx ** ord, axis=axis) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
         if not (-nd <= row_axis < nd and -nd <= col_axis < nd):
@@ -2121,3 +2152,70 @@ def norm(x, ord=None, axis=None):
             raise ValueError("Invalid norm order for matrices.")
     else:
         raise ValueError("Improper number of dimensions to norm.")
+
+
+def LDL(A):
+    """
+    LDL decomposition,
+
+    Return the LDL decomposition, `LDL*`, of the square matrix `A`,
+    where `L` is lower-triangular, `L*` is it's transpose and D is a diagonal Matrix.
+    `A` must be a square matrix.
+
+    Parameters
+    ----------
+    A : matrix, shape (M, M)
+
+    Returns
+    -------
+    L : ndarray, Lower-triangular matrix
+    D : ndarray, Diagonal matrix
+    T : ndarray, Transpose of L
+
+    Raises
+    ------
+    LinAlgError
+       If the given matrix is not a square matrix, shape(M, M)
+
+    Notes
+    -----
+
+
+    Examples
+    --------
+    In [5]: A = np.matrix([[4,12,-16],[12,37,-43],[-16,-43,98]])
+
+    In [6]: [L,D,T] = LDL(A)
+
+    In [7]: L
+    Out[7]: 
+    array([[ 1.,  0.,  0.],
+           [ 3.,  1.,  0.],
+           [-4.,  5.,  1.]])
+
+    In [8]: D
+    Out[8]: 
+    array([[ 4.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  9.]])
+
+    In [9]: T
+    Out[9]: 
+    array([[ 1.,  3., -4.],
+           [ 0.,  1.,  5.],
+           [ 0.,  0.,  1.]])
+
+
+    """
+
+    _assertSquareness(A)
+    A = array(A)0
+    n = A.shape[1]
+    L = array(eye(n))
+    D = zeros((n, 1))
+    for i in range(n):
+        D[i] = A[i, i] - dot(L[i, 0:i] ** 2, D[0:i])
+        for j in range(i + 1, n):
+            L[j, i] = (A[j, i] - dot(L[j, 0:i] * L[i, 0:i], D[0:i])) / D[i]
+    D = array(eye(n)) * D
+    return [L, D, L.T]
