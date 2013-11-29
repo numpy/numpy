@@ -234,12 +234,12 @@ array corresponding to all the true elements in the boolean array. As
 with index arrays, what is returned is a copy of the data, not a view
 as one gets with slices.
 
-With a multidimensional index array, multidimensional arrays may be
-the result. For example: ::
+Multidimensional arrays may result, if y has more dimensions than b.
+For example: ::
 
- >>> b[:,5] # use a 1-D boolean that broadcasts with y
+ >>> b1 = b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
  array([False, False, False,  True,  True], dtype=bool)
- >>> y[b[:,5]]
+ >>> y[b1]
  array([[21, 22, 23, 24, 25, 26, 27],
         [28, 29, 30, 31, 32, 33, 34]])
 
@@ -247,9 +247,14 @@ Here the 4th and 5th rows are selected from the indexed array and
 combined to make a 2-D array.
 
 In general, when the boolean array has fewer dimensions than the array
-being indexed, the shape of the result is the number of True elements
-of the boolean array followed by the remaining dimensions of the array
-being indexed. For example, using a 2-D boolean array of shape (2,3)
+being indexed, this is equivalent to y[b, ...], which means
+y is indexed by b followed by as many : as are needed to fill
+out the rank of y.
+Thus the shape of the result is one dimension containing the number
+of True elements of the boolean array, followed by the remaining
+dimensions of the array being indexed.
+
+For example, using a 2-D boolean array of shape (2,3)
 with four True elements to select rows from a 3-D array of shape
 (2,3,5) results in a 2-D result of shape (4,5): ::
 
@@ -267,6 +272,8 @@ with four True elements to select rows from a 3-D array of shape
         [ 5,  6,  7,  8,  9],
         [20, 21, 22, 23, 24],
         [25, 26, 27, 28, 29]])
+
+For further details, consult the numpy reference documentation on array indexing.
 
 Combining index arrays with slices
 ==================================
