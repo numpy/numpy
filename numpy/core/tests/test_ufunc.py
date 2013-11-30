@@ -322,6 +322,23 @@ class TestUfunc(TestCase):
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
+    def test_sum(self):
+        for dt in (np.int, np.float32, np.float64, np.longdouble):
+            for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
+                      128, 1024, 1235):
+                tgt = dt(v * (v - 1) / 2)
+                assert_almost_equal(np.sum(np.arange(v, dtype=dt)), tgt)
+                assert_almost_equal(np.sum(np.arange(v, dtype=dt)[::-1]), tgt)
+
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::2]), 250.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[1::2]), 250.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::3]), 167.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[1::3]), 167.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::-2]), 250.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[-1::-2]), 250.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::-3]), 167.)
+            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[-1::-3]), 167.)
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
         assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
