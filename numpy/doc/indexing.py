@@ -234,12 +234,12 @@ array corresponding to all the true elements in the boolean array. As
 with index arrays, what is returned is a copy of the data, not a view
 as one gets with slices.
 
-Multidimensional arrays may result, if y has more dimensions than b.
+The result will be multidimensional if y has more dimensions than b.
 For example: ::
 
- >>> b1 = b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
+ >>> b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
  array([False, False, False,  True,  True], dtype=bool)
- >>> y[b1]
+ >>> y[b[:,5]]
  array([[21, 22, 23, 24, 25, 26, 27],
         [28, 29, 30, 31, 32, 33, 34]])
 
@@ -258,7 +258,7 @@ For example, using a 2-D boolean array of shape (2,3)
 with four True elements to select rows from a 3-D array of shape
 (2,3,5) results in a 2-D result of shape (4,5): ::
 
- >>> x=np.arange(30).reshape(2,3,5)
+ >>> x = np.arange(30).reshape(2,3,5)
  >>> x
  array([[[ 0,  1,  2,  3,  4],
          [ 5,  6,  7,  8,  9],
@@ -266,7 +266,7 @@ with four True elements to select rows from a 3-D array of shape
         [[15, 16, 17, 18, 19],
          [20, 21, 22, 23, 24],
          [25, 26, 27, 28, 29]]])
- >>> b=np.array([[True, True, False], [False, True, True]])
+ >>> b = np.array([[True, True, False], [False, True, True]])
  >>> x[b]
  array([[ 0,  1,  2,  3,  4],
         [ 5,  6,  7,  8,  9],
