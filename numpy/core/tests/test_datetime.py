@@ -526,6 +526,9 @@ class TestDateTime(TestCase):
                             "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
                      "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
 
+        # Check that one NaT doesn't corrupt subsequent entries
+        a = np.array(['2010', 'NaT', '2030']).astype('M')
+        assert_equal(str(a), "['2010' 'NaT' '2030']")
 
     def test_pickle(self):
         # Check that pickle roundtripping works
