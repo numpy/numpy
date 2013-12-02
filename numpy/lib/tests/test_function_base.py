@@ -226,6 +226,13 @@ class TestInsert(TestCase):
         assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=3)
         assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=-4)
 
+        # negative axis value
+        a = np.arange(24).reshape((2,3,4))
+        assert_equal(insert(a, 1, a[:,:,3], axis=-1),
+                     insert(a, 1, a[:,:,3], axis=2))
+        assert_equal(insert(a, 1, a[:,2,:], axis=-2),
+                     insert(a, 1, a[:,2,:], axis=1))
+
     def test_0d(self):
         # This is an error in the future
         a = np.array(1)
