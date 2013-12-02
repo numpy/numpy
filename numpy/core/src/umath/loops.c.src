@@ -23,6 +23,13 @@
 
 #include <string.h> /* for memchr */
 
+/*
+ * cutoff blocksize for pairwise summation
+ * decreasing it decreases errors slightly as more pairs are summed but
+ * also lowers performance, as the inner loop is unrolled eight times it is
+ * effectively 16
+ */
+#define PW_BLOCKSIZE    128
 
 /*
  * include vectorized functions and dispatchers
@@ -1351,26 +1358,27 @@ NPY_NO_EXPORT void
 
 /**begin repeat
  * Float types
- *  #type = npy_float, npy_double, npy_longdouble#
- *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
- *  #c = f, , l#
- *  #C = F, , L#
+ *  #type = npy_float, npy_double, npy_longdouble, npy_float#
+ *  #dtype = npy_float, npy_double, npy_longdouble, npy_half#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF#
+ *  #c = f, , l, #
+ *  #C = F, , L, #
+ *  #trf = , , , npy_half_to_float#
  */
 
 /*
  * Pairwise summation, rounding error O(lg n) instead of O(n).
  * The recursion depth is O(lg n) as well.
+ * when updating also update similar complex floats summation
  */
-#define PW_BLOCKSIZE    128
-
 static @type@
-pairwise_add_@TYPE@(@type@ *a, npy_uintp n, npy_intp stride)
+pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
 {
     if (n < 8) {
         npy_intp i;
         @type@ res = 0.;
         for (i = 0; i < n; i++) {
-            res += a[i * stride];
+            res += @trf@(a[i * stride]);
         }
         return res;
     }
@@ -1383,24 +1391,24 @@ pairwise_add_@TYPE@(@type@ *a, npy_uintp n, npy_intp stride)
          * 8 times unroll reduces blocksize to 16 and allows vectorization with
          * avx without changing summation ordering
          */
-        r[0] = a[0 * stride];
-        r[1] = a[1 * stride];
-        r[2] = a[2 * stride];
-        r[3] = a[3 * stride];
-        r[4] = a[4 * stride];
-        r[5] = a[5 * stride];
-        r[6] = a[6 * stride];
-        r[7] = a[7 * stride];
+        r[0] = @trf@(a[0 * stride]);
+        r[1] = @trf@(a[1 * stride]);
+        r[2] = @trf@(a[2 * stride]);
+        r[3] = @trf@(a[3 * stride]);
+        r[4] = @trf@(a[4 * stride]);
+        r[5] = @trf@(a[5 * stride]);
+        r[6] = @trf@(a[6 * stride]);
+        r[7] = @trf@(a[7 * stride]);
 
         for (i = 8; i < n - (n % 8); i += 8) {
-            r[0] += a[(i + 0) * stride];
-            r[1] += a[(i + 1) * stride];
-            r[2] += a[(i + 2) * stride];
-            r[3] += a[(i + 3) * stride];
-            r[4] += a[(i + 4) * stride];
-            r[5] += a[(i + 5) * stride];
-            r[6] += a[(i + 6) * stride];
-            r[7] += a[(i + 7) * stride];
+            r[0] += @trf@(a[(i + 0) * stride]);
+            r[1] += @trf@(a[(i + 1) * stride]);
+            r[2] += @trf@(a[(i + 2) * stride]);
+            r[3] += @trf@(a[(i + 3) * stride]);
+            r[4] += @trf@(a[(i + 4) * stride]);
+            r[5] += @trf@(a[(i + 5) * stride]);
+            r[6] += @trf@(a[(i + 6) * stride]);
+            r[7] += @trf@(a[(i + 7) * stride]);
         }
 
         /* accumulate now to avoid stack spills for single peel loop */
@@ -1409,7 +1417,7 @@ pairwise_add_@TYPE@(@type@ *a, npy_uintp n, npy_intp stride)
 
         /* do non multiple of 8 rest */
         for (; i < n; i++) {
-            res += a[i * stride];
+            res += @trf@(a[i * stride]);
         }
         return res;
     }
@@ -1417,10 +1425,20 @@ pairwise_add_@TYPE@(@type@ *a, npy_uintp n, npy_intp stride)
         /* divide by two but avoid non-multiples of unroll factor */
         npy_uintp n2 = n / 2;
         n2 -= n2 % 8;
-        return pairwise_add_@TYPE@(a, n2, stride) +
-               pairwise_add_@TYPE@(a + n2 * stride, n - n2, stride);
+        return pairwise_sum_@TYPE@(a, n2, stride) +
+               pairwise_sum_@TYPE@(a + n2 * stride, n - n2, stride);
     }
 }
+
+/**end repeat**/
+
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double, npy_longdouble#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ *  #c = f, , l#
+ *  #C = F, , L#
+ */
 
 /**begin repeat1
  * Arithmetic
@@ -1436,7 +1454,7 @@ NPY_NO_EXPORT void
         @type@ * iop1 = (@type@ *)args[0];
         npy_intp n = dimensions[0];
 
-        *iop1 @OP@= pairwise_add_@TYPE@((@type@ *)args[1], n,
+        *iop1 @OP@= pairwise_sum_@TYPE@((@type@ *)args[1], n,
                                         steps[1] / sizeof(@type@));
 #else
         BINARY_REDUCE_LOOP(@type@) {
@@ -1766,17 +1784,26 @@ NPY_NO_EXPORT void
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
  */
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
+#if @PW@
+        npy_half * iop1 = (npy_half *)args[0];
+        npy_intp n = dimensions[0];
+
+        *iop1 @OP@= npy_float_to_half(pairwise_sum_HALF((npy_half *)args[1], n,
+                                                steps[1] / sizeof(npy_half)));
+#else
         char *iop1 = args[0];
         float io1 = npy_half_to_float(*(npy_half *)iop1);
         BINARY_REDUCE_LOOP_INNER {
             io1 @OP@= npy_half_to_float(*(npy_half *)ip2);
         }
         *((npy_half *)iop1) = npy_float_to_half(io1);
+#endif
     }
     else {
         BINARY_LOOP {
@@ -2087,21 +2114,105 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  * #C = F, , L#
  */
 
+/* similar to pairwise sum of real floats */
+static void
+pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
+                    npy_intp stride)
+{
+    assert(n % 2 == 0);
+    if (n < 8) {
+        npy_intp i;
+        *rr = 0.;
+        *ri = 0.;
+        for (i = 0; i < n; i += 2) {
+            *rr += a[i * stride + 0];
+            *ri += a[i * stride + 1];
+        }
+        return;
+    }
+    else if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
+        @ftype@ r[8], res;
+
+        /*
+         * sum a block with 8 accumulators
+         * 8 times unroll reduces blocksize to 16 and allows vectorization with
+         * avx without changing summation ordering
+         */
+        r[0] = a[0 * stride];
+        r[1] = a[0 * stride + 1];
+        r[2] = a[2 * stride];
+        r[3] = a[2 * stride + 1];
+        r[4] = a[4 * stride];
+        r[5] = a[4 * stride + 1];
+        r[6] = a[6 * stride];
+        r[7] = a[6 * stride + 1];
+
+        for (i = 8; i < n - (n % 8); i += 8) {
+            r[0] += a[(i + 0) * stride];
+            r[1] += a[(i + 0) * stride + 1];
+            r[2] += a[(i + 2) * stride];
+            r[3] += a[(i + 2) * stride + 1];
+            r[4] += a[(i + 4) * stride];
+            r[5] += a[(i + 4) * stride + 1];
+            r[6] += a[(i + 6) * stride];
+            r[7] += a[(i + 6) * stride + 1];
+        }
+
+        /* accumulate now to avoid stack spills for single peel loop */
+        *rr = ((r[0] + r[2]) + (r[4] + r[6]));
+        *ri = ((r[1] + r[3]) + (r[5] + r[7]));
+
+        /* do non multiple of 8 rest */
+        for (; i < n; i+=2) {
+            *rr += a[i * stride + 0];
+            *ri += a[i * stride + 1];
+        }
+        return;
+    }
+    else {
+        /* divide by two but avoid non-multiples of unroll factor */
+        @ftype@ rr1, ri1, rr2, ri2;
+        npy_uintp n2 = n / 2;
+        n2 -= n2 % 8;
+        pairwise_sum_@TYPE@(&rr1, &ri1, a, n2, stride);
+        pairwise_sum_@TYPE@(&rr2, &ri2, a + n2 * stride, n - n2, stride);
+        *rr = rr1 + rr2;
+        *ri = ri1 + ri2;
+        return;
+    }
+}
+
 /**begin repeat1
  * arithmetic
  * #kind = add, subtract#
  * #OP = +, -#
+ * #PW = 1, 0#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
-        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        ((@ftype@ *)op1)[0] = in1r @OP@ in2r;
-        ((@ftype@ *)op1)[1] = in1i @OP@ in2i;
+    if (IS_BINARY_REDUCE && @PW@) {
+        npy_intp n = dimensions[0];
+        @ftype@ * or = ((@ftype@ *)args[0]);
+        @ftype@ * oi = ((@ftype@ *)args[0]) + 1;
+        @ftype@ rr, ri;
+
+        pairwise_sum_@TYPE@(&rr, &ri, (@ftype@ *)args[1], n * 2,
+                            steps[1] / sizeof(@ftype@) / 2);
+        *or @OP@= rr;
+        *oi @OP@= ri;
+        return;
+    }
+    else {
+        BINARY_LOOP {
+            const @ftype@ in1r = ((@ftype@ *)ip1)[0];
+            const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+            const @ftype@ in2r = ((@ftype@ *)ip2)[0];
+            const @ftype@ in2i = ((@ftype@ *)ip2)[1];
+            ((@ftype@ *)op1)[0] = in1r @OP@ in2r;
+            ((@ftype@ *)op1)[1] = in1i @OP@ in2i;
+        }
     }
 }
 /**end repeat1**/

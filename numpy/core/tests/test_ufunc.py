@@ -323,21 +323,44 @@ class TestUfunc(TestCase):
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
     def test_sum(self):
-        for dt in (np.int, np.float32, np.float64, np.longdouble):
+        for dt in (np.int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v - 1) / 2)
-                assert_almost_equal(np.sum(np.arange(v, dtype=dt)), tgt)
-                assert_almost_equal(np.sum(np.arange(v, dtype=dt)[::-1]), tgt)
+                tgt = dt(v * (v + 1) / 2)
+                d = np.arange(1, v + 1, dtype=dt)
+                assert_almost_equal(np.sum(d), tgt)
+                assert_almost_equal(np.sum(d[::-1]), tgt)
 
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::2]), 250.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[1::2]), 250.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::3]), 167.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[1::3]), 167.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::-2]), 250.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[-1::-2]), 250.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[::-3]), 167.)
-            assert_almost_equal(np.sum(np.ones(500, dtype=dt)[-1::-3]), 167.)
+            d = np.ones(500, dtype=dt)
+            assert_almost_equal(np.sum(d[::2]), 250.)
+            assert_almost_equal(np.sum(d[1::2]), 250.)
+            assert_almost_equal(np.sum(d[::3]), 167.)
+            assert_almost_equal(np.sum(d[1::3]), 167.)
+            assert_almost_equal(np.sum(d[::-2]), 250.)
+            assert_almost_equal(np.sum(d[-1::-2]), 250.)
+            assert_almost_equal(np.sum(d[::-3]), 167.)
+            assert_almost_equal(np.sum(d[-1::-3]), 167.)
+
+    def test_sum_complex(self):
+        for dt in (np.complex64, np.complex128, np.clongdouble):
+            for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
+                      128, 1024, 1235):
+                tgt = dt(v * (v + 1) / 2) - dt((v * (v + 1) / 2) *1j)
+                d = np.empty(v, dtype=dt)
+                d.real = np.arange(1, v + 1)
+                d.imag = -np.arange(1, v + 1)
+                assert_almost_equal(np.sum(d), tgt)
+                assert_almost_equal(np.sum(d[::-1]), tgt)
+
+            d = np.ones(500, dtype=dt) + 1j
+            assert_almost_equal(np.sum(d[::2]), 250. + 250j)
+            assert_almost_equal(np.sum(d[1::2]), 250. + 250j)
+            assert_almost_equal(np.sum(d[::3]), 167. + 167j)
+            assert_almost_equal(np.sum(d[1::3]), 167. + 167j)
+            assert_almost_equal(np.sum(d[::-2]), 250. + 250j)
+            assert_almost_equal(np.sum(d[-1::-2]), 250. + 250j)
+            assert_almost_equal(np.sum(d[::-3]), 167. + 167j)
+            assert_almost_equal(np.sum(d[-1::-3]), 167. + 167j)
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
