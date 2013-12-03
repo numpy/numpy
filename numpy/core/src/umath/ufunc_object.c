@@ -235,7 +235,6 @@ PyUFunc_clearfperr()
 #if USE_USE_DEFAULTS==1
 static int PyUFunc_NUM_NODEFAULTS = 0;
 #endif
-static PyObject *PyUFunc_PYVALS_NAME = NULL;
 
 static PyObject *
 _get_global_ext_obj(char * name)
@@ -246,14 +245,11 @@ _get_global_ext_obj(char * name)
 #if USE_USE_DEFAULTS==1
     if (PyUFunc_NUM_NODEFAULTS != 0) {
 #endif
-        if (PyUFunc_PYVALS_NAME == NULL) {
-            PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
-        }
         thedict = PyThreadState_GetDict();
         if (thedict == NULL) {
             thedict = PyEval_GetBuiltins();
         }
-        ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
+        ref = PyDict_GetItem(thedict, npy_um_str_pyvals_name);
 #if USE_USE_DEFAULTS==1
     }
 #endif
@@ -282,6 +278,7 @@ _get_bufsize_errmask(PyObject * extobj, char * ufunc_name,
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
+ * Assumes subok is already true if check_subok is false.
  *
  * If an output argument is provided, then it is prepped
  * with its own __array_prepare__ not with the one determined by
@@ -296,7 +293,8 @@ _get_bufsize_errmask(PyObject * extobj, char * ufunc_name,
  */
 static void
 _find_array_prepare(PyObject *args, PyObject *kwds,
-                    PyObject **output_prep, int nin, int nout)
+                    PyObject **output_prep, int nin, int nout,
+                    int check_subok)
 {
     Py_ssize_t nargs;
     int i;
@@ -304,8 +302,12 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
     PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
     PyObject *obj, *prep = NULL;
 
-    /* If a 'subok' parameter is passed and isn't True, don't wrap */
-    if (kwds != NULL && (obj = PyDict_GetItemString(kwds, "subok")) != NULL) {
+    /*
+     * If a 'subok' parameter is passed and isn't True, don't wrap
+     * if check_subok is false it assumed subok in kwds keyword is True
+     */
+    if (check_subok && kwds != NULL &&
+        (obj = PyDict_GetItem(kwds, npy_um_str_subok)) != NULL) {
         if (obj != Py_True) {
             for (i = 0; i < nout; i++) {
                 output_prep[i] = NULL;
@@ -320,7 +322,7 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
             continue;
         }
-        prep = PyObject_GetAttrString(obj, "__array_prepare__");
+        prep = PyObject_GetAttr(obj, npy_um_str_array_prepare);
         if (prep) {
             if (PyCallable_Check(prep)) {
                 with_prep[np] = obj;
@@ -381,12 +383,12 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
             obj = PyTuple_GET_ITEM(args, j);
             /* Output argument one may also be in a keyword argument */
             if (i == 0 && obj == Py_None && kwds != NULL) {
-                obj = PyDict_GetItemString(kwds, "out");
+                obj = PyDict_GetItem(kwds, npy_um_str_out);
             }
         }
         /* Output argument one may also be in a keyword argument */
         else if (i == 0 && kwds != NULL) {
-            obj = PyDict_GetItemString(kwds, "out");
+            obj = PyDict_GetItem(kwds, npy_um_str_out);
         }
 
         if (obj != Py_None && obj != NULL) {
@@ -395,8 +397,8 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
                 output_prep[i] = Py_None;
             }
             else {
-                PyObject *oprep = PyObject_GetAttrString(obj,
-                            "__array_prepare__");
+                PyObject *oprep = PyObject_GetAttr(obj,
+                                                   npy_um_str_array_prepare);
                 incref = 0;
                 if (!(oprep) || !(PyCallable_Check(oprep))) {
                     Py_XDECREF(oprep);
@@ -1733,7 +1735,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 static PyObject *
 make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 {
-    PyObject *out = kwds ? PyDict_GetItemString(kwds, "out") : NULL;
+    PyObject *out = kwds ? PyDict_GetItem(kwds, npy_um_str_out) : NULL;
     PyObject *arr_prep_args;
 
     if (out == NULL) {
@@ -2094,7 +2096,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
@@ -2468,7 +2470,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
@@ -3959,7 +3961,8 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
     PyObject *obj, *wrap = NULL;
 
     /* If a 'subok' parameter is passed and isn't True, don't wrap */
-    if (kwds != NULL && (obj = PyDict_GetItemString(kwds, "subok")) != NULL) {
+    if (kwds != NULL && (obj = PyDict_GetItem(kwds,
+                                              npy_um_str_subok)) != NULL) {
         if (obj != Py_True) {
             for (i = 0; i < nout; i++) {
                 output_wrap[i] = NULL;
@@ -3974,7 +3977,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
             continue;
         }
-        wrap = PyObject_GetAttrString(obj, "__array_wrap__");
+        wrap = PyObject_GetAttr(obj, npy_um_str_array_wrap);
         if (wrap) {
             if (PyCallable_Check(wrap)) {
                 with_wrap[np] = obj;
@@ -4035,12 +4038,12 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
             obj = PyTuple_GET_ITEM(args, j);
             /* Output argument one may also be in a keyword argument */
             if (i == 0 && obj == Py_None && kwds != NULL) {
-                obj = PyDict_GetItemString(kwds, "out");
+                obj = PyDict_GetItem(kwds, npy_um_str_out);
             }
         }
         /* Output argument one may also be in a keyword argument */
         else if (i == 0 && kwds != NULL) {
-            obj = PyDict_GetItemString(kwds, "out");
+            obj = PyDict_GetItem(kwds, npy_um_str_out);
         }
 
         if (obj != Py_None && obj != NULL) {
@@ -4049,7 +4052,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
                 output_wrap[i] = Py_None;
             }
             else {
-                PyObject *owrap = PyObject_GetAttrString(obj,"__array_wrap__");
+                PyObject *owrap = PyObject_GetAttr(obj, npy_um_str_array_wrap);
                 incref = 0;
                 if (!(owrap) || !(PyCallable_Check(owrap))) {
                     Py_XDECREF(owrap);
@@ -4209,14 +4212,11 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (!PyArg_ParseTuple(args, "")) {
         return NULL;
     }
-    if (PyUFunc_PYVALS_NAME == NULL) {
-        PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
-    }
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
     }
-    res = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
+    res = PyDict_GetItem(thedict, npy_um_str_pyvals_name);
     if (res != NULL) {
         Py_INCREF(res);
         return res;
@@ -4280,14 +4280,11 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
     }
-    if (PyUFunc_PYVALS_NAME == NULL) {
-        PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
-    }
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
     }
-    res = PyDict_SetItem(thedict, PyUFunc_PYVALS_NAME, val);
+    res = PyDict_SetItem(thedict, npy_um_str_pyvals_name, val);
     if (res < 0) {
         return NULL;
     }
