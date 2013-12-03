@@ -342,7 +342,7 @@ class TestSaveTxt(TestCase):
 
         # ... but raises an error if not.
         c = BytesIO()
-        assert_raises(ValueError, np.savetxt(c, a, fmt=u'ç'))
+        assert_raises(ValueError, np.savetxt(c, a, fmt=sixu('\xe7')))
 
     def test_header_footer(self):
         """
