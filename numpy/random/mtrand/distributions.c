@@ -310,7 +310,7 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     goto Step50;
 
   Step40:
-    y = (int)floor(xr - log(v)/lamr);
+    y = (long)floor(xr - log(v)/lamr);
     if (y > n) goto Step10;
     v = v*(u-p3)*lamr;
 
