@@ -540,7 +540,7 @@ def average(a, axis=None, weights=None, returned=False):
         else:
             if weights is None:
                 n = add.reduce(a, axis)
-                d = umath.add.reduce((-mask), axis=axis, dtype=float)
+                d = umath.add.reduce((~mask), axis=axis, dtype=float)
             else:
                 w = filled(weights, 0.0)
                 wsh = w.shape
@@ -1735,7 +1735,7 @@ def _ezclump(mask):
     #def clump_masked(a):
     if mask.ndim > 1:
         mask = mask.ravel()
-    idx = (mask[1:] - mask[:-1]).nonzero()
+    idx = (mask[1:] ^ mask[:-1]).nonzero()
     idx = idx[0] + 1
     slices = [slice(left, right)
               for (left, right) in zip(itertools.chain([0], idx),

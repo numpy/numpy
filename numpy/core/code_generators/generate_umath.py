@@ -369,7 +369,7 @@ defdict = {
 'negative':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
-          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          'PyUFunc_NegativeTypeResolver',
           TD(bints+flts+timedeltaonly),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),

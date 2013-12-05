@@ -810,7 +810,12 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                 y = y[~yinfid]
         except (TypeError, NotImplementedError):
             pass
-        z = abs(x-y)
+
+        if x.dtype.kind == 'b' and y.dtype.kind == 'b':
+            z = x ^ y
+        else:
+            z = abs(x-y)
+
         if not issubdtype(z.dtype, number):
             z = z.astype(float_) # handle object arrays
         return around(z, decimal) <= 10.0**(-decimal)

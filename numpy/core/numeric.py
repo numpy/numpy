@@ -2154,7 +2154,12 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
     # ignore invalid fpe's
     with errstate(invalid='ignore'):
-        r = all(less_equal(abs(x-y), atol + rtol * abs(y)))
+        if not x.dtype.kind == 'b' and not y.dtype.kind == 'b':
+            diff = abs(x - y)
+        else:
+            diff = x ^ y
+
+        r = all(less_equal(diff, atol + rtol * abs(y)))
 
     return r
 

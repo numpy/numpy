@@ -6923,16 +6923,25 @@ def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
         return False
     # No infs at all
     if not np.any(xinf):
-        d = filled(umath.less_equal(umath.absolute(x - y),
-                                    atol + rtol * umath.absolute(y)),
+        if not x.dtype.kind == 'b' and not y.dtype.kind == 'b':
+            diff = umath.absolute(x - y)
+        else:
+            diff = x ^ y
+
+        d = filled(umath.less_equal(diff, atol + rtol * umath.absolute(y)),
                    masked_equal)
         return np.all(d)
     if not np.all(filled(x[xinf] == y[xinf], masked_equal)):
         return False
     x = x[~xinf]
     y = y[~xinf]
-    d = filled(umath.less_equal(umath.absolute(x - y),
-                                atol + rtol * umath.absolute(y)),
+
+    if not x.dtype.kind == 'b' and not y.dtype.kind == 'b':
+        diff = umath.absolute(x - y)
+    else:
+        diff = x ^ y
+
+    d = filled(umath.less_equal(diff, atol + rtol * umath.absolute(y)),
                masked_equal)
     return np.all(d)
 

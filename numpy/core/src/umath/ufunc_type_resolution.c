@@ -367,6 +367,34 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
     return 0;
 }
 
+
+NPY_NO_EXPORT int
+PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int ret;
+    ret = PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting, operands,
+                                                   type_tup, out_dtypes);
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* The type resolver would have upcast already */
+    if (out_dtypes[0]->type_num == NPY_BOOL) {
+        if (DEPRECATE("numpy boolean negative (the unary `-` operator) is "
+                      "deprecated, use the bitwise_xor (the `^` operator) "
+                      "or the logical_xor function instead.") < 0) {
+            return -1;
+        }
+    }
+
+    return ret;
+}
+
+
 /*
  * The ones_like function shouldn't really be a ufunc, but while it
  * still is, this provides type resolution that always forces UNSAFE
@@ -762,8 +790,22 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
-                    operands, type_tup, out_dtypes);
+        int ret;
+        ret = PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                                                operands, type_tup, out_dtypes);
+        if (ret < 0) {
+            return ret;
+        }
+
+        /* The type resolver would have upcast already */
+        if (out_dtypes[0]->type_num == NPY_BOOL) {
+            if (DEPRECATE("numpy boolean subtract (the binary `-` operator) is "
+                          "deprecated, use the bitwise_xor (the `^` operator) "
+                          "or the logical_xor function instead.") < 0) {
+                return -1;
+            }
+        }
+        return ret;
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
