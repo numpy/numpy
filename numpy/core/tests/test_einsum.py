@@ -498,5 +498,45 @@ class TestEinSum(TestCase):
                     [[[1,  3], [3,  9], [5, 15], [7, 21]],
                     [[8, 16], [16, 32], [24, 48], [32, 64]]])
 
+    def test_einsum_broadcast(self):
+        # Issue #2455 change in handling ellipsis
+        # remove the 'middle broadcast' error
+        # only use the 'RIGHT' iteration in prepare_op_axes
+        # adds auto broadcast on left where it belongs
+        # broadcast on right has to be explicit
+
+        A = np.arange(2*3*4).reshape(2,3,4)
+        B = np.arange(3)
+        ref = np.einsum('ijk,j->ijk',A,B)
+        assert_equal(np.einsum('ij...,j...->ij...',A,B), ref)
+        assert_equal(np.einsum('ij...,...j->ij...',A,B), ref)
+        assert_equal(np.einsum('ij...,j->ij...',A,B), ref) # used to raise error
+
+        A = np.arange(12).reshape((4,3))
+        B = np.arange(6).reshape((3,2))
+        ref = np.einsum('ik,kj->ij', A, B)
+        assert_equal(np.einsum('ik...,k...->i...', A, B), ref)
+        assert_equal(np.einsum('ik...,...kj->i...j', A, B), ref)
+        assert_equal(np.einsum('...k,kj', A, B), ref) # used to raise error
+        assert_equal(np.einsum('ik,k...->i...', A, B), ref) # used to raise error
+        #assert_equal(np.einsum('...k,k...->...', A, B), ref) # tries to use B.T (also in orig)
+
+        dims=[2,3,4,5];
+        a = np.arange(np.prod(dims)).reshape(dims)
+        v = np.arange(dims[2])
+        ref = np.einsum('ijkl,k->ijl',a,v)
+        assert_equal(np.einsum('ijkl,k',a,v), ref)
+        assert_equal(np.einsum('...kl,k',a,v), ref)  # used to raise error
+        assert_equal(np.einsum('...kl,k...',a,v), ref)
+        # no real diff from 1st
+
+        J,K,M=160,160,120;
+        A=np.arange(J*K*M).reshape(1,1,1,J,K,M)
+        B=np.arange(J*K*M*3).reshape(J,K,M,3)
+        ref = np.einsum('...lmn,...lmno->...o',A,B)
+        assert_equal(np.einsum('...lmn,lmno->...o',A,B), ref)  # used to raise error
+
+
+
 if __name__ == "__main__":
     run_module_suite()

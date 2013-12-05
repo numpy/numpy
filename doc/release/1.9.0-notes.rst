@@ -72,7 +72,10 @@ The performance of converting lists containing arrays to arrays using
 Changes
 =======
 
- 
+Einsum
+~~~~~~
+Remove unnecessary broadcasting notation restrictions.
+
 C-API
 ~~~~~
 
