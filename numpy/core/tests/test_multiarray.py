@@ -1955,6 +1955,24 @@ class TestArgmax(TestCase):
             assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
             assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
 
+    def test_output_shape(self):
+        # see also gh-616
+        a = np.ones((10, 5))
+        # Check some simple shape mismatches
+        out = np.ones(11, dtype=np.int_)
+        assert_raises(ValueError, a.argmax, -1, out)
+
+        out = np.ones((2, 5), dtype=np.int_)
+        assert_raises(ValueError, a.argmax, -1, out)
+
+        # these could be relaxed possibly (used to allow even the previous)
+        out = np.ones((1, 10), dtype=np.int_)
+        assert_raises(ValueError, a.argmax, -1, np.ones((1, 10)))
+
+        out = np.ones(10, dtype=np.int_)
+        a.argmax(-1, out=out)
+        assert_equal(out, a.argmax(-1))
+
 
 class TestArgmin(TestCase):
 
@@ -2036,6 +2054,24 @@ class TestArgmin(TestCase):
 
         a = np.array([1, -2**63, -2**63 + 1], dtype=np.int64)
         assert_equal(np.argmin(a), 1)
+
+    def test_output_shape(self):
+        # see also gh-616
+        a = np.ones((10, 5))
+        # Check some simple shape mismatches
+        out = np.ones(11, dtype=np.int_)
+        assert_raises(ValueError, a.argmin, -1, out)
+
+        out = np.ones((2, 5), dtype=np.int_)
+        assert_raises(ValueError, a.argmin, -1, out)
+
+        # these could be relaxed possibly (used to allow even the previous)
+        out = np.ones((1, 10), dtype=np.int_)
+        assert_raises(ValueError, a.argmin, -1, np.ones((1, 10)))
+
+        out = np.ones(10, dtype=np.int_)
+        a.argmin(-1, out=out)
+        assert_equal(out, a.argmin(-1))
 
 
 class TestMinMax(TestCase):
