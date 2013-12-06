@@ -1046,7 +1046,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         }
     }
     /* optimization for a tuple of integers */
-    if (PyArray_NDIM(self) > 1 && _is_full_index(op, self)) {
+    if (_is_full_index(op, self)) {
         int ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
 
         if (ret > 0) {
@@ -1182,7 +1182,18 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
 
     fancy = fancy_indexing_check(op);
     if (fancy != SOBJ_NOTFANCY) {
-        return array_subscript_fancy(self, op, fancy);
+        PyObject *ret;
+
+        ret = array_subscript_fancy(self, op, fancy);
+        if (ret == NULL) {
+            return NULL;
+        }
+        if (PyArray_Check(ret) &&
+                PyArray_NDIM((PyArrayObject *)ret) == 0 &&
+                !_check_ellipses(op)) {
+            return PyArray_Return((PyArrayObject *)ret);
+        }
+        return ret;
     }
     else {
         return array_subscript_simple(self, op, 1);
@@ -1195,7 +1206,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     int fancy;
     PyObject *ret = NULL;
     if (!PyArray_Check(op)) {
-        ret = array_subscript_fromobject(self, op);
+        return array_subscript_fromobject(self, op);
     }
 
     /* Boolean indexing special case */
@@ -1223,14 +1234,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
         }
     }
 
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    if (PyArray_Check(ret) && PyArray_NDIM((PyArrayObject *)ret) == 0
-                                                && !_check_ellipses(op)) {
-        return PyArray_Return((PyArrayObject *)ret);
-    }
     return ret;
 }
 
