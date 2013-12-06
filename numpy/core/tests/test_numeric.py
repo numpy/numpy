@@ -1355,7 +1355,7 @@ class TestClip(TestCase):
         self.assertTrue(a2 is a)
 
 
-class TestAllclose(object):
+class TestAllclose(TestCase):
     rtol = 1e-5
     atol = 1e-8
 
@@ -1418,6 +1418,14 @@ class TestAllclose(object):
         allclose(x, y)
         assert_array_equal(x, array([inf, 1]))
         assert_array_equal(y, array([0, inf]))
+
+    def test_exact(self):
+        self.assertTrue(allclose([True], [True]))
+        self.assertTrue(allclose(['a'], ['a']))
+        self.assertFalse(allclose([True], [False]))
+        self.assertFalse(allclose(['a'], ['b']))
+        self.assertTrue(allclose([1], [1.0]))
+        self.assertTrue(allclose([1.0], [1]))
 
 
 class TestIsclose(object):
