@@ -299,7 +299,7 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
           }
     }
 
-    return PyObject_CallFunction(op, "OO", m1, m2);
+    return PyObject_CallFunctionObjArgs(op, m1, m2, NULL);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -309,7 +309,7 @@ PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    return PyObject_CallFunction(op, "(O)", m1);
+    return PyObject_CallFunctionObjArgs(op, m1, NULL);
 }
 
 static PyObject *
@@ -320,7 +320,7 @@ PyArray_GenericInplaceBinaryFunction(PyArrayObject *m1,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    return PyObject_CallFunction(op, "OOO", m1, m2, m1);
+    return PyObject_CallFunctionObjArgs(op, m1, m2, m1, NULL);
 }
 
 static PyObject *
@@ -330,7 +330,7 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    return PyObject_CallFunction(op, "OO", m1, m1);
+    return PyObject_CallFunctionObjArgs(op, m1, m1, NULL);
 }
 
 static PyObject *
