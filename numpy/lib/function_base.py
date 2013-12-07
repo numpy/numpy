@@ -1085,7 +1085,7 @@ def interp(x, xp, fp, left=None, right=None):
         Value to return for `x < xp[0]`, default is `fp[0]`.
 
     right : float, optional
-        Value to return for `x > xp[-1]`, defaults is `fp[-1]`.
+        Value to return for `x > xp[-1]`, default is `fp[-1]`.
 
     Returns
     -------
