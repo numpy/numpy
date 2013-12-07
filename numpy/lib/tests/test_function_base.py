@@ -1311,28 +1311,33 @@ class TestMsort(TestCase):
 class TestMeshgrid(TestCase):
     def test_simple(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7])
-        assert_(np.all(X == np.array([[1, 2, 3],
-                                      [1, 2, 3],
-                                      [1, 2, 3],
-                                      [1, 2, 3]])))
-        assert_(np.all(Y == np.array([[4, 4, 4],
-                                      [5, 5, 5],
-                                      [6, 6, 6],
-                                      [7, 7, 7]])))
+        assert_array_equal(X, np.array([[1, 2, 3],
+                                        [1, 2, 3],
+                                        [1, 2, 3],
+                                        [1, 2, 3]]))
+        assert_array_equal(Y, np.array([[4, 4, 4],
+                                        [5, 5, 5],
+                                        [6, 6, 6],
+                                        [7, 7, 7]]))
 
     def test_single_input(self):
-        assert_raises(ValueError, meshgrid, np.arange(5))
+        [X] = meshgrid([1, 2, 3, 4])
+        assert_array_equal(X, np.array([1, 2, 3, 4]))
+
+    def test_no_input(self):
+        args = []
+        assert_array_equal([], meshgrid(*args))
 
     def test_indexing(self):
         x = [1, 2, 3]
         y = [4, 5, 6, 7]
         [X, Y] = meshgrid(x, y, indexing='ij')
-        assert_(np.all(X == np.array([[1, 1, 1, 1],
-                                      [2, 2, 2, 2],
-                                      [3, 3, 3, 3]])))
-        assert_(np.all(Y == np.array([[4, 5, 6, 7],
-                                      [4, 5, 6, 7],
-                                      [4, 5, 6, 7]])))
+        assert_array_equal(X, np.array([[1, 1, 1, 1],
+                                        [2, 2, 2, 2],
+                                        [3, 3, 3, 3]]))
+        assert_array_equal(Y, np.array([[4, 5, 6, 7],
+                                        [4, 5, 6, 7],
+                                        [4, 5, 6, 7]]))
 
         # Test expected shapes:
         z = [8, 9]
@@ -1345,8 +1350,8 @@ class TestMeshgrid(TestCase):
 
     def test_sparse(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)
-        assert_(np.all(X == np.array([[1, 2, 3]])))
-        assert_(np.all(Y == np.array([[4], [5], [6], [7]])))
+        assert_array_equal(X, np.array([[1, 2, 3]]))
+        assert_array_equal(Y, np.array([[4], [5], [6], [7]]))
 
 
 class TestPiecewise(TestCase):
