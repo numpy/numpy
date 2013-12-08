@@ -584,6 +584,35 @@ class TestNdarrayPadWidth(TestCase):
         assert_array_equal(a, b)
 
 
+class TestZeroPadWidth(TestCase):
+    def test_zero_pad_width(self):
+        arr = np.arange(30)
+        arr = np.reshape(arr, (6, 5))
+        for pad_width in (0, (0, 0), ((0, 0), (0, 0))):
+            assert_array_equal(arr, pad(arr, pad_width, mode='constant'))
+
+
+class TestNdarrayPadWidth(TestCase):
+    def test_check_simple(self):
+        a = np.arange(12)
+        a = np.reshape(a, (4, 3))
+        a = pad(a, np.array(((2, 3), (3, 2))), 'edge')
+        b = np.array(
+            [[0,  0,  0,    0,  1,  2,    2,  2],
+             [0,  0,  0,    0,  1,  2,    2,  2],
+
+             [0,  0,  0,    0,  1,  2,    2,  2],
+             [3,  3,  3,    3,  4,  5,    5,  5],
+             [6,  6,  6,    6,  7,  8,    8,  8],
+             [9,  9,  9,    9, 10, 11,   11, 11],
+
+             [9,  9,  9,    9, 10, 11,   11, 11],
+             [9,  9,  9,    9, 10, 11,   11, 11],
+             [9,  9,  9,    9, 10, 11,   11, 11]]
+            )
+        assert_array_equal(a, b)
+
+
 class ValueError1(TestCase):
     def test_check_simple(self):
         arr = np.arange(30)
@@ -623,6 +652,29 @@ class ValueError3(TestCase):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
+
+
+class TypeError1(TestCase):
+    def test_float(self):
+        arr = np.arange(30)
+        assert_raises(TypeError, pad, arr, ((-2.1, 3), (3, 2)))
+        assert_raises(TypeError, pad, arr, np.array(((-2.1, 3), (3, 2))))
+
+    def test_str(self):
+        arr = np.arange(30)
+        assert_raises(TypeError, pad, arr, 'foo')
+        assert_raises(TypeError, pad, arr, np.array('foo'))
+
+    def test_object(self):
+        class FooBar(object):
+            pass
+        arr = np.arange(30)
+        assert_raises(TypeError, pad, arr, FooBar())
+
+    def test_complex(self):
+        arr = np.arange(30)
+        assert_raises(TypeError, pad, arr, complex(1, -1))
+        assert_raises(TypeError, pad, arr, np.array(complex(1, -1)))
 
 
 if __name__ == "__main__":

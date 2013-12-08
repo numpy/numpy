@@ -61,6 +61,11 @@ given period and one end point is added to each extremity of `xp` in order to
 close the previous and the next period cycles, resulting in the correct
 interpolation behavior.
 
+``np.pad`` supports more input types for ``pad_width`` and ``constant_values``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Both parameters now accept NumPy arrays and float values as input. An
+exception is raised if `pad_width` values are not of integral type.
+
 
 Changes
 =======

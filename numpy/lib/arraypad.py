@@ -5,6 +5,7 @@ of an n-dimensional array.
 """
 from __future__ import division, absolute_import, print_function
 
+import numbers
 import numpy as np
 from numpy.compat import long
 
@@ -997,7 +998,7 @@ def _normalize_shape(narray, shape):
     ----------
     narray : ndarray
         Input ndarray
-    shape : {sequence, int}, optional
+    shape : {sequence, array_like, float, int}, optional
         The width of padding (pad_width) or the number of elements on the
         edge of the narray used for statistics (stat_length).
         ((before_1, after_1), ... (before_N, after_N)) unique number of
@@ -1037,13 +1038,9 @@ def _normalize_shape(narray, shape):
             if len(i) != 2:
                 fmt = "Unable to create correctly shaped tuple from %s"
                 raise ValueError(fmt % (normshp,))
-    elif (isinstance(shape, (tuple, list))
-            and isinstance(shape[0], (int, float, long))
-            and len(shape) == 1):
+    elif np.isscalar(shape[0]) and len(shape) == 1:
         normshp = ((shape[0], shape[0]), ) * shapelen
-    elif (isinstance(shape, (tuple, list))
-            and isinstance(shape[0], (int, float, long))
-            and len(shape) == 2):
+    elif np.isscalar(shape[0]) and len(shape) == 2:
         normshp = (shape, ) * shapelen
     if normshp is None:
         fmt = "Unable to create correctly shaped tuple from %s"
@@ -1092,6 +1089,31 @@ def _validate_lengths(narray, number_elements):
     return normshp
 
 
+def _is_all_integral_type(elems):
+    """
+    Check whether all elements in an arbitrarily nested iterable are of
+    integral type.
+
+    Parameters
+    ----------
+    elems : object
+        Arbitrarily nested iterable.
+
+    Returns
+    -------
+    test : bool
+        Whether all elements are of integral type.
+
+    """
+    if not isinstance(elems, (np.ndarray, tuple, list)):
+        if not isinstance(elems, numbers.Integral):
+            return False
+    else:
+        for elem in elems:
+            return _is_all_integral_type(elem)
+    return True
+
+
 ###############################################################################
 # Public functions
 
@@ -1104,7 +1126,7 @@ def pad(array, pad_width, mode=None, **kwargs):
     ----------
     array : array_like of rank N
         Input array
-    pad_width : {sequence, int}
+    pad_width : {sequence, array_like, int}
         Number of values padded to the edges of each axis.
         ((before_1, after_1), ... (before_N, after_N)) unique pad widths
         for each axis.
@@ -1160,7 +1182,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         length for all axes.
 
         Default is ``None``, to use the entire axis.
-    constant_values : {sequence, int}, optional
+    constant_values : {sequence, array_like, float, int}, optional
         Used in 'constant'.  The values to set the padded values for each
         axis.
 
@@ -1233,25 +1255,25 @@ def pad(array, pad_width, mode=None, **kwargs):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad(a, (2,3), 'constant', constant_values=(4,6))
+    >>> np.lib.pad(a, (2, 3), 'constant', constant_values=(4,6))
     array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
-    >>> np.lib.pad(a, (2,3), 'edge')
+    >>> np.lib.pad(a, (2, 3), 'edge')
     array([1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
 
-    >>> np.lib.pad(a, (2,3), 'linear_ramp', end_values=(5,-4))
+    >>> np.lib.pad(a, (2, 3), 'linear_ramp', end_values=(5,-4))
     array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
 
-    >>> np.lib.pad(a, (2,), 'maximum')
+    >>> np.lib.pad(a, (2, ), 'maximum')
     array([5, 5, 1, 2, 3, 4, 5, 5, 5])
 
-    >>> np.lib.pad(a, (2,), 'mean')
+    >>> np.lib.pad(a, (2, ), 'mean')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> np.lib.pad(a, (2,), 'median')
+    >>> np.lib.pad(a, (2, ), 'median')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> a = [[1,2], [3,4]]
+    >>> a = [[1, 2], [3, 4]]
     >>> np.lib.pad(a, ((3, 2), (2, 3)), 'minimum')
     array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
@@ -1262,19 +1284,19 @@ def pad(array, pad_width, mode=None, **kwargs):
            [1, 1, 1, 2, 1, 1, 1]])
 
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad(a, (2,3), 'reflect')
+    >>> np.lib.pad(a, (2, 3), 'reflect')
     array([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
 
-    >>> np.lib.pad(a, (2,3), 'reflect', reflect_type='odd')
+    >>> np.lib.pad(a, (2, 3), 'reflect', reflect_type='odd')
     array([-1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
-    >>> np.lib.pad(a, (2,3), 'symmetric')
+    >>> np.lib.pad(a, (2, 3), 'symmetric')
     array([2, 1, 1, 2, 3, 4, 5, 5, 4, 3])
 
-    >>> np.lib.pad(a, (2,3), 'symmetric', reflect_type='odd')
+    >>> np.lib.pad(a, (2, 3), 'symmetric', reflect_type='odd')
     array([0, 1, 1, 2, 3, 4, 5, 5, 6, 7])
 
-    >>> np.lib.pad(a, (2,3), 'wrap')
+    >>> np.lib.pad(a, (2, 3), 'wrap')
     array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
     >>> def padwithtens(vector, pad_width, iaxis, kwargs):
@@ -1283,7 +1305,7 @@ def pad(array, pad_width, mode=None, **kwargs):
     ...     return vector
 
     >>> a = np.arange(6)
-    >>> a = a.reshape((2,3))
+    >>> a = a.reshape((2, 3))
 
     >>> np.lib.pad(a, 2, padwithtens)
     array([[10, 10, 10, 10, 10, 10, 10],
@@ -1292,7 +1314,10 @@ def pad(array, pad_width, mode=None, **kwargs):
            [10, 10,  3,  4,  5, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
+
     """
+    if not _is_all_integral_type(pad_width):
+        raise TypeError('`pad_width` must be of integral type.')
 
     narray = np.array(array)
     pad_width = _validate_lengths(narray, pad_width)
