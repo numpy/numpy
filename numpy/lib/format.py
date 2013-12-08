@@ -476,13 +476,16 @@ def read_array(fp):
             max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
             array = numpy.empty(count, dtype=dtype)
-
-            for i in range(0, count, max_read_count):
+            extra_data = ''
+            i = 0
+            while i < count: 
                 read_count = min(max_read_count, count - i)
-
-                data = fp.read(int(read_count * dtype.itemsize))
-                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
-                                                         count=read_count)
+                data = extra_data + fp.read(int(read_count * dtype.itemsize))
+                actual_count = len(data) // dtype.itemsize
+                extra_data = data[actual_count*dtype.itemsize:] 
+                array[i:i+actual_count] = numpy.frombuffer(data, dtype=dtype,
+                                                         count=actual_count)
+                i += actual_count
 
         if fortran_order:
             array.shape = shape[::-1]
