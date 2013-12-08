@@ -52,7 +52,3 @@ script:
   - python ../tools/test-installed-numpy.py --mode=full
   # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
   # - coverage report --rcfile=../.coveragerc --show-missing
-notifications:
-  # Perhaps we should have status emails sent to the mailing list, but
-  # let's wait to see what people think before turning that on.
-  email: false
