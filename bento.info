@@ -46,6 +46,7 @@ ExtraSourceFiles:
     numpy/core/src/multiarray/*.c.src,
     numpy/core/src/multiarray/*.h,
     numpy/core/src/private/*.h,
+    numpy/core/src/private/*.h.src,
     numpy/core/src/umath/*.src,
     numpy/core/src/umath/*.h,
     numpy/core/src/umath/*.c,
