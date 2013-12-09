@@ -410,14 +410,14 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
 ]
 
+
 #BytesIO that returns fewer bytes than requested
 class BytesIORandomSize(BytesIO):
     def read(self, size=None):
         from random import randint
-        size = randint(min(512,size), size)
-        data =  super(BytesIORandomSize, self).read(size)
-        assert len(data) <= size
-        return data
+        size = randint(min(512, size), size)
+        return super(BytesIORandomSize, self).read(size)
+
 
 def roundtrip(arr):
     f = BytesIO()
@@ -426,12 +426,14 @@ def roundtrip(arr):
     arr2 = format.read_array(f2)
     return arr2
 
+
 def roundtrip_randsize(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIORandomSize(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
+
 
 def roundtrip_truncated(arr):
     f = BytesIO()
@@ -451,21 +453,25 @@ def test_roundtrip():
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
 
+
 def test_roundtrip_randsize():
     for arr in basic_arrays[2:] + record_arrays:
         arr2 = roundtrip_randsize(arr)
         yield assert_array_equal, arr, arr2
 
+
 def test_roundtrip_truncated():
     for arr in basic_arrays:
         if arr.dtype != object:
-            assert_raises(ValueError, roundtrip_truncated, arr)
+            yield assert_raises, ValueError, roundtrip_truncated, arr
+
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
     long_str_arr = np.ones(1, dtype=np.dtype((str, format.BUFFER_SIZE + 1)))
     long_str_arr2 = roundtrip(long_str_arr)
     assert_array_equal(long_str_arr, long_str_arr2)
+
 
 @dec.slow
 def test_memmap_roundtrip():
