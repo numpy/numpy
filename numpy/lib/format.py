@@ -476,7 +476,7 @@ def read_array(fp):
             max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
             array = numpy.empty(count, dtype=dtype)
-            extra_data = ''
+            extra_data = bytes()
             i = 0
             while i < count: 
                 read_count = min(max_read_count, count - i)
