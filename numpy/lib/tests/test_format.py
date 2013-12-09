@@ -325,7 +325,7 @@ basic_arrays = []
 for scalar in scalars:
     for endian in '<>':
         dtype = np.dtype(scalar).newbyteorder(endian)
-        basic = np.arange(15).astype(dtype)
+        basic = np.arange(1500).astype(dtype)
         basic_arrays.extend([
             # Empty
             np.array([], dtype=dtype),
@@ -334,11 +334,11 @@ for scalar in scalars:
             # 1-D
             basic,
             # 2-D C-contiguous
-            basic.reshape((3, 5)),
+            basic.reshape((30, 50)),
             # 2-D F-contiguous
-            basic.reshape((3, 5)).T,
+            basic.reshape((30, 50)).T,
             # 2-D non-contiguous
-            basic.reshape((3, 5))[::-1, ::2],
+            basic.reshape((30, 50))[::-1, ::2],
         ])
 
 # More complicated record arrays.
@@ -410,11 +410,34 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
 ]
 
+#BytesIO that returns fewer bytes than requested
+class BytesIORandomSize(BytesIO):
+    def read(self, size=None):
+        from random import randint
+        size = randint(min(512,size), size)
+        data =  super(BytesIORandomSize, self).read(size)
+        assert len(data) <= size
+        return data
 
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+def roundtrip_randsize(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    f2 = BytesIORandomSize(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+def roundtrip_truncated(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    #BytesIO is one byte short
+    f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
 
@@ -427,6 +450,16 @@ def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
+
+def test_roundtrip_randsize():
+    for arr in basic_arrays[2:] + record_arrays:
+        arr2 = roundtrip_randsize(arr)
+        yield assert_array_equal, arr, arr2
+
+def test_roundtrip_truncated():
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            assert_raises(ValueError, roundtrip_truncated, arr)
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027

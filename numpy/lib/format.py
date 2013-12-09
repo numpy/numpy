@@ -481,6 +481,10 @@ def read_array(fp):
             while i < count: 
                 read_count = min(max_read_count, count - i)
                 data = extra_data + fp.read(int(read_count * dtype.itemsize))
+                if len(data) == len(extra_data):
+                    #Unable to read sufficient data from fp
+                    msg = "EOF: expected %d entries, got %d entries" % (count, i)
+                    raise ValueError(msg)
                 actual_count = len(data) // dtype.itemsize
                 extra_data = data[actual_count*dtype.itemsize:] 
                 array[i:i+actual_count] = numpy.frombuffer(data, dtype=dtype,
