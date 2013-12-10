@@ -486,10 +486,11 @@ def read_array(fp):
                     msg = "EOF: expected %d entries, got %d entries" % (count, i)
                     raise ValueError(msg)
                 actual_count = len(data) // dtype.itemsize
-                extra_data = data[actual_count*dtype.itemsize:] 
-                array[i:i+actual_count] = numpy.frombuffer(data, dtype=dtype,
-                                                         count=actual_count)
-                i += actual_count
+                if actual_count > 0:
+                    array[i:i + actual_count] = \
+                        numpy.frombuffer(data, dtype=dtype, count=actual_count)
+                    i += actual_count
+                extra_data = data[actual_count * dtype.itemsize:]
 
         if fortran_order:
             array.shape = shape[::-1]

@@ -411,12 +411,16 @@ record_arrays = [
 ]
 
 
-#BytesIO that returns fewer bytes than requested
-class BytesIORandomSize(BytesIO):
+#BytesIO that reads a single byte at a time
+class BytesIOSingleByte(BytesIO):
     def read(self, size=None):
-        from random import randint
-        size = randint(min(512, size), size)
-        return super(BytesIORandomSize, self).read(size)
+        #Return first 512 bytes normally, otherwise checking magic bytes
+        #and reading header fails
+        if self.tell() > 512:
+            size = 1
+        else:
+            size = min(size, 512)
+        return super(BytesIOSingleByte, self).read(size)
 
 
 def roundtrip(arr):
@@ -427,10 +431,10 @@ def roundtrip(arr):
     return arr2
 
 
-def roundtrip_randsize(arr):
+def roundtrip_onebyte(arr):
     f = BytesIO()
     format.write_array(f, arr)
-    f2 = BytesIORandomSize(f.getvalue())
+    f2 = BytesIOSingleByte(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
 
@@ -454,10 +458,11 @@ def test_roundtrip():
         yield assert_array_equal, arr, arr2
 
 
-def test_roundtrip_randsize():
-    for arr in basic_arrays[2:] + record_arrays:
-        arr2 = roundtrip_randsize(arr)
-        yield assert_array_equal, arr, arr2
+def test_roundtrip_onebyte():
+    for arr in basic_arrays + record_arrays:
+        if arr.dtype != object:
+            arr2 = roundtrip_onebyte(arr)
+            yield assert_array_equal, arr, arr2
 
 
 def test_roundtrip_truncated():
