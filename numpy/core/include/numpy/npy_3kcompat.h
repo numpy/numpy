@@ -146,12 +146,13 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
  * Get a FILE* handle to the file represented by the Python object
  */
 static NPY_INLINE FILE*
-npy_PyFile_Dup(PyObject *file, char *mode)
+npy_PyFile_Dup(PyObject *file, char *mode, Py_ssize_t *orig_pos)
 {
     int fd, fd2;
     PyObject *ret, *os;
     Py_ssize_t pos;
     FILE *handle;
+
     /* Flush first to ensure things end up in the file in the correct order */
     ret = PyObject_CallMethod(file, "flush", "");
     if (ret == NULL) {
@@ -162,6 +163,9 @@ npy_PyFile_Dup(PyObject *file, char *mode)
     if (fd == -1) {
         return NULL;
     }
+
+    /* The handle needs to be dup'd because we have to call fclose
+       at the end */
     os = PyImport_ImportModule("os");
     if (os == NULL) {
         return NULL;
@@ -173,6 +177,8 @@ npy_PyFile_Dup(PyObject *file, char *mode)
     }
     fd2 = PyNumber_AsSsize_t(ret, NULL);
     Py_DECREF(ret);
+
+    /* Convert to FILE* handle */
 #ifdef _WIN32
     handle = _fdopen(fd2, mode);
 #else
@@ -182,6 +188,11 @@ npy_PyFile_Dup(PyObject *file, char *mode)
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object failed");
     }
+
+    /* Record the original raw file handle position */
+    *orig_pos = npy_ftell(handle);
+
+    /* Seek raw handle to the Python-side position */
     ret = PyObject_CallMethod(file, "tell", "");
     if (ret == NULL) {
         fclose(handle);
@@ -201,13 +212,22 @@ npy_PyFile_Dup(PyObject *file, char *mode)
  * Close the dup-ed file handle, and seek the Python one to the current position
  */
 static NPY_INLINE int
-npy_PyFile_DupClose(PyObject *file, FILE* handle)
+npy_PyFile_DupClose(PyObject *file, FILE* handle, Py_ssize_t orig_pos)
 {
     PyObject *ret;
     Py_ssize_t position;
+
     position = npy_ftell(handle);
+
+    /* Restore original file handle position, in order to not confuse
+       Python-side data structures */
+    npy_fseek(handle, orig_pos, SEEK_SET);
+
+    /* Flush before closing to sync the raw file handle position */
+    fflush(handle);
     fclose(handle);
 
+    /* Seek Python-side handle to the raw handle position */
     ret = PyObject_CallMethod(file, "seek", NPY_SSIZE_T_PYFMT "i", position, 0);
     if (ret == NULL) {
         return -1;
@@ -230,8 +250,8 @@ npy_PyFile_Check(PyObject *file)
 
 #else
 
-#define npy_PyFile_Dup(file, mode) PyFile_AsFile(file)
-#define npy_PyFile_DupClose(file, handle) (0)
+#define npy_PyFile_Dup(file, mode, orig_pos_p) PyFile_AsFile(file)
+#define npy_PyFile_DupClose(file, handle, orig_pos) (0)
 #define npy_PyFile_Check PyFile_Check
 
 #endif
