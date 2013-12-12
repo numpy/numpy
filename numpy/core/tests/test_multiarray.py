@@ -2310,6 +2310,21 @@ class TestIO(object):
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
+    def test_file_position_after_fromfile(self):
+        # Issue 4118
+        f = open(self.filename, 'wb')
+        f.seek(26303)
+        f.write(b'\0')
+        f.close()
+        
+        f = open(self.filename, 'rb')
+        f.read(2)
+        data = fromfile(f, count=1)
+        pos = f.tell()
+        f.close()
+        assert_equal(pos, 10)
+        os.unlink(self.filename)
+
     def _check_from(self, s, value, **kw):
         y = np.fromstring(asbytes(s), **kw)
         assert_array_equal(y, value)
