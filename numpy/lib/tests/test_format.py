@@ -325,7 +325,7 @@ basic_arrays = []
 for scalar in scalars:
     for endian in '<>':
         dtype = np.dtype(scalar).newbyteorder(endian)
-        basic = np.arange(15).astype(dtype)
+        basic = np.arange(1500).astype(dtype)
         basic_arrays.extend([
             # Empty
             np.array([], dtype=dtype),
@@ -334,11 +334,11 @@ for scalar in scalars:
             # 1-D
             basic,
             # 2-D C-contiguous
-            basic.reshape((3, 5)),
+            basic.reshape((30, 50)),
             # 2-D F-contiguous
-            basic.reshape((3, 5)).T,
+            basic.reshape((30, 50)).T,
             # 2-D non-contiguous
-            basic.reshape((3, 5))[::-1, ::2],
+            basic.reshape((30, 50))[::-1, ::2],
         ])
 
 # More complicated record arrays.
@@ -411,10 +411,35 @@ record_arrays = [
 ]
 
 
+#BytesIO that reads a random number of bytes at a time
+class BytesIOSRandomSize(BytesIO):
+    def read(self, size=None):
+        import random
+        size = random.randint(1, size)
+        return super(BytesIOSRandomSize, self).read(size)
+
+
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+
+def roundtrip_randsize(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    f2 = BytesIOSRandomSize(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+
+def roundtrip_truncated(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    #BytesIO is one byte short
+    f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
 
@@ -428,11 +453,26 @@ def test_roundtrip():
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
 
+
+def test_roundtrip_randsize():
+    for arr in basic_arrays + record_arrays:
+        if arr.dtype != object:
+            arr2 = roundtrip_randsize(arr)
+            yield assert_array_equal, arr, arr2
+
+
+def test_roundtrip_truncated():
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            yield assert_raises, ValueError, roundtrip_truncated, arr
+
+
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
     long_str_arr = np.ones(1, dtype=np.dtype((str, format.BUFFER_SIZE + 1)))
     long_str_arr2 = roundtrip(long_str_arr)
     assert_array_equal(long_str_arr, long_str_arr2)
+
 
 @dec.slow
 def test_memmap_roundtrip():
@@ -471,6 +511,14 @@ def test_memmap_roundtrip():
             ma = format.open_memmap(nfn, mode='r')
             #yield assert_array_equal, ma, arr
             del ma
+
+
+def test_compressed_roundtrip():
+    arr = np.random.rand(200, 200)
+    npz_file = os.path.join(tempdir, 'compressed.npz')
+    np.savez_compressed(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
 
 
 def test_write_version_1_0():
