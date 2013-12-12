@@ -517,6 +517,14 @@ def test_memmap_roundtrip():
             del ma
 
 
+def test_compressed_roundtrip():
+    arr = np.random.rand(200, 200)
+    npz_file = os.path.join(tempdir, 'compressed.npz')
+    np.savez_compressed(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
 def test_write_version_1_0():
     f = BytesIO()
     arr = np.arange(1)
