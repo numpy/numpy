@@ -268,6 +268,16 @@ class TestAssignment(TestCase):
             a[...] = b
         assert_raises(ValueError, assign, a, np.arange(12).reshape(2, 2, 3))
 
+    def test_assignment_errors(self):
+        # Address issue #2276
+        class C:
+            pass
+        a = np.zeros(1)
+        def assign(v):
+            a[0] = v
+        assert_raises((AttributeError, TypeError), assign, C())
+        assert_raises(ValueError, assign, [1])
+
 class TestDtypedescr(TestCase):
     def test_construction(self):
         d1 = dtype('i4')
