@@ -2691,7 +2691,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
         else {
             mit->outer = NpyIter_MultiNew(nops, index_arrays, outer_flags,
-                             NPY_CORDER, NPY_UNSAFE_CASTING, op_flags, dtypes);
+                             NPY_KEEPORDER, NPY_UNSAFE_CASTING, op_flags, dtypes);
         }
 
     }

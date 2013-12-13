@@ -236,6 +236,18 @@ class TestIndexing(TestCase):
         assert_((a == 1).all())
 
 
+    def test_memory_order(self):
+        # These is not necessary to preserve. Memory layouts for
+        # more complex indices are not as simple.
+        a = np.arange(10)
+        b = np.arange(10).reshape(5,2).T
+        assert_(a[b].flags.f_contiguous)
+
+        # Takes a different implementation branch:
+        a = a.reshape(-1, 1)
+        assert_(a[b, 0].flags.f_contiguous)
+
+
 class TestBroadcastedAssignments(TestCase):
     def assign(self, a, ind, val):
         a[ind] = val
