@@ -1680,6 +1680,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     for (i = 0; i < n; i++) {
         PyObject *obj;
         obj = PySequence_GetItem(sort_keys, i);
+        if (obj == NULL) {
+            goto fail;
+        }
         mps[i] = (PyArrayObject *)PyArray_FROM_O(obj);
         Py_DECREF(obj);
         if (mps[i] == NULL) {
