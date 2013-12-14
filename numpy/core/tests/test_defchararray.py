@@ -315,8 +315,8 @@ class TestMethods(TestCase):
 
     def test_decode(self):
         if sys.version_info[0] >= 3:
-            A = np.char.array([asbytes('\\u03a3')])
-            assert_(A.decode('unicode-escape')[0] == '\u03a3')
+            A = np.char.array([asbytes(r'\u03a3')])
+            assert_(A.decode('unicode-escape')[0] == u'\u03a3')
         else:
             A = np.char.array(['736563726574206d657373616765'])
             assert_(A.decode('hex_codec')[0] == 'secret message')
