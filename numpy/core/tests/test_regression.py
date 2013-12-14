@@ -386,6 +386,17 @@ class TestRegression(TestCase):
         v = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         assert_equal(np.lexsort(v), 0)
 
+    def test_lexsort_invalid_sequence(self):
+        # Issue gh-4123
+        class BuggySequence(object):
+            def __len__(self):
+                return 4
+            def __getitem__(self, key):
+                raise KeyError
+
+        assert_raises(KeyError, np.lexsort, BuggySequence())
+
+
     def test_pickle_dtype(self,level=rlevel):
         """Ticket #251"""
         pickle.dumps(np.float)
