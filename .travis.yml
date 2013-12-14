@@ -16,6 +16,8 @@ matrix:
       env: NPY_RELAXED_STRIDES_CHECKING=1
     - python: 3.3
       env: NPY_RELAXED_STRIDES_CHECKING=1
+    - python: 2.7
+      env: USE_BENTO=1
 before_install:
   - uname -a
   - free -m
@@ -39,7 +41,7 @@ install:
   # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
-  - pip install .
+  - if [ "${USE_BENTO}" == "1" ]; then source .bento_travisci.sh; else pip install .; fi
 script:
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
@@ -50,7 +52,3 @@ script:
   - python ../tools/test-installed-numpy.py --mode=full
   # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
   # - coverage report --rcfile=../.coveragerc --show-missing
-notifications:
-  # Perhaps we should have status emails sent to the mailing list, but
-  # let's wait to see what people think before turning that on.
-  email: false

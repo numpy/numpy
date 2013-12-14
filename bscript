@@ -105,7 +105,5 @@ def c_template(self, node):
     outs.append(node.change_ext(""))
 
     tsk = self.create_task('CTemplateTask', node, outs)
-    if "c" in self.features:
+    if "c" in self.features and not node.name[-6:] == (".h.src"):
         self.source.append(outs[0])
-
-
