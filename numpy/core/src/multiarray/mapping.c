@@ -121,11 +121,8 @@ array_item_asarray(PyArrayObject *self, npy_intp i)
 
 /* Get array item at given index */
 NPY_NO_EXPORT PyObject *
-array_item(PyArrayObject *self, Py_ssize_t _i)
+array_item(PyArrayObject *self, Py_ssize_t i)
 {
-    /* Workaround Python 2.4: Py_ssize_t not the same as npyint_p */
-    npy_intp i = _i;
-
     if (PyArray_NDIM(self) == 1) {
         return array_item_asscalar(self, (npy_intp) i);
     }
@@ -273,11 +270,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
             && (PySequence_Check(index))) {
         /*
          * Sequences < NPY_MAXDIMS with any slice objects
-         * or newaxis, or Ellipsis is considered standard
-         * as long as there are also no Arrays and or additional
-         * sequences embedded.
-         *
-         * This check is historically as is.
+         * or newaxis, Ellipsis or other arrays or sequences
+         * embedded, are considered equivalent to an indexing
+         * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
          */
 
         if (PyTuple_Check(index)) {
@@ -351,7 +346,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
             obj = PyTuple_GET_ITEM(index, get_idx++);
         }
         else {
-            get_idx += 1; /* only one loop */
+            /* only one loop */
+            get_idx += 1;
         }
 
         /**** Try the cascade of possible indices ****/
@@ -392,8 +388,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].value = 0;
 
             ellipsis_pos = curr_idx;
-            used_ndim += 0; /* We don't know yet */
+            /* the used and new ndim will be found later */
             used_ndim += 0;
+            new_ndim += 0;
             curr_idx += 1;
             continue;
         }
@@ -513,9 +510,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * Special case to allow 0-d boolean indexing with
              * scalars. Should be removed after boolean-array
              * like as integer-array like deprecation.
-             * (does not cover ufunc.at, but that should not matter...)
-             * Since 0-d arrays (but 0-d booleans) always error out, we
-             * do not need to bother about casting to int in that case...
+             * (does not cover ufunc.at, because it does not use the
+             * boolean special case, but that should not matter...)
+             * Since all but strictly boolean indices are invalid,
+             * there is no need for any further conversion tries.
              */
             else if (PyArray_NDIM(self) == 0) {
                 arr = tmp_arr;
@@ -751,7 +749,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     }
 
     /*
-     * Compare dimension of the index to the real dimension, this is
+     * Compare dimension of the index to the real ndim. this is
      * to find the ellipsis value or append an ellipsis if necessary.
      */
     if (used_ndim < PyArray_NDIM(self)) {
@@ -819,7 +817,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         if (new_ndim + fancy_ndim > NPY_MAXDIMS) {
             PyErr_Format(PyExc_IndexError,
                          "number of dimensions must be within [0, %d], "
-                         "indexed array has %d",
+                         "indexing result would have %d",
                          NPY_MAXDIMS, (new_ndim + fancy_ndim));
             goto failed_building_indices;
         }
@@ -872,6 +870,8 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * For any index, get a view of the subspace into the original
  * array. If there are no fancy indices, this is the result of
  * the indexing operation.
+ * Ensure_array allows to fetch a safe subspace view for advanced
+ * indexing.
  */
 static int
 get_view_from_index(PyArrayObject *self, PyArrayObject **view,
@@ -1411,6 +1411,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
      * second we need to create a (possibly invalid) view for the
      * subspace to the fancy index. This procedure is identical.
      */
+
     else if (index_type & (HAS_SLICE | HAS_NEWAXIS |
                            HAS_ELLIPSIS | HAS_INTEGER)) {
         if (get_view_from_index(self, &view, indices, index_num,
@@ -1678,8 +1679,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
      * WARNING: There is a huge special case here. If this is not a
      *          base class array, we have to get the view through its
      *          very own index machinery.
-     *          I find this a bit weird (why not use __getitem__).
-     *          This is/can only be done if the index is not fancy.
+     *          Many subclasses should probably call __setitem__
+     *          with a base class ndarray view to avoid this.
      */
     else if (!(index_type & (HAS_FANCY | HAS_SCALAR_ARRAY))
                 && !PyArray_CheckExact(self)) {
@@ -1779,10 +1780,10 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         }
     }
 
-    /* fancy indexing has to be used. And view is the subspace. */
-
     /*
-     * NOTE: The NPY_ITER_READWRITE is necessary for automatic
+     * NOTE: If tmp_arr was not allocated yet, mit should
+     *       handle the allocation.
+     *       The NPY_ITER_READWRITE is necessary for automatic
      *       allocation. Readwrite would not allow broadcasting
      *       correctly, but such an operand always has the full
      *       size anyway.
@@ -2183,7 +2184,8 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
         else if (indices[i].type == HAS_0D_BOOL) {
             mit->fancy_strides[j] = 0;
             mit->fancy_dims[j] = 1;
-            mit->iteraxes[j++] = -1; /* Does not exist */
+            /* Does not exist */
+            mit->iteraxes[j++] = -1;
         }
 
         /* advance curr_dim for non-fancy indices */
@@ -2255,8 +2257,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NpyIter_IterNextFunc *op_iternext;
     npy_intp outer_dim, indval;
     int outer_axis;
-    npy_intp itersize;
-    npy_intp *iterstride;
+    npy_intp itersize, iterstride;
     char **iterptr;
     PyArray_Descr *intp_type;
     int i;
@@ -2289,7 +2290,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             while (itersize--) {
                 indval = *((npy_intp*)data);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis) < 0 ) {
+                                           outer_dim, outer_axis) < 0) {
                     return -1;
                 }
                 data += stride;
@@ -2317,18 +2318,19 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
         }
 
         iterptr = NpyIter_GetDataPtrArray(op_iter);
-        iterstride = NpyIter_GetInnerStrideArray(op_iter);
+        iterstride = NpyIter_GetInnerStrideArray(op_iter)[0];
         do {
             itersize = *NpyIter_GetInnerLoopSizePtr(op_iter);
             while (itersize--) {
                 indval = *((npy_intp*)*iterptr);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis) < 0 ) {
+                                           outer_dim, outer_axis) < 0) {
 
+                    Py_DECREF(intp_type);
                     NpyIter_Deallocate(op_iter);
                     return -1;
                 }
-                *iterptr += *iterstride;
+                *iterptr += iterstride;
             }
         } while (op_iternext(op_iter));
 
@@ -2392,7 +2394,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     int single_op_axis[NPY_MAXDIMS];
     int *op_axes[NPY_MAXDIMS] = {NULL};
-    int i, j, dummy_array=0;
+    int i, j, dummy_array = 0;
     int nops;
     int uses_subspace;
 
@@ -2409,7 +2411,13 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->array = arr;
     Py_XINCREF(subspace);
     mit->subspace = subspace;
-    /* Whether subspace iteration is being used or not */
+
+    /*
+     * The subspace, the part of the array which is not indexed by
+     * arrays, needs to be iterated when the size of the subspace
+     * is larger than 1. If it is one, it has only an effect on the
+     * result shape. (Optimizes for example np.newaxis usage)
+     */
     if ((subspace == NULL) || PyArray_SIZE(subspace) == 1) {
         uses_subspace = 0;
     }
@@ -2426,7 +2434,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /*
-     * Prepare the indices for the outer iterator.
+     * Set iteration information of the indexing arrays.
      */
     for (i=0; i < index_num; i++) {
         if (indices[i].type & HAS_FANCY) {
@@ -2449,6 +2457,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
         /* signal necessity to decref... */
         dummy_array = 1;
+
         index_arrays[0] = (PyArrayObject *)PyArray_Zeros(0, NULL,
                                         PyArray_DescrFromType(NPY_INTP), 0);
         if (index_arrays[0] == NULL) {
@@ -2463,24 +2472,28 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /*
-     * Now there are three general cases when extra_op is used:
+     * Now there are two general cases how extra_op is used:
      *   1. No subspace iteration is necessary, so the extra_op can
      *      be included into the index iterator (it will be buffered)
      *   2. Subspace iteration is necessary, so the extra op is iterated
      *      independendly, and the iteration order is fixed at C (could
      *      also use Fortran order if the array is Fortran order).
      *      In this case the subspace iterator is not buffered.
-     *   3. Subspace iteration is necessary and an extra_op was given.
-     *      In this case it may need transposing, etc.
+     *
+     * If subspace iteration is necessary and an extra_op was given,
+     * it may also be necessary to transpose the extra_op (or signal
+     * the transposing to the advanced iterator).
      */
 
-    /*
-     * If we have an extra_op given, need to prepare it.
-     *   1. Subclasses might mess with the shape, so need a baseclass
-     *   2. Need to make sure the shape is compatible
-     *   3. May need to remove leading 1s and transpose dimensions.
-     */
     if (extra_op != NULL) {
+        /*
+         * If we have an extra_op given, need to prepare it.
+         *   1. Subclasses might mess with the shape, so need a baseclass
+         *   2. Need to make sure the shape is compatible
+         *   3. May need to remove leading 1s and transpose dimensions.
+         *      Normal assignments allows broadcasting away leading 1s, but
+         *      the transposing code does not like this.
+         */
         if (!PyArray_CheckExact(extra_op)) {
             extra_op = (PyArrayObject *)PyArray_View(extra_op, NULL,
                                                      &PyArray_Type);
@@ -2497,7 +2510,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
              * Usual assignments allows removal of leading one dimensions.
              * (or equivalently adding of one dimensions to the array being
              * assigned to). To implement this, reshape the array.
-             * This should maybe be done differently, or even not be allowed.
              */
             PyArrayObject *tmp_arr;
             PyArray_Dims permute;
@@ -2514,7 +2526,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
 
         /*
-         * If dimensions need to be prepended (and no swapaxis is needed,
+         * If dimensions need to be prepended (and no swapaxis is needed),
          * use op_axes after extra_op is allocated for sure.
          */
         if (mit->consec) {
@@ -2546,6 +2558,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /*
      * If subspace is not NULL, NpyIter cannot allocate extra_op for us.
+     * This is a bit of a kludge. A dummy iterator is created to find
+     * the correct output shape and stride permutation.
+     * TODO: This can at least partially be replaced, since the shape
+     *       is found for broadcasting errors.
      */
     else if (extra_op_flags && (subspace != NULL)) {
         npy_uint32 tmp_op_flags[NPY_MAXDIMS];
@@ -2630,18 +2646,14 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             single_op_axis[j] = -1;
         }
         for (i=0; i < PyArray_NDIM(extra_op); i++) {
-            /* (fills subspace too, but it is not unused) */
+            /* (fills subspace dimensions too, but they are not unused) */
             single_op_axis[j++] = i;
         }
     }
 
     /*
-     * TODO: Could do a no-buffer micro optimization. NpyIter is
-     *       relatively slow. Saves up to ~20% for tiny arrays...
-     */
-    /*
-     * NOTE: If for some reason you wish to use REDUCE_OK, be careful
-     *       and fix the error message replacement at the end.
+     * NOTE: If for some reason someone wishes to use REDUCE_OK, be
+     *       careful and fix the error message replacement at the end.
      */
     outer_flags = NPY_ITER_ZEROSIZE_OK |
                   NPY_ITER_REFS_OK |
@@ -2651,8 +2663,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /*
      * For a single 1-d operand, guarantee itertion order
-     * (scipy used this), note subspace may be True (otherwise as of
-     * writing this, NpyIter does not negate the external loop)
+     * (scipy used this). Note that subspace may be used.
      */
     if ((mit->numiter == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
         outer_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
@@ -2731,7 +2742,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
     }
 
-    /* Get the allocated extra_op (if it was allocated) */
+    /* Get the allocated extra_op */
     if (extra_op_flags) {
         if (extra_op == NULL) {
             mit->extra_op = NpyIter_GetOperandArray(mit->outer)[mit->numiter];
@@ -2798,7 +2809,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     /*
      * Now just need to create the correct subspace iterator.
      */
-    /* TODO: Might allow user to set (but not needed yet) */
     index_arrays[0] = subspace;
     dtypes[0] = NULL;
     op_flags[0] = subspace_flags;
@@ -3002,7 +3012,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 }
 
 
-
 #undef HAS_INTEGER
 #undef HAS_NEWAXIS
 #undef HAS_SLICE
@@ -3014,6 +3023,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 
 #undef SET_MIT_DATAPTR_CHECK_INDEX
 #undef SET_MIT_DATAPTR_0_NUMITER_CHECK_INDEX
+
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
@@ -3042,9 +3052,9 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * This was the orginal intention, but currently that does not work.
  * Do not expose the MapIter_Type to Python.
  *
- * It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a);
- * mapiter is equivalent to a[indexobj].flat but the latter gets to use
- * slice syntax. (indexobj has been removed from it)
+ * The original mapiter(indexobj); mapiter.bind(a); idea is now fully
+ * removed. This is not very useful anyway, since mapiter is equivalent
+ * to a[indexobj].flat but the latter gets to use slice syntax.
  */
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
 #if defined(NPY_PY3K)
@@ -3107,5 +3117,3 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* tp_version_tag */
 #endif
 };
-
-/** END of Subscript Iterator **/

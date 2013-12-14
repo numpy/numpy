@@ -237,7 +237,7 @@ class TestIndexing(TestCase):
 
 
     def test_memory_order(self):
-        # These is not necessary to preserve. Memory layouts for
+        # This is not necessary to preserve. Memory layouts for
         # more complex indices are not as simple.
         a = np.arange(10)
         b = np.arange(10).reshape(5,2).T
@@ -246,6 +246,19 @@ class TestIndexing(TestCase):
         # Takes a different implementation branch:
         a = a.reshape(-1, 1)
         assert_(a[b, 0].flags.f_contiguous)
+
+
+    def test_small_regressions(self):
+        # Reference count of intp for index checks
+        a = np.array([0])
+        refcount = sys.getrefcount(np.dtype(np.intp))
+        # item setting always checks indices in seperate function:
+        a[np.array([1], dtype=np.intp)] = 1
+        a[np.array([1], dtype=np.uint8)] = 1
+        a[np.array([0], dtype=np.intp)] = 1
+        a[np.array([0], dtype=np.uint8)] = 1
+
+        assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
 
 class TestBroadcastedAssignments(TestCase):
