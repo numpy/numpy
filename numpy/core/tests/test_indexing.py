@@ -253,10 +253,12 @@ class TestIndexing(TestCase):
         a = np.array([0])
         refcount = sys.getrefcount(np.dtype(np.intp))
         # item setting always checks indices in seperate function:
-        a[np.array([1], dtype=np.intp)] = 1
-        a[np.array([1], dtype=np.uint8)] = 1
         a[np.array([0], dtype=np.intp)] = 1
         a[np.array([0], dtype=np.uint8)] = 1
+        assert_raises(IndexError, a.__setitem__,
+                      np.array([1], dtype=np.intp), 1)
+        assert_raises(IndexError, a.__setitem__,
+                      np.array([1], dtype=np.uint8), 1)
 
         assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
