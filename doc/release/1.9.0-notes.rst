@@ -100,11 +100,54 @@ The `out` argument to `np.argmin` and `np.argmax` and their equivalent
 C-API functions is now checked to match the desired output shape exactly.
 If the check fails a `ValueError` instead of `TypeError` is raised.
 
+
 Einsum
 ~~~~~~
 Remove unnecessary broadcasting notation restrictions.
 np.einsum('ijk,j->ijk', A, B) can also be written as
 np.einsum('ij...,j->ij...', A, B) (ellipsis is no longer required on 'j')
+
+
+Indexing
+~~~~~~~~
+
+The NumPy indexing has seen a complete rewrite in this version. This makes
+most advanced indexing operations much faster and should have no effect
+to normal usage.
+However some subtle changes and deprecations were introduced in advanced
+indexing operations:
+
+  * Boolean indexing into scalar arrays will always return a new 1-d array.
+    This means that ``array(1)[array(True)]`` gives ``array([1])`` and
+    not the original array.
+  * Advanced indexing into one dimensional arrays used to have (undocumented)
+    special handling regarding repeating the value array in assignments
+    when the shapes did not match.
+    Code using this will raise an error now. For compatibility you can use
+    ``arr.flat[index] = values``, which uses the old code branch.
+  * The iteration order over advanced indexes used to be always C-order.
+    In NumPy 1.9. the iteration order adapts to the input and is not
+    guaranteed (with the exception of a *single* advanced index which is
+    never reversed for compatibility reasons). This means that the result is
+    undefined if multiple values are assigned to the same element.
+    An example for this is ``arr[[0, 0], [1, 1]] = [1, 2]``, which may
+    set ``arr[0, 1]`` to either 1 or 2 depending the memory order of the
+    indexing and values arrays.
+  * Equivalent to the iteration order, the memory layout of the advanced
+    indexing result is adapted for faster indexing and cannot be predicted.
+  * All indexing operations return a view or a copy. No indexing operation
+    will return the original array object.
+  * In the future Boolean array-likes (such as lists of python bools)
+    will always be treated as boolean indexes and boolean scalars (including
+    python `True`) will be a legal *boolean* index. At this time, this is
+    already the case for scalar arrays to allow the general
+    ``positive = a[a > 0]`` to work when ``a`` is zero dimensional.
+  * All non-integer array-likes are deprecated, object arrays of custom
+    integer like objects may have to be cast explicitly.
+  * The error reporting for advanced indexing is more informative, however
+    the error type has changed in some cases.
+  * Indexing with more then one ellipsis (`...`) is deprecated.
+
 
 C-API
 ~~~~~
