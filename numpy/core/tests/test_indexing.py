@@ -305,11 +305,19 @@ class TestBroadcastedAssignments(TestCase):
 
 
     def test_index_is_larger(self):
-        # Simple case of fancy index broadcastin of the index.
+        # Simple case of fancy index broadcasting of the index.
         a = np.zeros((5, 5))
         a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
 
         assert_((a[:3, :3] == [2, 3, 4]).all())
+
+
+    def test_broadcast_subspace(self):
+        a = np.zeros((100, 100))
+        v = np.arange(100)[:,None]
+        b = np.arange(100)[::-1]
+        a[b] = v
+        assert_((a[::-1] == v).all())
 
 
 class TestSubclasses(TestCase):
@@ -362,7 +370,7 @@ class TestSubclasses(TestCase):
 
 class TestFancyIndexingEquivalence(TestCase):
     def test_object_assign(self):
-        # Check that the field and object special case using copyto is active
+        # Check that the field and object special case using copyto is active.
         # The right hand side cannot be converted to an array here.
         a = np.arange(5, dtype=object)
         b = a.copy()
