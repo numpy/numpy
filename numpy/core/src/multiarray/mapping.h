@@ -7,6 +7,25 @@ extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 #endif
 
+
+/*
+ * Struct into which indices are parsed.
+ * I.e. integer ones should only be parsed once, slices and arrays
+ * need to be validated later and for the ellipsis we need to find how
+ * many slices it represents.
+ */
+typedef struct {
+    /*
+     * Object of index: slice, array, or NULL. Owns a reference.
+     */
+    PyObject *object;
+    /* Value of an integer index or number of slices an Ellipsis is worth */
+    npy_intp value;
+    /* kind of index, see constants in mapping.c */
+    int type;
+} npy_index_info;
+
+
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
 
@@ -48,7 +67,7 @@ NPY_NO_EXPORT PyObject*
 PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    int ndim, int fancy_ndim,
                    PyArrayObject *arr, PyArrayObject *subspace,
-                   npy_uint32 subspace_iter_flags,npy_uint32 subspace_flags,
+                   npy_uint32 subspace_iter_flags, npy_uint32 subspace_flags,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype);
 #endif
