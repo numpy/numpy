@@ -3021,9 +3021,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 #undef HAS_SCALAR_ARRAY
 #undef HAS_0D_BOOL
 
-#undef SET_MIT_DATAPTR_CHECK_INDEX
-#undef SET_MIT_DATAPTR_0_NUMITER_CHECK_INDEX
-
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
