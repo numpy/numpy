@@ -1867,12 +1867,12 @@ Calculation
     effect that is obtained by passing in *axis* = :const:`None` in Python
     (treating the array as a 1-d array).
 
-.. cfunction:: PyObject* PyArray_ArgMax(PyArrayObject* self, int axis)
+.. cfunction:: PyObject* PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.argmax` (*self*, *axis*). Return the index of
     the largest element of *self* along *axis*.
 
-.. cfunction:: PyObject* PyArray_ArgMin(PyArrayObject* self, int axis)
+.. cfunction:: PyObject* PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.argmin` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
