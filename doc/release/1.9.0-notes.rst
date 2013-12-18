@@ -131,8 +131,7 @@ indexing operations:
     never reversed for compatibility reasons). This means that the result is
     undefined if multiple values are assigned to the same element.
     An example for this is ``arr[[0, 0], [1, 1]] = [1, 2]``, which may
-    set ``arr[0, 1]`` to either 1 or 2 depending on the memory order of the
-    indexing and value arrays.
+    set ``arr[0, 1]`` to either 1 or 2.
   * Equivalent to the iteration order, the memory layout of the advanced
     indexing result is adapted for faster indexing and cannot be predicted.
   * All indexing operations return a view or a copy. No indexing operation
@@ -145,7 +144,7 @@ indexing operations:
   * All non-integer array-likes are deprecated, object arrays of custom
     integer like objects may have to be cast explicitly.
   * The error reporting for advanced indexing is more informative, however
-    the error type has changed in some cases. (e.g. Broadcasting errors of
+    the error type has changed in some cases. (Broadcasting errors of
     indexing arrays are reported as `IndexError`)
   * Indexing with more then one ellipsis (`...`) is deprecated.
 
