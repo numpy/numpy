@@ -72,6 +72,13 @@ The performance of converting lists containing arrays to arrays using
 Changes
 =======
 
+Argmin and argmax out argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `out` argument to `np.argmin` and `np.argmax` and their equivalent
+C-API functions is now checked to match the desired output shape exactly.
+If the check fails a `ValueError` instead of `TypeError` is raised.
+
  
 C-API
 ~~~~~
