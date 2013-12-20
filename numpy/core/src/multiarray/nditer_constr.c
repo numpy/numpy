@@ -195,6 +195,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
                 PyObject_Malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
+    memset(iter, 0, NIT_SIZEOF_ITERATOR(itflags, ndim, nop));    
 
     NPY_IT_TIME_POINT(c_malloc);
 
