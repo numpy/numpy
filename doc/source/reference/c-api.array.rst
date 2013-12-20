@@ -1036,7 +1036,10 @@ Converting data types
     the casting rule *casting*. For simple types with :cdata:`NPY_SAFE_CASTING`,
     this is basically a wrapper around :cfunc:`PyArray_CanCastSafely`, but
     for flexible types such as strings or unicode, it produces results
-    taking into account their sizes.
+    taking into account their sizes. Integer and float types can only be cast
+    to a string or unicode type using :cdata:`NPY_SAFE_CASTING` if the string
+    or unicode type is big enough to hold the max value of the integer/float
+    type being cast from.
 
 .. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
@@ -1073,7 +1076,8 @@ Converting data types
 
     Finds the data type of smallest size and kind to which *type1* and
     *type2* may be safely converted. This function is symmetric and
-    associative.
+    associative. A string or unicode result will be the proper size for
+    storing the max value of the input types converted to a string or unicode.
 
 .. cfunction:: PyArray_Descr* PyArray_ResultType(npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, PyArray_Descr**dtypes)
 

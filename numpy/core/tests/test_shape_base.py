@@ -183,7 +183,7 @@ def test_concatenate_axis_None():
     assert_equal(r.size, a.size + len(b))
     assert_equal(r.dtype, a.dtype)
     r = np.concatenate((a, b, c), axis=None)
-    d = array(['0', '1', '2', '3',
+    d = array(['0.0', '1.0', '2.0', '3.0',
                '0', '1', '2', 'x'])
     assert_array_equal(r, d)
 

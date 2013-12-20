@@ -1598,6 +1598,14 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     out : bool
         True if cast can occur according to the casting rule.
 
+    Notes
+    -----
+    Starting in NumPy 1.9, can_cast function now returns False in 'safe'
+    casting mode for integer/float dtype and string dtype if the string dtype
+    length is not long enough to store the max integer/float value converted
+    to a string. Previously can_cast in 'safe' mode returned True for
+    integer/float dtype and a string dtype of any length.
+
     See also
     --------
     dtype, result_type
@@ -1618,7 +1626,7 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     >>> np.can_cast('i8', 'f4')
     False
     >>> np.can_cast('i4', 'S4')
-    True
+    False
 
     Casting scalars
 
@@ -1693,6 +1701,11 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     Notes
     -----
     .. versionadded:: 1.6.0
+    Starting in NumPy 1.9, promote_types function now returns a valid string
+    length when given an integer or float dtype as one argument and a string
+    dtype as another argument. Previously it always returned the input string
+    dtype, even if it wasn't long enough to store the max integer/float value
+    converted to a string.
 
     See Also
     --------
@@ -1709,10 +1722,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     >>> np.promote_types('>i8', '<c8')
     dtype('complex128')
 
-    >>> np.promote_types('i1', 'S8')
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: invalid type promotion
+    >>> np.promote_types('i4', 'S8')
+    dtype('S11')
 
     """)
 
@@ -3125,6 +3136,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         array are satisfied (see description for `copy` input paramter), `arr_t`
         is a new array of the same shape as the input array, with dtype, order
         given by `dtype`, `order`.
+
+    Notes
+    -----
+    Starting in NumPy 1.9, astype method now returns an error if the string
+    dtype to cast to is not long enough in 'safe' casting mode to hold the max
+    value of integer/float array that is being casted. Previously the casting
+    was allowed even if the result was truncated.
 
     Raises
     ------
