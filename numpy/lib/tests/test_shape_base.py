@@ -100,9 +100,12 @@ class TestArraySplit(TestCase):
 
     def test_integer_split_2D_rows(self):
         a = array([arange(10), arange(10)])
-        res = array_split(a, 3, axis=0)
+        res = assert_warns(FutureWarning, array_split, a, 3, axis=0)
+
+        # After removing the FutureWarning, the last should be zeros((0, 10))
         desired = [array([arange(10)]), array([arange(10)]), array([])]
         compare_results(res, desired)
+        assert_(a.dtype.type is res[-1].dtype.type)
 
     def test_integer_split_2D_cols(self):
         a = array([arange(10), arange(10)])
@@ -116,9 +119,12 @@ class TestArraySplit(TestCase):
         """ This will fail if we change default axis
         """
         a = array([arange(10), arange(10)])
-        res = array_split(a, 3)
+        res = assert_warns(FutureWarning, array_split, a, 3)
+
+        # After removing the FutureWarning, the last should be zeros((0, 10))
         desired = [array([arange(10)]), array([arange(10)]), array([])]
         compare_results(res, desired)
+        assert_(a.dtype.type is res[-1].dtype.type)
     #perhaps should check higher dimensions
 
     def test_index_split_simple(self):
