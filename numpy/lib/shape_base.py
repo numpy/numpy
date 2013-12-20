@@ -4,6 +4,8 @@ __all__ = ['column_stack', 'row_stack', 'dstack', 'array_split', 'split', 'hspli
            'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
            'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
 
+import warnings
+
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, zeros, newaxis, outer, \
      concatenate, isscalar, array, asanyarray
@@ -347,9 +349,9 @@ def dstack(tup):
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
         if len(_nx.shape(sub_arys[i])) == 0:
-            sub_arys[i] = _nx.array([])
+            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
-            sub_arys[i] = _nx.array([])
+            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
     return sub_arys
 
 def array_split(ary,indices_or_sections,axis = 0):
@@ -395,11 +397,15 @@ def array_split(ary,indices_or_sections,axis = 0):
         st = div_points[i]; end = div_points[i+1]
         sub_arys.append(_nx.swapaxes(sary[st:end], axis, 0))
 
-    # there is a weird issue with array slicing that allows
-    # 0x10 arrays and other such things. The following kludge is needed
-    # to get around this issue.
-    sub_arys = _replace_zero_by_x_arrays(sub_arys)
-    # end kludge.
+    # This "kludge" was introduced here to replace arrays shaped (0, 10)
+    # or similar with an array shaped (0,).
+    # There seems no need for this, so give a FutureWarning to remove later.
+    if sub_arys[-1].size == 0 and sub_arys[-1].ndim != 1:
+        warnings.warn("in the future np.array_split will retain the shape of "
+                      "arrays with a zero size, instead of replacing them by "
+                      "`array([])`, which always has a shape of (0,).",
+                      FutureWarning)
+        sub_arys = _replace_zero_by_x_arrays(sub_arys)
 
     return sub_arys
 
