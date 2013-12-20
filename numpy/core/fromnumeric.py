@@ -1740,9 +1740,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
         Elements to sum.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a sum is performed.
-        The default (`axis` = `None`) is perform a sum over all
-        the dimensions of the input array. `axis` may be negative, in
+        The default (`axis` = `None`) will sum all of the elements
+        of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
+        `axis` = 0 or 1 will sum over the elements of the
+        columns or rows of the input array.
 
         .. versionadded:: 1.7.0
 
@@ -2393,8 +2395,8 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
         Input data.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a product is performed.
-        The default (`axis` = `None`) is perform a product over all
-        the dimensions of the input array. `axis` may be negative, in
+        The default (`axis` = `None`) will calculate the product
+        of all the elements in the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
         .. versionadded:: 1.7.0
