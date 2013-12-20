@@ -2282,6 +2282,19 @@ class TestLexsort(TestCase):
 
         assert_array_equal(x[1][idx], np.sort(x[1]))
 
+    def test_datetime(self):
+        a = np.array([0,0,0], dtype='datetime64[D]')
+        b = np.array([2,1,0], dtype='datetime64[D]')
+        idx = np.lexsort((b, a))
+        expected_idx = np.array([2, 1, 0])
+        assert_array_equal(idx, expected_idx)
+
+        a = np.array([0,0,0], dtype='timedelta64[D]')
+        b = np.array([2,1,0], dtype='timedelta64[D]')
+        idx = np.lexsort((b, a))
+        expected_idx = np.array([2, 1, 0])
+        assert_array_equal(idx, expected_idx)
+
 
 class TestIO(object):
     """Test tofile, fromfile, tostring, and fromstring"""
