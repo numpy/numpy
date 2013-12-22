@@ -3125,11 +3125,14 @@ def add_newdoc(place, obj, doc):
 # Based on scitools meshgrid
 def meshgrid(*xi, **kwargs):
     """
-    Return coordinate matrices from two or more coordinate vectors.
+    Return coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
     one-dimensional coordinate arrays x1, x2,..., xn.
+    
+    .. versionchanged:: 1.9
+       1-D and 0-D cases are allowed.
 
     Parameters
     ----------
@@ -3178,6 +3181,8 @@ def meshgrid(*xi, **kwargs):
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
+    
+    In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
 
     See Also
     --------
@@ -3214,28 +3219,23 @@ def meshgrid(*xi, **kwargs):
     >>> h = plt.contourf(x,y,z)
 
     """
-    if len(xi) < 2:
-        raise ValueError(
-            'meshgrid() takes 2 or more arguments '
-            '(%d given)' % int(len(xi) > 0))
-
-    args = np.atleast_1d(*xi)
-    ndim = len(args)
+    ndim = len(xi)
 
     copy_ = kwargs.get('copy', True)
     sparse = kwargs.get('sparse', False)
     indexing = kwargs.get('indexing', 'xy')
+
     if not indexing in ['xy', 'ij']:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
-    output = [x.reshape(s0[:i] + (-1,) + s0[i + 1::])
-              for i, x in enumerate(args)]
+    output = [np.asanyarray(x).reshape(s0[:i] + (-1,) + s0[i + 1::])
+              for i, x in enumerate(xi)]
 
     shape = [x.size for x in output]
 
-    if indexing == 'xy':
+    if indexing == 'xy' and ndim > 1:
         # switch first and second axis
         output[0].shape = (1, -1) + (1,)*(ndim - 2)
         output[1].shape = (-1, 1) + (1,)*(ndim - 2)
