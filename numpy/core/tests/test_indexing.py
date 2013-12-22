@@ -22,6 +22,32 @@ class TestIndexing(TestCase):
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
 
+    def test_scalar_return_type(self):
+        # Full scalar indices should return scalars and object
+        # arrays should not call PyArray_Return on their items
+        class Zero(object):
+            # The most basic valid indexing
+            def __index__(self):
+                return 0
+        z = Zero()
+
+        a = np.zeros(())
+        assert_(isinstance(a[()], np.float_))
+        a = np.zeros(1)
+        assert_(isinstance(a[z], np.float_))
+        a = np.zeros((1, 1))
+        assert_(isinstance(a[z, np.array(0)], np.float_))
+
+        # And object arrays do not call it too often:
+        b = np.array(0)
+        a = np.array(0, dtype=object)
+        a[()] = b
+        assert_(isinstance(a[()], np.ndarray))
+        a = np.array([b, None])
+        assert_(isinstance(a[z], np.ndarray))
+        a = np.array([[b, None]])
+        assert_(isinstance(a[z, np.array(0)], np.ndarray))
+
     def test_empty_fancy_index(self):
         # Empty list index creates an empty array
         # with the same dtype (but with weird shape)
@@ -122,6 +148,15 @@ class TestIndexing(TestCase):
         assert_equal(a, [[0, 2, 0],
                          [4, 0, 6],
                          [0, 8, 0]])
+
+
+class TestFieldIndexing(TestCase):
+    def test_scalar_return_type(self):
+        # Field access on an array should return an array, even if it
+        # is 0-d.
+        a = np.zeros((), [('a','f8')])
+        assert_(isinstance(a['a'], np.ndarray))
+        assert_(isinstance(a[['a']], np.ndarray))
 
 
 class TestMultiIndexingAutomated(TestCase):
