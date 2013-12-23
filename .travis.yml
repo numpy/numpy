@@ -9,15 +9,7 @@ python:
 matrix:
   include:
     - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=0
-    - python: 3.3
-      env: NPY_SEPARATE_COMPILATION=0
-    - python: 2.7
-      env: NPY_RELAXED_STRIDES_CHECKING=1
-    - python: 3.3
-      env: NPY_RELAXED_STRIDES_CHECKING=1
-    - python: 2.7
-      env: USE_BENTO=1
+      env: USE_CHROOT=1
 before_install:
   - uname -a
   - free -m
@@ -45,6 +37,7 @@ install:
 script:
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
+  - if [ "${USE_CHROOT}" == "1" ]; then ./.travis.sh && exit 0; exit 1; fi
   - mkdir empty
   - cd empty
   - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
