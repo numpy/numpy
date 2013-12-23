@@ -1455,7 +1455,7 @@ NPY_NO_EXPORT void
         npy_intp n = dimensions[0];
 
         *iop1 @OP@= pairwise_sum_@TYPE@((@type@ *)args[1], n,
-                                        steps[1] / sizeof(@type@));
+                                        steps[1] / (npy_intp)sizeof(@type@));
 #else
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
@@ -1795,7 +1795,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         npy_intp n = dimensions[0];
 
         *iop1 @OP@= npy_float_to_half(pairwise_sum_HALF((npy_half *)args[1], n,
-                                                steps[1] / sizeof(npy_half)));
+                                       steps[1] / (npy_intp)sizeof(npy_half)));
 #else
         char *iop1 = args[0];
         float io1 = npy_half_to_float(*(npy_half *)iop1);
@@ -2199,7 +2199,7 @@ NPY_NO_EXPORT void
         @ftype@ rr, ri;
 
         pairwise_sum_@TYPE@(&rr, &ri, (@ftype@ *)args[1], n * 2,
-                            steps[1] / sizeof(@ftype@) / 2);
+                            steps[1] / (npy_intp)sizeof(@ftype@) / 2);
         *or @OP@= rr;
         *oi @OP@= ri;
         return;
