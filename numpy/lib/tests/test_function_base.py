@@ -926,7 +926,7 @@ class TestHistogram(TestCase):
 
         # Normalization
         h, b = histogram(a, range=[1, 9], normed=True)
-        assert_equal((h * diff(b)).sum(), 1)
+        assert_almost_equal((h * diff(b)).sum(), 1, decimal=15)
 
         # Weights
         w = np.arange(10) + .5
