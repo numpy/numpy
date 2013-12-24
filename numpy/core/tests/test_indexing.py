@@ -96,12 +96,11 @@ class TestIndexing(TestCase):
         #assert_equal(a[False], a[0])
 
         # Same with NumPy boolean scalar
-        # Before DEPRECATE:
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
-            assert_equal(a[np.array(True)], a[1])
-            assert_equal(a[np.array(False)], a[0])
-        # After DEPRECATE:
+        # Before DEPRECATE, this is an error (as always, but telling about
+        # future change):
+        assert_raises(IndexError, a.__getitem__, np.array(True))
+        assert_raises(IndexError, a.__getitem__, np.array(False))
+        # After DEPRECATE, this behaviour can be enabled:
         #assert_equal(a[np.array(True)], a[None])
         #assert_equal(a[np.array(False), a[None][0:0]])
 
@@ -248,6 +247,40 @@ class TestIndexing(TestCase):
         assert_(a[b, 0].flags.f_contiguous)
 
 
+    def test_scalar_return_type(self):
+        # Full scalar indices should return scalars and object
+        # arrays should not call PyArray_Return on their items
+        class Zero(object):
+            # The most basic valid indexing
+            def __index__(self):
+                return 0
+        z = Zero()
+
+        class ArrayLike(object):
+            # Simple array, should behave like the array
+            def __array__(self):
+                return np.array(0)
+
+        a = np.zeros(())
+        assert_(isinstance(a[()], np.float_))
+        a = np.zeros(1)
+        assert_(isinstance(a[z], np.float_))
+        a = np.zeros((1, 1))
+        assert_(isinstance(a[z, np.array(0)], np.float_))
+        assert_(isinstance(a[z, ArrayLike()], np.float_))
+
+        # And object arrays do not call it too often:
+        b = np.array(0)
+        a = np.array(0, dtype=object)
+        a[()] = b
+        assert_(isinstance(a[()], np.ndarray))
+        a = np.array([b, None])
+        assert_(isinstance(a[z], np.ndarray))
+        a = np.array([[b, None]])
+        assert_(isinstance(a[z, np.array(0)], np.ndarray))
+        assert_(isinstance(a[z, ArrayLike()], np.ndarray))
+
+
     def test_small_regressions(self):
         # Reference count of intp for index checks
         a = np.array([0])
@@ -261,6 +294,15 @@ class TestIndexing(TestCase):
                       np.array([1], dtype=np.uint8), 1)
 
         assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
+
+
+class TestFieldIndexing(TestCase):
+    def test_scalar_return_type(self):
+        # Field access on an array should return an array, even if it
+        # is 0-d.
+        a = np.zeros((), [('a','f8')])
+        assert_(isinstance(a['a'], np.ndarray))
+        assert_(isinstance(a[['a']], np.ndarray))
 
 
 class TestBroadcastedAssignments(TestCase):

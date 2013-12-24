@@ -141,6 +141,10 @@ indexing operations:
     python `True`) will be a legal *boolean* index. At this time, this is
     already the case for scalar arrays to allow the general
     ``positive = a[a > 0]`` to work when ``a`` is zero dimensional.
+  * In NumPy 1.8 it was possible to use `array(True)` and `array(False)`
+    equivalent to 1 and 0 if the result of the operation was a scalar.
+    This will raise an error in NumPy 1.9 and, as noted above, treated as a
+    boolean index in the future.
   * All non-integer array-likes are deprecated, object arrays of custom
     integer like objects may have to be cast explicitly.
   * The error reporting for advanced indexing is more informative, however

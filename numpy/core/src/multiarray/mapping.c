@@ -453,36 +453,13 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     continue;
                 }
             }
-            /*
-             * After `__index__` deprecation, this can be removed in favor
-             * of a simple PyArray_PyIntAsIntp try and except.
-             */
-            else if (PyArray_NDIM((PyArrayObject *)obj) == 0) {
-                 i = PyArray_PyIntAsIntp(obj);
-                 if ((i == -1) && PyErr_Occurred()) {
-                     PyErr_Clear();
-                 }
-                 else {
-                     index_type |= (HAS_INTEGER | HAS_SCALAR_ARRAY);
-                     indices[curr_idx].object = NULL;
-                     indices[curr_idx].value = i;
-                     indices[curr_idx].type = HAS_INTEGER;
-                     used_ndim += 1;
-                     new_ndim += 0;
-                     curr_idx += 1;
-                     continue;
-                 }
-            }
         }
 
         /*
          * At this point, we must have an index array (or array-like).
-         * It might still be a (purely) bool special case though.
-         * (Or complete nonsense...)
+         * It might still be a (purely) bool special case, a 0-d integer
+         * array (an array scalar) or something invalid.
          */
-        index_type |= HAS_FANCY;
-        indices[curr_idx].type = HAS_FANCY;
-        indices[curr_idx].object = NULL;
 
         if (!PyArray_Check(obj)) {
             PyArrayObject *tmp_arr;
@@ -607,7 +584,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
 
         /* Check if the array is valid and fill the information */
-        if PyArray_ISBOOL(arr) {
+        if (PyArray_ISBOOL(arr)) {
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
@@ -658,6 +635,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * False, we add a new axis, but this axis has 0 entries.
                  */
 
+                index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
@@ -702,6 +680,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             }
 
             /* Add the arrays from the nonzero result to the index */
+            index_type |= HAS_FANCY;
             for (i=0; i < n; i++) {
                 indices[curr_idx].type = HAS_FANCY;
                 indices[curr_idx].object = (PyObject *)nonzero_result[i];
@@ -719,6 +698,33 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /* Normal case of an integer array */
         else if PyArray_ISINTEGER(arr) {
+            if (PyArray_NDIM(arr) == 0) {
+                /*
+                 * A 0-d integer array is an array scalar and can
+                 * be dealt with the HAS_SCALAR_ARRAY flag.
+                 * We could handle 0-d arrays early on, but this makes
+                 * sure that array-likes or odder arrays are always
+                 * handled right.
+                 */
+                i = PyArray_PyIntAsIntp((PyObject *)arr);
+                Py_DECREF(arr);
+                if ((i == -1) && PyErr_Occurred()) {
+                    goto failed_building_indices;
+                }
+                else {
+                    index_type |= (HAS_INTEGER | HAS_SCALAR_ARRAY);
+                    indices[curr_idx].object = NULL;
+                    indices[curr_idx].value = i;
+                    indices[curr_idx].type = HAS_INTEGER;
+                    used_ndim += 1;
+                    new_ndim += 0;
+                    curr_idx += 1;
+                    continue;
+                }
+            }
+
+            index_type |= HAS_FANCY;
+            indices[curr_idx].type = HAS_FANCY;
             indices[curr_idx].object = (PyObject *)arr;
 
             used_ndim += 1;
