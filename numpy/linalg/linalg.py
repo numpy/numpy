@@ -2048,8 +2048,12 @@ def norm(x, ord=None, axis=None):
 
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
-        xr = x.ravel()
-        return sqrt(dot(xr, xr.conj()).real)
+        x = x.ravel(order='K')
+        if isComplexType(x.dtype.type):
+            sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+        else:
+            sqnorm = dot(x, x)
+        return sqrt(sqnorm)
 
     # Normalize the `axis` argument to a tuple.
     nd = x.ndim
