@@ -348,11 +348,7 @@ def run_main(comline_list):
     """Run f2py as if string.join(comline_list,' ') is used as a command line.
     In case of using -h flag, return None.
     """
-    if sys.version_info[0] >= 3:
-        import imp
-        imp.reload(crackfortran)
-    else:
-        reload(crackfortran)
+    crackfortran.reset_global_f2py_vars()
     f2pydir=os.path.dirname(os.path.abspath(cfuncs.__file__))
     fobjhsrc = os.path.join(f2pydir, 'src', 'fortranobject.h')
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
