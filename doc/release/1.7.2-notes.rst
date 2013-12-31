@@ -47,3 +47,8 @@ Issues fixed
 * gh-3971: f2py changed string.lowercase to string.ascii_lowercase for python3
 * gh-3480: numpy.random.binomial raised ValueError for n == 0
 * gh-3992: hypot(inf, 0) shouldn't raise a warning, hypot(inf, inf) wrong result
+* gh-4018: Segmentation fault dealing with very large arrays
+* gh-4094: fix NaT handling in _strided_to_strided_string_to_datetime
+* gh-4051: fix uninitialized use in _strided_to_strided_string_to_datetime
+* gh-4123: lexsort segfault
+* gh-4141: Fix a few issues that show up with python 3.4b1
