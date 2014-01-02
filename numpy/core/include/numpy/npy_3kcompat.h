@@ -247,7 +247,7 @@ npy_PyFile_DupClose(PyObject *file, FILE* handle, npy_off_t orig_pos)
     }
 
     /* Seek Python-side handle to the FILE* handle position */
-    ret = PyObject_CallMethod(file, "seek", NPY_SSIZE_T_PYFMT "i", position, 0);
+    ret = PyObject_CallMethod(file, "seek", NPY_OFF_T_PYFMT "i", position, 0);
     if (ret == NULL) {
         return -1;
     }
