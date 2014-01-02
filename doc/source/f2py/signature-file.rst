@@ -622,7 +622,7 @@ signature
          real*8 intent(c,out),dimension(n),depend(n) :: a = _i[0]
        end subroutine myrange
 
-is equivalent to ``numpy.arange(n,typecode='d')``.
+is equivalent to ``numpy.arange(n,dtype=float)``.
 
 .. warning::
 

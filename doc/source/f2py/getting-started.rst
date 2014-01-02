@@ -95,11 +95,11 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
-  * When a Numpy array, that is Fortran contiguous and has a typecode
+  * When a Numpy array, that is Fortran contiguous and has a dtype
     corresponding to presumed Fortran type, is used as an input array
     argument, then its C pointer is directly passed to Fortran.
 
-    Otherwise F2PY makes a contiguous copy (with a proper typecode) of
+    Otherwise F2PY makes a contiguous copy (with a proper dtype) of
     the input array and passes C pointer of the copy to Fortran
     subroutine. As a result, any possible changes to the (copy of)
     input array have no effect to the original argument, as
@@ -111,7 +111,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       [1 1 1 1 1 1 1 1]
 
     Clearly, this is not an expected behaviour. The fact that the
-    above example worked with ``typecode='d'`` is considered
+    above example worked with ``dtype=float`` is considered
     accidental.
 
     F2PY provides ``intent(inplace)`` attribute that would modify
