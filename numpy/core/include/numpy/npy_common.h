@@ -58,11 +58,16 @@
 
 /* Enable 64 bit file position support on win-amd64. Ticket #1660 */
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
+    #include <io.h>
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64
+    #define npy_lseek _lseeki64
+    #define npy_off_t npy_int64
 #else
     #define npy_fseek fseek
     #define npy_ftell ftell
+    #define npy_lseek lseek
+    #define npy_off_t off_t
 #endif
 
 /* enums for detected endianness */
