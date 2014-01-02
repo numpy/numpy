@@ -921,6 +921,18 @@ class _TestNorm(object):
         x = np.array([-2 ** 31], dtype=np.int32)
         old_assert_almost_equal(norm(x, ord=3), 2 ** 31, decimal=5)
 
+    def test_complex_high_ord(self):
+        # gh-4156
+        d = np.empty((2,), dtype=np.clongdouble)
+        d[0] = 6+7j
+        d[1] = -6+7j
+        res = 11.615898132184
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=10)
+        d = d.astype(np.complex128)
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=9)
+        d = d.astype(np.complex64)
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
+
 
 class TestNormDouble(_TestNorm):
     dt = np.double

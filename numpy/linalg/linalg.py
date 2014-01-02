@@ -2088,7 +2088,7 @@ def norm(x, ord=None, axis=None):
                 # because it will downcast to float64.
                 absx = abs(x)
             else:
-                absx = asfarray(x)
+                absx = x if isComplexType(x.dtype.type) else asfarray(x)
                 if absx.dtype is x.dtype:
                     absx = abs(absx)
                 else:
