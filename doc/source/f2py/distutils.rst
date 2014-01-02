@@ -1,6 +1,6 @@
-============================
-Using via``numpy_distutils``
-============================
+=============================
+Using via ``numpy_distutils``
+=============================
 
 ``numpy_distutils`` is part of the SciPy_ project and aims to extend
 standard Python ``distutils`` to deal with Fortran sources and F2PY

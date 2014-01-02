@@ -7,8 +7,7 @@
 :Author: Pearu Peterson
 :Contact: pearu@cens.ioc.ee
 :Web site: http://cens.ioc.ee/projects/f2py2e/
-:Date: $Date: 2005/04/02 10:03:26 $
-:Revision: $Revision: 1.27 $
+:Date: 2005/04/02 10:03:26
 
 ================
  Introduction
