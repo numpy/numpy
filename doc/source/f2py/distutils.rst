@@ -1,11 +1,10 @@
 =============================
-Using via ``numpy_distutils``
+Using via `numpy.distutils`
 =============================
 
-``numpy_distutils`` is part of the SciPy_ project and aims to extend
-standard Python ``distutils`` to deal with Fortran sources and F2PY
-signature files, e.g. compile Fortran sources, call F2PY to construct
-extension modules, etc.
+:mod:`numpy.distutils` is part of Numpy extending standard Python ``distutils``
+to deal with Fortran sources and F2PY signature files, e.g. compile Fortran
+sources, call F2PY to construct extension modules, etc.
 
 .. topic:: Example
 
@@ -25,7 +24,7 @@ extension modules, etc.
 
   __ setup_example.py
 
-``numpy_distutils`` extends ``distutils`` with the following features:
+:mod:`numpy.distutils` extends ``distutils`` with the following features:
 
 * ``Extension`` class argument ``sources`` may contain Fortran source
   files. In addition, the list ``sources`` may contain at most one
@@ -40,9 +39,6 @@ extension modules, etc.
 
   Additional options to F2PY process can be given using ``Extension``
   class argument ``f2py_options``.
-
-``numpy_distutils`` 0.2.2 and up
-================================
 
 * The following new ``distutils`` commands are defined:
 
@@ -75,34 +71,3 @@ extension modules, etc.
   ::
 
      f2py -c --help-fcompiler
-
-``numpy_distutils`` pre 0.2.2
-=============================
-
-* The following new ``distutils`` commands are defined:
-
-  ``build_flib``
-    to build f77/f90 libraries used by Python extensions;
-  ``run_f2py``
-    to construct Fortran wrapper extension modules.
-
-  Run
-
-  ::
-
-    python <setup.py file> build_flib run_f2py --help
-
-  to see available options for these commands.
-
-* When building Python packages containing Fortran sources, then one
-  can choose different Fortran compilers either by using ``build_flib``
-  command option ``--fcompiler=<Vendor>`` or by defining environment
-  variable ``FC_VENDOR=<Vendor>``. Here ``<Vendor>`` can be one of the
-  following names::
-
-    Absoft Sun SGI Intel Itanium NAG Compaq Digital Gnu VAST PG
-
-  See ``numpy_distutils/command/build_flib.py`` for up-to-date list of
-  supported compilers.
-
-.. _SciPy: http://www.numpy.org/
