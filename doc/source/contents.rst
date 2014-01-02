@@ -6,6 +6,7 @@ Numpy manual contents
 
    user/index
    reference/index
+   f2py/index
    dev/index
    release
    about
