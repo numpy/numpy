@@ -10,12 +10,6 @@
 :Date: $Date: 2005/04/02 10:03:26 $
 :Revision: $Revision: 1.27 $
 
-
-.. section-numbering::
-
-.. Contents::
-
-
 ================
  Introduction
 ================
@@ -392,64 +386,62 @@ The signature of a Fortran block data has the following structure::
   end [ block data [<block data name>] ]
 
 Type declarations
--------------------
+-----------------
 
-  The definition of the ``<argument/variable type declaration>`` part
-  is
+The definition of the ``<argument/variable type declaration>`` part
+is
 
-  ::
+::
 
-    <typespec> [ [<attrspec>] :: ] <entitydecl>
+  <typespec> [ [<attrspec>] :: ] <entitydecl>
 
-  where
+where
 
-  ::
+::
 
-    <typespec> := byte | character [<charselector>]
-               | complex [<kindselector>] | real [<kindselector>]
-               | double complex | double precision
-               | integer [<kindselector>] | logical [<kindselector>]
+  <typespec> := byte | character [<charselector>]
+             | complex [<kindselector>] | real [<kindselector>]
+             | double complex | double precision
+             | integer [<kindselector>] | logical [<kindselector>]
 
-    <charselector> := * <charlen>
-                   | ( [len=] <len> [ , [kind=] <kind>] )
-                   | ( kind= <kind> [ , len= <len> ] )
-    <kindselector> := * <intlen> | ( [kind=] <kind> )
+  <charselector> := * <charlen>
+                 | ( [len=] <len> [ , [kind=] <kind>] )
+                 | ( kind= <kind> [ , len= <len> ] )
+  <kindselector> := * <intlen> | ( [kind=] <kind> )
 
-    <entitydecl> := <name> [ [ * <charlen> ] [ ( <arrayspec> ) ]
-                          | [ ( <arrayspec> ) ] * <charlen> ]
-                         | [ / <init_expr> / | = <init_expr> ] \
-                           [ , <entitydecl> ]
+  <entitydecl> := <name> [ [ * <charlen> ] [ ( <arrayspec> ) ]
+                        | [ ( <arrayspec> ) ] * <charlen> ]
+                       | [ / <init_expr> / | = <init_expr> ] \
+                         [ , <entitydecl> ]
 
-  and
+and
 
-  + ``<attrspec>`` is a comma separated list of attributes_;
++ ``<attrspec>`` is a comma separated list of attributes_;
 
-  + ``<arrayspec>`` is a comma separated list of dimension bounds;
++ ``<arrayspec>`` is a comma separated list of dimension bounds;
 
-  + ``<init_expr>`` is a `C expression`__.
++ ``<init_expr>`` is a `C expression`__.
 
-  + ``<intlen>`` may be negative integer for ``integer`` type
-    specifications. In such cases ``integer*<negintlen>`` represents
-    unsigned C integers.
++ ``<intlen>`` may be negative integer for ``integer`` type
+  specifications. In such cases ``integer*<negintlen>`` represents
+  unsigned C integers.
 
 __ `C expressions`_
 
-  If an argument has no ``<argument type declaration>``, its type is
-  determined by applying ``implicit`` rules to its name.
+If an argument has no ``<argument type declaration>``, its type is
+determined by applying ``implicit`` rules to its name.
 
 
 Statements
-------------
+----------
 
 Attribute statements:
-
   The ``<argument/variable attribute statement>`` is
   ``<argument/variable type declaration>`` without ``<typespec>``.
   In addition, in an attribute statement one cannot use other
   attributes, also ``<entitydecl>`` can be only a list of names.
 
 Use statements:
-
   The definition of the ``<use statement>`` part is
 
   ::
@@ -467,7 +459,6 @@ Use statements:
   `Call-back arguments`_.
 
 Common block statements:
-
   The definition of the ``<common block statement>`` part is
 
   ::
@@ -488,7 +479,6 @@ Common block statements:
   then you don't need to specify these in ``<shortentitydecl>``.
 
 Other statements:
-
   The ``<other statement>`` part refers to any other Fortran language
   constructs that are not described above. F2PY ignores most of them
   except
@@ -496,7 +486,7 @@ Other statements:
   + ``call`` statements and function calls of ``external`` arguments
     (`more details`__?);
 
-__ external_
+  __ external_
 
   + ``include`` statements
 
@@ -1016,8 +1006,8 @@ arrays with proper type but also other types work.
 
   Consider the following `Fortran 77 code`__:
 
-    .. include:: scalar.f
-       :literal:
+  .. include:: scalar.f
+     :literal:
 
   and wrap it using ``f2py -c -m scalar scalar.f``.
 
@@ -1025,8 +1015,8 @@ arrays with proper type but also other types work.
 
   In Python:
 
-     .. include:: scalar_session.dat
-        :literal:
+  .. include:: scalar_session.dat
+     :literal:
 
 
 String arguments
@@ -1390,165 +1380,164 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
 
 1. To scan Fortran sources and generate a signature file, use
 
-  ::
+   ::
 
-    f2py -h <filename.pyf> <options> <fortran files>   \
-      [[ only: <fortran functions>  : ]                \
-       [ skip: <fortran functions>  : ]]...            \
-      [<fortran files> ...]
+     f2py -h <filename.pyf> <options> <fortran files>   \
+       [[ only: <fortran functions>  : ]                \
+        [ skip: <fortran functions>  : ]]...            \
+       [<fortran files> ...]
 
-  Note that a Fortran source file can contain many routines, and not
-  necessarily all routines are needed to be used from Python. So, you
-  can either specify which routines should be wrapped (in ``only: .. :``
-  part) or which routines F2PY should ignored (in ``skip: .. :`` part).
+   Note that a Fortran source file can contain many routines, and not
+   necessarily all routines are needed to be used from Python. So, you
+   can either specify which routines should be wrapped (in ``only: .. :``
+   part) or which routines F2PY should ignored (in ``skip: .. :`` part).
 
-  If ``<filename.pyf>`` is specified as ``stdout`` then signatures
-  are send to standard output instead of a file.
+   If ``<filename.pyf>`` is specified as ``stdout`` then signatures
+   are send to standard output instead of a file.
 
-  Among other options (see below), the following options can be used
-  in this mode:
+   Among other options (see below), the following options can be used
+   in this mode:
 
-  ``--overwrite-signature``
-    Overwrite existing signature file.
+   ``--overwrite-signature``
+     Overwrite existing signature file.
 
 2. To construct an extension module, use
 
-  ::
+   ::
 
-    f2py <options> <fortran files>          \
-      [[ only: <fortran functions>  : ]     \
-       [ skip: <fortran functions>  : ]]... \
-      [<fortran files> ...]
+     f2py <options> <fortran files>          \
+       [[ only: <fortran functions>  : ]     \
+        [ skip: <fortran functions>  : ]]... \
+       [<fortran files> ...]
 
-  The constructed extension module is saved as
-  ``<modulename>module.c`` to the current directory.
+   The constructed extension module is saved as
+   ``<modulename>module.c`` to the current directory.
 
-  Here ``<fortran files>`` may also contain signature files.
-  Among other options (see below), the following options can be used
-  in this mode:
+   Here ``<fortran files>`` may also contain signature files.
+   Among other options (see below), the following options can be used
+   in this mode:
 
-  ``--debug-capi``
-    Add debugging hooks to the extension module. When using this
-    extension module, various information about the wrapper is printed
-    to standard output, for example, the values of variables, the
-    steps taken, etc.
+   ``--debug-capi``
+     Add debugging hooks to the extension module. When using this
+     extension module, various information about the wrapper is printed
+     to standard output, for example, the values of variables, the
+     steps taken, etc.
 
-  ``-include'<includefile>'``
-    Add a CPP ``#include`` statement to the extension module source.
-    ``<includefile>`` should be given in one of the following forms::
+   ``-include'<includefile>'``
+     Add a CPP ``#include`` statement to the extension module source.
+     ``<includefile>`` should be given in one of the following forms::
 
-      "filename.ext"
-      <filename.ext>
+     "filename.ext"
+     <filename.ext>
 
-    The include statement is inserted just before the wrapper
-    functions. This feature enables using arbitrary C functions
-    (defined in ``<includefile>``) in F2PY generated wrappers.
+     The include statement is inserted just before the wrapper
+     functions. This feature enables using arbitrary C functions
+     (defined in ``<includefile>``) in F2PY generated wrappers.
 
-    This option is deprecated. Use ``usercode`` statement to specify
-    C codelets directly in signature filess
+     This option is deprecated. Use ``usercode`` statement to specify
+     C codelets directly in signature filess
 
+   ``--[no-]wrap-functions``
 
-  ``--[no-]wrap-functions``
+     Create Fortran subroutine wrappers to Fortran functions.
+     ``--wrap-functions`` is default because it ensures maximum
+     portability and compiler independence.
 
-    Create Fortran subroutine wrappers to Fortran functions.
-    ``--wrap-functions`` is default because it ensures maximum
-    portability and compiler independence.
+   ``--include-paths <path1>:<path2>:..``
+     Search include files from given directories.
 
-  ``--include-paths <path1>:<path2>:..``
-    Search include files from given directories.
-
-  ``--help-link [<list of resources names>]``
-    List system resources found by ``numpy_distutils/system_info.py``.
-    For example, try ``f2py --help-link lapack_opt``.
+   ``--help-link [<list of resources names>]``
+     List system resources found by ``numpy_distutils/system_info.py``.
+     For example, try ``f2py --help-link lapack_opt``.
 
 3. To build an extension module, use
 
-  ::
+   ::
 
-    f2py -c <options> <fortran files>       \
-      [[ only: <fortran functions>  : ]     \
-       [ skip: <fortran functions>  : ]]... \
-      [ <fortran/c source files> ] [ <.o, .a, .so files> ]
+     f2py -c <options> <fortran files>       \
+       [[ only: <fortran functions>  : ]     \
+        [ skip: <fortran functions>  : ]]... \
+       [ <fortran/c source files> ] [ <.o, .a, .so files> ]
+ 
+   If ``<fortran files>`` contains a signature file, then a source for
+   an extension module is constructed, all Fortran and C sources are
+   compiled, and finally all object and library files are linked to the
+   extension module ``<modulename>.so`` which is saved into the current
+   directory.
 
-  If ``<fortran files>`` contains a signature file, then a source for
-  an extension module is constructed, all Fortran and C sources are
-  compiled, and finally all object and library files are linked to the
-  extension module ``<modulename>.so`` which is saved into the current
-  directory.
-
-  If ``<fortran files>`` does not contain a signature file, then an
-  extension module is constructed by scanning all Fortran source codes
-  for routine signatures.
-
-  Among other options (see below) and options described in previous
-  mode, the following options can be used in this mode:
-
-  ``--help-fcompiler``
-    List available Fortran compilers.
-  ``--help-compiler`` [depreciated]
-    List available Fortran compilers.
-  ``--fcompiler=<Vendor>``
-    Specify Fortran compiler type by vendor.
-  ``--f77exec=<path>``
-    Specify the path to F77 compiler
-  ``--fcompiler-exec=<path>`` [depreciated]
-    Specify the path to F77 compiler
-  ``--f90exec=<path>``
-    Specify the path to F90 compiler
-  ``--f90compiler-exec=<path>`` [depreciated]
-    Specify the path to F90 compiler
-
-  ``--f77flags=<string>``
-    Specify F77 compiler flags
-  ``--f90flags=<string>``
-    Specify F90 compiler flags
-  ``--opt=<string>``
-    Specify optimization flags
-  ``--arch=<string>``
-    Specify architecture specific optimization flags
-  ``--noopt``
-    Compile without optimization
-  ``--noarch``
-    Compile without arch-dependent optimization
-  ``--debug``
-    Compile with debugging information
-
-  ``-l<libname>``
-    Use the library ``<libname>`` when linking.
-  ``-D<macro>[=<defn=1>]``
-    Define macro ``<macro>`` as ``<defn>``.
-  ``-U<macro>``
-    Define macro ``<macro>``
-  ``-I<dir>``
-    Append directory ``<dir>`` to the list of directories searched for
-    include files.
-  ``-L<dir>``
-    Add directory ``<dir>`` to the list of directories to  be  searched
-    for ``-l``.
-
-  ``link-<resource>``
-
-    Link extension module with <resource> as defined by
-    ``numpy_distutils/system_info.py``. E.g. to link with optimized
-    LAPACK libraries (vecLib on MacOSX, ATLAS elsewhere), use
-    ``--link-lapack_opt``. See also ``--help-link`` switch.
-
-  When building an extension module, a combination of the following
-  macros may be required for non-gcc Fortran compilers::
-
-    -DPREPEND_FORTRAN
-    -DNO_APPEND_FORTRAN
-    -DUPPERCASE_FORTRAN
-
-  To test the performance of F2PY generated interfaces, use
-  ``-DF2PY_REPORT_ATEXIT``. Then a report of various timings is
-  printed out at the exit of Python. This feature may not work on
-  all platforms, currently only Linux platform is supported.
-
-  To see whether F2PY generated interface performs copies of array
-  arguments, use ``-DF2PY_REPORT_ON_ARRAY_COPY=<int>``. When the size
-  of an array argument is larger than ``<int>``, a message about
-  the coping is sent to ``stderr``.
+   If ``<fortran files>`` does not contain a signature file, then an
+   extension module is constructed by scanning all Fortran source codes
+   for routine signatures.
+ 
+   Among other options (see below) and options described in previous
+   mode, the following options can be used in this mode:
+ 
+   ``--help-fcompiler``
+     List available Fortran compilers.
+   ``--help-compiler`` [depreciated]
+     List available Fortran compilers.
+   ``--fcompiler=<Vendor>``
+     Specify Fortran compiler type by vendor.
+   ``--f77exec=<path>``
+     Specify the path to F77 compiler
+   ``--fcompiler-exec=<path>`` [depreciated]
+     Specify the path to F77 compiler
+   ``--f90exec=<path>``
+     Specify the path to F90 compiler
+   ``--f90compiler-exec=<path>`` [depreciated]
+     Specify the path to F90 compiler
+ 
+   ``--f77flags=<string>``
+     Specify F77 compiler flags
+   ``--f90flags=<string>``
+     Specify F90 compiler flags
+   ``--opt=<string>``
+     Specify optimization flags
+   ``--arch=<string>``
+     Specify architecture specific optimization flags
+   ``--noopt``
+     Compile without optimization
+   ``--noarch``
+     Compile without arch-dependent optimization
+   ``--debug``
+     Compile with debugging information
+ 
+   ``-l<libname>``
+     Use the library ``<libname>`` when linking.
+   ``-D<macro>[=<defn=1>]``
+     Define macro ``<macro>`` as ``<defn>``.
+   ``-U<macro>``
+     Define macro ``<macro>``
+   ``-I<dir>``
+     Append directory ``<dir>`` to the list of directories searched for
+     include files.
+   ``-L<dir>``
+     Add directory ``<dir>`` to the list of directories to  be  searched
+     for ``-l``.
+ 
+   ``link-<resource>``
+ 
+     Link extension module with <resource> as defined by
+     ``numpy_distutils/system_info.py``. E.g. to link with optimized
+     LAPACK libraries (vecLib on MacOSX, ATLAS elsewhere), use
+     ``--link-lapack_opt``. See also ``--help-link`` switch.
+ 
+   When building an extension module, a combination of the following
+   macros may be required for non-gcc Fortran compilers::
+ 
+     -DPREPEND_FORTRAN
+     -DNO_APPEND_FORTRAN
+     -DUPPERCASE_FORTRAN
+ 
+   To test the performance of F2PY generated interfaces, use
+   ``-DF2PY_REPORT_ATEXIT``. Then a report of various timings is
+   printed out at the exit of Python. This feature may not work on
+   all platforms, currently only Linux platform is supported.
+ 
+   To see whether F2PY generated interface performs copies of array
+   arguments, use ``-DF2PY_REPORT_ON_ARRAY_COPY=<int>``. When the size
+   of an array argument is larger than ``<int>``, a message about
+   the coping is sent to ``stderr``.
 
 Other options:
 
@@ -1601,7 +1590,6 @@ The following functions are provided by the ``f2py2e`` module:
   below.
 
 ``compile(source, modulename='untitled', extra_args='', verbose=1, source_fn=None)``
-
   Build extension module from Fortran 77 source string ``source``.
   Return 0 if successful.
   Note that this function actually calls ``f2py -c ..`` from shell to
