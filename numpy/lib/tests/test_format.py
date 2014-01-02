@@ -405,12 +405,39 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
 ]
 
+
+#BytesIO that reads a random number of bytes at a time
+class BytesIOSRandomSize(BytesIO):
+    def read(self, size=None):
+        import random
+        size = random.randint(1, size)
+        return super(BytesIOSRandomSize, self).read(size)
+
+
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
+
+
+def roundtrip_randsize(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    f2 = BytesIOSRandomSize(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+
+def roundtrip_truncated(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    #BytesIO is one byte short
+    f2 = BytesIO(f.getvalue()[0:-1])
+    arr2 = format.read_array(f2)
+    return arr2
+
 
 def assert_equal(o1, o2):
     assert_(o1 == o2)
@@ -420,6 +447,20 @@ def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
+
+
+def test_roundtrip_randsize():
+    for arr in basic_arrays + record_arrays:
+        if arr.dtype != object:
+            arr2 = roundtrip_randsize(arr)
+            yield assert_array_equal, arr, arr2
+
+
+def test_roundtrip_truncated():
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            yield assert_raises, ValueError, roundtrip_truncated, arr
+
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
@@ -462,6 +503,14 @@ def test_memmap_roundtrip():
             ma = format.open_memmap(nfn, mode='r')
             #yield assert_array_equal, ma, arr
             del ma
+
+
+def test_compressed_roundtrip():
+    arr = np.random.rand(200, 200)
+    npz_file = os.path.join(tempdir, 'compressed.npz')
+    np.savez_compressed(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
 
 
 def test_write_version_1_0():
