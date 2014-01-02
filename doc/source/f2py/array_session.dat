@@ -1,5 +1,5 @@
 >>> import arr
->>> from Numeric import array
+>>> from numpy import array
 >>> print arr.foo.__doc__
 foo - Function signature:
   a = foo(a,[overwrite_a])

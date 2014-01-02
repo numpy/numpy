@@ -8,11 +8,11 @@ Required arguments:
   c : input string(len=-1)
   d : in/output rank-0 array(string(len=-1),'c')
 
->>> import Numeric
->>> a=Numeric.array('123')
->>> b=Numeric.array('123')
->>> c=Numeric.array('123')
->>> d=Numeric.array('123')
+>>> import numpy
+>>> a=numpy.array('123')
+>>> b=numpy.array('123')
+>>> c=numpy.array('123')
+>>> d=numpy.array('123')
 >>> mystring.foo(a,b,c,d)
  A=123
  B=123

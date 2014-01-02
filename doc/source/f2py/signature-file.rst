@@ -347,9 +347,9 @@ The following attributes are used by F2PY:
   + ``inout``
       The argument is considered as an input/output or *in situ*
       output argument. ``intent(inout)`` arguments can be only
-      "contiguous" Numeric arrays with proper type and size.  Here
+      "contiguous" Numpy arrays with proper type and size.  Here
       "contiguous" can be either in Fortran or C sense. The latter one
-      coincides with the contiguous concept used in Numeric and is
+      coincides with the contiguous concept used in Numpy and is
       effective only if ``intent(c)`` is used. Fortran-contiguousness
       is assumed by default.
 
@@ -359,7 +359,7 @@ The following attributes are used by F2PY:
   + ``inplace``
       The argument is considered as an input/output or *in situ*
       output argument. ``intent(inplace)`` arguments must be
-      Numeric arrays with proper size. If the type of an array is
+      Numpy arrays with proper size. If the type of an array is
       not "proper" or the array is non-contiguous then the array
       will be changed in-place to fix the type and make it contiguous.
 
@@ -622,7 +622,7 @@ signature
          real*8 intent(c,out),dimension(n),depend(n) :: a = _i[0]
        end subroutine myrange
 
-is equivalent to ``Numeric.arange(n,typecode='d')``.
+is equivalent to ``numpy.arange(n,typecode='d')``.
 
 .. warning::
 

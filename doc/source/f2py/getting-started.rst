@@ -52,7 +52,7 @@ arguments to see the explanation of command line options) an extension
 module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
 Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
-  >>> import Numeric
+  >>> import numpy
   >>> import fib1
   >>> print fib1.fib.__doc__
   fib - Function signature:
@@ -62,7 +62,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   Optional arguments:
     n := len(a) input int
 
-  >>> a=Numeric.zeros(8,'d')
+  >>> a = numpy.zeros(8,'d')
   >>> fib1.fib(a)
   >>> print a
   [  0.   1.   1.   2.   3.   5.   8.  13.]
@@ -76,7 +76,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   * One can use different values for optional ``n``::
 
-      >>> a1=Numeric.zeros(8,'d')
+      >>> a1 = numpy.zeros(8,'d')
       >>> fib1.fib(a1,6)
       >>> print a1
       [ 0.  1.  1.  2.  3.  5.  0.  0.]
@@ -95,7 +95,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
-  * When a Numeric array, that is Fortran contiguous and has a typecode
+  * When a Numpy array, that is Fortran contiguous and has a typecode
     corresponding to presumed Fortran type, is used as an input array
     argument, then its C pointer is directly passed to Fortran.
 
@@ -105,7 +105,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     input array have no effect to the original argument, as
     demonstrated below::
 
-      >>> a=Numeric.ones(8,'i')
+      >>> a = numpy.ones(8,'i')
       >>> fib1.fib(a)
       >>> print a
       [1 1 1 1 1 1 1 1]
@@ -120,7 +120,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     if one specifies ``intent(inplace) a`` (see below, how), then
     the example above would read:
 
-      >>> a=Numeric.ones(8,'i')
+      >>> a = numpy.ones(8,'i')
       >>> fib1.fib(a)
       >>> print a
       [  0.   1.   1.   2.   3.   5.   8.  13.]
@@ -209,7 +209,7 @@ In Python::
   * Clearly, the signature of ``fib2.fib`` now corresponds to the
     intention of Fortran subroutine ``FIB`` more closely: given the
     number ``n``, ``fib2.fib`` returns the first ``n`` Fibonacci numbers
-    as a Numeric array. Also, the new Python signature ``fib2.fib``
+    as a Numpy array. Also, the new Python signature ``fib2.fib``
     rules out any surprises that we experienced with ``fib1.fib``.
 
   * Note that by default using single ``intent(out)`` also implies
