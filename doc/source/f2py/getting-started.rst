@@ -26,7 +26,7 @@ following steps:
 
 Depending on a particular situation, these steps can be carried out
 either by just in one command or step-by-step, some steps can be
-ommited or combined with others.
+omitted or combined with others.
 
 Below I'll describe three typical approaches of using F2PY.
 The following `example Fortran 77 code`__ will be used for
@@ -142,7 +142,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   Though the demonstrated way of wrapping Fortran routines to Python
   is very straightforward, it has several drawbacks (see the comments
   above).  These drawbacks are due to the fact that there is no way
-  that F2PY can determine what is the acctual intention of one or the
+  that F2PY can determine what is the actual intention of one or the
   other argument, is it input or output argument, or both, or
   something else. So, F2PY conservatively assumes that all arguments
   are input arguments by default.

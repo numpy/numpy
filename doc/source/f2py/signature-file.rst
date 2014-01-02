@@ -18,7 +18,7 @@ ones;-).
 
 In general, the contents of signature files is case-sensitive.  When
 scanning Fortran codes and writing a signature file, F2PY lowers all
-cases automatically except in multi-line blocks or when ``--no-lower``
+cases automatically except in multiline blocks or when ``--no-lower``
 option is used.
 
 The syntax of signature files is overvied below.
@@ -219,7 +219,7 @@ Other statements:
 
         <implicit map> := <typespec> ( <list of letters or range of letters> )
 
-      Implicit rules are used to deterimine the type specification of
+      Implicit rules are used to determine the type specification of
       a variable (from the first-letter of its name) if the variable
       is not defined using ``<variable type declaration>``.  Default
       implicit rule is given by
@@ -260,18 +260,18 @@ Other statements:
       generate proper prototypes for Fortran/C functions (because
       ``<C-expr>`` may contain any function calls and F2PY has no way
       to determine what should be the proper prototype). With this
-      statement you can explicitely specify the arguments of the
+      statement you can explicitly specify the arguments of the
       corresponding prototype::
 
         extern <return type> FUNC_F(<routine name>,<ROUTINE NAME>)(<callprotoargument>);
 
-  + ``fortranname [<acctual Fortran/C routine name>]``
+  + ``fortranname [<actual Fortran/C routine name>]``
       You can use arbitrary ``<routine name>`` for a given Fortran/C
       function. Then you have to specify
-      ``<acctual Fortran/C routine name>`` with this statement.
+      ``<actual Fortran/C routine name>`` with this statement.
 
       If ``fortranname`` statement is used without
-      ``<acctual Fortran/C routine name>`` then a dummy wrapper is
+      ``<actual Fortran/C routine name>`` then a dummy wrapper is
       generated.
 
   + ``usercode <multi-line block>``
@@ -279,8 +279,8 @@ Other statements:
       will be inserted to generated C/API source just before
       wrapper function definitions. Here you can define arbitrary
       C functions to be used in initialization of optional arguments,
-      for example. If ``usercode`` is used twise inside ``python
-      module`` block then the second multi-line block is inserted
+      for example. If ``usercode`` is used twice inside ``python
+      module`` block then the second multiline block is inserted
       after the definition of external routines.
 
       When used inside ``<routine singature>``, then given C code will
@@ -294,7 +294,7 @@ Other statements:
       modules dictionary. For example, for defining additional
       variables etc.
 
-  + ``pymethoddef <multi-line block>``
+  + ``pymethoddef <multiline block>``
       Multiline block will be inserted to the definition of
       module methods ``PyMethodDef``-array. It must be a
       comma-separated list of C arrays (see `Extending and Embedding`__
@@ -350,7 +350,7 @@ The following attributes are used by F2PY:
       "contiguous" Numpy arrays with proper type and size.  Here
       "contiguous" can be either in Fortran or C sense. The latter one
       coincides with the contiguous concept used in Numpy and is
-      effective only if ``intent(c)`` is used. Fortran-contiguousness
+      effective only if ``intent(c)`` is used. Fortran contiguity
       is assumed by default.
 
       Using ``intent(inout)`` is generally not recommended, use
@@ -376,7 +376,7 @@ The following attributes are used by F2PY:
 
       By default, returned multidimensional arrays are
       Fortran-contiguous. If ``intent(c)`` is used, then returned
-      multi-dimensional arrays are C-contiguous.
+      multidimensional arrays are C-contiguous.
 
   + ``hide``
       The argument is removed from the list of required or optional
@@ -393,12 +393,12 @@ The following attributes are used by F2PY:
       as a C scalar argument (recall that Fortran scalar arguments are
       actually C pointer arguments).  In the case of an array
       argument, the wrapper function is assumed to treat
-      multi-dimensional arrays as C-contiguous arrays.
+      multidimensional arrays as C-contiguous arrays.
 
       There is no need to use ``intent(c)`` for one-dimensional
       arrays, no matter if the wrapped function is either a Fortran or
       a C function. This is because the concepts of Fortran- and
-      C-contiguousness overlap in one-dimensional cases.
+      C contiguity overlap in one-dimensional cases.
 
       If ``intent(c)`` is used as an statement but without entity
       declaration list, then F2PY adds ``intent(c)`` attibute to all
@@ -410,7 +410,7 @@ The following attributes are used by F2PY:
 
   + ``cache``
       The argument is treated as a junk of memory. No Fortran nor C
-      contiguousness checks are carried out. Using ``intent(cache)``
+      contiguity checks are carried out. Using ``intent(cache)``
       makes sense only for array arguments, also in connection with
       ``intent(hide)`` or ``optional`` attributes.
 
@@ -564,7 +564,7 @@ F2PY directive has the following form::
 where allowed comment characters for fixed and free format Fortran
 codes are ``cC*!#`` and ``!``, respectively. Everything that follows
 ``<comment char>f2py`` is ignored by a compiler but read by F2PY as a
-normal Fortran (non-comment) line:
+normal Fortran, non-comment line:
 
   When F2PY finds a line with F2PY directive, the directive is first
   replaced by 5 spaces and then the line is reread.
@@ -581,7 +581,7 @@ C expressions are used in the following parts of signature files:
 * ``<init_expr>`` of variable initialization;
 * ``<C-booleanexpr>`` of the ``check`` attribute;
 * ``<arrayspec> of the ``dimension`` attribute;
-* ``callstatement`` statement, here also a C multi-line block can be used.
+* ``callstatement`` statement, here also a C multiline block can be used.
 
 A C expression may contain:
 
@@ -629,16 +629,16 @@ is equivalent to ``numpy.arange(n,dtype=float)``.
   F2PY may lower cases also in C expressions when scanning Fortran codes
   (see ``--[no]-lower`` option).
 
-Multi-line blocks
+Multiline blocks
 ------------------
 
-A multi-line block starts with ``'''`` (triple single-quotes) and ends
-with ``'''`` in some *strictly* subsequent line.  Multi-line blocks can
-be used only within .pyf files. The contents of a multi-line block can
+A multiline block starts with ``'''`` (triple single-quotes) and ends
+with ``'''`` in some *strictly* subsequent line.  Multiline blocks can
+be used only within .pyf files. The contents of a multiline block can
 be arbitrary (except that it cannot contain ``'''``) and no
 transformations (e.g. lowering cases) are applied to it.
 
-Currently, multi-line blocks can be used in the following constructs:
+Currently, multiline blocks can be used in the following constructs:
 
 + as a C expression of the ``callstatement`` statement;
 

@@ -68,7 +68,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
      (defined in ``<includefile>``) in F2PY generated wrappers.
 
      This option is deprecated. Use ``usercode`` statement to specify
-     C codelets directly in signature filess
+     C code snippets directly in signature files
 
    ``--[no-]wrap-functions``
 
