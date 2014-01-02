@@ -10,12 +10,12 @@ f2py \- Fortran to Python interface generator
 (2) To compile fortran files and build extension modules:
 
 .B f2py
--c [<options>, <config_fc options>, <extra options>] <fortran files>
+\-c [<options>, <config_fc options>, <extra options>] <fortran files>
 
 (3) To generate signature files:
 
 .B f2py
--h <filename.pyf> ...< same options as in (1) >
+\-h <filename.pyf> ...< same options as in (1) >
 .SH DESCRIPTION
 This program generates a Python C/API file (<modulename>module.c)
 that contains wrappers for given Fortran or C functions so that they
