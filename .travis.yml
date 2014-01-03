@@ -18,6 +18,8 @@ matrix:
       env: NPY_RELAXED_STRIDES_CHECKING=1
     - python: 2.7
       env: USE_BENTO=1
+    - python: 2.7
+      env: USE_CHROOT=1 ARCH=i386 DIST=saucy
 before_install:
   - uname -a
   - free -m
@@ -31,24 +33,5 @@ before_install:
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 
-install:
-  # We used to use 'setup.py install' here, but that has the terrible
-  # behaviour that if a copy of the package is already installed in
-  # the install location, then the new copy just gets dropped on top
-  # of it. Travis typically has a stable numpy release pre-installed,
-  # and if we don't remove it, then we can accidentally end up
-  # e.g. running old test modules that were in the stable release but
-  # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
-  # install' also has the advantage that it tests that numpy is 'pip
-  # install' compatible, see e.g. gh-2766...
-  - if [ "${USE_BENTO}" == "1" ]; then source .bento_travisci.sh; else pip install .; fi
 script:
-  # We change directories to make sure that python won't find the copy
-  # of numpy in the source directory.
-  - mkdir empty
-  - cd empty
-  - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
-  - export PYTHONWARNINGS=default
-  - python ../tools/test-installed-numpy.py --mode=full
-  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
-  # - coverage report --rcfile=../.coveragerc --show-missing
+  - ./tools/travis-test.sh
