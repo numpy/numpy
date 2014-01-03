@@ -67,7 +67,7 @@ setup_bento()
   cd $CI_ROOT
 
   # In-place numpy build
-  $BENTO_ROOT/bentomaker build -i -j
+  $BENTO_ROOT/bentomaker build -v -i -j
 
   # Prepend to PYTHONPATH so tests can be run
   export PYTHONPATH=$PWD:$PYTHONPATH
