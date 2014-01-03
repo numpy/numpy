@@ -725,8 +725,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             elif fname.endswith('.bz2'):
                 import bz2
                 fh = iter(bz2.BZ2File(fname))
-            else:
+            elif sys.version_info[0] == 2:
                 fh = iter(open(fname, 'U'))
+            else:
+                fh = iter(open(fname))
         else:
             fh = iter(fname)
     except TypeError:
@@ -1330,7 +1332,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     own_fhd = False
     try:
         if isinstance(fname, basestring):
-            fhd = iter(np.lib._datasource.open(fname, 'rbU'))
+            if sys.version_info[0] == 2:
+                fhd = iter(np.lib._datasource.open(fname, 'rbU'))
+            else:
+                fhd = iter(np.lib._datasource.open(fname, 'rb'))
             own_fhd = True
         else:
             fhd = iter(fname)

@@ -909,6 +909,30 @@ class _TestNorm(object):
         assert_raises(ValueError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
+    def test_longdouble_norm(self):
+        # Non-regression test: p-norm of longdouble would previously raise
+        # UnboundLocalError.
+        x = np.arange(10, dtype=np.longdouble)
+        old_assert_almost_equal(norm(x, ord=3), 12.65, decimal=2)
+
+    def test_intmin(self):
+        # Non-regression test: p-norm of signed integer would previously do
+        # float cast and abs in the wrong order.
+        x = np.array([-2 ** 31], dtype=np.int32)
+        old_assert_almost_equal(norm(x, ord=3), 2 ** 31, decimal=5)
+
+    def test_complex_high_ord(self):
+        # gh-4156
+        d = np.empty((2,), dtype=np.clongdouble)
+        d[0] = 6+7j
+        d[1] = -6+7j
+        res = 11.615898132184
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=10)
+        d = d.astype(np.complex128)
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=9)
+        d = d.astype(np.complex64)
+        old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
+
 
 class TestNormDouble(_TestNorm):
     dt = np.double

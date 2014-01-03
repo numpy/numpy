@@ -138,6 +138,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy
 import sys
+import io
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj, long, basestring
 
@@ -187,10 +188,7 @@ def read_magic(fp):
     major : int
     minor : int
     """
-    magic_str = fp.read(MAGIC_LEN)
-    if len(magic_str) != MAGIC_LEN:
-        msg = "could not read %d characters for the magic string; got %r"
-        raise ValueError(msg % (MAGIC_LEN, magic_str))
+    magic_str = _read_bytes(fp, MAGIC_LEN, "magic string")
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
@@ -322,14 +320,9 @@ def read_array_header_1_0(fp):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    hlength_str = fp.read(2)
-    if len(hlength_str) != 2:
-        msg = "EOF at %s before reading array header length"
-        raise ValueError(msg % fp.tell())
+    hlength_str = _read_bytes(fp, 2, "array header length")
     header_length = struct.unpack('<H', hlength_str)[0]
-    header = fp.read(header_length)
-    if len(header) != header_length:
-        raise ValueError("EOF at %s before reading array header" % fp.tell())
+    header = _read_bytes(fp, header_length, "array header")
 
     # The header is a pretty-printed string representation of a literal Python
     # dictionary with trailing newlines padded to a 16-byte boundary. The keys
@@ -467,11 +460,10 @@ def read_array(fp):
             max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
             array = numpy.empty(count, dtype=dtype)
-
             for i in range(0, count, max_read_count):
                 read_count = min(max_read_count, count - i)
-
-                data = fp.read(int(read_count * dtype.itemsize))
+                read_size = int(read_count * dtype.itemsize)
+                data = _read_bytes(fp, read_size, "array data")
                 array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
                                                          count=read_count)
 
@@ -592,3 +584,31 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         mode=mode, offset=offset)
 
     return marray
+
+
+def _read_bytes(fp, size, error_template="ran out of data"):
+    """
+    Read from file-like object until size bytes are read.
+    Raises ValueError if not EOF is encountered before size bytes are read.
+    Non-blocking objects only supported if they derive from io objects.
+
+    Required as e.g. ZipExtFile in python 2.6 can return less data than
+    requested.
+    """
+    data = bytes()
+    while True:
+        # io files (default in python3) return None or raise on would-block,
+        # python2 file will truncate, probably nothing can be done about that.
+        # note that regular files can't be non-blocking
+        try:
+            r = fp.read(size - len(data))
+            data += r
+            if len(r) == 0 or len(data) == size:
+                break
+        except io.BlockingIOError:
+            pass
+    if len(data) != size:
+        msg = "EOF: reading %s, expected %d bytes got %d"
+        raise ValueError(msg %(error_template, size, len(data)))
+    else:
+        return data

@@ -1389,6 +1389,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                              PyArray_ISFORTRAN(op[0]) ?
                                             NPY_ARRAY_F_CONTIGUOUS : 0,
                              NULL);
+                if (op[1] == NULL) {
+                    return -1;
+                }
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[1],
@@ -1441,6 +1444,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                                  PyArray_ISFORTRAN(tmp) ?
                                                 NPY_ARRAY_F_CONTIGUOUS : 0,
                                  NULL);
+                if (op[2] == NULL) {
+                    return -1;
+                }
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[2],

@@ -22,7 +22,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
-    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product,
+    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast
     )
 from numpy.lib import triu, asfarray
@@ -2082,12 +2082,20 @@ def norm(x, ord=None, axis=None):
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            if x.dtype.type is not longdouble:
+            if x.dtype.type is longdouble:
                 # Convert to a float type, so integer arrays give
                 # float results.  Don't apply asfarray to longdouble arrays,
                 # because it will downcast to float64.
-                absx = asfarray(abs(x))
-            return add.reduce(absx**ord, axis=axis)**(1.0/ord)
+                absx = abs(x)
+            else:
+                absx = x if isComplexType(x.dtype.type) else asfarray(x)
+                if absx.dtype is x.dtype:
+                    absx = abs(absx)
+                else:
+                    # if the type changed, we can safely overwrite absx
+                    abs(absx, out=absx)
+            absx **= ord
+            return add.reduce(absx, axis=axis) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
         if not (-nd <= row_axis < nd and -nd <= col_axis < nd):
