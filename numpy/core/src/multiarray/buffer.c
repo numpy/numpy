@@ -339,6 +339,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                              "cannot expose native-only dtype '%c' in "
                              "non-native byte order '%c' via buffer interface",
                              descr->type, descr->byteorder);
+                return -1;
             }
         }
 
