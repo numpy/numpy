@@ -131,11 +131,22 @@ Here:
 - *i* is the index of *self* in *inputs*.
 - *inputs* is a tuple of the input arguments to the ``ufunc``
 - *kwargs* are the keyword arguments passed to the function. The ``out``
-  argument is always contained in *kwargs*, if given.
+  arguments are always contained in *kwargs*, how positional variables
+  are passed is discussed below.
 
 The ufunc's arguments are first normalized into a tuple of input data
-(``inputs``), and dict of keyword arguments. If the output argument is
-passed as a positional argument it is moved to the keyword argmunets.
+(``inputs``), and dict of keyword arguments. If there are output
+arguments they are handeled as follows:
+
+- One positional output variable x is passed in the kwargs dict as ``out :
+  x``.
+- Multiple positional output variables ``x0, x1, ...`` are passed as a tuple
+  in the kwargs dict as ``out : (x0, x1, ...)``.
+- Keyword output variables like ``out = x`` and ``out = (x0, x1, ...)`` are
+  passed unchanged to the kwargs dict like ``out : x`` and ``out : (x0, x1,
+  ...)`` respectively.
+- Combinations of positional and keyword output variables are not
+  supported.
 
 The function dispatch proceeds as follows:
 

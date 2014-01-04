@@ -1057,6 +1057,15 @@ class TestSpecialMethods(TestCase):
         assert_equal(res4['out'], 'out_arg')
         assert_equal(res5['out'], 'out_arg')
 
+        # ufuncs with multiple output modf and frexp.
+        res6 = np.modf(a, 'out0', 'out1')
+        res7 = np.frexp(a, 'out0', 'out1')
+        assert_equal(res6['out'][0], 'out0')
+        assert_equal(res6['out'][1], 'out1')
+        assert_equal(res7['out'][0], 'out0')
+        assert_equal(res7['out'][1], 'out1')
+
+
     def test_ufunc_override_exception(self):
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):
