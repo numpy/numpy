@@ -34,10 +34,10 @@ information is available to the pre-processor.
 
     sizeof(long)
 
-.. cvar:: NPY_SIZEOF_LONG_LONG
+.. cvar:: NPY_SIZEOF_LONGLONG
 
     sizeof(longlong) where longlong is defined appropriately on the
-    platform (A macro defines **NPY_SIZEOF_LONGLONG** as well.)
+    platform.
 
 .. cvar:: NPY_SIZEOF_PY_LONG_LONG
 
