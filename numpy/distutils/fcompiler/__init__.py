@@ -196,7 +196,7 @@ class FCompiler(CCompiler):
 
     pic_flags = []           # Flags to create position-independent code
 
-    src_extensions = ['.for', '.ftn', '.f77', '.f', '.f90', '.f95', '.F', '.F90']
+    src_extensions = ['.for', '.ftn', '.f77', '.f', '.f90', '.f95', '.F', '.F90', '.FOR']
     obj_extension = ".o"
 
     shared_lib_extension = get_shared_lib_extension()
