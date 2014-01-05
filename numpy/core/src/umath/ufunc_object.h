@@ -15,5 +15,9 @@ NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_array_wrap;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_array_finalize;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_ufunc;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_pyvals_name;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_array;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_axis;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_dtype;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_keepdims;
 
 #endif
