@@ -2078,6 +2078,8 @@ add_newdoc('numpy.core', 'einsum',
     array([ 30,  80, 130, 180, 230])
     >>> np.dot(a, b)
     array([ 30,  80, 130, 180, 230])
+    >>> np.einsum('...j,j', a, b)
+    array([ 30,  80, 130, 180, 230])
 
     >>> np.einsum('ji', c)
     array([[0, 3],
@@ -2146,6 +2148,18 @@ add_newdoc('numpy.core', 'einsum',
            [ 4664.,  5018.],
            [ 4796.,  5162.],
            [ 4928.,  5306.]])
+
+    >>> a = np.arange(6).reshape((3,2))
+    >>> b = np.arange(12).reshape((4,3))
+    >>> np.einsum('ki,jk->ij', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('ki,...k->i...', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('k...,jk', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
 
     """)
 

@@ -72,7 +72,12 @@ The performance of converting lists containing arrays to arrays using
 Changes
 =======
 
- 
+Einsum
+~~~~~~
+Remove unnecessary broadcasting notation restrictions.
+np.einsum('ijk,j->ijk', A, B) can also be written as
+np.einsum('ij...,j->ij...', A, B) (ellipsis is no longer required on 'j')
+
 C-API
 ~~~~~
 
