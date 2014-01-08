@@ -94,10 +94,17 @@ PyUFunc_CheckOverride(PyObject *ufunc, char *method,
         goto fail;
     }
 
-    /* If we have more args than nin, the last one must be `out`.*/
+    /* If we have more args than nin, they must be the output variables.*/
     if (nargs > nin) {
-        obj = PyTuple_GET_ITEM(args, nargs - 1);
-        PyDict_SetItemString(normal_kwds, "out", obj);
+        if ((nargs - nin) == 1) {
+            obj = PyTuple_GET_ITEM(args, nargs - 1);
+            PyDict_SetItemString(normal_kwds, "out", obj);
+        }
+        else {
+            obj = PyTuple_GetSlice(args, nin, nargs);
+            PyDict_SetItemString(normal_kwds, "out", obj);
+            Py_DECREF(obj);
+        }
     }
 
     method_name = PyUString_FromString(method);
