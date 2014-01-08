@@ -194,7 +194,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
-                PyArray_malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
+                PyObject_Malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
 
     NPY_IT_TIME_POINT(c_malloc);
 
@@ -217,7 +217,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                         flags,
                         op_flags, op_itflags,
                         &NIT_MASKOP(iter))) {
-        PyArray_free(iter);
+        PyObject_Free(iter);
         return NULL;
     }
     /* Set resetindex to zero as well (it's just after the resetdataptr) */
@@ -549,7 +549,7 @@ NpyIter_Copy(NpyIter *iter)
 
     /* Allocate memory for the new iterator */
     size = NIT_SIZEOF_ITERATOR(itflags, ndim, nop);
-    newiter = (NpyIter*)PyArray_malloc(size);
+    newiter = (NpyIter*)PyObject_Malloc(size);
 
     /* Copy the raw values to the new iterator */
     memcpy(newiter, iter, size);
@@ -664,9 +664,7 @@ NpyIter_Deallocate(NpyIter *iter)
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
         for(iop = 0; iop < nop; ++iop, ++buffers) {
-            if (*buffers) {
-                PyArray_free(*buffers);
-            }
+            PyArray_free(*buffers);
         }
         /* read bufferdata */
         transferdata = NBF_READTRANSFERDATA(bufferdata);
@@ -691,7 +689,7 @@ NpyIter_Deallocate(NpyIter *iter)
     }
 
     /* Deallocate the iterator memory */
-    PyArray_free(iter);
+    PyObject_Free(iter);
 
     return NPY_SUCCEED;
 }

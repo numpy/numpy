@@ -1678,7 +1678,7 @@ static PyObject *
 array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
     /* nitems will always be 0 */
-    PyObject *obj = PyArray_malloc(type->tp_basicsize);
+    PyObject *obj = PyObject_Malloc(type->tp_basicsize);
     PyObject_Init(obj, type);
     return obj;
 }
