@@ -774,7 +774,7 @@ PyArray_PyIntAsIntp(PyObject *o)
      * an exact check, since otherwise __index__ is used.
      */
 #if !defined(NPY_PY3K)
-    if PyInt_CheckExact(o) {
+    if (PyInt_CheckExact(o)) {
   #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
         /* No overflow is possible, so we can just return */
         return PyInt_AS_LONG(o);
@@ -785,7 +785,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     }
     else
 #endif
-    if PyLong_CheckExact(o) {
+    if (PyLong_CheckExact(o)) {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
         long_value = PyLong_AsLongLong(o);
 #else
