@@ -297,11 +297,11 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         int is_standard_size = 1;
         int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
                                    descr->type_num == NPY_CLONGDOUBLE);
-#if NPY_SIZEOF_LONG_LONG != 8
-        is_native_only_type = is_native_only_type || (
-            descr->type_num == NPY_LONGLONG ||
-            descr->type_num == NPY_ULONGLONG);
-#endif
+        if (sizeof(npy_longlong) != 8) {
+            is_native_only_type = is_native_only_type || (
+                descr->type_num == NPY_LONGLONG ||
+                descr->type_num == NPY_ULONGLONG);
+        }
 
         *offset += descr->elsize;
 
@@ -339,6 +339,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                              "cannot expose native-only dtype '%c' in "
                              "non-native byte order '%c' via buffer interface",
                              descr->type, descr->byteorder);
+                return -1;
             }
         }
 
