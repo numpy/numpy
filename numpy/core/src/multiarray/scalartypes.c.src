@@ -111,7 +111,7 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
     PyObject *obj;
     const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
-    obj = (PyObject *)PyArray_malloc(size);
+    obj = (PyObject *)PyObject_Malloc(size);
     memset(obj, 0, size);
     if (type->tp_itemsize == 0) {
         PyObject_INIT(obj, type);
@@ -1540,7 +1540,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
         gentype_getreadbuf(self, 0, (void **)&data);
         descr = PyArray_DescrFromScalar(self);
-        newmem = PyArray_malloc(descr->elsize);
+        newmem = PyObject_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
@@ -1549,7 +1549,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
             descr->f->copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
-        PyArray_free(newmem);
+        PyObject_Free(newmem);
         Py_DECREF(descr);
         return new;
     }
@@ -3985,7 +3985,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_getset = gentype_getsets;
     PyGenericArrType_Type.tp_new = NULL;
     PyGenericArrType_Type.tp_alloc = gentype_alloc;
-    PyGenericArrType_Type.tp_free = PyArray_free;
+    PyGenericArrType_Type.tp_free = PyObject_Free;
     PyGenericArrType_Type.tp_repr = gentype_repr;
     PyGenericArrType_Type.tp_str = gentype_str;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
@@ -4009,7 +4009,7 @@ initialize_numeric_types(void)
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
     PyStringArrType_Type.tp_alloc = NULL;
-    PyStringArrType_Type.tp_free = NULL;
+    PyStringArrType_Type.tp_free = PyObject_Free;
 
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;
