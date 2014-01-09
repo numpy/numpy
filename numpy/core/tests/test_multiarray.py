@@ -3270,17 +3270,21 @@ class TestNewBufferProtocol(object):
         x = np.array([1, 2, 3], dtype='<i4')
         self._check_roundtrip(x)
 
+        # check long long can be represented as non-native
+        x = np.array([1, 2, 3], dtype='>q')
+        self._check_roundtrip(x)
+
         # Native-only data types can be passed through the buffer interface
         # only in native byte order
         if sys.byteorder == 'little':
-            x = np.array([1, 2, 3], dtype='>q')
+            x = np.array([1, 2, 3], dtype='>g')
             assert_raises(ValueError, self._check_roundtrip, x)
-            x = np.array([1, 2, 3], dtype='<q')
+            x = np.array([1, 2, 3], dtype='<g')
             self._check_roundtrip(x)
         else:
-            x = np.array([1, 2, 3], dtype='>q')
+            x = np.array([1, 2, 3], dtype='>g')
             self._check_roundtrip(x)
-            x = np.array([1, 2, 3], dtype='<q')
+            x = np.array([1, 2, 3], dtype='<g')
             assert_raises(ValueError, self._check_roundtrip, x)
 
     def test_roundtrip_half(self):
@@ -3366,9 +3370,9 @@ class TestNewBufferProtocol(object):
 
         sz = sum([dtype(b).itemsize for a, b in dt])
         if dtype('l').itemsize == 4:
-            assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
+            assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:q:dx:B:e:@H:f:=I:g:L:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
         else:
-            assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
+            assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:q:dx:B:e:@H:f:=I:g:Q:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
         # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides
         if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
             assert_equal(y.strides, (sz,))
