@@ -136,6 +136,11 @@ def type_checks(conf):
     NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("Py_intptr_t"),
                            '%d' % size))
 
+    size = conf.check_type_size("off_t", header_name=header_name,
+                                expected_sizes=[4, 8], features=features)
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("off_t"),
+                           '%d' % size))
+
     # We check declaration AND type because that's how distutils does it.
     try:
         conf.check_declaration("PY_LONG_LONG", header_name=header_name,
