@@ -27,6 +27,11 @@ def build(context):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
         kw = {}
+        # enable unix large file support on 32 bit systems
+        # (64 bit off_t, lseek -> lseek64 etc.)
+        kw['defines'] = ['_FILE_OFFSET_BITS=64',
+                         '_LARGEFILE_SOURCE=1',
+                         '_LARGEFILE64_SOURCE=1']
         if bld.env.USE_WINCRYPT:
             kw["lib"] = "ADVAPI32"
         return context.default_builder(extension, includes=includes, **kw)
