@@ -727,39 +727,55 @@ class TestDigitize(TestCase):
         x = np.arange(-6, 5)
         bins = np.arange(-5, 5)
         assert_array_equal(digitize(x, bins), np.arange(11))
+        assert_array_equal(new_digitize(x, bins), np.arange(11))
+        assert_array_equal(bindigitize(x, bins), np.arange(11))
 
     def test_reverse(self):
         x = np.arange(5, -6, -1)
         bins = np.arange(5, -5, -1)
         assert_array_equal(digitize(x, bins), np.arange(11))
+        assert_array_equal(new_digitize(x, bins), np.arange(11))
+        assert_array_equal(bindigitize(x, bins), np.arange(11))
 
     def test_random(self):
         x = rand(10)
         bin = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bin) != 0))
+        assert_(np.all(new_digitize(x, bin) != 0))
+        assert_(np.all(bindigitize(x, bin) != 0))
 
     def test_right_basic(self):
         x = [1, 5, 4, 10, 8, 11, 0]
         bins = [1, 5, 10]
         default_answer = [1, 2, 1, 3, 2, 3, 0]
         assert_array_equal(digitize(x, bins), default_answer)
+        assert_array_equal(new_digitize(x, bins), default_answer)
+        assert_array_equal(bindigitize(x, bins), default_answer)
         right_answer = [0, 1, 1, 2, 2, 3, 0]
         assert_array_equal(digitize(x, bins, True), right_answer)
+        assert_array_equal(new_digitize(x, bins, True), right_answer)
+        assert_array_equal(bindigitize(x, bins, True), right_answer)
 
     def test_right_open(self):
         x = np.arange(-6, 5)
         bins = np.arange(-6, 4)
         assert_array_equal(digitize(x, bins, True), np.arange(11))
+        assert_array_equal(new_digitize(x, bins, True), np.arange(11))
+        assert_array_equal(bindigitize(x, bins, True), np.arange(11))
 
     def test_right_open_reverse(self):
         x = np.arange(5, -6, -1)
         bins = np.arange(4, -6, -1)
         assert_array_equal(digitize(x, bins, True), np.arange(11))
+        assert_array_equal(new_digitize(x, bins, True), np.arange(11))
+        assert_array_equal(bindigitize(x, bins, True), np.arange(11))
 
     def test_right_open_random(self):
         x = rand(10)
         bins = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bins, True) != 10))
+        assert_(np.all(new_digitize(x, bins, True) != 10))
+        assert_(np.all(bindigitize(x, bins, True) != 10))
 
     def test_monotonic(self):
         x = [-1, 0, 1, 2]

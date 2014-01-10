@@ -8,7 +8,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'new_digitize', 'bindigitize']
 
 import warnings
 import sys
@@ -32,7 +33,9 @@ from numpy.core.fromnumeric import (
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
-from ._compiled_base import digitize, bincount, interp as compiled_interp
+from ._compiled_base import (
+    digitize, bincount, interp as compiled_interp, bindigitize
+    )
 from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 from numpy.compat import long
@@ -72,6 +75,96 @@ def iterable(y):
         return 0
     return 1
 
+def new_digitize(x, bins, right=False):
+    """
+    Return the indices of the bins to which each value in input array belongs.
+
+    Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
+    `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
+    `bins` is monotonically decreasing. If values in `x` are beyond the
+    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
+    is True, then the right bin is closed so that the index ``i`` is such
+    that ``bins[i-1] < x <= bins[i]`` or bins[i-1] >= x > bins[i]`` if `bins`
+    is monotonically increasing or decreasing, respectively.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array to be binned. It has to be 1-dimensional.
+    bins : array_like
+        Array of bins. It has to be 1-dimensional and monotonic.
+    right : bool, optional
+        Indicating whether the intervals include the right or the left bin
+        edge. Default behavior is (right==False) indicating that the interval
+        does not include the right edge. The left bin and is open in this
+        case. Ie., bins[i-1] <= x < bins[i] is the default behavior for
+        monotonically increasing bins.
+
+    Returns
+    -------
+    out : ndarray of ints
+        Output array of indices, of same shape as `x`.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or if `bins` is not monotonic.
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    bincount, histogram, unique
+
+    Notes
+    -----
+    If values in `x` are such that they fall outside the bin range,
+    attempting to index `bins` with the indices that `digitize` returns
+    will result in an IndexError.
+
+    Examples
+    --------
+    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
+    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
+    >>> inds = np.digitize(x, bins)
+    >>> inds
+    array([1, 4, 3, 2])
+    >>> for n in range(x.size):
+    ...   print bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]]
+    ...
+    0.0 <= 0.2 < 1.0
+    4.0 <= 6.4 < 10.0
+    2.5 <= 3.0 < 4.0
+    1.0 <= 1.6 < 2.5
+
+    >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
+    >>> bins = np.array([0,5,10,15,20])
+    >>> np.digitize(x,bins,right=True)
+    array([1, 2, 3, 4, 4])
+    >>> np.digitize(x,bins,right=False)
+    array([1, 3, 3, 4, 5])
+    """
+    x = np.asarray(x).ravel()
+    bins = np.asarray(bins).ravel()
+    
+    if not x.size or not bins.size:
+        raise ValueError('Both x and bins must have non-zero length.')
+    
+    stride = 1
+    if np.all(bins[:-1] > bins[1:]):
+        stride = -1
+    elif not np.all(bins[:-1] < bins[1:]):
+        msg = 'The bins must be monotonically increasing or decreasing.'
+        raise ValueError(msg)
+    bins = bins[::stride]
+    
+    side = 'left' if right else 'right'
+    out = np.searchsorted(bins, x, side=side)
+    
+    if stride == -1:
+        out = bins.size - out
+    
+    return out
 
 def histogram(a, bins=10, range=None, normed=False, weights=None,
               density=None):
