@@ -64,13 +64,6 @@
 #endif
 /**********************************************/
 
-typedef enum {
-    BROADCAST_NONE,
-    BROADCAST_LEFT,
-    BROADCAST_RIGHT,
-    BROADCAST_MIDDLE
-} EINSUM_BROADCAST;
-
 /**begin repeat
  * #name = byte, short, int, long, longlong,
  *         ubyte, ushort, uint, ulong, ulonglong,
@@ -1802,8 +1795,7 @@ parse_operand_subscripts(char *subscripts, int length,
                         char *out_label_counts,
                         int *out_min_label,
                         int *out_max_label,
-                        int *out_num_labels,
-                        EINSUM_BROADCAST *out_broadcast)
+                        int *out_num_labels)
 {
     int i, idim, ndim_left, label;
     int left_labels = 0, right_labels = 0, ellipsis = 0;
@@ -1947,19 +1939,6 @@ parse_operand_subscripts(char *subscripts, int length,
         }
     }
 
-    if (!ellipsis) {
-        *out_broadcast = BROADCAST_NONE;
-    }
-    else if (left_labels && right_labels) {
-        *out_broadcast = BROADCAST_MIDDLE;
-    }
-    else if (!left_labels) {
-        *out_broadcast = BROADCAST_RIGHT;
-    }
-    else {
-        *out_broadcast = BROADCAST_LEFT;
-    }
-
     return 1;
 }
 
@@ -1972,8 +1951,7 @@ static int
 parse_output_subscripts(char *subscripts, int length,
                         int ndim_broadcast,
                         const char *label_counts,
-                        char *out_labels,
-                        EINSUM_BROADCAST *out_broadcast)
+                        char *out_labels)
 {
     int i, nlabels, label, idim, ndim, ndim_left;
     int left_labels = 0, right_labels = 0, ellipsis = 0;
@@ -2095,19 +2073,6 @@ parse_output_subscripts(char *subscripts, int length,
     /* Set the remaining output labels to 0 */
     while (idim < ndim_left) {
         out_labels[idim++] = 0;
-    }
-
-    if (!ellipsis) {
-        *out_broadcast = BROADCAST_NONE;
-    }
-    else if (left_labels && right_labels) {
-        *out_broadcast = BROADCAST_MIDDLE;
-    }
-    else if (!left_labels) {
-        *out_broadcast = BROADCAST_RIGHT;
-    }
-    else {
-        *out_broadcast = BROADCAST_LEFT;
     }
 
     return ndim;
@@ -2328,136 +2293,44 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 
 static int
 prepare_op_axes(int ndim, int iop, char *labels, int *axes,
-            int ndim_iter, char *iter_labels, EINSUM_BROADCAST broadcast)
+            int ndim_iter, char *iter_labels)
 {
     int i, label, ibroadcast;
 
-    /* Regular broadcasting */
-    if (broadcast == BROADCAST_RIGHT) {
-        /* broadcast dimensions get placed in rightmost position */
-        ibroadcast = ndim-1;
-        for (i = ndim_iter-1; i >= 0; --i) {
-            label = iter_labels[i];
-            /*
-             * If it's an unlabeled broadcast dimension, choose
-             * the next broadcast dimension from the operand.
-             */
-            if (label == 0) {
-                while (ibroadcast >= 0 && labels[ibroadcast] != 0) {
-                    --ibroadcast;
-                }
-                /*
-                 * If we used up all the operand broadcast dimensions,
-                 * extend it with a "newaxis"
-                 */
-                if (ibroadcast < 0) {
-                    axes[i] = -1;
-                }
-                /* Otherwise map to the broadcast axis */
-                else {
-                    axes[i] = ibroadcast;
-                    --ibroadcast;
-                }
+    ibroadcast = ndim-1;
+    for (i = ndim_iter-1; i >= 0; --i) {
+        label = iter_labels[i];
+        /*
+         * If it's an unlabeled broadcast dimension, choose
+         * the next broadcast dimension from the operand.
+         */
+        if (label == 0) {
+            while (ibroadcast >= 0 && labels[ibroadcast] != 0) {
+                --ibroadcast;
             }
-            /* It's a labeled dimension, find the matching one */
+            /*
+             * If we used up all the operand broadcast dimensions,
+             * extend it with a "newaxis"
+             */
+            if (ibroadcast < 0) {
+                axes[i] = -1;
+            }
+            /* Otherwise map to the broadcast axis */
             else {
-                char *match = memchr(labels, label, ndim);
-                /* If the op doesn't have the label, broadcast it */
-                if (match == NULL) {
-                    axes[i] = -1;
-                }
-                /* Otherwise use it */
-                else {
-                    axes[i] = match - labels;
-                }
+                axes[i] = ibroadcast;
+                --ibroadcast;
             }
         }
-    }
-    /* Reverse broadcasting */
-    else if (broadcast == BROADCAST_LEFT) {
-        /* broadcast dimensions get placed in leftmost position */
-        ibroadcast = 0;
-        for (i = 0; i < ndim_iter; ++i) {
-            label = iter_labels[i];
-            /*
-             * If it's an unlabeled broadcast dimension, choose
-             * the next broadcast dimension from the operand.
-             */
-            if (label == 0) {
-                while (ibroadcast < ndim && labels[ibroadcast] != 0) {
-                    ++ibroadcast;
-                }
-                /*
-                 * If we used up all the operand broadcast dimensions,
-                 * extend it with a "newaxis"
-                 */
-                if (ibroadcast >= ndim) {
-                    axes[i] = -1;
-                }
-                /* Otherwise map to the broadcast axis */
-                else {
-                    axes[i] = ibroadcast;
-                    ++ibroadcast;
-                }
+        /* It's a labeled dimension, find the matching one */
+        else {
+            char *match = memchr(labels, label, ndim);
+            /* If the op doesn't have the label, broadcast it */
+            if (match == NULL) {
+                axes[i] = -1;
             }
-            /* It's a labeled dimension, find the matching one */
+            /* Otherwise use it */
             else {
-                char *match = memchr(labels, label, ndim);
-                /* If the op doesn't have the label, broadcast it */
-                if (match == NULL) {
-                    axes[i] = -1;
-                }
-                /* Otherwise use it */
-                else {
-                    axes[i] = match - labels;
-                }
-            }
-        }
-    }
-    /* Middle or None broadcasting */
-    else {
-        /* broadcast dimensions get placed in leftmost position */
-        ibroadcast = 0;
-        for (i = 0; i < ndim_iter; ++i) {
-            label = iter_labels[i];
-            /*
-             * If it's an unlabeled broadcast dimension, choose
-             * the next broadcast dimension from the operand.
-             */
-            if (label == 0) {
-                while (ibroadcast < ndim && labels[ibroadcast] != 0) {
-                    ++ibroadcast;
-                }
-                /*
-                 * If we used up all the operand broadcast dimensions,
-                 * it's an error
-                 */
-                if (ibroadcast >= ndim) {
-                    PyErr_Format(PyExc_ValueError,
-                            "operand %d did not have enough dimensions "
-                            "to match the broadcasting, and couldn't be "
-                            "extended because einstein sum subscripts "
-                            "were specified at both the start and end",
-                            iop);
-                    return 0;
-                }
-                /* Otherwise map to the broadcast axis */
-                else {
-                    axes[i] = ibroadcast;
-                    ++ibroadcast;
-                }
-            }
-            /* It's a labeled dimension, find the matching one */
-            else {
-                char *match = memchr(labels, label, ndim);
-                /* If the op doesn't have the label, broadcast it */
-                if (match == NULL) {
-                    axes[i] = -1;
-                }
-                /* Otherwise use it */
-                else {
-                    axes[i] = match - labels;
-                }
+                axes[i] = match - labels;
             }
         }
     }
@@ -2737,7 +2610,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     char output_labels[NPY_MAXDIMS], *iter_labels;
     int idim, ndim_output, ndim_broadcast, ndim_iter;
 
-    EINSUM_BROADCAST broadcast[NPY_MAXARGS];
     PyArrayObject *op[NPY_MAXARGS], *ret = NULL;
     PyArray_Descr *op_dtypes_array[NPY_MAXARGS], **op_dtypes;
 
@@ -2783,8 +2655,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!parse_operand_subscripts(subscripts, length,
                         PyArray_NDIM(op_in[iop]),
                         iop, op_labels[iop], label_counts,
-                        &min_label, &max_label, &num_labels,
-                        &broadcast[iop])) {
+                        &min_label, &max_label, &num_labels)) {
             return NULL;
         }
 
@@ -2845,7 +2716,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         /* Parse the output subscript string */
         ndim_output = parse_output_subscripts(outsubscripts, length,
                                         ndim_broadcast, label_counts,
-                                        output_labels, &broadcast[nop]);
+                                        output_labels);
     }
     else {
         if (subscripts[0] != '-' || subscripts[1] != '>') {
@@ -2859,7 +2730,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         /* Parse the output subscript string */
         ndim_output = parse_output_subscripts(subscripts, strlen(subscripts),
                                         ndim_broadcast, label_counts,
-                                        output_labels, &broadcast[nop]);
+                                        output_labels);
     }
     if (ndim_output < 0) {
         return NULL;
@@ -2961,7 +2832,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         op_axes[iop] = op_axes_arrays[iop];
 
         if (!prepare_op_axes(PyArray_NDIM(op[iop]), iop, op_labels[iop],
-                    op_axes[iop], ndim_iter, iter_labels, broadcast[iop])) {
+                    op_axes[iop], ndim_iter, iter_labels)) {
             goto fail;
         }
     }

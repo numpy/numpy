@@ -79,7 +79,12 @@ The `out` argument to `np.argmin` and `np.argmax` and their equivalent
 C-API functions is now checked to match the desired output shape exactly.
 If the check fails a `ValueError` instead of `TypeError` is raised.
 
- 
+Einsum
+~~~~~~
+Remove unnecessary broadcasting notation restrictions.
+np.einsum('ijk,j->ijk', A, B) can also be written as
+np.einsum('ij...,j->ij...', A, B) (ellipsis is no longer required on 'j')
+
 C-API
 ~~~~~
 
