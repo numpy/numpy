@@ -781,29 +781,6 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 }
 
 
-NPY_NO_EXPORT int
-_is_basic_python_type(PyObject * obj)
-{
-    if (obj == Py_None ||
-            /* Basic number types */
-#if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-#endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            PyComplex_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj) ||
-            PyDict_CheckExact(obj) ||
-            PyAnySet_CheckExact(obj)) {
-        return 1;
-    }
-
-    return 0;
-}
-
-
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
