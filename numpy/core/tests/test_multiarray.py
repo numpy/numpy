@@ -4082,5 +4082,42 @@ class TestConversion(TestCase):
                         "type %s and %s failed" % (dt1, dt2))
 
 
+class TestWhere(TestCase):
+    def test_basic(self):
+        dts = [np.bool, np.int16, np.int32, np.int64, np.double, np.complex128,
+               np.longdouble, np.clongdouble]
+        for dt in dts:
+            c = np.ones(53, dtype=np.bool)
+            assert_equal(np.where( c, dt(0), dt(1)), dt(0))
+            assert_equal(np.where(~c, dt(0), dt(1)), dt(1))
+            assert_equal(np.where(True, dt(0), dt(1)), dt(0))
+            assert_equal(np.where(False, dt(0), dt(1)), dt(1))
+            d = np.ones_like(c).astype(dt)
+            e = np.zeros_like(d)
+            r = d.astype(dt)
+            c[7] = False
+            r[7] = e[7]
+            assert_equal(np.where(c, d, e), r)
+            assert_equal(np.where(c, d, e[0]), r)
+            assert_equal(np.where(c, d[0], e), r)
+            assert_equal(np.where(c[::2], d[::2], e[::2]), r[::2])
+            assert_equal(np.where(c[1::2], d[1::2], e[1::2]), r[1::2])
+            assert_equal(np.where(c[::3], d[::3], e[::3]), r[::3])
+            assert_equal(np.where(c[1::3], d[1::3], e[1::3]), r[1::3])
+            assert_equal(np.where(c[::-2], d[::-2], e[::-2]), r[::-2])
+            assert_equal(np.where(c[::-3], d[::-3], e[::-3]), r[::-3])
+            assert_equal(np.where(c[1::-3], d[1::-3], e[1::-3]), r[1::-3])
+
+    def test_dtype_mix(self):
+        c = np.array([False, True, False, False, False, False, True, False,
+                     False, False, True, False])
+        a = np.uint32(1)
+        b =  np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.],
+                      dtype=np.float64)
+        r = np.array([5., 1., 3., 2., -1., -4., 1., -10., 10., 1., 1., 3.],
+                     dtype=np.float64)
+        assert_equal(np.where(c, a, b), r)
+
+
 if __name__ == "__main__":
     run_module_suite()

@@ -2679,6 +2679,23 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
     return NULL;
 }
 
+#define INNER_WHERE_LOOP(size) \
+    do { \
+        npy_intp i; \
+        for (i = 0; i < n; i++) { \
+            if (*csrc) { \
+                memcpy(dst, xsrc, size); \
+            } \
+            else { \
+                memcpy(dst, ysrc, size); \
+            } \
+            dst += size; \
+            xsrc += xstride; \
+            ysrc += ystride; \
+            csrc += cstride; \
+        } \
+    } while(0)
+
 
 /*NUMPY_API
  * Where
@@ -2687,7 +2704,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
     PyArrayObject *arr;
-    PyObject *tup = NULL, *obj = NULL;
+    PyObject *obj = NULL;
     PyObject *ret = NULL, *zero = NULL;
 
     arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0, NULL);
@@ -2706,24 +2723,126 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
+    if (!PyArray_ISBOOL(arr)) {
+        zero = PyInt_FromLong((long) 0);
+        obj = PyArray_EnsureAnyArray(PyArray_GenericBinaryFunction(arr, zero,
+                                                           n_ops.not_equal));
+        Py_DECREF(zero);
+        Py_DECREF(arr);
+        if (obj == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        obj = (PyObject *)arr;
+    }
 
-    zero = PyInt_FromLong((long) 0);
-    obj = PyArray_EnsureAnyArray(PyArray_GenericBinaryFunction(arr, zero,
-                n_ops.not_equal));
-    Py_DECREF(zero);
-    Py_DECREF(arr);
-    if (obj == NULL) {
-        return NULL;
-    }
-    tup = Py_BuildValue("(OO)", y, x);
-    if (tup == NULL) {
+    {
+        npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED;
+        NpyIter_IterNextFunc *iternext;
+        npy_intp * innersizeptr;
+        char **dataptrarray;
+        PyArrayObject * op_in[4] = {
+            NULL, (PyArrayObject*)obj,
+            (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL),
+            (PyArrayObject*)PyArray_FromAny(y, NULL, 0, 0, 0 ,NULL)
+        };
+        npy_uint32 op_flags[4] = {
+            NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE,
+            NPY_ITER_READONLY, NPY_ITER_READONLY, NPY_ITER_READONLY
+        };
+        PyArray_Descr * common_dt =
+            PyArray_ResultType(2, &op_in[0] + 2, 0, NULL);
+        PyArray_Descr * op_dt[4] = {common_dt, NULL, common_dt, common_dt};
+        PyArrayObject * ax = op_in[2], * ay = op_in[3];
+        NpyIter * iter;
+
+        if (ax == NULL || ay == NULL || common_dt == NULL) {
+            Py_DECREF(ax);
+            Py_DECREF(ay);
+            Py_DECREF(obj);
+            return NULL;
+        }
+        iter =  NpyIter_MultiNew(4, op_in, flags,
+                                 NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                                 op_flags, op_dt);
+        Py_DECREF(common_dt);
+        if (iter == NULL) {
+            Py_DECREF(ax);
+            Py_DECREF(ay);
+            Py_DECREF(obj);
+            return NULL;
+        }
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+        dataptrarray = NpyIter_GetDataPtrArray(iter);
+
+        do {
+            PyArray_Descr * dtx = NpyIter_GetDescrArray(iter)[2];
+            PyArray_Descr * dty = NpyIter_GetDescrArray(iter)[3];
+            int axswap = PyDataType_ISBYTESWAPPED(dtx);
+            int ayswap = PyDataType_ISBYTESWAPPED(dty);
+            PyArray_CopySwapFunc *copyswapx = dtx->f->copyswap;
+            PyArray_CopySwapFunc *copyswapy = dty->f->copyswap;
+            int native = (axswap == ayswap) && (axswap == 0);
+            npy_intp n = (*innersizeptr);
+            npy_intp itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
+            npy_intp cstride = NpyIter_GetInnerStrideArray(iter)[1];
+            npy_intp xstride = NpyIter_GetInnerStrideArray(iter)[2];
+            npy_intp ystride = NpyIter_GetInnerStrideArray(iter)[3];
+            char * dst = dataptrarray[0];
+            char * csrc = dataptrarray[1];
+            char * xsrc = dataptrarray[2];
+            char * ysrc = dataptrarray[3];
+
+            /* constant sizes so compiler replaces memcpy */
+            if (native && itemsize == 16) {
+                INNER_WHERE_LOOP(16);
+            }
+            else if (native && itemsize == 8) {
+                INNER_WHERE_LOOP(8);
+            }
+            else if (native && itemsize == 4) {
+                INNER_WHERE_LOOP(4);
+            }
+            else if (native && itemsize == 2) {
+                INNER_WHERE_LOOP(2);
+            }
+            else if (native && itemsize == 1) {
+                INNER_WHERE_LOOP(1);
+            }
+            else {
+                /* copyswap is faster than memcpy even if we are native */
+                npy_intp i;
+                for (i = 0; i < n; i++) {
+                    if (*csrc) {
+                        copyswapx(dst, xsrc, axswap, ax);
+                    }
+                    else {
+                        copyswapy(dst, ysrc, ayswap, ay);
+                    }
+                    dst += itemsize;
+                    xsrc += xstride;
+                    ysrc += ystride;
+                    csrc += cstride;
+                }
+            }
+        } while (iternext(iter));
+
+        /* Get the result from the iterator object array */
+        ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
+        Py_INCREF(ret);
         Py_DECREF(obj);
-        return NULL;
+        Py_DECREF(ax);
+        Py_DECREF(ay);
+        if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        return ret;
     }
-    ret = PyArray_Choose((PyArrayObject *)obj, tup, NULL, NPY_RAISE);
-    Py_DECREF(obj);
-    Py_DECREF(tup);
-    return ret;
 }
 
 static PyObject *
