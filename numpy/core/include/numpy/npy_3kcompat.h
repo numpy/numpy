@@ -193,7 +193,8 @@ npy_PyFile_Dup(PyObject *file, char *mode, npy_off_t *orig_pos)
     *orig_pos = npy_ftell(handle);
     if (*orig_pos == -1) {
         PyErr_SetString(PyExc_IOError, "obtaining file position failed");
-        return -1;
+        fclose(handle);
+        return NULL;
     }
 
     /* Seek raw handle to the Python-side position */
@@ -210,7 +211,8 @@ npy_PyFile_Dup(PyObject *file, char *mode, npy_off_t *orig_pos)
     }
     if (npy_fseek(handle, pos, SEEK_SET) == -1) {
         PyErr_SetString(PyExc_IOError, "seeking file failed");
-        return -1;
+        fclose(handle);
+        return NULL;
     }
     return handle;
 }
