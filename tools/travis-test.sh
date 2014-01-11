@@ -89,6 +89,12 @@ run_test()
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
+
+if [ -n "$USE_DEBUG" ]; then
+  apt-get install -qq -y --force-yes python3-dbg
+  PYTHON=python3-dbg
+fi
+
 export PYTHON
 export PIP
 if [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
