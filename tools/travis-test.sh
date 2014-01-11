@@ -19,7 +19,7 @@ setup_base()
   # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
-  pip install .
+  $PIP install .
 }
 
 setup_chroot()
@@ -40,7 +40,7 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python-dev python-nose python-pip"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip"
 }
 
 setup_bento()
@@ -79,13 +79,18 @@ run_test()
   # of numpy in the source directory.
   mkdir -p empty
   cd empty
-  INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
+  INSTALLDIR=$($PYTHON -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
-  python ../tools/test-installed-numpy.py # --mode=full
-  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
+  $PYTHON ../tools/test-installed-numpy.py # --mode=full
+  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which $PYTHON) ../tools/test-installed-numpy.py
   # - coverage report --rcfile=../.coveragerc --show-missing
 }
 
+# travis venv tests override python
+PYTHON=${PYTHON:-python}
+PIP=${PIP:-pip}
+export PYTHON
+export PIP
 if [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
   setup_base
   run_test
@@ -93,7 +98,7 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   DIR=/chroot
   setup_chroot $DIR
   # run again in chroot with this time testing
-  sudo linux32 chroot $DIR bash -c "cd numpy && $0 test"
+  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3 PIP=pip3 $0 test"
 elif [ -n "$USE_BENTO" ] && [ $# -eq 0 ]; then
   setup_bento
   # run again this time testing
