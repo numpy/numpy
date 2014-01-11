@@ -202,7 +202,7 @@ npy_PyFile_Dup(PyObject *file, char *mode, npy_off_t *orig_pos)
         fclose(handle);
         return NULL;
     }
-    pos = PyNumber_AsSsize_t(ret, PyExc_OverflowError);
+    pos = PyLong_AsLongLong(ret);
     Py_DECREF(ret);
     if (PyErr_Occurred()) {
         fclose(handle);

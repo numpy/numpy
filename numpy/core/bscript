@@ -491,7 +491,11 @@ def pre_build(context):
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath")
+                                       use="npysort npymath",
+                                       defines=['_FILE_OFFSET_BITS=64',
+                                                '_LARGEFILE_SOURCE=1',
+                                                '_LARGEFILE64_SOURCE=1']
+                                       )
     context.register_builder("multiarray", builder_multiarray)
 
     def build_ufunc(extension):

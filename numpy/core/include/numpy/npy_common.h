@@ -74,8 +74,8 @@
         #error Unsupported size for type off_t
     #endif
 #else
-    #define npy_fseek fseek
-    #define npy_ftell ftell
+    #define npy_fseek fseeko
+    #define npy_ftell ftello
     #define npy_lseek lseek
     #define npy_off_t off_t
 
