@@ -2679,6 +2679,11 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
     return NULL;
 }
 
+/*
+ * inner loop with constant size memcpy arguments
+ * this allows the compiler to replace function calls while still handling the
+ * alignment requirements of the platform.
+ */
 #define INNER_WHERE_LOOP(size) \
     do { \
         npy_intp i; \
@@ -2704,8 +2709,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
     PyArrayObject *arr;
-    PyObject *obj = NULL;
-    PyObject *ret = NULL, *zero = NULL;
+    PyObject *ret = NULL;
 
     arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0, NULL);
     if (arr == NULL) {
@@ -2723,27 +2727,14 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
-    if (!PyArray_ISBOOL(arr)) {
-        zero = PyInt_FromLong((long) 0);
-        obj = PyArray_EnsureAnyArray(PyArray_GenericBinaryFunction(arr, zero,
-                                                           n_ops.not_equal));
-        Py_DECREF(zero);
-        Py_DECREF(arr);
-        if (obj == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        obj = (PyObject *)arr;
-    }
-
     {
-        npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED;
+        npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
+                           NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
         NpyIter_IterNextFunc *iternext;
         npy_intp * innersizeptr;
         char **dataptrarray;
         PyArrayObject * op_in[4] = {
-            NULL, (PyArrayObject*)obj,
+            NULL, arr,
             (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL),
             (PyArrayObject*)PyArray_FromAny(y, NULL, 0, 0, 0 ,NULL)
         };
@@ -2753,24 +2744,28 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         };
         PyArray_Descr * common_dt =
             PyArray_ResultType(2, &op_in[0] + 2, 0, NULL);
-        PyArray_Descr * op_dt[4] = {common_dt, NULL, common_dt, common_dt};
+        PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
+                                    common_dt, common_dt};
         PyArrayObject * ax = op_in[2], * ay = op_in[3];
         NpyIter * iter;
 
         if (ax == NULL || ay == NULL || common_dt == NULL) {
+            Py_DECREF(op_dt[1]);
+            Py_DECREF(common_dt);
             Py_DECREF(ax);
             Py_DECREF(ay);
-            Py_DECREF(obj);
+            Py_DECREF(arr);
             return NULL;
         }
         iter =  NpyIter_MultiNew(4, op_in, flags,
                                  NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                  op_flags, op_dt);
+        Py_DECREF(op_dt[1]);
         Py_DECREF(common_dt);
         if (iter == NULL) {
             Py_DECREF(ax);
             Py_DECREF(ay);
-            Py_DECREF(obj);
+            Py_DECREF(arr);
             return NULL;
         }
 
@@ -2833,7 +2828,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
         Py_INCREF(ret);
-        Py_DECREF(obj);
+        Py_DECREF(arr);
         Py_DECREF(ax);
         Py_DECREF(ay);
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
@@ -2844,6 +2839,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return ret;
     }
 }
+
+#undef INNER_WHERE_LOOP
 
 static PyObject *
 array_where(PyObject *NPY_UNUSED(ignored), PyObject *args)
