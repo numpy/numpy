@@ -703,7 +703,7 @@ class system_info:
         else:
             found_libs = self._lib_list(lib_dirs, libs, exts)
             found_dirs = [lib_dirs]
-        if len(found_libs) == len(libs):
+        if len(found_libs) > 0 and len(found_libs) == len(libs):
             info = {'libraries': found_libs, 'library_dirs': found_dirs}
             # Now, check for optional libraries
             if is_sequence(lib_dirs):
@@ -1565,7 +1565,9 @@ class openblas_info(blas_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        openblas_libs = self.get_libs('libraries', self._lib_names)
+        if openblas_libs == self._lib_names: # backward compat with 1.8.0
+            openblas_libs = self.get_libs('openblas_libs', self._lib_names)
         info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
             return
