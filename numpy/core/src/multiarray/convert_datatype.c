@@ -140,7 +140,6 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
     PyArray_Descr *dtype = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
-    PyObject *list = NULL;
     int result;
 
     if (*flex_dtype == NULL) {
@@ -224,12 +223,14 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     if ((flex_type_num == NPY_STRING ||
                             flex_type_num == NPY_UNICODE) &&
                             data_obj != NULL) {
+                        PyObject *list;
+
                         if (PyArray_CheckScalar(data_obj)) {
-                            PyObject *scalar = PyArray_ToList(data_obj);
-                            if (scalar != NULL) {
-                                PyObject *s = PyObject_Str(scalar);
+                            list = PyArray_ToList((PyArrayObject *)data_obj);
+                            if (list != NULL) {
+                                PyObject *s = PyObject_Str(list);
                                 if (s == NULL) {
-                                    Py_DECREF(scalar);
+                                    Py_DECREF(list);
                                     Py_DECREF(*flex_dtype);
                                     *flex_dtype = NULL;
                                     return;
@@ -238,7 +239,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                     size = PyObject_Length(s);
                                     Py_DECREF(s);
                                 }
-                                Py_DECREF(scalar);
+                                Py_DECREF(list);
                             }
                         }
                         else if (PyArray_Check(data_obj)) {
@@ -247,7 +248,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                              * GetArrayParamsFromObject won't iterate over
                              * array.
                              */
-                            list = PyArray_ToList(data_obj);
+                            list = PyArray_ToList((PyArrayObject *)data_obj);
                             result = PyArray_GetArrayParamsFromObject(
                                     list,
                                     *flex_dtype,

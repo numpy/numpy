@@ -846,7 +846,6 @@ npyrational_compare(const void* d0, const void* d1, void* arr) {
         data = (rational*)data_; \
         best_i = 0; \
         best_r = data[0]; \
-        i; \
         for (i = 1; i < n; i++) { \
             if (rational_##op(data[i],best_r)) { \
                 best_i = i; \
