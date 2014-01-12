@@ -1130,13 +1130,13 @@ def test_xerbla_override():
             os._exit(os.EX_CONFIG)
 
         try:
-            a = np.array([[1]])
-            np.linalg.lapack_lite.dgetrf(
-                1, 1, a.astype(np.double),
+            a = np.array([[1.]])
+            np.linalg.lapack_lite.dorgqr(
+                1, 1, 1, a,
                 0, # <- invalid value
-                a.astype(np.intc), 0)
+                a, a, 0, 0)
         except ValueError as e:
-            if "DGETRF parameter number 4" in str(e):
+            if "DORGQR parameter number 5" in str(e):
                 # success
                 os._exit(os.EX_OK)
 
