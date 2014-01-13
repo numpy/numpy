@@ -2708,7 +2708,7 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
 NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
-    PyArrayObject *arr;
+    PyArrayObject *arr, *ax, *ay;
     PyObject *ret = NULL;
 
     arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0, NULL);
@@ -2727,32 +2727,31 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
-    {
+    ax = (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL);
+    ay = (PyArrayObject*)PyArray_FromAny(y, NULL, 0, 0, 0 ,NULL);
+    if (ax == NULL || ay == NULL) {
+        goto fail;
+    }
+    else {
         npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
                            NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
         PyArrayObject * op_in[4] = {
-            NULL, arr,
-            (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL),
-            (PyArrayObject*)PyArray_FromAny(y, NULL, 0, 0, 0 ,NULL)
+            NULL, arr, ax, ay
         };
         npy_uint32 op_flags[4] = {
             NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE,
             NPY_ITER_READONLY, NPY_ITER_READONLY, NPY_ITER_READONLY
         };
-        PyArray_Descr * common_dt =
-            PyArray_ResultType(2, &op_in[0] + 2, 0, NULL);
+        PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
+                                                       0, NULL);
         PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                     common_dt, common_dt};
-        PyArrayObject * ax = op_in[2], * ay = op_in[3];
         NpyIter * iter;
 
-        if (ax == NULL || ay == NULL || common_dt == NULL) {
-            Py_DECREF(op_dt[1]);
-            Py_DECREF(common_dt);
-            Py_DECREF(ax);
-            Py_DECREF(ay);
-            Py_DECREF(arr);
-            return NULL;
+        if (common_dt == NULL || op_dt[1] == NULL) {
+            Py_XDECREF(op_dt[1]);
+            Py_XDECREF(common_dt);
+            goto fail;
         }
         iter =  NpyIter_MultiNew(4, op_in, flags,
                                  NPY_KEEPORDER, NPY_UNSAFE_CASTING,
@@ -2760,10 +2759,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(op_dt[1]);
         Py_DECREF(common_dt);
         if (iter == NULL) {
-            Py_DECREF(ax);
-            Py_DECREF(ay);
-            Py_DECREF(arr);
-            return NULL;
+            goto fail;
         }
 
         if (NpyIter_GetIterSize(iter) != 0) {
@@ -2837,6 +2833,12 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         return ret;
     }
+
+ fail:
+    Py_DECREF(arr);
+    Py_XDECREF(ax);
+    Py_XDECREF(ay);
+    return NULL;
 }
 
 #undef INNER_WHERE_LOOP
