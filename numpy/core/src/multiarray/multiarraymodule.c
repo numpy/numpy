@@ -2730,9 +2730,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     {
         npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
                            NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
-        NpyIter_IterNextFunc *iternext;
-        npy_intp * innersizeptr;
-        char **dataptrarray;
         PyArrayObject * op_in[4] = {
             NULL, arr,
             (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL),
@@ -2769,61 +2766,63 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             return NULL;
         }
 
-        iternext = NpyIter_GetIterNext(iter, NULL);
-        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-        dataptrarray = NpyIter_GetDataPtrArray(iter);
+        if (NpyIter_GetIterSize(iter) != 0) {
+            NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+            npy_intp * innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+            char **dataptrarray = NpyIter_GetDataPtrArray(iter);
 
-        do {
-            PyArray_Descr * dtx = NpyIter_GetDescrArray(iter)[2];
-            PyArray_Descr * dty = NpyIter_GetDescrArray(iter)[3];
-            int axswap = PyDataType_ISBYTESWAPPED(dtx);
-            int ayswap = PyDataType_ISBYTESWAPPED(dty);
-            PyArray_CopySwapFunc *copyswapx = dtx->f->copyswap;
-            PyArray_CopySwapFunc *copyswapy = dty->f->copyswap;
-            int native = (axswap == ayswap) && (axswap == 0);
-            npy_intp n = (*innersizeptr);
-            npy_intp itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
-            npy_intp cstride = NpyIter_GetInnerStrideArray(iter)[1];
-            npy_intp xstride = NpyIter_GetInnerStrideArray(iter)[2];
-            npy_intp ystride = NpyIter_GetInnerStrideArray(iter)[3];
-            char * dst = dataptrarray[0];
-            char * csrc = dataptrarray[1];
-            char * xsrc = dataptrarray[2];
-            char * ysrc = dataptrarray[3];
+            do {
+                PyArray_Descr * dtx = NpyIter_GetDescrArray(iter)[2];
+                PyArray_Descr * dty = NpyIter_GetDescrArray(iter)[3];
+                int axswap = PyDataType_ISBYTESWAPPED(dtx);
+                int ayswap = PyDataType_ISBYTESWAPPED(dty);
+                PyArray_CopySwapFunc *copyswapx = dtx->f->copyswap;
+                PyArray_CopySwapFunc *copyswapy = dty->f->copyswap;
+                int native = (axswap == ayswap) && (axswap == 0);
+                npy_intp n = (*innersizeptr);
+                npy_intp itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
+                npy_intp cstride = NpyIter_GetInnerStrideArray(iter)[1];
+                npy_intp xstride = NpyIter_GetInnerStrideArray(iter)[2];
+                npy_intp ystride = NpyIter_GetInnerStrideArray(iter)[3];
+                char * dst = dataptrarray[0];
+                char * csrc = dataptrarray[1];
+                char * xsrc = dataptrarray[2];
+                char * ysrc = dataptrarray[3];
 
-            /* constant sizes so compiler replaces memcpy */
-            if (native && itemsize == 16) {
-                INNER_WHERE_LOOP(16);
-            }
-            else if (native && itemsize == 8) {
-                INNER_WHERE_LOOP(8);
-            }
-            else if (native && itemsize == 4) {
-                INNER_WHERE_LOOP(4);
-            }
-            else if (native && itemsize == 2) {
-                INNER_WHERE_LOOP(2);
-            }
-            else if (native && itemsize == 1) {
-                INNER_WHERE_LOOP(1);
-            }
-            else {
-                /* copyswap is faster than memcpy even if we are native */
-                npy_intp i;
-                for (i = 0; i < n; i++) {
-                    if (*csrc) {
-                        copyswapx(dst, xsrc, axswap, ax);
-                    }
-                    else {
-                        copyswapy(dst, ysrc, ayswap, ay);
-                    }
-                    dst += itemsize;
-                    xsrc += xstride;
-                    ysrc += ystride;
-                    csrc += cstride;
+                /* constant sizes so compiler replaces memcpy */
+                if (native && itemsize == 16) {
+                    INNER_WHERE_LOOP(16);
                 }
-            }
-        } while (iternext(iter));
+                else if (native && itemsize == 8) {
+                    INNER_WHERE_LOOP(8);
+                }
+                else if (native && itemsize == 4) {
+                    INNER_WHERE_LOOP(4);
+                }
+                else if (native && itemsize == 2) {
+                    INNER_WHERE_LOOP(2);
+                }
+                else if (native && itemsize == 1) {
+                    INNER_WHERE_LOOP(1);
+                }
+                else {
+                    /* copyswap is faster than memcpy even if we are native */
+                    npy_intp i;
+                    for (i = 0; i < n; i++) {
+                        if (*csrc) {
+                            copyswapx(dst, xsrc, axswap, ax);
+                        }
+                        else {
+                            copyswapy(dst, ysrc, ayswap, ay);
+                        }
+                        dst += itemsize;
+                        xsrc += xstride;
+                        ysrc += ystride;
+                        csrc += cstride;
+                    }
+                }
+            } while (iternext(iter));
+        }
 
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
