@@ -444,13 +444,14 @@ static _buffer_info_t*
 _buffer_info_new(PyArrayObject *arr)
 {
     _buffer_info_t *info;
-    _tmp_string_t fmt = {0,0,0};
+    _tmp_string_t fmt = {NULL, 0, 0};
     int k;
 
     info = (_buffer_info_t*)malloc(sizeof(_buffer_info_t));
 
     /* Fill in format */
     if (_buffer_format_string(PyArray_DESCR(arr), &fmt, arr, NULL, NULL) != 0) {
+        free(fmt.s);
         free(info);
         return NULL;
     }
