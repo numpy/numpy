@@ -626,6 +626,9 @@ def test_large_file_support():
     # try creating a large sparse file
     with tempfile.NamedTemporaryFile() as tf:
         try:
+            # seek past end would work too, but linux truncate somewhat
+            # increases the chances that we have a sparse filesystem and can
+            # avoid actually writing 5GB
             import subprocess as sp
             sp.check_call(["truncate", "-s", "5368709120", tf.name])
         except:
