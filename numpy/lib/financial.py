@@ -636,10 +636,11 @@ def irr(values):
     """
     res = np.roots(values[::-1])
     # Find the root(s) between 0 and 1
-    mask = (res.imag == 0) & (res.real > 0) & (res.real <= 1)
+    mask = (res.imag == 0) & (res.real > 0) 
     res = res[mask].real
     if res.size == 0:
         return np.nan
+    #TODO: change this to find the minimum value of the array (smallest res = largest rate, which will be th correct answer)
     rate = 1.0/res - 1
     if rate.size == 1:
         rate = rate.item()
