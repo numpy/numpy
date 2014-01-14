@@ -3617,14 +3617,15 @@ NPY_NO_EXPORT PyDataMem_EventHookFunc *
 PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
                        void *user_data, void **old_data)
 {
-    PyGILState_STATE gilstate = PyGILState_Ensure();
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API
     PyDataMem_EventHookFunc *temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
         *old_data = _PyDataMem_eventhook_user_data;
     }
     _PyDataMem_eventhook_user_data = user_data;
-    PyGILState_Release(gilstate);
+    NPY_DISABLE_C_API
     return temp;
 }
 
@@ -3638,12 +3639,13 @@ PyDataMem_NEW(size_t size)
 
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
-        PyGILState_STATE gilstate = PyGILState_Ensure();
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
             (*_PyDataMem_eventhook)(NULL, result, size,
                                     _PyDataMem_eventhook_user_data);
         }
-        PyGILState_Release(gilstate);
+        NPY_DISABLE_C_API
     }
     return result;
 }
@@ -3658,12 +3660,13 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
 
     result = calloc(size, elsize);
     if (_PyDataMem_eventhook != NULL) {
-        PyGILState_STATE gilstate = PyGILState_Ensure();
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
             (*_PyDataMem_eventhook)(NULL, result, size * elsize,
                                     _PyDataMem_eventhook_user_data);
         }
-        PyGILState_Release(gilstate);
+        NPY_DISABLE_C_API
     }
     return result;
 }
@@ -3676,12 +3679,13 @@ PyDataMem_FREE(void *ptr)
 {
     free(ptr);
     if (_PyDataMem_eventhook != NULL) {
-        PyGILState_STATE gilstate = PyGILState_Ensure();
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
             (*_PyDataMem_eventhook)(ptr, NULL, 0,
                                     _PyDataMem_eventhook_user_data);
         }
-        PyGILState_Release(gilstate);
+        NPY_DISABLE_C_API
     }
 }
 
@@ -3695,12 +3699,13 @@ PyDataMem_RENEW(void *ptr, size_t size)
 
     result = realloc(ptr, size);
     if (_PyDataMem_eventhook != NULL) {
-        PyGILState_STATE gilstate = PyGILState_Ensure();
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
             (*_PyDataMem_eventhook)(ptr, result, size,
                                     _PyDataMem_eventhook_user_data);
         }
-        PyGILState_Release(gilstate);
+        NPY_DISABLE_C_API
     }
     return result;
 }
