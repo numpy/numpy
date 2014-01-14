@@ -2747,6 +2747,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                     common_dt, common_dt};
         NpyIter * iter;
+        int needs_api;
+        NPY_BEGIN_THREADS_DEF;
 
         if (common_dt == NULL || op_dt[1] == NULL) {
             Py_XDECREF(op_dt[1]);
@@ -2760,6 +2762,10 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(common_dt);
         if (iter == NULL) {
             goto fail;
+        }
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
         if (NpyIter_GetIterSize(iter) != 0) {
@@ -2826,6 +2832,10 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(arr);
         Py_DECREF(ax);
         Py_DECREF(ay);
+
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(ret);
             return NULL;
