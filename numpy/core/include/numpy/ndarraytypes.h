@@ -954,6 +954,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
+#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size)
 #define NPY_BEGIN_THREADS_DESCR(dtype)
 #define NPY_END_THREADS_DESCR(dtype)
 #define NPY_ALLOW_C_API_DEF
