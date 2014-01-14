@@ -8,7 +8,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'bindigitize']
 
 import warnings
 import sys
@@ -32,7 +33,9 @@ from numpy.core.fromnumeric import (
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
-from ._compiled_base import digitize, bincount, interp as compiled_interp
+from ._compiled_base import (
+    digitize, bincount, interp as compiled_interp, bindigitize
+    )
 from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 from numpy.compat import long
