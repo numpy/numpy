@@ -23,6 +23,7 @@ __all__ = [
         'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
         'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
         'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+        'fastsearchsorted',
         ]
 
 
@@ -1006,6 +1007,14 @@ def searchsorted(a, v, side='left', sorter=None):
     except AttributeError:
         return _wrapit(a, 'searchsorted', v, side, sorter)
     return searchsorted(v, side, sorter)
+    
+def fastsearchsorted(a, v, side='left'):
+    try:
+        fastsearchsorted = a.fastsearchsorted
+    except AttributeError:
+        return _wrapit(a, 'fastsearchsorted', v, side)
+    return fastsearchsorted(v, side)
+
 
 
 def resize(a, new_shape):

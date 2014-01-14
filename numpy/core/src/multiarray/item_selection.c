@@ -22,6 +22,7 @@
 #include "item_selection.h"
 #include "npy_sort.h"
 #include "npy_partition.h"
+#include "npy_binsearch.h"
 
 /*NUMPY_API
  * Take
@@ -2220,6 +2221,114 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     Py_XDECREF(ret);
     return NULL;
 }
+
+NPY_NO_EXPORT PyObject *
+PyArray_FastSearchSorted(PyArrayObject *op1, PyObject *op2,
+                         NPY_SEARCHSIDE side)
+{
+    PyArrayObject *ap1 = NULL,
+                  *ap2 = NULL,
+                  *ret = NULL,
+                  *store_arr = NULL;
+    PyArray_Descr *dtype;
+    int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
+    PyArray_BinSearchFunc *binsearch;
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Find common type */
+    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    /* Look for a type specific binary search function */
+    /* Is it more clear to do PyArray_TYPE(ap1) instead of dtype->type_num? */
+    binsearch = get_binsearch_func(dtype->type_num, side);
+    if (binsearch == NULL && dtype->f->compare == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "type does not have compare function");
+        return NULL;
+    }
+
+    /* need ap2 as contiguous array and of right type */
+    ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
+                                0, 0,
+                                NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
+                                NULL);
+    if (ap2 == NULL) {
+        return NULL;
+    }
+
+    /*
+     * If the needle (ap2) is larger than the haystack (op1) we copy the
+     * haystack to a continuous array for improved cache utilization.
+     */
+    if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
+        ap1_flags |= NPY_ARRAY_CARRAY_RO;
+    }
+
+    ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                1, 1, ap1_flags, NULL);
+    if (ap1 == NULL) {
+        goto fail;
+    }
+
+    /* ret is a contiguous array of intp type to hold returned indices */
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
+                                       PyArray_DIMS(ap2), NPY_INTP,
+                                       NULL, NULL, 0, 0, (PyObject *)ap2);
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    /* If we have a type specific function, use it */
+    if (binsearch) {
+        NPY_BEGIN_THREADS_DESCR(dtype);
+        binsearch((const char *)PyArray_BYTES(ap1),
+                  (const char *)PyArray_BYTES(ap2),
+                  PyArray_BYTES(ret),
+                  PyArray_SIZE(ap1), PyArray_SIZE(ap2),
+                  PyArray_STRIDES(ap1)[0], dtype->elsize, NPY_SIZEOF_INTP);
+        NPY_END_THREADS_DESCR(dtype);
+    }
+    else {
+        store_arr = global_obj;
+        global_obj = ap1;
+        if (side == NPY_SEARCHLEFT) {
+            NPY_BEGIN_THREADS_DESCR(dtype);
+            npy_binsearch_left((const char *)PyArray_BYTES(ap1),
+                               (const char *)PyArray_BYTES(ap2),
+                               PyArray_BYTES(ret),
+                               PyArray_SIZE(ap1), PyArray_SIZE(ap2),
+                               PyArray_STRIDES(ap1)[0], dtype->elsize,
+                               NPY_SIZEOF_INTP, sortCompare);
+            NPY_END_THREADS_DESCR(dtype);
+        }
+        else if (side == NPY_SEARCHRIGHT) {
+            NPY_BEGIN_THREADS_DESCR(dtype);
+            npy_binsearch_right((const char *)PyArray_BYTES(ap1),
+                                (const char *)PyArray_BYTES(ap2),
+                                PyArray_BYTES(ret),
+                                PyArray_SIZE(ap1), PyArray_SIZE(ap2),
+                                PyArray_STRIDES(ap1)[0], dtype->elsize,
+                                NPY_SIZEOF_INTP, sortCompare);
+            NPY_END_THREADS_DESCR(dtype);
+        }
+        global_obj = store_arr;
+    }
+
+    Py_DECREF(ap1);
+    Py_DECREF(ap2);
+    return (PyObject *)ret;
+
+ fail:
+    Py_XDECREF(ap1);
+    Py_XDECREF(ap2);
+    Py_XDECREF(ret);
+    return NULL;
+}
+
 
 /*NUMPY_API
  * Diagonal
