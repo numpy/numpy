@@ -98,7 +98,7 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter"]
+        "copysign", "nextafter", "ftello", "fseeko"]
 
 
 OPTIONAL_HEADERS = [
@@ -129,7 +129,7 @@ OPTIONAL_GCC_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
-        "copysign"]
+        "copysign", "ftello", "fseeko"]
 
 # C99 functions: float and long double versions
 C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
