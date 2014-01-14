@@ -72,7 +72,11 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     }
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
@@ -145,7 +149,11 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     }
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
