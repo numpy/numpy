@@ -2415,6 +2415,7 @@ class TestIO(object):
 
             f = open(self.filename, 'r+b')
             f.read(2)
+            f.seek(0, 1) # seek between read&write required by ANSI C
             np.array([0], dtype=np.float64).tofile(f)
             pos = f.tell()
             f.close()
