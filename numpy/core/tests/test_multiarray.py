@@ -4083,5 +4083,105 @@ class TestConversion(TestCase):
                         "type %s and %s failed" % (dt1, dt2))
 
 
+class TestWhere(TestCase):
+    def test_basic(self):
+        dts = [np.bool, np.int16, np.int32, np.int64, np.double, np.complex128,
+               np.longdouble, np.clongdouble]
+        for dt in dts:
+            c = np.ones(53, dtype=np.bool)
+            assert_equal(np.where( c, dt(0), dt(1)), dt(0))
+            assert_equal(np.where(~c, dt(0), dt(1)), dt(1))
+            assert_equal(np.where(True, dt(0), dt(1)), dt(0))
+            assert_equal(np.where(False, dt(0), dt(1)), dt(1))
+            d = np.ones_like(c).astype(dt)
+            e = np.zeros_like(d)
+            r = d.astype(dt)
+            c[7] = False
+            r[7] = e[7]
+            assert_equal(np.where(c, e, e), e)
+            assert_equal(np.where(c, d, e), r)
+            assert_equal(np.where(c, d, e[0]), r)
+            assert_equal(np.where(c, d[0], e), r)
+            assert_equal(np.where(c[::2], d[::2], e[::2]), r[::2])
+            assert_equal(np.where(c[1::2], d[1::2], e[1::2]), r[1::2])
+            assert_equal(np.where(c[::3], d[::3], e[::3]), r[::3])
+            assert_equal(np.where(c[1::3], d[1::3], e[1::3]), r[1::3])
+            assert_equal(np.where(c[::-2], d[::-2], e[::-2]), r[::-2])
+            assert_equal(np.where(c[::-3], d[::-3], e[::-3]), r[::-3])
+            assert_equal(np.where(c[1::-3], d[1::-3], e[1::-3]), r[1::-3])
+
+    def test_exotic(self):
+        # object
+        assert_array_equal(np.where(True, None, None), np.array(None))
+        # zero sized
+        m = np.array([], dtype=bool).reshape(0, 3)
+        b = np.array([], dtype=np.float64).reshape(0, 3)
+        assert_array_equal(np.where(m, 0, b), np.array([]).reshape(0, 3))
+
+    def test_ndim(self):
+        c = [True, False]
+        a = np.zeros((2, 25))
+        b = np.ones((2, 25))
+        r = np.where(np.array(c)[:,np.newaxis], a, b)
+        assert_array_equal(r[0], a[0])
+        assert_array_equal(r[1], b[0])
+
+        a = a.T
+        b = b.T
+        r = np.where(c, a, b)
+        assert_array_equal(r[:,0], a[:,0])
+        assert_array_equal(r[:,1], b[:,0])
+
+    def test_dtype_mix(self):
+        c = np.array([False, True, False, False, False, False, True, False,
+                     False, False, True, False])
+        a = np.uint32(1)
+        b =  np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.],
+                      dtype=np.float64)
+        r = np.array([5., 1., 3., 2., -1., -4., 1., -10., 10., 1., 1., 3.],
+                     dtype=np.float64)
+        assert_equal(np.where(c, a, b), r)
+
+        a = a.astype(np.float32)
+        b = b.astype(np.int64)
+        assert_equal(np.where(c, a, b), r)
+
+        # non bool mask
+        c = c.astype(np.int)
+        c[c != 0] = 34242324
+        assert_equal(np.where(c, a, b), r)
+        # invert
+        tmpmask = c != 0
+        c[c == 0] = 41247212
+        c[tmpmask] = 0
+        assert_equal(np.where(c, b, a), r)
+
+    def test_foreign(self):
+        c = np.array([False, True, False, False, False, False, True, False,
+                     False, False, True, False])
+        r = np.array([5., 1., 3., 2., -1., -4., 1., -10., 10., 1., 1., 3.],
+                     dtype=np.float64)
+        a = np.ones(1, dtype='>i4')
+        b =  np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.],
+                      dtype=np.float64)
+        assert_equal(np.where(c, a, b), r)
+
+        b = b.astype('>f8')
+        assert_equal(np.where(c, a, b), r)
+
+        a = a.astype('<i4')
+        assert_equal(np.where(c, a, b), r)
+
+        c = c.astype('>i4')
+        assert_equal(np.where(c, a, b), r)
+
+    def test_error(self):
+        c = [True, True]
+        a = np.ones((4, 5))
+        b = np.ones((5, 5))
+        assert_raises(ValueError, np.where, c, a, a)
+        assert_raises(ValueError, np.where, c[0], a, b)
+
+
 if __name__ == "__main__":
     run_module_suite()
