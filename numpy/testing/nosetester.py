@@ -75,7 +75,7 @@ def import_nose():
 
     return nose
 
-def run_module_suite(file_to_run=None,argv=None):
+def run_module_suite(file_to_run=None, argv=None):
     """
     Run a test module.
 
@@ -91,6 +91,8 @@ def run_module_suite(file_to_run=None,argv=None):
         Arguments to be passed to the nose test runner. ``argv[0]`` is 
         ignored. All command line arguments accepted by ``nosetests`` 
         will work.
+
+        .. versionadded:: 1.9.0
 
     Examples
     --------
