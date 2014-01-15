@@ -8,6 +8,8 @@ python:
   - 3.3
 matrix:
   include:
+    - python: 3.3
+      env: USE_CHROOT=1 ARCH=i386 DIST=saucy
     - python: 2.7
       env: NPY_SEPARATE_COMPILATION=0
     - python: 3.3
@@ -18,8 +20,6 @@ matrix:
       env: NPY_RELAXED_STRIDES_CHECKING=1
     - python: 2.7
       env: USE_BENTO=1
-    - python: 2.7
-      env: USE_CHROOT=1 ARCH=i386 DIST=saucy
 before_install:
   - uname -a
   - free -m
