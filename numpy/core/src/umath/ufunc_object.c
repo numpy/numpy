@@ -1371,7 +1371,7 @@ iterator_loop(PyUFuncObject *ufunc,
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         if (!needs_api) {
-            NPY_BEGIN_THREADS;
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
         /* Execute the loop */
@@ -2743,7 +2743,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
     }
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
     }
 
     if (skip_first_count > 0) {
@@ -3127,7 +3127,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
         if (!needs_api) {
-            NPY_BEGIN_THREADS;
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
         do {
@@ -3215,7 +3215,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             needs_api = PyDataType_REFCHK(op_dtypes[0]);
 
             if (!needs_api) {
-                NPY_BEGIN_THREADS;
+                NPY_BEGIN_THREADS_THRESHOLDED(count);
             }
 
             innerloop(dataptr_copy, &count,
