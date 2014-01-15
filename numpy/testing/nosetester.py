@@ -76,6 +76,38 @@ def import_nose():
     return nose
 
 def run_module_suite(file_to_run=None,argv=None):
+    """
+    Run a test module.
+
+    Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from 
+    the command line
+
+    Parameters
+    ----------
+    file_to_run: str, optional
+        Path to test module, or None. 
+        By default, run the module from which this function is called.
+    argv: list of strings
+        Arguments to be passed to the nose test runner. ``argv[0]`` is 
+        ignored. All command line arguments accepted by ``nosetests`` 
+        will work.
+
+    Examples
+    --------
+    Adding the following::
+
+        if __name__ == "__main__" :
+            run_module_suite(argv=sys.argv)
+
+    at the end of a test module will run the tests when that module is 
+    called in the python interpreter.
+
+    Alternatively, calling::
+
+    >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")
+
+    from an interpreter will run all the test routine in 'test_matlib.py'.
+    """
     if file_to_run is None:
         f = sys._getframe(1)
         file_to_run = f.f_locals.get('__file__', None)
