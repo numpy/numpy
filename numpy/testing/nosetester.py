@@ -75,14 +75,18 @@ def import_nose():
 
     return nose
 
-def run_module_suite(file_to_run = None):
+def run_module_suite(file_to_run=None,argv=None):
     if file_to_run is None:
         f = sys._getframe(1)
         file_to_run = f.f_locals.get('__file__', None)
         if file_to_run is None:
             raise AssertionError
 
-    import_nose().run(argv=['', file_to_run])
+    if argv is None:
+        argv = ['', file_to_run]
+    else:
+        argv = argv + [file_to_run]
+    import_nose().run(argv=argv)
 
 
 class NoseTester(object):
