@@ -19,7 +19,11 @@ setup_base()
   # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
+if [ -z "$USE_DEBUG" ]; then
   $PIP install .
+else
+  $PYTHON setup.py build_ext --inplace
+fi
 }
 
 setup_chroot()
@@ -75,6 +79,9 @@ setup_bento()
 
 run_test()
 {
+  if [ -n "$USE_DEBUG" ]; then
+    export PYTHONPATH=$PWD
+  fi
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
   mkdir -p empty
@@ -89,6 +96,12 @@ run_test()
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
+
+if [ -n "$USE_DEBUG" ]; then
+  sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
+  PYTHON=python3-dbg
+fi
+
 export PYTHON
 export PIP
 if [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
