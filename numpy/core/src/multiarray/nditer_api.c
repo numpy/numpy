@@ -1377,7 +1377,8 @@ NpyIter_DebugPrint(NpyIter *iter)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
 
-    PyGILState_STATE gilstate = PyGILState_Ensure();
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API
 
     printf("\n------ BEGIN ITERATOR DUMP ------\n");
     printf("| Iterator Address: %p\n", (void *)iter);
@@ -1598,7 +1599,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("------- END ITERATOR DUMP -------\n");
     fflush(stdout);
 
-    PyGILState_Release(gilstate);
+    NPY_DISABLE_C_API
 }
 
 NPY_NO_EXPORT void
