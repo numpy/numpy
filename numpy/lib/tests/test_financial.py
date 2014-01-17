@@ -13,6 +13,9 @@ class TestFinancial(TestCase):
         v = [-150000, 15000, 25000, 35000, 45000, 60000]
         assert_almost_equal(np.irr(v),
                             0.0524, 2)
+        v = [-100, 0, 0, 74]
+        assert_almost_equal(np.irr(v),
+                            -0.0955, 2)
 
     def test_pv(self):
         assert_almost_equal(np.pv(0.07, 20, 12000, 0),
