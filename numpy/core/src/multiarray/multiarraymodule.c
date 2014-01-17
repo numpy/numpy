@@ -2764,6 +2764,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             goto fail;
         }
 
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
