@@ -1012,14 +1012,17 @@ cdef class RandomState:
                 raise ValueError("a must be non-empty")
 
         if None != p:
-            p = np.array(p, dtype=np.double, ndmin=1, copy=False)
+            d = len(p)
+            p = <ndarray>PyArray_ContiguousFromObject(p, NPY_DOUBLE, 1, 1)
+            pix = <double*>PyArray_DATA(p)
+
             if p.ndim != 1:
                 raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("a and p must have same size")
-            if np.any(p < 0):
+            if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if not np.allclose(p.sum(), 1):
+            if abs(kahan_sum(pix, d) - 1.) > 1e-8:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
@@ -1044,7 +1047,7 @@ cdef class RandomState:
                                  "population when 'replace=False'")
 
             if None != p:
-                if np.sum(p > 0) < size:
+                if np.count_nonzero(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
