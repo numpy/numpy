@@ -2208,10 +2208,10 @@ process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #COMPLEXTYPE=CFLOAT,CDOUBLE,CFLOAT,CDOUBLE#
-   #ftype=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
-   #lapack_func=sgeev,dgeev,cgeev,zgeev#
+   #TYPE=FLOAT,DOUBLE,CDOUBLE#
+   #COMPLEXTYPE=CFLOAT,CDOUBLE,CDOUBLE#
+   #ftype=fortran_real,fortran_doublereal,fortran_doublecomplex#
+   #lapack_func=sgeev,dgeev,zgeev#
  */
 
 static inline void
@@ -2873,27 +2873,6 @@ static char equal_3_types[] = {
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
-};
-
-static char equal_4_types[] = {
-    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
-    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
-};
-
-static char equal_5_types[] = {
-    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
-    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
-};
-
-static char equal_6_types[] = {
-    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
-    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
 };
 
 /* second result is logdet, that will always be a REAL */
