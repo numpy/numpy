@@ -79,17 +79,17 @@ def run_module_suite(file_to_run=None, argv=None):
     """
     Run a test module.
 
-    Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from 
+    Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from
     the command line
 
     Parameters
     ----------
     file_to_run: str, optional
-        Path to test module, or None. 
+        Path to test module, or None.
         By default, run the module from which this function is called.
     argv: list of strings
-        Arguments to be passed to the nose test runner. ``argv[0]`` is 
-        ignored. All command line arguments accepted by ``nosetests`` 
+        Arguments to be passed to the nose test runner. ``argv[0]`` is
+        ignored. All command line arguments accepted by ``nosetests``
         will work.
 
         .. versionadded:: 1.9.0
@@ -101,7 +101,7 @@ def run_module_suite(file_to_run=None, argv=None):
         if __name__ == "__main__" :
             run_module_suite(argv=sys.argv)
 
-    at the end of a test module will run the tests when that module is 
+    at the end of a test module will run the tests when that module is
     called in the python interpreter.
 
     Alternatively, calling::
@@ -120,7 +120,10 @@ def run_module_suite(file_to_run=None, argv=None):
         argv = ['', file_to_run]
     else:
         argv = argv + [file_to_run]
-    import_nose().run(argv=argv)
+
+    nose = import_nose()
+    from .noseclasses import KnownFailure
+    nose.run(argv=argv, addplugins=[KnownFailure()])
 
 
 class NoseTester(object):
