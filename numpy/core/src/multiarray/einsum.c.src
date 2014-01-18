@@ -1798,7 +1798,7 @@ parse_operand_subscripts(char *subscripts, int length,
                         int *out_num_labels)
 {
     int i, idim, ndim_left, label;
-    int left_labels = 0, right_labels = 0, ellipsis = 0;
+    int ellipsis = 0;
 
     /* Process the labels from the end until the ellipsis */
     idim = ndim-1;
@@ -1820,7 +1820,6 @@ parse_operand_subscripts(char *subscripts, int length,
                     (*out_num_labels)++;
                 }
                 out_label_counts[label]++;
-                right_labels = 1;
             }
             else {
                 PyErr_Format(PyExc_ValueError,
@@ -1889,7 +1888,6 @@ parse_operand_subscripts(char *subscripts, int length,
                         (*out_num_labels)++;
                     }
                     out_label_counts[label]++;
-                    left_labels = 1;
                 }
                 else {
                     PyErr_Format(PyExc_ValueError,
@@ -1954,7 +1952,7 @@ parse_output_subscripts(char *subscripts, int length,
                         char *out_labels)
 {
     int i, nlabels, label, idim, ndim, ndim_left;
-    int left_labels = 0, right_labels = 0, ellipsis = 0;
+    int ellipsis = 0;
 
     /* Count the labels, making sure they're all unique and valid */
     nlabels = 0;
@@ -2009,7 +2007,6 @@ parse_output_subscripts(char *subscripts, int length,
                             "too many output subscripts");
                 return -1;
             }
-            right_labels = 1;
         }
         /* The end of the ellipsis */
         else if (label == '.') {
@@ -2059,7 +2056,6 @@ parse_output_subscripts(char *subscripts, int length,
                                 "too many subscripts for the output");
                     return -1;
                 }
-                left_labels = 1;
             }
             else {
                 PyErr_SetString(PyExc_ValueError,

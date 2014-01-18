@@ -2132,7 +2132,7 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
     }
     else if (n <= PW_BLOCKSIZE) {
         npy_intp i;
-        @ftype@ r[8], res;
+        @ftype@ r[8];
 
         /*
          * sum a block with 8 accumulators
