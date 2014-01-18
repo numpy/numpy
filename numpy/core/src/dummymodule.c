@@ -6,6 +6,7 @@
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define NO_IMPORT_ARRAY
 
 #include <Python.h>
 #include <npy_pycompat.h>
