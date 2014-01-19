@@ -4138,6 +4138,18 @@ class TestWhere(TestCase):
 
         assert_array_equal(np.where(m, e, e), e)
 
+        # minimal dtype result with NaN scalar (e.g required by pandas)
+        d =  np.array([1., 2.], dtype=np.float32)
+        e =  float('NaN')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        e =  float('Infinity')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        e =  float('-Infinity')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        # also check upcast
+        e =  float(1e150)
+        assert_equal(np.where(True, d, e).dtype, np.float64)
+
     def test_ndim(self):
         c = [True, False]
         a = np.zeros((2, 25))
