@@ -5,7 +5,8 @@
 
 #include "Python.h"
 
-#ifdef  ENABLE_SEPARATE_COMPILATION
+#include "npy_config.h"
+#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
 #endif
@@ -2132,7 +2133,7 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
     }
     else if (n <= PW_BLOCKSIZE) {
         npy_intp i;
-        @ftype@ r[8], res;
+        @ftype@ r[8];
 
         /*
          * sum a block with 8 accumulators
