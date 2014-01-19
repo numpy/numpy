@@ -3091,18 +3091,18 @@ static PyArrayObject *
 array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nread)
 {
     PyArrayObject *r;
-    npy_intp start, numbytes;
+    npy_off_t start, numbytes;
 
     if (num < 0) {
         int fail = 0;
-        start = (npy_intp) npy_ftell(fp);
+        start = npy_ftell(fp);
         if (start < 0) {
             fail = 1;
         }
         if (npy_fseek(fp, 0, SEEK_END) < 0) {
             fail = 1;
         }
-        numbytes = (npy_intp) npy_ftell(fp);
+        numbytes = npy_ftell(fp);
         if (numbytes < 0) {
             fail = 1;
         }

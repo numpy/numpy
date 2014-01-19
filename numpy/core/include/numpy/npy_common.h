@@ -56,13 +56,48 @@
         #define NPY_INLINE
 #endif
 
-/* Enable 64 bit file position support on win-amd64. Ticket #1660 */
+/* 64 bit file position support, also on win-amd64. Ticket #1660 */
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
+    #include <io.h>
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64
+    #define npy_lseek _lseeki64
+    #define npy_off_t npy_int64
+
+    #if NPY_SIZEOF_INT == 8
+        #define NPY_OFF_T_PYFMT "i"
+    #elif NPY_SIZEOF_LONG == 8
+        #define NPY_OFF_T_PYFMT "l"
+    #elif NPY_SIZEOF_LONGLONG == 8
+        #define NPY_OFF_T_PYFMT "L"
+    #else
+        #error Unsupported size for type off_t
+    #endif
+#else
+#ifdef HAVE_FSEEKO
+    #define npy_fseek fseeko
 #else
     #define npy_fseek fseek
+#endif
+#ifdef HAVE_FTELLO
+    #define npy_ftell ftello
+#else
     #define npy_ftell ftell
+#endif
+    #define npy_lseek lseek
+    #define npy_off_t off_t
+
+    #if NPY_SIZEOF_OFF_T == NPY_SIZEOF_SHORT
+        #define NPY_OFF_T_PYFMT "h"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_INT
+        #define NPY_OFF_T_PYFMT "i"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_LONG
+        #define NPY_OFF_T_PYFMT "l"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_LONGLONG
+        #define NPY_OFF_T_PYFMT "L"
+    #else
+        #error Unsupported size for type off_t
+    #endif
 #endif
 
 /* enums for detected endianness */

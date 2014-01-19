@@ -1968,6 +1968,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
     PyArray_Descr *type = NULL;
     int own;
+    npy_off_t orig_pos;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -1987,7 +1988,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_INCREF(file);
         own = 0;
     }
-    fp = npy_PyFile_Dup(file, "rb");
+    fp = npy_PyFile_Dup(file, "rb", &orig_pos);
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be an open file");
@@ -1999,7 +2000,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
 
-    if (npy_PyFile_DupClose(file, fp) < 0) {
+    if (npy_PyFile_DupClose(file, fp, orig_pos) < 0) {
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {

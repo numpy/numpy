@@ -607,5 +607,32 @@ def test_bad_header():
     format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
+
+def test_large_file_support():
+    from nose import SkipTest
+    # try creating a large sparse file
+    with tempfile.NamedTemporaryFile() as tf:
+        try:
+            # seek past end would work too, but linux truncate somewhat
+            # increases the chances that we have a sparse filesystem and can
+            # avoid actually writing 5GB
+            import subprocess as sp
+            sp.check_call(["truncate", "-s", "5368709120", tf.name])
+        except:
+            raise SkipTest("Could not create 5GB large file")
+        # write a small array to the end
+        f = open(tf.name, "wb")
+        f.seek(5368709120)
+        d = np.arange(5)
+        np.save(f, d)
+        f.close()
+        # read it back
+        f = open(tf.name, "rb")
+        f.seek(5368709120)
+        r = np.load(f)
+        f.close()
+        assert_array_equal(r, d)
+
+
 if __name__ == "__main__":
     run_module_suite()
