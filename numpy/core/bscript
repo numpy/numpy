@@ -136,6 +136,11 @@ def type_checks(conf):
     NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("Py_intptr_t"),
                            '%d' % size))
 
+    size = conf.check_type_size("off_t", header_name=header_name,
+                                expected_sizes=[4, 8], features=features)
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("off_t"),
+                           '%d' % size))
+
     # We check declaration AND type because that's how distutils does it.
     try:
         conf.check_declaration("PY_LONG_LONG", header_name=header_name,
@@ -486,7 +491,11 @@ def pre_build(context):
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath")
+                                       use="npysort npymath",
+                                       defines=['_FILE_OFFSET_BITS=64',
+                                                '_LARGEFILE_SOURCE=1',
+                                                '_LARGEFILE64_SOURCE=1']
+                                       )
     context.register_builder("multiarray", builder_multiarray)
 
     def build_ufunc(extension):

@@ -280,6 +280,7 @@ def check_types(config_cmd, ext, build_dir):
     expected['Py_intptr_t'] = [4, 8]
     expected['PY_LONG_LONG'] = [8]
     expected['long long'] = [8]
+    expected['off_t'] = [4, 8]
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
@@ -326,7 +327,7 @@ def check_types(config_cmd, ext, build_dir):
             raise SystemError("Checking sizeof (%s) failed !" % complex_def)
 
 
-    for type in ('Py_intptr_t',):
+    for type in ('Py_intptr_t', 'off_t'):
         res = config_cmd.check_type_size(type, headers=["Python.h"],
                 library_dirs=[pythonlib_dir()],
                 expected=expected[type])
@@ -624,6 +625,9 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'npysort'))
 
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
+    config.add_define_macros([("_FILE_OFFSET_BITS", "64")])
+    config.add_define_macros([('_LARGEFILE_SOURCE', '1')])
+    config.add_define_macros([('_LARGEFILE64_SOURCE', '1')])
 
     config.numpy_include_dirs.extend(config.paths('include'))
 

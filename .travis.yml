@@ -8,6 +8,10 @@ python:
   - 3.3
 matrix:
   include:
+    - python: 3.3
+      env: USE_CHROOT=1 ARCH=i386 DIST=saucy
+    - python: 3.2
+      env: USE_DEBUG=1
     - python: 2.7
       env: NPY_SEPARATE_COMPILATION=0
     - python: 3.3
@@ -16,6 +20,8 @@ matrix:
       env: NPY_RELAXED_STRIDES_CHECKING=1
     - python: 3.3
       env: NPY_RELAXED_STRIDES_CHECKING=1
+    - python: 2.7
+      env: USE_BENTO=1
 before_install:
   - uname -a
   - free -m
@@ -26,30 +32,8 @@ before_install:
   - pip install nose
   # pip install coverage
   - python -V
-  - sudo apt-get install -qq gfortran
+  - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
-install:
-  # We used to use 'setup.py install' here, but that has the terrible
-  # behaviour that if a copy of the package is already installed in
-  # the install location, then the new copy just gets dropped on top
-  # of it. Travis typically has a stable numpy release pre-installed,
-  # and if we don't remove it, then we can accidentally end up
-  # e.g. running old test modules that were in the stable release but
-  # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
-  # install' also has the advantage that it tests that numpy is 'pip
-  # install' compatible, see e.g. gh-2766...
-  - pip install .
+
 script:
-  # We change directories to make sure that python won't find the copy
-  # of numpy in the source directory.
-  - mkdir empty
-  - cd empty
-  - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
-  - export PYTHONWARNINGS=default
-  - python ../tools/test-installed-numpy.py --mode=full
-  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
-  # - coverage report --rcfile=../.coveragerc --show-missing
-notifications:
-  # Perhaps we should have status emails sent to the mailing list, but
-  # let's wait to see what people think before turning that on.
-  email: false
+  - ./tools/travis-test.sh

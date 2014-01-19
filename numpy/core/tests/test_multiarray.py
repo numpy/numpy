@@ -4,6 +4,7 @@ import tempfile
 import sys
 import os
 import warnings
+import io
 
 import numpy as np
 from nose import SkipTest
@@ -2114,6 +2115,59 @@ class TestIO(object):
         s = "@".join(map(repr, x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
+
+    def test_file_position_after_fromfile(self):
+        # gh-4118
+        sizes = [io.DEFAULT_BUFFER_SIZE//8,
+                 io.DEFAULT_BUFFER_SIZE,
+                 io.DEFAULT_BUFFER_SIZE*8]
+
+        for size in sizes:
+            f = open(self.filename, 'wb')
+            f.seek(size-1)
+            f.write(b'\0')
+            f.close()
+
+            for mode in ['rb', 'r+b']:
+                err_msg = "%d %s" % (size, mode)
+
+                f = open(self.filename, mode)
+                f.read(2)
+                np.fromfile(f, dtype=np.float64, count=1)
+                pos = f.tell()
+                f.close()
+                assert_equal(pos, 10, err_msg=err_msg)
+
+        os.unlink(self.filename)
+
+    def test_file_position_after_tofile(self):
+        # gh-4118
+        sizes = [io.DEFAULT_BUFFER_SIZE//8,
+                 io.DEFAULT_BUFFER_SIZE,
+                 io.DEFAULT_BUFFER_SIZE*8]
+
+        for size in sizes:
+            err_msg = "%d" % (size,)
+
+            f = open(self.filename, 'wb')
+            f.seek(size-1)
+            f.write(b'\0')
+            f.seek(10)
+            f.write(b'12')
+            np.array([0], dtype=np.float64).tofile(f)
+            pos = f.tell()
+            f.close()
+            assert_equal(pos, 10 + 2 + 8, err_msg=err_msg)
+
+            f = open(self.filename, 'r+b')
+            f.read(2)
+            f.seek(0, 1) # seek between read&write required by ANSI C
+            np.array([0], dtype=np.float64).tofile(f)
+            pos = f.tell()
+            f.close()
+            assert_equal(pos, 10, err_msg=err_msg)
+
+        os.unlink(self.filename)
 
     def _check_from(self, s, value, **kw):
         y = np.fromstring(asbytes(s), **kw)
