@@ -4357,7 +4357,8 @@ cdef class RandomState:
         cdef npy_intp   k
         cdef npy_intp   totsize
         cdef ndarray    alpha_arr, val_arr
-        cdef double     *alpha_data, *val_data
+        cdef double     *alpha_data
+        cdef double     *val_data
         cdef npy_intp   i, j
         cdef double     acc, invacc
 
