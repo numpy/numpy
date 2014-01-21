@@ -117,7 +117,25 @@ CFLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
     int nb = blas_stride(strideb, sizeof(npy_cfloat));
 
     if (na && nb) {
-        cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
+        /* using double for stability */
+        double res_cache[2] = {0., 0.};
+        npy_cfloat *da = a, *db = b;
+
+        while (n > 0) {
+            int chunk = MIN(n, CHUNKSIZE);
+
+            cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb,
+                            (float *)res);
+
+            res_cache[0] += ((float *)res)[0];
+            res_cache[1] += ((float *)res)[1];
+
+            da += chunk * na;
+            db += chunk * nb;
+            n -= chunk;
+        }
+        ((float *)res)[0] = res_cache[0];
+        ((float *)res)[1] = res_cache[1];
     }
     else {
         oldFunctions[NPY_CFLOAT](a, stridea, b, strideb, res, n, tmp);
@@ -132,21 +150,107 @@ CDOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
     int nb = blas_stride(strideb, sizeof(npy_cdouble));
 
     if (na && nb) {
-        cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb,
-                        (double *)res);
+        double res_cache[2] = {0., 0.};
+        npy_cdouble *da = a, *db = b;
+
+        while (n > 0) {
+            int chunk = MIN(n, CHUNKSIZE);
+
+            cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb,
+                            (double *)res);
+
+            res_cache[0] += ((double *)res)[0];
+            res_cache[1] += ((double *)res)[1];
+
+            da += chunk * na;
+            db += chunk * nb;
+            n -= chunk;
+        }
+        ((double *)res)[0] = res_cache[0];
+        ((double *)res)[1] = res_cache[1];
     }
     else {
         oldFunctions[NPY_CDOUBLE](a, stridea, b, strideb, res, n, tmp);
     }
 }
 
+
+
+static void
+CFLOAT_vdot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+           npy_intp n, void *tmp)
+{
+    int na = blas_stride(stridea, sizeof(npy_cfloat));
+    int nb = blas_stride(strideb, sizeof(npy_cfloat));
+
+    if (na && nb) {
+        /* using double for stability */
+        double res_cache[2] = {0., 0.};
+        npy_cfloat *da = a, *db = b;
+
+        while (n > 0) {
+            int chunk = MIN(n, CHUNKSIZE);
+
+            cblas_cdotc_sub((int)n, (float *)a, na, (float *)b, nb,
+                            (float *)res);
+
+            res_cache[0] += ((float *)res)[0];
+            res_cache[1] += ((float *)res)[1];
+
+            da += chunk * na;
+            db += chunk * nb;
+            n -= chunk;
+        }
+        ((float *)res)[0] = res_cache[0];
+        ((float *)res)[1] = res_cache[1];
+    }
+    else {
+        /* No function available to handle, must be caught earlier */
+        assert(False);
+    }
+}
+
+static void
+CDOUBLE_vdot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+            npy_intp n, void *tmp)
+{
+    int na = blas_stride(stridea, sizeof(npy_cdouble));
+    int nb = blas_stride(strideb, sizeof(npy_cdouble));
+
+    if (na && nb) {
+        double res_cache[2] = {0., 0.};
+        npy_cdouble *da = a, *db = b;
+
+        while (n > 0) {
+            int chunk = MIN(n, CHUNKSIZE);
+
+            cblas_zdotc_sub((int)n, (double *)a, na, (double *)b, nb,
+                            (double *)res);
+
+            res_cache[0] += ((double *)res)[0];
+            res_cache[1] += ((double *)res)[1];
+
+            da += chunk * na;
+            db += chunk * nb;
+            n -= chunk;
+        }
+        ((double *)res)[0] = res_cache[0];
+        ((double *)res)[1] = res_cache[1];
+    }
+    else {
+        /* No function available to handle, must be caught earlier */
+        assert(False);
+    }
+}
+
+
 /*
  * Helper: call appropriate BLAS dot function for typenum.
  * Strides are NumPy strides.
  */
 static void
-blas_dot(int typenum, npy_intp n,
-         void *a, npy_intp stridea, void *b, npy_intp strideb, void *res)
+blas_dot(int typenum, npy_intp n, void *a, npy_intp stridea,
+         void *b, npy_intp strideb, void *res, int conjugate)
 {
     PyArray_DotFunc *dot = NULL;
     switch (typenum) {
@@ -157,10 +261,10 @@ blas_dot(int typenum, npy_intp n,
             dot = FLOAT_dot;
             break;
         case NPY_CDOUBLE:
-            dot = CDOUBLE_dot;
+            dot = (!conjugate) ? CDOUBLE_dot : CDOUBLE_vdot;
             break;
         case NPY_CFLOAT:
-            dot = CFLOAT_dot;
+            dot = (!conjugate) ? CFLOAT_dot : CFLOAT_vdot;
             break;
     }
     assert(dot != NULL);
@@ -790,7 +894,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         blas_dot(typenum, l,
                  PyArray_DATA(ap1), PyArray_STRIDE(ap1, (ap1shape == _row)),
                  PyArray_DATA(ap2), PyArray_STRIDE(ap2, 0),
-                 PyArray_DATA(ret));
+                 PyArray_DATA(ret), 0);
         NPY_END_ALLOW_THREADS;
     }
     else if (ap1shape == _matrix && ap2shape != _matrix) {
@@ -1056,7 +1160,7 @@ dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     else if (PyArray_NDIM(ap1) == 1 && PyArray_NDIM(ap2) == 1) {
         /* Dot product between two vectors -- Level 1 BLAS */
         blas_dot(typenum, l, PyArray_DATA(ap1), PyArray_ITEMSIZE(ap1),
-                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2), PyArray_DATA(ret));
+                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2), PyArray_DATA(ret), 0);
     }
     else if (PyArray_NDIM(ap1) == 2 && PyArray_NDIM(ap2) == 1) {
         /* Matrix-vector multiplication -- Level 2 BLAS */
@@ -1117,20 +1221,31 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1==NULL) {Py_DECREF(type); goto fail;}
-    op1 = PyArray_Flatten(ap1, 0);
+    op1 = PyArray_Ravel(ap1, NPY_ANYORDER);
     if (op1==NULL) {Py_DECREF(type); goto fail;}
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
 
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2==NULL) goto fail;
-    op2 = PyArray_Flatten(ap2, 0);
+    op2 = PyArray_Ravel(ap2, NPY_ANYORDER);
     if (op2 == NULL) goto fail;
     Py_DECREF(ap2);
     ap2 = (PyArrayObject *)op2;
 
-    if (typenum != NPY_FLOAT && typenum != NPY_DOUBLE &&
-        typenum != NPY_CFLOAT && typenum != NPY_CDOUBLE) {
+    if ((typenum != NPY_FLOAT && typenum != NPY_DOUBLE &&
+                typenum != NPY_CFLOAT && typenum != NPY_CDOUBLE) ||
+            /*
+             * If the strides are not legal, we need to conjugate, the blas
+             * wrappers would fail to do this correctly, so need to make
+             * sure that they will not use the fallback.
+             */
+            ((typenum == NPY_CFLOAT) && (
+                (blas_stride(PyArray_STRIDE(ap1, 0), 2 * sizeof(float)) == 0) ||
+                (blas_stride(PyArray_STRIDE(ap2, 0), 2 * sizeof(float)) == 0))) ||
+            ((typenum == NPY_CDOUBLE) && (
+                (blas_stride(PyArray_STRIDE(ap1, 0), 2 * sizeof(double)) == 0) ||
+                (blas_stride(PyArray_STRIDE(ap2, 0), 2 * sizeof(double)) == 0)))) {
         if (!altered) {
             /* need to alter dot product */
             PyObject *tmp1, *tmp2;
@@ -1164,18 +1279,8 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     NPY_BEGIN_ALLOW_THREADS;
 
     /* Dot product between two vectors -- Level 1 BLAS */
-    if (typenum == NPY_DOUBLE || typenum == NPY_FLOAT) {
-        blas_dot(typenum, l, PyArray_DATA(ap1), PyArray_ITEMSIZE(ap1),
-                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2), PyArray_DATA(ret));
-    }
-    else if (typenum == NPY_CDOUBLE) {
-        cblas_zdotc_sub(l, (double *)PyArray_DATA(ap1), 1,
-                        (double *)PyArray_DATA(ap2), 1, (double *)PyArray_DATA(ret));
-    }
-    else if (typenum == NPY_CFLOAT) {
-        cblas_cdotc_sub(l, (float *)PyArray_DATA(ap1), 1,
-                        (float *)PyArray_DATA(ap2), 1, (float *)PyArray_DATA(ret));
-    }
+    blas_dot(typenum, l, PyArray_DATA(ap1), PyArray_STRIDE(ap1, 0),
+             PyArray_DATA(ap2), PyArray_STRIDE(ap2, 0), PyArray_DATA(ret), 1);
 
     NPY_END_ALLOW_THREADS;
 
