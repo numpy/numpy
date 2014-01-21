@@ -723,6 +723,11 @@ class TestVectorize(TestCase):
 
 
 class TestDigitize(TestCase):
+    def test_zerolength_input(self):
+        assert_raises(ValueError, digitize, x=[], bins=[])
+        assert_raises(ValueError, digitize, x=[1], bins=[])
+        assert_raises(ValueError, digitize, x=[], bins=[1])
+
     def test_forward(self):
         x = np.arange(-6, 5)
         bins = np.arange(-5, 5)

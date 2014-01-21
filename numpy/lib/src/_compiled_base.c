@@ -296,7 +296,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     iret = (npy_intp *)PyArray_DATA(aret);
 
-    if (lx <= 0 || lbins < 0) {
+    if (lx == 0 || lbins == 0) {
         PyErr_SetString(PyExc_ValueError,
                 "Both x and bins must have non-zero length");
             goto fail;
