@@ -5828,6 +5828,8 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     increment the first element once because of buffering, whereas
     `add.at(a, [0,0], 1)` will increment the first element twice.
 
+    .. versionadded:: 1.8.0
+
     Parameters
     ----------
     a : array_like
