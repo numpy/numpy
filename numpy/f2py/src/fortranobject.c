@@ -335,7 +335,7 @@ fortran_call(PyFortranObject *fp, PyObject *arg, PyObject *kw) {
         name=%s,func=%p,data=%p,%p\n",fp->defs[i].name,
         fp->defs[i].func,fp->defs[i].data,&fp->defs[i].data); */
     if (fp->defs[i].rank==-1) {/* is Fortran routine */
-        if ((fp->defs[i].func==NULL)) {
+        if (fp->defs[i].func==NULL) {
             PyErr_Format(PyExc_RuntimeError, "no function to call");
             return NULL;
         }
