@@ -2261,7 +2261,7 @@ PyArray_FastSearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_Descr *dtype;
     int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
     PyArray_BinSearchFunc *binsearch;
-    NPY_BEGIN_THREADS_DEF;
+     NPY_BEGIN_THREADS_DEF;
 
     /* Find common type */
     dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));

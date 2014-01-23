@@ -8,19 +8,21 @@
 #include "npy_binsearch.h"
 #include <stdlib.h>
 
+#define SMALL_BINSEARCH 10
+
 /*
  *****************************************************************************
  **                            NUMERIC SEARCHES                             **
  *****************************************************************************
  */
- 
+
 /**begin repeat
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, half, float, double, longdouble,
+ *         longlong, ulonglong, half, float, double, longdouble, 
  *         cfloat, cdouble, clongdouble, datetime, timedelta#
  * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
@@ -28,7 +30,7 @@
  *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
  */
 
-#define @TYPE@_LTE(a, b) (@TYPE@_LT(a, b) || !@TYPE@_LT(b, a))
+#define @TYPE@_LTE(a, b) (!@TYPE@_LT((b), (a)))
 
 /**begin repeat1
  *
@@ -42,29 +44,274 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_str, npy_intp key_str,
                         npy_intp ret_str)
 {
-    for(; key_len > 0; key_len--,
-                       key += key_str,
-                       ret += ret_str) {
-        npy_intp min_idx = 0,
-                 max_idx = arr_len;
-        @type@ key_val = *(@type@ *)key;
-        
-        while(min_idx < max_idx) {
-            npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-            @type@ mid_val = *(@type@ *)(arr + mid_idx*arr_str);
-            if (@TYPE@_@CMP@(mid_val, key_val)) {
-                min_idx = mid_idx + 1;
+    if (arr_len < SMALL_BINSEARCH) {
+        /* for small arrays, linear search is faster */
+        for (; key_len > 0; key_len--,
+                            key += key_str,
+                            ret += ret_str) {
+            const @type@ key_val = *(const @type@ *)key;
+            npy_intp idx = 0;
+            const char *arr_ptr = arr;
+            while (@TYPE@_@CMP@(*(const @type@ *)arr_ptr, key_val) &&
+                   idx < arr_len)  {
+                idx++;
+                arr_ptr += arr_str;
             }
-            else {
-                max_idx = mid_idx;
-            }
+            *(npy_intp *)ret = idx;
         }
-        *(npy_intp *)ret = min_idx;
+    } else {
+        /* use binary search for larger ones */
+        for (; key_len > 0; key_len--,
+                            key += key_str,
+                            ret += ret_str) {
+            npy_intp min_idx = 0,
+                     max_idx = arr_len;
+            const @type@ key_val = *(const @type@ *)key;
+            
+            while (min_idx < max_idx) {
+                npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+                const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
+                if (@TYPE@_@CMP@(mid_val, key_val)) {
+                    min_idx = mid_idx + 1;
+                }
+                else {
+                    max_idx = mid_idx;
+                }
+            }
+            *(npy_intp *)ret = min_idx;
+        }
     }
 }
 
+// void
+// binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
+                        // npy_intp arr_len, npy_intp key_len,
+                        // npy_intp arr_str, npy_intp key_str,
+                        // npy_intp ret_str)
+// {
+    // for (; key_len > 0; key_len--,
+                        // key += key_str,
+                        // ret += ret_str) {
+        // npy_intp min_idx = 0,
+                 // max_idx = arr_len,
+                 // delta_idx;
+        // const @type@ key_val = *(const @type@ *)key;
+        // const char *arr_ptr = arr;
+        
+        // while ((delta_idx = max_idx - min_idx) > SMALL_BINSEARCH) {
+            // npy_intp mid_idx = min_idx + (delta_idx >> 1);
+            // arr_ptr = arr + mid_idx*arr_str;
+            // if (@TYPE@_@CMP@(*(const @type@ *)arr_ptr, key_val)) {
+                // min_idx = mid_idx + 1;
+            // }
+            // else {
+                // max_idx = mid_idx;
+            // }
+        // }
+        // arr_ptr = arr + min_idx*arr_str;
+        // while (@TYPE@_@CMP@(*(const @type@ *)arr_ptr, key_val) &&
+                   // min_idx < max_idx)  {
+                // min_idx++;
+                // arr_ptr += arr_str;
+            // }
+        // *(npy_intp *)ret = min_idx;
+    // }
+// }
+
 /**end repeat1**/
-/**end repeat**/
+/**end repeat**/ 
+ 
+ 
+// /**begin repeat
+ // *
+ // * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ // *         LONGLONG, ULONGLONG, HALF,CFLOAT, CDOUBLE, CLONGDOUBLE,
+ // *         DATETIME, TIMEDELTA#
+ // * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ // *         longlong, ulonglong, half, cfloat, cdouble, clongdouble,
+ // *         datetime, timedelta#
+ // * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ // *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ // *         npy_ushort, npy_cfloat, npy_cdouble, npy_clongdouble,
+ // *         npy_datetime, npy_timedelta#
+ // */
+
+// #define @TYPE@_LTE(a, b) (!@TYPE@_LT((b), (a)))
+
+// /**begin repeat1
+ // *
+ // * #side = left, right#
+ // * #CMP  = LT, LTE#
+ // */
+
+// void
+// binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
+                        // npy_intp arr_len, npy_intp key_len,
+                        // npy_intp arr_str, npy_intp key_str,
+                        // npy_intp ret_str)
+// {
+    // if (arr_len < SMALL_BINSEARCH) {
+        // /* for small arrays, linear search is faster */
+        // for (; key_len > 0; key_len--,
+                            // key += key_str,
+                            // ret += ret_str) {
+            // const @type@ key_val = *(const @type@ *)key;
+            // npy_intp idx = 0;
+            // const char *arr_ptr = arr;
+            // while (@TYPE@_@CMP@(*(const @type@ *)arr_ptr, key_val) &&
+                   // idx < arr_len)  {
+                // idx++;
+                // arr_ptr += arr_str;
+            // }
+            // *(npy_intp *)ret = idx;
+        // }
+    // } else {
+        // /* use binary search for larger ones */
+        // for (; key_len > 0; key_len--,
+                            // key += key_str,
+                            // ret += ret_str) {
+            // npy_intp min_idx = 0,
+                     // max_idx = arr_len;
+            // const @type@ key_val = *(const @type@ *)key;
+            
+            // while (min_idx < max_idx) {
+                // npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+                // const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
+                // if (@TYPE@_@CMP@(mid_val, key_val)) {
+                    // min_idx = mid_idx + 1;
+                // }
+                // else {
+                    // max_idx = mid_idx;
+                // }
+            // }
+            // *(npy_intp *)ret = min_idx;
+        // }
+    // }
+// }
+
+// /**end repeat1**/
+// /**end repeat**/
+
+// /**begin repeat
+ // *
+ // * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ // * #suff = float, double, longdouble#
+ // * #type = npy_float, npy_double, npy_longdouble#
+ // */
+
+// #define @TYPE@_LTE(a, b) (!@TYPE@_LT((b), (a)))
+ 
+// /**begin repeat1
+ // *
+ // * #side = left, right#
+ // * #CMP  = LT, LTE#
+ // * #cmp  = <, <=#
+ // */
+
+// void
+// binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
+                        // npy_intp arr_len, npy_intp key_len,
+                        // npy_intp arr_str, npy_intp key_str,
+                        // npy_intp ret_str)
+// {
+    // @type@ last_arr_val = *(@type@ *)(arr + arr_str * (arr_len - 1));
+    // /* a properly sorted array with NANs will have these at the end */
+    // if (last_arr_val != last_arr_val) { /* NANs, use behaved compare */
+        // if (arr_len < SMALL_BINSEARCH) {
+            // /* for small arrays, linear search is faster */
+            // for (; key_len > 0; key_len--,
+                                // key += key_str,
+                                // ret += ret_str) {
+                // const @type@ key_val = *(const @type@ *)key;
+                // npy_intp idx = 0;
+                // const char *arr_ptr = arr;
+                // while (@TYPE@_@CMP@(*(const @type@ *)arr_ptr, key_val) &&
+                       // idx < arr_len)  {
+                    // idx++;
+                    // arr_ptr += arr_str;
+                // }
+                // *(npy_intp *)ret = idx;
+            // }
+        // } else {
+            // /* use binary search for larger ones */
+            // for (; key_len > 0; key_len--,
+                                // key += key_str,
+                                // ret += ret_str) {
+                // npy_intp min_idx = 0,
+                         // max_idx = arr_len;
+                // const @type@ key_val = *(const @type@ *)key;
+                
+                // while (min_idx < max_idx) {
+                    // npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+                    // const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
+                    // if (@TYPE@_@CMP@(mid_val, key_val)) {
+                        // min_idx = mid_idx + 1;
+                    // }
+                    // else {
+                        // max_idx = mid_idx;
+                    // }
+                // }
+                // *(npy_intp *)ret = min_idx;
+            // }
+        // }
+    // }
+    // else { /* No NANs in arr, use < or <= for comparisons */
+        // if (arr_len < SMALL_BINSEARCH) {
+            // /* for small arrays, linear search is faster */
+            // for (; key_len > 0; key_len--,
+                                // key += key_str,
+                                // ret += ret_str) {
+                // const @type@ key_val = *(const @type@ *)key;
+                // npy_intp idx = 0;
+                // const char *arr_ptr = arr;
+                
+                // /* If the key is a NAN, send it to the end */
+                // if (key_val != key_val) {
+                    // *(npy_intp *)ret = arr_len;
+                    // continue;
+                // }
+                
+                // while ((*(const @type@ *)arr_ptr @cmp@ key_val) &&
+                       // idx < arr_len)  {
+                    // idx++;
+                    // arr_ptr += arr_str;
+                // }
+                // *(npy_intp *)ret = idx;
+            // }
+        // } else {
+            // /* use binary search for larger ones */
+            // for (; key_len > 0; key_len--,
+                                // key += key_str,
+                                // ret += ret_str) {
+                // npy_intp min_idx = 0,
+                         // max_idx = arr_len;
+                // const @type@ key_val = *(const @type@ *)key;
+                
+                // /* If the key is a NAN, send it to the end */
+                // if (key_val != key_val) {
+                    // *(npy_intp *)ret = arr_len;
+                    // continue;
+                // }
+                
+                // while (min_idx < max_idx) {
+                    // npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+                    // const @type@ mid_val = *(const @type@ *)(arr +
+                                                             // mid_idx*arr_str);
+                    // if (mid_val @cmp@ key_val) {
+                        // min_idx = mid_idx + 1;
+                    // }
+                    // else {
+                        // max_idx = mid_idx;
+                    // }
+                // }
+                // *(npy_intp *)ret = min_idx;
+            // }
+        // }    
+    // }
+// }
+
+// /**end repeat1**/
+// /**end repeat**/
 
 /*
  *****************************************************************************
@@ -72,9 +319,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
  *****************************************************************************
  */
 
-#define GENERIC_LTE(a, b, cmp) ((GENERIC_LT(a, b, cmp) || \
-                                 !GENERIC_LT(b, a, cmp) \
-                                ))
+#define GENERIC_LTE(a, b, cmp) (!GENERIC_LT(b, a, cmp))
  
  /**begin repeat
  *
@@ -88,13 +333,13 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_str, npy_intp key_str,
                      npy_intp ret_str, npy_comparator cmp)
 {
-    for(; key_len > 0; key_len--,
-                       key += key_str,
-                       ret += ret_str) {
+    for (; key_len > 0; key_len--,
+                        key += key_str,
+                        ret += ret_str) {
         npy_intp min_idx = 0,
                  max_idx = arr_len;
         
-        while(min_idx < max_idx) {
+        while (min_idx < max_idx) {
             npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             if (GENERIC_@CMP@(arr + mid_idx*arr_str, key, cmp)) {
                 min_idx = mid_idx + 1;
