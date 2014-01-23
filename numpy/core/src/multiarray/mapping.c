@@ -560,7 +560,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index)
     PyArrayObject *ret;
     npy_intp value;
 
-    if (!(PyArray_Check(op) && (PyArray_SIZE((PyArrayObject*)op) > 1))) {
+    if (!PyArray_Check(op)) {
         value = PyArray_PyIntAsIntp(op);
 
         if (value == -1 && PyErr_Occurred()) {
@@ -575,7 +575,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index)
             }
         }
         else {
-            return array_item_asarray(self, value);
+            return array_item(self, value);
         }
     }
 
