@@ -53,7 +53,7 @@ understood by four rules:
 4. If an input has a dimension size of 1 in its shape, the first data
    entry in that dimension will be used for all calculations along
    that dimension. In other words, the stepping machinery of the
-   :term:`ufunc` will simply not step along that dimension (the
+   :term:`ufunc` will simply step along that dimension (the
    :term:`stride` will be 0 for that dimension).
 
 Broadcasting is used throughout NumPy to decide how to handle
