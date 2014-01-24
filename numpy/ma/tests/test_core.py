@@ -815,6 +815,12 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal([1, 2], count(ott, 0))
         assert_equal(type(count(ott, 0)), type(count(ott1, 0)))
         assert_equal(count(ott,0).dtype, count(ott1,0).dtype)
+        try:
+            ott1.count(1)
+        except IndexError:
+            pass
+        else:
+            raise AssertionError("Should have failed")
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
