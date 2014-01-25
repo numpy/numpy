@@ -564,9 +564,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     }
                 }
 
-                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
-                                                         NPY_ARRAY_FORCECAST);
+                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr,
+                                            PyArray_DescrFromType(NPY_INTP),
+                                            NPY_ARRAY_FORCECAST);
 
                 if (arr == NULL) {
                     /* Since this will be removed, handle this later */
@@ -2571,17 +2571,18 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      */
     else if (extra_op_flags && (subspace != NULL)) {
         npy_uint32 tmp_op_flags[NPY_MAXDIMS];
+
+        NpyIter *tmp_iter;
+        npy_intp stride;
+        npy_intp strides[NPY_MAXDIMS];
+        npy_stride_sort_item strideperm[NPY_MAXDIMS];
+
         for (i=0; i < mit->numiter; i++) {
             tmp_op_flags[i] = NPY_ITER_READONLY;
         }
 
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
-
-        NpyIter *tmp_iter;
-        npy_intp stride;
-        npy_intp strides[NPY_MAXDIMS];
-        npy_stride_sort_item strideperm[NPY_MAXDIMS];
 
         /* Create an iterator, just to broadcast the arrays?! */
         tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
