@@ -653,6 +653,16 @@ class TestBool(TestCase):
         # covers all cases of the 16 byte unrolled code
         self.check_count_nonzero(17, 17)
 
+    def test_count_nonzero_unaligned(self):
+        # prevent mistakes as e.g. gh-4060
+        for o in range(7):
+            a = np.zeros((18,), dtype=np.bool)[o+1:]
+            a[:o] = True
+            self.assertEqual(np.count_nonzero(a), builtins.sum(a.tolist()))
+            a = np.ones((18,), dtype=np.bool)[o+1:]
+            a[:o] = False
+            self.assertEqual(np.count_nonzero(a), builtins.sum(a.tolist()))
+
 class TestMethods(TestCase):
     def test_test_round(self):
         assert_equal(array([1.2, 1.5]).round(), [1, 2])

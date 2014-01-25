@@ -3620,9 +3620,10 @@ NPY_NO_EXPORT PyDataMem_EventHookFunc *
 PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
                        void *user_data, void **old_data)
 {
+    PyDataMem_EventHookFunc *temp;
     NPY_ALLOW_C_API_DEF
     NPY_ALLOW_C_API
-    PyDataMem_EventHookFunc *temp = _PyDataMem_eventhook;
+    temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
         *old_data = _PyDataMem_eventhook_user_data;

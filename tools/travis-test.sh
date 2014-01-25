@@ -22,7 +22,9 @@ setup_base()
 if [ -z "$USE_DEBUG" ]; then
   $PIP install .
 else
-  $PYTHON setup.py build_ext --inplace
+  sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
+  # windows compilers have this requirement
+  CFLAGS="$sysflags -Werror=declaration-after-statement" $PYTHON setup.py build_ext --inplace
 fi
 }
 
