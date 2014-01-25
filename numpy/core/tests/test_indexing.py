@@ -166,6 +166,18 @@ class TestIndexing(TestCase):
         assert_equal(a[0], [0, 1])
 
 
+    def test_uncontiguous_subspace_assignment(self):
+        # During development there was a bug activating a skip logic
+        # based on ndim instead of size.
+        a = np.full((3, 4, 2), -1)
+        b = np.full((3, 4, 2), -1)
+
+        a[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T
+        b[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T.copy()
+
+        assert_equal(a, b)
+
+
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
         a = np.ones((1,) * 32) # 32 is NPY_MAXDIMS

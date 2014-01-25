@@ -1630,7 +1630,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         }
 
         counter = NpyIter_GetInnerLoopSizePtr(mit->subspace_iter);
-        if (*counter == PyArray_NDIM(mit->subspace)) {
+        if (*counter == PyArray_SIZE(mit->subspace)) {
             skip = 1;
         }
 
