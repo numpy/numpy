@@ -20,6 +20,21 @@ Future Changes
 Compatibility notes
 ===================
 
+Special scalar float values don't cause upcast to double anymore
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In previous numpy versions operations involving floating point scalars
+containing special values `NaN`, `Inf` and `-Inf` caused the result type to be
+at least `float64`.
+As the special values can be represented in the smallest available floating
+point type the upcast not performed anymore.
+
+For example the dtype of:
+
+    np.array([1.], dtype=np.float32) * float('nan')
+
+now remains `float32` instead of being cast to `float64`.
+Operations involving non-special values have not been changed.
+
 Percentile output changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 If given more than one percentile to compute numpy.percentile returns an array

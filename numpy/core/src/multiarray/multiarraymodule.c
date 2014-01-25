@@ -2782,7 +2782,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                 int ayswap = PyDataType_ISBYTESWAPPED(dty);
                 PyArray_CopySwapFunc *copyswapx = dtx->f->copyswap;
                 PyArray_CopySwapFunc *copyswapy = dty->f->copyswap;
-                int native = (axswap == ayswap) && (axswap == 0);
+                int native = (axswap == ayswap) && (axswap == 0) && !needs_api;
                 npy_intp n = (*innersizeptr);
                 npy_intp itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
                 npy_intp cstride = NpyIter_GetInnerStrideArray(iter)[1];
@@ -2828,6 +2828,10 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             } while (iternext(iter));
         }
 
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
+
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
         Py_INCREF(ret);
@@ -2835,9 +2839,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(ax);
         Py_DECREF(ay);
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(ret);
             return NULL;

@@ -4118,6 +4118,38 @@ class TestWhere(TestCase):
         b = np.array([], dtype=np.float64).reshape(0, 3)
         assert_array_equal(np.where(m, 0, b), np.array([]).reshape(0, 3))
 
+        # object cast
+        d = np.array([-1.34, -0.16, -0.54, -0.31, -0.08, -0.95, 0.000, 0.313,
+                      0.547, -0.18, 0.876, 0.236, 1.969, 0.310, 0.699, 1.013,
+                      1.267, 0.229, -1.39, 0.487])
+        nan = float('NaN')
+        e = np.array(['5z', '0l', nan, 'Wz', nan, nan, 'Xq', 'cs', nan, nan,
+                     'QN', nan, nan, 'Fd', nan, nan, 'kp', nan, '36', 'i1'],
+                     dtype=object);
+        m = np.array([0,0,1,0,1,1,0,0,1,1,0,1,1,0,1,1,0,1,0,0], dtype=bool)
+
+        r = e[:]
+        r[np.where(m)] = d[np.where(m)]
+        assert_array_equal(np.where(m, d, e), r)
+
+        r = e[:]
+        r[np.where(~m)] = d[np.where(~m)]
+        assert_array_equal(np.where(m, e, d), r)
+
+        assert_array_equal(np.where(m, e, e), e)
+
+        # minimal dtype result with NaN scalar (e.g required by pandas)
+        d =  np.array([1., 2.], dtype=np.float32)
+        e =  float('NaN')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        e =  float('Infinity')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        e =  float('-Infinity')
+        assert_equal(np.where(True, d, e).dtype, np.float32)
+        # also check upcast
+        e =  float(1e150)
+        assert_equal(np.where(True, d, e).dtype, np.float64)
+
     def test_ndim(self):
         c = [True, False]
         a = np.zeros((2, 25))

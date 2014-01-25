@@ -10,6 +10,7 @@
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "numpy/npy_math.h"
 
 #include "common.h"
 #include "scalartypes.h"
@@ -1340,14 +1341,14 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         case NPY_FLOAT: {
             float value = *(float *)valueptr;
-            if (value > -65000 && value < 65000) {
+            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
             break;
         }
         case NPY_DOUBLE: {
             double value = *(double *)valueptr;
-            if (value > -65000 && value < 65000) {
+            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
             else if (value > -3.4e38 && value < 3.4e38) {
@@ -1357,7 +1358,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         case NPY_LONGDOUBLE: {
             npy_longdouble value = *(npy_longdouble *)valueptr;
-            if (value > -65000 && value < 65000) {
+            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
             else if (value > -3.4e38 && value < 3.4e38) {
