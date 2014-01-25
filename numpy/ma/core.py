@@ -3976,21 +3976,16 @@ class MaskedArray(ndarray):
         """
         m = self._mask
         s = self.shape
-        ls = len(s)
         if m is nomask:
-            if ls == 0:
-                return 1
-            if ls == 1:
-                return s[0]
             if axis is None:
                 return self.size
             else:
                 n = s[axis]
                 t = list(s)
                 del t[axis]
-                return np.ones(t) * n
+                return np.full(t, n, dtype=np.intp)
         n1 = np.size(m, axis)
-        n2 = m.astype(int).sum(axis)
+        n2 = np.sum(m, axis=axis, dtype=np.intp)
         if axis is None:
             return (n1 - n2)
         else:
@@ -4032,7 +4027,7 @@ class MaskedArray(ndarray):
     def reshape (self, *s, **kwargs):
         """
         Give a new shape to the array without changing its data.
-
+u
         Returns a masked array containing the same data, but with a new shape.
         The result is a view on the original array; if this is not possible, a
         ValueError is raised.
