@@ -1534,16 +1534,5 @@ def test_complex_nan_comparisons():
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
 
 
-def test_object_array_comparison():
-    obj_array = np.arange(3)
-    a = np.array([obj_array, 1])
-    # Should raise an error because (obj_array == obj_array) is not a bool.
-    # At this time, a == a would return False because of the error.
-    assert_raises(ValueError, np.equal, a, a)
-
-    # Check the same for NaN, when it is the *same* NaN.
-    a = np.array([np.nan])
-    assert_equal(a == a, [False])
-
 if __name__ == "__main__":
     run_module_suite()

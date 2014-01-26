@@ -1193,24 +1193,12 @@ class poly1d(object):
     __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
-        dim = min(self.coeffs.shape[0], other.coeffs.shape[0])
-        if (self.coeffs[-dim:] != other.coeffs[-dim:]).any():
+        if self.coeffs.shape != other.coeffs.shape:
             return False
-        elif (self.coeffs[:-dim] != 0).any():
-            return False
-        elif (other.coeffs[:-dim] != 0).any():
-            return False
-        return True
+        return (self.coeffs == other.coeffs).all()
 
     def __ne__(self, other):
-        dim = min(self.coeffs.shape[0], other.coeffs.shape[0])
-        if (self.coeffs[-dim:] != other.coeffs[-dim:]).any():
-            return True
-        elif (self.coeffs[:-dim] != 0).any():
-            return True
-        elif (other.coeffs[:-dim] != 0).any():
-            return True
-        return False
+        return not self.__eq__(other)
 
     def __setattr__(self, key, val):
         raise ValueError("Attributes cannot be changed this way.")

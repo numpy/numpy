@@ -780,10 +780,10 @@ class $name(pu.PolyBase) :
         """
         if domain is None:
             domain = pu.getdomain(x)
-        elif len(domain) == 0:
+        elif type(domain) is list and len(domain) == 0:
             domain = $domain
 
-        if len(window) == 0:
+        if type(window) is list and len(window) == 0:
             window = $domain
 
         xnew = pu.mapdomain(x, domain, window)
