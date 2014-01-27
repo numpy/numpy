@@ -796,6 +796,7 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_count_func(self):
         # Tests count
         ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
+        ott1= array([0., 1., 2., 3.])
         if sys.version_info[0] >= 3:
             self.assertTrue(isinstance(count(ott), np.integer))
         else:
@@ -812,6 +813,9 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(3, count(ott))
         assert_(getmask(count(ott, 0)) is nomask)
         assert_equal([1, 2], count(ott, 0))
+        assert_equal(type(count(ott, 0)), type(count(ott1, 0)))
+        assert_equal(count(ott, 0).dtype, count(ott1, 0).dtype)
+        assert_raises(IndexError, ott1.count, 1)
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
