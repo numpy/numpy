@@ -5686,12 +5686,13 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
     generalized "row" parallel to `axis` in the final result (i.e., in a
     2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
-    `axis = 1`, it becomes the i-th column).  There are two exceptions to this:
+    `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
 
-      * when ``i = len(indices) - 1`` (so for the last index),
-        ``indices[i+1] = a.shape[axis]``.
-      * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
-        simply ``a[indices[i]]``.
+    * when ``i = len(indices) - 1`` (so for the last index),
+      ``indices[i+1] = a.shape[axis]``.
+    * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
+      simply ``a[indices[i]]``.
+    * if ``indices[i] >= len(a)`` or ``indices[i] < 0``, an error is raised.
 
     The shape of the output depends on the size of `indices`, and may be
     larger than `a` (this happens if ``len(indices) > a.shape[axis]``).
