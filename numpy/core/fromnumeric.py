@@ -1008,14 +1008,12 @@ def searchsorted(a, v, side='left', sorter=None):
         return _wrapit(a, 'searchsorted', v, side, sorter)
     return searchsorted(v, side, sorter)
     
-def fastsearchsorted(a, v, side='left'):
+def fastsearchsorted(a, v, side='left', sorter=None):
     try:
         fastsearchsorted = a.fastsearchsorted
     except AttributeError:
-        return _wrapit(a, 'fastsearchsorted', v, side)
-    return fastsearchsorted(v, side)
-
-
+        return _wrapit(a, 'fastsearchsorted', v, side, sorter)
+    return fastsearchsorted(v, side, sorter)
 
 def resize(a, new_shape):
     """
