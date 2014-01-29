@@ -1383,16 +1383,23 @@ array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_fastsearchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"keys", "side", NULL};
+    static char *kwlist[] = {"keys", "side", "sorter", NULL};
     PyObject *keys;
+    PyObject *sorter;
     NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:fastsearchsorted",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:fastsearchsorted",
                                      kwlist, &keys,
-                                     PyArray_SearchsideConverter, &side)) {
+                                     PyArray_SearchsideConverter, &side,
+                                     &sorter)) {
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_FastSearchSorted(self, keys, side));
+    if (sorter == Py_None) {
+        sorter = NULL;
+    }
+    return PyArray_Return((PyArrayObject *)PyArray_FastSearchSorted(self,
+                                                                    keys,
+                                                                    side,
+                                                                    sorter));
 }
 
 
