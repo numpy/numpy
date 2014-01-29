@@ -151,6 +151,34 @@ def configuration(parent_package='',top_path=None):
 
     return config
 
+def check_submodules():
+    """ verify that the submodules are checked out and clean
+        use `git submodule update --init`; on failure
+    """
+    if not os.path.exists('.git'):
+        return
+    with open('.gitmodules') as f:
+        for l in f:
+            if 'path' in l:
+                p = l.split('=')[-1].strip()
+                if not os.path.exists(p):
+                    raise ValueError('Submodule %s missing' % p)
+
+
+    proc = subprocess.Popen(['git', 'submodule', 'status'],
+                            stdout=subprocess.PIPE)
+    status, _ = proc.communicate()
+    status = status.decode("ascii", "replace")
+    for line in status.splitlines():
+        if line.startswith('-') or line.startswith('+'):
+            raise ValueError('Submodule not clean: %s' % line)
+
+from distutils.command.sdist import sdist
+class sdist_checked(sdist):
+    """ check submodules on sdist to prevent incomplete tarballs """
+    def run(self):
+        check_submodules()
+        sdist.run(self)
 
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -174,6 +202,7 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
+        cmdclass={"sdist": sdist_checked},
     )
 
     # Run build
