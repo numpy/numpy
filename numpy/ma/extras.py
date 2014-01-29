@@ -448,8 +448,8 @@ def average(a, axis=None, weights=None, returned=False):
         Data to be averaged.
         Masked entries are not taken into account in the computation.
     axis : int, optional
-        Axis along which the variance is computed. The default is to compute
-        the variance of the flattened array.
+        Axis along which the average is computed. The default is to compute
+        the average of the flattened array.
     weights : array_like, optional
         The importance that each element has in the computation of the average.
         The weights array can either be 1-D (in which case its length must be
