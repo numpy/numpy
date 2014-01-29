@@ -2386,7 +2386,7 @@ PyArray_FastSearchSorted(PyArrayObject *op1, PyObject *op2,
             }
             global_obj = store_arr;
         }
-    } else { /* do bin search with a sorter array */
+    } else { /* do binsearch with a sorter array */
         int error = 0;
         if (argbinsearch) { /* use type specific function */
             NPY_BEGIN_THREADS_DESCR(dtype);
@@ -2433,20 +2433,20 @@ PyArray_FastSearchSorted(PyArrayObject *op1, PyObject *op2,
                 NPY_END_THREADS_DESCR(dtype);
             }
             global_obj = store_arr;
-            if (error < 0) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Sorter index out of range.");
-                goto fail;
-            }
-            Py_DECREF(ap3);
-            Py_DECREF(sorter);
-        }    
+        }
+        if (error < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Sorter index out of range.");
+            goto fail;
+        }
+        Py_DECREF(ap3);
+        Py_DECREF(sorter);
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ap3);

@@ -1384,9 +1384,10 @@ static PyObject *
 array_fastsearchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"keys", "side", "sorter", NULL};
-    PyObject *keys;
-    PyObject *sorter;
+    PyObject *keys,
+             *sorter = NULL;
     NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
+    
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:fastsearchsorted",
                                      kwlist, &keys,
                                      PyArray_SearchsideConverter, &side,
@@ -1401,8 +1402,6 @@ array_fastsearchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                                                     side,
                                                                     sorter));
 }
-
-
 
 static void
 _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
