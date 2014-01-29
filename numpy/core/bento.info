@@ -11,10 +11,12 @@ Library:
     CompiledLibrary: npysort
         Sources:
             src/private/npy_partition.h.src,
+            src/private/npy_binsearch.h.src,
             src/npysort/quicksort.c.src,
             src/npysort/mergesort.c.src,
             src/npysort/heapsort.c.src,
-            src/npysort/selection.c.src
+            src/npysort/selection.c.src,
+            src/npysort/binsearch.c.src
     Extension: multiarray
         Sources:
             src/multiarray/multiarraymodule_onefile.c
