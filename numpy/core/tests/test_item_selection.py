@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import *
 import sys, warnings
+import itertools
 
 
 class TestTake(TestCase):
@@ -45,7 +46,6 @@ class TestTake(TestCase):
                             res = ta.take(index_array, mode=mode, axis=1)
                             assert_(res.shape == (2,) + index_array.shape)
 
-
     def test_refcounting(self):
         objects = [object() for i in range(10)]
         for mode in ('raise', 'clip', 'wrap'):
@@ -59,6 +59,17 @@ class TestTake(TestCase):
             a.take(b, out=a[:6])
             del a
             assert_(all(sys.getrefcount(o) == 3 for o in objects))
+
+    def test_casting(self):
+        types = ''.join((np.typecodes['AllInteger'], np.typecodes['Float']))
+        modes = ['raise', 'wrap', 'clip']
+        for from_, to_, mode in itertools.product(types, types, modes):
+            a = np.array([0, 1, 2], dtype=np.dtype(from_))
+            b = np.empty((3,), dtype=np.dtype(to_))
+            if np.can_cast(from_, to_):
+                a.take([0, 1, 2], out=b, mode=mode)
+            else:
+                assert_raises(TypeError, a.take, [0, 1, 2], out=b, mode=mode)
 
     def test_unicode_mode(self):
         d = np.arange(10)

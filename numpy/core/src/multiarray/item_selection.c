@@ -87,7 +87,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
     else {
         int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY;
+                    NPY_ARRAY_UPDATEIFCOPY |
+                    NPY_ARRAY_FORCECAST;
 
         if ((PyArray_NDIM(out) != nd) ||
             !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
@@ -104,8 +105,23 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
+
         dtype = PyArray_DESCR(self);
+        /*
+         * The out array is converted to an array obj of type dtype and after
+         * the take operation is finished is update-if-copy-ed back. An
+         * explicit check that dtype can be safely cast to the type of out
+         * is needed, as the constructor of obj would check the opposite
+         * casting, were it not disabled by the NPY_ARRAY_FORCECAST flag.
+         */
+        if (PyArray_CanCastTypeTo(dtype, PyArray_DESCR(out),
+                                  NPY_SAFE_CASTING) == 0) {
+            PyErr_SetString(PyExc_TypeError,
+                            "output cannot be safely cast to out dtype");
+            goto fail;
+        }
         Py_INCREF(dtype);
+
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
             goto fail;
