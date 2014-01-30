@@ -771,6 +771,8 @@ class TestRegression(TestCase):
         x = np.array(['a', 'aa', 'b'])
         y = np.array(['d', 'e'])
         assert_equal(x.searchsorted(y), [3, 3])
+        assert_equal(x.fastsearchsorted(y), [3, 3])
+        
 
     def test_string_argsort_with_zeros(self, level=rlevel):
         """Check argsort for strings containing zeros."""
@@ -1836,6 +1838,7 @@ class TestRegression(TestCase):
         # Ticket #2021, should not segfault.
         x = np.arange(0, 4, dtype='datetime64[D]')
         assert_raises(TypeError, x.searchsorted, 1)
+        assert_raises(TypeError, x.fastsearchsorted, 1)
 
     def test_string_truncation(self):
         # Ticket #1990 - Data can be truncated in creation of an array from a
@@ -1892,10 +1895,12 @@ class TestRegression(TestCase):
         # proper exception.
         a = np.array([('a', 1)], dtype='S1, int')
         assert_raises(TypeError, np.searchsorted, a, 1.2)
+        assert_raises(TypeError, np.fastsearchsorted, a, 1.2)
         # Ticket #2066, similar problem:
         dtype = np.format_parser(['i4', 'i4'], [], [])
         a = np.recarray((2, ), dtype)
         assert_raises(TypeError, np.searchsorted, a, 1)
+        assert_raises(TypeError, np.fastsearchsorted, a, 1)
 
     def test_complex64_alignment(self):
         # Issue gh-2668 (trac 2076), segfault on sparc due to misalignment

@@ -341,6 +341,7 @@ multiarray_funcs_api = {
     'PyArray_SelectkindConverter':          298,
     'PyDataMem_NEW_ZEROED':                 299,
     # End 1.8 API
+    'PyArray_FastSearchSorted':             300,
 }
 
 ufunc_types_api = {

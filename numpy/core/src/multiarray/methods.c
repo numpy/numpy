@@ -1380,6 +1380,29 @@ array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side, sorter));
 }
 
+static PyObject *
+array_fastsearchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"keys", "side", "sorter", NULL};
+    PyObject *keys,
+             *sorter = NULL;
+    NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
+    
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:fastsearchsorted",
+                                     kwlist, &keys,
+                                     PyArray_SearchsideConverter, &side,
+                                     &sorter)) {
+        return NULL;
+    }
+    if (sorter == Py_None) {
+        sorter = NULL;
+    }
+    return PyArray_Return((PyArrayObject *)PyArray_FastSearchSorted(self,
+                                                                    keys,
+                                                                    side,
+                                                                    sorter));
+}
+
 static void
 _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
                PyObject *deepcopy, PyObject *visit)
@@ -2431,6 +2454,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"searchsorted",
         (PyCFunction)array_searchsorted,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"fastsearchsorted",
+        (PyCFunction)array_fastsearchsorted,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"setfield",
         (PyCFunction)array_setfield,
