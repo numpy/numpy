@@ -1684,6 +1684,13 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
     return obj;
 }
 
+static PyObject *
+array_free(PyObject * v)
+{
+    /* avoid same deallocator as PyBaseObject, see gentype_free */
+    PyObject_Free(v);
+}
+
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 #if defined(NPY_PY3K)
@@ -1738,9 +1745,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
     (initproc)0,                                /* tp_init */
-    array_alloc,                                /* tp_alloc */
+    (allocfunc)array_alloc,                     /* tp_alloc */
     (newfunc)array_new,                         /* tp_new */
-    0,                                          /* tp_free */
+    (freefunc)array_free,                       /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */
     0,                                          /* tp_mro */

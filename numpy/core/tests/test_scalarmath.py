@@ -45,6 +45,12 @@ class TestTypes(TestCase):
             b = atype([1, 2, 3])
             assert_equal(a, b)
 
+    def test_leak(self):
+        # test leak of scalar objects
+        # a leak would show up in valgrind as still-reachable of ~2.6MB
+        for i in range(200000):
+            np.add(1, 1)
+
 
 class TestBaseMath(TestCase):
     def test_blocked(self):
