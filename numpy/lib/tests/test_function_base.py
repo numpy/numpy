@@ -760,6 +760,19 @@ class TestDigitize(TestCase):
         x = rand(10)
         bins = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bins, True) != 10))
+    
+    def test_monotonic(self):
+        x = [0]
+        bins = [0, 0, 1]
+        digitize(x, bins)
+        bins = [1, 1, 0]
+        digitize(x, bins)
+        bins = [1, 1, 1, 1]
+        digitize(x, bins)
+        bins = [0, 0, 1, 0]
+        assert_raises(ValueError, digitize, x, bins)
+        bins = [1, 1, 0, 1]
+        assert_raises(ValueError, digitize, x, bins)
 
 
 class TestUnwrap(TestCase):

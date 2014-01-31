@@ -66,31 +66,33 @@ decr_slot_right_(double x, double * bins, npy_intp lbins)
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic(double * a, int lena)
+check_array_monotonic(const double *a, int lena)
 {
-    int i;
-
-    if (a [0] <= a [1]) {
-        /* possibly monotonic increasing */
-        for (i = 1; i < lena - 1; i ++) {
-            if (a [i] > a [i + 1]) {
+    /* This function is always called with lena>= 2 */
+    const double *a_next = a + 1;
+    /* Ignore repeating values at the beginning of the array */
+    while((--lena > 1) && (*a == *a_next)) {
+        a++;
+        a_next++;
+    }
+    if (*a < *a_next) { /* possibly monotonic increasing */
+        while(--lena) {
+            if (*(++a) > *(++a_next)) {
                 return 0;
             }
         }
         return 1;
-    }
-    else {
-        /* possibly monotonic decreasing */
-        for (i = 1; i < lena - 1; i ++) {
-            if (a [i] < a [i + 1]) {
+    } else if (*a > *a_next) { /* possibly monotonic decreasing */
+        while(--lena) {
+            if (*(++a) < *(++a_next)) {
                 return 0;
             }
         }
         return -1;
+    } else { /* all bins edges hold the same value */
+        return 1;
     }
 }
-
-
 
 /* find the index of the maximum element of an integer array */
 static npy_intp
