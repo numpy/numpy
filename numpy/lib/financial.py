@@ -628,21 +628,29 @@ def irr(values):
 
     Examples
     --------
-    >>> print round(np.irr([-100, 39, 59, 55, 20]), 5)
+    >>> round(irr([-100, 39, 59, 55, 20]), 5)
     0.28095
+    >>> round(irr([-100, 0, 0, 74]), 5)
+    -0.0955
+    >>> round(irr([-100, 100, 0, -7]), 5)
+    -0.0833
+    >>> round(irr([-100, 100, 0, 7]), 5)
+    0.06206
+    >>> round(irr([-5, 10.5, 1, -8, 1]), 5)
+    0.0886
 
     (Compare with the Example given for numpy.lib.financial.npv)
 
     """
     res = np.roots(values[::-1])
-    # Find the root(s) between 0 and 1
-    mask = (res.imag == 0) & (res.real > 0) & (res.real <= 1)
-    res = res[mask].real
+    mask = (res.imag == 0) & (res.real > 0)
     if res.size == 0:
         return np.nan
+    res = res[mask].real
+    # NPV(rate) = 0 can have more than one solution so we return
+    # only the solution closest to zero.
     rate = 1.0/res - 1
-    if rate.size == 1:
-        rate = rate.item()
+    rate = rate.item(np.argmin(np.abs(rate)))
     return rate
 
 def npv(rate, values):
