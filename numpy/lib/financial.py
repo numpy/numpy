@@ -628,8 +628,16 @@ def irr(values):
 
     Examples
     --------
-    >>> print round(np.irr([-100, 39, 59, 55, 20]), 5)
+    >>> round(irr([-100, 39, 59, 55, 20]), 5)
     0.28095
+    >>> round(irr([-100, 0, 0, 74]), 5)
+    -0.0955
+    >>> round(irr([-100, 100, 0, -7]), 5)
+    -0.0833
+    >>> round(irr([-100, 100, 0, 7]), 5)
+    0.06206
+    >>> round(irr([-5, 10.5, 1, -8, 1]), 5)
+    0.0886
 
     (Compare with the Example given for numpy.lib.financial.npv)
 
