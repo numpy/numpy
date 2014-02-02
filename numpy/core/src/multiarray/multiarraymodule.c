@@ -4153,7 +4153,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (!d) {
         goto err;
     }
-    PyArray_Type.tp_free = PyObject_Free;
     if (PyType_Ready(&PyArray_Type) < 0) {
         return RETVAL;
     }
