@@ -1867,196 +1867,6 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 }
 
 
-/** @brief Use bisection of sorted array to find first entries >= keys.
- *
- * For each key use bisection to find the first index i s.t. key <= arr[i].
- * When there is no such index i, set i = len(arr). Return the results in ret.
- * Both arr and key must be of the same comparable type.
- *
- * @param arr 1d, strided, sorted array to be searched.
- * @param key contiguous array of keys.
- * @param ret contiguous array of intp for returned indices.
- * @return void
- */
-static void
-local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
-{
-    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    npy_intp nkeys = PyArray_SIZE(key);
-    char *parr = PyArray_DATA(arr);
-    char *pkey = PyArray_DATA(key);
-    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(key)->elsize;
-    npy_intp arrstride = *PyArray_STRIDES(arr);
-    npy_intp i;
-
-    for (i = 0; i < nkeys; ++i) {
-        npy_intp imin = 0;
-        npy_intp imax = nelts;
-        while (imin < imax) {
-            npy_intp imid = imin + ((imax - imin) >> 1);
-            if (compare(parr + arrstride*imid, pkey, key) < 0) {
-                imin = imid + 1;
-            }
-            else {
-                imax = imid;
-            }
-        }
-        *pret = imin;
-        pret += 1;
-        pkey += elsize;
-    }
-}
-
-
-/** @brief Use bisection of sorted array to find first entries > keys.
- *
- * For each key use bisection to find the first index i s.t. key < arr[i].
- * When there is no such index i, set i = len(arr). Return the results in ret.
- * Both arr and key must be of the same comparable type.
- *
- * @param arr 1d, strided, sorted array to be searched.
- * @param key contiguous array of keys.
- * @param ret contiguous array of intp for returned indices.
- * @return void
- */
-static void
-local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
-{
-    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    npy_intp nkeys = PyArray_SIZE(key);
-    char *parr = PyArray_DATA(arr);
-    char *pkey = PyArray_DATA(key);
-    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(key)->elsize;
-    npy_intp arrstride = *PyArray_STRIDES(arr);
-    npy_intp i;
-
-    for(i = 0; i < nkeys; ++i) {
-        npy_intp imin = 0;
-        npy_intp imax = nelts;
-        while (imin < imax) {
-            npy_intp imid = imin + ((imax - imin) >> 1);
-            if (compare(parr + arrstride*imid, pkey, key) <= 0) {
-                imin = imid + 1;
-            }
-            else {
-                imax = imid;
-            }
-        }
-        *pret = imin;
-        pret += 1;
-        pkey += elsize;
-    }
-}
-
-/** @brief Use bisection of sorted array to find first entries >= keys.
- *
- * For each key use bisection to find the first index i s.t. key <= arr[i].
- * When there is no such index i, set i = len(arr). Return the results in ret.
- * Both arr and key must be of the same comparable type.
- *
- * @param arr 1d, strided array to be searched.
- * @param key contiguous array of keys.
- * @param sorter 1d, strided array of intp that sorts arr.
- * @param ret contiguous array of intp for returned indices.
- * @return int
- */
-static int
-local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
-                     PyArrayObject *sorter, PyArrayObject *ret)
-{
-    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    npy_intp nkeys = PyArray_SIZE(key);
-    char *parr = PyArray_DATA(arr);
-    char *pkey = PyArray_DATA(key);
-    char *psorter = PyArray_DATA(sorter);
-    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(key)->elsize;
-    npy_intp arrstride = *PyArray_STRIDES(arr);
-    npy_intp sorterstride = *PyArray_STRIDES(sorter);
-    npy_intp i;
-
-    for (i = 0; i < nkeys; ++i) {
-        npy_intp imin = 0;
-        npy_intp imax = nelts;
-        while (imin < imax) {
-            npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = *(npy_intp *)(psorter + sorterstride * imid);
-
-            if (indx < 0 || indx >= nelts) {
-                return -1;
-            }
-            if (compare(parr + arrstride*indx, pkey, key) < 0) {
-                imin = imid + 1;
-            }
-            else {
-                imax = imid;
-            }
-        }
-        *pret = imin;
-        pret += 1;
-        pkey += elsize;
-    }
-    return 0;
-}
-
-
-/** @brief Use bisection of sorted array to find first entries > keys.
- *
- * For each key use bisection to find the first index i s.t. key < arr[i].
- * When there is no such index i, set i = len(arr). Return the results in ret.
- * Both arr and key must be of the same comparable type.
- *
- * @param arr 1d, strided array to be searched.
- * @param key contiguous array of keys.
- * @param sorter 1d, strided array of intp that sorts arr.
- * @param ret contiguous array of intp for returned indices.
- * @return int
- */
-static int
-local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
-                      PyArrayObject *sorter, PyArrayObject *ret)
-{
-    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    npy_intp nkeys = PyArray_SIZE(key);
-    char *parr = PyArray_DATA(arr);
-    char *pkey = PyArray_DATA(key);
-    char *psorter = PyArray_DATA(sorter);
-    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(key)->elsize;
-    npy_intp arrstride = *PyArray_STRIDES(arr);
-    npy_intp sorterstride = *PyArray_STRIDES(sorter);
-    npy_intp i;
-
-    for(i = 0; i < nkeys; ++i) {
-        npy_intp imin = 0;
-        npy_intp imax = nelts;
-        while (imin < imax) {
-            npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = *(npy_intp *)(psorter + sorterstride * imid);
-
-            if (indx < 0 || indx >= nelts) {
-                return -1;
-            }
-            if (compare(parr + arrstride*indx, pkey, key) <= 0) {
-                imin = imid + 1;
-            }
-            else {
-                imax = imid;
-            }
-        }
-        *pret = imin;
-        pret += 1;
-        pkey += elsize;
-    }
-    return 0;
-}
-
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
@@ -2138,7 +1948,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
         ap1_flags |= NPY_ARRAY_CARRAY_RO;
     }
-
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
                                 1, 1, ap1_flags, NULL);
     if (ap1 == NULL) {
@@ -2200,9 +2009,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
             global_obj = ap2;
             if (side == NPY_SEARCHLEFT) {
                 NPY_BEGIN_THREADS_DESCR(dtype);
-                npy_binsearch_left((const char *)PyArray_BYTES(ap1),
-                                   (const char *)PyArray_BYTES(ap2),
-                                   PyArray_BYTES(ret),
+                npy_binsearch_left((const char *)PyArray_DATA(ap1),
+                                   (const char *)PyArray_DATA(ap2),
+                                   (char *)PyArray_DATA(ret),
                                    PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                                    PyArray_STRIDES(ap1)[0], dtype->elsize,
                                    NPY_SIZEOF_INTP, sortCompare);
@@ -2210,9 +2019,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
             }
             else if (side == NPY_SEARCHRIGHT) {
                 NPY_BEGIN_THREADS_DESCR(dtype);
-                npy_binsearch_right((const char *)PyArray_BYTES(ap1),
-                                    (const char *)PyArray_BYTES(ap2),
-                                    PyArray_BYTES(ret),
+                npy_binsearch_right((const char *)PyArray_DATA(ap1),
+                                    (const char *)PyArray_DATA(ap2),
+                                    (char *)PyArray_DATA(ret),
                                     PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                                     PyArray_STRIDES(ap1)[0], dtype->elsize,
                                     NPY_SIZEOF_INTP, sortCompare);

@@ -1072,6 +1072,31 @@ class TestMethods(TestCase):
         assert_equal(b, a)
         b = a.searchsorted(unaligned, 'r')
         assert_equal(b, a + 1)
+        
+        # Test smart resetting of binsearch indices
+        a = np.arange(5)
+        b = a.searchsorted([6, 5, 4], 'l')
+        assert_equal(b, [5, 5, 4])
+        b = a.searchsorted([6, 5, 4], 'r')
+        assert_equal(b, [5, 5, 5])
+        
+        # Test all type specific binary search functions
+        types = ''.join((np.typecodes['AllInteger'], np.typecodes['AllFloat'],
+                         np.typecodes['Datetime'], '?O'))
+        for dt in types:
+            if dt == 'M':
+                dt = 'M8[D]'
+            if dt == '?':
+                a = np.arange(2, dtype=dt)
+                out = np.arange(2)
+            else:
+                a = np.arange(0, 5, dtype=dt)
+                out = np.arange(5)
+            b = a.searchsorted(a, 'l')
+            assert_equal(b, out)
+            b = a.searchsorted(a, 'r')
+            assert_equal(b, out + 1)
+
 
     def test_searchsorted_unicode(self):
         # Test searchsorted on unicode strings.
@@ -1146,6 +1171,25 @@ class TestMethods(TestCase):
         assert_equal(b, keys)
         b = a.searchsorted(unaligned, 'r', s)
         assert_equal(b, keys + 1)
+        
+        # Test all type specific indirect binary search functions
+        types = ''.join((np.typecodes['AllInteger'], np.typecodes['AllFloat'],
+                         np.typecodes['Datetime'], '?O'))
+        for dt in types:
+            if dt == 'M':
+                dt = 'M8[D]'
+            if dt == '?':
+                a = np.array([1, 0], dtype=dt)
+                s = [1, 0]
+                out = np.array([1, 0])
+            else:
+                a = np.array([3, 4, 1, 2, 0], dtype=dt)
+                s = [4, 2, 3, 0, 1]
+                out = np.array([3, 4, 1, 2, 0], dtype=np.intp)
+            b = a.searchsorted(a, 'l', s)
+            assert_equal(b, out)
+            b = a.searchsorted(a, 'r', s)
+            assert_equal(b, out + 1)
 
 
     def test_partition(self):

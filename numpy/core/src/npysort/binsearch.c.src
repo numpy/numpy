@@ -42,12 +42,27 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_str, npy_intp key_str,
                         npy_intp ret_str)
 {
+    npy_intp min_idx = 0,
+             max_idx = arr_len-1; /* set to arr_len later on */
+    @type@ last_key_val;
+             
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
-        npy_intp min_idx = 0,
-                 max_idx = arr_len;
         const @type@ key_val = *(const @type@ *)key;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (@TYPE@_LT(last_key_val, key_val)) {
+            max_idx = arr_len;
+        } else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+        
+        last_key_val = key_val;
         
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
@@ -70,12 +85,27 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            npy_intp arr_str, npy_intp key_str,
                            npy_intp sort_str, npy_intp ret_str)
 {
+    npy_intp min_idx = 0,
+             max_idx = arr_len-1; /* set to arr_len later on */
+    @type@ last_key_val;
+
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
-        npy_intp min_idx = 0,
-                 max_idx = arr_len;
         const @type@ key_val = *(const @type@ *)key;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (@TYPE@_LT(last_key_val, key_val)) {
+            max_idx = arr_len;
+        } else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+        
+        last_key_val = key_val;
 
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
@@ -123,11 +153,26 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_str, npy_intp key_str,
                      npy_intp ret_str, npy_comparator cmp)
 {
+    npy_intp min_idx = 0,
+             max_idx = arr_len-1; /* set to arr_len later on */
+    const char *last_key = key;
+
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
-        npy_intp min_idx = 0,
-                 max_idx = arr_len;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (GENERIC_LT(last_key, key, cmp)) {
+            max_idx = arr_len;
+        } else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+        
+        last_key = key;
         
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
@@ -152,11 +197,26 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
                         npy_intp sort_str, npy_intp ret_str,
                         npy_comparator cmp)
 {
+    npy_intp min_idx = 0,
+             max_idx = arr_len-1; /* set to arr_len later on */
+    const char *last_key = key;
+    
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
-        npy_intp min_idx = 0,
-                 max_idx = arr_len;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (GENERIC_LT(last_key, key, cmp)) {
+            max_idx = arr_len;
+        } else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+        
+        last_key = key;
         
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
