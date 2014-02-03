@@ -2308,7 +2308,7 @@ class TestLexsort(TestCase):
 
 
 class TestIO(object):
-    """Test tofile, fromfile, tostring, and fromstring"""
+    """Test tofile, fromfile, tobytes, and fromstring"""
 
     def setUp(self):
         shape = (2, 4, 3)
@@ -2357,11 +2357,11 @@ class TestIO(object):
         assert_array_equal(y, self.x.flat)
 
     def test_roundtrip_binary_str(self):
-        s = self.x.tostring()
+        s = self.x.tobytes()
         y = np.fromstring(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-        s = self.x.tostring('F')
+        s = self.x.tobytes('F')
         y = np.fromstring(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flatten('F'))
 
@@ -2567,7 +2567,7 @@ class TestFromBuffer(object):
             for dtype in [float, int, np.complex]:
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4, 7))*5).astype(dt)
-                buf = x.tostring()
+                buf = x.tobytes()
                 yield self.tst_basic, buf, x.flat, {'dtype':dt}
 
     def test_empty(self):

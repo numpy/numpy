@@ -542,7 +542,7 @@ array_tolist(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
@@ -2456,6 +2456,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"take",
         (PyCFunction)array_take,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"tobytes",
+        (PyCFunction)array_tobytes,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)array_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2463,7 +2466,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},
     {"tostring",
-        (PyCFunction)array_tostring,
+        (PyCFunction)array_tobytes,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)array_trace,

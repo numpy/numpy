@@ -294,6 +294,7 @@ Array conversion
    ndarray.itemset
    ndarray.setasflat
    ndarray.tostring
+   ndarray.tobytes
    ndarray.tofile
    ndarray.dump
    ndarray.dumps

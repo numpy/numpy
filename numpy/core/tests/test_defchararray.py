@@ -138,7 +138,7 @@ class TestChar(TestCase):
 
     def test_it(self):
         assert_equal(self.A.shape, (4,))
-        assert_equal(self.A.upper()[:2].tostring(), asbytes('AB'))
+        assert_equal(self.A.upper()[:2].tobytes(), asbytes('AB'))
 
 class TestComparisons(TestCase):
     def setUp(self):

@@ -286,11 +286,11 @@ class TestRegression(TestCase):
         b = np.array('world')
         a == b
 
-    def test_tostring_FORTRANORDER_discontiguous(self,level=rlevel):
+    def test_tobytes_FORTRANORDER_discontiguous(self,level=rlevel):
         """Fix in r2836"""
         # Create discontiguous Fortran-ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
-        assert_array_almost_equal(x.ravel(), np.fromstring(x.tostring()))
+        assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
 
     def test_flat_assignment(self,level=rlevel):
         """Correct behaviour of ticket #194"""
@@ -1200,7 +1200,7 @@ class TestRegression(TestCase):
         #that void scalar contains original data.
         test_string = np.array("test")
         test_string_void_scalar = np.core.multiarray.scalar(
-            np.dtype(("V", test_string.dtype.itemsize)), test_string.tostring())
+            np.dtype(("V", test_string.dtype.itemsize)), test_string.tobytes())
 
         assert_(test_string_void_scalar.view(test_string.dtype) == test_string)
 
@@ -1208,7 +1208,7 @@ class TestRegression(TestCase):
         #reconstructed scalar is correct.
         test_record = np.ones((), "i,i")
         test_record_void_scalar = np.core.multiarray.scalar(
-            test_record.dtype, test_record.tostring())
+            test_record.dtype, test_record.tobytes())
 
         assert_(test_record_void_scalar == test_record)
 
@@ -1378,10 +1378,10 @@ class TestRegression(TestCase):
             y = x.byteswap()
             if x.dtype.byteorder == z.dtype.byteorder:
                 # little-endian machine
-                assert_equal(x, np.fromstring(y.tostring(), dtype=dtype.newbyteorder()))
+                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype.newbyteorder()))
             else:
                 # big-endian machine
-                assert_equal(x, np.fromstring(y.tostring(), dtype=dtype))
+                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype))
             # double check real and imaginary parts:
             assert_equal(x.real, y.real.byteswap())
             assert_equal(x.imag, y.imag.byteswap())
@@ -1527,7 +1527,7 @@ class TestRegression(TestCase):
         # file handle out of sync
         f0 = tempfile.NamedTemporaryFile()
         f = f0.file
-        f.write(np.arange(255, dtype='u1').tostring())
+        f.write(np.arange(255, dtype='u1').tobytes())
 
         f.seek(20)
         ret = np.fromfile(f, count=4, dtype='u1')
@@ -1904,7 +1904,7 @@ class TestRegression(TestCase):
         # 2D array
         arr2 = np.reshape(arr, (2, 5))
         # Fortran write followed by (C or F) read caused bus error
-        data_str = arr2.tostring('F')
+        data_str = arr2.tobytes('F')
         data_back = np.ndarray(arr2.shape,
                               arr2.dtype,
                               buffer=data_str,

@@ -9384,7 +9384,7 @@ self
 \emph default
 .
 \series bold
-tostring
+tobytes
 \series default
 (
 \emph on

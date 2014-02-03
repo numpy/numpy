@@ -1499,9 +1499,9 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  */
 /**begin repeat
  *
- * #name = tolist, item, tostring, astype, copy, __deepcopy__, searchsorted,
- *         view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill,
- *         transpose, newbyteorder#
+ * #name = tolist, item, tostring, tobytes, astype, copy, __deepcopy__,
+ *         searchsorted, view, swapaxes, conj, conjugate, nonzero, flatten,
+ *         ravel, fill, transpose, newbyteorder#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args)
@@ -1844,6 +1844,9 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"itemset",
         (PyCFunction)gentype_itemset,
+        METH_VARARGS, NULL},
+    {"tobytes",
+        (PyCFunction)gentype_tobytes,
         METH_VARARGS, NULL},
     {"tofile",
         (PyCFunction)gentype_tofile,
