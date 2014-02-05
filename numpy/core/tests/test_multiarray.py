@@ -2052,12 +2052,11 @@ class TestIO(object):
         self.x = rand(shape) + rand(shape).astype(np.complex)*1j
         self.x[0,:, 1] = [nan, inf, -inf, nan]
         self.dtype = self.x.dtype
-        self.filename = tempfile.mktemp()
+        self.file = tempfile.NamedTemporaryFile()
+        self.filename = self.file.name
 
     def tearDown(self):
-        if os.path.isfile(self.filename):
-            os.unlink(self.filename)
-            #tmp_file.close()
+        self.file.close()
 
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)
@@ -2085,7 +2084,6 @@ class TestIO(object):
         y = np.fromfile(f, dtype=self.dtype)
         f.close()
         assert_array_equal(y, self.x.flat)
-        os.unlink(self.filename)
 
     def test_roundtrip_filename(self):
         self.x.tofile(self.filename)
@@ -2138,8 +2136,6 @@ class TestIO(object):
                 f.close()
                 assert_equal(pos, 10, err_msg=err_msg)
 
-        os.unlink(self.filename)
-
     def test_file_position_after_tofile(self):
         # gh-4118
         sizes = [io.DEFAULT_BUFFER_SIZE//8,
@@ -2166,8 +2162,6 @@ class TestIO(object):
             pos = f.tell()
             f.close()
             assert_equal(pos, 10, err_msg=err_msg)
-
-        os.unlink(self.filename)
 
     def _check_from(self, s, value, **kw):
         y = np.fromstring(asbytes(s), **kw)
@@ -2271,7 +2265,6 @@ class TestIO(object):
         s = f.read()
         f.close()
         assert_equal(s, '1.51,2.0,3.51,4.0')
-        os.unlink(self.filename)
 
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
