@@ -347,9 +347,9 @@ def dstack(tup):
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
         if len(_nx.shape(sub_arys[i])) == 0:
-            sub_arys[i] = _nx.array([])
+            sub_arys[i] = _nx.array([], dtype=sub_arys[i].dtype)
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
-            sub_arys[i] = _nx.array([])
+            sub_arys[i] = _nx.array([], dtype=sub_arys[i].dtype)
     return sub_arys
 
 def array_split(ary,indices_or_sections,axis = 0):

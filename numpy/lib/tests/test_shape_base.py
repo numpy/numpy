@@ -143,6 +143,14 @@ class TestArraySplit(TestCase):
                    array([]), array([])]
         compare_results(res, desired)
 
+    def test_structured_array_split(self):
+        a = array([('a', 1), ('b', 2), ('c', 3)],
+                  dtype=[('k', '|S1'), ('v', '<i8')])
+        indices = [1, 1]
+        res = array_split(a, indices, axis=-1)
+        desired = [a[:1], a[1:1], a[1:]]
+        compare_results(res, desired)
+
 
 class TestSplit(TestCase):
     """* This function is essentially the same as array_split,
