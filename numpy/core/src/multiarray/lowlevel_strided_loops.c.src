@@ -1364,6 +1364,11 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  * #isget = 0, 1#
  */
 
+/*
+ * Advanded indexing iteration of arrays when there is a single indexing
+ * array which has the same memory order as the value array and both
+ * can be trivally iterated (single stride, aligned, no casting necessary).
+ */
 NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
                        PyArrayObject *result)
@@ -1418,37 +1423,37 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 #else
     default:
 #endif
-            while (itersize--) {
-                indval = *((npy_intp*)ind_ptr);
+        while (itersize--) {
+            indval = *((npy_intp*)ind_ptr);
 #if @isget@
-                if (check_and_adjust_index(&indval, fancy_dim, 1) < 0 ) {
-                    return -1;
-                }
+            if (check_and_adjust_index(&indval, fancy_dim, 1) < 0 ) {
+                return -1;
+            }
 #else
-                if (indval < 0) {
-                    indval += fancy_dim;
-                }
+            if (indval < 0) {
+                indval += fancy_dim;
+            }
 #endif
-                self_ptr = base_ptr + indval * self_stride;
+            self_ptr = base_ptr + indval * self_stride;
 
 #if @isget@
 #if @elsize@
-                *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
+            *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
 #else
-                copyswap(result_ptr, self_ptr, 0, self);
+            copyswap(result_ptr, self_ptr, 0, self);
 #endif
 
 #else /* !@isget@ */
 #if @elsize@
-                *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
+            *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
 #else
-                copyswap(self_ptr, result_ptr, 0, self);
+            copyswap(self_ptr, result_ptr, 0, self);
 #endif
 #endif
 
-                ind_ptr += ind_stride;
-                result_ptr += result_stride;
-            }
+            ind_ptr += ind_stride;
+            result_ptr += result_stride;
+        }
         break;
 
 /**end repeat1**/
@@ -1458,6 +1463,9 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 }
 
 
+/*
+ * General advanced indexing iteration.
+ */
 NPY_NO_EXPORT int
 mapiter_@name@(PyArrayMapIterObject *mit)
 {
@@ -1533,6 +1541,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #else
             default:
 #endif
+                /* Outer iteration (safe because mit->size != 0) */
                 do {
 #if !@isget@
                     /*
@@ -1645,6 +1654,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         else {
 #endif
 
+            /* Outer iteration (safe because mit->size != 0) */
             do {
                 self_ptr = baseoffset;
                 for (i=0; i < @numiter@; i++) {

@@ -1679,7 +1679,7 @@ broadcast_error: {
             }
             for (iop = 0; iop < nop; ++iop) {
                 if (op[iop] != NULL) {
-                    tmp = get_shape_string(PyArray_NDIM(op[iop]),
+                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                                     PyArray_DIMS(op[iop]),
                                                     " ");
                     if (tmp == NULL) {
@@ -1703,7 +1703,7 @@ broadcast_error: {
                     return 0;
                 }
 
-                tmp = get_shape_string(ndim, itershape, "");
+                tmp = convert_shape_to_string(ndim, itershape, "");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1726,7 +1726,7 @@ broadcast_error: {
                     int *axes = op_axes[iop];
 
                     tmpstr = (axes == NULL) ? " " : "->";
-                    tmp = get_shape_string(PyArray_NDIM(op[iop]),
+                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                                     PyArray_DIMS(op[iop]),
                                                     tmpstr);
                     if (tmp == NULL) {
@@ -1748,7 +1748,7 @@ broadcast_error: {
                                 remdims[idim] = -1;
                             }
                         }
-                        tmp = get_shape_string(ndim, remdims, " ");
+                        tmp = convert_shape_to_string(ndim, remdims, " ");
                         if (tmp == NULL) {
                             return 0;
                         }
@@ -1770,7 +1770,7 @@ broadcast_error: {
                     return 0;
                 }
 
-                tmp = get_shape_string(ndim, itershape, "");
+                tmp = convert_shape_to_string(ndim, itershape, "");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1806,7 +1806,7 @@ operand_different_than_broadcast: {
         }
 
         /* Operand shape */
-        tmp = get_shape_string(PyArray_NDIM(op[iop]),
+        tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                         PyArray_DIMS(op[iop]), "");
         if (tmp == NULL) {
             return 0;
@@ -1839,7 +1839,7 @@ operand_different_than_broadcast: {
                 return 0;
             }
 
-            tmp = get_shape_string(ndim, remdims, "]");
+            tmp = convert_shape_to_string(ndim, remdims, "]");
             if (tmp == NULL) {
                 return 0;
             }
@@ -1859,7 +1859,7 @@ operand_different_than_broadcast: {
         }
 
         /* Broadcast shape */
-        tmp = get_shape_string(ndim, broadcast_shape, "");
+        tmp = convert_shape_to_string(ndim, broadcast_shape, "");
         if (tmp == NULL) {
             return 0;
         }

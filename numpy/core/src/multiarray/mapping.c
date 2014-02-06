@@ -135,7 +135,7 @@ array_item(PyArrayObject *self, Py_ssize_t i)
 
 /*NUMPY_API
  *
-*/
+ */
 NPY_NO_EXPORT void
 PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
@@ -213,7 +213,9 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 }
 
 
-/*
+/**
+ * Prepare an npy_index_object from the python slicing object.
+ *
  * This function handles all index preparations with the exception
  * of field access. It fills the array of index_info structs correctly.
  * It already handles the boolean array special case for fancy indexing,
@@ -564,9 +566,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     }
                 }
 
-                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr,
-                                            PyArray_DescrFromType(NPY_INTP),
-                                            NPY_ARRAY_FORCECAST);
+                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
+                                                         NPY_ARRAY_FORCECAST);
 
                 if (arr == NULL) {
                     /* Since this will be removed, handle this later */
@@ -851,11 +853,20 @@ prepare_index(PyArrayObject *self, PyObject *index,
 }
 
 
-/*
+/**
+ * Get pointer for an integer index.
+ *
  * For a purely integer index, set ptr to the memory address.
  * Returns 0 on success, -1 on failure.
  * The caller must ensure that the index is a full integer
  * one.
+ * 
+ * @param Array being indexed
+ * @param result pointer
+ * @param parsed index information
+ * @param number of indices
+ *
+ * @return 0 on success -1 on failure
  */
 static int
 get_item_pointer(PyArrayObject *self, char **ptr,
@@ -872,12 +883,23 @@ get_item_pointer(PyArrayObject *self, char **ptr,
     return 0;
 }
 
-/*
+
+/**
+ * Get view into an array using all non-array indices.
+ *
  * For any index, get a view of the subspace into the original
  * array. If there are no fancy indices, this is the result of
  * the indexing operation.
  * Ensure_array allows to fetch a safe subspace view for advanced
  * indexing.
+ * 
+ * @param Array being indexed
+ * @param resulting array (new reference)
+ * @param parsed index information
+ * @param number of indices
+ * @param Whether result should inherit the type from self
+ *
+ * @return 0 on success -1 on failure
  */
 static int
 get_view_from_index(PyArrayObject *self, PyArrayObject **view,
@@ -2102,15 +2124,10 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
 }
 
 
-/*
+/**
  * Fill information about the iterator. The MapIterObject does not
  * need to have any information set for this function to work.
  * (PyArray_MapIterSwapAxes requires also nd and nd_fancy info)
- *
- * @param MapIterObject
- * @param The parsed indices object
- * @param Number of indices
- * @param The array that is being iterated
  *
  * Sets the following information:
  *    * mit->consec: The axis where the fancy indices need transposing to.
@@ -2121,6 +2138,13 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *          by each fancy index.
  *    * mit->dimensions: Broadcast dimension of the fancy indices and
  *          the subspace iteration dimension.
+ *
+ * @param MapIterObject
+ * @param The parsed indices object
+ * @param Number of indices
+ * @param The array that is being iterated
+ *
+ * @return 0 on success -1 on failure
  */
 static int
 mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
@@ -2232,9 +2256,10 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
         if (indices[i].type != HAS_FANCY) {
             continue;
         }
-        tmp = get_shape_string(PyArray_NDIM((PyArrayObject *)indices[i].object),
-                               PyArray_SHAPE((PyArrayObject *)indices[i].object),
-                               " ");
+        tmp = convert_shape_to_string(
+                    PyArray_NDIM((PyArrayObject *)indices[i].object),
+                    PyArray_SHAPE((PyArrayObject *)indices[i].object),
+                    " ");
         if (tmp == NULL) {
             return -1;
         }
@@ -2351,6 +2376,9 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 /*
  * Create new mapiter.
  *
+ * NOTE: The outer iteration (and subspace if requested buffered) is
+ *       created with DELAY_BUFALLOC. It must be reset before usage!
+ *
  * @param Index information filled by prepare_index.
  * @param Number of indices (gotten through prepare_index).
  * @param Kind of index (gotten through preprare_index).
@@ -2374,9 +2402,6 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
  *        be NULL (if extra_op_flags is not 0).
  *
  * @return A new MapIter (PyObject *) or NULL.
- *
- * NOTE: The outer iteration (and subspace if requested buffered) is
- *       created with DELAY_BUFALLOC. It must be reset before usage!
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
@@ -2571,18 +2596,17 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      */
     else if (extra_op_flags && (subspace != NULL)) {
         npy_uint32 tmp_op_flags[NPY_MAXDIMS];
-
-        NpyIter *tmp_iter;
-        npy_intp stride;
-        npy_intp strides[NPY_MAXDIMS];
-        npy_stride_sort_item strideperm[NPY_MAXDIMS];
-
         for (i=0; i < mit->numiter; i++) {
             tmp_op_flags[i] = NPY_ITER_READONLY;
         }
 
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
+
+        NpyIter *tmp_iter;
+        npy_intp stride;
+        npy_intp strides[NPY_MAXDIMS];
+        npy_stride_sort_item strideperm[NPY_MAXDIMS];
 
         /* Create an iterator, just to broadcast the arrays?! */
         tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
@@ -2914,8 +2938,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         original_extra_op = extra_op;
     }
 
-    tmp = get_shape_string(PyArray_NDIM(original_extra_op),
-                           PyArray_DIMS(original_extra_op), " ");
+    tmp = convert_shape_to_string(PyArray_NDIM(original_extra_op),
+                                  PyArray_DIMS(original_extra_op), " ");
     if (tmp == NULL) {
         goto finish;
     }
@@ -2931,7 +2955,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         goto finish;
     }
 
-    tmp = get_shape_string(mit->nd, mit->dimensions, "");
+    tmp = convert_shape_to_string(mit->nd, mit->dimensions, "");
     if (tmp == NULL) {
         goto finish;
     }

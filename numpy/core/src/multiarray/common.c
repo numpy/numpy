@@ -784,8 +784,17 @@ _is_basic_python_type(PyObject * obj)
 }
 
 
+/**
+ * Convert an array shape to a string such as "(1, 2)".
+ *
+ * @param Dimensionality of the shape
+ * @param npy_intp pointer to shape array
+ * @param String to append after the shape `(1, 2)%s`.
+ * 
+ * @return Python unicode string
+ */
 NPY_NO_EXPORT PyObject *
-get_shape_string(npy_intp n, npy_intp *vals, char *ending)
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
 {
     npy_intp i;
     PyObject *ret, *tmp;
@@ -795,10 +804,7 @@ get_shape_string(npy_intp n, npy_intp *vals, char *ending)
      * be discarded for printing if it's a leading dimension.
      * Find the first non-"newaxis" dimension.
      */
-    i = 0;
-    while (i < n && vals[i] < 0) {
-        ++i;
-    }
+    for (i = 0; i < n && vals[i] < 0; i++);
 
     if (i == n) {
         return PyUString_FromFormat("()%s", ending);
