@@ -112,45 +112,39 @@ class TestArray2String(TestCase):
 
 class TestPrintOptions:
     """Test getting and setting global print options."""
-    def setUp(self):
-        self.oldopts = np.get_printoptions()
-
-    def tearDown(self):
-        np.set_printoptions(**self.oldopts)
-
     def test_basic(self):
         x = np.array([1.5, 0, 1.234567890])
         assert_equal(repr(x), "array([ 1.5       ,  0.        ,  1.23456789])")
-        np.set_printoptions(precision=4)
-        assert_equal(repr(x), "array([ 1.5   ,  0.    ,  1.2346])")
+        with np.PrintOptions(precision=4):
+            assert_equal(repr(x), "array([ 1.5   ,  0.    ,  1.2346])")
 
     def test_formatter(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
-        assert_equal(repr(x), "array([-1, 0, 1])")
+        with np.PrintOptions(formatter={'all':lambda x: str(x-1)}):
+            assert_equal(repr(x), "array([-1, 0, 1])")
 
     def test_formatter_reset(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
-        assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'int':None})
-        assert_equal(repr(x), "array([0, 1, 2])")
+        with np.PrintOptions(formatter={'all':lambda x: str(x-1)}):
+            assert_equal(repr(x), "array([-1, 0, 1])")
+        with np.PrintOptions(formatter={'int':None}):
+            assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
-        assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'all':None})
-        assert_equal(repr(x), "array([0, 1, 2])")
+        with np.PrintOptions(formatter={'all':lambda x: str(x-1)}):
+            assert_equal(repr(x), "array([-1, 0, 1])")
+        with np.PrintOptions(formatter={'all':None}):
+            assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'int':lambda x: str(x-1)})
-        assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'int_kind':None})
-        assert_equal(repr(x), "array([0, 1, 2])")
+        with np.PrintOptions(formatter={'int':lambda x: str(x-1)}):
+            assert_equal(repr(x), "array([-1, 0, 1])")
+        with np.PrintOptions(formatter={'int_kind':None}):
+            assert_equal(repr(x), "array([0, 1, 2])")
 
         x = np.arange(3.)
-        np.set_printoptions(formatter={'float':lambda x: str(x-1)})
-        assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
-        np.set_printoptions(formatter={'float_kind':None})
-        assert_equal(repr(x), "array([ 0.,  1.,  2.])")
+        with np.PrintOptions(formatter={'float':lambda x: str(x-1)}):
+            assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
+        with np.PrintOptions(formatter={'float_kind':None}):
+            assert_equal(repr(x), "array([ 0.,  1.,  2.])")
 
 def test_unicode_object_array():
     import sys

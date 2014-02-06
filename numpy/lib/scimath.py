@@ -291,7 +291,7 @@ def log10(x):
 
     (We set the printing precision so the example can be auto-tested)
 
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.emath.log10(10**1)
     1.0
@@ -325,7 +325,7 @@ def logn(n, x):
 
     Examples
     --------
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.lib.scimath.logn(2, [4, 8])
     array([ 2.,  3.])
@@ -372,7 +372,7 @@ def log2(x):
     --------
     We set the printing precision so the example can be auto-tested:
 
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.emath.log2(8)
     3.0
@@ -412,7 +412,7 @@ def power(x, p):
 
     Examples
     --------
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.lib.scimath.power([2, 4], 2)
     array([ 4, 16])
@@ -457,7 +457,7 @@ def arccos(x):
 
     Examples
     --------
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.emath.arccos(1) # a scalar is returned
     0.0
@@ -501,7 +501,7 @@ def arcsin(x):
 
     Examples
     --------
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.emath.arcsin(0)
     0.0
@@ -547,7 +547,7 @@ def arctanh(x):
 
     Examples
     --------
-    >>> np.set_printoptions(precision=4)
+    >>> np.PrintOptions(precision=4).apply()
 
     >>> np.emath.arctanh(np.matrix(np.eye(2)))
     array([[ Inf,   0.],

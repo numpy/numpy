@@ -155,7 +155,7 @@ class NumpyDocTestCase(npd.DocTestCase):
                                      checker=checker)
 
 
-print_state = numpy.get_printoptions()
+_print_state = numpy.PrintOptions()
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
@@ -264,10 +264,10 @@ class NumpyDoctest(npd.Doctest):
                                           checker=self.out_check_class(),
                                           result_var=self.doctest_result_var)
 
-    # Add an afterContext method to nose.plugins.doctests.Doctest in order
-    # to restore print options to the original state after each doctest
+    # Override afterContext from nose.plugins.doctests.Doctest in order to
+    # restore printing options to their original state after each doctest
     def afterContext(self):
-        numpy.set_printoptions(**print_state)
+        numpy.PrintOptions(**_print_state).apply()
 
     # Ignore NumPy-specific build files that shouldn't be searched for tests
     def wantFile(self, file):
