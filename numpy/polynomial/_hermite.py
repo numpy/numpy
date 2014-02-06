@@ -1,56 +1,56 @@
 """
-Objects for dealing with Hermite_e series.
+Objects for dealing with Hermite series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Hermite_e series, including a `HermiteE` class that
+dealing with Hermite series, including a `Hermite` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `hermedomain` -- Hermite_e series default domain, [-1,1].
-- `hermezero` -- Hermite_e series that evaluates identically to 0.
-- `hermeone` -- Hermite_e series that evaluates identically to 1.
-- `hermex` -- Hermite_e series for the identity map, ``f(x) = x``.
+- `hermdomain` -- Hermite series default domain, [-1,1].
+- `hermzero` -- Hermite series that evaluates identically to 0.
+- `hermone` -- Hermite series that evaluates identically to 1.
+- `hermx` -- Hermite series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
-- `hermeadd` -- add two Hermite_e series.
-- `hermesub` -- subtract one Hermite_e series from another.
-- `hermemul` -- multiply two Hermite_e series.
-- `hermediv` -- divide one Hermite_e series by another.
-- `hermeval` -- evaluate a Hermite_e series at given points.
-- `hermeval2d` -- evaluate a 2D Hermite_e series at given points.
-- `hermeval3d` -- evaluate a 3D Hermite_e series at given points.
-- `hermegrid2d` -- evaluate a 2D Hermite_e series on a Cartesian product.
-- `hermegrid3d` -- evaluate a 3D Hermite_e series on a Cartesian product.
+- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
+- `hermadd` -- add two Hermite series.
+- `hermsub` -- subtract one Hermite series from another.
+- `hermmul` -- multiply two Hermite series.
+- `hermdiv` -- divide one Hermite series by another.
+- `hermval` -- evaluate a Hermite series at given points.
+- `hermval2d` -- evaluate a 2D Hermite series at given points.
+- `hermval3d` -- evaluate a 3D Hermite series at given points.
+- `hermgrid2d` -- evaluate a 2D Hermite series on a Cartesian product.
+- `hermgrid3d` -- evaluate a 3D Hermite series on a Cartesian product.
 
 Calculus
 --------
-- `hermeder` -- differentiate a Hermite_e series.
-- `hermeint` -- integrate a Hermite_e series.
+- `hermder` -- differentiate a Hermite series.
+- `hermint` -- integrate a Hermite series.
 
 Misc Functions
 --------------
-- `hermefromroots` -- create a Hermite_e series with specified roots.
-- `hermeroots` -- find the roots of a Hermite_e series.
-- `hermevander` -- Vandermonde-like matrix for Hermite_e polynomials.
-- `hermevander2d` -- Vandermonde-like matrix for 2D power series.
-- `hermevander3d` -- Vandermonde-like matrix for 3D power series.
-- `hermegauss` -- Gauss-Hermite_e quadrature, points and weights.
-- `hermeweight` -- Hermite_e weight function.
-- `hermecompanion` -- symmetrized companion matrix in Hermite_e form.
-- `hermefit` -- least-squares fit returning a Hermite_e series.
-- `hermetrim` -- trim leading coefficients from a Hermite_e series.
-- `hermeline` -- Hermite_e series of given straight line.
-- `herme2poly` -- convert a Hermite_e series to a polynomial.
-- `poly2herme` -- convert a polynomial to a Hermite_e series.
+- `hermfromroots` -- create a Hermite series with specified roots.
+- `hermroots` -- find the roots of a Hermite series.
+- `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
+- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
+- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
+- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
+- `hermweight` -- Hermite weight function.
+- `hermcompanion` -- symmetrized companion matrix in Hermite form.
+- `hermfit` -- least-squares fit returning a Hermite series.
+- `hermtrim` -- trim leading coefficients from a Hermite series.
+- `hermline` -- Hermite series of given straight line.
+- `herm2poly` -- convert a Hermite series to a polynomial.
+- `poly2herm` -- convert a polynomial to a Hermite series.
 
 Classes
 -------
-- `HermiteE` -- A Hermite_e series class.
+- `Hermite` -- A Hermite series class.
 
 See also
 --------
@@ -63,22 +63,21 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
-__all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
-    'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
-    'hermeval',
-    'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
-    'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE',
-    'hermeval2d', 'hermeval3d', 'hermegrid2d', 'hermegrid3d', 'hermevander2d',
-    'hermevander3d', 'hermecompanion', 'hermegauss', 'hermeweight']
+__all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
+    'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
+    'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
+    'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
+    'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
+    'hermvander2d', 'hermvander3d', 'hermcompanion', 'hermgauss',
+    'hermweight']
 
-hermetrim = pu.trimcoef
+hermtrim = pu.trimcoef
 
 
-def poly2herme(pol) :
+def poly2herm(pol) :
     """
-    poly2herme(pol)
+    poly2herm(pol)
 
     Convert a polynomial to a Hermite series.
 
@@ -100,7 +99,7 @@ def poly2herme(pol) :
 
     See Also
     --------
-    herme2poly
+    herm2poly
 
     Notes
     -----
@@ -110,19 +109,19 @@ def poly2herme(pol) :
     Examples
     --------
     >>> from numpy.polynomial.hermite_e import poly2herme
-    >>> poly2herme(np.arange(4))
-    array([  2.,  10.,   2.,   3.])
+    >>> poly2herm(np.arange(4))
+    array([ 1.   ,  2.75 ,  0.5  ,  0.375])
 
     """
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
     for i in range(deg, -1, -1) :
-        res = hermeadd(hermemulx(res), pol[i])
+        res = hermadd(hermmulx(res), pol[i])
     return res
 
 
-def herme2poly(c) :
+def herm2poly(c) :
     """
     Convert a Hermite series to a polynomial.
 
@@ -146,7 +145,7 @@ def herme2poly(c) :
 
     See Also
     --------
-    poly2herme
+    poly2herm
 
     Notes
     -----
@@ -155,18 +154,19 @@ def herme2poly(c) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import herme2poly
-    >>> herme2poly([  2.,  10.,   2.,   3.])
+    >>> from numpy.polynomial.hermite import herm2poly
+    >>> herm2poly([ 1.   ,  2.75 ,  0.5  ,  0.375])
     array([ 0.,  1.,  2.,  3.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
     if n == 1:
         return c
     if n == 2:
+        c[1] *= 2
         return c
     else:
         c0 = c[-2]
@@ -174,9 +174,9 @@ def herme2poly(c) :
         # i is the current degree of c1
         for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(c[i - 2], c1*(i - 1))
-            c1 = polyadd(tmp, polymulx(c1))
-        return polyadd(c0, polymulx(c1))
+            c0 = polysub(c[i - 2], c1*(2*(i - 1)))
+            c1 = polyadd(tmp, polymulx(c1)*2)
+        return polyadd(c0, polymulx(c1)*2)
 
 #
 # These are constant arrays are of integer type so as to be compatible
@@ -184,19 +184,19 @@ def herme2poly(c) :
 #
 
 # Hermite
-hermedomain = np.array([-1, 1])
+hermdomain = np.array([-1, 1])
 
 # Hermite coefficients representing zero.
-hermezero = np.array([0])
+hermzero = np.array([0])
 
 # Hermite coefficients representing one.
-hermeone = np.array([1])
+hermone = np.array([1])
 
 # Hermite coefficients representing the identity x.
-hermex = np.array([0, 1])
+hermx = np.array([0, 1/2])
 
 
-def hermeline(off, scl) :
+def hermline(off, scl) :
     """
     Hermite series whose graph is a straight line.
 
@@ -219,29 +219,28 @@ def hermeline(off, scl) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeline
-    >>> from numpy.polynomial.hermite_e import hermeline, hermeval
-    >>> hermeval(0,hermeline(3, 2))
+    >>> from numpy.polynomial.hermite import hermline, hermval
+    >>> hermval(0,hermline(3, 2))
     3.0
-    >>> hermeval(1,hermeline(3, 2))
+    >>> hermval(1,hermline(3, 2))
     5.0
 
     """
     if scl != 0 :
-        return np.array([off, scl])
+        return np.array([off, scl/2])
     else :
         return np.array([off])
 
 
-def hermefromroots(roots) :
+def hermfromroots(roots) :
     """
-    Generate a HermiteE series with given roots.
+    Generate a Hermite series with given roots.
 
     The function returns the coefficients of the polynomial
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in HermiteE form, where the `r_n` are the roots specified in `roots`.
+    in Hermite form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -249,10 +248,10 @@ def hermefromroots(roots) :
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * He_1(x) + ... +  c_n * He_n(x)
+    .. math:: p(x) = c_0 + c_1 * H_1(x) + ... +  c_n * H_n(x)
 
     The coefficient of the last term is not generally 1 for monic
-    polynomials in HermiteE form.
+    polynomials in Hermite form.
 
     Parameters
     ----------
@@ -269,17 +268,17 @@ def hermefromroots(roots) :
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    chebfromroots.
+    polyfromroots, legfromroots, lagfromroots, chebfromroots,
+    hermefromroots.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermefromroots, hermeval
-    >>> coef = hermefromroots((-1, 0, 1))
-    >>> hermeval((-1, 0, 1), coef)
+    >>> from numpy.polynomial.hermite import hermfromroots, hermval
+    >>> coef = hermfromroots((-1, 0, 1))
+    >>> hermval((-1, 0, 1), coef)
     array([ 0.,  0.,  0.])
-    >>> coef = hermefromroots((-1j, 1j))
-    >>> hermeval((-1j, 1j), coef)
+    >>> coef = hermfromroots((-1j, 1j))
+    >>> hermval((-1j, 1j), coef)
     array([ 0.+0.j,  0.+0.j])
 
     """
@@ -288,19 +287,19 @@ def hermefromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
-        p = [hermeline(-r, 1) for r in roots]
+        p = [hermline(-r, 1) for r in roots]
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [hermemul(p[i], p[i+m]) for i in range(m)]
+            tmp = [hermmul(p[i], p[i+m]) for i in range(m)]
             if r:
-                tmp[0] = hermemul(tmp[0], p[-1])
+                tmp[0] = hermmul(tmp[0], p[-1])
             p = tmp
             n = m
         return p[0]
 
 
-def hermeadd(c1, c2):
+def hermadd(c1, c2):
     """
     Add one Hermite series to another.
 
@@ -321,7 +320,7 @@ def hermeadd(c1, c2):
 
     See Also
     --------
-    hermesub, hermemul, hermediv, hermepow
+    hermsub, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -332,8 +331,8 @@ def hermeadd(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeadd
-    >>> hermeadd([1, 2, 3], [1, 2, 3, 4])
+    >>> from numpy.polynomial.hermite import hermadd
+    >>> hermadd([1, 2, 3], [1, 2, 3, 4])
     array([ 2.,  4.,  6.,  4.])
 
     """
@@ -348,7 +347,7 @@ def hermeadd(c1, c2):
     return pu.trimseq(ret)
 
 
-def hermesub(c1, c2):
+def hermsub(c1, c2):
     """
     Subtract one Hermite series from another.
 
@@ -369,7 +368,7 @@ def hermesub(c1, c2):
 
     See Also
     --------
-    hermeadd, hermemul, hermediv, hermepow
+    hermadd, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -380,8 +379,8 @@ def hermesub(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermesub
-    >>> hermesub([1, 2, 3, 4], [1, 2, 3])
+    >>> from numpy.polynomial.hermite import hermsub
+    >>> hermsub([1, 2, 3, 4], [1, 2, 3])
     array([ 0.,  0.,  0.,  4.])
 
     """
@@ -397,7 +396,7 @@ def hermesub(c1, c2):
     return pu.trimseq(ret)
 
 
-def hermemulx(c):
+def hermmulx(c):
     """Multiply a Hermite series by x.
 
     Multiply the Hermite series `c` by x, where x is the independent
@@ -422,13 +421,13 @@ def hermemulx(c):
 
     .. math::
 
-    xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
+    xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermemulx
-    >>> hermemulx([1, 2, 3])
-    array([ 2.,  7.,  2.,  3.])
+    >>> from numpy.polynomial.hermite import hermmulx
+    >>> hermmulx([1, 2, 3])
+    array([ 2. ,  6.5,  1. ,  1.5])
 
     """
     # c is a trimmed copy
@@ -439,14 +438,14 @@ def hermemulx(c):
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
     prd[0] = c[0]*0
-    prd[1] = c[0]
+    prd[1] = c[0]/2
     for i in range(1, len(c)):
-        prd[i + 1] = c[i]
+        prd[i + 1] = c[i]/2
         prd[i - 1] += c[i]*i
     return prd
 
 
-def hermemul(c1, c2):
+def hermmul(c1, c2):
     """
     Multiply one Hermite series by another.
 
@@ -467,7 +466,7 @@ def hermemul(c1, c2):
 
     See Also
     --------
-    hermeadd, hermesub, hermediv, hermepow
+    hermadd, hermsub, hermdiv, hermpow
 
     Notes
     -----
@@ -479,9 +478,9 @@ def hermemul(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermemul
-    >>> hermemul([1, 2, 3], [0, 1, 2])
-    array([ 14.,  15.,  28.,   7.,   6.])
+    >>> from numpy.polynomial.hermite import hermmul
+    >>> hermmul([1, 2, 3], [0, 1, 2])
+    array([ 52.,  29.,  52.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -507,12 +506,12 @@ def hermemul(c1, c2):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = hermesub(c[-i]*xs, c1*(nd - 1))
-            c1 = hermeadd(tmp, hermemulx(c1))
-    return hermeadd(c0, hermemulx(c1))
+            c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
+            c1 = hermadd(tmp, hermmulx(c1)*2)
+    return hermadd(c0, hermmulx(c1)*2)
 
 
-def hermediv(c1, c2):
+def hermdiv(c1, c2):
     """
     Divide one Hermite series by another.
 
@@ -535,7 +534,7 @@ def hermediv(c1, c2):
 
     See Also
     --------
-    hermeadd, hermesub, hermemul, hermepow
+    hermadd, hermsub, hermmul, hermpow
 
     Notes
     -----
@@ -548,11 +547,13 @@ def hermediv(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermediv
-    >>> hermediv([ 14.,  15.,  28.,   7.,   6.], [0, 1, 2])
+    >>> from numpy.polynomial.hermite import hermdiv
+    >>> hermdiv([ 52.,  29.,  52.,   7.,   6.], [0, 1, 2])
     (array([ 1.,  2.,  3.]), array([ 0.]))
-    >>> hermediv([ 15.,  17.,  28.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  2.]))
+    >>> hermdiv([ 54.,  31.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 2.,  2.]))
+    >>> hermdiv([ 53.,  30.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -570,14 +571,14 @@ def hermediv(c1, c2):
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
-            p = hermemul([0]*i + [1], c2)
+            p = hermmul([0]*i + [1], c2)
             q = rem[-1]/p[-1]
             rem = rem[:-1] - q*p[:-1]
             quo[i] = q
         return quo, pu.trimseq(rem)
 
 
-def hermepow(c, pow, maxpower=16) :
+def hermpow(c, pow, maxpower=16) :
     """Raise a Hermite series to a power.
 
     Returns the Hermite series `c` raised to the power `pow`. The
@@ -602,13 +603,13 @@ def hermepow(c, pow, maxpower=16) :
 
     See Also
     --------
-    hermeadd, hermesub, hermemul, hermediv
+    hermadd, hermsub, hermmul, hermdiv
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermepow
-    >>> hermepow([1, 2, 3], 2)
-    array([ 23.,  28.,  46.,  12.,   9.])
+    >>> from numpy.polynomial.hermite import hermpow
+    >>> hermpow([1, 2, 3], 2)
+    array([ 81.,  52.,  82.,  12.,   9.])
 
     """
     # c is a trimmed copy
@@ -627,29 +628,29 @@ def hermepow(c, pow, maxpower=16) :
         # in the usual way.
         prd = c
         for i in range(2, power + 1) :
-            prd = hermemul(prd, c)
+            prd = hermmul(prd, c)
         return prd
 
 
-def hermeder(c, m=1, scl=1, axis=0) :
+def hermder(c, m=1, scl=1, axis=0) :
     """
-    Differentiate a Hermite_e series.
+    Differentiate a Hermite series.
 
-    Returns the series coefficients `c` differentiated `m` times along
-    `axis`.  At each iteration the result is multiplied by `scl` (the
+    Returns the Hermite series coefficients `c` differentiated `m` times
+    along `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable). The argument
     `c` is an array of coefficients from low to high degree along each
-    axis, e.g., [1,2,3] represents the series ``1*He_0 + 2*He_1 + 3*He_2``
-    while [[1,2],[1,2]] represents ``1*He_0(x)*He_0(y) + 1*He_1(x)*He_0(y)
-    + 2*He_0(x)*He_1(y) + 2*He_1(x)*He_1(y)`` if axis=0 is ``x`` and axis=1
-    is ``y``.
+    axis, e.g., [1,2,3] represents the series ``1*H_0 + 2*H_1 + 3*H_2``
+    while [[1,2],[1,2]] represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) +
+    2*H_0(x)*H_1(y) + 2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is
+    ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Hermite_e series coefficients. If `c` is multidimensional
-        the different axis correspond to different variables with the
-        degree in each axis given by the corresponding index.
+        Array of Hermite series coefficients. If `c` is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
@@ -668,7 +669,7 @@ def hermeder(c, m=1, scl=1, axis=0) :
 
     See Also
     --------
-    hermeint
+    hermint
 
     Notes
     -----
@@ -679,10 +680,10 @@ def hermeder(c, m=1, scl=1, axis=0) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeder
-    >>> hermeder([ 1.,  1.,  1.,  1.])
+    >>> from numpy.polynomial.hermite import hermder
+    >>> hermder([ 1. ,  0.5,  0.5,  0.5])
     array([ 1.,  2.,  3.])
-    >>> hermeder([-0.25,  1.,  1./2.,  1./3.,  1./4 ], m=2)
+    >>> hermder([-0.5,  1./2.,  1./8.,  1./12.,  1./16.], m=2)
     array([ 1.,  2.,  3.])
 
     """
@@ -708,24 +709,24 @@ def hermeder(c, m=1, scl=1, axis=0) :
     c = np.rollaxis(c, iaxis)
     n = len(c)
     if cnt >= n:
-        return c[:1]*0
+        c = c[:1]*0
     else :
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 0, -1):
-                der[j - 1] = j*c[j]
+                der[j - 1] = (2*j)*c[j]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
-    Integrate a Hermite_e series.
+    Integrate a Hermite series.
 
-    Returns the Hermite_e series coefficients `c` integrated `m` times from
+    Returns the Hermite series coefficients `c` integrated `m` times from
     `lbnd` along `axis`. At each iteration the resulting series is
     **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
@@ -740,9 +741,9 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Parameters
     ----------
     c : array_like
-        Array of Hermite_e series coefficients. If c is multidimensional
-        the different axis correspond to different variables with the
-        degree in each axis given by the corresponding index.
+        Array of Hermite series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
@@ -764,7 +765,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Returns
     -------
     S : ndarray
-        Hermite_e series coefficients of the integral.
+        Hermite series coefficients of the integral.
 
     Raises
     ------
@@ -774,7 +775,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     See Also
     --------
-    hermeder
+    hermder
 
     Notes
     -----
@@ -791,17 +792,17 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeint
-    >>> hermeint([1, 2, 3]) # integrate once, value 0 at 0.
-    array([ 1.,  1.,  1.,  1.])
-    >>> hermeint([1, 2, 3], m=2) # integrate twice, value & deriv 0 at 0
-    array([-0.25      ,  1.        ,  0.5       ,  0.33333333,  0.25      ])
-    >>> hermeint([1, 2, 3], k=1) # integrate once, value 1 at 0.
-    array([ 2.,  1.,  1.,  1.])
-    >>> hermeint([1, 2, 3], lbnd=-1) # integrate once, value 0 at -1
-    array([-1.,  1.,  1.,  1.])
-    >>> hermeint([1, 2, 3], m=2, k=[1, 2], lbnd=-1)
-    array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ])
+    >>> from numpy.polynomial.hermite import hermint
+    >>> hermint([1,2,3]) # integrate once, value 0 at 0.
+    array([ 1. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0
+    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
+    array([ 2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], lbnd=-1) # integrate once, value 0 at -1
+    array([-2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2, k=[1,2], lbnd=-1)
+    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -837,22 +838,22 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
             tmp[0] = c[0]*0
-            tmp[1] = c[0]
+            tmp[1] = c[0]/2
             for j in range(1, n):
-                tmp[j + 1] = c[j]/(j + 1)
-            tmp[0] += k[i] - hermeval(lbnd, tmp)
+                tmp[j + 1] = c[j]/(2*(j + 1))
+            tmp[0] += k[i] - hermval(lbnd, tmp)
             c = tmp
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def hermeval(x, c, tensor=True):
+def hermval(x, c, tensor=True):
     """
-    Evaluate an HermiteE series at points x.
+    Evaluate an Hermite series at points x.
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * He_0(x) + c_1 * He_1(x) + ... + c_n * He_n(x)
+    .. math:: p(x) = c_0 * H_0(x) + c_1 * H_1(x) + ... + c_n * H_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -898,7 +899,7 @@ def hermeval(x, c, tensor=True):
 
     See Also
     --------
-    hermeval2d, hermegrid2d, hermeval3d, hermegrid3d
+    hermval2d, hermgrid2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -906,13 +907,13 @@ def hermeval(x, c, tensor=True):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeval
+    >>> from numpy.polynomial.hermite import hermval
     >>> coef = [1,2,3]
-    >>> hermeval(1, coef)
-    3.0
-    >>> hermeval([[1,2],[3,4]], coef)
-    array([[  3.,  14.],
-           [ 31.,  54.]])
+    >>> hermval(1, coef)
+    11.0
+    >>> hermval([[1,2],[3,4]], coef)
+    array([[  11.,   51.],
+           [ 115.,  203.]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -923,6 +924,7 @@ def hermeval(x, c, tensor=True):
     if isinstance(x, np.ndarray) and tensor:
        c = c.reshape(c.shape + (1,)*x.ndim)
 
+    x2 = x*2
     if len(c) == 1 :
         c0 = c[0]
         c1 = 0
@@ -936,18 +938,18 @@ def hermeval(x, c, tensor=True):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = c[-i] - c1*(nd - 1)
-            c1 = tmp + c1*x
-    return c0 + c1*x
+            c0 = c[-i] - c1*(2*(nd - 1))
+            c1 = tmp + c1*x2
+    return c0 + c1*x2
 
 
-def hermeval2d(x, y, c):
+def hermval2d(x, y, c):
     """
-    Evaluate a 2-D HermiteE series at points (x, y).
+    Evaluate a 2-D Hermite series at points (x, y).
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * He_i(x) * He_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * H_i(x) * H_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -979,7 +981,7 @@ def hermeval2d(x, y, c):
 
     See Also
     --------
-    hermeval, hermegrid2d, hermeval3d, hermegrid3d
+    hermval, hermgrid2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -992,14 +994,14 @@ def hermeval2d(x, y, c):
     except:
         raise ValueError('x, y are incompatible')
 
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
+    c = hermval(x, c)
+    c = hermval(y, c, tensor=False)
     return c
 
 
-def hermegrid2d(x, y, c):
+def hermgrid2d(x, y, c):
     """
-    Evaluate a 2-D HermiteE series on the Cartesian product of x and y.
+    Evaluate a 2-D Hermite series on the Cartesian product of x and y.
 
     This function returns the values:
 
@@ -1039,7 +1041,7 @@ def hermegrid2d(x, y, c):
 
     See Also
     --------
-    hermeval, hermeval2d, hermeval3d, hermegrid3d
+    hermval, hermval2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -1047,18 +1049,18 @@ def hermegrid2d(x, y, c):
     .. versionadded::1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
+    c = hermval(x, c)
+    c = hermval(y, c)
     return c
 
 
-def hermeval3d(x, y, z, c):
+def hermval3d(x, y, z, c):
     """
-    Evaluate a 3-D Hermite_e series at points (x, y, z).
+    Evaluate a 3-D Hermite series at points (x, y, z).
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * He_i(x) * He_j(y) * He_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * H_i(x) * H_j(y) * H_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1092,7 +1094,7 @@ def hermeval3d(x, y, z, c):
 
     See Also
     --------
-    hermeval, hermeval2d, hermegrid2d, hermegrid3d
+    hermval, hermval2d, hermgrid2d, hermgrid3d
 
     Notes
     -----
@@ -1105,19 +1107,19 @@ def hermeval3d(x, y, z, c):
     except:
         raise ValueError('x, y, z are incompatible')
 
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
-    c = hermeval(z, c, tensor=False)
+    c = hermval(x, c)
+    c = hermval(y, c, tensor=False)
+    c = hermval(z, c, tensor=False)
     return c
 
 
-def hermegrid3d(x, y, z, c):
+def hermgrid3d(x, y, z, c):
     """
-    Evaluate a 3-D HermiteE series on the Cartesian product of x, y, and z.
+    Evaluate a 3-D Hermite series on the Cartesian product of x, y, and z.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * He_i(a) * He_j(b) * He_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * H_i(a) * H_j(b) * H_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1156,7 +1158,7 @@ def hermegrid3d(x, y, z, c):
 
     See Also
     --------
-    hermeval, hermeval2d, hermegrid2d, hermeval3d
+    hermval, hermval2d, hermgrid2d, hermval3d
 
     Notes
     -----
@@ -1164,28 +1166,28 @@ def hermegrid3d(x, y, z, c):
     .. versionadded::1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
-    c = hermeval(z, c)
+    c = hermval(x, c)
+    c = hermval(y, c)
+    c = hermval(z, c)
     return c
 
 
-def hermevander(x, deg) :
+def hermvander(x, deg) :
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = He_i(x),
+    .. math:: V[..., i] = H_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
-    `x` and the last index is the degree of the HermiteE polynomial.
+    `x` and the last index is the degree of the Hermite polynomial.
 
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
-    array ``V = hermevander(x, n)``, then ``np.dot(V, c)`` and
-    ``hermeval(x, c)`` are the same up to roundoff. This equivalence is
+    array ``V = hermvander(x, n)``, then ``np.dot(V, c)`` and
+    ``hermval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
-    number of HermiteE series of the same degree and sample points.
+    number of Hermite series of the same degree and sample points.
 
     Parameters
     ----------
@@ -1201,17 +1203,17 @@ def hermevander(x, deg) :
     vander : ndarray
         The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
-        corresponding HermiteE polynomial.  The dtype will be the same as
+        corresponding Hermite polynomial.  The dtype will be the same as
         the converted `x`.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermevander
+    >>> from numpy.polynomial.hermite import hermvander
     >>> x = np.array([-1, 0, 1])
-    >>> hermevander(x, 3)
-    array([[ 1., -1.,  0.,  2.],
-           [ 1.,  0., -1., -0.],
-           [ 1.,  1.,  0., -2.]])
+    >>> hermvander(x, 3)
+    array([[ 1., -2.,  2.,  4.],
+           [ 1.,  0., -2., -0.],
+           [ 1.,  2.,  2., -4.]])
 
     """
     ideg = int(deg)
@@ -1226,33 +1228,34 @@ def hermevander(x, deg) :
     v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
     if ideg > 0 :
-        v[1] = x
+        x2 = x*2
+        v[1] = x2
         for i in range(2, ideg + 1) :
-            v[i] = (v[i-1]*x - v[i-2]*(i - 1))
+            v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
     return np.rollaxis(v, 0, v.ndim)
 
 
-def hermevander2d(x, y, deg) :
+def hermvander2d(x, y, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = He_i(x) * He_j(y),
+    .. math:: V[..., deg[1]*i + j] = H_i(x) * H_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
-    the HermiteE polynomials.
+    the Hermite polynomials.
 
-    If ``V = hermevander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    If ``V = hermvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
     .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
 
-    and ``np.dot(V, c.flat)`` and ``hermeval2d(x, y, c)`` will be the same
+    and ``np.dot(V, c.flat)`` and ``hermval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 2-D HermiteE
+    fitting and for the evaluation of a large number of 2-D Hermite
     series of the same degrees and sample points.
 
     Parameters
@@ -1260,8 +1263,8 @@ def hermevander2d(x, y, deg) :
     x, y : array_like
         Arrays of point coordinates, all of the same shape. The dtypes
         will be converted to either float64 or complex128 depending on
-        whether any of the elements are complex. Scalars are converted to
-        1-D arrays.
+        whether any of the elements are complex. Scalars are converted to 1-D
+        arrays.
     deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
@@ -1274,7 +1277,7 @@ def hermevander2d(x, y, deg) :
 
     See Also
     --------
-    hermevander, hermevander3d. hermeval2d, hermeval3d
+    hermvander, hermvander3d. hermval2d, hermval3d
 
     Notes
     -----
@@ -1289,34 +1292,34 @@ def hermevander2d(x, y, deg) :
     degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
-    vx = hermevander(x, degx)
-    vy = hermevander(y, degy)
+    vx = hermvander(x, degx)
+    vy = hermvander(y, degy)
     v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def hermevander3d(x, y, z, deg) :
+def hermvander3d(x, y, z, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
-    then Hehe pseudo-Vandermonde matrix is defined by
+    then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = He_i(x)*He_j(y)*He_k(z),
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = H_i(x)*H_j(y)*H_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
-    the degrees of the HermiteE polynomials.
+    the degrees of the Hermite polynomials.
 
-    If ``V = hermevander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    If ``V = hermvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
     .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
 
-    and  ``np.dot(V, c.flat)`` and ``hermeval3d(x, y, z, c)`` will be the
+    and  ``np.dot(V, c.flat)`` and ``hermval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 3-D HermiteE
+    fitting and for the evaluation of a large number of 3-D Hermite
     series of the same degrees and sample points.
 
     Parameters
@@ -1338,7 +1341,7 @@ def hermevander3d(x, y, z, deg) :
 
     See Also
     --------
-    hermevander, hermevander3d. hermeval2d, hermeval3d
+    hermvander, hermvander3d. hermval2d, hermval3d
 
     Notes
     -----
@@ -1353,29 +1356,29 @@ def hermevander3d(x, y, z, deg) :
     degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = hermevander(x, degx)
-    vy = hermevander(y, degy)
-    vz = hermevander(z, degz)
+    vx = hermvander(x, degx)
+    vy = hermvander(y, degy)
+    vz = hermvander(z, degz)
     v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
-def hermefit(x, y, deg, rcond=None, full=False, w=None):
+def hermfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Hermite series to data.
 
-    Return the coefficients of a HermiteE series of degree `deg` that is
-    the least squares fit to the data values `y` given at points `x`. If
-    `y` is 1-D the returned coefficients will also be 1-D. If `y` is 2-D
-    multiple fits are done, one for each column of `y`, and the resulting
+    Return the coefficients of a Hermite series of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * He_1(x) + ... + c_n * He_n(x),
+    .. math::  p(x) = c_0 + c_1 * H_1(x) + ... + c_n * H_n(x),
 
     where `n` is `deg`.
 
-    Since numpy version 1.7.0, hermefit also supports NA. If any of the
+    Since numpy version 1.7.0, hermfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
     then an NA in any row of `y` invalidates that whole row.
@@ -1429,16 +1432,16 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, polyfit
-    hermeval : Evaluates a Hermite series.
-    hermevander : pseudo Vandermonde matrix of Hermite series.
-    hermeweight : HermiteE weight function.
+    chebfit, legfit, lagfit, polyfit, hermefit
+    hermval : Evaluates a Hermite series.
+    hermvander : Vandermonde matrix of Hermite series.
+    hermweight : Hermite weight function
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution is the coefficients of the HermiteE series `p` that
+    The solution is the coefficients of the Hermite series `p` that
     minimizes the sum of the weighted squared errors
 
     .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
@@ -1448,8 +1451,8 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     .. math:: V(x) * c = w * y,
 
-    where `V` is the pseudo Vandermonde matrix of `x`, the elements of `c`
-    are the coefficients to be solved for, and the elements of `y` are the
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, `y` are the
     observed values.  This equation is then solved using the singular value
     decomposition of `V`.
 
@@ -1460,11 +1463,11 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
-    Fits using HermiteE series are probably most useful when the data can
-    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the HermiteE
+    Fits using Hermite series are probably most useful when the data can be
+    approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
     weight. In that case the weight ``sqrt(w(x[i])`` should be used
     together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
-    available as `hermeweight`.
+    available as `hermweight`.
 
     References
     ----------
@@ -1473,12 +1476,12 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermefik, hermeval
+    >>> from numpy.polynomial.hermite import hermfit, hermval
     >>> x = np.linspace(-10, 10)
     >>> err = np.random.randn(len(x))/10
-    >>> y = hermeval(x, [1, 2, 3]) + err
-    >>> hermefit(x, y, 2)
-    array([ 1.01690445,  1.99951418,  2.99948696])
+    >>> y = hermval(x, [1, 2, 3]) + err
+    >>> hermfit(x, y, 2)
+    array([ 0.97902637,  1.99849131,  3.00006   ])
 
     """
     order = int(deg) + 1
@@ -1498,7 +1501,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         raise TypeError("expected x and y to have same length")
 
     # set up the least squares matrices in transposed form
-    lhs = hermevander(x, deg).T
+    lhs = hermvander(x, deg).T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1537,12 +1540,11 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def hermecompanion(c):
-    """
-    Return the scaled companion matrix of c.
+def hermcompanion(c):
+    """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an HermiteE basis polynomial. This provides
+    symmetric when `c` is an Hermite basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1550,7 +1552,7 @@ def hermecompanion(c):
     Parameters
     ----------
     c : array_like
-        1-D array of HermiteE series coefficients ordered from low to high
+        1-D array of Hermite series coefficients ordered from low to high
         degree.
 
     Returns
@@ -1570,27 +1572,27 @@ def hermecompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-.5*c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(np.arange(1, n))))
+    scl = np.hstack((1., np.sqrt(2.*np.arange(1, n))))
     scl = np.multiply.accumulate(scl)
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.sqrt(np.arange(1, n))
+    top[...] = np.sqrt(.5*np.arange(1, n))
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 
-def hermeroots(c):
+def hermroots(c):
     """
-    Compute the roots of a HermiteE series.
+    Compute the roots of a Hermite series.
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * He_i(x).
+    .. math:: p(x) = \\sum_i c[i] * H_i(x).
 
     Parameters
     ----------
@@ -1605,7 +1607,7 @@ def hermeroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, chebroots
+    polyroots, legroots, lagroots, chebroots, hermeroots
 
     Notes
     -----
@@ -1617,17 +1619,17 @@ def hermeroots(c):
     insensitive to errors in the roots. Isolated roots near the origin can
     be improved by a few iterations of Newton's method.
 
-    The HermiteE series basis polynomials aren't powers of `x` so the
+    The Hermite series basis polynomials aren't powers of `x` so the
     results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermeroots, hermefromroots
-    >>> coef = hermefromroots([-1, 0, 1])
+    >>> from numpy.polynomial.hermite import hermroots, hermfromroots
+    >>> coef = hermfromroots([-1, 0, 1])
     >>> coef
-    array([ 0.,  2.,  0.,  1.])
-    >>> hermeroots(coef)
-    array([-1.,  0.,  1.])
+    array([ 0.   ,  0.25 ,  0.   ,  0.125])
+    >>> hermroots(coef)
+    array([ -1.00000000e+00,  -1.38777878e-17,   1.00000000e+00])
 
     """
     # c is a trimmed copy
@@ -1635,22 +1637,22 @@ def hermeroots(c):
     if len(c) <= 1 :
         return np.array([], dtype=c.dtype)
     if len(c) == 2 :
-        return np.array([-c[0]/c[1]])
+        return np.array([-.5*c[0]/c[1]])
 
-    m = hermecompanion(c)
+    m = hermcompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r
 
 
-def hermegauss(deg):
+def hermgauss(deg):
     """
-    Gauss-HermiteE quadrature.
+    Gauss-Hermite quadrature.
 
-    Computes the sample points and weights for Gauss-HermiteE quadrature.
+    Computes the sample points and weights for Gauss-Hermite quadrature.
     These sample points and weights will correctly integrate polynomials of
     degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
-    with the weight function :math:`f(x) = \exp(-x^2/2)`.
+    with the weight function :math:`f(x) = \exp(-x^2)`.
 
     Parameters
     ----------
@@ -1672,10 +1674,10 @@ def hermegauss(deg):
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-    .. math:: w_k = c / (He'_n(x_k) * He_{n-1}(x_k))
+    .. math:: w_k = c / (H'_n(x_k) * H_{n-1}(x_k))
 
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
-    is the k'th root of :math:`He_n`, and then scaling the results to get
+    is the k'th root of :math:`H_n`, and then scaling the results to get
     the right value when integrating 1.
 
     """
@@ -1686,37 +1688,38 @@ def hermegauss(deg):
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0]*deg + [1])
-    m = hermecompanion(c)
+    m = hermcompanion(c)
     x = la.eigvals(m)
     x.sort()
 
     # improve roots by one application of Newton
-    dy = hermeval(x, c)
-    df = hermeval(x, hermeder(c))
+    dy = hermval(x, c)
+    df = hermval(x, hermder(c))
     x -= dy/df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
-    fm = hermeval(x, c[1:])
+    fm = hermval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
     w = 1/(fm * df)
 
-    # for Hermite_e we can also symmetrize
+    # for Hermite we can also symmetrize
     w = (w + w[::-1])/2
     x = (x - x[::-1])/2
 
     # scale w to get the right value
-    w *= np.sqrt(2*np.pi) / w.sum()
+    w *= np.sqrt(np.pi) / w.sum()
 
     return x, w
 
 
-def hermeweight(x):
-    """Weight function of the Hermite_e polynomials.
+def hermweight(x):
+    """
+    Weight function of the Hermite polynomials.
 
-    The weight function is :math:`\exp(-x^2/2)` and the interval of
-    integration is :math:`[-\inf, \inf]`. the HermiteE polynomials are
+    The weight function is :math:`\exp(-x^2)` and the interval of
+    integration is :math:`[-\inf, \inf]`. the Hermite polynomials are
     orthogonal, but not normalized, with respect to this weight function.
 
     Parameters
@@ -1735,12 +1738,10 @@ def hermeweight(x):
     .. versionadded::1.7.0
 
     """
-    w = np.exp(-.5*x**2)
+    w = np.exp(-x**2)
     return w
 
 
 #
-# HermiteE series class
+# Hermite series class
 #
-
-exec(polytemplate.substitute(name='HermiteE', nick='herme', domain='[-1,1]'))

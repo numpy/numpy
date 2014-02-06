@@ -87,7 +87,6 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
@@ -191,7 +190,7 @@ def leg2poly(c) :
 
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -1764,5 +1763,3 @@ def legweight(x):
 #
 # Legendre series class
 #
-
-exec(polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]'))

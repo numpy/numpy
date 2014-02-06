@@ -1,60 +1,88 @@
 """
-Objects for dealing with Hermite series.
+Objects for dealing with Chebyshev series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Hermite series, including a `Hermite` class that
+dealing with Chebyshev series, including a `Chebyshev` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `hermdomain` -- Hermite series default domain, [-1,1].
-- `hermzero` -- Hermite series that evaluates identically to 0.
-- `hermone` -- Hermite series that evaluates identically to 1.
-- `hermx` -- Hermite series for the identity map, ``f(x) = x``.
+- `chebdomain` -- Chebyshev series default domain, [-1,1].
+- `chebzero` -- (Coefficients of the) Chebyshev series that evaluates
+  identically to 0.
+- `chebone` -- (Coefficients of the) Chebyshev series that evaluates
+  identically to 1.
+- `chebx` -- (Coefficients of the) Chebyshev series for the identity map,
+  ``f(x) = x``.
 
 Arithmetic
 ----------
-- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
-- `hermadd` -- add two Hermite series.
-- `hermsub` -- subtract one Hermite series from another.
-- `hermmul` -- multiply two Hermite series.
-- `hermdiv` -- divide one Hermite series by another.
-- `hermval` -- evaluate a Hermite series at given points.
-- `hermval2d` -- evaluate a 2D Hermite series at given points.
-- `hermval3d` -- evaluate a 3D Hermite series at given points.
-- `hermgrid2d` -- evaluate a 2D Hermite series on a Cartesian product.
-- `hermgrid3d` -- evaluate a 3D Hermite series on a Cartesian product.
+- `chebadd` -- add two Chebyshev series.
+- `chebsub` -- subtract one Chebyshev series from another.
+- `chebmul` -- multiply two Chebyshev series.
+- `chebdiv` -- divide one Chebyshev series by another.
+- `chebpow` -- raise a Chebyshev series to an positive integer power
+- `chebval` -- evaluate a Chebyshev series at given points.
+- `chebval2d` -- evaluate a 2D Chebyshev series at given points.
+- `chebval3d` -- evaluate a 3D Chebyshev series at given points.
+- `chebgrid2d` -- evaluate a 2D Chebyshev series on a Cartesian product.
+- `chebgrid3d` -- evaluate a 3D Chebyshev series on a Cartesian product.
 
 Calculus
 --------
-- `hermder` -- differentiate a Hermite series.
-- `hermint` -- integrate a Hermite series.
+- `chebder` -- differentiate a Chebyshev series.
+- `chebint` -- integrate a Chebyshev series.
 
 Misc Functions
 --------------
-- `hermfromroots` -- create a Hermite series with specified roots.
-- `hermroots` -- find the roots of a Hermite series.
-- `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
-- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
-- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
-- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
-- `hermweight` -- Hermite weight function.
-- `hermcompanion` -- symmetrized companion matrix in Hermite form.
-- `hermfit` -- least-squares fit returning a Hermite series.
-- `hermtrim` -- trim leading coefficients from a Hermite series.
-- `hermline` -- Hermite series of given straight line.
-- `herm2poly` -- convert a Hermite series to a polynomial.
-- `poly2herm` -- convert a polynomial to a Hermite series.
+- `chebfromroots` -- create a Chebyshev series with specified roots.
+- `chebroots` -- find the roots of a Chebyshev series.
+- `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
+- `chebvander2d` -- Vandermonde-like matrix for 2D power series.
+- `chebvander3d` -- Vandermonde-like matrix for 3D power series.
+- `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
+- `chebweight` -- Chebyshev weight function.
+- `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
+- `chebfit` -- least-squares fit returning a Chebyshev series.
+- `chebpts1` -- Chebyshev points of the first kind.
+- `chebpts2` -- Chebyshev points of the second kind.
+- `chebtrim` -- trim leading coefficients from a Chebyshev series.
+- `chebline` -- Chebyshev series representing given straight line.
+- `cheb2poly` -- convert a Chebyshev series to a polynomial.
+- `poly2cheb` -- convert a polynomial to a Chebyshev series.
 
 Classes
 -------
-- `Hermite` -- A Hermite series class.
+- `Chebyshev` -- A Chebyshev series class.
 
 See also
 --------
 `numpy.polynomial`
+
+Notes
+-----
+The implementations of multiplication, division, integration, and
+differentiation use the algebraic identities [1]_:
+
+.. math ::
+    T_n(x) = \\frac{z^n + z^{-n}}{2} \\\\
+    z\\frac{dx}{dz} = \\frac{z - z^{-1}}{2}.
+
+where
+
+.. math :: x = \\frac{z + z^{-1}}{2}.
+
+These identities allow a Chebyshev series to be expressed as a finite,
+symmetric Laurent series.  In this module, this sort of Laurent series
+is referred to as a "z-series."
+
+References
+----------
+.. [1] A. T. Benjamin, et al., "Combinatorial Trigonometry with Chebyshev
+  Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
+  (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
 from __future__ import division, absolute_import, print_function
@@ -63,28 +91,243 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
-__all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
-    'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
-    'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
-    'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
-    'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
-    'hermvander2d', 'hermvander3d', 'hermcompanion', 'hermgauss',
-    'hermweight']
+__all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
+    'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
+    'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
+    'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
+    'chebpts1', 'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d',
+    'chebgrid2d', 'chebgrid3d', 'chebvander2d', 'chebvander3d',
+    'chebcompanion', 'chebgauss', 'chebweight']
 
-hermtrim = pu.trimcoef
+chebtrim = pu.trimcoef
 
+#
+# A collection of functions for manipulating z-series. These are private
+# functions and do minimal error checking.
+#
 
-def poly2herm(pol) :
+def _cseries_to_zseries(c) :
+    """Covert Chebyshev series to z-series.
+
+    Covert a Chebyshev series to the equivalent z-series. The result is
+    never an empty array. The dtype of the return is the same as that of
+    the input. No checks are run on the arguments as this routine is for
+    internal use.
+
+    Parameters
+    ----------
+    c : 1-D ndarray
+        Chebyshev coefficients, ordered from low to high
+
+    Returns
+    -------
+    zs : 1-D ndarray
+        Odd length symmetric z-series, ordered from  low to high.
+
     """
-    poly2herm(pol)
+    n = c.size
+    zs = np.zeros(2*n-1, dtype=c.dtype)
+    zs[n-1:] = c/2
+    return zs + zs[::-1]
 
-    Convert a polynomial to a Hermite series.
+
+def _zseries_to_cseries(zs) :
+    """Covert z-series to a Chebyshev series.
+
+    Covert a z series to the equivalent Chebyshev series. The result is
+    never an empty array. The dtype of the return is the same as that of
+    the input. No checks are run on the arguments as this routine is for
+    internal use.
+
+    Parameters
+    ----------
+    zs : 1-D ndarray
+        Odd length symmetric z-series, ordered from  low to high.
+
+    Returns
+    -------
+    c : 1-D ndarray
+        Chebyshev coefficients, ordered from  low to high.
+
+    """
+    n = (zs.size + 1)//2
+    c = zs[n-1:].copy()
+    c[1:n] *= 2
+    return c
+
+
+def _zseries_mul(z1, z2) :
+    """Multiply two z-series.
+
+    Multiply two z-series to produce a z-series.
+
+    Parameters
+    ----------
+    z1, z2 : 1-D ndarray
+        The arrays must be 1-D but this is not checked.
+
+    Returns
+    -------
+    product : 1-D ndarray
+        The product z-series.
+
+    Notes
+    -----
+    This is simply convolution. If symmetric/anti-symmetric z-series are
+    denoted by S/A then the following rules apply:
+
+    S*S, A*A -> S
+    S*A, A*S -> A
+
+    """
+    return np.convolve(z1, z2)
+
+
+def _zseries_div(z1, z2) :
+    """Divide the first z-series by the second.
+
+    Divide `z1` by `z2` and return the quotient and remainder as z-series.
+    Warning: this implementation only applies when both z1 and z2 have the
+    same symmetry, which is sufficient for present purposes.
+
+    Parameters
+    ----------
+    z1, z2 : 1-D ndarray
+        The arrays must be 1-D and have the same symmetry, but this is not
+        checked.
+
+    Returns
+    -------
+
+    (quotient, remainder) : 1-D ndarrays
+        Quotient and remainder as z-series.
+
+    Notes
+    -----
+    This is not the same as polynomial division on account of the desired form
+    of the remainder. If symmetric/anti-symmetric z-series are denoted by S/A
+    then the following rules apply:
+
+    S/S -> S,S
+    A/A -> S,A
+
+    The restriction to types of the same symmetry could be fixed but seems like
+    unneeded generality. There is no natural form for the remainder in the case
+    where there is no symmetry.
+
+    """
+    z1 = z1.copy()
+    z2 = z2.copy()
+    len1 = len(z1)
+    len2 = len(z2)
+    if len2 == 1 :
+        z1 /= z2
+        return z1, z1[:1]*0
+    elif len1 < len2 :
+        return z1[:1]*0, z1
+    else :
+        dlen = len1 - len2
+        scl = z2[0]
+        z2 /= scl
+        quo = np.empty(dlen + 1, dtype=z1.dtype)
+        i = 0
+        j = dlen
+        while i < j :
+            r = z1[i]
+            quo[i] = z1[i]
+            quo[dlen - i] = r
+            tmp = r*z2
+            z1[i:i+len2] -= tmp
+            z1[j:j+len2] -= tmp
+            i += 1
+            j -= 1
+        r = z1[i]
+        quo[i] = r
+        tmp = r*z2
+        z1[i:i+len2] -= tmp
+        quo /= scl
+        rem = z1[i+1:i-1+len2].copy()
+        return quo, rem
+
+
+def _zseries_der(zs) :
+    """Differentiate a z-series.
+
+    The derivative is with respect to x, not z. This is achieved using the
+    chain rule and the value of dx/dz given in the module notes.
+
+    Parameters
+    ----------
+    zs : z-series
+        The z-series to differentiate.
+
+    Returns
+    -------
+    derivative : z-series
+        The derivative
+
+    Notes
+    -----
+    The zseries for x (ns) has been multiplied by two in order to avoid
+    using floats that are incompatible with Decimal and likely other
+    specialized scalar types. This scaling has been compensated by
+    multiplying the value of zs by two also so that the two cancels in the
+    division.
+
+    """
+    n = len(zs)//2
+    ns = np.array([-1, 0, 1], dtype=zs.dtype)
+    zs *= np.arange(-n, n+1)*2
+    d, r = _zseries_div(zs, ns)
+    return d
+
+
+def _zseries_int(zs) :
+    """Integrate a z-series.
+
+    The integral is with respect to x, not z. This is achieved by a change
+    of variable using dx/dz given in the module notes.
+
+    Parameters
+    ----------
+    zs : z-series
+        The z-series to integrate
+
+    Returns
+    -------
+    integral : z-series
+        The indefinite integral
+
+    Notes
+    -----
+    The zseries for x (ns) has been multiplied by two in order to avoid
+    using floats that are incompatible with Decimal and likely other
+    specialized scalar types. This scaling has been compensated by
+    dividing the resulting zs by two.
+
+    """
+    n = 1 + len(zs)//2
+    ns = np.array([-1, 0, 1], dtype=zs.dtype)
+    zs = _zseries_mul(zs, ns)
+    div = np.arange(-n, n+1)*2
+    zs[:n] /= div[:n]
+    zs[n+1:] /= div[n+1:]
+    zs[n] = 0
+    return zs
+
+#
+# Chebyshev series functions
+#
+
+
+def poly2cheb(pol) :
+    """
+    Convert a polynomial to a Chebyshev series.
 
     Convert an array representing the coefficients of a polynomial (relative
     to the "standard" basis) ordered from lowest degree to highest, to an
-    array of the coefficients of the equivalent Hermite series, ordered
+    array of the coefficients of the equivalent Chebyshev series, ordered
     from lowest to highest degree.
 
     Parameters
@@ -95,12 +338,12 @@ def poly2herm(pol) :
     Returns
     -------
     c : ndarray
-        1-D array containing the coefficients of the equivalent Hermite
+        1-D array containing the coefficients of the equivalent Chebyshev
         series.
 
     See Also
     --------
-    herm2poly
+    cheb2poly
 
     Notes
     -----
@@ -109,24 +352,30 @@ def poly2herm(pol) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import poly2herme
-    >>> poly2herm(np.arange(4))
-    array([ 1.   ,  2.75 ,  0.5  ,  0.375])
+    >>> from numpy import polynomial as P
+    >>> p = P.Polynomial(range(4))
+    >>> p
+    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    >>> c = p.convert(kind=P.Chebyshev)
+    >>> c
+    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    >>> P.poly2cheb(range(4))
+    array([ 1.  ,  3.25,  1.  ,  0.75])
 
     """
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
     for i in range(deg, -1, -1) :
-        res = hermadd(hermmulx(res), pol[i])
+        res = chebadd(chebmulx(res), pol[i])
     return res
 
 
-def herm2poly(c) :
+def cheb2poly(c) :
     """
-    Convert a Hermite series to a polynomial.
+    Convert a Chebyshev series to a polynomial.
 
-    Convert an array representing the coefficients of a Hermite series,
+    Convert an array representing the coefficients of a Chebyshev series,
     ordered from lowest degree to highest, to an array of the coefficients
     of the equivalent polynomial (relative to the "standard" basis) ordered
     from lowest to highest degree.
@@ -134,7 +383,7 @@ def herm2poly(c) :
     Parameters
     ----------
     c : array_like
-        1-D array containing the Hermite series coefficients, ordered
+        1-D array containing the Chebyshev series coefficients, ordered
         from lowest order term to highest.
 
     Returns
@@ -146,7 +395,7 @@ def herm2poly(c) :
 
     See Also
     --------
-    poly2herm
+    poly2cheb
 
     Notes
     -----
@@ -155,19 +404,22 @@ def herm2poly(c) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import herm2poly
-    >>> herm2poly([ 1.   ,  2.75 ,  0.5  ,  0.375])
-    array([ 0.,  1.,  2.,  3.])
+    >>> from numpy import polynomial as P
+    >>> c = P.Chebyshev(range(4))
+    >>> c
+    Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    >>> p = c.convert(kind=P.Polynomial)
+    >>> p
+    Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
+    >>> P.cheb2poly(range(4))
+    array([ -2.,  -8.,   4.,  12.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
-    if n == 1:
-        return c
-    if n == 2:
-        c[1] *= 2
+    if n < 3:
         return c
     else:
         c0 = c[-2]
@@ -175,31 +427,32 @@ def herm2poly(c) :
         # i is the current degree of c1
         for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(c[i - 2], c1*(2*(i - 1)))
+            c0 = polysub(c[i - 2], c1)
             c1 = polyadd(tmp, polymulx(c1)*2)
-        return polyadd(c0, polymulx(c1)*2)
+        return polyadd(c0, polymulx(c1))
+
 
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
-# Hermite
-hermdomain = np.array([-1, 1])
+# Chebyshev default domain.
+chebdomain = np.array([-1, 1])
 
-# Hermite coefficients representing zero.
-hermzero = np.array([0])
+# Chebyshev coefficients representing zero.
+chebzero = np.array([0])
 
-# Hermite coefficients representing one.
-hermone = np.array([1])
+# Chebyshev coefficients representing one.
+chebone = np.array([1])
 
-# Hermite coefficients representing the identity x.
-hermx = np.array([0, 1/2])
+# Chebyshev coefficients representing the identity x.
+chebx = np.array([0, 1])
 
 
-def hermline(off, scl) :
+def chebline(off, scl) :
     """
-    Hermite series whose graph is a straight line.
+    Chebyshev series whose graph is a straight line.
 
 
 
@@ -211,37 +464,37 @@ def hermline(off, scl) :
     Returns
     -------
     y : ndarray
-        This module's representation of the Hermite series for
+        This module's representation of the Chebyshev series for
         ``off + scl*x``.
 
     See Also
     --------
-    polyline, chebline
+    polyline
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermline, hermval
-    >>> hermval(0,hermline(3, 2))
-    3.0
-    >>> hermval(1,hermline(3, 2))
-    5.0
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebline(3,2)
+    array([3, 2])
+    >>> C.chebval(-3, C.chebline(3,2)) # should be -3
+    -3.0
 
     """
     if scl != 0 :
-        return np.array([off, scl/2])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
 
-def hermfromroots(roots) :
+def chebfromroots(roots) :
     """
-    Generate a Hermite series with given roots.
+    Generate a Chebyshev series with given roots.
 
     The function returns the coefficients of the polynomial
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Hermite form, where the `r_n` are the roots specified in `roots`.
+    in Chebyshev form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -249,10 +502,10 @@ def hermfromroots(roots) :
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * H_1(x) + ... +  c_n * H_n(x)
+    .. math:: p(x) = c_0 + c_1 * T_1(x) + ... +  c_n * T_n(x)
 
     The coefficient of the last term is not generally 1 for monic
-    polynomials in Hermite form.
+    polynomials in Chebyshev form.
 
     Parameters
     ----------
@@ -269,18 +522,17 @@ def hermfromroots(roots) :
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, chebfromroots,
+    polyfromroots, legfromroots, lagfromroots, hermfromroots,
     hermefromroots.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermfromroots, hermval
-    >>> coef = hermfromroots((-1, 0, 1))
-    >>> hermval((-1, 0, 1), coef)
-    array([ 0.,  0.,  0.])
-    >>> coef = hermfromroots((-1j, 1j))
-    >>> hermval((-1j, 1j), coef)
-    array([ 0.+0.j,  0.+0.j])
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebfromroots((-1,0,1)) # x^3 - x relative to the standard basis
+    array([ 0.  , -0.25,  0.  ,  0.25])
+    >>> j = complex(0,1)
+    >>> C.chebfromroots((-j,j)) # x^2 + 1 relative to the standard basis
+    array([ 1.5+0.j,  0.0+0.j,  0.5+0.j])
 
     """
     if len(roots) == 0 :
@@ -288,53 +540,55 @@ def hermfromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
-        p = [hermline(-r, 1) for r in roots]
+        p = [chebline(-r, 1) for r in roots]
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [hermmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
             if r:
-                tmp[0] = hermmul(tmp[0], p[-1])
+                tmp[0] = chebmul(tmp[0], p[-1])
             p = tmp
             n = m
         return p[0]
 
 
-def hermadd(c1, c2):
+def chebadd(c1, c2):
     """
-    Add one Hermite series to another.
+    Add one Chebyshev series to another.
 
-    Returns the sum of two Hermite series `c1` + `c2`.  The arguments
+    Returns the sum of two Chebyshev series `c1` + `c2`.  The arguments
     are sequences of coefficients ordered from lowest order term to
-    highest, i.e., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    highest, i.e., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Hermite series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Array representing the Hermite series of their sum.
+        Array representing the Chebyshev series of their sum.
 
     See Also
     --------
-    hermsub, hermmul, hermdiv, hermpow
+    chebsub, chebmul, chebdiv, chebpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the sum of two Hermite series
-    is a Hermite series (without having to "reproject" the result onto
+    Unlike multiplication, division, etc., the sum of two Chebyshev series
+    is a Chebyshev series (without having to "reproject" the result onto
     the basis set) so addition, just like that of "standard" polynomials,
     is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermadd
-    >>> hermadd([1, 2, 3], [1, 2, 3, 4])
-    array([ 2.,  4.,  6.,  4.])
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebadd(c1,c2)
+    array([ 4.,  4.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -348,41 +602,45 @@ def hermadd(c1, c2):
     return pu.trimseq(ret)
 
 
-def hermsub(c1, c2):
+def chebsub(c1, c2):
     """
-    Subtract one Hermite series from another.
+    Subtract one Chebyshev series from another.
 
-    Returns the difference of two Hermite series `c1` - `c2`.  The
+    Returns the difference of two Chebyshev series `c1` - `c2`.  The
     sequences of coefficients are from lowest order term to highest, i.e.,
-    [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Hermite series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Hermite series coefficients representing their difference.
+        Of Chebyshev series coefficients representing their difference.
 
     See Also
     --------
-    hermadd, hermmul, hermdiv, hermpow
+    chebadd, chebmul, chebdiv, chebpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the difference of two Hermite
-    series is a Hermite series (without having to "reproject" the result
+    Unlike multiplication, division, etc., the difference of two Chebyshev
+    series is a Chebyshev series (without having to "reproject" the result
     onto the basis set) so subtraction, just like that of "standard"
     polynomials, is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermsub
-    >>> hermsub([1, 2, 3, 4], [1, 2, 3])
-    array([ 0.,  0.,  0.,  4.])
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebsub(c1,c2)
+    array([-2.,  0.,  2.])
+    >>> C.chebsub(c2,c1) # -C.chebsub(c1,c2)
+    array([ 2.,  0., -2.])
 
     """
     # c1, c2 are trimmed copies
@@ -397,17 +655,17 @@ def hermsub(c1, c2):
     return pu.trimseq(ret)
 
 
-def hermmulx(c):
-    """Multiply a Hermite series by x.
+def chebmulx(c):
+    """Multiply a Chebyshev series by x.
 
-    Multiply the Hermite series `c` by x, where x is the independent
+    Multiply the polynomial `c` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
     c : array_like
-        1-D array of Hermite series coefficients ordered from low to
+        1-D array of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -417,18 +675,8 @@ def hermmulx(c):
 
     Notes
     -----
-    The multiplication uses the recursion relationship for Hermite
-    polynomials in the form
 
-    .. math::
-
-    xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
-
-    Examples
-    --------
-    >>> from numpy.polynomial.hermite import hermmulx
-    >>> hermmulx([1, 2, 3])
-    array([ 2. ,  6.5,  1. ,  1.5])
+    .. versionadded:: 1.5.0
 
     """
     # c is a trimmed copy
@@ -439,122 +687,107 @@ def hermmulx(c):
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
     prd[0] = c[0]*0
-    prd[1] = c[0]/2
-    for i in range(1, len(c)):
-        prd[i + 1] = c[i]/2
-        prd[i - 1] += c[i]*i
+    prd[1] = c[0]
+    if len(c) > 1:
+        tmp = c[1:]/2
+        prd[2:] = tmp
+        prd[0:-2] += tmp
     return prd
 
 
-def hermmul(c1, c2):
+def chebmul(c1, c2):
     """
-    Multiply one Hermite series by another.
+    Multiply one Chebyshev series by another.
 
-    Returns the product of two Hermite series `c1` * `c2`.  The arguments
+    Returns the product of two Chebyshev series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
-    e.g., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    e.g., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Hermite series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Hermite series coefficients representing their product.
+        Of Chebyshev series coefficients representing their product.
 
     See Also
     --------
-    hermadd, hermsub, hermdiv, hermpow
+    chebadd, chebsub, chebdiv, chebpow
 
     Notes
     -----
     In general, the (polynomial) product of two C-series results in terms
-    that are not in the Hermite polynomial basis set.  Thus, to express
-    the product as a Hermite series, it is necessary to "reproject" the
-    product onto said basis set, which may produce "unintuitive" (but
-    correct) results; see Examples section below.
+    that are not in the Chebyshev polynomial basis set.  Thus, to express
+    the product as a C-series, it is typically necessary to "reproject"
+    the product onto said basis set, which typically produces
+    "unintuitive live" (but correct) results; see Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermmul
-    >>> hermmul([1, 2, 3], [0, 1, 2])
-    array([ 52.,  29.,  52.,   7.,   6.])
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebmul(c1,c2) # multiplication requires "reprojection"
+    array([  6.5,  12. ,  12. ,   4. ,   1.5])
 
     """
-    # s1, s2 are trimmed copies
+    # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-
-    if len(c1) > len(c2):
-        c = c2
-        xs = c1
-    else:
-        c = c1
-        xs = c2
-
-    if len(c) == 1:
-        c0 = c[0]*xs
-        c1 = 0
-    elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
-    else :
-        nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
-        for i in range(3, len(c) + 1) :
-            tmp = c0
-            nd =  nd - 1
-            c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
-            c1 = hermadd(tmp, hermmulx(c1)*2)
-    return hermadd(c0, hermmulx(c1)*2)
+    z1 = _cseries_to_zseries(c1)
+    z2 = _cseries_to_zseries(c2)
+    prd = _zseries_mul(z1, z2)
+    ret = _zseries_to_cseries(prd)
+    return pu.trimseq(ret)
 
 
-def hermdiv(c1, c2):
+def chebdiv(c1, c2):
     """
-    Divide one Hermite series by another.
+    Divide one Chebyshev series by another.
 
-    Returns the quotient-with-remainder of two Hermite series
+    Returns the quotient-with-remainder of two Chebyshev series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
     order "term" to highest, e.g., [1,2,3] represents the series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Hermite series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     [quo, rem] : ndarrays
-        Of Hermite series coefficients representing the quotient and
+        Of Chebyshev series coefficients representing the quotient and
         remainder.
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermpow
+    chebadd, chebsub, chebmul, chebpow
 
     Notes
     -----
-    In general, the (polynomial) division of one Hermite series by another
-    results in quotient and remainder terms that are not in the Hermite
-    polynomial basis set.  Thus, to express these results as a Hermite
-    series, it is necessary to "reproject" the results onto the Hermite
-    basis set, which may produce "unintuitive" (but correct) results; see
-    Examples section below.
+    In general, the (polynomial) division of one C-series by another
+    results in quotient and remainder terms that are not in the Chebyshev
+    polynomial basis set.  Thus, to express these results as C-series, it
+    is typically necessary to "reproject" the results onto said basis
+    set, which typically produces "unintuitive" (but correct) results;
+    see Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermdiv
-    >>> hermdiv([ 52.,  29.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 0.]))
-    >>> hermdiv([ 54.,  31.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 2.,  2.]))
-    >>> hermdiv([ 53.,  30.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebdiv(c1,c2) # quotient "intuitive," remainder not
+    (array([ 3.]), array([-8., -4.]))
+    >>> c2 = (0,1,2,3)
+    >>> C.chebdiv(c2,c1) # neither "intuitive"
+    (array([ 0.,  2.]), array([-2., -4.]))
 
     """
     # c1, c2 are trimmed copies
@@ -569,27 +802,25 @@ def hermdiv(c1, c2):
     elif lc2 == 1 :
         return c1/c2[-1], c1[:1]*0
     else :
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = hermmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+        z1 = _cseries_to_zseries(c1)
+        z2 = _cseries_to_zseries(c2)
+        quo, rem = _zseries_div(z1, z2)
+        quo = pu.trimseq(_zseries_to_cseries(quo))
+        rem = pu.trimseq(_zseries_to_cseries(rem))
+        return quo, rem
 
 
-def hermpow(c, pow, maxpower=16) :
-    """Raise a Hermite series to a power.
+def chebpow(c, pow, maxpower=16) :
+    """Raise a Chebyshev series to a power.
 
-    Returns the Hermite series `c` raised to the power `pow`. The
+    Returns the Chebyshev series `c` raised to the power `pow`. The
     argument `c` is a sequence of coefficients ordered from low to high.
-    i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
+    i.e., [1,2,3] is the series  ``T_0 + 2*T_1 + 3*T_2.``
 
     Parameters
     ----------
     c : array_like
-        1-D array of Hermite series coefficients ordered from low to
+        1-D array of Chebyshev series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
@@ -600,17 +831,14 @@ def hermpow(c, pow, maxpower=16) :
     Returns
     -------
     coef : ndarray
-        Hermite series of power.
+        Chebyshev series of power.
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermdiv
+    chebadd, chebsub, chebmul, chebdiv
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermpow
-    >>> hermpow([1, 2, 3], 2)
-    array([ 81.,  52.,  82.,  12.,   9.])
 
     """
     # c is a trimmed copy
@@ -627,31 +855,32 @@ def hermpow(c, pow, maxpower=16) :
     else :
         # This can be made more efficient by using powers of two
         # in the usual way.
-        prd = c
+        zs = _cseries_to_zseries(c)
+        prd = zs
         for i in range(2, power + 1) :
-            prd = hermmul(prd, c)
-        return prd
+            prd = np.convolve(prd, zs)
+        return _zseries_to_cseries(prd)
 
 
-def hermder(c, m=1, scl=1, axis=0) :
+def chebder(c, m=1, scl=1, axis=0) :
     """
-    Differentiate a Hermite series.
+    Differentiate a Chebyshev series.
 
-    Returns the Hermite series coefficients `c` differentiated `m` times
+    Returns the Chebyshev series coefficients `c` differentiated `m` times
     along `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable). The argument
     `c` is an array of coefficients from low to high degree along each
-    axis, e.g., [1,2,3] represents the series ``1*H_0 + 2*H_1 + 3*H_2``
-    while [[1,2],[1,2]] represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) +
-    2*H_0(x)*H_1(y) + 2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is
+    axis, e.g., [1,2,3] represents the series ``1*T_0 + 2*T_1 + 3*T_2``
+    while [[1,2],[1,2]] represents ``1*T_0(x)*T_0(y) + 1*T_1(x)*T_0(y) +
+    2*T_0(x)*T_1(y) + 2*T_1(x)*T_1(y)`` if axis=0 is ``x`` and axis=1 is
     ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Hermite series coefficients. If `c` is multidimensional the
-        different axis correspond to different variables with the degree in
-        each axis given by the corresponding index.
+        Array of Chebyshev series coefficients. If c is multidimensional
+        the different axis correspond to different variables with the
+        degree in each axis given by the corresponding index.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
@@ -666,26 +895,31 @@ def hermder(c, m=1, scl=1, axis=0) :
     Returns
     -------
     der : ndarray
-        Hermite series of the derivative.
+        Chebyshev series of the derivative.
 
     See Also
     --------
-    hermint
+    chebint
 
     Notes
     -----
-    In general, the result of differentiating a Hermite series does not
-    resemble the same operation on a power series. Thus the result of this
-    function may be "unintuitive," albeit correct; see Examples section
-    below.
+    In general, the result of differentiating a C-series needs to be
+    "reprojected" onto the C-series basis set. Thus, typically, the
+    result of this function is "unintuitive," albeit correct; see Examples
+    section below.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermder
-    >>> hermder([ 1. ,  0.5,  0.5,  0.5])
-    array([ 1.,  2.,  3.])
-    >>> hermder([-0.5,  1./2.,  1./8.,  1./12.,  1./16.], m=2)
-    array([ 1.,  2.,  3.])
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c = (1,2,3,4)
+    >>> C.chebder(c)
+    array([ 14.,  12.,  24.])
+    >>> C.chebder(c,3)
+    array([ 96.])
+    >>> C.chebder(c,scl=-1)
+    array([-14., -12., -24.])
+    >>> C.chebder(c,2,-1)
+    array([ 12.,  96.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -711,23 +945,27 @@ def hermder(c, m=1, scl=1, axis=0) :
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
-    else :
+    else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 0, -1):
+            for j in range(n, 2, -1):
                 der[j - 1] = (2*j)*c[j]
+                c[j - 2] += (j*c[j])/(j - 2)
+            if n > 1:
+                der[1] = 4*c[2]
+            der[0] = c[1]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
-    Integrate a Hermite series.
+    Integrate a Chebyshev series.
 
-    Returns the Hermite series coefficients `c` integrated `m` times from
+    Returns the Chebyshev series coefficients `c` integrated `m` times from
     `lbnd` along `axis`. At each iteration the resulting series is
     **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
@@ -735,24 +973,24 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
     coefficients from low to high degree along each axis, e.g., [1,2,3]
-    represents the series ``H_0 + 2*H_1 + 3*H_2`` while [[1,2],[1,2]]
-    represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) + 2*H_0(x)*H_1(y) +
-    2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
+    represents the series ``T_0 + 2*T_1 + 3*T_2`` while [[1,2],[1,2]]
+    represents ``1*T_0(x)*T_0(y) + 1*T_1(x)*T_0(y) + 2*T_0(x)*T_1(y) +
+    2*T_1(x)*T_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Hermite series coefficients. If c is multidimensional the
-        different axis correspond to different variables with the degree in
-        each axis given by the corresponding index.
+        Array of Chebyshev series coefficients. If c is multidimensional
+        the different axis correspond to different variables with the
+        degree in each axis given by the corresponding index.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
-        Integration constant(s).  The value of the first integral at
-        ``lbnd`` is the first value in the list, the value of the second
-        integral at ``lbnd`` is the second value, etc.  If ``k == []`` (the
-        default), all constants are set to zero.  If ``m == 1``, a single
-        scalar can be given instead of a list.
+        Integration constant(s).  The value of the first integral at zero
+        is the first value in the list, the value of the second integral
+        at zero is the second value, etc.  If ``k == []`` (the default),
+        all constants are set to zero.  If ``m == 1``, a single scalar can
+        be given instead of a list.
     lbnd : scalar, optional
         The lower bound of the integral. (Default: 0)
     scl : scalar, optional
@@ -766,17 +1004,17 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Returns
     -------
     S : ndarray
-        Hermite series coefficients of the integral.
+        C-series coefficients of the integral.
 
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
+        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
         ``np.isscalar(scl) == False``.
 
     See Also
     --------
-    hermder
+    chebder
 
     Notes
     -----
@@ -784,7 +1022,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
     .. math::`dx = du/a`, so one will need to set `scl` equal to
-    :math:`1/a` - perhaps not what one would have first thought.
+    :math:`1/a`- perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
     to be "reprojected" onto the C-series basis set.  Thus, typically,
@@ -793,17 +1031,19 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermint
-    >>> hermint([1,2,3]) # integrate once, value 0 at 0.
-    array([ 1. ,  0.5,  0.5,  0.5])
-    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0
-    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
-    >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
-    array([ 2. ,  0.5,  0.5,  0.5])
-    >>> hermint([1,2,3], lbnd=-1) # integrate once, value 0 at -1
-    array([-2. ,  0.5,  0.5,  0.5])
-    >>> hermint([1,2,3], m=2, k=[1,2], lbnd=-1)
-    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c = (1,2,3)
+    >>> C.chebint(c)
+    array([ 0.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(c,3)
+    array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667,
+            0.00625   ])
+    >>> C.chebint(c, k=3)
+    array([ 3.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(c,lbnd=-2)
+    array([ 8.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(c,scl=-2)
+    array([-1.,  1., -1., -1.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -839,22 +1079,26 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
             tmp[0] = c[0]*0
-            tmp[1] = c[0]/2
-            for j in range(1, n):
+            tmp[1] = c[0]
+            if n > 1:
+                tmp[2] = c[1]/4
+            for j in range(2, n):
+                t = c[j]/(2*j + 1)
                 tmp[j + 1] = c[j]/(2*(j + 1))
-            tmp[0] += k[i] - hermval(lbnd, tmp)
+                tmp[j - 1] -= c[j]/(2*(j - 1))
+            tmp[0] += k[i] - chebval(lbnd, tmp)
             c = tmp
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def hermval(x, c, tensor=True):
+def chebval(x, c, tensor=True):
     """
-    Evaluate an Hermite series at points x.
+    Evaluate a Chebyshev series at points x.
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * H_0(x) + c_1 * H_1(x) + ... + c_n * H_n(x)
+    .. math:: p(x) = c_0 * T_0(x) + c_1 * T_1(x) + ... + c_n * T_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -900,7 +1144,7 @@ def hermval(x, c, tensor=True):
 
     See Also
     --------
-    hermval2d, hermgrid2d, hermval3d, hermgrid3d
+    chebval2d, chebgrid2d, chebval3d, chebgrid3d
 
     Notes
     -----
@@ -908,16 +1152,9 @@ def hermval(x, c, tensor=True):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermval
-    >>> coef = [1,2,3]
-    >>> hermval(1, coef)
-    11.0
-    >>> hermval([[1,2],[3,4]], coef)
-    array([[  11.,   51.],
-           [ 115.,  203.]])
 
     """
-    c = np.array(c, ndmin=1, copy=0)
+    c = np.array(c, ndmin=1, copy=1)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -925,7 +1162,6 @@ def hermval(x, c, tensor=True):
     if isinstance(x, np.ndarray) and tensor:
        c = c.reshape(c.shape + (1,)*x.ndim)
 
-    x2 = x*2
     if len(c) == 1 :
         c0 = c[0]
         c1 = 0
@@ -933,24 +1169,23 @@ def hermval(x, c, tensor=True):
         c0 = c[0]
         c1 = c[1]
     else :
-        nd = len(c)
+        x2 = 2*x
         c0 = c[-2]
         c1 = c[-1]
         for i in range(3, len(c) + 1) :
             tmp = c0
-            nd =  nd - 1
-            c0 = c[-i] - c1*(2*(nd - 1))
+            c0 = c[-i] - c1
             c1 = tmp + c1*x2
-    return c0 + c1*x2
+    return c0 + c1*x
 
 
-def hermval2d(x, y, c):
+def chebval2d(x, y, c):
     """
-    Evaluate a 2-D Hermite series at points (x, y).
+    Evaluate a 2-D Chebyshev series at points (x, y).
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * H_i(x) * H_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * T_i(x) * T_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -971,18 +1206,18 @@ def hermval2d(x, y, c):
     c : array_like
         Array of coefficients ordered so that the coefficient of the term
         of multi-degree i,j is contained in ``c[i,j]``. If `c` has
-        dimension greater than two the remaining indices enumerate multiple
+        dimension greater than 2 the remaining indices enumerate multiple
         sets of coefficients.
 
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points formed with
-        pairs of corresponding values from `x` and `y`.
+        The values of the two dimensional Chebyshev series at points formed
+        from pairs of corresponding values from `x` and `y`.
 
     See Also
     --------
-    hermval, hermgrid2d, hermval3d, hermgrid3d
+    chebval, chebgrid2d, chebval3d, chebgrid3d
 
     Notes
     -----
@@ -995,18 +1230,18 @@ def hermval2d(x, y, c):
     except:
         raise ValueError('x, y are incompatible')
 
-    c = hermval(x, c)
-    c = hermval(y, c, tensor=False)
+    c = chebval(x, c)
+    c = chebval(y, c, tensor=False)
     return c
 
 
-def hermgrid2d(x, y, c):
+def chebgrid2d(x, y, c):
     """
-    Evaluate a 2-D Hermite series on the Cartesian product of x and y.
+    Evaluate a 2-D Chebyshev series on the Cartesian product of x and y.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
+    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1019,7 +1254,7 @@ def hermgrid2d(x, y, c):
 
     If `c` has fewer than two dimensions, ones are implicitly appended to
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
-    x.shape.
+    x.shape + y.shape.
 
     Parameters
     ----------
@@ -1029,20 +1264,20 @@ def hermgrid2d(x, y, c):
         tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
-        Array of coefficients ordered so that the coefficients for terms of
-        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points in the Cartesian
-        product of `x` and `y`.
+        The values of the two dimensional Chebyshev series at points in the
+        Cartesian product of `x` and `y`.
 
     See Also
     --------
-    hermval, hermval2d, hermval3d, hermgrid3d
+    chebval, chebval2d, chebval3d, chebgrid3d
 
     Notes
     -----
@@ -1050,18 +1285,18 @@ def hermgrid2d(x, y, c):
     .. versionadded::1.7.0
 
     """
-    c = hermval(x, c)
-    c = hermval(y, c)
+    c = chebval(x, c)
+    c = chebval(y, c)
     return c
 
 
-def hermval3d(x, y, z, c):
+def chebval3d(x, y, z, c):
     """
-    Evaluate a 3-D Hermite series at points (x, y, z).
+    Evaluate a 3-D Chebyshev series at points (x, y, z).
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * H_i(x) * H_j(y) * H_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * T_i(x) * T_j(y) * T_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1095,7 +1330,7 @@ def hermval3d(x, y, z, c):
 
     See Also
     --------
-    hermval, hermval2d, hermgrid2d, hermgrid3d
+    chebval, chebval2d, chebgrid2d, chebgrid3d
 
     Notes
     -----
@@ -1108,19 +1343,19 @@ def hermval3d(x, y, z, c):
     except:
         raise ValueError('x, y, z are incompatible')
 
-    c = hermval(x, c)
-    c = hermval(y, c, tensor=False)
-    c = hermval(z, c, tensor=False)
+    c = chebval(x, c)
+    c = chebval(y, c, tensor=False)
+    c = chebval(z, c, tensor=False)
     return c
 
 
-def hermgrid3d(x, y, z, c):
+def chebgrid3d(x, y, z, c):
     """
-    Evaluate a 3-D Hermite series on the Cartesian product of x, y, and z.
+    Evaluate a 3-D Chebyshev series on the Cartesian product of x, y, and z.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * H_i(a) * H_j(b) * H_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * T_i(a) * T_j(b) * T_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1159,7 +1394,7 @@ def hermgrid3d(x, y, z, c):
 
     See Also
     --------
-    hermval, hermval2d, hermgrid2d, hermval3d
+    chebval, chebval2d, chebgrid2d, chebval3d
 
     Notes
     -----
@@ -1167,28 +1402,28 @@ def hermgrid3d(x, y, z, c):
     .. versionadded::1.7.0
 
     """
-    c = hermval(x, c)
-    c = hermval(y, c)
-    c = hermval(z, c)
+    c = chebval(x, c)
+    c = chebval(y, c)
+    c = chebval(z, c)
     return c
 
 
-def hermvander(x, deg) :
+def chebvander(x, deg) :
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = H_i(x),
+    .. math:: V[..., i] = T_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
-    `x` and the last index is the degree of the Hermite polynomial.
+    `x` and the last index is the degree of the Chebyshev polynomial.
 
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
-    array ``V = hermvander(x, n)``, then ``np.dot(V, c)`` and
-    ``hermval(x, c)`` are the same up to roundoff. This equivalence is
+    matrix ``V = chebvander(x, n)``, then ``np.dot(V, c)`` and
+    ``chebval(x, c)`` are the same up to roundoff.  This equivalence is
     useful both for least squares fitting and for the evaluation of a large
-    number of Hermite series of the same degree and sample points.
+    number of Chebyshev series of the same degree and sample points.
 
     Parameters
     ----------
@@ -1202,19 +1437,10 @@ def hermvander(x, deg) :
     Returns
     -------
     vander : ndarray
-        The pseudo-Vandermonde matrix. The shape of the returned matrix is
+        The pseudo Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
-        corresponding Hermite polynomial.  The dtype will be the same as
+        corresponding Chebyshev polynomial.  The dtype will be the same as
         the converted `x`.
-
-    Examples
-    --------
-    >>> from numpy.polynomial.hermite import hermvander
-    >>> x = np.array([-1, 0, 1])
-    >>> hermvander(x, 3)
-    array([[ 1., -2.,  2.,  4.],
-           [ 1.,  0., -2., -0.],
-           [ 1.,  2.,  2., -4.]])
 
     """
     ideg = int(deg)
@@ -1227,36 +1453,37 @@ def hermvander(x, deg) :
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
+    # Use forward recursion to generate the entries.
     v[0] = x*0 + 1
     if ideg > 0 :
-        x2 = x*2
-        v[1] = x2
+        x2 = 2*x
+        v[1] = x
         for i in range(2, ideg + 1) :
-            v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
+            v[i] = v[i-1]*x2 - v[i-2]
     return np.rollaxis(v, 0, v.ndim)
 
 
-def hermvander2d(x, y, deg) :
+def chebvander2d(x, y, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = H_i(x) * H_j(y),
+    .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
-    the Hermite polynomials.
+    the Chebyshev polynomials.
 
-    If ``V = hermvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    If ``V = chebvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
     .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
 
-    and ``np.dot(V, c.flat)`` and ``hermval2d(x, y, c)`` will be the same
+    and ``np.dot(V, c.flat)`` and ``chebval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 2-D Hermite
+    fitting and for the evaluation of a large number of 2-D Chebyshev
     series of the same degrees and sample points.
 
     Parameters
@@ -1264,8 +1491,8 @@ def hermvander2d(x, y, deg) :
     x, y : array_like
         Arrays of point coordinates, all of the same shape. The dtypes
         will be converted to either float64 or complex128 depending on
-        whether any of the elements are complex. Scalars are converted to 1-D
-        arrays.
+        whether any of the elements are complex. Scalars are converted to
+        1-D arrays.
     deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
@@ -1278,7 +1505,7 @@ def hermvander2d(x, y, deg) :
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    chebvander, chebvander3d. chebval2d, chebval3d
 
     Notes
     -----
@@ -1293,34 +1520,34 @@ def hermvander2d(x, y, deg) :
     degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
-    vx = hermvander(x, degx)
-    vy = hermvander(y, degy)
+    vx = chebvander(x, degx)
+    vy = chebvander(y, degy)
     v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def hermvander3d(x, y, z, deg) :
+def chebvander3d(x, y, z, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = H_i(x)*H_j(y)*H_k(z),
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
-    the degrees of the Hermite polynomials.
+    the degrees of the Chebyshev polynomials.
 
-    If ``V = hermvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    If ``V = chebvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
     .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
 
-    and  ``np.dot(V, c.flat)`` and ``hermval3d(x, y, z, c)`` will be the
+    and ``np.dot(V, c.flat)`` and ``chebval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 3-D Hermite
+    fitting and for the evaluation of a large number of 3-D Chebyshev
     series of the same degrees and sample points.
 
     Parameters
@@ -1342,7 +1569,7 @@ def hermvander3d(x, y, z, deg) :
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    chebvander, chebvander3d. chebval2d, chebval3d
 
     Notes
     -----
@@ -1357,29 +1584,29 @@ def hermvander3d(x, y, z, deg) :
     degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = hermvander(x, degx)
-    vy = hermvander(y, degy)
-    vz = hermvander(z, degz)
+    vx = chebvander(x, degx)
+    vy = chebvander(y, degy)
+    vz = chebvander(z, degz)
     v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
-def hermfit(x, y, deg, rcond=None, full=False, w=None):
+def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
-    Least squares fit of Hermite series to data.
+    Least squares fit of Chebyshev series to data.
 
-    Return the coefficients of a Hermite series of degree `deg` that is the
+    Return the coefficients of a Legendre series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
     1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * H_1(x) + ... + c_n * H_n(x),
+    .. math::  p(x) = c_0 + c_1 * T_1(x) + ... + c_n * T_n(x),
 
     where `n` is `deg`.
 
-    Since numpy version 1.7.0, hermfit also supports NA. If any of the
+    Since numpy version 1.7.0, chebfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
     then an NA in any row of `y` invalidates that whole row.
@@ -1393,7 +1620,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
     deg : int
-        Degree of the fitting polynomial
+        Degree of the fitting series
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1409,10 +1636,12 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
+        .. versionadded:: 1.5.0
+
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
-        Hermite coefficients ordered from low to high. If `y` was 2-D,
+        Chebyshev coefficients ordered from low to high. If `y` was 2-D,
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
@@ -1433,27 +1662,27 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, lagfit, polyfit, hermefit
-    hermval : Evaluates a Hermite series.
-    hermvander : Vandermonde matrix of Hermite series.
-    hermweight : Hermite weight function
+    polyfit, legfit, lagfit, hermfit, hermefit
+    chebval : Evaluates a Chebyshev series.
+    chebvander : Vandermonde matrix of Chebyshev series.
+    chebweight : Chebyshev weight function.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution is the coefficients of the Hermite series `p` that
+    The solution is the coefficients of the Chebyshev series `p` that
     minimizes the sum of the weighted squared errors
 
     .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    where the :math:`w_j` are the weights. This problem is solved by
-    setting up the (typically) overdetermined matrix equation
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
 
     .. math:: V(x) * c = w * y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
-    coefficients to be solved for, `w` are the weights, `y` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
     decomposition of `V`.
 
@@ -1464,11 +1693,10 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
-    Fits using Hermite series are probably most useful when the data can be
-    approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
-    weight. In that case the weight ``sqrt(w(x[i])`` should be used
-    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
-    available as `hermweight`.
+    Fits using Chebyshev series are usually better conditioned than fits
+    using power series, but much can depend on the distribution of the
+    sample points and the smoothness of the data. If the quality of the fit
+    is inadequate splines may be a good alternative.
 
     References
     ----------
@@ -1477,12 +1705,6 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermfit, hermval
-    >>> x = np.linspace(-10, 10)
-    >>> err = np.random.randn(len(x))/10
-    >>> y = hermval(x, [1, 2, 3]) + err
-    >>> hermfit(x, y, 2)
-    array([ 0.97902637,  1.99849131,  3.00006   ])
 
     """
     order = int(deg) + 1
@@ -1502,7 +1724,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         raise TypeError("expected x and y to have same length")
 
     # set up the least squares matrices in transposed form
-    lhs = hermvander(x, deg).T
+    lhs = chebvander(x, deg).T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1541,11 +1763,11 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def hermcompanion(c):
+def chebcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Hermite basis polynomial. This provides
+    symmetric when `c` is aa Chebyshev basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1553,7 +1775,7 @@ def hermcompanion(c):
     Parameters
     ----------
     c : array_like
-        1-D array of Hermite series coefficients ordered from low to high
+        1-D array of Chebyshev series coefficients ordered from low to high
         degree.
 
     Returns
@@ -1567,33 +1789,32 @@ def hermcompanion(c):
     .. versionadded::1.7.0
 
     """
-    accprod = np.multiply.accumulate
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-.5*c[0]/c[1]]])
+        return np.array([[-c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(2.*np.arange(1, n))))
-    scl = np.multiply.accumulate(scl)
+    scl = np.array([1.] + [np.sqrt(.5)]*(n-1))
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.sqrt(.5*np.arange(1, n))
+    top[0] = np.sqrt(.5)
+    top[1:] = 1/2
     bot[...] = top
     mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 
-def hermroots(c):
+def chebroots(c):
     """
-    Compute the roots of a Hermite series.
+    Compute the roots of a Chebyshev series.
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * H_i(x).
+    .. math:: p(x) = \\sum_i c[i] * T_i(x).
 
     Parameters
     ----------
@@ -1608,7 +1829,7 @@ def hermroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, chebroots, hermeroots
+    polyroots, legroots, lagroots, hermroots, hermeroots
 
     Notes
     -----
@@ -1620,40 +1841,37 @@ def hermroots(c):
     insensitive to errors in the roots. Isolated roots near the origin can
     be improved by a few iterations of Newton's method.
 
-    The Hermite series basis polynomials aren't powers of `x` so the
+    The Chebyshev series basis polynomials aren't powers of `x` so the
     results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite import hermroots, hermfromroots
-    >>> coef = hermfromroots([-1, 0, 1])
-    >>> coef
-    array([ 0.   ,  0.25 ,  0.   ,  0.125])
-    >>> hermroots(coef)
-    array([ -1.00000000e+00,  -1.38777878e-17,   1.00000000e+00])
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> cheb.chebroots((-1, 1,-1, 1)) # T3 - T2 + T1 - T0 has real roots
+    array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
 
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
-    if len(c) <= 1 :
+    if len(c) < 2:
         return np.array([], dtype=c.dtype)
-    if len(c) == 2 :
-        return np.array([-.5*c[0]/c[1]])
+    if len(c) == 2:
+        return np.array([-c[0]/c[1]])
 
-    m = hermcompanion(c)
+    m = chebcompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r
 
 
-def hermgauss(deg):
+def chebgauss(deg):
     """
-    Gauss-Hermite quadrature.
+    Gauss-Chebyshev quadrature.
 
-    Computes the sample points and weights for Gauss-Hermite quadrature.
+    Computes the sample points and weights for Gauss-Chebyshev quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
-    with the weight function :math:`f(x) = \exp(-x^2)`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
+    the weight function :math:`f(x) = 1/\sqrt{1 - x^2}`.
 
     Parameters
     ----------
@@ -1670,58 +1888,34 @@ def hermgauss(deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     The results have only been tested up to degree 100, higher degrees may
-    be problematic. The weights are determined by using the fact that
+    be problematic. For Gauss-Chebyshev there are closed form solutions for
+    the sample points and weights. If n = `deg`, then
 
-    .. math:: w_k = c / (H'_n(x_k) * H_{n-1}(x_k))
+    .. math:: x_i = \cos(\pi (2 i - 1) / (2 n))
 
-    where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
-    is the k'th root of :math:`H_n`, and then scaling the results to get
-    the right value when integrating 1.
+    .. math:: w_i = \pi / n
 
     """
     ideg = int(deg)
     if ideg != deg or ideg < 1:
         raise ValueError("deg must be a non-negative integer")
 
-    # first approximation of roots. We use the fact that the companion
-    # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
-    m = hermcompanion(c)
-    x = la.eigvals(m)
-    x.sort()
-
-    # improve roots by one application of Newton
-    dy = hermval(x, c)
-    df = hermval(x, hermder(c))
-    x -= dy/df
-
-    # compute the weights. We scale the factor to avoid possible numerical
-    # overflow.
-    fm = hermval(x, c[1:])
-    fm /= np.abs(fm).max()
-    df /= np.abs(df).max()
-    w = 1/(fm * df)
-
-    # for Hermite we can also symmetrize
-    w = (w + w[::-1])/2
-    x = (x - x[::-1])/2
-
-    # scale w to get the right value
-    w *= np.sqrt(np.pi) / w.sum()
+    x = np.cos(np.pi * np.arange(1, 2*ideg, 2) / (2.0*ideg))
+    w = np.ones(ideg)*(np.pi/ideg)
 
     return x, w
 
 
-def hermweight(x):
+def chebweight(x):
     """
-    Weight function of the Hermite polynomials.
+    The weight function of the Chebyshev polynomials.
 
-    The weight function is :math:`\exp(-x^2)` and the interval of
-    integration is :math:`[-\inf, \inf]`. the Hermite polynomials are
-    orthogonal, but not normalized, with respect to this weight function.
+    The weight function is :math:`1/\sqrt{1 - x^2}` and the interval of
+    integration is :math:`[-1, 1]`. The Chebyshev polynomials are orthogonal, but
+    not normalized, with respect to this weight function.
 
     Parameters
     ----------
@@ -1736,15 +1930,83 @@ def hermweight(x):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
-    w = np.exp(-x**2)
+    w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
 
 
-#
-# Hermite series class
-#
+def chebpts1(npts):
+    """
+    Chebyshev points of the first kind.
 
-exec(polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]'))
+    The Chebyshev points of the first kind are the points ``cos(x)``,
+    where ``x = [pi*(k + .5)/npts for k in range(npts)]``.
+
+    Parameters
+    ----------
+    npts : int
+        Number of sample points desired.
+
+    Returns
+    -------
+    pts : ndarray
+        The Chebyshev points of the first kind.
+
+    See Also
+    --------
+    chebpts2
+
+    Notes
+    -----
+
+    .. versionadded:: 1.5.0
+
+    """
+    _npts = int(npts)
+    if _npts != npts:
+        raise ValueError("npts must be integer")
+    if _npts < 1:
+        raise ValueError("npts must be >= 1")
+
+    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
+    return np.cos(x)
+
+
+def chebpts2(npts):
+    """
+    Chebyshev points of the second kind.
+
+    The Chebyshev points of the second kind are the points ``cos(x)``,
+    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
+
+    Parameters
+    ----------
+    npts : int
+        Number of sample points desired.
+
+    Returns
+    -------
+    pts : ndarray
+        The Chebyshev points of the second kind.
+
+    Notes
+    -----
+
+    .. versionadded:: 1.5.0
+
+    """
+    _npts = int(npts)
+    if _npts != npts:
+        raise ValueError("npts must be integer")
+    if _npts < 2:
+        raise ValueError("npts must be >= 2")
+
+    x = np.linspace(-np.pi, 0, _npts)
+    return np.cos(x)
+
+
+#
+# Chebyshev series class
+#

@@ -1,56 +1,56 @@
 """
-Objects for dealing with Laguerre series.
+Objects for dealing with Hermite_e series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Laguerre series, including a `Laguerre` class that
+dealing with Hermite_e series, including a `HermiteE` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `lagdomain` -- Laguerre series default domain, [-1,1].
-- `lagzero` -- Laguerre series that evaluates identically to 0.
-- `lagone` -- Laguerre series that evaluates identically to 1.
-- `lagx` -- Laguerre series for the identity map, ``f(x) = x``.
+- `hermedomain` -- Hermite_e series default domain, [-1,1].
+- `hermezero` -- Hermite_e series that evaluates identically to 0.
+- `hermeone` -- Hermite_e series that evaluates identically to 1.
+- `hermex` -- Hermite_e series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `lagmulx` -- multiply a Laguerre series in ``P_i(x)`` by ``x``.
-- `lagadd` -- add two Laguerre series.
-- `lagsub` -- subtract one Laguerre series from another.
-- `lagmul` -- multiply two Laguerre series.
-- `lagdiv` -- divide one Laguerre series by another.
-- `lagval` -- evaluate a Laguerre series at given points.
-- `lagval2d` -- evaluate a 2D Laguerre series at given points.
-- `lagval3d` -- evaluate a 3D Laguerre series at given points.
-- `laggrid2d` -- evaluate a 2D Laguerre series on a Cartesian product.
-- `laggrid3d` -- evaluate a 3D Laguerre series on a Cartesian product.
+- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
+- `hermeadd` -- add two Hermite_e series.
+- `hermesub` -- subtract one Hermite_e series from another.
+- `hermemul` -- multiply two Hermite_e series.
+- `hermediv` -- divide one Hermite_e series by another.
+- `hermeval` -- evaluate a Hermite_e series at given points.
+- `hermeval2d` -- evaluate a 2D Hermite_e series at given points.
+- `hermeval3d` -- evaluate a 3D Hermite_e series at given points.
+- `hermegrid2d` -- evaluate a 2D Hermite_e series on a Cartesian product.
+- `hermegrid3d` -- evaluate a 3D Hermite_e series on a Cartesian product.
 
 Calculus
 --------
-- `lagder` -- differentiate a Laguerre series.
-- `lagint` -- integrate a Laguerre series.
+- `hermeder` -- differentiate a Hermite_e series.
+- `hermeint` -- integrate a Hermite_e series.
 
 Misc Functions
 --------------
-- `lagfromroots` -- create a Laguerre series with specified roots.
-- `lagroots` -- find the roots of a Laguerre series.
-- `lagvander` -- Vandermonde-like matrix for Laguerre polynomials.
-- `lagvander2d` -- Vandermonde-like matrix for 2D power series.
-- `lagvander3d` -- Vandermonde-like matrix for 3D power series.
-- `laggauss` -- Gauss-Laguerre quadrature, points and weights.
-- `lagweight` -- Laguerre weight function.
-- `lagcompanion` -- symmetrized companion matrix in Laguerre form.
-- `lagfit` -- least-squares fit returning a Laguerre series.
-- `lagtrim` -- trim leading coefficients from a Laguerre series.
-- `lagline` -- Laguerre series of given straight line.
-- `lag2poly` -- convert a Laguerre series to a polynomial.
-- `poly2lag` -- convert a polynomial to a Laguerre series.
+- `hermefromroots` -- create a Hermite_e series with specified roots.
+- `hermeroots` -- find the roots of a Hermite_e series.
+- `hermevander` -- Vandermonde-like matrix for Hermite_e polynomials.
+- `hermevander2d` -- Vandermonde-like matrix for 2D power series.
+- `hermevander3d` -- Vandermonde-like matrix for 3D power series.
+- `hermegauss` -- Gauss-Hermite_e quadrature, points and weights.
+- `hermeweight` -- Hermite_e weight function.
+- `hermecompanion` -- symmetrized companion matrix in Hermite_e form.
+- `hermefit` -- least-squares fit returning a Hermite_e series.
+- `hermetrim` -- trim leading coefficients from a Hermite_e series.
+- `hermeline` -- Hermite_e series of given straight line.
+- `herme2poly` -- convert a Hermite_e series to a polynomial.
+- `poly2herme` -- convert a polynomial to a Hermite_e series.
 
 Classes
 -------
-- `Laguerre` -- A Laguerre series class.
+- `HermiteE` -- A Hermite_e series class.
 
 See also
 --------
@@ -63,27 +63,27 @@ import numpy as np
 import numpy.linalg as la
 from . import polyutils as pu
 import warnings
-from .polytemplate import polytemplate
 
-__all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
-    'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
-    'lagval', 'lagder', 'lagint', 'lag2poly', 'poly2lag', 'lagfromroots',
-    'lagvander', 'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d',
-    'lagval3d', 'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d',
-    'lagcompanion', 'laggauss', 'lagweight']
+__all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
+    'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
+    'hermeval',
+    'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
+    'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE',
+    'hermeval2d', 'hermeval3d', 'hermegrid2d', 'hermegrid3d', 'hermevander2d',
+    'hermevander3d', 'hermecompanion', 'hermegauss', 'hermeweight']
 
-lagtrim = pu.trimcoef
+hermetrim = pu.trimcoef
 
 
-def poly2lag(pol) :
+def poly2herme(pol) :
     """
-    poly2lag(pol)
+    poly2herme(pol)
 
-    Convert a polynomial to a Laguerre series.
+    Convert a polynomial to a Hermite series.
 
     Convert an array representing the coefficients of a polynomial (relative
     to the "standard" basis) ordered from lowest degree to highest, to an
-    array of the coefficients of the equivalent Laguerre series, ordered
+    array of the coefficients of the equivalent Hermite series, ordered
     from lowest to highest degree.
 
     Parameters
@@ -94,12 +94,12 @@ def poly2lag(pol) :
     Returns
     -------
     c : ndarray
-        1-D array containing the coefficients of the equivalent Laguerre
+        1-D array containing the coefficients of the equivalent Hermite
         series.
 
     See Also
     --------
-    lag2poly
+    herme2poly
 
     Notes
     -----
@@ -108,24 +108,24 @@ def poly2lag(pol) :
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import poly2lag
-    >>> poly2lag(np.arange(4))
-    array([ 23., -63.,  58., -18.])
+    >>> from numpy.polynomial.hermite_e import poly2herme
+    >>> poly2herme(np.arange(4))
+    array([  2.,  10.,   2.,   3.])
 
     """
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
     for i in range(deg, -1, -1) :
-        res = lagadd(lagmulx(res), pol[i])
+        res = hermeadd(hermemulx(res), pol[i])
     return res
 
 
-def lag2poly(c) :
+def herme2poly(c) :
     """
-    Convert a Laguerre series to a polynomial.
+    Convert a Hermite series to a polynomial.
 
-    Convert an array representing the coefficients of a Laguerre series,
+    Convert an array representing the coefficients of a Hermite series,
     ordered from lowest degree to highest, to an array of the coefficients
     of the equivalent polynomial (relative to the "standard" basis) ordered
     from lowest to highest degree.
@@ -133,7 +133,7 @@ def lag2poly(c) :
     Parameters
     ----------
     c : array_like
-        1-D array containing the Laguerre series coefficients, ordered
+        1-D array containing the Hermite series coefficients, ordered
         from lowest order term to highest.
 
     Returns
@@ -145,7 +145,7 @@ def lag2poly(c) :
 
     See Also
     --------
-    poly2lag
+    poly2herme
 
     Notes
     -----
@@ -154,48 +154,50 @@ def lag2poly(c) :
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lag2poly
-    >>> lag2poly([ 23., -63.,  58., -18.])
+    >>> from numpy.polynomial.hermite_e import herme2poly
+    >>> herme2poly([  2.,  10.,   2.,   3.])
     array([ 0.,  1.,  2.,  3.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
     if n == 1:
         return c
+    if n == 2:
+        return c
     else:
         c0 = c[-2]
         c1 = c[-1]
         # i is the current degree of c1
-        for i in range(n - 1, 1, -1):
+        for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
-        return polyadd(c0, polysub(c1, polymulx(c1)))
+            c0 = polysub(c[i - 2], c1*(i - 1))
+            c1 = polyadd(tmp, polymulx(c1))
+        return polyadd(c0, polymulx(c1))
 
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
-# Laguerre
-lagdomain = np.array([0, 1])
+# Hermite
+hermedomain = np.array([-1, 1])
 
-# Laguerre coefficients representing zero.
-lagzero = np.array([0])
+# Hermite coefficients representing zero.
+hermezero = np.array([0])
 
-# Laguerre coefficients representing one.
-lagone = np.array([1])
+# Hermite coefficients representing one.
+hermeone = np.array([1])
 
-# Laguerre coefficients representing the identity x.
-lagx = np.array([1, -1])
+# Hermite coefficients representing the identity x.
+hermex = np.array([0, 1])
 
 
-def lagline(off, scl) :
+def hermeline(off, scl) :
     """
-    Laguerre series whose graph is a straight line.
+    Hermite series whose graph is a straight line.
 
 
 
@@ -207,7 +209,7 @@ def lagline(off, scl) :
     Returns
     -------
     y : ndarray
-        This module's representation of the Laguerre series for
+        This module's representation of the Hermite series for
         ``off + scl*x``.
 
     See Also
@@ -216,28 +218,29 @@ def lagline(off, scl) :
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagline, lagval
-    >>> lagval(0,lagline(3, 2))
+    >>> from numpy.polynomial.hermite_e import hermeline
+    >>> from numpy.polynomial.hermite_e import hermeline, hermeval
+    >>> hermeval(0,hermeline(3, 2))
     3.0
-    >>> lagval(1,lagline(3, 2))
+    >>> hermeval(1,hermeline(3, 2))
     5.0
 
     """
     if scl != 0 :
-        return np.array([off + scl, -scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
 
-def lagfromroots(roots) :
+def hermefromroots(roots) :
     """
-    Generate a Laguerre series with given roots.
+    Generate a HermiteE series with given roots.
 
     The function returns the coefficients of the polynomial
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Laguerre form, where the `r_n` are the roots specified in `roots`.
+    in HermiteE form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -245,10 +248,10 @@ def lagfromroots(roots) :
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * L_1(x) + ... +  c_n * L_n(x)
+    .. math:: p(x) = c_0 + c_1 * He_1(x) + ... +  c_n * He_n(x)
 
     The coefficient of the last term is not generally 1 for monic
-    polynomials in Laguerre form.
+    polynomials in HermiteE form.
 
     Parameters
     ----------
@@ -265,17 +268,17 @@ def lagfromroots(roots) :
 
     See Also
     --------
-    polyfromroots, legfromroots, chebfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots,
+    chebfromroots.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagfromroots, lagval
-    >>> coef = lagfromroots((-1, 0, 1))
-    >>> lagval((-1, 0, 1), coef)
+    >>> from numpy.polynomial.hermite_e import hermefromroots, hermeval
+    >>> coef = hermefromroots((-1, 0, 1))
+    >>> hermeval((-1, 0, 1), coef)
     array([ 0.,  0.,  0.])
-    >>> coef = lagfromroots((-1j, 1j))
-    >>> lagval((-1j, 1j), coef)
+    >>> coef = hermefromroots((-1j, 1j))
+    >>> hermeval((-1j, 1j), coef)
     array([ 0.+0.j,  0.+0.j])
 
     """
@@ -284,54 +287,53 @@ def lagfromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
-        p = [lagline(-r, 1) for r in roots]
+        p = [hermeline(-r, 1) for r in roots]
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [lagmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [hermemul(p[i], p[i+m]) for i in range(m)]
             if r:
-                tmp[0] = lagmul(tmp[0], p[-1])
+                tmp[0] = hermemul(tmp[0], p[-1])
             p = tmp
             n = m
         return p[0]
 
 
-def lagadd(c1, c2):
+def hermeadd(c1, c2):
     """
-    Add one Laguerre series to another.
+    Add one Hermite series to another.
 
-    Returns the sum of two Laguerre series `c1` + `c2`.  The arguments
+    Returns the sum of two Hermite series `c1` + `c2`.  The arguments
     are sequences of coefficients ordered from lowest order term to
     highest, i.e., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Array representing the Laguerre series of their sum.
+        Array representing the Hermite series of their sum.
 
     See Also
     --------
-    lagsub, lagmul, lagdiv, lagpow
+    hermesub, hermemul, hermediv, hermepow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the sum of two Laguerre series
-    is a Laguerre series (without having to "reproject" the result onto
+    Unlike multiplication, division, etc., the sum of two Hermite series
+    is a Hermite series (without having to "reproject" the result onto
     the basis set) so addition, just like that of "standard" polynomials,
     is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagadd
-    >>> lagadd([1, 2, 3], [1, 2, 3, 4])
+    >>> from numpy.polynomial.hermite_e import hermeadd
+    >>> hermeadd([1, 2, 3], [1, 2, 3, 4])
     array([ 2.,  4.,  6.,  4.])
-
 
     """
     # c1, c2 are trimmed copies
@@ -345,40 +347,40 @@ def lagadd(c1, c2):
     return pu.trimseq(ret)
 
 
-def lagsub(c1, c2):
+def hermesub(c1, c2):
     """
-    Subtract one Laguerre series from another.
+    Subtract one Hermite series from another.
 
-    Returns the difference of two Laguerre series `c1` - `c2`.  The
+    Returns the difference of two Hermite series `c1` - `c2`.  The
     sequences of coefficients are from lowest order term to highest, i.e.,
     [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Laguerre series coefficients representing their difference.
+        Of Hermite series coefficients representing their difference.
 
     See Also
     --------
-    lagadd, lagmul, lagdiv, lagpow
+    hermeadd, hermemul, hermediv, hermepow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the difference of two Laguerre
-    series is a Laguerre series (without having to "reproject" the result
+    Unlike multiplication, division, etc., the difference of two Hermite
+    series is a Hermite series (without having to "reproject" the result
     onto the basis set) so subtraction, just like that of "standard"
     polynomials, is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagsub
-    >>> lagsub([1, 2, 3, 4], [1, 2, 3])
+    >>> from numpy.polynomial.hermite_e import hermesub
+    >>> hermesub([1, 2, 3, 4], [1, 2, 3])
     array([ 0.,  0.,  0.,  4.])
 
     """
@@ -394,17 +396,17 @@ def lagsub(c1, c2):
     return pu.trimseq(ret)
 
 
-def lagmulx(c):
-    """Multiply a Laguerre series by x.
+def hermemulx(c):
+    """Multiply a Hermite series by x.
 
-    Multiply the Laguerre series `c` by x, where x is the independent
+    Multiply the Hermite series `c` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
     c : array_like
-        1-D array of Laguerre series coefficients ordered from low to
+        1-D array of Hermite series coefficients ordered from low to
         high.
 
     Returns
@@ -414,18 +416,18 @@ def lagmulx(c):
 
     Notes
     -----
-    The multiplication uses the recursion relationship for Laguerre
+    The multiplication uses the recursion relationship for Hermite
     polynomials in the form
 
     .. math::
 
-    xP_i(x) = (-(i + 1)*P_{i + 1}(x) + (2i + 1)P_{i}(x) - iP_{i - 1}(x))
+    xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagmulx
-    >>> lagmulx([1, 2, 3])
-    array([ -1.,  -1.,  11.,  -9.])
+    >>> from numpy.polynomial.hermite_e import hermemulx
+    >>> hermemulx([1, 2, 3])
+    array([ 2.,  7.,  2.,  3.])
 
     """
     # c is a trimmed copy
@@ -435,51 +437,50 @@ def lagmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]
-    prd[1] = -c[0]
+    prd[0] = c[0]*0
+    prd[1] = c[0]
     for i in range(1, len(c)):
-        prd[i + 1] = -c[i]*(i + 1)
-        prd[i] += c[i]*(2*i + 1)
-        prd[i - 1] -= c[i]*i
+        prd[i + 1] = c[i]
+        prd[i - 1] += c[i]*i
     return prd
 
 
-def lagmul(c1, c2):
+def hermemul(c1, c2):
     """
-    Multiply one Laguerre series by another.
+    Multiply one Hermite series by another.
 
-    Returns the product of two Laguerre series `c1` * `c2`.  The arguments
+    Returns the product of two Hermite series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
     e.g., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Laguerre series coefficients representing their product.
+        Of Hermite series coefficients representing their product.
 
     See Also
     --------
-    lagadd, lagsub, lagdiv, lagpow
+    hermeadd, hermesub, hermediv, hermepow
 
     Notes
     -----
     In general, the (polynomial) product of two C-series results in terms
-    that are not in the Laguerre polynomial basis set.  Thus, to express
-    the product as a Laguerre series, it is necessary to "reproject" the
+    that are not in the Hermite polynomial basis set.  Thus, to express
+    the product as a Hermite series, it is necessary to "reproject" the
     product onto said basis set, which may produce "unintuitive" (but
     correct) results; see Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagmul
-    >>> lagmul([1, 2, 3], [0, 1, 2])
-    array([  8., -13.,  38., -51.,  36.])
+    >>> from numpy.polynomial.hermite_e import hermemul
+    >>> hermemul([1, 2, 3], [0, 1, 2])
+    array([ 14.,  15.,  28.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -505,16 +506,16 @@ def lagmul(c1, c2):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = lagsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = lagadd(tmp, lagsub((2*nd - 1)*c1, lagmulx(c1))/nd)
-    return lagadd(c0, lagsub(c1, lagmulx(c1)))
+            c0 = hermesub(c[-i]*xs, c1*(nd - 1))
+            c1 = hermeadd(tmp, hermemulx(c1))
+    return hermeadd(c0, hermemulx(c1))
 
 
-def lagdiv(c1, c2):
+def hermediv(c1, c2):
     """
-    Divide one Laguerre series by another.
+    Divide one Hermite series by another.
 
-    Returns the quotient-with-remainder of two Laguerre series
+    Returns the quotient-with-remainder of two Hermite series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
     order "term" to highest, e.g., [1,2,3] represents the series
     ``P_0 + 2*P_1 + 3*P_2``.
@@ -522,35 +523,35 @@ def lagdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     [quo, rem] : ndarrays
-        Of Laguerre series coefficients representing the quotient and
+        Of Hermite series coefficients representing the quotient and
         remainder.
 
     See Also
     --------
-    lagadd, lagsub, lagmul, lagpow
+    hermeadd, hermesub, hermemul, hermepow
 
     Notes
     -----
-    In general, the (polynomial) division of one Laguerre series by another
-    results in quotient and remainder terms that are not in the Laguerre
-    polynomial basis set.  Thus, to express these results as a Laguerre
-    series, it is necessary to "reproject" the results onto the Laguerre
+    In general, the (polynomial) division of one Hermite series by another
+    results in quotient and remainder terms that are not in the Hermite
+    polynomial basis set.  Thus, to express these results as a Hermite
+    series, it is necessary to "reproject" the results onto the Hermite
     basis set, which may produce "unintuitive" (but correct) results; see
     Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagdiv
-    >>> lagdiv([  8., -13.,  38., -51.,  36.], [0, 1, 2])
+    >>> from numpy.polynomial.hermite_e import hermediv
+    >>> hermediv([ 14.,  15.,  28.,   7.,   6.], [0, 1, 2])
     (array([ 1.,  2.,  3.]), array([ 0.]))
-    >>> lagdiv([  9., -12.,  38., -51.,  36.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
+    >>> hermediv([ 15.,  17.,  28.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 1.,  2.]))
 
     """
     # c1, c2 are trimmed copies
@@ -568,24 +569,24 @@ def lagdiv(c1, c2):
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
-            p = lagmul([0]*i + [1], c2)
+            p = hermemul([0]*i + [1], c2)
             q = rem[-1]/p[-1]
             rem = rem[:-1] - q*p[:-1]
             quo[i] = q
         return quo, pu.trimseq(rem)
 
 
-def lagpow(c, pow, maxpower=16) :
-    """Raise a Laguerre series to a power.
+def hermepow(c, pow, maxpower=16) :
+    """Raise a Hermite series to a power.
 
-    Returns the Laguerre series `c` raised to the power `pow`. The
+    Returns the Hermite series `c` raised to the power `pow`. The
     argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
     ----------
     c : array_like
-        1-D array of Laguerre series coefficients ordered from low to
+        1-D array of Hermite series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
@@ -596,17 +597,17 @@ def lagpow(c, pow, maxpower=16) :
     Returns
     -------
     coef : ndarray
-        Laguerre series of power.
+        Hermite series of power.
 
     See Also
     --------
-    lagadd, lagsub, lagmul, lagdiv
+    hermeadd, hermesub, hermemul, hermediv
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagpow
-    >>> lagpow([1, 2, 3], 2)
-    array([ 14., -16.,  56., -72.,  54.])
+    >>> from numpy.polynomial.hermite_e import hermepow
+    >>> hermepow([1, 2, 3], 2)
+    array([ 23.,  28.,  46.,  12.,   9.])
 
     """
     # c is a trimmed copy
@@ -625,27 +626,27 @@ def lagpow(c, pow, maxpower=16) :
         # in the usual way.
         prd = c
         for i in range(2, power + 1) :
-            prd = lagmul(prd, c)
+            prd = hermemul(prd, c)
         return prd
 
 
-def lagder(c, m=1, scl=1, axis=0) :
+def hermeder(c, m=1, scl=1, axis=0) :
     """
-    Differentiate a Laguerre series.
+    Differentiate a Hermite_e series.
 
-    Returns the Laguerre series coefficients `c` differentiated `m` times
-    along `axis`.  At each iteration the result is multiplied by `scl` (the
+    Returns the series coefficients `c` differentiated `m` times along
+    `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable). The argument
     `c` is an array of coefficients from low to high degree along each
-    axis, e.g., [1,2,3] represents the series ``1*L_0 + 2*L_1 + 3*L_2``
-    while [[1,2],[1,2]] represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) +
-    2*L_0(x)*L_1(y) + 2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is
-    ``y``.
+    axis, e.g., [1,2,3] represents the series ``1*He_0 + 2*He_1 + 3*He_2``
+    while [[1,2],[1,2]] represents ``1*He_0(x)*He_0(y) + 1*He_1(x)*He_0(y)
+    + 2*He_0(x)*He_1(y) + 2*He_1(x)*He_1(y)`` if axis=0 is ``x`` and axis=1
+    is ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Laguerre series coefficients. If `c` is multidimensional
+        Array of Hermite_e series coefficients. If `c` is multidimensional
         the different axis correspond to different variables with the
         degree in each axis given by the corresponding index.
     m : int, optional
@@ -662,25 +663,25 @@ def lagder(c, m=1, scl=1, axis=0) :
     Returns
     -------
     der : ndarray
-        Laguerre series of the derivative.
+        Hermite series of the derivative.
 
     See Also
     --------
-    lagint
+    hermeint
 
     Notes
     -----
-    In general, the result of differentiating a Laguerre series does not
+    In general, the result of differentiating a Hermite series does not
     resemble the same operation on a power series. Thus the result of this
     function may be "unintuitive," albeit correct; see Examples section
     below.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagder
-    >>> lagder([ 1.,  1.,  1., -3.])
+    >>> from numpy.polynomial.hermite_e import hermeder
+    >>> hermeder([ 1.,  1.,  1.,  1.])
     array([ 1.,  2.,  3.])
-    >>> lagder([ 1.,  0.,  0., -4.,  3.], m=2)
+    >>> hermeder([-0.25,  1.,  1./2.,  1./3.,  1./4 ], m=2)
     array([ 1.,  2.,  3.])
 
     """
@@ -706,26 +707,24 @@ def lagder(c, m=1, scl=1, axis=0) :
     c = np.rollaxis(c, iaxis)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        return c[:1]*0
     else :
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 1, -1):
-                der[j - 1] = -c[j]
-                c[j - 1] += c[j]
-            der[0] = -c[1]
+            for j in range(n, 0, -1):
+                der[j - 1] = j*c[j]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
-    Integrate a Laguerre series.
+    Integrate a Hermite_e series.
 
-    Returns the Laguerre series coefficients `c` integrated `m` times from
+    Returns the Hermite_e series coefficients `c` integrated `m` times from
     `lbnd` along `axis`. At each iteration the resulting series is
     **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
@@ -733,15 +732,14 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
     coefficients from low to high degree along each axis, e.g., [1,2,3]
-    represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
-    represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
-    2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
-
+    represents the series ``H_0 + 2*H_1 + 3*H_2`` while [[1,2],[1,2]]
+    represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) + 2*H_0(x)*H_1(y) +
+    2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Laguerre series coefficients. If `c` is multidimensional
+        Array of Hermite_e series coefficients. If c is multidimensional
         the different axis correspond to different variables with the
         degree in each axis given by the corresponding index.
     m : int, optional
@@ -765,7 +763,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Returns
     -------
     S : ndarray
-        Laguerre series coefficients of the integral.
+        Hermite_e series coefficients of the integral.
 
     Raises
     ------
@@ -775,7 +773,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     See Also
     --------
-    lagder
+    hermeder
 
     Notes
     -----
@@ -792,17 +790,17 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagint
-    >>> lagint([1,2,3])
-    array([ 1.,  1.,  1., -3.])
-    >>> lagint([1,2,3], m=2)
-    array([ 1.,  0.,  0., -4.,  3.])
-    >>> lagint([1,2,3], k=1)
-    array([ 2.,  1.,  1., -3.])
-    >>> lagint([1,2,3], lbnd=-1)
-    array([ 11.5,   1. ,   1. ,  -3. ])
-    >>> lagint([1,2], m=2, k=[1,2], lbnd=-1)
-    array([ 11.16666667,  -5.        ,  -3.        ,   2.        ])
+    >>> from numpy.polynomial.hermite_e import hermeint
+    >>> hermeint([1, 2, 3]) # integrate once, value 0 at 0.
+    array([ 1.,  1.,  1.,  1.])
+    >>> hermeint([1, 2, 3], m=2) # integrate twice, value & deriv 0 at 0
+    array([-0.25      ,  1.        ,  0.5       ,  0.33333333,  0.25      ])
+    >>> hermeint([1, 2, 3], k=1) # integrate once, value 1 at 0.
+    array([ 2.,  1.,  1.,  1.])
+    >>> hermeint([1, 2, 3], lbnd=-1) # integrate once, value 0 at -1
+    array([-1.,  1.,  1.,  1.])
+    >>> hermeint([1, 2, 3], m=2, k=[1, 2], lbnd=-1)
+    array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -837,24 +835,23 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]
-            tmp[1] = -c[0]
+            tmp[0] = c[0]*0
+            tmp[1] = c[0]
             for j in range(1, n):
-                tmp[j] += c[j]
-                tmp[j + 1] = -c[j]
-            tmp[0] += k[i] - lagval(lbnd, tmp)
+                tmp[j + 1] = c[j]/(j + 1)
+            tmp[0] += k[i] - hermeval(lbnd, tmp)
             c = tmp
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def lagval(x, c, tensor=True):
+def hermeval(x, c, tensor=True):
     """
-    Evaluate a Laguerre series at points x.
+    Evaluate an HermiteE series at points x.
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * L_0(x) + c_1 * L_1(x) + ... + c_n * L_n(x)
+    .. math:: p(x) = c_0 * He_0(x) + c_1 * He_1(x) + ... + c_n * He_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -900,7 +897,7 @@ def lagval(x, c, tensor=True):
 
     See Also
     --------
-    lagval2d, laggrid2d, lagval3d, laggrid3d
+    hermeval2d, hermegrid2d, hermeval3d, hermegrid3d
 
     Notes
     -----
@@ -908,13 +905,13 @@ def lagval(x, c, tensor=True):
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagval
+    >>> from numpy.polynomial.hermite_e import hermeval
     >>> coef = [1,2,3]
-    >>> lagval(1, coef)
-    -0.5
-    >>> lagval([[1,2],[3,4]], coef)
-    array([[-0.5, -4. ],
-           [-4.5, -2. ]])
+    >>> hermeval(1, coef)
+    3.0
+    >>> hermeval([[1,2],[3,4]], coef)
+    array([[  3.,  14.],
+           [ 31.,  54.]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -924,7 +921,6 @@ def lagval(x, c, tensor=True):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
        c = c.reshape(c.shape + (1,)*x.ndim)
-
 
     if len(c) == 1 :
         c0 = c[0]
@@ -939,18 +935,18 @@ def lagval(x, c, tensor=True):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*((2*nd - 1) - x))/nd
-    return c0 + c1*(1 - x)
+            c0 = c[-i] - c1*(nd - 1)
+            c1 = tmp + c1*x
+    return c0 + c1*x
 
 
-def lagval2d(x, y, c):
+def hermeval2d(x, y, c):
     """
-    Evaluate a 2-D Laguerre series at points (x, y).
+    Evaluate a 2-D HermiteE series at points (x, y).
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * L_i(x) * L_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * He_i(x) * He_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -982,7 +978,7 @@ def lagval2d(x, y, c):
 
     See Also
     --------
-    lagval, laggrid2d, lagval3d, laggrid3d
+    hermeval, hermegrid2d, hermeval3d, hermegrid3d
 
     Notes
     -----
@@ -995,18 +991,18 @@ def lagval2d(x, y, c):
     except:
         raise ValueError('x, y are incompatible')
 
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
+    c = hermeval(x, c)
+    c = hermeval(y, c, tensor=False)
     return c
 
 
-def laggrid2d(x, y, c):
+def hermegrid2d(x, y, c):
     """
-    Evaluate a 2-D Laguerre series on the Cartesian product of x and y.
+    Evaluate a 2-D HermiteE series on the Cartesian product of x and y.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1019,7 +1015,7 @@ def laggrid2d(x, y, c):
 
     If `c` has fewer than two dimensions, ones are implicitly appended to
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
-    x.shape + y.shape.
+    x.shape.
 
     Parameters
     ----------
@@ -1029,20 +1025,20 @@ def laggrid2d(x, y, c):
         tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
-        Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional Chebyshev series at points in the
-        Cartesian product of `x` and `y`.
+        The values of the two dimensional polynomial at points in the Cartesian
+        product of `x` and `y`.
 
     See Also
     --------
-    lagval, lagval2d, lagval3d, laggrid3d
+    hermeval, hermeval2d, hermeval3d, hermegrid3d
 
     Notes
     -----
@@ -1050,18 +1046,18 @@ def laggrid2d(x, y, c):
     .. versionadded::1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
+    c = hermeval(x, c)
+    c = hermeval(y, c)
     return c
 
 
-def lagval3d(x, y, z, c):
+def hermeval3d(x, y, z, c):
     """
-    Evaluate a 3-D Laguerre series at points (x, y, z).
+    Evaluate a 3-D Hermite_e series at points (x, y, z).
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * L_i(x) * L_j(y) * L_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * He_i(x) * He_j(y) * He_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1090,12 +1086,12 @@ def lagval3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the multidimension polynomial on points formed with
+        The values of the multidimensional polynomial on points formed with
         triples of corresponding values from `x`, `y`, and `z`.
 
     See Also
     --------
-    lagval, lagval2d, laggrid2d, laggrid3d
+    hermeval, hermeval2d, hermegrid2d, hermegrid3d
 
     Notes
     -----
@@ -1108,19 +1104,19 @@ def lagval3d(x, y, z, c):
     except:
         raise ValueError('x, y, z are incompatible')
 
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
-    c = lagval(z, c, tensor=False)
+    c = hermeval(x, c)
+    c = hermeval(y, c, tensor=False)
+    c = hermeval(z, c, tensor=False)
     return c
 
 
-def laggrid3d(x, y, z, c):
+def hermegrid3d(x, y, z, c):
     """
-    Evaluate a 3-D Laguerre series on the Cartesian product of x, y, and z.
+    Evaluate a 3-D HermiteE series on the Cartesian product of x, y, and z.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * L_i(a) * L_j(b) * L_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * He_i(a) * He_j(b) * He_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1159,7 +1155,7 @@ def laggrid3d(x, y, z, c):
 
     See Also
     --------
-    lagval, lagval2d, laggrid2d, lagval3d
+    hermeval, hermeval2d, hermegrid2d, hermeval3d
 
     Notes
     -----
@@ -1167,28 +1163,28 @@ def laggrid3d(x, y, z, c):
     .. versionadded::1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
-    c = lagval(z, c)
+    c = hermeval(x, c)
+    c = hermeval(y, c)
+    c = hermeval(z, c)
     return c
 
 
-def lagvander(x, deg) :
+def hermevander(x, deg) :
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = L_i(x)
+    .. math:: V[..., i] = He_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
-    `x` and the last index is the degree of the Laguerre polynomial.
+    `x` and the last index is the degree of the HermiteE polynomial.
 
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
-    array ``V = lagvander(x, n)``, then ``np.dot(V, c)`` and
-    ``lagval(x, c)`` are the same up to roundoff. This equivalence is
+    array ``V = hermevander(x, n)``, then ``np.dot(V, c)`` and
+    ``hermeval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
-    number of Laguerre series of the same degree and sample points.
+    number of HermiteE series of the same degree and sample points.
 
     Parameters
     ----------
@@ -1204,17 +1200,17 @@ def lagvander(x, deg) :
     vander : ndarray
         The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
-        corresponding Laguerre polynomial.  The dtype will be the same as
+        corresponding HermiteE polynomial.  The dtype will be the same as
         the converted `x`.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagvander
-    >>> x = np.array([0, 1, 2])
-    >>> lagvander(x, 3)
-    array([[ 1.        ,  1.        ,  1.        ,  1.        ],
-           [ 1.        ,  0.        , -0.5       , -0.66666667],
-           [ 1.        , -1.        , -1.        , -0.33333333]])
+    >>> from numpy.polynomial.hermite_e import hermevander
+    >>> x = np.array([-1, 0, 1])
+    >>> hermevander(x, 3)
+    array([[ 1., -1.,  0.,  2.],
+           [ 1.,  0., -1., -0.],
+           [ 1.,  1.,  0., -2.]])
 
     """
     ideg = int(deg)
@@ -1229,33 +1225,33 @@ def lagvander(x, deg) :
     v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
     if ideg > 0 :
-        v[1] = 1 - x
+        v[1] = x
         for i in range(2, ideg + 1) :
-            v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
+            v[i] = (v[i-1]*x - v[i-2]*(i - 1))
     return np.rollaxis(v, 0, v.ndim)
 
 
-def lagvander2d(x, y, deg) :
+def hermevander2d(x, y, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = L_i(x) * L_j(y),
+    .. math:: V[..., deg[1]*i + j] = He_i(x) * He_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
-    the Laguerre polynomials.
+    the HermiteE polynomials.
 
-    If ``V = lagvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    If ``V = hermevander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
     .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
 
-    and ``np.dot(V, c.flat)`` and ``lagval2d(x, y, c)`` will be the same
+    and ``np.dot(V, c.flat)`` and ``hermeval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 2-D Laguerre
+    fitting and for the evaluation of a large number of 2-D HermiteE
     series of the same degrees and sample points.
 
     Parameters
@@ -1277,7 +1273,7 @@ def lagvander2d(x, y, deg) :
 
     See Also
     --------
-    lagvander, lagvander3d. lagval2d, lagval3d
+    hermevander, hermevander3d. hermeval2d, hermeval3d
 
     Notes
     -----
@@ -1292,34 +1288,34 @@ def lagvander2d(x, y, deg) :
     degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
+    vx = hermevander(x, degx)
+    vy = hermevander(y, degy)
     v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def lagvander3d(x, y, z, deg) :
+def hermevander3d(x, y, z, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
-    then The pseudo-Vandermonde matrix is defined by
+    then Hehe pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = He_i(x)*He_j(y)*He_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
-    the degrees of the Laguerre polynomials.
+    the degrees of the HermiteE polynomials.
 
-    If ``V = lagvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    If ``V = hermevander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
     .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
 
-    and  ``np.dot(V, c.flat)`` and ``lagval3d(x, y, z, c)`` will be the
+    and  ``np.dot(V, c.flat)`` and ``hermeval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 3-D Laguerre
+    fitting and for the evaluation of a large number of 3-D HermiteE
     series of the same degrees and sample points.
 
     Parameters
@@ -1341,7 +1337,7 @@ def lagvander3d(x, y, z, deg) :
 
     See Also
     --------
-    lagvander, lagvander3d. lagval2d, lagval3d
+    hermevander, hermevander3d. hermeval2d, hermeval3d
 
     Notes
     -----
@@ -1356,29 +1352,29 @@ def lagvander3d(x, y, z, deg) :
     degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
-    vz = lagvander(z, degz)
+    vx = hermevander(x, degx)
+    vy = hermevander(y, degy)
+    vz = hermevander(z, degz)
     v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
-def lagfit(x, y, deg, rcond=None, full=False, w=None):
+def hermefit(x, y, deg, rcond=None, full=False, w=None):
     """
-    Least squares fit of Laguerre series to data.
+    Least squares fit of Hermite series to data.
 
-    Return the coefficients of a Laguerre series of degree `deg` that is the
-    least squares fit to the data values `y` given at points `x`. If `y` is
-    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
-    fits are done, one for each column of `y`, and the resulting
+    Return the coefficients of a HermiteE series of degree `deg` that is
+    the least squares fit to the data values `y` given at points `x`. If
+    `y` is 1-D the returned coefficients will also be 1-D. If `y` is 2-D
+    multiple fits are done, one for each column of `y`, and the resulting
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
+    .. math::  p(x) = c_0 + c_1 * He_1(x) + ... + c_n * He_n(x),
 
     where `n` is `deg`.
 
-    Since numpy version 1.7.0, lagfit also supports NA. If any of the
+    Since numpy version 1.7.0, hermefit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
     then an NA in any row of `y` invalidates that whole row.
@@ -1411,7 +1407,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
-        Laguerre coefficients ordered from low to high. If `y` was 2-D,
+        Hermite coefficients ordered from low to high. If `y` was 2-D,
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
@@ -1432,27 +1428,27 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, hermefit
-    lagval : Evaluates a Laguerre series.
-    lagvander : pseudo Vandermonde matrix of Laguerre series.
-    lagweight : Laguerre weight function.
+    chebfit, legfit, polyfit, hermfit, polyfit
+    hermeval : Evaluates a Hermite series.
+    hermevander : pseudo Vandermonde matrix of Hermite series.
+    hermeweight : HermiteE weight function.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution is the coefficients of the Laguerre series `p` that
+    The solution is the coefficients of the HermiteE series `p` that
     minimizes the sum of the weighted squared errors
 
     .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
     where the :math:`w_j` are the weights. This problem is solved by
-    setting up as the (typically) overdetermined matrix equation
+    setting up the (typically) overdetermined matrix equation
 
     .. math:: V(x) * c = w * y,
 
-    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
-    coefficients to be solved for, `w` are the weights, and `y` are the
+    where `V` is the pseudo Vandermonde matrix of `x`, the elements of `c`
+    are the coefficients to be solved for, and the elements of `y` are the
     observed values.  This equation is then solved using the singular value
     decomposition of `V`.
 
@@ -1463,11 +1459,11 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
-    Fits using Laguerre series are probably most useful when the data can
-    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Laguerre
+    Fits using HermiteE series are probably most useful when the data can
+    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the HermiteE
     weight. In that case the weight ``sqrt(w(x[i])`` should be used
     together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
-    available as `lagweight`.
+    available as `hermeweight`.
 
     References
     ----------
@@ -1476,12 +1472,12 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagfit, lagval
-    >>> x = np.linspace(0, 10)
+    >>> from numpy.polynomial.hermite_e import hermefik, hermeval
+    >>> x = np.linspace(-10, 10)
     >>> err = np.random.randn(len(x))/10
-    >>> y = lagval(x, [1, 2, 3]) + err
-    >>> lagfit(x, y, 2)
-    array([ 0.96971004,  2.00193749,  3.00288744])
+    >>> y = hermeval(x, [1, 2, 3]) + err
+    >>> hermefit(x, y, 2)
+    array([ 1.01690445,  1.99951418,  2.99948696])
 
     """
     order = int(deg) + 1
@@ -1501,7 +1497,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         raise TypeError("expected x and y to have same length")
 
     # set up the least squares matrices in transposed form
-    lhs = lagvander(x, deg).T
+    lhs = hermevander(x, deg).T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1540,24 +1536,26 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def lagcompanion(c):
+def hermecompanion(c):
     """
-    Return the companion matrix of c.
+    Return the scaled companion matrix of c.
 
-    The usual companion matrix of the Laguerre polynomials is already
-    symmetric when `c` is a basis Laguerre polynomial, so no scaling is
-    applied.
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `c` is an HermiteE basis polynomial. This provides
+    better eigenvalue estimates than the unscaled case and for basis
+    polynomials the eigenvalues are guaranteed to be real if
+    `numpy.linalg.eigvalsh` is used to obtain them.
 
     Parameters
     ----------
     c : array_like
-        1-D array of Laguerre series coefficients ordered from low to high
+        1-D array of HermiteE series coefficients ordered from low to high
         degree.
 
     Returns
     -------
     mat : ndarray
-        Companion matrix of dimensions (deg, deg).
+        Scaled companion matrix of dimensions (deg, deg).
 
     Notes
     -----
@@ -1571,27 +1569,27 @@ def lagcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[1 + c[0]/c[1]]])
+        return np.array([[-c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
+    scl = np.hstack((1., np.sqrt(np.arange(1, n))))
+    scl = np.multiply.accumulate(scl)
     top = mat.reshape(-1)[1::n+1]
-    mid = mat.reshape(-1)[0::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = -np.arange(1, n)
-    mid[...] = 2.*np.arange(n) + 1.
+    top[...] = np.sqrt(np.arange(1, n))
     bot[...] = top
-    mat[:, -1] += (c[:-1]/c[-1])*n
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])
     return mat
 
 
-def lagroots(c):
+def hermeroots(c):
     """
-    Compute the roots of a Laguerre series.
+    Compute the roots of a HermiteE series.
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * L_i(x).
+    .. math:: p(x) = \\sum_i c[i] * He_i(x).
 
     Parameters
     ----------
@@ -1606,7 +1604,7 @@ def lagroots(c):
 
     See Also
     --------
-    polyroots, legroots, chebroots, hermroots, hermeroots
+    polyroots, legroots, lagroots, hermroots, chebroots
 
     Notes
     -----
@@ -1618,17 +1616,17 @@ def lagroots(c):
     insensitive to errors in the roots. Isolated roots near the origin can
     be improved by a few iterations of Newton's method.
 
-    The Laguerre series basis polynomials aren't powers of `x` so the
+    The HermiteE series basis polynomials aren't powers of `x` so the
     results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagroots, lagfromroots
-    >>> coef = lagfromroots([0, 1, 2])
+    >>> from numpy.polynomial.hermite_e import hermeroots, hermefromroots
+    >>> coef = hermefromroots([-1, 0, 1])
     >>> coef
-    array([  2.,  -8.,  12.,  -6.])
-    >>> lagroots(coef)
-    array([ -4.44089210e-16,   1.00000000e+00,   2.00000000e+00])
+    array([ 0.,  2.,  0.,  1.])
+    >>> hermeroots(coef)
+    array([-1.,  0.,  1.])
 
     """
     # c is a trimmed copy
@@ -1636,22 +1634,22 @@ def lagroots(c):
     if len(c) <= 1 :
         return np.array([], dtype=c.dtype)
     if len(c) == 2 :
-        return np.array([1 + c[0]/c[1]])
+        return np.array([-c[0]/c[1]])
 
-    m = lagcompanion(c)
+    m = hermecompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r
 
 
-def laggauss(deg):
+def hermegauss(deg):
     """
-    Gauss-Laguerre quadrature.
+    Gauss-HermiteE quadrature.
 
-    Computes the sample points and weights for Gauss-Laguerre quadrature.
+    Computes the sample points and weights for Gauss-HermiteE quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[0, \inf]` with the
-    weight function :math:`f(x) = \exp(-x)`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
+    with the weight function :math:`f(x) = \exp(-x^2/2)`.
 
     Parameters
     ----------
@@ -1670,13 +1668,13 @@ def laggauss(deg):
 
     .. versionadded::1.7.0
 
-    The results have only been tested up to degree 100 higher degrees may
+    The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-    .. math:: w_k = c / (L'_n(x_k) * L_{n-1}(x_k))
+    .. math:: w_k = c / (He'_n(x_k) * He_{n-1}(x_k))
 
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
-    is the k'th root of :math:`L_n`, and then scaling the results to get
+    is the k'th root of :math:`He_n`, and then scaling the results to get
     the right value when integrating 1.
 
     """
@@ -1687,34 +1685,38 @@ def laggauss(deg):
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0]*deg + [1])
-    m = lagcompanion(c)
+    m = hermecompanion(c)
     x = la.eigvals(m)
     x.sort()
 
     # improve roots by one application of Newton
-    dy = lagval(x, c)
-    df = lagval(x, lagder(c))
+    dy = hermeval(x, c)
+    df = hermeval(x, hermeder(c))
     x -= dy/df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
-    fm = lagval(x, c[1:])
+    fm = hermeval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
     w = 1/(fm * df)
 
-    # scale w to get the right value, 1 in this case
-    w /= w.sum()
+    # for Hermite_e we can also symmetrize
+    w = (w + w[::-1])/2
+    x = (x - x[::-1])/2
+
+    # scale w to get the right value
+    w *= np.sqrt(2*np.pi) / w.sum()
 
     return x, w
 
 
-def lagweight(x):
-    """Weight function of the Laguerre polynomials.
+def hermeweight(x):
+    """Weight function of the Hermite_e polynomials.
 
-    The weight function is :math:`exp(-x)` and the interval of integration
-    is :math:`[0, \inf]`. The Laguerre polynomials are orthogonal, but not
-    normalized, with respect to this weight function.
+    The weight function is :math:`\exp(-x^2/2)` and the interval of
+    integration is :math:`[-\inf, \inf]`. the HermiteE polynomials are
+    orthogonal, but not normalized, with respect to this weight function.
 
     Parameters
     ----------
@@ -1732,11 +1734,10 @@ def lagweight(x):
     .. versionadded::1.7.0
 
     """
-    w = np.exp(-x)
+    w = np.exp(-.5*x**2)
     return w
 
-#
-# Laguerre series class
-#
 
-exec(polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]'))
+#
+# HermiteE series class
+#

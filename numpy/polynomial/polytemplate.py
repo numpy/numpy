@@ -1,24 +1,25 @@
 """
-Template for the Chebyshev and Polynomial classes.
+Template for the Polynomial classes.
 
 This module houses a Python string module Template object (see, e.g.,
-http://docs.python.org/library/string.html#template-strings) used by
-the `polynomial` and `chebyshev` modules to implement their respective
-`Polynomial` and `Chebyshev` classes.  It provides a mechanism for easily
-creating additional specific polynomial classes (e.g., Legendre, Jacobi,
-etc.) in the future, such that all these classes will have a common API.
+http://docs.python.org/library/string.html#template-strings) used to
+generate the code for the `polynomial`, `chebyshev`, `hermite`,
+`hermite_e`, `laguerre`, and `legendre` modules, to implement their
+respective `Polynomial`, `Chebyshev`, `Hermite`, `HermiteE`,
+`Laguerre`, and `Legendre` classes. It provides a mechanism for
+easily creating additional specific polynomial classes (e.g., Jacobi,
+etc.) in the future, such that all these classes will have a common
+API.
 
 """
 from __future__ import division, absolute_import, print_function
 
 import string
-import sys
 
 polytemplate = string.Template('''
-from __future__ import division, absolute_import, print_function
-import numpy as np
-import warnings
-from . import polyutils as pu
+# Code below this point is generated at build time from the template
+# in polytemplate.py (see numpy/polynomial/setup.py).
+#
 
 class $name(pu.PolyBase) :
     """A $name series class.
