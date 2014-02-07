@@ -61,7 +61,7 @@ offset_bounds_from_strides(const int itemsize, const int nd,
                            npy_intp *lower_offset, npy_intp *upper_offset);
 
 NPY_NO_EXPORT PyObject *
-get_shape_string(npy_intp n, npy_intp *vals, char *ending);
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 
 
 /*
