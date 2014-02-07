@@ -1336,7 +1336,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
                              nd, shape, strides, view->buf,
                              flags, NULL);
     if (r == NULL ||
-        PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+            PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
         Py_XDECREF(r);
         Py_DECREF(memoryview);
         return -1;

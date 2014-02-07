@@ -275,6 +275,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
     /* convert to 0-dim array of scalar typecode */
     typecode = PyArray_DescrFromScalar(scalar);
+    if (typecode == NULL) {
+        return NULL;
+    }
     if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
@@ -543,6 +546,9 @@ PyArray_DescrFromScalar(PyObject *sc)
         else {
             /* Timedelta */
             descr = PyArray_DescrNewFromType(NPY_TIMEDELTA);
+        }
+        if (descr == NULL) {
+            return NULL;
         }
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
         memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
