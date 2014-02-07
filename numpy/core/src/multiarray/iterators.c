@@ -1489,6 +1489,10 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }
@@ -1549,6 +1553,10 @@ PyArray_MultiIterNew(int n, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }

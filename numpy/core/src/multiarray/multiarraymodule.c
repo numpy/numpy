@@ -1008,8 +1008,15 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     axis = PyArray_NDIM(ap1)-1;
     it1 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap1, &axis);
+    if (it1 == NULL) {
+        goto fail;
+    }
     it2 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
+    if (it2 == NULL) {
+        Py_DECREF(it1);
+        goto fail;
+    }
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
@@ -1629,7 +1636,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             }
             else {
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                if (oldtype == type) {
+                if (oldtype == type || ret == NULL) {
                     goto finish;
                 }
                 Py_INCREF(oldtype);

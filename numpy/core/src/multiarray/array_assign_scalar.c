@@ -234,10 +234,16 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         }
         else {
             tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
+            if (tmp_src_data == NULL) {
+                PyErr_NoMemory();
+                goto fail;
+            }
             allocated_src_data = 1;
         }
+
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,
                             src_dtype, PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
+            src_data = tmp_src_data;
             goto fail;
         }
 
