@@ -4894,6 +4894,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int buffersize;
     int errormask = 0;
     PyObject *errobj = NULL;
+    char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
     if (ufunc->nin > 2) {
@@ -5106,7 +5107,11 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
 
         /* Reset NpyIter data pointers which will trigger a buffer copy */
-        NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
+        NpyIter_ResetBasePointers(iter_buffer, dataptr, &err_msg);
+        if (err_msg) {
+            break;
+        }
+
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
 
         innerloop(buffer_dataptr, count, stride, innerloopdata);
@@ -5131,6 +5136,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     if (!needs_api) {
         NPY_END_THREADS;
+    }
+
+    if (err_msg) {
+        PyErr_SetString(PyExc_ValueError, err_msg);
     }
 
     NpyIter_Deallocate(iter_buffer);
