@@ -1335,8 +1335,11 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
-    if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
-        goto fail;
+    if (r == NULL ||
+        PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+        Py_XDECREF(r);
+        Py_DECREF(memoryview);
+        return -1;
     }
     PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
