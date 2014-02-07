@@ -20,14 +20,14 @@
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, half, float, double, longdouble, 
+ *         longlong, ulonglong, half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble, datetime, timedelta#
  * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
  *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
  */
- 
+
 #define @TYPE@_LTE(a, b) (!@TYPE@_LT((b), (a)))
 
 /**begin repeat1
@@ -45,7 +45,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
     npy_intp min_idx = 0,
              max_idx = arr_len-1; /* set to arr_len later on */
     @type@ last_key_val;
-             
+
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
@@ -61,9 +61,9 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
-        
+
         last_key_val = key_val;
-        
+
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const @type@ mid_val = *(const @type@ *)(arr + mid_idx * arr_str);
@@ -104,20 +104,20 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
-        
+
         last_key_val = key_val;
 
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
                            sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
             @type@ mid_val;
-            
+
             if (sort_idx < 0 || sort_idx >= arr_len) {
                 return -1;
             }
 
             mid_val = *(const @type@ *)(arr + sort_idx * arr_str);
-            
+
             if (@TYPE@_@CMP@(mid_val, key_val)) {
                 min_idx = mid_idx + 1;
             }
@@ -131,7 +131,7 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
 }
 
 /**end repeat1**/
-/**end repeat**/ 
+/**end repeat**/
 
 /*
  *****************************************************************************
@@ -140,19 +140,20 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
  */
 
 #define GENERIC_LTE(a, b, cmp) (!GENERIC_LT(b, a, cmp))
- 
+
  /**begin repeat
  *
  * #side = left, right#
- * #CMP  = LT, LTE#
+ * #CMP  = <, <=#
  */
- 
+
 void
 npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_len, npy_intp key_len,
-                     npy_intp arr_str, npy_intp key_str,
-                     npy_intp ret_str, npy_comparator cmp)
+                     npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                     PyArrayObject *cmp)
 {
+    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
     npy_intp min_idx = 0,
              max_idx = arr_len-1; /* set to arr_len later on */
     const char *last_key = key;
@@ -165,20 +166,19 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (GENERIC_LT(last_key, key, cmp)) {
+        if (compare(last_key, key, cmp) @CMP@ 0) {
             max_idx = arr_len;
         } else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
-        
+
         last_key = key;
-        
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const char *arr_ptr = arr + mid_idx*arr_str;
-            
-            if (GENERIC_@CMP@(arr_ptr, key, cmp)) {
+
+            if (compare(arr_ptr, key, cmp) @CMP@ 0) {
                 min_idx = mid_idx + 1;
             }
             else {
@@ -195,12 +195,13 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str,
                         npy_intp sort_str, npy_intp ret_str,
-                        npy_comparator cmp)
+                        PyArrayObject *cmp)
 {
+    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
     npy_intp min_idx = 0,
              max_idx = arr_len-1; /* set to arr_len later on */
     const char *last_key = key;
-    
+
     for (; key_len > 0; key_len--,
                         key += key_str,
                         ret += ret_str) {
@@ -209,27 +210,27 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (GENERIC_LT(last_key, key, cmp)) {
+        if (compare(last_key, key, cmp) @CMP@ 0) {
             max_idx = arr_len;
         } else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
-        
+
         last_key = key;
-        
+
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
                            sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
             const char *arr_ptr;
-            
+
             if (sort_idx < 0 || sort_idx >= arr_len) {
                 return -1;
             }
-            
+
             arr_ptr = arr + sort_idx*arr_str;
-            
-            if (GENERIC_@CMP@(arr_ptr, key, cmp)) {
+
+            if (compare(arr_ptr, key, cmp) @CMP@ 0) {
                 min_idx = mid_idx + 1;
             }
             else {

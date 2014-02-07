@@ -18,6 +18,17 @@ typedef int (PyArray_ArgBinSearchFunc)(const char *, const char *,
                                        npy_intp, npy_intp, npy_intp,
                                        npy_intp, npy_intp, npy_intp);
 
+typedef void (PyArray_GenericBinSearchFunc)(const char*, const char*, char*,
+                                            npy_intp, npy_intp,
+                                            npy_intp, npy_intp, npy_intp,
+                                            PyArrayObject*);
+
+typedef int (PyArray_GenericArgBinSearchFunc)(const char*, const char*,
+                                              const char*, char*,
+                                              npy_intp, npy_intp, npy_intp,
+                                              npy_intp, npy_intp, npy_intp,
+                                              PyArrayObject*);
+
 typedef struct{
     enum NPY_TYPES typenum;
     PyArray_BinSearchFunc *binsearch[NPY_NSEARCHSIDES];
@@ -28,17 +39,18 @@ typedef struct{
     PyArray_ArgBinSearchFunc *argbinsearch[NPY_NSEARCHSIDES];
 } argbinsearch_map;
 
-
 /**begin repeat
+ *
+ * #side = left, right#
+ */
+
+/**begin repeat1
  *
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong, half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble, datetime, timedelta#
  */
-/**begin repeat1
- *
- * #side = left, right#
- */
+
 void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
@@ -51,24 +63,19 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            npy_intp arr_str, npy_intp key_str,
                            npy_intp sort_str, npy_intp ret_str);
 /**end repeat1**/
-/**end repeat**/
 
-/**begin repeat
- *
- * #side = left, right#
- */
 void
 npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_len, npy_intp key_len,
                      npy_intp arr_str, npy_intp key_str,
-                     npy_intp ret_str, npy_comparator cmp);
+                     npy_intp ret_str, PyArrayObject *cmp);
 int
 npy_argbinsearch_@side@(const char *arr, const char *key,
                         const char *sort, char *ret,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str,
                         npy_intp sort_str, npy_intp ret_str,
-                        npy_comparator cmp);
+                        PyArrayObject *cmp);
 /**end repeat**/
 
 /**begin repeat
@@ -76,6 +83,22 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
  * #arg = , arg#
  * #Arg = , Arg#
  */
+
+static NPY_INLINE PyArray_Generic@Arg@BinSearchFunc*
+get_generic@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
+{
+    static PyArray_Generic@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
+        &npy_@arg@binsearch_left,
+        &npy_@arg@binsearch_right,
+    };
+
+    if (side >= NPY_NSEARCHSIDES || dtype->f->compare == NULL) {
+        return NULL;
+    }
+
+    return gen@arg@binsearch_map[side];
+}
+
 static NPY_INLINE PyArray_@Arg@BinSearchFunc*
 get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
 {
@@ -91,27 +114,23 @@ get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
          */
         {NPY_@TYPE@,
             {
-                /**begin repeat2
-                 *
-                 * #side = left, right#
-                 */
-                &@arg@binsearch_@side@_@suff@,
-                /**end repeat2**/
+                &@arg@binsearch_left_@suff@,
+                &@arg@binsearch_right_@suff@,
             },
         },
         /**end repeat1**/
     };
-    
+
     static npy_intp num_funcs = sizeof(_@arg@binsearch_map) /
                                 sizeof(_@arg@binsearch_map[0]);
-    
+
     npy_intp min_idx = 0,
              max_idx = num_funcs;
-             
+
     if (side >= NPY_NSEARCHSIDES) {
         return NULL;
     }
-    
+
     /* It seems only fair that a binary search function be searched for
      * using a binary search...
      */
@@ -124,7 +143,7 @@ get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
             max_idx = mid_idx;
         }
     }
-    
+
     if (_@arg@binsearch_map[min_idx].typenum == type) {
         return _@arg@binsearch_map[min_idx].@arg@binsearch[side];
     }
