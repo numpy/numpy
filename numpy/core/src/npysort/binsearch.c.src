@@ -1,12 +1,11 @@
 /* -*- c -*- */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy/npy_math.h"
 #include "npy_binsearch.h"
-#include <stdlib.h>
+
+#define NOT_USED NPY_UNUSED(unused)
 
 /*
  *****************************************************************************
@@ -39,8 +38,8 @@
 void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
-                        npy_intp arr_str, npy_intp key_str,
-                        npy_intp ret_str)
+                        npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                        PyArrayObject *NOT_USED)
 {
     npy_intp min_idx = 0,
              max_idx = arr_len-1; /* set to arr_len later on */
@@ -83,7 +82,8 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
                            npy_intp arr_len, npy_intp key_len,
                            npy_intp arr_str, npy_intp key_str,
-                           npy_intp sort_str, npy_intp ret_str)
+                           npy_intp sort_str, npy_intp ret_str,
+                           PyArrayObject *NOT_USED)
 {
     npy_intp min_idx = 0,
              max_idx = arr_len-1; /* set to arr_len later on */

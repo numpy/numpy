@@ -2,32 +2,21 @@
 #define __NPY_BINSEARCH_H__
 
 #include "npy_sort.h"
-
-/* Python include is for future object sorts */
-#include <Python.h>
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 
 
-typedef void (PyArray_BinSearchFunc)(const char *, const char *, char *,
+
+typedef void (PyArray_BinSearchFunc)(const char*, const char*, char*,
                                      npy_intp, npy_intp,
-                                     npy_intp, npy_intp, npy_intp);
+                                     npy_intp, npy_intp, npy_intp,
+                                     PyArrayObject*);
 
-typedef int (PyArray_ArgBinSearchFunc)(const char *, const char *,
-                                       const char *, char *,
+typedef int (PyArray_ArgBinSearchFunc)(const char*, const char*,
+                                       const char*, char*,
                                        npy_intp, npy_intp, npy_intp,
-                                       npy_intp, npy_intp, npy_intp);
-
-typedef void (PyArray_GenericBinSearchFunc)(const char*, const char*, char*,
-                                            npy_intp, npy_intp,
-                                            npy_intp, npy_intp, npy_intp,
-                                            PyArrayObject*);
-
-typedef int (PyArray_GenericArgBinSearchFunc)(const char*, const char*,
-                                              const char*, char*,
-                                              npy_intp, npy_intp, npy_intp,
-                                              npy_intp, npy_intp, npy_intp,
-                                              PyArrayObject*);
+                                       npy_intp, npy_intp, npy_intp,
+                                       PyArrayObject*);
 
 typedef struct{
     enum NPY_TYPES typenum;
@@ -54,14 +43,15 @@ typedef struct{
 void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
-                        npy_intp arr_str, npy_intp key_str,
-                        npy_intp ret_str);
+                        npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                        PyArrayObject *unused);
 int
 argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
                            npy_intp arr_len, npy_intp key_len,
                            npy_intp arr_str, npy_intp key_str,
-                           npy_intp sort_str, npy_intp ret_str);
+                           npy_intp sort_str, npy_intp ret_str,
+                           PyArrayObject *unused);
 /**end repeat1**/
 
 void
@@ -84,33 +74,19 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
  * #Arg = , Arg#
  */
 
-static NPY_INLINE PyArray_Generic@Arg@BinSearchFunc*
-get_generic@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
-{
-    static PyArray_Generic@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
-        &npy_@arg@binsearch_left,
-        &npy_@arg@binsearch_right,
-    };
-
-    if (side >= NPY_NSEARCHSIDES || dtype->f->compare == NULL) {
-        return NULL;
-    }
-
-    return gen@arg@binsearch_map[side];
-}
-
 static NPY_INLINE PyArray_@Arg@BinSearchFunc*
-get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
+get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
     static @arg@binsearch_map _@arg@binsearch_map[] = {
+        /* If adding new types, make sure to keep them ordered by type num */
         /**begin repeat1
          *
          * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-         *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
-         *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+         *         LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+         *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA, HALF#
          * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
-         *         longlong, ulonglong, half, float, double, longdouble,
-         *         cfloat, cdouble, clongdouble, datetime, timedelta#
+         *         longlong, ulonglong, float, double, longdouble,
+         *         cfloat, cdouble, clongdouble, datetime, timedelta, half#
          */
         {NPY_@TYPE@,
             {
@@ -121,11 +97,19 @@ get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
         /**end repeat1**/
     };
 
+    static PyArray_@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
+        &npy_@arg@binsearch_left,
+        &npy_@arg@binsearch_right,
+    };
+
+
     static npy_intp num_funcs = sizeof(_@arg@binsearch_map) /
                                 sizeof(_@arg@binsearch_map[0]);
 
     npy_intp min_idx = 0,
              max_idx = num_funcs;
+
+    int type = dtype->type_num;
 
     if (side >= NPY_NSEARCHSIDES) {
         return NULL;
@@ -144,12 +128,13 @@ get_@arg@binsearch_func(int type, NPY_SEARCHSIDE side)
         }
     }
 
-    if (_@arg@binsearch_map[min_idx].typenum == type) {
+    if (min_idx < num_funcs && _@arg@binsearch_map[min_idx].typenum == type) {
         return _@arg@binsearch_map[min_idx].@arg@binsearch[side];
     }
-    else {
-        return NULL;
+    if (dtype->f->compare) {
+        return gen@arg@binsearch_map[side];
     }
+    return NULL;
 }
 /**end repeat**/
 
