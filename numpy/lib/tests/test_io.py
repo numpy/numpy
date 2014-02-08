@@ -295,13 +295,14 @@ class TestSavezLoad(RoundtripTest, TestCase):
         # Check that zipfile owns file and can close it.
         # This needs to pass a file name to load for the
         # test.
-        fd, tmp = mkstemp(suffix='.npz')
-        os.close(fd)
-        np.savez(tmp, lab='place holder')
-        data = np.load(tmp)
-        fp = data.zip.fp
-        data.close()
-        assert_(fp.closed)
+        with tempdir() as tmpdir:
+            fd, tmp = mkstemp(suffix='.npz', dir=tmpdir)
+            os.close(fd)
+            np.savez(tmp, lab='place holder')
+            data = np.load(tmp)
+            fp = data.zip.fp
+            data.close()
+            assert_(fp.closed)
 
 
 class TestSaveTxt(TestCase):
