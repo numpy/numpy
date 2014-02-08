@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 set -ex
 
 # setup env
-if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
+if [ -r "/usr/lib/libeatmydata/libeatmydata.so" ]; then
   # much faster package installation
-  export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
+  export LD_PRELOAD="/usr/lib/libeatmydata/libeatmydata.so"
 fi
 
 
