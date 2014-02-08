@@ -296,7 +296,7 @@ def rfft(a, n=None, axis=-1):
     conjugates of the corresponding positive-frequency terms, and the
     negative-frequency terms are therefore redundant.  This function does not
     compute the negative frequency terms, and the length of the transformed
-    axis of the output is therefore ``n//2+1``.
+    axis of the output is therefore ``n//2 + 1``.
 
     When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains
     the zero-frequency term 0*fs, which is real due to Hermitian symmetry.
