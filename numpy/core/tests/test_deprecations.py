@@ -11,7 +11,8 @@ import warnings
 from nose.plugins.skip import SkipTest
 
 import numpy as np
-from numpy.testing import dec, run_module_suite, assert_raises
+from numpy.testing import (dec, run_module_suite, assert_raises,
+                           assert_warns, assert_array_equal)
 
 
 class _DeprecationTestCase(object):
@@ -151,7 +152,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[0.0,:])
         assert_deprecated(lambda: a[:, 0.0])
         assert_deprecated(lambda: a[:, 0.0,:])
-        assert_deprecated(lambda: a[0.0,:,:], num=2) # [1]
+        assert_deprecated(lambda: a[0.0,:,:])
         assert_deprecated(lambda: a[0, 0, 0.0])
         assert_deprecated(lambda: a[0.0, 0, 0])
         assert_deprecated(lambda: a[0, 0.0, 0])
@@ -161,11 +162,10 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[-1.4,:])
         assert_deprecated(lambda: a[:, -1.4])
         assert_deprecated(lambda: a[:, -1.4,:])
-        assert_deprecated(lambda: a[-1.4,:,:], num=2) # [1]
+        assert_deprecated(lambda: a[-1.4,:,:])
         assert_deprecated(lambda: a[0, 0, -1.4])
         assert_deprecated(lambda: a[-1.4, 0, 0])
         assert_deprecated(lambda: a[0, -1.4, 0])
-        # [1] These are duplicate because of the _tuple_of_integers quick check
 
         # Test that the slice parameter deprecation warning doesn't mask
         # the scalar index warning.
@@ -294,6 +294,53 @@ class TestArrayToIndexDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.take, args=(a, [0], a), exceptions=())
         # Check slicing. Normal indexing checks arrays specifically.
         self.assert_deprecated(lambda: a[a:a:a], exceptions=(), num=3)
+
+
+class TestNonIntegerArrayLike(_DeprecationTestCase):
+    """Tests that array likes, i.e. lists give a deprecation warning
+    when they cannot be safely cast to an integer.
+    """
+    message = "non integer \(and non boolean\) array-likes will not be " \
+              "accepted as indices in the future"
+
+    def test_basic(self):
+        a = np.arange(10)
+        self.assert_deprecated(a.__getitem__, args=([0.5, 1.5],),
+                               exceptions=IndexError)
+        self.assert_deprecated(a.__getitem__, args=((['1', '2'],),),
+                               exceptions=IndexError)
+
+        self.assert_not_deprecated(a.__getitem__, ([],))
+
+
+    def test_boolean_futurewarning(self):
+        a = np.arange(10)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, [True])
+            # Unfortunatly, the deprecation warning takes precedence:
+            #assert_warns(FutureWarning, a.__getitem__, True)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, [True])
+            #assert_raises(FutureWarning, a.__getitem__, True)
+
+
+class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
+    message = "an index can only have a single Ellipsis \(`...`\); replace " \
+              "all but one with slices \(`:`\)."
+
+    def test_basic(self):
+        a = np.arange(10)
+        self.assert_deprecated(a.__getitem__, args=((Ellipsis, Ellipsis),))
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', '', DeprecationWarning)
+            # Just check that this works:
+            b = a[...,...]
+            assert_array_equal(a, b)
+            assert_raises(IndexError, a.__getitem__, ((Ellipsis, ) * 3,))
 
 
 if __name__ == "__main__":

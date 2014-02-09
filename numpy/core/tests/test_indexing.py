@@ -53,7 +53,7 @@ class TestIndexing(TestCase):
                       [4, 5, 6],
                       [7, 8, 9]])
         assert_equal(a[...], a)
-        assert_(a[...] is a)
+        assert_(a[...].base is a) # `a[...]` was `a` in numpy <1.9.)
 
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
@@ -96,8 +96,14 @@ class TestIndexing(TestCase):
         #assert_equal(a[False], a[0])
 
         # Same with NumPy boolean scalar
-        assert_equal(a[np.array(True)], a[1])
-        assert_equal(a[np.array(False)], a[0])
+        # Before DEPRECATE, this is an error (as always, but telling about
+        # future change):
+        assert_raises(IndexError, a.__getitem__, np.array(True))
+        assert_raises(IndexError, a.__getitem__, np.array(False))
+        # After DEPRECATE, this behaviour can be enabled:
+        #assert_equal(a[np.array(True)], a[None])
+        #assert_equal(a[np.array(False), a[None][0:0]])
+
 
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
@@ -109,6 +115,7 @@ class TestIndexing(TestCase):
         a[b] = 1.
         assert_equal(a, [[1., 1., 1.]])
 
+
     def test_boolean_assignment_value_mismatch(self):
         # A boolean assignment should fail when the shape of the values
         # cannot be broadcasted to the subscription. (see also gh-3458)
@@ -119,6 +126,7 @@ class TestIndexing(TestCase):
         assert_raises(ValueError, f, a, [])
         assert_raises(ValueError, f, a, [1, 2, 3])
         assert_raises(ValueError, f, a[:1], [1, 2, 3])
+
 
     def test_boolean_indexing_twodim(self):
         # Indexing a 2-dimensional array with
@@ -138,6 +146,313 @@ class TestIndexing(TestCase):
         assert_equal(a, [[0, 2, 0],
                          [4, 0, 6],
                          [0, 8, 0]])
+
+
+    def test_reverse_strides_and_subspace_bufferinit(self):
+        # This tests that the strides are not reversed for simple and
+        # subspace fancy indexing.
+        a = np.ones(5)
+        b = np.zeros(5, dtype=np.intp)[::-1]
+        c = np.arange(5)[::-1]
+
+        a[b] = c
+        # If the strides are not reversed, the 0 in the arange comes last.
+        assert_equal(a[0], 0)
+
+        # This also tests that the subspace buffer is initiliazed:
+        a = np.ones((5, 2))
+        c = np.arange(10).reshape(5, 2)[::-1]
+        a[b, :] = c
+        assert_equal(a[0], [0, 1])
+
+
+    def test_uncontiguous_subspace_assignment(self):
+        # During development there was a bug activating a skip logic
+        # based on ndim instead of size.
+        a = np.full((3, 4, 2), -1)
+        b = np.full((3, 4, 2), -1)
+
+        a[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T
+        b[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T.copy()
+
+        assert_equal(a, b)
+
+
+    def test_too_many_fancy_indices_special_case(self):
+        # Just documents behaviour, this is a small limitation.
+        a = np.ones((1,) * 32) # 32 is NPY_MAXDIMS
+        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+
+
+    def test_scalar_array_bool(self):
+        # Numpy bools can be used as boolean index (python ones as of yet not)
+        a = np.array(1)
+        assert_equal(a[np.bool_(True)], a[np.array(True)])
+        assert_equal(a[np.bool_(False)], a[np.array(False)])
+
+        # After deprecating bools as integers:
+        #a = np.array([0,1,2])
+        #assert_equal(a[True, :], a[None, :])
+        #assert_equal(a[:, True], a[:, None])
+        #
+        #assert_(not np.may_share_memory(a, a[True, :]))
+
+
+    def test_everything_returns_views(self):
+        # Before `...` would return a itself.
+        a = np.arange(5)
+
+        assert_(a is not a[()])
+        assert_(a is not a[...])
+        assert_(a is not a[:])
+
+
+    def test_broaderrors_indexing(self):
+        a = np.zeros((5, 5))
+        assert_raises(IndexError, a.__getitem__, ([0, 1], [0, 1, 2]))
+        assert_raises(IndexError, a.__setitem__, ([0, 1], [0, 1, 2]), 0)
+
+
+    def test_trivial_fancy_out_of_bounds(self):
+        a = np.zeros(5)
+        ind = np.ones(20, dtype=np.intp)
+        ind[-1] = 10
+        assert_raises(IndexError, a.__getitem__, ind)
+        assert_raises(IndexError, a.__setitem__, ind, 0)
+        ind = np.ones(20, dtype=np.intp)
+        ind[0] = 11
+        assert_raises(IndexError, a.__getitem__, ind)
+        assert_raises(IndexError, a.__setitem__, ind, 0)
+
+
+    def test_nonbaseclass_values(self):
+        class SubClass(np.ndarray):
+            def __array_finalize__(self, old):
+                # Have array finalize do funny things
+                self.fill(99)
+
+        a = np.zeros((5, 5))
+        s = a.copy().view(type=SubClass)
+        s.fill(1)
+
+        a[[0, 1, 2, 3, 4], :] = s
+        assert_((a == 1).all())
+
+        # Subspace is last, so transposing might want to finalize
+        a[:, [0, 1, 2, 3, 4]] = s
+        assert_((a == 1).all())
+
+        a.fill(0)
+        a[...] = s
+        assert_((a == 1).all())
+
+
+    def test_memory_order(self):
+        # This is not necessary to preserve. Memory layouts for
+        # more complex indices are not as simple.
+        a = np.arange(10)
+        b = np.arange(10).reshape(5,2).T
+        assert_(a[b].flags.f_contiguous)
+
+        # Takes a different implementation branch:
+        a = a.reshape(-1, 1)
+        assert_(a[b, 0].flags.f_contiguous)
+
+
+    def test_scalar_return_type(self):
+        # Full scalar indices should return scalars and object
+        # arrays should not call PyArray_Return on their items
+        class Zero(object):
+            # The most basic valid indexing
+            def __index__(self):
+                return 0
+        z = Zero()
+
+        class ArrayLike(object):
+            # Simple array, should behave like the array
+            def __array__(self):
+                return np.array(0)
+
+        a = np.zeros(())
+        assert_(isinstance(a[()], np.float_))
+        a = np.zeros(1)
+        assert_(isinstance(a[z], np.float_))
+        a = np.zeros((1, 1))
+        assert_(isinstance(a[z, np.array(0)], np.float_))
+        assert_(isinstance(a[z, ArrayLike()], np.float_))
+
+        # And object arrays do not call it too often:
+        b = np.array(0)
+        a = np.array(0, dtype=object)
+        a[()] = b
+        assert_(isinstance(a[()], np.ndarray))
+        a = np.array([b, None])
+        assert_(isinstance(a[z], np.ndarray))
+        a = np.array([[b, None]])
+        assert_(isinstance(a[z, np.array(0)], np.ndarray))
+        assert_(isinstance(a[z, ArrayLike()], np.ndarray))
+
+
+    def test_small_regressions(self):
+        # Reference count of intp for index checks
+        a = np.array([0])
+        refcount = sys.getrefcount(np.dtype(np.intp))
+        # item setting always checks indices in seperate function:
+        a[np.array([0], dtype=np.intp)] = 1
+        a[np.array([0], dtype=np.uint8)] = 1
+        assert_raises(IndexError, a.__setitem__,
+                      np.array([1], dtype=np.intp), 1)
+        assert_raises(IndexError, a.__setitem__,
+                      np.array([1], dtype=np.uint8), 1)
+
+        assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
+
+
+class TestFieldIndexing(TestCase):
+    def test_scalar_return_type(self):
+        # Field access on an array should return an array, even if it
+        # is 0-d.
+        a = np.zeros((), [('a','f8')])
+        assert_(isinstance(a['a'], np.ndarray))
+        assert_(isinstance(a[['a']], np.ndarray))
+
+
+class TestBroadcastedAssignments(TestCase):
+    def assign(self, a, ind, val):
+        a[ind] = val
+        return a
+
+
+    def test_prepending_ones(self):
+        a = np.zeros((3, 2))
+
+        a[...] = np.ones((1, 3, 2))
+        # Fancy with subspace with and without transpose
+        a[[0, 1, 2], :] = np.ones((1, 3, 2))
+        a[:, [0, 1]] = np.ones((1, 3, 2))
+        # Fancy without subspace (with broadcasting)
+        a[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
+
+
+    def test_prepend_not_one(self):
+        assign = self.assign
+        s_ = np.s_
+
+        a = np.zeros(5)
+
+        # Too large and not only ones.
+        assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[1, 2, 3],],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
+
+
+    def test_simple_broadcasting_errors(self):
+        assign = self.assign
+        s_ = np.s_
+
+        a = np.zeros((5, 1))
+        assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 2)))
+        assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 0)))
+
+        assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 2)))
+        assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
+
+        assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
+
+
+    def test_index_is_larger(self):
+        # Simple case of fancy index broadcasting of the index.
+        a = np.zeros((5, 5))
+        a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
+
+        assert_((a[:3, :3] == [2, 3, 4]).all())
+
+
+    def test_broadcast_subspace(self):
+        a = np.zeros((100, 100))
+        v = np.arange(100)[:,None]
+        b = np.arange(100)[::-1]
+        a[b] = v
+        assert_((a[::-1] == v).all())
+
+
+class TestSubclasses(TestCase):
+    def test_basic(self):
+        class SubClass(np.ndarray):
+            pass
+
+        s = np.arange(5).view(SubClass)
+        assert_(isinstance(s[:3], SubClass))
+        assert_(s[:3].base is s)
+
+        assert_(isinstance(s[[0, 1, 2]], SubClass))
+        assert_(isinstance(s[s > 0], SubClass))
+
+
+    def test_matrix_fancy(self):
+        # The matrix class messes with the shape. While this is always
+        # weird (getitem is not used, it does not have setitem nor knows
+        # about fancy indexing), this tests gh-3110
+        m = np.matrix([[1, 2], [3, 4]])
+
+        assert_(isinstance(m[[0,1,0], :], np.matrix))
+
+        # gh-3110. Note the transpose currently because matrices do *not*
+        # support dimension fixing for fancy indexing correctly.
+        x = np.asmatrix(np.arange(50).reshape(5,10))
+        assert_equal(x[:2, np.array(-1)], x[:2, -1].T)
+
+
+    def test_finalize_gets_full_info(self):
+        # Array finalize should be called on the filled array.
+        class SubClass(np.ndarray):
+            def __array_finalize__(self, old):
+                self.finalize_status = np.array(self)
+                self.old = old
+
+        s = np.arange(10).view(SubClass)
+        new_s = s[:3]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
+
+        new_s = s[[0,1,2,3]]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
+
+        new_s = s[s > 0]
+        assert_array_equal(new_s.finalize_status, new_s)
+        assert_array_equal(new_s.old, s)
+
+
+class TestFancyIndexingEquivalence(TestCase):
+    def test_object_assign(self):
+        # Check that the field and object special case using copyto is active.
+        # The right hand side cannot be converted to an array here.
+        a = np.arange(5, dtype=object)
+        b = a.copy()
+        a[:3] = [1, (1,2), 3]
+        b[[0, 1, 2]] = [1, (1,2), 3]
+        assert_array_equal(a, b)
+
+        # test same for subspace fancy indexing
+        b = np.arange(5, dtype=object)[None, :]
+        b[[0], :3] = [[1, (1,2), 3]]
+        assert_array_equal(a, b[0])
+
+
+    def test_cast_equivalence(self):
+        # Yes, normal slicing uses unsafe casting.
+        a = np.arange(5)
+        b = a.copy()
+
+        a[:3] = np.array(['2', '-3', '-1'])
+        b[[0, 2, 1]] = np.array(['2', '-1', '-3'])
+        assert_array_equal(a, b)
+
+        # test the same for subspace fancy indexing
+        b = np.arange(5)[None, :]
+        b[[0], :3] = np.array([['2', '-3', '-1']])
+        assert_array_equal(a, b[0])
 
 
 class TestMultiIndexingAutomated(TestCase):
@@ -175,8 +490,8 @@ class TestMultiIndexingAutomated(TestCase):
             np.empty((0, 1, 1), dtype=np.intp), # empty broadcastable
             np.array([0, 1, -2]),
             np.array([[2], [0], [1]]),
-            np.array([[0, -1], [0, 1]]),
-            np.array([2, -1]),
+            np.array([[0, -1], [0, 1]], dtype=np.dtype('intp').newbyteorder()),
+            np.array([2, -1], dtype=np.int8),
             np.zeros([1]*31, dtype=int), # trigger too large array.
             np.array([0., 1.])] # invalid datatype
         # Some simpler indices that still cover a bit more
@@ -242,9 +557,7 @@ class TestMultiIndexingAutomated(TestCase):
                 if ellipsis_pos is None:
                     ellipsis_pos = i
                     continue # do not increment ndim counter
-                in_indices[i] = slice(None, None)
-                ndim += 1
-                continue
+                raise IndexError
             if isinstance(indx, slice):
                 ndim += 1
                 continue
@@ -314,6 +627,19 @@ class TestMultiIndexingAutomated(TestCase):
                     # make sense (even outide the 0-d indexed array case)
                     # Note that originally this is could be interpreted as
                     # integer in the full integer special case.
+                    raise IndexError
+            else:
+                # If the index is a singleton, the bounds check is done
+                # before the broadcasting. This used to be different in <1.9
+                if indx.ndim == 0:
+                    if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
+                        raise IndexError
+            if indx.ndim == 0:
+                # The index is a scalar. This used to be two fold, but if fancy
+                # indexing was active, the check was done later, possibly
+                # after broadcasting it away (1.7. or earlier). Now it is always
+                # done.
+                if indx >= arr.shape[ax] or indx < - arr.shape[ax]:
                     raise IndexError
             if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
                 # NOTE: There could still have been a 0-sized Ellipsis
@@ -533,7 +859,6 @@ class TestMultiIndexingAutomated(TestCase):
             warnings.filterwarnings('error', '', DeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
-
 
 
 if __name__ == "__main__":

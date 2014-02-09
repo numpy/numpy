@@ -294,8 +294,8 @@ class TestZeroRank(TestCase):
         a, b = self.d
         self.assertEqual(a[...], 0)
         self.assertEqual(b[...], 'x')
-        self.assertTrue(a[...] is a)
-        self.assertTrue(b[...] is b)
+        self.assertTrue(a[...].base is a) # `a[...] is a` in numpy <1.9.
+        self.assertTrue(b[...].base is b) # `b[...] is b` in numpy <1.9.
 
     def test_empty_subscript(self):
         a, b = self.d
@@ -2708,8 +2708,8 @@ class TestRecord(TestCase):
             # byte string indexing fails gracefully
             assert_raises(ValueError, a.__setitem__, asbytes('f1'), 1)
             assert_raises(ValueError, a.__getitem__, asbytes('f1'))
-            assert_raises(ValueError, a['f1'].__setitem__, asbytes('sf1'), 1)
-            assert_raises(ValueError, a['f1'].__getitem__, asbytes('sf1'))
+            assert_raises(IndexError, a['f1'].__setitem__, asbytes('sf1'), 1)
+            assert_raises(IndexError, a['f1'].__getitem__, asbytes('sf1'))
         else:
             funcs = (str, unicode)
         for func in funcs:

@@ -753,6 +753,8 @@ class TestRegression(TestCase):
         def ia(x, s, v): x[(s>0)]=v
         self.assertRaises(ValueError, ia, x, s, np.zeros(9, dtype=float))
         self.assertRaises(ValueError, ia, x, s, np.zeros(11, dtype=float))
+        # Old special case (different code path):
+        self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
 
     def test_mem_scalar_indexing(self, level=rlevel):
         """Ticket #603"""

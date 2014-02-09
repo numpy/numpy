@@ -1255,8 +1255,12 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-/* Store the information needed for fancy-indexing over an array */
 
+/*
+ * Store the information needed for fancy-indexing over an array. The
+ * fields are slightly unordered to keep consec, dataptr and subspace
+ * where they were originally.
+ */
 typedef struct {
         PyObject_HEAD
         /*
@@ -1271,32 +1275,70 @@ typedef struct {
         npy_intp              index;                   /* current index */
         int                   nd;                      /* number of dims */
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject     *iters[NPY_MAXDIMS];     /* index object
-                                                          iterators */
-        PyArrayIterObject     *ait;                    /* flat Iterator for
-                                                          underlying array */
+        NpyIter               *outer;                  /* index objects
+                                                          iterator */
+        void                  *unused[NPY_MAXDIMS - 2];
+        PyArrayObject         *array;
+        /* Flat iterator for the indexed array. For compatibility solely. */
+        PyArrayIterObject     *ait;
 
-        /* flat iterator for subspace (when numiter < nd) */
-        PyArrayIterObject     *subspace;
+        /*
+         * Subspace array. For binary compatibility (was an iterator,
+         * but only the check for NULL should be used).
+         */
+        PyArrayObject         *subspace;
 
         /*
          * if subspace iteration, then this is the array of axes in
          * the underlying array represented by the index objects
          */
         int                   iteraxes[NPY_MAXDIMS];
-        /*
-         * if subspace iteration, the these are the coordinates to the
-         * start of the subspace.
-         */
-        npy_intp              bscoord[NPY_MAXDIMS];
+        npy_intp              fancy_strides[NPY_MAXDIMS];
 
-        PyObject              *indexobj;               /* creating obj */
+        /* pointer when all fancy indices are 0 */
+        char                  *baseoffset;
+
         /*
-         * consec is first used to indicate wether fancy indices are
-         * consecutive and then denotes at which axis they are inserted
+         * after binding consec denotes at which axis the fancy axes
+         * are inserted.
          */
         int                   consec;
         char                  *dataptr;
+
+        int                   nd_fancy;
+        npy_intp              fancy_dims[NPY_MAXDIMS];
+
+        /* Whether the iterator (any of the iterators) requires API */
+        int                   needs_api;
+
+        /*
+         * Extra op information.
+         */
+        PyArrayObject         *extra_op;
+        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
+        npy_uint32            *extra_op_flags;         /* Iterator flags */
+
+        NpyIter               *extra_op_iter;
+        NpyIter_IterNextFunc  *extra_op_next;
+        char                  **extra_op_ptrs;
+
+        /*
+         * Information about the iteration state.
+         */
+        NpyIter_IterNextFunc  *outer_next;
+        char                  **outer_ptrs;
+        npy_intp              *outer_strides;
+
+        /*
+         * Information about the subspace iterator.
+         */
+        NpyIter               *subspace_iter;
+        NpyIter_IterNextFunc  *subspace_next;
+        char                  **subspace_ptrs;
+        npy_intp              *subspace_strides;
+
+        /* Count for the external loop (which ever it is) for API iteration */
+        npy_intp              iter_count;
 
 } PyArrayMapIterObject;
 

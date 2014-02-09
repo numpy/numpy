@@ -3356,31 +3356,14 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
     PyObject *res, *ret;
     int N;
 
-    if (key == Py_Ellipsis || key == Py_None ||
-            PyTuple_Check(key)) {
-        res = PyArray_FromScalar(self, NULL);
-    }
-    else {
-        PyErr_SetString(PyExc_IndexError,
-                "invalid index to scalar variable.");
-        return NULL;
-    }
-    if (key == Py_Ellipsis) {
-        return res;
-    }
-    if (key == Py_None) {
-        ret = add_new_axes_0d((PyArrayObject *)res, 1);
-        Py_DECREF(res);
-        return ret;
-    }
-    /* Must be a Tuple */
-    N = count_new_axes_0d(key);
-    if (N < 0) {
-        Py_DECREF(res);
-        return NULL;
-    }
-    ret = add_new_axes_0d((PyArrayObject *)res, N);
+    res = PyArray_FromScalar(self, NULL);
+
+    ret = array_subscript((PyArrayObject *)res, key);
     Py_DECREF(res);
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_IndexError,
+                        "invalid index to scalar variable.");
+    }
     return ret;
 }
 
