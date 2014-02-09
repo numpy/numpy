@@ -187,7 +187,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
         with tempdir() as tmpdir:
-            tmp = open(os.path.join(tmpdir, "file.npz"), "w")
+            tmp = os.path.join(tmpdir, "file.npz")
             np.savez(tmp, a=a)
             del a
             npfile = np.load(tmp)
