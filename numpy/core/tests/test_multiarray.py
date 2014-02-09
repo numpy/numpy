@@ -5,6 +5,7 @@ import sys
 import os
 import warnings
 import io
+from decimal import Decimal
 
 import numpy as np
 from nose import SkipTest
@@ -2569,6 +2570,8 @@ class TestStats(TestCase):
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
+        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
+        self.omat = self.omat.reshape(4, 5)
 
     def test_keepdims(self):
         mat = np.eye(3)
@@ -2595,8 +2598,19 @@ class TestStats(TestCase):
         assert_raises(ValueError, f, mat, axis=1, out=out)
 
     def test_dtype_from_input(self):
+
         icodes = np.typecodes['AllInteger']
         fcodes = np.typecodes['AllFloat']
+
+        # object type
+        for f in self.funcs:
+            mat = np.array([[Decimal(1)]*3]*3)
+            tgt = mat.dtype.type
+            res = f(mat, axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            res = type(f(mat, axis=None))
+            assert_(res is Decimal)
 
         # integer types
         for f in self.funcs:
@@ -2608,6 +2622,7 @@ class TestStats(TestCase):
                 # scalar case
                 res = f(mat, axis=None).dtype.type
                 assert_(res is tgt)
+
         # mean for float types
         for f in [_mean]:
             for c in fcodes:
@@ -2618,10 +2633,12 @@ class TestStats(TestCase):
                 # scalar case
                 res = f(mat, axis=None).dtype.type
                 assert_(res is tgt)
+
         # var, std for float types
         for f in [_var, _std]:
             for c in fcodes:
                 mat = np.eye(3, dtype=c)
+                # deal with complex types
                 tgt = mat.real.dtype.type
                 res = f(mat, axis=1).dtype.type
                 assert_(res is tgt)
@@ -2697,7 +2714,7 @@ class TestStats(TestCase):
                     assert_equal(f(A, axis=axis), np.zeros([]))
 
     def test_mean_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1]:
                 tgt = mat.sum(axis=axis)
                 res = _mean(mat, axis=axis) * mat.shape[axis]
@@ -2708,16 +2725,16 @@ class TestStats(TestCase):
                 assert_almost_equal(res, tgt)
 
     def test_var_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 msqr = _mean(mat * mat.conj(), axis=axis)
                 mean = _mean(mat, axis=axis)
-                tgt = msqr - mean * mean.conj()
+                tgt = msqr - mean * mean.conjugate()
                 res = _var(mat, axis=axis)
                 assert_almost_equal(res, tgt)
 
     def test_std_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 tgt = np.sqrt(_var(mat, axis=axis))
                 res = _std(mat, axis=axis)
@@ -2845,12 +2862,6 @@ class TestChoose(TestCase):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
-def can_use_decimal():
-    try:
-        from decimal import Decimal
-        return True
-    except ImportError:
-        return False
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
@@ -2886,11 +2897,7 @@ class TestNeighborhoodIter(TestCase):
     def test_simple2d(self):
         self._test_simple2d(np.float)
 
-    @dec.skipif(not can_use_decimal(),
-            "Skip neighborhood iterator tests for decimal objects " \
-            "(decimal module not available")
     def test_simple2d_object(self):
-        from decimal import Decimal
         self._test_simple2d(Decimal)
 
     def _test_mirror2d(self, dt):
@@ -2906,11 +2913,7 @@ class TestNeighborhoodIter(TestCase):
     def test_mirror2d(self):
         self._test_mirror2d(np.float)
 
-    @dec.skipif(not can_use_decimal(),
-            "Skip neighborhood iterator tests for decimal objects " \
-            "(decimal module not available")
     def test_mirror2d_object(self):
-        from decimal import Decimal
         self._test_mirror2d(Decimal)
 
     # Simple, 1d tests
@@ -2932,11 +2935,7 @@ class TestNeighborhoodIter(TestCase):
     def test_simple_float(self):
         self._test_simple(np.float)
 
-    @dec.skipif(not can_use_decimal(),
-            "Skip neighborhood iterator tests for decimal objects " \
-            "(decimal module not available")
     def test_simple_object(self):
-        from decimal import Decimal
         self._test_simple(Decimal)
 
     # Test mirror modes
@@ -2951,11 +2950,7 @@ class TestNeighborhoodIter(TestCase):
     def test_mirror(self):
         self._test_mirror(np.float)
 
-    @dec.skipif(not can_use_decimal(),
-            "Skip neighborhood iterator tests for decimal objects " \
-            "(decimal module not available")
     def test_mirror_object(self):
-        from decimal import Decimal
         self._test_mirror(Decimal)
 
     # Circular mode
@@ -2969,11 +2964,7 @@ class TestNeighborhoodIter(TestCase):
     def test_circular(self):
         self._test_circular(np.float)
 
-    @dec.skipif(not can_use_decimal(),
-            "Skip neighborhood iterator tests for decimal objects " \
-            "(decimal module not available")
     def test_circular_object(self):
-        from decimal import Decimal
         self._test_circular(Decimal)
 
 # Test stacking neighborhood iterators

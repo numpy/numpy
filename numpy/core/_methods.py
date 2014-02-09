@@ -63,8 +63,10 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
-    else:
+    elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
+    else:
+        ret = ret / rcount
 
     return ret
 
@@ -107,8 +109,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
-    else:
+    elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
+    else:
+        ret = ret / rcount
 
     return ret
 
@@ -118,7 +122,9 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
-    else:
+    elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(um.sqrt(ret))
+    else:
+        ret = um.sqrt(ret)
 
     return ret
