@@ -10,6 +10,8 @@ if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
+from decimal import Decimal
+
 
 import numpy as np
 from nose import SkipTest
@@ -2840,6 +2842,8 @@ class TestStats(TestCase):
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
+        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
+        self.omat = self.omat.reshape(4, 5)
 
     def test_keepdims(self):
         mat = np.eye(3)
@@ -2866,8 +2870,19 @@ class TestStats(TestCase):
         assert_raises(ValueError, f, mat, axis=1, out=out)
 
     def test_dtype_from_input(self):
+
         icodes = np.typecodes['AllInteger']
         fcodes = np.typecodes['AllFloat']
+
+        # object type
+        for f in self.funcs:
+            mat = np.array([[Decimal(1)]*3]*3)
+            tgt = mat.dtype.type
+            res = f(mat, axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            res = type(f(mat, axis=None))
+            assert_(res is Decimal)
 
         # integer types
         for f in self.funcs:
@@ -2879,6 +2894,7 @@ class TestStats(TestCase):
                 # scalar case
                 res = f(mat, axis=None).dtype.type
                 assert_(res is tgt)
+
         # mean for float types
         for f in [_mean]:
             for c in fcodes:
@@ -2889,10 +2905,12 @@ class TestStats(TestCase):
                 # scalar case
                 res = f(mat, axis=None).dtype.type
                 assert_(res is tgt)
+
         # var, std for float types
         for f in [_var, _std]:
             for c in fcodes:
                 mat = np.eye(3, dtype=c)
+                # deal with complex types
                 tgt = mat.real.dtype.type
                 res = f(mat, axis=1).dtype.type
                 assert_(res is tgt)
@@ -2968,7 +2986,7 @@ class TestStats(TestCase):
                     assert_equal(f(A, axis=axis), np.zeros([]))
 
     def test_mean_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1]:
                 tgt = mat.sum(axis=axis)
                 res = _mean(mat, axis=axis) * mat.shape[axis]
@@ -2979,16 +2997,16 @@ class TestStats(TestCase):
                 assert_almost_equal(res, tgt)
 
     def test_var_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 msqr = _mean(mat * mat.conj(), axis=axis)
                 mean = _mean(mat, axis=axis)
-                tgt = msqr - mean * mean.conj()
+                tgt = msqr - mean * mean.conjugate()
                 res = _var(mat, axis=axis)
                 assert_almost_equal(res, tgt)
 
     def test_std_values(self):
-        for mat in [self.rmat, self.cmat]:
+        for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 tgt = np.sqrt(_var(mat, axis=axis))
                 res = _std(mat, axis=axis)
