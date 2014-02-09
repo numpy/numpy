@@ -1904,8 +1904,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                   *ap2 = NULL,
                   *ap3 = NULL,
                   *sorter = NULL,
-                  *ret = NULL,
-                  *store_arr = NULL;
+                  *ret = NULL;
     PyArray_Descr *dtype;
     int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
     PyArray_BinSearchFunc *binsearch = NULL;
