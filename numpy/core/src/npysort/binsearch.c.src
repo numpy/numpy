@@ -41,13 +41,11 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
                         PyArrayObject *NOT_USED)
 {
-    npy_intp min_idx = 0,
-             max_idx = arr_len-1; /* set to arr_len later on */
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
     @type@ last_key_val = *(const @type@ *)key;
 
-    for (; key_len > 0; key_len--,
-                        key += key_str,
-                        ret += ret_str) {
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;
         /*
          * Updating only one of the indices based on the previous key
@@ -56,7 +54,8 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
          */
         if (@TYPE@_LT(last_key_val, key_val)) {
             max_idx = arr_len;
-        } else {
+        }
+        else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
@@ -65,7 +64,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
 
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-            const @type@ mid_val = *(const @type@ *)(arr + mid_idx * arr_str);
+            const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
             if (@TYPE@_@CMP@(mid_val, key_val)) {
                 min_idx = mid_idx + 1;
             }
@@ -85,13 +84,11 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            npy_intp sort_str, npy_intp ret_str,
                            PyArrayObject *NOT_USED)
 {
-    npy_intp min_idx = 0,
-             max_idx = arr_len-1; /* set to arr_len later on */
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
     @type@ last_key_val = *(const @type@ *)key;
 
-    for (; key_len > 0; key_len--,
-                        key += key_str,
-                        ret += ret_str) {
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;
         /*
          * Updating only one of the indices based on the previous key
@@ -100,7 +97,8 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
          */
         if (@TYPE@_LT(last_key_val, key_val)) {
             max_idx = arr_len;
-        } else {
+        }
+        else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
@@ -108,15 +106,15 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
         last_key_val = key_val;
 
         while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
-                           sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx*sort_str);
             @type@ mid_val;
 
             if (sort_idx < 0 || sort_idx >= arr_len) {
                 return -1;
             }
 
-            mid_val = *(const @type@ *)(arr + sort_idx * arr_str);
+            mid_val = *(const @type@ *)(arr + sort_idx*arr_str);
 
             if (@TYPE@_@CMP@(mid_val, key_val)) {
                 min_idx = mid_idx + 1;
@@ -139,8 +137,6 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
  *****************************************************************************
  */
 
-#define GENERIC_LTE(a, b, cmp) (!GENERIC_LT(b, a, cmp))
-
  /**begin repeat
  *
  * #side = left, right#
@@ -154,13 +150,11 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      PyArrayObject *cmp)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
-    npy_intp min_idx = 0,
-             max_idx = arr_len-1; /* set to arr_len later on */
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
     const char *last_key = key;
 
-    for (; key_len > 0; key_len--,
-                        key += key_str,
-                        ret += ret_str) {
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         /*
          * Updating only one of the indices based on the previous key
          * gives the search a big boost when keys are sorted, but slightly
@@ -168,12 +162,14 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
          */
         if (compare(last_key, key, cmp) @CMP@ 0) {
             max_idx = arr_len;
-        } else {
+        }
+        else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
 
         last_key = key;
+
         while (min_idx < max_idx) {
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const char *arr_ptr = arr + mid_idx*arr_str;
@@ -198,13 +194,11 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
                         PyArrayObject *cmp)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
-    npy_intp min_idx = 0,
-             max_idx = arr_len-1; /* set to arr_len later on */
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
     const char *last_key = key;
 
-    for (; key_len > 0; key_len--,
-                        key += key_str,
-                        ret += ret_str) {
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         /*
          * Updating only one of the indices based on the previous key
          * gives the search a big boost when keys are sorted, but slightly
@@ -212,7 +206,8 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
          */
         if (compare(last_key, key, cmp) @CMP@ 0) {
             max_idx = arr_len;
-        } else {
+        }
+        else {
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
@@ -220,8 +215,8 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
         last_key = key;
 
         while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1),
-                           sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx*sort_str);
             const char *arr_ptr;
 
             if (sort_idx < 0 || sort_idx >= arr_len) {

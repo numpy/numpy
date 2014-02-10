@@ -1870,7 +1870,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
- * result is an array of indices, one for each element in op2, such that if
+ * result is an array of indexes, one for each element in op2, such that if
  * the item were to be inserted in op1 just before that index the array
  * would still be in sorted order.
  *
@@ -1879,7 +1879,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
  * op1 : PyArrayObject *
  *     Array to be searched, must be 1-D.
  * op2 : PyObject *
- *     Array of items whose insertion indices in op1 are wanted
+ *     Array of items whose insertion indexes in op1 are wanted
  * side : {NPY_SEARCHLEFT, NPY_SEARCHRIGHT}
  *     If NPY_SEARCHLEFT, return first valid insertion indexes
  *     If NPY_SEARCHRIGHT, return last valid insertion indexes
@@ -1889,22 +1889,22 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
  * Returns
  * -------
  * ret : PyObject *
- *   New reference to npy_intp array containing indices where items in op2
+ *   New reference to npy_intp array containing indexes where items in op2
  *   could be validly inserted into op1. NULL on error.
  *
  * Notes
  * -----
- * Binary search is used to find the indices.
+ * Binary search is used to find the indexes.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                      NPY_SEARCHSIDE side, PyObject *perm)
 {
-    PyArrayObject *ap1 = NULL,
-                  *ap2 = NULL,
-                  *ap3 = NULL,
-                  *sorter = NULL,
-                  *ret = NULL;
+    PyArrayObject *ap1 = NULL;
+    PyArrayObject *ap2 = NULL;
+    PyArrayObject *ap3 = NULL;
+    PyArrayObject *sorter = NULL;
+    PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
     PyArray_BinSearchFunc *binsearch = NULL;
@@ -1921,12 +1921,12 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     /* Look for binary search function */
     if (perm) {
         argbinsearch = get_argbinsearch_func(dtype, side);
-    } else {
+    }
+    else {
         binsearch = get_binsearch_func(dtype, side);
     }
     if (binsearch == NULL && argbinsearch == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                        "compare not supported for type");
+        PyErr_SetString(PyExc_TypeError, "compare not supported for type");
         /* refs to dtype we own = 1 */
         Py_DECREF(dtype);
         /* refs to dtype we own = 0 */
@@ -1963,7 +1963,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
 
     if (perm) {
-        /* need ap3 as 1D aligned, not swapped, array of right type */
+        /* need ap3 as a 1D aligned, not swapped, array of right type */
         ap3 = (PyArrayObject *)PyArray_CheckFromAny(perm, NULL,
                                     1, 1,
                                     NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED,
@@ -1994,7 +1994,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         }
     }
 
-    /* ret is a contiguous array of intp type to hold returned indices */
+    /* ret is a contiguous array of intp type to hold returned indexes */
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
                                        PyArray_DIMS(ap2), NPY_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)ap2);
@@ -2002,7 +2002,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         goto fail;
     }
 
-    if (ap3 == NULL) { /* do regular binsearch */
+    if (ap3 == NULL) {
+        /* do regular binsearch */
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         binsearch((const char *)PyArray_DATA(ap1),
                   (const char *)PyArray_DATA(ap2),
@@ -2011,7 +2012,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                   PyArray_STRIDES(ap1)[0], PyArray_DESCR(ap2)->elsize,
                   NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
-    } else { /* do binsearch with a sorter array */
+    }
+    else {
+        /* do binsearch with a sorter array */
         int error = 0;
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         error = argbinsearch((const char *)PyArray_DATA(ap1),
@@ -2024,7 +2027,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                              PyArray_STRIDES(ap3)[0], NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
         if (error < 0) {
-            PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
+            PyErr_SetString(PyExc_ValueError,
+                        "Sorter index out of range.");
             goto fail;
         }
         Py_DECREF(ap3);
