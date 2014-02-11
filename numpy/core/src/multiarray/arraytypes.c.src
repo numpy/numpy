@@ -3950,7 +3950,7 @@ datetime_dtype_metadata_clone(NpyAuxData *data)
  * Initializes the c_metadata field for the _builtin_descrs DATETIME
  * and TIMEDELTA.
  */
-int
+static int
 initialize_builtin_datetime_metadata(void)
 {
     PyArray_DatetimeDTypeMetaData *data1, *data2;

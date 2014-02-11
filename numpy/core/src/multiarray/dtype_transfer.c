@@ -151,7 +151,7 @@ typedef struct {
 } _strided_zero_pad_data;
 
 /* zero-padded data copy function */
-NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
+static NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
 {
     _strided_zero_pad_data *newdata =
             (_strided_zero_pad_data *)PyArray_malloc(
@@ -258,7 +258,7 @@ typedef struct {
 } _align_wrap_data;
 
 /* transfer data free function */
-void _align_wrap_data_free(NpyAuxData *data)
+static void _align_wrap_data_free(NpyAuxData *data)
 {
     _align_wrap_data *d = (_align_wrap_data *)data;
     NPY_AUXDATA_FREE(d->wrappeddata);
@@ -268,7 +268,7 @@ void _align_wrap_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
+static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
 {
     _align_wrap_data *d = (_align_wrap_data *)data;
     _align_wrap_data *newdata;
@@ -485,7 +485,7 @@ typedef struct {
 } _wrap_copy_swap_data;
 
 /* wrap copy swap data free function */
-void _wrap_copy_swap_data_free(NpyAuxData *data)
+static void _wrap_copy_swap_data_free(NpyAuxData *data)
 {
     _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
     Py_DECREF(d->arr);
@@ -493,7 +493,7 @@ void _wrap_copy_swap_data_free(NpyAuxData *data)
 }
 
 /* wrap copy swap data copy function */
-NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
+static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
 {
     _wrap_copy_swap_data *newdata =
         (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
@@ -572,7 +572,7 @@ typedef struct {
 } _strided_cast_data;
 
 /* strided cast data free function */
-void _strided_cast_data_free(NpyAuxData *data)
+static void _strided_cast_data_free(NpyAuxData *data)
 {
     _strided_cast_data *d = (_strided_cast_data *)data;
     Py_DECREF(d->aip);
@@ -581,7 +581,7 @@ void _strided_cast_data_free(NpyAuxData *data)
 }
 
 /* strided cast data copy function */
-NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
+static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
 {
     _strided_cast_data *newdata =
             (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
@@ -716,7 +716,7 @@ typedef struct {
 } _strided_datetime_cast_data;
 
 /* strided datetime cast data free function */
-void _strided_datetime_cast_data_free(NpyAuxData *data)
+static void _strided_datetime_cast_data_free(NpyAuxData *data)
 {
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
     PyArray_free(d->tmp_buffer);
@@ -724,7 +724,7 @@ void _strided_datetime_cast_data_free(NpyAuxData *data)
 }
 
 /* strided datetime cast data copy function */
-NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
+static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 {
     _strided_datetime_cast_data *newdata =
             (_strided_datetime_cast_data *)PyArray_malloc(
@@ -1547,7 +1547,7 @@ typedef struct {
 } _one_to_n_data;
 
 /* transfer data free function */
-void _one_to_n_data_free(NpyAuxData *data)
+static void _one_to_n_data_free(NpyAuxData *data)
 {
     _one_to_n_data *d = (_one_to_n_data *)data;
     NPY_AUXDATA_FREE(d->data);
@@ -1556,7 +1556,7 @@ void _one_to_n_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
+static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
 {
     _one_to_n_data *d = (_one_to_n_data *)data;
     _one_to_n_data *newdata;
@@ -1750,7 +1750,7 @@ typedef struct {
 } _n_to_n_data;
 
 /* transfer data free function */
-void _n_to_n_data_free(NpyAuxData *data)
+static void _n_to_n_data_free(NpyAuxData *data)
 {
     _n_to_n_data *d = (_n_to_n_data *)data;
     NPY_AUXDATA_FREE(d->data);
@@ -1758,7 +1758,7 @@ void _n_to_n_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
+static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
 {
     _n_to_n_data *d = (_n_to_n_data *)data;
     _n_to_n_data *newdata;
@@ -1929,7 +1929,7 @@ typedef struct {
 } _subarray_broadcast_data;
 
 /* transfer data free function */
-void _subarray_broadcast_data_free(NpyAuxData *data)
+static void _subarray_broadcast_data_free(NpyAuxData *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
     NPY_AUXDATA_FREE(d->data);
@@ -1939,7 +1939,7 @@ void _subarray_broadcast_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
+static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
     _subarray_broadcast_data *newdata;
@@ -2381,7 +2381,7 @@ typedef struct {
 } _field_transfer_data;
 
 /* transfer data free function */
-void _field_transfer_data_free(NpyAuxData *data)
+static void _field_transfer_data_free(NpyAuxData *data)
 {
     _field_transfer_data *d = (_field_transfer_data *)data;
     npy_intp i, field_count;
@@ -2397,7 +2397,7 @@ void _field_transfer_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
+static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
 {
     _field_transfer_data *d = (_field_transfer_data *)data;
     _field_transfer_data *newdata;
@@ -2997,7 +2997,7 @@ typedef struct {
 } _masked_wrapper_transfer_data;
 
 /* transfer data free function */
-void _masked_wrapper_transfer_data_free(NpyAuxData *data)
+static void _masked_wrapper_transfer_data_free(NpyAuxData *data)
 {
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
     NPY_AUXDATA_FREE(d->transferdata);
@@ -3006,7 +3006,7 @@ void _masked_wrapper_transfer_data_free(NpyAuxData *data)
 }
 
 /* transfer data copy function */
-NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
+static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
 {
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
     _masked_wrapper_transfer_data *newdata;
@@ -3040,7 +3040,7 @@ NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-void _strided_masked_wrapper_decsrcref_transfer_function(
+static void _strided_masked_wrapper_decsrcref_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -3076,7 +3076,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
     }
 }
 
-void _strided_masked_wrapper_transfer_function(
+static void _strided_masked_wrapper_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -3168,7 +3168,7 @@ typedef struct {
 } _dst_memset_zero_data;
 
 /* zero-padded data copy function */
-NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
+static NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
 {
     _dst_memset_zero_data *newdata =
             (_dst_memset_zero_data *)PyArray_malloc(

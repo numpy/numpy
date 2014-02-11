@@ -37,7 +37,7 @@ struct NewNpyArrayIterObject_tag {
     char writeflags[NPY_MAXARGS];
 };
 
-void npyiter_cache_values(NewNpyArrayIterObject *self)
+static void npyiter_cache_values(NewNpyArrayIterObject *self)
 {
     NpyIter *iter = self->iter;
 
