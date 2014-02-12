@@ -105,37 +105,26 @@ check_array_monotonic(const double *a, npy_int lena)
     }
 }
 
-/* find the index of the maximum element of an integer array */
-static npy_intp
-mxx (npy_intp *i , npy_intp len)
+/* Find the minimum and maximum of an integer array */
+static void
+minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 {
-    npy_intp mx = 0, max = i[0];
-    npy_intp j;
+    npy_intp min;
+    npy_intp max = min = *data;
 
-    for ( j = 1; j < len; j ++ ) {
-        if ( i [j] > max ) {
-            max = i [j];
-            mx = j;
+    while (--data_len) {
+        const npy_intp val = *(++data);
+        if (val < min) {
+            min = val;
+        }
+        else if (val > max) {
+            max = val;
         }
     }
-    return mx;
+
+    *mn = min;
+    *mx = max;
 }
-
-/* find the index of the minimum element of an integer array */
-static npy_intp
-mnx (npy_intp *i , npy_intp len)
-{
-    npy_intp mn = 0, min = i [0];
-    npy_intp j;
-
-    for ( j = 1; j < len; j ++ )
-        if ( i [j] < min )
-            {min = i [j];
-                mn = j;}
-    return mn;
-}
-
-
 /*
  * arr_bincount is registered as bincount.
  *
@@ -155,7 +144,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyArray_Descr *type;
     PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
     PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
-    npy_intp *numbers, *ians, len , mxi, mni, ans_size, minlength;
+    npy_intp *numbers, *ians, len , mx, mn, ans_size, minlength;
     int i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -188,14 +177,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     numbers = (npy_intp *) PyArray_DATA(lst);
-    mxi = mxx(numbers, len);
-    mni = mnx(numbers, len);
-    if (numbers[mni] < 0) {
+    minmax(numbers, len, &mn, &mx);
+    if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "The first argument of bincount must be non-negative");
         goto fail;
     }
-    ans_size = numbers [mxi] + 1;
+    ans_size = mx + 1;
     if (mlength != Py_None) {
         if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
             goto fail;
