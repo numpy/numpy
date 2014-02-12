@@ -1420,6 +1420,13 @@ class TestAllclose(object):
         assert_array_equal(y, array([0, inf]))
 
 
+    def test_min_int(self):
+        # Could make problems because of abs(min_int) == min_int
+        min_int = np.iinfo(np.int_).min
+        a = np.array([min_int], dtype=np.int_)
+        assert_(allclose(a, a))
+
+
 class TestIsclose(object):
     rtol = 1e-5
     atol = 1e-8

@@ -2139,6 +2139,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
 
+    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+    # casting of x later.
+    dtype = multiarray.result_type(y, 1.)
+    y = array(y, dtype=dtype, copy=False)
+
     xinf = isinf(x)
     yinf = isinf(y)
     if any(xinf) or any(yinf):
@@ -2154,12 +2159,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
     # ignore invalid fpe's
     with errstate(invalid='ignore'):
-        if not x.dtype.kind == 'b' and not y.dtype.kind == 'b':
-            diff = abs(x - y)
-        else:
-            diff = x ^ y
-
-        r = all(less_equal(diff, atol + rtol * abs(y)))
+        r = all(less_equal(abs(x - y), atol + rtol * abs(y)))
 
     return r
 
