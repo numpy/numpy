@@ -28,12 +28,12 @@ double npy_copysign(double x, double y)
 #if !defined(HAVE_DECL_SIGNBIT)
 #include "_signbit.c"
 
-int _npy_signbit_f(float x)
+static int _npy_signbit_f(float x)
 {
     return _npy_signbit_d((double) x);
 }
 
-int _npy_signbit_ld(long double x)
+static int _npy_signbit_ld(long double x)
 {
     return _npy_signbit_d((double) x);
 }
@@ -46,7 +46,7 @@ int _npy_signbit_ld(long double x)
  * p >= 0, returnx x + nulp
  * p < 0, returnx x - nulp
  */
-double _next(double x, int p)
+static double _next(double x, int p)
 {
     volatile double t;
     npy_int32 hx, hy, ix;
@@ -92,7 +92,7 @@ double _next(double x, int p)
     return x;
 }
 
-float _nextf(float x, int p)
+static float _nextf(float x, int p)
 {
     volatile float t;
     npy_int32 hx, hy, ix;
@@ -178,7 +178,7 @@ do {								\
   (d) = qw_u.value;						\
 } while (0)
 
-npy_longdouble _nextl(npy_longdouble x, int p)
+static npy_longdouble _nextl(npy_longdouble x, int p)
 {
     npy_int64 hx,ihx,ilx;
     npy_uint64 lx;
@@ -256,7 +256,7 @@ npy_longdouble _nextl(npy_longdouble x, int p)
     }
 }
 #else
-npy_longdouble _nextl(npy_longdouble x, int p)
+static npy_longdouble _nextl(npy_longdouble x, int p)
 {
     volatile npy_longdouble t;
     union IEEEl2bitsrep ux;

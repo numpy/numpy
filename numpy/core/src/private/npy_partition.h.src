@@ -41,28 +41,35 @@
  *         npy_cdouble, npy_clongdouble#
  */
 
-int introselect_@suff@(@type@ *v, npy_intp num,
-                       npy_intp kth,
-                       npy_intp * pivots,
-                       npy_intp * npiv,
-                       void *NOT_USED);
-int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
-                        npy_intp kth,
-                        npy_intp * pivots,
-                        npy_intp * npiv,
-                        void *NOT_USED);
+NPY_VISIBILITY_HIDDEN int introselect_@suff@(@type@ *v, npy_intp num,
+                                             npy_intp kth,
+                                             npy_intp * pivots,
+                                             npy_intp * npiv,
+                                             void *NOT_USED);
+NPY_VISIBILITY_HIDDEN int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
+                                              npy_intp kth,
+                                              npy_intp * pivots,
+                                              npy_intp * npiv,
+                                              void *NOT_USED);
 
 
 /**end repeat**/
 
-int introselect_string(npy_char *vec, npy_intp cnt, npy_intp kth, PyArrayObject *arr);
-int aintroselect_string(npy_char *vec, npy_intp *ind, npy_intp cnt, npy_intp kth, void *null);
+NPY_VISIBILITY_HIDDEN int introselect_string(npy_char *vec, npy_intp cnt,
+                                             npy_intp kth, PyArrayObject *arr);
+NPY_VISIBILITY_HIDDEN int aintroselect_string(npy_char *vec, npy_intp *ind,
+                                              npy_intp cnt, npy_intp kth,
+                                              void *null);
 
 
-int introselect_unicode(npy_ucs4 *vec, npy_intp cnt, npy_intp kth, PyArrayObject *arr);
-int aintroselect_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, npy_intp kth, void *null);
+NPY_VISIBILITY_HIDDEN int introselect_unicode(npy_ucs4 *vec, npy_intp cnt,
+                                              npy_intp kth, PyArrayObject *arr);
+NPY_VISIBILITY_HIDDEN int aintroselect_unicode(npy_ucs4 *vec, npy_intp *ind,
+                                               npy_intp cnt, npy_intp kth,
+                                               void *null);
 
-int npy_introselect(void *base, size_t num, size_t size, size_t kth, npy_comparator cmp);
+NPY_VISIBILITY_HIDDEN int npy_introselect(void *base, size_t num, size_t size,
+                                          size_t kth, npy_comparator cmp);
 
 typedef struct {
     enum NPY_TYPES typenum;
