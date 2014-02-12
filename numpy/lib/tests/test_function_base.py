@@ -761,6 +761,22 @@ class TestDigitize(TestCase):
         bins = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bins, True) != 10))
 
+    def test_monotonic(self):
+        x = [-1, 0, 1, 2]
+        bins = [0, 0, 1]
+        assert_array_equal(digitize(x, bins, False), [0, 2, 3, 3])
+        assert_array_equal(digitize(x, bins, True), [0, 0, 2, 3])
+        bins = [1, 1, 0]
+        assert_array_equal(digitize(x, bins, False), [3, 2, 0, 0])
+        assert_array_equal(digitize(x, bins, True), [3, 3, 2, 0])
+        bins = [1, 1, 1, 1]
+        assert_array_equal(digitize(x, bins, False), [0, 0, 4, 4])
+        assert_array_equal(digitize(x, bins, True), [0, 0, 0, 4])
+        bins = [0, 0, 1, 0]
+        assert_raises(ValueError, digitize, x, bins)
+        bins = [1, 1, 0, 1]
+        assert_raises(ValueError, digitize, x, bins)
+
 
 class TestUnwrap(TestCase):
     def test_simple(self):
