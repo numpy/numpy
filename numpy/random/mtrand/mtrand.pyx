@@ -4430,11 +4430,12 @@ cdef class RandomState:
         i = len(x) - 1
 
         # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray) and x.ndim > 1:
+        if isinstance(x, np.ndarray) and \
+           (x.ndim > 1 or x.dtype.fields is not None):
             # For a multi-dimensional ndarray, indexing returns a view onto
             # each row. So we can't just use ordinary assignment to swap the
             # rows; we need a bounce buffer.
-            buf = np.empty(x.shape[1:], dtype=x.dtype)
+            buf = np.empty_like(x[0])
             while i > 0:
                 j = rk_interval(i, self.internal_state)
                 buf[...] = x[j]
