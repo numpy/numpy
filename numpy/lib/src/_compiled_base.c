@@ -92,18 +92,23 @@ check_array_monotonic(double * a, int lena)
 
 /* Find the minimum and maximum of an integer array */
 static void
-minmax(const npy_intp *data, npy_intp data_len, npy_intp *min, npy_intp *max)
+minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 {
-    *min = *max = *data;
+    npy_intp min;
+    npy_intp max = min = *data;
+
     while (--data_len) {
         const npy_intp val = *(++data);
-        if (val < *min) {
-            *min = val;
+        if (val < min) {
+            min = val;
         }
-        else if (val > *max) {
-            *max = val;
+        else if (val > max) {
+            max = val;
         }
     }
+
+    *mn = min;
+    *mx = max;
 }
 
 /*
