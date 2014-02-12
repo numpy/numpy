@@ -35,7 +35,7 @@
  * #CMP  = LT, LTE#
  */
 
-void
+NPY_VISIBILITY_HIDDEN void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
@@ -76,7 +76,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
     }
 }
 
-int
+NPY_VISIBILITY_HIDDEN int
 argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
                            npy_intp arr_len, npy_intp key_len,
@@ -143,7 +143,7 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
  * #CMP  = <, <=#
  */
 
-void
+NPY_VISIBILITY_HIDDEN void
 npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_len, npy_intp key_len,
                      npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
@@ -185,7 +185,7 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
     }
 }
 
-int
+NPY_VISIBILITY_HIDDEN int
 npy_argbinsearch_@side@(const char *arr, const char *key,
                         const char *sort, char *ret,
                         npy_intp arr_len, npy_intp key_len,
