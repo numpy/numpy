@@ -68,37 +68,40 @@ decr_slot_right_(double x, double * bins, npy_intp lbins)
 static int
 check_array_monotonic(const double *a, npy_int lena)
 {
-    npy_intp idx = 0;
-    npy_intp next_idx = 1;
+    npy_intp i;
+    double next;
+    double last = a[0];
 
-    /*
-     * After decrementing lena, next_idx < lena means both indices will
-     * still be in bounds after incrementing them.
-     */
-    lena--;
+    /* Skip repeated values at the beginning of the array */
+    for (i = 1; (i < lena) && (a[i] == last); i++);
 
-    /* Ignore repeating values at the beginning of the array */
-    for (; (next_idx < lena) && a[idx] == a[next_idx]; idx = next_idx++);
-
-    if (a[idx] > a[next_idx]) {
-        /* Possibly monotonic decreasing */
-        while(next_idx < lena) {
-            idx = next_idx++;
-            if (a[idx] < a[next_idx]) {
-                return 0;
-            }
-        }
-        return -1;
+    if (i == lena) {
+        /* all bin edges hold the same value */
+        return 1;
     }
-    else {
-        /* Possibly monotonic increasing, including all bins equal */
-        while(next_idx < lena) {
-            idx = next_idx++;
-            if (a[idx] > a[next_idx]) {
+
+    next = a[i];
+    if (last < next) {
+        /* Possibly monotonic increasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last > next) {
                 return 0;
             }
         }
         return 1;
+    }
+    else {
+        /* last > next, possibly monotonic decreasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last < next) {
+                return 0;
+            }
+        }
+        return -1;
     }
 }
 
