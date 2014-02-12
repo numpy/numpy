@@ -109,8 +109,8 @@ check_array_monotonic(const double *a, npy_int lena)
 static void
 minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 {
-    npy_intp min;
-    npy_intp max = min = *data;
+    npy_intp min = *data;
+    npy_intp max = *data;
 
     while (--data_len) {
         const npy_intp val = *(++data);
