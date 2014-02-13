@@ -638,7 +638,7 @@ def dsplit(ary, indices_or_sections):
 
     """
     if len(_nx.shape(ary)) < 3:
-        raise ValueError('vsplit only works on arrays of 3 or more dimensions')
+        raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
 
 def get_array_prepare(*args):
