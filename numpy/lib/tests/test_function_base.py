@@ -1865,6 +1865,27 @@ class TestMedian(TestCase):
 
         a = MySubClass([1,2,3])
         assert_equal(np.median(a), -7)
+    
+    def test_nan_behavior(self):
+        a = np.arange(24, dtype=float)
+        a[2] = np.nan
+        assert_equal(np.median(a), np.nan)
+        assert_equal(np.median(a, axis=0), np.nan)
+        a = np.arange(24, dtype=float).reshape(2, 3, 4)
+        a[1, 2, 3] = np.nan
+        a[1, 1, 2] = np.nan
+
+        #no axis                
+        assert_equal(np.median(a), np.nan)
+        #axis0
+        b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 0)
+        b[2, 3] = np.nan; b[1, 2] = np.nan
+        assert_equal(np.median(a, 0), b)
+        #axis1
+        b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 1)
+        b[1, 3] = np.nan; b[1, 2] = np.nan
+        assert_equal(np.median(a, 1), b)
+        
 
 
 class TestAdd_newdoc_ufunc(TestCase):
