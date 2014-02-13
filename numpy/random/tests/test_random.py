@@ -230,6 +230,29 @@ class TestRandomDist(TestCase):
             desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
             np.testing.assert_array_equal(actual, desired)
 
+    def test_shuffle_flexible(self):
+        # gh-4270
+        arr = [(0, 1), (2, 3)]
+        dt = np.dtype([('a', np.int32, 1), ('b', np.int32, 1)])
+        nparr = np.array(arr, dtype=dt)
+        a, b = nparr[0].copy(), nparr[1].copy()
+        for i in range(50):
+            np.random.shuffle(nparr)
+            assert_(a in nparr)
+            assert_(b in nparr)
+
+    def test_shuffle_masked(self):
+        # gh-3263
+        a = np.ma.masked_values(np.reshape(range(20), (5,4)) % 3 - 1, -1)
+        b = np.ma.masked_values(np.arange(20) % 3 - 1, -1)
+        ma = np.ma.count_masked(a)
+        mb = np.ma.count_masked(b)
+        for i in range(50):
+            np.random.shuffle(a)
+            self.assertEqual(ma, np.ma.count_masked(a))
+            np.random.shuffle(b)
+            self.assertEqual(mb, np.ma.count_masked(b))
+
     def test_beta(self):
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))
