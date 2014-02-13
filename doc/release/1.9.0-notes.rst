@@ -89,6 +89,12 @@ The performance of converting lists containing arrays to arrays using
 `np.array` has been improved. It is now equivalent in speed to
 `np.vstack(list)`.
 
+Performance improvement for `np.searchsorted`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For the built-in numeric types, `np.searchsorted` no longer relies on the
+data type's `compare` function to perform the search, but is now implemented
+by type specific functions. Depending on the size of the inputs, this can
+result in performance improvements over 2x.
 
 Changes
 =======
