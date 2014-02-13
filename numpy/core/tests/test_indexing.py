@@ -1,10 +1,20 @@
 from __future__ import division, absolute_import, print_function
 
+import sys
+import warnings
+import functools
+
 import numpy as np
+from numpy.core.multiarray_tests import array_indexing
 from itertools import product
-from numpy.compat import asbytes
 from numpy.testing import *
-import sys, warnings, gc
+
+
+try:
+    cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
+    _HAS_CTYPE = True
+except ImportError:
+    _HAS_CTYPE = False
 
 
 class TestIndexing(TestCase):
@@ -859,6 +869,52 @@ class TestMultiIndexingAutomated(TestCase):
             warnings.filterwarnings('error', '', DeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
+
+
+class TestCApiAccess(TestCase):
+    def test_getitem(self):
+        subscript = functools.partial(array_indexing, 0)
+
+        # Out of bound values:
+        assert_raises(IndexError, subscript, np.ones(()), 0)
+        assert_raises(IndexError, subscript, np.ones(10), 11)
+
+        # Python PySequence_SetItem fixes negative indices, and we fix them
+        # as well, so the following works even though it should fail:
+        #assert_raises(IndexError, subscript, np.ones((10, 10)), 20)
+        assert_raises(IndexError, subscript, np.ones(10), -21)
+
+        assert_raises(IndexError, subscript, np.ones((10, 10)), -21)
+
+        a = np.arange(10)
+        assert_array_equal(a[4], subscript(a, 4))
+        a = a.reshape(5, 2)
+        assert_array_equal(a[-4], subscript(a, -4))
+
+    def test_setitem(self):
+        assign = functools.partial(array_indexing, 1)
+
+        # Deletion is impossible:
+        assert_raises(ValueError, assign, np.ones(10), 0)
+        # Out of bound values:
+        assert_raises(IndexError, assign, np.ones(()), 0, 0)
+        assert_raises(IndexError, assign, np.ones(10), 11, 0)
+
+        # Python PySequence_SetItem fixes negative indices, and we fix them
+        # as well, so the following works even though it should fail:
+        #assert_raises(IndexError, assign, np.ones(10), -20, 0)
+        assert_raises(IndexError, assign, np.ones(10), -21, 0)
+
+        assert_raises(IndexError, assign, np.ones((10, 10)), 11, 0)
+        assert_raises(IndexError, assign, np.ones((10, 10)), -21, 0)
+
+        a = np.arange(10)
+        assign(a, 4, 10)
+        assert_(a[4] == 10)
+
+        a = a.reshape(5, 2)
+        assign(a, 4, 10)
+        assert_array_equal(a[-1], [10, 10])
 
 
 if __name__ == "__main__":

@@ -690,6 +690,37 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
 #undef GET_PYBUF_FLAG
 
 
+/*
+ * Test C-api level item getting.
+ */
+static PyObject *
+array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int mode;
+    Py_ssize_t i;
+    PyObject *arr, *op = NULL;
+
+    if (!PyArg_ParseTuple(args, "iOn|O", &mode, &arr, &i, &op)) {
+        return NULL;
+    }
+
+    if (mode == 0) {
+        return PySequence_GetItem(arr, i);
+    }
+    if (mode == 1) {
+        if (PySequence_SetItem(arr, i, op) < 0) {
+            return NULL;
+        }
+        
+        Py_RETURN_NONE;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+                    "invalid mode. 0: item 1: assign");
+    return NULL;
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_neighborhood_iterator",
         test_neighborhood_iterator,
@@ -713,6 +744,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
 #endif
     {"get_buffer_info",
         get_buffer_info,
+        METH_VARARGS, NULL},
+    {"array_indexing",
+        array_indexing,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
