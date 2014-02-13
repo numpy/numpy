@@ -2770,7 +2770,15 @@ def median(a, axis=None, out=None, overwrite_input=False):
     if axis is not None and axis >= a.ndim:
         raise IndexError(
             "axis %d out of bounds (%d)" % (axis, a.ndim))
-
+    
+    #Check if the array contains any nan's
+    ids = None
+    if axis is None or a.ndim == 1:
+        if np.any(np.isnan(a)):
+            return np.array([np.nan])
+    else: #continue the calculation but replace results with nans where needed
+        ids = np.any(np.isnan(a), axis=axis)            
+        
     if overwrite_input:
         if axis is None:
             part = a.ravel()
@@ -2809,9 +2817,16 @@ def median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
-    # Use mean in odd and even case to coerce data type
-    # and check, use out array.
-    return mean(part[indexer], axis=axis, out=out)
+    
+    if ids == None: #if there are no nans
+        # Use mean in odd and even case to coerce data type
+        # and check, use out array.
+        return mean(part[indexer], axis=axis, out=out)
+    else: #replace results where needed with nans
+        out = mean(part[indexer], axis=axis, out=out)
+        out[ids] = np.nan
+        return out
+        
 
 
 def percentile(a, q, axis=None, out=None,
