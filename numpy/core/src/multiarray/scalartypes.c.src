@@ -977,6 +977,9 @@ static PyObject *
 
     dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
     obj = Py@KIND@_FromDouble(dval);
+    if (obj == NULL) {
+        return NULL;
+    }
     ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
     Py_DECREF(obj);
     return ret;
@@ -1001,6 +1004,9 @@ static PyObject *
 
     dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
     obj = Py@KIND@_FromDouble(dval);
+    if (obj == NULL) {
+        return NULL;
+    }
     ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
     Py_DECREF(obj);
     return ret;
