@@ -1842,7 +1842,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         else if (descr && !PyArray_ISNBO(descr->byteorder)) {
             PyArray_DESCR_REPLACE(descr);
         }
-        if (descr) {
+        if (descr && descr->byteorder != NPY_IGNORE) {
             descr->byteorder = NPY_NATIVE;
         }
     }

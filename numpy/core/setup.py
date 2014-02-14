@@ -707,8 +707,11 @@ def configuration(parent_package='',top_path=None):
     npysort_sources=[join('src', 'npysort', 'quicksort.c.src'),
                      join('src', 'npysort', 'mergesort.c.src'),
                      join('src', 'npysort', 'heapsort.c.src'),
-                     join('src','private', 'npy_partition.h.src'),
-                     join('src', 'npysort', 'selection.c.src')]
+                     join('src', 'private', 'npy_partition.h.src'),
+                     join('src', 'npysort', 'selection.c.src'),
+                     join('src', 'private', 'npy_binsearch.h.src'),
+                     join('src', 'npysort', 'binsearch.c.src'),
+                    ]
     config.add_library('npysort',
                        sources=npysort_sources,
                        include_dirs=[])
