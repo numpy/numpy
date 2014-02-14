@@ -169,6 +169,12 @@ class TestConversion(TestCase):
         for code in 'lLqQ':
             assert_raises(OverflowError, Overflow_error_func, code)
 
+    def test_longdouble_int(self):
+        # gh-627
+        x = np.longdouble(np.inf)
+        assert_raises(OverflowError, x.__int__)
+        x = np.clongdouble(np.inf)
+        assert_raises(OverflowError, x.__int__)
 
     def test_numpy_scalar_relational_operators(self):
          #All integer
