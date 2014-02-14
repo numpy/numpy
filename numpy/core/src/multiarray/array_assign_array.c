@@ -238,9 +238,9 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
      * case, first an in-place add is done, followed by an assignment,
      * equivalently expressed like this:
      *
-     *   tmp = a[1000:6000]   # Calls array_subscript_nice in mapping.c
+     *   tmp = a[1000:6000]   # Calls array_subscript in mapping.c
      *   np.add(tmp, x, tmp)
-     *   a[1000:6000] = tmp   # Calls array_ass_sub in mapping.c
+     *   a[1000:6000] = tmp   # Calls array_assign_subscript in mapping.c
      *
      * In the assignment the underlying data type, shape, strides, and
      * data pointers are identical, but src != dst because they are separately

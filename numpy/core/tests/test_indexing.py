@@ -875,16 +875,13 @@ class TestCApiAccess(TestCase):
     def test_getitem(self):
         subscript = functools.partial(array_indexing, 0)
 
-        # Out of bound values:
+        # 0-d arrays don't work:
         assert_raises(IndexError, subscript, np.ones(()), 0)
+        # Out of bound values:
         assert_raises(IndexError, subscript, np.ones(10), 11)
-
-        # Python PySequence_SetItem fixes negative indices, and we fix them
-        # as well, so the following works even though it should fail:
-        #assert_raises(IndexError, subscript, np.ones((10, 10)), 20)
-        assert_raises(IndexError, subscript, np.ones(10), -21)
-
-        assert_raises(IndexError, subscript, np.ones((10, 10)), -21)
+        assert_raises(IndexError, subscript, np.ones(10), -11)
+        assert_raises(IndexError, subscript, np.ones((10, 10)), 11)
+        assert_raises(IndexError, subscript, np.ones((10, 10)), -11)
 
         a = np.arange(10)
         assert_array_equal(a[4], subscript(a, 4))
@@ -896,17 +893,13 @@ class TestCApiAccess(TestCase):
 
         # Deletion is impossible:
         assert_raises(ValueError, assign, np.ones(10), 0)
-        # Out of bound values:
+        # 0-d arrays don't work:
         assert_raises(IndexError, assign, np.ones(()), 0, 0)
+        # Out of bound values:
         assert_raises(IndexError, assign, np.ones(10), 11, 0)
-
-        # Python PySequence_SetItem fixes negative indices, and we fix them
-        # as well, so the following works even though it should fail:
-        #assert_raises(IndexError, assign, np.ones(10), -20, 0)
-        assert_raises(IndexError, assign, np.ones(10), -21, 0)
-
+        assert_raises(IndexError, assign, np.ones(10), -11, 0)
         assert_raises(IndexError, assign, np.ones((10, 10)), 11, 0)
-        assert_raises(IndexError, assign, np.ones((10, 10)), -21, 0)
+        assert_raises(IndexError, assign, np.ones((10, 10)), -11, 0)
 
         a = np.arange(10)
         assign(a, 4, 10)

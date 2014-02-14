@@ -710,8 +710,7 @@ array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
     if (mode == 1) {
         if (PySequence_SetItem(arr, i, op) < 0) {
             return NULL;
-        }
-        
+        }        
         Py_RETURN_NONE;
     }
 
