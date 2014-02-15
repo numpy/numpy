@@ -45,9 +45,11 @@ class TestF77Mismatch(TestCase):
                 "Skipping fortran compiler mismatch on non Linux platform")
     def test_lapack(self):
         f = FindDependenciesLdd()
-        deps = f.grep_dependencies(lapack_lite.__file__,
-                                   asbytes_nested(['libg2c', 'libgfortran']))
-        self.assertFalse(len(deps) > 1,
+        depsLibg2c = f.grep_dependencies(lapack_lite.__file__,
+                                   asbytes_nested(['libg2c']))
+        depsLibgfortran = f.grep_dependencies(lapack_lite.__file__,
+                                   asbytes_nested(['libgfortran']))
+        self.assertFalse(len(depsLibg2c)*len(depsLibgfortran) > 0,
 """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
 cause random crashes and wrong results. See numpy INSTALL.txt for more
 information.""")
