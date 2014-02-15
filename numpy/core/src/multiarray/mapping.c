@@ -54,82 +54,6 @@ array_length(PyArrayObject *self)
     }
 }
 
-/* Get array item as scalar type */
-NPY_NO_EXPORT PyObject *
-array_item_asscalar(PyArrayObject *self, npy_intp i)
-{
-    char *item;
-    npy_intp dim0;
-
-    /* Bounds check and get the data pointer */
-    dim0 = PyArray_DIM(self, 0);
-    if (i < 0) {
-        i += dim0;
-    }
-    if (i < 0 || i >= dim0) {
-        PyErr_SetString(PyExc_IndexError, "index out of bounds");
-        return NULL;
-    }
-    item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
-    return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
-}
-
-/* Get array item as ndarray type */
-NPY_NO_EXPORT PyObject *
-array_item_asarray(PyArrayObject *self, npy_intp i)
-{
-    char *item;
-    PyArrayObject *ret;
-    npy_intp dim0;
-
-    if(PyArray_NDIM(self) == 0) {
-        PyErr_SetString(PyExc_IndexError,
-                        "0-d arrays can't be indexed");
-        return NULL;
-    }
-
-    /* Bounds check and get the data pointer */
-    dim0 = PyArray_DIM(self, 0);
-    if (check_and_adjust_index(&i, dim0, 0) < 0) {
-        return NULL;
-    }
-    item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
-
-    /* Create the view array */
-    Py_INCREF(PyArray_DESCR(self));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                              PyArray_DESCR(self),
-                                              PyArray_NDIM(self)-1,
-                                              PyArray_DIMS(self)+1,
-                                              PyArray_STRIDES(self)+1, item,
-                                              PyArray_FLAGS(self),
-                                              (PyObject *)self);
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    /* Set the base object */
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
-    return (PyObject *)ret;
-}
-
-/* Get array item at given index */
-NPY_NO_EXPORT PyObject *
-array_item(PyArrayObject *self, Py_ssize_t i)
-{
-    if (PyArray_NDIM(self) == 1) {
-        return array_item_asscalar(self, (npy_intp) i);
-    }
-    else {
-        return array_item_asarray(self, (npy_intp) i);
-    }
-}
 
 /* -------------------------------------------------------------- */
 
@@ -1144,7 +1068,7 @@ array_boolean_subscript(PyArrayObject *self,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-array_ass_boolean_subscript(PyArrayObject *self,
+array_assign_boolean_subscript(PyArrayObject *self,
                     PyArrayObject *bmask, PyArrayObject *v, NPY_ORDER order)
 {
     npy_intp size, src_itemsize, v_stride;
@@ -1297,6 +1221,74 @@ array_ass_boolean_subscript(PyArrayObject *self,
 }
 
 
+/*
+ * C-level integer indexing always returning an array and never a scalar.
+ * Works also for subclasses, but it will not be called on one from the
+ * Python API.
+ *
+ * This function does not accept negative indices because it is called by
+ * PySequence_GetItem (through array_item) and that converts them to
+ * positive indices.
+ */
+NPY_NO_EXPORT PyObject *
+array_item_asarray(PyArrayObject *self, npy_intp i)
+{
+    npy_index_info indices[2];
+    PyObject *result;
+
+    if (PyArray_NDIM(self) == 0) {
+        PyErr_SetString(PyExc_IndexError,
+                        "too many indices for array"); 
+        return NULL;
+    }
+    if (i < 0) {
+        /* This is an error, but undo PySequence_GetItem fix for message */
+        i -= PyArray_DIM(self, 0);
+    }
+
+    indices[0].value = i;
+    indices[0].type = HAS_INTEGER;
+    indices[1].value = PyArray_NDIM(self) - 1;
+    indices[1].type = HAS_ELLIPSIS;
+    if (get_view_from_index(self, (PyArrayObject **)&result,
+                            indices, 2, 0) < 0) {
+        return NULL;
+    }
+    return result;
+}
+
+
+/*
+ * Python C-Api level item subscription (implementation for PySequence_GetItem)
+ *
+ * Negative indices are not accepted because PySequence_GetItem converts
+ * them to positive indices before calling this.
+ */
+NPY_NO_EXPORT PyObject *
+array_item(PyArrayObject *self, Py_ssize_t i)
+{
+    if (PyArray_NDIM(self) == 1) {
+        char *item;
+        npy_index_info index;
+
+        if (i < 0) {
+            /* This is an error, but undo PySequence_GetItem fix for message */
+            i -= PyArray_DIM(self, 0);
+        }
+
+        index.value = i;
+        index.type = HAS_INTEGER;
+        if (get_item_pointer(self, &item, &index, 1) < 0) {
+            return NULL;
+        }
+        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+    }
+    else {
+        return array_item_asarray(self, i);
+    }
+}
+
+
 /* make sure subscript always returns an array object */
 NPY_NO_EXPORT PyObject *
 array_subscript_asarray(PyArrayObject *self, PyObject *op)
@@ -1304,6 +1296,10 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
     return PyArray_EnsureAnyArray(array_subscript(self, op));
 }
 
+
+/*
+ * General function for indexing a NumPy array with a Python object.
+ */
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op)
 {
@@ -1586,8 +1582,68 @@ array_subscript(PyArrayObject *self, PyObject *op)
 }
 
 
+/*
+ * Python C-Api level item assignment (implementation for PySequence_SetItem)
+ *
+ * Negative indices are not accepted because PySequence_SetItem converts
+ * them to positive indices before calling this.
+ */
+NPY_NO_EXPORT int
+array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
+{
+    npy_index_info indices[2];
+
+    if (op == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot delete array elements");
+        return -1;
+    }
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
+        return -1;
+    }
+    if (PyArray_NDIM(self) == 0) {
+        PyErr_SetString(PyExc_IndexError,
+                        "too many indices for array"); 
+        return -1;
+    }
+
+    if (i < 0) {
+        /* This is an error, but undo PySequence_SetItem fix for message */
+        i -= PyArray_DIM(self, 0);
+    }
+
+    indices[0].value = i;
+    indices[0].type = HAS_INTEGER;
+    if (PyArray_NDIM(self) == 1) {
+        char *item;
+        if (get_item_pointer(self, &item, indices, 1) < 0) {
+            return -1;
+        }
+        if (PyArray_SETITEM(self, item, op) < 0) {
+            return -1;
+        }
+    }
+    else {
+        PyArrayObject *view;
+
+        indices[1].value = PyArray_NDIM(self) - 1;
+        indices[1].type = HAS_ELLIPSIS;
+        if (get_view_from_index(self, &view, indices, 2, 0) < 0) {
+            return -1;
+        }
+        if (PyArray_CopyObject(view, op) < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+/*
+ * General assignment with python indexing objects.
+ */
 static int
-array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
+array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
 {
     int index_type;
     int index_num;
@@ -1674,9 +1730,9 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             Py_INCREF(op);
             tmp_arr = (PyArrayObject *)op;
         }
-        if (array_ass_boolean_subscript(self,
-                                        (PyArrayObject *)indices[0].object,
-                                        tmp_arr, NPY_CORDER) < 0) {
+        if (array_assign_boolean_subscript(self,
+                                           (PyArrayObject *)indices[0].object,
+                                           tmp_arr, NPY_CORDER) < 0) {
             goto fail;
         }
         goto success;
@@ -1879,21 +1935,10 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 }
 
 
-NPY_NO_EXPORT int
-array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
-{
-    PyObject * ind = PyLong_FromSsize_t(i);
-    if (ind == NULL) {
-        return -1;
-    }
-    return array_ass_sub(self, ind, v);
-}
-
-
 NPY_NO_EXPORT PyMappingMethods array_as_mapping = {
     (lenfunc)array_length,              /*mp_length*/
     (binaryfunc)array_subscript,        /*mp_subscript*/
-    (objobjargproc)array_ass_sub,       /*mp_ass_subscript*/
+    (objobjargproc)array_assign_subscript,       /*mp_ass_subscript*/
 };
 
 /****************** End of Mapping Protocol ******************************/

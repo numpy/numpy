@@ -88,7 +88,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 
 
 static int
-array_ass_slice(PyArrayObject *self, Py_ssize_t ilow,
+array_assign_slice(PyArrayObject *self, Py_ssize_t ilow,
                 Py_ssize_t ihigh, PyObject *v) {
     int ret;
     PyArrayObject *tmp;
@@ -135,8 +135,8 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
     (ssizeargfunc)NULL,
     (ssizeargfunc)array_item,
     (ssizessizeargfunc)array_slice,
-    (ssizeobjargproc)array_ass_item,        /*sq_ass_item*/
-    (ssizessizeobjargproc)array_ass_slice,  /*sq_ass_slice*/
+    (ssizeobjargproc)array_assign_item,        /*sq_ass_item*/
+    (ssizessizeobjargproc)array_assign_slice,  /*sq_ass_slice*/
     (objobjproc) array_contains,            /*sq_contains */
     (binaryfunc) NULL,                      /*sg_inplace_concat */
     (ssizeargfunc)NULL,

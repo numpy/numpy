@@ -45,7 +45,7 @@ NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);
 
 NPY_NO_EXPORT int
-array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
+array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 
 /*
  * Prototypes for Mapping calls --- not part of the C-API

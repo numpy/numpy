@@ -51,6 +51,13 @@ The unused ``simple_capsule_dtor`` function has been removed from
 ``npy_3kcompat.h``.  Note that this header is not meant to be used outside of
 numpy; other projects should be using their own copy of this file when needed.
 
+Negative indices in C-Api sq_item and sq_ass_item sequence methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When directly accessing the ``sq_item`` or ``sq_ass_item`` PyObject slots
+for item getting, negative indices will not be supported anymore.
+``PySequence_GetItem`` and ``PySequence_SetItem`` however fix negative
+indices so that they can be used there.
+
 
 New Features
 ============
