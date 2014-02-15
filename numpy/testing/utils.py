@@ -793,7 +793,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33333,  5.     ])
 
     """
-    from numpy.core import around, number, float_
+    from numpy.core import around, number, float_, result_type, array
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
     def compare(x, y):
@@ -810,12 +810,21 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                 y = y[~yinfid]
         except (TypeError, NotImplementedError):
             pass
+
+        # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+        # casting of x later.
+        dtype = result_type(y, 1.)
+        y = array(y, dtype=dtype, copy=False)
         z = abs(x-y)
+
         if not issubdtype(z.dtype, number):
             z = z.astype(float_) # handle object arrays
+
         return around(z, decimal) <= 10.0**(-decimal)
+
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
              header=('Arrays are not almost equal to %d decimals' % decimal))
+
 
 def assert_array_less(x, y, err_msg='', verbose=True):
     """

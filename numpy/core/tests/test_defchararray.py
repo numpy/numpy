@@ -128,9 +128,9 @@ class TestWhitespace(TestCase):
         assert_(all(self.A == self.B))
         assert_(all(self.A >= self.B))
         assert_(all(self.A <= self.B))
-        assert_(all(negative(self.A > self.B)))
-        assert_(all(negative(self.A < self.B)))
-        assert_(all(negative(self.A != self.B)))
+        assert_(not any(self.A > self.B))
+        assert_(not any(self.A < self.B))
+        assert_(not any(self.A != self.B))
 
 class TestChar(TestCase):
     def setUp(self):

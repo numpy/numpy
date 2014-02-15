@@ -447,7 +447,10 @@ class TestRegression(TestCase):
             res1 = getattr(arr, func_meth)()
             res2 = getattr(np, func)(arr2)
             if res1 is None:
-                assert_(abs(arr-res2).max() < 1e-8, func)
+                res1 = arr
+
+            if res1.dtype.kind in 'uib':
+                assert_((res1 == res2).all(), func)
             else:
                 assert_(abs(res1-res2).max() < 1e-8, func)
 

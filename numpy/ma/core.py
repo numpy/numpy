@@ -6926,6 +6926,13 @@ def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     """
     x = masked_array(a, copy=False)
     y = masked_array(b, copy=False)
+
+    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+    # casting of x later.
+    dtype = np.result_type(y, 1.)
+    if y.dtype != dtype:
+        y = masked_array(y, dtype=dtype, copy=False)
+
     m = mask_or(getmask(x), getmask(y))
     xinf = np.isinf(masked_array(x, copy=False, mask=m)).filled(False)
     # If we have some infs, they should fall at the same place.
@@ -6937,13 +6944,16 @@ def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
                                     atol + rtol * umath.absolute(y)),
                    masked_equal)
         return np.all(d)
+
     if not np.all(filled(x[xinf] == y[xinf], masked_equal)):
         return False
     x = x[~xinf]
     y = y[~xinf]
+
     d = filled(umath.less_equal(umath.absolute(x - y),
                                 atol + rtol * umath.absolute(y)),
                masked_equal)
+
     return np.all(d)
 
 #..............................................................................

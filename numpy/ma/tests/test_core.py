@@ -1995,6 +1995,10 @@ class TestMaskedArrayMethods(TestCase):
         a[0] = 0
         self.assertTrue(allclose(a, 0, masked_equal=True))
 
+        # Test that the function works for MIN_INT integer typed arrays
+        a = masked_array([np.iinfo(np.int_).min], dtype=np.int_)
+        self.assertTrue(allclose(a, a))
+
     def test_allany(self):
         # Checks the any/all methods/functions.
         x = np.array([[0.13, 0.26, 0.90],
