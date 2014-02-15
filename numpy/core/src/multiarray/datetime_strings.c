@@ -1554,6 +1554,9 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
     op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
                                     NULL, 0, 0, 0, NULL);
+    if (op[0] == NULL) {
+        goto fail;
+    }
     if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
         PyErr_SetString(PyExc_TypeError,
                     "input must have type NumPy datetime");

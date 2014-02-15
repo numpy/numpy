@@ -4,7 +4,9 @@ import sys
 import gzip
 import os
 import threading
-from tempfile import mkstemp, mktemp, NamedTemporaryFile
+import shutil
+import contextlib
+from tempfile import mkstemp, mkdtemp, NamedTemporaryFile
 import time
 import warnings
 import gc
@@ -20,6 +22,12 @@ from nose import SkipTest
 from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
     assert_raises, run_module_suite)
 from numpy.testing import assert_warns, assert_, build_err_msg
+
+@contextlib.contextmanager
+def tempdir(change_dir=False):
+    tmpdir = mkdtemp()
+    yield tmpdir
+    shutil.rmtree(tmpdir)
 
 
 class TextIO(BytesIO):
@@ -145,14 +153,14 @@ class TestSavezLoad(RoundtripTest, TestCase):
     @np.testing.dec.slow
     def test_big_arrays(self):
         L = (1 << 31) + 100000
-        tmp = mktemp(suffix='.npz')
         a = np.empty(L, dtype=np.uint8)
-        np.savez(tmp, a=a)
-        del a
-        npfile = np.load(tmp)
-        a = npfile['a']
-        npfile.close()
-        os.remove(tmp)
+        with tempdir() as tmpdir:
+            tmp = os.path.join(tmpdir, "file.npz")
+            np.savez(tmp, a=a)
+            del a
+            npfile = np.load(tmp)
+            a = npfile['a']
+            npfile.close()
 
     def test_multiple_arrays(self):
         a = np.array([[1, 2], [3, 4]], float)

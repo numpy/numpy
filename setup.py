@@ -18,10 +18,9 @@ from __future__ import division, print_function
 DOCLINES = __doc__.split("\n")
 
 import os
-import shutil
 import sys
-import re
 import subprocess
+
 
 if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
     raise RuntimeError("Python version 2.6, 2.7 or >= 3.2 required.")
@@ -30,6 +29,7 @@ if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
+
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
@@ -47,23 +47,12 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
-NAME                = 'numpy'
-MAINTAINER          = "NumPy Developers"
-MAINTAINER_EMAIL    = "numpy-discussion@scipy.org"
-DESCRIPTION         = DOCLINES[0]
-LONG_DESCRIPTION    = "\n".join(DOCLINES[2:])
-URL                 = "http://www.numpy.org"
-DOWNLOAD_URL        = "http://sourceforge.net/projects/numpy/files/NumPy/"
-LICENSE             = 'BSD'
-CLASSIFIERS         = [_f for _f in CLASSIFIERS.split('\n') if _f]
-AUTHOR              = "Travis E. Oliphant et al."
-AUTHOR_EMAIL        = "oliphant@enthought.com"
-PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 8
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+
 
 # Return the git revision as a string
 def git_version():
@@ -100,18 +89,7 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 builtins.__NUMPY_SETUP__ = True
 
 
-def write_version_py(filename='numpy/version.py'):
-    cnt = """
-# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-short_version = '%(version)s'
-version = '%(version)s'
-full_version = '%(full_version)s'
-git_revision = '%(git_revision)s'
-release = %(isrelease)s
-
-if not release:
-    version = full_version
-"""
+def get_version_info():
     # Adding the git rev number needs to be done inside write_version_py(),
     # otherwise the import of numpy.version messes up the build under Python 3.
     FULLVERSION = VERSION
@@ -131,6 +109,23 @@ if not release:
     if not ISRELEASED:
         FULLVERSION += '.dev-' + GIT_REVISION[:7]
 
+    return FULLVERSION, GIT_REVISION
+
+
+def write_version_py(filename='numpy/version.py'):
+    cnt = """
+# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
+short_version = '%(version)s'
+version = '%(version)s'
+full_version = '%(full_version)s'
+git_revision = '%(git_revision)s'
+release = %(isrelease)s
+
+if not release:
+    version = full_version
+"""
+    FULLVERSION, GIT_REVISION = get_version_info()
+
     a = open(filename, 'w')
     try:
         a.write(cnt % {'version': VERSION,
@@ -139,6 +134,7 @@ if not release:
                        'isrelease': str(ISRELEASED)})
     finally:
         a.close()
+
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -155,8 +151,36 @@ def configuration(parent_package='',top_path=None):
 
     return config
 
-def setup_package():
+def check_submodules():
+    """ verify that the submodules are checked out and clean
+        use `git submodule update --init`; on failure
+    """
+    if not os.path.exists('.git'):
+        return
+    with open('.gitmodules') as f:
+        for l in f:
+            if 'path' in l:
+                p = l.split('=')[-1].strip()
+                if not os.path.exists(p):
+                    raise ValueError('Submodule %s missing' % p)
 
+
+    proc = subprocess.Popen(['git', 'submodule', 'status'],
+                            stdout=subprocess.PIPE)
+    status, _ = proc.communicate()
+    status = status.decode("ascii", "replace")
+    for line in status.splitlines():
+        if line.startswith('-') or line.startswith('+'):
+            raise ValueError('Submodule not clean: %s' % line)
+
+from distutils.command.sdist import sdist
+class sdist_checked(sdist):
+    """ check submodules on sdist to prevent incomplete tarballs """
+    def run(self):
+        check_submodules()
+        sdist.run(self)
+
+def setup_package():
     src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     old_path = os.getcwd()
     os.chdir(src_path)
@@ -165,28 +189,51 @@ def setup_package():
     # Rewrite the version file everytime
     write_version_py()
 
+    metadata = dict(
+        name = 'numpy',
+        maintainer = "NumPy Developers",
+        maintainer_email = "numpy-discussion@scipy.org",
+        description = DOCLINES[0],
+        long_description = "\n".join(DOCLINES[2:]),
+        url = "http://www.numpy.org",
+        author = "Travis E. Oliphant et al.",
+        download_url = "http://sourceforge.net/projects/numpy/files/NumPy/",
+        license = 'BSD',
+        classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
+        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        test_suite='nose.collector',
+        cmdclass={"sdist": sdist_checked},
+    )
+
     # Run build
-    from numpy.distutils.core import setup
+    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
+            sys.argv[1] in ('--help-commands', 'egg_info', '--version',
+                            'clean')):
+        # Use setuptools for these commands (they don't work well or at all
+        # with distutils).  For normal builds use distutils.
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
+
+        FULLVERSION, GIT_REVISION = get_version_info()
+        metadata['version'] = FULLVERSION
+    elif len(sys.argv) >= 2 and sys.argv[1] == 'bdist_wheel':
+        # bdist_wheel needs setuptools
+        import setuptools
+        from numpy.distutils.core import setup
+        metadata['configuration'] = configuration
+    else:
+        from numpy.distutils.core import setup
+        metadata['configuration'] = configuration
 
     try:
-        setup(
-            name=NAME,
-            maintainer=MAINTAINER,
-            maintainer_email=MAINTAINER_EMAIL,
-            description=DESCRIPTION,
-            long_description=LONG_DESCRIPTION,
-            url=URL,
-            download_url=DOWNLOAD_URL,
-            license=LICENSE,
-            classifiers=CLASSIFIERS,
-            author=AUTHOR,
-            author_email=AUTHOR_EMAIL,
-            platforms=PLATFORMS,
-            configuration=configuration )
+        setup(**metadata)
     finally:
         del sys.path[0]
         os.chdir(old_path)
     return
+
 
 if __name__ == '__main__':
     setup_package()

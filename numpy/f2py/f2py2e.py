@@ -91,7 +91,7 @@ Options:
                    --lower is assumed with -h key, and --no-lower without -h key.
 
   --build-dir <dirname>  All f2py generated files are created in <dirname>.
-                   Default is tempfile.mktemp().
+                   Default is tempfile.mkdtemp().
 
   --overwrite-signature  Overwrite existing signature file.
 
@@ -428,7 +428,7 @@ def run_compile():
         del sys.argv[i]
     else:
         remove_build_dir = 1
-        build_dir = os.path.join(tempfile.mktemp())
+        build_dir = tempfile.mkdtemp()
 
     _reg1 = re.compile(r'[-][-]link[-]')
     sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]

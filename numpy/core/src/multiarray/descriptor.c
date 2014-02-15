@@ -314,6 +314,11 @@ _convert_from_tuple(PyObject *obj)
         newdescr->elsize *= PyArray_MultiplyList(shape.ptr, shape.len);
         PyDimMem_FREE(shape.ptr);
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        if (newdescr->subarray == NULL) {
+            Py_DECREF(newdescr);
+            PyErr_NoMemory();
+            goto fail;
+        }
         newdescr->flags = type->flags;
         newdescr->subarray->base = type;
         type = NULL;
@@ -1528,6 +1533,10 @@ PyArray_DescrNew(PyArray_Descr *base)
     Py_XINCREF(newdescr->names);
     if (newdescr->subarray) {
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        if (newdescr->subarray == NULL) {
+            Py_DECREF(newdescr);
+            return PyErr_NoMemory();
+        }
         memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(newdescr->subarray->shape);
         Py_INCREF(newdescr->subarray->base);

@@ -2009,9 +2009,12 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                         ret_ndim, &innerloopsize,
                         &innerstride, dataptr,
                         self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
     Py_INCREF(self);
     if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
+        Py_XDECREF(ret);
         return NULL;
     }
 

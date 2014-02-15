@@ -1714,6 +1714,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     if (nd > 0) {
         fa->dimensions = PyDimMem_NEW(3*nd);
+        if (fa->dimensions == NULL) {
+            return PyErr_NoMemory();
+        }
         fa->strides = PyArray_DIMS(self) + nd;
         memcpy(PyArray_DIMS(self), dimensions, sizeof(npy_intp)*nd);
         _array_fill_strides(PyArray_STRIDES(self), dimensions, nd,
