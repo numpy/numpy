@@ -2139,8 +2139,13 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
 
-    xinf = isinf(x)
-    yinf = isinf(y)
+    xexact = x.dtype.kind not in 'fc'
+    yexact = y.dtype.kind not in 'fc'
+    if xexact and yexact:
+        return (x == y).all()
+
+    xinf = not xexact and isinf(x)
+    yinf = not yexact and isinf(y)
     if any(xinf) or any(yinf):
         # Check that x and y have inf's only in the same positions
         if not all(xinf == yinf):
