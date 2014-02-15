@@ -20,16 +20,16 @@ class FindDependenciesLdd(object):
         except OSError:
             raise RuntimeError("command %s cannot be run" % self.cmd)
 
-    def get_dependencies(self, file):
-        p = Popen(self.cmd + [file], stdout=PIPE, stderr=PIPE)
+    def get_dependencies(self, lfile):
+        p = Popen(self.cmd + [lfile], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if not (p.returncode == 0):
-            raise RuntimeError("Failed to check dependencies for %s" % libfile)
+            raise RuntimeError("failed dependencies check for %s" % lfile)
 
         return stdout
 
-    def grep_dependencies(self, file, deps):
-        stdout = self.get_dependencies(file)
+    def grep_dependencies(self, lfile, deps):
+        stdout = self.get_dependencies(lfile)
 
         rdeps = dict([(dep, re.compile(dep)) for dep in deps])
         founds = []
