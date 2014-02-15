@@ -75,7 +75,7 @@ static NPY_INLINE int
 check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
 {
     /* Check that index is valid, taking into account negative indices */
-    if ((*index < -max_item) || (*index >= max_item)) {
+    if (NPY_UNLIKELY((*index < -max_item) || (*index >= max_item))) {
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
