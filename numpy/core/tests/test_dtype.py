@@ -291,6 +291,47 @@ class TestSubarray(TestCase):
             np.dtype(([('a', [('a', 'i4', 6)], (2, 1)), ('b', 'f8', (1, 3))], (2, 2))),
             np.dtype(([('a', [('a', 'u4', 6)], (2, 1)), ('b', 'f8', (1, 3))], (2, 2))))
 
+    def test_shape_sequence(self):
+        # Any sequence of integers should work as shape, but the result
+        # should be a tuple (immutable) of base type integers.
+        a = np.array([1, 2, 3], dtype=np.int16)
+        l = [1, 2, 3]
+        # Array gets converted
+        dt = np.dtype([('a', 'f4', a)])
+        assert_(isinstance(dt['a'].shape, tuple))
+        assert_(isinstance(dt['a'].shape[0], int))
+        # List gets converted
+        dt = np.dtype([('a', 'f4', l)])
+        assert_(isinstance(dt['a'].shape, tuple))
+        # 
+        class IntLike(object):
+            def __index__(self):
+                return 3
+            def __int__(self):
+                # (a PyNumber_Check fails without __int__)
+                return 3
+        dt = np.dtype([('a', 'f4', IntLike())])
+        assert_(isinstance(dt['a'].shape, tuple))
+        assert_(isinstance(dt['a'].shape[0], int))
+        dt = np.dtype([('a', 'f4', (IntLike(),))])
+        assert_(isinstance(dt['a'].shape, tuple))
+        assert_(isinstance(dt['a'].shape[0], int))
+
+    def test_shape_invalid(self):
+        # Check that the shape is valid.
+        max_int = np.iinfo(np.intc).max
+        max_intp = np.iinfo(np.intp).max
+        # Too large values (the datatype is part of this)
+        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int // 4 + 1)])
+        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int + 1)])
+        assert_raises(ValueError, np.dtype, [('a', 'f4', (max_int, 2))])
+        # Takes a different code path (fails earlier:
+        assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp + 1)])
+        # Negative values
+        assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
+        assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
+
+
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
     def test1(self):
