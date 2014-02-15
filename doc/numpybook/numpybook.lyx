@@ -6062,9 +6062,9 @@ name "ndarray!methods!itemset"
 \end_layout
 
 \begin_layout Description
-tostring
+tobytes
 \begin_inset LatexCommand index
-name "ndarray!methods!tostring"
+name "ndarray!methods!tobytes"
 
 \end_inset
 
@@ -6134,7 +6134,7 @@ format
  the shape, type, or endianness of an array.
  When written in binary mode, tofile is functionally equivalent to 
 \family typewriter
-fid.write(self.tostring())
+fid.write(self.tobytes())
 \family default
 .
 \end_layout
@@ -6836,7 +6836,7 @@ Insert scalar (last argument) into array
 \begin_layout Standard
 
 \series bold
-tostring
+tobytes
 \end_layout
 
 \end_inset
@@ -9450,7 +9450,7 @@ name "ndarray!special methods!setstate"
 ).
  In this tuple, isfortran is a Bool stating whether the following flattened
  data is in Fortran order or not, and string_or_list is a string formed
- by self.tostring() if the data type is not object.
+ by self.tobytes() if the data type is not object.
  If the data type of self is an object array, then string_or_list is a flat
  list equivalent to self.ravel().tolist().
  
@@ -17719,7 +17719,7 @@ __reduce__ ()
 \InsetSpace ~
  This is called to pickle an array scalar.
  It returns a tuple of (numpy.core.multiarray.scalar, self.dtypestr, obj or
- self.tostring()) which can be used to reconstruct the scalar on unpickling.
+ self.tobytes()) which can be used to reconstruct the scalar on unpickling.
  Notice that no state is written, because the entire scalar can be constructed
  from just the string.
  Also, if this is an object array scalar, then the Python object being reference

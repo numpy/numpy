@@ -5382,9 +5382,19 @@ class MaskedArray(ndarray):
     #........................
     def tostring(self, fill_value=None, order='C'):
         """
+        This function is a compatibility alias for tobytes. Despite its name it
+        returns bytes not strings.
+        """
+
+        return self.tobytes(fill_value, order='C')
+    #........................
+    def tobytes(self, fill_value=None, order='C'):
+        """
         Return the array data as a string containing the raw bytes in the array.
 
         The array is filled with a fill value before the string conversion.
+
+        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -5401,22 +5411,22 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.tostring
+        ndarray.tobytes
         tolist, tofile
 
         Notes
         -----
-        As for `ndarray.tostring`, information about the shape, dtype, etc.,
+        As for `ndarray.tobytes`, information about the shape, dtype, etc.,
         but also about `fill_value`, will be lost.
 
         Examples
         --------
         >>> x = np.ma.array(np.array([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-        >>> x.tostring()
+        >>> x.tobytes()
         '\\x01\\x00\\x00\\x00?B\\x0f\\x00?B\\x0f\\x00\\x04\\x00\\x00\\x00'
 
         """
-        return self.filled(fill_value).tostring(order=order)
+        return self.filled(fill_value).tobytes(order=order)
     #........................
     def tofile(self, fid, sep="", format="%s"):
         """
@@ -5498,9 +5508,9 @@ class MaskedArray(ndarray):
                  self.shape,
                  self.dtype,
                  self.flags.fnc,
-                 self._data.tostring(cf),
+                 self._data.tobytes(cf),
                  #self._data.tolist(),
-                 getmaskarray(self).tostring(cf),
+                 getmaskarray(self).tobytes(cf),
                  #getmaskarray(self).tolist(),
                  self._fill_value,
                  )

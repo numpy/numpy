@@ -227,7 +227,8 @@ class Array(object):
         assert_(self.arr_attr[2]==self.pyarr_attr[2]) # dimensions
         if self.arr_attr[1]<=1:
             assert_(self.arr_attr[3]==self.pyarr_attr[3],\
-                   repr((self.arr_attr[3], self.pyarr_attr[3], self.arr.tostring(), self.pyarr.tostring()))) # strides
+                   repr((self.arr_attr[3], self.pyarr_attr[3],
+                         self.arr.tobytes(), self.pyarr.tobytes()))) # strides
         assert_(self.arr_attr[5][-2:]==self.pyarr_attr[5][-2:],\
                repr((self.arr_attr[5], self.pyarr_attr[5]))) # descr
         assert_(self.arr_attr[6]==self.pyarr_attr[6],\

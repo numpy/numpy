@@ -407,7 +407,7 @@ def write_array(fp, array, version=(1, 0)):
             for chunk in numpy.nditer(
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='F'):
-                fp.write(chunk.tostring('C'))
+                fp.write(chunk.tobytes('C'))
     else:
         if isfileobj(fp):
             array.tofile(fp)
@@ -415,7 +415,7 @@ def write_array(fp, array, version=(1, 0)):
             for chunk in numpy.nditer(
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='C'):
-                fp.write(chunk.tostring('C'))
+                fp.write(chunk.tobytes('C'))
 
 
 def read_array(fp):

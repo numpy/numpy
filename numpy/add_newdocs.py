@@ -4386,7 +4386,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
-        ``file.write(a.tostring())``.
+        ``file.write(a.tobytes())``.
     format : str
         Format string for text file output.
         Each entry in the array is formatted to text by first converting
@@ -4440,8 +4440,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
-    """
+tobytesdoc = """
     a.tostring(order='C')
 
     Construct a Python string containing the raw data bytes in the array.
@@ -4452,9 +4451,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     unless the F_CONTIGUOUS flag in the array is set, in which case it
     means 'Fortran' order.
 
+    {deprecated}
+
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
+    order : {{'C', 'F', None}}, optional
         Order of the data for multidimensional arrays:
         C, Fortran, or the same as for the original array.
 
@@ -4466,15 +4467,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     Examples
     --------
     >>> x = np.array([[0, 1], [2, 3]])
-    >>> x.tostring()
+    >>> x.tobytes()
     '\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
-    >>> x.tostring('C') == x.tostring()
+    >>> x.tobytes('C') == x.tobytes()
     True
-    >>> x.tostring('F')
+    >>> x.tobytes('F')
     '\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
 
-    """))
+    """
 
+add_newdoc('numpy.core.multiarray', 'ndarray',
+           ('tostring', tobytesdoc.format(deprecated=
+                                          'This function is a compatibility '
+                                          'alias for tobytes. Despite its '
+                                          'name it returns bytes not '
+                                          'strings.')))
+add_newdoc('numpy.core.multiarray', 'ndarray',
+           ('tobytes', tobytesdoc.format(deprecated='.. versionadded:: 1.9.0')))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
     """

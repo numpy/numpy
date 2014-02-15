@@ -74,6 +74,14 @@ Dtype parameter added to `np.linspace` and `np.logspace`
 The returned data type from the `linspace` and `logspace` functions
 can now be specificed using the dtype parameter.
 
+
+`tobytes` alias for `tostring` method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`ndarray.tobytes` and `MaskedArray.tobytes` have been added as aliases for
+`tostring` which exports arrays as `bytes`. This is more consistent in Python 3
+where `str` and `bytes` are not the same.
+
+
 Improvements
 ============
 

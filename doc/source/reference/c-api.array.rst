@@ -1574,7 +1574,7 @@ Conversion
 
 .. cfunction:: PyObject* PyArray_ToString(PyArrayObject* self, NPY_ORDER order)
 
-    Equivalent to :meth:`ndarray.tostring` (*self*, *order*). Return the bytes
+    Equivalent to :meth:`ndarray.tobytes` (*self*, *order*). Return the bytes
     of this array in a Python string.
 
 .. cfunction:: PyObject* PyArray_ToFile(PyArrayObject* self, FILE* fp, char* sep, char* format)

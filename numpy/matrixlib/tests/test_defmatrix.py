@@ -285,8 +285,8 @@ class TestMatrixReturn(TestCase):
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
             'partition', 'argpartition',
-            'take', 'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
-            'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
+            'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
+            'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
             'prod', 'std', 'ctypes', 'itemset', 'setasflat'
             ]
         for attrib in dir(a):

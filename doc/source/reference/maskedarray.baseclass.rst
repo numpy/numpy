@@ -200,6 +200,7 @@ Conversion
    MaskedArray.tolist
    MaskedArray.torecords
    MaskedArray.tostring
+   MaskedArray.tobytes
 
 
 Shape manipulation
