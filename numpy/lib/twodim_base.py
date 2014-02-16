@@ -25,7 +25,7 @@ def fliplr(m):
     Parameters
     ----------
     m : array_like
-        Input array.
+        Input array, must be at least 2-D.
 
     Returns
     -------
@@ -40,8 +40,7 @@ def fliplr(m):
 
     Notes
     -----
-    Equivalent to A[:,::-1]. Does not require the array to be
-    two-dimensional.
+    Equivalent to A[:,::-1]. Requires the array to be at least 2-D.
 
     Examples
     --------
