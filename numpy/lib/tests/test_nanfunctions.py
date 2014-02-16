@@ -11,15 +11,15 @@ from numpy.testing import (
 
 # Test data
 _ndat = np.array([[0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
-                  [0.5351, 0.9403, np.nan,  0.2100, 0.4759, 0.2833],
-                  [np.nan, np.nan, np.nan,  0.1042, np.nan, 0.5954],
+                  [0.5351, -0.9403, np.nan,  0.2100, 0.4759, 0.2833],
+                  [np.nan, np.nan, np.nan,  0.1042, np.nan, -0.5954],
                   [0.1610, np.nan, np.nan,  0.1859, 0.3146, np.nan]])
 
 
 # Rows of _ndat with nans removed
 _rdat = [np.array([ 0.6244, 0.2692, 0.0116, 0.1170]),
-         np.array([ 0.5351, 0.9403, 0.2100, 0.4759, 0.2833]),
-         np.array([ 0.1042, 0.5954]),
+         np.array([ 0.5351, -0.9403, 0.2100, 0.4759, 0.2833]),
+         np.array([ 0.1042, -0.5954]),
          np.array([ 0.1610, 0.1859, 0.3146])]
 
 
@@ -525,6 +525,96 @@ class TestNanFunctions_MeanVarStd(TestCase):
             assert_(res.shape == (3, 1))
             res = f(mat)
             assert_(np.isscalar(res))
+
+
+class TestNanFunctions_Median(TestCase):
+
+    def test_mutation(self):
+        # Check that passed array is not modified.
+        ndat = _ndat.copy()
+        np.nanmedian(ndat)
+        assert_equal(ndat, _ndat)
+
+    def test_keepdims(self):
+        mat = np.eye(3)
+        for axis in [None, 0, 1]:
+            tgt = np.median(mat, axis=axis, out=None, overwrite_input=False)
+            res = np.nanmedian(mat, axis=axis, out=None, overwrite_input=False)
+            assert_(res.ndim == tgt.ndim)
+
+    def test_out(self):
+        mat = np.random.rand(3,3)
+        resout = np.zeros(3)
+        tgt = np.median(mat, axis=1)
+        res = np.nanmedian(mat, axis=1, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+
+    def test_result_values(self):
+            tgt = [np.median(d) for d in _rdat]
+            res = np.nanmedian(_ndat, axis=1)
+            assert_almost_equal(res, tgt)
+
+    def test_allnans(self):
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        for axis in [None, 0, 1]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_(np.isnan(np.nanmedian(mat, axis=axis)).all())
+                if axis is None:
+                    assert_(len(w) == 1)
+                else:
+                    assert_(len(w) == 3)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+                # Check scalar
+                assert_(np.isnan(np.nanmedian(np.nan)))
+                if axis is None:
+                    assert_(len(w) == 2)
+                else:
+                    assert_(len(w) == 4)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+
+    def test_empty(self):
+        mat = np.zeros((0, 3))
+        for axis in [0, None]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_(np.isnan(np.nanmedian(mat, axis=axis)).all())
+                assert_(len(w) == 1)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+        for axis in [1]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_equal(np.nanmedian(mat, axis=axis), np.zeros([]))
+                assert_(len(w) == 0)
+
+    def test_scalar(self):
+        assert_(np.nanmedian(0.) == 0.)
+
+    def test_extended_axis_invalid(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_raises(IndexError, np.nanmedian, d, axis=-5)
+        assert_raises(IndexError, np.nanmedian, d, axis=(0, -5))
+        assert_raises(IndexError, np.nanmedian, d, axis=4)
+        assert_raises(IndexError, np.nanmedian, d, axis=(0, 4))
+        assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
+
+    def test_keepdims(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_equal(np.nanmedian(d, axis=None, keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.nanmedian(d, axis=(0, 1), keepdims=True).shape,
+                     (1, 1, 7, 11))
+        assert_equal(np.nanmedian(d, axis=(0, 3), keepdims=True).shape,
+                     (1, 5, 7, 1))
+        assert_equal(np.nanmedian(d, axis=(1,), keepdims=True).shape,
+                     (3, 1, 7, 11))
+        assert_equal(np.nanmedian(d, axis=(0, 1, 2, 3), keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.nanmedian(d, axis=(0, 1, 3), keepdims=True).shape,
+                     (1, 1, 7, 1))
+
+
 
 
 if __name__ == "__main__":

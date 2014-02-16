@@ -148,6 +148,11 @@ this new boolean argument.
 The number of times each unique item comes up in the input can now be
 obtained as an optional return value.
 
+Support for median in nanfunctions 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Taking the median of an ``ndarray`` while ignoring the nans in an array 
+was added with the ``np.nanmedian`` function.
+
 
 Improvements
 ============
