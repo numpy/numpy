@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import tempfile
 import sys
 import os
+import shutil
 import warnings
 import operator
 import io
@@ -2373,11 +2374,11 @@ class TestIO(object):
         self.x = rand(shape) + rand(shape).astype(np.complex)*1j
         self.x[0,:, 1] = [nan, inf, -inf, nan]
         self.dtype = self.x.dtype
-        self.file = tempfile.NamedTemporaryFile()
-        self.filename = self.file.name
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = tempfile.mktemp(dir=self.tempdir)
 
     def tearDown(self):
-        self.file.close()
+        shutil.rmtree(self.tempdir)
 
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)
