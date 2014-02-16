@@ -34,6 +34,17 @@ cf2py  intent(out) a
        external fun
        call fun(a)
        end
+
+       subroutine string_callback(callback, a)
+       external callback
+       double precision callback
+       double precision a
+       character*1 r
+cf2py  intent(out) a
+       r = 'r'
+       a = callback(r)
+       end
+
     """
 
     @dec.slow
@@ -102,6 +113,19 @@ cf2py  intent(out) a
         assert_( r==7, repr(r))
         r = t(a.mth)
         assert_( r==9, repr(r))
+
+    def test_string_callback(self):
+
+        def callback(code):
+            if code == 'r':
+                return 0
+            else:
+                return 1
+
+        f = getattr(self.module, 'string_callback')
+        r = f(callback)
+        assert_(r == 0, repr(r))
+
 
 if __name__ == "__main__":
     import nose
