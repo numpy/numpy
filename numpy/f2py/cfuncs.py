@@ -75,7 +75,7 @@ typedef long long long_long;
 typedef unsigned long long unsigned_long_long;
 #endif
 """
-typedefs['insinged_long_long']="""\
+typedefs['unsigned_long_long']="""\
 #ifdef _WIN32
 typedef __uint64 long_long;
 #else
