@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from tempfile import NamedTemporaryFile, TemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import os
+import shutil
 
 from numpy import memmap
 from numpy import arange, allclose, asarray
@@ -11,6 +12,7 @@ from numpy.testing import *
 class TestMemmap(TestCase):
     def setUp(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
+        self.tempdir = mkdtemp()
         self.shape = (3, 4)
         self.dtype = 'float32'
         self.data = arange(12, dtype=self.dtype)
@@ -18,6 +20,7 @@ class TestMemmap(TestCase):
 
     def tearDown(self):
         self.tmpfp.close()
+        shutil.rmtree(self.tempdir)
 
     def test_roundtrip(self):
         # Write data to file
@@ -33,11 +36,11 @@ class TestMemmap(TestCase):
         assert_array_equal(self.data, newfp)
 
     def test_open_with_filename(self):
-        with NamedTemporaryFile() as tmp:
-            fp = memmap(tmp.name, dtype=self.dtype, mode='w+',
-                        shape=self.shape)
-            fp[:] = self.data[:]
-            del fp
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
+                       shape=self.shape)
+        fp[:] = self.data[:]
+        del fp
 
     def test_unnamed_file(self):
         with TemporaryFile() as f:
@@ -54,16 +57,16 @@ class TestMemmap(TestCase):
         del fp
 
     def test_filename(self):
-        with NamedTemporaryFile() as tmp:
-            fp = memmap(tmp.name, dtype=self.dtype, mode='w+',
-                        shape=self.shape)
-            abspath = os.path.abspath(tmp.name)
-            fp[:] = self.data[:]
-            self.assertEqual(abspath, fp.filename)
-            b = fp[:1]
-            self.assertEqual(abspath, b.filename)
-            del b
-            del fp
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
+                       shape=self.shape)
+        abspath = os.path.abspath(tmpname)
+        fp[:] = self.data[:]
+        self.assertEqual(abspath, fp.filename)
+        b = fp[:1]
+        self.assertEqual(abspath, b.filename)
+        del b
+        del fp
 
     def test_filename_fileobj(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
