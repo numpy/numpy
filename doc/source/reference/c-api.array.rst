@@ -2583,7 +2583,7 @@ Data-type descriptors
     unless otherwise noted. Therefore, you must own a reference to any
     data-type object used as input to such a function.
 
-.. cfunction:: int PyArrayDescr_Check(PyObject* obj)
+.. cfunction:: int PyArray_DescrCheck(PyObject* obj)
 
     Evaluates as true if *obj* is a data-type object ( :ctype:`PyArray_Descr *` ).
 
