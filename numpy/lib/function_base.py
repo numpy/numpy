@@ -1101,7 +1101,7 @@ def interp(x, xp, fp, left=None, right=None):
     -----
     Does not check that the x-coordinate sequence `xp` is increasing.
     If `xp` is not increasing, the results are nonsense.
-    A simple check for increasing is::
+    A simple check for increasingness is::
 
         np.all(np.diff(xp) > 0)
 
@@ -1578,16 +1578,15 @@ class vectorize(object):
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
+    If `otypes` is not specified, then a call to the function with the first
+    argument will be used to determine the number of outputs.  The results of
+    this call will be cached if `cache` is `True` to prevent calling the
+    function twice.  However, to implement the cache, the original function
+    must be wrapped which will slow down subsequent calls, so only do this if
+    your function is expensive.
 
-    The new keyword argument interface and `excluded` argument support
-    further degrades performance.
-
+    The new keyword argument interface and `excluded` argument support further
+    degrades performance.
     """
     def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
                  cache=False):
@@ -1811,11 +1810,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
             "ddof must be integer")
 
     # Handles complex arrays too
-    m = np.asarray(m)
     if y is None:
         dtype = np.result_type(m, np.float64)
     else:
-        y = np.asarray(y)
         dtype = np.result_type(m, y, np.float64)
     X = array(m, ndmin=2, dtype=dtype)
 
@@ -1912,7 +1909,7 @@ def blackman(M):
     """
     Return the Blackman window.
 
-    The Blackman window is a taper formed by using the first three
+    The Blackman window is a taper formed by using the the first three
     terms of a summation of cosines. It was designed to have close to the
     minimal leakage possible.  It is close to optimal, only slightly worse
     than a Kaiser window.
@@ -2142,10 +2139,9 @@ def hanning(M):
     .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hanning was named for Julius van Hann, an Austrian meteorologist.
-    It is also known as the Cosine Bell. Some authors prefer that it be
-    called a Hann window, to help avoid confusion with the very similar
-    Hamming window.
+    The Hanning was named for Julius van Hann, an Austrian meterologist. It is
+    also known as the Cosine Bell. Some authors prefer that it be called a
+    Hann window, to help avoid confusion with the very similar Hamming window.
 
     Most references to the Hanning window come from the signal processing
     literature, where it is used as one of many windowing functions for
@@ -2242,9 +2238,9 @@ def hamming(M):
     .. math::  w(n) = 0.54 - 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey
-    and is described in Blackman and Tukey. It was recommended for
-    smoothing the truncated autocovariance function in the time domain.
+    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey and
+    is described in Blackman and Tukey. It was recommended for smoothing the
+    truncated autocovariance function in the time domain.
     Most references to the Hamming window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
@@ -2424,11 +2420,11 @@ def i0(x):
     Notes
     -----
     We use the algorithm published by Clenshaw [1]_ and referenced by
-    Abramowitz and Stegun [2]_, for which the function domain is
-    partitioned into the two intervals [0,8] and (8,inf), and Chebyshev
-    polynomial expansions are employed in each interval. Relative error on
-    the domain [0,30] using IEEE arithmetic is documented [3]_ as having a
-    peak of 5.8e-16 with an rms of 1.4e-16 (n = 30000).
+    Abramowitz and Stegun [2]_, for which the function domain is partitioned
+    into the two intervals [0,8] and (8,inf), and Chebyshev polynomial
+    expansions are employed in each interval. Relative error on the domain
+    [0,30] using IEEE arithmetic is documented [3]_ as having a peak of 5.8e-16
+    with an rms of 1.4e-16 (n = 30000).
 
     References
     ----------
@@ -2498,11 +2494,12 @@ def kaiser(M, beta):
 
     where :math:`I_0` is the modified zeroth-order Bessel function.
 
-    The Kaiser was named for Jim Kaiser, who discovered a simple
-    approximation to the DPSS window based on Bessel functions.  The Kaiser
-    window is a very good approximation to the Digital Prolate Spheroidal
-    Sequence, or Slepian window, which is the transform which maximizes the
-    energy in the main lobe of the window relative to total energy.
+    The Kaiser was named for Jim Kaiser, who discovered a simple approximation
+    to the DPSS window based on Bessel functions.
+    The Kaiser window is a very good approximation to the Digital Prolate
+    Spheroidal Sequence, or Slepian window, which is the transform which
+    maximizes the energy in the main lobe of the window relative to total
+    energy.
 
     The Kaiser can approximate many other windows by varying the beta
     parameter.
@@ -2612,8 +2609,8 @@ def sinc(x):
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
-    including in anti-aliasing, in the construction of a Lanczos resampling
-    filter, and in interpolation.
+    including in anti-aliasing, in the construction of a
+    Lanczos resampling filter, and in interpolation.
 
     For bandlimited interpolation of discrete-time signals, the ideal
     interpolation kernel is proportional to the sinc function.
@@ -2774,23 +2771,24 @@ def median(a, axis=None, out=None, overwrite_input=False):
         raise IndexError(
             "axis %d out of bounds (%d)" % (axis, a.ndim))
     
+    #Set the partition indexes    
+    if axis is None:
+        sz = a.size
+    else:
+        sz = a.shape[axis]
+    if sz % 2 == 0:
+        szh = sz // 2
+        kth = [szh - 1, szh]
+    else:
+        kth = [(sz - 1) // 2]
     #Check if the array contains any nan's
-    ids = None
-    if axis is None or a.ndim == 1:
-        if np.any(np.isnan(a)):
-            return np.array([np.nan])
-    else: #continue the calculation but replace results with nans where needed
-        ids = np.any(np.isnan(a), axis=axis)            
-        
+    if check_nan and np.issubdtype(a.dtype, np.inexact):
+        kth.append(-1)
+    
     if overwrite_input:
         if axis is None:
             part = a.ravel()
-            sz = part.size
-            if sz % 2 == 0:
-                szh = sz // 2
-                part.partition((szh - 1, szh))
-            else:
-                part.partition((sz - 1) // 2)
+            part.partition(kth)            
         else:
             sz = a.shape[axis]
             if sz % 2 == 0:
@@ -2799,15 +2797,10 @@ def median(a, axis=None, out=None, overwrite_input=False):
             else:
                 a.partition((sz - 1) // 2, axis=axis)
             part = a
+            a.partition(kth, axis=axis)            
     else:
-        if axis is None:
-            sz = a.size
-        else:
-            sz = a.shape[axis]
-        if sz % 2 == 0:
-            part = partition(a, ((sz // 2) - 1, sz // 2), axis=axis)
-        else:
-            part = partition(a, (sz - 1) // 2, axis=axis)
+        part = partition(a, kth, axis=axis)
+        
     if part.shape == ():
         # make 0-D arrays work
         return part.item()
@@ -2820,8 +2813,21 @@ def median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
-    
-    if ids == None: #if there are no nans
+    #Check if the array contains any nan's
+    if check_nan and np.issubdtype(a.dtype, np.inexact):
+        if part.ndim <= 1:
+            if np.isnan(part[-1]):
+                return np.nan
+            else:
+                return mean(part[indexer], axis=axis, out=out)
+        else:       
+            nan_indexer = [slice(None)] * part.ndim
+            nan_indexer[axis] = slice(-1, None)
+            ids = np.isnan(part[nan_indexer].squeeze(axis))
+            out = np.asanyarray(mean(part[indexer], axis=axis, out=out))
+            out[ids] = np.nan
+            return out
+    else: #if there are no nans
         # Use mean in odd and even case to coerce data type
         # and check, use out array.
         return mean(part[indexer], axis=axis, out=out)
