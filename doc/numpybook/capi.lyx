@@ -13529,7 +13529,7 @@ PyArray_Descr*
 \end_layout
 
 \begin_layout Description
-PyArrayDescr_Check (
+PyArray_DescrCheck (
 \family typewriter
 int
 \family default
