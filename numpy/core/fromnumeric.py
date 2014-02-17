@@ -90,6 +90,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     See Also
     --------
+    compress : Take elements using a boolean mask
     ndarray.take : equivalent method
 
     Examples
