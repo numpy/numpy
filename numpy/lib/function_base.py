@@ -2692,7 +2692,7 @@ def msort(a):
     return b
 
 
-def median(a, axis=None, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
     """
     Compute the median along the specified axis.
 
@@ -2717,6 +2717,10 @@ def median(a, axis=None, out=None, overwrite_input=False):
        but it will probably be fully or partially sorted. Default is
        False. Note that, if `overwrite_input` is True and the input
        is not already an ndarray, an error will be raised.
+   check_nan : bool, optional
+       If True, then the input array will be tested for the presence of NaNs. 
+       If the input array does not contain NaNs, this flag can be set to False
+       for a 1%-70% performance increase. 
 
     Returns
     -------
@@ -2729,7 +2733,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     See Also
     --------
-    mean, percentile
+    mean, percentile, nanmedian
 
     Notes
     -----
@@ -2771,40 +2775,30 @@ def median(a, axis=None, out=None, overwrite_input=False):
         raise IndexError(
             "axis %d out of bounds (%d)" % (axis, a.ndim))
     
+    #Set the partition indexes    
+    if axis is None:
+        sz = a.size
+    else:
+        sz = a.shape[axis]
+    if sz % 2 == 0:
+        szh = sz // 2
+        kth = [szh - 1, szh]
+    else:
+        kth = [(sz - 1) // 2]
     #Check if the array contains any nan's
-    ids = None
-    if axis is None or a.ndim == 1:
-        if np.any(np.isnan(a)):
-            return np.array([np.nan])
-    else: #continue the calculation but replace results with nans where needed
-        ids = np.any(np.isnan(a), axis=axis)            
-        
+    if check_nan and np.issubdtype(a.dtype, np.inexact):
+        kth.append(-1)
+    
     if overwrite_input:
         if axis is None:
             part = a.ravel()
-            sz = part.size
-            if sz % 2 == 0:
-                szh = sz // 2
-                part.partition((szh - 1, szh))
-            else:
-                part.partition((sz - 1) // 2)
+            part.partition(kth)            
         else:
-            sz = a.shape[axis]
-            if sz % 2 == 0:
-                szh = sz // 2
-                a.partition((szh - 1, szh), axis=axis)
-            else:
-                a.partition((sz - 1) // 2, axis=axis)
             part = a
+            a.partition(kth, axis=axis)            
     else:
-        if axis is None:
-            sz = a.size
-        else:
-            sz = a.shape[axis]
-        if sz % 2 == 0:
-            part = partition(a, ((sz // 2) - 1, sz // 2), axis=axis)
-        else:
-            part = partition(a, (sz - 1) // 2, axis=axis)
+        part = partition(a, kth, axis=axis)
+        
     if part.shape == ():
         # make 0-D arrays work
         return part.item()
@@ -2817,17 +2811,24 @@ def median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
-    
-    if ids == None: #if there are no nans
+    #Check if the array contains any nan's
+    if check_nan and np.issubdtype(a.dtype, np.inexact):
+        if part.ndim <= 1:
+            if np.isnan(part[-1]):
+                return np.nan
+            else:
+                return mean(part[indexer], axis=axis, out=out)
+        else:       
+            nan_indexer = [slice(None)] * part.ndim
+            nan_indexer[axis] = slice(-1, None)
+            ids = np.isnan(part[nan_indexer].squeeze(axis))
+            out = np.asanyarray(mean(part[indexer], axis=axis, out=out))
+            out[ids] = np.nan
+            return out
+    else: #if there are no nans
         # Use mean in odd and even case to coerce data type
         # and check, use out array.
         return mean(part[indexer], axis=axis, out=out)
-    else: #replace results where needed with nans
-        out = mean(part[indexer], axis=axis, out=out)
-        out[ids] = np.nan
-        return out
-        
-
 
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear'):

@@ -1837,6 +1837,15 @@ class TestMedian(TestCase):
         assert_equal(np.median(a), -7)
     
     def test_nan_behavior(self):
+        #Complex
+        a = np.arange(24, dtype=complex)
+        a[2] = complex(np.nan, 0)
+        assert_equal(np.median(a), np.nan)
+        a[2] = complex(0, np.nan)
+        assert_equal(np.median(a), np.nan)
+        a[2] = complex(np.nan, np.nan)
+        assert_equal(np.median(a), np.nan)
+        #floats
         a = np.arange(24, dtype=float)
         a[2] = np.nan
         assert_equal(np.median(a), np.nan)
