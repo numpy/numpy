@@ -1877,6 +1877,18 @@ Calculation
     Equivalent to :meth:`ndarray.argmin` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
 
+
+
+
+.. note::
+
+    The out argument specifies where to place the result. If out is 
+    NULL, then the output array is created, otherwise the output is 
+    placed in out which must be the correct size and type. A new 
+    reference to the ouput array is always returned even when out 
+    is not NULL. The caller of the routine has the responsability
+    to ``DECREF`` out if not NULL or a memory-leak will occur.
+
 .. cfunction:: PyObject* PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.max` (*self*, *axis*). Return the largest
