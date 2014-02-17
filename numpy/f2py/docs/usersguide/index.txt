@@ -1561,7 +1561,7 @@ Other options:
   without the ``-h`` switch.
 ``--build-dir <dirname>``
   All F2PY generated files are created in ``<dirname>``.  Default is
-  ``tempfile.mktemp()``.
+  ``tempfile.mkdtemp()``.
 ``--quiet``
   Run quietly.
 ``--verbose``
