@@ -1299,6 +1299,16 @@ class TestMethods(TestCase):
             mid = x.size // 2 + 1
             assert_equal(np.partition(x, mid)[mid], mid)
 
+            # max
+            d = np.ones(10); d[1] = 4;
+            assert_equal(np.partition(d, (2, -1))[-1], 4)
+            assert_equal(np.partition(d, (2, -1))[2], 1)
+            assert_equal(d[np.argpartition(d, (2, -1))][-1], 4)
+            assert_equal(d[np.argpartition(d, (2, -1))][2], 1)
+            d[1] = np.nan
+            assert_(np.isnan(d[np.argpartition(d, (2, -1))][-1]))
+            assert_(np.isnan(np.partition(d, (2, -1))[-1]))
+
             # equal elements
             d = np.arange((47)) % 7
             tgt = np.sort(np.arange((47)) % 7)

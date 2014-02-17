@@ -69,6 +69,7 @@ static NPY_INLINE void store_pivot(npy_intp pivot, npy_intp kth,
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
  *         npy_cdouble, npy_clongdouble#
+ * #inexact = 0*11, 1*7#
  */
 
 static npy_intp
@@ -320,6 +321,20 @@ int
     if (kth - low < 3) {
         DUMBSELECT(v, tosort, low, high - low + 1, kth - low);
         store_pivot(kth, kth, pivots, npiv);
+        return 0;
+    }
+    else if (@inexact@ && kth == num - 1) {
+        /* useful to check if NaN present via partition(d, (x, -1)) */
+        npy_intp k;
+        npy_intp maxidx = low;
+        @type@ maxval = v[IDX(low)];
+        for (k = low + 1; k < num; k++) {
+            if (!@TYPE@_LT(v[IDX(k)], maxval)) {
+                maxidx = k;
+                maxval = v[IDX(k)];
+            }
+        }
+        SWAP(SORTEE(kth), SORTEE(maxidx));
         return 0;
     }
 
