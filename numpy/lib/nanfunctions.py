@@ -673,10 +673,6 @@ def nanmedian(a, axis=None, overwrite_input=False):
     axis : int, optional
         Axis along which the medians are computed. The default (axis=None)
         is to compute the median along a flattened version of the array.
-    out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output,
-        but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
@@ -689,15 +685,14 @@ def nanmedian(a, axis=None, overwrite_input=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result (unless `out` is specified, in
-        which case that array is returned instead).  If the input contains
-        integers, or floats of smaller precision than 64, then the output
-        data-type is float64.  Otherwise, the output data-type is the same
-        as that of the input.
+        A new array holding the result. If the input contains integers, or 
+        floats of smaller precision than 64, then the output data-type is 
+        float64.  Otherwise, the output data-type is the same as that of the 
+        input.
 
     See Also
     --------
-    mean, percentile
+    mean, median, percentile
 
     Notes
     -----
@@ -708,29 +703,26 @@ def nanmedian(a, axis=None, overwrite_input=False):
 
     Examples
     --------
-    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
+    >>> a[0, 1] = np.nan
     >>> a
-    array([[10,  7,  4],
-           [ 3,  2,  1]])
+    array([[ 10.,  nan,   4.],
+       [  3.,   2.,   1.]])
     >>> np.median(a)
-    3.5
-    >>> np.median(a, axis=0)
-    array([ 6.5,  4.5,  2.5])
+    nan
+    >>> np.nanmedian(a)
+    3.0
+    >>> np.nanmedian(a, axis=0)
+    array([ 6.5,  2.,  2.5])
     >>> np.median(a, axis=1)
     array([ 7.,  2.])
-    >>> m = np.median(a, axis=0)
-    >>> out = np.zeros_like(m)
-    >>> np.median(a, axis=0, out=m)
-    array([ 6.5,  4.5,  2.5])
-    >>> m
-    array([ 6.5,  4.5,  2.5])
     >>> b = a.copy()
-    >>> np.median(b, axis=1, overwrite_input=True)
+    >>> np.nanmedian(b, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
-    >>> np.median(b, axis=None, overwrite_input=True)
-    3.5
+    >>> np.nanmedian(b, axis=None, overwrite_input=True)
+    3.0
     >>> assert not np.all(a==b)
 
     """
