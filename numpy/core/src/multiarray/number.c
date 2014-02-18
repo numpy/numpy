@@ -384,6 +384,9 @@ array_add(PyArrayObject *m1, PyObject *m2)
     if (can_elide_temp(m1, m2)) {
         return array_inplace_add(m1, m2);
     }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_add(m2, m1);
+    }
     else {
         return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
     }
@@ -407,6 +410,9 @@ array_multiply(PyArrayObject *m1, PyObject *m2)
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mul__", "__rmul__", 0);
     if (can_elide_temp(m1, m2)) {
         return array_inplace_multiply(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_multiply(m2, m1);
     }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
@@ -639,6 +645,9 @@ array_bitwise_and(PyArrayObject *m1, PyObject *m2)
     if (can_elide_temp(m1, m2)) {
         return array_inplace_bitwise_and(m1, m2);
     }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_and(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
@@ -649,6 +658,9 @@ array_bitwise_or(PyArrayObject *m1, PyObject *m2)
     if (can_elide_temp(m1, m2)) {
         return array_inplace_bitwise_or(m1, m2);
     }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_or(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
@@ -658,6 +670,9 @@ array_bitwise_xor(PyArrayObject *m1, PyObject *m2)
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__xor__", "__rxor__", 0);
     if (can_elide_temp(m1, m2)) {
         return array_inplace_bitwise_xor(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_xor(m2, m1);
     }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
