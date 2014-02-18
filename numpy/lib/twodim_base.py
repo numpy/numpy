@@ -650,14 +650,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
 
     >>> fig = plt.figure(figsize=(7, 3))
     >>> ax = fig.add_subplot(131)
-    >>> ax.set_title('imshow:\nequidistant')
+    >>> ax.set_title('imshow: equidistant')
     >>> im = plt.imshow(H, interpolation='nearest', origin='low',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
 
     pcolormesh can display exact bin edges:
 
     >>> ax = fig.add_subplot(132)
-    >>> ax.set_title('pcolormesh:\nexact bin edges')
+    >>> ax.set_title('pcolormesh: exact bin edges')
     >>> X, Y = np.meshgrid(xedges, yedges)
     >>> ax.pcolormesh(X, Y, H)
     >>> ax.set_aspect('equal')
@@ -665,7 +665,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     NonUniformImage displays exact bin edges with interpolation:
 
     >>> ax = fig.add_subplot(133)
-    >>> ax.set_title('NonUniformImage:\ninterpolated')
+    >>> ax.set_title('NonUniformImage: interpolated')
     >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
     >>> xcenters = xedges[:-1] + 0.5 * (xedges[1:] - xedges[:-1])
     >>> ycenters = yedges[:-1] + 0.5 * (yedges[1:] - yedges[:-1])
