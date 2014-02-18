@@ -340,6 +340,10 @@ class TestUfunc(TestCase):
             assert_almost_equal(np.sum(d[-1::-2]), 250.)
             assert_almost_equal(np.sum(d[::-3]), 167.)
             assert_almost_equal(np.sum(d[-1::-3]), 167.)
+            # sum with first reduction entry != 0
+            d = np.ones((1,), dtype=dt)
+            d += d
+            assert_almost_equal(d, 2.)
 
     def test_sum_complex(self):
         for dt in (np.complex64, np.complex128, np.clongdouble):
@@ -361,6 +365,10 @@ class TestUfunc(TestCase):
             assert_almost_equal(np.sum(d[-1::-2]), 250. + 250j)
             assert_almost_equal(np.sum(d[::-3]), 167. + 167j)
             assert_almost_equal(np.sum(d[-1::-3]), 167. + 167j)
+            # sum with first reduction entry != 0
+            d = np.ones((1,), dtype=dt) + 1j
+            d += d
+            assert_almost_equal(d, 2. + 2j)
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
