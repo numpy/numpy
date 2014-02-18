@@ -346,6 +346,12 @@ array_inplace_divide(PyArrayObject *m1, PyObject *m2);
 #endif
 static PyObject *
 array_inplace_true_divide(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_and(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_or(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_xor(PyArrayObject *m1, PyObject *m2);
 
 /* check if m1 is a temporary (refcnt == 1) so we can do inplace operations
  * instead of creating a new temporary */
@@ -626,6 +632,9 @@ static PyObject *
 array_bitwise_and(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__and__", "__rand__", 0);
+    if (can_alide_temp(m1, m2)) {
+        return array_inplace_bitwise_and(m1, m2);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
@@ -633,6 +642,9 @@ static PyObject *
 array_bitwise_or(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__or__", "__ror__", 0);
+    if (can_alide_temp(m1, m2)) {
+        return array_inplace_bitwise_or(m1, m2);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
@@ -640,6 +652,9 @@ static PyObject *
 array_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__xor__", "__rxor__", 0);
+    if (can_alide_temp(m1, m2)) {
+        return array_inplace_bitwise_xor(m1, m2);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
 
