@@ -210,7 +210,7 @@ def byte_bounds(a):
     a_data = ai['data'][0]
     astrides = ai['strides']
     ashape = ai['shape']
-    bytes_a = int(ai['typestr'][2:])
+    bytes_a = a.dtype.itemsize
 
     a_low = a_high = a_data
     if astrides is None: # contiguous case
