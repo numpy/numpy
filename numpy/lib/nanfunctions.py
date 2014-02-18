@@ -18,11 +18,11 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import numpy as np
-from numpy.core.fromnumeric import partition
+
 
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanmedian', 'nanvar', 'nanstd'
+    'nanvar', 'nanstd'
     ]
 
 
@@ -600,143 +600,6 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
         # action is needed to handle bad results.
     return avg
 
-
-def _nanmedian1d(arr1d, overwrite_input=False): # This only works on 1d arrays
-    """Private function for rank 1 arrays. Compute the median ignoring NaNs.
-
-    Parameters
-    ----------
-    arr1d : ndarray
-        Input array, of rank 1.
-    overwrite_input : bool, optional
-       If True, then allow use of memory of input array (a) for
-       calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve
-       the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if `overwrite_input` is True and the input
-       is not already an ndarray, an error will be raised.
-       
-    Results
-    -------
-    m : float
-        The median.
-    """
-    
-    if overwrite_input:        
-        part = arr1d.ravel()
-        #filter out the NaNs
-        sz = part.size - np.sum(np.isnan(part))
-        if sz == 0:            
-            warnings.warn("All-NaN slice encountered", RuntimeWarning)
-            return np.nan
-        if sz % 2 == 0:
-            szh = sz // 2
-            part.partition((szh - 1, szh))
-        else:
-            part.partition((sz - 1) // 2)        
-    else:        
-        sz = arr1d.size - np.sum(np.isnan(arr1d))
-        if sz == 0:            
-            warnings.warn("All-NaN slice encountered", RuntimeWarning)
-            return np.nan
-        if sz % 2 == 0:
-            part = partition(arr1d, ((sz // 2) - 1, sz // 2), axis=None)
-        else:
-            part = partition(arr1d, (sz - 1) // 2, axis=None)
-    if part.shape == ():
-        # make 0-D arrays work
-        return part.item()
-    axis = 0
-    index = sz // 2
-    if sz % 2 == 1:
-        # index with slice to allow mean (below) to work
-        indexer = slice(index, index+1)
-    else:
-        indexer = slice(index-1, index+1)
-    
-    # Use mean in odd and even case to coerce data type
-    # and check, use out array.
-    return np.mean(part[indexer], axis=axis)
-
-
-def nanmedian(a, axis=None, overwrite_input=False):
-    """
-    Compute the median along the specified axis, while ignoring NaNs.
-
-    Returns the median of the array elements.
-
-    Parameters
-    ----------
-    a : array_like
-        Input array or object that can be converted to an array.
-    axis : int, optional
-        Axis along which the medians are computed. The default (axis=None)
-        is to compute the median along a flattened version of the array.
-    overwrite_input : bool, optional
-       If True, then allow use of memory of input array (a) for
-       calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve
-       the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if `overwrite_input` is True and the input
-       is not already an ndarray, an error will be raised.
-
-    Returns
-    -------
-    median : ndarray
-        A new array holding the result. If the input contains integers, or 
-        floats of smaller precision than 64, then the output data-type is 
-        float64.  Otherwise, the output data-type is the same as that of the 
-        input.
-
-    See Also
-    --------
-    mean, median, percentile
-
-    Notes
-    -----
-    Given a vector V of length N, the median of V is the middle value of
-    a sorted copy of V, ``V_sorted`` - i.e., ``V_sorted[(N-1)/2]``, when N is
-    odd.  When N is even, it is the average of the two middle values of
-    ``V_sorted``.
-
-    Examples
-    --------
-    >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
-    >>> a[0, 1] = np.nan
-    >>> a
-    array([[ 10.,  nan,   4.],
-       [  3.,   2.,   1.]])
-    >>> np.median(a)
-    nan
-    >>> np.nanmedian(a)
-    3.0
-    >>> np.nanmedian(a, axis=0)
-    array([ 6.5,  2.,  2.5])
-    >>> np.median(a, axis=1)
-    array([ 7.,  2.])
-    >>> b = a.copy()
-    >>> np.nanmedian(b, axis=1, overwrite_input=True)
-    array([ 7.,  2.])
-    >>> assert not np.all(a==b)
-    >>> b = a.copy()
-    >>> np.nanmedian(b, axis=None, overwrite_input=True)
-    3.0
-    >>> assert not np.all(a==b)
-
-    """
-    a = np.asanyarray(a)
-    if axis is not None and axis >= a.ndim:
-        raise IndexError(
-            "axis %d out of bounds (%d)" % (axis, a.ndim))
-    
-    if axis is None:
-        part = a.ravel()
-        return _nanmedian1d(part, overwrite_input)
-    else:
-        return np.apply_along_axis(_nanmedian1d, axis, a, overwrite_input)
-    
 
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
