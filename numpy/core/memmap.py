@@ -38,6 +38,9 @@ class memmap(ndarray):
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
 
+    Delete the memmap instance to close.
+
+
     Parameters
     ----------
     filename : str or file-like object
@@ -91,8 +94,6 @@ class memmap(ndarray):
 
     Methods
     -------
-    close
-        Close the memmap file.
     flush
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
