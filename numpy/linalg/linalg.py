@@ -1513,7 +1513,9 @@ def cond(x, p=None, check_finite=True):
         s = svd(x, compute_uv=False, check_finite=False)
         return s[0]/s[-1]
     else:
-        return norm(x, p)*norm(inv(x), p)
+        xnorm = norm(x, p, svd_check_finite=False)
+        xinvnorm = norm(inv(x, check_finite=False), p, svd_check_finite=False)
+        return xnorm * xinvnorm
 
 
 def matrix_rank(M, tol=None, check_finite=True):
