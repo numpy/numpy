@@ -25,7 +25,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast
     )
-from numpy.lib import triu, asfarray
+from numpy.lib import triu, asfarray, asarray_chkfinite
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
@@ -105,6 +105,11 @@ def get_linalg_error_extobj(callback):
 
 def _makearray(a):
     new = asarray(a)
+    wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
+    return new, wrap
+
+def _makearray_chkfinite(a):
+    new = asarray_chkfinite(a)
     wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
@@ -224,7 +229,7 @@ def _assertNoEmpty2d(*arrays):
 
 # Linear equations
 
-def tensorsolve(a, b, axes=None):
+def tensorsolve(a, b, axes=None, check_finite=True):
     """
     Solve the tensor equation ``a x = b`` for x.
 
@@ -245,6 +250,10 @@ def tensorsolve(a, b, axes=None):
     axes : tuple of ints, optional
         Axes in `a` to reorder to the right, before inversion.
         If None (default), no reordering is done.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -271,8 +280,12 @@ def tensorsolve(a, b, axes=None):
     True
 
     """
-    a, wrap = _makearray(a)
-    b = asarray(b)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+        b = asarray_chkfinite(b)
+    else:
+        a, wrap = _makearray(a)
+        b = asarray(b)
     an = a.ndim
 
     if axes is not None:
@@ -289,11 +302,11 @@ def tensorsolve(a, b, axes=None):
 
     a = a.reshape(-1, prod)
     b = b.ravel()
-    res = wrap(solve(a, b))
+    res = wrap(solve(a, b, check_finite=False))
     res.shape = oldshape
     return res
 
-def solve(a, b):
+def solve(a, b, check_finite=True):
     """
     Solve a linear matrix equation, or system of linear scalar equations.
 
@@ -306,6 +319,10 @@ def solve(a, b):
         Coefficient matrix.
     b : {(..., M,), (..., M, K)}, array_like
         Ordinate or "dependent variable" values.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -350,10 +367,14 @@ def solve(a, b):
     True
 
     """
-    a, _ = _makearray(a)
+    if check_finite:
+        a, _ = _makearray_chkfinite(a)
+        b, wrap = _makearray_chkfinite(b)
+    else:
+        a, _ = _makearray(a)
+        b, wrap = _makearray(b)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
-    b, wrap = _makearray(b)
     t, result_t = _commonType(a, b)
 
     # We use the b = (..., M,) logic, only if the number of extra dimensions
@@ -383,7 +404,7 @@ def solve(a, b):
     return wrap(r.astype(result_t))
 
 
-def tensorinv(a, ind=2):
+def tensorinv(a, ind=2, check_finite=True):
     """
     Compute the 'inverse' of an N-dimensional array.
 
@@ -400,6 +421,10 @@ def tensorinv(a, ind=2):
     ind : int, optional
         Number of first indices that are involved in the inverse sum.
         Must be a positive integer, default is 2.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -436,7 +461,10 @@ def tensorinv(a, ind=2):
     True
 
     """
-    a = asarray(a)
+    if check_finite:
+        a = asarray_chkfinite(a)
+    else:
+        a = asarray(a)
     oldshape = a.shape
     prod = 1
     if ind > 0:
@@ -446,13 +474,13 @@ def tensorinv(a, ind=2):
     else:
         raise ValueError("Invalid ind argument.")
     a = a.reshape(prod, -1)
-    ia = inv(a)
+    ia = inv(a, check_finite=False)
     return ia.reshape(*invshape)
 
 
 # Matrix inversion
 
-def inv(a):
+def inv(a, check_finite=True):
     """
     Compute the (multiplicative) inverse of a matrix.
 
@@ -463,6 +491,10 @@ def inv(a):
     ----------
     a : (..., M, M) array_like
         Matrix to be inverted.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -506,7 +538,10 @@ def inv(a):
             [ 3. , -1. ]]])
 
     """
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -523,7 +558,7 @@ def inv(a):
 
 # Cholesky decomposition
 
-def cholesky(a):
+def cholesky(a, check_finite=True):
     """
     Cholesky decomposition.
 
@@ -538,6 +573,10 @@ def cholesky(a):
     a : (..., M, M) array_like
         Hermitian (symmetric if all elements are real), positive-definite
         input matrix.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -593,9 +632,12 @@ def cholesky(a):
             [ 0.+2.j,  1.+0.j]])
 
     """
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     extobj = get_linalg_error_extobj(_raise_linalgerror_nonposdef)
     gufunc = _umath_linalg.cholesky_lo
-    a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -604,7 +646,7 @@ def cholesky(a):
 
 # QR decompostion
 
-def qr(a, mode='reduced'):
+def qr(a, mode='reduced', check_finite=True):
     """
     Compute the qr factorization of a matrix.
 
@@ -634,6 +676,10 @@ def qr(a, mode='reduced'):
         be passed using only the first letter for backwards compatibility,
         but all others must be spelled out. See the Notes for more
         explanation.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
 
     Returns
@@ -735,7 +781,10 @@ def qr(a, mode='reduced'):
         else:
             raise ValueError("Unrecognized mode '%s'" % mode)
 
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertRank2(a)
     _assertNoEmpty2d(a)
     m, n = a.shape
@@ -817,7 +866,7 @@ def qr(a, mode='reduced'):
 # Eigenvalues
 
 
-def eigvals(a):
+def eigvals(a, check_finite=True):
     """
     Compute the eigenvalues of a general matrix.
 
@@ -828,6 +877,10 @@ def eigvals(a):
     ----------
     a : (..., M, M) array_like
         A complex- or real-valued matrix whose eigenvalues will be computed.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -881,11 +934,13 @@ def eigvals(a):
     array([ 1., -1.])
 
     """
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
-    _assertFinite(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
@@ -902,7 +957,7 @@ def eigvals(a):
 
     return w.astype(result_t)
 
-def eigvalsh(a, UPLO='L'):
+def eigvalsh(a, UPLO='L', check_finite=True):
     """
     Compute the eigenvalues of a Hermitian or real symmetric matrix.
 
@@ -916,6 +971,10 @@ def eigvalsh(a, UPLO='L'):
     UPLO : {'L', 'U'}, optional
         Same as `lower`, with 'L' for lower and 'U' for upper triangular.
         Deprecated.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -961,7 +1020,10 @@ def eigvalsh(a, UPLO='L'):
     else:
         gufunc = _umath_linalg.eigvalsh_up
 
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
@@ -979,7 +1041,7 @@ def _convertarray(a):
 # Eigenvectors
 
 
-def eig(a):
+def eig(a, check_finite=True):
     """
     Compute the eigenvalues and right eigenvectors of a square array.
 
@@ -988,6 +1050,10 @@ def eig(a):
     a : (..., M, M) array
         Matrices for which the eigenvalues and right eigenvectors will
         be computed
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1091,10 +1157,12 @@ def eig(a):
            [ 0.,  1.]])
 
     """
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
-    _assertFinite(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
@@ -1113,7 +1181,7 @@ def eig(a):
     return w.astype(result_t), wrap(vt)
 
 
-def eigh(a, UPLO='L'):
+def eigh(a, UPLO='L', check_finite=True):
     """
     Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
 
@@ -1129,6 +1197,10 @@ def eigh(a, UPLO='L'):
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
         part of `a` ('L', default) or the upper triangular part ('U').
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1201,7 +1273,10 @@ def eigh(a, UPLO='L'):
     if UPLO not in ('L', 'U'):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -1222,7 +1297,7 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices=1, compute_uv=1):
+def svd(a, full_matrices=1, compute_uv=1, check_finite=True):
     """
     Singular Value Decomposition.
 
@@ -1240,6 +1315,10 @@ def svd(a, full_matrices=1, compute_uv=1):
     compute_uv : bool, optional
         Whether or not to compute `u` and `v` in addition to `s`.  True
         by default.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1302,7 +1381,10 @@ def svd(a, full_matrices=1, compute_uv=1):
     True
 
     """
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
@@ -1340,7 +1422,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         s = s.astype(_realType(result_t))
         return s
 
-def cond(x, p=None):
+def cond(x, p=None, check_finite=True):
     """
     Compute the condition number of a matrix.
 
@@ -1370,6 +1452,10 @@ def cond(x, p=None):
 
         inf means the numpy.inf object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1419,15 +1505,18 @@ def cond(x, p=None):
     0.70710678118654746
 
     """
-    x = asarray(x) # in case we have a matrix
+    if check_finite:
+        x = asarray_chkfinite(x)
+    else:
+        x = asarray(x)
     if p is None:
-        s = svd(x, compute_uv=False)
+        s = svd(x, compute_uv=False, check_finite=False)
         return s[0]/s[-1]
     else:
         return norm(x, p)*norm(inv(x), p)
 
 
-def matrix_rank(M, tol=None):
+def matrix_rank(M, tol=None, check_finite=True):
     """
     Return matrix rank of array using SVD method
 
@@ -1443,6 +1532,10 @@ def matrix_rank(M, tol=None):
        None, and ``S`` is an array with singular values for `M`, and
        ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
        set to ``S.max() * max(M.shape) * eps``.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Notes
     -----
@@ -1503,12 +1596,15 @@ def matrix_rank(M, tol=None):
     >>> matrix_rank(np.zeros((4,)))
     0
     """
-    M = asarray(M)
+    if check_finite:
+        M = asarray_chkfinite(M)
+    else:
+        M = asarray(M)
     if M.ndim > 2:
         raise TypeError('array should have 2 or fewer dimensions')
     if M.ndim < 2:
         return int(not all(M==0))
-    S = svd(M, compute_uv=False)
+    S = svd(M, compute_uv=False, check_finite=False)
     if tol is None:
         tol = S.max() * max(M.shape) * finfo(S.dtype).eps
     return sum(S > tol)
@@ -1516,7 +1612,7 @@ def matrix_rank(M, tol=None):
 
 # Generalized inverse
 
-def pinv(a, rcond=1e-15 ):
+def pinv(a, rcond=1e-15, check_finite=True):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -1533,6 +1629,10 @@ def pinv(a, rcond=1e-15 ):
       Singular values smaller (in modulus) than
       `rcond` * largest_singular_value (again, in modulus)
       are set to zero.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1579,10 +1679,13 @@ def pinv(a, rcond=1e-15 ):
     True
 
     """
-    a, wrap = _makearray(a)
+    if check_finite:
+        a, wrap = _makearray_chkfinite(a)
+    else:
+        a, wrap = _makearray(a)
     _assertNoEmpty2d(a)
     a = a.conjugate()
-    u, s, vt = svd(a, 0)
+    u, s, vt = svd(a, 0, check_finite=False)
     m = u.shape[0]
     n = vt.shape[1]
     cutoff = rcond*maximum.reduce(s)
@@ -1596,7 +1699,7 @@ def pinv(a, rcond=1e-15 ):
 
 # Determinant
 
-def slogdet(a):
+def slogdet(a, check_finite=True):
     """
     Compute the sign and (natural) logarithm of the determinant of an array.
 
@@ -1609,6 +1712,10 @@ def slogdet(a):
     ----------
     a : (..., M, M) array_like
         Input array, has to be a square 2-D array.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1666,7 +1773,10 @@ def slogdet(a):
     (1, -1151.2925464970228)
 
     """
-    a = asarray(a)
+    if check_finite:
+        a = asarray_chkfinite(a)
+    else:
+        a = asarray(a)
     _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
@@ -1676,7 +1786,7 @@ def slogdet(a):
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     return sign.astype(result_t), logdet.astype(real_t)
 
-def det(a):
+def det(a, check_finite=True):
     """
     Compute the determinant of an array.
 
@@ -1684,6 +1794,10 @@ def det(a):
     ----------
     a : (..., M, M) array_like
         Input array to compute determinants for.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1715,12 +1829,15 @@ def det(a):
 
     >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
     >>> a.shape
-    (2, 2, 2
+    (2, 2, 2)
     >>> np.linalg.det(a)
     array([-2., -3., -8.])
 
     """
-    a = asarray(a)
+    if check_finite:
+        a = asarray_chkfinite(a)
+    else:
+        a = asarray(a)
     _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
@@ -1730,7 +1847,7 @@ def det(a):
 
 # Linear Least Squares
 
-def lstsq(a, b, rcond=-1):
+def lstsq(a, b, rcond=-1, check_finite=True):
     """
     Return the least-squares solution to a linear matrix equation.
 
@@ -1754,6 +1871,10 @@ def lstsq(a, b, rcond=-1):
         Cut-off ratio for small singular values of `a`.
         Singular values are set to zero if they are smaller than `rcond`
         times the largest singular value of `a`.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1814,8 +1935,12 @@ def lstsq(a, b, rcond=-1):
 
     """
     import math
-    a, _ = _makearray(a)
-    b, wrap = _makearray(b)
+    if check_finite:
+        a, _ = _makearray_chkfinite(a)
+        b, wrap = _makearray_chkfinite(b)
+    else:
+        a, _ = _makearray(a)
+        b, wrap = _makearray(b)
     is_1d = len(b.shape) == 1
     if is_1d:
         b = b[:, newaxis]
@@ -1891,7 +2016,7 @@ def lstsq(a, b, rcond=-1):
     return wrap(x), wrap(resids), results['rank'], st
 
 
-def _multi_svd_norm(x, row_axis, col_axis, op):
+def _multi_svd_norm(x, row_axis, col_axis, op, check_finite=True):
     """Compute the extreme singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by numpy.linalg.norm().
@@ -1903,6 +2028,10 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
         The axes of `x` that hold the 2-D matrices.
     op : callable
         This should be either numpy.amin or numpy.amax.
+    check_finite : bool, optional
+        Whether to check that the input matrices contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -1917,11 +2046,11 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     if row_axis > col_axis:
         row_axis -= 1
     y = rollaxis(rollaxis(x, col_axis, x.ndim), row_axis, -1)
-    result = op(svd(y, compute_uv=0), axis=-1)
+    result = op(svd(y, compute_uv=0, check_finite=check_finite), axis=-1)
     return result
 
 
-def norm(x, ord=None, axis=None):
+def norm(x, ord=None, axis=None, svd_check_finite=True):
     """
     Matrix or vector norm.
 
@@ -1942,6 +2071,11 @@ def norm(x, ord=None, axis=None):
         axes that hold 2-D matrices, and the matrix norms of these matrices
         are computed.  If `axis` is None then either a vector norm (when `x`
         is 1-D) or a matrix norm (when `x` is 2-D) is returned.
+    svd_check_finite : bool, optional
+        For norms that use svd, whether to check that the input matrices
+        contain only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns
     -------
@@ -2109,9 +2243,11 @@ def norm(x, ord=None, axis=None):
         if row_axis % nd == col_axis % nd:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
-            return _multi_svd_norm(x, row_axis, col_axis, amax)
+            return _multi_svd_norm(x, row_axis, col_axis, amax,
+                    check_finite=svd_check_finite)
         elif ord == -2:
-            return _multi_svd_norm(x, row_axis, col_axis, amin)
+            return _multi_svd_norm(x, row_axis, col_axis, amin,
+                    check_finite=svd_check_finite)
         elif ord == 1:
             if col_axis > row_axis:
                 col_axis -= 1
