@@ -1461,6 +1461,193 @@ class TestBincount(TestCase):
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
 
+class TestNDBincount(TestCase):
+    def test_no_weights_1D(self):
+        int_types = ''.join(('?', np.typecodes['AllInteger']))
+        for type in int_types:
+            if type == '?':
+                z = [0, 5]
+            else:
+                z = [0, 2, 1, 0, 1, 1]
+            x = np.array([1, 5, 2, 4, 1], dtype=type)
+            y = np.bincount(x)
+            assert_array_equal(y, z)
+
+    def test_weights_1D(self):
+        int_types = ''.join(('?', np.typecodes['AllInteger']))
+        all_types = ''.join((np.typecodes['AllInteger'], 'efd'))
+        for type_x in int_types:
+            if type_x == '?':
+                z = [0, 13]
+            else:
+                z = [0, 2, 5, 0, 5, 1]
+            x = np.array([1, 2, 4, 5, 2], dtype=type_x)
+            for type_w in all_types:
+                w = np.array([2, 3, 5, 1, 2], dtype=type_w)
+                y = np.bincount(x, weights=w)
+                assert_array_equal(y, z)
+
+    def test_no_weights_nd(self):
+        int_types = np.typecodes['AllInteger']
+        for type in int_types:
+            x = np.arange(24, dtype=type).reshape(2, 3, 4) % 5
+            y = np.bincount(x, axis=None)
+            z = [5, 5, 5, 5, 4]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=(0, 1, 2))
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=0)
+            z = [[[1, 0, 1, 0, 0],
+                  [0, 1, 0, 1, 0],
+                  [0, 0, 1, 0, 1],
+                  [1, 0, 0, 1, 0]],
+                 [[0, 1, 0, 0, 1],
+                  [1, 0, 1, 0, 0],
+                  [0, 1, 0, 1, 0],
+                  [0, 0, 1, 0, 1]],
+                 [[1, 0, 0, 1, 0],
+                  [0, 1, 0, 0, 1],
+                  [1, 0, 1, 0, 0],
+                  [0, 1, 0, 1, 0]]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=1)
+            z = [[[1, 0, 0, 1, 1],
+                  [1, 1, 0, 0, 1],
+                  [1, 1, 1, 0, 0],
+                  [0, 1, 1, 1, 0]],
+                 [[1, 1, 1, 0, 0],
+                  [0, 1, 1, 1, 0],
+                  [0, 0, 1, 1, 1],
+                  [1, 0, 0, 1, 1]]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=2)
+            z = [[[1, 1, 1, 1, 0],
+                  [1, 1, 1, 0, 1],
+                  [1, 1, 0, 1, 1]],
+                 [[1, 0, 1, 1, 1],
+                  [0, 1, 1, 1, 1],
+                  [1, 1, 1, 1, 0]]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=(0, 1))
+            z = [[2, 1, 1, 1, 1],
+                 [1, 2, 1, 1, 1],
+                 [1, 1, 2, 1, 1],
+                 [1, 1, 1, 2, 1]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=(0, 2))
+            z = [[2, 1, 2, 2, 1],
+                 [1, 2, 2, 1, 2],
+                 [2, 2, 1, 2, 1]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=(1, 2))
+            z = [[3, 3, 2, 2, 2],
+                 [2, 2, 3, 3, 2]]
+            assert_array_equal(y, z)
+            y = np.bincount(x, axis=())
+            z = [[[[1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0],
+                   [0, 0, 0, 1, 0]],
+                  [[0, 0, 0, 0, 1],
+                   [1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0]],
+                  [[0, 0, 0, 1, 0],
+                   [0, 0, 0, 0, 1],
+                   [1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0]]],
+                 [[[0, 0, 1, 0, 0],
+                   [0, 0, 0, 1, 0],
+                   [0, 0, 0, 0, 1],
+                   [1, 0, 0, 0, 0]],
+                  [[0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0],
+                   [0, 0, 0, 1, 0],
+                   [0, 0, 0, 0, 1]],
+                  [[1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0],
+                   [0, 0, 0, 1, 0]]]]
+            assert_array_equal(y, z)
+
+    def test_weights_nd(self):
+        int_types = np.typecodes['AllInteger']
+        all_types = ''.join((np.typecodes['AllInteger'], 'efd'))
+        for type_x in int_types:
+            x = np.arange(6, dtype=type_x).reshape(2,3) % 4
+            for type_w in all_types:
+                w = np.arange(6, 0, -1, dtype=type_w).reshape(2, 3)
+                y = np.bincount(x, weights=w, axis=None)
+                z = [8, 6, 4, 3]
+                assert_array_equal(y, z)
+                y = np.bincount(x, weights=w, axis=(0, 1))
+                assert_array_equal(y, z)
+                y = np.bincount(x, weights=w, axis=0)
+                z = [[6, 0, 0, 3],
+                     [2, 5, 0, 0],
+                     [0, 1, 4, 0]]
+                assert_array_equal(y, z)
+                y = np.bincount(x, weights=w, axis=1)
+                z = [[6, 5, 4, 0],
+                     [2, 1, 0, 3]]
+                assert_array_equal(y, z)
+
+    def test_scalars(self):
+        assert_array_equal(np.bincount(3), [0, 0, 0, 1])
+        assert_array_equal(np.bincount(3, 4), [0, 0, 0, 4])
+
+    def test_broadcasting(self):
+        x = [0, 1, 2, 0, 2]
+        w = np.arange(30).reshape(2, 3, 5)
+        y = np.bincount(x, weights=w)
+        z = [[[ 3,  1,  6],
+              [13,  6, 16],
+              [23, 11, 26]],
+             [[33, 16, 36],
+              [43, 21, 46],
+              [53, 26, 56]]]
+        assert_array_equal(y, z)
+
+    def test_non_aligned_non_nbo(self):
+        x = np.array([0, 1, 0, 2, 0, 3, 0], dtype='u1')
+        y = np.bincount(x[1:].view('<u2'))
+        z = [0, 1, 1, 1]
+        assert_array_equal(y, z)
+        y = np.bincount(x[:-1].view('>u2'))
+        assert_array_equal(y, z)
+
+    def test_strided(self):
+        x = np.arange(25).reshape(5, 5) % 3
+        y = np.bincount(x[:, 0])
+        z = [2, 1, 2]
+        assert_array_equal(y, z)
+        w = np.arange(25, 0, -1).reshape(5, 5)
+        y = np.bincount(x[:, 0], weights=w[:, 2])
+        z = [31, 13, 21]
+        assert_array_equal(y, z)
+
+    def test_errors(self):
+        # input array must be of integers
+        assert_raises(TypeError, np.bincount, [1.5, 2.3])
+        # minlength must be an integer
+        assert_raises(TypeError, np.bincount, range(5), minlength=1.3)
+        # axis must be in bounds
+        assert_raises(ValueError, np.bincount, range(5), axis=2)
+        # multiple axes must be in bounds
+        assert_raises(ValueError, np.bincount, range(5), axis=(0, 2))
+        # no duplicate entries in axis
+        assert_raises(ValueError, np.bincount, range(5), axis=(0, 0))
+        # weights must be castable to double
+        assert_raises(TypeError, np.bincount, [1, 2], [5.j, 2.j])
+        # no negative entries in input array
+        assert_raises(ValueError, np.bincount, [-1, 3])
+        # Make sure the iterator to find the max isn't deallocated twice,
+        # which crashed the system
+        assert_raises(ValueError, np.bincount,
+                      np.arange(-75, 50).reshape(5, 5, 5)[..., 0])
+        # no entry in input array that won't fit in a np.intp
+        assert_raises(ValueError, np.bincount, [np.iinfo(np.intp).max + 1])
+
 
 class TestInterp(TestCase):
     def test_exceptions(self):

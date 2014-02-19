@@ -11,7 +11,7 @@ def configuration(parent_package='',top_path=None):
 
 
     config.add_extension('_compiled_base',
-                         sources=[join('src', '_compiled_base.c')]
+                         sources=[join('src', '_compiled_base.c.src')]
                          )
 
     config.add_data_dir('benchmarks')

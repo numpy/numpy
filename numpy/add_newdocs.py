@@ -4987,47 +4987,57 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
 
 add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
-    bincount(x, weights=None, minlength=None)
+    bincount(list, weights=None, minlength=None, axis=None)
 
-    Count number of occurrences of each value in array of non-negative ints.
+    Count number of occurrences of each value in an array of non-negative ints
+    along the selected axes.
 
-    The number of bins (of size 1) is one larger than the largest value in
-    `x`. If `minlength` is specified, there will be at least this number
-    of bins in the output array (though it will be longer if necessary,
-    depending on the contents of `x`).
-    Each bin gives the number of occurrences of its index value in `x`.
-    If `weights` is specified the input array is weighted by it, i.e. if a
-    value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
-    of ``out[n] += 1``.
+    Each bin gives the number of occurrences of its index value in `list`
+    along the axes in `axis`. If `weights` is specified, 'list' is weighted
+    by it, i.e. if ``list[i] == n``, then ``out[n] += weight[i]`` instead of
+    ``out[n] += 1``.
 
     Parameters
     ----------
-    x : array_like, 1 dimension, nonnegative ints
+    list : array_like, nonnegative ints
         Input array.
     weights : array_like, optional
-        Weights, array of the same shape as `x`.
+        Weights, array broadcastable with `list`.
     minlength : int, optional
         .. versionadded:: 1.6.0
-
         A minimum number of bins for the output array.
+    axis : int or tuple of ints, optional
+        .. versionadded:: 1.9.0
+       The axes of `x` over which to count, defaults to counting over
+        the flattened array.
 
     Returns
     -------
-    out : ndarray of ints
+    out : ndarray of ints (or doubles if weights is specified)
         The result of binning the input array.
-        The length of `out` is equal to ``np.amax(x)+1``.
 
     Raises
     ------
     ValueError
-        If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is non-positive.
+        If the input contains elements with negative values, if there are
+        entries in axis repeated or out of bounds, or if the input array
+        and `weights` cannot be broadcasted together.
     TypeError
-        If the type of the input is float or complex.
+        If the type of the input, `minlength` or `axis` is not an integer, or
+        if `weights` cannot be safely cast to a double.
 
     See Also
     --------
     histogram, digitize, unique
+
+    Notes
+    -----
+    To determine the output shape, `list` and `weights` are broadcasted
+    together, the axes in `axis` are removed from the broadcasted shape, and
+    a dimension of size `max(max(list) + 1, minlength)` is appended to the
+    end. Note that the values in `axis` refer to the shape of `list` prior to
+    broadcasting, not after. Then entry at position `out[..., n]` will be the
+    (weighted) count of all instances of `n` in `list` along the selected axes.
 
     Examples
     --------
@@ -5037,7 +5047,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     array([1, 3, 1, 1, 0, 0, 0, 1])
 
     >>> x = np.array([0, 1, 1, 3, 2, 1, 7, 23])
-    >>> np.bincount(x).size == np.amax(x)+1
+    >>> np.bincount(x).size == np.max(x)+1
     True
 
     The input array needs to be of integer dtype, otherwise a
@@ -5046,16 +5056,42 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     >>> np.bincount(np.arange(5, dtype=np.float))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    TypeError: array cannot be safely cast to required type
+    TypeError: input must be an array of integers
 
-    A possible use of ``bincount`` is to perform sums over
-    variable-size chunks of an array, using the ``weights`` keyword.
+    A possible use of `bincount` is to perform sums over
+    variable-size chunks of an array, using the `weights` keyword.
 
     >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
     >>> x = np.array([0, 1, 1, 2, 2, 2])
     >>> np.bincount(x,  weights=w)
     array([ 0.3,  0.7,  1.1])
 
+    Using the `axis` argument allows (weighted) counting over multiple axes:
+
+    >>> x = np.arange(2*3).reshape(3, 2, 1)
+    >>> np.bincount(x, axis=(1, 2))
+    array([[1, 1, 0, 0, 0, 0],
+           [0, 0, 1, 1, 0, 0],
+           [0, 0, 0, 0, 1, 1]])
+    >>> w = x * x
+    >>> np.bincount(x, w, axis=(1, 2))
+    array([[  0.,   1.,   0.,   0.,   0.,   0.],
+           [  0.,   0.,   4.,   9.,   0.,   0.],
+           [  0.,   0.,   0.,   0.,  16.,  25.]])
+
+    With broadcasting, multidimensional `weights` can be summed:
+
+    >>> x = [0, 1, 1, 2]
+    >>> w = np.arange(8).reshape(4, 2)
+    >>> np.bincount(x, w.T).T
+    array([[ 0.,  1.],
+           [ 6.,  8.],
+           [ 6.,  7.]])
+
+    Note that in this last example, the broadcasted shape of `x` is
+    `(1, 1, 4)`, but counting is only done over the last axis, not all three,
+    because the `axis` value (which defaults to all axes) refers to the shape
+    prior to broadcasting.
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
