@@ -2379,7 +2379,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                         NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
                         NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
                         NPY_ITER_READONLY,
-                        NPY_KEEPORDER, NPY_SAFE_CASTING, intp_type);
+                        NPY_KEEPORDER, NPY_SAME_KIND_CASTING, intp_type);
 
         if (op_iter == NULL) {
             Py_DECREF(intp_type);
