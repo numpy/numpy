@@ -42,6 +42,25 @@ class TestIndexing(TestCase):
             a = np.array([np.array(1)], dtype=object)
             assert_(isinstance(a[0.], np.ndarray))
 
+    def test_same_kind_index_casting(self):
+        # Indexes should be cast with same-kind and not safe, even if
+        # that is somewhat unsafe. So test various different code paths.
+        index = np.arange(5)
+        u_index = index.astype(np.uintp)
+        arr = np.arange(10)
+
+        assert_array_equal(arr[index], arr[u_index])
+        arr[u_index] = np.arange(5)
+        assert_array_equal(arr, np.arange(10))
+
+        arr = np.arange(10).reshape(5, 2)
+        assert_array_equal(arr[index], arr[u_index])
+
+        arr[u_index] = np.arange(5)[:,None]
+        assert_array_equal(arr, np.arange(5)[:,None].repeat(2, axis=1))
+
+        arr = np.arange(25).reshape(5, 5)
+        assert_array_equal(arr[u_index, u_index], arr[index, index])
 
     def test_empty_fancy_index(self):
         # Empty list index creates an empty array
