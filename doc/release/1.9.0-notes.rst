@@ -58,6 +58,10 @@ for item getting, negative indices will not be supported anymore.
 ``PySequence_GetItem`` and ``PySequence_SetItem`` however fix negative
 indices so that they can be used there.
 
+ndarray.tofile exception type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All tofile exceptions are now IOError, some were previously ValueError.
+
 
 New Features
 ============
