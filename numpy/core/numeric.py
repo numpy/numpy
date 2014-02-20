@@ -2375,7 +2375,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.seterr(over='raise')
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
-    >>> np.seterr(all='ignore')  # reset to default
+    >>> np.seterr(**old_settings)  # reset to default
     {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
 
     >>> np.int16(32000) * np.int16(3)
