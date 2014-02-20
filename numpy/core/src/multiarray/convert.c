@@ -88,9 +88,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     if (n3 == 0) {
         /* binary data */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
-            PyErr_SetString(PyExc_ValueError, "cannot write " \
-                    "object arrays to a file in "   \
-                    "binary mode");
+            PyErr_SetString(PyExc_IOError,
+                    "cannot write object arrays to a file in binary mode");
             return -1;
         }
 
@@ -126,7 +125,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             NPY_END_ALLOW_THREADS;
             if (n < size) {
-                PyErr_Format(PyExc_ValueError,
+                PyErr_Format(PyExc_IOError,
                         "%ld requested and %ld written",
                         (long) size, (long) n);
                 return -1;
@@ -143,9 +142,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                             1, fp) < 1) {
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_IOError,
-                            "problem writing element"\
-                            " %"NPY_INTP_FMT" to file",
-                            it->index);
+                            "problem writing element %" NPY_INTP_FMT
+                            " to file", it->index);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -218,7 +216,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
-                        "problem writing element %"NPY_INTP_FMT\
+                        "problem writing element %" NPY_INTP_FMT
                         " to file", it->index);
                 Py_DECREF(strobj);
                 Py_DECREF(it);
@@ -228,8 +226,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             if (it->index != it->size-1) {
                 if (fwrite(sep, 1, n3, fp) < n3) {
                     PyErr_Format(PyExc_IOError,
-                            "problem writing "\
-                            "separator to file");
+                            "problem writing separator to file");
                     Py_DECREF(strobj);
                     Py_DECREF(it);
                     return -1;
