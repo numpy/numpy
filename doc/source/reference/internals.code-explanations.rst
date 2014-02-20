@@ -188,139 +188,84 @@ written to so that structured array field setting works more naturally
 (a[0]['f1'] = ``value`` ).
 
 
-Advanced ("Fancy") Indexing
-=============================
+Indexing
+========
 
 .. index::
    single: indexing
 
-The implementation of advanced indexing represents some of the most
-difficult code to write and explain. In fact, there are two
-implementations of advanced indexing. The first works only with 1-D
-arrays and is implemented to handle expressions involving a.flat[obj].
-The second is general-purpose that works for arrays of "arbitrary
-dimension" (up to a fixed maximum). The one-dimensional indexing
-approaches were implemented in a rather straightforward fashion, and
-so it is the general-purpose indexing code that will be the focus of
-this section.
+All python indexing operations ``arr[index]`` are organized by first preparing
+the index and finding the index type. The supported index types are:
+* integer
+* newaxis
+* slice
+* ellipsis
+* integer arrays/array-likes (fancy)
+* boolean (single boolean array); if there is more then one boolean array as
+  index or the shape does not match exactly, the boolean array will be
+  converted to integer arrays instead.
+* 0-d boolean (and also integer); 0-d boolean arrays are a special
+  case which has to be handled in the advanced indexing code. They signal
+  that a 0-d boolean array had to be interpreted as an integer array.
 
-There is a multi-layer approach to indexing because the indexing code
-can at times return an array scalar and at other times return an
-array. The functions with "_nice" appended to their name do this
-special handling while the function without the _nice appendage always
-return an array (perhaps a 0-dimensional array). Some special-case
-optimizations (the index being an integer scalar, and the index being
-a tuple with as many dimensions as the array) are handled in
-array_subscript_nice function which is what Python calls when
-presented with the code "a[obj]." These optimizations allow fast
-single-integer indexing, and also ensure that a 0-dimensional array is
-not created only to be discarded as the array scalar is returned
-instead. This provides significant speed-up for code that is selecting
-many scalars out of an array (such as in a loop). However, it is still
-not faster than simply using a list to store standard Python scalars,
-because that is optimized by the Python interpreter itself.
+As well as the scalar array special case signaling that an integer array
+was interpreted as an integer index, which is important because an integer
+array index forces a copy but is ignored if a scalar is returned (full integer
+index). The prepared index is guaranteed to be valid with the exception of
+out of bound values and broadcasting errors for advanced indexing. This
+includes that an ellipsis is added for incomplete indices for example when
+a two dimensional array is indexed with a single integer.
 
-After these optimizations, the array_subscript function itself is
-called. This function first checks for field selection which occurs
-when a string is passed as the indexing object. Then, 0-D arrays are
-given special-case consideration. Finally, the code determines whether
-or not advanced, or fancy, indexing needs to be performed. If fancy
-indexing is not needed, then standard view-based indexing is performed
-using code borrowed from Numeric which parses the indexing object and
-returns the offset into the data-buffer and the dimensions necessary
-to create a new view of the array. The strides are also changed by
-multiplying each stride by the step-size requested along the
-corresponding dimension.
+The next step depends on the type of index which was found. A full integer
+index will cause a scalar return, or set the scalar in assignments and a single
+boolean indexing array will call specialized boolean functions. Indices
+containing an ellipsis or slice but no advanced indexing will always create
+a view into the old array by calculating the new strides and memory offset.
+This view can then either be returned or for assignments filled using
+:cfunc:`PyArray_CopyObject`. Note that `PyArray_CopyObject` may also be called
+on temporary arrays in other branches to support complicated assignments
+when the array is of object dtype.
 
+Advanced indexing
+-----------------
 
-Fancy-indexing check
---------------------
+By far the most complex case is advanced indexing, which may or may not be
+combined with typical view based indexing (here also integer indices can be
+interpreted as view based). Before trying to understand this, you may want
+to make yourself familiar with its subtleties. The advanced indexing code
+has three different branches and one special case:
+* There is one indexing indexing array and it, as well as the assignment array,
+  can be iterated trivially. For example they may be contiguous. Also the
+  indexing array must be of `intp` type and the value array in assignments of
+  the correct type. This is purely a fast path.
+* There are only integer array indices so that no subspace exists.
+* View based and advanced indexing is mixed. In this case there is a "subspace"
+  defined by the view based indexing (and using the same functionality). For
+  example for ``arr[[1, 2, 3], :]`` the subspace is defined by ``arr[0, :]``.
+* There is a subspace but it has exactly one element. This case can be handled
+  as if there is no subspace, but needs some care during setup.
 
-The fancy_indexing_check routine determines whether or not to use
-standard view-based indexing or new copy-based indexing. If the
-indexing object is a tuple, then view-based indexing is assumed by
-default. Only if the tuple contains an array object or a sequence
-object is fancy-indexing assumed. If the indexing object is an array,
-then fancy indexing is automatically assumed. If the indexing object
-is any other kind of sequence, then fancy-indexing is assumed by
-default. This is over-ridden to simple indexing if the sequence
-contains any slice, newaxis, or Ellipsis objects, and no arrays or
-additional sequences are also contained in the sequence. The purpose
-of this is to allow the construction of "slicing" sequences which is a
-common technique for building up code that works in arbitrary numbers
-of dimensions.
+The logic deciding what case applies, checking broadcasting and what kind of
+transposing is necessary is all implemented in `PyArray_MapIterNew`. After
+setting up, there are two cases. If there is no subspace (or it only has one
+element) no subspace iteration is necessary and an iterator is prepared which
+iterates all indexing arrays *as well as* the result or value array. If there
+is a subspace, there are three iterators prepared. One for the indexing arrays,
+one for the result or value array (minus its subspace), and one for the
+subspaces of the original and the result/assignment array. The first two
+iterators give (or allow calculation) of the pointers into the start of the
+subspace, which then allows to restart the subspace iteration.
 
+When advanced indices are next to each other tranposing may be necessary.
+All necessary transposing is handled by :cfunc:`PyArray_MapIterSwapAxes` and
+has to be handled by the caller unless `PyArray_MapIterNew` is asked to
+allocate the result.
 
-Fancy-indexing implementation
------------------------------
-
-The concept of indexing was also abstracted using the idea of an
-iterator. If fancy indexing is performed, then a :ctype:`PyArrayMapIterObject`
-is created. This internal object is not exposed to Python. It is
-created in order to handle the fancy-indexing at a high-level. Both
-get and set fancy-indexing operations are implemented using this
-object. Fancy indexing is abstracted into three separate operations:
-(1) creating the :ctype:`PyArrayMapIterObject` from the indexing object, (2)
-binding the :ctype:`PyArrayMapIterObject` to the array being indexed, and (3)
-getting (or setting) the items determined by the indexing object.
-There is an optimization implemented so that the :ctype:`PyArrayIterObject`
-(which has it's own less complicated fancy-indexing) is used for
-indexing when possible.
-
-
-Creating the mapping object
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first step is to convert the indexing objects into a standard form
-where iterators are created for all of the index array inputs and all
-Boolean arrays are converted to equivalent integer index arrays (as if
-nonzero(arr) had been called). Finally, all integer arrays are
-replaced with the integer 0 in the indexing object and all of the
-index-array iterators are "broadcast" to the same shape.
-
-
-Binding the mapping object
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When the mapping object is created it does not know which array it
-will be used with so once the index iterators are constructed during
-mapping-object creation, the next step is to associate these iterators
-with a particular ndarray. This process interprets any ellipsis and
-slice objects so that the index arrays are associated with the
-appropriate axis (the axis indicated by the iteraxis entry
-corresponding to the iterator for the integer index array). This
-information is then used to check the indices to be sure they are
-within range of the shape of the array being indexed. The presence of
-ellipsis and/or slice objects implies a sub-space iteration that is
-accomplished by extracting a sub-space view of the array (using the
-index object resulting from replacing all the integer index arrays
-with 0) and storing the information about where this sub-space starts
-in the mapping object. This is used later during mapping-object
-iteration to select the correct elements from the underlying array.
-
-
-Getting (or Setting)
-^^^^^^^^^^^^^^^^^^^^
-
-After the mapping object is successfully bound to a particular array,
-the mapping object contains the shape of the resulting item as well as
-iterator objects that will walk through the currently-bound array and
-either get or set its elements as needed. The walk is implemented
-using the :cfunc:`PyArray_MapIterNext` function. This function sets the
-coordinates of an iterator object into the current array to be the
-next coordinate location indicated by all of the indexing-object
-iterators while adjusting, if necessary, for the presence of a sub-
-space. The result of this function is that the dataptr member of the
-mapping object structure is pointed to the next position in the array
-that needs to be copied out or set to some value.
-
-When advanced indexing is used to extract an array, an iterator for
-the new array is constructed and advanced in phase with the mapping
-object iterator. When advanced indexing is used to place values in an
-array, a special "broadcasted" iterator is constructed from the object
-being placed into the array so that it will only work if the values
-used for setting have a shape that is "broadcastable" to the shape
-implied by the indexing object.
+After preparation getting and setting is relatively straight forward, though
+the different modes of iteration need to be considered. Unless there is only
+a single indexing array during item getting, the validity of the indices
+is checked beforehand. Otherwise it is handled in the inner loop itself for
+optimization.
 
 
 Universal Functions
