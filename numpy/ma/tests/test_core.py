@@ -729,6 +729,9 @@ class TestMaskedArrayArithmetic(TestCase):
         self.assertTrue((-xm).mask)
         self.assertTrue(maximum(xm, xm).mask)
         self.assertTrue(minimum(xm, xm).mask)
+        # Issue #4332
+        self.assertEqual((xm > 0).dtype, np.dtype(bool))
+
 
     def test_masked_singleton_equality(self):
         # Tests (in)equality on masked snigleton

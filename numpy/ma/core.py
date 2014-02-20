@@ -2840,12 +2840,8 @@ class MaskedArray(ndarray):
                 else:
                     # Don't modify inplace, we risk back-propagation
                     m = (m | d)
-            # Make sure the mask has the proper size
-            if result.shape == () and m:
-                return masked
-            else:
-                result._mask = m
-                result._sharedmask = False
+            result._mask = m
+            result._sharedmask = False
         #....
         return result
 
