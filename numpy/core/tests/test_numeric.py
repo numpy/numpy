@@ -1913,9 +1913,13 @@ class TestCross(TestCase):
         u = np.ones((10, 3, 5))
         v = np.ones((2, 5))
         assert_equal(np.cross(u, v, axisa=1, axisb=0).shape, (10, 5, 3))
+        assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=2)
+        assert_raises(ValueError, np.cross, u, v, axisa=3, axisb=0)
         u = np.ones((10, 3, 5, 7))
         v = np.ones((5, 7, 2))
         assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
+        assert_raises(ValueError, np.cross, u, v, axisa=-5, axisb=2)
+        assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=-4)
 
 
 if __name__ == "__main__":
