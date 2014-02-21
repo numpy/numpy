@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import *
-from numpy.lib.stride_tricks import broadcast_arrays
+from numpy.lib.stride_tricks import as_strided, broadcast_arrays
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -44,6 +44,15 @@ def assert_same_as_ufunc(shape0, shape1, transposed=False, flipped=False):
     y = x0 + x1
     b0, b1 = broadcast_arrays(x0, x1)
     assert_array_equal(y, b1)
+
+
+def test_as_strided_dtype():
+    """Verify that as_strided works for arrays of different data types
+    """
+    # note: regression test for bug in GitHub issue #3323
+    for dtype in [float, 'i4,f4', object]:
+        x = np.zeros((2,), dtype)
+        assert_array_equal(x, as_strided(x))
 
 
 def test_same():
