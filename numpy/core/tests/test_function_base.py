@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
-from numpy import logspace, linspace
+from numpy import logspace, linspace, array
 
 class TestLogspace(TestCase):
     def test_basic(self):
@@ -35,3 +35,25 @@ class TestLinspace(TestCase):
         t3 = linspace(0, 1, 2).dtype
         assert_equal(t1, t2)
         assert_equal(t2, t3)
+
+    def test_array_scalar(self):
+        lim1 = array([-120, 100], dtype="int8")
+        lim2 = array([120, -100], dtype="int8")
+        lim3 = array([1200, 1000], dtype="uint16")
+        t1 = linspace(lim1[0], lim1[1], 5)
+        t2 = linspace(lim2[0], lim2[1], 5)
+        t3 = linspace(lim3[0], lim3[1], 5)
+        t4 = linspace(-120.0, 100.0, 5)
+        t5 = linspace(120.0, -100.0, 5)
+        t6 = linspace(1200.0, 1000.0, 5)
+        assert_equal(t1, t4)
+        assert_equal(t2, t5)
+        assert_equal(t3, t6)
+
+    def test_complex(self):
+        lim1 = linspace(1 + 2j, 3 + 4j, 5)
+        t1 = array([ 1.0+2.j ,  1.5+2.5j,  2.0+3.j ,  2.5+3.5j,  3.0+4.j])
+        lim2 = linspace(1j, 10, 5)
+        t2 = array([  0.0+1.j  ,   2.5+0.75j,   5.0+0.5j ,   7.5+0.25j,  10.0+0.j])
+        assert_equal(lim1, t1)
+        assert_equal(lim2, t2)
