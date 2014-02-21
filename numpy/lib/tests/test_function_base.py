@@ -1222,8 +1222,8 @@ class TestCorrCoef(TestCase):
         assert_allclose(np.corrcoef(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('always', RuntimeWarning)
             assert_array_equal(corrcoef(np.array([])), np.nan)
             assert_array_equal(corrcoef(np.array([]).reshape(0, 2)),
                                np.array([]).reshape(0, 0))
@@ -1232,8 +1232,8 @@ class TestCorrCoef(TestCase):
 
     def test_wrong_ddof(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('always', RuntimeWarning)
             assert_array_equal(corrcoef(x, ddof=5),
                                np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
@@ -1253,8 +1253,8 @@ class TestCov(TestCase):
         assert_allclose(cov(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('always', RuntimeWarning)
             assert_array_equal(cov(np.array([])), np.nan)
             assert_array_equal(cov(np.array([]).reshape(0, 2)),
                                np.array([]).reshape(0, 0))
@@ -1263,8 +1263,8 @@ class TestCov(TestCase):
 
     def test_wrong_ddof(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('always', RuntimeWarning)
             assert_array_equal(cov(x, ddof=5),
                                np.array([[np.inf, -np.inf], [-np.inf, np.inf]]))
 

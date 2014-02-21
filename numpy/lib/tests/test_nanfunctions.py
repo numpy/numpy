@@ -130,8 +130,8 @@ class TestNanFunctions_ArgminArgmax(TestCase):
     def test_result_values(self):
         for f, fcmp in zip(self.nanfuncs, [np.greater, np.less]):
             for row in _ndat:
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore')
+                with warnings.catch_warnings(record=True):
+                    warnings.simplefilter('always')
                     ind = f(row)
                     val = row[ind]
                     # comparing with NaN is tricky as the result
