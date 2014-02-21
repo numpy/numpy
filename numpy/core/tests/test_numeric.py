@@ -1877,6 +1877,46 @@ class TestRoll(TestCase):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
 
+class TestCross(TestCase):
+    def test_2x2(self):
+        u = [1, 2]
+        v = [3, 4]
+        z = -2
+        cp = np.cross(u, v)
+        assert_equal(cp, z)
+        cp = np.cross(v, u)
+        assert_equal(cp, -z)
+
+    def test_2x3(self):
+        u = [1, 2]
+        v = [3, 4, 5]
+        z = np.array([10, -5, -2])
+        cp = np.cross(u, v)
+        assert_equal(cp, z)
+        cp = np.cross(v, u)
+        assert_equal(cp, -z)
+
+    def test_3x3(self):
+        u = [1, 2, 3]
+        v = [4, 5, 6]
+        z = np.array([-3, 6, -3])
+        cp = cross(u, v)
+        assert_equal(cp, z)
+        cp = np.cross(v, u)
+        assert_equal(cp, -z)
+
+    def test_broadcasting(self):
+        # Ticket #2624 (Trac #2032)
+        u = np.ones((2, 1, 3))
+        v = np.ones((5, 3))
+        assert_equal(np.cross(u, v).shape, (2, 5, 3))
+        u = np.ones((10, 3, 5))
+        v = np.ones((2, 5))
+        assert_equal(np.cross(u, v, axisa=1, axisb=0).shape, (10, 5, 3))
+        u = np.ones((10, 3, 5, 7))
+        v = np.ones((5, 7, 2))
+        assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
+
 
 if __name__ == "__main__":
     run_module_suite()
