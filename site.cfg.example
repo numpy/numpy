@@ -83,6 +83,21 @@
 # for your configuration (in the following example we installed OpenBLAS with
 # ``make install PREFIX=/opt/OpenBLAS``.
 #
+# **Warning**: OpenBLAS, by default, is built in multithreaded mode. Due to the
+# way Python's multiprocessing is implemented, a multithreaded OpenBLAS can
+# cause programs using both to hang as soon as a worker process is forked on
+# POSIX systems (Linux, Mac).
+# This is fixed in Openblas 0.2.9 for the pthread build, the OpenMP build using
+# GNU openmp is as of gcc-4.9 not fixed yet.
+# Python 3.4 will introduce a new feature in multiprocessing, called the
+# "forkserver", which solves this problem. For older versions, make sure
+# OpenBLAS is built using pthreads or use Python threads instead of
+# multiprocessing.
+# (This problem does not exist with multithreaded ATLAS.)
+#
+# http://docs.python.org/3.4/library/multiprocessing.html#contexts-and-start-methods
+# https://github.com/xianyi/OpenBLAS/issues/294
+#
 # [openblas]
 # libraries = openblas
 # library_dirs = /opt/OpenBLAS/lib
