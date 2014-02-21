@@ -13,6 +13,8 @@ import sys
 import pickle
 from functools import reduce
 
+from nose.tools import assert_raises
+
 import numpy as np
 import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
@@ -3582,6 +3584,45 @@ class TestMaskedView(TestCase):
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
+
+def test_append_masked_array():
+    a = np.ma.masked_equal([1,2,3], value=2)
+    b = np.ma.masked_equal([4,3,2], value=2)
+
+    result = np.ma.append(a, b)
+    expected_data = [1, 2, 3, 4, 3, 2]
+    expected_mask = [False, True, False, False, False, True]
+    assert_array_equal(result.data, expected_data)
+    assert_array_equal(result.mask, expected_mask)
+
+    a = np.ma.masked_all((2,2))
+    b = np.ma.ones((3,1))
+
+    result = np.ma.append(a, b)
+    expected_data = [1] * 3
+    expected_mask = [True] * 4 + [False] * 3
+    assert_array_equal(result.data[-3], expected_data)
+    assert_array_equal(result.mask, expected_mask)
+
+    result = np.ma.append(a, b, axis=None)
+    assert_array_equal(result.data[-3], expected_data)
+    assert_array_equal(result.mask, expected_mask)
+
+
+def test_append_masked_array_along_axis():
+    a = np.ma.masked_equal([1,2,3], value=2)
+    b = np.ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
+    
+    # When `axis` is specified, `values` must have the correct shape.
+    assert_raises(ValueError, np.ma.append, a, b, axis=0)
+
+    result = np.ma.append(a[np.newaxis,:], b, axis=0)
+    expected = np.ma.arange(1, 10)
+    expected[[1, 6]] = np.ma.masked
+    expected = expected.reshape((3,3))
+    assert_array_equal(result.data, expected.data)
+    assert_array_equal(result.mask, expected.mask)
+    
 
 ###############################################################################
 if __name__ == "__main__":
