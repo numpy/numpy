@@ -805,18 +805,19 @@ _descriptor_from_pep3118_format(char *s)
         if (*s == ':') {
             in_name = !in_name;
             *p = *s;
+            p++;
         }
         else if (in_name || !NumPyOS_ascii_isspace(*s)) {
             *p = *s;
+            p++;
         }
-        ++p;
-        ++s;
+        s++;
     }
     *p = '\0';
 
     str = PyUString_FromStringAndSize(buf, strlen(buf));
-    free(buf);
     if (str == NULL) {
+        free(buf);
         return NULL;
     }
 
@@ -824,6 +825,7 @@ _descriptor_from_pep3118_format(char *s)
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
     if (_numpy_internal == NULL) {
         Py_DECREF(str);
+        free(buf);
         return NULL;
     }
     descr = PyObject_CallMethod(
@@ -833,14 +835,17 @@ _descriptor_from_pep3118_format(char *s)
     if (descr == NULL) {
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
+        free(buf);
         return NULL;
     }
     if (!PyArray_DescrCheck(descr)) {
         PyErr_Format(PyExc_RuntimeError,
                      "internal error: numpy.core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
+        free(buf);
         return NULL;
     }
+    free(buf);
     return (PyArray_Descr*)descr;
 }
 
