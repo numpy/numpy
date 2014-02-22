@@ -3,6 +3,7 @@
 #include <npy_config.h>
 #include "numpy/arrayobject.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 /*
  * Check a set of args for the `__numpy_ufunc__` method.  If more than one of
@@ -16,7 +17,7 @@
  * result of the operation, if any. If *result is NULL, there is no override.
  */
 static int
-PyUFunc_CheckOverride(PyObject *ufunc, char *method,
+PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds, 
                       PyObject **result,
                       int nin)

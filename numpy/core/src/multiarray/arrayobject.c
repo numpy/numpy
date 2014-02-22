@@ -1684,7 +1684,7 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
     return obj;
 }
 
-static PyObject *
+static void
 array_free(PyObject * v)
 {
     /* avoid same deallocator as PyBaseObject, see gentype_free */

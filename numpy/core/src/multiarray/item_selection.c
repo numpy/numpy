@@ -1258,7 +1258,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis, NPY_SEL
     PyArray_PartitionFunc * part = get_partition_func(PyArray_TYPE(op), which);
 
     n = PyArray_NDIM(op);
-    if ((n == 0)) {
+    if (n == 0) {
         return 0;
     }
     if (axis < 0) {

@@ -2537,7 +2537,9 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         PyObject **out = (PyObject **)op1;
         int v;
         PyObject *ret;
-        PyObject_Cmp(in1 ? in1 : Py_None, zero, &v);
+        if (PyObject_Cmp(in1 ? in1 : Py_None, zero, &v) == -1) {
+            return;
+        }
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
             return;

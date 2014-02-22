@@ -2092,7 +2092,7 @@ static PyObject *
 array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
     int errval;
-    static PyObject *cached_npy_dot = NULL;
+    static PyUFuncObject *cached_npy_dot = NULL;
     PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
     char* kwlist[] = {"a", "b", "out", NULL };
@@ -2100,7 +2100,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     
     if (cached_npy_dot == NULL) {
         module = PyImport_ImportModule("numpy.core.multiarray");
-        cached_npy_dot = PyDict_GetItemString(PyModule_GetDict(module), "dot");
+        cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
+                                              PyModule_GetDict(module), "dot");
 
         Py_INCREF(cached_npy_dot);
         Py_DECREF(module);

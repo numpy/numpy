@@ -623,7 +623,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
 
         /* Normal case of an integer array */
-        else if PyArray_ISINTEGER(arr) {
+        else if (PyArray_ISINTEGER(arr)) {
             if (PyArray_NDIM(arr) == 0) {
                 /*
                  * A 0-d integer array is an array scalar and can
@@ -1046,7 +1046,7 @@ array_boolean_subscript(PyArrayObject *self,
             return NULL;
         }
 
-        if (PyArray_SetBaseObject(ret, tmp) < 0) {
+        if (PyArray_SetBaseObject(ret, (PyObject *)tmp) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -1468,7 +1468,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
      */
     if (index_type == HAS_FANCY && index_num == 1) {
         /* The array being indexed has one dimension and it is a fancy index */
-        PyArrayObject *ind = indices[0].object;
+        PyArrayObject *ind = (PyArrayObject*)indices[0].object;
 
         /* Check if the index is simple enough */
         if (PyArray_TRIVIALLY_ITERABLE(ind) &&
@@ -1838,7 +1838,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (index_type == HAS_FANCY &&
             index_num == 1 && tmp_arr) {
         /* The array being indexed has one dimension and it is a fancy index */
-        PyArrayObject *ind = indices[0].object;
+        PyArrayObject *ind = (PyArrayObject*)indices[0].object;
 
         /* Check if the type is equivalent */
         if (PyArray_EquivTypes(PyArray_DESCR(self),
@@ -2593,7 +2593,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             permute.len = mit->nd;
             permute.ptr = &PyArray_DIMS(extra_op)[
                                             PyArray_NDIM(extra_op) - mit->nd];
-            tmp_arr = PyArray_Newshape(extra_op, &permute, NPY_CORDER);
+            tmp_arr = (PyArrayObject*)PyArray_Newshape(extra_op, &permute,
+                                                       NPY_CORDER);
             if (tmp_arr == NULL) {
                 goto broadcast_error;
             }

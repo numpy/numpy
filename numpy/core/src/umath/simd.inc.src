@@ -274,9 +274,14 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
  * # kind = logical_or, logical_and#
  */
 
+#if defined NPY_HAVE_SSE2_INTRINSICS
 static void
 sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
                         npy_intp n);
+
+static void
+sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
+#endif
 
 static NPY_INLINE int
 run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
@@ -291,9 +296,6 @@ run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
     return 0;
 }
 
-
-static void
-sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
 
 static NPY_INLINE int
 run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
@@ -314,8 +316,10 @@ run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
  * # kind = absolute, logical_not#
  */
 
+#if defined NPY_HAVE_SSE2_INTRINSICS
 static void
 sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
+#endif
 
 static NPY_INLINE int
 run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)

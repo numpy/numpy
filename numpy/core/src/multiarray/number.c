@@ -408,7 +408,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
                     return NPY_FLOAT_SCALAR;
                 }
             }
-            else if PyArray_IsScalar(o2, Integer) {
+            else if (PyArray_IsScalar(o2, Integer)) {
                     return NPY_INTPOS_SCALAR;
             }
             else { /* IsScalar(o2, Floating) */
