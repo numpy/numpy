@@ -65,6 +65,10 @@ class TestSetOps(TestCase):
         bb = np.array(list(zip(b, b)), dt)
         check_all(aa, bb, i1, i2, dt)
 
+        # test for ticket #2799
+        aa = [1.+0.j, 1- 1.j, 1]
+        assert_array_equal(np.unique(aa), [ 1.-1.j,  1.+0.j])
+
     def test_intersect1d(self):
         # unique inputs
         a = np.array([5, 7, 1, 2])
