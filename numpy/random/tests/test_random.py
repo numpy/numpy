@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import TestCase, run_module_suite, assert_,\
-        assert_raises
+        assert_raises, assert_equal
 from numpy import random
 from numpy.compat import asbytes
 import numpy as np
@@ -30,6 +30,20 @@ class TestMultinomial(TestCase):
         x = random.randint(-5, -1, 5)
         assert_(np.all(-5 <= x))
         assert_(np.all(x < -1))
+
+    def test_size(self):
+        # gh-3173
+        p = [0.5, 0.5]
+        assert_equal(np.random.multinomial(1 ,p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.multinomial(1 ,p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.multinomial(1 ,p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.multinomial(1 ,p, [2, 2]).shape, (2, 2, 2))
+        assert_equal(np.random.multinomial(1 ,p, (2, 2)).shape, (2, 2, 2))
+        assert_equal(np.random.multinomial(1 ,p, np.array((2, 2))).shape,
+                     (2, 2, 2))
+
+        assert_raises(TypeError, np.random.multinomial, 1 , p,
+                      np.float(1))
 
 
 class TestSetState(TestCase):
@@ -288,6 +302,18 @@ class TestRandomDist(TestCase):
                             [[ 0.59266909280647828,  0.40733090719352177],
                              [ 0.56974431743975207,  0.43025568256024799]]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+
+    def test_dirichlet_size(self):
+        # gh-3173
+        p = np.array([51.72840233779265162,  39.74494232180943953])
+        assert_equal(np.random.dirichlet(p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.dirichlet(p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.dirichlet(p, np.uint32(1)).shape, (1, 2))
+        assert_equal(np.random.dirichlet(p, [2, 2]).shape, (2, 2, 2))
+        assert_equal(np.random.dirichlet(p, (2, 2)).shape, (2, 2, 2))
+        assert_equal(np.random.dirichlet(p, np.array((2, 2))).shape, (2, 2, 2))
+
+        assert_raises(TypeError, np.random.dirichlet, p, np.float(1))
 
     def test_exponential(self):
         np.random.seed(self.seed)
