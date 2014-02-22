@@ -1578,7 +1578,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
-            return PyErr_NoMemory();
+            return (PyArray_Descr *)PyErr_NoMemory();
         }
         memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(newdescr->subarray->shape);
@@ -2729,7 +2729,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     if (endian != NPY_IGNORE) {
         if (newendian == NPY_SWAP) {
             /* swap byteorder */
-            if PyArray_ISNBO(endian) {
+            if (PyArray_ISNBO(endian)) {
                 endian = NPY_OPPBYTE;
             }
             else {

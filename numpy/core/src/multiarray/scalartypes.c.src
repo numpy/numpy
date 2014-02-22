@@ -2951,7 +2951,7 @@ long_arrtype_hash(PyObject *obj)
  * #Char = ,U#
  * #Word = ,Unsigned#
  */
-static npy_hash_t
+static NPY_INLINE npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
     PyObject * l = PyLong_From@Word@LongLong(
@@ -3363,7 +3363,6 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
      * the data where N is the number of None's in <???>.
      */
     PyObject *res, *ret;
-    int N;
 
     res = PyArray_FromScalar(self, NULL);
 
@@ -3989,7 +3988,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_getset = gentype_getsets;
     PyGenericArrType_Type.tp_new = NULL;
     PyGenericArrType_Type.tp_alloc = gentype_alloc;
-    PyGenericArrType_Type.tp_free = gentype_free;
+    PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_repr = gentype_repr;
     PyGenericArrType_Type.tp_str = gentype_str;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;

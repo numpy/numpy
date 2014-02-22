@@ -97,7 +97,7 @@ static PyArray_@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
     &npy_@arg@binsearch_right,
 };
 
-static PyArray_@Arg@BinSearchFunc*
+static NPY_INLINE PyArray_@Arg@BinSearchFunc*
 get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
     static npy_intp num_funcs = sizeof(_@arg@binsearch_map) /
