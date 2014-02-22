@@ -522,6 +522,16 @@ cdef double kahan_sum(double *darr, npy_intp n):
         sum = t
     return sum
 
+def _shape_from_size(size, d):
+    if size is None:
+        shape = (d,)
+    else:
+        try:
+           shape = (operator.index(size), d)
+        except TypeError:
+           shape = tuple(size) + (d,)
+    return shape
+
 cdef class RandomState:
     """
     RandomState(seed=None)
@@ -589,14 +599,12 @@ cdef class RandomState:
         """
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
-        if seed is None:
-            errcode = rk_randomseed(self.internal_state)
-        elif type(seed) is int:
-            rk_seed(seed, self.internal_state)
-        elif isinstance(seed, np.integer):
-            iseed = int(seed)
-            rk_seed(iseed, self.internal_state)
-        else:
+        try:
+            if seed is None:
+                errcode = rk_randomseed(self.internal_state)
+            else:
+                rk_seed(operator.index(seed), self.internal_state)
+        except TypeError:
             obj = <ndarray>PyArray_ContiguousFromObject(seed, NPY_LONG, 1, 1)
             init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
                 PyArray_DIM(obj, 0))
@@ -4248,12 +4256,7 @@ cdef class RandomState:
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
             raise ValueError("sum(pvals[:-1]) > 1.0")
 
-        if size is None:
-            shape = (d,)
-        elif type(size) is int:
-            shape = (size, d)
-        else:
-            shape = size + (d,)
+        shape = _shape_from_size(size, d)
 
         multin = np.zeros(shape, int)
         mnarr = <ndarray>multin
@@ -4366,12 +4369,7 @@ cdef class RandomState:
         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
-        if size is None:
-            shape = (k,)
-        elif type(size) is int:
-            shape = (size, k)
-        else:
-            shape = size + (k,)
+        shape = _shape_from_size(size, k)
 
         diric   = np.zeros(shape, np.float64)
         val_arr = <ndarray>diric
