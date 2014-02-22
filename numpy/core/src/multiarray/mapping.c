@@ -11,6 +11,7 @@
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "iterators.h"
@@ -566,6 +567,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
+                indices[curr_idx].value = 1;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
                 if (PyObject_IsTrue((PyObject *)arr)) {
@@ -612,6 +614,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             index_type |= HAS_FANCY;
             for (i=0; i < n; i++) {
                 indices[curr_idx].type = HAS_FANCY;
+                indices[curr_idx].value = PyArray_DIM(arr, i);
                 indices[curr_idx].object = (PyObject *)nonzero_result[i];
 
                 used_ndim += 1;
@@ -654,6 +657,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             index_type |= HAS_FANCY;
             indices[curr_idx].type = HAS_FANCY;
+            indices[curr_idx].value = -1;
             indices[curr_idx].object = (PyObject *)arr;
 
             used_ndim += 1;
@@ -741,7 +745,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     /*
      * At this point indices are all set correctly, no bounds checking
      * has been made and the new array may still have more dimensions
-     * then is possible.
+     * than is possible and boolean indexing arrays may have an incorrect shape.
      *
      * Check this now so we do not have to worry about it later.
      * It can happen for fancy indexing or with newaxis.
@@ -755,6 +759,50 @@ prepare_index(PyArrayObject *self, PyObject *index,
                          "indexing result would have %d",
                          NPY_MAXDIMS, (new_ndim + fancy_ndim));
             goto failed_building_indices;
+        }
+
+        /*
+         * If we had a fancy index, we may have had a boolean array index.
+         * So check if this had the correct shape now that we can find out
+         * which axes it acts on.
+         */
+        used_ndim = 0;
+        for (i = 0; i < curr_idx; i++) {
+            if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
+                if (indices[i].value != PyArray_DIM(self, used_ndim)) {
+                    static PyObject *warning;
+
+                    char *err_msg[174];
+                    sprintf(err_msg,
+                        "boolean index did not match indexed array along "
+                        "dimension %d; dimension is %" NPY_INTP_FMT
+                        " but corresponding boolean dimension is %" NPY_INTP_FMT,
+                        used_ndim, PyArray_DIM(self, used_ndim),
+                        indices[i].value);
+
+                    npy_cache_pyfunc(
+                        "numpy", "VisibleDeprecationWarning", &warning);
+                    if (warning == NULL) {
+                        goto failed_building_indices;
+                    }
+
+                    if (PyErr_WarnEx(warning, err_msg, 1) < 0) {
+                        goto failed_building_indices;
+                    }
+                    break;
+                }
+            }
+
+            if (indices[i].type == HAS_ELLIPSIS) {
+                used_ndim += indices[i].value;
+            }
+            else if ((indices[i].type == HAS_NEWAXIS) ||
+                     (indices[i].type == HAS_0D_BOOL)) {
+                used_ndim += 0;
+            }
+            else {
+                used_ndim += 1;
+            }
         }
     }
 

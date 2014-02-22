@@ -726,14 +726,9 @@ class TestMultiIndexingAutomated(TestCase):
                 arr = arr.reshape((arr.shape[:ax] + (1,) + arr.shape[ax:]))
                 continue
             if isinstance(indx, np.ndarray) and indx.dtype == bool:
-                # This may be open for improvement in numpy.
-                # numpy should probably cast boolean lists to boolean indices
-                # instead of intp!
+                if indx.shape != arr.shape[ax:ax+indx.ndim]:
+                    raise IndexError
 
-                # Numpy supports for a boolean index with
-                # non-matching shape as long as the True values are not
-                # out of bounds. Numpy maybe should maybe not allow this,
-                # (at least not array that are larger then the original one).
                 try:
                     flat_indx = np.ravel_multi_index(np.nonzero(indx),
                                     arr.shape[ax:ax+indx.ndim], mode='raise')
@@ -959,6 +954,7 @@ class TestMultiIndexingAutomated(TestCase):
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
+            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
             for simple_pos in [0, 2, 3]:
                 tocheck = [self.fill_indices, self.complex_indices,
                            self.fill_indices, self.fill_indices]
@@ -981,7 +977,7 @@ class TestMultiIndexingAutomated(TestCase):
     def test_1d(self):
         a = np.arange(10)
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', '', DeprecationWarning)
+            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
 
