@@ -395,13 +395,14 @@ operations.
 But isn't it weird to add an operator with no stdlib uses?
 ----------------------------------------------------------
 
-It's certainly unusual, but the important thing is whether a change
-will benefit users, not where the software is being downloaded from.
-It's clear from the above that ``@`` will be used, and used heavily.
-And -- who knows? -- perhaps someday the stdlib will contain a matrix
-type of some sort.  This PEP only moves us closer to that possibility,
-by helping the Python numerical community finally standardize on a
-single duck type for all matrix-like objects.
+It's certainly unusual (though ``...`` was also added without any
+stdlib uses), but the important thing is whether a change will benefit
+users, not where the software is being downloaded from.  It's clear
+from the above that ``@`` will be used, and used heavily.  And -- who
+knows? -- perhaps someday the stdlib will contain a matrix type of
+some sort.  This PEP only moves us closer to that possibility, by
+helping the Python numerical community finally standardize on a single
+duck type for all matrix-like objects.
 
 
 Matrix power and in-place operators
@@ -460,8 +461,8 @@ advantages:
   and columns that define matrix multiplication.
 
 
-Definition for built-ins
-''''''''''''''''''''''''
+Definitions for built-ins
+'''''''''''''''''''''''''
 
 No ``__matmul__`` or ``__matpow__`` are defined for builtin numeric
 types, because these are scalars, and the consensus semantics for
