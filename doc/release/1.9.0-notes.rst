@@ -239,6 +239,12 @@ Non-integer scalars for sequence repetition
 Using non-integer numpy scalars to repeat python sequences is deprecated.
 For example ``np.float_(2) * [1]`` will be an error in the future.
 
+``select`` input deprecations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The integer and empty input to ``select`` is deprecated. In the future only
+boolean arrays will be valid conditions and an empty ``condlist`` will be
+considered an input error instead of returning the default.
+
 C-API
 ~~~~~
 

@@ -2996,8 +2996,8 @@ static PyObject *
 array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     npy_intp i, len, narr = 0, ndtypes = 0;
-    PyArrayObject *arr[NPY_MAXARGS];
-    PyArray_Descr *dtypes[NPY_MAXARGS];
+    PyArrayObject **arr = NULL;
+    PyArray_Descr **dtypes = NULL;
     PyObject *ret = NULL;
 
     len = PyTuple_GET_SIZE(args);
@@ -3007,25 +3007,21 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
         goto finish;
     }
 
+    arr = PyArray_malloc(2 * len * sizeof(void *));
+    if (arr == NULL) {
+        return PyErr_NoMemory();
+    }
+    dtypes = (PyArray_Descr**)&arr[len];
+
     for (i = 0; i < len; ++i) {
         PyObject *obj = PyTuple_GET_ITEM(args, i);
         if (PyArray_Check(obj)) {
-            if (narr == NPY_MAXARGS) {
-                PyErr_SetString(PyExc_ValueError,
-                                "too many arguments");
-                goto finish;
-            }
             Py_INCREF(obj);
             arr[narr] = (PyArrayObject *)obj;
             ++narr;
         }
         else if (PyArray_IsScalar(obj, Generic) ||
                                     PyArray_IsPythonNumber(obj)) {
-            if (narr == NPY_MAXARGS) {
-                PyErr_SetString(PyExc_ValueError,
-                                "too many arguments");
-                goto finish;
-            }
             arr[narr] = (PyArrayObject *)PyArray_FromAny(obj,
                                         NULL, 0, 0, 0, NULL);
             if (arr[narr] == NULL) {
@@ -3034,11 +3030,6 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             ++narr;
         }
         else {
-            if (ndtypes == NPY_MAXARGS) {
-                PyErr_SetString(PyExc_ValueError,
-                                "too many arguments");
-                goto finish;
-            }
             if (!PyArray_DescrConverter(obj, &dtypes[ndtypes])) {
                 goto finish;
             }
@@ -3055,6 +3046,7 @@ finish:
     for (i = 0; i < ndtypes; ++i) {
         Py_DECREF(dtypes[i]);
     }
+    PyArray_free(arr);
     return ret;
 }
 

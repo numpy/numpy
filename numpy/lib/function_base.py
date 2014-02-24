@@ -770,29 +770,68 @@ def select(condlist, choicelist, default=0):
     array([ 0,  1,  2,  0,  0,  0, 36, 49, 64, 81])
 
     """
-    n = len(condlist)
-    n2 = len(choicelist)
-    if n2 != n:
+    # Check the size of condlist and choicelist are the same, or abort.
+    if len(condlist) != len(choicelist):
         raise ValueError(
-            "list of cases must be same length as list of conditions")
-    choicelist = [default] + choicelist
-    S = 0
-    pfac = 1
-    for k in range(1, n+1):
-        S += k * pfac * asarray(condlist[k-1])
-        if k < n:
-            pfac *= (1-asarray(condlist[k-1]))
-    # handle special case of a 1-element condition but
-    #  a multi-element choice
-    if type(S) in ScalarType or max(asarray(S).shape) == 1:
-        pfac = asarray(1)
-        for k in range(n2+1):
-            pfac = pfac + asarray(choicelist[k])
-        if type(S) in ScalarType:
-            S = S*ones(asarray(pfac).shape, type(S))
-        else:
-            S = S*ones(asarray(pfac).shape, S.dtype)
-    return choose(S, tuple(choicelist))
+            'list of cases must be same length as list of conditions')
+
+    # Now that the dtype is known, handle the deprecated select([], []) case
+    if len(condlist) == 0:
+        warnings.warn("select with an empty condition list is not possible"
+                      "and will be deprecated",
+                      DeprecationWarning)
+        return np.asarray(default)[()]
+
+    choicelist = [np.asarray(choice) for choice in choicelist]
+    choicelist.append(np.asarray(default))
+
+    # need to get the result type before broadcasting for correct scalar
+    # behaviour
+    dtype = np.result_type(*choicelist)
+
+    # Convert conditions to arrays and broadcast conditions and choices
+    # as the shape is needed for the result. Doing it seperatly optimizes
+    # for example when all choices are scalars.
+    condlist = np.broadcast_arrays(*condlist)
+    choicelist = np.broadcast_arrays(*choicelist)
+
+    # If cond array is not an ndarray in boolean format or scalar bool, abort.
+    deprecated_ints = False
+    for i in range(len(condlist)):
+        cond = condlist[i]
+        if cond.dtype.type is not np.bool_:
+            if np.issubdtype(cond.dtype, np.integer):
+                # A previous implementation accepted int ndarrays accidentally.
+                # Supported here deliberately, but deprecated.
+                condlist[i] = condlist[i].astype(bool)
+                deprecated_ints = True
+            else:
+                raise ValueError(
+                    'invalid entry in choicelist: should be boolean ndarray')
+
+    if deprecated_ints:
+        msg = "select condlists containing integer ndarrays is deprecated " \
+            "and will be removed in the future. Use `.astype(bool)` to " \
+            "convert to bools."
+        warnings.warn(msg, DeprecationWarning)
+
+    if choicelist[0].ndim == 0:
+        # This may be common, so avoid the call.
+        result_shape = condlist[0].shape
+    else:
+        result_shape = np.broadcast_arrays(condlist[0], choicelist[0])[0].shape
+
+    result = np.full(result_shape, choicelist[-1], dtype)
+
+    # Use np.copyto to burn each choicelist array onto result, using the
+    # corresponding condlist as a boolean mask. This is done in reverse
+    # order since the first choice should take precedence.
+    choicelist = choicelist[-2::-1]
+    condlist = condlist[::-1]
+    for choice, cond in zip(choicelist, condlist):
+        np.copyto(result, choice, where=cond)
+
+    return result
 
 
 def copy(a, order='K'):
@@ -3134,7 +3173,7 @@ def meshgrid(*xi, **kwargs):
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
     one-dimensional coordinate arrays x1, x2,..., xn.
-    
+
     .. versionchanged:: 1.9
        1-D and 0-D cases are allowed.
 
@@ -3185,9 +3224,8 @@ def meshgrid(*xi, **kwargs):
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
-    
-    In the 1-D and 0-D case, the indexing and sparse keywords have no
-    effect.
+
+    In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
 
     See Also
     --------
