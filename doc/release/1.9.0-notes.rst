@@ -111,6 +111,12 @@ data type's `compare` function to perform the search, but is now implemented
 by type specific functions. Depending on the size of the inputs, this can
 result in performance improvements over 2x.
 
+Full broadcasting support for `np.cross`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.cross` now properly broadcasts its two input arrays, even if they have
+different number of dimensions. In earlier versions this would result in
+either an error being raised, or wrong results computed.
+
 Changes
 =======
 
