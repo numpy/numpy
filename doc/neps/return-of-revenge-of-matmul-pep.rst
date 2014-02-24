@@ -49,20 +49,22 @@ particular, many will implement only the 2d or 1d+2d subsets.
 The recommended semantics for ``@`` are:
 
 * 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
-  is a mathematically distinct operation, and should go through ``*``
-  instead.  (This is consistent both with the dominant convention that
-  ``*`` refer to elementwise multiplication with broadcasting
-  [#broadcasting], and with the minority convention that ``*`` be used
-  for both scalar and matrix multiplication, decided on a call-by-call
-  basis.)
+  is a mathematically and algorithmically distinct operation from
+  matrix @ matrix multiplication, and should go through ``*`` instead
+  of ``@``.  (This is consistent with both existing Python conventions
+  for ``*``: in the dominant convention, ``*`` refers to elementwise
+  multiplication with broadcasting [#broadcasting], and in the
+  minority convention, ``*`` is currently used for both scalar and
+  matrix multiplication, decided on a call-by-call basis.)
 
 * 1d vector inputs are promoted to 2d by appending a '1' to the shape
   on the appropriate side, the operation is performed, and then this
   added dimension is removed from the output.  The result is that
   matrix @ vector and vector @ matrix are both legal (assuming
-  compatible shapes), and both return vectors.  This is clearer with
-  examples.  If ``arr(2, 3)`` represents a 2x3 array, and ``arr(3)``
-  represents a 1d vector with 3 elements, then:
+  compatible shapes), and both return vectors; vector @ vector returns
+  a scalar.  This is clearer with examples.  If ``arr(2, 3)``
+  represents a 2x3 array, and ``arr(3)`` represents a 1d vector with 3
+  elements, then:
 
   * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
     an array with shape (2, 1), i.e., a column vector.
@@ -472,14 +474,15 @@ information needed to interpret their contents numerically (e.g., as
 float32 versus int32).  Array objects are typed, but cannot represent
 multidimensional data.  And finally, providing a quality
 implementation of matrix multiplication is highly non-trivial.  The
-naive nested loop implementation is very slow and its use would create
-a dangeous trap for users.  But the alternative of providing a
-competitive matrix multiply would require that Python link to a BLAS
-library, which brings a set of new complications -- among them that
-several popular BLAS libraries (including the one that ships by
-default on OS X) currently break the use of ``multiprocessing``
-[#blas-fork].  Thus we'll continue to delegate dealing with these
-problems to numpy and friends, at least for now.
+naive nested loop implementation is very slow and providing it in the
+Python core would just create a trap for users.  But the alternative
+-- providing a modern, competitive matrix multiply -- would require
+that Python link to a BLAS library, which brings a set of new
+complications.  In particular, several popular BLAS libraries
+(including the one that ships by default on OS X) currently break the
+use of ``multiprocessing`` [#blas-fork].  Thus we'll continue to
+delegate dealing with these problems to numpy and friends, at least
+for now.
 
 There are also non-numeric Python builtins which define ``__mul__``
 (``str``, ``list``, ...).  We do not define ``__matmul__`` for these
