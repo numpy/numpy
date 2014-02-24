@@ -68,8 +68,8 @@ they are compatible::
   Scale  (1d array):             3
   Result (3d array): 256 x 256 x 3
 
-When either of the dimensions compared is one, the larger of the two is
-used.  In other words, the smaller of two axes is stretched or "copied"
+When either of the dimensions compared is one, the other is
+used.  In other words, dimensions with size 1 are stretched or "copied"
 to match the other.
 
 In the following example, both the ``A`` and ``B`` arrays have axes with
