@@ -41,30 +41,28 @@ Intended use
 ------------
 
 This section is informative, rather than normative -- it documents the
-consensus of a number of 3rd party libraries on how the ``@`` and
-``@@`` operators will be implemented.  Not all matrix-like data types
-will provide all of the different dimensionalities described here; in
-particular, many will implement only the 2d or 1d+2d subsets.
+consensus of a number of libraries that provide array- or matrix-like
+objects on how the ``@`` and ``@@`` operators will be implemented.
+Not all matrix-like data types will provide all of the different
+dimensionalities described here; in particular, many will implement
+only the 2d or 1d+2d subsets.  But ideally whatever functionality is
+available will be consistent with this.
 
 The recommended semantics for ``@`` are:
 
 * 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
   is a mathematically and algorithmically distinct operation from
-  matrix @ matrix multiplication, and should go through ``*`` instead
-  of ``@``.  (This is consistent with both existing Python conventions
-  for ``*``: in the dominant convention, ``*`` refers to elementwise
-  multiplication with broadcasting [#broadcasting], and in the
-  minority convention, ``*`` is currently used for both scalar and
-  matrix multiplication, decided on a call-by-call basis.)
+  matrix @ matrix multiplication; scalar * matrix multiplication
+  should go through ``*`` instead of ``@``.
 
 * 1d vector inputs are promoted to 2d by appending a '1' to the shape
-  on the appropriate side, the operation is performed, and then this
-  added dimension is removed from the output.  The result is that
-  matrix @ vector and vector @ matrix are both legal (assuming
-  compatible shapes), and both return vectors; vector @ vector returns
-  a scalar.  This is clearer with examples.  If ``arr(2, 3)``
-  represents a 2x3 array, and ``arr(3)`` represents a 1d vector with 3
-  elements, then:
+  on the appropriate side, performing the operation, and then removing
+  this added dimension from the output.  The result is that matrix @
+  vector and vector @ matrix are both legal (assuming compatible
+  shapes), and both return 1d vectors; vector @ vector returns a
+  scalar.  This is clearer with examples.  If ``arr(2, 3)`` represents
+  a 2x3 array, and ``arr(3)`` represents a 1d vector with 3 elements,
+  then:
 
   * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
     an array with shape (2, 1), i.e., a column vector.
