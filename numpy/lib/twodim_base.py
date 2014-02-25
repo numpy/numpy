@@ -430,7 +430,7 @@ def tril(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype), m)
+    out = multiply(tri(m.shape[-2], m.shape[-1], k=k, dtype=m.dtype), m)
     return out
 
 
@@ -457,7 +457,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply((1 - tri(m.shape[0], m.shape[1], k - 1, dtype=m.dtype)), m)
+    out = multiply((1 - tri(m.shape[-2], m.shape[-1], k - 1, dtype=m.dtype)), m)
     return out
 
 

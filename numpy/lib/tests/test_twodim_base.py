@@ -275,16 +275,40 @@ class TestTri(TestCase):
         assert_array_equal(tri(3, dtype=bool), out.astype(bool))
 
 
-def test_tril_triu():
+def test_tril_triu_ndim2():
     for dtype in np.typecodes['AllFloat'] + np.typecodes['AllInteger']:
         a = np.ones((2, 2), dtype=dtype)
         b = np.tril(a)
         c = np.triu(a)
-        assert_array_equal(b, [[1, 0], [1, 1]])
-        assert_array_equal(c, b.T)
+        yield assert_array_equal, b, [[1, 0], [1, 1]]
+        yield assert_array_equal, c, b.T
         # should return the same dtype as the original array
-        assert_equal(b.dtype, a.dtype)
-        assert_equal(c.dtype, a.dtype)
+        yield assert_equal, b.dtype, a.dtype
+        yield assert_equal, c.dtype, a.dtype
+
+def test_tril_triu_ndim3():
+    for dtype in np.typecodes['AllFloat'] + np.typecodes['AllInteger']:
+        a = np.array([
+            [[1, 1], [1, 1]],
+            [[1, 1], [1, 0]],
+            [[1, 1], [0, 0]],
+            ], dtype=dtype)
+        a_tril_desired = np.array([
+            [[1, 0], [1, 1]],
+            [[1, 0], [1, 0]],
+            [[1, 0], [0, 0]],
+            ], dtype=dtype)
+        a_triu_desired = np.array([
+            [[1, 1], [0, 1]],
+            [[1, 1], [0, 0]],
+            [[1, 1], [0, 0]],
+            ], dtype=dtype)
+        a_triu_observed = np.triu(a)
+        a_tril_observed = np.tril(a)
+        yield assert_array_equal, a_triu_observed, a_triu_desired
+        yield assert_array_equal, a_tril_observed, a_tril_desired
+        yield assert_equal, a_triu_observed.dtype, a.dtype
+        yield assert_equal, a_tril_observed.dtype, a.dtype
 
 
 def test_mask_indices():

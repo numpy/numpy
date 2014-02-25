@@ -81,6 +81,10 @@ Dtype parameter added to `np.linspace` and `np.logspace`
 The returned data type from the `linspace` and `logspace` functions
 can now be specificed using the dtype parameter.
 
+More general `np.triu` and `np.tril` broadcasting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For arrays with `ndim` exceeding 2, these functions will now apply to the
+final two axes instead of raising an exception.
 
 `tobytes` alias for `tostring` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
