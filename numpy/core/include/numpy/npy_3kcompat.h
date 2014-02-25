@@ -274,24 +274,6 @@ npy_PyFile_Check(PyObject *file)
 
 /*
  * DEPRECATED DO NOT USE
- * use npy_PyFile_Dup2 instead
- * this function will mess ups python3 internal file object buffering
- * Get a FILE* handle to the file represented by the Python object
- */
-static NPY_INLINE FILE*
-npy_PyFile_Dup(PyObject *file, char *mode)
-{
-    npy_off_t orig;
-    if (DEPRECATE("npy_PyFile_Dup is deprecated, use "
-                  "npy_PyFile_Dup2") < 0) {
-        return NULL;
-    }
-
-    return npy_PyFile_Dup2(file, mode, &orig);
-}
-
-/*
- * DEPRECATED DO NOT USE
  * use npy_PyFile_DupClose2 instead
  * this function will mess ups python3 internal file object buffering
  * Close the dup-ed file handle, and seek the Python one to the current position
@@ -315,15 +297,45 @@ npy_PyFile_DupClose(PyObject *file, FILE* handle)
 
 #else
 
-/* DEPRECATED DO NOT USE */
-#define npy_PyFile_Dup(file, mode) PyFile_AsFile(file)
-#define npy_PyFile_DupClose(file, handle) (0)
+/* DEPRECATED, DO NOT USE */
+#define npy_PyFile_DupClose(f, h, p) npy_PyFile_DupClose2((f), (h), (p))
+
 /* use these */
-#define npy_PyFile_Dup2(file, mode, orig_pos_p) PyFile_AsFile(file)
-#define npy_PyFile_DupClose2(file, handle, orig_pos) (0)
+static NPY_INLINE FILE *
+npy_PyFile_Dup2(PyObject *file,
+                const char *NPY_UNUSED(mode), npy_off_t *NPY_UNUSED(orig_pos))
+{
+    return PyFile_AsFile(file);
+}
+
+static NPY_INLINE int
+npy_PyFile_DupClose2(PyObject *NPY_UNUSED(file), FILE* NPY_UNUSED(handle),
+                     npy_off_t NPY_UNUSED(orig_pos))
+{
+    return 0;
+}
+
 #define npy_PyFile_Check PyFile_Check
 
 #endif
+
+/*
+ * DEPRECATED, DO NOT USE
+ * Use npy_PyFile_Dup2 instead.
+ * This function will mess up python3 internal file object buffering.
+ * Get a FILE* handle to the file represented by the Python object.
+ */
+static NPY_INLINE FILE*
+npy_PyFile_Dup(PyObject *file, char *mode)
+{
+    npy_off_t orig;
+    if (DEPRECATE("npy_PyFile_Dup is deprecated, use "
+                  "npy_PyFile_Dup2") < 0) {
+        return NULL;
+    }
+
+    return npy_PyFile_Dup2(file, mode, &orig);
+}
 
 static NPY_INLINE PyObject*
 npy_PyFile_OpenFile(PyObject *filename, const char *mode)
