@@ -251,7 +251,7 @@ Conversion operations
    ma.MaskedArray.tofile
    ma.MaskedArray.tolist
    ma.MaskedArray.torecords
-   ma.MaskedArray.tostring
+   ma.MaskedArray.tobytes
 
 
 Pickling and unpickling
@@ -400,5 +400,3 @@ Miscellanea
    ma.ediff1d
    ma.indices
    ma.where
-
-

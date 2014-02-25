@@ -1,37 +1,21 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import sys
-import traceback
+import warnings
 
-__all__ = ['IgnoreException', 'importall',]
+__all__ = ['importall']
 
-DEBUG=0
-get_frame = sys._getframe
-
-class IgnoreException(Exception):
-    "Ignoring this exception due to disabled feature"
-
-
-def output_exception(printstream = sys.stdout):
-    try:
-        type, value, tb = sys.exc_info()
-        info = traceback.extract_tb(tb)
-        #this is more verbose
-        #traceback.print_exc()
-        filename, lineno, function, text = info[-1] # last line only
-        msg = "%s:%d: %s: %s (in %s)\n" % (
-            filename, lineno, type.__name__, str(value), function)
-        printstream.write(msg)
-    finally:
-        type = value = tb = None # clean up
-    return
 
 def importall(package):
     """
+    `importall` is DEPRECATED and will be removed in numpy 1.9.0
+
     Try recursively to import all subpackages under package.
     """
-    if isinstance(package,str):
+    warnings.warn("`importall is deprecated, and will be remobed in numpy 1.9.0",
+                  DeprecationWarning)
+
+    if isinstance(package, str):
         package = __import__(package)
 
     package_name = package.__name__
@@ -40,7 +24,7 @@ def importall(package):
         subdir = os.path.join(package_dir, subpackage_name)
         if not os.path.isdir(subdir):
             continue
-        if not os.path.isfile(os.path.join(subdir,'__init__.py')):
+        if not os.path.isfile(os.path.join(subdir, '__init__.py')):
             continue
         name = package_name+'.'+subpackage_name
         try:

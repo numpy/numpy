@@ -50,11 +50,6 @@
       {(int nrows, int ncols, long* data          )};
 %apply (int* DIM1 , int* DIM2 , long** ARGOUTVIEW_ARRAY2)
       {(int* nrows, int* ncols, long** data             )};
-// Note: the %apply for INPLACE_ARRAY2 above gets successfully applied
-// to the constructor Array2(int nrows, int ncols, long* data), but
-// does not get applied to the method Array2::resize(int nrows, int
-// ncols, long* data).  I have no idea why.  For this reason the test
-// for Apply2.resize(numpy.ndarray) in testArray.py is commented out.
 
 // Array1 support
 %include "Array1.h"

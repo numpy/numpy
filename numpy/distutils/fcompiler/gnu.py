@@ -35,13 +35,13 @@ class GnuFCompiler(FCompiler):
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
-        m = re.match(r'GNU Fortran', version_string)
+        m = re.search(r'GNU Fortran', version_string)
         if not m:
             return None
-        m = re.match(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
+        m = re.search(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
         if m:
             return ('gfortran', m.group(1))
-        m = re.match(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
+        m = re.search(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
         if m:
             v = m.group(1)
             if v.startswith('0') or v.startswith('2') or v.startswith('3'):
@@ -170,7 +170,7 @@ class GnuFCompiler(FCompiler):
         if d is not None:
             g2c = self.g2c + '-pic'
             f = self.static_lib_format % (g2c, self.static_lib_extension)
-            if not os.path.isfile(os.path.join(d,f)):
+            if not os.path.isfile(os.path.join(d, f)):
                 g2c = self.g2c
         else:
             g2c = self.g2c

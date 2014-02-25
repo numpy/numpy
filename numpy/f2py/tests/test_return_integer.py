@@ -7,7 +7,7 @@ import util
 
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t):
-        assert_( t(123)==123,repr(t(123)))
+        assert_( t(123)==123, repr(t(123)))
         assert_( t(123.6)==123)
         assert_( t(long(123))==123)
         assert_( t('123')==123)
@@ -17,13 +17,13 @@ class TestReturnInteger(util.F2PyTest):
         assert_( t(array(123))==123)
         assert_( t(array([123]))==123)
         assert_( t(array([[123]]))==123)
-        assert_( t(array([123],'b'))==123)
-        assert_( t(array([123],'h'))==123)
-        assert_( t(array([123],'i'))==123)
-        assert_( t(array([123],'l'))==123)
-        assert_( t(array([123],'B'))==123)
-        assert_( t(array([123],'f'))==123)
-        assert_( t(array([123],'d'))==123)
+        assert_( t(array([123], 'b'))==123)
+        assert_( t(array([123], 'h'))==123)
+        assert_( t(array([123], 'i'))==123)
+        assert_( t(array([123], 'l'))==123)
+        assert_( t(array([123], 'B'))==123)
+        assert_( t(array([123], 'f'))==123)
+        assert_( t(array([123], 'd'))==123)
 
         #assert_raises(ValueError, t, array([123],'S3'))
         assert_raises(ValueError, t, 'abc')
@@ -34,7 +34,7 @@ class TestReturnInteger(util.F2PyTest):
         assert_raises(Exception, t, t)
         assert_raises(Exception, t, {})
 
-        if t.__doc__.split()[0] in ['t8','s8']:
+        if t.__doc__.split()[0] in ['t8', 's8']:
             assert_raises(OverflowError, t, 100000000000000000000000)
             assert_raises(OverflowError, t, 10000000011111111111111.23)
 

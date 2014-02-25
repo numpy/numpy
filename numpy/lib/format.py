@@ -35,7 +35,7 @@ Capabilities
 
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
-  able create a solution in his preferred programming language to
+  able to create a solution in his preferred programming language to
   read most ``.npy`` files that he has been given without much
   documentation.
 
@@ -138,6 +138,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy
 import sys
+import io
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj, long, basestring
 
@@ -148,6 +149,7 @@ else:
 
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
+BUFFER_SIZE = 2 ** 18 #size of buffer for reading npz files in bytes
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -186,10 +188,7 @@ def read_magic(fp):
     major : int
     minor : int
     """
-    magic_str = fp.read(MAGIC_LEN)
-    if len(magic_str) != MAGIC_LEN:
-        msg = "could not read %d characters for the magic string; got %r"
-        raise ValueError(msg % (MAGIC_LEN, magic_str))
+    magic_str = _read_bytes(fp, MAGIC_LEN, "magic string")
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
@@ -321,14 +320,9 @@ def read_array_header_1_0(fp):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    hlength_str = fp.read(2)
-    if len(hlength_str) != 2:
-        msg = "EOF at %s before reading array header length"
-        raise ValueError(msg % fp.tell())
+    hlength_str = _read_bytes(fp, 2, "array header length")
     header_length = struct.unpack('<H', hlength_str)[0]
-    header = fp.read(header_length)
-    if len(header) != header_length:
-        raise ValueError("EOF at %s before reading array header" % fp.tell())
+    header = _read_bytes(fp, header_length, "array header")
 
     # The header is a pretty-printed string representation of a literal Python
     # dictionary with trailing newlines padded to a 16-byte boundary. The keys
@@ -351,7 +345,7 @@ def read_array_header_1_0(fp):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-        not numpy.all([isinstance(x, (int,long)) for x in d['shape']])):
+        not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
         msg = "shape is not valid: %r"
         raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
@@ -365,7 +359,7 @@ def read_array_header_1_0(fp):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=(1,0)):
+def write_array(fp, array, version=(1, 0)):
     """
     Write an array to an NPY file, including a header.
 
@@ -398,6 +392,10 @@ def write_array(fp, array, version=(1,0)):
         raise ValueError(msg % (version,))
     fp.write(magic(*version))
     write_array_header_1_0(fp, header_data_from_array_1_0(array))
+
+    # Set buffer size to 16 MiB to hide the Python loop overhead.
+    buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
+
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
         # Instead, we will pickle it out with version 2 of the pickle protocol.
@@ -406,14 +404,19 @@ def write_array(fp, array, version=(1,0)):
         if isfileobj(fp):
             array.T.tofile(fp)
         else:
-            fp.write(array.T.tostring('C'))
+            for chunk in numpy.nditer(
+                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                    buffersize=buffersize, order='F'):
+                fp.write(chunk.tobytes('C'))
     else:
         if isfileobj(fp):
             array.tofile(fp)
         else:
-            # XXX: We could probably chunk this using something like
-            # arrayterator.
-            fp.write(array.tostring('C'))
+            for chunk in numpy.nditer(
+                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                    buffersize=buffersize, order='C'):
+                fp.write(chunk.tobytes('C'))
+
 
 def read_array(fp):
     """
@@ -457,9 +460,21 @@ def read_array(fp):
         else:
             # This is not a real file. We have to read it the memory-intensive
             # way.
-            # XXX: we can probably chunk this to avoid the memory hit.
-            data = fp.read(int(count * dtype.itemsize))
-            array = numpy.fromstring(data, dtype=dtype, count=count)
+            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking
+            # large reads from gzip streams. Chunk reads to BUFFER_SIZE bytes to
+            # avoid issue and reduce memory overhead of the read. In
+            # non-chunked case count < max_read_count, so only one read is
+            # performed.
+
+            max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
+
+            array = numpy.empty(count, dtype=dtype)
+            for i in range(0, count, max_read_count):
+                read_count = min(max_read_count, count - i)
+                read_size = int(read_count * dtype.itemsize)
+                data = _read_bytes(fp, read_size, "array data")
+                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                                                         count=read_count)
 
         if fortran_order:
             array.shape = shape[::-1]
@@ -471,7 +486,7 @@ def read_array(fp):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=(1,0)):
+                fortran_order=False, version=(1, 0)):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -578,3 +593,31 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         mode=mode, offset=offset)
 
     return marray
+
+
+def _read_bytes(fp, size, error_template="ran out of data"):
+    """
+    Read from file-like object until size bytes are read.
+    Raises ValueError if not EOF is encountered before size bytes are read.
+    Non-blocking objects only supported if they derive from io objects.
+
+    Required as e.g. ZipExtFile in python 2.6 can return less data than
+    requested.
+    """
+    data = bytes()
+    while True:
+        # io files (default in python3) return None or raise on would-block,
+        # python2 file will truncate, probably nothing can be done about that.
+        # note that regular files can't be non-blocking
+        try:
+            r = fp.read(size - len(data))
+            data += r
+            if len(r) == 0 or len(data) == size:
+                break
+        except io.BlockingIOError:
+            pass
+    if len(data) != size:
+        msg = "EOF: reading %s, expected %d bytes got %d"
+        raise ValueError(msg %(error_template, size, len(data)))
+    else:
+        return data

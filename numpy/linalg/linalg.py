@@ -13,17 +13,19 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError']
 
 import warnings
 
-from numpy.core import array, asarray, zeros, empty, transpose, \
-        intc, single, double, csingle, cdouble, inexact, complexfloating, \
-        newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
-        maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite, size, finfo, absolute, log, exp, errstate, geterrobj
-from numpy.lib import triu
+from numpy.core import (
+    array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
+    csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
+    add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
+    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
+    broadcast
+    )
+from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
@@ -214,9 +216,9 @@ def _assertFinite(*arrays):
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
 
-def _assertNonEmpty(*arrays):
+def _assertNoEmpty2d(*arrays):
     for a in arrays:
-        if size(a) == 0:
+        if a.size == 0 and product(a.shape[-2:]) == 0:
             raise LinAlgError("Arrays cannot be empty")
 
 
@@ -269,7 +271,7 @@ def tensorsolve(a, b, axes=None):
     True
 
     """
-    a,wrap = _makearray(a)
+    a, wrap = _makearray(a)
     b = asarray(b)
     an = a.ndim
 
@@ -349,15 +351,29 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     b, wrap = _makearray(b)
     t, result_t = _commonType(a, b)
 
-    if len(b.shape) == len(a.shape) - 1:
+    # We use the b = (..., M,) logic, only if the number of extra dimensions
+    # match exactly
+    if b.ndim == a.ndim - 1:
+        if a.shape[-1] == 0 and b.shape[-1] == 0:
+            # Legal, but the ufunc cannot handle the 0-sized inner dims
+            # let the ufunc handle all wrong cases.
+            a = a.reshape(a.shape[:-1])
+            bc = broadcast(a, b)
+            return wrap(empty(bc.shape, dtype=result_t))
+
         gufunc = _umath_linalg.solve1
     else:
+        if b.size == 0:
+            if (a.shape[-1] == 0 and b.shape[-2] == 0) or b.shape[-1] == 0:
+                a = a[:,:1].reshape(a.shape[:-1] + (1,))
+                bc = broadcast(a, b)
+                return wrap(empty(bc.shape, dtype=result_t))
+
         gufunc = _umath_linalg.solve
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
@@ -491,10 +507,14 @@ def inv(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+
+    if a.shape[-1] == 0:
+        # The inner array is 0x0, the ufunc cannot handle this case
+        return wrap(empty_like(a, dtype=result_t))
+
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
@@ -717,7 +737,7 @@ def qr(a, mode='reduced'):
 
     a, wrap = _makearray(a)
     _assertRank2(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
@@ -747,7 +767,7 @@ def qr(a, mode='reduced'):
 
     # handle modes that don't return q
     if mode == 'r':
-        r = _fastCopyAndTranspose(result_t, a[:,:mn])
+        r = _fastCopyAndTranspose(result_t, a[:, :mn])
         return wrap(triu(r))
 
     if mode == 'raw':
@@ -789,7 +809,7 @@ def qr(a, mode='reduced'):
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     q = _fastCopyAndTranspose(result_t, q[:mc])
-    r = _fastCopyAndTranspose(result_t, a[:,:mc])
+    r = _fastCopyAndTranspose(result_t, a[:, :mc])
 
     return wrap(q), wrap(triu(r))
 
@@ -862,7 +882,7 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
@@ -894,7 +914,7 @@ def eigvalsh(a, UPLO='L'):
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
-        Same as `lower`, wth 'L' for lower and 'U' for upper triangular.
+        Same as `lower`, with 'L' for lower and 'U' for upper triangular.
         Deprecated.
 
     Returns
@@ -930,6 +950,9 @@ def eigvalsh(a, UPLO='L'):
     array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -939,13 +962,13 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
-    return w.astype(result_t)
+    return w.astype(_realType(result_t))
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1002,7 +1025,7 @@ def eig(a):
 
     The number `w` is an eigenvalue of `a` if there exists a vector
     `v` such that ``dot(a,v) = w * v``. Thus, the arrays `a`, `w`, and
-    `v` satisfy the equations ``dot(a[i,:], v[i]) = w[i] * v[:,i]``
+    `v` satisfy the equations ``dot(a[:,:], v[:,i]) = w[i] * v[:,i]``
     for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
@@ -1174,7 +1197,9 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
-    UPLO = asbytes(UPLO)
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
@@ -1183,7 +1208,7 @@ def eigh(a, UPLO='L'):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if 'L' == UPLO:
+    if UPLO == 'L':
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
@@ -1278,7 +1303,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
 
@@ -1396,10 +1421,10 @@ def cond(x, p=None):
     """
     x = asarray(x) # in case we have a matrix
     if p is None:
-        s = svd(x,compute_uv=False)
+        s = svd(x, compute_uv=False)
         return s[0]/s[-1]
     else:
-        return norm(x,p)*norm(inv(x),p)
+        return norm(x, p)*norm(inv(x), p)
 
 
 def matrix_rank(M, tol=None):
@@ -1555,7 +1580,7 @@ def pinv(a, rcond=1e-15 ):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]
@@ -1566,7 +1591,7 @@ def pinv(a, rcond=1e-15 ):
             s[i] = 1./s[i]
         else:
             s[i] = 0.;
-    res = dot(transpose(vt), multiply(s[:, newaxis],transpose(u)))
+    res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
@@ -1642,7 +1667,7 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -1696,7 +1721,7 @@ def det(a):
 
     """
     a = asarray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -1732,9 +1757,9 @@ def lstsq(a, b, rcond=-1):
 
     Returns
     -------
-    x : {(M,), (M, K)} ndarray
-        Least-squares solution.  The shape of `x` depends on the shape of
-        `b`.
+    x : {(N,), (N, K)} ndarray
+        Least-squares solution. If `b` is two-dimensional,
+        the solutions are in the `K` columns of `x`.
     residuals : {(), (1,), (K,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
@@ -1805,7 +1830,7 @@ def lstsq(a, b, rcond=-1):
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
-    bstar[:b.shape[0],:n_rhs] = b.copy()
+    bstar[:b.shape[0], :n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
@@ -1865,7 +1890,38 @@ def lstsq(a, b, rcond=-1):
     st = s[:min(n, m)].copy().astype(result_real_t)
     return wrap(x), wrap(resids), results['rank'], st
 
-def norm(x, ord=None):
+
+def _multi_svd_norm(x, row_axis, col_axis, op):
+    """Compute the extreme singular values of the 2-D matrices in `x`.
+
+    This is a private utility function used by numpy.linalg.norm().
+
+    Parameters
+    ----------
+    x : ndarray
+    row_axis, col_axis : int
+        The axes of `x` that hold the 2-D matrices.
+    op : callable
+        This should be either numpy.amin or numpy.amax.
+
+    Returns
+    -------
+    result : float or ndarray
+        If `x` is 2-D, the return values is a float.
+        Otherwise, it is an array with ``x.ndim - 2`` dimensions.
+        The return values are either the minimum or maximum of the
+        singular values of the matrices, depending on whether `op`
+        is `numpy.amin` or `numpy.amax`.
+
+    """
+    if row_axis > col_axis:
+        row_axis -= 1
+    y = rollaxis(rollaxis(x, col_axis, x.ndim), row_axis, -1)
+    result = op(svd(y, compute_uv=0), axis=-1)
+    return result
+
+
+def norm(x, ord=None, axis=None):
     """
     Matrix or vector norm.
 
@@ -1875,16 +1931,22 @@ def norm(x, ord=None):
 
     Parameters
     ----------
-    x : {(M,), (M, N)} array_like
-        Input array.
+    x : array_like
+        Input array.  If `axis` is None, `x` must be 1-D or 2-D.
     ord : {non-zero int, inf, -inf, 'fro'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
         `inf` object.
+    axis : {int, 2-tuple of ints, None}, optional
+        If `axis` is an integer, it specifies the axis of `x` along which to
+        compute the vector norms.  If `axis` is a 2-tuple, it specifies the
+        axes that hold 2-D matrices, and the matrix norms of these matrices
+        are computed.  If `axis` is None then either a vector norm (when `x`
+        is 1-D) or a matrix norm (when `x` is 2-D) is returned.
 
     Returns
     -------
-    n : float
-        Norm of the matrix or vector.
+    n : float or ndarray
+        Norm of the matrix or vector(s).
 
     Notes
     -----
@@ -1967,44 +2029,107 @@ def norm(x, ord=None):
     >>> LA.norm(a, -3)
     nan
 
+    Using the `axis` argument to compute vector norms:
+
+    >>> c = np.array([[ 1, 2, 3],
+    ...               [-1, 1, 4]])
+    >>> LA.norm(c, axis=0)
+    array([ 1.41421356,  2.23606798,  5.        ])
+    >>> LA.norm(c, axis=1)
+    array([ 3.74165739,  4.24264069])
+    >>> LA.norm(c, ord=1, axis=1)
+    array([6, 6])
+
+    Using the `axis` argument to compute matrix norms:
+
+    >>> m = np.arange(8).reshape(2,2,2)
+    >>> LA.norm(m, axis=(1,2))
+    array([  3.74165739,  11.22497216])
+    >>> LA.norm(m[0, :, :]), LA.norm(m[1, :, :])
+    (3.7416573867739413, 11.224972160321824)
+
     """
     x = asarray(x)
-    if ord is None: # check the default case first and handle it immediately
-        return sqrt(add.reduce((x.conj() * x).ravel().real))
 
+    # Check the default case first and handle it immediately.
+    if ord is None and axis is None:
+        x = x.ravel(order='K')
+        if isComplexType(x.dtype.type):
+            sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+        else:
+            sqnorm = dot(x, x)
+        return sqrt(sqnorm)
+
+    # Normalize the `axis` argument to a tuple.
     nd = x.ndim
-    if nd == 1:
+    if axis is None:
+        axis = tuple(range(nd))
+    elif not isinstance(axis, tuple):
+        axis = (axis,)
+
+    if len(axis) == 1:
         if ord == Inf:
-            return abs(x).max()
+            return abs(x).max(axis=axis)
         elif ord == -Inf:
-            return abs(x).min()
+            return abs(x).min(axis=axis)
         elif ord == 0:
-            return (x != 0).sum() # Zero norm
+            # Zero norm
+            return (x != 0).sum(axis=axis)
         elif ord == 1:
-            return abs(x).sum() # special case for speedup
-        elif ord == 2:
-            return sqrt(((x.conj()*x).real).sum()) # special case for speedup
+            # special case for speedup
+            return add.reduce(abs(x), axis=axis)
+        elif ord is None or ord == 2:
+            # special case for speedup
+            s = (x.conj() * x).real
+            return sqrt(add.reduce(s, axis=axis))
         else:
             try:
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            return ((abs(x)**ord).sum())**(1.0/ord)
-    elif nd == 2:
+            if x.dtype.type is longdouble:
+                # Convert to a float type, so integer arrays give
+                # float results.  Don't apply asfarray to longdouble arrays,
+                # because it will downcast to float64.
+                absx = abs(x)
+            else:
+                absx = x if isComplexType(x.dtype.type) else asfarray(x)
+                if absx.dtype is x.dtype:
+                    absx = abs(absx)
+                else:
+                    # if the type changed, we can safely overwrite absx
+                    abs(absx, out=absx)
+            absx **= ord
+            return add.reduce(absx, axis=axis) ** (1.0 / ord)
+    elif len(axis) == 2:
+        row_axis, col_axis = axis
+        if not (-nd <= row_axis < nd and -nd <= col_axis < nd):
+            raise ValueError('Invalid axis %r for an array with shape %r' %
+                             (axis, x.shape))
+        if row_axis % nd == col_axis % nd:
+            raise ValueError('Duplicate axes given.')
         if ord == 2:
-            return svd(x, compute_uv=0).max()
+            return _multi_svd_norm(x, row_axis, col_axis, amax)
         elif ord == -2:
-            return svd(x, compute_uv=0).min()
+            return _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
-            return abs(x).sum(axis=0).max()
+            if col_axis > row_axis:
+                col_axis -= 1
+            return add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
         elif ord == Inf:
-            return abs(x).sum(axis=1).max()
+            if row_axis > col_axis:
+                row_axis -= 1
+            return add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
         elif ord == -1:
-            return abs(x).sum(axis=0).min()
+            if col_axis > row_axis:
+                col_axis -= 1
+            return add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
         elif ord == -Inf:
-            return abs(x).sum(axis=1).min()
-        elif ord in ['fro','f']:
-            return sqrt(add.reduce((x.conj() * x).real.ravel()))
+            if row_axis > col_axis:
+                row_axis -= 1
+            return add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
+        elif ord in [None, 'fro', 'f']:
+            return sqrt(add.reduce((x.conj() * x).real, axis=axis))
         else:
             raise ValueError("Invalid norm order for matrices.")
     else:

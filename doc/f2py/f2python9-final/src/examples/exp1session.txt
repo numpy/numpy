@@ -1,0 +1,20 @@
+>>> import foo,Numeric
+>>> print foo.exp1.__doc__
+exp1 - Function signature:
+  l,u = exp1([n])
+Optional arguments:
+  n := 1 input int
+Return objects:
+  l : rank-1 array('d') with bounds (2)
+  u : rank-1 array('d') with bounds (2)
+
+>>> l,u = foo.exp1()
+>>> print l,u
+[ 1264.   465.] [ 1457.   536.]
+>>> print l[0]/l[1], u[0]/u[1]-l[0]/l[1]
+2.71827956989 2.25856657199e-06
+>>> l,u = foo.exp1(2)
+>>> print l,u
+[ 517656.  190435.] [ 566827.  208524.]
+>>> print l[0]/l[1], u[0]/u[1]-l[0]/l[1]
+2.71828182845 1.36437527942e-11

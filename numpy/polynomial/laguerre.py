@@ -181,7 +181,7 @@ def lag2poly(c) :
 #
 
 # Laguerre
-lagdomain = np.array([0,1])
+lagdomain = np.array([0, 1])
 
 # Laguerre coefficients representing zero.
 lagzero = np.array([0])
@@ -1294,7 +1294,7 @@ def lagvander2d(x, y, deg) :
 
     vx = lagvander(x, degx)
     vy = lagvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1359,7 +1359,7 @@ def lagvander3d(x, y, z, deg) :
     vx = lagvander(x, degx)
     vy = lagvander(y, degy)
     vz = lagvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1571,17 +1571,17 @@ def lagcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array(1 + c[0]/c[1])
+        return np.array([[1 + c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
     top = mat.reshape(-1)[1::n+1]
     mid = mat.reshape(-1)[0::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = -np.arange(1,n)
+    top[...] = -np.arange(1, n)
     mid[...] = 2.*np.arange(n) + 1.
     bot[...] = top
-    mat[:,-1] += (c[:-1]/c[-1])*n
+    mat[:, -1] += (c[:-1]/c[-1])*n
     return mat
 
 

@@ -3,26 +3,4 @@
 
 #include "numpy/npy_3kcompat.h"
 
-/*
- * Accessing items of ob_base
- */
-
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
-#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
-#endif
-
-/*
- * PyIndex_Check
- */
-#if (PY_VERSION_HEX < 0x02050000)
-#undef PyIndex_Check
-#define PyIndex_Check(o)     0
-#undef PyIndex_Check_Or_Unsupported
-#define PyIndex_Check_Or_Unsupported(o) 1
-#else
-#define PyIndex_Check_Or_Unsupported(o) PyIndex_Check(o)
-#endif
-
 #endif /* _NPY_COMPAT_H_ */

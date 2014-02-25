@@ -19,7 +19,7 @@ class build(old_build):
         ]
 
     help_options = old_build.help_options + [
-        ('help-fcompiler',None, "list available Fortran compilers",
+        ('help-fcompiler', None, "list available Fortran compilers",
          show_fortran_compilers),
         ]
 

@@ -79,6 +79,8 @@ class $name(pu.PolyBase) :
     window = np.array($domain)
     # Don't let participate in array operations. Value doesn't matter.
     __array_priority__ = 1000
+    # Not hashable
+    __hash__ = None
 
     def has_samecoef(self, other):
         """Check if coefficients match.
@@ -806,6 +808,13 @@ class $name(pu.PolyBase) :
         ----------
         roots : array_like
             List of roots.
+        domain : {array_like, None}, optional
+            Domain for the resulting instance of $name. If none the domain
+            is the interval from the smallest root to the largest. The
+            default is $domain.
+        window : array_like, optional
+            Window for the resulting instance of $name. The default value
+            is $domain.
 
         Returns
         -------
@@ -817,10 +826,13 @@ class $name(pu.PolyBase) :
         ${nick}fromroots : equivalent function
 
         """
+        [roots] = pu.as_series([roots], trim=False)
         if domain is None :
             domain = pu.getdomain(roots)
-        rnew = pu.mapdomain(roots, domain, window)
-        coef = ${nick}fromroots(rnew)
+        deg = len(roots)
+        off, scl = pu.mapparms(domain, window)
+        rnew = off + scl*roots
+        coef = ${nick}fromroots(rnew) / scl**deg
         return $name(coef, domain=domain, window=window)
 
     @staticmethod

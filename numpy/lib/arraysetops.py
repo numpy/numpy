@@ -163,8 +163,7 @@ def unique(ar, return_index=False, return_inverse=False):
         ar = ar.flatten()
     except AttributeError:
         if not return_inverse and not return_index:
-            items = sorted(set(ar))
-            return np.asarray(items)
+            return np.sort(list(set(ar)))
         else:
             ar = np.asanyarray(ar).flatten()
 

@@ -1,0 +1,87 @@
+
+F2PY - Fortran to Python Interface Generator
+
+I am pleased to announce the third public release of f2py
+(version 2.3.321):
+
+     http://cens.ioc.ee/projects/f2py2e/
+
+f2py is a command line tool for binding Python and Fortran codes.  It
+scans Fortran 77/90/95 codes and generates a Python C/API module that
+makes it possible to call Fortran subroutines from Python.  No Fortran or
+C expertise is required for using this tool.
+
+Features include:
+
+   *** All basic Fortran types are supported:
+         integer[ | *1 | *2 | *4 | *8 ], logical[ | *1 | *2 | *4 | *8 ],
+         character[ | *(*) | *1 | *2 | *3 | ... ]
+         real[ | *4 | *8 | *16 ], double precision,
+         complex[ | *8 | *16 | *32 ]
+
+   *** Multi-dimensional arrays of (almost) all basic types.
+       Dimension specifications:
+		 <dim> | <start>:<end> | * | :
+
+   *** Supported attributes and statements:
+         intent([ in | inout | out | hide | in,out | inout,out ])
+	 dimension(<dimspec>)
+	 depend([<names>])
+	 check([<C-booleanexpr>])
+	 note(<LaTeX text>)
+	 optional, required, external
+NEW:     intent(c), threadsafe, fortranname
+
+   *** Calling Fortran 77/90/95 subroutines and functions.  Also
+       Fortran 90/95 module subroutines are supported.  Internal
+       initialization of optional arguments.
+
+   *** Accessing COMMON blocks from Python.
+NEW:   Accessing Fortran 90/95 module data.
+
+   *** Call-back functions: calling Python functions from Fortran with
+       very flexible hooks.
+
+   *** In Python, arguments of the interfaced functions may be of
+       different type - necessary type conversations are done
+       internally in C level.
+
+   *** Automatically generates documentation (__doc__,LaTeX) for
+       interfaced functions.
+
+   *** Automatically generates signature files --- user has full
+       control over the interface constructions.  Automatically
+       detects the signatures of call-back functions, solves argument
+       dependencies, etc.
+
+NEW: * Automatically generates setup_<modulename>.py for building
+       extension modules using tools from distutils and
+       fortran_support module (SciPy).
+
+   *** Automatically generates Makefile for compiling Fortran and C
+       codes and linking them to a shared module. Many compilers are
+       supported: gcc, Compaq Fortran, VAST/f90 Fortran, Absoft
+       F77/F90, MIPSpro 7 Compilers, etc.  Platforms: Intel/Alpha
+       Linux, HP-UX, IRIX64.
+
+   *** Complete User's Guide in various formats (html,ps,pdf,dvi).
+
+   *** f2py users list is available for support, feedback, etc.
+
+NEW: * Installation with distutils.
+
+   *** And finally, many bugs are fixed.
+
+More information about f2py, see
+
+     http://cens.ioc.ee/projects/f2py2e/
+
+LICENSE:
+	f2py is released under the LGPL.
+
+Sincerely,
+     Pearu Peterson <pearu@cens.ioc.ee>
+     December 4, 2001
+
+<P><A HREF="http://cens.ioc.ee/projects/f2py2e/">f2py 2.3.321</A> - The
+Fortran to Python Interface Generator (04-Dec-01)

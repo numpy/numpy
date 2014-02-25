@@ -1377,7 +1377,8 @@ NpyIter_DebugPrint(NpyIter *iter)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
 
-    PyGILState_STATE gilstate = PyGILState_Ensure();
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API
 
     printf("\n------ BEGIN ITERATOR DUMP ------\n");
     printf("| Iterator Address: %p\n", (void *)iter);
@@ -1598,7 +1599,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("------- END ITERATOR DUMP -------\n");
     fflush(stdout);
 
-    PyGILState_Release(gilstate);
+    NPY_DISABLE_C_API
 }
 
 NPY_NO_EXPORT void
@@ -1832,12 +1833,11 @@ npyiter_copy_from_buffers(NpyIter *iter)
                     *reduce_outeraxisdata = NULL;
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
-    npy_intp transfersize = NBF_SIZE(bufferdata),
-                buffersize = NBF_BUFFERSIZE(bufferdata);
+    npy_intp transfersize = NBF_SIZE(bufferdata);
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
+    char **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
 

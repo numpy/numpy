@@ -16,11 +16,10 @@ Source tree
 * release.sh
 * pavement.py
 
-NumPy Trac
+NumPy Docs
 ----------
-* http://projects.scipy.org/numpy/wiki/MakingReleases
+* https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
 * http://projects.scipy.org/numpy/wiki/MicrosoftToolchainSupport
-* http://projects.scipy.org/numpy/wiki/ApiDeprecation
 
 SciPy.org wiki
 --------------
@@ -31,14 +30,18 @@ Doc wiki
 --------
 * http://docs.scipy.org/numpy/docs/numpy-docs/user/install.rst/
 
+Release Scripts
+---------------
+* https://github.com/certik/numpy-vendor
+
 
 Supported platforms and versions
 ================================
-Python 2.4-2.7 and >=3.1 are the currently supported versions on all platforms. 
+Python 2.6-2.7 and >=3.2 are the currently supported versions on all platforms.
 
 OS X
 ----
-OS X versions 10.4 - 10.7 are supported.  Note that there are currently still
+OS X versions >= 10.5 are supported.  Note that there are currently still
 issues with compiling on 10.7, due to Apple moving to gcc-llvm.
 Only the Python from `python.org <http://python.org>`_ is supported. Binaries
 do *not* support Apple Python.
@@ -81,8 +84,8 @@ Cython sources are checked in at the moment. It is worth keeping an eye on what
 Cython versions have been used to generate all current C files, it should be
 the same and most recent version (0.16 as of now).
 
-Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_ 
-is used. On Windows g77 (included in MinGW) is the current default, in the future 
+Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_
+is used. On Windows g77 (included in MinGW) is the current default, in the future
 this may shift to gfortran as well.
 
 Python
@@ -113,7 +116,7 @@ needs to be installed:
 * Python 2.5-2.7 and 3.1-3.2
 * MakeNsis
 * CpuId plugin for MakeNsis : this can be found in the NumPy source tree under
-  tools/win32build/cpucaps and has to be built with MinGW (see SConstruct file in 
+  tools/win32build/cpucaps and has to be built with MinGW (see SConstruct file in
   that dir for details)
 * MinGW
 * ATLAS, 3x ([No SSE, SSE2, SSE3] for superpack installer) : ATLAS does not
@@ -139,7 +142,7 @@ and MSI installers can be installed with
   $ msiexec /i yourprog.msi
 
 For the above to work you probably need to put the wine-1.x.x/bin directory in
-your PATH. 
+your PATH.
 
 To install MinGW, the easiest option is to use the automated installer on the
 MinGW download page. This will give you (at this moment) GCC 3.4.5; GCC 4.x is
@@ -156,7 +159,7 @@ add adding a PATH variable in HKEY_CURRENT_USER/Environment.
 Virtualenv
 ----------
 Virtualenv is a very useful tool to keep several versions of packages around.
-It is also used in the Paver script to build the docs. 
+It is also used in the Paver script to build the docs.
 
 
 What is released
@@ -164,14 +167,12 @@ What is released
 
 Binaries
 --------
-Windows binaries in "superpack" form for Python 2.5/2.6/2.7/3.1/3.2.
+Windows binaries in "superpack" form for Python 2.6/2.7/3.2/3.3.
 A superpack contains three builds, for SSE2, SSE3 and no SSE.
 
 OS X binaries are made in dmg format, targeting only the Python from
 `python.org <http://python.org>`_
 
-For Python 2.4 binaries are not built. It should be checked however
-that the source release works with Python 2.4.
 
 Other
 -----
@@ -185,13 +186,6 @@ A source release in both .zip and .tar.gz formats is released.
 
 Release process
 ===============
-
-Check the buildbot
-------------------
-For Numpy, check the buildbot located at `<http://buildbot.scipy.org/>`_.
-Also check that the benchmarks (which are not run as part of the test suite)
-work.  Note that at the moment this applies only to Scipy; Numpy doesn't have
-a benchmark suite.  So, run ``scipy.bench()``.
 
 Agree on a release schedule
 ---------------------------
@@ -297,14 +291,14 @@ define NPY_x_y_API_VERSION in numpyconfig.h
 
 Make the release
 ----------------
-The tar-files and binary releases for distribution should be uploaded to SourceForge, 
+The tar-files and binary releases for distribution should be uploaded to SourceForge,
 together with the Release Notes and the Changelog. Uploading can be done
 through a web interface or, more efficiently, through scp/sftp/rsync as
-described in the SourceForge 
+described in the SourceForge
 `upload guide <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_.
 For example::
 
-  scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/ 
+  scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
 
 Update PyPi
 -----------
@@ -353,7 +347,7 @@ Update scipy.org
 A release announcement with a link to the download site should be placed in the
 sidebar of the front page of scipy.org.
 
-Announce to the lists 
+Announce to the lists
 ---------------------
 The release should be announced on the mailing lists of
 NumPy and SciPy, to python-announce, and possibly also those of

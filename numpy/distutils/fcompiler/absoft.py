@@ -61,12 +61,12 @@ class AbsoftFCompiler(FCompiler):
         elif self.get_version() >= '9.0':
             opt = ['-shared']
         else:
-            opt = ["-K","shared"]
+            opt = ["-K", "shared"]
         return opt
 
     def library_dir_option(self, dir):
         if os.name=='nt':
-            return ['-link','/PATH:"%s"' % (dir)]
+            return ['-link', '/PATH:"%s"' % (dir)]
         return "-L" + dir
 
     def library_option(self, lib):
@@ -97,9 +97,9 @@ class AbsoftFCompiler(FCompiler):
         elif self.get_version() >= '10.0':
             opt.extend(['af90math', 'afio', 'af77math', 'U77'])
         elif self.get_version() >= '8.0':
-            opt.extend(['f90math','fio','f77math','U77'])
+            opt.extend(['f90math', 'fio', 'f77math', 'U77'])
         else:
-            opt.extend(['fio','f90math','fmath','U77'])
+            opt.extend(['fio', 'f90math', 'fmath', 'U77'])
         if os.name =='nt':
             opt.append('COMDLG32')
         return opt
@@ -115,11 +115,11 @@ class AbsoftFCompiler(FCompiler):
 
     def get_flags_f77(self):
         opt = FCompiler.get_flags_f77(self)
-        opt.extend(['-N22','-N90','-N110'])
+        opt.extend(['-N22', '-N90', '-N110'])
         v = self.get_version()
         if os.name == 'nt':
             if v and v>='8.0':
-                opt.extend(['-f','-N15'])
+                opt.extend(['-f', '-N15'])
         else:
             opt.append('-f')
             if v:
@@ -133,8 +133,8 @@ class AbsoftFCompiler(FCompiler):
 
     def get_flags_f90(self):
         opt = FCompiler.get_flags_f90(self)
-        opt.extend(["-YCFRL=1","-YCOM_NAMES=LCS","-YCOM_PFX","-YEXT_PFX",
-                    "-YCOM_SFX=_","-YEXT_SFX=_","-YEXT_NAMES=LCS"])
+        opt.extend(["-YCFRL=1", "-YCOM_NAMES=LCS", "-YCOM_PFX", "-YEXT_PFX",
+                    "-YCOM_SFX=_", "-YEXT_SFX=_", "-YEXT_NAMES=LCS"])
         if self.get_version():
             if self.get_version()>'4.6':
                 opt.extend(["-YDEALLOC=ALL"])
@@ -142,9 +142,9 @@ class AbsoftFCompiler(FCompiler):
 
     def get_flags_fix(self):
         opt = FCompiler.get_flags_fix(self)
-        opt.extend(["-YCFRL=1","-YCOM_NAMES=LCS","-YCOM_PFX","-YEXT_PFX",
-                    "-YCOM_SFX=_","-YEXT_SFX=_","-YEXT_NAMES=LCS"])
-        opt.extend(["-f","fixed"])
+        opt.extend(["-YCFRL=1", "-YCOM_NAMES=LCS", "-YCOM_PFX", "-YEXT_PFX",
+                    "-YCOM_SFX=_", "-YEXT_SFX=_", "-YEXT_NAMES=LCS"])
+        opt.extend(["-f", "fixed"])
         return opt
 
     def get_flags_opt(self):

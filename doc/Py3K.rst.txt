@@ -483,7 +483,7 @@ So what is done in ``PyArray_FromAny`` currently is that:
   3118 buffers, so that::
 
       array([some_3118_object])
-  
+
   will treat the object similarly as it would handle an `ndarray`.
 
   However, again, bytes (and unicode) have priority and will not be
@@ -491,13 +491,13 @@ So what is done in ``PyArray_FromAny`` currently is that:
 
 This amounts to possible semantic changes:
 
-- ``array(buffer)`` will no longer create an object array 
+- ``array(buffer)`` will no longer create an object array
   ``array([buffer], dtype='O')``, but will instead expand to a view
   on the buffer.
 
 .. todo::
 
-   Take a second look at places that used PyBuffer_FromMemory and 
+   Take a second look at places that used PyBuffer_FromMemory and
    PyBuffer_FromReadWriteMemory -- what can be done with these?
 
 .. todo::
@@ -633,7 +633,7 @@ Currently, the following is done:
 
 1) Numpy's integer types no longer inherit from Python integer.
 2) int is taken dtype-equivalent to NPY_LONG
-3) ints are converted to NPY_LONG 
+3) ints are converted to NPY_LONG
 
 PyInt methods are currently replaced by PyLong, via macros in npy_3kcompat.h.
 

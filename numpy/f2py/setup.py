@@ -48,10 +48,10 @@ def configuration(parent_package='',top_path=None):
             f2py_exe = f2py_exe[:-4] + '.py'
         if 'bdist_wininst' in sys.argv and f2py_exe[-3:] != '.py':
             f2py_exe = f2py_exe + '.py'
-        target = os.path.join(build_dir,f2py_exe)
-        if newer(__file__,target):
+        target = os.path.join(build_dir, f2py_exe)
+        if newer(__file__, target):
             log.info('Creating %s', target)
-            f = open(target,'w')
+            f = open(target, 'w')
             f.write('''\
 #!%s
 # See http://cens.ioc.ee/projects/f2py2e/
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     config = configuration(top_path='')
     version = config.get_version()
-    print('F2PY Version',version)
+    print('F2PY Version', version)
     config = config.todict()
 
     if sys.version[:3]>='2.3':
@@ -125,5 +125,5 @@ wrapping Fortran 77/90/95 subroutines, accessing common blocks from
 Python, and calling Python functions from Fortran (call-backs).
 Interfacing subroutines/data from Fortran 90/95 modules is supported.""",
           url               = "http://cens.ioc.ee/projects/f2py2e/",
-          keywords          = ['Fortran','f2py'],
+          keywords          = ['Fortran', 'f2py'],
           **config)

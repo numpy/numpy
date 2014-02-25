@@ -10,9 +10,13 @@ Library:
             src/npymath/halffloat.c
     CompiledLibrary: npysort
         Sources:
+            src/private/npy_partition.h.src,
+            src/private/npy_binsearch.h.src,
             src/npysort/quicksort.c.src,
             src/npysort/mergesort.c.src,
-            src/npysort/heapsort.c.src
+            src/npysort/heapsort.c.src,
+            src/npysort/selection.c.src,
+            src/npysort/binsearch.c.src
     Extension: multiarray
         Sources:
             src/multiarray/multiarraymodule_onefile.c
@@ -27,7 +31,17 @@ Library:
             src/umath/umath_tests.c.src
     Extension: scalarmath
         Sources:
+            src/private/scalarmathmodule.h.src,
             src/scalarmathmodule.c.src
     Extension: _dotblas
         Sources:
             blasdot/_dotblas.c
+    Extension: test_rational
+        Sources:
+            src/umath/test_rational.c.src
+    Extension: struct_ufunc_test
+        Sources:
+            src/umath/struct_ufunc_test.c.src
+    Extension: operand_flag_tests
+        Sources:
+            src/umath/operand_flag_tests.c.src

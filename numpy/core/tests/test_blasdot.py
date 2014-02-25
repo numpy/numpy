@@ -50,16 +50,16 @@ def test_dot_3args():
 
     r = np.empty((1024, 32))
     for i in range(12):
-        np.dot(f,v,r)
+        np.dot(f, v, r)
     assert_equal(sys.getrefcount(r), 2)
-    r2 = np.dot(f,v,out=None)
+    r2 = np.dot(f, v, out=None)
     assert_array_equal(r2, r)
-    assert_(r is np.dot(f,v,out=r))
+    assert_(r is np.dot(f, v, out=r))
 
-    v = v[:,0].copy() # v.shape == (16,)
-    r = r[:,0].copy() # r.shape == (1024,)
-    r2 = np.dot(f,v)
-    assert_(r is np.dot(f,v,r))
+    v = v[:, 0].copy() # v.shape == (16,)
+    r = r[:, 0].copy() # r.shape == (1024,)
+    r2 = np.dot(f, v)
+    assert_(r is np.dot(f, v, r))
     assert_array_equal(r2, r)
 
 def test_dot_3args_errors():
@@ -81,8 +81,8 @@ def test_dot_3args_errors():
     assert_raises(ValueError, np.dot, f, v, r.T)
 
     r = np.empty((1024, 64))
-    assert_raises(ValueError, np.dot, f, v, r[:,::2])
-    assert_raises(ValueError, np.dot, f, v, r[:,:32])
+    assert_raises(ValueError, np.dot, f, v, r[:, ::2])
+    assert_raises(ValueError, np.dot, f, v, r[:, :32])
 
     r = np.empty((1024, 32), dtype=np.float32)
     assert_raises(ValueError, np.dot, f, v, r)
@@ -111,15 +111,15 @@ def test_dot_array_order():
                 dtype=arr_type, order=a_order)
             assert_array_equal(np.dot(a, a), a.dot(a))
             # (a.a)' = a'.a', note that mse~=1e-31 needs almost_equal
-            assert_almost_equal(a.dot(a), a.T.dot(a.T).T, decimal=30)
+            assert_almost_equal(a.dot(a), a.T.dot(a.T).T, decimal=prec)
 
             #
             # Check with making explicit copy
             #
             a_T = a.T.copy(order=a_order)
-            assert_array_equal(a_T.dot(a_T), a.T.dot(a.T))
-            assert_array_equal(a.dot(a_T), a.dot(a.T))
-            assert_array_equal(a_T.dot(a), a.T.dot(a))
+            assert_almost_equal(a_T.dot(a_T), a.T.dot(a.T), decimal=prec)
+            assert_almost_equal(a.dot(a_T), a.dot(a.T), decimal=prec)
+            assert_almost_equal(a_T.dot(a), a.T.dot(a), decimal=prec)
 
             #
             # Compare with multiarray dot
@@ -135,10 +135,10 @@ def test_dot_array_order():
                 b = np.asarray(np.random.randn(a_dim, b_dim),
                     dtype=arr_type, order=b_order)
                 b_T = b.T.copy(order=b_order)
-                assert_array_equal(a_T.dot(b), a.T.dot(b))
-                assert_array_equal(b_T.dot(a), b.T.dot(a))
+                assert_almost_equal(a_T.dot(b), a.T.dot(b), decimal=prec)
+                assert_almost_equal(b_T.dot(a), b.T.dot(a), decimal=prec)
                 # (b'.a)' = a'.b
-                assert_almost_equal(b.T.dot(a), a.T.dot(b).T, decimal=30)
+                assert_almost_equal(b.T.dot(a), a.T.dot(b).T, decimal=prec)
                 assert_almost_equal(a.dot(b), _dot(a, b), decimal=prec)
                 assert_almost_equal(b.T.dot(a), _dot(b.T, a), decimal=prec)
 
@@ -147,7 +147,25 @@ def test_dot_array_order():
                     c = np.asarray(np.random.randn(b_dim, c_dim),
                         dtype=arr_type, order=c_order)
                     c_T = c.T.copy(order=c_order)
-                    assert_array_equal(c.T.dot(b.T), c_T.dot(b_T))
-                    assert_almost_equal(c.T.dot(b.T).T, b.dot(c), decimal=30)
+                    assert_almost_equal(c.T.dot(b.T), c_T.dot(b_T), decimal=prec)
+                    assert_almost_equal(c.T.dot(b.T).T, b.dot(c), decimal=prec)
                     assert_almost_equal(b.dot(c), _dot(b, c), decimal=prec)
                     assert_almost_equal(c.T.dot(b.T), _dot(c.T, b.T), decimal=prec)
+
+def test_dot_override():
+    class A(object):
+        def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            return "A"
+
+    class B(object):
+        def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            return NotImplemented
+
+    a = A()
+    b = B()
+    c = np.array([[1]])
+
+    assert_equal(np.dot(a, b), "A")
+    assert_equal(c.dot(a), "A")
+    assert_raises(TypeError, np.dot, b, c)
+    assert_raises(TypeError, c.dot, b)

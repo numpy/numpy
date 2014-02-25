@@ -4,4 +4,8 @@ from bento.commands import hooks
 def build(context):
     context.tweak_extension("_compiled_base",
                   includes=["../core/include", "../core/include/numpy", "../core",
-                            "../core/src/private"])
+                            "../core/src/private"],
+                  defines=['_FILE_OFFSET_BITS=64',
+                           '_LARGEFILE_SOURCE=1',
+                           '_LARGEFILE64_SOURCE=1']
+                            )

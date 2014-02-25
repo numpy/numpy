@@ -96,8 +96,3 @@ If there are object arrays involved then loop->obj gets set to 1.  Then there ar
             - The buffer[i] memory receives the PyObject input after the cast.  This is
 	      a new reference which will be "stolen" as it is copied over into memory.
 	      The only problem is that what is presently in memory must be DECREF'd first.
-
-
-
-
-

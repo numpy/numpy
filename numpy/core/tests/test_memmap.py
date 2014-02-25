@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from tempfile import NamedTemporaryFile, TemporaryFile, mktemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import os
+import shutil
 
 from numpy import memmap
 from numpy import arange, allclose, asarray
@@ -11,13 +12,15 @@ from numpy.testing import *
 class TestMemmap(TestCase):
     def setUp(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
-        self.shape = (3,4)
+        self.tempdir = mkdtemp()
+        self.shape = (3, 4)
         self.dtype = 'float32'
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
 
     def tearDown(self):
         self.tmpfp.close()
+        shutil.rmtree(self.tempdir)
 
     def test_roundtrip(self):
         # Write data to file
@@ -33,12 +36,11 @@ class TestMemmap(TestCase):
         assert_array_equal(self.data, newfp)
 
     def test_open_with_filename(self):
-        tmpname = mktemp('','mmap')
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
         del fp
-        os.unlink(tmpname)
 
     def test_unnamed_file(self):
         with TemporaryFile() as f:
@@ -55,7 +57,7 @@ class TestMemmap(TestCase):
         del fp
 
     def test_filename(self):
-        tmpname = mktemp('','mmap')
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)
@@ -65,7 +67,6 @@ class TestMemmap(TestCase):
         self.assertEqual(abspath, b.filename)
         del b
         del fp
-        os.unlink(tmpname)
 
     def test_filename_fileobj(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",

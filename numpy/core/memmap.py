@@ -11,7 +11,7 @@ from numpy.compat import long, basestring
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
-writeable_filemodes = ["r+","w+"]
+writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
     "readonly":"r",
@@ -37,6 +37,9 @@ class memmap(ndarray):
 
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
+
+    Delete the memmap instance to close.
+
 
     Parameters
     ----------
@@ -66,7 +69,9 @@ class memmap(ndarray):
         measured in bytes, it should normally be a multiple of the byte-size
         of `dtype`. When ``mode != 'r'``, even positive offsets beyond end of
         file are valid; The file will be extended to accommodate the
-        additional data. The default offset is 0.
+        additional data. By default, ``memmap`` will start at the beginning of
+        the file, even if ``filename`` is a file pointer ``fp`` and
+        ``fp.tell() != 0``.
     shape : tuple, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
@@ -89,8 +94,6 @@ class memmap(ndarray):
 
     Methods
     -------
-    close
-        Close the memmap file.
     flush
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
@@ -204,7 +207,7 @@ class memmap(ndarray):
                 raise ValueError("mode must be one of %s" %
                                  (valid_filemodes + list(mode_equivalents.keys())))
 
-        if hasattr(filename,'read'):
+        if hasattr(filename, 'read'):
             fid = filename
             own_file = False
         else:

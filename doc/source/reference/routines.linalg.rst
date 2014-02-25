@@ -46,6 +46,7 @@ Norms and other numbers
    linalg.norm
    linalg.cond
    linalg.det
+   linalg.matrix_rank
    linalg.slogdet
    trace
 

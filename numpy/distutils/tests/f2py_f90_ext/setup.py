@@ -3,7 +3,7 @@ from __future__ import division, print_function
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('f2py_f90_ext',parent_package,top_path)
+    config = Configuration('f2py_f90_ext', parent_package, top_path)
     config.add_extension('foo',
                          ['src/foo_free.f90'],
                          include_dirs=['include'],

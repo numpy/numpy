@@ -14,6 +14,8 @@ Sorting
    ndarray.sort
    msort
    sort_complex
+   partition
+   argpartition
 
 Searching
 ---------

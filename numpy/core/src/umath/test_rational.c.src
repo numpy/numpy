@@ -604,7 +604,9 @@ static PyNumberMethods pyrational_as_number = {
     pyrational_add,          /* nb_add */
     pyrational_subtract,     /* nb_subtract */
     pyrational_multiply,     /* nb_multiply */
+#if PY_MAJOR_VERSION < 3
     pyrational_divide,       /* nb_divide */
+#endif
     pyrational_remainder,    /* nb_remainder */
     0,                       /* nb_divmod */
     0,                       /* nb_power */
@@ -618,17 +620,27 @@ static PyNumberMethods pyrational_as_number = {
     0,                       /* nb_and */
     0,                       /* nb_xor */
     0,                       /* nb_or */
+#if PY_MAJOR_VERSION < 3
     0,                       /* nb_coerce */
+#endif
     pyrational_int,          /* nb_int */
+#if PY_MAJOR_VERSION < 3
     pyrational_int,          /* nb_long */
+#else
+    0,                       /* reserved */
+#endif
     pyrational_float,        /* nb_float */
+#if PY_MAJOR_VERSION < 3
     0,                       /* nb_oct */
     0,                       /* nb_hex */
+#endif
 
     0,                       /* nb_inplace_add */
     0,                       /* nb_inplace_subtract */
     0,                       /* nb_inplace_multiply */
+#if PY_MAJOR_VERSION < 3
     0,                       /* nb_inplace_divide */
+#endif
     0,                       /* nb_inplace_remainder */
     0,                       /* nb_inplace_power */
     0,                       /* nb_inplace_lshift */
@@ -716,9 +728,7 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_subclasses */
     0,                                        /* tp_weaklist */
     0,                                        /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                        /* tp_version_tag */
-#endif
 };
 
 /* Numpy support */
@@ -836,7 +846,6 @@ npyrational_compare(const void* d0, const void* d1, void* arr) {
         data = (rational*)data_; \
         best_i = 0; \
         best_r = data[0]; \
-        i; \
         for (i = 1; i < n; i++) { \
             if (rational_##op(data[i],best_r)) { \
                 best_i = i; \
@@ -1230,14 +1239,18 @@ PyMODINIT_FUNC inittest_rational(void) {
         } \
         if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
             PyErr_Format(PyExc_AssertionError, \
-                         "ufunc %s takes %d arguments, our loop takes %ld", \
-                         #name, ufunc->nargs, sizeof(_types)/sizeof(int)); \
+                         "ufunc %s takes %d arguments, our loop takes %lu", \
+                         #name, ufunc->nargs, (unsigned long) \
+                         (sizeof(_types)/sizeof(int))); \
+            Py_DECREF(ufunc); \
             goto fail; \
         } \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational, \
                 rational_ufunc_##name, _types, 0) < 0) { \
+            Py_DECREF(ufunc); \
             goto fail; \
         } \
+        Py_DECREF(ufunc); \
     }
     #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
         REGISTER_UFUNC(name, {npy_rational, npy_rational, npy_rational})
@@ -1308,9 +1321,10 @@ PyMODINIT_FUNC inittest_rational(void) {
     /* Create test ufunc with built in input types and rational output type */
     {
         int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
+
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-            PyUFunc_None,(char*)"test_add",
-            (char*)"add two matrices of int64 and return rational matrix",0);
+                PyUFunc_None,(char*)"test_add",
+                (char*)"add two matrices of int64 and return rational matrix",0);
         if (!ufunc) {
             goto fail;
         }
@@ -1324,14 +1338,15 @@ PyMODINIT_FUNC inittest_rational(void) {
     /* Create test ufunc with rational types using RegisterLoopForDescr */
     {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-            PyUFunc_None,(char*)"test_add_rationals",
-            (char*)"add two matrices of rationals and return rational matrix",0);
-        if (!ufunc) {
-            goto fail;
-        }
+                PyUFunc_None,(char*)"test_add_rationals",
+                (char*)"add two matrices of rationals and return rational matrix",0);
         PyArray_Descr* types[3] = {&npyrational_descr,
                                     &npyrational_descr,
                                     &npyrational_descr};
+
+        if (!ufunc) {
+            goto fail;
+        }
         if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, &npyrational_descr,
                 rational_ufunc_test_add_rationals, types, 0) < 0) {
             goto fail;

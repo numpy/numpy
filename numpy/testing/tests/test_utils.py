@@ -53,6 +53,9 @@ class _GenericTest(object):
         a = np.array([1, 1], dtype=np.object)
         self._test_equal(a, 1)
 
+    def test_array_likes(self):
+        self._test_equal([1, 2, 3], (1, 2, 3))
+
 class TestArrayEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_equal
@@ -194,7 +197,7 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
-        a[0,0] = np.inf
+        a[0, 0] = np.inf
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(a, b))
 
@@ -372,6 +375,11 @@ class TestAssertAllclose(unittest.TestCase):
 
         assert_allclose(6, 10, rtol=0.5)
         self.assertRaises(AssertionError, assert_allclose, 10, 6, rtol=0.5)
+
+    def test_min_int(self):
+        a = np.array([np.iinfo(np.int_).min], dtype=np.int_)
+        # Should not raise:
+        assert_allclose(a, a)
 
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):

@@ -17,4 +17,3 @@ Business Day Functions
    is_busday
    busday_offset
    busday_count
-

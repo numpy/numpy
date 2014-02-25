@@ -522,6 +522,16 @@ cdef double kahan_sum(double *darr, npy_intp n):
         sum = t
     return sum
 
+def _shape_from_size(size, d):
+    if size is None:
+        shape = (d,)
+    else:
+        try:
+           shape = (operator.index(size), d)
+        except TypeError:
+           shape = tuple(size) + (d,)
+    return shape
+
 cdef class RandomState:
     """
     RandomState(seed=None)
@@ -538,7 +548,7 @@ cdef class RandomState:
 
     Parameters
     ----------
-    seed : int or array_like, optional
+    seed : {None, int, array_like}, optional
         Random seed initializing the pseudo-random number generator.
         Can be an integer, an array (or other sequence) of integers of
         any length, or ``None`` (the default).
@@ -589,14 +599,12 @@ cdef class RandomState:
         """
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
-        if seed is None:
-            errcode = rk_randomseed(self.internal_state)
-        elif type(seed) is int:
-            rk_seed(seed, self.internal_state)
-        elif isinstance(seed, np.integer):
-            iseed = int(seed)
-            rk_seed(iseed, self.internal_state)
-        else:
+        try:
+            if seed is None:
+                errcode = rk_randomseed(self.internal_state)
+            else:
+                rk_seed(operator.index(seed), self.internal_state)
+        except TypeError:
             obj = <ndarray>PyArray_ContiguousFromObject(seed, NPY_LONG, 1, 1)
             init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
                 PyArray_DIM(obj, 0))
@@ -1012,14 +1020,17 @@ cdef class RandomState:
                 raise ValueError("a must be non-empty")
 
         if None != p:
-            p = np.array(p, dtype=np.double, ndmin=1, copy=False)
+            d = len(p)
+            p = <ndarray>PyArray_ContiguousFromObject(p, NPY_DOUBLE, 1, 1)
+            pix = <double*>PyArray_DATA(p)
+
             if p.ndim != 1:
                 raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("a and p must have same size")
-            if np.any(p < 0):
+            if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if not np.allclose(p.sum(), 1):
+            if abs(kahan_sum(pix, d) - 1.) > 1e-8:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
@@ -1044,7 +1055,7 @@ cdef class RandomState:
                                  "population when 'replace=False'")
 
             if None != p:
-                if np.sum(p > 0) < size:
+                if np.count_nonzero(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
@@ -2792,13 +2803,13 @@ cdef class RandomState:
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 30, normed=True)
         >>> x = np.arange(-8., 8., .01)
-        >>> pdf = np.exp(-abs(x-loc/scale))/(2.*scale)
+        >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
 
         Plot Gaussian for comparison:
 
         >>> g = (1/(scale * np.sqrt(2 * np.pi)) * 
-        ...      np.exp( - (x - loc)**2 / (2 * scale**2) ))
+        ...      np.exp(-(x - loc)**2 / (2 * scale**2)))
         >>> plt.plot(x,g)
 
         """
@@ -3413,13 +3424,13 @@ cdef class RandomState:
 
         Samples are drawn from a Binomial distribution with specified
         parameters, n trials and p probability of success where
-        n an integer > 0 and p is in the interval [0,1]. (n may be
+        n an integer >= 0 and p is in the interval [0,1]. (n may be
         input as a float, but it is truncated to an integer in use)
 
         Parameters
         ----------
         n : float (but truncated to an integer)
-                parameter, > 0.
+                parameter, >= 0.
         p : float
                 parameter, >= 0 and <=1.
         size : {tuple, int}
@@ -3493,8 +3504,8 @@ cdef class RandomState:
         fp = PyFloat_AsDouble(p)
         ln = PyInt_AsLong(n)
         if not PyErr_Occurred():
-            if ln <= 0:
-                raise ValueError("n <= 0")
+            if ln < 0:
+                raise ValueError("n < 0")
             if fp < 0:
                 raise ValueError("p < 0")
             elif fp > 1:
@@ -3505,8 +3516,8 @@ cdef class RandomState:
 
         on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        if np.any(np.less_equal(n, 0)):
-            raise ValueError("n <= 0")
+        if np.any(np.less(n, 0)):
+            raise ValueError("n < 0")
         if np.any(np.less(p, 0)):
             raise ValueError("p < 0")
         if np.any(np.greater(p, 1)):
@@ -3846,20 +3857,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        ngood : float (but truncated to an integer)
-                parameter, > 0.
-        nbad  : float
-                parameter, >= 0.
-        nsample  : float
-                   parameter, > 0 and <= ngood+nbad
-        size : {tuple, int}
+        ngood : int or array_like
+            Number of ways to make a good selection.  Must be nonnegative.
+        nbad : int or array_like
+            Number of ways to make a bad selection.  Must be nonnegative.
+        nsample : int or array_like
+            Number of items sampled.  Must be at least 1 and at most
+            ``ngood + nbad``.
+        size : int or tuple of int
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.
 
         Returns
         -------
-        samples : {ndarray, scalar}
-                  where the values are all integers in  [0, n].
+        samples : ndarray or scalar
+            The values are all integers in  [0, n].
 
         See Also
         --------
@@ -3924,27 +3936,26 @@ cdef class RandomState:
         lnbad = PyInt_AsLong(nbad)
         lnsample = PyInt_AsLong(nsample)
         if not PyErr_Occurred():
-            if ngood < 1:
-                raise ValueError("ngood < 1")
-            if nbad < 1:
-                raise ValueError("nbad < 1")
-            if nsample < 1:
+            if lngood < 0:
+                raise ValueError("ngood < 0")
+            if lnbad < 0:
+                raise ValueError("nbad < 0")
+            if lnsample < 1:
                 raise ValueError("nsample < 1")
-            if ngood + nbad < nsample:
+            if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
             return discnmN_array_sc(self.internal_state, rk_hypergeometric, size,
                                     lngood, lnbad, lnsample)
-
 
         PyErr_Clear()
 
         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
         onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
         onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
-        if np.any(np.less(ongood, 1)):
-            raise ValueError("ngood < 1")
-        if np.any(np.less(onbad, 1)):
-            raise ValueError("nbad < 1")
+        if np.any(np.less(ongood, 0)):
+            raise ValueError("ngood < 0")
+        if np.any(np.less(onbad, 0)):
+            raise ValueError("nbad < 0")
         if np.any(np.less(onsample, 1)):
             raise ValueError("nsample < 1")
         if np.any(np.less(np.add(ongood, onbad),onsample)):
@@ -4245,12 +4256,7 @@ cdef class RandomState:
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
             raise ValueError("sum(pvals[:-1]) > 1.0")
 
-        if size is None:
-            shape = (d,)
-        elif type(size) is int:
-            shape = (size, d)
-        else:
-            shape = size + (d,)
+        shape = _shape_from_size(size, d)
 
         multin = np.zeros(shape, int)
         mnarr = <ndarray>multin
@@ -4354,7 +4360,8 @@ cdef class RandomState:
         cdef npy_intp   k
         cdef npy_intp   totsize
         cdef ndarray    alpha_arr, val_arr
-        cdef double     *alpha_data, *val_data
+        cdef double     *alpha_data
+        cdef double     *val_data
         cdef npy_intp   i, j
         cdef double     acc, invacc
 
@@ -4362,12 +4369,7 @@ cdef class RandomState:
         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
-        if size is None:
-            shape = (k,)
-        elif type(size) is int:
-            shape = (size, k)
-        else:
-            shape = size + (k,)
+        shape = _shape_from_size(size, k)
 
         diric   = np.zeros(shape, np.float64)
         val_arr = <ndarray>diric
@@ -4426,11 +4428,12 @@ cdef class RandomState:
         i = len(x) - 1
 
         # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray) and x.ndim > 1:
+        if isinstance(x, np.ndarray) and \
+           (x.ndim > 1 or x.dtype.fields is not None):
             # For a multi-dimensional ndarray, indexing returns a view onto
             # each row. So we can't just use ordinary assignment to swap the
             # rows; we need a bounce buffer.
-            buf = np.empty(x.shape[1:], dtype=x.dtype)
+            buf = np.empty_like(x[0])
             while i > 0:
                 j = rk_interval(i, self.internal_state)
                 buf[...] = x[j]

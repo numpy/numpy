@@ -37,7 +37,7 @@ struct NewNpyArrayIterObject_tag {
     char writeflags[NPY_MAXARGS];
 };
 
-void npyiter_cache_values(NewNpyArrayIterObject *self)
+static void npyiter_cache_values(NewNpyArrayIterObject *self)
 {
     NpyIter *iter = self->iter;
 
@@ -742,9 +742,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     &op_axes_in,
                     PyArray_IntpConverter, &itershape,
                     &buffersize)) {
-        if (itershape.ptr != NULL) {
-            PyDimMem_FREE(itershape.ptr);
-        }
+        PyDimMem_FREE(itershape.ptr);
         return -1;
     }
 
@@ -816,9 +814,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
-    if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
-    }
+    PyDimMem_FREE(itershape.ptr);
 
     /* Release the references we got to the ops and dtypes */
     for (iop = 0; iop < nop; ++iop) {
@@ -829,9 +825,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
-    if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
-    }
+    PyDimMem_FREE(itershape.ptr);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);
@@ -1747,11 +1741,7 @@ static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
 
 static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
 {
-#if PY_VERSION_HEX >= 0x02050000
     npy_intp istart = 0, iend = 0;
-#else
-    long istart = 0, iend = 0;
-#endif
 
     if (value == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -1764,11 +1754,7 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
         return -1;
     }
 
-#if PY_VERSION_HEX >= 0x02050000
     if (!PyArg_ParseTuple(value, "nn", &istart, &iend)) {
-#else
-    if (!PyArg_ParseTuple(value, "ll", &istart, &iend)) {
-#endif
         return -1;
     }
 
@@ -2017,9 +2003,12 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                         ret_ndim, &innerloopsize,
                         &innerstride, dataptr,
                         self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
     Py_INCREF(self);
     if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
+        Py_XDECREF(ret);
         return NULL;
     }
 
@@ -2405,7 +2394,6 @@ static PyGetSetDef npyiter_getsets[] = {
 };
 
 NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)npyiter_seq_length,            /*sq_length*/
     (binaryfunc)NULL,                       /*sq_concat*/
     (ssizeargfunc)NULL,                     /*sq_repeat*/
@@ -2416,26 +2404,10 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sq_inplace_concat */
     (ssizeargfunc)NULL,                     /*sq_inplace_repeat */
-#else
-    (inquiry)npyiter_seq_length,            /*sq_length*/
-    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
-    (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
-    (intargfunc)npyiter_seq_item,           /*sq_item*/
-    (intintargfunc)npyiter_seq_slice,       /*sq_slice*/
-    (intobjargproc)npyiter_seq_ass_item,    /*sq_ass_item*/
-    (intintobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
-    (objobjproc)NULL,                       /*sq_contains */
-    (binaryfunc)NULL,                       /*sg_inplace_concat */
-    (intargfunc)NULL                        /*sg_inplace_repeat */
-#endif
 };
 
 NPY_NO_EXPORT PyMappingMethods npyiter_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)npyiter_seq_length,          /*mp_length*/
-#else
-    (inquiry)npyiter_seq_length,          /*mp_length*/
-#endif
     (binaryfunc)npyiter_subscript,        /*mp_subscript*/
     (objobjargproc)npyiter_ass_subscript, /*mp_ass_subscript*/
 };
@@ -2497,7 +2469,5 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

@@ -28,6 +28,8 @@
 #define CFLOAT_SWAP(a,b) {npy_cfloat tmp = (b); (b)=(a); (a) = tmp;}
 #define CDOUBLE_SWAP(a,b) {npy_cdouble tmp = (b); (b)=(a); (a) = tmp;}
 #define CLONGDOUBLE_SWAP(a,b) {npy_clongdouble tmp = (b); (b)=(a); (a) = tmp;}
+#define DATETIME_SWAP(a,b) {npy_datetime tmp = (b); (b)=(a); (a) = tmp;}
+#define TIMEDELTA_SWAP(a,b) {npy_timedelta tmp = (b); (b)=(a); (a) = tmp;}
 
 /* Need this for the argsort functions */
 #define INTP_SWAP(a,b) {npy_intp tmp = (b); (b)=(a); (a) = tmp;}
@@ -321,6 +323,20 @@ UNICODE_LT(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
         }
     }
     return ret;
+}
+
+
+NPY_INLINE static int
+DATETIME_LT(npy_datetime a, npy_datetime b)
+{
+    return a < b;
+}
+
+
+NPY_INLINE static int
+TIMEDELTA_LT(npy_timedelta a, npy_timedelta b)
+{
+    return a < b;
 }
 
 

@@ -1,0 +1,209 @@
+.TH "F2PY" 1
+.SH NAME
+f2py \- Fortran to Python interface generator
+.SH SYNOPSIS
+(1) To construct extension module sources:
+
+.B f2py
+[<options>] <fortran files> [[[only:]||[skip:]] <fortran functions> ] [: <fortran files> ...]
+
+(2) To compile fortran files and build extension modules:
+
+.B f2py
+\-c [<options>, <config_fc options>, <extra options>] <fortran files>
+
+(3) To generate signature files:
+
+.B f2py
+\-h <filename.pyf> ...< same options as in (1) >
+.SH DESCRIPTION
+This program generates a Python C/API file (<modulename>module.c)
+that contains wrappers for given Fortran or C functions so that they
+can be called from Python.
+With the \-c option the corresponding
+extension modules are built.
+.SH OPTIONS
+.TP
+.B \-h <filename>
+Write signatures of the fortran routines to file <filename> and
+exit. You can then edit <filename> and use it instead of <fortran
+files>. If <filename>==stdout then the signatures are printed to
+stdout.
+.TP
+.B <fortran functions>
+Names of fortran routines for which Python C/API functions will be
+generated. Default is all that are found in <fortran files>.
+.TP
+.B skip:
+Ignore fortran functions that follow until `:'.
+.TP
+.B only:
+Use only fortran functions that follow until `:'.
+.TP
+.B :
+Get back to <fortran files> mode.
+.TP
+.B \-m <modulename>
+Name of the module; f2py generates a Python/C API file
+<modulename>module.c or extension module <modulename>.  Default is
+\'untitled\'.
+.TP
+.B \-\-[no\-]lower
+Do [not] lower the cases in <fortran files>. By default, \-\-lower is
+assumed with \-h key, and \-\-no\-lower without \-h key.
+.TP
+.B \-\-build\-dir <dirname>
+All f2py generated files are created in <dirname>. Default is tempfile.mkdtemp().
+.TP
+.B \-\-overwrite\-signature
+Overwrite existing signature file.
+.TP
+.B \-\-[no\-]latex\-doc
+Create (or not) <modulename>module.tex.  Default is \-\-no\-latex\-doc.
+.TP
+.B \-\-short\-latex
+Create 'incomplete' LaTeX document (without commands \\documentclass,
+\\tableofcontents, and \\begin{document}, \\end{document}).
+.TP
+.B \-\-[no\-]rest\-doc
+Create (or not) <modulename>module.rst.  Default is \-\-no\-rest\-doc.
+.TP
+.B \-\-debug\-capi
+Create C/API code that reports the state of the wrappers during
+runtime. Useful for debugging.
+.TP
+.B \-include\'<includefile>\'
+Add CPP #include statement to the C/API code.  <includefile> should be
+in the format of either `"filename.ext"' or `<filename.ext>'.  As a
+result <includefile> will be included just before wrapper functions
+part in the C/API code. The option is depreciated, use `usercode`
+statement in signature files instead.
+.TP
+.B \-\-[no\-]wrap\-functions
+Create Fortran subroutine wrappers to Fortran 77
+functions. \-\-wrap\-functions is default because it ensures maximum
+portability/compiler independence.
+.TP
+.B \-\-help\-link [..]
+List system resources found by system_info.py. [..] may contain
+a list of resources names. See also \-\-link\-<resource> switch below.
+.TP
+.B \-\-quiet
+Run quietly.
+.TP
+.B \-\-verbose
+Run with extra verbosity.
+.TP
+.B \-v
+Print f2py version ID and exit.
+.TP
+.B \-\-include_paths path1:path2:...
+Search include files (that f2py will scan) from the given directories.
+.SH "CONFIG_FC OPTIONS"
+The following options are effective only when \-c switch is used.
+.TP
+.B \-\-help-compiler
+List available Fortran compilers [DEPRECIATED].
+.TP
+.B \-\-fcompiler=<name>
+Specify Fortran compiler type by vendor.
+.TP
+.B \-\-compiler=<name>
+Specify C compiler type (as defined by distutils)
+.TP
+.B \-\-fcompiler-exec=<path>
+Specify the path to F77 compiler [DEPRECIATED].
+.TP
+.B \-\-f90compiler\-exec=<path>
+Specify the path to F90 compiler [DEPRECIATED].
+.TP
+.B \-\-help\-fcompiler
+List available Fortran compilers and exit.
+.TP
+.B \-\-f77exec=<path>
+Specify the path to F77 compiler.
+.TP
+.B \-\-f90exec=<path>
+Specify the path to F90 compiler.
+.TP
+.B  \-\-f77flags="..."
+Specify F77 compiler flags.
+.TP
+.B \-\-f90flags="..."
+Specify F90 compiler flags.
+.TP
+.B \-\-opt="..."
+Specify optimization flags.
+.TP
+.B \-\-arch="..."
+Specify architecture specific optimization flags.
+.TP
+.B \-\-noopt
+Compile without optimization.
+.TP
+.B \-\-noarch
+Compile without arch-dependent optimization.
+.TP
+.B \-\-debug
+Compile with debugging information.
+.SH "EXTRA OPTIONS"
+The following options are effective only when \-c switch is used.
+.TP
+.B \-\-link-<resource> 
+Link extension module with <resource> as defined by
+numpy_distutils/system_info.py. E.g. to link with optimized LAPACK
+libraries (vecLib on MacOSX, ATLAS elsewhere), use
+\-\-link\-lapack_opt. See also \-\-help\-link switch.
+
+.TP
+.B -L/path/to/lib/ -l<libname>
+.TP
+.B -D<define> -U<name> -I/path/to/include/ 
+.TP
+.B <filename>.o <filename>.so <filename>.a
+
+.TP
+.B -DPREPEND_FORTRAN -DNO_APPEND_FORTRAN -DUPPERCASE_FORTRAN -DUNDERSCORE_G77
+Macros that might be required with non-gcc Fortran compilers. 
+
+.TP
+.B -DF2PY_REPORT_ATEXIT
+To print out a performance report of F2PY interface when python
+exits. Available for Linux.
+
+.TP
+.B -DF2PY_REPORT_ON_ARRAY_COPY=<int>
+To send a message to stderr whenever F2PY interface makes a copy of an
+array. Integer <int> sets the threshold for array sizes when a message
+should be shown.
+
+.SH REQUIREMENTS
+Python 1.5.2 or higher (2.x is supported).
+
+Numerical Python 13 or higher (20.x,21.x,22.x,23.x are supported).
+
+Optional Numarray 0.9 or higher partially supported.
+
+numpy_distutils from Scipy (can be downloaded from F2PY homepage)
+.SH "SEE ALSO"
+python(1)
+.SH BUGS
+For instructions on reporting bugs, see 
+
+  http://cens.ioc.ee/projects/f2py2e/FAQ.html
+.SH AUTHOR
+Pearu Peterson <pearu@cens.ioc.ee>
+.SH "INTERNET RESOURCES"
+Main website: http://cens.ioc.ee/projects/f2py2e/
+
+User's Guide: http://cens.ioc.ee/projects/f2py2e/usersguide/
+
+Mailing list: http://cens.ioc.ee/mailman/listinfo/f2py-users/
+
+Scipy website: http://www.numpy.org
+.SH COPYRIGHT
+Copyright (c) 1999, 2000, 2001, 2002, 2003, 2004, 2005 Pearu Peterson
+.SH LICENSE
+NumPy License
+.SH VERSION
+2.45.241

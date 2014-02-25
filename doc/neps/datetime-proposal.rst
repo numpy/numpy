@@ -6,7 +6,7 @@
 :Contact: oliphant@enthought.com
 :Date: 2009-06-09
 
-Revised only slightly from the third proposal by 
+Revised only slightly from the third proposal by
 
 :Author: Francesc Alted i Abad
 :Contact: faltet@pytables.com
@@ -66,20 +66,20 @@ table:
 ------------------------- ----------------------- --------------------------
   Code       Meaning         Relative Time             Absolute Time
 ======== ================ ======================= ==========================
-   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AC]
-   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AC]
-   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AC]
-   B       business day     +- 3.5e16 years         [3.5e16 BC, 3.5e16 AC]
-   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AC]
-   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AC]
-   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AC]
-   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AC]
-   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AC]
-   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AC]
-   ns      nanosecond       +- 292 years            [  1678 AC,   2262 AC]
-   ps      picosecond       +- 106 days             [  1969 AC,   1970 AC]
-   fs      femtosecond      +- 2.6 hours            [  1969 AC,   1970 AC]
-   as      attosecond       +- 9.2 seconds          [  1969 AC,   1970 AC]
+   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
+   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
+   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AD]
+   B       business day     +- 3.5e16 years         [3.5e16 BC, 3.5e16 AD]
+   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AD]
+   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AD]
+   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AD]
+   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AD]
+   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AD]
+   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AD]
+   ns      nanosecond       +- 292 years            [  1678 AD,   2262 AD]
+   ps      picosecond       +- 106 days             [  1969 AD,   1970 AD]
+   fs      femtosecond      +- 2.6 hours            [  1969 AD,   1970 AD]
+   as      attosecond       +- 9.2 seconds          [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
 A time unit is specified by a string consisting of a base-type given in
@@ -115,10 +115,10 @@ lower units respectively).
 Finally, a date-time data-type can be created with support for tracking
 sequential events within a basic unit: [D]//100, [Y]//4 (notice the
 required brackets).  These ``modulo`` event units provide the following
-interpretation to the date-time integer: 
+interpretation to the date-time integer:
 
-   * the divisor is the number of events in each period 
-   * the (integer) quotient is the integer number representing the base units 
+   * the divisor is the number of events in each period
+   * the (integer) quotient is the integer number representing the base units
    * the remainder is the particular event in the period.
 
 Modulo event-units can be combined with any derived units, but brackets
@@ -140,7 +140,7 @@ i.e. you cannot specify 'M8[us]//5' as 'M8//5' or as '//5'
 
 ``datetime64``
 ==============
- 
+
 This dtype represents a time that is absolute (i.e. not relative).  It
 is implemented internally as an ``int64`` type.  The integer represents
 units from the internal POSIX epoch (see [3]_). Like POSIX, the
@@ -301,7 +301,7 @@ Compatibility issues
 
 This will be fully compatible with the ``timedelta`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other units, the conversion process will loose
+microseconds.  For other units, the conversion process will lose
 precision or will overflow as needed.
 
 
@@ -565,27 +565,27 @@ Necessary changes to NumPy
 ==========================
 
 In order to facilitate the addition of the date-time data-types a few changes
-to NumPy were made: 
+to NumPy were made:
 
 Addition of metadata to dtypes
 ------------------------------
 
 All data-types now have a metadata dictionary. It can be set using the
-metadata keyword during construction of the object. 
+metadata keyword during construction of the object.
 
-Date-time data-types will place the word "__frequency__" in the meta-data 
+Date-time data-types will place the word "__frequency__" in the meta-data
 dictionary containing a 4-tuple with the following parameters.
 
-(basic unit string (str), 
- number of multiples (int), 
- number of sub-divisions (int), 
- number of events (int)).  
+(basic unit string (str),
+ number of multiples (int),
+ number of sub-divisions (int),
+ number of events (int)).
 
-Simple time units like 'D' for days will thus be specified by ('D', 1, 1, 1) in 
-the "__frequency__" key of the metadata.  More complicated time units (like '[2W/5]//50') will be indicated by ('D', 2, 5, 50). 
+Simple time units like 'D' for days will thus be specified by ('D', 1, 1, 1) in
+the "__frequency__" key of the metadata.  More complicated time units (like '[2W/5]//50') will be indicated by ('D', 2, 5, 50).
 
-The "__frequency__" key is reserved for metadata and cannot be set with a 
-dtype constructor. 
+The "__frequency__" key is reserved for metadata and cannot be set with a
+dtype constructor.
 
 
 Ufunc interface extension
@@ -595,18 +595,18 @@ ufuncs that have datetime and timedelta arguments can use the Python API
 during ufunc calls (to raise errors).
 
 There is a new ufunc C-API call to set the data for a particular
-function pointer (for a particular set of data-types) to be the list of arrays 
-passed in to the ufunc. 
+function pointer (for a particular set of data-types) to be the list of arrays
+passed in to the ufunc.
 
 Array Intervace Extensions
 --------------------------
 
 The array interface is extended to both handle datetime and timedelta
-typestr (including extended notation). 
+typestr (including extended notation).
 
 In addition, the typestr element of the __array_interface__ can be a tuple
-as long as the version string is 4.  The tuple is 
-('typestr', metadata dictionary). 
+as long as the version string is 4.  The tuple is
+('typestr', metadata dictionary).
 
 This extension to the typestr concept extends to the descr portion of
 the __array_interface__.  Thus, the second element in the tuple of a
@@ -626,13 +626,13 @@ Multiple of basic units are simple to handle.  Divisors of basic units
 are harder to handle arbitrarily, but it is common to mentally think of
 a month as 1/12 of a year, or a day as 1/7 of a week.  Therefore, the
 ability to specify a unit in terms of a fraction of a "larger" unit was
-implemented.  
+implemented.
 
 The event notion (//50) was added to solve a use-case of a commercial
 sponsor of this NEP.  The idea is to allow timestamp to carry both event
 number and timestamp information.  The remainder carries the event
 number information, while the quotient carries the timestamp
-information.  
+information.
 
 
 Why the ``origin`` metadata disappeared
@@ -672,4 +672,3 @@ allowed.
 .. coding: utf-8
 .. fill-column: 72
 .. End:
-

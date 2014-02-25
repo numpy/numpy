@@ -19,7 +19,7 @@ def needs_mingw_ftime_workaround():
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
-    config = Configuration('random',parent_package,top_path)
+    config = Configuration('random', parent_package, top_path)
 
     def generate_libraries(ext, build_dir):
         config_cmd = config.get_config_cmd()
@@ -30,7 +30,11 @@ def configuration(parent_package='',top_path=None):
         ext.libraries.extend(libs)
         return None
 
-    defs = []
+    # enable unix large file support on 32 bit systems
+    # (64 bit off_t, lseek -> lseek64 etc.)
+    defs = [('_FILE_OFFSET_BITS', '64'),
+            ('_LARGEFILE_SOURCE', '1'),
+            ('_LARGEFILE64_SOURCE', '1')]
     if needs_mingw_ftime_workaround():
         defs.append(("NPY_NEEDS_MINGW_TIME_WORKAROUND", None))
 
@@ -41,9 +45,9 @@ def configuration(parent_package='',top_path=None):
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
                                    'distributions.c']]+[generate_libraries],
                          libraries=libs,
-                         depends = [join('mtrand','*.h'),
-                                    join('mtrand','*.pyx'),
-                                    join('mtrand','*.pxi'),
+                         depends = [join('mtrand', '*.h'),
+                                    join('mtrand', '*.pyx'),
+                                    join('mtrand', '*.pxi'),
                                     ],
                          define_macros = defs,
                         )

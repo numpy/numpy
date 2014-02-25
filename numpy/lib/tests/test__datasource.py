@@ -17,6 +17,7 @@ else:
     from urlparse import urlparse
     from urllib2 import URLError
 
+
 def urlopen_stub(url, data=None):
     '''Stub to replace urlopen for testing.'''
     if url == valid_httpurl():
@@ -28,11 +29,13 @@ def urlopen_stub(url, data=None):
 # setup and teardown
 old_urlopen = None
 
+
 def setup():
     global old_urlopen
 
     old_urlopen = urllib_request.urlopen
     urllib_request.urlopen = urlopen_stub
+
 
 def teardown():
     urllib_request.urlopen = old_urlopen
@@ -57,6 +60,7 @@ def valid_textfile(filedir):
     os.close(fd)
     return path
 
+
 def invalid_textfile(filedir):
     # Generate and return an invalid filename.
     fd, path = mkstemp(suffix='.txt', prefix='dstmp_',  dir=filedir)
@@ -64,23 +68,30 @@ def invalid_textfile(filedir):
     os.remove(path)
     return path
 
+
 def valid_httpurl():
     return http_path+http_file
+
 
 def invalid_httpurl():
     return http_fakepath+http_fakefile
 
+
 def valid_baseurl():
     return http_path
+
 
 def invalid_baseurl():
     return http_fakepath
 
+
 def valid_httpfile():
     return http_file
 
+
 def invalid_httpfile():
     return http_fakefile
+
 
 class TestDataSourceOpen(TestCase):
     def setUp(self):
@@ -259,7 +270,7 @@ class TestRepositoryAbspath(TestCase):
 
     def test_ValidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
-        local_path = os.path.join(self.repos._destpath, netloc, \
+        local_path = os.path.join(self.repos._destpath, netloc,
                                   upath.strip(os.sep).strip('/'))
         filepath = self.repos.abspath(valid_httpfile())
         self.assertEqual(local_path, filepath)
@@ -312,6 +323,7 @@ class TestRepositoryExists(TestCase):
         os.mkdir(local_path, 0o0700)
         tmpfile = valid_textfile(local_path)
         assert_(self.repos.exists(tmpfile))
+
 
 class TestOpenFunc(TestCase):
     def setUp(self):

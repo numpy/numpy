@@ -18,6 +18,12 @@ in several different formats.
 Instructions
 ------------
 
+If you obtained Numpy via git, get also the git submodules that contain
+additional parts required for building the documentation::
+
+    git submodule init
+    git submodule update
+
 Since large parts of the main documentation are stored in
 docstrings, you will need to first build Numpy, and install it so
 that the correct version is imported by
@@ -62,35 +68,8 @@ Numpy's documentation uses several custom extensions to Sphinx.  These
 are shipped in the ``sphinxext/`` directory, and are automatically
 enabled when building Numpy's documentation.
 
-However, if you want to make use of these extensions in third-party
-projects, they are available on PyPi_ as the numpydoc_ package, and
-can be installed with::
-
-    easy_install numpydoc
-
-In addition, you will need to add::
-
-    extensions = ['numpydoc']
-
-to ``conf.py`` in your Sphinx documentation.
-
-The following extensions are available:
-
-  - ``numpydoc``: support for Numpy docstring format in Sphinx.
-
-  - ``numpydoc.only_directives``: (DEPRECATED)
-
-  - ``numpydoc.plot_directives``: Adaptation of Matplotlib's ``plot::``
-    directive. Note that this implementation may still undergo severe
-    changes or be eventually deprecated.
-
-  - ``numpydoc.autosummary``: (DEPRECATED) An ``autosummary::`` directive.
-    Available in Sphinx 0.6.2 and (to-be) 1.0 as ``sphinx.ext.autosummary``,
-    and it the Sphinx 1.0 version is recommended over that included in
-    Numpydoc.
-
-  - ``numpydoc.traitsdoc``: For gathering documentation about Traits attributes.
-
+If you want to make use of these extensions in third-party
+projects, they are available on PyPi_ as the numpydoc_ package.
 
 .. _PyPi: http://python.org/pypi
 .. _numpydoc: http://python.org/pypi/numpydoc

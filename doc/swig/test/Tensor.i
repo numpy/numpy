@@ -17,15 +17,15 @@
 
 %apply (TYPE IN_ARRAY3[ANY][ANY][ANY]) {(TYPE tensor[ANY][ANY][ANY])};
 %apply (TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3)
-      {(TYPE* tensor, int rows, int cols, int num)};
+      {(TYPE* tensor, int slices, int rows, int cols)};
 %apply (int DIM1, int DIM2, int DIM3, TYPE* IN_ARRAY3)
-      {(int rows, int cols, int num, TYPE* tensor)};
+      {(int slices, int rows, int cols, TYPE* tensor)};
 
 %apply (TYPE INPLACE_ARRAY3[ANY][ANY][ANY]) {(TYPE array[3][3][3])};
 %apply (TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3)
-      {(TYPE* array, int rows, int cols, int num)};
+      {(TYPE* array, int slices, int rows, int cols)};
 %apply (int DIM1, int DIM2, int DIM3, TYPE* INPLACE_ARRAY3)
-      {(int rows, int cols, int num, TYPE* array)};
+      {(int slices, int rows, int cols, TYPE* array)};
 
 %apply (TYPE ARGOUT_ARRAY3[ANY][ANY][ANY]) {(TYPE lower[2][2][2])};
 %apply (TYPE ARGOUT_ARRAY3[ANY][ANY][ANY]) {(TYPE upper[2][2][2])};

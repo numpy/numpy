@@ -39,6 +39,7 @@ Misc Functions
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyvander2d` -- Vandermonde-like matrix for 2D power series.
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.
+- `polycompanion` -- companion matrix in power series form.
 - `polyfit` -- least-squares fit returning a polynomial.
 - `polytrim` -- trim leading coefficients from a polynomial.
 - `polyline` -- polynomial representing given straight line.
@@ -57,8 +58,8 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
     'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
     'polyval', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial','polyval2d',
-    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d','polyvander3d']
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d',
+    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
 import numpy as np
 import numpy.linalg as la
@@ -74,7 +75,7 @@ polytrim = pu.trimcoef
 #
 
 # Polynomial default domain.
-polydomain = np.array([-1,1])
+polydomain = np.array([-1, 1])
 
 # Polynomial coefficients representing zero.
 polyzero = np.array([0])
@@ -83,7 +84,7 @@ polyzero = np.array([0])
 polyone = np.array([1])
 
 # Polynomial coefficients representing the identity x.
-polyx = np.array([0,1])
+polyx = np.array([0, 1])
 
 #
 # Polynomial series functions
@@ -119,7 +120,7 @@ def polyline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1118,7 +1119,7 @@ def polyvander2d(x, y, deg) :
 
     vx = polyvander(x, degx)
     vy = polyvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     # einsum bug
     #v = np.einsum("...i,...j->...ij", vx, vy)
     return v.reshape(v.shape[:-2] + (-1,))
@@ -1185,7 +1186,7 @@ def polyvander3d(x, y, z, deg) :
     vx = polyvander(x, degx)
     vy = polyvander(y, degy)
     vz = polyvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     # einsum bug
     #v = np.einsum("...i, ...j, ...k->...ijk", vx, vy, vz)
     return v.reshape(v.shape[:-3] + (-1,))
@@ -1417,13 +1418,13 @@ def polycompanion(c):
     if len(c) < 2 :
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array(-c[0]/c[1])
+        return np.array([[-c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
     bot = mat.reshape(-1)[n::n+1]
     bot[...] = 1
-    mat[:,-1] -= c[:-1]/c[-1]
+    mat[:, -1] -= c[:-1]/c[-1]
     return mat
 
 

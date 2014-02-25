@@ -100,7 +100,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  *
  * strides[0] == itemsize
  * strides[i] == shape[i - 1] * strides[i - 1]
- * 
+ *
  * According to these rules, a 0- or 1-dimensional array is either both
  * C- and F-contiguous, or neither; and an array with 2+ dimensions
  * can be C- or F- contiguous, or neither, but not both. Though there
@@ -643,11 +643,7 @@ arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 }
 
 static PyMappingMethods arrayflags_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)NULL,                       /*mp_length*/
-#else
-    (inquiry)NULL,                       /*mp_length*/
-#endif
     (binaryfunc)arrayflags_getitem,      /*mp_subscript*/
     (objobjargproc)arrayflags_setitem,   /*mp_ass_subscript*/
 };
@@ -725,7 +721,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

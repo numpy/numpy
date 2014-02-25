@@ -32,7 +32,7 @@ version of the FFTPACK routines.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
+__all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
@@ -62,11 +62,11 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         s = list(a.shape)
         if s[axis] > n:
             index = [slice(None)]*len(s)
-            index[axis] = slice(0,n)
+            index[axis] = slice(0, n)
             a = a[index]
         else:
             index = [slice(None)]*len(s)
-            index[axis] = slice(0,s[axis])
+            index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
             z[index] = a
@@ -96,7 +96,7 @@ def fft(a, n=None, axis=-1):
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros.  If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
@@ -190,7 +190,7 @@ def ifft(a, n=None, axis=-1):
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros.  If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
         See notes about padding issues.
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
@@ -263,7 +263,7 @@ def rfft(a, n=None, axis=-1):
         Number of points along transformation axis in the input to use.
         If `n` is smaller than the length of the input, the input is cropped.
         If it is larger, the input is padded with zeros. If `n` is not given,
-        the length of the input (along the axis specified by `axis`) is used.
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
@@ -273,7 +273,7 @@ def rfft(a, n=None, axis=-1):
     out : complex ndarray
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
-        If `n` is even, the length of the transformed axis is ``(n/2)+1``.  
+        If `n` is even, the length of the transformed axis is ``(n/2)+1``.
         If `n` is odd, the length is ``(n+1)/2``.
 
     Raises
@@ -292,19 +292,19 @@ def rfft(a, n=None, axis=-1):
     Notes
     -----
     When the DFT is computed for purely real input, the output is
-    Hermite-symmetric, i.e. the negative frequency terms are just the complex
+    Hermitian-symmetric, i.e. the negative frequency terms are just the complex
     conjugates of the corresponding positive-frequency terms, and the
     negative-frequency terms are therefore redundant.  This function does not
     compute the negative frequency terms, and the length of the transformed
-    axis of the output is therefore ``n//2+1``.
+    axis of the output is therefore ``n//2 + 1``.
 
-    When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains 
+    When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains
     the zero-frequency term 0*fs, which is real due to Hermitian symmetry.
 
-    If `n` is even, ``A[-1]`` contains the term representing both positive 
-    and negative Nyquist frequency (+fs/2 and -fs/2), and must also be purely 
-    real. If `n` is odd, there is no term at fs/2; ``A[-1]`` contains 
-    the largest positive frequency (fs/2*(n-1)/n), and is complex in the 
+    If `n` is even, ``A[-1]`` contains the term representing both positive
+    and negative Nyquist frequency (+fs/2 and -fs/2), and must also be purely
+    real. If `n` is odd, there is no term at fs/2; ``A[-1]`` contains
+    the largest positive frequency (fs/2*(n-1)/n), and is complex in the
     general case.
 
     If the input `a` contains an imaginary part, it is silently discarded.
@@ -338,7 +338,7 @@ def irfft(a, n=None, axis=-1):
     The input is expected to be in the form returned by `rfft`, i.e. the
     real zero-frequency term followed by the complex positive frequency terms
     in order of increasing frequency.  Since the discrete Fourier Transform of
-    real input is Hermite-symmetric, the negative frequency terms are taken
+    real input is Hermitian-symmetric, the negative frequency terms are taken
     to be the complex conjugates of the corresponding positive frequency terms.
 
     Parameters
@@ -350,9 +350,10 @@ def irfft(a, n=None, axis=-1):
         For `n` output points, ``n//2+1`` input points are necessary.  If the
         input is longer than this, it is cropped.  If it is shorter than this,
         it is padded with zeros.  If `n` is not given, it is determined from
-        the length of the input (along the axis specified by `axis`).
+        the length of the input along the axis specified by `axis`.
     axis : int, optional
-        Axis over which to compute the inverse FFT.
+        Axis over which to compute the inverse FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
@@ -360,7 +361,7 @@ def irfft(a, n=None, axis=-1):
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
-        ``2*(m-1)`` where `m` is the length of the transformed axis of the
+        ``2*(m-1)`` where ``m`` is the length of the transformed axis of the
         input. To get an odd number of output points, `n` must be specified.
 
     Raises
@@ -380,14 +381,13 @@ def irfft(a, n=None, axis=-1):
     -----
     Returns the real valued `n`-point inverse discrete Fourier transform
     of `a`, where `a` contains the non-negative frequency terms of a
-    Hermite-symmetric sequence. `n` is the length of the result, not the
+    Hermitian-symmetric sequence. `n` is the length of the result, not the
     input.
 
     If you specify an `n` such that `a` must be zero-padded or truncated, the
     extra/removed values will be added/removed at high frequencies. One can
     thus resample a series to `m` points via Fourier interpolation by:
     ``a_resamp = irfft(rfft(a), m)``.
-
 
     Examples
     --------
@@ -412,22 +412,35 @@ def irfft(a, n=None, axis=-1):
 
 def hfft(a, n=None, axis=-1):
     """
-    Compute the FFT of a signal whose spectrum has Hermitian symmetry.
+    Compute the FFT of a signal which has Hermitian symmetry (real spectrum).
 
     Parameters
     ----------
     a : array_like
         The input array.
     n : int, optional
-        The length of the FFT.
+        Length of the transformed axis of the output.
+        For `n` output points, ``n//2+1`` input points are necessary.  If the
+        input is longer than this, it is cropped.  If it is shorter than this,
+        it is padded with zeros.  If `n` is not given, it is determined from
+        the length of the input along the axis specified by `axis`.
     axis : int, optional
-        The axis over which to compute the FFT, assuming Hermitian symmetry
-        of the spectrum. Default is the last axis.
+        Axis over which to compute the FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
     out : ndarray
-        The transformed input.
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        The length of the transformed axis is `n`, or, if `n` is not given,
+        ``2*(m-1)`` where ``m`` is the length of the transformed axis of the
+        input. To get an odd number of output points, `n` must be specified.
+
+    Raises
+    ------
+    IndexError
+        If `axis` is larger than the last axis of `a`.
 
     See also
     --------
@@ -437,13 +450,22 @@ def hfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal is real in the frequency domain and has
-    Hermite symmetry in the time domain. So here it's `hfft` for which
+    opposite case: here the signal has Hermitian symmetry in the time domain
+    and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
 
     Examples
     --------
+    >>> signal = np.array([1, 2, 3, 4, 3, 2])
+    >>> np.fft.fft(signal)
+    array([ 15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j])
+    >>> np.fft.hfft(signal[:4]) # Input first half of signal
+    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
+    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+
+
     >>> signal = np.array([[1, 1.j], [-1.j, 2]])
     >>> np.conj(signal.T) - signal   # check Hermitian symmetry
     array([[ 0.-0.j,  0.+0.j],
@@ -463,7 +485,7 @@ def hfft(a, n=None, axis=-1):
 
 def ihfft(a, n=None, axis=-1):
     """
-    Compute the inverse FFT of a signal whose spectrum has Hermitian symmetry.
+    Compute the inverse FFT of a signal which has Hermitian symmetry.
 
     Parameters
     ----------
@@ -471,14 +493,21 @@ def ihfft(a, n=None, axis=-1):
         Input array.
     n : int, optional
         Length of the inverse FFT.
+        Number of points along transformation axis in the input to use.
+        If `n` is smaller than the length of the input, the input is cropped.
+        If it is larger, the input is padded with zeros. If `n` is not given,
+        the length of the input along the axis specified by `axis` is used.
     axis : int, optional
-        Axis over which to compute the inverse FFT, assuming Hermitian
-        symmetry of the spectrum. Default is the last axis.
+        Axis over which to compute the inverse FFT. If not given, the last
+        axis is used.
 
     Returns
     -------
-    out : ndarray
-        The transformed input.
+    out : complex ndarray
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        If `n` is even, the length of the transformed axis is ``(n/2)+1``.
+        If `n` is odd, the length is ``(n+1)/2``.
 
     See also
     --------
@@ -487,10 +516,18 @@ def ihfft(a, n=None, axis=-1):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal is real in the frequency domain and has
-    Hermite symmetry in the time domain. So here it's `hfft` for which
+    opposite case: here the signal has Hermitian symmetry in the time domain
+    and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
     ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+
+    Examples
+    --------
+    >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
+    >>> np.fft.ifft(spectrum)
+    array([ 1.+0.j,  2.-0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.-0.j])
+    >>> np.fft.ihfft(spectrum)
+    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
 
     """
 
@@ -547,8 +584,8 @@ def fftn(a, s=None, axes=None):
         This corresponds to `n` for `fft(x, n)`.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -619,7 +656,7 @@ def fftn(a, s=None, axes=None):
 
     """
 
-    return _raw_fftnd(a,s,axes,fft)
+    return _raw_fftnd(a, s, axes, fft)
 
 def ifftn(a, s=None, axes=None):
     """
@@ -648,8 +685,8 @@ def ifftn(a, s=None, axes=None):
         This corresponds to ``n`` for ``ifft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.  See notes for issue on `ifft` zero padding.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.  See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
         Axes over which to compute the IFFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -714,7 +751,7 @@ def ifftn(a, s=None, axes=None):
     return _raw_fftnd(a, s, axes, ifft)
 
 
-def fft2(a, s=None, axes=(-2,-1)):
+def fft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional discrete Fourier Transform
 
@@ -733,8 +770,8 @@ def fft2(a, s=None, axes=(-2,-1)):
         This corresponds to `n` for `fft(x, n)`.
         Along each axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
@@ -792,10 +829,10 @@ def fft2(a, s=None, axes=(-2,-1)):
 
     """
 
-    return _raw_fftnd(a,s,axes,fft)
+    return _raw_fftnd(a, s, axes, fft)
 
 
-def ifft2(a, s=None, axes=(-2,-1)):
+def ifft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
 
@@ -821,8 +858,8 @@ def ifft2(a, s=None, axes=(-2,-1)):
         ``s[1]`` to axis 1, etc.).  This corresponds to `n` for ``ifft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.  See notes for issue on `ifft` zero padding.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.  See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
@@ -899,8 +936,8 @@ def rfftn(a, s=None, axes=None):
         for the remaining axes, it corresponds to `n` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input (along the axes specified
-        by `axes`) is used.
+        if `s` is not given, the shape of the input along the axes specified
+        by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
@@ -965,7 +1002,7 @@ def rfftn(a, s=None, axes=None):
         a = fft(a, s[ii], axes[ii])
     return a
 
-def rfft2(a, s=None, axes=(-2,-1)):
+def rfft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional FFT of a real array.
 
@@ -1023,8 +1060,8 @@ def irfftn(a, s=None, axes=None):
         where ``s[-1]//2+1`` points of the input are used.
         Along any axis, if the shape indicated by `s` is smaller than that of
         the input, the input is cropped.  If it is larger, the input is padded
-        with zeros. If `s` is not given, the shape of the input (along the
-        axes specified by `axes`) is used.
+        with zeros. If `s` is not given, the shape of the input along the
+        axes specified by `axes` is used.
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
         `len(s)` axes are used, or all axes if `s` is also not specified.
@@ -1040,7 +1077,7 @@ def irfftn(a, s=None, axes=None):
         The length of each transformed axis is as given by the corresponding
         element of `s`, or the length of the input in every axis except for the
         last one if `s` is not given.  In the final transformed axis the length
-        of the output when `s` is not given is ``2*(m-1)`` where `m` is the
+        of the output when `s` is not given is ``2*(m-1)`` where ``m`` is the
         length of the final transformed axis of the input.  To get an odd
         number of output points in the final axis, `s` must be specified.
 
@@ -1086,7 +1123,7 @@ def irfftn(a, s=None, axes=None):
     a = irfft(a, s[-1], axes[-1])
     return a
 
-def irfft2(a, s=None, axes=(-2,-1)):
+def irfft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional inverse FFT of a real array.
 

@@ -15,12 +15,14 @@ def assert_shapes_correct(input_shapes, expected_shape):
     expected = [expected_shape] * len(inarrays)
     assert_equal(outshapes, expected)
 
+
 def assert_incompatible_shapes_raise(input_shapes):
     """ Broadcast a list of arrays with the given (incompatible) input shapes
     and check that they raise a ValueError.
     """
     inarrays = [np.zeros(s) for s in input_shapes]
     assert_raises(ValueError, broadcast_arrays, *inarrays)
+
 
 def assert_same_as_ufunc(shape0, shape1, transposed=False, flipped=False):
     """ Broadcast two shapes against each other and check that the data layout
@@ -51,14 +53,16 @@ def test_same():
     assert_array_equal(x, bx)
     assert_array_equal(y, by)
 
+
 def test_one_off():
-    x = np.array([[1,2,3]])
-    y = np.array([[1],[2],[3]])
+    x = np.array([[1, 2, 3]])
+    y = np.array([[1], [2], [3]])
     bx, by = broadcast_arrays(x, y)
-    bx0 = np.array([[1,2,3],[1,2,3],[1,2,3]])
+    bx0 = np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
     by0 = bx0.T
     assert_array_equal(bx0, bx)
     assert_array_equal(by0, by)
+
 
 def test_same_input_shapes():
     """ Check that the final shape is just the input shape.
@@ -67,13 +71,13 @@ def test_same_input_shapes():
         (),
         (1,),
         (3,),
-        (0,1),
-        (0,3),
-        (1,0),
-        (3,0),
-        (1,3),
-        (3,1),
-        (3,3),
+        (0, 1),
+        (0, 3),
+        (1, 0),
+        (3, 0),
+        (1, 3),
+        (3, 1),
+        (3, 3),
     ]
     for shape in data:
         input_shapes = [shape]
@@ -86,29 +90,31 @@ def test_same_input_shapes():
         input_shapes3 = [shape, shape, shape]
         assert_shapes_correct(input_shapes3, shape)
 
+
 def test_two_compatible_by_ones_input_shapes():
     """ Check that two different input shapes (of the same length but some have
     1s) broadcast to the correct shape.
     """
     data = [
         [[(1,), (3,)], (3,)],
-        [[(1,3), (3,3)], (3,3)],
-        [[(3,1), (3,3)], (3,3)],
-        [[(1,3), (3,1)], (3,3)],
-        [[(1,1), (3,3)], (3,3)],
-        [[(1,1), (1,3)], (1,3)],
-        [[(1,1), (3,1)], (3,1)],
-        [[(1,0), (0,0)], (0,0)],
-        [[(0,1), (0,0)], (0,0)],
-        [[(1,0), (0,1)], (0,0)],
-        [[(1,1), (0,0)], (0,0)],
-        [[(1,1), (1,0)], (1,0)],
-        [[(1,1), (0,1)], (0,1)],
+        [[(1, 3), (3, 3)], (3, 3)],
+        [[(3, 1), (3, 3)], (3, 3)],
+        [[(1, 3), (3, 1)], (3, 3)],
+        [[(1, 1), (3, 3)], (3, 3)],
+        [[(1, 1), (1, 3)], (1, 3)],
+        [[(1, 1), (3, 1)], (3, 1)],
+        [[(1, 0), (0, 0)], (0, 0)],
+        [[(0, 1), (0, 0)], (0, 0)],
+        [[(1, 0), (0, 1)], (0, 0)],
+        [[(1, 1), (0, 0)], (0, 0)],
+        [[(1, 1), (1, 0)], (1, 0)],
+        [[(1, 1), (0, 1)], (0, 1)],
     ]
     for input_shapes, expected_shape in data:
         assert_shapes_correct(input_shapes, expected_shape)
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_shapes_correct(input_shapes[::-1], expected_shape)
+
 
 def test_two_compatible_by_prepending_ones_input_shapes():
     """ Check that two different input shapes (of different lengths) broadcast
@@ -116,86 +122,88 @@ def test_two_compatible_by_prepending_ones_input_shapes():
     """
     data = [
         [[(), (3,)], (3,)],
-        [[(3,), (3,3)], (3,3)],
-        [[(3,), (3,1)], (3,3)],
-        [[(1,), (3,3)], (3,3)],
-        [[(), (3,3)], (3,3)],
-        [[(1,1), (3,)], (1,3)],
-        [[(1,), (3,1)], (3,1)],
-        [[(1,), (1,3)], (1,3)],
-        [[(), (1,3)], (1,3)],
-        [[(), (3,1)], (3,1)],
+        [[(3,), (3, 3)], (3, 3)],
+        [[(3,), (3, 1)], (3, 3)],
+        [[(1,), (3, 3)], (3, 3)],
+        [[(), (3, 3)], (3, 3)],
+        [[(1, 1), (3,)], (1, 3)],
+        [[(1,), (3, 1)], (3, 1)],
+        [[(1,), (1, 3)], (1, 3)],
+        [[(), (1, 3)], (1, 3)],
+        [[(), (3, 1)], (3, 1)],
         [[(), (0,)], (0,)],
-        [[(0,), (0,0)], (0,0)],
-        [[(0,), (0,1)], (0,0)],
-        [[(1,), (0,0)], (0,0)],
-        [[(), (0,0)], (0,0)],
-        [[(1,1), (0,)], (1,0)],
-        [[(1,), (0,1)], (0,1)],
-        [[(1,), (1,0)], (1,0)],
-        [[(), (1,0)], (1,0)],
-        [[(), (0,1)], (0,1)],
+        [[(0,), (0, 0)], (0, 0)],
+        [[(0,), (0, 1)], (0, 0)],
+        [[(1,), (0, 0)], (0, 0)],
+        [[(), (0, 0)], (0, 0)],
+        [[(1, 1), (0,)], (1, 0)],
+        [[(1,), (0, 1)], (0, 1)],
+        [[(1,), (1, 0)], (1, 0)],
+        [[(), (1, 0)], (1, 0)],
+        [[(), (0, 1)], (0, 1)],
     ]
     for input_shapes, expected_shape in data:
         assert_shapes_correct(input_shapes, expected_shape)
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_shapes_correct(input_shapes[::-1], expected_shape)
 
+
 def test_incompatible_shapes_raise_valueerror():
     """ Check that a ValueError is raised for incompatible shapes.
     """
     data = [
         [(3,), (4,)],
-        [(2,3), (2,)],
+        [(2, 3), (2,)],
         [(3,), (3,), (4,)],
-        [(1,3,4), (2,3,3)],
+        [(1, 3, 4), (2, 3, 3)],
     ]
     for input_shapes in data:
         assert_incompatible_shapes_raise(input_shapes)
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_incompatible_shapes_raise(input_shapes[::-1])
 
+
 def test_same_as_ufunc():
     """ Check that the data layout is the same as if a ufunc did the operation.
     """
     data = [
         [[(1,), (3,)], (3,)],
-        [[(1,3), (3,3)], (3,3)],
-        [[(3,1), (3,3)], (3,3)],
-        [[(1,3), (3,1)], (3,3)],
-        [[(1,1), (3,3)], (3,3)],
-        [[(1,1), (1,3)], (1,3)],
-        [[(1,1), (3,1)], (3,1)],
-        [[(1,0), (0,0)], (0,0)],
-        [[(0,1), (0,0)], (0,0)],
-        [[(1,0), (0,1)], (0,0)],
-        [[(1,1), (0,0)], (0,0)],
-        [[(1,1), (1,0)], (1,0)],
-        [[(1,1), (0,1)], (0,1)],
+        [[(1, 3), (3, 3)], (3, 3)],
+        [[(3, 1), (3, 3)], (3, 3)],
+        [[(1, 3), (3, 1)], (3, 3)],
+        [[(1, 1), (3, 3)], (3, 3)],
+        [[(1, 1), (1, 3)], (1, 3)],
+        [[(1, 1), (3, 1)], (3, 1)],
+        [[(1, 0), (0, 0)], (0, 0)],
+        [[(0, 1), (0, 0)], (0, 0)],
+        [[(1, 0), (0, 1)], (0, 0)],
+        [[(1, 1), (0, 0)], (0, 0)],
+        [[(1, 1), (1, 0)], (1, 0)],
+        [[(1, 1), (0, 1)], (0, 1)],
         [[(), (3,)], (3,)],
-        [[(3,), (3,3)], (3,3)],
-        [[(3,), (3,1)], (3,3)],
-        [[(1,), (3,3)], (3,3)],
-        [[(), (3,3)], (3,3)],
-        [[(1,1), (3,)], (1,3)],
-        [[(1,), (3,1)], (3,1)],
-        [[(1,), (1,3)], (1,3)],
-        [[(), (1,3)], (1,3)],
-        [[(), (3,1)], (3,1)],
+        [[(3,), (3, 3)], (3, 3)],
+        [[(3,), (3, 1)], (3, 3)],
+        [[(1,), (3, 3)], (3, 3)],
+        [[(), (3, 3)], (3, 3)],
+        [[(1, 1), (3,)], (1, 3)],
+        [[(1,), (3, 1)], (3, 1)],
+        [[(1,), (1, 3)], (1, 3)],
+        [[(), (1, 3)], (1, 3)],
+        [[(), (3, 1)], (3, 1)],
         [[(), (0,)], (0,)],
-        [[(0,), (0,0)], (0,0)],
-        [[(0,), (0,1)], (0,0)],
-        [[(1,), (0,0)], (0,0)],
-        [[(), (0,0)], (0,0)],
-        [[(1,1), (0,)], (1,0)],
-        [[(1,), (0,1)], (0,1)],
-        [[(1,), (1,0)], (1,0)],
-        [[(), (1,0)], (1,0)],
-        [[(), (0,1)], (0,1)],
+        [[(0,), (0, 0)], (0, 0)],
+        [[(0,), (0, 1)], (0, 0)],
+        [[(1,), (0, 0)], (0, 0)],
+        [[(), (0, 0)], (0, 0)],
+        [[(1, 1), (0,)], (1, 0)],
+        [[(1,), (0, 1)], (0, 1)],
+        [[(1,), (1, 0)], (1, 0)],
+        [[(), (1, 0)], (1, 0)],
+        [[(), (0, 1)], (0, 1)],
     ]
     for input_shapes, expected_shape in data:
         assert_same_as_ufunc(input_shapes[0], input_shapes[1],
-                "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
+                             "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_same_as_ufunc(input_shapes[1], input_shapes[0])
         # Try them transposed, too.

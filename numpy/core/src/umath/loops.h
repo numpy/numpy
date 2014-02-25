@@ -2726,4 +2726,3 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  */
 
 #endif
-

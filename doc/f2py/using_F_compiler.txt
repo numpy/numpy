@@ -1,0 +1,147 @@
+
+Title:     Wrapping F compiled Fortran 90 modules with F2PY
+           ================================================
+
+Rationale: The F compiler does not support external procedures which
+           makes it impossible to use it in F2PY in a normal way.
+           This document describes a workaround to this problem so
+           that F compiled codes can be still wrapped with F2PY.
+
+Author:    Pearu Peterson
+Date:      May 8, 2002
+
+Acknowledgement: Thanks to Siegfried Gonzi who hammered me to produce
+           this document.
+
+Normally wrapping Fortran 90 modules to Python using F2PY is carried
+out with the following command
+
+  f2py -c -m fun foo.f90
+
+where file foo.f90 contains, for example,
+
+module foo
+  public :: bar
+  contains
+  subroutine bar (a)
+    integer,intent(inout) ::  a
+    print *,"Hello from foo.bar"
+    print *,"a=",a
+    a = a + 5
+    print *,"a=",a
+  end subroutine bar
+end module foo
+
+Then with a supported F90 compiler (running `f2py -c --help-compiler'
+will display the found compilers) f2py will generate an extension
+module fun.so into the current directory and the Fortran module foo
+subroutine bar can be called from Python as follows
+
+>>> import fun
+>>> print fun.foo.bar.__doc__
+bar - Function signature:
+  bar(a)
+Required arguments:
+  a : in/output rank-0 array(int,'i')
+
+>>> from Numeric import array
+>>> a = array(3)
+>>> fun.foo.bar(a)
+ Hello from foo.bar
+ a=           3
+ a=           8
+>>> a
+8
+>>>
+
+This works nicely with all supported Fortran compilers.
+
+However, the F compiler (http://www.fortran.com/F/compilers.html) is
+an exception. Namely, the F compiler is designed to recognize only
+module procedures (and main programs, of course) but F2PY needs to
+compile also the so-called external procedures that it generates to
+facilitate accessing Fortran F90 module procedures from C and
+subsequently from Python.  As a result, wrapping F compiled Fortran
+procedures to Python is _not_ possible using the simple procedure as
+described above. But, there is a workaround that I'll describe below
+in five steps.
+
+1) Compile foo.f90:
+
+   F -c foo.f90
+
+This creates an object file foo.o into the current directory.
+
+2) Create the signature file:
+
+  f2py foo.f90 -h foo.pyf
+
+This creates a file foo.pyf containing
+
+module foo ! in foo.f90
+    real public :: bar
+    subroutine bar(a) ! in foo.f90:foo
+        integer intent(inout) :: a
+    end subroutine bar
+end module foo
+
+3) Open the file foo.pyf with your favorite text editor and change the
+   above signature to
+
+python module foo
+  interface
+    subroutine bar(a)
+        fortranname foo_MP_bar
+        intent(c) bar
+        integer intent(in,out) :: a
+    end subroutine bar
+  end interface
+end python module foo
+
+The most important modifications are
+
+ a) adding `python' keyword everywhere before the `module' keyword
+
+ b) including an `interface' block around the all subroutine blocks.
+
+ c) specifying the real symbol name of the subroutine using
+    `fortranname' statement. F generated symbol names are in the form
+    <module name>_MP_<subroutine name>
+
+ d) specifying that subroutine is `intent(c)'.
+
+Notice that the `intent(inout)' attribute is changed to
+`intent(in,out)' that instructs the wrapper to return the modified
+value of `a'.
+
+4) Build the extension module
+
+   f2py -c foo.pyf foo.o --fcompiler=Gnu /opt/F/lib/quickfit.o \
+       /opt/F/lib/libf96.a
+
+This will create the extension module foo.so into the current
+directory.  Notice that you must use Gnu compiler (gcc) for linking.
+And the paths to F specific object files and libraries may differ for
+your F installation.
+
+5) Finally, we can call the module subroutine `bar' from Python
+
+>>> import foo
+>>> print foo.bar.__doc__
+bar - Function signature:
+  a = bar(a)
+Required arguments:
+  a : input int
+Return objects:
+  a : int
+
+>>> foo.bar(3)
+8
+>>>
+
+Notice that the F compiled module procedures are called as ordinary
+external procedures. Also I/O seems to be lacking for F compiled
+Fortran modules.
+
+Enjoy,
+	Pearu

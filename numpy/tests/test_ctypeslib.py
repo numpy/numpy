@@ -81,21 +81,21 @@ class TestNdpointer(TestCase):
         self.assertTrue(p.from_param(np.array([[1]])))
 
     def test_shape(self):
-        p = ndpointer(shape=(1,2))
-        self.assertTrue(p.from_param(np.array([[1,2]])))
-        self.assertRaises(TypeError, p.from_param, np.array([[1],[2]]))
+        p = ndpointer(shape=(1, 2))
+        self.assertTrue(p.from_param(np.array([[1, 2]])))
+        self.assertRaises(TypeError, p.from_param, np.array([[1], [2]]))
         p = ndpointer(shape=())
         self.assertTrue(p.from_param(np.array(1)))
 
     def test_flags(self):
-        x = np.array([[1,2],[3,4]], order='F')
+        x = np.array([[1, 2], [3, 4]], order='F')
         p = ndpointer(flags='FORTRAN')
         self.assertTrue(p.from_param(x))
         p = ndpointer(flags='CONTIGUOUS')
         self.assertRaises(TypeError, p.from_param, x)
         p = ndpointer(flags=x.flags.num)
         self.assertTrue(p.from_param(x))
-        self.assertRaises(TypeError, p.from_param, np.array([[1,2],[3,4]]))
+        self.assertRaises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
 
 if __name__ == "__main__":

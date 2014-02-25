@@ -165,13 +165,13 @@ with misaligned data.
     at least *aobj* ->nd in size). You may want to typecast the
     returned pointer to the data type of the ndarray.
 
-.. cfunction:: void* PyArray_GETPTR1(PyObject* obj, <npy_intp> i)
+.. cfunction:: void* PyArray_GETPTR1(PyArrayObject* obj, npy_intp i)
 
-.. cfunction:: void* PyArray_GETPTR2(PyObject* obj, <npy_intp> i, <npy_intp> j)
+.. cfunction:: void* PyArray_GETPTR2(PyArrayObject* obj, npy_intp i, npy_intp j)
 
-.. cfunction:: void* PyArray_GETPTR3(PyObject* obj, <npy_intp> i, <npy_intp> j, <npy_intp> k)
+.. cfunction:: void* PyArray_GETPTR3(PyArrayObject* obj, npy_intp i, npy_intp j, npy_intp k)
 
-.. cfunction:: void* PyArray_GETPTR4(PyObject* obj, <npy_intp> i, <npy_intp> j, <npy_intp> k, <npy_intp> l)
+.. cfunction:: void* PyArray_GETPTR4(PyArrayObject* obj, npy_intp i, npy_intp j, npy_intp k, npy_intp l)
 
     Quick, inline access to the element at the given coordinates in
     the ndarray, *obj*, which must have respectively 1, 2, 3, or 4
@@ -1036,7 +1036,10 @@ Converting data types
     the casting rule *casting*. For simple types with :cdata:`NPY_SAFE_CASTING`,
     this is basically a wrapper around :cfunc:`PyArray_CanCastSafely`, but
     for flexible types such as strings or unicode, it produces results
-    taking into account their sizes.
+    taking into account their sizes. Integer and float types can only be cast
+    to a string or unicode type using :cdata:`NPY_SAFE_CASTING` if the string
+    or unicode type is big enough to hold the max value of the integer/float
+    type being cast from.
 
 .. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
@@ -1062,7 +1065,7 @@ Converting data types
     *arr* is an array scalar (has 0 dimensions), it finds the data type
     of smallest size to which the value may be converted
     without overflow or truncation to an integer.
-    
+
     This function will not demote complex to float or anything to
     boolean, but will demote a signed integer to an unsigned integer
     when the scalar value is positive.
@@ -1073,7 +1076,8 @@ Converting data types
 
     Finds the data type of smallest size and kind to which *type1* and
     *type2* may be safely converted. This function is symmetric and
-    associative.
+    associative. A string or unicode result will be the proper size for
+    storing the max value of the input types converted to a string or unicode.
 
 .. cfunction:: PyArray_Descr* PyArray_ResultType(npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, PyArray_Descr**dtypes)
 
@@ -1088,7 +1092,7 @@ Converting data types
     Categories are determined by first checking which of boolean,
     integer (int/uint), or floating point (float/complex) the maximum
     kind of all the arrays and the scalars are.
-    
+
     If there are only scalars or the maximum category of the scalars
     is higher than the maximum category of the arrays,
     the data types are combined with :cfunc:`PyArray_PromoteTypes`
@@ -1312,7 +1316,7 @@ of the constant names is deprecated in 1.7.
 
 .. note::
 
-    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously.
     This is clear for 1-dimensional arrays, but can also be true for higher
     dimensional arrays.
 
@@ -1574,7 +1578,7 @@ Conversion
 
 .. cfunction:: PyObject* PyArray_ToString(PyArrayObject* self, NPY_ORDER order)
 
-    Equivalent to :meth:`ndarray.tostring` (*self*, *order*). Return the bytes
+    Equivalent to :meth:`ndarray.tobytes` (*self*, *order*). Return the bytes
     of this array in a Python string.
 
 .. cfunction:: PyObject* PyArray_ToFile(PyArrayObject* self, FILE* fp, char* sep, char* format)
@@ -1810,6 +1814,27 @@ Item selection and manipulation
     would be placed. No checking is done on whether or not self is in
     ascending order.
 
+.. cfunction:: int PyArray_Partition(PyArrayObject *self, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+
+    Equivalent to :meth:`ndarray.partition` (*self*, *ktharray*, *axis*,
+    *kind*). Partitions the array so that the values of the element indexed by
+    *ktharray* are in the positions they would be if the array is fully sorted
+    and places all elements smaller than the kth before and all elements equal
+    or greater after the kth element. The ordering of all elements within the
+    partitions is undefined.
+    If *self*->descr is a data-type with fields defined, then
+    self->descr->names is used to determine the sort order. A comparison where
+    the first field is equal will use the second field and so on. To alter the
+    sort order of a record array, create a new data-type with a different
+    order of names and construct a view of the array with that new data-type.
+    Returns zero on success and -1 on failure.
+
+.. cfunction:: PyObject* PyArray_ArgPartition(PyArrayObject *op, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+
+    Equivalent to :meth:`ndarray.argpartition` (*self*, *ktharray*, *axis*,
+    *kind*). Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a partitioned version of *self*.
+
 .. cfunction:: PyObject* PyArray_Diagonal(PyArrayObject* self, int offset, int axis1, int axis2)
 
     Equivalent to :meth:`ndarray.diagonal` (*self*, *offset*, *axis1*, *axis2*
@@ -1846,15 +1871,27 @@ Calculation
     effect that is obtained by passing in *axis* = :const:`None` in Python
     (treating the array as a 1-d array).
 
-.. cfunction:: PyObject* PyArray_ArgMax(PyArrayObject* self, int axis)
+.. cfunction:: PyObject* PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.argmax` (*self*, *axis*). Return the index of
     the largest element of *self* along *axis*.
 
-.. cfunction:: PyObject* PyArray_ArgMin(PyArrayObject* self, int axis)
+.. cfunction:: PyObject* PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.argmin` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
+
+
+
+
+.. note::
+
+    The out argument specifies where to place the result. If out is 
+    NULL, then the output array is created, otherwise the output is 
+    placed in out which must be the correct size and type. A new 
+    reference to the ouput array is always returned even when out 
+    is not NULL. The caller of the routine has the responsability
+    to ``DECREF`` out if not NULL or a memory-leak will occur.
 
 .. cfunction:: PyObject* PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out)
 
@@ -2562,7 +2599,7 @@ Data-type descriptors
     unless otherwise noted. Therefore, you must own a reference to any
     data-type object used as input to such a function.
 
-.. cfunction:: int PyArrayDescr_Check(PyObject* obj)
+.. cfunction:: int PyArray_DescrCheck(PyObject* obj)
 
     Evaluates as true if *obj* is a data-type object ( :ctype:`PyArray_Descr *` ).
 

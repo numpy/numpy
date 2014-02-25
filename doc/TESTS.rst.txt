@@ -68,7 +68,7 @@ you'd like to become part of SciPy, please write the tests as you
 develop the package. Also since much of SciPy is legacy code that was
 originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
-modules to develop test for either after or even as you read through
+modules and develop tests for it as you read through
 this introduction.
 
 Writing your own tests
@@ -199,14 +199,14 @@ with test generators::
       for i in range(0,4,2):
           yield check_even, i, i*3
 
-Note that 'check_even' is not itself a test (no 'test' in the name),
-but 'test_evens' is a generator that returns a series of tests, using
-'check_even', across a range of inputs.
+Note that ``check_even`` is not itself a test (no 'test' in the name),
+but ``test_evens`` is a generator that returns a series of tests, using
+``check_even``, across a range of inputs.
 
 A problem with generator tests can be that if a test is failing, it's
 hard to see for which parameters.  To avoid this problem, ensure that:
 
-  - No computation related to the features tested is done in the 
+  - No computation related to the features tested is done in the
     ``test_*`` generator function, but delegated to a corresponding
     ``check_*`` function (can be inside the generator, to share namespace).
   - The generators are used *solely* for loops over parameters.
@@ -220,7 +220,7 @@ hard to see for which parameters.  To avoid this problem, ensure that:
 Doctests
 --------
 
-Doctests are a convenient way of documenting the behavior a function
+Doctests are a convenient way of documenting the behavior of a function
 and allowing that behavior to be tested at the same time.  The output
 of an interactive Python session can be included in the docstring of a
 function, and the test framework can run the example and compare the
@@ -236,7 +236,7 @@ for numpy.lib::
 The doctests are run as if they are in a fresh Python instance which
 has executed ``import numpy as np``. Tests that are part of a SciPy
 subpackage will have that subpackage already imported. E.g. for a test
-in ``scipy/linalg/tests/``, the namespace will be created such that 
+in ``scipy/linalg/tests/``, the namespace will be created such that
 ``from scipy import linalg`` has already executed.
 
 

@@ -50,14 +50,14 @@
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong, half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
+ *         cfloat, cdouble, clongdouble, datetime, timedelta#
  * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
- *         npy_cdouble, npy_clongdouble#
+ *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
  */
 
 int
@@ -292,7 +292,7 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 int
 npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
 {
-    char *tmp = (char *) malloc(size);
+    char *tmp = malloc(size);
     char *a = (char *) base - size;
     size_t i, j, l;
 

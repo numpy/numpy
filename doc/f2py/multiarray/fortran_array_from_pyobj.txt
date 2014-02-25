@@ -1,0 +1,284 @@
+
+    _____________________________________________________________
+   /   Proposed internal structure for f2py generated extension  \
+  <    modules regarding the issues with different storage-orders >
+   \   of multi-dimensional matrices in Fortran and C.           /
+    =============================================================
+
+Author: Pearu Peterson
+Date:   14 January, 2001
+
+Definitions:
+============
+
+In the following I will use the following definitions:
+
+1) A matrix is a mathematical object that represents a collection of
+   objects (elements), usually visualized in a table form, and one can
+   define a set of various (algebraic,etc) operations for matrices.
+   One can think of a matrix as a defintion of a certain mapping:
+         (i) |--> A(i)
+   where i belongs to the set of indices (an index itself can be a
+   sequence of objects, for example, a sequence of integers) and A(i)
+   is an element from a specified set, for example, a set of fruits.
+   Symbol A then denotes a matrix of fruits.
+
+2) An array is a storage object that represents a collection of
+   objects stored in a certain systematic way, for example, as an
+   ordered sequence in computer memory.
+
+In order to manipulate matrices using computers, one must store matrix
+elements in computer memory. In the following, I will assume that the
+elements of a matrix is stored as an array. There is no unique way in
+which order one should save matrix elements in the array. However, in
+C and Fortran programming languages, two, unfortunately different,
+conventions are used.
+
+Aim:
+====
+
+The purpose of this writing is to work out an interface for Python
+language so that C and Fortran routines can be called without
+bothering about how multi-dimensional matrices are stored in memory.
+For example, accessing a matrix element A[i,j] in Python will be
+equivalent to accessing the same matrix in C, using A[i][j], or in
+Fortran, using A(i,j).
+
+External conditions:
+====================
+
+In C programming language, it is custom to think that matrices are
+stored in the so-called row-major order, that is, a matrix is stored
+row by row, each row is as a contiguous array in computer memory.
+
+In Fortran programming language, matrices are stored in the
+column-major order: each column is a contiguous array in computer
+memory.
+
+In Python programming language, matrices can be stored using Python
+Numeric array() function that uses internally C approach, that is,
+elements of matrices are stored in row-major order. For example,
+A = array([[1,2,3],[4,5,6]]) represents a 2-by-3 matrix
+
+             / 1   2   3 \
+             |           |
+             \ 4   5   6 /
+
+and its elements are stored in computer memory as the following array:
+
+         1  2  3  4  5  6
+
+The same matrix, if used in Fortran, would be stored in computer
+memory as the following array:
+
+         1  4  2  5  3  6
+
+Problem and solution:
+=====================
+
+A problem arises if one wants to use the same matrix both in C and in
+Fortran functions. Then the difference in storage order of a matrix
+elements must be taken into account. This technical detail can be very
+confusing even for an experienced programmer. This is because when
+passing a matrix to a Fortran subroutine, you must (mentally or
+programmically) transpose the matrix and when the subroutine returns,
+you must transpose it back.
+
+As will be discussed below, there is a way to overcome these
+difficulties in Python by creating an interface between Python and
+Fortran code layers that takes care of this transition internally. So
+that if you will read the manual pages of the Fortran codes, then you
+need not to think about how matrices are actually stored, the storage
+order will be the same, seemingly.
+
+Python / C / Fortran interface:
+===============================
+
+The interface between Python and Fortran codes will use the following
+Python Numeric feature: transposing a Numeric array does not involve
+copying of its data but just permuting the dimensions and strides of
+the array (the so-called lazy transpose).
+
+However, when passing a Numeric array data pointer to Fortran or C
+function, the data must be contiguous in memory. If it is not, then
+data is rearranged inplace. I don't think that it can be avoided.
+This is certainly a penalty hit to performance. However, one can
+easily avoid it by creating a Numeric array with the right storage
+order, so that after transposing, the array data will be contiguous in
+memory and the data pointer can safely passed on to the Fortran
+subroutine.  This lazy-transpose operation will be done within the
+interface and users need not to bother about this detail anymore (that
+is, after they initialize Numeric array with matrix elements using the
+proper order. Of course, the proper order depends on the target
+function: C or Fortran). The interface should be smart enough to
+minimize the need of real-transpose operations and the need to
+additional memory storage as well.
+
+Statement of the problem:
+=========================
+
+Consider a M-by-N matrix A of integers, where M and N are the number A
+rows and columns, respectively.
+
+In Fortran language, the storing array of this matrix can be defined
+as follows:
+
+      integer A(M,N)
+
+in C:
+
+      int A[M][N];
+
+and in Python:
+
+      A = Numeric.zeros((M,N),'i')
+
+Consider also the corresponding Fortran and C functions that
+that use matrix arguments:
+
+Fortran:
+      subroutine FUN(A,M,N)
+      integer A(M,N)
+      ...
+      end
+C:
+      void cun(int *a,int m,int n) {
+      ...
+      }
+
+and the corresponding Python interface signatures:
+
+      def py_fun(a):
+          ...
+      def py_cun(a):
+          ...
+
+Main goal:
+==========
+
+Our goal is to generate Python C/API functions py_fun and py_cun such
+that their usage in Python would be identical. The cruical part of
+their implementation are in functions that take a PyObject and
+return a PyArrayObject such that it is contiguous and its data pointer
+is suitable for passing on to the arguments of C or Fortran functions.
+The prototypes of these functions are:
+
+PyArrayObject* fortran_array_from_pyobj(
+     int typecode,
+     int *dims,
+     int rank,
+     int intent,
+     PyObject *obj);
+
+and
+
+PyArrayObject* c_array_from_pyobj(
+     int typecode,
+     int *dims,
+     int rank,
+     int intent,
+     PyObject *obj);
+
+for wrapping Fortran and C functions, respectively.
+
+Pseudo-code for fortran_array_from_pyobj:
+=========================================
+
+if type(obj) is ArrayType:
+    #raise not check(len(ravel(obj)) >= dims[0]*dims[1]*...*dims[rank-1])
+    if obj.typecode is typecode:
+        if is_contiguous(obj):
+            transpose_data_inplace(obj) # real-transpose
+            set_transpose_strides(obj)  # lazy-transpose
+            Py_INCREF(obj);
+            return obj
+        set_transpose_strides(obj)
+        if is_contiguous(obj):
+            set_transpose_strides(obj)
+            Py_INCREF(obj);
+            return obj
+        else:
+            tmp_obj = PyArray_ContiguousFromObject(obj,typecode,0,0)
+            swap_datapointer_and_typeinfo(obj,tmp_obj)
+            Py_DECREF(tmp_obj);
+            set_transpose_strides(obj)
+            Py_INCREF(obj);
+            return obj
+    else:
+        tmp_obj = PyArray_FromDims(rank,dims,typecode)
+        set_transpose_strides(tmp_obj)
+        if intent in [in,inout]:
+            copy_ND_array(obj,tmp_obj)
+        swap_datapointer_and_typeinfo(obj,tmp_obj)
+        Py_DECREF(tmp_obj);
+        Py_INCREF(obj);
+        return obj
+elif obj is None: # happens when only intent is 'hide'
+    tmp_obj = PyArray_FromDims(rank,dims,typecode)
+    if intent is out:
+        set_transpose_strides(tmp_obj)
+    # otherwise tmp_obj->data is used as a work array
+    Py_INCREF(tmp_obj)
+    return tmp_obj
+else:
+    tmp_obj = PyArray_ContiguousFromObject(obj,typecode,0,0)
+    #raise not check(len(ravel(obj)) >= dims[0]*dims[1]*...*dims[rank-1])
+    set_transpose_strides(tmp_obj)
+    transpose_data_inplace(tmp_obj)
+    Py_INCREF(tmp_obj)
+    return tmp_obj
+
+Notes:
+    1) CPU expensive tasks are in transpose_data_inplace and
+       copy_ND_array, PyArray_ContiguousFromObject.
+    2) Memory expensive tasks are in PyArray_FromDims,
+       PyArray_ContiguousFromObject
+    3) Side-effects are expected when set_transpose_strides and
+    transpose_data_inplace are used. For example:
+        >>> a = Numeric([[1,2,3],[4,5,6]],'d')
+        >>> a.is_contiguous()
+        1
+        >>> py_fun(a)
+        >>> a.typecode()
+        'i'
+        >>> a.is_contiguous()
+        0
+        >>> transpose(a).is_contiguous()
+        1
+
+Pseudo-code for c_array_from_pyobj:
+===================================
+
+if type(obj) is ArrayType:
+    #raise not check(len(ravel(obj)) >= dims[0]*dims[1]*...*dims[rank-1])
+    if obj.typecode is typecode:
+        if is_contiguous(obj):
+            Py_INCREF(obj);
+            return obj
+        else:
+            tmp_obj = PyArray_ContiguousFromObject(obj,typecode,0,0)
+            swap_datapointer_and_typeinfo(obj,tmp_obj)
+            Py_DECREF(tmp_obj);
+            Py_INCREF(obj);
+            return obj
+    else:
+        tmp_obj = PyArray_FromDims(rank,dims,typecode)
+        if intent in [in,inout]:
+            copy_ND_array(obj,tmp_obj)
+        swap_datapointer_and_typeinfo(obj,tmp_obj)
+        Py_DECREF(tmp_obj);
+        Py_INCREF(obj);
+        return obj
+elif obj is None: # happens when only intent is 'hide'
+    tmp_obj = PyArray_FromDims(rank,dims,typecode)
+    Py_INCREF(tmp_obj)
+    return tmp_obj
+else:
+    tmp_obj = PyArray_ContiguousFromObject(obj,typecode,0,0)
+    #raise not check(len(ravel(obj)) >= dims[0]*dims[1]*...*dims[rank-1])
+    Py_INCREF(tmp_obj)
+    return tmp_obj
+
+
+14 January, 2002
+Pearu Peterson <pearu@cens.ioc.ee>

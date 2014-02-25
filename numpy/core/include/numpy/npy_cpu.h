@@ -68,6 +68,8 @@
     #define NPY_CPU_MIPSEB
 #elif defined(__aarch64__)
     #define NPY_CPU_AARCH64
+#elif defined(__mc68000__)
+    #define NPY_CPU_M68K
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
@@ -104,6 +106,12 @@
         #error Unknown architecture, please report this to numpy maintainers with \
         information about your platform (OS, CPU and compiler)
     #endif
+#endif
+
+#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
+#else
+#define NPY_CPU_HAVE_UNALIGNED_ACCESS 0
 #endif
 
 #endif

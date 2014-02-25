@@ -3,7 +3,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['finfo','iinfo']
+__all__ = ['finfo', 'iinfo']
 
 from .machar import MachAr
 from . import numeric
@@ -97,7 +97,7 @@ class finfo(object):
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype,None)
+        obj = cls._finfo_cache.get(dtype, None)
         if obj is not None:
             return obj
         dtypes = [dtype]
@@ -107,7 +107,7 @@ class finfo(object):
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
             raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype,None)
+        obj = cls._finfo_cache.get(dtype, None)
         if obj is not None:
             return obj
         if not issubclass(dtype, numeric.floating):
@@ -115,7 +115,7 @@ class finfo(object):
             if newdtype is not dtype:
                 dtypes.append(newdtype)
                 dtype = newdtype
-        obj = cls._finfo_cache.get(dtype,None)
+        obj = cls._finfo_cache.get(dtype, None)
         if obj is not None:
             return obj
         obj = object.__new__(cls)._init(dtype)
@@ -151,11 +151,11 @@ class finfo(object):
                         'numpy %s precision floating point number' % precname)
 
         for word in ['precision', 'iexp',
-                     'maxexp','minexp','negep',
+                     'maxexp', 'minexp', 'negep',
                      'machep']:
-            setattr(self,word,getattr(machar, word))
-        for word in ['tiny','resolution','epsneg']:
-            setattr(self,word,getattr(machar, word).flat[0])
+            setattr(self, word, getattr(machar, word))
+        for word in ['tiny', 'resolution', 'epsneg']:
+            setattr(self, word, getattr(machar, word).flat[0])
         self.max = machar.huge.flat[0]
         self.min = -self.max
         self.eps = machar.eps.flat[0]
@@ -296,11 +296,11 @@ max = %(max)s
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)
-    print('single epsilon:',f.eps)
-    print('single tiny:',f.tiny)
+    print('single epsilon:', f.eps)
+    print('single tiny:', f.tiny)
     f = finfo(ntypes.float)
-    print('float epsilon:',f.eps)
-    print('float tiny:',f.tiny)
+    print('float epsilon:', f.eps)
+    print('float tiny:', f.tiny)
     f = finfo(ntypes.longfloat)
-    print('longfloat epsilon:',f.eps)
-    print('longfloat tiny:',f.tiny)
+    print('longfloat epsilon:', f.eps)
+    print('longfloat tiny:', f.tiny)

@@ -23,6 +23,7 @@
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
+#include "common.h"
 
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
@@ -365,6 +366,34 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
 
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int ret;
+    ret = PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting, operands,
+                                                   type_tup, out_dtypes);
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* The type resolver would have upcast already */
+    if (out_dtypes[0]->type_num == NPY_BOOL) {
+        if (DEPRECATE("numpy boolean negative (the unary `-` operator) is "
+                      "deprecated, use the bitwise_xor (the `^` operator) "
+                      "or the logical_xor function instead.") < 0) {
+            return -1;
+        }
+    }
+
+    return ret;
+}
+
 
 /*
  * The ones_like function shouldn't really be a ufunc, but while it
@@ -761,8 +790,22 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
-                    operands, type_tup, out_dtypes);
+        int ret;
+        ret = PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                                                operands, type_tup, out_dtypes);
+        if (ret < 0) {
+            return ret;
+        }
+
+        /* The type resolver would have upcast already */
+        if (out_dtypes[0]->type_num == NPY_BOOL) {
+            if (DEPRECATE("numpy boolean subtract (the binary `-` operator) is "
+                          "deprecated, use the bitwise_xor (the `^` operator) "
+                          "or the logical_xor function instead.") < 0) {
+                return -1;
+            }
+        }
+        return ret;
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -1343,11 +1386,7 @@ unmasked_ufunc_loop_as_masked(
     /* Process the data as runs of unmasked values */
     do {
         /* Skip masked values */
-        subloopsize = 0;
-        while (subloopsize < loopsize && !*mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 1);
         for (iargs = 0; iargs < nargs; ++iargs) {
             dataptrs[iargs] += subloopsize * strides[iargs];
         }
@@ -1356,11 +1395,7 @@ unmasked_ufunc_loop_as_masked(
          * Process unmasked values (assumes unmasked loop doesn't
          * mess with the 'args' pointer values)
          */
-        subloopsize = 0;
-        while (subloopsize < loopsize && *mask) {
-            ++subloopsize;
-            mask += mask_stride;
-        }
+        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 0);
         unmasked_innerloop(dataptrs, &subloopsize, strides,
                                         unmasked_innerloopdata);
         for (iargs = 0; iargs < nargs; ++iargs) {
@@ -1613,7 +1648,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
 
     for (i = 0; i < nop; ++i) {
         int type_num;
-        
+
         /* no more ufunc arguments to check */
         if (op[i] == NULL) {
             break;
@@ -2129,5 +2164,3 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     return -1;
 }
-
-

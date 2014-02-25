@@ -77,6 +77,9 @@
 .. _linux git workflow: http://www.mail-archive.com/dri-devel@lists.sourceforge.net/msg39091.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
 .. _git foundation: http://matthew-brett.github.com/pydagogue/foundation.html
+.. _numpy/master: https://github.com/numpy/numpy
+.. _git cherry-pick: https://www.kernel.org/pub/software/scm/git/docs/git-cherry-pick.html
+.. _git blame: https://www.kernel.org/pub/software/scm/git/docs/git-blame.html
 
 .. other stuff
 .. _python: http://www.python.org

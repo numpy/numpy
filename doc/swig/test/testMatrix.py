@@ -29,7 +29,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test det function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         det = Matrix.__dict__[self.typeStr + "Det"]
-        matrix = [[8,7],[6,9]]
+        matrix = [[8, 7], [6, 9]]
         self.assertEquals(det(matrix), 30)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -37,7 +37,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test det function with bad list"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         det = Matrix.__dict__[self.typeStr + "Det"]
-        matrix = [[8,7], ["e", "pi"]]
+        matrix = [[8, 7], ["e", "pi"]]
         self.assertRaises(BadListError, det, matrix)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -45,7 +45,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test det function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         det = Matrix.__dict__[self.typeStr + "Det"]
-        matrix = [8,7]
+        matrix = [8, 7]
         self.assertRaises(TypeError, det, matrix)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -53,7 +53,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test det function with wrong size"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         det = Matrix.__dict__[self.typeStr + "Det"]
-        matrix = [[8,7,6], [5,4,3], [2,1,0]]
+        matrix = [[8, 7, 6], [5, 4, 3], [2, 1, 0]]
         self.assertRaises(TypeError, det, matrix)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -68,7 +68,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test max function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         max = Matrix.__dict__[self.typeStr + "Max"]
-        matrix = [[6,5,4],[3,2,1]]
+        matrix = [[6, 5, 4], [3, 2, 1]]
         self.assertEquals(max(matrix), 6)
 
     # Test (type* IN_ARRAY2, int DIM1, int DIM2) typemap
@@ -76,7 +76,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test max function with bad list"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         max = Matrix.__dict__[self.typeStr + "Max"]
-        matrix = [[6,"five",4], ["three", 2, "one"]]
+        matrix = [[6, "five", 4], ["three", 2, "one"]]
         self.assertRaises(BadListError, max, matrix)
 
     # Test (type* IN_ARRAY2, int DIM1, int DIM2) typemap
@@ -98,7 +98,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test min function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         min = Matrix.__dict__[self.typeStr + "Min"]
-        matrix = [[9,8],[7,6],[5,4]]
+        matrix = [[9, 8], [7, 6], [5, 4]]
         self.assertEquals(min(matrix), 4)
 
     # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
@@ -106,7 +106,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test min function with bad list"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         min = Matrix.__dict__[self.typeStr + "Min"]
-        matrix = [["nine","eight"], ["seven","six"]]
+        matrix = [["nine", "eight"], ["seven", "six"]]
         self.assertRaises(BadListError, min, matrix)
 
     # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
@@ -114,7 +114,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test min function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         min = Matrix.__dict__[self.typeStr + "Min"]
-        self.assertRaises(TypeError, min, [1,3,5,7,9])
+        self.assertRaises(TypeError, min, [1, 3, 5, 7, 9])
 
     # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
     def testMinNonContainer(self):
@@ -128,16 +128,16 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = np.array([[1,2,3],[2,1,2],[3,2,1]],self.typeCode)
-        scale(matrix,4)
-        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+        matrix = np.array([[1, 2, 3], [2, 1, 2], [3, 2, 1]], self.typeCode)
+        scale(matrix, 4)
+        self.assertEquals((matrix == [[4, 8, 12], [8, 4, 8], [12, 8, 4]]).all(), True)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
     def testScaleWrongDim(self):
         "Test scale function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = np.array([1,2,2,1],self.typeCode)
+        matrix = np.array([1, 2, 2, 1], self.typeCode)
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -145,7 +145,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with wrong size"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = np.array([[1,2],[2,1]],self.typeCode)
+        matrix = np.array([[1, 2], [2, 1]], self.typeCode)
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -153,7 +153,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with wrong type"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = np.array([[1,2,3],[2,1,2],[3,2,1]],'c')
+        matrix = np.array([[1, 2, 3], [2, 1, 2], [3, 2, 1]], 'c')
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -161,7 +161,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with non-array"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = [[1,2,3],[2,1,2],[3,2,1]]
+        matrix = [[1, 2, 3], [2, 1, 2], [3, 2, 1]]
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
@@ -169,16 +169,16 @@ class MatrixTestCase(unittest.TestCase):
         "Test floor function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = np.array([[6,7],[8,9]],self.typeCode)
-        floor(matrix,7)
-        np.testing.assert_array_equal(matrix, np.array([[7,7],[8,9]]))
+        matrix = np.array([[6, 7], [8, 9]], self.typeCode)
+        floor(matrix, 7)
+        np.testing.assert_array_equal(matrix, np.array([[7, 7], [8, 9]]))
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
     def testFloorWrongDim(self):
         "Test floor function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = np.array([6,7,8,9],self.typeCode)
+        matrix = np.array([6, 7, 8, 9], self.typeCode)
         self.assertRaises(TypeError, floor, matrix)
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
@@ -186,7 +186,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test floor function with wrong type"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = np.array([[6,7], [8,9]],'c')
+        matrix = np.array([[6, 7], [8, 9]], 'c')
         self.assertRaises(TypeError, floor, matrix)
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
@@ -194,7 +194,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test floor function with non-array"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = [[6,7], [8,9]]
+        matrix = [[6, 7], [8, 9]]
         self.assertRaises(TypeError, floor, matrix)
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
@@ -202,16 +202,16 @@ class MatrixTestCase(unittest.TestCase):
         "Test ceil function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = np.array([[1,2],[3,4]],self.typeCode)
-        ceil(matrix,3)
-        np.testing.assert_array_equal(matrix, np.array([[1,2],[3,3]]))
+        matrix = np.array([[1, 2], [3, 4]], self.typeCode)
+        ceil(matrix, 3)
+        np.testing.assert_array_equal(matrix, np.array([[1, 2], [3, 3]]))
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
     def testCeilWrongDim(self):
         "Test ceil function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = np.array([1,2,3,4],self.typeCode)
+        matrix = np.array([1, 2, 3, 4], self.typeCode)
         self.assertRaises(TypeError, ceil, matrix)
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
@@ -219,7 +219,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test ceil function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = np.array([[1,2], [3,4]],'c')
+        matrix = np.array([[1, 2], [3, 4]], 'c')
         self.assertRaises(TypeError, ceil, matrix)
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
@@ -227,7 +227,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test ceil function with non-array"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = [[1,2], [3,4]]
+        matrix = [[1, 2], [3, 4]]
         self.assertRaises(TypeError, ceil, matrix)
 
     # Test (type ARGOUT_ARRAY2[ANY][ANY]) typemap
@@ -235,9 +235,9 @@ class MatrixTestCase(unittest.TestCase):
         "Test luSplit function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         luSplit = Matrix.__dict__[self.typeStr + "LUSplit"]
-        lower, upper = luSplit([[1,2,3],[4,5,6],[7,8,9]])
-        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
-        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+        lower, upper = luSplit([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        self.assertEquals((lower == [[1, 0, 0], [4, 5, 0], [7, 8, 9]]).all(), True)
+        self.assertEquals((upper == [[0, 2, 3], [0, 0, 6], [0, 0, 0]]).all(), True)
 
 ######################################################################
 

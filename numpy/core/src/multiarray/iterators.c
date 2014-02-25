@@ -70,12 +70,6 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         }
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
-        if (!PyIndex_Check_Or_Unsupported(op)) {
-            if (DEPRECATE("non-integer scalar index. In a future numpy "
-                          "release, this will raise an error.") < 0) {
-                goto fail;
-            }
-        }
         if (check_index) {
             if (check_and_adjust_index(&i, max, axis) < 0) {
             goto fail;
@@ -204,26 +198,8 @@ parse_index(PyArrayObject *self, PyObject *op,
 static int
 slice_coerce_index(PyObject *o, npy_intp *v)
 {
-    /*
-     * PyNumber_Index was introduced in Python 2.5 because of NumPy.
-     * http://www.python.org/dev/peps/pep-0357/
-     * Let's use it for indexing!
-     *
-     * Unfortunately, SciPy and possibly other code seems to rely
-     * on the lenient coercion. :(
-     */
-#if 0 /*PY_VERSION_HEX >= 0x02050000*/
-    PyObject *ind = PyNumber_Index(o);
-    if (ind != NULL) {
-        *v = PyArray_PyIntAsIntp(ind);
-        Py_DECREF(ind);
-    }
-    else {
-        *v = -1;
-    }
-#else
     *v = PyArray_PyIntAsIntp(o);
-#endif
+
     if ((*v) == -1 && PyErr_Occurred()) {
         PyErr_Clear();
         return 0;
@@ -231,24 +207,6 @@ slice_coerce_index(PyObject *o, npy_intp *v)
     return 1;
 }
 
-/*
- * Issue a DeprecationWarning for slice parameters that do not pass a
- * PyIndex_Check, returning -1 if an error occurs.
- *
- * N.B. This function, like slice_GetIndices, will be obsolete once
- * non-integer slice parameters becomes an error rather than a warning.
- */
-static NPY_INLINE int
-_validate_slice_parameter(PyObject *o)
-{
-    if (!PyIndex_Check_Or_Unsupported(o)) {
-        if (DEPRECATE("non-integer slice parameter. In a future numpy "
-                      "release, this will raise an error.") < 0) {
-            return -1;
-        }
-    }
-    return 0;
-}
 
 /*
  * This is basically PySlice_GetIndicesEx, but with our coercion
@@ -268,9 +226,6 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *step = 1;
     }
     else {
-        if (_validate_slice_parameter(r->step) < 0) {
-            return -1;
-        }
         if (!slice_coerce_index(r->step, step)) {
             return -1;
         }
@@ -286,9 +241,6 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *start = *step < 0 ? length-1 : 0;
     }
     else {
-        if (_validate_slice_parameter(r->start) < 0) {
-            return -1;
-        }
         if (!slice_coerce_index(r->start, start)) {
             return -1;
         }
@@ -307,9 +259,6 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *stop = defstop;
     }
     else {
-        if (_validate_slice_parameter(r->stop) < 0) {
-            return -1;
-        }
         if (!slice_coerce_index(r->stop, stop)) {
             return -1;
         }
@@ -1026,8 +975,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 "Cannot delete iterator elements");
         return -1;
     }
-    
-    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0) 
+
+    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0)
         return -1;
 
     if (ind == Py_Ellipsis) {
@@ -1187,11 +1136,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
 
 static PyMappingMethods iter_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)iter_length,                   /*mp_length*/
-#else
-    (inquiry)iter_length,                   /*mp_length*/
-#endif
     (binaryfunc)iter_subscript,             /*mp_subscript*/
     (objobjargproc)iter_ass_subscript,      /*mp_ass_subscript*/
 };
@@ -1213,9 +1158,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
      *  2) underlying array is not contiguous
      *     -- make new 1-d contiguous array with updateifcopy flag set
      *        to copy back to the old array
-     * 
+     *
      *  If underlying array is readonly, then we make the output array readonly
-     *     and updateifcopy does not apply. 
+     *     and updateifcopy does not apply.
      */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));
@@ -1400,9 +1345,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 /** END of Array Iterator **/
@@ -1546,6 +1489,10 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }
@@ -1606,6 +1553,10 @@ PyArray_MultiIterNew(int n, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }
@@ -1877,9 +1828,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 /*========================= Neighborhood iterator ======================*/
@@ -2144,9 +2093,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
             Py_DECREF(*(PyObject**)iter->constant);
         }
     }
-    if (iter->constant != NULL) {
-        PyDataMem_FREE(iter->constant);
-    }
+    PyDataMem_FREE(iter->constant);
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
@@ -2209,7 +2156,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

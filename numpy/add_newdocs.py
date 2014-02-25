@@ -748,6 +748,12 @@ add_newdoc('numpy.core.multiarray', 'empty',
         Whether to store multi-dimensional data in C (row-major) or
         Fortran (column-major) order in memory.
 
+    Returns
+    -------
+    out : ndarray
+        Array of uninitialized (arbitrary) data with the given
+        shape, dtype, and order.
+
     See Also
     --------
     empty_like, zeros, ones
@@ -925,7 +931,7 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     5
     """)
 
-add_newdoc('numpy.core.multiarray','set_typeDict',
+add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
 
     Set the internal dictionary that can look up an array type using a
@@ -1280,10 +1286,10 @@ add_newdoc('numpy.core', 'inner',
 
     """)
 
-add_newdoc('numpy.core','fastCopyAndTranspose',
+add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
 
-add_newdoc('numpy.core.multiarray','correlate',
+add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
 
 add_newdoc('numpy.core.multiarray', 'arange',
@@ -1347,14 +1353,14 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     """)
 
-add_newdoc('numpy.core.multiarray','_get_ndarray_c_version',
+add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
 
     Return the compile time NDARRAY_VERSION number.
 
     """)
 
-add_newdoc('numpy.core.multiarray','_reconstruct',
+add_newdoc('numpy.core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
     Construct an empty array. Used by Pickles.
@@ -1592,6 +1598,14 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     out : bool
         True if cast can occur according to the casting rule.
 
+    Notes
+    -----
+    Starting in NumPy 1.9, can_cast function now returns False in 'safe'
+    casting mode for integer/float dtype and string dtype if the string dtype
+    length is not long enough to store the max integer/float value converted
+    to a string. Previously can_cast in 'safe' mode returned True for
+    integer/float dtype and a string dtype of any length.
+
     See also
     --------
     dtype, result_type
@@ -1612,7 +1626,7 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     >>> np.can_cast('i8', 'f4')
     False
     >>> np.can_cast('i4', 'S4')
-    True
+    False
 
     Casting scalars
 
@@ -1687,6 +1701,11 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     Notes
     -----
     .. versionadded:: 1.6.0
+    Starting in NumPy 1.9, promote_types function now returns a valid string
+    length when given an integer or float dtype as one argument and a string
+    dtype as another argument. Previously it always returned the input string
+    dtype, even if it wasn't long enough to store the max integer/float value
+    converted to a string.
 
     See Also
     --------
@@ -1703,10 +1722,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     >>> np.promote_types('>i8', '<c8')
     dtype('complex128')
 
-    >>> np.promote_types('i1', 'S8')
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: invalid type promotion
+    >>> np.promote_types('i4', 'S8')
+    dtype('S11')
 
     """)
 
@@ -2072,6 +2089,8 @@ add_newdoc('numpy.core', 'einsum',
     array([ 30,  80, 130, 180, 230])
     >>> np.dot(a, b)
     array([ 30,  80, 130, 180, 230])
+    >>> np.einsum('...j,j', a, b)
+    array([ 30,  80, 130, 180, 230])
 
     >>> np.einsum('ji', c)
     array([[0, 3],
@@ -2140,6 +2159,18 @@ add_newdoc('numpy.core', 'einsum',
            [ 4664.,  5018.],
            [ 4796.,  5162.],
            [ 4928.,  5306.]])
+
+    >>> a = np.arange(6).reshape((3,2))
+    >>> b = np.arange(12).reshape((4,3))
+    >>> np.einsum('ki,jk->ij', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('ki,...k->i...', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('k...,jk', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
 
     """)
 
@@ -2648,7 +2679,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
       or the ultimate owner of the memory exposes a writeable buffer
       interface or is a string.
 
-    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously.
     This is clear for 1-dimensional arrays, but can also be true for higher
     dimensional arrays.
 
@@ -3045,6 +3076,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argpartition',
+    """
+    a.argpartition(kth, axis=-1, kind='quickselect', order=None)
+
+    Returns the indices that would partition this array.
+
+    Refer to `numpy.argpartition` for full documentation.
+
+    .. versionadded:: 1.8.0
+
+    See Also
+    --------
+    numpy.argpartition : equivalent function
+
+    """))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     """
     a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
@@ -3088,6 +3136,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         array are satisfied (see description for `copy` input paramter), `arr_t`
         is a new array of the same shape as the input array, with dtype, order
         given by `dtype`, `order`.
+
+    Notes
+    -----
+    Starting in NumPy 1.9, astype method now returns an error if the string
+    dtype to cast to is not long enough in 'safe' casting mode to hold the max
+    value of integer/float array that is being casted. Previously the casting
+    was allowed even if the result was truncated.
 
     Raises
     ------
@@ -3299,7 +3354,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     """
     a.diagonal(offset=0, axis1=0, axis2=1)
 
-    Return specified diagonals.
+    Return specified diagonals. In NumPy 1.9 the returned array is a
+    read-only view instead of a copy as in previous NumPy versions.  In
+    NumPy 1.10 the read-only restriction will be removed.
 
     Refer to :func:`numpy.diagonal` for full documentation.
 
@@ -4172,6 +4229,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     argsort : Indirect sort.
     lexsort : Indirect stable sort on multiple keys.
     searchsorted : Find elements in sorted array.
+    partition: Partial sort.
 
     Notes
     -----
@@ -4198,6 +4256,59 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     array([('c', 1), ('a', 2)],
           dtype=[('x', '|S1'), ('y', '<i4')])
 
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
+    """
+    a.partition(kth, axis=-1, kind='introselect', order=None)
+
+    Rearranges the elements in the array in such a way that value of the
+    element in kth position is in the position it would be in a sorted array.
+    All elements smaller than the kth element are moved before this element and
+    all equal or greater are moved behind it. The ordering of the elements in
+    the two partitions is undefined.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    kth : int or sequence of ints
+        Element index to partition by. The kth element value will be in its
+        final sorted position and all smaller elements will be moved before it
+        and all equal or greater elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all elements
+        indexed by kth of them into their sorted position at once.
+    axis : int, optional
+        Axis along which to sort. Default is -1, which means sort along the
+        last axis.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'.
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
+
+    See Also
+    --------
+    numpy.partition : Return a parititioned copy of an array.
+    argpartition : Indirect partition.
+    sort : Full sort.
+
+    Notes
+    -----
+    See ``np.partition`` for notes on the different algorithms.
+
+    Examples
+    --------
+    >>> a = np.array([3, 4, 2, 1])
+    >>> a.partition(a, 3)
+    >>> a
+    array([2, 1, 3, 4])
+
+    >>> a.partition((1, 3))
+    array([1, 2, 3, 4])
     """))
 
 
@@ -4293,7 +4404,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
-        ``file.write(a.tostring())``.
+        ``file.write(a.tobytes())``.
     format : str
         Format string for text file output.
         Each entry in the array is formatted to text by first converting
@@ -4347,8 +4458,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
-    """
+tobytesdoc = """
     a.tostring(order='C')
 
     Construct a Python string containing the raw data bytes in the array.
@@ -4359,9 +4469,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     unless the F_CONTIGUOUS flag in the array is set, in which case it
     means 'Fortran' order.
 
+    {deprecated}
+
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
+    order : {{'C', 'F', None}}, optional
         Order of the data for multidimensional arrays:
         C, Fortran, or the same as for the original array.
 
@@ -4373,15 +4485,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     Examples
     --------
     >>> x = np.array([[0, 1], [2, 3]])
-    >>> x.tostring()
+    >>> x.tobytes()
     '\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
-    >>> x.tostring('C') == x.tostring()
+    >>> x.tobytes('C') == x.tobytes()
     True
-    >>> x.tostring('F')
+    >>> x.tobytes('F')
     '\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
 
-    """))
+    """
 
+add_newdoc('numpy.core.multiarray', 'ndarray',
+           ('tostring', tobytesdoc.format(deprecated=
+                                          'This function is a compatibility '
+                                          'alias for tobytes. Despite its '
+                                          'name it returns bytes not '
+                                          'strings.')))
+add_newdoc('numpy.core.multiarray', 'ndarray',
+           ('tobytes', tobytesdoc.format(deprecated='.. versionadded:: 1.9.0')))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
     """
@@ -5593,12 +5713,13 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
     generalized "row" parallel to `axis` in the final result (i.e., in a
     2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
-    `axis = 1`, it becomes the i-th column).  There are two exceptions to this:
+    `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
 
-      * when ``i = len(indices) - 1`` (so for the last index),
-        ``indices[i+1] = a.shape[axis]``.
-      * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
-        simply ``a[indices[i]]``.
+    * when ``i = len(indices) - 1`` (so for the last index),
+      ``indices[i+1] = a.shape[axis]``.
+    * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
+      simply ``a[indices[i]]``.
+    * if ``indices[i] >= len(a)`` or ``indices[i] < 0``, an error is raised.
 
     The shape of the output depends on the size of `indices`, and may be
     larger than `a` (this happens if ``len(indices) > a.shape[axis]``).
@@ -5746,6 +5867,61 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('at',
+    """
+    at(a, indices, b=None)
+
+    Performs unbuffered in place operation on operand 'a' for elements
+    specified by 'indices'. For addition ufunc, this method is equivalent to
+    `a[indices] += b`, except that results are accumulated for elements that
+    are indexed more than once. For example, `a[[0,0]] += 1` will only
+    increment the first element once because of buffering, whereas
+    `add.at(a, [0,0], 1)` will increment the first element twice.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        The array to perform in place operation on.
+    indices : array_like or tuple
+        Array like index object or slice object for indexing into first
+        operand. If first operand has multiple dimensions, indices can be a
+        tuple of array like index objects or slice objects.
+    b : array_like
+        Second operand for ufuncs requiring two operands. Operand must be
+        broadcastable over first operand after indexing or slicing.
+
+    Examples
+    --------
+    Set items 0 and 1 to their negative values:
+
+    >>> a = np.array([1, 2, 3, 4])
+    >>> np.negative.at(a, [0, 1])
+    >>> print(a)
+    array([-1, -2, 3, 4])
+
+    ::
+
+    Increment items 0 and 1, and increment item 2 twice:
+
+    >>> a = np.array([1, 2, 3, 4])
+    >>> np.add.at(a, [0, 1, 2, 2], 1)
+    >>> print(a)
+    array([2, 3, 5, 4])
+
+    ::
+
+    Add items 0 and 1 in first array to second array,
+    and store results in first array:
+
+    >>> a = np.array([1, 2, 3, 4])
+    >>> b = np.array([1, 2])
+    >>> np.add.at(a, [0, 1], b)
+    >>> print(a)
+    array([2, 4, 3, 4])
+
+    """))
 
 ##############################################################################
 #

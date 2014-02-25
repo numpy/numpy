@@ -5,11 +5,13 @@
 
 #include "Python.h"
 
-#ifdef  ENABLE_SEPARATE_COMPILATION
+#include "npy_config.h"
+#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
 #endif
 
+#include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
@@ -19,11 +21,24 @@
 #include "npy_pycompat.h"
 
 #include "ufunc_object.h"
-#include <assert.h>
 
-#ifdef HAVE_EMMINTRIN_H
-#include <emmintrin.h>
-#endif
+#include <string.h> /* for memchr */
+
+/*
+ * cutoff blocksize for pairwise summation
+ * decreasing it decreases errors slightly as more pairs are summed but
+ * also lowers performance, as the inner loop is unrolled eight times it is
+ * effectively 16
+ */
+#define PW_BLOCKSIZE    128
+
+/*
+ * include vectorized functions and dispatchers
+ * this file is safe to include also for generic builds
+ * platform specific instructions are either masked via the proprocessor or
+ * runtime detected
+ */
+#include "simd.inc"
 
 
 /*
@@ -36,15 +51,6 @@
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
-
-/*
- * stride is equal to element size and input and destination are equal or
- * don't overlap within one register
- */
-#define IS_BLOCKABLE_UNARY(esize, vsize) \
-    (steps[0] == (esize) && steps[0] == steps[1] && \
-     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
-     ((abs(args[1] - args[0]) >= (vsize)) || ((abs(args[1] - args[0]) == 0))))
 
 #define OUTPUT_LOOP\
     char *op1 = args[1];\
@@ -66,22 +72,6 @@
     npy_intp n = dimensions[0];\
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
-
-/* align output to alignment
- * store alignment is usually more important than load alignment */
-#define UNARY_LOOP_BLOCK_ALIGN_OUT(type, alignment)\
-    type *ip1 = (type *)args[0], *op1 = (type *)args[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i, peel = npy_aligned_block_offset(op1, sizeof(type),\
-                                                alignment, n);\
-    for(i = 0; i < peel; i++)
-
-#define UNARY_LOOP_BLOCKED(type, vsize)\
-    for(; i < npy_blocked_end(peel, sizeof(type), vsize, n);\
-            i += (vsize / sizeof(type)))
-
-#define UNARY_LOOP_BLOCKED_END\
-    for (; i < n; i++)
 
 #define BINARY_LOOP\
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
@@ -576,26 +566,70 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  * #kind = logical_and, logical_or#
  * #OP =  &&, ||#
  * #SC =  ==, !=#
+ * #and = 1, 0#
  **/
 
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(npy_bool) {
-            const npy_bool in2 = *(npy_bool *)ip2;
-            io1 = io1 @OP@ in2;
-            if (io1 @SC@ 0) {
-                break;
-            }
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+        /*
+         * stick with our variant for more reliable performance, only known
+         * platform which outperforms it by ~20% is an i7 with glibc 2.17
+         */
+        if (run_reduce_simd_@kind@_BOOL(args, dimensions, steps)) {
+            return;
         }
-        *((npy_bool *)iop1) = io1;
+#else
+        /* for now only use libc on 32-bit/non-x86 */
+        if (steps[1] == 1) {
+            npy_bool * op = (npy_bool *)args[0];
+#if @and@
+            /* np.all(), search for a zero (false) */
+            if (*op) {
+                *op = memchr(args[1], 0, dimensions[0]) == NULL;
+            }
+#else
+            /*
+             * np.any(), search for a non-zero (true) via comparing against
+             * zero blocks, memcmp is faster than memchr on SSE4 machines
+             * with glibc >= 2.12 and memchr can only check for equal 1
+             */
+            static const npy_bool zero[4096]; /* zero by C standard */
+            npy_uintp i, n = dimensions[0];
+
+            for (i = 0; !*op && i < n - (n % sizeof(zero)); i += sizeof(zero)) {
+                *op = memcmp(&args[1][i], zero, sizeof(zero)) != 0;
+            }
+            if (!*op && n - i > 0) {
+                *op = memcmp(&args[1][i], zero, n - i) != 0;
+            }
+#endif
+            return;
+        }
+#endif
+        else {
+            BINARY_REDUCE_LOOP(npy_bool) {
+                const npy_bool in2 = *(npy_bool *)ip2;
+                io1 = io1 @OP@ in2;
+                if (io1 @SC@ 0) {
+                    break;
+                }
+            }
+            *((npy_bool *)iop1) = io1;
+        }
     }
     else {
-        BINARY_LOOP {
-            const npy_bool in1 = *(npy_bool *)ip1;
-            const npy_bool in2 = *(npy_bool *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
+        if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
+            return;
+        }
+        else {
+            BINARY_LOOP {
+                const npy_bool in1 = *(npy_bool *)ip1;
+                const npy_bool in2 = *(npy_bool *)ip2;
+                *((npy_bool *)op1) = in1 @OP@ in2;
+            }
         }
     }
 }
@@ -634,9 +668,14 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        npy_bool in1 = *(npy_bool *)ip1;
-        *((npy_bool *)op1) = in1 @OP@ 0;
+    if (run_unary_simd_@kind@_BOOL(args, dimensions, steps)) {
+        return;
+    }
+    else {
+        UNARY_LOOP {
+            npy_bool in1 = *(npy_bool *)ip1;
+            *((npy_bool *)op1) = in1 @OP@ 0;
+        }
     }
 }
 /**end repeat**/
@@ -1297,50 +1336,102 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *****************************************************************************
  */
 
-
 /**begin repeat
+ * Float types
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #scalarf = npy_sqrtf, npy_sqrt#
- *  #vtype = __m128, __m128d#
- *  #vsuf = ps, pd#
  */
+
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-#ifdef HAVE_EMMINTRIN_H
-    if (IS_BLOCKABLE_UNARY(sizeof(@type@), 16)) {
-        UNARY_LOOP_BLOCK_ALIGN_OUT(@type@, 16) {
-            op1[i] = @scalarf@(ip1[i]);
-        }
-        assert(npy_is_aligned(&op1[i], 16));
-        if (npy_is_aligned(&ip1[i], 16)) {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_load_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        else {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_loadu_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        UNARY_LOOP_BLOCKED_END {
-            op1[i] = @scalarf@(ip1[i]);
-        }
-    }
-    else
-#endif
-    {
+    if (!run_unary_simd_sqrt_@TYPE@(args, dimensions, steps)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             *(@type@ *)op1 = @scalarf@(in1);
         }
     }
 }
+
 /**end repeat**/
 
+
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double, npy_longdouble, npy_float#
+ *  #dtype = npy_float, npy_double, npy_longdouble, npy_half#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF#
+ *  #c = f, , l, #
+ *  #C = F, , L, #
+ *  #trf = , , , npy_half_to_float#
+ */
+
+/*
+ * Pairwise summation, rounding error O(lg n) instead of O(n).
+ * The recursion depth is O(lg n) as well.
+ * when updating also update similar complex floats summation
+ */
+static @type@
+pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
+{
+    if (n < 8) {
+        npy_intp i;
+        @type@ res = 0.;
+        for (i = 0; i < n; i++) {
+            res += @trf@(a[i * stride]);
+        }
+        return res;
+    }
+    else if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
+        @type@ r[8], res;
+
+        /*
+         * sum a block with 8 accumulators
+         * 8 times unroll reduces blocksize to 16 and allows vectorization with
+         * avx without changing summation ordering
+         */
+        r[0] = @trf@(a[0 * stride]);
+        r[1] = @trf@(a[1 * stride]);
+        r[2] = @trf@(a[2 * stride]);
+        r[3] = @trf@(a[3 * stride]);
+        r[4] = @trf@(a[4 * stride]);
+        r[5] = @trf@(a[5 * stride]);
+        r[6] = @trf@(a[6 * stride]);
+        r[7] = @trf@(a[7 * stride]);
+
+        for (i = 8; i < n - (n % 8); i += 8) {
+            r[0] += @trf@(a[(i + 0) * stride]);
+            r[1] += @trf@(a[(i + 1) * stride]);
+            r[2] += @trf@(a[(i + 2) * stride]);
+            r[3] += @trf@(a[(i + 3) * stride]);
+            r[4] += @trf@(a[(i + 4) * stride]);
+            r[5] += @trf@(a[(i + 5) * stride]);
+            r[6] += @trf@(a[(i + 6) * stride]);
+            r[7] += @trf@(a[(i + 7) * stride]);
+        }
+
+        /* accumulate now to avoid stack spills for single peel loop */
+        res = ((r[0] + r[1]) + (r[2] + r[3])) +
+              ((r[4] + r[5]) + (r[6] + r[7]));
+
+        /* do non multiple of 8 rest */
+        for (; i < n; i++) {
+            res += @trf@(a[i * stride]);
+        }
+        return res;
+    }
+    else {
+        /* divide by two but avoid non-multiples of unroll factor */
+        npy_uintp n2 = n / 2;
+        n2 -= n2 % 8;
+        return pairwise_sum_@TYPE@(a, n2, stride) +
+               pairwise_sum_@TYPE@(a + n2 * stride, n - n2, stride);
+    }
+}
+
+/**end repeat**/
 
 /**begin repeat
  * Float types
@@ -1350,22 +1441,30 @@ NPY_NO_EXPORT void
  *  #C = F, , L#
  */
 
-
 /**begin repeat1
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    if(IS_BINARY_REDUCE) {
+    if (IS_BINARY_REDUCE) {
+#if @PW@
+        @type@ * iop1 = (@type@ *)args[0];
+        npy_intp n = dimensions[0];
+
+        *iop1 @OP@= pairwise_sum_@TYPE@((@type@ *)args[1], n,
+                                        steps[1] / (npy_intp)sizeof(@type@));
+#else
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
         }
         *((@type@ *)iop1) = io1;
+#endif
     }
-    else {
+    else if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
         BINARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
@@ -1383,10 +1482,12 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 @OP@ in2;
+    if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((npy_bool *)op1) = in1 @OP@ in2;
+        }
     }
 }
 /**end repeat1**/
@@ -1462,11 +1563,13 @@ NPY_NO_EXPORT void
 {
     /*  */
     if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(@type@) {
-            const @type@ in2 = *(@type@ *)ip2;
-            io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+        if (!run_unary_reduce_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+            BINARY_REDUCE_LOOP(@type@) {
+                const @type@ in2 = *(@type@ *)ip2;
+                io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+            }
+            *((@type@ *)iop1) = io1;
         }
-        *((@type@ *)iop1) = io1;
     }
     else {
         BINARY_LOOP {
@@ -1532,18 +1635,27 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1*in1;
+    char * margs[] = {args[0], args[0], args[1]};
+    npy_intp msteps[] = {steps[0], steps[0], steps[1]};
+    if (!run_binary_simd_multiply_@TYPE@(margs, dimensions, msteps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *((@type@ *)op1) = in1*in1;
+        }
     }
 }
 
 NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = 1/in1;
+    @type@ one = 1.@c@;
+    char * margs[] = {(char*)&one, args[0], args[1]};
+    npy_intp msteps[] = {0, steps[0], steps[1]};
+    if (!run_binary_simd_divide_@TYPE@(margs, dimensions, msteps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *((@type@ *)op1) = 1/in1;
+        }
     }
 }
 
@@ -1567,11 +1679,13 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ tmp = in1 > 0 ? in1 : -in1;
-        /* add 0 to clear -0.0 */
-        *((@type@ *)op1) = tmp + 0;
+    if (!run_unary_simd_absolute_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ tmp = in1 > 0 ? in1 : -in1;
+            /* add 0 to clear -0.0 */
+            *((@type@ *)op1) = tmp + 0;
+        }
     }
 }
 
@@ -1671,16 +1785,24 @@ NPY_NO_EXPORT void
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
  */
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    if(IS_BINARY_REDUCE) {
+    if (IS_BINARY_REDUCE) {
         char *iop1 = args[0];
         float io1 = npy_half_to_float(*(npy_half *)iop1);
+#if @PW@
+        npy_intp n = dimensions[0];
+
+        io1 @OP@= pairwise_sum_HALF((npy_half *)args[1], n,
+                                    steps[1] / (npy_intp)sizeof(npy_half));
+#else
         BINARY_REDUCE_LOOP_INNER {
             io1 @OP@= npy_half_to_float(*(npy_half *)ip2);
         }
+#endif
         *((npy_half *)iop1) = npy_float_to_half(io1);
     }
     else {
@@ -1992,21 +2114,105 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  * #C = F, , L#
  */
 
+/* similar to pairwise sum of real floats */
+static void
+pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
+                    npy_intp stride)
+{
+    assert(n % 2 == 0);
+    if (n < 8) {
+        npy_intp i;
+        *rr = 0.;
+        *ri = 0.;
+        for (i = 0; i < n; i += 2) {
+            *rr += a[i * stride + 0];
+            *ri += a[i * stride + 1];
+        }
+        return;
+    }
+    else if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
+        @ftype@ r[8];
+
+        /*
+         * sum a block with 8 accumulators
+         * 8 times unroll reduces blocksize to 16 and allows vectorization with
+         * avx without changing summation ordering
+         */
+        r[0] = a[0 * stride];
+        r[1] = a[0 * stride + 1];
+        r[2] = a[2 * stride];
+        r[3] = a[2 * stride + 1];
+        r[4] = a[4 * stride];
+        r[5] = a[4 * stride + 1];
+        r[6] = a[6 * stride];
+        r[7] = a[6 * stride + 1];
+
+        for (i = 8; i < n - (n % 8); i += 8) {
+            r[0] += a[(i + 0) * stride];
+            r[1] += a[(i + 0) * stride + 1];
+            r[2] += a[(i + 2) * stride];
+            r[3] += a[(i + 2) * stride + 1];
+            r[4] += a[(i + 4) * stride];
+            r[5] += a[(i + 4) * stride + 1];
+            r[6] += a[(i + 6) * stride];
+            r[7] += a[(i + 6) * stride + 1];
+        }
+
+        /* accumulate now to avoid stack spills for single peel loop */
+        *rr = ((r[0] + r[2]) + (r[4] + r[6]));
+        *ri = ((r[1] + r[3]) + (r[5] + r[7]));
+
+        /* do non multiple of 8 rest */
+        for (; i < n; i+=2) {
+            *rr += a[i * stride + 0];
+            *ri += a[i * stride + 1];
+        }
+        return;
+    }
+    else {
+        /* divide by two but avoid non-multiples of unroll factor */
+        @ftype@ rr1, ri1, rr2, ri2;
+        npy_uintp n2 = n / 2;
+        n2 -= n2 % 8;
+        pairwise_sum_@TYPE@(&rr1, &ri1, a, n2, stride);
+        pairwise_sum_@TYPE@(&rr2, &ri2, a + n2 * stride, n - n2, stride);
+        *rr = rr1 + rr2;
+        *ri = ri1 + ri2;
+        return;
+    }
+}
+
 /**begin repeat1
  * arithmetic
  * #kind = add, subtract#
  * #OP = +, -#
+ * #PW = 1, 0#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
-        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        ((@ftype@ *)op1)[0] = in1r @OP@ in2r;
-        ((@ftype@ *)op1)[1] = in1i @OP@ in2i;
+    if (IS_BINARY_REDUCE && @PW@) {
+        npy_intp n = dimensions[0];
+        @ftype@ * or = ((@ftype@ *)args[0]);
+        @ftype@ * oi = ((@ftype@ *)args[0]) + 1;
+        @ftype@ rr, ri;
+
+        pairwise_sum_@TYPE@(&rr, &ri, (@ftype@ *)args[1], n * 2,
+                            steps[1] / (npy_intp)sizeof(@ftype@) / 2);
+        *or @OP@= rr;
+        *oi @OP@= ri;
+        return;
+    }
+    else {
+        BINARY_LOOP {
+            const @ftype@ in1r = ((@ftype@ *)ip1)[0];
+            const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+            const @ftype@ in2r = ((@ftype@ *)ip2)[0];
+            const @ftype@ in2i = ((@ftype@ *)ip2)[1];
+            ((@ftype@ *)op1)[0] = in1r @OP@ in2r;
+            ((@ftype@ *)op1)[1] = in1i @OP@ in2i;
+        }
     }
 }
 /**end repeat1**/
@@ -2331,7 +2537,9 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         PyObject **out = (PyObject **)op1;
         int v;
         PyObject *ret;
-        PyObject_Cmp(in1 ? in1 : Py_None, zero, &v);
+        if (PyObject_Cmp(in1 ? in1 : Py_None, zero, &v) == -1) {
+            return;
+        }
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
             return;

@@ -361,7 +361,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oi, oj, ok, ni, nj, nk;
 
     oldnd = 0;
-    /* 
+    /*
      * Remove axes with dimension 1 from the old array. They have no effect
      * but would need special cases since their strides do not matter.
      */
@@ -783,7 +783,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
  * Sorts items so stride is descending, because C-order
  * is the default in the face of ambiguity.
  */
-int _npy_stride_sort_item_comparator(const void *a, const void *b)
+static int _npy_stride_sort_item_comparator(const void *a, const void *b)
 {
     npy_intp astride = ((const npy_stride_sort_item *)a)->stride,
             bstride = ((const npy_stride_sort_item *)b)->stride;

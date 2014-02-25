@@ -274,6 +274,15 @@ types, are interpreted accordingly in ufuncs) without worrying about
 whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
+
+Overriding Ufunc behavior
+=========================
+
+Classes (including ndarray subclasses) can override how ufuncs act on
+them by defining certain special methods.  For details, see
+:ref:`arrays.classes`.
+
+
 :class:`ufunc`
 ==============
 
@@ -417,6 +426,12 @@ an integer (or Boolean) data-type and smaller than the size of the
 :class:`int_` data type, it will be internally upcast to the :class:`int_`
 (or :class:`uint`) data-type.
 
+Ufuncs also have a fifth method that allows in place operations to be
+performed using fancy indexing. No buffering is used on the dimensions where
+fancy indexing is used, so the fancy index can list an item more than once and
+the operation will be performed on the result of the previous operation for
+that item.
+
 .. index::
    pair: ufunc; methods
 
@@ -427,6 +442,7 @@ an integer (or Boolean) data-type and smaller than the size of the
    ufunc.accumulate
    ufunc.reduceat
    ufunc.outer
+   ufunc.at
 
 
 .. warning::

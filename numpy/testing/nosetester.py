@@ -9,8 +9,9 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import warnings
-import numpy.testing.utils
 from numpy.compat import basestring
+from numpy import ModuleDeprecationWarning
+
 
 def get_package_name(filepath):
     """
@@ -56,10 +57,9 @@ def import_nose():
     """ Import nose only when needed.
     """
     fine_nose = True
-    minimum_nose_version = (0,10,0)
+    minimum_nose_version = (0, 10, 0)
     try:
         import nose
-        from nose.tools import raises
     except ImportError:
         fine_nose = False
     else:
@@ -75,14 +75,55 @@ def import_nose():
 
     return nose
 
-def run_module_suite(file_to_run = None):
+def run_module_suite(file_to_run=None, argv=None):
+    """
+    Run a test module.
+
+    Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from
+    the command line
+
+    Parameters
+    ----------
+    file_to_run: str, optional
+        Path to test module, or None.
+        By default, run the module from which this function is called.
+    argv: list of strings
+        Arguments to be passed to the nose test runner. ``argv[0]`` is
+        ignored. All command line arguments accepted by ``nosetests``
+        will work.
+
+        .. versionadded:: 1.9.0
+
+    Examples
+    --------
+    Adding the following::
+
+        if __name__ == "__main__" :
+            run_module_suite(argv=sys.argv)
+
+    at the end of a test module will run the tests when that module is
+    called in the python interpreter.
+
+    Alternatively, calling::
+
+    >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")
+
+    from an interpreter will run all the test routine in 'test_matlib.py'.
+    """
     if file_to_run is None:
         f = sys._getframe(1)
         file_to_run = f.f_locals.get('__file__', None)
         if file_to_run is None:
             raise AssertionError
 
-    import_nose().run(argv=['',file_to_run])
+    if argv is None:
+        argv = ['', file_to_run]
+    else:
+        argv = argv + [file_to_run]
+
+    nose = import_nose()
+    from .noseclasses import KnownFailure
+    nose.run(argv=argv, addplugins=[KnownFailure()])
 
 
 class NoseTester(object):
@@ -214,7 +255,7 @@ class NoseTester(object):
             spdir = os.path.dirname(scipy.__file__)
             print("SciPy is installed in %s" % spdir)
 
-        pyversion = sys.version.replace('\n','')
+        pyversion = sys.version.replace('\n', '')
         print("Python version %s" % pyversion)
         print("nose version %d.%d.%d" % nose.__versioninfo__)
 
@@ -362,31 +403,28 @@ class NoseTester(object):
         if raise_warnings in _warn_opts.keys():
             raise_warnings = _warn_opts[raise_warnings]
 
-        # Preserve the state of the warning filters
-        warn_ctx = numpy.testing.utils.WarningManager()
-        warn_ctx.__enter__()
-        # Reset the warning filters to the default state,
-        # so that running the tests is more repeatable.
-        warnings.resetwarnings()
-        # If deprecation warnings are not set to 'error' below,
-        # at least set them to 'warn'.
-        warnings.filterwarnings('always', category=DeprecationWarning)
-        # Force the requested warnings to raise
-        for warningtype in raise_warnings:
-            warnings.filterwarnings('error', category=warningtype)
-        # Filter out annoying import messages.
-        warnings.filterwarnings('ignore', message='Not importing directory')
-        warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-        warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+        with warnings.catch_warnings():
+            # Reset the warning filters to the default state,
+            # so that running the tests is more repeatable.
+            warnings.resetwarnings()
+            # If deprecation warnings are not set to 'error' below,
+            # at least set them to 'warn'.
+            warnings.filterwarnings('always', category=DeprecationWarning)
+            # Force the requested warnings to raise
+            for warningtype in raise_warnings:
+                warnings.filterwarnings('error', category=warningtype)
+            # Filter out annoying import messages.
+            warnings.filterwarnings('ignore', message='Not importing directory')
+            warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+            warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+            warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
+            warnings.filterwarnings("ignore", category=FutureWarning)
 
-        try:
             from .noseclasses import NumpyTestProgram
 
-            argv, plugins = self.prepare_test_args(label,
-                    verbose, extra_argv, doctests, coverage)
+            argv, plugins = self.prepare_test_args(
+                    label, verbose, extra_argv, doctests, coverage)
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
-        finally:
-            warn_ctx.__exit__()
 
         return t.result
 
@@ -460,4 +498,3 @@ class NoseTester(object):
         add_plugins = [Unplugger('doctest')]
 
         return nose.run(argv=argv, addplugins=add_plugins)
-

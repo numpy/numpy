@@ -37,7 +37,7 @@ def run():
         from numpy.f2py import f2py2e
         has_f2py2e = 1
     except ImportError:
-        print('Failed to import f2py2e:',sys.exc_info()[1])
+        print('Failed to import f2py2e:', sys.exc_info()[1])
         has_f2py2e = 0
 
     try:
@@ -48,7 +48,7 @@ def run():
             import numpy_distutils
             has_numpy_distutils = 1
         except ImportError:
-            print('Failed to import numpy_distutils:',sys.exc_info()[1])
+            print('Failed to import numpy_distutils:', sys.exc_info()[1])
             has_numpy_distutils = 0
 
     if has_newnumpy:
@@ -62,9 +62,9 @@ def run():
     if has_f2py2e:
         try:
             print('Found f2py2e version %r in %s' % \
-                  (f2py2e.__version__.version,f2py2e.__file__))
+                  (f2py2e.__version__.version, f2py2e.__file__))
         except Exception as msg:
-            print('error:',msg)
+            print('error:', msg)
             print('------')
 
     if has_numpy_distutils:
@@ -79,7 +79,7 @@ def run():
             numpy_distutils.__file__))
             print('------')
         except Exception as msg:
-            print('error:',msg)
+            print('error:', msg)
             print('------')
         try:
             if has_numpy_distutils == 1:
@@ -93,10 +93,10 @@ def run():
                         compiler_class(verbose=1).is_available()
                         print('------')
                 except Exception as msg:
-                    print('error:',msg)
+                    print('error:', msg)
                     print('------')
         except Exception as msg:
-            print('error:',msg,'(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
+            print('error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
             print('------')
         try:
             if has_numpy_distutils == 2:
@@ -112,10 +112,10 @@ def run():
                 fcompiler.show_fcompilers()
                 print('------')
             except Exception as msg:
-                print('error:',msg)
+                print('error:', msg)
                 print('------')
         except Exception as msg:
-            print('error:',msg)
+            print('error:', msg)
             print('------')
         try:
             if has_numpy_distutils == 2:
@@ -130,7 +130,7 @@ def run():
                     print('ok')
                     print('------')
                 except Exception as msg:
-                    print('error:',msg,'(ignore it)')
+                    print('error:', msg, '(ignore it)')
                     print('Importing numpy_distutils.cpuinfo ...', end=' ')
                     from numpy_distutils.cpuinfo import cpuinfo
                     print('ok')
@@ -138,11 +138,11 @@ def run():
             cpu = cpuinfo()
             print('CPU information:', end=' ')
             for name in dir(cpuinfo):
-                if name[0]=='_' and name[1]!='_' and getattr(cpu,name[1:])():
+                if name[0]=='_' and name[1]!='_' and getattr(cpu, name[1:])():
                     print(name[1:], end=' ')
             print('------')
         except Exception as msg:
-            print('error:',msg)
+            print('error:', msg)
             print('------')
     os.chdir(_path)
 if __name__ == "__main__":

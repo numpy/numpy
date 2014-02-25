@@ -1,0 +1,240 @@
+/* -*- c -*- */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include "npy_binsearch.h"
+
+#define NOT_USED NPY_UNUSED(unused)
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SEARCHES                             **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble, datetime, timedelta#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
+ */
+
+#define @TYPE@_LTE(a, b) (!@TYPE@_LT((b), (a)))
+
+/**begin repeat1
+ *
+ * #side = left, right#
+ * #CMP  = LT, LTE#
+ */
+
+NPY_VISIBILITY_HIDDEN void
+binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
+                        npy_intp arr_len, npy_intp key_len,
+                        npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                        PyArrayObject *NOT_USED)
+{
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
+    @type@ last_key_val = *(const @type@ *)key;
+
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
+        const @type@ key_val = *(const @type@ *)key;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (@TYPE@_LT(last_key_val, key_val)) {
+            max_idx = arr_len;
+        }
+        else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+
+        last_key_val = key_val;
+
+        while (min_idx < max_idx) {
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
+            if (@TYPE@_@CMP@(mid_val, key_val)) {
+                min_idx = mid_idx + 1;
+            }
+            else {
+                max_idx = mid_idx;
+            }
+        }
+        *(npy_intp *)ret = min_idx;
+    }
+}
+
+NPY_VISIBILITY_HIDDEN int
+argbinsearch_@side@_@suff@(const char *arr, const char *key,
+                           const char *sort, char *ret,
+                           npy_intp arr_len, npy_intp key_len,
+                           npy_intp arr_str, npy_intp key_str,
+                           npy_intp sort_str, npy_intp ret_str,
+                           PyArrayObject *NOT_USED)
+{
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
+    @type@ last_key_val = *(const @type@ *)key;
+
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
+        const @type@ key_val = *(const @type@ *)key;
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (@TYPE@_LT(last_key_val, key_val)) {
+            max_idx = arr_len;
+        }
+        else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+
+        last_key_val = key_val;
+
+        while (min_idx < max_idx) {
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx*sort_str);
+            @type@ mid_val;
+
+            if (sort_idx < 0 || sort_idx >= arr_len) {
+                return -1;
+            }
+
+            mid_val = *(const @type@ *)(arr + sort_idx*arr_str);
+
+            if (@TYPE@_@CMP@(mid_val, key_val)) {
+                min_idx = mid_idx + 1;
+            }
+            else {
+                max_idx = mid_idx;
+            }
+        }
+        *(npy_intp *)ret = min_idx;
+    }
+    return 0;
+}
+
+/**end repeat1**/
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                             GENERIC SEARCH                              **
+ *****************************************************************************
+ */
+
+ /**begin repeat
+ *
+ * #side = left, right#
+ * #CMP  = <, <=#
+ */
+
+NPY_VISIBILITY_HIDDEN void
+npy_binsearch_@side@(const char *arr, const char *key, char *ret,
+                     npy_intp arr_len, npy_intp key_len,
+                     npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                     PyArrayObject *cmp)
+{
+    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
+    const char *last_key = key;
+
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (compare(last_key, key, cmp) @CMP@ 0) {
+            max_idx = arr_len;
+        }
+        else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+
+        last_key = key;
+
+        while (min_idx < max_idx) {
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const char *arr_ptr = arr + mid_idx*arr_str;
+
+            if (compare(arr_ptr, key, cmp) @CMP@ 0) {
+                min_idx = mid_idx + 1;
+            }
+            else {
+                max_idx = mid_idx;
+            }
+        }
+        *(npy_intp *)ret = min_idx;
+    }
+}
+
+NPY_VISIBILITY_HIDDEN int
+npy_argbinsearch_@side@(const char *arr, const char *key,
+                        const char *sort, char *ret,
+                        npy_intp arr_len, npy_intp key_len,
+                        npy_intp arr_str, npy_intp key_str,
+                        npy_intp sort_str, npy_intp ret_str,
+                        PyArrayObject *cmp)
+{
+    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
+    npy_intp min_idx = 0;
+    npy_intp max_idx = arr_len;
+    const char *last_key = key;
+
+    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
+        /*
+         * Updating only one of the indices based on the previous key
+         * gives the search a big boost when keys are sorted, but slightly
+         * slows down things for purely random ones.
+         */
+        if (compare(last_key, key, cmp) @CMP@ 0) {
+            max_idx = arr_len;
+        }
+        else {
+            min_idx = 0;
+            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
+        }
+
+        last_key = key;
+
+        while (min_idx < max_idx) {
+            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
+            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx*sort_str);
+            const char *arr_ptr;
+
+            if (sort_idx < 0 || sort_idx >= arr_len) {
+                return -1;
+            }
+
+            arr_ptr = arr + sort_idx*arr_str;
+
+            if (compare(arr_ptr, key, cmp) @CMP@ 0) {
+                min_idx = mid_idx + 1;
+            }
+            else {
+                max_idx = mid_idx;
+            }
+        }
+        *(npy_intp *)ret = min_idx;
+    }
+    return 0;
+}
+
+/**end repeat**/

@@ -69,7 +69,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         add them to `tests`.
         """
 
-        doctest.DocTestFinder._find(self,tests, obj, name, module,
+        doctest.DocTestFinder._find(self, tests, obj, name, module,
                                     source_lines, globs, seen)
 
         # Below we re-run pieces of the above method with manual modifications,
@@ -122,18 +122,18 @@ class NumpyOutputChecker(doctest.OutputChecker):
         if not ret:
             if "#random" in want:
                 return True
-            
+
             # it would be useful to normalize endianness so that
             # bigendian machines don't fail all the tests (and there are
             # actually some bigendian examples in the doctests). Let's try
             # making them all little endian
-            got = got.replace("'>","'<")
-            want= want.replace("'>","'<")
+            got = got.replace("'>", "'<")
+            want= want.replace("'>", "'<")
 
             # try to normalize out 32 and 64 bit default int sizes
-            for sz in [4,8]:
-                got = got.replace("'<i%d'"%sz,"int")
-                want= want.replace("'<i%d'"%sz,"int")
+            for sz in [4, 8]:
+                got = got.replace("'<i%d'"%sz, "int")
+                want= want.replace("'<i%d'"%sz, "int")
 
             ret = doctest.OutputChecker.check_output(self, want,
                     got, optionflags)

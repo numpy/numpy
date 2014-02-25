@@ -7,6 +7,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "common.h"
 
 #include "usertypes.h"
 
@@ -27,6 +28,62 @@
  * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
  * warning (that people's code will be broken in a future release.)
  */
+
+/*
+ * PyArray_GetAttrString_SuppressException:
+ *
+ * Stripped down version of PyObject_GetAttrString,
+ * avoids lookups for None, tuple, and List objects,
+ * and doesn't create a PyErr since this code ignores it.
+ *
+ * This can be much faster then PyObject_GetAttrString where
+ * exceptions are not used by caller.
+ *
+ * 'obj' is the object to search for attribute.
+ *
+ * 'name' is the attribute to search for.
+ *
+ * Returns attribute value on success, 0 on failure.
+ */
+PyObject *
+PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
+{
+    PyTypeObject *tp = Py_TYPE(obj);
+    PyObject *res = (PyObject *)NULL;
+
+    /* We do not need to check for special attributes on trivial types */
+    if (_is_basic_python_type(obj)) {
+        return NULL;
+    }
+
+    /* Attribute referenced by (char *)name */
+    if (tp->tp_getattr != NULL) {
+        res = (*tp->tp_getattr)(obj, name);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+    }
+    /* Attribute referenced by (PyObject *)name */
+    else if (tp->tp_getattro != NULL) {
+#if defined(NPY_PY3K)
+        PyObject *w = PyUnicode_InternFromString(name);
+#else
+        PyObject *w = PyString_InternFromString(name);
+#endif
+        if (w == NULL) {
+            return (PyObject *)NULL;
+        }
+        res = (*tp->tp_getattro)(obj, w);
+        Py_DECREF(w);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+    }
+    return res;
+}
+
+
+
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND;
 
 
@@ -49,7 +106,7 @@ _array_find_python_scalar_type(PyObject *op)
         }
     }
     else if (PyLong_Check(op)) {
-        /* check to see if integer can fit into a longlong or ulonglong 
+        /* check to see if integer can fit into a longlong or ulonglong
            and return that --- otherwise return object */
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
@@ -58,14 +115,14 @@ _array_find_python_scalar_type(PyObject *op)
             return PyArray_DescrFromType(NPY_LONGLONG);
         }
 
-        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
+        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1)
             && PyErr_Occurred()){
             PyErr_Clear();
-        } 
+        }
         else {
             return PyArray_DescrFromType(NPY_ULONGLONG);
-        } 
-        
+        }
+
         return PyArray_DescrFromType(NPY_OBJECT);
     }
     return NULL;
@@ -156,8 +213,17 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         goto promote_types;
     }
 
+    /* See if it's a python None */
+    if (obj == Py_None) {
+        dtype = PyArray_DescrFromType(NPY_OBJECT);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        Py_INCREF(dtype);
+        goto promote_types;
+    }
     /* Check if it's a NumPy scalar */
-    if (PyArray_IsScalar(obj, Generic)) {
+    else if (PyArray_IsScalar(obj, Generic)) {
         if (!string_type) {
             dtype = PyArray_DescrFromScalar(obj);
             if (dtype == NULL) {
@@ -308,32 +374,35 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* PEP 3118 buffer interface */
-    memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+    if (PyObject_CheckBuffer(obj) == 1) {
+        memset(&buffer_view, 0, sizeof(Py_buffer));
+        if (PyObject_GetBuffer(obj, &buffer_view,
+                               PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
 
-        PyErr_Clear();
-        dtype = _descriptor_from_pep3118_format(buffer_view.format);
-        PyBuffer_Release(&buffer_view);
-        if (dtype) {
+            PyErr_Clear();
+            dtype = _descriptor_from_pep3118_format(buffer_view.format);
+            PyBuffer_Release(&buffer_view);
+            if (dtype) {
+                goto promote_types;
+            }
+        }
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+                 PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+
+            PyErr_Clear();
+            dtype = PyArray_DescrNewFromType(NPY_VOID);
+            dtype->elsize = buffer_view.itemsize;
+            PyBuffer_Release(&buffer_view);
             goto promote_types;
         }
-    }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-             PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-
-        PyErr_Clear();
-        dtype = PyArray_DescrNewFromType(NPY_VOID);
-        dtype->elsize = buffer_view.itemsize;
-        PyBuffer_Release(&buffer_view);
-        goto promote_types;
-    }
-    else {
-        PyErr_Clear();
+        else {
+            PyErr_Clear();
+        }
     }
 
     /* The array interface */
-    ip = PyObject_GetAttrString(obj, "__array_interface__");
+    ip = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
@@ -364,12 +433,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
-    else {
-        PyErr_Clear();
-    }
 
     /* The array struct interface */
-    ip = PyObject_GetAttrString(obj, "__array_struct__");
+    ip = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
     if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
@@ -389,9 +455,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
-    else {
-        PyErr_Clear();
-    }
 
     /* The old buffer interface */
 #if !defined(NPY_PY3K)
@@ -407,7 +470,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    if (PyObject_HasAttrString(obj, "__array__")) {
+    ip = PyArray_GetAttrString_SuppressException(obj, "__array__");
+    if (ip != NULL) {
+        Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
             dtype = PyArray_DESCR((PyArrayObject *)ip);
@@ -542,31 +607,6 @@ _array_typedescr_fromstr(char *c_str)
     return descr;
 }
 
-NPY_NO_EXPORT int
-check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
-{
-    /* Check that index is valid, taking into account negative indices */
-    if ((*index < -max_item) || (*index >= max_item)) {
-        /* Try to be as clear as possible about what went wrong. */
-        if (axis >= 0) {
-            PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
-                         *index, axis, max_item);
-        } else {
-            PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT,
-                         *index, max_item);
-        }
-        return -1;
-    }
-    /* adjust negative indices */
-    if (*index < 0) {
-        *index += max_item;
-    }
-    return 0;
-}
 
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
@@ -608,8 +648,9 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    int i, alignment, aligned = 1;
-    npy_intp ptr;
+    unsigned int i;
+    npy_uintp aligned;
+    const unsigned int alignment = PyArray_DESCR(ap)->alignment;
 
     /* The special casing for STRING and VOID types was removed
      * in accordance with http://projects.scipy.org/numpy/ticket/1227
@@ -618,28 +659,27 @@ _IsAligned(PyArrayObject *ap)
      * PyArray_DescrConverter(), but not necessarily when using
      * PyArray_DescrAlignConverter(). */
 
-    alignment = PyArray_DESCR(ap)->alignment;
     if (alignment == 1) {
         return 1;
     }
-    ptr = (npy_intp) PyArray_DATA(ap);
-    aligned = (ptr % alignment) == 0;
+    aligned = (npy_uintp)PyArray_DATA(ap);
 
     for (i = 0; i < PyArray_NDIM(ap); i++) {
 #if NPY_RELAXED_STRIDES_CHECKING
+        /* skip dim == 1 as it is not required to have stride 0 */
         if (PyArray_DIM(ap, i) > 1) {
             /* if shape[i] == 1, the stride is never used */
-            aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
+            aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
         }
         else if (PyArray_DIM(ap, i) == 0) {
             /* an array with zero elements is always aligned */
             return 1;
         }
 #else /* not NPY_RELAXED_STRIDES_CHECKING */
-        aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
+        aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
 #endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
-    return aligned != 0;
+    return npy_is_aligned((void *)aligned, alignment);
 }
 
 NPY_NO_EXPORT npy_bool
@@ -718,4 +758,88 @@ offset_bounds_from_strides(const int itemsize, const int nd,
     upper += itemsize;
     *lower_offset = lower;
     *upper_offset = upper;
+}
+
+
+NPY_NO_EXPORT int
+_is_basic_python_type(PyObject * obj)
+{
+    if (obj == Py_None ||
+            /* Basic number types */
+#if !defined(NPY_PY3K)
+            PyInt_CheckExact(obj) ||
+#endif
+            PyLong_CheckExact(obj) ||
+            PyFloat_CheckExact(obj) ||
+            PyComplex_CheckExact(obj) ||
+            /* Basic sequence types */
+            PyList_CheckExact(obj) ||
+            PyTuple_CheckExact(obj) ||
+            PyDict_CheckExact(obj) ||
+            PyAnySet_CheckExact(obj)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+
+/**
+ * Convert an array shape to a string such as "(1, 2)".
+ *
+ * @param Dimensionality of the shape
+ * @param npy_intp pointer to shape array
+ * @param String to append after the shape `(1, 2)%s`.
+ * 
+ * @return Python unicode string
+ */
+NPY_NO_EXPORT PyObject *
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if it's a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    for (i = 0; i < n && vals[i] < 0; i++);
+
+    if (i == n) {
+        return PyUString_FromFormat("()%s", ending);
+    }
+    else {
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyUString_FromString(",newaxis");
+        }
+        else {
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+        }
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        PyUString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    if (i == 1) {
+        tmp = PyUString_FromFormat(",)%s", ending);
+    }
+    else {
+        tmp = PyUString_FromFormat(")%s", ending);
+        }
+    PyUString_ConcatAndDel(&ret, tmp);
+    return ret;
 }

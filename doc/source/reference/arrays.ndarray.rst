@@ -273,15 +273,15 @@ more complete description.)
 
 For the following methods there are also corresponding functions in
 :mod:`numpy`: :func:`all`, :func:`any`, :func:`argmax`,
-:func:`argmin`, :func:`argsort`, :func:`choose`, :func:`clip`,
-:func:`compress`, :func:`copy`, :func:`cumprod`, :func:`cumsum`,
-:func:`diagonal`, :func:`imag`, :func:`max <amax>`, :func:`mean`,
-:func:`min <amin>`, :func:`nonzero`, :func:`prod`, :func:`ptp`,
-:func:`put`, :func:`ravel`, :func:`real`, :func:`repeat`,
-:func:`reshape`, :func:`round <around>`, :func:`searchsorted`,
-:func:`sort`, :func:`squeeze`, :func:`std`, :func:`sum`,
-:func:`swapaxes`, :func:`take`, :func:`trace`, :func:`transpose`,
-:func:`var`.
+:func:`argmin`, :func:`argpartition`, :func:`argsort`, :func:`choose`,
+:func:`clip`, :func:`compress`, :func:`copy`, :func:`cumprod`,
+:func:`cumsum`, :func:`diagonal`, :func:`imag`, :func:`max <amax>`,
+:func:`mean`, :func:`min <amin>`, :func:`nonzero`, :func:`partition`,
+:func:`prod`, :func:`ptp`, :func:`put`, :func:`ravel`, :func:`real`,
+:func:`repeat`, :func:`reshape`, :func:`round <around>`,
+:func:`searchsorted`, :func:`sort`, :func:`squeeze`, :func:`std`,
+:func:`sum`, :func:`swapaxes`, :func:`take`, :func:`trace`,
+:func:`transpose`, :func:`var`.
 
 Array conversion
 ----------------
@@ -294,6 +294,7 @@ Array conversion
    ndarray.itemset
    ndarray.setasflat
    ndarray.tostring
+   ndarray.tobytes
    ndarray.tofile
    ndarray.dump
    ndarray.dumps
@@ -339,6 +340,8 @@ the operation should proceed.
    ndarray.choose
    ndarray.sort
    ndarray.argsort
+   ndarray.partition
+   ndarray.argpartition
    ndarray.searchsorted
    ndarray.nonzero
    ndarray.compress

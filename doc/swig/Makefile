@@ -1,5 +1,5 @@
 # List all of the subdirectories here for recursive make
-SUBDIRS = test doc
+SUBDIRS = test
 
 # Default target
 .PHONY : default

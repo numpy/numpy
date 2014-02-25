@@ -14,16 +14,16 @@ from . import _methods
 _dt_ = nt.sctype2char
 
 
-# functions that are now methods
-__all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
-           'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
-           'searchsorted', 'alen',
-           'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
-           'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
-           'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
-           'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
-           'amax', 'amin',
-          ]
+# functions that are methods
+__all__ = [
+        'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+        'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
+        'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+        'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
+        'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
+        'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
+        'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+        ]
 
 
 try:
@@ -40,7 +40,7 @@ def _wrapit(obj, method, *args, **kwds):
         wrap = obj.__array_wrap__
     except AttributeError:
         wrap = None
-    result = getattr(asarray(obj),method)(*args, **kwds)
+    result = getattr(asarray(obj), method)(*args, **kwds)
     if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
@@ -62,9 +62,9 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         The source array.
     indices : array_like
         The indices of the values to extract.
-        
+
         .. versionadded:: 1.8.0
-        
+
         Also allow scalars for indices.
     axis : int, optional
         The axis over which to select values. By default, the flattened
@@ -90,6 +90,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     See Also
     --------
+    compress : Take elements using a boolean mask
     ndarray.take : equivalent method
 
     Examples
@@ -106,7 +107,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     array([4, 3, 6])
 
     If `indices` is not one dimensional, the output also has these dimensions.
-    
+
     >>> np.take(a, [[0, 1], [2, 3]])
     array([[4, 3],
            [5, 7]])
@@ -534,6 +535,152 @@ def transpose(a, axes=None):
     return transpose(axes)
 
 
+def partition(a, kth, axis=-1, kind='introselect', order=None):
+    """
+    Return a partitioned copy of an array.
+
+    Creates a copy of the array with its elements rearranged in such a way that
+    the value of the element in kth position is in the position it would be in
+    a sorted array. All elements smaller than the kth element are moved before
+    this element and all equal or greater are moved behind it. The ordering of
+    the elements in the two partitions is undefined.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array to be sorted.
+    kth : int or sequence of ints
+        Element index to partition by. The kth value of the element will be in
+        its final sorted position and all smaller elements will be moved before
+        it and all equal or greater elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all elements
+        indexed by kth  of them into their sorted position at once.
+    axis : int or None, optional
+        Axis along which to sort. If None, the array is flattened before
+        sorting. The default is -1, which sorts along the last axis.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'.
+    order : list, optional
+        When `a` is a structured array, this argument specifies which fields
+        to compare first, second, and so on.  This list does not need to
+        include all of the fields.
+
+    Returns
+    -------
+    partitioned_array : ndarray
+        Array of the same type and shape as `a`.
+
+    See Also
+    --------
+    ndarray.partition : Method to sort an array in-place.
+    argpartition : Indirect partition.
+    sort : Full sorting
+
+    Notes
+    -----
+    The various selection algorithms are characterized by their average speed,
+    worst case performance, work space size, and whether they are stable. A
+    stable sort keeps items with the same key in the same relative order. The
+    three available algorithms have the following properties:
+
+    ================= ======= ============= ============ =======
+       kind            speed   worst case    work space  stable
+    ================= ======= ============= ============ =======
+    'introselect'        1        O(n)           0         no
+    ================= ======= ============= ============ =======
+
+    All the partition algorithms make temporary copies of the data when
+    partitioning along any but the last axis.  Consequently, partitioning
+    along the last axis is faster and uses less space than partitioning
+    along any other axis.
+
+    The sort order for complex numbers is lexicographic. If both the real
+    and imaginary parts are non-nan then the order is determined by the
+    real parts except when they are equal, in which case the order is
+    determined by the imaginary parts.
+
+    Examples
+    --------
+    >>> a = np.array([3, 4, 2, 1])
+    >>> np.partition(a, 3)
+    array([2, 1, 3, 4])
+
+    >>> np.partition(a, (1, 3))
+    array([1, 2, 3, 4])
+
+    """
+    if axis is None:
+        a = asanyarray(a).flatten()
+        axis = 0
+    else:
+        a = asanyarray(a).copy(order="K")
+    a.partition(kth, axis=axis, kind=kind, order=order)
+    return a
+
+
+def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+    """
+    Perform an indirect partition along the given axis using the algorithm
+    specified by the `kind` keyword. It returns an array of indices of the
+    same shape as `a` that index data along the given axis in partitioned
+    order.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array to sort.
+    kth : int or sequence of ints
+        Element index to partition by. The kth element will be in its final
+        sorted position and all smaller elements will be moved before it and
+        all larger elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all of them into
+        their sorted position at once.
+    axis : int or None, optional
+        Axis along which to sort.  The default is -1 (the last axis). If None,
+        the flattened array is used.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
+
+    Returns
+    -------
+    index_array : ndarray, int
+        Array of indices that partition `a` along the specified axis.
+        In other words, ``a[index_array]`` yields a sorted `a`.
+
+    See Also
+    --------
+    partition : Describes partition algorithms used.
+    ndarray.partition : Inplace partition.
+    argsort : Full indirect sort
+
+    Notes
+    -----
+    See `partition` for notes on the different selection algorithms.
+
+    Examples
+    --------
+    One dimensional array:
+
+    >>> x = np.array([3, 4, 2, 1])
+    >>> x[np.argpartition(x, 3)]
+    array([2, 1, 3, 4])
+    >>> x[np.argpartition(x, (1, 3))]
+    array([1, 2, 3, 4])
+
+    """
+    return a.argpartition(kth, axis, kind=kind, order=order)
+
+
 def sort(a, axis=-1, kind='quicksort', order=None):
     """
     Return a sorted copy of an array.
@@ -563,6 +710,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     argsort : Indirect sort.
     lexsort : Indirect stable sort on multiple keys.
     searchsorted : Find elements in a sorted array.
+    partition : Partial sort.
 
     Notes
     -----
@@ -637,7 +785,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         a = asanyarray(a).flatten()
         axis = 0
     else:
-        a = asanyarray(a).copy()
+        a = asanyarray(a).copy(order="K")
     a.sort(axis, kind, order)
     return a
 
@@ -675,6 +823,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     sort : Describes sorting algorithms used.
     lexsort : Indirect stable sort with multiple keys.
     ndarray.sort : Inplace sort.
+    argpartition : Indirect partial sort.
 
     Notes
     -----
@@ -981,16 +1130,15 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     In versions of NumPy prior to 1.7, this function always returned a new,
     independent array containing a copy of the values in the diagonal.
 
-    In NumPy 1.7, it continues to return a copy of the diagonal, but depending
-    on this fact is deprecated. Writing to the resulting array continues to
-    work as it used to, but a FutureWarning will be issued.
+    In NumPy 1.7 and 1.8, it continues to return a copy of the diagonal,
+    but depending on this fact is deprecated. Writing to the resulting
+    array continues to work as it used to, but a FutureWarning is issued.
 
-    In NumPy 1.8, it will switch to returning a read-only view on the original
-    array. Attempting to write to the resulting array will produce an error.
+    In NumPy 1.9 it returns a read-only view on the original array.
+    Attempting to write to the resulting array will produce an error.
 
-    In NumPy 1.9, it will still return a view, but this view will no longer be
-    marked read-only. Writing to the returned array will alter your original
-    array as well.
+    In NumPy 1.10, it will return a read/write view, Writing to the returned
+    array will alter your original array.
 
     If you don't write to the array returned by this function, then you can
     just ignore all of the above.
@@ -1158,7 +1306,7 @@ def ravel(a, order='C'):
     Returns
     -------
     1d_array : ndarray
-        Output of the same dtype as `a`, and of shape ``(a.size(),)``.
+        Output of the same dtype as `a`, and of shape ``(a.size,)``.
 
     See Also
     --------
@@ -1378,7 +1526,8 @@ def compress(condition, a, axis=None, out=None):
     See Also
     --------
     take, choose, diag, diagonal, select
-    ndarray.compress : Equivalent method.
+    ndarray.compress : Equivalent method in ndarray
+    np.extract: Equivalent method when working on 1-D arrays
     numpy.doc.ufuncs : Section "Output arguments"
 
     Examples
@@ -1801,6 +1950,8 @@ def cumsum (a, axis=None, dtype=None, out=None):
 
     trapz : Integration of array values using the composite trapezoidal rule.
 
+    diff :  Calculate the n-th order discrete difference along given axis.
+
     Notes
     -----
     Arithmetic is modular when using integer types, and no error is
@@ -1930,9 +2081,9 @@ def amax(a, axis=None, out=None, keepdims=False):
         Element-wise maximum of two arrays, propagating any NaNs.
     fmax :
         Element-wise maximum of two arrays, ignoring any NaNs.
-    argmax : 
+    argmax :
         Return the indices of the maximum values.
-    
+
     nanmin, minimum, fmin
 
     Notes
@@ -1940,9 +2091,9 @@ def amax(a, axis=None, out=None, keepdims=False):
     NaN values are propagated, that is if at least one item is NaN, the
     corresponding max value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmax.
-    
+
     Don't use `amax` for element-wise comparison of 2 arrays; when
-    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than 
+    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than
     ``amax(a, axis=0)``.
 
     Examples
@@ -2014,7 +2165,7 @@ def amin(a, axis=None, out=None, keepdims=False):
         Element-wise minimum of two arrays, propagating any NaNs.
     fmin :
         Element-wise minimum of two arrays, ignoring any NaNs.
-    argmin : 
+    argmin :
         Return the indices of the minimum values.
 
     nanmax, maximum, fmax
@@ -2024,9 +2175,9 @@ def amin(a, axis=None, out=None, keepdims=False):
     NaN values are propagated, that is if at least one item is NaN, the
     corresponding min value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmin.
-    
-    Don't use `amin` for element-wise comparison of 2 arrays; when 
-    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than 
+
+    Don't use `amin` for element-wise comparison of 2 arrays; when
+    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than
     ``amin(a, axis=0)``.
 
     Examples
@@ -2092,7 +2243,7 @@ def alen(a):
     try:
         return len(a)
     except TypeError:
-        return len(array(a,ndmin=1))
+        return len(array(a, ndmin=1))
 
 
 def prod(a, axis=None, dtype=None, out=None, keepdims=False):
@@ -2517,6 +2668,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     See Also
     --------
     average : Weighted average
+    std, var, nanmean, nanstd, nanvar
 
     Notes
     -----
@@ -2563,7 +2715,6 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     return _methods._mean(a, axis=axis, dtype=dtype,
                             out=out, keepdims=keepdims)
 
-
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
     Compute the standard deviation along the specified axis.
@@ -2604,7 +2755,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     See Also
     --------
-    var, mean
+    var, mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -2707,8 +2858,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     See Also
     --------
-    std : Standard deviation
-    mean : Average
+    std , mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes

@@ -16,7 +16,7 @@ Here is an example ``.gitconfig`` file::
   [user]
           name = Your Name
           email = you@yourdomain.example.com
-  
+
   [alias]
           ci = commit -a
           co = checkout
@@ -24,7 +24,7 @@ Here is an example ``.gitconfig`` file::
           stat = status -a
           br = branch
           wdiff = diff --color-words
-  
+
   [core]
           editor = vim
 
@@ -33,7 +33,7 @@ Here is an example ``.gitconfig`` file::
 
 You can edit this file directly or you can use the ``git config --global``
 command::
-  
+
   git config --global user.name "Your Name"
   git config --global user.email you@yourdomain.example.com
   git config --global alias.ci "commit -a"
