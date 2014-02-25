@@ -1295,7 +1295,7 @@ class TestMaskedArrayAttributes(TestCase):
 class TestFillingValues(TestCase):
     #
     def test_check_on_scalar(self):
-        "Test _check_fill_value set to valid and invalid values"
+        # Tests _check_fill_value set to valid and invalid values
         _check_fill_value = np.ma.core._check_fill_value
         #
         fval = _check_fill_value(0, int)
