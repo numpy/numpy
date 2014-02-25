@@ -278,6 +278,12 @@ def test_array_astype():
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
     assert_(b.size == 2)
 
+    a = np.array([1000], dtype='i4')
+    assert_raises(TypeError, a.astype, 'S1', casting='safe')
+
+    a = np.array(1000, dtype='i4')
+    assert_raises(TypeError, a.astype, 'U1', casting='safe')
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
 

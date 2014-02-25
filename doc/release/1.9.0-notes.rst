@@ -179,6 +179,30 @@ indexing operations:
   * Indexing with more then one ellipsis (`...`) is deprecated.
 
 
+promote_types and string dtype
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+promote_types function now returns a valid string length when given an
+integer or float dtype as one argument and a string dtype as another argument.
+Previously it always returned the input string dtype, even if it wasn't
+long enough to store the max integer/float value converted to a string.
+
+
+can_cast and string dtype
+~~~~~~~~~~~~~~~~~~~~~~~~~
+can_cast function now returns False in "safe" casting mode for integer/float
+dtype and string dtype if the string dtype length is not long enough to store
+the max integer/float value converted to a string. Previously can_cast in "safe"
+mode returned True for integer/float dtype and a string dtype of any length.
+
+
+astype and string dtype
+~~~~~~~~~~~~~~~~~~~~~~~
+astype method now returns an error if the string dtype to cast to is not long
+enough in "safe" casting mode to hold the max value of integer/float array that
+is being casted. Previously the casting was allowed even if the result was
+truncated.
+
+
 C-API
 ~~~~~
 
