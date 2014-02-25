@@ -446,10 +446,17 @@ The recommended semantics for ``@`` are:
 The recommended semantics for ``@@`` are::
 
     def __matpow__(self, n):
+        if not isinstance(n, numbers.Integral):
+            raise TypeError("n must be integer")
         if n == 0:
             return identity_matrix_with_shape(self.shape)
+        elif n < 0:
+            return inverse(self) @ (self @@ (n + 1))
         else:
             return self @ (self @@ (n - 1))
+
+(Of course we expect that much more efficient implementations will be
+used in practice.)
 
 The following projects have expressed an intention to implement ``@``
 and ``@@`` on their matrix-like types in a manner consistent with the
