@@ -34,120 +34,9 @@ with corresponding in-place versions:
 =======  ========================= ===============================
 
 No implementations of these methods are added to the builtin or
-standard library types.
-
-
-Intended use
-------------
-
-This section is informative, rather than normative -- it documents the
-consensus of a number of libraries that provide array- or matrix-like
-objects on how the ``@`` and ``@@`` operators will be implemented.
-Not all matrix-like data types will provide all of the different
-dimensionalities described here; in particular, many will implement
-only the 2d or 1d+2d subsets.  But ideally whatever functionality is
-available will be consistent with this.
-
-This section uses the numpy terminology for describing arbitrary
-multidimensional arrays of data.  In this model, the shape of any
-array is represented by a tuple of integers.  Matrices have len(shape)
-== 2, 1d vectors have len(shape) == 1, and scalars have shape == (),
-i.e., they are "0 dimensional".  Any array contains prod(shape) total
-entries.  Notice that prod(()) == 1 (for the same reason that sum(())
-== 0); scalars are just an ordinary kind of array, not anything
-special.  Notice also that we distinguish between a single scalar
-value (shape == (), analogous to `1`), a vector containing only a
-single entry (shape == (1,), analogous to `[1]`), a matrix containing
-only a single entry (shape == (1, 1), analogous to `[[1]]`), etc., so
-the dimensionality of any array is always well-defined.
-
-The recommended semantics for ``@`` are:
-
-* 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
-  is a mathematically and algorithmically distinct operation from
-  matrix @ matrix multiplication; scalar * matrix multiplication
-  should go through ``*`` instead of ``@``.
-
-* 1d vector inputs are promoted to 2d by prepending or appending a '1'
-  to the shape on the 'away' side, the operation is performed, and
-  then the added dimension is removed from the output.  The result is
-  that matrix @ vector and vector @ matrix are both legal (assuming
-  compatible shapes), and both return 1d vectors; vector @ vector
-  returns a scalar.  This is clearer with examples.  If ``arr(2, 3)``
-  represents a 2x3 array, and ``arr(3)`` represents a 1d vector with 3
-  elements, then:
-
-  * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
-    an array with shape (2, 1), i.e., a column vector.
-
-  * ``arr(2, 3) @ arr(3)`` performs the same computation as the
-    previous (i.e., treats the 1d vector as a matrix containing a
-    single **column**), but returns the result with shape (2,), i.e.,
-    a 1d vector.
-
-  * ``arr(1, 3) @ arr(3, 2)`` is a regular matrix product, and returns
-    an array with shape (1, 2), i.e., a row vector.
-
-  * ``arr(3) @ arr(3, 2)`` performs the same computation as the
-    previous (i.e., treats the 1d vector as a matrix containing a
-    single **row**), but returns the result with shape (2,), i.e., a
-    1d vector.
-
-  * ``arr(1, 3) @ arr(3, 1)`` is a regular matrix product, and returns
-    an array with shape (1, 1), i.e., a single value in matrix form.
-
-  * ``arr(3) @ arr(3)`` performs the same computation as the
-    previous, but returns the result with shape (), i.e., a single
-    scalar value, not in matrix form.  So this is the standard inner
-    product on vectors.
-
-* 2d inputs are conventional matrices, and treated in the obvious
-  way.
-
-* For higher dimensional inputs, we treat the last two dimensions as
-  being the dimensions of the matrices to multiply, and 'broadcast'
-  across the other dimensions.  This provides a convenient way to
-  quickly compute many matrix products in a single operation.  For
-  example, ``arr(10, 2, 3) @ arr(10, 3, 4)`` performs 10 separate
-  matrix multiplies, each of which multiplies a 2x3 and a 3x4 matrix
-  to produce a 2x4 matrix, and then returns the 10 resulting matrices
-  together in an array with shape (10, 2, 4).  Note that in more
-  complicated cases, broadcasting allows several simple but powerful
-  tricks for controlling how arrays are aligned; see [#broadcasting]
-  for details.
-
-  If one operand is >2d, and another operand is 1d, then the above
-  rules apply unchanged, with 1d->2d promotion performed before
-  broadcasting.  E.g., ``arr(10, 2, 3) @ arr(3)`` first promotes to
-  ``arr(10, 2, 3) @ arr(3, 1)``, then broadcasts and multiplies to get
-  an array with shape (10, 2, 1), and finally removes the added
-  dimension, returning an array with shape (10, 2).  Similarly,
-  ``arr(2) @ arr(10, 2, 3)`` produces an intermediate array with shape
-  (10, 1, 3), and a final array with shape (10, 3).
-
-The recommended semantics for ``@@`` are::
-
-    def __matpow__(self, n):
-        if n == 0:
-            return identity_matrix_with_shape(self.shape)
-        else:
-            return self @ (self @@ (n - 1))
-
-The following projects have expressed an intention to implement ``@``
-and ``@@`` on their matrix types in a manner consistent with the above
-definitions:
-
-* numpy
-
-* scipy.sparse
-
-* pandas
-
-* blaze
-
-* XX (try: Theano, OpenCV, cvxopt, pycuda, sage, sympy, pysparse,
-  pyoperators, any others?  QTransform in PyQt? PyOpenGL doesn't seem
-  to provide a matrix type. panda3d?)
+standard library types.  However, a number of projects have agreed on
+consensus semantics for these operations; see `Intended usage
+details`_ below.
 
 
 Motivation
@@ -466,6 +355,119 @@ comprehensive tutorials and references will only need to add a
 sentence or two to fully document this PEP's changes.
 
 
+Intended usage details
+======================
+
+This section is informative, rather than normative -- it documents the
+consensus of a number of libraries that provide array- or matrix-like
+objects on how the ``@`` and ``@@`` operators will be implemented.
+Not all matrix-like data types will provide all of the different
+dimensionalities described here; in particular, many will implement
+only the 2d or 1d+2d subsets.  But ideally whatever functionality is
+available will be consistent with this.
+
+This section uses the numpy terminology for describing arbitrary
+multidimensional arrays of data.  In this model, the shape of any
+array is represented by a tuple of integers.  Matrices have len(shape)
+== 2, 1d vectors have len(shape) == 1, and scalars have shape == (),
+i.e., they are "0 dimensional".  Any array contains prod(shape) total
+entries.  Notice that prod(()) == 1 (for the same reason that sum(())
+== 0); scalars are just an ordinary kind of array, not anything
+special.  Notice also that we distinguish between a single scalar
+value (shape == (), analogous to `1`), a vector containing only a
+single entry (shape == (1,), analogous to `[1]`), a matrix containing
+only a single entry (shape == (1, 1), analogous to `[[1]]`), etc., so
+the dimensionality of any array is always well-defined.
+
+The recommended semantics for ``@`` are:
+
+* 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
+  is a mathematically and algorithmically distinct operation from
+  matrix @ matrix multiplication; scalar * matrix multiplication
+  should go through ``*`` instead of ``@``.
+
+* 1d vector inputs are promoted to 2d by prepending or appending a '1'
+  to the shape on the 'away' side, the operation is performed, and
+  then the added dimension is removed from the output.  The result is
+  that matrix @ vector and vector @ matrix are both legal (assuming
+  compatible shapes), and both return 1d vectors; vector @ vector
+  returns a scalar.  This is clearer with examples.  If ``arr(2, 3)``
+  represents a 2x3 array, and ``arr(3)`` represents a 1d vector with 3
+  elements, then:
+
+  * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
+    an array with shape (2, 1), i.e., a column vector.
+
+  * ``arr(2, 3) @ arr(3)`` performs the same computation as the
+    previous (i.e., treats the 1d vector as a matrix containing a
+    single **column**), but returns the result with shape (2,), i.e.,
+    a 1d vector.
+
+  * ``arr(1, 3) @ arr(3, 2)`` is a regular matrix product, and returns
+    an array with shape (1, 2), i.e., a row vector.
+
+  * ``arr(3) @ arr(3, 2)`` performs the same computation as the
+    previous (i.e., treats the 1d vector as a matrix containing a
+    single **row**), but returns the result with shape (2,), i.e., a
+    1d vector.
+
+  * ``arr(1, 3) @ arr(3, 1)`` is a regular matrix product, and returns
+    an array with shape (1, 1), i.e., a single value in matrix form.
+
+  * ``arr(3) @ arr(3)`` performs the same computation as the
+    previous, but returns the result with shape (), i.e., a single
+    scalar value, not in matrix form.  So this is the standard inner
+    product on vectors.
+
+* 2d inputs are conventional matrices, and treated in the obvious
+  way.
+
+* For higher dimensional inputs, we treat the last two dimensions as
+  being the dimensions of the matrices to multiply, and 'broadcast'
+  across the other dimensions.  This provides a convenient way to
+  quickly compute many matrix products in a single operation.  For
+  example, ``arr(10, 2, 3) @ arr(10, 3, 4)`` performs 10 separate
+  matrix multiplies, each of which multiplies a 2x3 and a 3x4 matrix
+  to produce a 2x4 matrix, and then returns the 10 resulting matrices
+  together in an array with shape (10, 2, 4).  Note that in more
+  complicated cases, broadcasting allows several simple but powerful
+  tricks for controlling how arrays are aligned with each other; see
+  [#broadcasting] for details.
+
+  If one operand is >2d, and another operand is 1d, then the above
+  rules apply unchanged, with 1d->2d promotion performed before
+  broadcasting.  E.g., ``arr(10, 2, 3) @ arr(3)`` first promotes to
+  ``arr(10, 2, 3) @ arr(3, 1)``, then broadcasts and multiplies to get
+  an array with shape (10, 2, 1), and finally removes the added
+  dimension, returning an array with shape (10, 2).  Similarly,
+  ``arr(2) @ arr(10, 2, 3)`` produces an intermediate array with shape
+  (10, 1, 3), and a final array with shape (10, 3).
+
+The recommended semantics for ``@@`` are::
+
+    def __matpow__(self, n):
+        if n == 0:
+            return identity_matrix_with_shape(self.shape)
+        else:
+            return self @ (self @@ (n - 1))
+
+The following projects have expressed an intention to implement ``@``
+and ``@@`` on their matrix-like types in a manner consistent with the
+above definitions:
+
+* numpy
+
+* scipy.sparse
+
+* pandas
+
+* blaze
+
+* XX (try: Theano, OpenCV, cvxopt, pycuda, sage, sympy, pysparse,
+  pyoperators, any others?  QTransform in PyQt? PyOpenGL doesn't seem
+  to provide a matrix type. panda3d?)
+
+
 Rationale
 =========
 
@@ -476,9 +478,9 @@ Choice of operator
 ''''''''''''''''''
 
 Why ``@`` instead of some other punctuation symbol? It doesn't matter
-much, and there isn't any consensus across languages about how this
-operator should be named [#matmul-other-langs], but ``@`` has a few
-advantages:
+much, and there isn't any consensus across other programming languages
+about how this operator should be named [#matmul-other-langs], but
+``@`` has a few advantages:
 
 * ``@`` is a friendly character that Pythoneers are already used to
   typing in decorators, and its use in email addresses means it is
@@ -497,8 +499,9 @@ Definitions for built-ins
 '''''''''''''''''''''''''
 
 No ``__matmul__`` or ``__matpow__`` are defined for builtin numeric
-types, because these are scalars, and the consensus semantics for
-``@`` are that it should raise an error on scalars.
+types (``float``, ``int``, etc.), because these are scalars, and the
+consensus semantics for ``@`` are that it should raise an error on
+scalars.
 
 We do not (for now) define a ``__matmul__`` operator on the standard
 ``memoryview`` or ``array.array`` objects, for several reasons.  There
@@ -545,22 +548,21 @@ We review some of the rejected alternatives here.
 **Use a type that defines ``__mul__`` as matrix multiplication:**
 Numpy has had such a type for many years: ``np.matrix`` (as opposed to
 the standard array type, ``np.ndarray``).  And based on this
-experience, a strong consensus has developed that ``np.matrix``
+experience, a strong consensus has developed that ``np.matrix`` should
 essentially never be used.  The problem is that the presence of two
 different duck-types for numeric data -- one where ``*`` means matrix
-multiply, and one where ``*`` means elementwise multiplication --
-makes it impossible to write generic functions that can operate on
-arbitrary data.  In practice, the vast majority of the Python numeric
-ecosystem has standardized on using ``*`` for elementwise
-multiplication, and deprecated the use of ``np.matrix``.  Most
-3rd-party libraries that receive a ``matrix`` as input will either
-error out, return incorrect results, or simply convert the input into
-a standard ``ndarray``, and return ``ndarray`` objects as well.  The
-only reason ``np.matrix`` survives is because of strong arguments from
-some educators who find that its problems are outweighed by the need
-to provide a simple and clear mapping between mathematical notation
-and code for novices; and this, as described above, causes its own
-problems.
+multiply, and one where ``*`` means elementwise multiplication -- make
+it impossible to write generic functions that can operate on arbitrary
+data.  In practice, the vast majority of the Python numeric ecosystem
+has standardized on using ``*`` for elementwise multiplication, and
+deprecated the use of ``np.matrix``.  Most 3rd-party libraries that
+receive a ``matrix`` as input will either error out, return incorrect
+results, or simply convert the input into a standard ``ndarray``, and
+return ``ndarray`` objects as well.  The only reason ``np.matrix``
+survives is because of strong arguments from some educators who find
+that its problems are outweighed by the need to provide a simple and
+clear mapping between mathematical notation and code for novices; and
+this, as described above, causes its own problems.
 
 **Add a new ``@`` (or whatever) operator that has some other meaning
 in general Python, and then overload it in numeric code:** This was
@@ -620,7 +622,8 @@ for the need for a proper infix operator for matrix product.
 References
 ==========
 
-.. [#preprocessor] GvR comment attached to G+ post, apparently not directly linkable: https://plus.google.com/115212051037621986145/posts/hZVVtJ9bK3u
+.. [#preprocessor] From a comment by GvR on a G+ post by GvR; the
+   comment itself does not seem to be directly linkable: https://plus.google.com/115212051037621986145/posts/hZVVtJ9bK3u
 .. [#infix-hack] http://code.activestate.com/recipes/384122-infix-operators/
 .. [#sage-infix] http://www.sagemath.org/doc/reference/misc/sage/misc/decorators.html#sage.misc.decorators.infix_operator
 .. [#scipy-conf] http://conference.scipy.org/past.html
