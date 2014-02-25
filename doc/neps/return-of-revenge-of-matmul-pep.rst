@@ -48,6 +48,19 @@ dimensionalities described here; in particular, many will implement
 only the 2d or 1d+2d subsets.  But ideally whatever functionality is
 available will be consistent with this.
 
+This section uses the numpy terminology for describing arbitrary
+multidimensional arrays of data.  In this model, the shape of any
+array is represented by a tuple of integers.  Matrices have len(shape)
+== 2, 1d vectors have len(shape) == 1, and scalars have shape == (),
+i.e., they are "0 dimensional".  Any array contains prod(shape) total
+entries.  Notice that prod(()) == 1 (for the same reason that sum(())
+== 0); scalars are just an ordinary kind of array, not anything
+special.  Notice also that we distinguish between a single scalar
+value (shape == (), analogous to `1`), a vector containing only a
+single entry (shape == (1,), analogous to `[1]`), a matrix containing
+only a single entry (shape == (1, 1), analogous to `[[1]]`), etc., so
+the dimensionality of any array is always well-defined.
+
 The recommended semantics for ``@`` are:
 
 * 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
@@ -55,28 +68,30 @@ The recommended semantics for ``@`` are:
   matrix @ matrix multiplication; scalar * matrix multiplication
   should go through ``*`` instead of ``@``.
 
-* 1d vector inputs are promoted to 2d by appending a '1' to the shape
-  on the appropriate side, performing the operation, and then removing
-  this added dimension from the output.  The result is that matrix @
-  vector and vector @ matrix are both legal (assuming compatible
-  shapes), and both return 1d vectors; vector @ vector returns a
-  scalar.  This is clearer with examples.  If ``arr(2, 3)`` represents
-  a 2x3 array, and ``arr(3)`` represents a 1d vector with 3 elements,
-  then:
+* 1d vector inputs are promoted to 2d by prepending or appending a '1'
+  to the shape on the 'away' side, the operation is performed, and
+  then the added dimension is removed from the output.  The result is
+  that matrix @ vector and vector @ matrix are both legal (assuming
+  compatible shapes), and both return 1d vectors; vector @ vector
+  returns a scalar.  This is clearer with examples.  If ``arr(2, 3)``
+  represents a 2x3 array, and ``arr(3)`` represents a 1d vector with 3
+  elements, then:
 
   * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
     an array with shape (2, 1), i.e., a column vector.
 
   * ``arr(2, 3) @ arr(3)`` performs the same computation as the
-    previous, but returns the result with shape (2,), i.e., a 1d
-    vector.
+    previous (i.e., treats the 1d vector as a matrix containing a
+    single **column**), but returns the result with shape (2,), i.e.,
+    a 1d vector.
 
   * ``arr(1, 3) @ arr(3, 2)`` is a regular matrix product, and returns
     an array with shape (1, 2), i.e., a row vector.
 
   * ``arr(3) @ arr(3, 2)`` performs the same computation as the
-    previous, but returns the result with shape (2,), i.e., a 1d
-    vector.
+    previous (i.e., treats the 1d vector as a matrix containing a
+    single **row**), but returns the result with shape (2,), i.e., a
+    1d vector.
 
   * ``arr(1, 3) @ arr(3, 1)`` is a regular matrix product, and returns
     an array with shape (1, 1), i.e., a single value in matrix form.
@@ -91,11 +106,24 @@ The recommended semantics for ``@`` are:
 
 * For higher dimensional inputs, we treat the last two dimensions as
   being the dimensions of the matrices to multiply, and 'broadcast'
-  [#broadcasting] across the other dimensions.  This provides a
-  convenient way to quickly compute many matrix products in a single
-  operation.  For example, ``arr(10, 2, 3) @ arr(10, 3, 4)`` performs
-  10 separate matrix multiplies, each between a 2x3 and a 3x4 matrix,
-  and returns the results together in an array with shape (10, 2, 4).
+  across the other dimensions.  This provides a convenient way to
+  quickly compute many matrix products in a single operation.  For
+  example, ``arr(10, 2, 3) @ arr(10, 3, 4)`` performs 10 separate
+  matrix multiplies, each of which multiplies a 2x3 and a 3x4 matrix
+  to produce a 2x4 matrix, and then returns the 10 resulting matrices
+  together in an array with shape (10, 2, 4).  Note that in more
+  complicated cases, broadcasting allows several simple but powerful
+  tricks for controlling how arrays are aligned; see [#broadcasting]
+  for details.
+
+  If one operand is >2d, and another operand is 1d, then the above
+  rules apply unchanged, with 1d->2d promotion performed before
+  broadcasting.  E.g., ``arr(10, 2, 3) @ arr(3)`` first promotes to
+  ``arr(10, 2, 3) @ arr(3, 1)``, then broadcasts and multiplies to get
+  an array with shape (10, 2, 1), and finally removes the added
+  dimension, returning an array with shape (10, 2).  Similarly,
+  ``arr(2) @ arr(10, 2, 3)`` produces an intermediate array with shape
+  (10, 1, 3), and a final array with shape (10, 3).
 
 The recommended semantics for ``@@`` are::
 
@@ -113,9 +141,13 @@ definitions:
 
 * scipy.sparse
 
-* XX (try: pandas, Theano, blaze, OpenCV, cvxopt, any others?
-  QTransform in PyQt? PyOpenGL doesn't seem to provide a matrix
-  type. panda3d?)
+* pandas
+
+* blaze
+
+* XX (try: Theano, OpenCV, cvxopt, pycuda, sage, sympy, pysparse,
+  pyoperators, any others?  QTransform in PyQt? PyOpenGL doesn't seem
+  to provide a matrix type. panda3d?)
 
 
 Motivation
@@ -376,15 +408,18 @@ operations are in each codebase.
 These numerical packages together contain ~780 uses of matrix
 multiplication.  Within these packages, matrix multiplication is used
 more heavily than most comparison operators (``<`` ``!=`` ``<=``
-``>=``), and more heavily even than ``{`` and ``}``.  When we include
-the stdlib into our comparisons, matrix multiplication is still used
-more often in total than any of the bitwise operators, and 2x as often
-as ``//``.  This is true even though the stdlib, which contains a fair
-amount of integer arithmetic and no matrix operations, is ~4x larger
-than the numeric libraries put together.  While it's impossible to
-know for certain, from this data it seems plausible -- even likely --
-that on net across all Python code currently being written, matrix
-multiplication is used more often than ``//`` or other integer
+``>=``).  When we include the stdlib into our comparisons, matrix
+multiplication is still used more often in total than any of the
+bitwise operators, and 2x as often as ``//``.  This is true even
+though the stdlib, which contains a fair amount of integer arithmetic
+and no matrix operations, makes up more than 80% of the combined code
+base.  (In an interesting coincidence, the numeric libraries make up
+approximately the same proportion of the 'combined' codebase as
+numeric tutorials make up of PyCon 2014's tutorial schedule.)
+
+While it's impossible to know for certain, from this data it seems
+plausible that on net across all Python code currently being written,
+matrix multiplication is used more often than ``//`` or other integer
 operations.
 
 
@@ -404,15 +439,16 @@ duck type for all matrix-like objects.
 Matrix power and in-place operators
 -----------------------------------
 
-No-one cares terribly much about the other operators proposed in this
-PEP.  The matrix power operator ``@@`` is useful and well-defined, but
-not really necessary.  It is included here for consistency: if we have
-an ``@`` that is analogous to ``*``, then it would be weird and
-surprising to *not* have an ``@@`` that is analogous to ``**``.
-Similarly, the in-place operators ``@=`` and ``@@=`` are of marginal
-utility -- it is not generally possible to implement in-place matrix
-multiplication any more efficiently than by doing ``a = (a @ b)`` --
-but are included for completeness and symmetry.
+The primary motivation for this PEP is ``@``; no-one cares terribly
+much about the other proposed operators.  The matrix power operator
+``@@`` is useful and well-defined, but not really necessary.  It is
+included here for consistency: if we have an ``@`` that is analogous
+to ``*``, then it would be weird and surprising to *not* have an
+``@@`` that is analogous to ``**``.  Similarly, the in-place operators
+``@=`` and ``@@=`` are of marginal utility -- it is not generally
+possible to implement in-place matrix multiplication any more
+efficiently than by doing ``a = (a @ b)`` -- but are included for
+completeness and symmetry.
 
 
 Compatibility considerations
@@ -507,8 +543,9 @@ like ``@=``).
 We review some of the rejected alternatives here.
 
 **Use a type that defines ``__mul__`` as matrix multiplication:**
-Numpy has had such a type for many years: ``np.matrix``.  And based on
-this experience, a strong consensus has developed that it should
+Numpy has had such a type for many years: ``np.matrix`` (as opposed to
+the standard array type, ``np.ndarray``).  And based on this
+experience, a strong consensus has developed that ``np.matrix``
 essentially never be used.  The problem is that the presence of two
 different duck-types for numeric data -- one where ``*`` means matrix
 multiply, and one where ``*`` means elementwise multiplication --
@@ -516,13 +553,13 @@ makes it impossible to write generic functions that can operate on
 arbitrary data.  In practice, the vast majority of the Python numeric
 ecosystem has standardized on using ``*`` for elementwise
 multiplication, and deprecated the use of ``np.matrix``.  Most
-3rd-party libraries which receive a ``matrix`` as input will either
+3rd-party libraries that receive a ``matrix`` as input will either
 error out, return incorrect results, or simply convert the input into
-a standard ``ndarray``, and return ``ndarray``s as well.  The only
-reason ``np.matrix`` survives is because of strong arguments from some
-educators who find that its problems are outweighed by the need to
-provide a simple and clear mapping between mathematical notation and
-code for novices; and this, as described above, causes its own
+a standard ``ndarray``, and return ``ndarray`` objects as well.  The
+only reason ``np.matrix`` survives is because of strong arguments from
+some educators who find that its problems are outweighed by the need
+to provide a simple and clear mapping between mathematical notation
+and code for novices; and this, as described above, causes its own
 problems.
 
 **Add a new ``@`` (or whatever) operator that has some other meaning
@@ -544,7 +581,7 @@ extreme overabundance of parentheses.  See `Motivation`_ above.
 **Add lots of new operators / add a new generic syntax for defining
 infix operators:** In addition to this being generally un-Pythonic and
 repeatedly rejected by BDFL fiat, this would be using a sledgehammer
-to smash a fly.  There is a strong consensus in the scientific python
+to smash a fly.  There is a consensus in the scientific python
 community that matrix multiplication really is the only missing infix
 operator that matters enough to bother about. (In retrospect, we all
 think PEP 225 was a bad idea too.)
