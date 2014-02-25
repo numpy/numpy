@@ -425,7 +425,7 @@ def _check_fill_value(fill_value, ndtype):
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
             except OverflowError:
                 err_msg = "Fill value %s overflows dtype %s"
-                raise OverflowError(err_msg % (fill_value, ndtype))
+                raise TypeError(err_msg % (fill_value, ndtype))
     return np.array(fill_value)
 
 
