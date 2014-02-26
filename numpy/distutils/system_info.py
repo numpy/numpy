@@ -286,7 +286,7 @@ def get_standard_file(fname):
     return filenames
 
 
-def get_info(name, notfound_action=0):
+def get_info(name, notfound_action=0, verbosity=None):
     """
     notfound_action:
       0 - do nothing
@@ -347,7 +347,7 @@ def get_info(name, notfound_action=0):
           'umfpack': umfpack_info,
           'amd': amd_info,
           }.get(name.lower(), system_info)
-    return cl().get_info(notfound_action)
+    return cl(verbosity=verbosity).get_info(notfound_action)
 
 
 class NotFoundError(DistutilsError):
@@ -444,7 +444,7 @@ class system_info:
     def __init__(self,
                   default_lib_dirs=default_lib_dirs,
                   default_include_dirs=default_include_dirs,
-                  verbosity=1,
+                  verbosity=None,
                   ):
         self.__class__.info = {}
         self.local_prefixes = []
@@ -463,6 +463,8 @@ class system_info:
             self.search_static_first = self.cp.getboolean(
                 self.section, 'search_static_first')
         assert isinstance(self.search_static_first, int)
+        if verbosity is not None:
+            self.verbosity = verbosity
 
     def parse_config_files(self):
         self.cp.read(self.files)
@@ -756,9 +758,6 @@ class fftw_info(system_info):
                     'includes':['fftw.h', 'rfftw.h'],
                     'macros':[('SCIPY_FFTW_H', None)]}]
 
-    def __init__(self):
-        system_info.__init__(self)
-
     def calc_ver_info(self, ver_param):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
@@ -929,10 +928,10 @@ class mkl_info(system_info):
                     return d
         return None
 
-    def __init__(self):
+    def __init__(self, verbosity=None):
         mklroot = self.get_mkl_rootdir()
         if mklroot is None:
-            system_info.__init__(self)
+            system_info.__init__(self, verbosity=verbosity)
         else:
             from .cpuinfo import cpu
             l = 'mkl'  # use shared library
@@ -950,7 +949,8 @@ class mkl_info(system_info):
             system_info.__init__(
                 self,
                 default_lib_dirs=[os.path.join(mklroot, 'lib', plt)],
-                default_include_dirs=[os.path.join(mklroot, 'include')])
+                default_include_dirs=[os.path.join(mklroot, 'include')],
+                verbosity=verbosity)
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
@@ -1094,8 +1094,8 @@ class atlas_info(system_info):
             else:
                 info['language'] = 'f77'
 
-        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
-        dict_append(info, **atlas_extra_info)
+        atlas_info = get_atlas_version(verbosity=self.verbosity, **atlas)
+        dict_append(info, **atlas_info[1])
 
         self.set_info(**info)
 
@@ -1119,8 +1119,8 @@ class atlas_blas_info(atlas_info):
             dict_append(info, include_dirs=[h])
         info['language'] = 'c'
 
-        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
-        dict_append(atlas, **atlas_extra_info)
+        atlas_info = get_atlas_version(verbosity=self.verbosity, **atlas)
+        dict_append(atlas, **atlas_info[1])
 
         dict_append(info, **atlas)
 
@@ -1294,6 +1294,7 @@ _cached_atlas_version = {}
 def get_atlas_version(**config):
     libraries = config.get('libraries', [])
     library_dirs = config.get('library_dirs', [])
+    verbosity = config.get('verbosity', 1)
     key = (tuple(libraries), tuple(library_dirs))
     if key in _cached_atlas_version:
         return _cached_atlas_version[key]
@@ -1303,11 +1304,12 @@ def get_atlas_version(**config):
     try:
         s, o = c.get_output(atlas_version_c_text,
                             libraries=libraries, library_dirs=library_dirs,
-                            use_tee=0)
+                            use_tee=verbosity)
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
-                                library_dirs=library_dirs)
+                                library_dirs=library_dirs,
+                                use_tee=verbosity)
             if not s:
                 warnings.warn("""
 *****************************************************
@@ -1481,7 +1483,7 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin'and not atlas_info:
+        if sys.platform == 'darwin' and not atlas_info:
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
@@ -1630,10 +1632,11 @@ class x11_info(system_info):
     section = 'x11'
     notfounderror = X11NotFoundError
 
-    def __init__(self):
+    def __init__(self, verbosity=None):
         system_info.__init__(self,
                              default_lib_dirs=default_x11_lib_dirs,
-                             default_include_dirs=default_x11_include_dirs)
+                             default_include_dirs=default_x11_include_dirs,
+                             verbosity=verbosity)
 
     def calc_info(self):
         if sys.platform  in ['win32']:
@@ -1659,7 +1662,7 @@ class _numpy_info(system_info):
     modulename = 'Numeric'
     notfounderror = NumericNotFoundError
 
-    def __init__(self):
+    def __init__(self, verbosity=None):
         include_dirs = []
         try:
             module = __import__(self.modulename)
@@ -1691,7 +1694,8 @@ class _numpy_info(system_info):
                 include_dirs.append(d)
         system_info.__init__(self,
                              default_lib_dirs=[],
-                             default_include_dirs=include_dirs)
+                             default_include_dirs=include_dirs,
+                             verbosity=verbosity)
 
     def calc_info(self):
         try:
