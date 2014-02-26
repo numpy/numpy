@@ -256,22 +256,22 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     range : sequence, optional
         A sequence of lower and upper bin edges to be used if the edges are
-        not given explicitely in `bins`. Defaults to the minimum and maximum
+        not given explicitly in `bins`. Defaults to the minimum and maximum
         values along each dimension.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True, returns
-        the bin density, ie, the bin count divided by the bin hypervolume.
+        If False, returns the number of samples in each bin. If True,
+        returns the bin density ``bin_count / sample_count / bin_volume``.
     weights : array_like (N,), optional
         An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
-        Weights are normalized to 1 if normed is True. If normed is False, the
-        values of the returned histogram are equal to the sum of the weights
-        belonging to the samples falling into each bin.
+        Weights are normalized to 1 if normed is True. If normed is False,
+        the values of the returned histogram are equal to the sum of the
+        weights belonging to the samples falling into each bin.
 
     Returns
     -------
     H : ndarray
-        The multidimensional histogram of sample x. See normed and weights for
-        the different possible semantics.
+        The multidimensional histogram of sample x. See normed and weights
+        for the different possible semantics.
     edges : list
         A list of D arrays describing the bin edges for each dimension.
 
@@ -1101,7 +1101,7 @@ def interp(x, xp, fp, left=None, right=None):
     -----
     Does not check that the x-coordinate sequence `xp` is increasing.
     If `xp` is not increasing, the results are nonsense.
-    A simple check for increasingness is::
+    A simple check for increasing is::
 
         np.all(np.diff(xp) > 0)
 
@@ -1578,15 +1578,16 @@ class vectorize(object):
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the first
-    argument will be used to determine the number of outputs.  The results of
-    this call will be cached if `cache` is `True` to prevent calling the
-    function twice.  However, to implement the cache, the original function
-    must be wrapped which will slow down subsequent calls, so only do this if
-    your function is expensive.
+    If `otypes` is not specified, then a call to the function with the
+    first argument will be used to determine the number of outputs.  The
+    results of this call will be cached if `cache` is `True` to prevent
+    calling the function twice.  However, to implement the cache, the
+    original function must be wrapped which will slow down subsequent
+    calls, so only do this if your function is expensive.
 
-    The new keyword argument interface and `excluded` argument support further
-    degrades performance.
+    The new keyword argument interface and `excluded` argument support
+    further degrades performance.
+
     """
     def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
                  cache=False):
@@ -1909,7 +1910,7 @@ def blackman(M):
     """
     Return the Blackman window.
 
-    The Blackman window is a taper formed by using the the first three
+    The Blackman window is a taper formed by using the first three
     terms of a summation of cosines. It was designed to have close to the
     minimal leakage possible.  It is close to optimal, only slightly worse
     than a Kaiser window.
@@ -2139,9 +2140,10 @@ def hanning(M):
     .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hanning was named for Julius van Hann, an Austrian meterologist. It is
-    also known as the Cosine Bell. Some authors prefer that it be called a
-    Hann window, to help avoid confusion with the very similar Hamming window.
+    The Hanning was named for Julius van Hann, an Austrian meteorologist.
+    It is also known as the Cosine Bell. Some authors prefer that it be
+    called a Hann window, to help avoid confusion with the very similar
+    Hamming window.
 
     Most references to the Hanning window come from the signal processing
     literature, where it is used as one of many windowing functions for
@@ -2238,9 +2240,9 @@ def hamming(M):
     .. math::  w(n) = 0.54 - 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey and
-    is described in Blackman and Tukey. It was recommended for smoothing the
-    truncated autocovariance function in the time domain.
+    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey
+    and is described in Blackman and Tukey. It was recommended for
+    smoothing the truncated autocovariance function in the time domain.
     Most references to the Hamming window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
@@ -2420,11 +2422,11 @@ def i0(x):
     Notes
     -----
     We use the algorithm published by Clenshaw [1]_ and referenced by
-    Abramowitz and Stegun [2]_, for which the function domain is partitioned
-    into the two intervals [0,8] and (8,inf), and Chebyshev polynomial
-    expansions are employed in each interval. Relative error on the domain
-    [0,30] using IEEE arithmetic is documented [3]_ as having a peak of 5.8e-16
-    with an rms of 1.4e-16 (n = 30000).
+    Abramowitz and Stegun [2]_, for which the function domain is
+    partitioned into the two intervals [0,8] and (8,inf), and Chebyshev
+    polynomial expansions are employed in each interval. Relative error on
+    the domain [0,30] using IEEE arithmetic is documented [3]_ as having a
+    peak of 5.8e-16 with an rms of 1.4e-16 (n = 30000).
 
     References
     ----------
@@ -2494,12 +2496,11 @@ def kaiser(M, beta):
 
     where :math:`I_0` is the modified zeroth-order Bessel function.
 
-    The Kaiser was named for Jim Kaiser, who discovered a simple approximation
-    to the DPSS window based on Bessel functions.
-    The Kaiser window is a very good approximation to the Digital Prolate
-    Spheroidal Sequence, or Slepian window, which is the transform which
-    maximizes the energy in the main lobe of the window relative to total
-    energy.
+    The Kaiser was named for Jim Kaiser, who discovered a simple
+    approximation to the DPSS window based on Bessel functions.  The Kaiser
+    window is a very good approximation to the Digital Prolate Spheroidal
+    Sequence, or Slepian window, which is the transform which maximizes the
+    energy in the main lobe of the window relative to total energy.
 
     The Kaiser can approximate many other windows by varying the beta
     parameter.
@@ -2609,8 +2610,8 @@ def sinc(x):
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
-    including in anti-aliasing, in the construction of a
-    Lanczos resampling filter, and in interpolation.
+    including in anti-aliasing, in the construction of a Lanczos resampling
+    filter, and in interpolation.
 
     For bandlimited interpolation of discrete-time signals, the ideal
     interpolation kernel is proportional to the sinc function.
@@ -2706,23 +2707,23 @@ def median(a, axis=None, out=None, overwrite_input=False):
         Axis along which the medians are computed. The default (axis=None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output,
-        but the type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must have
+        the same shape and buffer length as the expected output, but the
+        type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve
-       the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if `overwrite_input` is True and the input
-       is not already an ndarray, an error will be raised.
+       median. This will save memory when you do not need to preserve the
+       contents of the input array. Treat the input as undefined, but it
+       will probably be fully or partially sorted. Default is False. Note
+       that, if `overwrite_input` is True and the input is not already an
+       ndarray, an error will be raised.
 
     Returns
     -------
     median : ndarray
-        A new array holding the result (unless `out` is specified, in
-        which case that array is returned instead).  If the input contains
+        A new array holding the result (unless `out` is specified, in which
+        case that array is returned instead).  If the input contains
         integers, or floats of smaller precision than 64, then the output
         data-type is float64.  Otherwise, the output data-type is the same
         as that of the input.
@@ -2859,13 +2860,13 @@ def percentile(a, q, axis=None, out=None,
     Returns
     -------
     percentile : scalar or ndarray
-        If a single percentile `q` is given and axis=None a scalar is returned.
-        If multiple percentiles `q` are given an array holding the result is
-        returned. The results are listed in the first axis.
-        (If `out` is specified, in which case that array is returned instead).
-        If the input contains integers, or floats of smaller precision than 64,
-        then the output data-type is float64. Otherwise, the output data-type
-        is the same as that of the input.
+        If a single percentile `q` is given and axis=None a scalar is
+        returned.  If multiple percentiles `q` are given an array holding
+        the result is returned. The results are listed in the first axis.
+        (If `out` is specified, in which case that array is returned
+        instead).  If the input contains integers, or floats of smaller
+        precision than 64, then the output data-type is float64. Otherwise,
+        the output data-type is the same as that of the input.
 
     See Also
     --------
@@ -2873,12 +2874,12 @@ def percentile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector V of length N, the qth percentile of V is the qth ranked
-    value in a sorted copy of V.  The values and distances of the two nearest
-    neighbors as well as the `interpolation` parameter will determine the
-    percentile if the normalized ranking does not match q exactly. This
-    function is the same as the median if ``q=50``, the same as the minimum
-    if ``q=0``and the same as the maximum if ``q=100``.
+    Given a vector V of length N, the q-th percentile of V is the q-th ranked
+    value in a sorted copy of V.  The values and distances of the two
+    nearest neighbors as well as the `interpolation` parameter will
+    determine the percentile if the normalized ranking does not match q
+    exactly. This function is the same as the median if ``q=50``, the same
+    as the minimum if ``q=0``and the same as the maximum if ``q=100``.
 
     Examples
     --------
@@ -3029,10 +3030,11 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Notes
     -----
-    Image [2]_ illustrates trapezoidal rule -- y-axis locations of points will
-    be taken from `y` array, by default x-axis distances between points will be
-    1.0, alternatively they can be provided with `x` array or with `dx` scalar.
-    Return value will be equal to combined area under the red lines.
+    Image [2]_ illustrates trapezoidal rule -- y-axis locations of points
+    will be taken from `y` array, by default x-axis distances between
+    points will be 1.0, alternatively they can be provided with `x` array
+    or with `dx` scalar.  Return value will be equal to combined area under
+    the red lines.
 
 
     References
@@ -3145,12 +3147,12 @@ def meshgrid(*xi, **kwargs):
          If True a sparse grid is returned in order to conserve memory.
          Default is False.
     copy : bool, optional
-        If False, a view into the original arrays are returned in
-        order to conserve memory.  Default is True.  Please note that
-        ``sparse=False, copy=False`` will likely return non-contiguous arrays.
-        Furthermore, more than one element of a broadcast array may refer to
-        a single memory location.  If you need to write to the arrays, make
-        copies first.
+        If False, a view into the original arrays are returned in order to
+        conserve memory.  Default is True.  Please note that
+        ``sparse=False, copy=False`` will likely return non-contiguous
+        arrays.  Furthermore, more than one element of a broadcast array
+        may refer to a single memory location.  If you need to write to the
+        arrays, make copies first.
 
     Returns
     -------
@@ -3164,13 +3166,13 @@ def meshgrid(*xi, **kwargs):
     Notes
     -----
     This function supports both indexing conventions through the indexing
-    keyword argument.  Giving the string 'ij' returns a meshgrid with matrix
-    indexing, while 'xy' returns a meshgrid with Cartesian indexing.  In the
-    2-D case with inputs of length M and N, the outputs are of shape (N, M) for
-    'xy' indexing and (M, N) for 'ij' indexing.  In the 3-D case with inputs of
-    length M, N and P, outputs are of shape (N, M, P) for 'xy' indexing and
-    (M, N, P) for 'ij' indexing.  The difference is illustrated by the
-    following code snippet::
+    keyword argument.  Giving the string 'ij' returns a meshgrid with
+    matrix indexing, while 'xy' returns a meshgrid with Cartesian indexing.
+    In the 2-D case with inputs of length M and N, the outputs are of shape
+    (N, M) for 'xy' indexing and (M, N) for 'ij' indexing.  In the 3-D case
+    with inputs of length M, N and P, outputs are of shape (N, M, P) for
+    'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
+    illustrated by the following code snippet::
 
         xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
@@ -3182,7 +3184,8 @@ def meshgrid(*xi, **kwargs):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
     
-    In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
+    In the 1-D and 0-D case, the indexing and sparse keywords have no
+    effect.
 
     See Also
     --------
@@ -3258,7 +3261,8 @@ def meshgrid(*xi, **kwargs):
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
-    dimensional array, this returns those entries not returned by `arr[obj]`.
+    dimensional array, this returns those entries not returned by
+    `arr[obj]`.
 
     Parameters
     ----------
@@ -3285,9 +3289,11 @@ def delete(arr, obj, axis=None):
     Notes
     -----
     Often it is preferable to use a boolean mask. For example:
+    
     >>> mask = np.ones(len(arr), dtype=bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
+
     Is equivalent to `np.delete(arr, [0,2,4], axis=0)`, but allows further
     use of `mask`.
 
@@ -3465,7 +3471,8 @@ def insert(arr, obj, values, axis=None):
         .. versionadded:: 1.8.0
 
         Support for multiple insertions when `obj` is a single scalar or a
-        sequence with one element (similar to calling insert multiple times).
+        sequence with one element (similar to calling insert multiple
+        times).
     values : array_like
         Values to insert into `arr`. If the type of `values` is different
         from that of `arr`, `values` is converted to the type of `arr`.
@@ -3664,19 +3671,19 @@ def append(arr, values, axis=None):
         Values are appended to a copy of this array.
     values : array_like
         These values are appended to a copy of `arr`.  It must be of the
-        correct shape (the same shape as `arr`, excluding `axis`).  If `axis`
-        is not specified, `values` can be any shape and will be flattened
-        before use.
+        correct shape (the same shape as `arr`, excluding `axis`).  If
+        `axis` is not specified, `values` can be any shape and will be
+        flattened before use.
     axis : int, optional
-        The axis along which `values` are appended.  If `axis` is not given,
-        both `arr` and `values` are flattened before use.
+        The axis along which `values` are appended.  If `axis` is not
+        given, both `arr` and `values` are flattened before use.
 
     Returns
     -------
     append : ndarray
-        A copy of `arr` with `values` appended to `axis`.  Note that `append`
-        does not occur in-place: a new array is allocated and filled.  If
-        `axis` is None, `out` is a flattened array.
+        A copy of `arr` with `values` appended to `axis`.  Note that
+        `append` does not occur in-place: a new array is allocated and
+        filled.  If `axis` is None, `out` is a flattened array.
 
     See Also
     --------
