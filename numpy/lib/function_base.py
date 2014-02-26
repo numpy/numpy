@@ -2692,7 +2692,7 @@ def msort(a):
     return b
 
 
-def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
+def median(a, axis=None, out=None, overwrite_input=False):
     """
     Compute the median along the specified axis.
 
@@ -2717,11 +2717,7 @@ def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
        but it will probably be fully or partially sorted. Default is
        False. Note that, if `overwrite_input` is True and the input
        is not already an ndarray, an error will be raised.
-   check_nan : bool, optional
-       If True, then the input array will be tested for the presence of NaNs. 
-       If the input array does not contain NaNs, this flag can be set to False
-       for a 1%-70% performance increase. 
-
+   
     Returns
     -------
     median : ndarray
@@ -2786,7 +2782,7 @@ def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
     else:
         kth = [(sz - 1) // 2]
     #Check if the array contains any nan's
-    if check_nan and np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact):
         kth.append(-1)
     
     if overwrite_input:
@@ -2812,7 +2808,7 @@ def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
     else:
         indexer[axis] = slice(index-1, index+1)
     #Check if the array contains any nan's
-    if check_nan and np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact):
         if part.ndim <= 1:
             if np.isnan(part[-1]):
                 return np.nan

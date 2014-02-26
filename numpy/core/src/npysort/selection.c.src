@@ -322,6 +322,19 @@ int
         store_pivot(kth, kth, pivots, npiv);
         return 0;
     }
+    else if (kth == num - 1) {
+        npy_intp k;
+        npy_intp maxidx = low;
+        @type@ maxval = v[IDX(low)];
+        for (k = low + 1; k < num; k++) {
+            if (!@TYPE@_LT(v[IDX(k)], maxval)) {
+                maxidx = k;
+                maxval = v[IDX(k)];
+            }
+        }
+        SWAP(SORTEE(kth), SORTEE(maxidx));
+        return 0;
+    }
 
     /* dumb integer msb, float npy_log2 too slow for small parititions */
     {
