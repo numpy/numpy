@@ -373,10 +373,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         if not np.isinf(mindiff):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
-            not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (around(sample[:, i], decimal) == around(edges[i][-1], decimal))
+            on_edge = where(around(sample[:, i], decimal) ==
+                            around(edges[i][-1], decimal))[0]
             # Shift these points one bin to the left.
-            Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
+            Ncount[i][on_edge] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
@@ -2692,7 +2692,7 @@ def msort(a):
     return b
 
 
-def median(a, axis=None, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
     """
     Compute the median along the specified axis.
 
@@ -2706,23 +2706,23 @@ def median(a, axis=None, out=None, overwrite_input=False):
         Axis along which the medians are computed. The default (axis=None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must have
-        the same shape and buffer length as the expected output, but the
-        type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve the
-       contents of the input array. Treat the input as undefined, but it
-       will probably be fully or partially sorted. Default is False. Note
-       that, if `overwrite_input` is True and the input is not already an
-       ndarray, an error will be raised.
-
+       median. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. Note that, if `overwrite_input` is True and the input
+       is not already an ndarray, an error will be raised.
+   
     Returns
     -------
     median : ndarray
-        A new array holding the result (unless `out` is specified, in which
-        case that array is returned instead).  If the input contains
+        A new array holding the result (unless `out` is specified, in
+        which case that array is returned instead).  If the input contains
         integers, or floats of smaller precision than 64, then the output
         data-type is float64.  Otherwise, the output data-type is the same
         as that of the input.
@@ -2782,7 +2782,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     else:
         kth = [(sz - 1) // 2]
     #Check if the array contains any nan's
-    if check_nan and np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact):
         kth.append(-1)
     
     if overwrite_input:
@@ -2790,12 +2790,6 @@ def median(a, axis=None, out=None, overwrite_input=False):
             part = a.ravel()
             part.partition(kth)            
         else:
-            sz = a.shape[axis]
-            if sz % 2 == 0:
-                szh = sz // 2
-                a.partition((szh - 1, szh), axis=axis)
-            else:
-                a.partition((sz - 1) // 2, axis=axis)
             part = a
             a.partition(kth, axis=axis)            
     else:
@@ -2814,7 +2808,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     else:
         indexer[axis] = slice(index-1, index+1)
     #Check if the array contains any nan's
-    if check_nan and np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact):
         if part.ndim <= 1:
             if np.isnan(part[-1]):
                 return np.nan
@@ -2831,12 +2825,6 @@ def median(a, axis=None, out=None, overwrite_input=False):
         # Use mean in odd and even case to coerce data type
         # and check, use out array.
         return mean(part[indexer], axis=axis, out=out)
-    else: #replace results where needed with nans
-        out = mean(part[indexer], axis=axis, out=out)
-        out[ids] = np.nan
-        return out
-        
-
 
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear'):
@@ -3207,8 +3195,7 @@ def meshgrid(*xi, **kwargs):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
     
-    In the 1-D and 0-D case, the indexing and sparse keywords have no
-    effect.
+    In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
 
     See Also
     --------
@@ -3284,8 +3271,7 @@ def meshgrid(*xi, **kwargs):
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
-    dimensional array, this returns those entries not returned by
-    `arr[obj]`.
+    dimensional array, this returns those entries not returned by `arr[obj]`.
 
     Parameters
     ----------
@@ -3312,11 +3298,9 @@ def delete(arr, obj, axis=None):
     Notes
     -----
     Often it is preferable to use a boolean mask. For example:
-    
     >>> mask = np.ones(len(arr), dtype=bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
-
     Is equivalent to `np.delete(arr, [0,2,4], axis=0)`, but allows further
     use of `mask`.
 
