@@ -742,17 +742,30 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
  * Convert PEP 3118 format string to PyArray_Descr
  */
 
+static int
+_descriptor_from_pep3118_format_fast(char *s, PyObject **result);
+
+static int
+_pep3118_letter_to_type(char letter, int native, int complex);
+
 NPY_NO_EXPORT PyArray_Descr*
 _descriptor_from_pep3118_format(char *s)
 {
     char *buf, *p;
     int in_name = 0;
+    int obtained;
     PyObject *descr;
     PyObject *str;
     PyObject *_numpy_internal;
 
     if (s == NULL) {
         return PyArray_DescrNewFromType(NPY_BYTE);
+    }
+
+    /* Fast path */
+    obtained = _descriptor_from_pep3118_format_fast(s, &descr);
+    if (obtained) {
+        return (PyArray_Descr*)descr;
     }
 
     /* Strip whitespace, except from field names */
@@ -762,18 +775,19 @@ _descriptor_from_pep3118_format(char *s)
         if (*s == ':') {
             in_name = !in_name;
             *p = *s;
+            p++;
         }
         else if (in_name || !NumPyOS_ascii_isspace(*s)) {
             *p = *s;
+            p++;
         }
-        ++p;
-        ++s;
+        s++;
     }
     *p = '\0';
 
     str = PyUString_FromStringAndSize(buf, strlen(buf));
-    free(buf);
     if (str == NULL) {
+        free(buf);
         return NULL;
     }
 
@@ -781,6 +795,7 @@ _descriptor_from_pep3118_format(char *s)
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
     if (_numpy_internal == NULL) {
         Py_DECREF(str);
+        free(buf);
         return NULL;
     }
     descr = PyObject_CallMethod(
@@ -790,13 +805,118 @@ _descriptor_from_pep3118_format(char *s)
     if (descr == NULL) {
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
+        free(buf);
         return NULL;
     }
     if (!PyArray_DescrCheck(descr)) {
         PyErr_Format(PyExc_RuntimeError,
                      "internal error: numpy.core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
+        free(buf);
         return NULL;
     }
+    free(buf);
     return (PyArray_Descr*)descr;
+}
+
+/*
+ * Fast path for parsing buffer strings corresponding to simple types.
+ *
+ * Currently, this deals only with single-element data types.
+ */
+
+static int
+_descriptor_from_pep3118_format_fast(char *s, PyObject **result)
+{
+    PyArray_Descr *descr;
+
+    int is_standard_size = 0;
+    char byte_order = '=';
+    int is_complex = 0;
+
+    int type_num = NPY_BYTE;
+    int item_seen = 0;
+
+    for (; *s != '\0'; ++s) {
+        is_complex = 0;
+        switch (*s) {
+        case '@':
+        case '^':
+            /* ^ means no alignment; doesn't matter for a single element */
+            byte_order = '=';
+            is_standard_size = 0;
+            break;
+        case '<':
+            byte_order = '<';
+            is_standard_size = 1;
+            break;
+        case '>':
+        case '!':
+            byte_order = '>';
+            is_standard_size = 1;
+            break;
+        case '=':
+            byte_order = '=';
+            is_standard_size = 1;
+            break;
+        case 'Z':
+            is_complex = 1;
+            ++s;
+        default:
+            if (item_seen) {
+                /* Not a single-element data type */
+                return 0;
+            }
+            type_num = _pep3118_letter_to_type(*s, !is_standard_size,
+                                               is_complex);
+            if (type_num < 0) {
+                /* Something unknown */
+                return 0;
+            }
+            item_seen = 1;
+            break;
+        }
+    }
+
+    if (!item_seen) {
+        return 0;
+    }
+
+    descr = PyArray_DescrFromType(type_num);
+    if (byte_order == '=') {
+        *result = (PyObject*)descr;
+    }
+    else {
+        *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
+        Py_DECREF(descr);
+    }
+    
+    return 1;
+}
+
+static int
+_pep3118_letter_to_type(char letter, int native, int complex)
+{
+    switch (letter)
+    {
+    case '?': return NPY_BOOL;
+    case 'b': return NPY_BYTE;
+    case 'B': return NPY_UBYTE;
+    case 'h': return native ? NPY_SHORT : NPY_INT16;
+    case 'H': return native ? NPY_USHORT : NPY_UINT16;
+    case 'i': return native ? NPY_INT : NPY_INT32;
+    case 'I': return native ? NPY_UINT : NPY_UINT32;
+    case 'l': return native ? NPY_LONG : NPY_INT32;
+    case 'L': return native ? NPY_ULONG : NPY_UINT32;
+    case 'q': return native ? NPY_LONGLONG : NPY_INT64;
+    case 'Q': return native ? NPY_ULONGLONG : NPY_UINT64;
+    case 'e': return NPY_HALF;
+    case 'f': return complex ? NPY_CFLOAT : NPY_FLOAT;
+    case 'd': return complex ? NPY_CDOUBLE : NPY_DOUBLE;
+    case 'g': return native ? (complex ? NPY_CLONGDOUBLE : NPY_LONGDOUBLE) : -1;
+    default:
+        /* Other unhandled cases */
+        return -1;
+    }
+    return -1;
 }

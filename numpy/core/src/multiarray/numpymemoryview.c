@@ -252,7 +252,6 @@ NPY_NO_EXPORT PyObject *
 PyMemorySimpleView_FromObject(PyObject *base)
 {
     PyMemorySimpleViewObject *mview = NULL;
-    Py_buffer view;
 
     if (Py_TYPE(base)->tp_as_buffer == NULL ||
         Py_TYPE(base)->tp_as_buffer->bf_getbuffer == NULL) {
@@ -263,17 +262,19 @@ PyMemorySimpleView_FromObject(PyObject *base)
         return NULL;
     }
 
-    memset(&view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(base, &view, PyBUF_FULL_RO) < 0)
-        return NULL;
-
     mview = (PyMemorySimpleViewObject *)
         PyObject_GC_New(PyMemorySimpleViewObject, &PyMemorySimpleView_Type);
     if (mview == NULL) {
-        PyBuffer_Release(&view);
         return NULL;
     }
-    memcpy(&mview->view, &view, sizeof(Py_buffer));
+
+    memset(&mview->view, 0, sizeof(Py_buffer));
+    mview->base = NULL;
+    if (PyObject_GetBuffer(base, &mview->view, PyBUF_FULL_RO) < 0) {
+        Py_DECREF(mview);
+        return NULL;
+    }
+
     mview->base = base;
     Py_INCREF(base);
 
