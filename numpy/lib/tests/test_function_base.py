@@ -1490,6 +1490,8 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
         x0 = np.float64(.3)
         assert_almost_equal(np.interp(x0, x, y), x0)
+        x0 = np.nan
+        assert_almost_equal(np.interp(x0, x, y), x0)
 
     def test_zero_dimensional_interpolation_point(self):
         x = np.linspace(0, 1, 5)
