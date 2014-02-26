@@ -125,6 +125,69 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
     *mn = min;
     *mx = max;
 }
+
+/*
+ * Check if a contiguous array, to be used as first argument to bincount,
+ * can be cast to npy_intp safely
+ */
+static int
+fits_in_intp(PyArrayObject *arr)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(arr);
+    PyArray_CompareFunc *cmp = dtype->f->compare;
+    PyArrayObject *arr_cmp1, *arr_cmp2;
+    npy_intp data[2] = {0, NPY_MAX_INTP};
+    npy_intp shape = 2;
+    npy_intp stride = dtype->elsize;
+    npy_intp size = PyArray_SIZE(arr);
+    npy_bool dtype_is_signed = PyDataType_ISSIGNED(dtype);
+    const void *a = (const void *)PyArray_DATA(arr);
+    const void *min, *max;
+
+    if (!PyDataType_ISINTEGER(dtype)) {
+        PyErr_SetString(PyExc_TypeError,
+                "The first argument of bincount must be of integer type");
+        return 0;
+    }
+
+    /*
+     * Create an array of npy_intp type, with two items equal to 0 and
+     * NPY_MAX_INTP and cast it to 'dtype'
+     */
+    arr_cmp1 = (PyArrayObject *)PyArray_SimpleNewFromData(1, &shape, NPY_INTP,
+                                                          (void *)&data);
+    if (!arr_cmp1) {
+        return 0;
+    }
+
+    Py_INCREF(dtype);
+    arr_cmp2 = (PyArrayObject *)PyArray_CastToType(arr_cmp1, dtype, 0);
+    Py_DECREF(arr_cmp1);
+    if (!arr_cmp2) {
+        return 0;
+    }
+
+    min = (const void *)PyArray_DATA(arr_cmp2);
+    max = min + stride;
+    while (size--) {
+        if(dtype_is_signed && cmp(a, min, arr) < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The first argument of bincount must be non-negative");
+            Py_DECREF(arr_cmp2);
+            return 0;
+        }
+        else if (cmp(a, max, arr) > 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "Value too large in first argument to bincount");
+            Py_DECREF(arr_cmp2);
+            return 0;
+        }
+    }
+
+    Py_DECREF(arr_cmp2);
+    return 1;
+}
+
 /*
  * arr_bincount is registered as bincount.
  *
@@ -142,8 +205,8 @@ static PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *type;
-    PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
-    PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
+    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
+    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL, *lst_bis = NULL;
     npy_intp *numbers, *ians, len , mx, mn, ans_size, minlength;
     int i;
     double *weights , *dans;
@@ -156,7 +219,27 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
     if (lst == NULL) {
-        goto fail;
+        /*
+         * Clear the error set by PyArray_ContiguousFromAny, and give it a
+         * second chance if it is of integer type and the values are in bounds
+         */
+        PyErr_Clear();
+        lst_bis = (PyArrayObject *)PyArray_FromAny(list, NULL, 1, 1,
+                                                   NPY_ARRAY_CARRAY, NULL);
+        if (lst_bis == NULL) {
+            goto fail;
+        }
+        if (!fits_in_intp(lst_bis)) {
+            Py_DECREF(lst_bis);
+            goto fail;
+        }
+        Py_DECREF(lst_bis);
+        lst = (PyArrayObject *)PyArray_FROMANY(list, NPY_INTP, 1, 1,
+                                               NPY_ARRAY_CARRAY |
+                                               NPY_ARRAY_FORCECAST);
+        if (lst == NULL) {
+            goto fail;
+        }
     }
     len = PyArray_SIZE(lst);
     type = PyArray_DescrFromType(NPY_INTP);
@@ -236,6 +319,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         Py_DECREF(lst);
         Py_DECREF(wts);
     }
+
     return (PyObject *)ans;
 
 fail:

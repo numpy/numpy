@@ -1461,6 +1461,16 @@ class TestBincount(TestCase):
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
 
+    def test_big_int_types(self):
+        x = np.arange(5, dtype=np.int64);
+        y = np.bincount(x)
+        assert_array_equal(y, np.array([1, 1, 1, 1, 1]))
+        x = np.arange(5, dtype=np.uint64);
+        y = np.bincount(x)
+        assert_array_equal(y, np.array([1, 1, 1, 1, 1]))
+        x = [np.iinfo(np.intp).max + 1]
+        assert_raises(ValueError, np.bincount, x)
+
 
 class TestInterp(TestCase):
     def test_exceptions(self):
