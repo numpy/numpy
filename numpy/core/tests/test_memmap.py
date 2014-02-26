@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import os
 import shutil
 
-from numpy import memmap
+from numpy import memmap, save, load, datetime64
 from numpy import arange, allclose, asarray
 from numpy.testing import *
 
@@ -46,6 +46,15 @@ class TestMemmap(TestCase):
         with TemporaryFile() as f:
             fp = memmap(f, dtype=self.dtype, shape=self.shape)
             del fp
+
+    def test_datetime_mmap(self):
+        a = asarray(['2012', '2013', '2014'], dtype='datetime64')
+        x = datetime64('2013')
+        with NamedTemporaryFile(prefix='mmap', dir=self.tempdir) as f:
+            save(f, a)
+            f.seek(0)
+            b = load(f.name, mmap_mode='c')
+            assert tuple(b > x) ==  tuple (a > x)
 
     def test_attributes(self):
         offset = 1
