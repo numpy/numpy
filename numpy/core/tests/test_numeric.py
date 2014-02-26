@@ -936,6 +936,20 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
         assert_equal(np.nonzero(x['b'].T), ([0, 0, 1, 2, 2], [0, 1, 2, 0, 2]))
 
+    def test_sparse(self):
+        # test special sparse condition boolean code path
+        for i in range(20):
+            c = np.zeros(200, dtype=np.bool)
+            c[i::20] = True
+            assert_equal(np.nonzero(c)[0], np.arange(i, 200 + i, 20))
+
+            c = np.zeros(400, dtype=np.bool)
+            c[10 + i:20 + i] = True
+            c[20 + i*2] = True
+            assert_equal(np.nonzero(c)[0],
+                         np.concatenate((np.arange(10 +i, 20 + i), [20 +i*2])))
+
+
 class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3, 5, 8)
