@@ -756,9 +756,6 @@ class fftw_info(system_info):
                     'includes':['fftw.h', 'rfftw.h'],
                     'macros':[('SCIPY_FFTW_H', None)]}]
 
-    def __init__(self):
-        system_info.__init__(self)
-
     def calc_ver_info(self, ver_param):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
@@ -1302,11 +1299,13 @@ def get_atlas_version(**config):
     info = {}
     try:
         s, o = c.get_output(atlas_version_c_text,
-                            libraries=libraries, library_dirs=library_dirs)
+                            libraries=libraries, library_dirs=library_dirs,
+                            use_tee=(system_info.verbosity > 0))
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
-                                library_dirs=library_dirs)
+                                library_dirs=library_dirs,
+                                use_tee=(system_info.verbosity > 0))
             if not s:
                 warnings.warn("""
 *****************************************************
@@ -1480,7 +1479,7 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin'and not atlas_info:
+        if sys.platform == 'darwin' and not atlas_info:
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
