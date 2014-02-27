@@ -29,11 +29,11 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False):
                             out=out, keepdims=keepdims)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.logical_or.reduce(a, axis=axis, dtype=dtype, out=out,
+    return um.logical_or.reduce(a, axis=axis, dtype=bool, out=out,
                                 keepdims=keepdims)
 
 def _all(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.logical_and.reduce(a, axis=axis, dtype=dtype, out=out,
+    return um.logical_and.reduce(a, axis=axis, dtype=bool, out=out,
                                  keepdims=keepdims)
 
 def _count_reduce_items(arr, axis):
