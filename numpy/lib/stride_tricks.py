@@ -29,7 +29,8 @@ def as_strided(x, shape=None, strides=None):
         interface['strides'] = tuple(strides)
     array = np.asarray(DummyArray(interface, base=x))
     # Make sure dtype is correct in case of custom dtype
-    array.dtype = x.dtype
+    if array.dtype.kind == 'V':
+        array.dtype = x.dtype
     return array
 
 def broadcast_arrays(*args):
