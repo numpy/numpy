@@ -97,10 +97,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             # add preprocessor statement for using customized msvcr lib
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
-        # Define the MSVC version as hint for MinGW
-        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
-        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
-
         # **changes: eric jones 4/11/01
         # 2. increased optimization and turned off all warnings
         # 3. also added --driver-name g++
@@ -150,6 +146,12 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
 
+        specs = make_specs()
+        self.compiler.extend(["-specs",specs])
+        self.compiler_so.extend(["-specs",specs])
+        self.linker_exe.extend(["-specs",specs])
+        self.linker_so.extend(["-specs",specs])
+
         # Maybe we should also append -mthreads, but then the finished
         # dlls need another dll (mingwm10.dll see Mingw32 docs)
         # (-mthreads: Support thread-safe exception handling on `Mingw32')
@@ -174,13 +176,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
              extra_postargs=None,
              build_temp=None,
              target_lang=None):
-        # Include the appropiate MSVC runtime library if Python was built
-        # with MSVC >= 7.0 (MinGW standard is msvcrt)
-        runtime_library = msvc_runtime_library()
-        if runtime_library:
-            if not libraries:
-                libraries = []
-            libraries.append(runtime_library)
         args = (self,
                 target_desc,
                 objects,
@@ -436,6 +431,39 @@ def _build_import_library_x86():
     #    msg = "Couldn't find import library, and failed to build it."
     #    raise DistutilsPlatformError(msg)
     return
+
+def make_specs():
+    from numpy.distutils.misc_util import msvc_runtime_library
+    msvcr = msvc_runtime_library()
+    moldname = "moldname" if msvcr == "msvcrt" else "moldname" + msvcr.lstrip('msvcr')
+
+    import subprocess
+    specs = subprocess.check_output(["gcc", "-dumpspecs"])
+
+    #newspecs = specs.replace("msvcrt",msvcr).replace("moldname",moldname)
+    #be more subtle:
+
+    import re
+    newspecs = []
+    m = re.search(r"(\*cpp:(?:\n|\r\n))(.*?)(\n\n|\r\n\r\n)", specs, re.DOTALL)
+    if m:
+        a,b,c = m.groups()
+        b += " -D__MSVCRT_VERSION__=0x%03i0" % int(msvcr.lstrip('msvcr'))
+        newspecs.extend([a,b,c])
+    m = re.search(r"(\*libgcc:(?:\n|\r\n))(.*?)(\n\n|\r\n\r\n)", specs, re.DOTALL)
+    if m:
+        a,b,c = m.groups()
+        b = b.replace("msvcrt",msvcr).replace("moldname",moldname)
+        newspecs.extend([a,b,c])
+    newspecs = "".join(newspecs)
+
+    import sys, os
+    fname = os.path.join(sys.prefix,'libs',msvcr+".specs")
+    with open(fname,"w") as f:
+        f.write(newspecs)
+    return fname
+
+
 
 #=====================================
 # Dealing with Visual Studio MANIFESTS
