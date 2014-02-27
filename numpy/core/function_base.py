@@ -74,6 +74,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     """
     num = int(num)
+
+    # Convert float/complex array scalars to float, gh-3504 
+    start = start + 0.
+    stop = stop + 0.
+
     if num <= 0:
         return array([], float)
     if endpoint:

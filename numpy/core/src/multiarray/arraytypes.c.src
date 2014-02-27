@@ -3503,7 +3503,7 @@ static int
                 /* We don't know what axis we're operating on, so don't report it in case of an error. */
                 if (check_and_adjust_index(&tmp, nindarray, -1) < 0)
                     return 1;
-                if (nelem == 1) {
+                if (NPY_LIKELY(nelem == 1)) {
                     *dest++ = *(src + tmp);
                 }
                 else {
@@ -3529,7 +3529,7 @@ static int
                         tmp -= nindarray;
                     }
                 }
-                if (nelem == 1) {
+                if (NPY_LIKELY(nelem == 1)) {
                     *dest++ = *(src+tmp);
                 }
                 else {
@@ -3551,7 +3551,7 @@ static int
                 else if (tmp >= nindarray) {
                     tmp = nindarray - 1;
                 }
-                if (nelem == 1) {
+                if (NPY_LIKELY(nelem == 1)) {
                     *dest++ = *(src + tmp);
                 }
                 else {

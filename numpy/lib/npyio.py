@@ -667,6 +667,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
+
         .. versionadded:: 1.6.0
 
     Returns
@@ -910,14 +911,17 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
+
         .. versionadded:: 1.7.0
     footer : str, optional
         String that will be written at the end of the file.
+
         .. versionadded:: 1.7.0
     comments : str, optional
         String that will be prepended to the ``header`` and ``footer`` strings,
         to mark them as comments. Default: '# ',  as expected by e.g.
         ``numpy.loadtxt``.
+
         .. versionadded:: 1.7.0
 
         Character separating lines.
