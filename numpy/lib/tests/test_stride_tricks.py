@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import *
 from numpy.lib.stride_tricks import broadcast_arrays
+from numpy.lib.stride_tricks import as_strided
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -205,6 +206,22 @@ def test_same_as_ufunc():
         if () not in input_shapes:
             assert_same_as_ufunc(input_shapes[0], input_shapes[1], False, True)
             assert_same_as_ufunc(input_shapes[0], input_shapes[1], True, True)
+
+def test_as_strided():
+    a = np.array([None])
+    a_view = as_strided(a)
+    expected = np.array([None])
+    assert_array_equal(a_view, np.array([None]))
+
+    a = np.array([1, 2, 3, 4])
+    a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,))
+    expected = np.array([1, 3])
+    assert_array_equal(a_view, expected)
+
+    a = np.array([1, 2, 3, 4])
+    a_view = as_strided(a, shape=(3, 4), strides=(0, 1 * a.itemsize))
+    expected = np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]])
+    assert_array_equal(a_view, expected)
 
 
 if __name__ == "__main__":
