@@ -25,10 +25,10 @@ from numpy.core.multiarray_tests import (
         test_inplace_increment, get_buffer_info
         )
 from numpy.testing import (
-        TestCase, run_module_suite, assert_, assert_raises,
+        TestCase, run_module_suite, assert_, assert_raises, assert_warns,
         assert_equal, assert_almost_equal, assert_array_equal,
         assert_array_almost_equal, assert_allclose,
-        assert_array_less, runstring, dec
+        assert_array_less, runstring, dec, assert_no_warnings
         )
 
 # Need to test an object that does not fully implement math interface
@@ -2821,12 +2821,6 @@ class TestRecord(TestCase):
 
     def test_field_names_deprecation(self):
 
-        def collect_warning_types(f, *args, **kwargs):
-            with warnings.catch_warnings(record=True) as log:
-                warnings.simplefilter("always")
-                f(*args, **kwargs)
-            return [w.category for w in log]
-
         a = np.zeros((1,), dtype=[('f1', 'i4'),
                                   ('f2', 'i4'),
                                   ('f3', [('sf1', 'i4')])])
@@ -2842,20 +2836,18 @@ class TestRecord(TestCase):
 
         # All the different functions raise a warning, but not an error, and
         # 'a' is not modified:
-        assert_equal(collect_warning_types(a[['f1', 'f2']].__setitem__, 0, (10, 20)),
-                     [FutureWarning])
+        assert_warns(FutureWarning, a[['f1', 'f2']].__setitem__, 0, (10, 20))
         assert_equal(a, b)
         # Views also warn
         subset = a[['f1', 'f2']]
         subset_view = subset.view()
-        assert_equal(collect_warning_types(subset_view['f1'].__setitem__, 0, 10),
-                     [FutureWarning])
+        assert_warns(FutureWarning, subset_view['f1'].__setitem__, 0, 10)
         # But the write goes through:
         assert_equal(subset['f1'][0], 10)
-        # Only one warning per multiple field indexing, though (even if there are
-        # multiple views involved):
-        assert_equal(collect_warning_types(subset['f1'].__setitem__, 0, 10),
-                     [])
+
+        # Only one warning per multiple field indexing,
+        # though (even if there are multiple views involved):
+        assert_no_warnings(subset['f1'].__setitem__, 0, 10)
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')

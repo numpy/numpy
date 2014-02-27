@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns
+    assert_allclose, assert_array_max_ulp, assert_warns, assert_no_warnings
     )
 from numpy.random import rand
 from numpy.lib import *
@@ -185,11 +185,8 @@ class TestInsert(TestCase):
         assert_equal(insert(b, [], []), b)
         # Bools will be treated differently in the future:
         #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
-            assert_equal(
-                insert(a, np.array([True]*4), 9), [1, 9, 9, 9, 9, 2, 3])
-            assert_(w[0].category is FutureWarning)
+        res = assert_warns(FutureWarning, insert, a, np.array([True]*4), 9)
+        assert_equal(res, [1, 9, 9, 9, 9, 2, 3])
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -236,10 +233,8 @@ class TestInsert(TestCase):
     def test_0d(self):
         # This is an error in the future
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(insert(a, [], 2, axis=0), np.array(2))
-            assert_(w[0].category is DeprecationWarning)
+        res = assert_warns(DeprecationWarning, insert, a, [], 2, axis=0)
+        assert_equal(res, np.array(2))
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -412,17 +407,12 @@ class TestDelete(TestCase):
     def test_fancy(self):
         # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            assert_raises(DeprecationWarning, delete, self.a, [100])
-            assert_raises(DeprecationWarning, delete, self.a, [-100])
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=FutureWarning)
-            self._check_inverse_of_slicing([0, -1, 2, 2])
-            obj = np.array([True, False, False], dtype=bool)
-            self._check_inverse_of_slicing(obj)
-            assert_(w[0].category is FutureWarning)
-            assert_(w[1].category is FutureWarning)
+        assert_warns(DeprecationWarning, delete, self.a, [100])
+        assert_warns(DeprecationWarning, delete, self.a, [-100])
+        lst = [0, -1, 2, 2]
+        assert_warns(FutureWarning, self._check_inverse_of_slicing, lst)
+        obj = np.array([True, False, False], dtype=bool)
+        assert_warns(FutureWarning, self._check_inverse_of_slicing, obj)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -430,10 +420,8 @@ class TestDelete(TestCase):
 
     def test_0d(self):
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(delete(a, [], axis=0), a)
-            assert_(w[0].category is DeprecationWarning)
+        res = assert_warns(DeprecationWarning, delete, a, [], axis=0)
+        assert_equal(res, a)
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -1226,20 +1214,18 @@ class TestCorrCoef(TestCase):
         assert_allclose(np.corrcoef(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter('always', RuntimeWarning)
-            assert_array_equal(corrcoef(np.array([])), np.nan)
-            assert_array_equal(corrcoef(np.array([]).reshape(0, 2)),
-                               np.array([]).reshape(0, 0))
-            assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
-                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+        emp = np.array([])
+        res = assert_warns(RuntimeWarning, corrcoef, emp)
+        assert_array_equal(res, np.nan)
+        res = assert_no_warnings(corrcoef, emp.reshape(0, 2))
+        assert_array_equal(res, emp.reshape(0, 0))
+        res = assert_warns(RuntimeWarning, corrcoef, emp.reshape(2, 0))
+        assert_array_equal(res, np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
     def test_wrong_ddof(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter('always', RuntimeWarning)
-            assert_array_equal(corrcoef(x, ddof=5),
-                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+        res = assert_warns(RuntimeWarning, corrcoef, x, ddof=5)
+        assert_array_equal(res, np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
 
 class TestCov(TestCase):
@@ -1257,20 +1243,19 @@ class TestCov(TestCase):
         assert_allclose(cov(x, y), np.array([[1., -1.j], [1.j, 1.]]))
 
     def test_empty(self):
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter('always', RuntimeWarning)
-            assert_array_equal(cov(np.array([])), np.nan)
-            assert_array_equal(cov(np.array([]).reshape(0, 2)),
-                               np.array([]).reshape(0, 0))
-            assert_array_equal(cov(np.array([]).reshape(2, 0)),
-                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+        emp = np.array([])
+        res = assert_warns(RuntimeWarning, cov, emp)
+        assert_array_equal(res, np.nan)
+        res = assert_no_warnings(cov, emp.reshape(0, 2))
+        assert_array_equal(res, emp.reshape(0, 0))
+        res = assert_warns(RuntimeWarning, cov, emp.reshape(2, 0))
+        assert_array_equal(res, np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
     def test_wrong_ddof(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter('always', RuntimeWarning)
-            assert_array_equal(cov(x, ddof=5),
-                               np.array([[np.inf, -np.inf], [-np.inf, np.inf]]))
+        res = assert_warns(RuntimeWarning, cov, x, ddof=5)
+        desired = np.array([[np.inf, -np.inf], [-np.inf, np.inf]])
+        assert_array_equal(res, desired)
 
 
 class Test_I0(TestCase):

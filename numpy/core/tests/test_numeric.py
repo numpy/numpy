@@ -179,33 +179,24 @@ class TestNonarrayArgs(TestCase):
         assert_(mean(A) == 3.5)
         assert_(all(mean(A, 0) == array([2.5, 3.5, 4.5])))
         assert_(all(mean(A, 1) == array([2., 5.])))
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(mean([])))
-            assert_(w[0].category is RuntimeWarning)
+        res = assert_warns(RuntimeWarning, mean, [])
+        assert_(isnan(res))
 
     def test_std(self):
         A = [[1, 2, 3], [4, 5, 6]]
         assert_almost_equal(std(A), 1.707825127659933)
         assert_almost_equal(std(A, 0), array([1.5, 1.5, 1.5]))
         assert_almost_equal(std(A, 1), array([0.81649658, 0.81649658]))
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(std([])))
-            assert_(w[0].category is RuntimeWarning)
+        res = assert_warns(RuntimeWarning, std, [])
+        assert_(isnan(res))
 
     def test_var(self):
         A = [[1, 2, 3], [4, 5, 6]]
         assert_almost_equal(var(A), 2.9166666666666665)
         assert_almost_equal(var(A, 0), array([2.25, 2.25, 2.25]))
         assert_almost_equal(var(A, 1), array([0.66666667, 0.66666667]))
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(var([])))
-            assert_(w[0].category is RuntimeWarning)
+        res = assert_warns(RuntimeWarning, var, [])
+        assert_(isnan(res))
 
 
 class TestBoolScalar(TestCase):
