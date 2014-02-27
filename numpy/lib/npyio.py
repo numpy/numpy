@@ -1871,6 +1871,11 @@ def recfromcsv(fname, **kwargs):
     --------
     numpy.genfromtxt : generic function to load ASCII data.
 
+    Notes
+    -----
+    By default, `dtype` is None, which means that the data-type of the output
+    array will be determined from the data.
+
     """
     # Set default kwargs as relevant to csv import.
     # These seem to be undocumented. (case_sensitive is mentioned in basics.io)

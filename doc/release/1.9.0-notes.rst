@@ -207,6 +207,12 @@ is being casted. Previously the casting was allowed even if the result was
 truncated.
 
 
+`npyio.recfromcsv` keyword arguments change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`npyio.recfromcsv` no longer accepts the undocumented `update` keyword,
+which used to override the `dtype` keyword.
+
+ 
 C-API
 ~~~~~
 
