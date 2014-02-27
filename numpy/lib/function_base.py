@@ -1810,9 +1810,11 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
             "ddof must be integer")
 
     # Handles complex arrays too
+    m = np.asarray(m)
     if y is None:
         dtype = np.result_type(m, np.float64)
     else:
+        y = np.asarray(y)
         dtype = np.result_type(m, y, np.float64)
     X = array(m, ndmin=2, dtype=dtype)
 

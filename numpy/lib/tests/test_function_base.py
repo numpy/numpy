@@ -1204,6 +1204,10 @@ class TestCorrCoef(TestCase):
          [0.66318558, 0.88157256, 0.71483595, -0.51366032, 1., 0.98317823],
          [0.51532523, 0.78052386, 0.83053601, -0.66173113, 0.98317823, 1.]])
 
+    def test_non_array(self):
+        assert_almost_equal(np.corrcoef([0, 1, 0], [1, 0, 1]),
+                            [[1., -1.], [-1.,  1.]])
+
     def test_simple(self):
         assert_almost_equal(corrcoef(self.A), self.res1)
         assert_almost_equal(corrcoef(self.A, self.B), self.res2)
