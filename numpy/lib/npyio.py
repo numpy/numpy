@@ -288,21 +288,23 @@ def load(file, mmap_mode=None):
     Parameters
     ----------
     file : file-like object or string
-        The file to read.  It must support ``seek()`` and ``read()`` methods.
-        If the filename extension is ``.gz``, the file is first decompressed.
+        The file to read. Compressed files with the filename extension
+        ``.gz`` are acceptable. File-like objects must support the
+        ``seek()`` and ``read()`` methods. Pickled files require that the
+        file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
-        If not None, then memory-map the file, using the given mode
-        (see `numpy.memmap` for a detailed description of the modes).
-        A memory-mapped array is kept on disk. However, it can be accessed
-        and sliced like any ndarray.  Memory mapping is especially useful for
-        accessing small fragments of large files without reading the entire
-        file into memory.
+        If not None, then memory-map the file, using the given mode (see
+        `numpy.memmap` for a detailed description of the modes).  A
+        memory-mapped array is kept on disk. However, it can be accessed
+        and sliced like any ndarray.  Memory mapping is especially useful
+        for accessing small fragments of large files without reading the
+        entire file into memory.
 
     Returns
     -------
     result : array, tuple, dict, etc.
-        Data stored in the file. For '.npz' files, the returned instance of
-        NpzFile class must be closed to avoid leaking file descriptors.
+        Data stored in the file. For ``.npz`` files, the returned instance
+        of NpzFile class must be closed to avoid leaking file descriptors.
 
     Raises
     ------
@@ -311,7 +313,7 @@ def load(file, mmap_mode=None):
 
     See Also
     --------
-    save, savez, loadtxt
+    save, savez, savez_compressed, loadtxt
     memmap : Create a memory-map to an array stored in a file on disk.
 
     Notes
@@ -322,13 +324,14 @@ def load(file, mmap_mode=None):
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
-    - If the file is a ``.npz`` file, the returned value supports the context
-      manager protocol in a similar fashion to the open function::
+    - If the file is a ``.npz`` file, the returned value supports the
+      context manager protocol in a similar fashion to the open function::
 
         with load('foo.npz') as data:
             a = data['a']
 
-      The underlyling file descriptor is closed when exiting the 'with' block.
+      The underlying file descriptor is closed when exiting the 'with'
+      block.
 
     Examples
     --------
@@ -548,7 +551,8 @@ def savez_compressed(file, *args, **kwds):
 
     See Also
     --------
-    numpy.savez : Save several arrays into an uncompressed .npz file format
+    numpy.savez : Save several arrays into an uncompressed ``.npz`` file format
+    numpy.load : Load the files created by savez_compressed.
 
     """
     _savez(file, args, kwds, True)
