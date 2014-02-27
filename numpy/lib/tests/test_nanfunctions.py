@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
-    assert_raises
+    assert_raises, assert_warns, assert_no_warnings
     )
 
 
@@ -75,17 +75,11 @@ class TestNanFunctions_MinMax(TestCase):
         mat = np.array([np.nan]*9).reshape(3, 3)
         for f in self.nanfuncs:
             for axis in [None, 0, 1]:
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    assert_(np.isnan(f(mat, axis=axis)).all())
-                    assert_(len(w) == 1, 'no warning raised')
-                    assert_(issubclass(w[0].category, RuntimeWarning))
+                res = assert_warns(RuntimeWarning, f, mat, axis=axis)
+                assert_(np.isnan(res).all())
             # Check scalars
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter('always')
-                assert_(np.isnan(f(np.nan)))
-                assert_(len(w) == 1, 'no warning raised')
-                assert_(issubclass(w[0].category, RuntimeWarning))
+            res = assert_warns(RuntimeWarning, f, np.nan)
+            assert_(np.isnan(res))
 
     def test_masked(self):
         mat = np.ma.fix_invalid(_ndat)
@@ -130,15 +124,14 @@ class TestNanFunctions_ArgminArgmax(TestCase):
     def test_result_values(self):
         for f, fcmp in zip(self.nanfuncs, [np.greater, np.less]):
             for row in _ndat:
-                with warnings.catch_warnings(record=True):
-                    warnings.simplefilter('always')
-                    ind = f(row)
-                    val = row[ind]
-                    # comparing with NaN is tricky as the result
-                    # is always false except for NaN != NaN
-                    assert_(not np.isnan(val))
-                    assert_(not fcmp(val, row).any())
-                    assert_(not np.equal(val, row[:ind]).any())
+                ind = f(row)
+                val = row[ind]
+                ## comparing with NaN is tricky as the result
+                ## is always false except for NaN != NaN
+                assert_(not np.isnan(val))
+                res = assert_warns(RuntimeWarning, fcmp, val, row)
+                assert_(not res.any())
+                assert_(not np.equal(val, row[:ind]).any())
 
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
@@ -301,18 +294,9 @@ class TestNanFunctions_Sum(TestCase):
 
     def test_allnans(self):
         # Check for FutureWarning
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            res = np.nansum([np.nan]*3, axis=None)
-            assert_(res == 0, 'result is not 0')
-            assert_(len(w) == 0, 'warning raised')
-            # Check scalar
-            res = np.nansum(np.nan)
-            assert_(res == 0, 'result is not 0')
-            assert_(len(w) == 0, 'warning raised')
-            # Check there is no warning for not all-nan
-            np.nansum([0]*3, axis=None)
-            assert_(len(w) == 0, 'unwanted warning raised')
+        assert_equal(assert_no_warnings(np.nansum, [np.nan]*3, axis=None), 0)
+        assert_equal(assert_no_warnings(np.nansum, np.nan), 0)
+        assert_no_warnings(np.nansum, [0]*3, axis=None)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
@@ -437,16 +421,13 @@ class TestNanFunctions_MeanVarStd(TestCase):
         dsize = [len(d) for d in _rdat]
         for nf, rf in zip(nanfuncs, stdfuncs):
             for ddof in range(5):
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    tgt = [ddof >= d for d in dsize]
-                    res = nf(_ndat, axis=1, ddof=ddof)
-                    assert_equal(np.isnan(res), tgt)
-                    if any(tgt):
-                        assert_(len(w) == 1)
-                        assert_(issubclass(w[0].category, RuntimeWarning))
-                    else:
-                        assert_(len(w) == 0)
+                tgt = [ddof >= d for d in dsize]
+                kwargs = dict(axis=1, ddof=ddof)
+                if any(tgt):
+                    res = assert_warns(RuntimeWarning, nf, _ndat, **kwargs)
+                else:
+                    res = assert_no_warnings(nf, _ndat, **kwargs)
+                assert_equal(np.isnan(res), tgt)
 
     def test_result_values(self):
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
@@ -458,30 +439,20 @@ class TestNanFunctions_MeanVarStd(TestCase):
         mat = np.array([np.nan]*9).reshape(3, 3)
         for f in self.nanfuncs:
             for axis in [None, 0, 1]:
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    assert_(np.isnan(f(mat, axis=axis)).all())
-                    assert_(len(w) == 1)
-                    assert_(issubclass(w[0].category, RuntimeWarning))
-                    # Check scalar
-                    assert_(np.isnan(f(np.nan)))
-                    assert_(len(w) == 2)
-                    assert_(issubclass(w[0].category, RuntimeWarning))
+                res = assert_warns(RuntimeWarning, f, mat, axis=axis)
+                assert_(np.isnan(res).all())
+                res = assert_warns(RuntimeWarning, f, np.nan)
+                assert_(np.isnan(res))
 
     def test_empty(self):
         mat = np.zeros((0, 3))
         for f in self.nanfuncs:
             for axis in [0, None]:
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    assert_(np.isnan(f(mat, axis=axis)).all())
-                    assert_(len(w) == 1)
-                    assert_(issubclass(w[0].category, RuntimeWarning))
+                res = assert_warns(RuntimeWarning, f, mat, axis=axis)
+                assert_(np.isnan(res).all())
             for axis in [1]:
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    assert_equal(f(mat, axis=axis), np.zeros([]))
-                    assert_(len(w) == 0)
+                res = assert_no_warnings(f, mat, axis=axis)
+                assert_equal(res, np.zeros([]))
 
     def test_scalar(self):
         for f in self.nanfuncs:
