@@ -1156,6 +1156,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     It compares the difference between `actual` and `desired` to
     ``atol + rtol * abs(desired)``.
 
+    .. versionadded:: 1.5.0
+
     Parameters
     ----------
     actual : array_like
@@ -1465,6 +1467,7 @@ class WarningManager(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
 
+
 def assert_warns(warning_class, func, *args, **kw):
     """
     Fail unless the given callable throws the specified warning.
@@ -1473,6 +1476,8 @@ def assert_warns(warning_class, func, *args, **kw):
     invoked with arguments args and keyword arguments kwargs.
     If a different type of warning is thrown, it will not be caught, and the
     test case will be deemed to have suffered an error.
+
+    .. versionadded:: 1.4.0
 
     Parameters
     ----------
@@ -1504,6 +1509,8 @@ def assert_warns(warning_class, func, *args, **kw):
 def assert_no_warnings(func, *args, **kw):
     """
     Fail if the given callable produces any warnings.
+
+    .. versionadded:: 1.8.0
 
     Parameters
     ----------
