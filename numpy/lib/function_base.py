@@ -144,26 +144,31 @@ def new_digitize(x, bins, right=False):
     >>> np.digitize(x,bins,right=False)
     array([1, 3, 3, 4, 5])
     """
-    x = np.asarray(x).ravel()
-    bins = np.asarray(bins).ravel()
-    
-    if not x.size or not bins.size:
-        raise ValueError('Both x and bins must have non-zero length.')
-    
-    stride = 1
-    if np.all(bins[:-1] > bins[1:]):
-        stride = -1
-    elif not np.all(bins[:-1] < bins[1:]):
-        msg = 'The bins must be monotonically increasing or decreasing.'
+    x = np.asarray(x)
+
+    # scalars get promoted to 1-D arrays
+    bins = np.array(bins, copy=False, ndmin=1)
+    if bins.ndim > 1:
+        msg = "bins must be 1-dimensional"
         raise ValueError(msg)
-    bins = bins[::stride]
-    
+    if bins.size == 0:
+        msg = "bins must have non-zero length"
+        raise ValueError(msg)
+
+    stride = 1
+    # if np.all(bins[:-1] >= bins[1:]):
+        # stride = -1
+    # elif not np.all(bins[:-1] <= bins[1:]):
+        # msg = 'the bins must be monotonically increasing or decreasing'
+        # raise ValueError(msg)
+    # bins = bins[::stride]
+
     side = 'left' if right else 'right'
     out = np.searchsorted(bins, x, side=side)
-    
+
     if stride == -1:
         out = bins.size - out
-    
+
     return out
 
 def histogram(a, bins=10, range=None, normed=False, weights=None,
@@ -3223,7 +3228,7 @@ def meshgrid(*xi, **kwargs):
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
     one-dimensional coordinate arrays x1, x2,..., xn.
-    
+
     .. versionchanged:: 1.9
        1-D and 0-D cases are allowed.
 
@@ -3274,7 +3279,7 @@ def meshgrid(*xi, **kwargs):
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
-    
+
     In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
 
     See Also
