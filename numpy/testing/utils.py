@@ -1510,7 +1510,7 @@ def assert_no_warnings(func, *args, **kw):
     """
     Fail if the given callable produces any warnings.
 
-    .. versionadded:: 1.8.0
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
