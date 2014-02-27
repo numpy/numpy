@@ -693,8 +693,8 @@ class TestMinMax(TestCase):
                     assert_equal(inp.min(), -1e10, err_msg=msg)
 
 
-class TestAbsolute(TestCase):
-    def test_abs_blocked(self):
+class TestAbsoluteNegative(TestCase):
+    def test_abs_neg_blocked(self):
         # simd tests on abs, test all alignments for vz + 2 * (vs - 1) + 1
         for dt, sz in [(np.float32, 11), (np.float64, 5)]:
             for out, inp, msg in _gen_alignment_data(dtype=dt, type='unary',
@@ -703,6 +703,10 @@ class TestAbsolute(TestCase):
                 np.absolute(inp, out=out)
                 assert_equal(out, tgt, err_msg=msg)
                 self.assertTrue((out >= 0).all())
+
+                tgt = [-1*(i) for i in inp]
+                np.negative(inp, out=out)
+                assert_equal(out, tgt, err_msg=msg)
 
                 # will throw invalid flag depending on compiler optimizations
                 with np.errstate(invalid='ignore'):
@@ -715,6 +719,10 @@ class TestAbsolute(TestCase):
                             assert_array_equal(np.abs(inp), d, err_msg=msg)
                             np.abs(inp, out=out)
                             assert_array_equal(out, d, err_msg=msg)
+
+                            assert_array_equal(-inp, -1*inp, err_msg=msg)
+                            np.negative(inp, out=out)
+                            assert_array_equal(out, -1*inp, err_msg=msg)
 
 
 class TestSpecialMethods(TestCase):

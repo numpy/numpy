@@ -133,10 +133,10 @@ static const npy_int32 fanout_4[] = {
  */
 
 /**begin repeat1
- * #func = sqrt, absolute, minimum, maximum#
- * #check = IS_BLOCKABLE_UNARY, IS_BLOCKABLE_UNARY, IS_BLOCKABLE_REDUCE, IS_BLOCKABLE_REDUCE#
- * #name = unary, unary, unary_reduce, unary_reduce#
- * #minmax = 0, 0, 1, 1#
+ * #func = sqrt, absolute, negative, minimum, maximum#
+ * #check = IS_BLOCKABLE_UNARY*3, IS_BLOCKABLE_REDUCE*2 #
+ * #name = unary*3, unary_reduce*2#
+ * #minmax = 0*3, 1*2#
  */
 
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -621,41 +621,56 @@ sse2_sqrt_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
 }
 
 
+static NPY_INLINE
+@type@ scalar_abs_@type@(@type@ v)
+{
+    /* add 0 to clear -0.0 */
+    return (v > 0 ? v: -v) + 0;
+}
+
+static NPY_INLINE
+@type@ scalar_neg_@type@(@type@ v)
+{
+    return -v;
+}
+
+/**begin repeat1
+ * #kind = absolute, negative#
+ * #VOP = andnot, xor#
+ * #scalar = scalar_abs, scalar_neg#
+ **/
 static void
-sse2_absolute_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
+sse2_@kind@_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
 {
     /*
      * get 0x7FFFFFFF mask (everything but signbit set)
-     * float & ~mask will remove the sign
+     * float & ~mask will remove the sign, float ^ mask flips the sign
      * this is equivalent to how the compiler implements fabs on amd64
      */
     const @vtype@ mask = @vpre@_set1_@vsuf@(-0.@c@);
 
     /* align output to 16 bytes */
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16) {
-        const @type@ tmp = ip[i] > 0 ? ip[i]: -ip[i];
-        /* add 0 to clear -0.0 */
-        op[i] = tmp + 0;
+        op[i] = @scalar@_@type@(ip[i]);
     }
     assert(n < (16 / sizeof(@type@)) || npy_is_aligned(&op[i], 16));
     if (npy_is_aligned(&ip[i], 16)) {
         LOOP_BLOCKED(@type@, 16) {
             @vtype@ a = @vpre@_load_@vsuf@(&ip[i]);
-            @vpre@_store_@vsuf@(&op[i], @vpre@_andnot_@vsuf@(mask, a));
+            @vpre@_store_@vsuf@(&op[i], @vpre@_@VOP@_@vsuf@(mask, a));
         }
     }
     else {
         LOOP_BLOCKED(@type@, 16) {
             @vtype@ a = @vpre@_loadu_@vsuf@(&ip[i]);
-            @vpre@_store_@vsuf@(&op[i], @vpre@_andnot_@vsuf@(mask, a));
+            @vpre@_store_@vsuf@(&op[i], @vpre@_@VOP@_@vsuf@(mask, a));
         }
     }
     LOOP_BLOCKED_END {
-        const @type@ tmp = ip[i] > 0 ? ip[i]: -ip[i];
-        /* add 0 to clear -0.0 */
-        op[i] = tmp + 0;
+        op[i] = @scalar@_@type@(ip[i]);
     }
 }
+/**end repeat1**/
 
 
 /**begin repeat1
