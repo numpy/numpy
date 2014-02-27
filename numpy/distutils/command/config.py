@@ -401,7 +401,7 @@ int main ()
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
-                   lang="c"):
+                   lang="c", use_tee=None):
         """Try to compile, link to an executable, and run a program
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
@@ -426,7 +426,8 @@ int main ()
                 grabber.restore()
                 raise
             exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.')
+            exitstatus, output = exec_command(exe, execute_in='.',
+                                              use_tee=use_tee)
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)
                 if os.WIFSIGNALED(exitstatus):
