@@ -2456,10 +2456,13 @@ object_arrtype_dealloc(PyObject *v)
         /* We are inheriting from a Python type as well so \
            give it first dibs on conversion */ \
         sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
-        robj = sup->tp_new(type, args, kwds); \
-        if (robj != NULL) goto finish;              \
-        if (PyTuple_GET_SIZE(args)!=1) return NULL; \
-        PyErr_Clear(); \
+        /* Prevent recursion */ \
+        if (thisfunc != sup->tp_new) { \
+            robj = sup->tp_new(type, args, kwds); \
+            if (robj != NULL) goto finish;        \
+            if (PyTuple_GET_SIZE(args)!=1) return NULL; \
+            PyErr_Clear(); \
+        } \
         /* now do default conversion */ \
     }
 
@@ -2495,6 +2498,9 @@ static PyObject *
     PyObject *robj;
     PyArrayObject *arr;
     PyArray_Descr *typecode = NULL;
+#if (@work@ != 0) || (@default@ == 1)
+    void *thisfunc = (void *)@name@_arrtype_new; 
+#endif
 #if !(@default@ == 2)
     int itemsize;
     void *dest, *src;
