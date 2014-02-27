@@ -9,7 +9,7 @@ python:
 matrix:
   include:
     - python: 3.3
-      env: USE_CHROOT=1 ARCH=i386 DIST=saucy
+      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=3.4
     - python: 3.2
       env: USE_DEBUG=1
     - python: 2.7

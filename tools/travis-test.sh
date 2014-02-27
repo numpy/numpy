@@ -33,14 +33,17 @@ setup_chroot()
   # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   DIR=$1
+  # speeds up setup as we don't have eatmydata during bootstrap
+  sudo mkdir -p $DIR
+  sudo mount -t tmpfs -o size=4G tmpfs $DIR
   set -u
   sudo apt-get -qq -y --force-yes install debootstrap eatmydata
   sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
   sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
-  echo deb http://archive.ubuntu.com/ubuntu/ saucy main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://archive.ubuntu.com/ubuntu/ saucy-updates main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://security.ubuntu.com/ubuntu saucy-security  main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://archive.ubuntu.com/ubuntu/ $DIST main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://archive.ubuntu.com/ubuntu/ $DIST-updates main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://security.ubuntu.com/ubuntu $DIST-security  main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
