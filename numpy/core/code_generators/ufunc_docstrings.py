@@ -3312,3 +3312,65 @@ add_newdoc('numpy.core.umath', 'true_divide',
     array([0, 0, 0, 0, 1])
 
     """)
+
+add_newdoc('numpy.core.umath', 'ldexp',
+    """
+    Scale floating point value by a power of 2, element-wise.
+
+    Equivalent to ``x1 * 2**x2``.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Input array to be scaled.
+    x2 : array_like
+        Input array of exponents.
+
+    Returns
+    -------
+    y: ndarray
+        The corresponding scaled values.
+
+    See Also
+    --------
+    frexp : Extract significand and exponent from floating point number
+
+    Examples
+    --------
+    >>> np.ldexp(0.5, np.arange(-1,4))
+    array([ 0.25,  0.5 ,  1.  ,  2.  ,  4.  ])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'frexp',
+    """
+    Extract significand and exponent from a floating point number.
+
+    All floating point numbers are of the form: ``y1 * 2**y2`` where `y1`,
+    the significand, is a number between 0.5 and 1, or 0 and `y2`, the
+    exponent, is an integer.
+
+    Parameters
+    ----------
+    x: array_like
+        Input array.
+
+    Returns
+    -------
+    y1 : ndarray
+        The normalized significands from `x`.
+    y2 : ndarray
+        The exponents from `x`.
+
+    See Also
+    --------
+    ldexp : Scale floating point number by power of 2
+
+    Examples
+    --------
+    >>> np.frexp([0.25, 0.5, 1, 2, 4])
+    (array([ 0.5,  0.5,  0.5,  0.5,  0.5]),
+     array([-1,  0,  1,  2,  3], dtype=int32))
+
+    """)
+

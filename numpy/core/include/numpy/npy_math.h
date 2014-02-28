@@ -118,10 +118,6 @@ double npy_tanh(double x);
 double npy_asin(double x);
 double npy_acos(double x);
 double npy_atan(double x);
-double npy_aexp(double x);
-double npy_alog(double x);
-double npy_asqrt(double x);
-double npy_afabs(double x);
 
 double npy_log(double x);
 double npy_log10(double x);
@@ -151,6 +147,9 @@ double npy_modf(double x, double* y);
 double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
 double npy_spacing(double x);
+
+double npy_ldexp(double x, int exp);
+double npy_frexp(double x, int* exp);
 
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
@@ -256,8 +255,11 @@ float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
 float npy_spacingf(float x);
 
+float npy_ldexpf(float x, int exp);
+float npy_frexpf(float x, int* exp);
+
 /*
- * float C99 math functions
+ * long double C99 math functions
  */
 
 npy_longdouble npy_sinl(npy_longdouble x);
@@ -296,6 +298,9 @@ npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
 npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_spacingl(npy_longdouble x);
+
+npy_longdouble npy_ldexpl(npy_longdouble x, int exp);
+npy_longdouble npy_frexpl(npy_longdouble x, int* exp);
 
 /*
  * Non standard functions
@@ -420,6 +425,19 @@ npy_cdouble npy_csqrt(npy_cdouble z);
 
 npy_cdouble npy_ccos(npy_cdouble z);
 npy_cdouble npy_csin(npy_cdouble z);
+npy_cdouble npy_ctan(npy_cdouble z);
+
+npy_cdouble npy_ccosh(npy_cdouble z);
+npy_cdouble npy_csinh(npy_cdouble z);
+npy_cdouble npy_ctanh(npy_cdouble z);
+
+npy_cdouble npy_cacos(npy_cdouble z);
+npy_cdouble npy_casin(npy_cdouble z);
+npy_cdouble npy_catan(npy_cdouble z);
+
+npy_cdouble npy_cacosh(npy_cdouble z);
+npy_cdouble npy_casinh(npy_cdouble z);
+npy_cdouble npy_catanh(npy_cdouble z);
 
 /*
  * Single precision complex functions
@@ -435,6 +453,20 @@ npy_cfloat npy_csqrtf(npy_cfloat z);
 
 npy_cfloat npy_ccosf(npy_cfloat z);
 npy_cfloat npy_csinf(npy_cfloat z);
+npy_cfloat npy_ctanf(npy_cfloat z);
+
+npy_cfloat npy_ccoshf(npy_cfloat z);
+npy_cfloat npy_csinhf(npy_cfloat z);
+npy_cfloat npy_ctanhf(npy_cfloat z);
+
+npy_cfloat npy_cacosf(npy_cfloat z);
+npy_cfloat npy_casinf(npy_cfloat z);
+npy_cfloat npy_catanf(npy_cfloat z);
+
+npy_cfloat npy_cacoshf(npy_cfloat z);
+npy_cfloat npy_casinhf(npy_cfloat z);
+npy_cfloat npy_catanhf(npy_cfloat z);
+
 
 /*
  * Extended precision complex functions
@@ -450,6 +482,20 @@ npy_clongdouble npy_csqrtl(npy_clongdouble z);
 
 npy_clongdouble npy_ccosl(npy_clongdouble z);
 npy_clongdouble npy_csinl(npy_clongdouble z);
+npy_clongdouble npy_ctanl(npy_clongdouble z);
+
+npy_clongdouble npy_ccoshl(npy_clongdouble z);
+npy_clongdouble npy_csinhl(npy_clongdouble z);
+npy_clongdouble npy_ctanhl(npy_clongdouble z);
+
+npy_clongdouble npy_cacosl(npy_clongdouble z);
+npy_clongdouble npy_casinl(npy_clongdouble z);
+npy_clongdouble npy_catanl(npy_clongdouble z);
+
+npy_clongdouble npy_cacoshl(npy_clongdouble z);
+npy_clongdouble npy_casinhl(npy_clongdouble z);
+npy_clongdouble npy_catanhl(npy_clongdouble z);
+
 
 /*
  * Functions that set the floating point error
