@@ -984,7 +984,7 @@ cdef class RandomState:
 
         >>> np.random.choice(5, 3, replace=False)
         array([3,1,0])
-        >>> #This is equivalent to np.random.shuffle(np.arange(5))[:3]
+        >>> #This is equivalent to np.random.permutation(np.arange(5))[:3]
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
