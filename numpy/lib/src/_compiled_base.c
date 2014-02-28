@@ -104,158 +104,143 @@ check_array_monotonic(const double *a, npy_int lena)
     }
 }
 
-/*
- * Having multiple inner loops was a must to properly handle input integer
- * arrays for types larger than NPY_INTP. And once started, there is no
- * good reason not to specialize the inner loops for all integer types.
- */
-
-typedef npy_intp (max_inner_loop_func)(const char*, npy_intp, npy_intp);
-typedef void (count_inner_loop_func)(const char *, npy_intp *, npy_intp,
-                                     npy_intp);
-typedef void (weights_inner_loop_func)(const char *, const char *,
-                                       npy_double *, npy_intp, npy_intp,
-                                       npy_intp);
-
-/**begin repeat
- *
- * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG#
- * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong#
- * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
- *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #sgnd = 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 #
- */
 
 /*
- * Returns the maximum value in an array of non-negative integers.
- * Returns -1 if it finds any negative values, or -2 if the maximum
- * will not fit in a NPY_INTP
+ * Return the maximum value in an array of non-negative npy_intp integers.
+ * Return -1 if there are any negative values.
  */
 
-static npy_intp
-max_inner_loop_@suff@(const char *list, npy_intp str, npy_intp len)
+static NPY_INLINE npy_intp
+max_loop(const char *arr, npy_intp stride, npy_intp len)
 {
-    @type@ max = 0;
+    npy_intp max = 0;
 
     while (len--) {
-        const @type@ val = *(const @type@ *)list;
-        list += str;
-        #if @sgnd@
-            if (val < 0) {
-                max = -1;
-                break;
-            }
-        #endif
+        const npy_intp val = *(const npy_intp *)arr;
+        arr += stride;
+
+        if (val < 0) {
+            max = -1;
+            break;
+        }
         if (val > max) {
             max = val;
         }
     }
-    if (max > NPY_MAX_INTP) {
-        max = -2;
+
+    return max;
+}
+
+static npy_intp
+get_non_negative_max(PyArrayObject* arr)
+{
+    npy_intp max_arr;
+    PyArray_Descr *type_intp = PyArray_DescrFromType(NPY_INTP);
+    npy_bool no_iter = PyArray_ISALIGNED(arr) &&
+                       PyArray_ISNOTSWAPPED(arr) &&
+                       PyArray_EquivTypes(PyArray_DESCR(arr), type_intp) &&
+                       (PyArray_NDIM(arr) <= 1 || PyArray_ISCONTIGUOUS(arr));
+
+    if (!PyArray_SIZE(arr)) {
+        /* special handling for empty arrays */
+        max_arr = -1;
+    }
+    else if (no_iter) {
+        npy_intp stride = PyArray_NDIM(arr) ?
+                          PyArray_STRIDE(arr, PyArray_NDIM(arr) - 1) : 0;
+        NPY_BEGIN_ALLOW_THREADS;
+        max_arr = max_loop((const char *)PyArray_DATA(arr),
+                           stride,
+                           PyArray_SIZE(arr));
+        NPY_END_ALLOW_THREADS;
+    }
+    else {
+        NpyIter *iter = NULL;
+        NpyIter_IterNextFunc *iternext = NULL;
+        char **dataptr;
+        npy_intp *strideptr, *innersizeptr;
+
+        iter = NpyIter_New(arr,
+                           NPY_ITER_READONLY | NPY_ITER_EXTERNAL_LOOP |
+                           NPY_ITER_BUFFERED | NPY_ITER_GROWINNER |
+                           NPY_ITER_NBO | NPY_ITER_ALIGNED,
+                           NPY_KEEPORDER, NPY_UNSAFE_CASTING, type_intp);
+        if (!(iter && (iternext = NpyIter_GetIterNext(iter, NULL)))) {
+            if (iter) {
+                NpyIter_Deallocate(iter);
+            }
+            Py_DECREF(type_intp);
+            return -1;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+        do {
+            NPY_BEGIN_ALLOW_THREADS;
+            max_arr = max_loop((const char *)dataptr[0], *strideptr,
+                               *innersizeptr);
+            NPY_END_ALLOW_THREADS;
+        } while (max_arr >= 0 && iternext(iter));
+
+        NpyIter_Deallocate(iter);
     }
 
-    return (npy_intp)max;
+    Py_DECREF(type_intp);
+    return max_arr;
 }
 
 /*
- * Writes to 'out[i]' the number of times that 'i' comes up in 'list'. The
- * `out` array must be long enough to hold the largest value in `list`,
- * typically calculated with a prior call to 'max_inner_loop_@suff@'
+ * Write to 'out[i]' the number of times that 'i' comes up in 'arr', when
+ * both 'arr' and 'out' are of type npy_intp. 'out' array must be contiguous
+ * and long enough to hold the largest value in `arr`, typically calculated
+ * with a prior call to 'max_loop'.
  */
 
-static void
-count_inner_loop_@suff@(const char *list, npy_intp *out, npy_intp str,
-                        npy_intp len)
+static NPY_INLINE void
+count_loop(const char *arr, npy_intp *out, npy_intp stride, npy_intp len)
 {
     while (len--) {
-        @type@ val = *(@type@ *)list;
-        list += str;
+        const npy_intp val = *(const npy_intp *)arr;
+
+        arr += stride;
         out[val]++;
     }
 }
 
 /*
- * Writes to 'out[i]' the sum of all the items in 'weights' at positions
- * where `list` holds the value `i`. The `out` array must be long enough
- * to hold the largest value in `list`, typically calculated with a prior
- * call to 'max_inner_loop_@suff@'
+ * Add to 'out[i]' the sum of all the items in 'weights' at positions
+ * where 'arr' holds the value 'i', with 'arr' of type npy_intp and 'weights'
+ * and 'out' of type npy_double. 'out' must be contiguous and long enough to
+ * hold the largest value in `arr`, typically calculated with a prior call
+ * to 'max_loop'
  */
 
-static void
-weights_inner_loop_@suff@(const char *list, const char *weights,
-                          npy_double *out, npy_intp str_lst,
-                          npy_intp str_wts, npy_intp len)
+static NPY_INLINE void
+weights_loop(const char *arr, const char *weights, npy_double *out,
+             npy_intp stride_arr, npy_intp stride_wts, npy_intp len)
 {
     while (len--) {
-        const @type@ val_lst = *(const @type@ *)list;
+        const npy_intp val_arr = *(const npy_intp *)arr;
         const npy_double val_wts = *(const npy_double *)weights;
-        list += str_lst;
-        weights += str_wts;
-        out[val_lst] += val_wts;
+
+        arr += stride_arr;
+        weights += stride_wts;
+        out[val_arr] += val_wts;
     }
 }
 
-/**end repeat**/
-
-static max_inner_loop_func *max_func_map[] = {
-    /**begin repeat
-     *
-     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-     *         LONGLONG, ULONGLONG#
-     * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
-     *         longlong, ulonglong#
-     */
-        &max_inner_loop_@suff@,
-    /**end repeat**/
-};
-
-static count_inner_loop_func *count_func_map[] = {
-    /**begin repeat
-     *
-     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-     *         LONGLONG, ULONGLONG#
-     * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
-     *         longlong, ulonglong#
-     */
-        &count_inner_loop_@suff@,
-    /**end repeat**/
-};
-
-static weights_inner_loop_func *weights_func_map[] = {
-    /**begin repeat
-     *
-     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-     *         LONGLONG, ULONGLONG#
-     * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
-     *         longlong, ulonglong#
-     */
-        &weights_inner_loop_@suff@,
-    /**end repeat**/
-};
-
-
 /*
- * On succesful ending, returns 0 and fills axes with the bounds-checked
- * axes found in axes_in, and axes_len with the number of axes found. On
- * failure sets an exception and returns -1;
+ * On succes, returns 0 and fills 'axes' with the bounds-checked axes found
+ * in 'axes_in', and 'axes_len' with the number of axes found. On failure
+ * sets an exception and returns -1;
  */
 
 static int
-parse_axes(PyArrayObject *arr, PyObject *axes_in, int *axes, int *axes_len)
+parse_axes(PyObject *axes_in, int *axes, int *axes_len, int ndim)
 {
-    int ndim = PyArray_NDIM(arr);
     npy_intp naxes;
     npy_intp j;
 
-    // if () {
-        // /* User left argument blank, default to last axis */
-        // naxes = 1;
-        // /* Set axis to 0 as default for scalar arrays */
-        // axes[0] = (ndim == 0) ? 0 : ndim - 1;
-    // }
-    // else
     if (!axes_in || axes_in == Py_None) {
         /* Convert blank argument or 'None' into all the axes */
         naxes = ndim;
@@ -325,65 +310,66 @@ parse_axes(PyArrayObject *arr, PyObject *axes_in, int *axes, int *axes_len)
     return 0;
 }
 
-
 /*
  * arr_ndbincount is registered as bincount.
  *
  * bincount accepts one, two or three arguments. The first is an array of
  * non-negative integers. The second, if present, is an array of weights,
- * which must be promotable to double. Call these arguments 'list' and
- * 'weights'. Their shapes must be broadcastable. The fourth argument, call
- * it `axis', holds a list of axes, and defaults to the last axis only. The
+ * which must be promotable to double. Call these arguments 'arr' and
+ * 'weights'. Their shapes must broadcast. The fourth argument, call
+ * it `axis', holds a list of axes, and defaults to all axes. The
  * return will have the shape of the broadcasted arrays, with the axes in
  * `axis` removed, and an extra dimension added at the end
- * If 'weights' is not present then 'bincount(list)[..., i]` is the number of
- * occurrences of 'i' in 'list' over the removed 'axis' at each of the
+ * If 'weights' is not present then 'bincount(arr)[..., i]` is the number of
+ * occurrences of 'i' in 'arr' over the removed 'axis' at each of the
  * non-removed positions.
- * If 'weights' is present then 'bincount(list, weights)[..., i]' is the sum
- * of all 'weights[j]' where 'list[j] == i' over the removed 'axis' at each
+ * If 'weights' is present then 'bincount(arr, weights)[..., i]' is the sum
+ * of all 'weights[j]' where 'arr[j] == i' over the removed 'axis' at each
  * of the non-removed positions.
  * The third argument, call it 'minlength', if present, is a minimum length
  * for the last dimension of the output array.
  * The entries in the fourth argument, 'axis', refer to the original shape of
- * the 'list' argument before broadcasting.
+ * the 'arr' argument before broadcasting.
  */
 
 static PyObject*
 arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
 {
     /* Raw input arguments  */
-    PyObject *list = NULL;
+    PyObject *arr = NULL;
     PyObject *weights = NULL;
     PyObject *axis = NULL;
     PyObject *minlength = Py_None;
-    static char *kwlist[] = {"list", "weights", "minlength", "axis", NULL};
+    static char *kwlist[] = {"arr", "weights", "minlength", "axis", NULL};
     /* Array version of the inputs and output */
-    PyArrayObject *arr_lst = NULL;
+    PyArrayObject *arr_arr = NULL;
     PyArrayObject *arr_wts = NULL;
     PyArrayObject *arr_ret = NULL;
     /* Metadata of the input arguments */
     int axes[NPY_MAXDIMS];
     int naxes;
     npy_bool axis_flags[NPY_MAXDIMS];
-    int ndim_lst, ndim_wts, ndim_ret;
-    npy_intp shape_ret[NPY_MAXDIMS], *shape_lst;
-    npy_intp max_lst = 0;
+    int ndim_arr, ndim_wts, ndim_ret;
+    npy_intp shape_ret[NPY_MAXDIMS];
+    npy_intp shape_array_arr[NPY_MAXDIMS];
+    npy_intp *shape_arr = shape_array_arr;
+    npy_intp max_arr = 0;
     npy_intp min_len = 0;
     npy_intp j, k;
-    /* We have to take ownership of this type reference */
+    /* We have to take ownership of this type references */
+    PyArray_Descr *type_intp = PyArray_DescrFromType(NPY_INTP);
     PyArray_Descr *type_double = PyArray_DescrFromType(NPY_DOUBLE);
     /* Iterator related declarations */
-    NpyIter *iter = NULL, *iter_outer = NULL, *iter_inner = NULL;
+    NpyIter *iter_outer = NULL, *iter_inner = NULL;
     int ndim_outer, ndim_inner;
     int op_axes_outer_arrays[3][NPY_MAXDIMS];
     int op_axes_inner_arrays[2][NPY_MAXDIMS];
-    npy_bool no_iter_max = 0, no_iter_count = 0, no_iter_weights = 0;
-    npy_bool is_empty_list;
+    npy_bool is_empty_arr = 0, no_iter_count = 0, no_iter_weights = 0;
     NPY_BEGIN_THREADS_DEF;
 
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOO", kwlist,
-                                     &list, &weights, &minlength, &axis)) {
+                                     &arr, &weights, &minlength, &axis)) {
         goto fail;
     }
 
@@ -404,34 +390,37 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
         goto fail;
     }
 
-    /* Convert list to array */
-    arr_lst = (PyArrayObject *)PyArray_FromAny(list, NULL, 0, 0, 0, NULL);
-    if (!arr_lst) {
-        PyErr_SetString(PyExc_TypeError, "could not parse input array");
-        goto fail;
+    /* Convert arr to an array. Cast to NPY_INTP for 1-D arrays only */
+    if (!PyArray_Check(arr)) {
+        arr_arr = (PyArrayObject *)PyArray_FROMANY(arr, NPY_INTP, 0, 0,
+                                                   NPY_ARRAY_CARRAY_RO);
     }
-    is_empty_list = !(npy_bool)PyArray_SIZE(arr_lst);
-    if(!(PyArray_ISINTEGER(arr_lst) || PyArray_ISBOOL(arr_lst) ||
-         is_empty_list)) {
-        /* Without the is_empty check, empty lists raise this error */
+    else if (PyArray_ISINTEGER((PyArrayObject *)arr)) {
+        if (PyArray_NDIM((PyArrayObject *)arr) == 1) {
+            arr_arr = (PyArrayObject *)PyArray_FROMANY(arr, NPY_INTP, 0, 0,
+                                                       NPY_ARRAY_ALIGNED |
+                                                       NPY_ARRAY_FORCECAST);
+        }
+         else {
+            arr_arr = (PyArrayObject *)arr;
+            Py_INCREF(arr_arr);
+         }
+    } else {
         PyErr_SetString(PyExc_TypeError,
                         "input must be an array of integers");
+    }
+    if (!arr_arr) {
+
         goto fail;
     }
-    ndim_lst = PyArray_NDIM(arr_lst);
-    /*
-     * We don't need an iterator to find the max if the input array is behaved
-     * and either 1D or contiguous.
-     */
-    no_iter_max = PyArray_ISNOTSWAPPED(arr_lst) &&
-                  PyArray_ISALIGNED(arr_lst) &&
-                  ((ndim_lst == 1) || PyArray_ISCONTIGUOUS(arr_lst));
+    ndim_arr = PyArray_NDIM(arr_arr);
+    is_empty_arr = PyArray_SIZE(arr_arr) ? 0 : 1;
 
     /* Check axis in bounds */
-    if (parse_axes(arr_lst, axis, axes, &naxes) < 0) {
+    if (parse_axes(axis, axes, &naxes, ndim_arr) < 0) {
         goto fail;
     }
-    memset(axis_flags, 0, ndim_lst);
+    memset(axis_flags, 0, ndim_arr);
     for (j = 0; j < naxes; j++) {
         int axis = axes[j];
         if (axis_flags[axis]) {
@@ -441,68 +430,61 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
         axis_flags[axis] = 1;
     }
 
-    /*
-     * Convert weights to an array. Don't force a cast to NPY_DOUBLE, the
-     * iterator will handle that.
-     */
+    /* Convert weights to an array. Cast to NPY_DOUBLE for 1-D arrays only */
     if (weights && weights != Py_None) {
-        arr_wts = (PyArrayObject *)PyArray_FromAny(weights, NULL,
-                                                   0, 0, 0, NULL);
-        if (!arr_wts) {
-            PyErr_SetString(PyExc_TypeError,
-                            "could not parse weights array");
-            goto fail;
+
+        if (!PyArray_Check(weights)) {
+            arr_wts = (PyArrayObject *)PyArray_FROMANY(weights,
+                                                       NPY_DOUBLE, 0, 0,
+                                                       NPY_ARRAY_CARRAY_RO);
         }
-        if(!PyArray_CanCastArrayTo(arr_wts, type_double, NPY_SAFE_CASTING)) {
+        else if (PyArray_CanCastTypeTo(PyArray_DESCR((PyArrayObject *)weights),
+                                       type_double, NPY_SAFE_CASTING)) {
+            if (PyArray_NDIM((PyArrayObject *)weights) <= 1) {
+                arr_wts = (PyArrayObject *)PyArray_FROMANY(weights,
+                                                    NPY_DOUBLE, 0, 0,
+                                                    NPY_ARRAY_ALIGNED |
+                                                    NPY_ARRAY_FORCECAST);
+            }
+             else {
+                arr_wts = (PyArrayObject *)weights;
+                Py_INCREF(arr_wts);
+             }
+        } else {
             PyErr_SetString(PyExc_TypeError,
-                            "cannot convert weights array to double");
+                            "cannot cast 'weights' to float");
+        }
+        if (!arr_wts) {
             goto fail;
         }
         ndim_wts = PyArray_NDIM(arr_wts);
-        if (ndim_wts == 0) {
-            /*
-             * The iterator has trouble with scalars, because no axes get
-             * selected, and casting and buffering doesn't happen, so we
-             * force the conversion.
-             */
-            PyArrayObject *temp = (PyArrayObject *)PyArray_Cast(arr_wts,
-                                                                NPY_DOUBLE);
-            Py_DECREF(arr_wts);
-            arr_wts = temp;
-        }
     }
 
     /* Broadacst the arrays to create the return array shape */
-    shape_lst = PyArray_DIMS(arr_lst);
+    shape_arr = PyArray_DIMS(arr_arr);
 
     if (arr_wts) {
         npy_intp *shape_wts = PyArray_DIMS(arr_wts);
 
-        if (ndim_wts > ndim_lst) {
-            j = ndim_lst - ndim_wts;
-            k = 0;
-        }
-        else {
-            j = 0;
-            k = ndim_wts - ndim_lst;
-        }
-        for (ndim_inner = 0, ndim_outer = 0; j < ndim_lst; j++, k++) {
+        j = ndim_wts > ndim_arr ? ndim_arr - ndim_wts : 0;
+        k = ndim_wts > ndim_arr ? 0 : ndim_arr - ndim_wts;
+
+        for (ndim_inner = 0, ndim_outer = 0; j < ndim_arr; j++, k++) {
 
             if (j < 0 || !axis_flags[j]) {
                 op_axes_outer_arrays[0][ndim_outer] = j < 0 ? -1 : j;
                 op_axes_outer_arrays[1][ndim_outer] = k < 0 ? -1 : k;
                 op_axes_outer_arrays[2][ndim_outer] = ndim_outer;
                 /*
-                 * We are not validating whether the arrays are
-                 * broadcastable, the iterator will handle that.
-                 * But if they are broadcastable, then this is the
-                 * broadcasted shape.
+                 * We are not validating whether the arrays broadcast,
+                 * the iterator will handle that. But if they broadcast,
+                 * then this is the broadcast shape.
                  */
-                if (j < 0 || (k >= 0 && shape_lst[j] == 1)) {
+                if (j < 0 || (k >= 0 && shape_arr[j] == 1)) {
                     shape_ret[ndim_outer++] = shape_wts[k];
                 }
                 else  {
-                    shape_ret[ndim_outer++] = shape_lst[j];
+                    shape_ret[ndim_outer++] = shape_arr[j];
                 }
             }
             else {
@@ -512,11 +494,11 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
         }
     }
     else {
-        for(j = 0, ndim_inner = 0, ndim_outer = 0; j < ndim_lst; j++) {
+        for(j = 0, ndim_inner = 0, ndim_outer = 0; j < ndim_arr; j++) {
             if (!axis_flags[j]) {
                 op_axes_outer_arrays[0][ndim_outer] = j;
                 op_axes_outer_arrays[2][ndim_outer] = ndim_outer;
-                shape_ret[ndim_outer++] = shape_lst[j];
+                shape_ret[ndim_outer++] = shape_arr[j];
             }
             else {
                 op_axes_inner_arrays[0][ndim_inner++] = j;
@@ -525,127 +507,65 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
     }
     ndim_ret = ndim_outer;
 
-    /* Find maximum entry in arr_lst and check for negative entries. */
-    if (is_empty_list) {
-        max_lst = -1;
-    }
-    else if (no_iter_max) {
-        /* Don't use an iterator if we do not need one */
-        int typenum_lst= PyArray_DESCR(arr_lst)->type_num;
-        max_inner_loop_func *max_func = max_func_map[typenum_lst];
-
-        NPY_BEGIN_THREADS;
-        max_lst = max_func((const char *)PyArray_DATA(arr_lst),
-                           ndim_lst ? PyArray_STRIDES(arr_lst)[ndim_lst-1] : 0,
-                           PyArray_SIZE(arr_lst));
-        NPY_END_THREADS;
-    }
-    else {
-        NpyIter_IterNextFunc *iternext = NULL;
-        char **dataptr;
-        npy_intp *strideptr, *innersizeptr;
-        int typenum_lst = PyArray_DESCR(arr_lst)->type_num;
-        max_inner_loop_func *max_func = max_func_map[typenum_lst];
-
-        iter = NpyIter_New(arr_lst,
-                           NPY_ITER_READONLY | NPY_ITER_EXTERNAL_LOOP |
-                           NPY_ITER_BUFFERED | NPY_ITER_GROWINNER |
-                           NPY_ITER_NBO | NPY_ITER_ALIGNED,
-                           NPY_KEEPORDER, NPY_UNSAFE_CASTING, NULL);
-        if (!(iter && (iternext = NpyIter_GetIterNext(iter, NULL)))) {
-            goto fail;
-        }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-        strideptr = NpyIter_GetInnerStrideArray(iter);
-        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-        do {
-            NPY_BEGIN_THREADS;
-            max_lst = max_func((const char *)dataptr[0],
-                               *strideptr,
-                               *innersizeptr);
-            NPY_END_THREADS;
-        } while (max_lst >= 0 && iternext(iter));
-
-        NpyIter_Deallocate(iter);
-        iter = NULL;
-    }
-
-    if (max_lst == -1 && !is_empty_list) {
+    /* Find maximum entry in arr_arr and check for negative entries. */
+    max_arr = get_non_negative_max(arr_arr);
+    if (max_arr == -1 && !is_empty_arr) {
         /*
-         * If list is empty, we want max_lst = -1 not to raise an error,
+         * If arr is empty, we want max_arr = -1 not to raise an error,
          * as it will set the return length to the right value.
          */
-        PyErr_SetString(PyExc_ValueError, "input array must be non-negative");
-        goto fail;
-    }
-    if (max_lst == -2) {
-        PyErr_SetString(PyExc_ValueError, "value too large in input array");
+        PyErr_SetString(PyExc_ValueError, "wrong value in input array");
         goto fail;
     }
 
     /* Finish creating the return array shape */
-    shape_ret[ndim_ret++] = (min_len <= max_lst) ? max_lst + 1 : min_len;
+    shape_ret[ndim_ret++] = (min_len <= max_arr) ? max_arr + 1 : min_len;
 
     /* Create the return array */
     arr_ret = (PyArrayObject *)PyArray_ZEROS(ndim_ret, shape_ret,
                                              arr_wts ? NPY_DOUBLE : NPY_INTP,
                                              0);
 
-    /* Figure out whether we need an iterator for counting */
-    if (arr_wts) {
-        /*
-         * We do not need an iterator for weighted counting if both arrays
-         * are behaved, of the same size, are 1D, weights has the right type,
-         * and weighted counting is done over all axes.
-         */
-        no_iter_count = 0;
-        no_iter_weights = (ndim_lst == ndim_wts) &&
-                          (ndim_lst == ndim_inner) &&
-                          (ndim_lst <= 1) &&
-                          PyArray_SIZE(arr_lst) == PyArray_SIZE(arr_wts) &&
-                          PyArray_ISNOTSWAPPED(arr_wts) &&
-                          PyArray_ISALIGNED(arr_wts) &&
-                          PyArray_DESCR(arr_wts)->type_num == NPY_DOUBLE &&
-                          PyArray_ISNOTSWAPPED(arr_lst) &&
-                          PyArray_ISALIGNED(arr_lst);
-    }
-    else {
-        /*
-         * We do not need an iterator for counting if the input array is
-         * behaved, 1D or contiguous, and counting is done over all axes.
-         */
-        no_iter_weights = 0;
-        no_iter_count = (ndim_lst == ndim_inner) && no_iter_max;
-    }
+    /* Do we need an iterator? */
+    no_iter_count = PyArray_ISALIGNED(arr_arr) &&
+                    PyArray_ISNOTSWAPPED(arr_arr) &&
+                    PyArray_EquivTypes(PyArray_DESCR(arr_arr), type_intp) &&
+                    ndim_outer == 0 &&
+                    (ndim_arr <= 1 || PyArray_ISCONTIGUOUS(arr_arr));
+    no_iter_weights = no_iter_count && arr_wts &&
+                      PyArray_ISALIGNED(arr_wts) &&
+                      PyArray_ISNOTSWAPPED(arr_wts) &&
+                      PyArray_EquivTypes(PyArray_DESCR(arr_wts),
+                                         type_double) &&
+                      PyArray_SIZE(arr_arr) == PyArray_SIZE(arr_wts) &&
+                      (ndim_wts <= 1 || PyArray_ISCONTIGUOUS(arr_wts));
 
     /* Finally, lets count */
-    if (is_empty_list) {
+    if (is_empty_arr) {
         goto finish;
     }
-    else if (no_iter_count) {
-        int typenum_lst = PyArray_DESCR(arr_lst)->type_num;
-        count_inner_loop_func *cnt_func = count_func_map[typenum_lst];
-
+    else if (no_iter_count && !arr_wts) {
+        npy_intp stride = ndim_arr ?
+                          PyArray_STRIDE(arr_arr, ndim_arr - 1) : 0;
         NPY_BEGIN_THREADS;
-        cnt_func((const char *)PyArray_DATA(arr_lst),
-                 (npy_intp *)PyArray_DATA(arr_ret),
-                 ndim_lst ? PyArray_STRIDES(arr_lst)[ndim_lst-1] : 0,
-                 PyArray_SIZE(arr_lst));
+        count_loop((const char *)PyArray_DATA(arr_arr),
+                    (npy_intp *)PyArray_DATA(arr_ret),
+                    stride,
+                    PyArray_SIZE(arr_arr));
         NPY_END_THREADS;
     }
     else if (no_iter_weights) {
-        int typenum_lst = PyArray_DESCR(arr_lst)->type_num;
-        weights_inner_loop_func *w_func = weights_func_map[typenum_lst];
-
+        npy_intp stride_arr = ndim_arr ?
+                              PyArray_STRIDE(arr_arr, ndim_arr - 1) : 0;
+        npy_intp stride_wts = ndim_wts ?
+                              PyArray_STRIDE(arr_wts, ndim_wts - 1) : 0;
         NPY_BEGIN_THREADS;
-        w_func((const char *)PyArray_DATA(arr_lst),
-               (const char *)PyArray_DATA(arr_wts),
-               (npy_double *)PyArray_DATA(arr_ret),
-               ndim_lst ? PyArray_STRIDES(arr_lst)[ndim_lst-1] : 0,
-               ndim_wts ? PyArray_STRIDES(arr_wts)[ndim_wts-1] : 0,
-               PyArray_SIZE(arr_lst));
+        weights_loop((const char *)PyArray_DATA(arr_arr),
+                     (const char *)PyArray_DATA(arr_wts),
+                     (npy_double *)PyArray_DATA(arr_ret),
+                     stride_arr, stride_wts,
+                     PyArray_SIZE(arr_arr));
         NPY_END_THREADS;
-
     }
     else {
         PyArrayObject *op[3];
@@ -659,11 +579,9 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
         npy_intp *innersizeptr_inner;
         int nops = arr_wts ? 3 : 2;
         int nop_ret = nops - 1;
-        PyArray_Descr *type_lst = PyArray_DESCR(arr_lst);
-        int typenum_lst = type_lst->type_num;
 
         /* We need nested iterators, set them up... */
-        op[0] = arr_lst;
+        op[0] = arr_arr;
         op[1] = arr_wts;
         /* nop_ret will overwrite arr_wts if arr_wts == NULL */
         op[nop_ret] = arr_ret;
@@ -694,7 +612,7 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
                             NPY_ITER_ALIGNED;
         op_flags_inner[1] = NPY_ITER_READONLY | NPY_ITER_NBO |
                             NPY_ITER_ALIGNED;
-        op_dtypes[0] = PyArray_DESCR(arr_lst);
+        op_dtypes[0] = type_intp;
         op_dtypes[1] = type_double;
         iter_inner = NpyIter_AdvancedNew(nops - 1, op, flags_inner,
                                          NPY_KEEPORDER, NPY_UNSAFE_CASTING,
@@ -710,30 +628,27 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
         innersizeptr_inner = NpyIter_GetInnerLoopSizePtr(iter_inner);
 
         if (arr_wts) {
-            weights_inner_loop_func *wts_func = weights_func_map[typenum_lst];
             do {
                 npy_double *data_ret = (npy_double *)dataptrs_outer[2];
                 NpyIter_ResetBasePointers(iter_inner, dataptrs_outer, NULL);
                 do {
                     NPY_BEGIN_THREADS;
-                    wts_func((const char *)dataptrs_inner[0],
-                             (const char *)dataptrs_inner[1],
-                             data_ret, strideptr_inner[0], strideptr_inner[1],
-                             *innersizeptr_inner);
+                    weights_loop((const char *)dataptrs_inner[0],
+                                 (const char *)dataptrs_inner[1],
+                                 data_ret, strideptr_inner[0],
+                                 strideptr_inner[1], *innersizeptr_inner);
                     NPY_END_THREADS;
                 } while (iternext_inner(iter_inner));
             } while (iternext_outer(iter_outer));
         }
         else {
-            count_inner_loop_func *cnt_func = count_func_map[typenum_lst];
             do {
                 npy_intp *data_ret = (npy_intp *)dataptrs_outer[1];
                 NpyIter_ResetBasePointers(iter_inner, dataptrs_outer, NULL);
                 do {
                     NPY_BEGIN_THREADS;
-                    cnt_func((const char *)dataptrs_inner[0],
-                             data_ret, strideptr_inner[0],
-                             *innersizeptr_inner);
+                    count_loop((const char *)dataptrs_inner[0], data_ret,
+                               strideptr_inner[0], *innersizeptr_inner);
                     NPY_END_THREADS;
                 } while (iternext_inner(iter_inner));
             } while (iternext_outer(iter_outer));
@@ -744,23 +659,22 @@ arr_ndbincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwargs)
     }
 
     finish:
+        Py_DECREF(type_intp);
         Py_DECREF(type_double);
-        Py_XDECREF(arr_lst);
+        Py_XDECREF(arr_arr);
         Py_XDECREF(arr_wts);
         return (PyObject *)arr_ret;
 
     fail:
-        if (iter) {
-            NpyIter_Deallocate(iter);
-        }
         if (iter_inner) {
             NpyIter_Deallocate(iter_inner);
         }
         if (iter_outer) {
             NpyIter_Deallocate(iter_outer);
         }
+        Py_DECREF(type_intp);
         Py_DECREF(type_double);
-        Py_XDECREF(arr_lst);
+        Py_XDECREF(arr_arr);
         Py_XDECREF(arr_wts);
         Py_XDECREF(arr_ret);
         return NULL;

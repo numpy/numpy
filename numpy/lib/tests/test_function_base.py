@@ -1463,7 +1463,7 @@ class TestBincount(TestCase):
 
 class TestNDBincount(TestCase):
     def test_no_weights_1D(self):
-        int_types = ''.join(('?', np.typecodes['AllInteger']))
+        int_types = ''.join((np.typecodes['AllInteger']))
         for type in int_types:
             if type == '?':
                 z = [0, 5]
@@ -1474,7 +1474,7 @@ class TestNDBincount(TestCase):
             assert_array_equal(y, z)
 
     def test_weights_1D(self):
-        int_types = ''.join(('?', np.typecodes['AllInteger']))
+        int_types = ''.join((np.typecodes['AllInteger']))
         all_types = ''.join((np.typecodes['AllInteger'], 'efd'))
         for type_x in int_types:
             if type_x == '?':
@@ -1628,7 +1628,7 @@ class TestNDBincount(TestCase):
 
     def test_errors(self):
         # input array must be of integers
-        assert_raises(TypeError, np.bincount, [1.5, 2.3])
+        assert_raises(TypeError, np.bincount, np.array([1.5, 2.3]))
         # minlength must be an integer
         assert_raises(TypeError, np.bincount, range(5), minlength=1.3)
         # axis must be in bounds
@@ -1641,12 +1641,12 @@ class TestNDBincount(TestCase):
         assert_raises(TypeError, np.bincount, [1, 2], [5.j, 2.j])
         # no negative entries in input array
         assert_raises(ValueError, np.bincount, [-1, 3])
-        # Make sure the iterator to find the max isn't deallocated twice,
-        # which crashed the system
+        # Make sure the iterator to find the max is properly deallocated
         assert_raises(ValueError, np.bincount,
                       np.arange(-75, 50).reshape(5, 5, 5)[..., 0])
         # no entry in input array that won't fit in a np.intp
-        assert_raises(ValueError, np.bincount, [np.iinfo(np.intp).max + 1])
+        assert_raises(ValueError, np.bincount,
+                      np.array([np.iinfo(np.intp).max + 1]))
 
 
 class TestInterp(TestCase):

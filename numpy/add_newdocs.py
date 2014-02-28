@@ -4987,41 +4987,45 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
 
 add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
-    bincount(list, weights=None, minlength=None, axis=None)
+    bincount(arr, weights=None, minlength=None, axis=None)
 
     Count number of occurrences of each value in an array of non-negative ints
     along the selected axes.
 
-    Each bin gives the number of occurrences of its index value in `list`
-    along the axes in `axis`. If `weights` is specified, 'list' is weighted
-    by it, i.e. if ``list[i] == n``, then ``out[n] += weight[i]`` instead of
+    Each bin gives the number of occurrences of its index value in `arr`
+    along the axes in `axis`. If `weights` is specified, 'arr' is weighted
+    by it, i.e. if ``arr[i] == n``, then ``out[n] += weight[i]`` instead of
     ``out[n] += 1``.
 
     Parameters
     ----------
-    list : array_like, nonnegative ints
+    arr : array_like, nonnegative ints
         Input array.
     weights : array_like, optional
-        Weights, array broadcastable with `list`.
+        Weights, broadcasts with `arr`.
     minlength : int, optional
+
         .. versionadded:: 1.6.0
+
         A minimum number of bins for the output array.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
+
         .. versionadded:: 1.9.0
-       The axes of `x` over which to count, defaults to counting over
-        the flattened array.
+
+       The axes of `arr` over which to count. The default `None` counts
+       over all axes.
 
     Returns
     -------
-    out : ndarray of ints (or doubles if weights is specified)
+    out : ndarray of ints (or doubles if `weights` is specified)
         The result of binning the input array.
 
     Raises
     ------
     ValueError
         If the input contains elements with negative values, if there are
-        entries in axis repeated or out of bounds, or if the input array
-        and `weights` cannot be broadcasted together.
+        repeated or out of bounds entries in `axis` , or if the input array
+        and `weights` cannot be broadcast together.
     TypeError
         If the type of the input, `minlength` or `axis` is not an integer, or
         if `weights` cannot be safely cast to a double.
@@ -5032,12 +5036,12 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
 
     Notes
     -----
-    To determine the output shape, `list` and `weights` are broadcasted
-    together, the axes in `axis` are removed from the broadcasted shape, and
-    a dimension of size `max(max(list) + 1, minlength)` is appended to the
-    end. Note that the values in `axis` refer to the shape of `list` prior to
-    broadcasting, not after. Then entry at position `out[..., n]` will be the
-    (weighted) count of all instances of `n` in `list` along the selected axes.
+    To determine the output shape, `arr` and `weights` are broadcast
+    together, the axes in `axis` are removed from the broadcast shape, and
+    a dimension of size `max(max(arr) + 1, minlength)` is appended to the
+    end. Note that the values in `axis` refer to the shape of `arr` prior to
+    broadcasting. `out[..., n]` will then be the (weighted) count of all
+    instances of `n` in `arr` along the selected axes.
 
     Examples
     --------
@@ -5088,10 +5092,10 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
            [ 6.,  8.],
            [ 6.,  7.]])
 
-    Note that in this last example, the broadcasted shape of `x` is
-    `(1, 1, 4)`, but counting is only done over the last axis, not all three,
-    because the `axis` value (which defaults to all axes) refers to the shape
-    prior to broadcasting.
+    Note that in this last example, the broadcast shape of `arr` is `(1, 4)`,
+    but counting is only done over the last axis, not all two, because the
+    `axis` value (which defaults to all axes) refers to the shape prior to
+    broadcasting.
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
