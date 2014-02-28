@@ -1260,7 +1260,10 @@ add_newdoc('numpy.core.umath', 'fmod',
     """
     Return the element-wise remainder of division.
 
-    This is the NumPy implementation of the Python modulo operator `%`.
+    This is the NumPy implementation of the C library function fmod, the
+    remainder has the same sign as the dividend `x1`. It is equivalent to
+    the Matlab(TM) ``rem`` function and should not be confused with the
+    Python modulus operator ``x1 % x2``.
 
     Parameters
     ----------
@@ -1276,15 +1279,16 @@ add_newdoc('numpy.core.umath', 'fmod',
 
     See Also
     --------
-    remainder : Modulo operation where the quotient is `floor(x1/x2)`.
+    remainder : Equivalent to the Python ``%`` operator.
     divide
 
     Notes
     -----
     The result of the modulo operation for negative dividend and divisors
-    is bound by conventions. In `fmod`, the sign of the remainder is the
-    sign of the dividend. In `remainder`, the sign of the divisor does not
-    affect the sign of the result.
+    is bound by conventions. For `fmod`, the sign of result is the sign of
+    the dividend, while for `remainder` the sign of the result is the sign
+    of the divisor. The `fmod` function is equivalent to the Matlab(TM)
+    ``rem`` function.
 
     Examples
     --------
@@ -2685,7 +2689,10 @@ add_newdoc('numpy.core.umath', 'remainder',
     """
     Return element-wise remainder of division.
 
-    Computes ``x1 - floor(x1 / x2) * x2``.
+    Computes ``x1 - floor(x1 / x2) * x2``, the result has the same sign as
+    the divisor `x2`. It is equivalent to the Python modulus operator
+    ``x1 % x2`` and should not be confused with the Matlab(TM) ``rem``
+    function.
 
     Parameters
     ----------
@@ -2705,6 +2712,7 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     See Also
     --------
+    fmod : Equivalent of the Matlab(TM) ``rem`` function.
     divide, floor
 
     Notes
