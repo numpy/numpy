@@ -438,7 +438,7 @@ def make_specs():
     moldname = "moldname" if msvcr == "msvcrt" else "moldname" + msvcr.lstrip('msvcr')
 
     import subprocess
-    specs = subprocess.check_output(["gcc", "-dumpspecs"])
+    specs = subprocess.Popen(["gcc", "-dumpspecs"], stdout=subprocess.PIPE).communicate()[0].decode('ascii')
 
     #newspecs = specs.replace("msvcrt",msvcr).replace("moldname",moldname)
     #be more subtle:
@@ -459,8 +459,9 @@ def make_specs():
 
     import sys, os
     fname = os.path.join(sys.prefix,'libs',msvcr+".specs")
-    with open(fname,"w") as f:
-        f.write(newspecs)
+    fh = (fname, "w")
+    fh.write(newspecs)
+    fh.close()
     return fname
 
 
