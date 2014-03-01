@@ -48,7 +48,7 @@ Classes
 -------
 - `Polynomial` -- polynomial class.
 
-See also
+See Also
 --------
 `numpy.polynomial`
 
