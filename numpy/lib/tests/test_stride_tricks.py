@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import *
-from numpy.lib.stride_tricks import broadcast_arrays
+from numpy.lib.stride_tricks import as_strided, broadcast_arrays
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -46,6 +46,14 @@ def assert_same_as_ufunc(shape0, shape1, transposed=False, flipped=False):
     assert_array_equal(y, b1)
 
 
+def test_as_strided_dtype():
+    # Verify that as_strided works for arrays of different data types
+    # note: regression test for bug in GitHub issue #3323
+    for dtype in [float, 'i4,f4', object]:
+        x = np.zeros((2,), dtype)
+        assert_array_equal(x, as_strided(x))
+
+
 def test_same():
     x = np.arange(10)
     y = np.arange(10)
@@ -65,8 +73,7 @@ def test_one_off():
 
 
 def test_same_input_shapes():
-    """ Check that the final shape is just the input shape.
-    """
+    # Check that the final shape is just the input shape.
     data = [
         (),
         (1,),
@@ -92,9 +99,8 @@ def test_same_input_shapes():
 
 
 def test_two_compatible_by_ones_input_shapes():
-    """ Check that two different input shapes (of the same length but some have
-    1s) broadcast to the correct shape.
-    """
+    # Check that two different input shapes (of the same length but some have
+    # 1s) broadcast to the correct shape.
     data = [
         [[(1,), (3,)], (3,)],
         [[(1, 3), (3, 3)], (3, 3)],
@@ -117,9 +123,8 @@ def test_two_compatible_by_ones_input_shapes():
 
 
 def test_two_compatible_by_prepending_ones_input_shapes():
-    """ Check that two different input shapes (of different lengths) broadcast
-    to the correct shape.
-    """
+    # Check that two different input shapes (of different lengths) broadcast
+    # to the correct shape.
     data = [
         [[(), (3,)], (3,)],
         [[(3,), (3, 3)], (3, 3)],
@@ -149,8 +154,7 @@ def test_two_compatible_by_prepending_ones_input_shapes():
 
 
 def test_incompatible_shapes_raise_valueerror():
-    """ Check that a ValueError is raised for incompatible shapes.
-    """
+    # Check that a ValueError is raised for incompatible shapes.
     data = [
         [(3,), (4,)],
         [(2, 3), (2,)],
@@ -164,8 +168,7 @@ def test_incompatible_shapes_raise_valueerror():
 
 
 def test_same_as_ufunc():
-    """ Check that the data layout is the same as if a ufunc did the operation.
-    """
+    # Check that the data layout is the same as if a ufunc did the operation.
     data = [
         [[(1,), (3,)], (3,)],
         [[(1, 3), (3, 3)], (3, 3)],
