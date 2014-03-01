@@ -1085,6 +1085,30 @@ class TestHistogramdd(TestCase):
             h, e = np.histogramdd(x, bins=[3, [-np.inf, 3, np.inf]])
             assert_allclose(h, expected)
 
+    def test_rightmost_binedge(self):
+        """Test event very close to rightmost binedge.
+        See Github issue #4266"""
+        x = [0.9999999995]
+        bins = [[0.,0.5,1.0]]
+        hist, _ = histogramdd(x, bins=bins)
+        assert_(hist[0] == 0.0)
+        assert_(hist[1] == 1.)
+        x = [1.0]
+        bins = [[0.,0.5,1.0]]
+        hist, _ = histogramdd(x, bins=bins)
+        assert_(hist[0] == 0.0)
+        assert_(hist[1] == 1.)
+        x = [1.0000000001]
+        bins = [[0.,0.5,1.0]]
+        hist, _ = histogramdd(x, bins=bins)
+        assert_(hist[0] == 0.0)
+        assert_(hist[1] == 1.)
+        x = [1.0001]
+        bins = [[0.,0.5,1.0]]
+        hist, _ = histogramdd(x, bins=bins)
+        assert_(hist[0] == 0.0)
+        assert_(hist[1] == 0.0)
+
 
 class TestUnique(TestCase):
     def test_simple(self):
