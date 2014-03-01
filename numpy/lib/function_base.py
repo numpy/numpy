@@ -365,7 +365,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
             on_edge = (around(sample[:, i], decimal) == around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
-            Ncount[i][on_edge] -= 1
             Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
 
     # Flattened histogram matrix (1D)
