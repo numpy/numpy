@@ -43,3 +43,7 @@ Issues fixed
 * gh-3348: Access violation in _descriptor_from_pep3118_format
 * gh-3175: segmentation fault with numpy.array() from bytearray
 * gh-4266: histogramdd - wrong result for entries very close to last boundary
+* gh-3563: Correct and extend the documentation of fmod and remainder ufuncs
+* gh-2354: Document ldexp and frexp
+* gh-2807: Improve the documentation of numpy.load
+* gh-2423: Fix documentation of normed in histogram2d and histogramdd
