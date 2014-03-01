@@ -523,9 +523,11 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     Parameters
     ----------
     x : array_like, shape (N,)
-        An array containing the x coordinates of the points to be histogrammed.
+        An array containing the x coordinates of the points to be
+        histogrammed.
     y : array_like, shape (N,)
-        An array containing the y coordinates of the points to be histogrammed.
+        An array containing the y coordinates of the points to be
+        histogrammed.
     bins : int or [int, int] or array_like or [array, array], optional
         The bin specification:
 
@@ -542,13 +544,13 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
         will be considered outliers and not tallied in the histogram.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True, returns
-        the bin density, i.e. the bin count divided by the bin area.
+        If False, returns the number of samples in each bin. If True,
+        returns the bin density ``bin_count / sample_count / bin_area``.
     weights : array_like, shape(N,), optional
-        An array of values ``w_i`` weighing each sample ``(x_i, y_i)``. Weights
-        are normalized to 1 if `normed` is True. If `normed` is False, the
-        values of the returned histogram are equal to the sum of the weights
-        belonging to the samples falling into each bin.
+        An array of values ``w_i`` weighing each sample ``(x_i, y_i)``.
+        Weights are normalized to 1 if `normed` is True. If `normed` is
+        False, the values of the returned histogram are equal to the sum of
+        the weights belonging to the samples falling into each bin.
 
     Returns
     -------
@@ -568,20 +570,15 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
 
     Notes
     -----
-    When `normed` is True, then the returned histogram is the sample density,
-    defined such that:
-
-    .. math::
-      \\sum_{i=0}^{nx-1} \\sum_{j=0}^{ny-1} H_{i,j} \\Delta x_i \\Delta y_j = 1
-
-    where `H` is the histogram array and :math:`\\Delta x_i \\Delta y_i`
-    the area of bin ``{i,j}``.
+    When `normed` is True, then the returned histogram is the sample
+    density, defined such that the sum over bins of the product
+    ``bin_value * bin_area`` is 1.
 
     Please note that the histogram does not follow the Cartesian convention
-    where `x` values are on the abcissa and `y` values on the ordinate axis.
-    Rather, `x` is histogrammed along the first dimension of the array
-    (vertical), and `y` along the second dimension of the array (horizontal).
-    This ensures compatibility with `histogramdd`.
+    where `x` values are on the abscissa and `y` values on the ordinate
+    axis.  Rather, `x` is histogrammed along the first dimension of the
+    array (vertical), and `y` along the second dimension of the array
+    (horizontal).  This ensures compatibility with `histogramdd`.
 
     Examples
     --------
@@ -615,7 +612,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     >>> ax = fig.add_subplot(131)
     >>> ax.set_title('imshow:\nequidistant')
     >>> im = plt.imshow(H, interpolation='nearest', origin='low',
-                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
 
     pcolormesh can displaying exact bin edges:
 

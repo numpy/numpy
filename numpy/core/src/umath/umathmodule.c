@@ -250,6 +250,50 @@ static PyUFuncGenericFunction ldexp_functions[] = {
 #endif
 };
 
+static const char frdoc[] =
+    "    Decompose the elements of x into mantissa and twos exponent.\n"
+    "\n"
+    "    Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.\n"
+    "    The mantissa is lies in the open interval(-1, 1), while the twos\n"
+    "    exponent is a signed integer.\n"
+    "\n"
+    "    Parameters\n"
+    "    ----------\n"
+    "    x : array_like\n"
+    "        Array of numbers to be decomposed.\n"
+    "    out1: ndarray, optional\n"
+    "        Output array for the mantissa. Must have the same shape as `x`.\n"
+    "    out2: ndarray, optional\n"
+    "        Output array for the exponent. Must have the same shape as `x`.\n"
+    "\n"
+    "    Returns\n"
+    "    -------\n"
+    "    (mantissa, exponent) : tuple of ndarrays, (float, int)\n"
+    "        `mantissa` is a float array with values between -1 and 1.\n"
+    "        `exponent` is an int array which represents the exponent of 2.\n"
+    "\n"
+    "    See Also\n"
+    "    --------\n"
+    "    ldexp : Compute ``y = x1 * 2**x2``, the inverse of `frexp`.\n"
+    "\n"
+    "    Notes\n"
+    "    -----\n"
+    "    Complex dtypes are not supported, they will raise a TypeError.\n"
+    "\n"
+    "    Examples\n"
+    "    --------\n"
+    "    >>> x = np.arange(9)\n"
+    "    >>> y1, y2 = np.frexp(x)\n"
+    "    >>> y1\n"
+    "    array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,\n"
+    "            0.5  ])\n"
+    "    >>> y2\n"
+    "    array([0, 1, 2, 2, 3, 3, 3, 3, 4])\n"
+    "    >>> y1 * 2**y2\n"
+    "    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])\n"
+    "\n";
+
+
 static char ldexp_signatures[] = {
 #ifdef HAVE_LDEXPF
     NPY_HALF, NPY_INT, NPY_HALF,
@@ -265,6 +309,48 @@ static char ldexp_signatures[] = {
 #endif
 };
 
+static const char lddoc[] =
+    "    Returns x1 * 2**x2, element-wise.\n"
+    "\n"
+    "    The mantissas `x1` and twos exponents `x2` are used to construct\n"
+    "    floating point numbers ``x1 * 2**x2``.\n"
+    "\n"
+    "    Parameters\n"
+    "    ----------\n"
+    "    x1 : array_like\n"
+    "        Array of multipliers.\n"
+    "    x2 : array_like, int\n"
+    "        Array of twos exponents.\n"
+    "    out : ndarray, optional\n"
+    "        Output array for the result.\n"
+    "\n"
+    "    Returns\n"
+    "    -------\n"
+    "    y : ndarray or scalar\n"
+    "        The result of ``x1 * 2**x2``.\n"
+    "\n"
+    "    See Also\n"
+    "    --------\n"
+    "    frexp : Return (y1, y2) from ``x = y1 * 2**y2``, inverse to `ldexp`.\n"
+    "\n"
+    "    Notes\n"
+    "    -----\n"
+    "    Complex dtypes are not supported, they will raise a TypeError.\n"
+    "\n"
+    "    `ldexp` is useful as the inverse of `frexp`, if used by itself it is\n"
+    "    more clear to simply use the expression ``x1 * 2**x2``.\n"
+    "\n"
+    "    Examples\n"
+    "    --------\n"
+    "    >>> np.ldexp(5, np.arange(4))\n"
+    "    array([  5.,  10.,  20.,  40.], dtype=float32)\n"
+    "\n"
+    "    >>> x = np.arange(6)\n"
+    "    >>> np.ldexp(*np.frexp(x))\n"
+    "    array([ 0.,  1.,  2.,  3.,  4.,  5.])\n"
+    "\n";
+
+
 static void
 InitOtherOperators(PyObject *dictionary) {
     PyObject *f;
@@ -273,16 +359,14 @@ InitOtherOperators(PyObject *dictionary) {
     num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
     f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
                                 frexp_signatures, num,
-                                1, 2, PyUFunc_None, "frexp",
-                                "Split the number, x, into a normalized"\
-                                " fraction (y1) and exponent (y2)",0);
+                                1, 2, PyUFunc_None, "frexp", frdoc, 0);
     PyDict_SetItemString(dictionary, "frexp", f);
     Py_DECREF(f);
 
     num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data, ldexp_signatures, num,
-                                2, 1, PyUFunc_None, "ldexp",
-                                "Compute y = x1 * 2**x2.",0);
+    f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data,
+                                ldexp_signatures, num,
+                                2, 1, PyUFunc_None, "ldexp", lddoc, 0);
     PyDict_SetItemString(dictionary, "ldexp", f);
     Py_DECREF(f);
 
