@@ -3078,7 +3078,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argpartition',
     """
-    a.argpartition(kth, axis=-1, kind='quickselect', order=None)
+    a.argpartition(kth, axis=-1, kind='introselect', order=None)
 
     Returns the indices that would partition this array.
 
