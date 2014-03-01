@@ -175,6 +175,11 @@ class TestPower(TestCase):
         x = np.array([1, 2, 3], np.int16)
         assert_((x**2.00001).dtype is (x**2.0).dtype)
 
+        # Check that the fast path ignores 1-element not 0-d arrays
+        res = x ** np.array([[[2]]])
+        assert_equal(res.shape, (1, 1, 3))
+
+
 class TestLog2(TestCase):
     def test_log2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -908,9 +913,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(res1[4], (a, b))
         assert_equal(res0[5], {})
         assert_equal(res1[5], {})
-        
+
     def test_ufunc_override_mro(self):
-        
+
         # Some multi arg functions for testing.
         def tres_mul(a, b, c):
             return a * b * c
@@ -937,7 +942,7 @@ class TestSpecialMethods(TestCase):
         class C(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
                 return NotImplemented
-        
+
         class CSub(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
                 return NotImplemented
@@ -969,7 +974,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(three_mul_ufunc(a, 1, 2), "A")
         assert_equal(three_mul_ufunc(1, a, 2), "A")
         assert_equal(three_mul_ufunc(1, 2, a), "A")
-        
+
         assert_equal(three_mul_ufunc(a, a, 6), "A")
         assert_equal(three_mul_ufunc(a, 2, a), "A")
         assert_equal(three_mul_ufunc(a, 2, b), "A")
