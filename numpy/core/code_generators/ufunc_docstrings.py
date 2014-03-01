@@ -3323,3 +3323,97 @@ add_newdoc('numpy.core.umath', 'true_divide',
     array([0, 0, 0, 0, 1])
 
     """)
+
+# This doc is not currently used, but has been converted to a C string
+# that can be found in numpy/core/src/umath/umathmodule.c where the
+# frexp ufunc is constructed.
+add_newdoc('numpy.core.umath', 'frexp',
+    """
+    Decompose the elements of x into mantissa and twos exponent.
+
+    Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
+    The mantissa is lies in the open interval(-1, 1), while the twos
+    exponent is a signed integer.
+
+    Parameters
+    ----------
+    x : array_like
+        Array of numbers to be decomposed.
+    out1: ndarray, optional
+        Output array for the mantissa. Must have the same shape as `x`.
+    out2: ndarray, optional
+        Output array for the exponent. Must have the same shape as `x`.
+
+    Returns
+    -------
+    (mantissa, exponent) : tuple of ndarrays, (float, int)
+        `mantissa` is a float array with values between -1 and 1.
+        `exponent` is an int array which represents the exponent of 2.
+
+    See Also
+    --------
+    ldexp : Compute ``y = x1 * 2**x2``, the inverse of `frexp`.
+
+    Notes
+    -----
+    Complex dtypes are not supported, they will raise a TypeError.
+
+    Examples
+    --------
+    >>> x = np.arange(9)
+    >>> y1, y2 = np.frexp(x)
+    >>> y1
+    array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,
+            0.5  ])
+    >>> y2
+    array([0, 1, 2, 2, 3, 3, 3, 3, 4])
+    >>> y1 * 2**y2
+    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
+
+    """)
+
+# This doc is not currently used, but has been converted to a C string
+# that can be found in numpy/core/src/umath/umathmodule.c where the
+# ldexp ufunc is constructed.
+add_newdoc('numpy.core.umath', 'ldexp',
+    """
+    Returns x1 * 2**x2, element-wise.
+
+    The mantissas `x1` and twos exponents `x2` are used to construct
+    floating point numbers ``x1 * 2**x2``.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Array of multipliers.
+    x2 : array_like, int
+        Array of twos exponents.
+    out : ndarray, optional
+        Output array for the result.
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The result of ``x1 * 2**x2``.
+
+    See Also
+    --------
+    frexp : Return (y1, y2) from ``x = y1 * 2**y2``, inverse to `ldexp`.
+
+    Notes
+    -----
+    Complex dtypes are not supported, they will raise a TypeError.
+
+    `ldexp` is useful as the inverse of `frexp`, if used by itself it is
+    more clear to simply use the expression ``x1 * 2**x2``.
+
+    Examples
+    --------
+    >>> np.ldexp(5, np.arange(4))
+    array([  5.,  10.,  20.,  40.], dtype=float32)
+
+    >>> x = np.arange(6)
+    >>> np.ldexp(*np.frexp(x))
+    array([ 0.,  1.,  2.,  3.,  4.,  5.])
+
+    """)
