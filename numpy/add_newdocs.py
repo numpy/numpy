@@ -4693,45 +4693,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 #
 ##############################################################################
 
-add_newdoc('numpy.core.umath', 'frexp',
-    """
-    Return normalized fraction and exponent of 2 of input array, element-wise.
-
-    Returns (`out1`, `out2`) from equation ``x` = out1 * 2**out2``.
-
-    Parameters
-    ----------
-    x : array_like
-        Input array.
-
-    Returns
-    -------
-    (out1, out2) : tuple of ndarrays, (float, int)
-        `out1` is a float array with values between -1 and 1.
-        `out2` is an int array which represent the exponent of 2.
-
-    See Also
-    --------
-    ldexp : Compute ``y = x1 * 2**x2``, the inverse of `frexp`.
-
-    Notes
-    -----
-    Complex dtypes are not supported, they will raise a TypeError.
-
-    Examples
-    --------
-    >>> x = np.arange(9)
-    >>> y1, y2 = np.frexp(x)
-    >>> y1
-    array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,
-            0.5  ])
-    >>> y2
-    array([0, 1, 2, 2, 3, 3, 3, 3, 4])
-    >>> y1 * 2**y2
-    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
-
-    """)
-
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
     frompyfunc(func, nin, nout)
@@ -4769,44 +4730,6 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     >>> np.array((oct(10), oct(30), oct(100))) # for comparison
     array(['012', '036', '0144'],
           dtype='|S4')
-
-    """)
-
-add_newdoc('numpy.core.umath', 'ldexp',
-    """
-    Compute y = x1 * 2**x2.
-
-    Parameters
-    ----------
-    x1 : array_like
-        The array of multipliers.
-    x2 : array_like
-        The array of exponents.
-
-    Returns
-    -------
-    y : array_like
-        The output array, the result of ``x1 * 2**x2``.
-
-    See Also
-    --------
-    frexp : Return (y1, y2) from ``x = y1 * 2**y2``, the inverse of `ldexp`.
-
-    Notes
-    -----
-    Complex dtypes are not supported, they will raise a TypeError.
-
-    `ldexp` is useful as the inverse of `frexp`, if used by itself it is
-    more clear to simply use the expression ``x1 * 2**x2``.
-
-    Examples
-    --------
-    >>> np.ldexp(5, np.arange(4))
-    array([  5.,  10.,  20.,  40.], dtype=float32)
-
-    >>> x = np.arange(6)
-    >>> np.ldexp(*np.frexp(x))
-    array([ 0.,  1.,  2.,  3.,  4.,  5.])
 
     """)
 
