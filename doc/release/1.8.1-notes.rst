@@ -45,3 +45,4 @@ Issues fixed
 * gh-4266: histogramdd - wrong result for entries very close to last boundary
 * gh-4408: Fix stride_stricks.as_strided function for object arrays
 * gh-4225: fix log1p and exmp1 return for np.inf on windows compiler builds
+* gh-4359: Fix infinite recursion in str.format of flex arrays
