@@ -46,3 +46,4 @@ Issues fixed
 * gh-4408: Fix stride_stricks.as_strided function for object arrays
 * gh-4225: fix log1p and exmp1 return for np.inf on windows compiler builds
 * gh-4359: Fix infinite recursion in str.format of flex arrays
+* gh-4145: Incorrect shape of broadcast result with the exponent operator
