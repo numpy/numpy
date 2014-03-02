@@ -23,36 +23,37 @@ Compatibility notes
 Special scalar float values don't cause upcast to double anymore
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In previous numpy versions operations involving floating point scalars
-containing special values `NaN`, `Inf` and `-Inf` caused the result type to be
-at least `float64`.
-As the special values can be represented in the smallest available floating
-point type the upcast not performed anymore.
+containing special values ``NaN``, ``Inf`` and ``-Inf`` caused the result
+type to be at least ``float64``.  As the special values can be represented
+in the smallest available floating point type, the upcast is not performed
+anymore.
 
 For example the dtype of:
 
-    np.array([1.], dtype=np.float32) * float('nan')
+    ``np.array([1.], dtype=np.float32) * float('nan')``
 
-now remains `float32` instead of being cast to `float64`.
+now remains ``float32`` instead of being cast to ``float64``.
 Operations involving non-special values have not been changed.
 
 Percentile output changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-If given more than one percentile to compute numpy.percentile returns an array
-instead of a list. A single percentile still returns a scalar.
-The array is equivalent to converting the the list returned in older versions
-to an array via `np.array`.
+If given more than one percentile to compute numpy.percentile returns an
+array instead of a list. A single percentile still returns a scalar.  The
+array is equivalent to converting the list returned in older versions
+to an array via ``np.array``.
 
-If the `overwrite_input` option is used the input is only partially instead of
-fully sorted.
+If the ``overwrite_input`` option is used the input is only partially
+instead of fully sorted.
 
-npy_3kcompat.h header change
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``npy_3kcompat.h`` header change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The unused ``simple_capsule_dtor`` function has been removed from
-``npy_3kcompat.h``.  Note that this header is not meant to be used outside of
-numpy; other projects should be using their own copy of this file when needed.
+``npy_3kcompat.h``.  Note that this header is not meant to be used outside
+of numpy; other projects should be using their own copy of this file when
+needed.
 
-Negative indices in C-Api sq_item and sq_ass_item sequence methods
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Negative indices in C-Api ``sq_item`` and ``sq_ass_item`` sequence methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When directly accessing the ``sq_item`` or ``sq_ass_item`` PyObject slots
 for item getting, negative indices will not be supported anymore.
 ``PySequence_GetItem`` and ``PySequence_SetItem`` however fix negative
@@ -60,7 +61,8 @@ indices so that they can be used there.
 
 ndarray.tofile exception type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-All tofile exceptions are now IOError, some were previously ValueError.
+All ``tofile`` exceptions are now ``IOError``, some were previously
+``ValueError``.
 
 
 New Features
@@ -68,62 +70,62 @@ New Features
 
 Percentile supports more interpolation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.percentile` now has the interpolation keyword argument to specify in which
-way points should be interpolated if the percentiles fall between two values.
-See the documentation for the available options.
+``np.percentile`` now has the interpolation keyword argument to specify in
+which way points should be interpolated if the percentiles fall between two
+values.  See the documentation for the available options.
 
 Ufunc and Dot Overrides
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-For better compatibility with external objects you can now override universal
-functions (ufuncs), ``numpy.core._dotblas.dot``, and
+For better compatibility with external objects you can now override
+universal functions (ufuncs), ``numpy.core._dotblas.dot``, and
 ``numpy.core.multiarray.dot`` (the numpy.dot functions). By defining a
 ``__numpy_ufunc__`` method.
 
-Dtype parameter added to `np.linspace` and `np.logspace`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The returned data type from the `linspace` and `logspace` functions
-can now be specificed using the dtype parameter.
+Dtype parameter added to ``np.linspace`` and ``np.logspace``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The returned data type from the ``linspace`` and ``logspace`` functions can
+now be specified using the dtype parameter.
 
-More general `np.triu` and `np.tril` broadcasting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For arrays with `ndim` exceeding 2, these functions will now apply to the
+More general ``np.triu`` and ``np.tril`` broadcasting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For arrays with ``ndim`` exceeding 2, these functions will now apply to the
 final two axes instead of raising an exception.
 
-`tobytes` alias for `tostring` method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`ndarray.tobytes` and `MaskedArray.tobytes` have been added as aliases for
-`tostring` which exports arrays as `bytes`. This is more consistent in Python 3
-where `str` and `bytes` are not the same.
+``tobytes`` alias for ``tostring`` method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``ndarray.tobytes`` and ``MaskedArray.tobytes`` have been added as aliases
+for ``tostring`` which exports arrays as ``bytes``. This is more consistent
+in Python 3 where ``str`` and ``bytes`` are not the same.
 
 
 Improvements
 ============
 
-Percentile implemented in terms of `np.partition`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.percentile` has been implemented interms of `np.partition` which only
-partially sorts the data via a selection algorithm. This improves the time
-complexcity from `O(nlog(n))` to `O(n)`.
+Percentile implemented in terms of ``np.partition``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.percentile`` has been implemented in terms of ``np.partition`` which
+only partially sorts the data via a selection algorithm. This improves the
+time complexity from ``O(nlog(n))`` to ``O(n)``.
 
-Performance improvement for `np.array`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The performance of converting lists containing arrays to arrays using
-`np.array` has been improved. It is now equivalent in speed to
-`np.vstack(list)`.
-
-Performance improvement for `np.searchsorted`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For the built-in numeric types, `np.searchsorted` no longer relies on the
-data type's `compare` function to perform the search, but is now implemented
-by type specific functions. Depending on the size of the inputs, this can
-result in performance improvements over 2x.
-
-Full broadcasting support for `np.cross`
+Performance improvement for ``np.array``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.cross` now properly broadcasts its two input arrays, even if they have
-different number of dimensions. In earlier versions this would result in
-either an error being raised, or wrong results computed.
+The performance of converting lists containing arrays to arrays using
+``np.array`` has been improved. It is now equivalent in speed to
+``np.vstack(list)``.
+
+Performance improvement for ``np.searchsorted``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For the built-in numeric types, ``np.searchsorted`` no longer relies on the
+data type's ``compare`` function to perform the search, but is now
+implemented by type specific functions. Depending on the size of the
+inputs, this can result in performance improvements over 2x.
+
+Full broadcasting support for ``np.cross``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.cross`` now properly broadcasts its two input arrays, even if they
+have different number of dimensions. In earlier versions this would result
+in either an error being raised, or wrong results computed.
 
 Changes
 =======
@@ -131,16 +133,17 @@ Changes
 Argmin and argmax out argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `out` argument to `np.argmin` and `np.argmax` and their equivalent
-C-API functions is now checked to match the desired output shape exactly.
-If the check fails a `ValueError` instead of `TypeError` is raised.
+The ``out`` argument to ``np.argmin`` and ``np.argmax`` and their
+equivalent C-API functions is now checked to match the desired output shape
+exactly.  If the check fails a ``ValueError`` instead of ``TypeError`` is
+raised.
 
 
 Einsum
 ~~~~~~
 Remove unnecessary broadcasting notation restrictions.
-np.einsum('ijk,j->ijk', A, B) can also be written as
-np.einsum('ij...,j->ij...', A, B) (ellipsis is no longer required on 'j')
+``np.einsum('ijk,j->ijk', A, B)`` can also be written as
+``np.einsum('ij...,j->ij...', A, B)`` (ellipsis is no longer required on 'j')
 
 
 Indexing
@@ -148,69 +151,79 @@ Indexing
 
 The NumPy indexing has seen a complete rewrite in this version. This makes
 most advanced integer indexing operations much faster and should have no
-other implications.
-However some subtle changes and deprecations were introduced in advanced
-indexing operations:
+other implications.  However some subtle changes and deprecations were
+introduced in advanced indexing operations:
 
-  * Boolean indexing into scalar arrays will always return a new 1-d array.
-    This means that ``array(1)[array(True)]`` gives ``array([1])`` and
-    not the original array.
-  * Advanced indexing into one dimensional arrays used to have (undocumented)
-    special handling regarding repeating the value array in assignments
-    when the shape of the value array was too small or did not match.
-    Code using this will raise an error. For compatibility you can use
-    ``arr.flat[index] = values``, which uses the old code branch.
-    (for example `a = np.ones(10); a[np.arange(10)] = [1, 2, 3]`)
-  * The iteration order over advanced indexes used to be always C-order.
-    In NumPy 1.9. the iteration order adapts to the inputs and is not
-    guaranteed (with the exception of a *single* advanced index which is
-    never reversed for compatibility reasons). This means that the result is
-    undefined if multiple values are assigned to the same element.
-    An example for this is ``arr[[0, 0], [1, 1]] = [1, 2]``, which may
-    set ``arr[0, 1]`` to either 1 or 2.
-  * Equivalent to the iteration order, the memory layout of the advanced
-    indexing result is adapted for faster indexing and cannot be predicted.
-  * All indexing operations return a view or a copy. No indexing operation
-    will return the original array object. (For example `arr[...]`)
-  * In the future Boolean array-likes (such as lists of python bools)
-    will always be treated as Boolean indexes and Boolean scalars (including
-    python `True`) will be a legal *boolean* index. At this time, this is
-    already the case for scalar arrays to allow the general
-    ``positive = a[a > 0]`` to work when ``a`` is zero dimensional.
-  * In NumPy 1.8 it was possible to use `array(True)` and `array(False)`
-    equivalent to 1 and 0 if the result of the operation was a scalar.
-    This will raise an error in NumPy 1.9 and, as noted above, treated as a
-    boolean index in the future.
-  * All non-integer array-likes are deprecated, object arrays of custom
-    integer like objects may have to be cast explicitly.
-  * The error reporting for advanced indexing is more informative, however
-    the error type has changed in some cases. (Broadcasting errors of
-    indexing arrays are reported as `IndexError`)
-  * Indexing with more then one ellipsis (`...`) is deprecated.
+* Boolean indexing into scalar arrays will always return a new 1-d array.
+  This means that ``array(1)[array(True)]`` gives ``array([1])`` and
+  not the original array.
+
+* Advanced indexing into one dimensional arrays used to have
+  (undocumented) special handling regarding repeating the value array in
+  assignments when the shape of the value array was too small or did not
+  match.  Code using this will raise an error. For compatibility you can
+  use ``arr.flat[index] = values``, which uses the old code branch.  (for
+  example ``a = np.ones(10); a[np.arange(10)] = [1, 2, 3]``)
+
+* The iteration order over advanced indexes used to be always C-order.
+  In NumPy 1.9. the iteration order adapts to the inputs and is not
+  guaranteed (with the exception of a *single* advanced index which is
+  never reversed for compatibility reasons). This means that the result
+  is undefined if multiple values are assigned to the same element.  An
+  example for this is ``arr[[0, 0], [1, 1]] = [1, 2]``, which may set
+  ``arr[0, 1]`` to either 1 or 2.
+
+* Equivalent to the iteration order, the memory layout of the advanced
+  indexing result is adapted for faster indexing and cannot be predicted.
+
+* All indexing operations return a view or a copy. No indexing operation
+  will return the original array object. (For example ``arr[...]``)
+
+* In the future Boolean array-likes (such as lists of python bools) will
+  always be treated as Boolean indexes and Boolean scalars (including
+  python ``True``) will be a legal *boolean* index. At this time, this is
+  already the case for scalar arrays to allow the general
+  ``positive = a[a > 0]`` to work when ``a`` is zero dimensional.
+
+* In NumPy 1.8 it was possible to use ``array(True)`` and
+  ``array(False)`` equivalent to 1 and 0 if the result of the operation
+  was a scalar.  This will raise an error in NumPy 1.9 and, as noted
+  above, treated as a boolean index in the future.
+
+* All non-integer array-likes are deprecated, object arrays of custom
+  integer like objects may have to be cast explicitly.
+
+* The error reporting for advanced indexing is more informative, however
+  the error type has changed in some cases. (Broadcasting errors of
+  indexing arrays are reported as ``IndexError``)
+
+* Indexing with more then one ellipsis (``...``) is deprecated.
 
 
-promote_types and string dtype
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-promote_types function now returns a valid string length when given an
-integer or float dtype as one argument and a string dtype as another argument.
-Previously it always returned the input string dtype, even if it wasn't
-long enough to store the max integer/float value converted to a string.
+``promote_types`` and string dtype
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``promote_types`` function now returns a valid string length when given an
+integer or float dtype as one argument and a string dtype as another
+argument.  Previously it always returned the input string dtype, even if it
+wasn't long enough to store the max integer/float value converted to a
+string.
 
 
-can_cast and string dtype
-~~~~~~~~~~~~~~~~~~~~~~~~~
-can_cast function now returns False in "safe" casting mode for integer/float
-dtype and string dtype if the string dtype length is not long enough to store
-the max integer/float value converted to a string. Previously can_cast in "safe"
-mode returned True for integer/float dtype and a string dtype of any length.
+``can_cast`` and string dtype
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``can_cast`` function now returns False in "safe" casting mode for
+integer/float dtype and string dtype if the string dtype length is not long
+enough to store the max integer/float value converted to a string.
+Previously ``can_cast`` in "safe" mode returned True for integer/float
+dtype and a string dtype of any length.
 
 
 astype and string dtype
 ~~~~~~~~~~~~~~~~~~~~~~~
-astype method now returns an error if the string dtype to cast to is not long
-enough in "safe" casting mode to hold the max value of integer/float array that
-is being casted. Previously the casting was allowed even if the result was
-truncated.
+The ``astype`` method now returns an error if the string dtype to cast to
+is not long enough in "safe" casting mode to hold the max value of
+integer/float array that is being casted. Previously the casting was
+allowed even if the result was truncated.
 
 
 C-API
@@ -224,7 +237,7 @@ Deprecations
 Non-integer scalars for sequence repetition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Using non-integer numpy scalars to repeat python sequences is deprecated.
-For example `np.float_(2) * [1]` will be an error in the future.
+For example ``np.float_(2) * [1]`` will be an error in the future.
 
 C-API
 ~~~~~
