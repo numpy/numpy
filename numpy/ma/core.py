@@ -6156,7 +6156,7 @@ def argmax(a, axis=None, fill_value=None):
             pass
     d = filled(a, fill_value)
     return d.argmax(axis=axis)
-argmin.__doc__ = MaskedArray.argmax.__doc__
+argmax.__doc__ = MaskedArray.argmax.__doc__
 
 def sort(a, axis= -1, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
