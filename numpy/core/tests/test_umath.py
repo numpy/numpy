@@ -173,6 +173,11 @@ class TestPower(TestCase):
         x = np.array([1, 2, 3], np.int16)
         assert_((x**2.00001).dtype is (x**2.0).dtype)
 
+        # Check that the fast path ignores 1-element not 0-d arrays
+        res = x ** np.array([[[2]]])
+        assert_equal(res.shape, (1, 1, 3))
+
+
 class TestLog2(TestCase):
     def test_log2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]

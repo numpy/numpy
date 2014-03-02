@@ -315,32 +315,41 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
         *out_exponent = PyFloat_AsDouble(o2);
         return NPY_FLOAT_SCALAR;
     }
-    if ((PyArray_IsZeroDim(o2) &&
-         ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
-           (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) ||
-        PyArray_IsScalar(o2, Integer) ||
-        (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
-        temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
-        if (temp != NULL) {
+    if (PyArray_Check(o2)) {
+        if ((PyArray_NDIM(o2) == 0) &&
+                ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
+                 (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) {
+            temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
+            if (temp == NULL) {
+                return NPY_NOSCALAR;
+            }
             *out_exponent = PyFloat_AsDouble(o2);
             Py_DECREF(temp);
-            if (PyArray_IsZeroDim(o2)) {
-                if (PyArray_ISINTEGER((PyArrayObject *)o2)) {
-                    return NPY_INTPOS_SCALAR;
-                }
-                else { /* ISFLOAT */
-                    return NPY_FLOAT_SCALAR;
-                }
+            if (PyArray_ISINTEGER((PyArrayObject *)o2)) {
+                return NPY_INTPOS_SCALAR;
             }
-            else if PyArray_IsScalar(o2, Integer) {
-                    return NPY_INTPOS_SCALAR;
-            }
-            else { /* IsScalar(o2, Floating) */
+            else { /* ISFLOAT */
                 return NPY_FLOAT_SCALAR;
             }
         }
     }
-    if (PyIndex_Check(o2)) {
+    else if (PyArray_IsScalar(o2, Integer) ||
+                (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
+        temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
+        if (temp == NULL) {
+            return NPY_NOSCALAR;
+        }
+        *out_exponent = PyFloat_AsDouble(o2);
+        Py_DECREF(temp);
+
+        if (PyArray_IsScalar(o2, Integer)) {
+                return NPY_INTPOS_SCALAR;
+        }
+        else { /* IsScalar(o2, Floating) */
+            return NPY_FLOAT_SCALAR;
+        }
+    }
+    else if (PyIndex_Check(o2)) {
         PyObject* value = PyNumber_Index(o2);
         Py_ssize_t val;
         if (value==NULL) {
