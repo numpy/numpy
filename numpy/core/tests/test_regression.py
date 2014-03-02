@@ -1945,5 +1945,13 @@ class TestRegression(TestCase):
         arr.__setitem__(slice(None), [9])
         assert_equal(arr, [9, 9, 9])
 
+    def test_format_on_flex_array_element(self):
+        # Ticket #4369.
+        dt = np.dtype([('date', '<M8[D]'), ('val', '<f8')])
+        arr = np.array([('2000-01-01', 1)], dt)
+        formatted = '{0}'.format(arr[0])
+        assert_equal(formatted, str(arr[0]))
+
+
 if __name__ == "__main__":
     run_module_suite()
