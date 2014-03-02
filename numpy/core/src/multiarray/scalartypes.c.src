@@ -420,8 +420,7 @@ gentype_format(PyObject *self, PyObject *args)
         Py_DECREF(dtype);
     }
     else {
-        obj = self;
-        Py_INCREF(obj);
+        obj = PyObject_Str(self);
     }
 
     if (obj == NULL) {
