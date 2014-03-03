@@ -1199,14 +1199,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
         can also be provided as width(s) of each field.
+    skip_rows : int, optional
+        `skip_rows` was deprecated in numpy 1.5, and will be removed in
+        numpy 2.0. Please use `skip_header` instead.
     skip_header : int, optional
         The numbers of lines to skip at the beginning of the file.
     skip_footer : int, optional
-        The numbers of lines to skip at the end of the file
+        The numbers of lines to skip at the end of the file.
     converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
+    missing : variable, optional
+        `missing` was deprecated in numpy 1.5, and will be removed in
+        numpy 2.0. Please use `missing_values` instead.
     missing_values : variable, optional
         The set of strings corresponding to missing data.
     filling_values : variable, optional
@@ -1244,6 +1250,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
+    loose : bool, optional
+        If True, do not raise errors for invalid values.
     invalid_raise : bool, optional
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
