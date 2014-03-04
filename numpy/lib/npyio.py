@@ -1203,9 +1203,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         `skip_rows` was deprecated in numpy 1.5, and will be removed in
         numpy 2.0. Please use `skip_header` instead.
     skip_header : int, optional
-        The numbers of lines to skip at the beginning of the file.
+        The number of lines to skip at the beginning of the file.
     skip_footer : int, optional
-        The numbers of lines to skip at the end of the file.
+        The number of lines to skip at the end of the file.
     converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
