@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import copy
 import pickle
 import sys
 import platform
@@ -1951,6 +1952,17 @@ class TestRegression(TestCase):
         arr = np.array([('2000-01-01', 1)], dt)
         formatted = '{0}'.format(arr[0])
         assert_equal(formatted, str(arr[0]))
+
+    def test_deepcopy_on_0d_array(self):
+        # Ticket #3311.
+        arr = np.array(3)
+        arr_cp = copy.deepcopy(arr)
+
+        assert_equal(arr, arr_cp)
+        assert_equal(arr.shape, arr_cp.shape)
+        assert_equal(int(arr), int(arr_cp))
+        self.assertTrue(arr is not arr_cp)
+        self.assertTrue(isinstance(arr_cp, type(arr)))
 
 
 if __name__ == "__main__":
