@@ -466,10 +466,10 @@ PyArrayDescr_Type
 
         A pointer to a function that compares two elements of the
         array, ``arr``, pointed to by ``d1`` and ``d2``. This
-        function requires behaved arrays. The return value is 1 if *
-        ``d1`` > * ``d2``, 0 if * ``d1`` == * ``d2``, and -1 if *
-        ``d1`` < * ``d2``. The array object arr is used to retrieve
-        itemsize and field information for flexible arrays.
+        function requires behaved (aligned and not swapped) arrays.
+        The return value is 1 if * ``d1`` > * ``d2``, 0 if * ``d1`` == *
+        ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
+        used to retrieve itemsize and field information for flexible arrays.
 
     .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind,
        void* arr)
