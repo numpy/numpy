@@ -1385,7 +1385,7 @@ fail:
  *      npy_intp dims[NPY_MAXDIMS];
  *
  *      if (PyArray_GetArrayParamsFromObject(op, NULL, 1, &dtype,
- *                                          &ndim, &dims, &arr, NULL) < 0) {
+ *                                          &ndim, dims, &arr, NULL) < 0) {
  *          return NULL;
  *      }
  *      if (arr == NULL) {
