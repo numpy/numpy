@@ -153,6 +153,12 @@ def apply_over_axes(func, a, axes):
     apply_along_axis :
         Apply a function to 1-D slices of an array along the given axis.
 
+    Notes
+    ------
+    This function is equivalent to tuple axis arguments to reorderable ufuncs
+    with keepdims=True. Tuple axis arguments to ufuncs have been availabe since
+    version 1.7.0.
+
     Examples
     --------
     >>> a = np.arange(24).reshape(2,3,4)
@@ -168,6 +174,13 @@ def apply_over_axes(func, a, axes):
     as the original array:
 
     >>> np.apply_over_axes(np.sum, a, [0,2])
+    array([[[ 60],
+            [ 92],
+            [124]]])
+
+    Tuple axis arguments to ufuncs are equivalent:
+
+    >>> np.sum(a, axis=(0,2), keepdims=True)
     array([[[ 60],
             [ 92],
             [124]]])
