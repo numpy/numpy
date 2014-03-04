@@ -229,7 +229,7 @@ is used to control the memory layout of the allocated result, typically
             npy_intp i;
             do {
                 npy_intp size = *innersizeptr;
-                char *src = dataaddr[0], *dst = dataaddr[1];
+                char *src = dataptrarray[0], *dst = dataptrarray[1];
                 for(i = 0; i < size; i++, src += innerstride, dst += itemsize) {
                     memcpy(dst, src, itemsize);
                 }
