@@ -39,6 +39,13 @@ DeprecationWarning to error
 FutureWarning to changed behavior 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* Multidimensional indexing with anything but a base class tuple is
+  deprecated. This means that code such as ``arr[[slice(None)]]`` has to
+  be changed to ``arr[tuple([slice(None)])]``. This is necessary to avoid
+  the ambiguity of expressions such as ``arr[[[0, 1], [0, 1]]]`` which
+  currently are interpreted as ``arr[[0, 1], [0, 1]]`` using heuristics.
+  Future or deprecation warnings are given depending on the index.
+
 * In ``np.lib.split`` an empty array in the result always had dimension
   ``(0,)`` no matter the dimensions of the array being split. This
   has been changed so that the dimensions will be preserved. A

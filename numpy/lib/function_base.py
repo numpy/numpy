@@ -647,7 +647,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         ni[i], ni[j] = ni[j], ni[i]
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*[slice(1, -1)]
+    core = D * (slice(1, -1),)
     hist = hist[core]
 
     # Normalize if normed is True
@@ -1242,11 +1242,11 @@ def gradient(f, *varargs, **kwargs):
         # Needs to keep the specific units, can't be a general unit
         otype = f.dtype
 
-    # Convert datetime64 data into ints. Make dummy variable `y`
-    # that is a view of ints if the data is datetime64, otherwise
+    # Convert datetime64 data into timedelta. Make dummy variable `y`
+    # that is a view of timedelta if the data is datetime64, otherwise
     # just set y equal to the the array `f`.
     if f.dtype.char in ["M", "m"]:
-        y = f.view('int64')
+        y = f.view(otype)
     else:
         y = f
 
@@ -1266,19 +1266,19 @@ def gradient(f, *varargs, **kwargs):
             slice2[axis] = slice(2, None)
             slice3[axis] = slice(None, -2)
             # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
+            out[tuple(slice1)] = (y[tuple(slice2)] - y[tuple(slice3)])/2.0
 
             slice1[axis] = 0
             slice2[axis] = 1
             slice3[axis] = 0
             # 1D equivalent -- out[0] = (y[1] - y[0])
-            out[slice1] = (y[slice2] - y[slice3])
+            out[tuple(slice1)] = (y[tuple(slice2)] - y[tuple(slice3)])
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             # 1D equivalent -- out[-1] = (y[-1] - y[-2])
-            out[slice1] = (y[slice2] - y[slice3])
+            out[tuple(slice1)] = (y[tuple(slice2)] - y[tuple(slice3)])
 
         # Numerical differentiation: 2st order edges, 2nd order interior
         else:
@@ -1289,21 +1289,23 @@ def gradient(f, *varargs, **kwargs):
             slice2[axis] = slice(2, None)
             slice3[axis] = slice(None, -2)
             # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
+            out[tuple(slice1)] = (y[tuple(slice2)] - y[tuple(slice3)])/2.0
 
             slice1[axis] = 0
             slice2[axis] = 0
             slice3[axis] = 1
             slice4[axis] = 2
             # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] + y[2]) / 2.0
-            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            out[tuple(slice1)] = -(3.0*y[tuple(slice2)] - 4.0*y[tuple(slice3)] +
+                                   y[tuple(slice4)]) / 2.0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             slice4[axis] = -3
             # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] + y[-3])
-            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            out[tuple(slice1)] = (3.0*y[tuple(slice2)] - 4.0*y[tuple(slice3)] +
+                                  y[tuple(slice4)]) / 2.0
 
         # divide by step size
         out /= dx[i]
@@ -1601,6 +1603,7 @@ def unwrap(p, discont=pi, axis=-1):
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
     ddmod = mod(dd + pi, 2*pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
@@ -3344,6 +3347,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
+    indexer = tuple(indexer)
 
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
@@ -3713,12 +3717,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
-        ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
+        ret = (d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0).sum(axis)
     except ValueError:
         # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
-        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+        ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
 
 
@@ -4009,7 +4013,7 @@ def delete(arr, obj, axis=None):
             pass
         else:
             slobj[axis] = slice(None, start)
-            new[slobj] = arr[slobj]
+            new[tuple(slobj)] = arr[tuple(slobj)]
         # copy end chunck
         if stop == N:
             pass
@@ -4017,7 +4021,7 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(stop-numtodel, None)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(stop, None)
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         # copy middle pieces
         if step == 1:
             pass
@@ -4027,9 +4031,9 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(start, stop)
-            arr = arr[slobj2]
+            arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         else:
@@ -4056,11 +4060,11 @@ def delete(arr, obj, axis=None):
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(obj, None)
         slobj2 = [slice(None)]*ndim
         slobj2[axis] = slice(obj+1, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
@@ -4092,7 +4096,7 @@ def delete(arr, obj, axis=None):
 
         keep[obj, ] = False
         slobj[axis] = keep
-        new = arr[slobj]
+        new = arr[tuple(slobj)]
 
     if wrap:
         return wrap(new)
@@ -4267,13 +4271,13 @@ def insert(arr, obj, values, axis=None):
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, index)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(index, index+numnew)
-        new[slobj] = values
+        new[tuple(slobj)] = values
         slobj[axis] = slice(index+numnew, None)
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         return new
@@ -4302,8 +4306,8 @@ def insert(arr, obj, values, axis=None):
     slobj2 = [slice(None)]*ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
-    new[slobj] = values
-    new[slobj2] = arr
+    new[tuple(slobj)] = values
+    new[tuple(slobj2)] = arr
 
     if wrap:
         return wrap(new)

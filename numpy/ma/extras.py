@@ -688,9 +688,9 @@ def median(a, axis=None, out=None, overwrite_input=False):
     ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
     # insert indices of low and high median
     ind.insert(axis, h - 1)
-    low = asorted[ind]
+    low = asorted[tuple(ind)]
     ind[axis] = h
-    high = asorted[ind]
+    high = asorted[tuple(ind)]
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     if asorted.ndim == 1:
@@ -702,6 +702,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
         s = np.ma.sum([low, high], axis=0, out=out)
+        print(repr(s.data))
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
     else:
         s = np.ma.mean([low, high], axis=0, out=out)
@@ -1592,7 +1593,7 @@ def flatnotmasked_contiguous(a):
         if not k:
             result.append(slice(i, i + n))
         i += n
-    return result or None
+    return tuple(result) or None
 
 def notmasked_contiguous(a, axis=None):
     """
@@ -1650,8 +1651,8 @@ def notmasked_contiguous(a, axis=None):
     #
     for i in range(a.shape[other]):
         idx[other] = i
-        result.append(flatnotmasked_contiguous(a[idx]) or None)
-    return result
+        result.append(flatnotmasked_contiguous(a[tuple(idx)]) or None)
+    return tuple(result)
 
 
 def _ezclump(mask):
@@ -1680,7 +1681,7 @@ def _ezclump(mask):
 
     if mask[-1]:
         r.append(slice(idx[-1], mask.size))
-    return r
+    return tuple(r)
 
 
 def clump_unmasked(a):

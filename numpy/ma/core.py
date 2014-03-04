@@ -5347,8 +5347,11 @@ class MaskedArray(ndarray):
                 idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
                                   indexing='ij')
                 idx[axis] = sidx
+                idx = tuple(idx)
+
             tmp_mask = self._mask[idx].flat
             tmp_data = self._data[idx].flat
+
             self._data.flat = tmp_data
             self._mask.flat = tmp_mask
         return
@@ -6424,7 +6427,9 @@ def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None
         indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
                            indexing='ij')
         indx[axis] = sindx
+        indx = tuple(indx)
     return a[indx]
+
 sort.__doc__ = MaskedArray.sort.__doc__
 
 

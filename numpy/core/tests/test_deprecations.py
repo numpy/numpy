@@ -152,6 +152,33 @@ class TestBooleanBinaryMinusDeprecation(_DeprecationTestCase):
         self.assert_deprecated(operator.sub, args=(generic, generic))
 
 
+class TestNonTupleNDIndexDeprecation(object):
+    def test_basic(self):
+        a = np.zeros((5, 5))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_warns(DeprecationWarning, a.__getitem__, [slice(None)])
+
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_raises(DeprecationWarning, a.__getitem__, [slice(None)])
+
+            # a a[[0, 1]] always was advanced indexing, so no error/warning
+            a[[0, 1]]
+
+    def test_not_exact_tuple(self):
+        a = np.zeros((5, 5))
+        class TupleSubclass(tuple):
+            pass
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, TupleSubclass((1, 2)))
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, TupleSubclass((1, 2)))
+
+
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.

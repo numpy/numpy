@@ -200,6 +200,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
          * or newaxis, Ellipsis or other arrays or sequences
          * embedded, are considered equivalent to an indexing
          * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
+         *
+         * Use make_tuple = 1 to denote a non-base class tuple
+         * Use make_tuple = 2 for indices that could be valid non-converted
+         * use make_tuple = 3 to denote a conversion that will be an error
          */
 
         if (PyTuple_Check(index)) {
@@ -221,18 +225,49 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 make_tuple = 0;
                 break;
             }
-            if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)
-                    || PySlice_Check(tmp_obj) || tmp_obj == Py_Ellipsis
-                    || tmp_obj == Py_None) {
-                make_tuple = 1;
+            if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)) {
+                make_tuple = 2;
+            }
+            else if (PySlice_Check(tmp_obj) || (tmp_obj == Py_Ellipsis) ||
+                     (tmp_obj == Py_None)) {
+                make_tuple = 3;
                 Py_DECREF(tmp_obj);
                 break;
-            }
+                }
             Py_DECREF(tmp_obj);
         }
 
         if (make_tuple) {
             /* We want to interpret it as a tuple, so make it one */
+            if (make_tuple == 2) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index.") < 0) {
+                    return -1;
+                }
+            }
+            else if (make_tuple == 1) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "multi dimensional indexing tuple was not base class. "
+                        "Using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated, use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index.") < 0) {
+                    return -1;
+                }
+            }
+            else {
+                if (DEPRECATE(
+                        "using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this indexing "
+                        "operation will be an error.") < 0) {
+                    return -1;
+                }
+            }
+
             index = PySequence_Tuple(index);
             if (index == NULL) {
                 return -1;
