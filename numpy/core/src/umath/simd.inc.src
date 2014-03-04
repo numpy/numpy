@@ -84,34 +84,6 @@
 #define LOOP_BLOCKED_END\
     for (; i < n; i++)
 
-/* fanout two bits to two bytes */
-static const npy_int16 fanout_2[] = {
-    0x0000,
-    0x0001,
-    0x0100,
-    0x0101,
-};
-
-/* fanout four bits to four bytes */
-static const npy_int32 fanout_4[] = {
-    0x00000000,
-    0x00000001,
-    0x00000100,
-    0x00000101,
-    0x00010000,
-    0x00010001,
-    0x00010100,
-    0x00010101,
-    0x01000000,
-    0x01000001,
-    0x01000100,
-    0x01000101,
-    0x01010000,
-    0x01010001,
-    0x01010100,
-    0x01010101
-};
-
 
 /*
  * Dispatcher functions
@@ -381,8 +353,8 @@ static NPY_INLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
  *  #vsuf = ps, pd#
  *  #vsufs = ss, sd#
  *  #nan = NPY_NANF, NPY_NAN#
- *  #mtype = npy_int32, npy_int16#
- *  #fanout = fanout_4, fanout_2#
+ *  #double = 0, 1#
+ *  #cast = _mm_castps_si128, _mm_castpd_si128#
  */
 
 
@@ -529,19 +501,33 @@ sse2_ordered_cmp_@kind@_@TYPE@(const @type@ a, const @type@ b)
 static void
 sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-    npy_bool * r;
+    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
     }
-    r = &op[i];
-    LOOP_BLOCKED(@type@, 16) {
-        @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
-        @vtype@ b = @vpre@_loadu_@vsuf@(&ip2[i]);
-        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
-        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
-        /* may be unaligned */
-        memcpy(r, &ir, sizeof(ir));
-        r += sizeof(ir);
+    LOOP_BLOCKED(@type@, 64) {
+        @vtype@ a1 = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+        @vtype@ b1 = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+        @vtype@ c1 = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+        @vtype@ d1 = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+        @vtype@ a2 = @vpre@_loadu_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
+        @vtype@ b2 = @vpre@_loadu_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
+        @vtype@ c2 = @vpre@_loadu_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
+        @vtype@ d2 = @vpre@_loadu_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
+        @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a1, a2);
+        @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
+        @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
+        @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
+        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
+        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
+        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
+        rr = @vpre@_and_si128(rr, mask);
+#if @double@
+        rr = @vpre@_packs_epi16(rr, rr);
+        @vpre@_storel_epi64((__m128i*)&op[i], rr);
+#else
+        @vpre@_storeu_si128((__m128i*)&op[i], rr);
+#endif
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
@@ -552,19 +538,30 @@ sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 static void
 sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-    npy_bool * r;
-    @vtype@ a = @vpre@_set1_@vsuf@(ip1[0]);
+    @vtype@ s = @vpre@_set1_@vsuf@(ip1[0]);
+    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip2, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
     }
-    r = &op[i];
-    LOOP_BLOCKED(@type@, 16) {
-        @vtype@ b = @vpre@_load_@vsuf@(&ip2[i]);
-        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
-        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
-        /* may be unaligned */
-        memcpy(r, &ir, sizeof(ir));
-        r += sizeof(ir);
+    LOOP_BLOCKED(@type@, 64) {
+        @vtype@ a = @vpre@_load_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
+        @vtype@ b = @vpre@_load_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
+        @vtype@ c = @vpre@_load_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
+        @vtype@ d = @vpre@_load_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
+        @vtype@ r1 = @vpre@_@VOP@_@vsuf@(s, a);
+        @vtype@ r2 = @vpre@_@VOP@_@vsuf@(s, b);
+        @vtype@ r3 = @vpre@_@VOP@_@vsuf@(s, c);
+        @vtype@ r4 = @vpre@_@VOP@_@vsuf@(s, d);
+        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
+        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
+        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
+        rr = @vpre@_and_si128(rr, mask);
+#if @double@
+        rr = @vpre@_packs_epi16(rr, rr);
+        @vpre@_storel_epi64((__m128i*)&op[i], rr);
+#else
+        @vpre@_storeu_si128((__m128i*)&op[i], rr);
+#endif
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
@@ -575,19 +572,30 @@ sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
 static void
 sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-    npy_bool * r;
-    @vtype@ b = @vpre@_set1_@vsuf@(ip2[0]);
+    @vtype@ s = @vpre@_set1_@vsuf@(ip2[0]);
+    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
     }
-    r = &op[i];
-    LOOP_BLOCKED(@type@, 16) {
-        @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
-        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
-        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
-        /* may be unaligned */
-        memcpy(r, &ir, sizeof(ir));
-        r += sizeof(ir);
+    LOOP_BLOCKED(@type@, 64) {
+        @vtype@ a = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+        @vtype@ b = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+        @vtype@ c = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+        @vtype@ d = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+        @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a, s);
+        @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, s);
+        @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, s);
+        @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, s);
+        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
+        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
+        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
+        rr = @vpre@_and_si128(rr, mask);
+#if @double@
+        rr = @vpre@_packs_epi16(rr, rr);
+        @vpre@_storel_epi64((__m128i*)&op[i], rr);
+#else
+        @vpre@_storeu_si128((__m128i*)&op[i], rr);
+#endif
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
