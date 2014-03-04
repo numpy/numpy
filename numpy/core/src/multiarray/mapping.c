@@ -313,6 +313,15 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
                     || PySlice_Check(tmp_obj)
                     || tmp_obj == Py_Ellipsis
                     || tmp_obj == Py_None) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "Using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index, `arr[np.array(seq)]`, "
+                        "which will result either in an error or a different "
+                        "result.") < 0) {
+                    return -1;
+                }
                 commit_to_unpack = 1;
             }
         }

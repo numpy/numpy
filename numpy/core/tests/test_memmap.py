@@ -126,7 +126,7 @@ class TestMemmap(object):
     def test_indexing_drops_references(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
-        tmp = fp[[(1, 2), (2, 3)]]
+        tmp = fp[((1, 2), (2, 3))]
         if isinstance(tmp, memmap):
             assert_(tmp._mmap is not fp._mmap)
 

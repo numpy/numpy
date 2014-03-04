@@ -21,6 +21,12 @@ New functions
 Deprecations
 ============
 
+* Multidimensional indexing with anything but a base class tuple is
+  deprecated. This means that code such as ``arr[[slice(None)]]`` has to
+  be changed to ``arr[tuple([slice(None)])]``. This is necessary to avoid
+  the ambiguity of expressions such as ``arr[[[0, 1], [0, 1]]]`` which
+  currently are interpreted as ``arr[[0, 1], [0, 1]]`` using heuristics.
+
 
 Future Changes
 ==============

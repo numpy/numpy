@@ -132,6 +132,22 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
+class TestNonTupleNDIndexDeprecation(object):
+    def test_basic(self):
+        a = np.zeros((5, 5))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_warns(FutureWarning, a.__getitem__, [slice(None)])
+
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_raises(FutureWarning, a.__getitem__, [slice(None)])
+
+            # a a[[0, 1]] always was advanced indexing, so no error/warning
+            a[[0, 1]]
+
+
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.

@@ -723,6 +723,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # as median (which is mean of empty slice = nan)
         indexer = [slice(None)] * asorted.ndim
         indexer[axis] = slice(0, 0)
+        indexer = tuple(indexer)
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
@@ -784,6 +785,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
         s = np.ma.sum([low, high], axis=0, out=out)
+        print(repr(s.data))
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
         s = np.lib.utils._median_nancheck(asorted, s, axis, out)
@@ -1657,7 +1659,7 @@ def flatnotmasked_contiguous(a):
         if not k:
             result.append(slice(i, i + n))
         i += n
-    return result or None
+    return tuple(result) or None
 
 def notmasked_contiguous(a, axis=None):
     """
@@ -1715,8 +1717,8 @@ def notmasked_contiguous(a, axis=None):
     #
     for i in range(a.shape[other]):
         idx[other] = i
-        result.append(flatnotmasked_contiguous(a[idx]) or None)
-    return result
+        result.append(flatnotmasked_contiguous(a[tuple(idx)]) or None)
+    return tuple(result)
 
 
 def _ezclump(mask):
@@ -1745,7 +1747,7 @@ def _ezclump(mask):
 
     if mask[-1]:
         r.append(slice(idx[-1], mask.size))
-    return r
+    return tuple(r)
 
 
 def clump_unmasked(a):

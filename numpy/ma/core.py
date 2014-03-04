@@ -5483,6 +5483,7 @@ class MaskedArray(ndarray):
         else:
             idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
+            idx = tuple(idx)
 
         self[...] = self[idx]
 
@@ -6569,6 +6570,7 @@ def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None
     else:
         a.sort(axis=axis, kind=kind, order=order)
     return a
+
 sort.__doc__ = MaskedArray.sort.__doc__
 
 
