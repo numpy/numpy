@@ -346,6 +346,11 @@ class TestBoolCmp(TestCase):
             self.ed[s:s+4] = [(i & 2**x) != 0 for x in range(4)]
             s += 4
 
+        self.nf = self.f.copy()
+        self.nd = self.d.copy()
+        self.nf[self.ef] = np.nan
+        self.nd[self.ed] = np.nan
+
     def test_float(self):
         # offset for alignment test
         for i in range(4):
@@ -365,6 +370,9 @@ class TestBoolCmp(TestCase):
             assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
             assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
+            # isnan on amd64 takes the same codepath
+            assert_array_equal(np.isnan(self.nf[i:]), self.ef[i:])
+
     def test_double(self):
         # offset for alignment test
         for i in range(2):
@@ -383,6 +391,9 @@ class TestBoolCmp(TestCase):
             assert_array_equal(r.view(np.int8), r.astype(np.int8))
             assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
             assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
+
+            # isnan on amd64 takes the same codepath
+            assert_array_equal(np.isnan(self.nd[i:]), self.ed[i:])
 
 
 class TestSeterr(TestCase):

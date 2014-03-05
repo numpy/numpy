@@ -503,6 +503,7 @@ sse2_compress4_to_byte_@TYPE@(@vtype@ r1, @vtype@ r2, @vtype@ r3, @vtype@ r4,
  * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
  * #OP = ==, !=, <, <=, >, >=#
  * #VOP = cmpeq, cmpneq, cmplt, cmple, cmpgt, cmpge#
+ * #neq = 0, 1, 0*4#
 */
 
 /* sets invalid fpu flag on QNaN for consistency with packed compare */
@@ -523,20 +524,36 @@ sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
     }
-    LOOP_BLOCKED(@type@, 64) {
-        @vtype@ a1 = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
-        @vtype@ b1 = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
-        @vtype@ c1 = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
-        @vtype@ d1 = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
-        @vtype@ a2 = @vpre@_loadu_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
-        @vtype@ b2 = @vpre@_loadu_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
-        @vtype@ c2 = @vpre@_loadu_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
-        @vtype@ d2 = @vpre@_loadu_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
-        @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a1, a2);
-        @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
-        @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
-        @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
-        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+    /* isnan special unary case */
+    if (@neq@ && ip1 == ip2) {
+        LOOP_BLOCKED(@type@, 64) {
+            @vtype@ a = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a, a);
+            @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, b);
+            @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, c);
+            @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, d);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        }
+    }
+    else {
+        LOOP_BLOCKED(@type@, 64) {
+            @vtype@ a1 = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b1 = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c1 = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d1 = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ a2 = @vpre@_loadu_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b2 = @vpre@_loadu_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c2 = @vpre@_loadu_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d2 = @vpre@_loadu_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a1, a2);
+            @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
+            @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
+            @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        }
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
