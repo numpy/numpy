@@ -513,6 +513,20 @@ class TestDtypeAttributeDeletion(object):
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
 
+class TestDtypeAttributes(TestCase):
+
+    def test_name_builtin(self):
+        for t in np.typeDict.values():
+            name = t.__name__
+            if name.endswith('_'):
+                name = name[:-1]
+            assert_equal(np.dtype(t).name, name)
+
+    def test_name_dtype_subclass(self):
+        # Ticket #4357
+        class user_def_subcls(np.void): pass
+        assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
+
 
 if __name__ == "__main__":
     run_module_suite()

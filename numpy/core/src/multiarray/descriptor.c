@@ -1697,8 +1697,10 @@ arraydescr_typename_get(PyArray_Descr *self)
     PyTypeObject *typeobj = self->typeobj;
     PyObject *res;
     char *s;
-    /* fixme: not reentrant */
-    static int prefix_len = 0;
+    const char np_prefix[] = "numpy.";
+    const int np_prefix_len = sizeof(np_prefix) - 1;
+    int prefix_len;
+    int suffix_len;
 
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
         s = strrchr(typeobj->tp_name, '.');
@@ -1711,14 +1713,31 @@ arraydescr_typename_get(PyArray_Descr *self)
         return res;
     }
     else {
-        if (prefix_len == 0) {
-            prefix_len = strlen("numpy.");
-        }
+        /*
+         * NumPy type or subclass
+         *
+         * res is derived from typeobj->tp_name with the following rules:
+         * - if starts with "numpy.", that prefix is removed
+         * - if ends with "_", that suffix is removed
+         */
         len = strlen(typeobj->tp_name);
-        if (*(typeobj->tp_name + (len-1)) == '_') {
-            len -= 1;
+
+        if (! strncmp(typeobj->tp_name, np_prefix, np_prefix_len)) {
+            prefix_len = np_prefix_len;
         }
+        else {
+            prefix_len = 0;
+        }
+
+        if (typeobj->tp_name[len - 1] == '_') {
+            suffix_len = 1;
+        }
+        else {
+            suffix_len = 0;
+        }
+
         len -= prefix_len;
+        len -= suffix_len;
         res = PyUString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
     }
     if (PyTypeNum_ISFLEXIBLE(self->type_num) && self->elsize != 0) {
