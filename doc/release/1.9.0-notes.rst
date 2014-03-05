@@ -242,7 +242,12 @@ For example ``np.float_(2) * [1]`` will be an error in the future.
 C-API
 ~~~~~
 
-None
+The utility function npy_PyFile_Dup and npy_PyFile_DupClose are broken by the
+internal buffering python 3 applies to its file objects.
+To fix this two new functions npy_PyFile_Dup2 and npy_PyFile_DupClose2 are
+declared in npy_3kcompat.h and the old functions are deprecated.
+Due to the fragile nature of these functions it is recommended to instead use
+the python API when possible.
 
 
 New Features

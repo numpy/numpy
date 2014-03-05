@@ -1999,7 +1999,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_INCREF(file);
         own = 0;
     }
-    fp = npy_PyFile_Dup(file, "rb", &orig_pos);
+    fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be an open file");
@@ -2011,7 +2011,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
 
-    if (npy_PyFile_DupClose(file, fp, orig_pos) < 0) {
+    if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {

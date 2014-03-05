@@ -588,7 +588,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         own = 0;
     }
 
-    fd = npy_PyFile_Dup(file, "wb", &orig_pos);
+    fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
     if (fd == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be a string or open file");
@@ -597,7 +597,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (PyArray_ToFile(self, fd, sep, format) < 0) {
         goto fail;
     }
-    if (npy_PyFile_DupClose(file, fd, orig_pos) < 0) {
+    if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
