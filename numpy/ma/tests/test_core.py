@@ -474,6 +474,10 @@ class TestMaskedArray(TestCase):
         atest[idx] = btest[idx]
         assert_equal(atest, [20])
 
+    def test_filled_w_object_dtype(self):
+        a = np.ma.masked_all(1, dtype='O')
+        assert_equal(a.filled('x')[0], 'x')
+
     def test_filled_w_flexible_dtype(self):
         # Test filled w/ flexible dtype
         flexi = array([(1, 1, 1)],
