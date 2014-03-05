@@ -349,30 +349,40 @@ class TestBoolCmp(TestCase):
     def test_float(self):
         # offset for alignment test
         for i in range(4):
-            assert_array_equal(self.f[i:] != 0, self.ef[i:])
             assert_array_equal(self.f[i:] > 0, self.ef[i:])
             assert_array_equal(self.f[i:] - 1 >= 0, self.ef[i:])
             assert_array_equal(self.f[i:] == 0, ~self.ef[i:])
             assert_array_equal(-self.f[i:] < 0, self.ef[i:])
             assert_array_equal(-self.f[i:] + 1 <= 0, self.ef[i:])
-
-            assert_array_equal(0 != self.f[i:], self.ef[i:])
-            assert_array_equal(np.zeros_like(self.f)[i:] != self.f[i:],
-                               self.ef[i:])
+            r = self.f[i:] != 0
+            assert_array_equal(r, self.ef[i:])
+            r2 = self.f[i:] != np.zeros_like(self.f[i:])
+            r3 = 0 != self.f[i:]
+            assert_array_equal(r, r2)
+            assert_array_equal(r, r3)
+            # check bool == 0x1
+            assert_array_equal(r.view(np.int8), r.astype(np.int8))
+            assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
+            assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
     def test_double(self):
         # offset for alignment test
         for i in range(2):
-            assert_array_equal(self.d[i:] != 0, self.ed[i:])
             assert_array_equal(self.d[i:] > 0, self.ed[i:])
             assert_array_equal(self.d[i:] - 1 >= 0, self.ed[i:])
             assert_array_equal(self.d[i:] == 0, ~self.ed[i:])
             assert_array_equal(-self.d[i:] < 0, self.ed[i:])
             assert_array_equal(-self.d[i:] + 1 <= 0, self.ed[i:])
-
-            assert_array_equal(0 != self.d[i:], self.ed[i:])
-            assert_array_equal(np.zeros_like(self.d)[i:] != self.d[i:],
-                               self.ed[i:])
+            r = self.d[i:] != 0
+            assert_array_equal(r, self.ed[i:])
+            r2 = self.d[i:] != np.zeros_like(self.d[i:])
+            r3 = 0 != self.d[i:]
+            assert_array_equal(r, r2)
+            assert_array_equal(r, r3)
+            # check bool == 0x1
+            assert_array_equal(r.view(np.int8), r.astype(np.int8))
+            assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
+            assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
 
 class TestSeterr(TestCase):
