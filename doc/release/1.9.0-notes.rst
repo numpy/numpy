@@ -11,7 +11,8 @@ Highlights
 Dropped Support
 ===============
 
-The oldnumeric and numarray modules have been removed.
+* The oldnumeric and numarray modules have been removed.
+* The doc/pyrex and doc/cython directories have been removed.
 
 Future Changes
 ==============
