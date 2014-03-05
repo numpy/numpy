@@ -141,12 +141,11 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
  * PyFile_* compatibility
  */
 #if defined(NPY_PY3K)
-
 /*
  * Get a FILE* handle to the file represented by the Python object
  */
 static NPY_INLINE FILE*
-npy_PyFile_Dup(PyObject *file, char *mode, npy_off_t *orig_pos)
+npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
     int fd, fd2;
     PyObject *ret, *os;
@@ -221,7 +220,7 @@ npy_PyFile_Dup(PyObject *file, char *mode, npy_off_t *orig_pos)
  * Close the dup-ed file handle, and seek the Python one to the current position
  */
 static NPY_INLINE int
-npy_PyFile_DupClose(PyObject *file, FILE* handle, npy_off_t orig_pos)
+npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
 {
     int fd;
     PyObject *ret;
@@ -269,10 +268,55 @@ npy_PyFile_Check(PyObject *file)
     return 1;
 }
 
+/*
+ * DEPRECATED DO NOT USE
+ * use npy_PyFile_Dup2 instead
+ * this function will mess ups python3 internal file object buffering
+ * Get a FILE* handle to the file represented by the Python object
+ */
+static NPY_INLINE FILE*
+npy_PyFile_Dup(PyObject *file, char *mode)
+{
+    npy_off_t orig;
+    if (DEPRECATE("npy_PyFile_Dup is deprecated, use "
+                  "npy_PyFile_Dup2") < 0) {
+        return NULL;
+    }
+
+    return npy_PyFile_Dup2(file, mode, &orig);
+}
+
+/*
+ * DEPRECATED DO NOT USE
+ * use npy_PyFile_DupClose2 instead
+ * this function will mess ups python3 internal file object buffering
+ * Close the dup-ed file handle, and seek the Python one to the current position
+ */
+static NPY_INLINE int
+npy_PyFile_DupClose(PyObject *file, FILE* handle)
+{
+    PyObject *ret;
+    Py_ssize_t position;
+    position = npy_ftell(handle);
+    fclose(handle);
+
+    ret = PyObject_CallMethod(file, "seek", NPY_SSIZE_T_PYFMT "i", position, 0);
+    if (ret == NULL) {
+        return -1;
+    }
+    Py_DECREF(ret);
+    return 0;
+}
+
+
 #else
 
-#define npy_PyFile_Dup(file, mode, orig_pos_p) PyFile_AsFile(file)
-#define npy_PyFile_DupClose(file, handle, orig_pos) (0)
+/* DEPRECATED DO NOT USE */
+#define npy_PyFile_Dup(file, mode) PyFile_AsFile(file)
+#define npy_PyFile_DupClose(file, handle) (0)
+/* use these */
+#define npy_PyFile_Dup2(file, mode, orig_pos_p) PyFile_AsFile(file)
+#define npy_PyFile_DupClose2(file, handle, orig_pos) (0)
 #define npy_PyFile_Check PyFile_Check
 
 #endif
