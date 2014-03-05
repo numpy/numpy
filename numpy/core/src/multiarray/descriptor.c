@@ -1693,12 +1693,12 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_typename_get(PyArray_Descr *self)
 {
-    int len;
+    static const char np_prefix[] = "numpy.";
+    const int np_prefix_len = sizeof(np_prefix) - 1;
     PyTypeObject *typeobj = self->typeobj;
     PyObject *res;
     char *s;
-    const char np_prefix[] = "numpy.";
-    const int np_prefix_len = sizeof(np_prefix) - 1;
+    int len;
     int prefix_len;
     int suffix_len;
 
