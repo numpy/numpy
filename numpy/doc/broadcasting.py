@@ -171,7 +171,7 @@ Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
 with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
 
-See `this article <http://www.scipy.org/EricsBroadcastingDoc>`_
+See `this article <http://wiki.scipy.org/EricsBroadcastingDoc>`_
 for illustrations of broadcasting concepts.
 
 """
