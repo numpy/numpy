@@ -991,7 +991,7 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
-def outer(a, b):
+def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
@@ -1012,6 +1012,8 @@ def outer(a, b):
     b : (N,) array_like
         Second input vector.  Input is flattened if
         not already 1-dimensional.
+    out : (M, N) ndarray, optional
+          A location where the result is stored
 
     Returns
     -------
@@ -1065,7 +1067,7 @@ def outer(a, b):
     """
     a = asarray(a)
     b = asarray(b)
-    return a.ravel()[:, newaxis]*b.ravel()[newaxis,:]
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 # try to import blas optimized dot if available
 try:

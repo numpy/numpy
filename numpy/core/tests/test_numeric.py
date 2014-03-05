@@ -2023,6 +2023,15 @@ class TestCross(TestCase):
         assert_raises(ValueError, np.cross, u, v, axisa=-5, axisb=2)
         assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=-4)
 
+def test_outer_out_param():
+    arr1 = np.ones((5,))
+    arr2 = np.ones((2,))
+    arr3 = np.linspace(-2, 2, 5)
+    out1 = np.ndarray(shape=(5,5))
+    out2 = np.ndarray(shape=(2, 5))
+    res1 = np.outer(arr1, arr3, out1)
+    assert_equal(res1, out1)
+    assert_equal(np.outer(arr2, arr3, out2), out2)
 
 if __name__ == "__main__":
     run_module_suite()
