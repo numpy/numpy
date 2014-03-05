@@ -10,6 +10,7 @@ from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
 from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.compat import get_exception
+from numpy.distutils.misc_util import quote_args, quote
 
 if sys.version_info[0] < 3:
     from . import log
@@ -88,8 +89,8 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             display = '%s: adding %d object files to %s' % (
                            os.path.basename(self.archiver[0]),
                            len(objects), output_filename)
-            self.spawn(self.archiver + [output_filename] + objects,
-                       display = display)
+            command = self.archiver + [quote(output_filename)] + quote_args(objects)
+            self.spawn(command, display = display)
 
         # Not many Unices required ranlib anymore -- SunOS 4.x is, I
         # think the only major Unix that does.  Maybe we need some

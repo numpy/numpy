@@ -38,7 +38,7 @@ from distutils.util import split_quoted, strtobool
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
-    make_temp_file, get_shared_lib_extension
+    make_temp_file, get_shared_lib_extension, quote
 from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
@@ -582,12 +582,12 @@ class FCompiler(CCompiler):
                       % (self.__class__.__name__, src))
             extra_compile_args = self.extra_f90_compile_args or []
         if self.object_switch[-1]==' ':
-            o_args = [self.object_switch.strip(), obj]
+            o_args = [self.object_switch.strip(), quote(obj)]
         else:
-            o_args = [self.object_switch.strip()+obj]
+            o_args = [self.object_switch.strip() + quote(obj)]
 
         assert self.compile_switch.strip()
-        s_args = [self.compile_switch, src]
+        s_args = [self.compile_switch, quote(src)]
 
         if extra_compile_args:
             log.info('extra %s options: %r' \
@@ -659,6 +659,7 @@ class FCompiler(CCompiler):
             else:
                 ld_args = objects + self.objects
             ld_args = ld_args + lib_opts + o_args
+            ld_args = [quote(ld_arg) for ld_arg in ld_args]
             if debug:
                 ld_args[:0] = ['-g']
             if extra_preargs:
@@ -987,3 +988,4 @@ def get_f77flags(src):
 
 if __name__ == '__main__':
     show_fcompilers()
+
