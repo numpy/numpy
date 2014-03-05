@@ -480,10 +480,30 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 
 /**end repeat1**/
 
+/* compress 4 vectors to 4/8 bytes in op with filled with 0 or 1 */
+static NPY_INLINE void
+sse2_compress4_to_byte_@TYPE@(@vtype@ r1, @vtype@ r2, @vtype@ r3, @vtype@ r4,
+                              npy_bool * op)
+{
+    const __m128i mask = @vpre@_set1_epi8(0x1);
+    __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
+    __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
+    __m128i rr = @vpre@_packs_epi16(ir1, ir2);
+#if @double@
+    rr = @vpre@_packs_epi16(rr, rr);
+    rr = @vpre@_and_si128(rr, mask);
+    @vpre@_storel_epi64((__m128i*)op, rr);
+#else
+    rr = @vpre@_and_si128(rr, mask);
+    @vpre@_storeu_si128((__m128i*)op, rr);
+#endif
+}
+
 /**begin repeat1
  * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
  * #OP = ==, !=, <, <=, >, >=#
  * #VOP = cmpeq, cmpneq, cmplt, cmple, cmpgt, cmpge#
+ * #neq = 0, 1, 0*4#
 */
 
 /* sets invalid fpu flag on QNaN for consistency with packed compare */
@@ -501,34 +521,39 @@ sse2_ordered_cmp_@kind@_@TYPE@(const @type@ a, const @type@ b)
 static void
 sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
     }
-    LOOP_BLOCKED(@type@, 64) {
-        @vtype@ a1 = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
-        @vtype@ b1 = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
-        @vtype@ c1 = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
-        @vtype@ d1 = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
-        @vtype@ a2 = @vpre@_loadu_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
-        @vtype@ b2 = @vpre@_loadu_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
-        @vtype@ c2 = @vpre@_loadu_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
-        @vtype@ d2 = @vpre@_loadu_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
-        @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a1, a2);
-        @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
-        @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
-        @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
-        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
-        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
-        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-#if @double@
-        rr = @vpre@_packs_epi16(rr, rr);
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storel_epi64((__m128i*)&op[i], rr);
-#else
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storeu_si128((__m128i*)&op[i], rr);
-#endif
+    /* isnan special unary case */
+    if (@neq@ && ip1 == ip2) {
+        LOOP_BLOCKED(@type@, 64) {
+            @vtype@ a = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a, a);
+            @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, b);
+            @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, c);
+            @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, d);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        }
+    }
+    else {
+        LOOP_BLOCKED(@type@, 64) {
+            @vtype@ a1 = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b1 = @vpre@_load_@vsuf@(&ip1[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c1 = @vpre@_load_@vsuf@(&ip1[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d1 = @vpre@_load_@vsuf@(&ip1[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ a2 = @vpre@_loadu_@vsuf@(&ip2[i + 0 * 16 / sizeof(@type@)]);
+            @vtype@ b2 = @vpre@_loadu_@vsuf@(&ip2[i + 1 * 16 / sizeof(@type@)]);
+            @vtype@ c2 = @vpre@_loadu_@vsuf@(&ip2[i + 2 * 16 / sizeof(@type@)]);
+            @vtype@ d2 = @vpre@_loadu_@vsuf@(&ip2[i + 3 * 16 / sizeof(@type@)]);
+            @vtype@ r1 = @vpre@_@VOP@_@vsuf@(a1, a2);
+            @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
+            @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
+            @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        }
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
@@ -540,7 +565,6 @@ static void
 sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     @vtype@ s = @vpre@_set1_@vsuf@(ip1[0]);
-    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip2, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
     }
@@ -553,17 +577,7 @@ sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         @vtype@ r2 = @vpre@_@VOP@_@vsuf@(s, b);
         @vtype@ r3 = @vpre@_@VOP@_@vsuf@(s, c);
         @vtype@ r4 = @vpre@_@VOP@_@vsuf@(s, d);
-        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
-        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
-        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-#if @double@
-        rr = @vpre@_packs_epi16(rr, rr);
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storel_epi64((__m128i*)&op[i], rr);
-#else
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storeu_si128((__m128i*)&op[i], rr);
-#endif
+        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
@@ -575,7 +589,6 @@ static void
 sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     @vtype@ s = @vpre@_set1_@vsuf@(ip2[0]);
-    const __m128i mask = @vpre@_set1_epi8(0x1);
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
     }
@@ -588,17 +601,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, s);
         @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, s);
         @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, s);
-        __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
-        __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
-        __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-#if @double@
-        rr = @vpre@_packs_epi16(rr, rr);
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storel_epi64((__m128i*)&op[i], rr);
-#else
-        rr = @vpre@_and_si128(rr, mask);
-        @vpre@_storeu_si128((__m128i*)&op[i], rr);
-#endif
+        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
