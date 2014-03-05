@@ -521,11 +521,12 @@ sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
         __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
         __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
         __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-        rr = @vpre@_and_si128(rr, mask);
 #if @double@
         rr = @vpre@_packs_epi16(rr, rr);
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storel_epi64((__m128i*)&op[i], rr);
 #else
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storeu_si128((__m128i*)&op[i], rr);
 #endif
     }
@@ -555,11 +556,12 @@ sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
         __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
         __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-        rr = @vpre@_and_si128(rr, mask);
 #if @double@
         rr = @vpre@_packs_epi16(rr, rr);
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storel_epi64((__m128i*)&op[i], rr);
 #else
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storeu_si128((__m128i*)&op[i], rr);
 #endif
     }
@@ -589,11 +591,12 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
         __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
         __m128i rr = @vpre@_packs_epi16(ir1, ir2);
-        rr = @vpre@_and_si128(rr, mask);
 #if @double@
         rr = @vpre@_packs_epi16(rr, rr);
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storel_epi64((__m128i*)&op[i], rr);
 #else
+        rr = @vpre@_and_si128(rr, mask);
         @vpre@_storeu_si128((__m128i*)&op[i], rr);
 #endif
     }
