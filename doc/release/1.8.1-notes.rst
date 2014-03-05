@@ -47,3 +47,16 @@ Issues fixed
 * gh-4225: fix log1p and exmp1 return for np.inf on windows compiler builds
 * gh-4359: Fix infinite recursion in str.format of flex arrays
 * gh-4145: Incorrect shape of broadcast result with the exponent operator
+
+Deprecations
+============
+
+C-API
+~~~~~
+
+The utility function npy_PyFile_Dup and npy_PyFile_DupClose are broken by the
+internal buffering python 3 applies to its file objects.
+To fix this two new functions npy_PyFile_Dup2 and npy_PyFile_DupClose2 are
+declared in npy_3kcompat.h and the old functions are deprecated.
+Due to the fragile nature of these functions it is recommended to instead use
+the python API when possible.
