@@ -10,8 +10,6 @@ if sys.version_info[0] < 3:
 else:
     from configparser import ConfigParser, SafeConfigParser, NoOptionError
 
-from numpy.distutils.misc_util import quote
-
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']
 
@@ -58,7 +56,7 @@ def parse_flags(line):
         * 'ignored'
 
     """
-    lexer = shlex.shlex(line, posix=True)
+    lexer = shlex.shlex(line)
     lexer.whitespace_split = True
 
     d = {'include_dirs': [], 'library_dirs': [], 'libraries': [],
@@ -90,6 +88,8 @@ def parse_flags(line):
 
     return d
 
+def _escape_backslash(val):
+    return val.replace('\\', '\\\\')
 
 class LibraryInfo(object):
     """
@@ -147,11 +147,11 @@ class LibraryInfo(object):
 
     def cflags(self, section="default"):
         val = self.vars.interpolate(self._sections[section]['cflags'])
-        return quote(val)
+        return _escape_backslash(val)
 
     def libs(self, section="default"):
         val = self.vars.interpolate(self._sections[section]['libs'])
-        return quote(val)
+        return _escape_backslash(val)
 
     def __str__(self):
         m = ['Name: %s' % self.name]
@@ -289,7 +289,7 @@ def parse_config(filename, dirs=None):
     vars = {}
     if config.has_section('variables'):
         for name, value in config.items("variables"):
-            vars[name] = quote(value)
+            vars[name] = _escape_backslash(value)
 
     # Parse "normal" sections
     secs = [s for s in config.sections() if not s in ['meta', 'variables']]
@@ -338,7 +338,7 @@ def _read_config_imp(filenames, dirs=None):
                              (pkgname, meta["name"]))
 
         mod = sys.modules[pkgname]
-        vars["pkgdir"] = quote(os.path.dirname(mod.__file__))
+        vars["pkgdir"] = _escape_backslash(os.path.dirname(mod.__file__))
 
     return LibraryInfo(name=meta["name"], description=meta["description"],
             version=meta["version"], sections=sections, vars=VariableSet(vars))
