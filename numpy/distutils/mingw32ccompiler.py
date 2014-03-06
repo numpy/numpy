@@ -459,7 +459,7 @@ def make_specs():
 
     import sys, os
     fname = os.path.join(sys.prefix,'libs',msvcr+".specs")
-    fh = (fname, "w")
+    fh = open(fname, "w")
     fh.write(newspecs)
     fh.close()
     return fname
