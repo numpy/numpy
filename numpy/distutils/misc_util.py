@@ -15,11 +15,6 @@ import distutils
 from distutils.errors import DistutilsError
 
 try:
-    from pipes import quote
-except ImportError:
-    from shlex import quote
-
-try:
     set
 except NameError:
     from sets import Set as set
@@ -36,8 +31,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'quote', 'get_build_architecture', 'get_info',
-           'get_pkg_info']
+           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info']
 
 class InstallableLib(object):
     """
