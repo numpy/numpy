@@ -103,6 +103,7 @@ PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
 if [ -n "$USE_DEBUG" ]; then
+  sudo apt-get update # 06.03.2014, temporary until travis boxes are resynced
   sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
   PYTHON=python3-dbg
 fi
