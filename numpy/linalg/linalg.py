@@ -1763,7 +1763,7 @@ def lstsq(a, b, rcond=-1):
     residuals : {(), (1,), (K,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
-        If the rank of `a` is < N or > M, this is an empty array.
+        If the rank of `a` is < N or M <= N, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
     rank : int
