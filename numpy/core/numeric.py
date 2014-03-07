@@ -1015,6 +1015,8 @@ def outer(a, b, out=None):
     out : (M, N) ndarray, optional
           A location where the result is stored
 
+        .. versionadded:: 1.9.0
+
     Returns
     -------
     out : (M, N) ndarray
