@@ -227,10 +227,26 @@ integer/float array that is being casted. Previously the casting was
 allowed even if the result was truncated.
 
 
+NDIter
+~~~~~~
+When ``NpyIter_RemoveAxis`` is now called, the iterator range will be reset.
+
+When a multi index is being tracked and an iterator is not buffered, it is
+possible to use ``NpyIter_RemoveAxis``. In this case an iterator can shrink
+in size. Because the total size of an iterator is limited, the iterator
+may be too large before these calls. In this case its size will be set to ``-1``
+and an error issued not at construction time but when removing the multi
+index, setting the iterator range, or getting the next function.
+
+This has no effect on currently working code, but highlights the necessity
+of checking for an error return if these conditions can occur. In most
+cases the arrays being iterated are as large as the iterator so that such
+a problem cannot occur.
+
+
 C-API
 ~~~~~
 
-None
 
 Deprecations
 ============

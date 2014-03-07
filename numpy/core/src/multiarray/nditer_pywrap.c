@@ -37,12 +37,16 @@ struct NewNpyArrayIterObject_tag {
     char writeflags[NPY_MAXARGS];
 };
 
-static void npyiter_cache_values(NewNpyArrayIterObject *self)
+static int npyiter_cache_values(NewNpyArrayIterObject *self)
 {
     NpyIter *iter = self->iter;
 
     /* iternext and get_multi_index functions */
     self->iternext = NpyIter_GetIterNext(iter, NULL);
+    if (self->iternext == NULL) {
+        return -1;
+    }
+
     if (NpyIter_HasMultiIndex(iter) && !NpyIter_HasDelayedBufAlloc(iter)) {
         self->get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
     }
@@ -67,6 +71,7 @@ static void npyiter_cache_values(NewNpyArrayIterObject *self)
     /* The read/write settings */
     NpyIter_GetReadFlags(iter, self->readflags);
     NpyIter_GetWriteFlags(iter, self->writeflags);
+    return 0;
 }
 
 static PyObject *
@@ -803,7 +808,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Cache some values for the member functions to use */
-    npyiter_cache_values(self);
+    if (npyiter_cache_values(self) < 0) {
+        goto fail;
+    }
 
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;
@@ -1068,7 +1075,10 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         }
 
         /* Cache some values for the member functions to use */
-        npyiter_cache_values(iter);
+        if (npyiter_cache_values(iter) < 0) {
+            Py_DECREF(ret);
+            goto fail;
+        }
 
         if (NpyIter_GetIterSize(iter->iter) == 0) {
             iter->started = 1;
@@ -1242,7 +1252,10 @@ npyiter_copy(NewNpyArrayIterObject *self)
     }
 
     /* Cache some values for the member functions to use */
-    npyiter_cache_values(iter);
+    if (npyiter_cache_values(iter) < 0) {
+        Py_DECREF(iter);
+        return NULL;
+    }
 
     iter->started = self->started;
     iter->finished = self->finished;
@@ -1287,7 +1300,9 @@ npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
         return NULL;
     }
     /* RemoveAxis invalidates cached values */
-    npyiter_cache_values(self);
+    if (npyiter_cache_values(self) < 0) {
+        return NULL;
+    }
     /* RemoveAxis also resets the iterator */
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;

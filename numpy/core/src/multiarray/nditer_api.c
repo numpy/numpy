@@ -14,6 +14,7 @@
 /* Indicate that this .c file is allowed to include the header */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
+#include "scalarmathmodule.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -127,12 +128,22 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
         perm[idim] = p;
     }
 
-    /* Adjust the iteration size */
-    NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata_del);
-
     /* Shift all the axisdata structures by one */
     axisdata = NIT_INDEX_AXISDATA(axisdata_del, 1);
     memmove(axisdata_del, axisdata, (ndim-1-xdim)*sizeof_axisdata);
+
+    /* Adjust the iteration size and reset iterend */
+    NIT_ITERSIZE(iter) = 1;
+    axisdata = NIT_AXISDATA(iter);
+    for (idim = 0; idim < ndim-1; ++idim) {
+        if (npy_mul_with_overflow_intp(&NIT_ITERSIZE(iter),
+                    NIT_ITERSIZE(iter), NAD_SHAPE(axisdata))) {
+            NIT_ITERSIZE(iter) = -1;
+            break;
+        }
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+    NIT_ITEREND(iter) = NIT_ITERSIZE(iter);
 
     /* Shrink the iterator */
     NIT_NDIM(iter) = ndim - 1;
@@ -166,6 +177,11 @@ NpyIter_RemoveMultiIndex(NpyIter *iter)
 
     itflags = NIT_ITFLAGS(iter);
     if (itflags&NPY_ITFLAG_HASMULTIINDEX) {
+        if (NIT_ITERSIZE(iter) < 0) {
+            PyErr_SetString(PyExc_ValueError, "iterator is too large");
+            return NPY_FAIL;
+        }
+    
         NIT_ITFLAGS(iter) = itflags & ~NPY_ITFLAG_HASMULTIINDEX;
         npyiter_coalesce_axes(iter);
     }
@@ -349,6 +365,15 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
     }
 
     if (istart < 0 || iend > NIT_ITERSIZE(iter)) {
+        if (NIT_ITERSIZE(iter) < 0) {
+            if (errmsg == NULL) {
+                PyErr_SetString(PyExc_ValueError, "iterator is too large");
+            }
+            else {
+                *errmsg = "iterator is too large";
+            }
+            return NPY_FAIL;
+        }
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
                     "Out-of-bounds range [%d, %d) passed to "
@@ -454,6 +479,10 @@ NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
     }
 
     if (iterindex < NIT_ITERSTART(iter) || iterindex >= NIT_ITEREND(iter)) {
+        if (NIT_ITERSIZE(iter) < 0) {
+            PyErr_SetString(PyExc_ValueError, "iterator is too large");
+            return NPY_FAIL;
+        }
         PyErr_SetString(PyExc_IndexError,
                 "Iterator GotoMultiIndex called with a multi-index outside the "
                 "restricted iteration range");
@@ -574,6 +603,10 @@ NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
     }
 
     if (iterindex < NIT_ITERSTART(iter) || iterindex >= NIT_ITEREND(iter)) {
+        if (NIT_ITERSIZE(iter) < 0) {
+            PyErr_SetString(PyExc_ValueError, "iterator is too large");
+            return NPY_FAIL;
+        }
         PyErr_SetString(PyExc_IndexError,
                 "Iterator GotoIterIndex called with an iterindex outside the "
                 "iteration range.");
