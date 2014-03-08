@@ -2729,7 +2729,7 @@ def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
 
     See Also
     --------
-    mean, percentile
+    mean, percentile, nanmedian
 
     Notes
     -----
