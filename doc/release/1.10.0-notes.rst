@@ -128,6 +128,14 @@ Masked arrays containing objects with arrays
 For such (rare) masked arrays, getting a single masked item no longer returns a
 corrupted masked array, but a fully masked version of the item.
 
+Median warns and returns nan when invalid values are encountered
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to mean, median and percentile now emits a Runtime warning and 
+returns `NaN` in slices where a `NaN` is present.
+To compute the median or percentile while ignoring invalid values use the 
+new `nanmedian` or `nanpercentile` functions.
+
+
 New Features
 ============
 
