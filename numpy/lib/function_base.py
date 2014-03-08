@@ -373,10 +373,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         if not np.isinf(mindiff):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
-            not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (around(sample[:, i], decimal) == around(edges[i][-1], decimal))
+            on_edge = where(around(sample[:, i], decimal) ==
+                            around(edges[i][-1], decimal))[0]
             # Shift these points one bin to the left.
-            Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
+            Ncount[i][on_edge] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
@@ -1101,7 +1101,7 @@ def interp(x, xp, fp, left=None, right=None):
     -----
     Does not check that the x-coordinate sequence `xp` is increasing.
     If `xp` is not increasing, the results are nonsense.
-    A simple check for increasing is::
+    A simple check for increasingness is::
 
         np.all(np.diff(xp) > 0)
 
@@ -1578,16 +1578,15 @@ class vectorize(object):
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
+    If `otypes` is not specified, then a call to the function with the first
+    argument will be used to determine the number of outputs.  The results of
+    this call will be cached if `cache` is `True` to prevent calling the
+    function twice.  However, to implement the cache, the original function
+    must be wrapped which will slow down subsequent calls, so only do this if
+    your function is expensive.
 
-    The new keyword argument interface and `excluded` argument support
-    further degrades performance.
-
+    The new keyword argument interface and `excluded` argument support further
+    degrades performance.
     """
     def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
                  cache=False):
@@ -1811,11 +1810,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
             "ddof must be integer")
 
     # Handles complex arrays too
-    m = np.asarray(m)
     if y is None:
         dtype = np.result_type(m, np.float64)
     else:
-        y = np.asarray(y)
         dtype = np.result_type(m, y, np.float64)
     X = array(m, ndmin=2, dtype=dtype)
 
@@ -1912,7 +1909,7 @@ def blackman(M):
     """
     Return the Blackman window.
 
-    The Blackman window is a taper formed by using the first three
+    The Blackman window is a taper formed by using the the first three
     terms of a summation of cosines. It was designed to have close to the
     minimal leakage possible.  It is close to optimal, only slightly worse
     than a Kaiser window.
@@ -2142,10 +2139,9 @@ def hanning(M):
     .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hanning was named for Julius van Hann, an Austrian meteorologist.
-    It is also known as the Cosine Bell. Some authors prefer that it be
-    called a Hann window, to help avoid confusion with the very similar
-    Hamming window.
+    The Hanning was named for Julius van Hann, an Austrian meterologist. It is
+    also known as the Cosine Bell. Some authors prefer that it be called a
+    Hann window, to help avoid confusion with the very similar Hamming window.
 
     Most references to the Hanning window come from the signal processing
     literature, where it is used as one of many windowing functions for
@@ -2242,9 +2238,9 @@ def hamming(M):
     .. math::  w(n) = 0.54 - 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey
-    and is described in Blackman and Tukey. It was recommended for
-    smoothing the truncated autocovariance function in the time domain.
+    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey and
+    is described in Blackman and Tukey. It was recommended for smoothing the
+    truncated autocovariance function in the time domain.
     Most references to the Hamming window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
@@ -2424,11 +2420,11 @@ def i0(x):
     Notes
     -----
     We use the algorithm published by Clenshaw [1]_ and referenced by
-    Abramowitz and Stegun [2]_, for which the function domain is
-    partitioned into the two intervals [0,8] and (8,inf), and Chebyshev
-    polynomial expansions are employed in each interval. Relative error on
-    the domain [0,30] using IEEE arithmetic is documented [3]_ as having a
-    peak of 5.8e-16 with an rms of 1.4e-16 (n = 30000).
+    Abramowitz and Stegun [2]_, for which the function domain is partitioned
+    into the two intervals [0,8] and (8,inf), and Chebyshev polynomial
+    expansions are employed in each interval. Relative error on the domain
+    [0,30] using IEEE arithmetic is documented [3]_ as having a peak of 5.8e-16
+    with an rms of 1.4e-16 (n = 30000).
 
     References
     ----------
@@ -2498,11 +2494,12 @@ def kaiser(M, beta):
 
     where :math:`I_0` is the modified zeroth-order Bessel function.
 
-    The Kaiser was named for Jim Kaiser, who discovered a simple
-    approximation to the DPSS window based on Bessel functions.  The Kaiser
-    window is a very good approximation to the Digital Prolate Spheroidal
-    Sequence, or Slepian window, which is the transform which maximizes the
-    energy in the main lobe of the window relative to total energy.
+    The Kaiser was named for Jim Kaiser, who discovered a simple approximation
+    to the DPSS window based on Bessel functions.
+    The Kaiser window is a very good approximation to the Digital Prolate
+    Spheroidal Sequence, or Slepian window, which is the transform which
+    maximizes the energy in the main lobe of the window relative to total
+    energy.
 
     The Kaiser can approximate many other windows by varying the beta
     parameter.
@@ -2612,8 +2609,8 @@ def sinc(x):
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
-    including in anti-aliasing, in the construction of a Lanczos resampling
-    filter, and in interpolation.
+    including in anti-aliasing, in the construction of a
+    Lanczos resampling filter, and in interpolation.
 
     For bandlimited interpolation of discrete-time signals, the ideal
     interpolation kernel is proportional to the sinc function.
@@ -2695,7 +2692,7 @@ def msort(a):
     return b
 
 
-def median(a, axis=None, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False, check_nan=True):
     """
     Compute the median along the specified axis.
 
@@ -2709,30 +2706,30 @@ def median(a, axis=None, out=None, overwrite_input=False):
         Axis along which the medians are computed. The default (axis=None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must have
-        the same shape and buffer length as the expected output, but the
-        type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve the
-       contents of the input array. Treat the input as undefined, but it
-       will probably be fully or partially sorted. Default is False. Note
-       that, if `overwrite_input` is True and the input is not already an
-       ndarray, an error will be raised.
-
+       median. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. Note that, if `overwrite_input` is True and the input
+       is not already an ndarray, an error will be raised.
+   
     Returns
     -------
     median : ndarray
-        A new array holding the result (unless `out` is specified, in which
-        case that array is returned instead).  If the input contains
+        A new array holding the result (unless `out` is specified, in
+        which case that array is returned instead).  If the input contains
         integers, or floats of smaller precision than 64, then the output
         data-type is float64.  Otherwise, the output data-type is the same
         as that of the input.
 
     See Also
     --------
-    mean, percentile
+    mean, percentile, nanmedian
 
     Notes
     -----
@@ -2773,33 +2770,31 @@ def median(a, axis=None, out=None, overwrite_input=False):
     if axis is not None and axis >= a.ndim:
         raise IndexError(
             "axis %d out of bounds (%d)" % (axis, a.ndim))
-
+    
+    #Set the partition indexes    
+    if axis is None:
+        sz = a.size
+    else:
+        sz = a.shape[axis]
+    if sz % 2 == 0:
+        szh = sz // 2
+        kth = [szh - 1, szh]
+    else:
+        kth = [(sz - 1) // 2]
+    #Check if the array contains any nan's
+    if np.issubdtype(a.dtype, np.inexact):
+        kth.append(-1)
+    
     if overwrite_input:
         if axis is None:
             part = a.ravel()
-            sz = part.size
-            if sz % 2 == 0:
-                szh = sz // 2
-                part.partition((szh - 1, szh))
-            else:
-                part.partition((sz - 1) // 2)
+            part.partition(kth)            
         else:
-            sz = a.shape[axis]
-            if sz % 2 == 0:
-                szh = sz // 2
-                a.partition((szh - 1, szh), axis=axis)
-            else:
-                a.partition((sz - 1) // 2, axis=axis)
             part = a
+            a.partition(kth, axis=axis)            
     else:
-        if axis is None:
-            sz = a.size
-        else:
-            sz = a.shape[axis]
-        if sz % 2 == 0:
-            part = partition(a, ((sz // 2) - 1, sz // 2), axis=axis)
-        else:
-            part = partition(a, (sz - 1) // 2, axis=axis)
+        part = partition(a, kth, axis=axis)
+        
     if part.shape == ():
         # make 0-D arrays work
         return part.item()
@@ -2812,10 +2807,24 @@ def median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
-    # Use mean in odd and even case to coerce data type
-    # and check, use out array.
-    return mean(part[indexer], axis=axis, out=out)
-
+    #Check if the array contains any nan's
+    if np.issubdtype(a.dtype, np.inexact):
+        if part.ndim <= 1:
+            if np.isnan(part[-1]):
+                return np.nan
+            else:
+                return mean(part[indexer], axis=axis, out=out)
+        else:       
+            nan_indexer = [slice(None)] * part.ndim
+            nan_indexer[axis] = slice(-1, None)
+            ids = np.isnan(part[nan_indexer].squeeze(axis))
+            out = np.asanyarray(mean(part[indexer], axis=axis, out=out))
+            out[ids] = np.nan
+            return out
+    else: #if there are no nans
+        # Use mean in odd and even case to coerce data type
+        # and check, use out array.
+        return mean(part[indexer], axis=axis, out=out)
 
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear'):
@@ -3186,8 +3195,7 @@ def meshgrid(*xi, **kwargs):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
     
-    In the 1-D and 0-D case, the indexing and sparse keywords have no
-    effect.
+    In the 1-D and 0-D case, the indexing and sparse keywords have no effect.
 
     See Also
     --------
@@ -3263,8 +3271,7 @@ def meshgrid(*xi, **kwargs):
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
-    dimensional array, this returns those entries not returned by
-    `arr[obj]`.
+    dimensional array, this returns those entries not returned by `arr[obj]`.
 
     Parameters
     ----------
@@ -3291,11 +3298,9 @@ def delete(arr, obj, axis=None):
     Notes
     -----
     Often it is preferable to use a boolean mask. For example:
-    
     >>> mask = np.ones(len(arr), dtype=bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
-
     Is equivalent to `np.delete(arr, [0,2,4], axis=0)`, but allows further
     use of `mask`.
 
