@@ -14,31 +14,32 @@ NOTE NOTE NOTE
 ==============
 
 This document is currently a draft.  It's being posted because we want
-**your** feedback.  Even if you're just the author of some little
-obscure project that's only been downloaded 13 times (and 9 of those
-were you playing around with pip, and the other 4 are your
-office-mates).  Even if you're not *really* a programmer, but only a
+**your** feedback.  Yes, **you**.  *Even* if you're just the author of
+some little obscure project that's only been downloaded 13 times (and
+9 of those were you playing around with pip, and the other 4 are your
+office-mates).  *Even* if you're not *really* a programmer, but only a
 scientist/roboticist/statistician/financial modeller/whatever, and
 don't want to bother the *real* programmers while they do... whatever
-it is they do (and why does it involve ducks?).  Even if your lab has
-been feuding with the numpy developers for the last 3 generations over
-some ufunc-related mishap that corrupted your advisor's advisor's
+it is they do (and why does it involve ducks?).  *Even* if your lab
+has been feuding with the numpy developers for the last 3 generations
+over some ufunc-related mishap that corrupted your advisor's advisor's
 favorite data.  We want this document to reflect the consensus of --
 and serve the needs of -- the *whole* Python numerical/mathematical
-ecosystem, and nothing here is finalized.  So please do send feedback.
-Some appropriate methods:
+ecosystem.  We've probably missed important things due to our limited
+perspective.  Nothing here is finalized.  So please do send feedback.
+Some appropriate ways to reach us:
 
-* This Github PR: https://github.com/numpy/numpy/pull/4351 (also, the
-  most up-to-date draft can always be viewed here)
+* This Github PR: https://github.com/numpy/numpy/pull/4351 (this is
+  also where you can view the most up-to-date draft)
 
 * Email to: njs@pobox.com
 
 * python-dev, once this is posted there...
 
-Of course, by the same token, we can't guarantee that your brilliant
-suggestion will actually be incorporated, because it probably
-contradicts three other people's brilliant suggestions.  Life is full
-of compromises. But we'll do our best.
+Of course, we can't guarantee that your brilliant suggestion will
+actually be incorporated, because it probably contradicts three other
+people's brilliant suggestions.  The goal is to get something we can
+all live with.  Life is full of compromises.  But we'll do our best.
 
 Now, without further ado:
 
@@ -81,13 +82,9 @@ Executive summary
 In numerical code, there are two important operations which compete
 for use of the ``*`` operator: elementwise multiplication, and matrix
 multiplication.  Most Python code uses the ``*`` operator for the
-former, leaving no operator for matrix multiplication; a minority uses
-the opposite convention and suffers the opposite problem.  Matrix
+former, leaving no operator for matrix multiplication.  Matrix
 multiplication is uniquely deserving of a new, dedicated infix
 operator, because:
-
-* The lack of a standard notation for matrix multiplication produces
-  API fragmentation across the ecosystem of numeric packages.
 
 * ``@`` brings Python into alignment with universal notational
   practice across all fields of mathematics, science, and engineering.
@@ -101,8 +98,9 @@ operator, because:
 * ``@`` will be used frequently -- quite possibly more frequently than
   ``//`` or the bitwise operators.
 
-* ``@`` helps the numerical community finally standardize on a single
-  duck type for all matrix-like objects.
+* ``@`` helps the Python numerical community reduce fragmentation, by
+  finally standardizing on a single duck type for all matrix-like
+  objects.
 
 And, given the existence of ``@``, it makes more sense than not to
 have ``@@``, ``@=``, and ``@@=``, so they are added as well.
@@ -132,10 +130,10 @@ Because Python contains only a single multiplication operator, matrix
 libraries must decide: use ``*`` for elementwise multiplication, or
 use ``*`` for matrix multiplication, or use some heuristics to guess
 on a case-by-case basis.  For reasons described in more detail below,
-none of these options is very pleasant.  And for a number of reasons,
-it makes more sense to keep ``*`` for elementwise multiplication (see:
-`Choice of operation`_).  Thus, this PEP proposes a new operator ``@``
-for matrix multiplication.
+none of these options is very pleasant.  And it turns out to make more
+sense to keep ``*`` for elementwise multiplication (see `Choice of
+operation`_ below for details).  Thus, this PEP proposes a new
+operator ``@`` for matrix multiplication.
 
 
 Why should matrix multiplication be infix?
@@ -290,7 +288,7 @@ handle a somewhat specialized arithmetic operation: "floor division"
 (``//``), like the bitwise operators, is very useful under certain
 circumstances when performing exact calculations on discrete values,
 but it seems likely that there are many Python programmers who have
-never used ``//``.  ``@`` is no more niche than ``//``.
+never had reason to use ``//``.  ``@`` is no more niche than ``//``.
 
 
 So ``@`` is good for matrix formulas, but how common are those really?
@@ -441,7 +439,8 @@ analogous to `1`), a vector containing only a single entry (shape ==
 (shape == (1, 1), analogous to `[[1]]`), etc., so the dimensionality
 of any array is always well-defined.  Other libraries with more
 restricted representations (e.g., only 2d arrays) might implement only
-a (hopefully compatible!) subset of the functionality described here.
+a subset of the functionality described here.
+
 
 Semantics
 ---------
@@ -491,16 +490,17 @@ The recommended semantics for ``@`` are:
   ``Mat1 @ (vec @ Mat2)``).  But this seems to be a case where
   practicality beats purity: non-associativity only arises for strange
   expressions that would never be written in practice; if they are
-  written there is a consistent rule for understanding what will
-  happen (``Mat1 @ vec @ Mat2`` is parsed as ``(Mat1 @ vec) @ Mat2``,
-  cf. ``a / b / c``); and, not supporting 1d vectors would rule out a
-  very large number of important operations: no-one wants to explain
-  to newbies why to solve the simplest linear system in the obvious
-  way, they have to type ``(inv(A) @ b[:, np.newaxis]).ravel()``, or
-  do OLS by typing ``solve(X.T @ X, X @ y[:, np.newaxis]).ravel()``;
-  no-one wants to type ``(a[np.newaxis, :] @ a[:, np.newaxis])[()]``
-  every time they compute an inner product (or ``(a[np.newaxis, :] @
-  Mat @ a[:, np.newaxis])[()]`` for general quadratic forms.
+  written anyway then there is a consistent rule for understanding
+  what will happen (``Mat1 @ vec @ Mat2`` is parsed as ``(Mat1 @ vec)
+  @ Mat2``, just like ``a - b - c``); and, not supporting 1d vectors
+  would rule out many important use cases that do arise very commonly
+  in practice.  No-one wants to explain to newbies why to solve the
+  simplest linear system in the obvious way, they have to type
+  ``(inv(A) @ b[:, np.newaxis]).flatten()``, or do OLS by typing
+  ``solve(X.T @ X, X @ y[:, np.newaxis]).flatten()``; no-one wants to
+  type ``(a[np.newaxis, :] @ a[:, np.newaxis])[0, 0]`` every time they
+  compute an inner product, or ``(a[np.newaxis, :] @ Mat @ a[:,
+  np.newaxis])[0, 0]`` for general quadratic forms.
 
 * 2d inputs are conventional matrices, and treated in the obvious
   way.
@@ -549,12 +549,12 @@ handle >2d arrays appropriately (assuming an appropriate definition of
 definition, ``vector @@ 2`` gives the squared Euclidean length of the
 vector, a commonly used value.  Also, while it is rarely useful to
 compute inverses or other negative powers explicitly in dense matrix
-code, these *are* a natural operation in systems performing symbolic
-or deferred-mode computations (e.g. sympy, Theano), so we make sure to
-define negative powers.  Fractional powers, though, are somewhat more
-dicey in general, so we leave it to individual projects to decide
-whether they want to try to define some reasonable semantics for such
-inputs.
+code, these *are* natural objects to work with when doing symbolic or
+deferred-mode computations (e.g. sympy, Theano); therefore, negative
+powers are fully supported.  Fractional powers, though, are somewhat
+more dicey in general, so we leave it to individual projects to decide
+whether they want to try to define some reasonable semantics for
+fractional inputs.
 
 
 Adoption
@@ -570,9 +570,13 @@ matrix multiplication in at least some cases *and* have expressed a
 goal of migrating from this to the majority convention of ``*`` =
 elementwise, ``@`` = matrix multiplication.
 
+[and (+?) means that I think they probably count as (+), but need to
+double check with the relevant devs]
+
 XX check: Theano, OpenCV, cvxopt, pycuda, sage, sympy, pysparse,
-pyviennacl, any others?  QTransform in PyQt? PyOpenGL seems to assume
-that if you want real matrices you'll use numpy. panda3d?
+pyviennacl, panda3d; are there any other libraries that define matrix
+types?  QTransform in PyQt? PyOpenGL seems to assume that if you want
+real matrices you'll use numpy.
 
 
 Rationale for specification details
@@ -812,8 +816,7 @@ References
 
    * Bayesian statistics made simple
 
-   In addition, the following tutorials could easily deal with
-   matrices:
+   In addition, the following tutorials could easily involve matrices:
 
    * Introduction to game programming
 
