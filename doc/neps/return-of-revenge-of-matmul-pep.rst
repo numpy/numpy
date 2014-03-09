@@ -269,9 +269,9 @@ called upon to work with it in sophisticated ways.  Matrices are the
 lingua franca of finance, machine learning, 3d graphics, computer
 vision, robotics, operations research, econometrics, meteorology,
 computational linguistics, recommendation systems, neuroscience,
-bioinformatics (including genetics, cancer research, drug discovery,
-etc.), physics engines, quantum mechanics, network analysis, and many
-other application areas.
+astronomy, bioinformatics (including genetics, cancer research, drug
+discovery, etc.), physics engines, quantum mechanics, geophysics,
+network analysis, and many other application areas.
 
 In most or all of these areas, Python is rapidly becoming a dominant
 player, in large part because of its ability to elegantly mix
