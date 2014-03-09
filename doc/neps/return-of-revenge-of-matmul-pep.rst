@@ -10,21 +10,24 @@ Content-Type: text/x-rst
 Created: 20-Feb-2014
 Post-History:
 
-NOTE NOTE NOTE
-==============
+[NOTE NOTE NOTE]
+================
 
-This document is currently a draft.  It's being posted because we want
-**your** feedback.  Yes, **you**.  *Even* if you're just the author of
-some little obscure project that's only been downloaded 13 times (and
-9 of those were you playing around with pip, and the other 4 are your
-office-mates).  *Even* if you're not *really* a programmer, but only a
+[This document is currently a draft.  It's being posted because we
+want **your** feedback.  Yes, **you**.  *Even* if you're 'just a
+user', or 'just' the author of some little obscure project that's only
+been downloaded 13 times (and 9 of those were you playing around with
+pip, and the other 4 are your office-mates).  *Even* if you're not
+'really' a programmer, but only a
 scientist/roboticist/statistician/financial modeller/whatever, and
-don't want to bother the *real* programmers while they do... whatever
-it is they do (and why does it involve ducks?).  *Even* if your lab
-has been feuding with the numpy developers for the last 3 generations
-over some ufunc-related mishap that corrupted your advisor's advisor's
-favorite data.  We want this document to reflect the consensus of --
-and serve the needs of -- the *whole* Python numerical/mathematical
+don't want to bother the 'real' programmers while they do... whatever
+it is they do (and why do they keep talking about ducks?).  *Even* if
+your lab has been feuding with the numpy developers for the last 3
+generations over some ufunc-related mishap that corrupted your
+advisor's advisor's favorite data [#feud].  *Even* if you think we're
+a bunch of idiots.  Actually, especially if you think we're a bunch of
+idiots.  We want this document to reflect the consensus of -- and
+serve the needs of -- the *whole* Python numerical/mathematical
 ecosystem.  We've probably missed important things due to our limited
 perspective.  Nothing here is finalized.  So please do send feedback.
 Some appropriate ways to reach us:
@@ -38,10 +41,17 @@ Some appropriate ways to reach us:
 
 Of course, we can't guarantee that your brilliant suggestion will
 actually be incorporated, because it probably contradicts three other
-people's brilliant suggestions.  The goal is to get something we can
-all live with.  Life is full of compromises.  But we'll do our best.
+people's brilliant suggestions, and somehow we have to agree on
+something to actually propose.  Life is full of compromises.  But
+we'll do our best.
 
-Now, without further ado:
+Note that we especially would like feedback on the proposed
+`Semantics`_, and in particular if they look good to you and you
+maintain a library that implements some matrix-like type, then we'd
+love to add your project to the list in the `Adoption`_ section, as
+further evidence of what a big happy family we all are.
+
+Now, without further ado:]
 
 
 Abstract
@@ -880,3 +890,5 @@ References
 .. [#broadcasting]: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
 .. [#matmul-other-langs]: http://mail.scipy.org/pipermail/scipy-user/2014-February/035499.html
+
+.. [#feud] Also, if this is true, then please file a bug: https://github.com/numpy/numpy/issues
