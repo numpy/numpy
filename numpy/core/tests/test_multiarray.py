@@ -567,7 +567,8 @@ class TestStructured(TestCase):
         assert_equal(a==b, [True, False])
         assert_equal(a!=b, [False, True])
         for i in range(3):
-            b[0].a = a[0].a
+            b[0].a[:] = a[0].a
+            assert_equal(b[0].a, a[0].a)
             b[0].a[i] = 5
             assert_equal(a==b, [False, False])
             assert_equal(a!=b, [True, True])
@@ -2872,6 +2873,54 @@ class TestRecord(TestCase):
     def test_record_no_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')
         self.assertRaises(TypeError, hash, a[0])
+
+    def test_structured_array_assignment(self):
+        # see also #3126
+        struct_dt = np.dtype([('elem', 'i4', 5)])
+        dt = np.dtype([
+            ('field', 'i4', 10),
+            ('struct', struct_dt),
+            ('field_of_struct', struct_dt, 3),
+            ('elem', 'i4'),
+        ])
+        # correct slice assignments
+        x = np.zeros(1, dt)
+        x[0]['field'][:] = np.ones(10, dtype='i4')
+        assert_array_equal(x[0]['field'], 1)
+        fos = np.ones(3, dtype=struct_dt)
+        x[0]['field_of_struct'][:] = fos
+        assert_array_equal(x[0]['field_of_struct'], fos)
+        # incorrect slice assignment
+        def f():
+            x[0]['field'][:] = np.ones(9, dtype='i4')
+        self.assertRaises(ValueError, f)
+        # no slice assignment
+        x = np.zeros(1, dt)
+        s = np.ones(1, dtype=struct_dt)
+        x[0]['struct'] = s
+        assert_array_equal(x[0]['struct'], s)
+        x['elem'] = 2
+        self.assertEqual(x['elem'], 2)
+        x[0]['elem'] = 3
+        self.assertEqual(x['elem'], 3)
+        # incorrect no slice assignment, #3126
+        def f():
+            x[0]['field'] = np.ones(10, dtype='i4')
+        self.assertRaises(ValueError, f)
+        def f():
+            x[0]['field'] = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        self.assertRaises(ValueError, f)
+        # see #3561
+        def f():
+            x[0]['field'] = 1
+        self.assertRaises(ValueError, f)
+        def f():
+            x[0]['struct'] = np.ones(3, dtype=struct_dt)
+        self.assertRaises(ValueError, f)
+        y = x.copy()
+        def f():
+            x[0]['field'] = y[0]['field']
+        self.assertRaises(ValueError, f)
 
 class TestView(TestCase):
     def test_basic(self):

@@ -1672,6 +1672,22 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
         Py_DECREF(typecode);
     }
     else {
+        /* method voidtype_setfield sets per definition a void field,
+         * not an array or a broadcast to an array. */
+        if ((typecode->subarray != NULL) ||
+#if defined(NPY_PY3K)
+            (!PyUString_Check(value) &&
+#else
+            (!PyBytes_Check(value) && !PyUnicode_Check(value) &&
+#endif
+             PySequence_Check(value) &&
+             PySequence_Length(value) > 1)) {
+            PyErr_Format(PyExc_ValueError,
+                    "Incompatible assignment of sequence to numpy scalar. " \
+                    "Left hand [:] for slice assignment might be missing.");
+            return NULL;
+        }
+    
         /* Copy data from value to correct place in dptr */
         src = (PyArrayObject *)PyArray_FromAny(value, typecode,
                                     0, 0, NPY_ARRAY_CARRAY, NULL);
