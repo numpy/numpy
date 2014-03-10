@@ -2635,9 +2635,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         }
     }
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);

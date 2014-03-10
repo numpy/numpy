@@ -22,6 +22,7 @@
 #include <ctype.h>
 
 #include "convert.h"
+#include "common.h"
 
 #ifdef NPY_HAVE_SSE_INTRINSICS
 #define EINSUM_USE_SSE1 1
@@ -2969,7 +2970,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;
-        int needs_api = NpyIter_IterationNeedsAPI(iter);
         NPY_BEGIN_THREADS_DEF;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2982,19 +2982,15 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
         NPY_EINSUM_DBG_PRINT("Einsum loop\n");
         do {
             sop(nop, dataptr, stride, *countptr);
         } while(iternext(iter));
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
 
         /* If the API was needed, it may have thrown an error */
-        if (needs_api && PyErr_Occurred()) {
+        if (NpyIter_IterationNeedsAPI(iter) && PyErr_Occurred()) {
             Py_DECREF(ret);
             ret = NULL;
         }

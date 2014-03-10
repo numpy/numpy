@@ -1153,9 +1153,7 @@ trivial_two_operand_loop(PyArrayObject **op,
 
     innerloop(data, count, stride, innerloopdata);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 }
 
 static void
@@ -1186,9 +1184,7 @@ trivial_three_operand_loop(PyArrayObject **op,
 
     innerloop(data, count, stride, innerloopdata);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 }
 
 /*
@@ -1270,7 +1266,6 @@ iterator_loop(PyUFuncObject *ufunc,
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
     char *baseptrs[NPY_MAXARGS];
-    int needs_api;
 
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
@@ -1325,8 +1320,6 @@ iterator_loop(PyUFuncObject *ufunc,
         return -1;
     }
 
-    needs_api = NpyIter_IterationNeedsAPI(iter);
-
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
     for (i = nin; i < nop; ++i) {
@@ -1370,9 +1363,7 @@ iterator_loop(PyUFuncObject *ufunc,
         stride = NpyIter_GetInnerStrideArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         /* Execute the loop */
         do {
@@ -1380,9 +1371,7 @@ iterator_loop(PyUFuncObject *ufunc,
             innerloop(dataptr, count_ptr, stride, innerloopdata);
         } while (iternext(iter));
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
     }
 
     NpyIter_Deallocate(iter);
@@ -1579,8 +1568,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
-    NPY_BEGIN_THREADS_DEF;
-
     if (wheremask != NULL) {
         if (nop + 1 > NPY_MAXARGS) {
             PyErr_SetString(PyExc_ValueError,
@@ -1669,6 +1656,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         NpyAuxData *innerloopdata;
         npy_intp fixed_strides[2*NPY_MAXARGS];
         PyArray_Descr **iter_dtypes;
+        NPY_BEGIN_THREADS_DEF;
 
         /* Validate that the prepare_ufunc_output didn't mess with pointers */
         for (i = nin; i < nop; ++i) {
@@ -1708,9 +1696,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         strides = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         NPY_UF_DBG_PRINT("Actual inner loop:\n");
         /* Execute the loop */
@@ -1721,9 +1707,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                         *countptr, innerloopdata);
         } while (iternext(iter));
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
 
         NPY_AUXDATA_FREE(innerloopdata);
     }
@@ -2742,9 +2726,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         return -1;
     }
 
-    if (!needs_api) {
-        NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
-    }
+    NPY_BEGIN_THREADS_NDITER(iter);
 
     if (skip_first_count > 0) {
         do {
@@ -2797,9 +2779,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
     } while (iternext(iter));
 
 finish_loop:
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
@@ -3126,9 +3106,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         do {
 
@@ -3158,9 +3136,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             }
         } while (iternext(iter));
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
     }
     else if (iter == NULL) {
         char *dataptr_copy[3];
@@ -3221,9 +3197,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             innerloop(dataptr_copy, &count,
                         stride_copy, innerloopdata);
 
-            if (!needs_api) {
-                NPY_END_THREADS;
-            }
+            NPY_END_THREADS;
         }
     }
 
@@ -3274,7 +3248,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int i, idim, ndim, otype_final;
-    int needs_api, need_outer_iterator;
+    int need_outer_iterator;
 
     NpyIter *iter = NULL;
 
@@ -3519,11 +3493,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         stride_copy[1] = stride1;
         stride_copy[2] = stride0;
 
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         do {
 
@@ -3560,9 +3530,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             }
         } while (iternext(iter));
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
     }
     else if (iter == NULL) {
         char *dataptr_copy[3];
@@ -3575,7 +3543,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         /* Execute the loop with no iterators */
         npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
 
-        needs_api = PyDataType_REFCHK(op_dtypes[0]);
+        int needs_api = PyDataType_REFCHK(op_dtypes[0]);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
@@ -3619,9 +3587,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             }
         }
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
     }
 
 finish:
@@ -5190,9 +5156,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         i--;
     }
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     if (err_msg) {
         PyErr_SetString(PyExc_ValueError, err_msg);
