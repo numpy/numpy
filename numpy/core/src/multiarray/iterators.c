@@ -71,7 +71,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
         if (check_index) {
-            if (check_and_adjust_index(&i, max, axis) < 0) {
+            if (check_and_adjust_index(&i, max, axis, NULL) < 0) {
             goto fail;
             }
         }
@@ -668,7 +668,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     itemsize = PyArray_DESCR(self->ao)->elsize;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             PyArray_ITER_RESET(self);
             return NULL;
         }
@@ -702,7 +702,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             Py_DECREF(ind_it);
             Py_DECREF(ret);
             PyArray_ITER_RESET(self);
@@ -926,7 +926,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             return -1;
         }
         PyArray_ITER_GOTO1D(self, num);
@@ -940,7 +940,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     counter = ind_it->size;
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             Py_DECREF(ind_it);
             return -1;
         }
@@ -1017,7 +1017,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         PyErr_Clear();
     }
     else {
-        if (check_and_adjust_index(&start, self->size, -1) < 0) {
+        if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
             goto finish;
         }
         retval = 0;

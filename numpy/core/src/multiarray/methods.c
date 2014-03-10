@@ -647,7 +647,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (check_and_adjust_index(&value, size, -1) < 0) {
+        if (check_and_adjust_index(&value, size, -1, NULL) < 0) {
             return NULL;
         }
 
@@ -724,7 +724,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (check_and_adjust_index(&value, size, -1) < 0) {
+        if (check_and_adjust_index(&value, size, -1, NULL) < 0) {
             return NULL;
         }
 

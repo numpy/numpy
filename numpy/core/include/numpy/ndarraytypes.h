@@ -928,10 +928,11 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
 #define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS)
 
+/* the variable is used in some places, so always define it */
+#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
 #define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
@@ -951,7 +952,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #else
 #define NPY_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size)

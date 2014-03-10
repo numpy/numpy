@@ -799,7 +799,7 @@ get_item_pointer(PyArrayObject *self, char **ptr,
     *ptr = PyArray_BYTES(self);
     for (i=0; i < index_num; i++) {
         if ((check_and_adjust_index(&(indices[i].value),
-                               PyArray_DIMS(self)[i], i)) < 0) {
+                               PyArray_DIMS(self)[i], i, NULL)) < 0) {
             return -1;
         }
         *ptr += PyArray_STRIDE(self, i) * indices[i].value;
@@ -842,7 +842,8 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
         switch (indices[i].type) {
             case HAS_INTEGER:
                 if ((check_and_adjust_index(&indices[i].value,
-                                PyArray_DIMS(self)[orig_dim], orig_dim)) < 0) {
+                                PyArray_DIMS(self)[orig_dim], orig_dim,
+                                NULL)) < 0) {
                     return -1;
                 }
                 data_ptr += PyArray_STRIDE(self, orig_dim) * indices[i].value;
@@ -2366,7 +2367,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             while (itersize--) {
                 indval = *((npy_intp*)data);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis) < 0) {
+                                           outer_dim, outer_axis, NULL) < 0) {
                     return -1;
                 }
                 data += stride;
@@ -2400,7 +2401,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             while (itersize--) {
                 indval = *((npy_intp*)*iterptr);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis) < 0) {
+                                           outer_dim, outer_axis, NULL) < 0) {
 
                     Py_DECREF(intp_type);
                     NpyIter_Deallocate(op_iter);
