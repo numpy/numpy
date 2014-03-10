@@ -1417,6 +1417,9 @@ _packbits( void *In,
     npy_intp out_Nm1;
     int maxi, remain, nonzero, j;
     char *outptr,*inptr;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(out_N);
 
     outptr = Out;    /* pointer to output buffer */
     inptr  = In;     /* pointer to input buffer */
@@ -1451,6 +1454,8 @@ _packbits( void *In,
         *outptr = build;
         outptr += out_stride;
     }
+
+    NPY_END_THREADS;
     return;
 }
 
@@ -1468,6 +1473,9 @@ _unpackbits(void *In,
     unsigned char mask;
     int i, index;
     char *inptr, *outptr;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(in_N);
 
     outptr = Out;
     inptr  = In;
@@ -1480,6 +1488,8 @@ _unpackbits(void *In,
         }
         inptr += in_stride;
     }
+
+    NPY_END_THREADS;
     return;
 }
 
