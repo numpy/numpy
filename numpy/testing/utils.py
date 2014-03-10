@@ -318,6 +318,14 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
+
+    # Ensure __eq__ and __ne__ agree. Gaurd against bool, bool case
+    # to eliminate infinite recursion.
+    if not (isinstance(desired, bool) and isinstance(actual, bool)):
+        eq = bool(desired == actual)
+        ne = bool(desired != actual)
+        assert_equal(not eq, ne, '!__eq__==__ne__', verbose)
+
     if desired != actual :
         raise AssertionError(msg)
 
