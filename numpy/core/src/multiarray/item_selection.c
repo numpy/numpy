@@ -2455,11 +2455,14 @@ PyArray_Nonzero(PyArrayObject *self)
         char * data = PyArray_BYTES(self);
         npy_intp stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
         npy_intp count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
+        NPY_BEGIN_THREADS_DEF;
 
         /* nothing to do */
         if (nonzero_count == 0) {
             goto finish;
         }
+
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
 
         /* avoid function call for bool */
         if (PyArray_ISBOOL(self)) {
@@ -2501,6 +2504,8 @@ PyArray_Nonzero(PyArrayObject *self)
             }
         }
 
+        NPY_END_THREADS;
+
         goto finish;
     }
 
@@ -2521,6 +2526,7 @@ PyArray_Nonzero(PyArrayObject *self)
 
     if (NpyIter_GetIterSize(iter) != 0) {
         npy_intp * multi_index;
+        NPY_BEGIN_THREADS_DEF;
         /* Get the pointers for inner loop iteration */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -2534,6 +2540,9 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
         dataptr = NpyIter_GetDataPtrArray(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
@@ -2556,6 +2565,8 @@ PyArray_Nonzero(PyArrayObject *self)
                 }
             } while(iternext(iter));
         }
+
+        NPY_END_THREADS;
     }
 
     NpyIter_Deallocate(iter);
