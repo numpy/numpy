@@ -318,7 +318,9 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
-    if desired != actual :
+
+    # Explicitly use __eq__ for comparison, ticket #2552
+    if not (desired == actual):
         raise AssertionError(msg)
 
 def print_assert_equal(test_string, actual, desired):
