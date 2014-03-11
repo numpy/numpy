@@ -476,7 +476,7 @@ The combined column is thus strongly weighted towards the stdlib,
 which is much larger than both projects put together (stdlib: 411575
 SLOC, scikit-learn: 50924 SLOC, nipy: 37078 SLOC). [#sloc-details]_
 
-The **dot** row (marked ``******``) counts how common matrix multiply
+The ``dot`` row (marked ``******``) counts how common matrix multiply
 operations are in each codebase.
 
 ::
