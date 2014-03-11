@@ -2472,7 +2472,8 @@ PyArray_Nonzero(PyArrayObject *self)
                 npy_intp subsize;
                 npy_intp j = 0;
                 while (1) {
-                    npy_memchr(data + j * stride, 0, stride, count, &subsize, 1);
+                    npy_memchr(data + j * stride, 0, stride, count - j,
+                               &subsize, 1);
                     j += subsize;
                     if (j >= count) {
                         break;
