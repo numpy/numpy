@@ -1093,3 +1093,9 @@ References
 
    Modules tested were chosen based on a combination of intuition and
    the top-100 list at pypi-ranking.info.
+
+
+Copyright
+=========
+
+This document has been placed in the public domain.
