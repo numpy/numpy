@@ -1044,17 +1044,17 @@ References
    (https://github.com/nipy/nipy/), and treats the following tokens as
    indicating matrix multiply: ``dot``.
 
-.. [#blas-fork]: BLAS libraries have a habit of secretly spawning
+.. [#blas-fork] BLAS libraries have a habit of secretly spawning
    threads, even when used from single-threaded programs.  And threads
    play very poorly with ``fork()``; the usual symptom is that
    attempting to perform linear algebra in a child process causes an
    immediate deadlock.
 
-.. [#threads-2008]: http://fperez.org/py4science/numpy-pep225/numpy-pep225.html
+.. [#threads-2008] http://fperez.org/py4science/numpy-pep225/numpy-pep225.html
 
-.. [#broadcasting]: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
+.. [#broadcasting] http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
-.. [#matmul-other-langs]: http://mail.scipy.org/pipermail/scipy-user/2014-February/035499.html
+.. [#matmul-other-langs] http://mail.scipy.org/pipermail/scipy-user/2014-February/035499.html
 
 .. [#feud] Also, if this is true, then please file a bug: https://github.com/numpy/numpy/issues
 
