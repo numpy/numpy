@@ -129,12 +129,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     func = PyArray_DESCR(self)->f->fasttake;
     if (func == NULL) {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
+                    if (check_and_adjust_index(&tmp, max_item, axis,
+                                               _save) < 0) {
                         goto fail;
                     }
                     tmp_src = src + tmp * chunk;
@@ -216,8 +219,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
             break;
         }
+        NPY_END_THREADS;
     }
     else {
+        /* no gil release, need it for error reporting */
         err = func(dest, src, (npy_intp *)(PyArray_DATA(indices)),
                     max_item, n, m, nelem, clipmode);
         if (err) {
@@ -300,7 +305,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk*(i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
                     goto fail;
                 }
                 PyArray_Item_INCREF(src, PyArray_DESCR(self));
@@ -350,7 +355,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
                     goto fail;
                 }
                 memmove(dest + tmp * chunk, src, chunk);
@@ -2455,11 +2460,14 @@ PyArray_Nonzero(PyArrayObject *self)
         char * data = PyArray_BYTES(self);
         npy_intp stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
         npy_intp count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
+        NPY_BEGIN_THREADS_DEF;
 
         /* nothing to do */
         if (nonzero_count == 0) {
             goto finish;
         }
+
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
 
         /* avoid function call for bool */
         if (PyArray_ISBOOL(self)) {
@@ -2501,6 +2509,8 @@ PyArray_Nonzero(PyArrayObject *self)
             }
         }
 
+        NPY_END_THREADS;
+
         goto finish;
     }
 
@@ -2521,6 +2531,7 @@ PyArray_Nonzero(PyArrayObject *self)
 
     if (NpyIter_GetIterSize(iter) != 0) {
         npy_intp * multi_index;
+        NPY_BEGIN_THREADS_DEF;
         /* Get the pointers for inner loop iteration */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -2534,6 +2545,9 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
         dataptr = NpyIter_GetDataPtrArray(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
@@ -2556,6 +2570,8 @@ PyArray_Nonzero(PyArrayObject *self)
                 }
             } while(iternext(iter));
         }
+
+        NPY_END_THREADS;
     }
 
     NpyIter_Deallocate(iter);
@@ -2624,7 +2640,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         npy_intp shapevalue = shape[idim];
         npy_intp ind = multi_index[idim];
 
-        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
+        if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
           return NULL;
         }
         data += ind * strides[idim];
@@ -2653,7 +2669,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
         npy_intp shapevalue = shape[idim];
         npy_intp ind = multi_index[idim];
 
-        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
+        if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
             return -1;
         }
         data += ind * strides[idim];

@@ -86,9 +86,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
                             shape_it, dst_data, dst_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 
@@ -165,9 +163,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
                             dst_data, dst_strides_it,
                             wheremask_data, wheremask_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 

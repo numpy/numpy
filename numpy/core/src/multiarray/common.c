@@ -618,7 +618,7 @@ index2ptr(PyArrayObject *mp, npy_intp i)
         return NULL;
     }
     dim0 = PyArray_DIMS(mp)[0];
-    if (check_and_adjust_index(&i, dim0, 0) < 0)
+    if (check_and_adjust_index(&i, dim0, 0, NULL) < 0)
         return NULL;
     if (i == 0) {
         return PyArray_DATA(mp);

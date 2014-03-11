@@ -3501,15 +3501,22 @@ static int
                     NPY_CLIPMODE clipmode)
 {
     npy_intp i, j, k, tmp;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS;
 
     switch(clipmode) {
     case NPY_RAISE:
         for (i = 0; i < n_outer; i++) {
             for (j = 0; j < m_middle; j++) {
                 tmp = indarray[j];
-                /* We don't know what axis we're operating on, so don't report it in case of an error. */
-                if (check_and_adjust_index(&tmp, nindarray, -1) < 0)
+                /*
+                 * We don't know what axis we're operating on,
+                 * so don't report it in case of an error.
+                 */
+                if (check_and_adjust_index(&tmp, nindarray, -1, _save) < 0) {
                     return 1;
+                }
                 if (NPY_LIKELY(nelem == 1)) {
                     *dest++ = *(src + tmp);
                 }
@@ -3571,6 +3578,8 @@ static int
         }
         break;
     }
+
+    NPY_END_THREADS;
     return 0;
 }
 /**end repeat**/

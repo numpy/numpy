@@ -2,8 +2,20 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
+#include <numpy/ndarraytypes.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
+
+#ifdef NPY_ALLOW_THREADS
+#define NPY_BEGIN_THREADS_NDITER(iter) \
+        do { \
+            if (!NpyIter_IterationNeedsAPI(iter)) { \
+                NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
+            } \
+        } while(0)
+#else
+#define NPY_BEGIN_THREADS_NDITER(iter)
+#endif
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -70,12 +82,17 @@ convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
  * 0 <= *index < max_item, and returns 0.
  * 'axis' should be the array axis that is being indexed over, if known. If
  * unknown, use -1.
+ * If _save is NULL it is assumed the GIL is taken
+ * If _save is not NULL it is assumed the GIL is not taken and it
+ * is acquired in the case of an error
  */
 static NPY_INLINE int
-check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
+check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
+                       PyThreadState * _save)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*index < -max_item) || (*index >= max_item))) {
+        NPY_END_THREADS;
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
@@ -85,8 +102,7 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
         } else {
             PyErr_Format(PyExc_IndexError,
                          "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT,
-                         *index, max_item);
+                         "for size %"NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }

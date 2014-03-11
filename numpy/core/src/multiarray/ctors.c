@@ -2635,9 +2635,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         }
     }
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);
@@ -2845,6 +2843,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     PyArray_ArrFuncs *funcs;
     PyObject *obj;
     int ret;
+    NPY_BEGIN_THREADS_DEF;
 
     if (_safe_ceil_to_intp((stop - start)/step, &length)) {
         PyErr_SetString(PyExc_OverflowError,
@@ -2892,7 +2891,9 @@ PyArray_Arange(double start, double stop, double step, int type_num)
         Py_DECREF(range);
         return NULL;
     }
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(range));
     funcs->fill(PyArray_DATA(range), length, range);
+    NPY_END_THREADS;
     if (PyErr_Occurred()) {
         goto fail;
     }
@@ -2989,6 +2990,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     npy_intp length;
     PyArray_Descr *native = NULL;
     int swap;
+    NPY_BEGIN_THREADS_DEF;
 
     /* Datetime arange is handled specially */
     if ((dtype != NULL && (dtype->type_num == NPY_DATETIME ||
@@ -3105,7 +3107,9 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_DECREF(range);
         goto fail;
     }
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(range));
     funcs->fill(PyArray_DATA(range), length, range);
+    NPY_END_THREADS;
     if (PyErr_Occurred()) {
         goto fail;
     }

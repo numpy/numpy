@@ -2774,9 +2774,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
-        }
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         if (NpyIter_GetIterSize(iter) != 0) {
             NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2836,9 +2834,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             } while (iternext(iter));
         }
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
 
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
