@@ -844,23 +844,25 @@ like ``@=``).
 
 We review some of the rejected alternatives here.
 
-**Use a type that defines ``__mul__`` as matrix multiplication:** As
+**Use a type that defines __mul__ as matrix multiplication:** As
 discussed above (`Background: What's wrong with the status quo?`_),
 this has been tried this for many years via the ``numpy.matrix`` type
 (and its predecessors in Numeric and numarray).  The result is a
 strong consensus among experienced numerical programmers that
 ``numpy.matrix`` should essentially never be used, because of the
-problems caused by having conflicting duck types for arrays.  There
-have been several pushes to remove ``numpy.matrix`` entirely; the only
-argument against this has come from educators who find that its
-problems are outweighed by the need to provide a simple and clear
-mapping between mathematical notation and code for novices (see
-`Transparent syntax is especially crucial for non-expert
-programmers`_).  But, of course, starting out newbies with a
-dispreferred syntax and then expecting them to transition later causes
-its own problems.
+problems caused by having conflicting duck types for arrays.  (Of
+course one could then argue we should *only* define ``__mul__`` to be
+matrix multiplication, but then we'd have the same problem with
+elementwise multiplication.)  There have been several pushes to remove
+``numpy.matrix`` entirely; the only argument against this has come
+from educators who find that its problems are outweighed by the need
+to provide a simple and clear mapping between mathematical notation
+and code for novices (see `Transparent syntax is especially crucial
+for non-expert programmers`_).  But, of course, starting out newbies
+with a dispreferred syntax and then expecting them to transition later
+causes its own problems.  This solution is worse than the disease.
 
-**Add a new ``@`` (or whatever) operator that has some other meaning
+**Add a new @ (or whatever) operator that has some other meaning
 in general Python, and then overload it in numeric code:** This was
 the approach proposed by PEP 211, which suggested defining ``@`` to be
 the equivalent of ``itertools.product``.  The problem with this is
@@ -873,7 +875,7 @@ an infix operator.  There almost certainly don't exist any other
 binary operations that will ever justify adding another infix
 operator.
 
-**Add a ``.dot`` method to array types so as to allow "pseudo-infix"
+**Add a .dot method to array types so as to allow "pseudo-infix"
 A.dot(B) syntax:** This has been in numpy for some years, and in many
 cases it's better than dot(A, B).  But it's still much less readable
 than real infix notation, and in particular still suffers from an
@@ -888,7 +890,7 @@ community that matrix multiplication really is the only missing infix
 operator that matters enough to bother about. (In retrospect, we all
 think PEP 225 was a bad idea too.)
 
-**Use ``with`` to toggle the meaning of ``*`` within a single code
+**Use a 'with' block to toggle the meaning of * within a single code
 block**: E.g., numpy could define a special context object so that
 we'd have::
 
@@ -914,7 +916,7 @@ used safely in rather limited cases (no function calls), and which
 would make it very easy to shoot yourself in the foot without warning.
 
 **Use a language preprocessor that adds extra operators and perhaps
-other syntax (as per recent BDFL suggestion [#preprocessor]_):** Aside
+other syntax (as per recent BDFL suggestion):** (See: [#preprocessor]_) Aside
 from matrix multiplication, there are no other operators or syntax
 that anyone in the number-crunching community cares enough about to
 bother adding.  But defining a new language (presumably with its own
@@ -934,17 +936,16 @@ especially prohibitive complication for unsophisticated users.  And we
 use Python because we like Python!  We don't want
 almost-but-not-quite-Python.
 
-**Use overloading hacks to define a "new infix operator" like
-``*dot*``, as in a well-known Python recipe [#infix-hack]_:** Beautiful
-is better than ugly. This solution is so ugly that most developers
-will simply refuse to consider it for use in serious, reusable code.
-This isn't just speculation -- a variant of this recipe is actually
+**Use overloading hacks to define a "new infix operator" like *dot*, as
+in a well-known Python recipe:** (See: [#infix-hack]_) Beautiful is
+better than ugly. This solution is so ugly that most developers will
+simply refuse to consider it for use in serious, reusable code.  This
+isn't just speculation -- a variant of this recipe is actually
 distributed as a supported part of a major Python mathematics system
 [#sage-infix]_, so it's widely available, yet still receives minimal
 use.  OTOH, the fact that people even consider such a 'solution', and
-are supporting it in shipping code, could be taken as further evidence
-for the need for a proper infix operator for matrix product.
-
+are supporting it in shipping code, could be taken as further
+evidence for the need for a proper infix operator for matrix product.
 
 References
 ==========
