@@ -1616,8 +1616,7 @@ class vectorize(object):
             excluded = set()
         self.excluded = set(excluded)
 
-        if self.otypes and not self.excluded:
-            self._ufunc = None      # Caching to improve default performance
+        self._ufunc = None      # Caching to improve default performance
 
     def __call__(self, *args, **kwargs):
         """
