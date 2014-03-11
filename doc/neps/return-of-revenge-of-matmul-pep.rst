@@ -24,7 +24,7 @@ don't want to bother the 'real' programmers while they do... whatever
 it is they do (and why do they keep talking about ducks?).  *Even* if
 your lab has been feuding with the numpy developers for the last 3
 generations over some ufunc-related mishap that corrupted your
-advisor's advisor's favorite data [#feud].  *Even* if you think we're
+advisor's advisor's favorite data [#feud]_.  *Even* if you think we're
 a bunch of idiots.  Actually, especially if you think we're a bunch of
 idiots.  We want this document to reflect the consensus of -- and
 serve the needs of -- the *whole* Python numerical/mathematical
@@ -91,50 +91,54 @@ Executive summary
 
 In numerical code, there are two important operations which compete
 for use of the ``*`` operator: elementwise multiplication, and matrix
-multiplication.  Most Python code uses the ``*`` operator for the
-former, leaving no operator for matrix multiplication.  Matrix
-multiplication is uniquely deserving of a new, dedicated infix
-operator, because:
+multiplication.  Most Python code uses ``*`` for the former, leaving
+no operator for matrix multiplication; this leads to hard-to-read code
+and API fragmentation.  Matrix multiplication has a combination of
+features which together provide a uniquely compelling case for the
+addition of a dedicated infix operator:
 
 * ``@`` brings Python into alignment with universal notational
   practice across all fields of mathematics, science, and engineering.
 
 * ``@`` greatly clarifies real-world code.
 
-* ``@`` provides a smoother onramp for less experienced users.
+* ``@`` provides a smoother onramp for less experienced users, who are
+  particularly harmed by the current API fragmentation.
 
-* ``@`` benefits a large and growing user community.
+* ``@`` benefits a substantial and growing fraction of the Python user
+  community.
 
-* ``@`` will be used frequently -- quite possibly more frequently than
-  ``//`` or the bitwise operators.
+* ``@`` will be used frequently -- likely more frequently than ``//``
+  or the bitwise operators.
 
 * ``@`` helps the Python numerical community reduce fragmentation, by
-  finally standardizing on a single duck type for all matrix-like
+  finally standardizing on a single duck type for all array-like
   objects.
 
 And, given the existence of ``@``, it makes more sense than not to
 have ``@@``, ``@=``, and ``@@=``, so they are added as well.
 
 
-Background: Why isn't one multiplication operator enough?
----------------------------------------------------------
+Background: What's wrong with the status quo?
+---------------------------------------------
 
 When it comes to crunching numbers on a computer, we usually have lots
 and lots of numbers to deal with, and we want to be able to write down
 simple operations that apply to large collections of numbers all at
-once.  The basic object that makes this possible is the *n-dimensional
-array*.
+once.  The *n-dimensional array* is the basic object that all popular
+numeric computing environments use to make this possible.  Python has
+a number of libraries that provide such arrays, with numpy being the
+most prominent.
 
-When working with such arrays, there are two important generalizations
-of the usual multiplication operation.  One is elementwise
-multiplication, e.g.::
+When working with arrays, there are two different ways we might want
+to define multiplication.  One is elementwise multiplication, e.g.::
 
   [[1, 2],     [[11, 12],     [[1 * 11, 2 * 12],
    [3, 4]]  x   [13, 14]]  =   [3 * 13, 4 * 14]]
 
-and the other is the `matrix product`_:
+and the other is `matrix multiplication`_:
 
-.. _matrix product: https://en.wikipedia.org/wiki/Matrix_multiplication
+.. _matrix multiplication: https://en.wikipedia.org/wiki/Matrix_multiplication
 
 ::
 
@@ -143,34 +147,44 @@ and the other is the `matrix product`_:
 
 Elementwise multiplication is useful because it fits the common
 pattern for numerical code: it lets us easily and quickly perform a
-basic operation (scalar multiplication) on a large number of aligned
+basic operation (ordinary multiplication) on a large number of aligned
 values without writing a slow and cumbersome ``for`` loop.  And this
-fits into a very general schema; e.g., in numpy, all Python operators
-work elementwise on arrays of all dimensionalities.  Matrix
-multiplication is slightly more special-purpose -- it's only defined
-on 2d arrays, also known as "matrices" -- but still used very heavily
-across all application areas; mathematically, it's one of the most
-fundamental operations there is.
+works as part of a very general schema: when using the array objects
+provided by numpy or other numerical libraries, all Python operators
+work elementwise on arrays of all dimensionalities.  The result is
+that simple formulas like ``a * b + c / d`` can be written and tested
+using single numbers for the variables, but then used to efficiently
+perform this calculation on large collections of numbers all at once.
 
-Python, however, contains only a single multiplication operator ``*``,
-which means that libraries providing array- or matrix-like objects
-must decide: either use ``*`` for elementwise multiplication, or use
-``*`` for matrix multiplication.  For some libraries -- those which
-have an explicit focus on a specialized application area where only
-one of these operations is used -- this may be an easy choice.  But it
-turns out that in general-purpose number crunching, both operations
-are used frequently, and there are strong arguments for using infix
-rather than function call syntax in both cases, which makes it very
-unclear which approach is optimal; often it varies on a case-by-case
+Matrix multiplication, by comparison, is slightly more
+special-purpose.  It's only defined on 2d arrays (also known as
+"matrices"), and multiplication is the only operation that has a
+meaningful "matrix" version -- "matrix addition" is the same as
+elementwise addition; there is no such thing "matrix bitwise-or" or
+"matrix floordiv"; "matrix division" can be defined but is not very
+useful, etc.  However, matrix multiplication is still used very
+heavily across all numerical application areas; mathematically, it's
+one of the most fundamental operations there is.
+
+Because Python currently contains only a single multiplication
+operator ``*``, libraries providing array-like objects must decide:
+either use ``*`` for elementwise multiplication, or use ``*`` for
+matrix multiplication.  For some libraries -- those which have an
+explicit focus on a specialized application area where only one of
+these operations is used -- this may be an easy choice.  But it turns
+out that when doing general-purpose number crunching, both operations
+are used frequently, and there are major advantages to using infix
+rather than function call syntax in both cases.  It is not at all
+clear which convention is optimal; often it varies on a case-by-case
 basis.
 
-Nonetheless, network effects mean that it is very important to have
-*just one* consistent convention.  In numpy, for example, it is
-technically possible to switch between the conventions, because numpy
-provides two different types: for ``numpy.ndarray`` objects, ``*``
-performs elementwise multiplication, and matrix multiplication must
-use a function call (``numpy.dot``).  For ``numpy.matrix`` objects,
-``*`` performs matrix multiplication, and elementwise multiplication
+Nonetheless, network effects mean that it is very important that we
+pick *just one* convention.  In numpy, for example, it is technically
+possible to switch between the conventions, because numpy provides two
+different types: for ``numpy.ndarray`` objects, ``*`` performs
+elementwise multiplication, and matrix multiplication must use a
+function call (``numpy.dot``).  For ``numpy.matrix`` objects, ``*``
+performs matrix multiplication, and elementwise multiplication
 requires function syntax.  Writing code using ``numpy.ndarray`` works
 fine.  Writing code using ``numpy.matrix`` also works fine.  But
 trouble begins as soon as we try to put these two pieces of code
@@ -181,37 +195,41 @@ to get right.  Functions that defensively try to handle both types as
 input find themselves floundering into a swamp of ``isinstance`` and
 ``if`` statements.
 
-Imagine if PEP 238 had, instead of splitting ``/`` into two operators,
-``/`` and ``//``, instead split ``int`` into two types:
-``classic_int``, whose ``__div__`` implemented floor division, and
-``new_int``, whose ``__div__`` implemented true division.  The result
-would have been chaos.  This, in a more limited way, is the situation
-that Python numeric code currently finds itself in.
+PEP 238 split ``/`` into two operators: ``/`` and ``//``.  Imagine the
+chaos that would have resulted if it had instead split ``int`` into
+two types: ``classic_int``, whose ``__div__`` implemented floor
+division, and ``new_int``, whose ``__div__`` implemented true
+division.  This, in a more limited way, is the situation that Python
+number-crunchers currently find themselves in.
 
-In practice, the vast majority of Python number-crunching code has
-settled on the convention of using ``*`` for elementwise
-multiplication, and funcall syntax for matrix multiplication (e.g., by
-using ``numpy.ndarray``).  This reduces the problems caused by API
-fragmentation -- but does not eliminate them.  The strong desire to
+In practice, the vast majority of projects have settled on the
+convention of using ``*`` for elementwise multiplication, and function
+call syntax for matrix multiplication (e.g., using ``numpy.ndarray``
+instead of ``numpy.matrix``).  This reduces the problems caused by API
+fragmentation, but it doesn't eliminate them.  The strong desire to
 use infix notation for matrix multiplication has caused a number of
 libraries to continue to use the opposite convention (e.g.,
-scipy.sparse, pyoperators, pyviennacl), and ``numpy.matrix`` itself is
-still preferred in many pedagogical contexts.  Well-written libraries
-thus must continue to be prepared to deal with both types of objects,
-and, of course, are also stuck using unpleasant funcall syntax for
-matrix multiplication.
+scipy.sparse, pyoperators, pyviennacl), and ``numpy.matrix`` itself
+still gets used in introductory programming courses, often appears in
+StackOverflow answers, and so forth.  Well-written libraries thus must
+continue to be prepared to deal with both types of objects, and, of
+course, are also stuck using unpleasant funcall syntax for matrix
+multiplication.  These problems cannot be resolved within the
+constraints of current Python syntax (see `Rejected alternatives to
+adding a new operator`_ below).
 
-This PEP proposes to drain this swamp by splitting ``*`` into two
-operators, just as was done for ``/``: ``*`` for elementwise
-multiplication, and ``@`` for matrix multiplication.  (Why not the
-reverse?  Because this way is compatible with the existing consensus,
-and because it leads to a consistent rule that all scalar operators
-apply in an elementwise manner to arrays; the opposite convention
-would lead to more special cases.)
+This PEP proposes the minimum effective change to Python syntax that
+will allow us to drain this swamp.  We split ``*`` into two operators,
+just as was done for ``/``: ``*`` for elementwise multiplication, and
+``@`` for matrix multiplication.  (Why not the reverse?  Because this
+way is compatible with the existing consensus, and because it gives us
+a consistent rule that all the built-in numeric operators also apply
+in an elementwise manner to arrays; the reverse convention would lead
+to more special cases.)
 
-And now that we understand why matrix multiplication does not use
-``*``, the rest of this section focuses on explaining why it is
-uniquely deserving of a new, dedicated operator.
+So that's why matrix multiplication can't just use ``*``.  Now, in the
+the rest of this section, we'll explain why it nonetheless meets the
+high bar for adding a new operator.
 
 
 Why should matrix multiplication be infix?
@@ -219,29 +237,29 @@ Why should matrix multiplication be infix?
 
 Right now, most numerical code in Python uses syntax like
 ``numpy.dot(a, b)`` or ``a.dot(b)`` to perform matrix multiplication.
-So why isn't a function good enough?
+This obviously works, so what's the problem?
 
-Matrix multiplication is similar to ordinary arithmetic operations
-like addition and multiplication on scalars in two ways: (a) it is
-used very heavily in numerical programs -- often multiple times per
-line of code -- and (b) it has an ancient and universally adopted
-tradition of being written using infix syntax.  This is because, for
-typical formulas, this notation is dramatically more readable than any
-function syntax.  An example demonstrates this.
+Matrix multiplication shares two features with ordinary arithmetic
+operations like addition and multiplication on numbers: (a) it is used
+very heavily in numerical programs -- often multiple times per line of
+code -- and (b) it has an ancient and universally adopted tradition of
+being written using infix syntax.  This is because, for typical
+formulas, this notation is dramatically more readable than any
+function call syntax.  Here's an example to demonstrate:
 
 One of the most useful tools for testing a statistical hypothesis is
 the linear hypothesis test for OLS regression models.  It doesn't
 really matter what all those words I just said mean; if we find
-ourselves having to implement this, what we do is look up some
-textbook or paper on it, and encounter many mathematical formulas that
-look like:
+ourselves having to implement this thing, what we'll do is look up
+some textbook or paper on it, and encounter many mathematical formulas
+that look like:
 
 .. math::
 
     S = (H \beta - r)^T (H V H^T)^{-1} (H \beta - r)
 
 Here the various variables are all vectors or matrices (details for
-the curious: [#lht]).
+the curious: [#lht]_).
 
 Now we need to write code to perform this calculation. In current
 numpy, matrix multiplication can be performed using either the
@@ -263,8 +281,8 @@ becomes::
 
     S = (H @ beta - r).T @ inv(H @ V @ H.T) @ (H @ beta - r)
 
-Notice that there is now a transparent, 1-to-1 mapping between symbols
-in the original formula and the code.
+Notice that there is now a transparent, 1-to-1 mapping between the
+symbols in the original formula and the code that implements it.
 
 Of course, an experienced programmer will probably notice that this is
 not the best way to compute this expression.  The repeated computation
@@ -305,11 +323,22 @@ parentheses.  This last point is particularly important for
 readability: when using function-call syntax, the required parentheses
 on every operation create visual clutter that makes it very difficult
 to parse out the overall structure of the formula by eye, even for a
-relatively simple formula like this one.  I made and caught many
-errors while trying to write out the 'dot' formulas above.  They still
-contain at least one error.  (Exercise: find it.  Or maybe them.)  In
-comparison, the ``@`` examples are not only correct, they're obviously
+relatively simple formula like this one.  Eyes are terrible at parsing
+non-regular languages.  I made and caught many errors while trying to
+write out the 'dot' formulas above.  I know they still contain at
+least one error, maybe more.  (Exercise: find it.  Or them.)  The
+``@`` examples, by contrast, are not only correct, they're obviously
 correct at a glance.
+
+For yet more sophisticated programmers writing code that will be
+reused, considerations of speed or numerical accuracy might lead us to
+prefer some particular order of operations.  In the ``@`` examples we
+could be certain that if we see something like ``(H @ V) @ H.T`` then
+the parentheses must have been added intentionally to accomplish some
+meaningful purpose; in the ``dot`` examples, it's impossible to know
+which nesting decisions are important, and which are arbitrary.
+
+``@`` dramatically improves matrix code usability on many axes.
 
 
 Transparent syntax is especially crucial for non-expert programmers
@@ -332,7 +361,7 @@ at all.  This is so important that such classes often use the
 ``numpy.matrix`` type which defines ``*`` to mean matrix
 multiplication, even though this type is buggy and heavily deprecated
 by the rest of the numpy community for the fragmentation that it
-causes; this pedagogical use case is the *only* reason
+causes.  This pedagogical use case is the *only* reason
 ``numpy.matrix`` has not been deprecated.  Adding ``@`` will benefit
 both beginning and advanced users with better syntax; and furthermore,
 it will allow both groups to standardize on the same notation from the
@@ -349,17 +378,67 @@ vision, robotics, operations research, econometrics, meteorology,
 computational linguistics, recommendation systems, neuroscience,
 astronomy, bioinformatics (including genetics, cancer research, drug
 discovery, etc.), physics engines, quantum mechanics, geophysics,
-network analysis, and many other application areas.
+network analysis, and many other application areas.  In most or all of
+these areas, Python is rapidly becoming a dominant player, in large
+part because of its ability to elegantly mix traditional discrete data
+structures (hash tables, strings, etc.) on an equal footing with
+modern numerical data types and algorithms.
 
-In most or all of these areas, Python is rapidly becoming a dominant
-player, in large part because of its ability to elegantly mix
-traditional discrete data structures (hash tables, strings, etc.) on
-an equal footing with modern numerical data types and algorithms.  In
-2013, there were 7 international conferences specifically on numerical
-Python [#scipy-conf][#pydata-conf], and ~20% of the PyCon 2014
-tutorials will involve the use of matrices [#pycon-tutorials].
-Matrices may once have been a niche data type restricted to university
-labs using Fortran, but those days are long gone.
+We all live in our own little sub-communities, so some Python users
+may be surprised to realize the sheer extent to which Python is used
+for number crunching -- especially since much of this particular
+sub-community's activity occurs outside of traditional Python/FOSS
+channels.  So, to give some rough idea of just how many numerical
+Python programmers are actually out there, here are two numbers: In
+2013, there were 7 international conferences organized specifically on
+numerical Python [#scipy-conf]_ [#pydata-conf]_.  At PyCon 2014, ~20% of
+the tutorials will involve the use of matrices [#pycon-tutorials]_.
+
+To quantify this further, we used Github's "search" function to look
+at what modules are actually imported across a wide range of
+real-world code (i.e., all the code on Github).  Our list includes
+several popular stdlib modules, a variety of numeric modules, and a
+variety of other extremely high-profile modules like django and lxml
+(which is the #1 most downloaded package on PyPI)::
+
+       Python source files on Github containing the given strings
+                   (as of 2014-04-10, ~21:00 UTC)
+    ================ ==========  ===============  =======  ===========
+    module           "import X"  "from X import"    total  total/numpy
+    ================ ==========  ===============  =======  ===========
+    sys                 2374638            63301  2437939         5.85
+    os                  1971515            37571  2009086         4.82
+    re                  1294651             8358  1303009         3.12
+    numpy ************** 337916 ********** 79065 * 416981 ******* 1.00
+    warnings             298195            73150   371345         0.89
+    subprocess           281290            63644   344934         0.83
+    django                62795           219302   282097         0.68
+    math                 200084            81903   281987         0.68
+    threading            212302            45423   257725         0.62
+    pickle+cPickle       215349            22672   238021         0.57
+    matplotlib           119054            27859   146913         0.35
+    sqlalchemy            29842            82850   112692         0.27
+    pylab                 36754            41063    77817         0.19
+    scipy                 40829            28263    69092         0.17
+    lxml                  19026            38061    57087         0.14
+    zlib                  40486             6623    47109         0.11
+    multiprocessing       25247            19850    45097         0.11
+    requests              30896              560    31456         0.08
+    jinja2                 8057            24047    32104         0.08
+    twisted               13858             6404    20262         0.05
+    gevent                11309             8529    19838         0.05
+    pandas                14923             4005    18928         0.05
+    sympy                  2779             9537    12316         0.03
+    theano                 3654             1828     5482         0.01
+    ================ ==========  ===============  =======  ===========
+
+These numbers should be taken with several grains of salt (see
+footnote for discussion: [#github-details]_), but, to the extent that we
+can trust this data, ``numpy`` appears to be the most-imported
+non-stdlib module in the entire Pythonverse; it's even more-imported
+than such stdlib stalwarts as ``subprocess``, ``math``, ``pickle``,
+and ``threading``.  And numpy users represent only a subset of the
+numerical community that will benefit from the ``@`` operator.
 
 In addition, there is some precedence for adding an infix operator to
 handle a somewhat specialized arithmetic operation: the floor division
@@ -369,16 +448,22 @@ values.  But it seems likely that there are many Python programmers
 who have never had reason to use ``//`` (or, for that matter, the
 bitwise operators).  ``@`` is no more niche than ``//``.
 
+Matrices may once have been a niche data type restricted to Fortran
+programs running in university labs and on military hardware, but
+those days are long gone.
+
 
 So ``@`` is good for matrix formulas, but how common are those really?
 ----------------------------------------------------------------------
 
 We've seen that ``@`` makes matrix formulas dramatically easier to
-work with -- both for experts and non-experts -- and that matrix
-formulas are extremely important in general.  But being important
-doesn't necessarily mean taking up a lot of code: if such formulas
-only occur in one or two places in the average numerically-oriented
-project, then it still might not be worth adding a new operator.
+work with for both experts and non-experts, that matrix formulas are
+important in general, and that numerical libraries like numpy are used
+by a substantial proportion of Python's user base.  But numerical
+libraries aren't just about linear algebra, and being important
+doesn't necessarily mean taking up a lot of code: if matrix formulas
+only occured in one or two places in the average numerically-oriented
+project, then it still wouldn't be worth adding a new operator.
 
 When the going gets tough, the tough get empirical.  To get a rough
 estimate of how useful the ``@`` operator will be, the table below
@@ -389,7 +474,7 @@ library -- normalized by source lines of code (SLOC).  Rows are sorted
 by the 'combined' column, which pools all three code bases together.
 The combined column is thus strongly weighted towards the stdlib,
 which is much larger than both projects put together (stdlib: 411575
-SLOC, scikit-learn: 50924 SLOC, nipy: 37078 SLOC). [#sloc-details]
+SLOC, scikit-learn: 50924 SLOC, nipy: 37078 SLOC). [#sloc-details]_
 
 The **dot** row (marked ``******``) counts how common matrix multiply
 operations are in each codebase.
@@ -448,23 +533,23 @@ By coincidence, the numeric libraries make up approximately the same
 proportion of the 'combined' codebase as numeric tutorials make up of
 PyCon 2014's tutorial schedule, which suggests that the 'combined'
 column may not be *wildly* unrepresentative of new Python code in
-general.  While it's impossible to know for certain, from this data it
-seems plausible that on net across all Python code currently being
-written, matrix multiplication is used more often than ``//`` and the
-bitwise operations.
+general.  While it's impossible to know for certain, from this data
+it's plausible that across all Python code currently being written,
+matrix multiplication is used more often than ``//`` and the bitwise
+operations.
 
 
 But isn't it weird to add an operator with no stdlib uses?
 ----------------------------------------------------------
 
-It's certainly unusual (though ``...`` was also added without any
+It's certainly unusual (though ``Ellipsis`` was also added without any
 stdlib uses), but the important thing is whether a change will benefit
 users, not where the software is being downloaded from.  It's clear
 from the above that ``@`` will be used, and used heavily.  And -- who
-knows? -- perhaps someday the stdlib will contain a matrix type of
+knows? -- perhaps someday the stdlib will contain an array type of
 some sort.  This PEP only moves us closer to that possibility, by
 helping the Python numerical community finally standardize on a single
-duck type for all matrix-like objects.
+duck type for all array-like objects.
 
 
 Matrix power and in-place operators
@@ -479,16 +564,20 @@ to ``*``, then it would be weird and surprising to *not* have an
 ``@=`` and ``@@=`` have limited utility -- it's more common to write
 ``a = (b @ a)`` than it is to write ``a = (a @ b)``, and it is not
 generally possible to implement in-place matrix multiplication any
-more efficiently than by doing ``a = (a @ b)`` -- but they are
-included for completeness and symmetry.
+more efficiently than by making a full copy of the matrix -- but they
+are included for completeness and symmetry.
 
 
 Compatibility considerations
 ============================
 
 Currently, the only legal use of the ``@`` token in Python code is at
-statement beginning in decorators.  Therefore no code will be broken
-by the addition of these operators.
+statement beginning in decorators, and the token strings ``@@``,
+``@=``, and ``@@=`` are entirely illegal.  The new operators are all
+binary infix; therefore they cannot occur at statement beginning.
+This means that no existing code will be broken by the addition of
+these operators, and there is no possible parsing ambiguity between
+decorator-@ and the new operators.
 
 Another important kind of compatibility is the mental cost paid by
 users to update their understanding of the Python language after this
@@ -506,20 +595,21 @@ consensus of a number of libraries that provide array- or matrix-like
 objects on how the ``@`` and ``@@`` operators will be implemented.
 
 This section uses the numpy terminology for describing arbitrary
-multidimensional arrays of data.  In this model, the *shape* of any
-array is represented by a tuple of integers.  Because matrices are
+multidimensional arrays of data, because it is a superset of all other
+commonly used models.  In this model, the *shape* of any array is
+represented by a tuple of integers.  Because matrices are
 two-dimensional, they have len(shape) == 2, while 1d vectors have
 len(shape) == 1, and scalars have shape == (), i.e., they are "0
 dimensional".  Any array contains prod(shape) total entries.  Notice
 that `prod(()) == 1`_ (for the same reason that sum(()) == 0); scalars
 are just an ordinary kind of array, not a special case.  Notice also
 that we distinguish between a single scalar value (shape == (),
-analogous to `1`), a vector containing only a single entry (shape ==
-(1,), analogous to `[1]`), a matrix containing only a single entry
-(shape == (1, 1), analogous to `[[1]]`), etc., so the dimensionality
+analogous to ``1``), a vector containing only a single entry (shape ==
+(1,), analogous to ``[1]``), a matrix containing only a single entry
+(shape == (1, 1), analogous to ``[[1]]``), etc., so the dimensionality
 of any array is always well-defined.  Other libraries with more
-restricted representations (e.g., only 2d arrays) might implement only
-a subset of the functionality described here.
+restricted representations (e.g., those that support 2d arrays only)
+might implement only a subset of the functionality described here.
 
 .. _prod(()) == 1: https://en.wikipedia.org/wiki/Empty_product
 
@@ -584,7 +674,8 @@ The recommended semantics for ``@`` are:
   np.newaxis])[0, 0]`` for general quadratic forms.
 
 * 2d inputs are conventional matrices, and treated in the obvious
-  way.
+  way -- ``arr(3, 4) @ arr(4, 5)`` returns an array with shape (3,
+  5).
 
 * For higher dimensional inputs, we treat the last two dimensions as
   being the dimensions of the matrices to multiply, and 'broadcast'
@@ -596,7 +687,7 @@ The recommended semantics for ``@`` are:
   together in an array with shape (10, 2, 4).  Note that in more
   complicated cases, broadcasting allows several simple but powerful
   tricks for controlling how arrays are aligned with each other; see
-  [#broadcasting] for details.  (In particular, it turns out that
+  [#broadcasting]_ for details.  (In particular, it turns out that
   elementwise multiplication with broadcasting includes the standard
   scalar * matrix product as a special case, further motivating the
   use of ``*`` for this case.)
@@ -624,18 +715,18 @@ The recommended semantics for ``@@`` are::
             return self @ (self @@ (n - 1))
 
 (Of course we expect that much more efficient implementations will be
-used in practice.)  Notice that this definition will automatically
-handle >2d arrays appropriately (assuming an appropriate definition of
-``identity_matrix_with_shape``).  Notice also that with this
-definition, ``vector @@ 2`` gives the squared Euclidean length of the
-vector, a commonly used value.  Also, while it is rarely useful to
-compute inverses or other negative powers explicitly in dense matrix
-code, these *are* natural objects to work with when doing symbolic or
-deferred-mode computations (e.g. sympy, Theano); therefore, negative
-powers are fully supported.  Fractional powers, though, are somewhat
-more dicey in general, so we leave it to individual projects to decide
-whether they want to try to define some reasonable semantics for
-fractional inputs.
+used in practice.)  Notice that if given an appropriate definition of
+``identity_matrix_with_shape``, then this definition will
+automatically handle >2d arrays appropriately.  Notice also that with
+this definition, ``vector @@ 2`` gives the squared Euclidean length of
+the vector, a commonly used value.  Also, while it is rarely useful to
+explicitly compute inverses or other negative powers in standard
+immediate-mode dense matrix code, these computations are natural when
+doing symbolic or deferred-mode computations (as in e.g. sympy,
+theano, numba, numexpr); therefore, negative powers are fully
+supported.  Fractional powers, though, are somewhat more dicey in
+general, so we leave it to individual projects to decide whether they
+want to try to define some reasonable semantics for fractional inputs.
 
 
 Adoption
@@ -646,29 +737,33 @@ and ``@@`` on their matrix-like types in a manner consistent with the
 above definitions: numpy (+), scipy.sparse (+), pandas, blaze,
 pyoperators (+?), pyviennacl (+).
 
-(+) indicates projects which (a) currently use the convention of ``*``
-for matrix multiplication in at least some cases *and* (b) if this PEP
-is accepted, have expressed a goal of migrating from this to the
-majority convention of elementwise-``*``, matmul-``@``. I.e., each (+)
-indicates a reduction in cross-project API fragmentation.
+(+) indicates projects which (a) currently have the convention of
+using ``*`` for matrix multiplication in at least some cases *and* (b)
+if this PEP is accepted, have expressed a goal of migrating from this
+to the majority convention of elementwise-``*``, matmul-``@``. I.e.,
+each (+) indicates a reduction in cross-project API fragmentation.
 
-[and (+?) means that I think they probably count as (+), but need to
-double check with the relevant devs]
+[And (+?) means that I think they probably count as (+), but need to
+double check with the relevant devs.  More to check: Theano (emailed),
+pycuda (emailed), panda3d (emailed devs directly), cvxopt (mostly
+dead, but emailed), OpenCV (not sure who to talk to -- anyone know?),
+pysparse (appears to be totally dead).  Are there any other libraries
+that define matrix types?  Is it worth trying to talk to the PyQt
+people about QTransform?  PyOpenGL seems to assume that if you want to
+do anything interesting with matrices you'll use numpy.]
 
-Non-adoption: The sympy and sage projects don't include elementwise
-multiplication at all, and have no plans to add it.  This is
-consistent with their approach of focusing on matrices as abstract
-mathematical objects (e.g., linear maps over free modules over rings)
-rather than as big bags full of numbers that need crunching.  They
-define ``*`` to be matrix multiplication
 
-XX check: Theano (emailed), OpenCV, cvxopt (emailed), pycuda
-(emailed), pysparse (last commit appears to have been >1 year ago, and
-last change touching the source appears to have been >2 years ago, so
-I guess the project's dead, or at least unlikely to see any API
-changes), panda3d (emailed devs directly); are there any other
-libraries that define matrix types?  QTransform in PyQt?  PyOpenGL
-seems to assume that if you want real matrices you'll use numpy.
+Non- or partial-adoption
+------------------------
+
+The sympy and sage projects don't include elementwise multiplication
+at all, and have no plans to add it.  This is consistent with their
+approach of focusing on matrices as abstract mathematical objects
+(i.e., linear maps over free modules over rings) rather than as big
+bags full of numbers that need crunching.  They thus don't encounter
+the problems this PEP addresses to solve, making it mostly irrelevant
+to them; they define ``*`` to be matrix multiplication, and if this
+PEP is accepted, plan to define ``@`` as an alias for ``*``.
 
 
 Rationale for specification details
@@ -679,13 +774,13 @@ Choice of operator
 
 Why ``@`` instead of some other punctuation symbol? It doesn't matter
 much, and there isn't any consensus across other programming languages
-about how this operator should be named [#matmul-other-langs], but
+about how this operator should be named [#matmul-other-langs]_, but
 ``@`` has a few advantages:
 
 * ``@`` is a friendly character that Pythoneers are already used to
   typing in decorators, and its use in email addresses means it is
   more likely to be easily accessible across keyboard layouts than
-  some other characters (e.g. ``$``).
+  some other characters (e.g. ``$`` or multibyte characters).
 
 * The mATrices mnemonic is cute.
 
@@ -717,7 +812,7 @@ Python core would just create a trap for users.  But the alternative
 that Python link to a BLAS library, which brings a set of new
 complications.  In particular, several popular BLAS libraries
 (including the one that ships by default on OS X) currently break the
-use of ``multiprocessing`` [#blas-fork].  Thus the Python core will
+use of ``multiprocessing`` [#blas-fork]_.  Thus the Python core will
 continue to delegate dealing with these problems to numpy and friends,
 at least for now.
 
@@ -732,44 +827,41 @@ Rejected alternatives to adding a new operator
 Over the past 15+ years, the Python numeric community has explored a
 variety of ways to resolve the tension between matrix and elementwise
 multiplication operations.  PEP 211 and PEP 225, both proposed in 2000
-and last seriously discussed in 2008 [#threads-2008], were early
+and last seriously discussed in 2008 [#threads-2008]_, were early
 attempts to add new operators to solve this problem, but suffered from
 serious flaws; in particular, at that time the Python numerical
 community had not yet reached consensus on the proper API for array
 objects, or on what operators might be needed or useful (e.g., PEP 225
 proposes 6 new operators with unspecified semantics).  Experience
-since then has eventually led to consensus that the best solution is
-to add a single infix operator for matrix multiply (together with any
-other new operators this implies like ``@=``).
+since then has now led to consensus that the best solution is to add a
+single infix operator for matrix multiply (together with any other new
+operators this implies like ``@=``).
 
 We review some of the rejected alternatives here.
 
-**Use a type that defines ``__mul__`` as matrix multiplication:**
-Numpy has had such a type for many years: ``np.matrix`` (as opposed to
-the standard array type, ``np.ndarray``).  And based on this
-experience, a strong consensus has developed that ``np.matrix`` should
-essentially never be used.  The problem is that the presence of two
-different duck-types for numeric data -- one where ``*`` means matrix
-multiply, and one where ``*`` means elementwise multiplication -- make
-it impossible to write generic functions that can operate on arbitrary
-data.  In practice, the vast majority of the Python numeric ecosystem
-has standardized on using ``*`` for elementwise multiplication, and
-deprecated the use of ``np.matrix``.  Most 3rd-party libraries that
-receive a ``matrix`` as input will either error out, return incorrect
-results, or simply convert the input into a standard ``ndarray``, and
-return ``ndarray`` objects as well.  The only reason ``np.matrix``
-survives is because of strong arguments from some educators who find
-that its problems are outweighed by the need to provide a simple and
-clear mapping between mathematical notation and code for novices; and
-this, as described above, causes its own problems.
+**Use a type that defines ``__mul__`` as matrix multiplication:** As
+discussed above (`Background: What's wrong with the status quo?`_),
+this has been tried this for many years via the ``numpy.matrix`` type
+(and its predecessors in Numeric and numarray).  The result is a
+strong consensus among experienced numerical programmers that
+``numpy.matrix`` should essentially never be used, because of the
+problems caused by having conflicting duck types for arrays.  There
+have been several pushes to remove ``numpy.matrix`` entirely; the only
+argument against this has come from educators who find that its
+problems are outweighed by the need to provide a simple and clear
+mapping between mathematical notation and code for novices (see
+`Transparent syntax is especially crucial for non-expert
+programmers`_).  But, of course, starting out newbies with a
+dispreferred syntax and then expecting them to transition later causes
+its own problems.
 
 **Add a new ``@`` (or whatever) operator that has some other meaning
 in general Python, and then overload it in numeric code:** This was
 the approach proposed by PEP 211, which suggested defining ``@`` to be
 the equivalent of ``itertools.product``.  The problem with this is
 that when taken on its own terms, adding an infix operator for
-``itertools.product`` is just silly.  (Similar arguments apply to a
-suggestion that arose during discussions of a draft of this PEP, that
+``itertools.product`` is just silly.  (Similar arguments can be made
+against the suggestion that arose during discussions this PEP, that
 ``@`` be defined as a general operator for function composition.)
 Matrix multiplication has a uniquely strong rationale for inclusion as
 an infix operator.  There almost certainly don't exist any other
@@ -780,8 +872,8 @@ operator.
 A.dot(B) syntax:** This has been in numpy for some years, and in many
 cases it's better than dot(A, B).  But it's still much less readable
 than real infix notation, and in particular still suffers from an
-extreme overabundance of parentheses.  See `Why does matrix
-multiplication need an infix operator?`_ above.
+extreme overabundance of parentheses.  See `Why should matrix
+multiplication be infix?`_ above.
 
 **Add lots of new operators / add a new generic syntax for defining
 infix operators:** In addition to being generally un-Pythonic and
@@ -814,34 +906,36 @@ function that gets called inside the ``with`` block will suddenly find
 itself executing inside the mul_as_dot world, and crash and burn
 horribly (if you're lucky).  So this is a construct that could only be
 used safely in rather limited cases (no function calls), and which
-makes it very easy to shoot yourself in the foot without warning.
+would make it very easy to shoot yourself in the foot without warning.
 
 **Use a language preprocessor that adds extra operators and perhaps
-other syntax (as per recent BDFL suggestion [#preprocessor]):** Aside
+other syntax (as per recent BDFL suggestion [#preprocessor]_):** Aside
 from matrix multiplication, there are no other operators or syntax
-that anyone cares enough about to bother adding.  But defining a new
-language (presumably with its own parser which would have to be kept
-in sync with Python's, etc.), just to support a single binary
-operator, is neither practical nor desireable.  In the scientific
-context, Python's competition is special-purpose numerical languages
-(Matlab, R, IDL, etc.).  Compared to these, Python's killer feature is
-exactly that one can mix specialized numerical code with
-general-purpose code for XML parsing, web page generation, database
-access, network programming, GUI libraries, etc., and we also gain
-major benefits from the huge variety of tutorials, reference material,
-introductory classes, etc., which use Python.  Fragmenting "numerical
-Python" from "real Python" would be a major source of confusion.
-Having to set up a preprocessor would be an especially prohibitive
-complication for unsophisticated users.  And we use Python because we
-like Python!  We don't want almost-but-not-quite-Python.
+that anyone in the number-crunching community cares enough about to
+bother adding.  But defining a new language (presumably with its own
+parser which would have to be kept in sync with Python's, etc.), just
+to support a single binary operator, is neither practical nor
+desireable.  In the numerical context, Python's competition is
+special-purpose numerical languages (Matlab, R, IDL, etc.).  Compared
+to these, Python's killer feature is exactly that one can mix
+specialized numerical code with code for XML parsing, web page
+generation, database access, network programming, GUI libraries, etc.,
+and we also gain major benefits from the huge variety of tutorials,
+reference material, introductory classes, etc., which use Python.
+Fragmenting "numerical Python" from "real Python" would be a major
+source of confusion -- an a major motivation for this PEP is to
+*reduce* fragmentation.  Having to set up a preprocessor would be an
+especially prohibitive complication for unsophisticated users.  And we
+use Python because we like Python!  We don't want
+almost-but-not-quite-Python.
 
 **Use overloading hacks to define a "new infix operator" like
-``*dot*``, as in a well-known Python recipe [#infix-hack]:** Beautiful
+``*dot*``, as in a well-known Python recipe [#infix-hack]_:** Beautiful
 is better than ugly. This solution is so ugly that most developers
 will simply refuse to consider it for use in serious, reusable code.
 This isn't just speculation -- a variant of this recipe is actually
 distributed as a supported part of a major Python mathematics system
-[#sage-infix], so it's widely available, yet still receives minimal
+[#sage-infix]_, so it's widely available, yet still receives minimal
 use.  OTOH, the fact that people even consider such a 'solution', and
 are supporting it in shipping code, could be taken as further evidence
 for the need for a proper infix operator for matrix product.
@@ -958,3 +1052,37 @@ References
 .. [#matmul-other-langs]: http://mail.scipy.org/pipermail/scipy-user/2014-February/035499.html
 
 .. [#feud] Also, if this is true, then please file a bug: https://github.com/numpy/numpy/issues
+
+.. [#github-details] Counts were produced by manually entering the
+   string ``"import foo"`` or ``"from foo import"`` (with quotes) into
+   the Github code search page, e.g.:
+   https://github.com/search?q=%22import+numpy%22&ref=simplesearch&type=Code
+   on 2014-04-10 at ~21:00 UTC.  The reported values are the numbers
+   given in the "Languages" box on the lower-left corner, next to
+   "Python".  This also causes some undercounting (e.g., leaving out
+   Cython code, and possibly one should also count HTML docs and so
+   forth), but these effects are negligible (e.g., only ~1% of numpy
+   usage appears to occur in Cython code, and probably even less for
+   the other modules listed).  The use of this box is crucial,
+   however, because these counts appear to be stable, while the
+   "overall" counts listed at the top of the page ("We've found ___
+   code results") are highly variable even for a single search --
+   simply reloading the page can cause them to vary by a factor of 2
+   (!!).  (They do seem to settle down if one reloads the page
+   repeatedly, but nonetheless this is spooky enough that it seemed
+   better to avoid these numbers.)
+
+   These numbers should of course be taken with a grain of salt; it's not
+   clear how representative Github is of Python code in general, and
+   limitations of the search tool make it impossible to get precise
+   counts (in particular, a line like ``import sys, os`` will only be
+   counted in the ``sys`` row; OTOH, files containing both ``import X``
+   and ``from X import`` will be double-counted).  But AFAIK this is the
+   best data set currently available.
+
+   Also, it's possible there some other non-stdlib module I didn't
+   think to test that is even more-imported than numpy -- though I
+   tried quite a few.  If you find one, let me know!
+
+   Modules tested were chosen based on a combination of intuition and
+   the top-100 list at pypi-ranking.info.
