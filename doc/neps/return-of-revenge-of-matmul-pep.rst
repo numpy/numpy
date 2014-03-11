@@ -396,10 +396,10 @@ the tutorials will involve the use of matrices [#pycon-tutorials]_.
 
 To quantify this further, we used Github's "search" function to look
 at what modules are actually imported across a wide range of
-real-world code (i.e., all the code on Github).  Our list includes
-several popular stdlib modules, a variety of numeric modules, and a
-variety of other extremely high-profile modules like django and lxml
-(which is the #1 most downloaded package on PyPI)::
+real-world code (i.e., all the code on Github).  We checked for
+imports of several popular stdlib modules, a variety of numeric
+modules, and other extremely high-profile modules like django and lxml
+(the latter of which is the #1 most downloaded package on PyPI)::
 
        Python source files on Github containing the given strings
                    (as of 2014-04-10, ~21:00 UTC)
@@ -433,12 +433,12 @@ variety of other extremely high-profile modules like django and lxml
     ================ ==========  ===============  =======  ===========
 
 These numbers should be taken with several grains of salt (see
-footnote for discussion: [#github-details]_), but, to the extent that we
-can trust this data, ``numpy`` appears to be the most-imported
+footnote for discussion: [#github-details]_), but, to the extent that
+we can trust this data, ``numpy`` appears to be the most-imported
 non-stdlib module in the entire Pythonverse; it's even more-imported
 than such stdlib stalwarts as ``subprocess``, ``math``, ``pickle``,
 and ``threading``.  And numpy users represent only a subset of the
-numerical community that will benefit from the ``@`` operator.
+broader numerical community that will benefit from the ``@`` operator.
 
 In addition, there is some precedence for adding an infix operator to
 handle a somewhat specialized arithmetic operation: the floor division
@@ -737,23 +737,25 @@ and ``@@`` on their matrix-like types in a manner consistent with the
 above definitions: numpy (+), scipy.sparse (+), pandas, blaze,
 pyoperators (+?), pyviennacl (+).
 
-(+) indicates projects which (a) currently have the convention of
-using ``*`` for matrix multiplication in at least some cases *and* (b)
-if this PEP is accepted, have expressed a goal of migrating from this
-to the majority convention of elementwise-``*``, matmul-``@``. I.e.,
-each (+) indicates a reduction in cross-project API fragmentation.
+In addition: (+) indicates projects which (a) currently have the
+convention of using ``*`` for matrix multiplication in at least some
+cases *and* (b) if this PEP is accepted, have expressed a goal of
+migrating from this to the majority convention of elementwise-``*``,
+matmul-``@``. I.e., each (+) indicates a reduction in cross-project
+API fragmentation.
 
 [And (+?) means that I think they probably count as (+), but need to
 double check with the relevant devs.  More to check: Theano (emailed),
 pycuda (emailed), panda3d (emailed devs directly), cvxopt (mostly
-dead, but emailed), OpenCV (not sure who to talk to -- anyone know?),
-pysparse (appears to be totally dead).  Are there any other libraries
-that define matrix types?  Is it worth trying to talk to the PyQt
-people about QTransform?  PyOpenGL seems to assume that if you want to
-do anything interesting with matrices you'll use numpy.]
+dead, but emailed), OpenCV (emailed, though I'm not sure if I sent it
+to the right place), pysparse (appears to be totally dead).  Are there
+any other libraries that define matrix types?  Is it worth trying to
+talk to the PyQt people about QTransform?  PyOpenGL seems to assume
+that if you want to do anything interesting with matrices you'll use
+numpy.]
 
 
-Non- or partial-adoption
+Partial- or Non-adoption
 ------------------------
 
 The sympy and sage projects don't include elementwise multiplication
@@ -763,7 +765,9 @@ approach of focusing on matrices as abstract mathematical objects
 bags full of numbers that need crunching.  They thus don't encounter
 the problems this PEP addresses to solve, making it mostly irrelevant
 to them; they define ``*`` to be matrix multiplication, and if this
-PEP is accepted, plan to define ``@`` as an alias for ``*``.
+PEP is accepted, plan to define ``@`` as an alias for ``*``.  So
+technically this would be adoption of the semantics in this PEP, just
+without full API convergence.
 
 
 Rationale for specification details
@@ -833,9 +837,10 @@ serious flaws; in particular, at that time the Python numerical
 community had not yet reached consensus on the proper API for array
 objects, or on what operators might be needed or useful (e.g., PEP 225
 proposes 6 new operators with unspecified semantics).  Experience
-since then has now led to consensus that the best solution is to add a
-single infix operator for matrix multiply (together with any other new
-operators this implies like ``@=``).
+since then has now led to consensus that the best solution, for both
+numeric Python and core Python, is to add a single infix operator for
+matrix multiply (together with the other new operators this implies
+like ``@=``).
 
 We review some of the rejected alternatives here.
 
@@ -1067,8 +1072,8 @@ References
    however, because these counts appear to be stable, while the
    "overall" counts listed at the top of the page ("We've found ___
    code results") are highly variable even for a single search --
-   simply reloading the page can cause them to vary by a factor of 2
-   (!!).  (They do seem to settle down if one reloads the page
+   simply reloading the page can cause this number to vary by a factor
+   of 2 (!!).  (They do seem to settle down if one reloads the page
    repeatedly, but nonetheless this is spooky enough that it seemed
    better to avoid these numbers.)
 
@@ -1082,7 +1087,8 @@ References
 
    Also, it's possible there some other non-stdlib module I didn't
    think to test that is even more-imported than numpy -- though I
-   tried quite a few.  If you find one, let me know!
+   tried quite a few of the obvious suspects.  If you find one, let me
+   know!
 
    Modules tested were chosen based on a combination of intuition and
    the top-100 list at pypi-ranking.info.
