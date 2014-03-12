@@ -1761,7 +1761,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
  *            may be null, in which case the thread global one is fetched
  *  - ufunc_name: name of ufunc
  */
-static int 
+static int
 _check_ufunc_fperr(int errmask, PyObject *extobj, char* ufunc_name) {
     int fperr;
     PyObject *errobj = NULL;
@@ -1810,6 +1810,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int broadcast_ndim, iter_ndim;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
+
+    int core_reps_ix[NPY_MAXARGS][NPY_MAXDIMS];
+    int core_reps_offset[NPY_MAXDIMS+1];
 
     npy_uint32 op_flags[NPY_MAXARGS];
     npy_intp iter_shape[NPY_MAXARGS];
@@ -1889,15 +1892,36 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /*
-     * Figure out the number of iterator creation dimensions,
-     * which is the broadcast dimensions + all the core dimensions of
-     * the outputs, so that the iterator can allocate those output
-     * dimensions following the rules of order='F', for example.
+     * Figure out the number of iterator creation dimensions, which is the
+     * broadcast dimensions + for each distinct core dimension label, the
+     * maximum number of times that it appears in an output argument's
+     * signature. This is the minimum that allows the iterator to allocate
+     * those output dimensions following the rules of order='F', for example.
      */
-    iter_ndim = broadcast_ndim;
-    for (i = nin; i < nop; ++i) {
-        iter_ndim += ufunc->core_num_dims[i];
+    for (i = nin; i < nop; i++) {
+        int offset = ufunc->core_offsets[i];
+        int len = ufunc->core_num_dims[i];
+        /* Set all counts to zero */
+        for (j = 0; j < ufunc->core_num_dim_ix; j++) {
+            core_reps_ix[i][j] = 0;
+        }
+        /* Count times each core dimension comes up in this argument */
+        for (j = offset; j < offset + len; j++) {
+            core_reps_ix[i][ufunc->core_dim_ixs[j]]++;
+        }
+        /* Store the maximum in core_reps[nin-1] */
+        for (j = 0; j < ufunc->core_num_dim_ix; j++) {
+            if (i == nin || core_reps_ix[i][j] > core_reps_ix[nin-1][j]) {
+                core_reps_ix[nin-1][j] = core_reps_ix[i][j];
+            }
+        }
     }
+    /* Store a cumsum of the counts, to be used as an indexing offset */
+    core_reps_offset[0] = 0;
+    for (j = 0; j < ufunc->core_num_dim_ix; j++) {
+        core_reps_offset[j+1] = core_reps_offset[j] + core_reps_ix[nin-1][j];
+    }
+    iter_ndim = broadcast_ndim + core_reps_offset[ufunc->core_num_dim_ix];
     if (iter_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                     "too many dimensions for generalized ufunc %s",
@@ -1972,6 +1996,13 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     for (idim = 0; idim < broadcast_ndim; ++idim) {
         iter_shape[idim] = -1;
     }
+    /* Fill in the end part of 'iter_shape' */
+    idim = broadcast_ndim; /* outcome of previous loop, left for clarity */
+    for (i = 0; i < ufunc->core_num_dim_ix; i++) {
+        for (j = 0; j < core_reps_ix[nin-1][i]; j++) {
+            iter_shape[idim++] = core_dim_sizes[i];
+        }
+    }
 
     /* Fill in op_axes for all the operands */
     j = broadcast_ndim;
@@ -2005,14 +2036,21 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
         /* Except for when it belongs to this output */
         if (i >= nin) {
-            int dim_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            /* Fill in 'iter_shape' and 'op_axes' for this output */
-            for (idim = 0; idim < num_dims; ++idim) {
-                iter_shape[j] = core_dim_sizes[
-                                        ufunc->core_dim_ixs[dim_offset + idim]];
-                op_axes_arrays[i][j] = n + idim;
-                ++j;
+            int counts[NPY_MAXDIMS];
+            int offset = ufunc->core_offsets[i];
+            int len = ufunc->core_num_dims[i];
+
+            /* Initialize the counts to zero */
+            for (j = 0; j < ufunc->core_num_dim_ix; j++) {
+                counts[j] = 0;
+            }
+            /* Count the core dimensions (again) */
+            for (j = offset; j < offset + len; j++) {
+                int core_dim = ufunc->core_dim_ixs[j];
+                int count = counts[core_dim];
+                counts[core_dim]++;
+                int off = core_reps_offset[core_dim];
+                op_axes_arrays[i][off+count+broadcast_ndim] = n + j - offset;
             }
         }
 
@@ -4066,7 +4104,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override, 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override,
                                    ufunc->nin);
     if (errval) {
         return NULL;
@@ -4844,7 +4882,7 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override,
                                    ufunc->nin);
     if (errval) {
         return NULL;
@@ -4861,7 +4899,7 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override,
                                    ufunc->nin);
     if (errval) {
         return NULL;
@@ -4878,7 +4916,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override,
                                    ufunc->nin);
     if (errval) {
         return NULL;
