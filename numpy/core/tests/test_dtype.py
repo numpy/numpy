@@ -331,6 +331,12 @@ class TestSubarray(TestCase):
         assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
+    def test_alignment(self):
+        #Check that subarrays are aligned
+        t1 = np.dtype('1i4', align=True)
+        t2 = np.dtype('2i4', align=True)
+        assert_equal(t1.alignment, t2.alignment)
+
 
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
