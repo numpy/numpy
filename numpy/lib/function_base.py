@@ -1593,6 +1593,7 @@ class vectorize(object):
                  cache=False):
         self.pyfunc = pyfunc
         self.cache = cache
+        self._ufunc = None    # Caching to improve default performance
 
         if doc is None:
             self.__doc__ = pyfunc.__doc__
@@ -1615,8 +1616,6 @@ class vectorize(object):
         if excluded is None:
             excluded = set()
         self.excluded = set(excluded)
-
-        self._ufunc = None      # Caching to improve default performance
 
     def __call__(self, *args, **kwargs):
         """
@@ -1651,7 +1650,8 @@ class vectorize(object):
     def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
         # frompyfunc will fail if args is empty
-        assert args
+        if not args:
+            raise ValueError('args can not be empty')
 
         if self.otypes:
             otypes = self.otypes

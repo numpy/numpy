@@ -721,6 +721,12 @@ class TestVectorize(TestCase):
         assert_array_equal(f(x), x*x)
         assert_equal(_calls[0], len(x))
 
+    def test_otypes(self):
+        f = np.vectorize(lambda x: x)
+        f.otypes = 'i'
+        x = np.arange(5)
+        assert_array_equal(f(x), x)
+
 
 class TestDigitize(TestCase):
     def test_forward(self):
