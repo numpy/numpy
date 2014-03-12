@@ -1877,15 +1877,11 @@ def recfromcsv(fname, **kwargs):
     array will be determined from the data.
 
     """
-    # Set default kwargs as relevant to csv import.
-    # These seem to be undocumented. (case_sensitive is mentioned in basics.io)
+    # Set default kwargs for genfromtxt as relevant to csv import.
     kwargs.setdefault("case_sensitive", "lower")
-    # previously, names were set to True if they were not set or if they
-    # were set to None, overriding the user's choice.
     kwargs.setdefault("names", True)
     kwargs.setdefault("delimiter", ",")
     kwargs.setdefault("dtype", None)
-
     output = genfromtxt(fname, **kwargs)
 
     usemask = kwargs.get("usemask", False)
