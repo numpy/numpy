@@ -369,7 +369,14 @@ Construction and Destruction
 
             Causes the iterator to track a multi-index.
             This prevents the iterator from coalescing axes to
-            produce bigger inner loops.
+            produce bigger inner loops. If the loop is also not buffered
+            and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+            then the iterator size can be ``-1`` to indicate that the iterator
+            is too large. This can happen due to complex broadcasting and
+            will result in errors being created when the setting the iterator
+            range, removing the multi index, or getting the next function.
+            However, it is possible to remove axes again and use the iterator
+            normally if the size is small enough after removal.
 
         .. cvar:: NPY_ITER_EXTERNAL_LOOP
 
@@ -412,8 +419,9 @@ Construction and Destruction
 
             Indicates that arrays with a size of zero should be permitted.
             Since the typical iteration loop does not naturally work with
-            zero-sized arrays, you must check that the IterSize is non-zero
-            before entering the iteration loop.
+            zero-sized arrays, you must check that the IterSize is larger
+            than zero before entering the iteration loop.
+            Currently only the operands are checked, not a forced shape.
 
         .. cvar:: NPY_ITER_REDUCE_OK
 
@@ -721,7 +729,7 @@ Construction and Destruction
 
     **WARNING**: This function may change the internal memory layout of
     the iterator.  Any cached functions or pointers from the iterator
-    must be retrieved again!
+    must be retrieved again! The iterator range will be reset as well.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -887,7 +895,11 @@ Construction and Destruction
 .. cfunction:: npy_intp NpyIter_GetIterSize(NpyIter* iter)
 
     Returns the number of elements being iterated.  This is the product
-    of all the dimensions in the shape.
+    of all the dimensions in the shape.  When a multi index is being tracked
+    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    indicate an iterator is too large.  Such an iterator is invalid, but
+    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    necessary to check for this case.
 
 .. cfunction:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)
 
