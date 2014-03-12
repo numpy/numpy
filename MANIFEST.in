@@ -19,7 +19,7 @@ include doc/Makefile doc/postprocess.py
 recursive-include doc/release *
 recursive-include doc/source *
 recursive-include doc/sphinxext *
-recursive-include doc/swig *
+recursive-include tools/swig *
 recursive-include doc/scipy-sphinx-theme *
 recursive-include doc/f2py *
 
