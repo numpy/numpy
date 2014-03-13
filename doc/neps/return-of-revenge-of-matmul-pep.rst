@@ -782,20 +782,23 @@ eliminated if this PEP is accepted):
 **Projects which currently use * for *matrix* multiplication, and
 which do not implement elementwise multiplication at all:**
 
-There are also several projects which implement matrix types, but with
-a very different perspective than the numerical libraries discussed
+There are several projects which implement matrix types, but from a
+very different perspective than the numerical libraries discussed
 above.  These projects focus on computational methods for analyzing
 matrices in the sense of abstract mathematical objects (i.e., linear
 maps over free modules over rings), rather than as big bags full of
-numbers that need crunching.  And it turns out that for these
-purposes, they don't actually have much use for elementwise operations
-in the first place; as discussed in the Background section above,
+numbers that need crunching.  And it turns out that from the abstract
+math point of view, there isn't much use for elementwise operations in
+the first place; as discussed in the Background section above,
 elementwise operations are motivated by the bag-of-numbers approach.
-So, these projects don't encounter the basic problem that this PEP
-exists to address, making it mostly irrelevant to them. They use ``*``
-for matrix multiplication (and for group actions, etc.), and if this
-PEP is accepted, their expressed intention is to continue doing so,
-while perhaps adding ``@`` and ``@@`` as aliases for ``*`` and ``**``:
+The different goals of these projects mean that they don't encounter
+the basic problem that this PEP exists to address, making it mostly
+irrelevant to them; while they appear superficially similar, they're
+actually doing something quite different.  They use ``*`` for matrix
+multiplication (and for group actions, and so forth), and if this PEP
+is accepted, their expressed intention is to continue doing so, while
+perhaps adding ``@`` and ``@@`` on matrices as aliases for ``*`` and
+``**``:
 
 * sympy
 * sage
