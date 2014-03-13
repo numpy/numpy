@@ -47,32 +47,33 @@ Executive summary
 
 In numerical code, there are two important operations which compete
 for use of Python's ``*`` operator: elementwise multiplication, and
-matrix multiplication.  And in the nearly twenty years since the
-Numeric library was first released, no-one has found any really
-satisfactory way to resolve this competition.  Currently, most
-numerical Python code uses ``*`` for elementwise multiplication, and
-function/method syntax for matrix multiplication; however, this leads
-to ugly and unreadable code in common circumstances.  The problem is
-bad enough that significant amounts of code continue to use the
-opposite convention (which has the virtue of producing ugly and
-unreadable code in *different* circumstances), despite the problems
-this API fragmentation causes.  There does not seem to be any *good*
-solution to the problem of designing a numerical API within current
-Python syntax -- only a landscape of options that are bad in different
-ways. This makes it intrisically difficult to reach consensus, and
-thus fragmentation continues.  The minimal change to Python syntax
-which is sufficient to resolve these problems is the addition of a
-single new infix operator for matrix multiplication.
+matrix multiplication.  In the nearly twenty years since the Numeric
+library was first proposed, there have been many attempts to resolve
+this tension [#hugunin]_; none have been really satisfactory.
+Currently, most numerical Python code uses ``*`` for elementwise
+multiplication, and function/method syntax for matrix multiplication;
+however, this leads to ugly and unreadable code in common
+circumstances.  The problem is bad enough that significant amounts of
+code continue to use the opposite convention (which has the virtue of
+producing ugly and unreadable code in *different* circumstances), and
+this API fragmentation across codebases then creates yet more
+problems.  There does not seem to be any *good* solution to the
+problem of designing a numerical API within current Python syntax --
+only a landscape of options that are bad in different ways.  The
+minimal change to Python syntax which is sufficient to resolve these
+problems is the addition of a single new infix operator for matrix
+multiplication.
 
 Matrix multiplication has a singular combination of features which
-distinguish it from other binary operations. Together they mean that
-such an operator will fit comfortably into Python's existing style,
-and provide a uniquely compelling case for its addition:
+distinguish it from other binary operations, which together provide a
+uniquely compelling case for the addition of a dedicated infix
+operator:
 
 * Just as for the existing numerical operators, there exists a vast
   body of prior art supporting the use of infix notation for matrix
   multiplication across all fields of mathematics, science, and
-  engineering.
+  engineering; ``@`` fills a hole in Python's existing operator
+  system.
 
 * ``@`` greatly clarifies real-world code.
 
@@ -138,7 +139,7 @@ at hand.
 Matrix multiplication is more of a special case.  It's only defined on
 2d arrays (also known as "matrices"), and multiplication is the only
 operation that has a meaningful "matrix" version -- "matrix addition"
-is the same as elementwise addition; there is no such thing "matrix
+is the same as elementwise addition; there is no such thing as "matrix
 bitwise-or" or "matrix floordiv"; "matrix division" can be defined but
 is not very useful, etc.  However, matrix multiplication is still used
 very heavily across all numerical application areas; mathematically,
@@ -604,21 +605,19 @@ Semantics
 
 The recommended semantics for ``@`` are:
 
-* 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
-  is a mathematically and algorithmically distinct operation from
-  matrix @ matrix multiplication; scalar * matrix multiplication
-  should go through ``*`` instead of ``@``.
-
-* 2d inputs are conventional matrices, and treated in the obvious way.
-  If we write ``arr(2, 3)`` to represent an arbitrary 2x3 array, then
-  ``arr(3, 4) @ arr(4, 5)`` returns an array with shape (3, 5).
+* 2d inputs are conventional matrices, and so the semantics are
+  obvious: we apply conventional matrix multiplication.  If we write
+  ``arr(2, 3)`` to represent an arbitrary 2x3 array, then ``arr(3, 4)
+  @ arr(4, 5)`` returns an array with shape (3, 5).
 
 * 1d vector inputs are promoted to 2d by prepending or appending a '1'
-  to the shape on the side 'away' from the operator, the operation is
-  performed, and then the added dimension is removed from the output.
-  The result is that matrix @ vector and vector @ matrix are both
-  legal (assuming compatible shapes), and both return 1d vectors;
-  vector @ vector returns a scalar.  This is clearer with examples.
+  to the shape, the operation is performed, and then the added
+  dimension is removed from the output.  The 1 is always added on the
+  "outside" of the shape: prepended for left arguments, and appended
+  for right arguments.  The result is that matrix @ vector and vector
+  @ matrix are both legal (assuming compatible shapes), and both
+  return 1d vectors; vector @ vector returns a scalar.  This is
+  clearer with examples.
 
   * ``arr(2, 3) @ arr(3, 1)`` is a regular matrix product, and returns
     an array with shape (2, 1), i.e., a column vector.
@@ -662,7 +661,10 @@ The recommended semantics for ``@`` are:
   @ b[:, np.newaxis])[0, 0]`` instead of ``a @ b`` every time they
   compute an inner product, or ``(a[np.newaxis, :] @ Mat @ b[:,
   np.newaxis])[0, 0]`` for general quadratic forms instead of ``a @
-  Mat @ b``.
+  Mat @ b``.  In addition, sage and sympy (see below) use these
+  non-associative semantics with an infix matrix multiplication
+  operator (they use ``*``), and they report that they haven't
+  experienced any problems caused by it.
 
 * For inputs with more than 2 dimensions, we treat the last two
   dimensions as being the dimensions of the matrices to multiply, and
@@ -671,23 +673,34 @@ The recommended semantics for ``@`` are:
   For example, ``arr(10, 2, 3) @ arr(10, 3, 4)`` performs 10 separate
   matrix multiplies, each of which multiplies a 2x3 and a 3x4 matrix
   to produce a 2x4 matrix, and then returns the 10 resulting matrices
-  together in an array with shape (10, 2, 4).  Note that in more
-  complicated cases, broadcasting allows several simple but powerful
-  tricks for controlling how arrays are aligned with each other; see
+  together in an array with shape (10, 2, 4).  The intuition here is
+  that we treat these 3d arrays of numbers as if they were 1d arrays
+  *of matrices*, and then apply matrix multiplication in an
+  elementwise manner, where now the elements are whole matrices.  Note
+  that broadcasting is not limited to perfectly aligned arrays; in
+  more complicated cases, it allows several simple but powerful tricks
+  for controlling how arrays are aligned with each other; see
   [#broadcasting]_ for details.  (In particular, it turns out that
-  elementwise multiplication with broadcasting includes the standard
-  scalar * matrix product as a special case, further motivating the
-  use of ``*`` for this case.)
+  when broadcasting is taken into account, the standard scalar *
+  matrix product is a special case of the elementwise multiplication
+  operator ``*``.)
 
   If one operand is >2d, and another operand is 1d, then the above
   rules apply unchanged, with 1d->2d promotion performed before
   broadcasting.  E.g., ``arr(10, 2, 3) @ arr(3)`` first promotes to
-  ``arr(10, 2, 3) @ arr(3, 1)``, then broadcasts to ``arr(10, 2, 3) @
-  arr(10, 3, 1)``, multiplies to get an array with shape (10, 2, 1),
-  and finally removes the added dimension, returning an array with
-  shape (10, 2).  Similarly, ``arr(2) @ arr(10, 2, 3)`` produces an
-  intermediate array with shape (10, 1, 3), and a final array with
-  shape (10, 3).
+  ``arr(10, 2, 3) @ arr(3, 1)``, then broadcasts the right argument to
+  create the aligned operation ``arr(10, 2, 3) @ arr(10, 3, 1)``,
+  multiplies to get an array with shape (10, 2, 1), and finally
+  removes the added dimension, returning an array with shape (10, 2).
+  Similarly, ``arr(2) @ arr(10, 2, 3)`` produces an intermediate array
+  with shape (10, 1, 3), and a final array with shape (10, 3).
+
+* 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
+  is a mathematically and algorithmically distinct operation from
+  matrix @ matrix multiplication, and is already covered as a special
+  case of the elementwise ``*`` operator.  Allowing scalar @ matrix
+  would thus both require an unnecessary special case, and violate
+  TOOWTDI.
 
 The recommended semantics for ``@@`` are::
 
@@ -773,14 +786,14 @@ above.  These projects focus on computational methods for analyzing
 matrices in the sense of abstract mathematical objects (i.e., linear
 maps over free modules over rings), rather than as big bags full of
 numbers that need crunching.  And it turns out that for these
-purposes, they don't actually have any use for most elementwise
-operations; as discussed in the Background section above, elementwise
-operations are motivated by the bag-of-numbers approach.  So, these
-projects don't encounter the basic problem that this PEP exists to
-address, making it mostly irrelevant to them. They use ``*`` for
-matrix multiplication, and if this PEP is accepted, their expressed
-intention is to continue doing so, while probably adding ``@`` and
-``@@`` as aliases for ``*`` and ``**``:
+purposes, they don't actually have much use for elementwise operations
+in the first place; as discussed in the Background section above,
+elementwise operations are motivated by the bag-of-numbers approach.
+So, these projects don't encounter the basic problem that this PEP
+exists to address, making it mostly irrelevant to them. They use ``*``
+for matrix multiplication (and for group actions, etc.), and if this
+PEP is accepted, their expressed intention is to continue doing so,
+while perhaps adding ``@`` and ``@@`` as aliases for ``*`` and ``**``:
 
 * sympy
 * sage
@@ -815,7 +828,8 @@ about how this operator should be named [#matmul-other-langs]_, but
   a nice bonus.
 
 * The swirly shape is reminiscent of the simultaneous sweeps over rows
-  and columns that define matrix multiplication.
+  and columns that define matrix multiplication; its asymmetry is
+  evocative of its non-commutative nature.
 
 
 (Non)-Definitions for built-in types
@@ -1158,6 +1172,12 @@ References
    packages API works, so the relevant metric is to look at sources
    files that are choosing to directly interact with that API, which
    is sort of like what we get by looking at import statements.
+
+.. [#hugunin] The first such proposal occurs in Jim Hugunin's very
+   first email to the matrix SIG in 1995, which lays out the first
+   draft of what became Numeric. He suggests using ``*`` for
+   elementwise multiplication, and ``%`` for matrix multiplication:
+   https://mail.python.org/pipermail/matrix-sig/1995-August/000002.html
 
 
 Copyright
