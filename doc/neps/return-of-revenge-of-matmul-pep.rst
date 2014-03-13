@@ -603,7 +603,7 @@ might implement only a subset of the functionality described here.
 Semantics
 ---------
 
-The recommended semantics for ``@`` are:
+The recommended semantics for ``@`` for different inputs are:
 
 * 2d inputs are conventional matrices, and so the semantics are
   obvious: we apply conventional matrix multiplication.  If we write
@@ -676,10 +676,10 @@ The recommended semantics for ``@`` are:
   together in an array with shape (10, 2, 4).  The intuition here is
   that we treat these 3d arrays of numbers as if they were 1d arrays
   *of matrices*, and then apply matrix multiplication in an
-  elementwise manner, where now the elements are whole matrices.  Note
-  that broadcasting is not limited to perfectly aligned arrays; in
-  more complicated cases, it allows several simple but powerful tricks
-  for controlling how arrays are aligned with each other; see
+  elementwise manner, where now each 'element' is a whole matrix.
+  Note that broadcasting is not limited to perfectly aligned arrays;
+  in more complicated cases, it allows several simple but powerful
+  tricks for controlling how arrays are aligned with each other; see
   [#broadcasting]_ for details.  (In particular, it turns out that
   when broadcasting is taken into account, the standard scalar *
   matrix product is a special case of the elementwise multiplication
@@ -697,10 +697,9 @@ The recommended semantics for ``@`` are:
 
 * 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
   is a mathematically and algorithmically distinct operation from
-  matrix @ matrix multiplication, and is already covered as a special
-  case of the elementwise ``*`` operator.  Allowing scalar @ matrix
-  would thus both require an unnecessary special case, and violate
-  TOOWTDI.
+  matrix @ matrix multiplication, and is already covered bu the
+  elementwise ``*`` operator.  Allowing scalar @ matrix would thus
+  both require an unnecessary special case, and violate TOOWTDI.
 
 The recommended semantics for ``@@`` are::
 
@@ -724,9 +723,12 @@ explicitly compute inverses or other negative powers in standard
 immediate-mode dense matrix code, these computations are natural when
 doing symbolic or deferred-mode computations (as in e.g. sympy,
 theano, numba, numexpr); therefore, negative powers are fully
-supported.  Fractional powers, though, are somewhat more dicey in
-general, so we leave it to individual projects to decide whether they
-want to try to define some reasonable semantics for fractional inputs.
+supported.  Fractional powers, though, bring in variety of
+`mathematical complications`_, so we leave it to individual projects
+to decide whether they want to try to define some reasonable semantics
+for fractional inputs.
+
+.. _`mathematical complications`: https://en.wikipedia.org/wiki/Square_root_of_a_matrix
 
 
 Adoption
@@ -890,20 +892,20 @@ We review some of the rejected alternatives here.
 As discussed above (`Background: What's wrong with the status quo?`_),
 this has been tried this for many years via the ``numpy.matrix`` type
 (and its predecessors in Numeric and numarray).  The result is a
-strong consensus among experienced numerical programmers that
-``numpy.matrix`` should essentially never be used, because of the
-problems caused by having conflicting duck types for arrays.  (Of
-course one could then argue we should *only* define ``__mul__`` to be
-matrix multiplication, but then we'd have the same problem with
-elementwise multiplication.)  There have been several pushes to remove
-``numpy.matrix`` entirely; the only counter-arguments have come from
-educators who find that its problems are outweighed by the need to
-provide a simple and clear mapping between mathematical notation and
-code for novices (see `Transparent syntax is especially crucial for
-non-expert programmers`_).  But, of course, starting out newbies with
-a dispreferred syntax and then expecting them to transition later
-causes its own problems.  The two-type solution is worse than the
-disease.
+strong consensus among both numpy developers and developers of
+downstream packages that ``numpy.matrix`` should essentially never be
+used, because of the problems caused by having conflicting duck types
+for arrays.  (Of course one could then argue we should *only* define
+``__mul__`` to be matrix multiplication, but then we'd have the same
+problem with elementwise multiplication.)  There have been several
+pushes to remove ``numpy.matrix`` entirely; the only counter-arguments
+have come from educators who find that its problems are outweighed by
+the need to provide a simple and clear mapping between mathematical
+notation and code for novices (see `Transparent syntax is especially
+crucial for non-expert programmers`_).  But, of course, starting out
+newbies with a dispreferred syntax and then expecting them to
+transition later causes its own problems.  The two-type solution is
+worse than the disease.
 
 **Add lots of new operators, or add a new generic syntax for defining
 infix operators:** In addition to being generally un-Pythonic and
