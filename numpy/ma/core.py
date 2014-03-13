@@ -46,7 +46,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'bool_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
-           'amax', 'amin', 'angle', 'anom', 'anomalies', 'any', 'arange',
+           'amax', 'amin', 'angle', 'anom', 'anomalies', 'any', 'append', 'arange',
            'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray', 'asanyarray',
@@ -7258,3 +7258,41 @@ zeros = _convert2ma('zeros', params=dict(fill_value=None, hardmask=False))
 zeros_like = np.zeros_like
 
 ###############################################################################
+def append(a, b, axis=None):
+    """Append values to the end of an array.
+
+    .. versionadded:: 1.9.0
+
+    Parameters
+    ----------
+    arr : array_like
+        Values are appended to a copy of this array.
+    values : array_like
+        These values are appended to a copy of `arr`.  It must be of the
+        correct shape (the same shape as `arr`, excluding `axis`).  If `axis`
+        is not specified, `values` can be any shape and will be flattened
+        before use.
+    axis : int, optional
+        The axis along which `values` are appended.  If `axis` is not given,
+        both `arr` and `values` are flattened before use.
+
+    Returns
+    -------
+    append : MaskedArray
+        A copy of `arr` with `values` appended to `axis`.  Note that `append`
+        does not occur in-place: a new array is allocated and filled.  If
+        `axis` is None, the result is a flattened array.
+
+    See Also
+    --------
+    numpy.append : Equivalent function in the top-level NumPy module.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = ma.masked_values([1, 2, 3], 2)
+    >>> b = ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
+    >>> print(ma.append(a, b))
+    [1 -- 3 4 5 6 -- 8 9]
+    """
+    return concatenate([a, b], axis)
