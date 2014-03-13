@@ -351,6 +351,7 @@ _convert_from_tuple(PyObject *obj)
             goto fail;
         }
         newdescr->flags = type->flags;
+        newdescr->alignment = type->alignment;
         newdescr->subarray->base = type;
         type = NULL;
         Py_XDECREF(newdescr->fields);
