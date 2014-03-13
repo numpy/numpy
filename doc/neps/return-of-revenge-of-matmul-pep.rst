@@ -697,7 +697,7 @@ The recommended semantics for ``@`` for different inputs are:
 
 * 0d (scalar) inputs raise an error.  Scalar * matrix multiplication
   is a mathematically and algorithmically distinct operation from
-  matrix @ matrix multiplication, and is already covered bu the
+  matrix @ matrix multiplication, and is already covered by the
   elementwise ``*`` operator.  Allowing scalar @ matrix would thus
   both require an unnecessary special case, and violate TOOWTDI.
 
@@ -1019,17 +1019,18 @@ References
    test the null hypothesis that :math:`H\beta = r`; a large :math:`S`
    then indicates that this hypothesis is unlikely to be true. For
    example, in an analysis of human height, the vector :math:`\beta`
-   might contain the average heights of men and women respectively,
-   and then setting :math:`H = [1, -1], r = 0` would let us test
-   whether men and women are the same height on average. Compare to
-   eq. 2.139 in
+   might contain one value which was the the average height of the
+   measured men, and another value which was the average height of the
+   measured women, and then setting :math:`H = [1, -1], r = 0` would
+   let us test whether men and women are the same height on
+   average. Compare to eq. 2.139 in
    http://sfb649.wiwi.hu-berlin.de/fedc_homepage/xplore/tutorials/xegbohtmlnode17.html
 
    Example code is adapted from https://github.com/rerpy/rerpy/blob/0d274f85e14c3b1625acb22aed1efa85d122ecb7/rerpy/incremental_ls.py#L202
 
-.. [#pycon-tutorials] Out of the 36 tutorials scheduled for PyCon
-   2014, we guess that the 8 below will almost certainly deal with
-   matrices:
+.. [#pycon-tutorials] Out of the 36 tutorials scheduled for PyCon 2014
+   (https://us.pycon.org/2014/schedule/tutorials/), we guess that the
+   8 below will almost certainly deal with matrices:
 
    * Dynamics and control with Python
 
@@ -1064,8 +1065,6 @@ References
    This gives an estimated range of 8 to 12 / 36 = 22% to 33% of
    tutorials dealing with matrices; saying ~20% then gives us some
    wiggle room in case our estimates are high.
-
-   See: https://us.pycon.org/2014/schedule/tutorials/
 
 .. [#sloc-details] SLOCs were defined as physical lines which contain
    at least one token that is not a COMMENT, NEWLINE, ENCODING,
