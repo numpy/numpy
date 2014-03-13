@@ -1,5 +1,5 @@
-Notes for the numpy/doc/swig directory
-======================================
+Notes for the numpy/tools/swig directory
+========================================
 
 This set of files is for developing and testing file numpy.i, which is
 intended to be a set of typemaps for helping SWIG interface between C
@@ -10,7 +10,7 @@ distribution.
 Documentation
 -------------
 Documentation for how to use numpy.i, as well as for the testing
-system used here, can be found in the NumPy reference guide.  
+system used here, can be found in the NumPy reference guide.
 
 Testing
 -------

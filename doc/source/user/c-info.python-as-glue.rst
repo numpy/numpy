@@ -1385,7 +1385,7 @@ Simplified Wrapper and Interface Generator (SWIG) is an old and fairly
 stable method for wrapping C/C++-libraries to a large variety of other
 languages. It does not specifically understand NumPy arrays but can be
 made useable with NumPy through the use of typemaps. There are some
-sample typemaps in the numpy/doc/swig directory under numpy.i along
+sample typemaps in the numpy/tools/swig directory under numpy.i together
 with an example module that makes use of them. SWIG excels at wrapping
 large C/C++ libraries because it can (almost) parse their headers and
 auto-produce an interface. Technically, you need to generate a ``.i``

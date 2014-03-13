@@ -46,8 +46,8 @@ to an array via ``np.array``.
 If the ``overwrite_input`` option is used the input is only partially
 instead of fully sorted.
 
-``npy_3kcompat.h`` header change
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``npy_3kcompat.h`` header changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The unused ``simple_capsule_dtor`` function has been removed from
 ``npy_3kcompat.h``.  Note that this header is not meant to be used outside
 of numpy; other projects should be using their own copy of this file when
@@ -64,6 +64,10 @@ ndarray.tofile exception type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All ``tofile`` exceptions are now ``IOError``, some were previously
 ``ValueError``.
+
+The ``doc/swig`` directory moved
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``doc/swig`` directory has been moved to ``tools/swig``.
 
 
 New Features
