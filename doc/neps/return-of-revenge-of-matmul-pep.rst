@@ -107,7 +107,7 @@ environments use to make this possible.  Python has several libraries
 that provide such arrays, with numpy being at present the most
 prominent.
 
-When working with these kinds of arrays, there are two different ways
+When working with n-dimensional arrays, there are two different ways
 we might want to define multiplication.  One is elementwise
 multiplication::
 
@@ -166,11 +166,13 @@ and elementwise multiplication requires function syntax.  Writing code
 using ``numpy.ndarray`` works fine.  Writing code using
 ``numpy.matrix`` also works fine.  But trouble begins as soon as we
 try to integrate these two pieces of code together.  Code that expects
-an ``ndarray`` and gets a ``matrix``, or vice-versa, will not work.
-Keeping track of which functions expect which types and converting
-back and forth all the time is impossible to get right.  Functions
-that defensively try to handle both types as input find themselves
-floundering into a swamp of ``isinstance`` and ``if`` statements.
+an ``ndarray`` and gets a ``matrix``, or vice-versa, may crash or
+return incorrect results.  Keeping track of which functions expect
+which types as inputs, and return which types as outputs, and then
+converting back and forth all the time, is incredibly cumbersome and
+impossible to get right at any scale.  Functions that defensively try
+to handle both types as input and DTRT, find themselves floundering
+into a swamp of ``isinstance`` and ``if`` statements.
 
 PEP 238 split ``/`` into two operators: ``/`` and ``//``.  Imagine the
 chaos that would have resulted if it had instead split ``int`` into
@@ -769,7 +771,7 @@ fragmentation will probably be eliminated if this PEP is accepted):
 
 * numpy (``numpy.matrix``)
 * scipy.sparse
-* pyoperators [XX double-check]
+* pyoperators
 * pyviennacl
 
 The following projects have been alerted to the existence of the PEP,
@@ -870,6 +872,31 @@ solution to a future proposal.
 There are also non-numeric Python builtins which define ``__mul__``
 (``str``, ``list``, ...).  We do not define ``__matmul__`` for these
 types either, because why would we even do that.
+
+
+Unresolved issues
+-----------------
+
+Associativity of ``@``
+''''''''''''''''''''''
+
+It's been suggested that ``@`` should be right-associative, on the
+grounds that for expressions like ``Mat @ Mat @ vec``, the two
+different evaluation orders produce the same result, but the
+right-associative order ``Mat @ (Mat @ vec)`` will be faster and use
+less memory than the left-associative order ``(Mat @ Mat) @ vec``.
+(Matrix-vector multiplication is much cheaper than matrix-matrix
+multiplication).  It would be a shame if users found themselves
+required to use an overabundance of parentheses to achieve acceptable
+speed/memory usage in common situations, but, it's not currently clear
+whether such cases actually are common enough to override Python's
+general rule of left-associativity, or even whether they're more
+common than the symmetric cases where left-associativity would be
+faster (though this does seem intuitively plausible).  The only way to
+answer this is probably to do an audit of some real-world uses and
+check how often the associativity matters in practice; if this PEP is
+accepted in principle, then we should probably do this check before
+finalizing it.
 
 
 Rejected alternatives to adding a new operator
