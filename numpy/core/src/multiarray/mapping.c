@@ -1039,7 +1039,6 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *tmp = ret;
 
         Py_INCREF(dtype);
-
         ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
                             &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
                             0, (PyObject *)self);
