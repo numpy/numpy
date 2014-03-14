@@ -551,10 +551,10 @@ still included, though, for consistency: if we have an ``@`` that is
 analogous to ``*``, then it would be weird and surprising to *not*
 have an ``@@`` that is analogous to ``**``.  Similarly, the in-place
 operators ``@=`` and ``@@=`` provide limited value -- it's more common
-to write ``a = (b @ a)`` than it is to write ``a = (a @ b)``, and it
-is not generally possible to implement in-place matrix multiplication
-any more efficiently than by making a full copy of the matrix -- but
-they are included for completeness and symmetry.
+to write ``a = (b @ a)`` than it is to write ``a = (a @ b)``, and
+in-place matrix operations still generally have to allocate
+substantial temporary storage -- but they are included for
+completeness and symmetry.
 
 
 Compatibility considerations
