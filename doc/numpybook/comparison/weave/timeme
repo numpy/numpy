@@ -1,2 +1,0 @@
-python2.4 -m timeit -s "import numpy as N; a=N.random.rand(100,200); import filter" "b = filter.filter(a)"
-
