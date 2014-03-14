@@ -72,8 +72,8 @@ operator:
 * Just as for the existing numerical operators, there exists a vast
   body of prior art supporting the use of infix notation for matrix
   multiplication across all fields of mathematics, science, and
-  engineering; ``@`` fills a hole in Python's existing operator
-  system.
+  engineering; ``@`` harmoniously fills a hole in Python's existing
+  operator system.
 
 * ``@`` greatly clarifies real-world code.
 
@@ -194,9 +194,10 @@ introductory programming courses, often appears in StackOverflow
 answers, and so forth.  Well-written libraries thus must continue to
 be prepared to deal with both types of objects, and, of course, are
 also stuck using unpleasant funcall syntax for matrix multiplication.
-These problems cannot be resolved within the constraints of current
-Python syntax (see `Rejected alternatives to adding a new operator`_
-below).
+After nearly two decades of trying, the numerical community has still
+not found any way to resolve these problems within the constraints of
+current Python syntax (see `Rejected alternatives to adding a new
+operator`_ below).
 
 This PEP proposes the minimum effective change to Python syntax that
 will allow us to drain this swamp.  It splits ``*`` into two
@@ -343,13 +344,14 @@ existence of a transparent mapping between formulas and code often
 means the difference between succeeding and failing to write that code
 at all.  This is so important that such classes often use the
 ``numpy.matrix`` type which defines ``*`` to mean matrix
-multiplication, even though this type is buggy and heavily deprecated
-by the rest of the numpy community for the fragmentation that it
-causes.  This pedagogical use case is, in fact, the *only* reason
-``numpy.matrix`` has not been deprecated.  Adding ``@`` will benefit
-both beginning and advanced users with better syntax; and furthermore,
-it will allow both groups to standardize on the same notation from the
-start, providing a smoother on-ramp to expertise.
+multiplication, even though this type is buggy and heavily
+disrecommended by the rest of the numpy community for the
+fragmentation that it causes.  This pedagogical use case is, in fact,
+the *only* reason ``numpy.matrix`` remains a supported part of numpy.
+Adding ``@`` will benefit both beginning and advanced users with
+better syntax; and furthermore, it will allow both groups to
+standardize on the same notation from the start, providing a smoother
+on-ramp to expertise.
 
 
 But isn't matrix multiplication a pretty niche requirement?
@@ -843,9 +845,9 @@ about how this operator should be named [#matmul-other-langs]_, but
 ------------------------------------
 
 No ``__matmul__`` or ``__matpow__`` are defined for builtin numeric
-types (``float``, ``int``, etc.), because these are scalars, and the
-consensus semantics for ``@`` are that it should raise an error on
-scalars.
+types (``float``, ``int``, etc.) or for the ``numbers.Number``
+hierarchy, because these types represent scalars, and the consensus
+semantics for ``@`` are that it should raise an error on scalars.
 
 We do not -- for now -- define a ``__matmul__`` method on the standard
 ``memoryview`` or ``array.array`` objects, for several reasons.
@@ -1176,7 +1178,7 @@ References
      a common phrase in English prose, so we'd end up with false
      positives from comments, strings, etc.  For many of the modules
      considered this shouldn't matter too much -- for example, the
-     stdlib modules have flat namespaces -- but it might in particular
+     stdlib modules have flat namespaces -- but it might especially
      lead to undercounting of django, scipy, and twisted.
 
    Also, it's possible there exist other non-stdlib modules we didn't
@@ -1199,8 +1201,8 @@ References
    source files don't import distutils because most source files don't
    care how they're distributed, so long as they are; these source
    files thus don't care about details of how distutils' API works.
-   This PEP is in some sense about changing how numpy and related
-   packages API works, so the relevant metric is to look at sources
+   This PEP is in some sense about changing how numpy's and related
+   packages' APIs work, so the relevant metric is to look at source
    files that are choosing to directly interact with that API, which
    is sort of like what we get by looking at import statements.
 
