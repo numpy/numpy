@@ -1,4 +1,4 @@
-PEP: XXXX
+PEP: 465
 Title: Dedicated infix operators for matrix multiplication and matrix power
 Version: $Revision$
 Last-Modified: $Date$
@@ -819,26 +819,105 @@ Rationale for specification details
 Choice of operator
 ------------------
 
-Why ``@`` instead of some other punctuation symbol? It doesn't matter
-much, and there isn't any consensus across other programming languages
-about how this operator should be named [#matmul-other-langs]_, but
-``@`` has a few advantages:
+Why ``@`` instead of some other spelling?  There isn't any consensus
+across other programming languages about how this operator should be
+named [#matmul-other-langs]_; here we discuss the various options.
 
-* ``@`` is a friendly character that Pythoneers are already used to
-  typing in decorators, and its use in email addresses means it is
-  more likely to be easily accessible across keyboard layouts than
-  some other characters (e.g. ``$`` or non-ASCII characters).
+Restricting ourselves only to symbols present on US English keyboards,
+the punctuation characters that don't already have a meaning in Python
+expression context are: ``@``, backtick, ``$``, ``!``, and ``?``.  Of
+these options, ``@`` is clearly the best; ``!`` and ``?`` are already
+heavily freighted with inapplicable meanings in the programming
+context, backtick has been banned from Python by BDFL pronouncement
+(see PEP 3099), and ``$`` is uglier, even more dissimilar to ``*`` and
+:math:`\cdot`, and has Perl/PHP baggage.  ``$`` is probably the
+second-best option of these, though.
 
-* The mATrices mnemonic is cute.
+Symbols which are not present on US English keyboards start at a
+significant disadvantage (having to spend 5 minutes at the beginning
+of every numeric Python tutorial just going over keyboard layouts is
+not a hassle anyone really wants).  Plus, even if we somehow overcame
+the typing problem, it's not clear there are any that are actually
+better than ``@``.  Some options that have been suggested include:
+
+* U+00D7 MULTIPLICATION SIGN: ``A × B``
+* U+22C5 DOT OPERATOR: ``A ⋅ B``
+* U+2297 CIRCLED TIMES: ``A ⊗ B``
+* U+00B0 DEGREE: ``A ° B``
+
+What we need, though, is an operator that means "matrix
+multiplication, as opposed to scalar/elementwise multiplication".
+There is no conventional symbol for these in mathematics or
+programming, where these operations are usually distinguished by
+context.  (And U+2297 CIRCLED TIMES is actually used conventionally to
+mean exactly the wrong things: elementwise multiplication -- the
+"Hadamard product" -- or outer product, rather than matrix/inner
+product like our operator).  ``@`` at least has the virtue that it
+*looks* like a funny non-commutative operator; a naive user who knows
+maths but not programming couldn't look at ``A * B`` versus ``A × B``,
+or ``A * B`` versus ``A ⋅ B``, or ``A * B`` versus ``A ° B`` and guess
+which one is the usual multiplication, and which one is the special
+case.
+
+Finally, there is the option of using multi-character tokens.  Some
+options:
+
+* Matlab uses a ``.*`` operator.  Aside from being visually confusable
+  with ``*``, this would be a terrible choice for us because in
+  Matlab, ``*`` means matrix multiplication and ``.*`` means
+  elementwise multiplication, so using ``.*`` for matrix
+  multiplication would make us exactly backwards from what Matlab
+  users expect.
+
+* APL apparently used ``+.×``, which by combining a multi-character
+  token, confusing attribute-access-like . syntax, and a unicode
+  character, ranks somewhere below U+2603 SNOWMAN on our candidate
+  list.  If we like the idea of combining addition and multiplication
+  operators as being evocative of how matrix multiplication actually
+  works, then something like ``+*`` could be used -- though this may
+  be too easy to confuse with ``*+``, which is just multiplication
+  combined with the unary ``+`` operator.
+
+* PEP 211 suggested ``~*`` and ``~**``.  This has the downside that it
+  sort of suggests that there is a unary ``*`` operator that is being
+  combined with unary ``~``, but it could work.
+
+* R uses ``%*%`` for matrix multiplication.  In R this forms part of a
+  general extensible infix system in which all tokens of the form
+  ``%foo%`` are user-defined binary operators.  We could steal the
+  token without stealing the system.
+
+* Some other plausible candidates that have been suggested: ``><`` (=
+  ascii drawing of the multiplication sign ×); the footnote operators
+  ``[*]`` and ``[**]`` or ``|*|`` and ``|**|`` (but when used in
+  context, the use of vertical grouping symbols tends to recreate the
+  nested parentheses visual clutter that was noted as one of the major
+  downsides of the function syntax we're trying to get away from);
+  ``^*`` and ``^^``.
+
+So, it doesn't matter much, but ``@`` seems as good or better than any
+of the alternatives:
+
+* It's a friendly character that Pythoneers are already used to typing
+  in decorators, but the decorator usage and the math expression
+  usage are sufficiently dissimilar that it would be hard to confuse
+  them in practice.
+
+* It's widely accessible across keyboard layouts (and thanks to its
+  use in email addresses, this is true even of weird keyboards like
+  those in phones).
 
 * It's round like ``*`` and :math:`\cdot`.
 
-* The use of a single-character token makes ``@@`` possible, which is
-  a nice bonus.
+* The mATrices mnemonic is cute.
+
+* The use of a single-character token reduces the line-noise effect,
+  and makes ``@@`` possible, which is a nice bonus.
 
 * The swirly shape is reminiscent of the simultaneous sweeps over rows
-  and columns that define matrix multiplication; its asymmetry is
-  evocative of its non-commutative nature.
+  and columns that define matrix multiplication
+
+* Its asymmetry is evocative of its non-commutative nature.
 
 
 (Non)-Definitions for built-in types
