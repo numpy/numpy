@@ -3152,6 +3152,23 @@ class TestDot(TestCase):
         r = np.empty((1024, 32), dtype=int)
         assert_raises(ValueError, dot, f, v, r)
 
+    def test_dot_scalar_and_matrix_of_objects(self):
+        # Ticket #2469
+        arr = np.matrix([1, 2], dtype=object)
+        desired = np.matrix([[3, 6]], dtype=object)
+        assert_equal(np.dot(arr, 3), desired)
+        assert_equal(np.dot(3, arr), desired)
+
+
+class TestInner(TestCase):
+
+    def test_inner_scalar_and_matrix_of_objects(self):
+        # Ticket #4482
+        arr = np.matrix([1, 2], dtype=object)
+        desired = np.matrix([[3, 6]], dtype=object)
+        assert_equal(np.inner(arr, 3), desired)
+        assert_equal(np.inner(3, arr), desired)
+
 
 class TestSummarization(TestCase):
     def test_1d(self):

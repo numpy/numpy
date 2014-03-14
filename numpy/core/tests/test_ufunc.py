@@ -589,6 +589,13 @@ class TestUfunc(TestCase):
         assert_equal(np.max(a), True)
         assert_equal(np.min(a), False)
 
+    def test_object_scalar_multiply(self):
+        # Tickets #2469 and #4482
+        arr = np.matrix([1, 2], dtype=object)
+        desired = np.matrix([[3, 6]], dtype=object)
+        assert_equal(np.multiply(arr, 3), desired)
+        assert_equal(np.multiply(3, arr), desired)
+
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
         for a in [[], np.array([], dtype=object)]:
