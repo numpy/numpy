@@ -6118,7 +6118,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
     """
-    A character code (one of 'biufcSUV') identifying the general kind of data.
+    A character code (one of 'biufcOSUV') identifying the general kind of data.
+
+    =  ======================
+    b  boolean
+    i  signed integer
+    u  unsigned integer
+    f  floating-point
+    c  complex floating-point
+    O  object
+    S  (byte-)string
+    U  Unicode
+    V  void
+    =  ======================
 
     """))
 
