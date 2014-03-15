@@ -350,12 +350,14 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_THRESHOLDED(ni);
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
                     goto fail;
                 }
                 memmove(dest + tmp * chunk, src, chunk);
@@ -392,6 +394,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             }
             break;
         }
+        NPY_END_THREADS;
     }
 
  finish:
@@ -487,6 +490,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         func = PyArray_DESCR(self)->f->fastputmask;
         if (func == NULL) {
             for (i = 0; i < ni; i++) {
@@ -500,6 +505,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         else {
             func(dest, PyArray_DATA(mask), ni, PyArray_DATA(values), nv);
         }
+        NPY_END_THREADS;
     }
 
     Py_XDECREF(values);
