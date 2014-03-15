@@ -970,6 +970,7 @@ array_boolean_subscript(PyArrayObject *self,
         npy_intp self_stride, bmask_stride, subloopsize;
         char *self_data;
         char *bmask_data;
+        NPY_BEGIN_THREADS_DEF;
 
         /* Set up the iterator */
         flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_REFS_OK;
@@ -1004,6 +1005,9 @@ array_boolean_subscript(PyArrayObject *self,
             NPY_AUXDATA_FREE(transferdata);
             return NULL;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
         innerstrides = NpyIter_GetInnerStrideArray(iter);
         dataptrs = NpyIter_GetDataPtrArray(iter);
 
@@ -1030,6 +1034,8 @@ array_boolean_subscript(PyArrayObject *self,
                 ret_data += subloopsize * itemsize;
             }
         } while (iternext(iter));
+
+        NPY_END_THREADS;
 
         NpyIter_Deallocate(iter);
         NPY_AUXDATA_FREE(transferdata);
@@ -1143,6 +1149,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
         npy_intp self_stride, bmask_stride, subloopsize;
         char *self_data;
         char *bmask_data;
+        NPY_BEGIN_THREADS_DEF;
 
         /* Set up the iterator */
         flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_REFS_OK;
@@ -1161,6 +1168,9 @@ array_assign_boolean_subscript(PyArrayObject *self,
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
         innerstrides = NpyIter_GetInnerStrideArray(iter);
         dataptrs = NpyIter_GetDataPtrArray(iter);
 
@@ -1201,6 +1211,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 v_data += subloopsize * v_stride;
             }
         } while (iternext(iter));
+
+        NPY_END_THREADS;
 
         NPY_AUXDATA_FREE(transferdata);
         NpyIter_Deallocate(iter);
