@@ -1119,8 +1119,8 @@ PyArrayInterface
        A character indicating what kind of array is present according to the
        typestring convention with 't' -> bitfield, 'b' -> Boolean, 'i' ->
        signed integer, 'u' -> unsigned integer, 'f' -> floating point, 'c' ->
-       complex floating point, 'O' -> object, 'S' -> string, 'U' -> unicode,
-       'V' -> void.
+       complex floating point, 'O' -> object, 'S' -> (byte-)string, 'U' ->
+       unicode, 'V' -> void.
 
    .. cmember:: int PyArrayInterface.itemsize
 
