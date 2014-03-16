@@ -2899,9 +2899,13 @@ the C-API is needed then some additional steps must be taken.
 
     .. code-block:: c
 
-        #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #define NO_IMPORT_ARRAY
+        #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #include numpy/arrayobject.h
+
+    You can also put the common two last lines into an extension-local
+    header file as long as you make sure that NO_IMPORT_ARRAY is
+    #defined before #including that file.
 
 Checking the API Version
 ^^^^^^^^^^^^^^^^^^^^^^^^
