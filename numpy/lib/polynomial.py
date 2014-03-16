@@ -127,7 +127,7 @@ def poly(seq_of_zeros):
     elif len(sh) == 1:
         pass
     else:
-        raise ValueError("input must be 1d or square 2d array.")
+        raise ValueError("input must be 1d or non-empty square 2d array.")
 
     if len(seq_of_zeros) == 0:
         return 1.0
