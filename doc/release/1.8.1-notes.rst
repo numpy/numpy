@@ -47,6 +47,7 @@ Issues fixed
 * gh-4225: fix log1p and exmp1 return for np.inf on windows compiler builds
 * gh-4359: Fix infinite recursion in str.format of flex arrays
 * gh-4145: Incorrect shape of broadcast result with the exponent operator
+* gh-4483: Fix commutativity of {dot,multiply,inner}(scalar, matrix_of_objs)
 
 Deprecations
 ============
