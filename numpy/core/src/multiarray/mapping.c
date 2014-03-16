@@ -211,19 +211,19 @@ prepare_index(PyArrayObject *self, PyObject *index,
             n = 0;
         }
         for (i = 0; i < n; i++) {
-            PyObject *obj = PySequence_GetItem(index, i);
-            if (obj == NULL) {
+            PyObject *tmp_obj = PySequence_GetItem(index, i);
+            if (tmp_obj == NULL) {
                 make_tuple = 1;
                 break;
             }
-            if (PyArray_Check(obj) || PySequence_Check(obj)
-                    || PySlice_Check(obj) || obj == Py_Ellipsis
-                    || obj == Py_None) {
+            if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)
+                    || PySlice_Check(tmp_obj) || tmp_obj == Py_Ellipsis
+                    || tmp_obj == Py_None) {
                 make_tuple = 1;
-                Py_DECREF(obj);
+                Py_DECREF(tmp_obj);
                 break;
             }
-            Py_DECREF(obj);
+            Py_DECREF(tmp_obj);
         }
 
         if (make_tuple) {
@@ -784,7 +784,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
  * Returns 0 on success, -1 on failure.
  * The caller must ensure that the index is a full integer
  * one.
- * 
+ *
  * @param Array being indexed
  * @param result pointer
  * @param parsed index information
@@ -816,7 +816,7 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * the indexing operation.
  * Ensure_array allows to fetch a safe subspace view for advanced
  * indexing.
- * 
+ *
  * @param Array being indexed
  * @param resulting array (new reference)
  * @param parsed index information
@@ -1251,7 +1251,7 @@ array_item_asarray(PyArrayObject *self, npy_intp i)
 
     if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_IndexError,
-                        "too many indices for array"); 
+                        "too many indices for array");
         return NULL;
     }
     if (i < 0) {
@@ -1616,7 +1616,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
     }
     if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_IndexError,
-                        "too many indices for array"); 
+                        "too many indices for array");
         return -1;
     }
 
