@@ -350,12 +350,14 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_THRESHOLDED(ni);
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
                     goto fail;
                 }
                 memmove(dest + tmp * chunk, src, chunk);
@@ -392,6 +394,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             }
             break;
         }
+        NPY_END_THREADS;
     }
 
  finish:
@@ -487,6 +490,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         func = PyArray_DESCR(self)->f->fastputmask;
         if (func == NULL) {
             for (i = 0; i < ni; i++) {
@@ -500,6 +505,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         else {
             func(dest, PyArray_DATA(mask), ni, PyArray_DATA(values), nv);
         }
+        NPY_END_THREADS;
     }
 
     Py_XDECREF(values);
@@ -2279,6 +2285,7 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp i, coord[NPY_MAXDIMS];
     npy_intp count = 0;
+    NPY_BEGIN_THREADS_DEF;
 
     /* Use raw iteration with no heap memory allocation */
     if (PyArray_PrepareOneRawArrayIter(
@@ -2293,6 +2300,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     if (shape[0] == 0) {
         return 0;
     }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
 
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
@@ -2323,6 +2332,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
         } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
 
+    NPY_END_THREADS;
+
     return count;
 }
 
@@ -2343,6 +2354,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
+    NPY_BEGIN_THREADS_DEF;
 
     /* Special low-overhead version specific to the boolean type */
     if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
@@ -2392,6 +2404,9 @@ PyArray_CountNonzero(PyArrayObject *self)
         NpyIter_Deallocate(iter);
         return -1;
     }
+
+    NPY_BEGIN_THREADS_NDITER(iter);
+
     dataptr = NpyIter_GetDataPtrArray(iter);
     strideptr = NpyIter_GetInnerStrideArray(iter);
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
@@ -2410,6 +2425,8 @@ PyArray_CountNonzero(PyArrayObject *self)
         }
 
     } while(iternext(iter));
+
+    NPY_END_THREADS;
 
     NpyIter_Deallocate(iter);
 
