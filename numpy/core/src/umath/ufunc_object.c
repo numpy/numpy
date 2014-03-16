@@ -2429,7 +2429,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     */
     if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_CheckExact(_obj)) {
+        if (!PyArray_Check(_obj)) {
             double self_prio, other_prio;
             self_prio = PyArray_GetPriority(PyTuple_GET_ITEM(args, 0),
                                                         NPY_SCALAR_PRIORITY);
