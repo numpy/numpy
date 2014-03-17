@@ -347,6 +347,16 @@ NpyIter_GetIterNext(NpyIter *iter, char **errmsg)
     int ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
+    if (NIT_ITERSIZE(iter) < 0) {
+        if (errmsg == NULL) {
+            PyErr_SetString(PyExc_ValueError, "iterator is too large");
+        }
+        else {
+            *errmsg = "iterator is too large";
+        }
+        return NULL;
+    }
+
     /*
      * When there is just one iteration and buffering is disabled
      * the iternext function is very simple.

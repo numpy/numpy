@@ -69,5 +69,11 @@ class TestRegression(TestCase):
         bp = linalg.cholesky(b)
         assert_array_equal(ap, bp)
 
+    def test_large_svd_32bit(self):
+        # See gh-4442, 64bit would require very large/slow matrices.
+        x = np.eye(1000, 66)
+        np.linalg.svd(x)
+        
+
 if __name__ == '__main__':
     run_module_suite()

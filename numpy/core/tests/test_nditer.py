@@ -6,7 +6,7 @@ import numpy as np
 from numpy import array, arange, nditer, all
 from numpy.compat import asbytes, sixu
 from numpy.testing import *
-
+from numpy.core.multiarray_tests import test_nditer_too_large
 
 
 def iter_multi_index(i):
@@ -657,9 +657,9 @@ def test_iter_broadcasting_errors():
         # The message should contain "shape->remappedshape" for each operand
         assert_(msg.find('(2,3)->(2,3)') >= 0,
             'Message "%s" doesn\'t contain operand shape (2,3)->(2,3)' % msg)
-        assert_(msg.find('(2)->(2,newaxis)') >= 0,
+        assert_(msg.find('(2,)->(2,newaxis)') >= 0,
                 ('Message "%s" doesn\'t contain remapped operand shape' +
-                '(2)->(2,newaxis)') % msg)
+                '(2,)->(2,newaxis)') % msg)
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
                 'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
@@ -2577,6 +2577,53 @@ def test_0d_nested_iter():
         for y in j:
             vals.append([z for z in k])
     assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
+
+
+def test_iter_too_large():
+    # The total size of the iterator must not exceed the maximum intp due
+    # to broadcasting. Dividing by 1024 will keep it small enough to
+    # give a legal array.
+    size = np.iinfo(np.intp).max // 1024
+    arr = np.lib.stride_tricks.as_strided(np.zeros(1), (size,), (0,))
+    assert_raises(ValueError, nditer, (arr, arr[:, None]))
+    # test the same for multiindex. That may get more interesting when
+    # removing 0 dimensional axis is allowed (since an iterator can grow then)
+    assert_raises(ValueError, nditer,
+                  (arr, arr[:, None]), flags=['multi_index'])
+
+
+def test_iter_too_large_with_multiindex():
+    # When a multi index is being tracked, the error is delayed this
+    # checks the delayed error messages and getting below that by
+    # removing an axis.
+    base_size = 2**10
+    num = 1
+    while base_size**num < np.iinfo(np.intp).max:
+        num += 1
+
+    shape_template = [1, 1] * num
+    arrays = []
+    for i in range(num):
+        shape = shape_template[:]
+        shape[i * 2] = 2**10
+        arrays.append(np.empty(shape))
+    arrays = tuple(arrays)
+
+    # arrays are now too large to be broadcast. The different modes test
+    # different nditer functionality with or without GIL.
+    for mode in range(6):
+        assert_raises(ValueError, test_nditer_too_large, arrays, -1, mode)
+    # but if we do nothing with the nditer, it can be constructed:
+    test_nditer_too_large(arrays, -1, 7)
+
+    # When an axis is removed, things should work again (half the time):
+    for i in range(num):
+        for mode in range(6):
+            # an axis with size 1024 is removed:
+            test_nditer_too_large(arrays, i*2, mode)
+            # an axis with size 1 is removed:
+            assert_raises(ValueError, test_nditer_too_large,
+                          arrays, i*2 + 1, mode)
 
 
 if __name__ == "__main__":
