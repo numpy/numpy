@@ -181,7 +181,7 @@ NpyIter_RemoveMultiIndex(NpyIter *iter)
             PyErr_SetString(PyExc_ValueError, "iterator is too large");
             return NPY_FAIL;
         }
-    
+
         NIT_ITFLAGS(iter) = itflags & ~NPY_ITFLAG_HASMULTIINDEX;
         npyiter_coalesce_axes(iter);
     }
@@ -1331,21 +1331,20 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
                     out_strides[iop] = stride;
                 }
                 /*
-                 * Otherwise it's a fixed stride if the stride is 0
-                 * for all inner dimensions of the reduction double loop
+                 * Otherwise it's guaranteed to be a fixed stride if the
+                 * stride is 0 for all the dimensions.
                  */
                 else {
                     NpyIter_AxisData *axisdata = axisdata0;
-                    int idim,
-                            reduce_outerdim = NBF_REDUCE_OUTERDIM(data);
-                    for (idim = 0; idim < reduce_outerdim; ++idim) {
+                    int idim;
+                    for (idim = 0; idim < ndim; ++idim) {
                         if (NAD_STRIDES(axisdata)[iop] != 0) {
                             break;
                         }
                         NIT_ADVANCE_AXISDATA(axisdata, 1);
                     }
                     /* If all the strides were 0, the stride won't change */
-                    if (idim == reduce_outerdim) {
+                    if (idim == ndim) {
                         out_strides[iop] = stride;
                     }
                     else {
