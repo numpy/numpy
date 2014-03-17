@@ -49,6 +49,7 @@ Issues fixed
 * gh-4145: Incorrect shape of broadcast result with the exponent operator
 * gh-4483: Fix commutativity of {dot,multiply,inner}(scalar, matrix_of_objs)
 * gh-4466: Delay npyiter size check when size may change
+* gh-4502: Buffered stride was erroneously marked fixed (fixes #4485)
 
 Deprecations
 ============
