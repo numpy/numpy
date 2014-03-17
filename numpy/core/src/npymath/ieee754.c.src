@@ -28,12 +28,12 @@ double npy_copysign(double x, double y)
 #if !defined(HAVE_DECL_SIGNBIT)
 #include "_signbit.c"
 
-static int _npy_signbit_f(float x)
+int _npy_signbit_f(float x)
 {
     return _npy_signbit_d((double) x);
 }
 
-static int _npy_signbit_ld(long double x)
+int _npy_signbit_ld(long double x)
 {
     return _npy_signbit_d((double) x);
 }
