@@ -48,6 +48,7 @@ Issues fixed
 * gh-4359: Fix infinite recursion in str.format of flex arrays
 * gh-4145: Incorrect shape of broadcast result with the exponent operator
 * gh-4483: Fix commutativity of {dot,multiply,inner}(scalar, matrix_of_objs)
+* gh-4466: Delay npyiter size check when size may change
 
 Deprecations
 ============
