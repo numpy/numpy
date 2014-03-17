@@ -66,6 +66,9 @@ offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
 
+NPY_NO_EXPORT PyObject *
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
+
 /*
  * return true if pointer is aligned to 'alignment'
  */

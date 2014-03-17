@@ -785,3 +785,64 @@ offset_bounds_from_strides(const int itemsize, const int nd,
     *lower_offset = lower;
     *upper_offset = upper;
 }
+
+/**
+ * Convert an array shape to a string such as "(1, 2)".
+ *
+ * @param Dimensionality of the shape
+ * @param npy_intp pointer to shape array
+ * @param String to append after the shape `(1, 2)%s`.
+ * 
+ * @return Python unicode string
+ */
+NPY_NO_EXPORT PyObject *
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if it's a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    for (i = 0; i < n && vals[i] < 0; i++);
+
+    if (i == n) {
+        return PyUString_FromFormat("()%s", ending);
+    }
+    else {
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyUString_FromString(",newaxis");
+        }
+        else {
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+        }
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        PyUString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    if (i == 1) {
+        tmp = PyUString_FromFormat(",)%s", ending);
+    }
+    else {
+        tmp = PyUString_FromFormat(")%s", ending);
+        }
+    PyUString_ConcatAndDel(&ret, tmp);
+    return ret;
+}
+

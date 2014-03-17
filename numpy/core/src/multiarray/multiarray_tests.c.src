@@ -478,7 +478,8 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_map_binop add_inp
     }
 
     if ((it = (PyArrayIterObject *)\
-            PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd)) == NULL) {
+            PyArray_BroadcastToShape((PyObject *)arr, mit->dimensions,
+                                     mit->nd)) == NULL) {
         Py_DECREF(arr);
 
         return -1;
@@ -689,6 +690,139 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
 #undef GET_PYBUF_FLAG
 
 
+/*
+ * Test C-api level item getting.
+ */
+static PyObject *
+array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int mode;
+    Py_ssize_t i;
+    PyObject *arr, *op = NULL;
+
+    if (!PyArg_ParseTuple(args, "iOn|O", &mode, &arr, &i, &op)) {
+        return NULL;
+    }
+
+    if (mode == 0) {
+        return PySequence_GetItem(arr, i);
+    }
+    if (mode == 1) {
+        if (PySequence_SetItem(arr, i, op) < 0) {
+            return NULL;
+        }        
+        Py_RETURN_NONE;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+                    "invalid mode. 0: item 1: assign");
+    return NULL;
+}
+
+
+/*
+ * Test nditer of too large arrays using remove axis, etc.
+ */
+static PyObject *
+test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
+    NpyIter *iter;
+    PyObject *array_tuple, *arr;
+    PyArrayObject *arrays[NPY_MAXARGS];
+    npy_uint32 op_flags[NPY_MAXARGS];
+    Py_ssize_t nop;
+    int i, axis, mode;
+
+    npy_intp index[NPY_MAXARGS] = {0};
+    char *msg;
+
+    if (!PyArg_ParseTuple(args, "Oii", &array_tuple, &axis, &mode)) {
+        return NULL;
+    }
+
+    if (!PyTuple_CheckExact(array_tuple)) {
+        PyErr_SetString(PyExc_ValueError, "tuple required as first argument");
+        return NULL;
+    }
+    nop = PyTuple_Size(array_tuple);
+    if (nop > NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError, "tuple must be smaller then maxargs");
+        return NULL;
+    }
+
+    for (i=0; i < nop; i++) {
+        arr = PyTuple_GET_ITEM(array_tuple, i);
+        if (!PyArray_CheckExact(arr)) {
+            PyErr_SetString(PyExc_ValueError, "require base class ndarray");
+            return NULL;
+        }
+        arrays[i] = (PyArrayObject *)arr;
+        op_flags[i] = NPY_ITER_READONLY;
+    }
+
+    iter = NpyIter_MultiNew(nop, arrays, NPY_ITER_MULTI_INDEX | NPY_ITER_RANGED,
+                            NPY_KEEPORDER, NPY_NO_CASTING, op_flags, NULL);
+
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    /* Remove an axis (negative, do not remove any) */
+    if (axis >= 0) {
+        if (!NpyIter_RemoveAxis(iter, axis)) {
+            goto fail;
+        }
+    }
+
+    switch (mode) {
+        /* Test IterNext getting */
+        case 0:
+            if (NpyIter_GetIterNext(iter, NULL) == NULL) {
+                goto fail;
+            }
+            break;
+        case 1:
+            if (NpyIter_GetIterNext(iter, &msg) == NULL) {
+                PyErr_SetString(PyExc_ValueError, msg);
+                goto fail;
+            }
+            break;
+        /* Test Multi Index removal */
+        case 2:
+            if (!NpyIter_RemoveMultiIndex(iter)) {
+                goto fail;
+            }
+            break;
+        /* Test GotoMultiIndex (just 0 hardcoded) */
+        case 3:
+            if (!NpyIter_GotoMultiIndex(iter, index)) {
+                goto fail;
+            }
+            break;
+        /* Test setting iterrange (hardcoded range of 0, 1) */
+        case 4:
+            if (!NpyIter_ResetToIterIndexRange(iter, 0, 1, NULL)) {
+                goto fail;
+            }
+            break;
+        case 5:
+            if (!NpyIter_ResetToIterIndexRange(iter, 0, 1, &msg)) {
+                PyErr_SetString(PyExc_ValueError, msg);
+                goto fail;
+            }
+            break;
+        /* Do nothing */
+        default:
+            break;
+    }
+
+    NpyIter_Deallocate(iter);
+    Py_RETURN_NONE;
+  fail:
+    NpyIter_Deallocate(iter);
+    return NULL;
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_neighborhood_iterator",
         test_neighborhood_iterator,
@@ -712,6 +846,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
 #endif
     {"get_buffer_info",
         get_buffer_info,
+        METH_VARARGS, NULL},
+    {"array_indexing",
+        array_indexing,
+        METH_VARARGS, NULL},
+    {"test_nditer_too_large",
+        test_nditer_too_large,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
