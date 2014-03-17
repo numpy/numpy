@@ -1860,6 +1860,10 @@ class TestMedian(TestCase):
         assert_equal(a[0], np.median(a))
         a = np.array([0.0444502, 0.141249, 0.0463301])
         assert_equal(a[-1], np.median(a))
+        # check array scalar result
+        assert_equal(np.median(a).ndim, 0)
+        a[1] = np.nan
+        assert_equal(np.median(a).ndim, 0)
 
     def test_axis_keyword(self):
         a3 = np.array([[2, 3],
@@ -1932,6 +1936,12 @@ class TestMedian(TestCase):
 
         a = MySubClass([1,2,3])
         assert_equal(np.median(a), -7)
+
+    def test_object(self):
+        o = np.arange(7.);
+        assert_(type(np.median(o.astype(object))), float)
+        o[2] = np.nan
+        assert_(type(np.median(o.astype(object))), float)
 
     def test_extended_axis(self):
         o = np.random.normal(size=(71, 23))
