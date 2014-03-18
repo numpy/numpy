@@ -5,9 +5,9 @@ Last-Modified: $Date$
 Author: Nathaniel J. Smith <njs@pobox.com>
 Status: Draft
 Type: Standards Track
-Python-Version: 3.5
 Content-Type: text/x-rst
 Created: 20-Feb-2014
+Python-Version: 3.5
 Post-History: 13-Mar-2014
 
 Abstract
@@ -833,12 +833,12 @@ one is the special case.
 Finally, there is the option of using multi-character tokens.  Some
 options:
 
-* Matlab uses a ``.*`` operator.  Aside from being visually confusable
-  with ``*``, this would be a terrible choice for us because in
-  Matlab, ``*`` means matrix multiplication and ``.*`` means
-  elementwise multiplication, so using ``.*`` for matrix
-  multiplication would make us exactly backwards from what Matlab
-  users expect.
+* Matlab and Julia use a ``.*`` operator.  Aside from being visually
+  confusable with ``*``, this would be a terrible choice for us
+  because in Matlab and Julia, ``*`` means matrix multiplication and
+  ``.*`` means elementwise multiplication, so using ``.*`` for matrix
+  multiplication would make us exactly backwards from what Matlab and
+  Julia users expect.
 
 * APL apparently used ``+.×``, which by combining a multi-character
   token, confusing attribute-access-like . syntax, and a unicode
@@ -863,7 +863,7 @@ options:
   ``[*]`` or ``|*|`` (but when used in context, the use of vertical
   grouping symbols tends to recreate the nested parentheses visual
   clutter that was noted as one of the major downsides of the function
-  syntax we're trying to get away from); ``^*`` and ``^^``.
+  syntax we're trying to get away from); ``^*``.
 
 So, it doesn't matter much, but ``@`` seems as good or better than any
 of the alternatives:
