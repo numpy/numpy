@@ -189,9 +189,10 @@ static void
  * specialized copy and swap for source stride 0,
  * interestingly unrolling here is like above is only marginally profitable for
  * small types and detrimental for >= 8byte moves on x86
+ * but it profits from vectorization enabled with -O3
  */
 #if (@src_contig@ == 0) && @is_aligned@
-static void
+static NPY_GCC_OPT_3 void
 @prefix@_@oper@_size@elsize@_srcstride0(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
