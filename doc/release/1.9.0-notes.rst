@@ -119,6 +119,13 @@ data type's `compare` function to perform the search, but is now implemented
 by type specific functions. Depending on the size of the inputs, this can
 result in performance improvements over 2x.
 
+Optional reduced verbosity for np.distutils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
+calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
+print anything on the output. This is mostly for other packages using
+numpy.distutils.
+
 Changes
 =======
 
