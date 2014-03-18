@@ -1964,6 +1964,14 @@ class TestRegression(TestCase):
         self.assertTrue(arr is not arr_cp)
         self.assertTrue(isinstance(arr_cp, type(arr)))
 
+    def test_bool_subscript_crash(self):
+        # gh-4494
+        c = np.rec.array([(1, 2, 3), (4, 5, 6)])
+        masked = c[np.array([True, False])]
+        base = masked.base
+        del masked, c
+        base.dtype
+
 
 if __name__ == "__main__":
     run_module_suite()
