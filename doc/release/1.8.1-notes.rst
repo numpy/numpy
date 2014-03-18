@@ -70,6 +70,13 @@ of checking for an error return if these conditions can occur. In most
 cases the arrays being iterated are as large as the iterator so that such
 a problem cannot occur.
 
+Optional reduced verbosity for np.distutils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
+calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
+print anything on the output. This is mostly for other packages using
+numpy.distutils.
+
 Deprecations
 ============
 
