@@ -80,8 +80,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     num = int(num)
 
     # Convert float/complex array scalars to float, gh-3504 
-    start = start + 0.
-    stop = stop + 0.
+    start = start * 1.
+    stop = stop * 1.
 
     if dtype is None:
         dtype = result_type(start, stop, float(num))
