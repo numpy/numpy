@@ -133,6 +133,13 @@ Full broadcasting support for ``np.cross``
 have different number of dimensions. In earlier versions this would result
 in either an error being raised, or wrong results computed.
 
+Optional reduced verbosity for np.distutils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
+calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
+print anything on the output. This is mostly for other packages using
+numpy.distutils.
+
 Changes
 =======
 
