@@ -120,7 +120,7 @@ def find_executable(exe, path=None, _cache={}):
             if not os.path.islink(f_ext):
                 f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
-                log.good('Found executable %s' % f_ext)
+                log.info('Found executable %s' % f_ext)
                 _cache[key] = f_ext
                 return f_ext
 
