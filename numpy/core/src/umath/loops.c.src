@@ -52,6 +52,19 @@
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
 
+/* binary loop input and output continous */
+#define IS_BINARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
+                                   steps[1] == sizeof(tin) && \
+                                   steps[2] == sizeof(tout))
+/* binary loop input and output continous with first scalar */
+#define IS_BINARY_CONT_S1(tin, tout) (steps[0] == 0 && \
+                                   steps[1] == sizeof(tin) && \
+                                   steps[2] == sizeof(tout))
+/* binary loop input and output continous with second scalar */
+#define IS_BINARY_CONT_S2(tin, tout) (steps[0] == sizeof(tin) && \
+                                   steps[1] == 0 && \
+                                   steps[2] == sizeof(tout))
+
 #define OUTPUT_LOOP\
     char *op1 = args[1];\
     npy_intp os1 = steps[1];\
@@ -803,13 +816,45 @@ NPY_NO_EXPORT void
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  */
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 @OP@ in2;
+    /*
+     * gcc vectorization of this is not good (PR60575) but manual integer
+     * vectorization is too tedious to be worthwhile
+     */
+    if (IS_BINARY_CONT(@type@, npy_bool)) {
+        npy_intp i, n = dimensions[0];
+        @type@ * a = (@type@ *)args[0], * b = (@type@ *)args[1];
+        npy_bool * o = (npy_bool *)args[2];
+        for (i = 0; i < n; i++) {
+            o[i] = a[i] @OP@ b[i];
+        }
+    }
+    else if (IS_BINARY_CONT_S1(@type@, npy_bool)) {
+        npy_intp i, n = dimensions[0];
+        @type@ a = *(@type@ *)args[0];
+        @type@ * b = (@type@ *)args[1];
+        npy_bool * o = (npy_bool *)args[2];
+        for (i = 0; i < n; i++) {
+            o[i] = a @OP@ b[i];
+        }
+    }
+    else if (IS_BINARY_CONT_S2(@type@, npy_bool)) {
+        npy_intp i, n = dimensions[0];
+        @type@ * a = (@type@ *)args[0];
+        @type@ b = *(@type@*)args[1];
+        npy_bool * o = (npy_bool *)args[2];
+        for (i = 0; i < n; i++) {
+            o[i] = a[i] @OP@ b;
+        }
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((npy_bool *)op1) = in1 @OP@ in2;
+        }
     }
 }
 
