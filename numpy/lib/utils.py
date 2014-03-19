@@ -6,7 +6,7 @@ import types
 import re
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core import product, ndarray, ufunc
+from numpy.core import product, ndarray, ufunc, asarray
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
