@@ -592,6 +592,15 @@ class TestDateTime(TestCase):
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[s]'), np.dtype('m8[as]'))
 
+    def test_cast_overflow(self):
+        # gh-4486
+        def cast():
+            numpy.datetime64("1970-01-01 00:00:00.000000000000000").astype("<M8[D]")
+        assert_raises(OverflowError, cast)
+        def cast2():
+            numpy.datetime64("2014").astype("<M8[fs]")
+        assert_raises(OverflowError, cast2)
+
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
