@@ -51,6 +51,7 @@ Issues fixed
 * gh-4466: Delay npyiter size check when size may change
 * gh-4485: Buffered stride was erroneously marked fixed
 * gh-4354: byte_bounds fails with datetime dtypes
+* gh-4486: segfault/error converting from/to high-precision datetime64 objects
 
 Changes
 =======
