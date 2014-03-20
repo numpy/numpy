@@ -111,13 +111,13 @@ class PackageLoader(object):
             depend_dict[name] = getattr(info_module, 'depends', [])
         package_names = []
 
-        for name in depend_dict.keys():
+        for name in list(depend_dict.keys()):
             if not depend_dict[name]:
                 package_names.append(name)
                 del depend_dict[name]
 
         while depend_dict:
-            for name, lst in depend_dict.items():
+            for name, lst in list(depend_dict.items()):
                 new_lst = [n for n in lst if n in depend_dict]
                 if not new_lst:
                     package_names.append(name)
