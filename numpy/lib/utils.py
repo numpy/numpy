@@ -6,7 +6,7 @@ import types
 import re
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core import product, ndarray, ufunc
+from numpy.core import product, ndarray, ufunc, asarray
 
 __all__ = ['issubclass_', 'issubsctype', 'issubdtype',
         'deprecate', 'deprecate_with_doc', 'get_numarray_include',
@@ -250,8 +250,9 @@ def byte_bounds(a):
     a_data = ai['data'][0]
     astrides = ai['strides']
     ashape = ai['shape']
-    bytes_a = int(ai['typestr'][2:])
-
+   
+    bytes_a = asarray(a).dtype.itemsize
+       
     a_low = a_high = a_data
     if astrides is None: # contiguous case
         a_high += a.size * bytes_a
