@@ -83,11 +83,12 @@ numpy.polynomial.hermite_e
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
@@ -1765,4 +1766,22 @@ def legweight(x):
 # Legendre series class
 #
 
-exec(polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]'))
+class Legendre(ABCPolyBase):
+    # Virtual Functions
+    _add = staticmethod(legadd)
+    _sub = staticmethod(legsub)
+    _mul = staticmethod(legmul)
+    _div = staticmethod(legdiv)
+    _pow = staticmethod(legpow)
+    _val = staticmethod(legval)
+    _int = staticmethod(legint)
+    _der = staticmethod(legder)
+    _fit = staticmethod(legfit)
+    _line = staticmethod(legline)
+    _roots = staticmethod(legroots)
+    _fromroots = staticmethod(legfromroots)
+
+    # Virtual properties
+    nickname = 'leg'
+    domain = np.array(legdomain)
+    window = np.array(legdomain)

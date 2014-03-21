@@ -61,11 +61,12 @@ __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d',
     'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 polytrim = pu.trimcoef
 
@@ -1490,4 +1491,22 @@ def polyroots(c):
 # polynomial class
 #
 
-exec(polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]'))
+class Polynomial(ABCPolyBase):
+    # Virtual Functions
+    _add = staticmethod(polyadd)
+    _sub = staticmethod(polysub)
+    _mul = staticmethod(polymul)
+    _div = staticmethod(polydiv)
+    _pow = staticmethod(polypow)
+    _val = staticmethod(polyval)
+    _int = staticmethod(polyint)
+    _der = staticmethod(polyder)
+    _fit = staticmethod(polyfit)
+    _line = staticmethod(polyline)
+    _roots = staticmethod(polyroots)
+    _fromroots = staticmethod(polyfromroots)
+
+    # Virtual properties
+    nickname = 'poly'
+    domain = np.array(polydomain)
+    window = np.array(polydomain)

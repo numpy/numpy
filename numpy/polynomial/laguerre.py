@@ -59,11 +59,12 @@ See also
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
     'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
@@ -1739,4 +1740,22 @@ def lagweight(x):
 # Laguerre series class
 #
 
-exec(polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]'))
+class Laguerre(ABCPolyBase):
+    # Virtual Functions
+    _add = staticmethod(lagadd)
+    _sub = staticmethod(lagsub)
+    _mul = staticmethod(lagmul)
+    _div = staticmethod(lagdiv)
+    _pow = staticmethod(lagpow)
+    _val = staticmethod(lagval)
+    _int = staticmethod(lagint)
+    _der = staticmethod(lagder)
+    _fit = staticmethod(lagfit)
+    _line = staticmethod(lagline)
+    _roots = staticmethod(lagroots)
+    _fromroots = staticmethod(lagfromroots)
+
+    # Virtual properties
+    nickname = 'lag'
+    domain = np.array(lagdomain)
+    window = np.array(lagdomain)

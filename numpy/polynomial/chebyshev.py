@@ -87,11 +87,12 @@ References
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
@@ -2012,4 +2013,22 @@ def chebpts2(npts):
 # Chebyshev series class
 #
 
-exec(polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]'))
+class Chebyshev(ABCPolyBase):
+    # Virtual Functions
+    _add = staticmethod(chebadd)
+    _sub = staticmethod(chebsub)
+    _mul = staticmethod(chebmul)
+    _div = staticmethod(chebdiv)
+    _pow = staticmethod(chebpow)
+    _val = staticmethod(chebval)
+    _int = staticmethod(chebint)
+    _der = staticmethod(chebder)
+    _fit = staticmethod(chebfit)
+    _line = staticmethod(chebline)
+    _roots = staticmethod(chebroots)
+    _fromroots = staticmethod(chebfromroots)
+
+    # Virtual properties
+    nickname = 'cheb'
+    domain = np.array(chebdomain)
+    window = np.array(chebdomain)

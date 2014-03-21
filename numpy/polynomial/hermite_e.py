@@ -59,11 +59,12 @@ See also
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
     'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
@@ -1743,4 +1744,22 @@ def hermeweight(x):
 # HermiteE series class
 #
 
-exec(polytemplate.substitute(name='HermiteE', nick='herme', domain='[-1,1]'))
+class HermiteE(ABCPolyBase):
+    # Virtual Functions
+    _add = staticmethod(hermeadd)
+    _sub = staticmethod(hermesub)
+    _mul = staticmethod(hermemul)
+    _div = staticmethod(hermediv)
+    _pow = staticmethod(hermepow)
+    _val = staticmethod(hermeval)
+    _int = staticmethod(hermeint)
+    _der = staticmethod(hermeder)
+    _fit = staticmethod(hermefit)
+    _line = staticmethod(hermeline)
+    _roots = staticmethod(hermeroots)
+    _fromroots = staticmethod(hermefromroots)
+
+    # Virtual properties
+    nickname = 'herme'
+    domain = np.array(hermedomain)
+    window = np.array(hermedomain)
