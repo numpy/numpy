@@ -32,7 +32,7 @@ class TestEinSum(TestCase):
         assert_raises(TypeError, np.einsum, "", 0, bad_arg=0)
 
         # issue 4528 revealed a segfault with this call
-        assert_raises(TypeError, np.einsum, None, None, None, None)
+        assert_raises(TypeError, np.einsum, *(None,)*63)
 
         # number of operands must match count in subscripts string
         assert_raises(ValueError, np.einsum, "", 0, 0)
