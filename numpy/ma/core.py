@@ -3585,9 +3585,8 @@ class MaskedArray(ndarray):
                     if m.dtype.names:
                         m = m.view((bool, len(m.dtype)))
                         if m.any():
-                            r = np.array(self._data.tolist(), dtype=object)
-                            np.copyto(r, f, where=m)
-                            return str(tuple(r))
+                            return str(tuple((f if _m else _d) for _d, _m in
+                                             zip(self._data.tolist(), m)))
                         else:
                             return str(self._data)
                     elif m:
@@ -3598,7 +3597,7 @@ class MaskedArray(ndarray):
                 names = self.dtype.names
                 if names is None:
                     res = self._data.astype("O")
-                    res[m] = f
+                    res.view(ndarray)[m] = f
                 else:
                     rdtype = _recursive_make_descr(self.dtype, "O")
                     res = self._data.astype(rdtype)
@@ -3612,18 +3611,21 @@ class MaskedArray(ndarray):
 
         """
         n = len(self.shape)
-        name = repr(self._data).split('(')[0]
+        if self._baseclass is np.ndarray:
+            name = 'array'
+        else:
+            name = self._baseclass.__name__
+
         parameters = dict(name=name, nlen=" " * len(name),
-                           data=str(self), mask=str(self._mask),
-                           fill=str(self.fill_value), dtype=str(self.dtype))
+                          data=str(self), mask=str(self._mask),
+                          fill=str(self.fill_value), dtype=str(self.dtype))
         if self.dtype.names:
             if n <= 1:
                 return _print_templates['short_flx'] % parameters
-            return  _print_templates['long_flx'] % parameters
+            return _print_templates['long_flx'] % parameters
         elif n <= 1:
             return _print_templates['short_std'] % parameters
         return _print_templates['long_std'] % parameters
-
 
     def __eq__(self, other):
         "Check whether other equals self elementwise"

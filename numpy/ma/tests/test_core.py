@@ -369,6 +369,13 @@ class TestMaskedArray(TestCase):
         assert_equal(copied.mask, [0, 0, 0])
         assert_equal(a.mask, [0, 1, 0])
 
+    def test_str_repr(self):
+        a = array([0, 1, 2], mask=[False, True, False])
+        assert_equal(str(a), '[0 -- 2]')
+        assert_equal(repr(a), 'masked_array(data = [0 -- 2],\n'
+                              '             mask = [False  True False],\n'
+                              '       fill_value = 999999)\n')
+
     def test_pickling(self):
         # Tests pickling
         a = arange(10)
@@ -3624,7 +3631,7 @@ def test_append_masked_array():
 def test_append_masked_array_along_axis():
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
-    
+
     # When `axis` is specified, `values` must have the correct shape.
     assert_raises(ValueError, np.ma.append, a, b, axis=0)
 
@@ -3634,7 +3641,7 @@ def test_append_masked_array_along_axis():
     expected = expected.reshape((3,3))
     assert_array_equal(result.data, expected.data)
     assert_array_equal(result.mask, expected.mask)
-    
+
 
 ###############################################################################
 if __name__ == "__main__":

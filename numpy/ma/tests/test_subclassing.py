@@ -82,6 +82,24 @@ class MMatrix(MaskedArray, np.matrix,):
 mmatrix = MMatrix
 
 
+# also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
+# setting to non-class values (and thus np.ma.core.masked_print_option)
+class ComplicatedSubArray(SubArray):
+    def __str__(self):
+        return 'myprefix {0} mypostfix'.format(
+            super(ComplicatedSubArray, self).__str__())
+
+    def __repr__(self):
+        # Return a repr that does not start with 'name('
+        return '<{0} {1}>'.format(self.__class__.__name__, self)
+
+    def __setitem__(self, item, value):
+        # this ensures direct assignment to masked_print_option will fail
+        if not isinstance(value, ComplicatedSubArray):
+            raise ValueError("Can only set to MySubArray values")
+        super(ComplicatedSubArray, self).__setitem__(item, value)
+
+
 class TestSubclassing(TestCase):
     # Test suite for masked subclasses of ndarray.
 
@@ -186,6 +204,31 @@ class TestSubclassing(TestCase):
         self.assertTrue(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, m)
+
+    def test_subclass_repr(self):
+        """test that repr uses the name of the subclass
+        and 'array' for np.ndarray"""
+        x = np.arange(5)
+        mx = masked_array(x, mask=[True, False, True, False, False])
+        self.assertTrue(repr(mx).startswith('masked_array'))
+        xsub = SubArray(x)
+        mxsub = masked_array(xsub, mask=[True, False, True, False, False])
+        self.assertTrue(repr(mxsub).startswith(
+            'masked_{0}(data = [-- 1 -- 3 4]'.format(SubArray.__name__)))
+
+    def test_subclass_str(self):
+        """test str with subclass that has overridden str, setitem"""
+        # first without override
+        x = np.arange(5)
+        xsub = SubArray(x)
+        mxsub = masked_array(xsub, mask=[True, False, True, False, False])
+        self.assertTrue(str(mxsub) == '[-- 1 -- 3 4]')
+
+        xcsub = ComplicatedSubArray(x)
+        assert_raises(ValueError, xcsub.__setitem__, 0,
+                      np.ma.core.masked_print_option)
+        mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
+        self.assertTrue(str(mxcsub) == 'myprefix [-- 1 -- 3 4] mypostfix')
 
 
 ###############################################################################

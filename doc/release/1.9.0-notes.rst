@@ -194,6 +194,11 @@ Several more functions now release the Global Interpreter Lock allowing more
 efficient parallization using the ``threading`` module. Most notably the GIL is
 now released for fancy indexing and ``np.where``.
 
+MaskedArray support for more complicated base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Built-in assumptions that the baseclass behaved like a plain array are being
+removed. In particalur, ``repr`` and ``str`` should now work more reliably.
+
 Changes
 =======
 
