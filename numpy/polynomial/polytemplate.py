@@ -13,6 +13,12 @@ from __future__ import division, absolute_import, print_function
 
 import string
 import sys
+import warnings
+
+from numpy import ModuleDeprecationWarning
+
+warnings.warn("The polytemplate module will be removed in Numpy 1.10.0.",
+              ModuleDeprecationWarning)
 
 polytemplate = string.Template('''
 from __future__ import division, absolute_import, print_function
