@@ -824,7 +824,7 @@ def polyval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -884,7 +884,7 @@ def polygrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = polyval(x, c)
@@ -937,7 +937,7 @@ def polyval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1001,7 +1001,7 @@ def polygrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = polyval(x, c)
@@ -1174,7 +1174,7 @@ def polyvander3d(x, y, z, deg) :
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1250,12 +1250,16 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients in column `k` of `coef` represent the polynomial
         fit to the data in `y`'s `k`-th column.
 
-    [residuals, rank, singular_values, rcond] : present when `full` == True
-        Sum of the squared residuals (SSR) of the least-squares fit; the
-        effective rank of the scaled Vandermonde matrix; its singular
-        values; and the specified value of `rcond`.  For more information,
-        see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
 
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+        
     Raises
     ------
     RankWarning
@@ -1492,6 +1496,27 @@ def polyroots(c):
 #
 
 class Polynomial(ABCPolyBase):
+    """A power series class.
+
+    The Polynomial class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Polynomial coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` give ``1 + 2*x + 3*x**2``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
     # Virtual Functions
     _add = staticmethod(polyadd)
     _sub = staticmethod(polysub)

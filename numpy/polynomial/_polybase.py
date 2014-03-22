@@ -16,34 +16,36 @@ from . import polyutils as pu
 __all__ = ['ABCPolyBase']
 
 class ABCPolyBase(object):
-    """A $name series class.
+    """An abstract base class for series classes.
 
-    $name instances provide the standard Python numerical methods '+',
-    '-', '*', '//', '%', 'divmod', '**', and '()' as well as the listed
-    methods.
+    ABCPolyBase provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
+    methods listed below.
+
+    .. versionadded:: 1.9.0
 
     Parameters
     ----------
     coef : array_like
-        $name coefficients, in increasing order.  For example,
-        ``(1, 2, 3)`` implies ``P_0 + 2P_1 + 3P_2`` where the
-        ``P_i`` are a graded polynomial basis.
+        Series coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``, where
+        ``P_i`` is the basis polynomials of degree ``i``.
     domain : (2,) array_like, optional
-        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped to
-        the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is $domain.
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is the derived class domain.
     window : (2,) array_like, optional
-        Window, see ``domain`` for its use. The default value is $domain.
-        .. versionadded:: 1.6.0
+        Window, see domain for its use. The default value is the
+        derived class window.
 
     Attributes
     ----------
     coef : (N,) ndarray
-        $name coefficients, from low to high.
+        Series coefficients in order of increasing degree.
     domain : (2,) ndarray
-        Domain that is mapped to ``window``.
+        Domain that is mapped to window.
     window : (2,) ndarray
-        Window that ``domain`` is mapped to.
+        Window that domain is mapped to.
 
     Class Attributes
     ----------------
@@ -55,16 +57,6 @@ class ABCPolyBase(object):
     window : (2,) ndarray
         Default window of the class.
 
-    Notes
-    -----
-    It is important to specify the domain in many cases, for instance in
-    fitting data, because many of the important properties of the
-    polynomial basis only hold in a specified interval and consequently
-    the data must be mapped into that interval in order to benefit.
-
-    Examples
-    --------
-
     """
     __metaclass__ = ABCMeta
 
@@ -75,16 +67,16 @@ class ABCPolyBase(object):
     __array_priority__ = 1000
 
     # Limit runaway size. T_n^m has degree n*m
-    maxpower = 16
+    maxpower = 100
 
     @abstractproperty
     def domain(self):
         pass
-    
+
     @abstractproperty
     def window(self):
         pass
-    
+
     @abstractproperty
     def nickname(self):
         pass
@@ -140,6 +132,8 @@ class ABCPolyBase(object):
     def has_samecoef(self, other):
         """Check if coefficients match.
 
+        .. versionadded:: 1.6.0
+
         Parameters
         ----------
         other : class instance
@@ -149,10 +143,6 @@ class ABCPolyBase(object):
         -------
         bool : boolean
             True if the coefficients are the same, False otherwise.
-
-        Notes
-        -----
-        .. versionadded:: 1.6.0
 
         """
         if len(self.coef) != len(other.coef):
@@ -165,6 +155,8 @@ class ABCPolyBase(object):
     def has_samedomain(self, other):
         """Check if domains match.
 
+        .. versionadded:: 1.6.0
+
         Parameters
         ----------
         other : class instance
@@ -175,15 +167,13 @@ class ABCPolyBase(object):
         bool : boolean
             True if the domains are the same, False otherwise.
 
-        Notes
-        -----
-        .. versionadded:: 1.6.0
-
         """
         return np.all(self.domain == other.domain)
 
     def has_samewindow(self, other):
         """Check if windows match.
+
+        .. versionadded:: 1.6.0
 
         Parameters
         ----------
@@ -195,15 +185,13 @@ class ABCPolyBase(object):
         bool : boolean
             True if the windows are the same, False otherwise.
 
-        Notes
-        -----
-        .. versionadded:: 1.6.0
-
         """
         return np.all(self.window == other.window)
 
     def has_sametype(self, other):
         """Check if types match.
+
+        .. versionadded:: 1.7.0
 
         Parameters
         ----------
@@ -214,10 +202,6 @@ class ABCPolyBase(object):
         -------
         bool : boolean
             True if other is same class as self
-
-        Notes
-        -----
-        .. versionadded:: 1.7.0
 
         """
         return isinstance(other, self.__class__)
@@ -286,7 +270,6 @@ class ABCPolyBase(object):
         return self
 
     def __add__(self, other):
-        """Returns sum"""
         if isinstance(other, ABCPolyBase):
             if not self.has_sametype(other):
                 raise TypeError("Polynomial types differ")
@@ -304,7 +287,6 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def __sub__(self, other):
-        """Returns difference"""
         if isinstance(other, ABCPolyBase):
             if not self.has_sametype(other):
                 raise TypeError("Polynomial types differ")
@@ -322,7 +304,6 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def __mul__(self, other):
-        """Returns product"""
         if isinstance(other, ABCPolyBase):
             if not self.has_sametype(other):
                 raise TypeError("Polynomial types differ")
@@ -355,7 +336,6 @@ class ABCPolyBase(object):
             return NotImplemented
 
     def __floordiv__(self, other):
-        """Returns the quotient."""
         if isinstance(other, ABCPolyBase):
             if not self.has_sametype(other):
                 raise TypeError("Polynomial types differ")
@@ -373,7 +353,6 @@ class ABCPolyBase(object):
         return self.__class__(quo, self.domain, self.window)
 
     def __mod__(self, other):
-        """Returns the remainder."""
         if isinstance(other, ABCPolyBase):
             if not self.has_sametype(other):
                 raise TypeError("Polynomial types differ")
@@ -391,7 +370,6 @@ class ABCPolyBase(object):
         return self.__class__(rem, self.domain, self.window)
 
     def __divmod__(self, other):
-        """Returns quo, remainder"""
         if isinstance(other, self.__class__):
             if not self.has_samedomain(other):
                 raise TypeError("Domains are not equal")
@@ -494,12 +472,10 @@ class ABCPolyBase(object):
     def copy(self):
         """Return a copy.
 
-        Return a copy of the current $name instance.
-
         Returns
         -------
-        new_instance : $name
-            Copy of current instance.
+        new_series : series
+            Copy of self.
 
         """
         return self.__class__(self.coef, self.domain, self.window)
@@ -507,9 +483,12 @@ class ABCPolyBase(object):
     def degree(self):
         """The degree of the series.
 
-        Notes
-        -----
         .. versionadded:: 1.5.0
+
+        Returns
+        -------
+        degree : int
+            Degree of the series, one less than the number of coefficients.
 
         """
         return len(self) - 1
@@ -517,11 +496,13 @@ class ABCPolyBase(object):
     def cutdeg(self, deg):
         """Truncate series to the given degree.
 
-        Reduce the degree of the $name series to `deg` by discarding the
+        Reduce the degree of the series to `deg` by discarding the
         high order terms. If `deg` is greater than the current degree a
         copy of the current series is returned. This can be useful in least
         squares where the coefficients of the high degree terms may be very
         small.
+
+        .. versionadded:: 1.5.0
 
         Parameters
         ----------
@@ -531,24 +512,20 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        new_instance : $name
-            New instance of $name with reduced degree.
-
-        Notes
-        -----
-        .. versionadded:: 1.5.0
+        new_series : series
+            New instance of series with reduced degree.
 
         """
         return self.truncate(deg + 1)
 
     def trim(self, tol=0):
-        """Remove small leading coefficients
+        """Remove trailing coefficients
 
-        Remove leading coefficients until a coefficient is reached whose
+        Remove trailing coefficients until a coefficient is reached whose
         absolute value greater than `tol` or the beginning of the series is
-        reached. If all the coefficients would be removed the series is set to
-        ``[0]``. A new $name instance is returned with the new coefficients.
-        The current instance remains unchanged.
+        reached. If all the coefficients would be removed the series is set
+        to ``[0]``. A new series instance is returned with the new
+        coefficients.  The current instance remains unchanged.
 
         Parameters
         ----------
@@ -557,7 +534,7 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        new_instance : $name
+        new_series : series
             Contains the new set of coefficients.
 
         """
@@ -567,7 +544,7 @@ class ABCPolyBase(object):
     def truncate(self, size):
         """Truncate series to length `size`.
 
-        Reduce the $name series to length `size` by discarding the high
+        Reduce the series to length `size` by discarding the high
         degree terms. The value of `size` must be a positive integer. This
         can be useful in least squares where the coefficients of the
         high degree terms may be very small.
@@ -580,8 +557,8 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        new_instance : $name
-            New instance of $name with truncated coefficients.
+        new_series : series
+            New instance of series with truncated coefficients.
 
         """
         isize = int(size)
@@ -594,7 +571,7 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def convert(self, domain=None, kind=None, window=None):
-        """Convert to different class and/or domain.
+        """Convert series to a different kind and/or domain and/or window.
 
         Parameters
         ----------
@@ -611,9 +588,10 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        new_series_instance : `kind`
+        new_series : series
             The returned class can be of different type than the current
-            instance and/or have a different domain.
+            instance and/or have a different domain and/or different
+            window.
 
         Notes
         -----
@@ -639,24 +617,24 @@ class ABCPolyBase(object):
         applied to the input arguments before the series is evaluated. The
         map depends on the ``domain`` and ``window``; if the current
         ``domain`` is equal to the ``window`` the resulting map is the
-        identity.  If the coefficients of the ``$name`` instance are to be
+        identity.  If the coefficients of the series instance are to be
         used by themselves outside this class, then the linear function
         must be substituted for the ``x`` in the standard representation of
         the base polynomials.
 
         Returns
         -------
-        off, scl : floats or complex
+        off, scl : float or complex
             The mapping function is defined by ``off + scl*x``.
 
         Notes
         -----
-        If the current domain is the interval ``[l_1, r_1]`` and the window
-        is ``[l_2, r_2]``, then the linear mapping function ``L`` is
+        If the current domain is the interval ``[l1, r1]`` and the window
+        is ``[l2, r2]``, then the linear mapping function ``L`` is
         defined by the equations::
 
-            L(l_1) = l_2
-            L(r_1) = r_2
+            L(l1) = l2
+            L(r1) = r2
 
         """
         return pu.mapparms(self.domain, self.window)
@@ -664,8 +642,8 @@ class ABCPolyBase(object):
     def integ(self, m=1, k=[], lbnd=None):
         """Integrate.
 
-        Return an instance of $name that is the definite integral of the
-        current series. Refer to `${nick}int` for full documentation.
+        Return a series instance that is the definite integral of the
+        current series.
 
         Parameters
         ----------
@@ -681,13 +659,9 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        integral : $name
-            The integral of the series using the same domain.
-
-        See Also
-        --------
-        ${nick}int : similar function.
-        ${nick}der : similar function for derivative.
+        new_series : series
+            A new series representing the integral. The domain is the same
+            as the domain of the integrated series.
 
         """
         off, scl = self.mapparms()
@@ -701,8 +675,8 @@ class ABCPolyBase(object):
     def deriv(self, m=1):
         """Differentiate.
 
-        Return an instance of $name that is the derivative of the current
-        series.  Refer to `${nick}der` for full documentation.
+        Return a series instance of that is the derivative of the current
+        series.
 
         Parameters
         ----------
@@ -711,13 +685,9 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        derivative : $name
-            The derivative of the series using the same domain.
-
-        See Also
-        --------
-        ${nick}der : similar function.
-        ${nick}int : similar function for integration.
+        new_series : series
+            A new series representing the derivative. The domain is the same
+            as the domain of the differentiated series.
 
         """
         off, scl = self.mapparms()
@@ -725,45 +695,44 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def roots(self):
-        """Return list of roots.
+        """Return the roots of the series polynomial.
 
-        Return ndarray of roots for this series. See `${nick}roots` for
-        full documentation. Note that the accuracy of the roots is likely to
-        decrease the further outside the domain they lie.
+        Compute the roots for the series. Note that the accuracy of the
+        roots decrease the further outside the domain they lie.
 
-        See Also
-        --------
-        ${nick}roots : similar function
-        ${nick}fromroots : function to go generate series from roots.
+        Returns
+        -------
+        roots : ndarray
+            Array containing the roots of the series.
 
         """
         roots = self._roots(self.coef)
         return pu.mapdomain(roots, self.window, self.domain)
 
     def linspace(self, n=100, domain=None):
-        """Return x,y values at equally spaced points in domain.
+        """Return x, y values at equally spaced points in domain.
 
-        Returns x, y values at `n` linearly spaced points across domain.
-        Here y is the value of the polynomial at the points x. By default
-        the domain is the same as that of the $name instance.  This method
-        is intended mostly as a plotting aid.
+        Returns the x, y values at `n` linearly spaced points across the
+        domain.  Here y is the value of the polynomial at the points x. By
+        default the domain is the same as that of the series instance.
+        This method is intended mostly as a plotting aid.
+
+        .. versionadded:: 1.5.0
 
         Parameters
         ----------
         n : int, optional
             Number of point pairs to return. The default value is 100.
-        domain : {None, array_like}
+        domain : {None, array_like}, optional
             If not None, the specified domain is used instead of that of
             the calling instance. It should be of the form ``[beg,end]``.
-            The default is None.
+            The default is None which case the class domain is used.
 
         Returns
         -------
-        x, y : ndarrays
-            ``x`` is equal to linspace(self.domain[0], self.domain[1], n)
-            ``y`` is the polynomial evaluated at ``x``.
-
-        .. versionadded:: 1.5.0
+        x, y : ndarray
+            x is equal to linspace(self.domain[0], self.domain[1], n) and
+            y is the series evaluated at element of x.
 
         """
         if domain is None:
@@ -779,12 +748,10 @@ class ABCPolyBase(object):
         window=None):
         """Least squares fit to data.
 
-        Return a `$name` instance that is the least squares fit to the data
-        `y` sampled at `x`. Unlike `${nick}fit`, the domain of the returned
-        instance can be specified and this will often result in a superior
-        fit with less chance of ill conditioning. Support for NA was added
-        in version 1.7.0. See `${nick}fit` for full documentation of the
-        implementation.
+        Return a series instance that is the least squares fit to the data
+        `y` sampled at `x`. The domain of the returned instance can be
+        specified and this will often result in a superior fit with less
+        chance of ill conditioning.
 
         Parameters
         ----------
@@ -797,11 +764,11 @@ class ABCPolyBase(object):
         deg : int
             Degree of the fitting polynomial.
         domain : {None, [beg, end], []}, optional
-            Domain to use for the returned $name instance. If ``None``,
+            Domain to use for the returned series. If ``None``,
             then a minimal domain that covers the points `x` is chosen.  If
-            ``[]`` the default domain ``$domain`` is used. The default
-            value is $domain in numpy 1.4.x and ``None`` in later versions.
-            The ``'[]`` value was added in numpy 1.5.0.
+            ``[]`` the class domain is used. The default value was the
+            class domain in NumPy 1.4 and ``None`` in later versions.
+            The ``[]`` option was added in numpy 1.5.0.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
@@ -819,27 +786,29 @@ class ABCPolyBase(object):
             weights are chosen so that the errors of the products
             ``w[i]*y[i]`` all have the same variance.  The default value is
             None.
+
             .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
-            Window to use for the returned $name instance. The default
-            value is ``$domain``
+            Window to use for the returned series. The default
+            value is the default class domain
+
             .. versionadded:: 1.6.0
 
         Returns
         -------
-        least_squares_fit : instance of $name
-            The $name instance is the least squares fit to the data and
+        new_series : series
+            A series that represents the least squares fit to the data and
             has the domain specified in the call.
 
-        [residuals, rank, singular_values, rcond] : only if `full` = True
-            Residuals of the least squares fit, the effective rank of the
-            scaled Vandermonde matrix and its singular values, and the
-            specified value of `rcond`. For more details, see
-            `linalg.lstsq`.
+        [resid, rank, sv, rcond] : list
+            These values are only returned if `full` = True
 
-        See Also
-        --------
-        ${nick}fit : similar function
+            resid -- sum of squared residuals of the least squares fit
+            rank -- the numerical rank of the scaled Vandermonde matrix
+            sv -- singular values of the scaled Vandermonde matrix
+            rcond -- value of `rcond`.
+
+            For more details, see `linalg.lstsq`.
 
         """
         if domain is None:
@@ -861,32 +830,28 @@ class ABCPolyBase(object):
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None):
-        """Return $name instance with specified roots.
+        """Return series instance that has the specified roots.
 
-        Returns an instance of $name representing the product
-        ``(x - r[0])*(x - r[1])*...*(x - r[n-1])``, where ``r`` is the
+        Returns a series representing the product
+        ``(x - r[0])*(x - r[1])*...*(x - r[n-1])``, where ``r`` is a
         list of roots.
 
         Parameters
         ----------
         roots : array_like
             List of roots.
-        domain : {array_like, None}, optional
-            Domain for the resulting instance of $name. If None the domain
-            is the interval from the smallest root to the largest. The
-            default is $domain.
-        window : array_like, optional
-            Window for the resulting instance of $name. The default value
-            is $domain.
+        domain : {[], None, array_like}, optional
+            Domain for the resulting series. If None the domain is the
+            interval from the smallest root to the largest. If [] the
+            domain is the class domain. The default is [].
+        window : {None, array_like}, optional
+            Window for the returned series. If None the class window is
+            used. The default is None.
 
         Returns
         -------
-        object : $name instance
+        new_series : series
             Series with the specified roots.
-
-        See Also
-        --------
-        ${nick}fromroots : equivalent function
 
         """
         [roots] = pu.as_series([roots], trim=False)
@@ -908,21 +873,25 @@ class ABCPolyBase(object):
     def identity(cls, domain=None, window=None):
         """Identity function.
 
-        If ``p`` is the returned $name object, then ``p(x) == x`` for all
+        If ``p`` is the returned series, then ``p(x) == x`` for all
         values of x.
 
         Parameters
         ----------
-        domain : array_like
-            The resulting array must be of the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the domain.
-        window : array_like
-            The resulting array must be if the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the window.
+        domain : {None, array_like}, optional
+            If given, the array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain. If None is
+            given then the class domain is used. The default is None.
+        window : {None, array_like}, optional
+            If given, the resulting array must be if the form
+            ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
+            the window. If None is given then the class window is used. The
+            default is None.
 
         Returns
         -------
-        identity : $name instance
+        new_series : series
+             Series of representing the identity.
 
         """
         if domain is None:
@@ -935,27 +904,31 @@ class ABCPolyBase(object):
 
     @classmethod
     def basis(cls, deg, domain=None, window=None):
-        """$name polynomial of degree `deg`.
+        """Series basis polynomial of degree `deg`.
 
-        Returns an instance of the $name polynomial of degree `d`.
+        Returns the series representing the basis polynomial of degree `deg`.
+
+        .. versionadded:: 1.7.0
 
         Parameters
         ----------
         deg : int
-            Degree of the $name polynomial. Must be >= 0.
-        domain : array_like
-            The resulting array must be of the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the domain.
-        window : array_like
-            The resulting array must be if the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the window.
+            Degree of the basis polynomial for the series. Must be >= 0.
+        domain : {None, array_like}, optional
+            If given, the array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain. If None is
+            given then the class domain is used. The default is None.
+        window : {None, array_like}, optional
+            If given, the resulting array must be if the form
+            ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
+            the window. If None is given then the class window is used. The
+            default is None.
 
         Returns
-        p : $name instance
-
-        Notes
-        -----
-        .. versionadded:: 1.7.0
+        -------
+        new_series : series
+            A series with the coefficient of the `deg` term set to one and
+            all others zero.
 
         """
         if domain is None:
@@ -969,40 +942,43 @@ class ABCPolyBase(object):
         return cls([0]*ideg + [1], domain, window)
 
     @classmethod
-    def cast(cls, fromcls, domain=None, window=None):
-        """Convert instance to equivalent $name series.
+    def cast(cls, series, domain=None, window=None):
+        """Convert series to series of this class.
 
         The `series` is expected to be an instance of some polynomial
         series of one of the types supported by by the numpy.polynomial
         module, but could be some other class that supports the convert
         method.
 
+        .. versionadded:: 1.7.0
+
         Parameters
         ----------
         series : series
-            The instance series to be converted.
-        domain : array_like
-            The resulting array must be of the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the domain.
-        window : array_like
-            The resulting array must be if the form ``[beg, end]``, where
-            ``beg`` and ``end`` are the endpoints of the window.
+            The series instance to be converted.
+        domain : {None, array_like}, optional
+            If given, the array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain. If None is
+            given then the class domain is used. The default is None.
+        window : {None, array_like}, optional
+            If given, the resulting array must be if the form
+            ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
+            the window. If None is given then the class window is used. The
+            default is None.
 
         Returns
-        p : $name instance
-            A $name series equal to the `poly` series.
+        -------
+        new_series : series
+            A series of the same kind as the calling class and equal to
+            `series` when evaluated.
 
         See Also
         --------
-        convert -- similar instance method
-
-        Notes
-        -----
-        .. versionadded:: 1.7.0
+        convert : similar instance method
 
         """
         if domain is None:
             domain = cls.domain
         if window is None:
             window = cls.window
-        return fromcls.convert(domain, cls, window)
+        return series.convert(domain, cls, window)
