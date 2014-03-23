@@ -2299,7 +2299,7 @@ einsum_sub_op_from_lists(PyObject *args,
 
     /* Set the operands to NULL */
     for (i = 0; i < nop; ++i) {
-        op[nop] = NULL;
+        op[i] = NULL;
     }
 
     /* Get the operands and build the subscript string */
