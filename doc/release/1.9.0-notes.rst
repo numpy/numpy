@@ -140,6 +140,12 @@ calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
 print anything on the output. This is mostly for other packages using
 numpy.distutils.
 
+Covariance check in ``np.random.multivariate_normal``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A ``RuntimeWarning`` warning is raised when the covariance matrix is not
+positive-semidefinite.
+
+
 Changes
 =======
 

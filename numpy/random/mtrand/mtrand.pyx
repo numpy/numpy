@@ -125,6 +125,7 @@ import_array()
 
 import numpy as np
 import operator
+import warnings
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
@@ -4077,7 +4078,7 @@ cdef class RandomState:
             Mean of the N-dimensional distribution.
         cov : 2-D array_like, of shape (N, N)
             Covariance matrix of the distribution.  Must be symmetric and
-            positive semi-definite for "physically meaningful" results.
+            positive-semidefinite for "physically meaningful" results.
         size : int or tuple of ints, optional
             Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
@@ -4149,44 +4150,55 @@ cdef class RandomState:
         [True, True]
 
         """
+        from numpy.dual import svd
+
         # Check preconditions on arguments
         mean = np.array(mean)
         cov = np.array(cov)
         if size is None:
             shape = []
+        elif isinstance(size, (int, long, np.integer)):
+            shape = [size]
         else:
             shape = size
+
         if len(mean.shape) != 1:
                raise ValueError("mean must be 1 dimensional")
         if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
                raise ValueError("cov must be 2 dimensional and square")
         if mean.shape[0] != cov.shape[0]:
                raise ValueError("mean and cov must have same length")
-        # Compute shape of output
-        if isinstance(shape, (int, long, np.integer)):
-            shape = [shape]
+
+        # Compute shape of output and create a matrix of independent
+        # standard normally distributed random numbers. The matrix has rows
+        # with the same length as mean and as many rows are necessary to
+        # form a matrix of shape final_shape.
         final_shape = list(shape[:])
         final_shape.append(mean.shape[0])
-        # Create a matrix of independent standard normally distributed random
-        # numbers. The matrix has rows with the same length as mean and as
-        # many rows are necessary to form a matrix of shape final_shape.
-        x = self.standard_normal(np.multiply.reduce(final_shape))
-        x.shape = (np.multiply.reduce(final_shape[0:len(final_shape)-1]),
-                   mean.shape[0])
+        x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
+
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
         # Compute A such that dot(transpose(A),A) == cov.
         # Then the matrix products of the rows of x and A has the desired
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
+        #
+        # Also check that cov is positive-semidefinite. If so, the u.T and v
+        # matrices should be equal up to roundoff error if cov is
+        # symmetrical and the singular value of the corresponding row is
+        # not zero. We continue to use the SVD rather than Cholesky in
+        # order to preserve current outputs. Note that symmetry has not
+        # been checked.
+        (u, s, v) = svd(cov)
+        neg = (np.sum(u.T * v, axis=1) < 0) & (s > 0)
+        if np.any(neg):
+            s[neg] = 0.
+            warnings.warn("covariance is not positive-semidefinite.",
+                          RuntimeWarning)
 
-        from numpy.dual import svd
-        # XXX: we really should be doing this by Cholesky decomposition
-        (u,s,v) = svd(cov)
-        x = np.dot(x*np.sqrt(s),v)
-        # The rows of x now have the correct covariance but mean 0. Add
-        # mean to each row. Then each row will have mean mean.
-        np.add(mean,x,x)
+        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        x += mean
         x.shape = tuple(final_shape)
         return x
 

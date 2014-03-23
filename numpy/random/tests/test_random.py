@@ -1,10 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import TestCase, run_module_suite, assert_,\
-        assert_raises, assert_equal
+import numpy as np
+from numpy.testing import (
+        TestCase, run_module_suite, assert_, assert_raises, assert_equal,
+        assert_warns)
 from numpy import random
 from numpy.compat import asbytes
-import numpy as np
 
 
 class TestBinomial(TestCase):
@@ -427,20 +428,32 @@ class TestRandomDist(TestCase):
     def test_multivariate_normal(self):
         np.random.seed(self.seed)
         mean= (.123456789, 10)
+        # Hmm... not even symmetric.
         cov = [[1, 0], [1, 0]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[ -1.47027513018564449,  10.                 ],
-                          [ -1.65915081534845532,  10.                 ]],
-                         [[ -2.29186329304599745,  10.                 ],
-                          [ -1.77505606019580053,  10.                 ]],
-                         [[ -0.54970369430044119,  10.                 ],
-                          [  0.29768848031692957,  10.                 ]]])
+        desired = np.array([[[-1.47027513018564449, 10.],
+                             [-1.65915081534845532, 10.]],
+                            [[-2.29186329304599745, 10.],
+                             [-1.77505606019580053, 10.]],
+                            [[-0.54970369430044119, 10.],
+                             [ 0.29768848031692957, 10.]]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+
+        # Check for default size, was raising deprecation warning
+        actual = np.random.multivariate_normal(mean, cov)
+        desired = np.array([-0.79441224511977482, 10.])
+        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+
+        # Check that non positive-semidefinite covariance raises warning
+        mean= [0, 0]
+        cov = [[1, 1 + 1e-10], [1 + 1e-10, 1]]
+        rng = np.random.multivariate_normal
+        assert_warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)
-        actual = np.random.negative_binomial(n = 100, p = .12345, size = (3, 2))
+        actual = np.random.negative_binomial(n=100, p=.12345, size=(3, 2))
         desired = np.array([[848, 841],
                          [892, 611],
                          [779, 647]])
