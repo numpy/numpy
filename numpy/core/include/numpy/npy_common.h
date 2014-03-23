@@ -18,6 +18,13 @@
 #define NPY_GCC_UNROLL_LOOPS
 #endif
 
+/* highest gcc optimization level, enabled autovectorizer */
+#ifdef HAVE_ATTRIBUTE_OPTIMIZE_OPT_3
+#define NPY_GCC_OPT_3 __attribute__((optimize("O3")))
+#else
+#define NPY_GCC_OPT_3
+#endif
+
 #if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
 #define NPY_HAVE_SSE_INTRINSICS
 #endif
