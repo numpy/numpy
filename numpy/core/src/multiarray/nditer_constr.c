@@ -261,6 +261,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             buffersize = NIT_ITERSIZE(iter);
         }
         NBF_BUFFERSIZE(bufferdata) = buffersize;
+
+        /*
+         * Initialize for use in FirstVisit, which may be called before
+         * the buffers are filled and the reduce pos is updated.
+         */
+        NBF_REDUCE_POS(bufferdata) = 0;
     }
 
     /*

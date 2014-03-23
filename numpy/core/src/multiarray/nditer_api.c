@@ -758,14 +758,6 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
 
-    /*
-     * size 1 reduction iterators are not full initialized but each visit is
-     * always the first, gh-4134
-     */
-    if (NPY_UNLIKELY(NIT_ITERSIZE(iter) == 1)) {
-        return 1;
-    }
-
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     axisdata = NIT_AXISDATA(iter);
 
@@ -793,8 +785,8 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         /* The outer reduce loop */
-        if (NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0 &&
-                NBF_REDUCE_POS(bufferdata) != 0) {
+        if (NBF_REDUCE_POS(bufferdata) != 0 &&
+                NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0) {
             return 0;
         }
     }
