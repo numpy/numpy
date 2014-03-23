@@ -758,6 +758,14 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
 
+    /*
+     * size 1 reduction iterators are not full initialized but each visit is
+     * always the first, gh-4134
+     */
+    if (NPY_UNLIKELY(NIT_ITERSIZE(iter) == 1)) {
+        return 1;
+    }
+
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     axisdata = NIT_AXISDATA(iter);
 

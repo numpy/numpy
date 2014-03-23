@@ -588,6 +588,7 @@ class TestUfunc(TestCase):
         assert_equal(np.all(a), False)
         assert_equal(np.max(a), True)
         assert_equal(np.min(a), False)
+        assert_equal(np.array([[1]], dtype=object).sum(), 1)
 
     def test_object_scalar_multiply(self):
         # Tickets #2469 and #4482
