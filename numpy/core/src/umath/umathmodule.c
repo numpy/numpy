@@ -385,6 +385,10 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_pyvals_name = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_axis = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_dtype = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_keepdims = NULL;
 
 /* intern some strings used in ufuncs */
 static int
@@ -397,6 +401,10 @@ intern_strings(void)
     npy_um_str_array_finalize = PyUString_FromString("__array_finalize__");
     npy_um_str_ufunc = PyUString_FromString("__numpy_ufunc__");
     npy_um_str_pyvals_name = PyUString_FromString(UFUNC_PYVALS_NAME);
+    npy_um_str_array = PyUString_FromString("array");
+    npy_um_str_axis = PyUString_FromString("axis");
+    npy_um_str_dtype = PyUString_FromString("dtype");
+    npy_um_str_keepdims = PyUString_FromString("keepdims");
 
     return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&
         npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;

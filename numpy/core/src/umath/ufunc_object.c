@@ -69,6 +69,8 @@
 
 /* ---------------------------------------------------------------- */
 
+typedef int(*npy_converter)(PyObject *, PyObject **);
+
 static int
 _does_loop_use_arrays(void *data);
 
@@ -3612,6 +3614,60 @@ fail:
     return NULL;
 }
 
+/**
+ * Simple parsing of arguments args and kwds into the array obj.
+ * Apply PyObject conversion function to found arguments.
+ * Returns -1 if conversion failed or less thant `n` arguments were found.
+ */
+static int
+_parseargs(PyObject * args, PyObject * kwds, PyObject ** kwlist,
+           npy_converter * conv, npy_intp n, PyObject ** obj)
+{
+    Py_ssize_t na, nk;
+    Py_ssize_t i;
+    int args_found = 0;
+
+    if (!args || !kwds) {
+        return -1;
+    }
+    na = PyObject_Length(args);
+    nk = PyDict_Size(kwds);
+    if (na + nk != n) {
+        return -1;
+    }
+    for (i = 0; i < na; i++) {
+        obj[i] = PyTuple_GET_ITEM(args, i);
+        if (obj[i]) {
+            args_found++;
+        }
+    }
+    i = na;
+    for (i = na; i < n; i++) {
+        obj[i] = PyDict_GetItem(kwds, kwlist[i]);
+        if (obj[i]) {
+            args_found++;
+        }
+    }
+
+    if (args_found != n) {
+        return -1;
+    }
+
+    for (i = 0; i < n; i++) {
+        PyObject * tmp;
+        if (conv[i]) {
+            if (conv[i](obj[i], &tmp) == NPY_SUCCEED) {
+                obj[i] = tmp;
+            }
+            else {
+                return -1;
+            }
+        }
+    }
+
+    return args_found;
+}
+
 
 /*
  * This code handles reduce, reduceat, and accumulate
@@ -3634,6 +3690,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int keepdims = 0;
     static char *kwlist1[] = {"array", "axis", "dtype",
                                 "out", "keepdims", NULL};
+    PyObject *okwlist1[] = {npy_um_str_array, npy_um_str_axis, npy_um_str_dtype,
+                            npy_um_str_out, npy_um_str_keepdims};
     static char *kwlist2[] = {"array", "indices", "axis",
                                 "dtype", "out", NULL};
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
@@ -3680,26 +3738,34 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             return NULL;
         }
     }
-    else if (operation == UFUNC_ACCUMULATE) {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
-                                        &op,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out,
-                                        &keepdims)) {
-            Py_XDECREF(otype);
-            return NULL;
-        }
-    }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
-                                        &op,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out,
-                                        &keepdims)) {
-            Py_XDECREF(otype);
-            return NULL;
+        PyObject * obj[5] = {0};
+        npy_converter conv[5] = {NULL, NULL, (npy_converter)PyArray_DescrConverter2,
+                                 (npy_converter)PyArray_OutputConverter, NULL};
+        int r = _parseargs(args, kwds, okwlist1, conv, 5, obj);
+        if (r == 5) {
+            op = obj[0];
+            axes_in = obj[1];
+            otype = (PyArray_Descr*)obj[2];
+            out = (PyArrayObject*)obj[3];
+            keepdims = PyObject_IsTrue(obj[4]);
+            if (keepdims < 0) {
+                r = -1;
+            }
+        }
+
+        if (r != 5 || PyErr_Occurred()) {
+            Py_XDECREF(obj[3]);
+            PyErr_Clear();
+            if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
+                                             &op,
+                                             &axes_in,
+                                             PyArray_DescrConverter2, &otype,
+                                             PyArray_OutputConverter, &out,
+                                             &keepdims)) {
+                Py_XDECREF(otype);
+                return NULL;
+            }
         }
     }
     /* Ensure input is an array */
