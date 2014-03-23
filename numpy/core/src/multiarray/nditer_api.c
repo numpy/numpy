@@ -785,8 +785,8 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         /* The outer reduce loop */
-        if (NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0 &&
-                NBF_REDUCE_POS(bufferdata) != 0) {
+        if (NBF_REDUCE_POS(bufferdata) != 0 &&
+                NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0) {
             return 0;
         }
     }
