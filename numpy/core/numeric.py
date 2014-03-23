@@ -941,6 +941,8 @@ def convolve(a,v,mode='full'):
     scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
                                Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
+    polymul : Polynomial multiplication. Same output as convolve, but also
+              accepts poly1d objects as input.
 
     Notes
     -----
