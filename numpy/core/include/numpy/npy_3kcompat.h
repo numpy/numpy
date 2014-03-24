@@ -163,8 +163,10 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
         return NULL;
     }
 
-    /* The handle needs to be dup'd because we have to call fclose
-       at the end */
+    /*
+     * The handle needs to be dup'd because we have to call fclose
+     * at the end
+     */
     os = PyImport_ImportModule("os");
     if (os == NULL) {
         return NULL;
@@ -231,8 +233,10 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     /* Close the FILE* handle */
     fclose(handle);
 
-    /* Restore original file handle position, in order to not confuse
-       Python-side data structures */
+    /*
+     * Restore original file handle position, in order to not confuse
+     * Python-side data structures
+     */
     fd = PyObject_AsFileDescriptor(file);
     if (fd == -1) {
         return -1;
