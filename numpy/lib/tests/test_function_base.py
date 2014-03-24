@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns
+    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex
     )
 from numpy.random import rand
 from numpy.lib import *
@@ -1545,6 +1545,23 @@ class TestBincount(TestCase):
         x = np.array([], dtype=int)
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
+
+    def test_with_incorrect_minlength(self):
+        x = np.array([], dtype=int)
+        assert_raises_regex(TypeError, "an integer is required",
+                            lambda: np.bincount(x, minlength="foobar"))
+        assert_raises_regex(ValueError, "must be positive",
+                            lambda: np.bincount(x, minlength=-1))
+        assert_raises_regex(ValueError, "must be positive",
+                            lambda: np.bincount(x, minlength=0))
+
+        x = np.arange(5)
+        assert_raises_regex(TypeError, "an integer is required",
+                            lambda: np.bincount(x, minlength="foobar"))
+        assert_raises_regex(ValueError, "minlength must be positive",
+                            lambda: np.bincount(x, minlength=-1))
+        assert_raises_regex(ValueError, "minlength must be positive",
+                            lambda: np.bincount(x, minlength=0))
 
 
 class TestInterp(TestCase):
