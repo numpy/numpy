@@ -2235,32 +2235,22 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 }
 
 /*
- * count number of nonzero bytes in 16 byte block
+ * count number of nonzero bytes in 48 byte block
  * w must be aligned to 8 bytes
  *
  * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
  * but a 32 bit type version would make it even faster on these platforms
  */
-static NPY_INLINE int
-count_nonzero_bytes_128(const npy_uint64 * w)
+static NPY_INLINE npy_intp
+count_nonzero_bytes_384(const npy_uint64 * w)
 {
     const npy_uint64 w1 = w[0];
     const npy_uint64 w2 = w[1];
-
-    /*
-     * bytes not exclusively 0 or 1, sum them individually.
-     * should only happen if one does weird stuff with views or external
-     * buffers.
-     */
-    if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
-        /* reload from pointer to avoid a unnecessary stack spill with gcc */
-        const char * c = (const char *)w;
-        npy_uintp i, count = 0;
-        for (i = 0; i < 16; i++) {
-            count += (c[i] != 0);
-        }
-        return count;
-    }
+    const npy_uint64 w3 = w[2];
+    const npy_uint64 w4 = w[3];
+    const npy_uint64 w5 = w[4];
+    const npy_uint64 w6 = w[5];
+    npy_intp r;
 
     /*
      * last part of sideways add popcount, first three bisections can be
@@ -2269,7 +2259,27 @@ count_nonzero_bytes_128(const npy_uint64 * w)
      * multiplication overflow well defined for unsigned types.
      * w1 + w2 guaranteed to not overflow as we only have 0 and 1 data.
      */
-    return ((w1 + w2) * 0x0101010101010101ULL) >> 56ULL;
+    r = ((w1 + w2 + w3 + w4 + w5 + w6) * 0x0101010101010101ULL) >> 56ULL;
+
+    /*
+     * bytes not exclusively 0 or 1, sum them individually.
+     * should only happen if one does weird stuff with views or external
+     * buffers.
+     * Doing this after the optimistic computation allows saving registers and
+     * better pipelining
+     */
+    if (NPY_UNLIKELY(
+             ((w1 | w2 | w3 | w4 | w5 | w6) & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
+        /* reload from pointer to avoid a unnecessary stack spill with gcc */
+        const char * c = (const char *)w;
+        npy_uintp i, count = 0;
+        for (i = 0; i < 48; i++) {
+            count += (c[i] != 0);
+        }
+        return count;
+    }
+
+    return r;
 }
 
 /*
@@ -2311,9 +2321,9 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
             const char *e = data + shape[0];
             if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
                     npy_is_aligned(d, sizeof(npy_uint64))) {
-                npy_uintp stride = 2 * sizeof(npy_uint64);
+                npy_uintp stride = 6 * sizeof(npy_uint64);
                 for (; d < e - (shape[0] % stride); d += stride) {
-                    count += count_nonzero_bytes_128((const npy_uint64 *)d);
+                    count += count_nonzero_bytes_384((const npy_uint64 *)d);
                 }
             }
             for (; d < e; ++d) {
