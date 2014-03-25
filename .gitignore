@@ -112,11 +112,15 @@ numpy/core/src/multiarray/scalartypes.c
 numpy/core/src/npymath/ieee754.c
 numpy/core/src/npymath/npy_math.c
 numpy/core/src/npymath/npy_math_complex.c
+numpy/core/src/npysort/binsearch.c
 numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
 numpy/core/src/npysort/quicksort.c
 numpy/core/src/npysort/selection.c
 numpy/core/src/npysort/sort.c
+numpy/core/src/private/npy_binsearch.h
+numpy/core/src/private/npy_partition.h
+numpy/core/src/private/scalarmathmodule.h
 numpy/core/src/scalarmathmodule.c
 numpy/core/src/umath/funcs.inc
 numpy/core/src/umath/loops.c
