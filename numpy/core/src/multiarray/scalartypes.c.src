@@ -1121,6 +1121,21 @@ voidtype_dtypedescr_get(PyVoidScalarObject *self)
 
 
 static PyObject *
+inttype_numerator_get(PyObject *self)
+{
+    Py_INCREF(self);
+    return self;
+}
+
+
+static PyObject *
+inttype_denominator_get(PyObject *self)
+{
+    return PyInt_FromLong(1);
+}
+
+
+static PyObject *
 gentype_data_get(PyObject *self)
 {
 #if defined(NPY_PY3K)
@@ -2062,6 +2077,20 @@ static PyMethodDef voidtype_methods[] = {
         (PyCFunction)voidtype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}
+};
+
+static PyGetSetDef inttype_getsets[] = {
+    {"numerator",
+        (getter)inttype_numerator_get,
+        (setter)0,
+        "numerator of value (the value itself)",
+        NULL},
+    {"denominator",
+        (getter)inttype_denominator_get,
+        (setter)0,
+        "denominator of value (1)",
+        NULL},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 /**begin repeat
@@ -4029,6 +4058,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
+
+    PyIntegerArrType_Type.tp_getset = inttype_getsets;
 
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,

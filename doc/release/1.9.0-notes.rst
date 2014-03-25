@@ -105,6 +105,12 @@ for ``tostring`` which exports arrays as ``bytes``. This is more consistent
 in Python 3 where ``str`` and ``bytes`` are not the same.
 
 
+compatibility to python ``numbers`` module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All numerical numpy types are now registered with the type hierarchy in
+the python ``numbers`` module.
+
+
 Improvements
 ============
 
