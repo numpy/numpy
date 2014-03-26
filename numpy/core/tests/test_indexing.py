@@ -336,6 +336,28 @@ class TestIndexing(TestCase):
 
         assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
+    def test_unaligned(self):
+        v = (np.zeros(64, dtype=np.int8) + ord('a'))[1:-7]
+        d = v.view(np.dtype("S8"))
+        # unaligned source
+        x = (np.zeros(16, dtype=np.int8) + ord('a'))[1:-7]
+        x = x.view(np.dtype("S8"))
+        x[...] = np.array("b" * 8, dtype="S")
+        b = np.arange(d.size)
+        #trivial
+        assert_equal(d[b], d)
+        d[b] = x
+        # nontrivial
+        # unaligned index array
+        b = np.zeros(d.size + 1).view(np.int8)[1:-(np.intp(0).itemsize - 1)]
+        b = b.view(np.intp)[:d.size]
+        b[...] = np.arange(d.size)
+        assert_equal(d[b.astype(np.int16)], d)
+        d[b.astype(np.int16)] = x
+        # boolean
+        d[b % 2 == 0]
+        d[b % 2 == 0] = x[::2]
+
 
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):

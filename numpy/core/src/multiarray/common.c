@@ -650,14 +650,12 @@ _IsAligned(PyArrayObject *ap)
 {
     unsigned int i;
     npy_uintp aligned;
-    const unsigned int alignment = PyArray_DESCR(ap)->alignment;
+    npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 
-    /* The special casing for STRING and VOID types was removed
-     * in accordance with http://projects.scipy.org/numpy/ticket/1227
-     * It used to be that IsAligned always returned True for these
-     * types, which is indeed the case when they are created using
-     * PyArray_DescrConverter(), but not necessarily when using
-     * PyArray_DescrAlignConverter(). */
+    /* alignment 1 types should have a efficient alignment for copy loops */
+    if (PyArray_ISFLEXIBLE(ap) || PyArray_ISSTRING(ap)) {
+        alignment = 16;
+    }
 
     if (alignment == 1) {
         return 1;
