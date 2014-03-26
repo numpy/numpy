@@ -282,6 +282,29 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         self._test_not_equal(x, y)
         self._test_not_equal(x, z)
 
+    def test_error_message(self):
+        """Check the message is formatted correctly for the decimal value"""
+        x = np.array([1.00000000001, 2.00000000002, 3.00003])
+        y = np.array([1.00000000002, 2.00000000003, 3.00004])
+
+        # test with a different amount of decimal digits
+        b = ('\nArrays are not almost equal to 12 decimals\n\n(mismatch '
+             '100.0%)\n x: array([ 1.00000000001,  2.00000000002,  3.00003     '
+             ' ])\n y: array([ 1.00000000002,  2.00000000003,  3.00004      ])')
+        try:
+            self._assert_func(x, y, decimal=12)
+        except AssertionError as e:
+            self.assertEqual(e.message, b)
+
+        # with the default value of decimal digits, only the 3rd element differs
+        b = ('\nArrays are not almost equal to 7 decimals\n\n(mismatch '
+             '33.3333333333%)\n x: array([ 1.     ,  2.     ,  3.00003])\n y: '
+             'array([ 1.     ,  2.     ,  3.00004])')
+        try:
+            self._assert_func(x, y)
+        except AssertionError as e:
+            self.assertEqual(e.message, b)
+
 class TestApproxEqual(unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_approx_equal
@@ -328,6 +351,18 @@ class TestApproxEqual(unittest.TestCase):
                 lambda : self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
+
+    def test_error_message(self):
+        """Check the message is formatted correctly for the decimal value"""
+        x = 1.00000001
+        y = 1.00000002
+
+        b = ('\nItems are not equal to 9 significant digits:\n ACTUAL: '
+             '1.00000001\n DESIRED: 1.00000002')
+        try:
+            self._assert_func(x, y, significant=9)
+        except AssertionError as e:
+            self.assertEqual(e.message, b)
 
 class TestRaises(unittest.TestCase):
     def setUp(self):
