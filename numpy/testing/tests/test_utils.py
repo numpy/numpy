@@ -294,7 +294,7 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         try:
             self._assert_func(x, y, decimal=12)
         except AssertionError as e:
-            self.assertEqual(e.message, b)
+            self.assertEqual(str(e), b)
 
         # with the default value of decimal digits, only the 3rd element differs
         b = ('\nArrays are not almost equal to 7 decimals\n\n(mismatch '
@@ -303,7 +303,7 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         try:
             self._assert_func(x, y)
         except AssertionError as e:
-            self.assertEqual(e.message, b)
+            self.assertEqual(str(e), b)
 
 class TestApproxEqual(unittest.TestCase):
     def setUp(self):
@@ -362,7 +362,7 @@ class TestApproxEqual(unittest.TestCase):
         try:
             self._assert_func(x, y, significant=9)
         except AssertionError as e:
-            self.assertEqual(e.message, b)
+            self.assertEqual(str(e), b)
 
 class TestRaises(unittest.TestCase):
     def setUp(self):
