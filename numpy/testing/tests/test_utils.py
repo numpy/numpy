@@ -352,18 +352,6 @@ class TestApproxEqual(unittest.TestCase):
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
 
-    def test_error_message(self):
-        """Check the message is formatted correctly for the decimal value"""
-        x = 1.00000001
-        y = 1.00000002
-
-        b = ('\nItems are not equal to 9 significant digits:\n ACTUAL: '
-             '1.00000001\n DESIRED: 1.00000002')
-        try:
-            self._assert_func(x, y, significant=9)
-        except AssertionError as e:
-            self.assertEqual(str(e), b)
-
 class TestRaises(unittest.TestCase):
     def setUp(self):
         class MyException(Exception):
