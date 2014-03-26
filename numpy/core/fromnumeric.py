@@ -584,7 +584,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     The various selection algorithms are characterized by their average speed,
     worst case performance, work space size, and whether they are stable. A
     stable sort keeps items with the same key in the same relative order. The
-    three available algorithms have the following properties:
+    available algorithms have the following properties:
 
     ================= ======= ============= ============ =======
        kind            speed   worst case    work space  stable
