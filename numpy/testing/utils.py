@@ -9,8 +9,9 @@ import sys
 import re
 import operator
 import warnings
+from functools import partial
 from .nosetester import import_nose
-from numpy.core import float32, empty, arange, array_repr
+from numpy.core import float32, empty, arange, array_repr, ndarray
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -199,8 +200,15 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
             msg.append(err_msg)
     if verbose:
         for i, a in enumerate(arrays):
+
+            if isinstance(a, ndarray):
+                # precision argument is only needed if the objects are ndarrays
+                r_func = partial(array_repr, precision=precision)
+            else:
+                r_func = repr
+
             try:
-                r = array_repr(a, precision=precision)
+                r = r_func(a)
             except:
                 r = '[repr failed]'
             if r.count('\n') > 3:
