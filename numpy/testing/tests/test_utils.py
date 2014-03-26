@@ -288,22 +288,24 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         y = np.array([1.00000000002, 2.00000000003, 3.00004])
 
         # test with a different amount of decimal digits
-        b = ('\nArrays are not almost equal to 12 decimals\n\n(mismatch '
-             '100.0%)\n x: array([ 1.00000000001,  2.00000000002,  3.00003     '
+        # note that we only check for the formatting of the arrays themselves
+        b = ('x: array([ 1.00000000001,  2.00000000002,  3.00003     '
              ' ])\n y: array([ 1.00000000002,  2.00000000003,  3.00004      ])')
         try:
             self._assert_func(x, y, decimal=12)
         except AssertionError as e:
-            self.assertEqual(str(e), b)
+            # remove anything that's not the array string
+            self.assertEqual(str(e).split('%)\n ')[1], b)
 
         # with the default value of decimal digits, only the 3rd element differs
-        b = ('\nArrays are not almost equal to 7 decimals\n\n(mismatch '
-             '33.3333333333%)\n x: array([ 1.     ,  2.     ,  3.00003])\n y: '
-             'array([ 1.     ,  2.     ,  3.00004])')
+        # note that we only check for the formatting of the arrays themselves
+        b = ('x: array([ 1.     ,  2.     ,  3.00003])\n y: array([ 1.     ,  '
+             '2.     ,  3.00004])')
         try:
             self._assert_func(x, y)
         except AssertionError as e:
-            self.assertEqual(str(e), b)
+            # remove anything that's not the array string
+            self.assertEqual(str(e).split('%)\n ')[1], b)
 
 class TestApproxEqual(unittest.TestCase):
     def setUp(self):
