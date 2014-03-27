@@ -193,6 +193,15 @@ class TestIndexing(TestCase):
         c = np.arange(10).reshape(5, 2)[::-1]
         a[b, :] = c
         assert_equal(a[0], [0, 1])
+    
+    def test_reversed_strides_result_allocation(self):
+        # Test a bug when calculating the output strides for a result array
+        # when the subspace size was 1 (and test other cases as well)
+        a = np.arange(10)[:, None]
+        i = np.arange(10)[::-1]
+        assert_array_equal(a[i], a[i.copy('C')])
+
+        a = np.arange(20).reshape(-1, 2)
 
 
     def test_uncontiguous_subspace_assignment(self):

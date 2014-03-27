@@ -2671,7 +2671,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
                                     NPY_ITER_ZEROSIZE_OK |
                                     NPY_ITER_REFS_OK |
-                                    NPY_ITER_MULTI_INDEX,
+                                    NPY_ITER_MULTI_INDEX |
+                                    NPY_ITER_DONT_NEGATE_STRIDES,
                                     NPY_KEEPORDER,
                                     NPY_UNSAFE_CASTING,
                                     tmp_op_flags, NULL);
@@ -2685,9 +2686,13 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
              * here, but it would *not* work directly, since elsize
              * is limited to int.
              */
-            NpyIter_CreateCompatibleStrides(tmp_iter,
+            if (!NpyIter_CreateCompatibleStrides(tmp_iter,
                         extra_op_dtype->elsize * PyArray_SIZE(subspace),
-                        strides);
+                        strides)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "internal error: failed to find output array strides");
+                goto fail;
+            }
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
