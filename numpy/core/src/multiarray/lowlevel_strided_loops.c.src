@@ -793,7 +793,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 
 #endif
 
-static void
+static NPY_GCC_OPT_3 void
 @prefix@_cast_@name1@_to_@name2@(
                         char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
