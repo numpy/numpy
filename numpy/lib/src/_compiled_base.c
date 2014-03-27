@@ -161,14 +161,22 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     len = PyArray_SIZE(lst);
     type = PyArray_DescrFromType(NPY_INTP);
 
-    /* handle empty list */
-    if (len < 1) {
-        if (mlength == Py_None) {
-            minlength = 0;
-        }
-        else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+    if (mlength == Py_None) {
+        minlength = 0;
+    }
+    else {
+        minlength = PyArray_PyIntAsIntp(mlength);
+        if (minlength <= 0) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                                "minlength must be positive");
+            }
             goto fail;
         }
+    }
+
+    /* handle empty list */
+    if (len == 0) {
         if (!(ans = (PyArrayObject *)PyArray_Zeros(1, &minlength, type, 0))){
             goto fail;
         }
@@ -185,15 +193,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     ans_size = mx + 1;
     if (mlength != Py_None) {
-        if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
-            goto fail;
-        }
-        if (minlength <= 0) {
-            /* superfluous, but may catch incorrect usage */
-            PyErr_SetString(PyExc_ValueError,
-                    "minlength must be positive");
-            goto fail;
-        }
         if (ans_size < minlength) {
             ans_size = minlength;
         }
