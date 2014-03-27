@@ -1982,6 +1982,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
     npy_bool *ptr;
     npy_intp coords[NPY_MAXDIMS], dims_m1[NPY_MAXDIMS];
     npy_intp *dptr[NPY_MAXDIMS];
+    static npy_intp one = 1;
 
     typecode=PyArray_DescrFromType(NPY_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
@@ -1996,14 +1997,12 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
     }
     size = PyArray_SIZE(ba);
     ptr = (npy_bool *)PyArray_DATA(ba);
-    count = 0;
 
-    /* pre-determine how many nonzero entries there are */
-    for (i = 0; i < size; i++) {
-        if (*(ptr++)) {
-            count++;
-        }
-    }
+    /*
+     * pre-determine how many nonzero entries there are,
+     * ignore dimensionality of input as its a CARRAY
+     */
+    count = count_boolean_trues(1, (char*)ptr, &size, &one);
 
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
@@ -2019,7 +2018,6 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
         coords[j] = 0;
         dims_m1[j] = PyArray_DIMS(ba)[j]-1;
     }
-    ptr = (npy_bool *)PyArray_DATA(ba);
     if (count == 0) {
         goto finish;
     }
