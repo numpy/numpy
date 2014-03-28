@@ -59,11 +59,12 @@ See also
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
     'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
@@ -1416,10 +1417,15 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1747,4 +1753,43 @@ def hermweight(x):
 # Hermite series class
 #
 
-exec(polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]'))
+class Hermite(ABCPolyBase):
+    """An Hermite series class.
+
+    The Hermite class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Laguerre coefficients in order of increasing degree, i.e,
+        ``(1, 2, 3)`` gives ``1*H_0(x) + 2*H_1(X) + 3*H_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(hermadd)
+    _sub = staticmethod(hermsub)
+    _mul = staticmethod(hermmul)
+    _div = staticmethod(hermdiv)
+    _pow = staticmethod(hermpow)
+    _val = staticmethod(hermval)
+    _int = staticmethod(hermint)
+    _der = staticmethod(hermder)
+    _fit = staticmethod(hermfit)
+    _line = staticmethod(hermline)
+    _roots = staticmethod(hermroots)
+    _fromroots = staticmethod(hermfromroots)
+
+    # Virtual properties
+    nickname = 'herm'
+    domain = np.array(hermdomain)
+    window = np.array(hermdomain)

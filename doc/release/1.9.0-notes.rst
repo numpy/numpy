@@ -18,6 +18,7 @@ Dropped Support
 Future Changes
 ==============
 
+* The numpy/polynomial/polytemplate.py file will be removed in 1.10.0.
 
 Compatibility notes
 ===================
@@ -70,6 +71,13 @@ The ``doc/swig`` directory moved
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``doc/swig`` directory has been moved to ``tools/swig``.
 
+Polynomial Classes no longer derived from PolyBase
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This may cause problems with folks who depended on the polynomial classes
+being derived from PolyBase. They are now all derived from the abstract
+base class ABCPolyBase. Strictly speaking, there should be a deprecation
+involved, but no external code making use of the old baseclass could be
+found.
 
 New Features
 ============
@@ -151,6 +159,12 @@ Covariance check in ``np.random.multivariate_normal``
 A ``RuntimeWarning`` warning is raised when the covariance matrix is not
 positive-semidefinite.
 
+Polynomial Classes no longer template based
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The polynomial classes have been refactored to use an abstract base class
+rather than a template in order to implement a common interface. This makes
+importing the polynomial package faster as the classes do not need to be
+compiled on import.
 
 Changes
 =======

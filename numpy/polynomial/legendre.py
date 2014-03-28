@@ -83,11 +83,12 @@ numpy.polynomial.hermite_e
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
@@ -1447,10 +1448,15 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1765,4 +1771,43 @@ def legweight(x):
 # Legendre series class
 #
 
-exec(polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]'))
+class Legendre(ABCPolyBase):
+    """A Legendre series class.
+
+    The Legendre class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Legendre coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(legadd)
+    _sub = staticmethod(legsub)
+    _mul = staticmethod(legmul)
+    _div = staticmethod(legdiv)
+    _pow = staticmethod(legpow)
+    _val = staticmethod(legval)
+    _int = staticmethod(legint)
+    _der = staticmethod(legder)
+    _fit = staticmethod(legfit)
+    _line = staticmethod(legline)
+    _roots = staticmethod(legroots)
+    _fromroots = staticmethod(legfromroots)
+
+    # Virtual properties
+    nickname = 'leg'
+    domain = np.array(legdomain)
+    window = np.array(legdomain)
