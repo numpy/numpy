@@ -373,6 +373,14 @@ an inner loop for user types using the descr.
 
 * PyUFunc_RegisterLoopForDescr
 
+C-API Developer Improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``PyArray_Type`` instance creation function ``tp_new`` now
+uses ``tp_basicsize`` to determine how much memory to allocate.
+In previous releases only ``sizeof(PyArrayObject)`` bytes of
+memory were allocated, often requiring C-API subtypes to
+reimplement ``tp_new``.
+
 Deprecations
 ============
 

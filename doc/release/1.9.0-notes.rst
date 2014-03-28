@@ -1,7 +1,7 @@
 NumPy 1.9.0 Release Notes
 *************************
 
-This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
+This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
 
 
 Highlights
@@ -88,6 +88,13 @@ Percentile supports more interpolation options
 which way points should be interpolated if the percentiles fall between two
 values.  See the documentation for the available options.
 
+Generalized axis support for median and percentile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.median`` and ``np.percentile`` now support generalized axis arguments like
+ufunc reductions do since 1.7. One can now say axis=(index, index) to pick a
+list of axes for the reduction. The ``keepdims`` keyword argument was also
+added to allow convenient broadcasting to arrays of the original shape.
+
 Ufunc and Dot Overrides
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -113,7 +120,7 @@ for ``tostring`` which exports arrays as ``bytes``. This is more consistent
 in Python 3 where ``str`` and ``bytes`` are not the same.
 
 
-compatibility to python ``numbers`` module
+Compatibility to python ``numbers`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All numerical numpy types are now registered with the type hierarchy in
 the python ``numbers`` module.
@@ -165,6 +172,12 @@ The polynomial classes have been refactored to use an abstract base class
 rather than a template in order to implement a common interface. This makes
 importing the polynomial package faster as the classes do not need to be
 compiled on import.
+
+More GIL releases
+~~~~~~~~~~~~~~~~~
+Several more functions now release the Global Interpreter Lock allowing more
+efficient parallization using the ``threading`` module. Most notably the GIL is
+now released for fancy indexing and ``np.where``.
 
 Changes
 =======
@@ -281,6 +294,7 @@ of checking for an error return if these conditions can occur. In most
 cases the arrays being iterated are as large as the iterator so that such
 a problem cannot occur.
 
+This change was already applied to the 1.8.1 release.
 
 C-API
 ~~~~~
@@ -310,6 +324,7 @@ declared in npy_3kcompat.h and the old functions are deprecated.
 Due to the fragile nature of these functions it is recommended to instead use
 the python API when possible.
 
+This change was already applied to the 1.8.1 release.
 
 New Features
 ============
