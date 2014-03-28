@@ -1325,16 +1325,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyObject_RichCompareBool
-                ((PyObject *)PyArray_DESCR(self),
-                 (PyObject *)PyArray_DESCR(array_other),
-                 Py_EQ);
-            if (_res < 0) {
+            _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
+                                         PyArray_DESCR(array_other),
+                                         NPY_EQUIV_CASTING);
+            if (_res == 0) {
                 Py_DECREF(result);
                 Py_DECREF(array_other);
-                return NULL;
+                Py_INCREF(Py_False);
+                return Py_False;
             }
-            if (_res) {
+            else {
                 Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
             }
@@ -1386,16 +1386,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyObject_RichCompareBool(
-                    (PyObject *)PyArray_DESCR(self),
-                    (PyObject *)PyArray_DESCR(array_other),
-                    Py_EQ);
-            if (_res < 0) {
+            _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
+                                         PyArray_DESCR(array_other),
+                                         NPY_EQUIV_CASTING);
+            if (_res == 0) {
                 Py_DECREF(result);
                 Py_DECREF(array_other);
-                return NULL;
+                Py_INCREF(Py_True);
+                return Py_True;
             }
-            if (_res) {
+            else {
                 Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
                 Py_DECREF(array_other);
