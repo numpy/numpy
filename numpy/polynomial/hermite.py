@@ -1380,11 +1380,6 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     where `n` is `deg`.
 
-    Since numpy version 1.7.0, hermfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
-
     Parameters
     ----------
     x : array_like, shape (M,)
