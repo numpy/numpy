@@ -511,6 +511,22 @@ class TestCreation(TestCase):
         assert_array_equal(d, [0] * 13)
         assert_equal(np.count_nonzero(d), 0)
 
+    def test_sequence_non_homogenous(self):
+        assert_equal(np.array([4, 2**80]).dtype, np.object)
+        assert_equal(np.array([4, 2**80, 4]).dtype, np.object)
+        assert_equal(np.array([2**80, 4]).dtype, np.object)
+        assert_equal(np.array([2**80] * 3).dtype, np.object)
+        assert_equal(np.array([[1, 1],[1j, 1j]]).dtype, np.complex)
+        assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, np.complex)
+        assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, np.complex)
+
+    @dec.skipif(sys.version_info[0] >= 3)
+    def test_sequence_long(self):
+        assert_equal(np.array([long(4), long(4)]).dtype, np.long)
+        assert_equal(np.array([long(4), 2**80]).dtype, np.object)
+        assert_equal(np.array([long(4), 2**80, long(4)]).dtype, np.object)
+        assert_equal(np.array([2**80, long(4)]).dtype, np.object)
+
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
