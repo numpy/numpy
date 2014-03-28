@@ -1395,105 +1395,6 @@ static void
 
 /*
  *****************************************************************************
- **                               SCAN                                      **
- *****************************************************************************
- */
-
-
-/*
- * The first ignore argument is for backwards compatibility.
- * Should be removed when the API version is bumped up.
- */
-
-/**begin repeat
- * #fname = SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #format = "hd", "hu", "d", "u",
- *           "ld", "lu", NPY_LONGLONG_FMT, NPY_ULONGLONG_FMT#
- */
-static int
-@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
-        PyArray_Descr *NPY_UNUSED(ignored))
-{
-    return fscanf(fp, "%"@format@, ip);
-}
-/**end repeat**/
-
-/**begin repeat
- * #fname = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_float, npy_double, npy_longdouble#
- */
-static int
-@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
-        PyArray_Descr *NPY_UNUSED(ignored))
-{
-    double result;
-    int ret;
-
-    ret = NumPyOS_ascii_ftolf(fp, &result);
-    *ip = (@type@) result;
-    return ret;
-}
-/**end repeat**/
-
-static int
-HALF_scan(FILE *fp, npy_half *ip, void *NPY_UNUSED(ignore),
-        PyArray_Descr *NPY_UNUSED(ignored))
-{
-    double result;
-    int ret;
-
-    ret = NumPyOS_ascii_ftolf(fp, &result);
-    *ip = npy_double_to_half(result);
-    return ret;
-}
-
-/**begin repeat
- * #fname = BYTE, UBYTE#
- * #type = npy_byte, npy_ubyte#
- * #btype = npy_int, npy_uint#
- * #format = "d", "u"#
- */
-static int
-@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
-        PyArray_Descr *NPY_UNUSED(ignore2))
-{
-    @btype@ temp;
-    int num;
-
-    num = fscanf(fp, "%"@format@, &temp);
-    *ip = (@type@) temp;
-    return num;
-}
-/**end repeat**/
-
-static int
-BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
-        PyArray_Descr *NPY_UNUSED(ignore2))
-{
-    double result;
-    int ret;
-
-    ret = NumPyOS_ascii_ftolf(fp, &result);
-    *ip = (npy_bool) (result != 0.0);
-    return ret;
-}
-
-/**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
- *          OBJECT, STRING, UNICODE, VOID,
- *          DATETIME, TIMEDELTA#
- */
-
-#define @fname@_scan NULL
-
-/**end repeat**/
-
-
-/*
- *****************************************************************************
  **                             FROMSTR                                     **
  *****************************************************************************
  */
@@ -3644,7 +3545,6 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_CompareFunc*)@from@_compare,
     (PyArray_ArgFunc*)@from@_argmax,
     (PyArray_DotFunc*)NULL,
-    (PyArray_ScanFunc*)@from@_scan,
     (PyArray_FromStrFunc*)@from@_fromstr,
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)NULL,
@@ -3784,7 +3684,6 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_CompareFunc*)@from@_compare,
     (PyArray_ArgFunc*)@from@_argmax,
     (PyArray_DotFunc*)@from@_dot,
-    (PyArray_ScanFunc*)@from@_scan,
     (PyArray_FromStrFunc*)@from@_fromstr,
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)@from@_fill,

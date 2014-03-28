@@ -105,7 +105,6 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->argmax = NULL;
     f->argmin = NULL;
     f->dotfunc = NULL;
-    f->scanfunc = NULL;
     f->fromstr = NULL;
     f->nonzero = NULL;
     f->fill = NULL;

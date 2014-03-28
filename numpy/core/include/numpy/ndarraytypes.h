@@ -388,8 +388,6 @@ typedef void (PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,
  * XXX the ignore argument should be removed next time the API version
  * is bumped. It used to be the separator.
  */
-typedef int (PyArray_ScanFunc)(FILE *fp, void *dptr,
-                               char *ignore, struct _PyArray_Descr *);
 typedef int (PyArray_FromStrFunc)(char *s, void *dptr, char **endptr,
                                   struct _PyArray_Descr *);
 
@@ -464,13 +462,6 @@ typedef struct {
          * Can be NULL
          */
         PyArray_DotFunc *dotfunc;
-
-        /*
-         * Function to scan an ASCII file and
-         * place a single value plus possible separator
-         * Can be NULL
-         */
-        PyArray_ScanFunc *scanfunc;
 
         /*
          * Function to read a single value from a string
