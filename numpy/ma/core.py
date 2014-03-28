@@ -417,13 +417,18 @@ def _check_fill_value(fill_value, ndtype):
                                   dtype=ndtype)
     else:
         if isinstance(fill_value, basestring) and (ndtype.char not in 'OSVU'):
-            fill_value = default_fill_value(ndtype)
+            err_msg = "Cannot set fill value of string with array of dtype %s"
+            raise TypeError(err_msg % ndtype)
         else:
-            # In case we want to convert 1e+20 to int...
+            # In case we want to convert 1e20 to int...
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=ndtype)#.item()
+                fill_value = np.array(fill_value, copy=False, dtype=ndtype)
             except OverflowError:
-                fill_value = default_fill_value(ndtype)
+                # Raise TypeError instead of OverflowError. OverflowError
+                # is seldom used, and the real problem here is that the
+                # passed fill_value is not compatible with the ndtype.
+                err_msg = "Fill value %s overflows dtype %s"
+                raise TypeError(err_msg % (fill_value, ndtype))
     return np.array(fill_value)
 
 

@@ -67,6 +67,17 @@ ndarray.tofile exception type
 All ``tofile`` exceptions are now ``IOError``, some were previously
 ``ValueError``.
 
+Invalid fill value exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two changes to numpy.ma.core._check_fill_value:
+
+* When the fill value is a string and the array type is not one of
+  'OSUV', TypeError is raised instead of the default fill value being used.
+
+* When the fill value overflows the array type, TypeError is raised instead
+  of OverflowError.
+
+
 The ``doc/swig`` directory moved
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``doc/swig`` directory has been moved to ``tools/swig``.

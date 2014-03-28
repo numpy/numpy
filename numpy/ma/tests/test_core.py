@@ -1312,9 +1312,9 @@ class TestMaskedArrayAttributes(TestCase):
 
 #------------------------------------------------------------------------------
 class TestFillingValues(TestCase):
-    #
+
     def test_check_on_scalar(self):
-        # Test _check_fill_value
+        # Test _check_fill_value set to valid and invalid values
         _check_fill_value = np.ma.core._check_fill_value
         #
         fval = _check_fill_value(0, int)
@@ -1326,9 +1326,8 @@ class TestFillingValues(TestCase):
         assert_equal(fval, asbytes("0"))
         fval = _check_fill_value(None, "|S3")
         assert_equal(fval, default_fill_value("|S3"))
-        #
-        fval = _check_fill_value(1e+20, int)
-        assert_equal(fval, default_fill_value(0))
+        self.assertRaises(TypeError, _check_fill_value, 1e+20, int)
+        self.assertRaises(TypeError, _check_fill_value, 'stuff', int)
 
     def test_check_on_fields(self):
         # Tests _check_fill_value with records
