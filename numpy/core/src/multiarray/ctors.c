@@ -503,15 +503,18 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     }
     /* Copy element by element */
     else {
+        PyObject * seq;
+        seq = PySequence_Fast(s, "Could not convert object to sequence");
+        if (seq == NULL) {
+            goto fail;
+        }
         for (i = 0; i < slen; i++) {
-            PyObject *o = PySequence_GetItem(s, i);
-            if (o == NULL) {
-                goto fail;
-            }
+            PyObject * o = PySequence_Fast_GET_ITEM(seq, i);
             if ((PyArray_NDIM(a) - dim) > 1) {
                 PyArrayObject * tmp =
                     (PyArrayObject *)array_item_asarray(dst, i);
                 if (tmp == NULL) {
+                    Py_DECREF(seq);
                     goto fail;
                 }
 
@@ -522,11 +525,12 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
                 res = PyArray_DESCR(dst)->f->setitem(o, b, dst);
             }
-            Py_DECREF(o);
             if (res < 0) {
+                Py_DECREF(seq);
                 goto fail;
             }
         }
+        Py_DECREF(seq);
     }
 
     Py_DECREF(s);
