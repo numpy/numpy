@@ -293,6 +293,12 @@ cases the arrays being iterated are as large as the iterator so that such
 a problem cannot occur.
 
 
+`npyio.recfromcsv` keyword arguments change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`npyio.recfromcsv` no longer accepts the undocumented `update` keyword,
+which used to override the `dtype` keyword.
+
+ 
 C-API
 ~~~~~
 

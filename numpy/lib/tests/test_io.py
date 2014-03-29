@@ -1572,6 +1572,14 @@ M   33  21.99
                            dtype=[('a', np.int), ('b', np.int)])
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
+        #
+        data = TextIO('A,B\n0,1\n2,3')
+        dtype = [('a', np.int), ('b', np.float)]
+        test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
+        control = np.array([(0, 1), (2, 3)],
+                           dtype=dtype)
+        self.assertTrue(isinstance(test, np.recarray))
+        assert_equal(test, control)
 
     def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
