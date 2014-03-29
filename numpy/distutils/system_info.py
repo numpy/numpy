@@ -963,6 +963,10 @@ class mkl_info(system_info):
             pass  # win32 has no pthread library
         else:
             dict_append(info, libraries=['pthread'])
+
+        if not check_blas_fortran_abi("Intel MKL", info):
+            return
+
         self.set_info(**info)
 
 
@@ -980,6 +984,7 @@ class lapack_mkl_info(mkl_info):
 
         info = {'libraries': lapack_libs}
         dict_append(info, **mkl)
+
         self.set_info(**info)
 
 
@@ -1031,6 +1036,8 @@ class atlas_info(system_info):
         if atlas is None:
             atlas = atlas_1
         if atlas is None:
+            return
+        if not check_blas_fortran_abi("ATLAS", atlas):
             return
         include_dirs = self.get_include_dirs()
         h = (self.combine_paths(lib_dirs + include_dirs, 'cblas.h') or [None])
@@ -1120,6 +1127,9 @@ class atlas_blas_info(atlas_info):
         dict_append(atlas, **atlas_extra_info)
 
         dict_append(info, **atlas)
+
+        if not check_blas_fortran_abi("ATLAS", info):
+            return
 
         self.set_info(**info)
         return
@@ -1407,10 +1417,12 @@ class lapack_opt_info(system_info):
                     args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
             if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3)])
-                return
+                info = dict(extra_compile_args=args,
+                            extra_link_args=link_args,
+                            define_macros=[('NO_ATLAS_INFO', 3)])
+                if check_blas_fortran_abi("Accelerate/Veclib", info):
+                    self.set_info(**info)
+                    return
 
         #atlas_info = {} ## uncomment for testing
         need_lapack = 0
@@ -1551,6 +1563,10 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
+
+        if not check_blas_fortran_abi("Generic BLAS", info):
+            return
+
         info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
 
@@ -2192,6 +2208,144 @@ def show_all(argv=None):
         r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
+
+
+def check_blas_fortran_abi(blas_name, info):
+    """
+    Compile and run a test program to check whether the given BLAS
+    conforms to the ABI of the Fortran compiler.
+
+    The ABI is checked for the main suspect functions: SDOT, DDOT,
+    CDOTU, ZDOTU.
+
+    """
+
+    from numpy.distutils.core import get_distribution
+    from numpy.distutils.command.config import config as Config
+    from distutils.ccompiler import CompileError, LinkError
+
+    if not info:
+        return False
+
+    dist = get_distribution(True)
+    config = Config(dist)
+    options = dist.command_options.get('config')
+    if options:
+        dist._set_command_options('config', config, options)
+
+    body = """\
+      program main
+      external sdot, ddot, cdotu, zdotu
+      real sx(1), sy(1), sa, sdot
+      double precision dx(1), dy(1), da, ddot
+      complex cx(1), cy(1), ca, cdotu
+      double complex zx(1), zy(1), za, zdotu
+
+      sx(1) = 1e0
+      sy(1) = 2e0
+      sa = sdot(1, sx, 1, sy, 1)
+      if (sa.ne.sx(1)*sy(1)) stop 1
+
+      dx(1) = 1d0
+      dy(1) = 2d0
+      da = ddot(1, dx, 1, dy, 1)
+      if (da.ne.dx(1)*dy(1)) stop 2
+
+      cx(1) = (1e0, 2e0)
+      cy(1) = (3e0, 4e0)
+      ca = cdotu(1, cx, 1, cy, 1)
+      if (ca.ne.cx(1)*cy(1)) stop 3
+
+      zx(1) = (1d0, 2d0)
+      zy(1) = (3d0, 4d0)
+      za = zdotu(1, zx, 1, zy, 1)
+      if (za.ne.zx(1)*zy(1)) stop 4
+
+      write(*,*) 'BLAS', 'SUCCESS'
+      end
+    """
+
+    libraries = info.get('libraries', [])
+    library_dirs = info.get('library_dirs', [])
+    extra_compile_args = info.get('extra_compile_args', [])
+    extra_link_args = info.get('extra_link_args', [])
+
+    # The distutils config API does not offer a way to pass
+    # extra_*_args to the compiler. Therefore, we monkeypatch the
+    # active compiler to inject the arguments. (The Fortran compiler
+    # classes originate from numpy.distutils so that we are not
+    # monkeypatching another library.)
+
+    def new_compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
+        if extra_postargs:
+            extra_postargs += extra_compile_args
+        else:
+            extra_postargs = extra_compile_args
+        return old_compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+    def new_link(self, target_desc, objects,
+                 output_filename, output_dir=None, libraries=None,
+                 library_dirs=None, runtime_library_dirs=None,
+                 export_symbols=None, debug=0, extra_preargs=None,
+                 extra_postargs=None, build_temp=None, target_lang=None):
+        if extra_postargs:
+            extra_postargs += extra_link_args
+        else:
+            extra_postargs = extra_link_args
+        return old_link(self, target_desc, objects,
+                        output_filename, output_dir, libraries,
+                        library_dirs, runtime_library_dirs,
+                        export_symbols, debug, extra_preargs,
+                        extra_postargs, build_temp, target_lang)
+
+    config._check_compiler()
+
+    if config.fcompiler is None:
+        # No Fortran compiler, so checking the ABI is not needed.
+        return True
+
+    old_compile = config.fcompiler.__class__._compile
+    old_link = config.fcompiler.__class__.link
+    try:
+        config.fcompiler.__class__._compile = new_compile
+        config.fcompiler.__class__.link = new_link
+
+        # Run the test program
+        exitcode, output = config.get_output(body,
+                                             libraries=libraries,
+                                             library_dirs=library_dirs,
+                                             lang="f77")
+    finally:
+        config.fcompiler.__class__._compile = old_compile
+        config.fcompiler.__class__.link = old_link
+
+    # Note: get_output includes also `body` in the output, so be careful
+    # in checking the success status. Also, Fortran program exit codes 
+    # are undefined.
+    is_abi_compatible = output and re.search(r'BLAS\s*SUCCESS', output, re.S)
+
+    if not is_abi_compatible:
+        import textwrap
+        msg = textwrap.dedent("""
+
+        ***********************************************************************
+        WARNING:
+
+        BLAS library (%s) detected, but its
+        Fortran ABI is incompatible with the selected Fortran compiler.
+        It is therefore not used now.
+
+        If you are using GNU Fortran Compiler on OSX, setting
+        the environment variable FFLAGS=\"-arch i386 -arch x86_64 -fPIC -ff2c\"
+        may fix this issue.
+        ***********************************************************************
+
+        """
+        % (blas_name,))
+        warnings.warn(msg)
+
+    return is_abi_compatible
+
 
 if __name__ == "__main__":
     show_all()
