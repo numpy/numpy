@@ -644,6 +644,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     PyObject *e;
     int r, n, i;
     Py_buffer buffer_view;
+    PyObject * seq;
 
     if (*maxndim == 0) {
         return 0;
@@ -786,75 +787,63 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         }
     }
 
-    n = PySequence_Size(obj);
-
-    if (n < 0) {
-        return -1;
+    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    if (seq == NULL) {
+        /*
+         * PySequence_Check detects whether an old type object is a
+         * sequence by the presence of the __getitem__ attribute, and
+         * for new type objects that aren't dictionaries by the
+         * presence of the __len__ attribute as well. In either case it
+         * is possible to have an object that tests as a sequence but
+         * doesn't behave as a sequence and consequently, the
+         * PySequence_GetItem call can fail. When that happens and the
+         * object looks like a dictionary, we truncate the dimensions
+         * and set the object creation flag, otherwise we pass the
+         * error back up the call chain.
+         */
+        if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+            PyErr_Clear();
+            *maxndim = 0;
+            *out_is_object = 1;
+            return 0;
+        }
+        else {
+            return -1;
+        }
     }
+    n = PySequence_Fast_GET_SIZE(seq);
 
     d[0] = n;
 
     /* 1-dimensional sequence */
     if (n == 0 || *maxndim == 1) {
         *maxndim = 1;
+        Py_DECREF(seq);
         return 0;
     }
     else {
         npy_intp dtmp[NPY_MAXDIMS];
         int j, maxndim_m1 = *maxndim - 1;
+        e = PySequence_Fast_GET_ITEM(seq, 0);
 
-        if ((e = PySequence_GetItem(obj, 0)) == NULL) {
-            /*
-             * PySequence_Check detects whether an old type object is a
-             * sequence by the presence of the __getitem__ attribute, and
-             * for new type objects that aren't dictionaries by the
-             * presence of the __len__ attribute as well. In either case it
-             * is possible to have an object that tests as a sequence but
-             * doesn't behave as a sequence and consequently, the
-             * PySequence_GetItem call can fail. When that happens and the
-             * object looks like a dictionary, we truncate the dimensions
-             * and set the object creation flag, otherwise we pass the
-             * error back up the call chain.
-             */
-            if (PyErr_ExceptionMatches(PyExc_KeyError)) {
-                PyErr_Clear();
-                *maxndim = 0;
-                *out_is_object = 1;
-                return 0;
-            }
-            else {
-                return -1;
-            }
-        }
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
                                         stop_at_string, stop_at_tuple,
                                         out_is_object);
-        Py_DECREF(e);
         if (r < 0) {
+            Py_DECREF(seq);
             return r;
         }
 
         /* For the dimension truncation check below */
         *maxndim = maxndim_m1 + 1;
         for (i = 1; i < n; ++i) {
+            e = PySequence_Fast_GET_ITEM(seq, i);
             /* Get the dimensions of the first item */
-            if ((e = PySequence_GetItem(obj, i)) == NULL) {
-                /* see comment above */
-                if (PyErr_ExceptionMatches(PyExc_KeyError)) {
-                    PyErr_Clear();
-                    *maxndim = 0;
-                    *out_is_object = 1;
-                    return 0;
-                }
-                else {
-                    return -1;
-                }
-            }
             r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
                                             stop_at_string, stop_at_tuple,
                                             out_is_object);
-            Py_DECREF(e);
             if (r < 0) {
+                Py_DECREF(seq);
                 return r;
             }
 
@@ -875,6 +864,8 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             *maxndim = maxndim_m1 + 1;
         }
     }
+
+    Py_DECREF(seq);
 
     return 0;
 }
