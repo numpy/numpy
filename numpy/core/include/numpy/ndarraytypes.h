@@ -934,7 +934,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
-#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
+#define NPY_END_THREADS   do { if (_save) \
+                { PyEval_RestoreThread(_save); _save = NULL;} } while (0);
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
                 { _save = PyEval_SaveThread();} } while (0);
 
