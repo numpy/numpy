@@ -1983,6 +1983,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
     npy_intp coords[NPY_MAXDIMS], dims_m1[NPY_MAXDIMS];
     npy_intp *dptr[NPY_MAXDIMS];
     static npy_intp one = 1;
+    NPY_BEGIN_THREADS_DEF;
 
     typecode=PyArray_DescrFromType(NPY_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
@@ -2026,6 +2027,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
      * Loop through the Boolean array  and copy coordinates
      * for non-zero entries
      */
+    NPY_BEGIN_THREADS_THRESHOLDED(size);
     for (i = 0; i < size; i++) {
         if (*(ptr++)) {
             for (j = 0; j < nd; j++) {
@@ -2043,6 +2045,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
             }
         }
     }
+    NPY_END_THREADS;
 
  finish:
     Py_DECREF(ba);
@@ -2349,6 +2352,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     char **iterptr;
     PyArray_Descr *intp_type;
     int i;
+    NPY_BEGIN_THREADS_DEF;
 
     if (mit->size == 0) {
         /* All indices got broadcasted away, do *not* check as it always was */
@@ -2356,6 +2360,8 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     }
 
     intp_type = PyArray_DescrFromType(NPY_INTP);
+
+    NPY_BEGIN_THREADS;
 
     for (i=0; i < mit->numiter; i++) {
         op = NpyIter_GetOperandArray(mit->outer)[i];
@@ -2372,21 +2378,27 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
             npy_intp stride;
+            /* release GIL if it was taken by nditer below */
+            if (_save == NULL) {
+                NPY_BEGIN_THREADS;
+            }
 
             PyArray_PREPARE_TRIVIAL_ITERATION(op, itersize, data, stride);
 
             while (itersize--) {
                 indval = *((npy_intp*)data);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis, NULL) < 0) {
+                                           outer_dim, outer_axis, _save) < 0) {
                     return -1;
                 }
                 data += stride;
             }
+            /* GIL retake at end of function or if nditer path required */
             continue;
         }
 
         /* Use NpyIter if the trivial iteration is not possible */
+        NPY_END_THREADS;
         op_iter = NpyIter_New(op,
                         NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
                         NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
@@ -2405,6 +2417,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             return -1;
         }
 
+        NPY_BEGIN_THREADS_NDITER(op_iter);
         iterptr = NpyIter_GetDataPtrArray(op_iter);
         iterstride = NpyIter_GetInnerStrideArray(op_iter)[0];
         do {
@@ -2412,8 +2425,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             while (itersize--) {
                 indval = *((npy_intp*)*iterptr);
                 if (check_and_adjust_index(&indval,
-                                           outer_dim, outer_axis, NULL) < 0) {
-
+                                           outer_dim, outer_axis, _save) < 0) {
                     Py_DECREF(intp_type);
                     NpyIter_Deallocate(op_iter);
                     return -1;
@@ -2422,9 +2434,11 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             }
         } while (op_iternext(op_iter));
 
+        NPY_END_THREADS;
         NpyIter_Deallocate(op_iter);
     }
 
+    NPY_END_THREADS;
     Py_DECREF(intp_type);
     return 0;
 }
