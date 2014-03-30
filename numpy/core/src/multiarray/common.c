@@ -205,6 +205,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
     Py_buffer buffer_view;
+    /* types for sequence handling */
+    PyObject ** objects;
+    PyObject * seq;
+    PyTypeObject * common_type;
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -514,30 +518,48 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case */
-    size = PySequence_Size(obj);
-    if (size < 0) {
+    /* Recursive case, first check the sequence contains only one type */
+    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    if (seq == NULL) {
         goto fail;
     }
+    size = PySequence_Fast_GET_SIZE(seq);
+    objects = PySequence_Fast_ITEMS(seq);
+    common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
+    for (i = 1; i < size; ++i) {
+        if (Py_TYPE(objects[i]) != common_type) {
+            common_type = NULL;
+            break;
+        }
+    }
+
+    /* all types are the same and scalar, one recursive call is enough */
+    if (common_type != NULL && !string_type &&
+            (common_type == &PyFloat_Type ||
+/* TODO: we could add longs if we add a range check */
+#if !defined(NPY_PY3K)
+             common_type == &PyInt_Type ||
+#endif
+             common_type == &PyBool_Type ||
+             common_type == &PyComplex_Type)) {
+        size = 1;
+    }
+
     /* Recursive call for each sequence item */
     for (i = 0; i < size; ++i) {
-        int res;
-        ip = PySequence_GetItem(obj, i);
-        if (ip == NULL) {
-            goto fail;
-        }
-        res = PyArray_DTypeFromObjectHelper(ip, maxdims - 1,
-                                            out_dtype, string_type);
+        int res = PyArray_DTypeFromObjectHelper(objects[i], maxdims - 1,
+                                                out_dtype, string_type);
         if (res < 0) {
-            Py_DECREF(ip);
+            Py_DECREF(seq);
             goto fail;
         }
         else if (res > 0) {
-            Py_DECREF(ip);
+            Py_DECREF(seq);
             return res;
         }
-        Py_DECREF(ip);
     }
+
+    Py_DECREF(seq);
 
     return 0;
 
