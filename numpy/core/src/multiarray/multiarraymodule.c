@@ -1400,7 +1400,10 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 static int
 _equivalent_fields(PyObject *field1, PyObject *field2) {
 
-    int same, val;
+    int val;
+    Py_ssize_t ppos;
+    PyObject *keys, *key;
+    PyObject *tuple1, *tuple2;
 
     if (field1 == field2) {
         return 1;
@@ -1408,20 +1411,33 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     if (field1 == NULL || field2 == NULL) {
         return 0;
     }
-#if defined(NPY_PY3K)
-    val = PyObject_RichCompareBool(field1, field2, Py_EQ);
-    if (val != 1 || PyErr_Occurred()) {
-#else
-    val = PyObject_Compare(field1, field2);
-    if (val != 0 || PyErr_Occurred()) {
-#endif
-        same = 0;
+
+    if (PyDict_Size(field1) != PyDict_Size(field2)) {
+        return 0;
     }
-    else {
-        same = 1;
+
+    /* Iterate over all the fields and compare for equivalency */
+    ppos = 0;
+    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
+        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
+            return 0;
+        }
+        /* Compare the dtype of the field for equivalency */
+        if (!PyArray_CanCastTypeTo((PyArray_Descr *)PyTuple_GET_ITEM(tuple1, 0),
+                                   (PyArray_Descr *)PyTuple_GET_ITEM(tuple2, 0),
+                                   NPY_EQUIV_CASTING)) {
+            return 0;
+        }
+        /* Compare the byte position of the field */
+        if (PyObject_RichCompareBool(PyTuple_GET_ITEM(tuple1, 1),
+                                     PyTuple_GET_ITEM(tuple2, 1),
+                                     Py_EQ) != 1) {
+            PyErr_Clear();
+            return 0;
+        }
     }
-    PyErr_Clear();
-    return same;
+
+    return 1;
 }
 
 /*
@@ -2097,7 +2113,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     PyObject *v, *a, *o = NULL;
     char* kwlist[] = {"a", "b", "out", NULL };
     PyObject *module;
-    
+
     if (cached_npy_dot == NULL) {
         module = PyImport_ImportModule("numpy.core.multiarray");
         cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(

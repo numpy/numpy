@@ -623,6 +623,12 @@ class TestStructured(TestCase):
         y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
         assert_equal(x == y, False)
 
+        # Check that structured arrays that are different only in
+        # byte-order work
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
+        b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
+        assert_equal(a == b, [False, True])
+
 
 class TestBool(TestCase):
     def test_test_interning(self):
