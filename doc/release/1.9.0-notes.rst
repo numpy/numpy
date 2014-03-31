@@ -108,7 +108,6 @@ added to allow convenient broadcasting to arrays of the original shape.
 
 Ufunc and Dot Overrides
 ~~~~~~~~~~~~~~~~~~~~~~~
-
 For better compatibility with external objects you can now override
 universal functions (ufuncs), ``numpy.core._dotblas.dot``, and
 ``numpy.core.multiarray.dot`` (the numpy.dot functions). By defining a
@@ -135,6 +134,11 @@ Compatibility to python ``numbers`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All numerical numpy types are now registered with the type hierarchy in
 the python ``numbers`` module.
+
+``increasing`` parameter added to ``np.vander``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ordering of the columns of the Vandermonde matrix can be specified with
+this new boolean argument.
 
 
 Improvements
@@ -195,7 +199,6 @@ Changes
 
 Argmin and argmax out argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 The ``out`` argument to ``np.argmin`` and ``np.argmax`` and their
 equivalent C-API functions is now checked to match the desired output shape
 exactly.  If the check fails a ``ValueError`` instead of ``TypeError`` is
