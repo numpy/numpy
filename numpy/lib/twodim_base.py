@@ -11,7 +11,8 @@ __all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
 
 from numpy.core.numeric import (
     asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, dtype as np_dtype, less, int8, int16, int32, int64
+    asarray, where, dtype as np_dtype, less, int8, int16, int32, int64,
+    empty, promote_types
     )
 from numpy.core import iinfo
 
@@ -483,17 +484,16 @@ def triu(m, k=0):
 
 
 # Originally borrowed from John Hunter and matplotlib
-def vander(x, N=None, order='decreasing'):
+def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
 
-    The columns of the output matrix are powers of the input vector.  The
-    order of the powers is determined by the `order` argument, either
-    "decreasing" (the default) or "increasing".  Specifically, when
-    `order` is "decreasing", the `i`-th output column is the input vector
-    raised element-wise to the power of ``N - i - 1``.  Such a matrix with
-    a geometric progression in each row is named for Alexandre-Theophile
-    Vandermonde.
+    The columns of the output matrix are powers of the input vector. The
+    order of the powers is determined by the `increasing` boolean argument.
+    Specifically, when `increasing` is False, the `i`-th output column is
+    the input vector raised element-wise to the power of ``N - i - 1``. Such
+    a matrix with a geometric progression in each row is named for Alexandre-
+    Theophile Vandermonde.
 
     Parameters
     ----------
@@ -502,16 +502,18 @@ def vander(x, N=None, order='decreasing'):
     N : int, optional
         Number of columns in the output.  If `N` is not specified, a square
         array is returned (``N = len(x)``).
-    order : str, optional
-        Order of the powers of the columns.  Must be either 'decreasing'
-        (the default) or 'increasing'.
+    increasing : bool, optional
+        Order of the powers of the columns.  If True, the powers increase
+        from left to right, if False (the default) they are reversed.
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
     out : ndarray
-        Vandermonde matrix.  If `order` is "decreasing", the first column is
-        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `order` is
-        "increasing", the columns are ``x^0, x^1, ..., x^(N-1)``.
+        Vandermonde matrix.  If `increasing` is False, the first column is
+        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `increasing` is
+        True, the columns are ``x^0, x^1, ..., x^(N-1)``.
 
     See Also
     --------
@@ -539,7 +541,7 @@ def vander(x, N=None, order='decreasing'):
            [  8,   4,   2,   1],
            [ 27,   9,   3,   1],
            [125,  25,   5,   1]])
-    >>> np.vander(x, order='increasing')
+    >>> np.vander(x, increasing=True)
     array([[  1,   1,   1,   1],
            [  1,   2,   4,   8],
            [  1,   3,   9,  27],
@@ -554,22 +556,22 @@ def vander(x, N=None, order='decreasing'):
     48
 
     """
-    if order not in ['decreasing', 'increasing']:
-        raise ValueError("Invalid order %r; order must be either "
-                         "'decreasing' or 'increasing'." % (order,))
     x = asarray(x)
     if x.ndim != 1:
         raise ValueError("x must be a one-dimensional array or sequence.")
     if N is None:
         N = len(x)
-    if order == "decreasing":
-        powers = arange(N - 1, -1, -1)
-    else:
-        powers = arange(N)
 
-    V = x.reshape(-1, 1) ** powers
+    v = empty((len(x), N), dtype=promote_types(x.dtype, int))
+    tmp = v[:, ::-1] if not increasing else v
 
-    return V
+    if N > 0:
+        tmp[:, 0] = 1
+    if N > 1:
+        tmp[:, 1:] = x[:, None]
+        multiply.accumulate(tmp[:, 1:], out=tmp[:, 1:], axis=1)
+
+    return v
 
 
 def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
