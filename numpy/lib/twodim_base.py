@@ -998,3 +998,119 @@ def triu_indices_from(arr, k=0):
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
     return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+
+
+def elementary(N, i, j=None, t=None, dtype=float):
+    """
+    Return an array arranged like an elementary matrix.
+
+    Parameters
+    ----------
+    N : int
+        The size of the NxN array to be returned. Elementary matrices
+        are be square.
+    i : int
+        The index of the first row on which operations are to be
+        performed.
+    j : int
+        If set, the index of the second row on which operations are to
+        be performed.
+    t : scalar
+        If set, the factor by which a given row will be multiplied.
+
+    Returns
+    -------
+    m : ndarray of shape (NxN)
+        An identity array that has had a single row operation performed 
+        on it.
+
+    See also
+    --------
+    eye, identity
+
+    Examples
+    -------
+    To swap the the first and third rows of a 4x4 identity matirx:
+
+    >>> L = elementary(4, 0, 2)
+    >>> L
+    array([[ 0.,  0.,  1.,  0.],
+           [ 0.,  1.,  0.,  0.],
+           [ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.]])
+
+    When the elementary array is multiplied by a given matrix, the
+    result is the matrix with its first and third rows swapped.
+
+    >>> H = np.matrix([[ 2,  3,  5,  7],
+                       [11, 13, 17, 19],
+                       [23, 29, 31, 37],
+                       [41, 43, 47, 53]])
+    >>> L*H
+    matrix([[ 23.,  29.,  31.,  37.],
+            [ 11.,  13.,  17.,  19.],
+            [  2.,   3.,   5.,   7.],
+            [ 41.,  43.,  47.,  53.]])
+
+    If the matrix is multiplied by the elementary array (i.e., the
+    multiplication takes place in reverse order), the result is the
+    given matrix with its first and third columns swapped.
+
+    >>> H*L
+    matrix([[  5.,   3.,   2.,   7.],
+            [ 17.,  13.,  11.,  19.],
+            [ 31.,  29.,  23.,  37.],
+            [ 47.,  43.,  41.,  53.]])
+
+    To add a multiple of a matrix's second row to the same matrix's 
+    fourth row:
+
+    >>> H
+    matrix([[ 2,  3,  5,  7],
+            [11, 13, 17, 19],
+            [23, 29, 31, 37],
+            [41, 43, 47, 53]])
+    >> M=elementary(4, 1, 3, 10000, int)
+    >> M
+    array([[    1,     0,     0,     0],
+           [    0,     1,     0,     0],
+           [    0,     0,     1,     0],
+           [    0, 10000,     0,     1]])
+    >> M*H
+    matrix([[     2,      3,      5,      7],
+            [    11,     13,     17,     19],
+            [    23,     29,     31,     37],
+            [110041, 130043, 170047, 190053]])
+
+    To multiply only the last column of a matrix by a scalar:
+
+    >>> H
+    matrix([[ 2,  3,  5,  7],
+            [11, 13, 17, 19],
+            [23, 29, 31, 37],
+            [41, 43, 47, 53]])
+    >>> H*elementary(len(H), len(H)-1, t=2)
+    matrix([[   2.,    3.,    5.,   14.],
+            [  11.,   13.,   17.,   38.],
+            [  23.,   29.,   31.,   74.],
+            [  41.,   43.,   47.,  106.]])
+
+    Any nonsingular matrix can be formed by taking the product of an array 
+    of elementary matrices. 
+
+    """
+    m=eye(N, dtype=dtype)
+    if j==None and t==None:
+        raise ValueError("One or more of {0} and {1} must be set.".format( \
+            'j', 't'))
+    elif t==None:
+        swap = array(m[i])
+        m[i] = m[j]
+        m[j] = swap
+        return m
+    elif j==None:
+        m[i] *= t
+        return m
+    else:
+        m[j] += (t * m[i])
+        return m
