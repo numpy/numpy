@@ -1002,7 +1002,7 @@ def triu_indices_from(arr, k=0):
 
 def elementary(N, i, j=None, t=None, dtype=float):
     """
-    Return an array arranged like an elementary matrix.
+    Return a 2-D array arranged as an elementary matrix.
 
     Parameters
     ----------
