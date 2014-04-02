@@ -1029,6 +1029,12 @@ class TestMethods(TestCase):
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
 
+    def test_sort_unicode_kind(self):
+        d = np.arange(10)
+        k = b'\xc3\xa4'.decode("UTF8")
+        assert_raises(ValueError, d.sort, kind=k)
+        assert_raises(ValueError, d.argsort, kind=k)
+
     def test_searchsorted(self):
         # test for floats and complex containing nans. The logic is the
         # same for all float types so only test double types for now.
@@ -1533,6 +1539,12 @@ class TestMethods(TestCase):
         for k in range(d.size):
             assert_equal(np.partition(d, k)[k], tgt[k])
             assert_equal(d[np.argpartition(d, k)][k], tgt[k])
+
+    def test_partition_unicode_kind(self):
+        d = np.arange(10)
+        k = b'\xc3\xa4'.decode("UTF8")
+        assert_raises(ValueError, d.partition, 2, kind=k)
+        assert_raises(ValueError, d.argpartition, 2, kind=k)
 
 
     def test_flatten(self):

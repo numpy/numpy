@@ -65,8 +65,9 @@ get_forwarding_ndarray_method(const char *name)
                 "NumPy internal error: could not find function "
                 "numpy.core._methods.%s", name);
     }
-
-    Py_INCREF(callable);
+    else {
+        Py_INCREF(callable);
+    }
     Py_DECREF(module_methods);
     return callable;
 }
@@ -1823,6 +1824,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
+            Py_DECREF(cpick);
             return -1;
         }
     }

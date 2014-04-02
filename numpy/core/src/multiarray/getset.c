@@ -267,6 +267,7 @@ array_interface_get(PyArrayObject *self)
     }
 
     if (array_might_be_written(self) < 0) {
+        Py_DECREF(dict);
         return NULL;
     }
 
