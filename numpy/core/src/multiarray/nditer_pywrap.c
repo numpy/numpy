@@ -1547,6 +1547,9 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
         ret = PyTuple_New(ndim);
+        if (ret == NULL) {
+            return NULL;
+        }
         for (idim = 0; idim < ndim; ++idim) {
             PyTuple_SET_ITEM(ret, idim,
                     PyInt_FromLong(multi_index[idim]));
@@ -1605,6 +1608,7 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyInt_AsLong(v);
             if (multi_index[idim]==-1 && PyErr_Occurred()) {
+                Py_XDECREF(v);
                 return -1;
             }
         }

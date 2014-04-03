@@ -395,6 +395,9 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
 
     if (PyUnicode_Check(obj)) {
         obj = tmp = PyUnicode_AsASCIIString(obj);
+        if (obj == NULL) {
+            return NPY_FAIL;
+        }
     }
 
     *sortkind = NPY_QUICKSORT;
@@ -440,6 +443,9 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 
     if (PyUnicode_Check(obj)) {
         obj = tmp = PyUnicode_AsASCIIString(obj);
+        if (obj == NULL) {
+            return NPY_FAIL;
+        }
     }
 
     *selectkind = NPY_INTROSELECT;
@@ -591,6 +597,9 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         PyObject *tmp;
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
+        if (tmp == NULL) {
+            return NPY_FAIL;
+        }
         ret = PyArray_ClipmodeConverter(tmp, val);
         Py_DECREF(tmp);
         return ret;

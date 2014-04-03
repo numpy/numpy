@@ -63,7 +63,7 @@ _arraydescr_fromctypes(PyObject *obj)
                 /* derived type */
                 PyObject *newtup;
                 PyArray_Descr *derived;
-                newtup = Py_BuildValue("NO", newdescr, length);
+                newtup = Py_BuildValue("NN", newdescr, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
                 if (ret == NPY_SUCCEED) {
@@ -706,6 +706,7 @@ _convert_from_commastring(PyObject *obj, int align)
     if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj) < 1) {
         PyErr_SetString(PyExc_RuntimeError,
                 "_commastring is not returning a list with len >= 1");
+        Py_DECREF(listobj);
         return NULL;
     }
     if (PyList_GET_SIZE(listobj) == 1) {

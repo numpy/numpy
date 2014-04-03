@@ -158,12 +158,10 @@ invalid_weekmask_string:
         }
         else {
             int i;
-            PyObject *f;
 
             for (i = 0; i < 7; ++i) {
                 long val;
-
-                f = PySequence_GetItem(obj, i);
+                PyObject *f = PySequence_GetItem(obj, i);
                 if (f == NULL) {
                     Py_DECREF(obj);
                     return 0;
@@ -171,6 +169,7 @@ invalid_weekmask_string:
 
                 val = PyInt_AsLong(f);
                 if (val == -1 && PyErr_Occurred()) {
+                    Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
                 }
@@ -184,9 +183,11 @@ invalid_weekmask_string:
                     PyErr_SetString(PyExc_ValueError,
                         "A business day weekmask array must have all "
                         "1's and 0's");
+                    Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
                 }
+                Py_DECREF(f);
             }
 
             goto finish;

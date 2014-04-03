@@ -842,6 +842,7 @@ _descriptor_from_pep3118_format(char *s)
         PyErr_Format(PyExc_RuntimeError,
                      "internal error: numpy.core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
+        Py_DECREF(descr);
         free(buf);
         return NULL;
     }
