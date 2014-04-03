@@ -60,7 +60,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     for (i = 0; i < nargs; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
-        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
+        /*
+         * TODO: could use PyArray_GetAttrString_SuppressException if it
+         * weren't private to multiarray.so
+         */
+        if (PyArray_CheckExact(obj) || PyArray_IsScalar(obj, Generic) ||
+            _is_basic_python_type(obj)) {
             continue;
         }
         if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {

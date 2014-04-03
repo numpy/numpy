@@ -64,9 +64,6 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
-NPY_NO_EXPORT int
-_is_basic_python_type(PyObject * obj);
-
 NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
@@ -181,6 +178,34 @@ npy_memchr(char * haystack, char needle,
     *psubloopsize = subloopsize;
 
     return p;
+}
+
+static NPY_INLINE int
+_is_basic_python_type(PyObject * obj)
+{
+    if (obj == Py_None ||
+            PyBool_Check(obj) ||
+            /* Basic number types */
+#if !defined(NPY_PY3K)
+            PyInt_CheckExact(obj) ||
+            PyString_CheckExact(obj) ||
+#endif
+            PyLong_CheckExact(obj) ||
+            PyFloat_CheckExact(obj) ||
+            PyComplex_CheckExact(obj) ||
+            /* Basic sequence types */
+            PyList_CheckExact(obj) ||
+            PyTuple_CheckExact(obj) ||
+            PyDict_CheckExact(obj) ||
+            PyAnySet_CheckExact(obj) ||
+            PyUnicode_CheckExact(obj) ||
+            PyBytes_CheckExact(obj) ||
+            PySlice_Check(obj)) {
+
+        return 1;
+    }
+
+    return 0;
 }
 
 #include "ucsnarrow.h"
