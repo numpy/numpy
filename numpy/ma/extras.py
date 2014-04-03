@@ -416,26 +416,53 @@ def apply_over_axes(func, a, axes):
     """
     (This docstring will be overwritten)
     """
-    val = np.asarray(a)
-    msk = getmaskarray(a)
+    val = asarray(a)
     N = a.ndim
     if array(axes).ndim == 0:
         axes = (axes,)
     for axis in axes:
         if axis < 0: axis = N + axis
         args = (val, axis)
-        res = ma.array(func(*(val, axis)), mask=func(*(msk, axis)))
+        res = func(*args)
         if res.ndim == val.ndim:
-            (val, msk) = (res._data, res._mask)
+            val = res
         else:
             res = ma.expand_dims(res, axis)
             if res.ndim == val.ndim:
-                (val, msk) = (res._data, res._mask)
+                val = res
             else:
-                raise ValueError("Function is not returning"\
-                                 " an array of correct shape")
+                raise ValueError("function is not returning "
+                        "an array of the correct shape")
     return val
-apply_over_axes.__doc__ = np.apply_over_axes.__doc__
+apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
+    :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
+    """
+
+    Examples
+    --------
+    >>> a = ma.arange(24).reshape(2,3,4)
+    >>> a[:,0,1] = ma.masked
+    >>> a[:,1,:] = ma.masked
+    >>> print a
+    [[[0 -- 2 3]
+      [-- -- -- --]
+      [8 9 10 11]]
+
+     [[12 -- 14 15]
+      [-- -- -- --]
+      [20 21 22 23]]]
+    >>> print ma.apply_over_axes(ma.sum, a, [0,2])
+    [[[46]
+      [--]
+      [124]]]
+
+    Tuple axis arguments to ufuncs are equivalent:
+
+    >>> print ma.sum(a, axis=(0,2)).reshape((1,-1,1))
+    [[[46]
+      [--]
+      [124]]]
+"""
 
 
 def average(a, axis=None, weights=None, returned=False):

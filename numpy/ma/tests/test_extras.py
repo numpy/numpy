@@ -489,7 +489,8 @@ class TestApplyOverAxes(TestCase):
         assert_equal(test, ctrl)
         a[(a % 2).astype(np.bool)] = masked
         test = apply_over_axes(np.sum, a, [0, 2])
-        ctrl = np.array([[[30], [44], [60]]])
+        ctrl = np.array([[[28], [44], [60]]])
+        assert_equal(test, ctrl)
 
 
 class TestMedian(TestCase):
