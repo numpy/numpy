@@ -1305,6 +1305,11 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(a.mask, nomask)
 
     def test_flat(self):
+        # test simple access
+        test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
+        assert_equal(test.flat[1], 2)
+        assert_equal(test.flat[2], masked)
+        self.assertTrue(np.all(test.flat[0:2] == test[0, 0:2]))
         # Test flat on masked_matrices
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         test.flat = masked_array([3, 2, 1], mask=[1, 0, 0])
@@ -1315,6 +1320,8 @@ class TestMaskedArrayAttributes(TestCase):
         testflat = test.flat
         testflat[:] = testflat[[2, 1, 0]]
         assert_equal(test, control)
+        testflat[0] = 9
+        assert_equal(test[0, 0], 9)
 
 
 #------------------------------------------------------------------------------

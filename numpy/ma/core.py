@@ -2534,8 +2534,11 @@ class MaskedIterator(object):
         result = self.dataiter.__getitem__(indx).view(type(self.ma))
         if self.maskiter is not None:
             _mask = self.maskiter.__getitem__(indx)
-            _mask.shape = result.shape
-            result._mask = _mask
+            if isinstance(_mask, ndarray):
+                _mask.shape = result.shape
+                result._mask = _mask
+            elif _mask:
+                return masked
         return result
 
     ### This won't work is ravel makes a copy
