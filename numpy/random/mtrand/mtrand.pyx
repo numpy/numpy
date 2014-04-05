@@ -3511,6 +3511,8 @@ cdef class RandomState:
                 raise ValueError("p < 0")
             elif fp > 1:
                 raise ValueError("p > 1")
+            elif np.isnan(fp):
+                raise ValueError("p is nan")
             return discnp_array_sc(self.internal_state, rk_binomial, size, ln, fp)
 
         PyErr_Clear()
