@@ -49,7 +49,7 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
 }
 
 setup_bento()
