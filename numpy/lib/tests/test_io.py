@@ -19,9 +19,12 @@ from numpy.lib._iotools import (ConverterError, ConverterLockError,
                                 ConversionWarning)
 from numpy.compat import asbytes, asbytes_nested, bytes, asstr
 from nose import SkipTest
-from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
-                                assert_raises, run_module_suite)
+from numpy.ma.testutils import (
+    TestCase, assert_equal, assert_array_equal,
+    assert_raises, assert_raises_regex, run_module_suite
+)
 from numpy.testing import assert_warns, assert_, build_err_msg
+
 
 @contextlib.contextmanager
 def tempdir(change_dir=False):
@@ -758,6 +761,14 @@ class TestLoadTxt(TestCase):
 
         res = np.loadtxt(count())
         assert_array_equal(res, np.arange(10))
+
+    def test_bad_line(self):
+        c = TextIO()
+        c.write('1 2 3\n4 5 6\n2 3')
+        c.seek(0)
+
+        # Check for exception and that exception contains line number
+        assert_raises_regex(ValueError, "3", np.loadtxt, c)
 
 
 class Testfromregex(TestCase):

@@ -845,6 +845,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 continue
             if usecols:
                 vals = [vals[i] for i in usecols]
+            if len(vals) != N:
+                line_num = i + skiprows + 1
+                raise ValueError("Wrong number of columns at line %d"
+                                 % line_num)
+
             # Convert each value according to its column and store
             items = [conv(val) for (conv, val) in zip(converters, vals)]
             # Then pack it according to the dtype's nesting
