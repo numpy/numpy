@@ -18,6 +18,10 @@ class TestBinomial(TestCase):
             assert_(random.binomial(0, p) == 0)
             np.testing.assert_array_equal(random.binomial(zeros, p), zeros)
 
+    def test_p_is_nan(self):
+        # Issue #4571.
+        assert_raises(ValueError, random.binomial, 1, np.nan)
+
 
 class TestMultinomial(TestCase):
     def test_basic(self):
