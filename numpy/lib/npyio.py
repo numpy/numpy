@@ -1174,7 +1174,7 @@ def fromregex(file, regexp, dtype):
 #####--------------------------------------------------------------------------
 
 
-def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
+def genfromtxt(fname, dtype=float, comments='#', delimiter=None, quoter=None,
                skiprows=0, skip_header=0, skip_footer=0, converters=None,
                missing='', missing_values=None, filling_values=None,
                usecols=None, names=None,
@@ -1207,6 +1207,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     skip_rows : int, optional
         `skip_rows` was deprecated in numpy 1.5, and will be removed in
         numpy 2.0. Please use `skip_header` instead.
+    quoter  str, optional
+        The string used as a quoting character. By default it's assumed that
+        the values are not quoted.
     skip_header : int, optional
         The number of lines to skip at the beginning of the file.
     skip_footer : int, optional
@@ -1334,6 +1337,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         comments = asbytes(comments)
     if isinstance(delimiter, unicode):
         delimiter = asbytes(delimiter)
+    if isinstance(quoter, unicode):
+        quoter = asbytes(quoter)
     if isinstance(missing, unicode):
         missing = asbytes(missing)
     if isinstance(missing_values, (unicode, list, tuple)):
@@ -1365,7 +1370,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             "fname must be a string, filehandle, or generator. "
             "(got %s instead)" % type(fname))
 
-    split_line = LineSplitter(delimiter=delimiter, comments=comments,
+    split_line = LineSplitter(delimiter=delimiter, quoter=quoter,
+                              comments=comments,
                               autostrip=autostrip)._handyman
     validate_names = NameValidator(excludelist=excludelist,
                                    deletechars=deletechars,
