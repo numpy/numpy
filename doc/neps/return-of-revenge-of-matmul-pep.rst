@@ -27,7 +27,7 @@ with the corresponding in-place version:
 =======  ========================= ===============================
  Op      Precedence/associativity     Methods
 =======  ========================= ===============================
-``@``    *To be determined*        ``__matmul__``, ``__rmatmul__``
+``@``    Same as ``*``             ``__matmul__``, ``__rmatmul__``
 ``@=``   n/a                       ``__imatmul__``
 =======  ========================= ===============================
 
@@ -761,11 +761,6 @@ perhaps adding ``@`` as an alias.  These projects include:
 * sympy
 * sage
 
-If you know of any actively maintained Python libraries which provide
-an interface for working with numerical arrays or matrices, and which
-are not listed above, then please let the PEP author know:
-njs@pobox.com
-
 
 Implementation details
 ======================
@@ -889,6 +884,81 @@ of the alternatives:
 * Whatever, we have to pick something.
 
 
+Precedence and associativity
+----------------------------
+
+There was a long discussion [#associativity-discussions]_ about
+whether ``@`` should be right- or left-associative (or even something
+more exotic [#group-associativity]_). Almost all Python operators are
+left-associative, so following this convention would be the simplest
+approach, but there were two arguments that suggested matrix
+multiplication might be worth making right-associative as a special
+case:
+
+First, matrix multiplication has a tight conceptual association with
+function application/composition, so many mathematically sophisticated
+users have an intuition that an expression like :math:`R S x` proceeds
+from right-to-left, with first :math:`S` transforming the vector
+:math:`x`, and then :math:`R` transforming the result. This isn't
+universally agreed (and not all number-crunchers are steeped in the
+pure-math conceptual framework that motivates this intuition
+[#oil-industry-versus-right-associativity]_), but at the least this
+intuition is more common than for other operations like :math:`2 \cdot
+3 \cdot 4` which everyone reads as going from left-to-right.
+
+Second, if expressions like ``Mat @ Mat @ vec`` appear often in code,
+then programs will run faster (and efficiency-minded programmers will
+be able to use fewer parentheses) if this is evaluated as ``Mat @ (Mat
+@ vec)`` then if it is evaluated like ``(Mat @ Mat) @ vec``.
+
+However, weighing against these arguments are the following:
+
+Regarding the efficiency argument, empirically, we were unable to find
+any evidence that ``Mat @ Mat @ vec`` type expressions actually
+dominate in real-life code. Parsing a number of large projects that
+use numpy, we found that when forced by numpy's current funcall syntax
+to choose an order of operations for nested calls to ``dot``, people
+actually use left-associative nesting slightly *more* often than
+right-associative nesting [#numpy-associativity-counts]_.  And anyway,
+writing parentheses isn't so bad -- if an efficiency-minded programmer
+is going to take the trouble to think through the best way to evaluate
+some expression, they probably *should* write down the parentheses
+regardless of whether they're needed, just to make it obvious to the
+next reader that they order of operations matter.
+
+In addition, it turns out that other languages, including those with
+much more of a focus on linear algebra, overwhelmingly make their
+matmul operators left-associative. Specifically, the ``@`` equivalent
+is left-associative in R, Matlab, Julia, IDL, and Gauss. The only
+exceptions we found are Mathematica, in which ``a @ b @ c`` would be
+parsed non-associatively as ``dot(a, b, c)``, and APL, in which all
+operators are right-associative. There do not seem to exist any
+languages that make ``@`` right-associative and ``*``
+left-associative. And these decisions don't seem to be controversial
+-- I've never seen anyone complaining about this particular aspect of
+any of these other languages, and the left-associativity of ``*``
+doesn't seem to bother users of the existing Python libraries that use
+``*`` for matrix multiplication. So, at the least we can conclude from
+this that making ``@`` left-associative will certainly not cause any
+disasters. Making ``@`` right-associative, OTOH, would be exploring
+new and uncertain ground.
+
+And another advantage of left-associativity is that it is much easier
+to learn and remember that ``@`` acts like ``*``, than it is to
+remember first that ``@`` is unlike other Python operators by being
+right-associative, and then on top of this, also have to remember
+whether it is more tightly or more loosely binding than
+``*``. (Right-associativity forces us to choose a precedence, and
+intuitions were about equally split on which precedence made more
+sense. So this suggests that no matter which choice we made, no-one
+would be able to guess or remember it.)
+
+On net, therefore, the general consensus of the numerical community is
+that while matrix multiplication is something of a special case, it's
+not special enough to break the rules, and ``@`` should parse like
+``*`` does.
+
+
 (Non)-Definitions for built-in types
 ------------------------------------
 
@@ -930,32 +1000,7 @@ Earlier versions of this PEP also proposed a matrix power operator,
 decided that the utility of this was sufficiently unclear that it
 would be better to leave it out for now, and only revisit the issue if
 -- once we have more experience with ``@`` -- it turns out that ``@@``
-is truly missed. [#atat-discussion]
-
-
-Unresolved issues
------------------
-
-Associativity of ``@``
-''''''''''''''''''''''
-
-It's been suggested that ``@`` should be right-associative, on the
-grounds that for expressions like ``Mat @ Mat @ vec``, the two
-different evaluation orders produce the same result, but the
-right-associative order ``Mat @ (Mat @ vec)`` will be faster and use
-less memory than the left-associative order ``(Mat @ Mat) @ vec``.
-(Matrix-vector multiplication is much cheaper than matrix-matrix
-multiplication).  It would be a shame if users found themselves
-required to use an overabundance of parentheses to achieve acceptable
-speed/memory usage in common situations, but, it's not currently clear
-whether such cases actually are common enough to override Python's
-general rule of left-associativity, or even whether they're more
-common than the symmetric cases where left-associativity would be
-faster (though this does seem intuitively plausible).  The only way to
-answer this is probably to do an audit of some real-world uses and
-check how often the associativity matters in practice; if this PEP is
-accepted in principle, then we should probably do this check before
-finalizing it.
+is truly missed. [#atat-discussion]_
 
 
 Rejected alternatives to adding a new operator
@@ -1130,8 +1175,9 @@ Collected here for reference:
 * numpy-discussion thread on whether to keep ``@@``:
   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069448.html
 
-* numpy-discussion thread on precedence/associativity of ``@``:
-  http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069444.html
+* numpy-discussion threads on precedence/associativity of ``@``:
+  * http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069444.html
+  * http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069605.html
 
 
 References
@@ -1207,10 +1253,10 @@ References
 
    Matrix multiply counts were estimated by counting how often certain
    tokens which are used as matrix multiply function names occurred in
-   each package.  In principle this could create false positives, but
-   as far as I know the counts are exact; it's unlikely that anyone is
-   using ``dot`` as a variable name when it's also the name of one of
-   the most widely-used numpy functions.
+   each package.  This creates a small number of false positives for
+   scikit-learn, because we also count instances of the wrappers
+   around ``dot`` that this package uses, and so there are a few dozen
+   tokens which actually occur in ``import`` or ``def`` statements.
 
    All counts were made using the latest development version of each
    project as of 21 Feb 2014.
@@ -1311,6 +1357,21 @@ References
    draft of what became Numeric. He suggests using ``*`` for
    elementwise multiplication, and ``%`` for matrix multiplication:
    https://mail.python.org/pipermail/matrix-sig/1995-August/000002.html
+
+.. [#atat-discussion] http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069502.html
+
+.. [#associativity-discussions]
+   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069444.html
+   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069605.html
+
+.. [#oil-industry-versus-right-associativity]
+   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069610.html
+
+.. [#numpy-associativity-counts]
+   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069578.html
+
+.. [#group-associativity]
+   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069530.html
 
 
 Copyright
