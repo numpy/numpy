@@ -1307,7 +1307,9 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         else {
             d = view->len;
             for (k = 0; k < nd; ++k) {
-                d /= view->shape[k];
+                if (view->shape[k] != 0) {
+                    d /= view->shape[k];
+                }
                 strides[k] = d;
             }
         }
