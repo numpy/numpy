@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['column_stack', 'row_stack', 'dstack', 'array_split', 'split', 'hsplit',
            'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
-           'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
+           'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'interleave']
 
 import warnings
 
@@ -851,3 +851,65 @@ def tile(A, reps):
         shape[i] = dim_out
         n //= max(dim_in, 1)
     return c.reshape(shape)
+
+
+def interleave(arrays, axis=0):
+    """
+    Interleaves multiple arrays along a user specified axis.
+
+    Parrameters
+    -----------
+    arrays : sequence of array_like with same shape and dtype
+         Input arrays, if a sequence of length 1 is given, the fist
+    axis : int
+         Along what axis interleaving should be performed
+
+    Returns
+    -------
+    interleave: ndarray
+        Interleaved array of rank queal to arrays in `arrays` with shape
+        in `axis` dimension multiplied with number of arrays in `arrays`.
+
+    Raises
+    ------
+    ValueError
+        if axis is larger than ndim of arrays
+
+    See Also
+    --------
+    concatenate
+
+    Examples
+    --------
+    >>> a = np.arange(3)
+    >>> interleave(a, a+6)
+    array([0, 6, 1, 7, 2, 8])
+
+    >>> a = np.arange(4).reshape((2,2))
+    >>> interleave(a, a+4, axis=1)
+    array([[0, 4, 1, 5],
+           [2, 6, 3, 7]])
+    """
+    narrays = len(arrays)
+    if narrays == 0:
+        raise ValueError("interleave takes at least one (reasonably two) arrays")
+    arrays = map(asarray, arrays)
+    if any(x.dtype != arrays[0].dtype for x in arrays[1:]):
+        raise ValueError("dtype of arrays must be consistent")
+    if any(x.shape != arrays[0].shape for x in arrays[1:]):
+        raise ValueError("Shapes of arrays must be consistent")
+    nd = arrays[0].ndim
+    if nd == 0: raise ValueError("interleave only works on arrays of 1 or more dimensions")
+    if axis < 0:
+        axis += nd
+    if (axis >= nd):
+        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
+            % (axis, nd))
+
+    c = _nx.empty([narrays*n if i==axis else n for i, n \
+                  in enumerate(arrays[0].shape)], dtype=arrays[0].dtype)
+    for i, arr in enumerate(arrays):
+        slicing = [slice(i, arrays[0].shape[j]*narrays, narrays) if\
+                   j==axis else Ellipsis for j in range(arrays[0].ndim)]
+        c[slicing] = arr
+    return c

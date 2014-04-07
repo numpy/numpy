@@ -351,6 +351,30 @@ class TestMayShareMemory(TestCase):
         self.assertTrue(may_share_memory(d2[1:, ::-1], d2))
 
 
+class TestInterleave(TestCase):
+    def test_basic(self):
+        arrs = map(array, [(0,1,2), (6,7,8), (0,6,1,7,2,8)])
+        c = interleave(arrs[:-1])
+        assert_equal(c, arrs[-1])
+
+        arrs = map(array, [(0,1,2), (6,7,8), (12,13,14), (0,6,12,1,7,13,2,8,14)])
+        c = interleave(arrs[:-1])
+        assert_equal(c, arrs[-1])
+
+        arrs = map(array, [arange(9).reshape((3,3)),
+                              arange(18,27).reshape((3,3)),
+                              arange(36,45).reshape((3,3)),
+                              [[18*(i%3)+3*(i//3)+j for j in range(3)] for i in range(9)]])
+        c = interleave(arrs[:-1], axis=0)
+        assert_equal(c, arrs[-1])
+
+        arrs = map(array, [arange(4).reshape((2,2)),
+                              arange(8,12).reshape((2,2)),
+                              [[8*(j%2)+(j//2)+2*i for j in range(4)] for i in range(2)]])
+        c = interleave(arrs[:-1], axis=1)
+        assert_equal(c, arrs[-1])
+
+
 # Utility
 def compare_results(res, desired):
     for i in range(len(desired)):
