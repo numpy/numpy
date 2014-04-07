@@ -893,7 +893,7 @@ def interleave(arrays, axis=0):
     narrays = len(arrays)
     if narrays == 0:
         raise ValueError("interleave takes at least one (reasonably two) arrays")
-    arrays = map(asarray, arrays)
+    arrays = [asarray(a) for a in arrays]
     if any(x.dtype != arrays[0].dtype for x in arrays[1:]):
         raise ValueError("dtype of arrays must be consistent")
     if any(x.shape != arrays[0].shape for x in arrays[1:]):
