@@ -853,16 +853,19 @@ def tile(A, reps):
     return c.reshape(shape)
 
 
-def interleave(arrays, axis=0):
+def interleave(arrays, axis=0, dtype=None):
     """
     Interleaves multiple arrays along a user specified axis.
 
     Parrameters
     -----------
-    arrays : sequence of array_like with same shape and dtype
-         Input arrays, if a sequence of length 1 is given, the fist
-    axis : int
-         Along what axis interleaving should be performed
+    arrays : sequence of array_like with consistent shape
+        Input arrays, if a sequence of length 1 is given, the first
+    axis : int, optional
+        Along what axis interleaving should be performed
+    dtype : dtype
+        What dtype resulting array should be (default: same as
+        first array).
 
     Returns
     -------
@@ -894,8 +897,6 @@ def interleave(arrays, axis=0):
     if narrays == 0:
         raise ValueError("interleave takes at least one (reasonably two) arrays")
     arrays = [asarray(a) for a in arrays]
-    if any(x.dtype != arrays[0].dtype for x in arrays[1:]):
-        raise ValueError("dtype of arrays must be consistent")
     if any(x.shape != arrays[0].shape for x in arrays[1:]):
         raise ValueError("Shapes of arrays must be consistent")
     nd = arrays[0].ndim
@@ -907,7 +908,7 @@ def interleave(arrays, axis=0):
             % (axis, nd))
 
     c = _nx.empty([narrays*n if i==axis else n for i, n \
-                  in enumerate(arrays[0].shape)], dtype=arrays[0].dtype)
+                  in enumerate(arrays[0].shape)], dtype=dtype or arrays[0].dtype)
     for i, arr in enumerate(arrays):
         slicing = [slice(i, arrays[0].shape[j]*narrays, narrays) if\
                    j==axis else Ellipsis for j in range(arrays[0].ndim)]
