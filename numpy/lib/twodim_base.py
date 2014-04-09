@@ -1000,7 +1000,7 @@ def triu_indices_from(arr, k=0):
     return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
-def elementary(N, i, j=None, t=None, dtype=float):
+def elementary(N, i, j=None, multiplier=None, dtype=float):
     """
     Return an array arranged like an elementary matrix.
 
@@ -1008,14 +1008,14 @@ def elementary(N, i, j=None, t=None, dtype=float):
     ----------
     N : int
         The size of the NxN array to be returned. Elementary matrices
-        are be square.
+        are square by definition.
     i : int
         The index of the first row on which operations are to be
         performed.
     j : int
         If set, the index of the second row on which operations are to
         be performed.
-    t : scalar
+    multiplier : scalar
         If set, the factor by which a given row will be multiplied.
 
     Returns
@@ -1028,8 +1028,12 @@ def elementary(N, i, j=None, t=None, dtype=float):
     --------
     eye, identity
 
+    Notes
+    -----
+    This function's primary utility is in matrix multiplication. 
+
     Examples
-    -------
+    --------
     To swap the the first and third rows of a 4x4 identity matirx:
 
     >>> L = elementary(4, 0, 2)
@@ -1046,7 +1050,7 @@ def elementary(N, i, j=None, t=None, dtype=float):
                        [11, 13, 17, 19],
                        [23, 29, 31, 37],
                        [41, 43, 47, 53]])
-    >>> L*H
+    >>> L * H
     matrix([[ 23.,  29.,  31.,  37.],
             [ 11.,  13.,  17.,  19.],
             [  2.,   3.,   5.,   7.],
@@ -1056,7 +1060,7 @@ def elementary(N, i, j=None, t=None, dtype=float):
     multiplication takes place in reverse order), the result is the
     given matrix with its first and third columns swapped.
 
-    >>> H*L
+    >>> H * L
     matrix([[  5.,   3.,   2.,   7.],
             [ 17.,  13.,  11.,  19.],
             [ 31.,  29.,  23.,  37.],
@@ -1070,13 +1074,13 @@ def elementary(N, i, j=None, t=None, dtype=float):
             [11, 13, 17, 19],
             [23, 29, 31, 37],
             [41, 43, 47, 53]])
-    >> M=elementary(4, 1, 3, 10000, int)
+    >> M = elementary(4, 1, 3, 10000, int)
     >> M
     array([[    1,     0,     0,     0],
            [    0,     1,     0,     0],
            [    0,     0,     1,     0],
            [    0, 10000,     0,     1]])
-    >> M*H
+    >> M * H
     matrix([[     2,      3,      5,      7],
             [    11,     13,     17,     19],
             [    23,     29,     31,     37],
@@ -1089,7 +1093,7 @@ def elementary(N, i, j=None, t=None, dtype=float):
             [11, 13, 17, 19],
             [23, 29, 31, 37],
             [41, 43, 47, 53]])
-    >>> H*elementary(len(H), len(H)-1, t=2)
+    >>> H * elementary(len(H), len(H)-1, multiplier=2)
     matrix([[   2.,    3.,    5.,   14.],
             [  11.,   13.,   17.,   38.],
             [  23.,   29.,   31.,   74.],
@@ -1099,18 +1103,15 @@ def elementary(N, i, j=None, t=None, dtype=float):
     of elementary matrices. 
 
     """
-    m=eye(N, dtype=dtype)
-    if j==None and t==None:
-        raise ValueError("One or more of {0} and {1} must be set.".format( \
-            'j', 't'))
-    elif t==None:
-        swap = array(m[i])
-        m[i] = m[j]
-        m[j] = swap
+    m = eye(N, dtype=dtype)
+    if j is None and multiplier is None:
+        raise ValueError("One or more of 'j' and 'multiplier' must be set.")
+    elif multiplier is None:
+        m[i], m[j] = m[j], m[i]
         return m
-    elif j==None:
-        m[i] *= t
+    elif j is None:
+        m[i] *= multiplier
         return m
     else:
-        m[j] += (t * m[i])
+        m[j] += (multiplier * m[i])
         return m
