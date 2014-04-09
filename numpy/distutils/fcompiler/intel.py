@@ -162,7 +162,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/4Yb', '/d2']
 
     def get_flags_opt(self):
-        return ['/O2']
+        return ['/O1']  # Scipy test failures with /O2
 
     def get_flags_arch(self):
         return ["/arch:IA-32", "/QaxSSE3"]
