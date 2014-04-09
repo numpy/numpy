@@ -419,10 +419,11 @@ array_dealloc(PyArrayObject *self)
              * self already...
              */
         }
-        PyDataMem_FREE(fa->data);
+        npy_free_cache(fa->data, PyArray_NBYTES(self));
     }
 
-    PyDimMem_FREE(fa->dimensions);
+    /* must match allocation in PyArray_NewFromDescr */
+    npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }

@@ -28,6 +28,108 @@
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
 #include <assert.h>
 
+#define NBUCKETS 1024 /* number of buckets for data*/
+#define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
+#define NCACHE 8 /* 1 + number of cache entries per bucket */
+static void * datacache[NBUCKETS][NCACHE];
+static void * dimcache[NBUCKETS_DIM][NCACHE];
+
+/*
+ * very simplistic small memory block cache to avoid more expensive libc
+ * allocations
+ * base function for data cache with 1 byte buckets and dimension cache with
+ * sizeof(npy_intp) byte buckets
+ */
+static NPY_INLINE void *
+_npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
+                 void * (*cache)[NCACHE], void * (*alloc)(size_t))
+{
+    assert((esz == 1 && cache == datacache) ||
+           (esz == sizeof(npy_intp) && cache == dimcache));
+    if (nelem < msz) {
+        /* first entry is used as fill counter */
+        npy_uintp * idx = (npy_uintp *)&(cache[nelem][0]);
+        if (*idx > 0) {
+            return cache[nelem][(*idx)--];
+        }
+    }
+    return alloc(nelem * esz);
+}
+
+/*
+ * return pointer p to cache, nelem is number of elements of the cache bucket
+ * size (1 or sizeof(npy_intp)) of the block pointed too
+ */
+static NPY_INLINE void
+_npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
+                void * (*cache)[NCACHE], void (*dealloc)(void *))
+{
+    if (p != NULL && nelem < msz) {
+        /* first entry is used as fill counter */
+        npy_uintp * idx = (npy_uintp *)&(cache[nelem][0]);
+        if (*idx < NCACHE - 1) {
+            cache[nelem][++(*idx)] = p;
+            return;
+        }
+    }
+    dealloc(p);
+}
+
+
+/*
+ * array data cache, sz is number of bytes to allocate
+ */
+static void *
+npy_alloc_cache(npy_uintp sz)
+{
+    return _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
+}
+
+/* zero initialized data, sz is number of bytes to allocate */
+static void *
+npy_alloc_cache_zero(npy_uintp sz)
+{
+    if (sz < NBUCKETS) {
+        void * p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache,
+                                    &PyDataMem_NEW);
+        memset(p, 0, sz);
+        return p;
+    }
+    return PyDataMem_NEW_ZEROED(sz, 1);
+}
+
+void
+npy_free_cache(void * p, npy_uintp sz)
+{
+    _npy_free_cache(p, sz, NBUCKETS, datacache, &PyDataMem_FREE);
+}
+
+/*
+ * dimension/stride cache, uses a different allocator and is always a multiple
+ * of npy_intp
+ */
+static void *
+npy_alloc_cache_dim(npy_uintp sz)
+{
+    /* dims + strides */
+    if (NPY_UNLIKELY(sz < 2)) {
+        sz = 2;
+    }
+    return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
+                            &PyArray_malloc);
+}
+
+void
+npy_free_cache_dim(void * p, npy_uintp sz)
+{
+    /* dims + strides */
+    if (NPY_UNLIKELY(sz < 2)) {
+        sz = 2;
+    }
+    _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache,
+                    &PyArray_free);
+}
+
 /*
  * Reading from a file or a string.
  *
@@ -886,15 +988,12 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     int i;
     size_t sd;
     npy_intp size;
-    assert(dims != NULL || (nd == 0));
 
     if (descr->subarray) {
         PyObject *ret;
         npy_intp newdims[2*NPY_MAXDIMS];
         npy_intp *newstrides = NULL;
-        if (nd > 0) {
-            memcpy(newdims, dims, nd * sizeof(npy_intp));
-        }
+        memcpy(newdims, dims, nd*sizeof(npy_intp));
         if (strides) {
             newstrides = newdims + NPY_MAXDIMS;
             memcpy(newstrides, strides, nd*sizeof(npy_intp));
@@ -994,7 +1093,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->weakreflist = (PyObject *)NULL;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(3*nd);
+        fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
             PyErr_NoMemory();
             goto fail;
@@ -1034,10 +1133,10 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            data = PyDataMem_NEW_ZEROED(sd, 1);
+            data = npy_alloc_cache_zero(sd);
         }
         else {
-            data = PyDataMem_NEW(sd);
+            data = npy_alloc_cache(sd);
         }
         if (data == NULL) {
             PyErr_NoMemory();
