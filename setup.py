@@ -180,6 +180,16 @@ class sdist_checked(sdist):
         check_submodules()
         sdist.run(self)
 
+def generate_cython():
+    cwd = os.path.abspath(os.path.dirname(__file__))
+    print("Cythonizing sources")
+    p = subprocess.call([sys.executable,
+                          os.path.join(cwd, 'tools', 'cythonize.py'),
+                          'numpy/random'],
+                         cwd=cwd)
+    if p != 0:
+        raise RuntimeError("Running cythonize failed!")
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     old_path = os.getcwd()
@@ -225,6 +235,10 @@ def setup_package():
         metadata['configuration'] = configuration
     else:
         from numpy.distutils.core import setup
+        cwd = os.path.abspath(os.path.dirname(__file__))
+        if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
+            # Generate Cython sources, unless building from source release
+            generate_cython()
         metadata['configuration'] = configuration
 
     try:
