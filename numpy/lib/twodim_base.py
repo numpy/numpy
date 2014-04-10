@@ -1007,34 +1007,28 @@ def elementary(N, i, j=None, multiplier=None, dtype=float):
     Parameters
     ----------
     N : int
-        The size of the NxN array to be returned. Elementary matrices
-        are square by definition.
+        The size of the NxN array to be returned. Elementary matrices are 
+        square by definition.
     i : int
-        The index of the first row on which operations are to be
-        performed.
+        The index of the first row on which operations are to be performed.
     j : int
-        If set, the index of the second row on which operations are to
-        be performed.
+        If set, the index of the second row on which operations are to be 
+        performed.
     multiplier : scalar
         If set, the factor by which a given row will be multiplied.
 
     Returns
     -------
     m : ndarray of shape (NxN)
-        An identity array that has had a single row operation performed 
-        on it.
+        An identity array that has had a single row operation performed on it.
 
     See also
     --------
     eye, identity
 
-    Notes
-    -----
-    This function's primary utility is in matrix multiplication. 
-
     Examples
     --------
-    To swap the the first and third rows of a 4x4 identity matirx:
+    To swap the the first and third rows of a 4x4 identity array:
 
     >>> L = elementary(4, 0, 2)
     >>> L
@@ -1043,71 +1037,73 @@ def elementary(N, i, j=None, multiplier=None, dtype=float):
            [ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
 
-    When the elementary array is multiplied by a given matrix, the
-    result is the matrix with its first and third rows swapped.
+    When the elementary array is matrix-multiplied by a given array, the 
+    result is the given array with its first and third rows swapped.
 
-    >>> H = np.matrix([[ 2,  3,  5,  7],
-                       [11, 13, 17, 19],
-                       [23, 29, 31, 37],
-                       [41, 43, 47, 53]])
-    >>> L * H
-    matrix([[ 23.,  29.,  31.,  37.],
-            [ 11.,  13.,  17.,  19.],
-            [  2.,   3.,   5.,   7.],
-            [ 41.,  43.,  47.,  53.]])
+    >>> H = np.array([[ 2,  3,  5,  7],
+                      [11, 13, 17, 19],
+                      [23, 29, 31, 37],
+                      [41, 43, 47, 53]])
+    >>> L.dot(H)
+    array([[ 23.,  29.,  31.,  37.],
+           [ 11.,  13.,  17.,  19.],
+           [  2.,   3.,   5.,   7.],
+           [ 41.,  43.,  47.,  53.]])
 
-    If the matrix is multiplied by the elementary array (i.e., the
-    multiplication takes place in reverse order), the result is the
-    given matrix with its first and third columns swapped.
+    If the array is matrix-multiplied by the elementary array (i.e., the
+    multiplication takes place in reverse order), the result is the given 
+    array with its first and third columns swapped.
 
-    >>> H * L
-    matrix([[  5.,   3.,   2.,   7.],
-            [ 17.,  13.,  11.,  19.],
-            [ 31.,  29.,  23.,  37.],
-            [ 47.,  43.,  41.,  53.]])
+    >>> H.dot(L)
+    array([[  5.,   3.,   2.,   7.],
+           [ 17.,  13.,  11.,  19.],
+           [ 31.,  29.,  23.,  37.],
+           [ 47.,  43.,  41.,  53.]])
 
-    To add a multiple of a matrix's second row to the same matrix's 
-    fourth row:
+    To add a multiple of an array's second row to the same array's fourth row:
 
     >>> H
-    matrix([[ 2,  3,  5,  7],
-            [11, 13, 17, 19],
-            [23, 29, 31, 37],
-            [41, 43, 47, 53]])
+    array([[ 2,  3,  5,  7],
+           [11, 13, 17, 19],
+           [23, 29, 31, 37],
+           [41, 43, 47, 53]])
     >> M = elementary(4, 1, 3, 10000, int)
     >> M
     array([[    1,     0,     0,     0],
            [    0,     1,     0,     0],
            [    0,     0,     1,     0],
            [    0, 10000,     0,     1]])
-    >> M * H
-    matrix([[     2,      3,      5,      7],
-            [    11,     13,     17,     19],
-            [    23,     29,     31,     37],
-            [110041, 130043, 170047, 190053]])
+    >> M.dot(H)
+    array([[     2,      3,      5,      7],
+           [    11,     13,     17,     19],
+           [    23,     29,     31,     37],
+           [110041, 130043, 170047, 190053]])
 
-    To multiply only the last column of a matrix by a scalar:
+    To multiply only the last column of an array by a scalar:
 
     >>> H
-    matrix([[ 2,  3,  5,  7],
-            [11, 13, 17, 19],
-            [23, 29, 31, 37],
-            [41, 43, 47, 53]])
-    >>> H * elementary(len(H), len(H)-1, multiplier=2)
-    matrix([[   2.,    3.,    5.,   14.],
-            [  11.,   13.,   17.,   38.],
-            [  23.,   29.,   31.,   74.],
-            [  41.,   43.,   47.,  106.]])
+    array([[ 2,  3,  5,  7],
+           [11, 13, 17, 19],
+           [23, 29, 31, 37],
+           [41, 43, 47, 53]])
+    >>> G = elementary(len(H), len(H)-1, multiplier=2)
+    >>> H.dot(G)
+    array([[   2.,    3.,    5.,   14.],
+           [  11.,   13.,   17.,   38.],
+           [  23.,   29.,   31.,   74.],
+           [  41.,   43.,   47.,  106.]])
 
-    Any nonsingular matrix can be formed by taking the product of an array 
-    of elementary matrices. 
+    Any nonsingular array can be formed by taking the product of an array of 
+    elementary arrays. 
 
     """
     m = eye(N, dtype=dtype)
     if j is None and multiplier is None:
-        raise ValueError("One or more of 'j' and 'multiplier' must be set.")
+        raise ValueError("'j' and 'multiplier' are both set to None.")
     elif multiplier is None:
-        m[i], m[j] = m[j], m[i]
+        swap = array(m[i])
+        m[i] = m[j]
+        m[j] = swap
         return m
     elif j is None:
         m[i] *= multiplier
@@ -1115,3 +1111,4 @@ def elementary(N, i, j=None, multiplier=None, dtype=float):
     else:
         m[j] += (multiplier * m[i])
         return m
+
