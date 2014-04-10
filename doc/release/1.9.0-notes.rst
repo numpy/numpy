@@ -140,6 +140,11 @@ the python ``numbers`` module.
 The ordering of the columns of the Vandermonde matrix can be specified with
 this new boolean argument.
 
+``unique_counts`` parameter added to ``np.unique``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The number of times each unique item comes up in the input can now be
+obtained as an optional return value.
+
 
 Improvements
 ============
@@ -320,7 +325,7 @@ This change was already applied to the 1.8.1 release.
 `npyio.recfromcsv` no longer accepts the undocumented `update` keyword,
 which used to override the `dtype` keyword.
 
- 
+
 C-API
 ~~~~~
 

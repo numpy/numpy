@@ -14,31 +14,59 @@ class TestSetOps(TestCase):
 
     def test_unique(self):
 
-        def check_all(a, b, i1, i2, dt):
-            msg = "check values failed for type '%s'" % dt
+        def check_all(a, b, i1, i2, c, dt):
+            base_msg = 'check {0} failed for type {1}'
+
+            msg = base_msg.format('values', dt)
             v = unique(a)
             assert_array_equal(v, b, msg)
 
-            msg = "check indexes failed for type '%s'" % dt
-            v, j = unique(a, 1, 0)
+            msg = base_msg.format('return_index', dt)
+            v, j = unique(a, 1, 0, 0)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i1, msg)
 
-            msg = "check reverse indexes failed for type '%s'" % dt
-            v, j = unique(a, 0, 1)
+            msg = base_msg.format('return_inverse', dt)
+            v, j = unique(a, 0, 1, 0)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i2, msg)
 
-            msg = "check with all indexes failed for type '%s'" % dt
-            v, j1, j2 = unique(a, 1, 1)
+            msg = base_msg.format('return_counts', dt)
+            v, j = unique(a, 0, 0, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j, c, msg)
+
+            msg = base_msg.format('return_index and return_inverse', dt)
+            v, j1, j2 = unique(a, 1, 1, 0)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
+
+            msg = base_msg.format('return_index and return_counts', dt)
+            v, j1, j2 = unique(a, 1, 0, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j1, i1, msg)
+            assert_array_equal(j2, c, msg)
+
+            msg = base_msg.format('return_inverse and return_counts', dt)
+            v, j1, j2 = unique(a, 0, 1, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j1, i2, msg)
+            assert_array_equal(j2, c, msg)
+
+            msg = base_msg.format(('return_index, return_inverse '
+                                   'and return_counts'), dt)
+            v, j1, j2, j3 = unique(a, 1, 1, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j1, i1, msg)
+            assert_array_equal(j2, i2, msg)
+            assert_array_equal(j3, c, msg)
 
         a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
         i2 = [2, 3, 0, 1, 0, 2, 3]*10
+        c = np.multiply([2, 1, 2, 2], 10)
 
         # test for numeric arrays
         types = []
@@ -49,7 +77,7 @@ class TestSetOps(TestCase):
         for dt in types:
             aa = np.array(a, dt)
             bb = np.array(b, dt)
-            check_all(aa, bb, i1, i2, dt)
+            check_all(aa, bb, i1, i2, c, dt)
 
         # test for object arrays
         dt = 'O'
@@ -57,13 +85,13 @@ class TestSetOps(TestCase):
         aa[:] = a
         bb = np.empty(len(b), dt)
         bb[:] = b
-        check_all(aa, bb, i1, i2, dt)
+        check_all(aa, bb, i1, i2, c, dt)
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
         aa = np.array(list(zip(a, a)), dt)
         bb = np.array(list(zip(b, b)), dt)
-        check_all(aa, bb, i1, i2, dt)
+        check_all(aa, bb, i1, i2, c, dt)
 
         # test for ticket #2799
         aa = [1.+0.j, 1- 1.j, 1]
