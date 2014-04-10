@@ -5,6 +5,7 @@
  *              NPY_CPU_AMD64
  *              NPY_CPU_PPC
  *              NPY_CPU_PPC64
+ *              NPY_CPU_PPC64LE
  *              NPY_CPU_SPARC
  *              NPY_CPU_S390
  *              NPY_CPU_IA64
@@ -41,6 +42,8 @@
      * _ARCH_PPC is used by at least gcc on AIX
      */
     #define NPY_CPU_PPC
+#elif defined(__ppc64le__)
+    #define NPY_CPU_PPC64LE
 #elif defined(__ppc64__)
     #define NPY_CPU_PPC64
 #elif defined(__sparc__) || defined(__sparc)

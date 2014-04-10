@@ -129,6 +129,9 @@ final two axes instead of raising an exception.
 for ``tostring`` which exports arrays as ``bytes``. This is more consistent
 in Python 3 where ``str`` and ``bytes`` are not the same.
 
+Build system
+~~~~~~~~~~~~
+Added experimental support for the ppc64le architecture.
 
 Compatibility to python ``numbers`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
