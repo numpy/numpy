@@ -1315,14 +1315,40 @@ class TestMaskedArrayAttributes(TestCase):
         test.flat = masked_array([3, 2, 1], mask=[1, 0, 0])
         control = masked_array(np.matrix([[3, 2, 1]]), mask=[1, 0, 0])
         assert_equal(test, control)
-        #
+        # Test setting
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         testflat = test.flat
         testflat[:] = testflat[[2, 1, 0]]
         assert_equal(test, control)
         testflat[0] = 9
         assert_equal(test[0, 0], 9)
-
+        # test 2-D record array
+        # ... on structured array w/ masked records
+        x = array([[(1, 1.1, 'one'), (2, 2.2, 'two'), (3, 3.3, 'thr')],
+                   [(4, 4.4, 'fou'), (5, 5.5, 'fiv'), (6, 6.6, 'six')]],
+                  dtype=[('a', int), ('b', float), ('c', '|S8')])
+        x['a'][0, 1] = masked
+        x['b'][1, 0] = masked
+        x['c'][0, 2] = masked
+        x[-1, -1] = masked
+        xflat = x.flat
+        assert_equal(xflat[0], x[0, 0])
+        assert_equal(xflat[1], x[0, 1])
+        assert_equal(xflat[2], x[0, 2])
+        assert_equal(xflat[:3], x[0])
+        assert_equal(xflat[3], x[1, 0])
+        assert_equal(xflat[4], x[1, 1])
+        assert_equal(xflat[5], x[1, 2])
+        assert_equal(xflat[3:], x[1])
+        assert_equal(xflat[-1], x[-1, -1])
+        i = 0
+        j = 0
+        for xf in xflat:
+            assert_equal(xf, x[j, i])
+            i += 1
+            if i >= x.shape[-1]:
+                i = 0
+                j += 1
 
 #------------------------------------------------------------------------------
 class TestFillingValues(TestCase):

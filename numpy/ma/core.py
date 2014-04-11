@@ -2470,7 +2470,6 @@ class _arraymethod(object):
         return result
 
 
-
 class MaskedIterator(object):
     """
     Flat iterator object to iterate over masked arrays.
@@ -2535,9 +2534,10 @@ class MaskedIterator(object):
         if self.maskiter is not None:
             _mask = self.maskiter.__getitem__(indx)
             if isinstance(_mask, ndarray):
-                _mask.shape = result.shape
                 result._mask = _mask
-            elif _mask:
+            elif isinstance(_mask, np.void):
+                return mvoid(result, mask=_mask, hardmask=self.ma._hardmask)
+            elif _mask:  # Just a scalar, masked
                 return masked
         return result
 
@@ -2570,8 +2570,12 @@ class MaskedIterator(object):
 
         """
         d = next(self.dataiter)
-        if self.maskiter is not None and next(self.maskiter):
-            d = masked
+        if self.maskiter is not None:
+            m = next(self.maskiter)
+            if isinstance(m, np.void):
+                return mvoid(d, mask=m, hardmask=self.ma._hardmask)
+            elif m:  # Just a scalar, masked
+                return masked
         return d
 
     next = __next__
