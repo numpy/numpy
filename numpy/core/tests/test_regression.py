@@ -1945,6 +1945,26 @@ class TestRegression(TestCase):
         formatted = '{0}'.format(arr[0])
         assert_equal(formatted, str(arr[0]))
 
+    def test_richcompare_crash(self):
+        # gh-4613
+        import operator as op
+
+        # dummy class where __array__ throws exception
+        class Foo(object):
+            __array_priority__ = 1002
+            def __array__(self,*args,**kwargs):
+                raise Exception()
+
+        rhs = Foo()
+        lhs = np.array(1)
+        for f in [op.lt, op.le, op.gt, op.ge]:
+            if sys.version_info[0] >= 3:
+                assert_raises(TypeError, f, lhs, rhs)
+            else:
+                f(lhs, rhs)
+        assert_(not op.eq(lhs, rhs))
+        assert_(op.ne(lhs, rhs))
+
 
 if __name__ == "__main__":
     run_module_suite()
