@@ -154,7 +154,8 @@ class TestRegression(TestCase):
                               {'names':['a'],'formats':['foo']}, align=1)
 
     @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and platform.architecture()[0] == "64bit"),
+                        (sys.platform == "win32" and
+                         platform.architecture()[0] == "64bit"),
                         "numpy.intp('0xff', 16) not supported on Py3, "
                         "as it does not inherit from Python int")
     def test_intp(self,level=rlevel):
@@ -1971,6 +1972,26 @@ class TestRegression(TestCase):
         base = masked.base
         del masked, c
         base.dtype
+
+    def test_richcompare_crash(self):
+        # gh-4613
+        import operator as op
+
+        # dummy class where __array__ throws exception
+        class Foo(object):
+            __array_priority__ = 1002
+            def __array__(self,*args,**kwargs):
+                raise Exception()
+
+        rhs = Foo()
+        lhs = np.array(1)
+        for f in [op.lt, op.le, op.gt, op.ge]:
+            if sys.version_info[0] >= 3:
+                assert_raises(TypeError, f, lhs, rhs)
+            else:
+                f(lhs, rhs)
+        assert_(not op.eq(lhs, rhs))
+        assert_(op.ne(lhs, rhs))
 
 
 if __name__ == "__main__":
