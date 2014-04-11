@@ -1103,7 +1103,7 @@ cdef class RandomState:
 
     def uniform(self, low=0.0, high=1.0, size=None):
         """
-        uniform(low=0.0, high=1.0, size=1)
+        uniform(low=0.0, high=1.0, size=None)
 
         Draw samples from a uniform distribution.
 
