@@ -1435,7 +1435,11 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
         array_other = (PyArrayObject *)PyArray_FromObject(other,
-                                                    NPY_NOTYPE, 0, 0);
+                                                          NPY_NOTYPE, 0, 0);
+        if (array_other == NULL) {
+            PyErr_Clear();
+            return result;
+        }
         if (PyArray_ISSTRING(self) && PyArray_ISSTRING(array_other)) {
             Py_DECREF(result);
             result = _strings_richcompare(self, (PyArrayObject *)
