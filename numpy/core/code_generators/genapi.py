@@ -74,6 +74,29 @@ def remove_whitespace(s):
 def _repl(str):
     return str.replace('Bool', 'npy_bool')
 
+
+class StealRef:
+    def __init__(self, arg):
+        self.arg = arg # counting from 1
+
+    def __str__(self):
+        try:
+            return ' '.join('NPY_STEALS_REF_TO_ARG(%d)' % x for x in self.arg)
+        except TypeError:
+            return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
+
+
+class NonNull:
+    def __init__(self, arg):
+        self.arg = arg # counting from 1
+
+    def __str__(self):
+        try:
+            return ' '.join('NPY_GCC_NONNULL(%d)' % x for x in self.arg)
+        except TypeError:
+            return 'NPY_GCC_NONNULL(%d)' % self.arg
+
+
 class Function(object):
     def __init__(self, name, return_type, args, doc=''):
         self.name = name
@@ -350,9 +373,10 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
         return astr
 
 class FunctionApi(object):
-    def __init__(self, name, index, return_type, args, api_name):
+    def __init__(self, name, index, annotations, return_type, args, api_name):
         self.name = name
         self.index = index
+        self.annotations = annotations
         self.return_type = return_type
         self.args = args
         self.api_name = api_name
@@ -377,17 +401,25 @@ class FunctionApi(object):
         return "        (void *) %s" % self.name
 
     def internal_define(self):
+        annstr = []
+        for a in self.annotations:
+            annstr.append(str(a))
+        annstr = ' '.join(annstr)
         astr = """\
-NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
-                                           self.name,
-                                           self._argtypes_string())
+NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
+                                              self.name,
+                                              self._argtypes_string())
         return astr
 
 def order_dict(d):
-    """Order dict by its values."""
+    """ order api dict by values
+        may contain plain integer or (int, annotations) """
     o = list(d.items())
     def _key(x):
-        return (x[1], x[0])
+        try:
+            return x[1] + (x[0],)
+        except TypeError:
+            return (x[1], x[0])
     return sorted(o, key=_key)
 
 def merge_api_dicts(dicts):
@@ -419,7 +451,13 @@ Same index has been used twice in api definition: %s
         raise ValueError(msg)
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
-    indexes = set(d.values())
+    # if its a tuple the first entry is the index, the rest are annotations
+    indexes = set()
+    for v in d.values():
+        try:
+            indexes.add(v[0])
+        except TypeError:
+            indexes.add(v)
     expected = set(range(len(indexes)))
     if not indexes == expected:
         diff = expected.symmetric_difference(indexes)
@@ -434,7 +472,10 @@ def get_api_functions(tagname, api_dict):
         functions.extend(find_functions(f, tagname))
     dfunctions = []
     for func in functions:
-        o = api_dict[func.name]
+        try:
+            o = api_dict[func.name][0]
+        except TypeError:
+            o = api_dict[func.name]
         dfunctions.append( (o, func) )
     dfunctions.sort()
     return [a[1] for a in dfunctions]
@@ -444,11 +485,7 @@ def fullapi_hash(api_dicts):
     of the list of items in the API (as a string)."""
     a = []
     for d in api_dicts:
-        def sorted_by_values(d):
-            """Sort a dictionary by its values. Assume the dictionary items is of
-            the form func_name -> order"""
-            return sorted(d.items(), key=lambda x_y: (x_y[1], x_y[0]))
-        for name, index in sorted_by_values(d):
+        for name, index in order_dict(d):
             a.extend(name)
             a.extend(str(index))
 

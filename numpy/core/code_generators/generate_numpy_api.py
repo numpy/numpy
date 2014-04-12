@@ -208,8 +208,14 @@ def do_generate_api(targets, sources):
     multiarray_api_dict = {}
     for f in numpyapi_list:
         name = f.name
-        index = multiarray_funcs[name]
-        multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type,
+        try:
+            index = multiarray_funcs[name][0]
+            annotations = multiarray_funcs[name][1:]
+        except TypeError:
+            index = multiarray_funcs[name]
+            annotations = []
+        multiarray_api_dict[f.name] = FunctionApi(f.name, index, annotations,
+                                                  f.return_type,
                                                   f.args, api_name)
 
     for name, index in global_vars.items():

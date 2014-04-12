@@ -352,9 +352,9 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 }
 
 
-/* steals typed reference */
 /*NUMPY_API
   Get a subset of bytes from each element of the array
+  steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
@@ -410,6 +410,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 /*NUMPY_API
   Set a subset of bytes from each element of the array
+  steals reference to dtype, must not be NULL
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,

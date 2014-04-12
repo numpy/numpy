@@ -1540,7 +1540,7 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
  * NPY_RELAXED_STRIDES_CHECKING: If the strides logic is changed, the
  * order specific stride setting is not necessary.
  */
-static PyObject *
+static NPY_STEALS_REF_TO_ARG(1) PyObject *
 _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 {
     npy_intp newdims[NPY_MAXDIMS];

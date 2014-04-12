@@ -173,7 +173,7 @@ def do_generate_api(targets, sources):
     for f in ufunc_api_list:
         name = f.name
         index = ufunc_api_index[name]
-        ufunc_api_dict[name] = FunctionApi(f.name, index, f.return_type,
+        ufunc_api_dict[name] = FunctionApi(f.name, index, [], f.return_type,
                                            f.args, api_name)
 
     for name, index in numpy_api.ufunc_types_api.items():

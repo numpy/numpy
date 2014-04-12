@@ -1492,13 +1492,13 @@ PyArray_STRIDE(const PyArrayObject *arr, int istride)
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
-static NPY_INLINE PyObject *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
-static NPY_INLINE PyArray_Descr *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
