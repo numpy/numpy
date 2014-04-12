@@ -2534,6 +2534,8 @@ class MaskedIterator(object):
         if self.maskiter is not None:
             _mask = self.maskiter.__getitem__(indx)
             if isinstance(_mask, ndarray):
+                # set shape to match that of data; this is needed for matrices
+                _mask.shape = result.shape
                 result._mask = _mask
             elif isinstance(_mask, np.void):
                 return mvoid(result, mask=_mask, hardmask=self.ma._hardmask)
