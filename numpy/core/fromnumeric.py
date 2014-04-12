@@ -4,7 +4,9 @@
 from __future__ import division, absolute_import, print_function
 
 import types
+import warnings
 
+from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import umath as um
 from . import numerictypes as nt
@@ -2453,6 +2455,11 @@ def rank(a):
     If `a` is not already an array, a conversion is attempted.
     Scalars are zero dimensional.
 
+    .. note::
+        This function is deprecated in NumPy 1.9 to avoid confusion with
+        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
+        should be used instead.
+
     Parameters
     ----------
     a : array_like
@@ -2486,6 +2493,10 @@ def rank(a):
     0
 
     """
+    warnings.warn(
+        "`rank` is deprecated; use the `ndim` attribute or function instead. "
+        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
+        VisibleDeprecationWarning)
     try:
         return a.ndim
     except AttributeError:
