@@ -25,6 +25,16 @@
 #define NPY_GCC_OPT_3
 #endif
 
+/*
+ * mark an argument (starting from 1) that must not be NULL and is not checked
+ * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
+ */
+#ifdef HAVE_ATTRIBUTE_NONNULL
+#define NPY_GCC_NONNULL(n) __attribute__((nonnull(n)))
+#else
+#define NPY_GCC_NONNULL(n)
+#endif
+
 #if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
 #define NPY_HAVE_SSE_INTRINSICS
 #endif

@@ -307,7 +307,10 @@ int main ()
         self._check_compiler()
         body = []
         if decl:
-            body.append("int %s (void);" % func)
+            if type(decl) == str:
+                body.append(decl)
+            else:
+                body.append("int %s (void);" % func)
         # Handle MSVC intrinsics: force MS compiler to make a function call.
         # Useful to test for some functions when built with optimization on, to
         # avoid build error because the intrinsic and our 'fake' test

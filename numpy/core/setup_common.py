@@ -127,6 +127,8 @@ OPTIONAL_GCC_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                             'attribute_optimize_unroll_loops'),
                             ('__attribute__((optimize("O3")))',
                              'attribute_optimize_opt_3'),
+                            ('__attribute__((nonnull (1)))',
+                             'attribute_nonnull'),
                           ]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
