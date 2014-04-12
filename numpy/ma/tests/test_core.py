@@ -1305,6 +1305,7 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(a.mask, nomask)
 
     def test_flat(self):
+        # Test that flat can return all types of items [#4585, #4615]
         # test simple access
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         assert_equal(test.flat[1], 2)
@@ -1349,6 +1350,13 @@ class TestMaskedArrayAttributes(TestCase):
             if i >= x.shape[-1]:
                 i = 0
                 j += 1
+        # test that matrices keep the correct shape (#4615)
+        a = masked_array(np.matrix(np.eye(2)), mask=0)
+        b = a.flat
+        b01 = b[:2]
+        assert_equal(b01.data, array([[1., 0.]]))
+        assert_equal(b01.mask, array([[False, False]]))
+
 
 #------------------------------------------------------------------------------
 class TestFillingValues(TestCase):
