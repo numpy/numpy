@@ -465,10 +465,10 @@ class TestVander(object):
         # assert_array_almost_equal).
         yield (assert_array_equal, v, expected)
 
-class TestElementary(object):
+class TestElementary(TestCase):
     def test_switch_rows(self):
         G = elementary(4, 0, 3)
-        assert_array_equal(G, np.array([[0., 0., 0., 1.],
+        assert_equal(G, np.array([[0., 0., 0., 1.],
                                         [0., 1., 0., 0.], 
                                         [0., 0., 1., 0.],
                                         [1., 0., 0., 0.]]))
@@ -476,7 +476,7 @@ class TestElementary(object):
 
     def test_add_row_multiple(self):
         H = elementary(5, 1, 3, 7, 'i')
-        assert_array_equal(H, np.array([[1, 0, 0, 0, 0],
+        assert_equal(H, np.array([[1, 0, 0, 0, 0],
                                         [0, 1, 0, 0, 0],
                                         [0, 0, 1, 0, 0],
                                         [0, 7, 0, 1, 0],
@@ -485,7 +485,7 @@ class TestElementary(object):
 
     def test_multiply_row(self):
         I = elementary(3, 0, multiplier=6, dtype=int)
-        assert_array_equal(I, np.array([[6, 0, 0], 
+        assert_equal(I, np.array([[6, 0, 0], 
                                         [0, 1, 0], 
                                         [0, 0, 1]]))
 
