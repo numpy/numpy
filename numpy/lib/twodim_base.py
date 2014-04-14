@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
            'triu', 'tril', 'vander', 'histogram2d', 'mask_indices',
            'tril_indices', 'tril_indices_from', 'triu_indices',
-           'triu_indices_from',
+           'triu_indices_from', 'elementary',
            ]
 
 from numpy.core.numeric import (
