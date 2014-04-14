@@ -2472,5 +2472,17 @@ class TestBroadcast(TestCase):
                 assert_equal(mit.numiter, j)
 
 
+class TestKeepdims(TestCase):
+
+    class sub_array(np.ndarray):
+        def sum(self, axis=None, dtype=None, out=None):
+            return np.ndarray.sum(self, axis, dtype, out, keepdims=True)
+
+    def test_raise(self):
+        sub_class = self.sub_array
+        x = np.arange(30).view(sub_class)
+        assert_raises(TypeError, np.sum, x, keepdims=True)
+
+
 if __name__ == "__main__":
     run_module_suite()
