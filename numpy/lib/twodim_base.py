@@ -1101,9 +1101,7 @@ def elementary(N, i, j=None, multiplier=None, dtype=float):
     if j is None and multiplier is None:
         raise ValueError("'j' and 'multiplier' are both set to None.")
     elif multiplier is None:
-        swap = array(m[i])
-        m[i] = m[j]
-        m[j] = swap
+        m[[i, j]] = m[[j, i]]
         return m
     elif j is None:
         m[i] *= multiplier
