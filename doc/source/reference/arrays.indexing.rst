@@ -170,8 +170,8 @@ concepts to remember include:
 
 .. data:: newaxis
 
-   The :const:`newaxis` object can be used in all slicing operations
-   as discussed above. :const:`None` can also be used instead of
+   The :const:`newaxis` object can be used in all slicing operations to 
+   create an axis of length one. :const:`None` can also be used instead of
    :const:`newaxis`.
 
 
