@@ -68,7 +68,7 @@ class IntelFCompiler(BaseIntelFCompiler):
                 opt.remove('-shared')
             except ValueError:
                 idx = 0
-            opt[idx:idx] = ['-dynamiclib', '-Wl,-undefined,dynamic_lookup', '-Wl,-framework,Python']
+            opt[idx:idx] = ['-dynamiclib', '-Wl,-undefined,dynamic_lookup']
         return opt
 
 class IntelItaniumFCompiler(IntelFCompiler):
