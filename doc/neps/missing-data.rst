@@ -1,4 +1,7 @@
-:Title: Missing Data Functionality in NumPy
+===================================
+Missing Data Functionality in NumPy
+===================================
+
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Copyright: Copyright 2011 by Enthought, Inc
 :License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)

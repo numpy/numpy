@@ -1,4 +1,7 @@
-Title: A Simple File Format for NumPy Arrays
+=====================================
+A Simple File Format for NumPy Arrays
+=====================================
+
 Discussions-To: numpy-discussion@mail.scipy.org
 Version: $Revision$
 Last-Modified: $Date$
@@ -10,6 +13,7 @@ Created: 20-Dec-2007
 
 
 Abstract
+--------
 
     We propose a standard binary file format (NPY) for persisting
     a single arbitrary NumPy array on disk.  The format stores all of
@@ -21,6 +25,7 @@ Abstract
 
 
 Rationale
+---------
 
     A lightweight, omnipresent system for saving NumPy arrays to disk
     is a frequent need.  Python in general has pickle [1] for saving
@@ -53,6 +58,7 @@ Rationale
 
 
 Use Cases
+---------
 
     - Neville Newbie has just started to pick up Python and NumPy.  He
       has not installed many packages, yet, nor learned the standard
@@ -84,6 +90,7 @@ Use Cases
 
 
 Requirements
+------------
 
     The format MUST be able to:
 
@@ -150,6 +157,7 @@ Requirements
 
 
 Format Specification: Version 1.0
+---------------------------------
 
     The first 6 bytes are a magic string: exactly "\x93NUMPY".
 
@@ -198,6 +206,7 @@ Format Specification: Version 1.0
 
 
 Conventions
+-----------
 
     We recommend using the ".npy" extension for files following this
     format.  This is by no means a requirement; applications may wish
@@ -211,6 +220,7 @@ Conventions
 
 
 Alternatives
+------------
 
     The author believes that this system (or one along these lines) is
     about the simplest system that satisfies all of the requirements.
@@ -262,6 +272,7 @@ Alternatives
 
 
 Implementation
+--------------
 
     The current implementation is included in the 1.0.5 release of numpy.
 
@@ -272,6 +283,7 @@ Implementation
 
 
 References
+----------
 
     [1] http://docs.python.org/lib/module-pickle.html
 
@@ -279,15 +291,7 @@ References
 
 
 Copyright
+---------
 
     This document has been placed in the public domain.
 
-
-
-Local Variables:
-mode: indented-text
-indent-tabs-mode: nil
-sentence-end-double-space: t
-fill-column: 70
-coding: utf-8
-End:

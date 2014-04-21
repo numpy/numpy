@@ -1,7 +1,6 @@
-===========================================================
-A proposal to build numpy without warning with a big set of
-warning flags
-===========================================================
+=========================================================================
+A proposal to build numpy without warning with a big set of warning flags
+=========================================================================
 
 :Author: David Cournapeau
 :Contact: david@ar.media.kyoto-u.ac.jp
@@ -12,7 +11,7 @@ Executive summary
 
 When building numpy and scipy, we are limited to a quite restricted set of
 warning compilers, thus missing a large class of potential bugs which could be
-detected with stronger warning flags. The goal of this PEP is present the
+detected with stronger warning flags. The goal of this NEP is present the
 various methods used to clean the code and implement some policy to make numpy
 buildable with a  bigger set of warning flags, while keeping the build warnings
 free.

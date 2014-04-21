@@ -1,4 +1,7 @@
-:Title: Optimizing Iterator/UFunc Performance
+=====================================
+Optimizing Iterator/UFunc Performance
+=====================================
+
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Content-Type: text/x-rst
 :Created: 25-Nov-2010
