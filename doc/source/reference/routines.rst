@@ -36,8 +36,6 @@ indentation.
    routines.ma
    routines.math
    routines.matlib
-   routines.numarray
-   routines.oldnumeric
    routines.other
    routines.padding
    routines.polynomials
