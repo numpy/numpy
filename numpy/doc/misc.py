@@ -3,8 +3,8 @@
 Miscellaneous
 =============
 
-IEEE 754 Floating Point Special Values:
------------------------------------------------
+IEEE 754 Floating Point Special Values
+--------------------------------------
 
 Special values defined in numpy: nan, inf,
 
@@ -46,8 +46,8 @@ from the results: ::
  >>> np.nansum(x)
  42.0
 
-How numpy handles numerical exceptions:
-------------------------------------------
+How numpy handles numerical exceptions
+--------------------------------------
 
 The default is to ``'warn'`` for ``invalid``, ``divide``, and ``overflow``
 and ``'ignore'`` for ``underflow``.  But this can be changed, and it can be
@@ -72,8 +72,8 @@ These behaviors can be set for all kinds of errors or specific ones:
 Note that integer divide-by-zero is handled by the same machinery.
 These behaviors are set on a per-thread basis.
 
-Examples:
-------------
+Examples
+--------
 
 ::
 
@@ -96,8 +96,8 @@ Examples:
  >>> j = np.seterr(**oldsettings) # restore previous
  ...                              # error-handling settings
 
-Interfacing to C:
------------------
+Interfacing to C
+----------------
 Only a survey of the choices. Little detail on how each works.
 
 1) Bare metal, wrap your own C-code manually.
@@ -121,29 +121,22 @@ Only a survey of the choices. Little detail on how each works.
 
    - API will change for Python 3.0!
 
-2) pyrex
+2) Cython
 
  - Plusses:
 
    - avoid learning C API's
    - no dealing with reference counting
-   - can code in psuedo python and generate C code
+   - can code in pseudo python and generate C code
    - can also interface to existing C code
    - should shield you from changes to Python C api
-   - become pretty popular within Python community
+   - has become the de-facto standard within the scientific Python community
+   - fast indexing support for arrays
 
  - Minuses:
 
    - Can write code in non-standard form which may become obsolete
    - Not as flexible as manual wrapping
-   - Maintainers not easily adaptable to new features
-
-Thus:
-
-3) cython - fork of pyrex to allow needed features for SAGE
-
-  - being considered as the standard scipy/numpy wrapping tool
-  - fast indexing support for arrays
 
 4) ctypes
 
@@ -180,16 +173,15 @@ Thus:
 
    - generates lots of code between Python and the C code
    - can cause performance problems that are nearly impossible to optimize
-       out
+     out
    - interface files can be hard to write
    - doesn't necessarily avoid reference counting issues or needing to know
      API's
 
-7) Weave
+7) scipy.weave
 
  - Plusses:
 
-   - Phenomenal tool
    - can turn many numpy expressions into C code
    - dynamic compiling and loading of generated C code
    - can embed pure C code in Python module and have weave extract, generate
@@ -197,7 +189,8 @@ Thus:
 
  - Minuses:
 
-   - Future uncertain--lacks a champion
+   - Future very uncertain: it's the only part of Scipy not ported to Python 3
+     and is effectively deprecated in favor of Cython.
 
 8) Psyco
 
@@ -214,15 +207,19 @@ Thus:
 
 Interfacing to Fortran:
 -----------------------
-Fortran: Clear choice is f2py. (Pyfort is an older alternative, but not
-supported any longer)
+The clear choice to wrap Fortran code is
+`f2py <http://docs.scipy.org/doc/numpy-dev/f2py/>`_.
+
+Pyfort is an older alternative, but not supported any longer.
+Fwrap is a newer project that looked promising but isn't being developed any
+longer.
 
 Interfacing to C++:
 -------------------
- 1) CXX
- 2) Boost.python
- 3) SWIG
- 4) Sage has used cython to wrap C++ (not pretty, but it can be done)
+ 1) Cython
+ 2) CXX
+ 3) Boost.python
+ 4) SWIG
  5) SIP (used mainly in PyQT)
 
 """
