@@ -1771,7 +1771,7 @@ def any(a, axis=None, out=None, keepdims=False):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical OR reduction is performed.
-        The default (`axis` = `None`) is perform a logical OR over all
+        The default (`axis` = `None`) is to perform a logical OR over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
@@ -1849,7 +1849,7 @@ def all(a, axis=None, out=None, keepdims=False):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical AND reduction is performed.
-        The default (`axis` = `None`) is perform a logical OR over all
+        The default (`axis` = `None`) is to perform a logical AND over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
