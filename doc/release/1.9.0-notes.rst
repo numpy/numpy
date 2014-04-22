@@ -347,6 +347,11 @@ The integer and empty input to ``select`` is deprecated. In the future only
 boolean arrays will be valid conditions and an empty ``condlist`` will be
 considered an input error instead of returning the default.
 
+``rank`` function
+~~~~~~~~~~~~~~~~~
+The ``rank`` function has been deprecated to avoid confusion with
+``numpy.linalg.matrix_rank``.
+
 C-API
 ~~~~~
 

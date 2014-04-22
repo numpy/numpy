@@ -366,5 +366,14 @@ class TestBooleanSubtractDeprecations(_DeprecationTestCase):
         self.assert_deprecated(operator.neg, args=(generic,))
 
 
+class TestRankDeprecation(_DeprecationTestCase):
+    """Test that np.rank is deprecated. The function should simply be
+    removed. The VisibleDeprecationWarning may become unnecessary.
+    """
+    def test(self):
+        a = np.arange(10)
+        assert_warns(np.VisibleDeprecationWarning, np.rank, a)
+
+
 if __name__ == "__main__":
     run_module_suite()
