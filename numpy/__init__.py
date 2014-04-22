@@ -121,6 +121,17 @@ class ModuleDeprecationWarning(DeprecationWarning):
     pass
 
 
+class VisibleDeprecationWarning(UserWarning):
+    """Visible deprecation warning.
+
+    By default, python will not show deprecation warnings, so this class
+    can be used when a very visible warning is helpful, for example because
+    the usage is most likely a user bug.
+
+    """
+    pass
+
+
 # oldnumeric and numarray were removed in 1.9. In case some packages import
 # but do not use them, we define them here for backward compatibility.
 oldnumeric = 'removed'
@@ -157,7 +168,9 @@ else:
         return loader(*packages, **options)
 
     from . import add_newdocs
-    __all__ = ['add_newdocs', 'ModuleDeprecationWarning']
+    __all__ = ['add_newdocs',
+               'ModuleDeprecationWarning',
+               'VisibleDeprecationWarning']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
