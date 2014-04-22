@@ -642,7 +642,13 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                       NPY_CASTING casting)
 {
-    if (casting == NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND) {
+    /* fast path for basic types */
+    if (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
+        NPY_LIKELY(from->type_num == to->type_num) &&
+        NPY_LIKELY(from->byteorder == to->byteorder)) {
+        return 1;
+    }
+    else if (casting == NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND) {
         npy_bool unsafe_ok, same_kind_ok;
         unsafe_ok = PyArray_CanCastTypeTo_impl(from, to, NPY_UNSAFE_CASTING);
         same_kind_ok = PyArray_CanCastTypeTo_impl(from, to,
