@@ -1332,7 +1332,6 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     >>> np.testing.assert_array_almost_equal_nulp(x, x*eps/2 + x)
 
     >>> np.testing.assert_array_almost_equal_nulp(x, x*eps + x)
-    ------------------------------------------------------------
     Traceback (most recent call last):
       ...
     AssertionError: X and Y are not equal to 1 ULP (max is 2)

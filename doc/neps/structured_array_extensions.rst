@@ -1,3 +1,6 @@
+===========================
+Structured array extensions
+===========================
 
 1.  Create with-style context that makes "named-columns" available as names in the namespace.
 

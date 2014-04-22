@@ -11,7 +11,7 @@ work right away.
 
 
 Asserts
-=======
+-------
 .. autosummary::
    :toctree: generated/
 
