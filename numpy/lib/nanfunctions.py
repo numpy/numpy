@@ -228,7 +228,7 @@ def nanmin(a, axis=None, out=None, keepdims=False):
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
         if np.any(mask):
-            res = _copyto(res, mask, np.nan)
+            res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
 
@@ -327,7 +327,7 @@ def nanmax(a, axis=None, out=None, keepdims=False):
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
         if np.any(mask):
-            res = _copyto(res, mask, np.nan)
+            res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
 
