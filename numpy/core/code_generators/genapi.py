@@ -412,14 +412,10 @@ NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
         return astr
 
 def order_dict(d):
-    """ order api dict by values
-        may contain plain integer or (int, annotations) """
+    """Order dict by its values."""
     o = list(d.items())
     def _key(x):
-        try:
-            return x[1] + (x[0],)
-        except TypeError:
-            return (x[1], x[0])
+        return x[1] + (x[0],)
     return sorted(o, key=_key)
 
 def merge_api_dicts(dicts):
@@ -451,13 +447,9 @@ Same index has been used twice in api definition: %s
         raise ValueError(msg)
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
-    # if its a tuple the first entry is the index, the rest are annotations
     indexes = set()
     for v in d.values():
-        try:
-            indexes.add(v[0])
-        except TypeError:
-            indexes.add(v)
+        indexes.add(v[0])
     expected = set(range(len(indexes)))
     if not indexes == expected:
         diff = expected.symmetric_difference(indexes)
@@ -472,10 +464,7 @@ def get_api_functions(tagname, api_dict):
         functions.extend(find_functions(f, tagname))
     dfunctions = []
     for func in functions:
-        try:
-            o = api_dict[func.name][0]
-        except TypeError:
-            o = api_dict[func.name]
+        o = api_dict[func.name][0]
         dfunctions.append( (o, func) )
     dfunctions.sort()
     return [a[1] for a in dfunctions]
