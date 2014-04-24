@@ -110,7 +110,7 @@ def poly2herm(pol) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import poly2herme
+    >>> from numpy.polynomial.hermite import poly2herm
     >>> poly2herm(np.arange(4))
     array([ 1.   ,  2.75 ,  0.5  ,  0.375])
 
