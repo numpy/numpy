@@ -190,7 +190,7 @@ From scratch
 
 .. cfunction:: PyObject* PyArray_NewFromDescr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
     This is the main array creation function. Most new arrays are
     created with this flexible function.

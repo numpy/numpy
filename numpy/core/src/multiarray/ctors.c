@@ -26,6 +26,7 @@
 #include "array_assign.h"
 #include "mapping.h" /* for array_item_asarray */
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
+#include <assert.h>
 
 /*
  * Reading from a file or a string.
@@ -885,12 +886,15 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     int i;
     size_t sd;
     npy_intp size;
+    assert(dims != NULL || (nd == 0));
 
     if (descr->subarray) {
         PyObject *ret;
         npy_intp newdims[2*NPY_MAXDIMS];
         npy_intp *newstrides = NULL;
-        memcpy(newdims, dims, nd*sizeof(npy_intp));
+        if (nd > 0) {
+            memcpy(newdims, dims, nd * sizeof(npy_intp));
+        }
         if (strides) {
             newstrides = newdims + NPY_MAXDIMS;
             memcpy(newstrides, strides, nd*sizeof(npy_intp));
