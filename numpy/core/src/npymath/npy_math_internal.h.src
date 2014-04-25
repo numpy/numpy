@@ -541,6 +541,22 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
  * #C = F, ,L#
  */
 
+@type@ npy_heaviside@c@(@type@ x, @type@ h0)
+{
+    if (npy_isnan(x)) {
+        return (@type@) NPY_NAN;
+    }
+    else if (x == 0) {
+        return h0;
+    }
+    else if (x < 0) {
+        return (@type@) 0.0;
+    }
+    else {
+        return (@type@) 1.0;
+    }
+}
+
 #define LOGE2    NPY_LOGE2@c@
 #define LOG2E    NPY_LOG2E@c@
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)

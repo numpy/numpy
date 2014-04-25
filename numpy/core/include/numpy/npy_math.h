@@ -316,12 +316,14 @@ NPY_INPLACE double npy_rad2deg(double x);
 NPY_INPLACE double npy_logaddexp(double x, double y);
 NPY_INPLACE double npy_logaddexp2(double x, double y);
 NPY_INPLACE double npy_divmod(double x, double y, double *modulus);
+NPY_INPLACE double npy_heaviside(double x, double h0);
 
 NPY_INPLACE float npy_deg2radf(float x);
 NPY_INPLACE float npy_rad2degf(float x);
 NPY_INPLACE float npy_logaddexpf(float x, float y);
 NPY_INPLACE float npy_logaddexp2f(float x, float y);
 NPY_INPLACE float npy_divmodf(float x, float y, float *modulus);
+NPY_INPLACE float npy_heavisidef(float x, float h0);
 
 NPY_INPLACE npy_longdouble npy_deg2radl(npy_longdouble x);
 NPY_INPLACE npy_longdouble npy_rad2degl(npy_longdouble x);
@@ -329,6 +331,7 @@ NPY_INPLACE npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_divmodl(npy_longdouble x, npy_longdouble y,
                            npy_longdouble *modulus);
+NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
 
 #define npy_degrees npy_rad2deg
 #define npy_degreesf npy_rad2degf

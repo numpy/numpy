@@ -1197,6 +1197,28 @@ class TestRadians(TestCase):
         assert_almost_equal(ncu.radians(-90.0), -0.5*np.pi)
 
 
+class TestHeavside(TestCase):
+    def test_heaviside(self):
+        x = np.array([[-30.0, -0.1, 0.0, 0.2], [7.5, np.nan, np.inf, -np.inf]])
+        expectedhalf = np.array([[0.0, 0.0, 0.5, 1.0], [1.0, np.nan, 1.0, 0.0]])
+        expected1 = expectedhalf.copy()
+        expected1[0, 2] = 1
+
+        h = ncu.heaviside(x, 0.5)
+        assert_equal(h, expectedhalf)
+
+        h = ncu.heaviside(x, 1.0)
+        assert_equal(h, expected1)
+
+        x = x.astype(np.float32)
+
+        h = ncu.heaviside(x, np.float32(0.5))
+        assert_equal(h, expectedhalf.astype(np.float32))
+
+        h = ncu.heaviside(x, np.float32(1.0))
+        assert_equal(h, expected1.astype(np.float32))
+
+
 class TestSign(TestCase):
     def test_sign(self):
         a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])
