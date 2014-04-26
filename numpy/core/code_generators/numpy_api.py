@@ -16,20 +16,18 @@ from __future__ import division, absolute_import, print_function
 
 from code_generators.genapi import StealRef, NonNull
 
+# index, type
 multiarray_global_vars = {
-    'NPY_NUMUSERTYPES':             (7,),
-    'NPY_DEFAULT_ASSIGN_CASTING':   (292,),
-}
-
-multiarray_global_vars_types = {
-    'NPY_NUMUSERTYPES':             ('int',),
-    'NPY_DEFAULT_ASSIGN_CASTING':   ('NPY_CASTING',),
+    'NPY_NUMUSERTYPES':             (7, 'int'),
+    'NPY_DEFAULT_ASSIGN_CASTING':   (292, 'NPY_CASTING'),
 }
 
 multiarray_scalar_bool_values = {
     '_PyArrayScalar_BoolValues':    (9,)
 }
 
+# index, annotations
+# please mark functions that have been checked to not need any annotations
 multiarray_types_api = {
     'PyBigArray_Type':                  (1,),
     'PyArray_Type':                     (2,),
@@ -401,7 +399,6 @@ ufunc_funcs_api = {
 # XXX: DO NOT CHANGE THE ORDER OF TUPLES BELOW !
 multiarray_api = (
         multiarray_global_vars,
-        multiarray_global_vars_types,
         multiarray_scalar_bool_values,
         multiarray_types_api,
         multiarray_funcs_api,

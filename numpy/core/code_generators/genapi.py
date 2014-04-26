@@ -447,9 +447,7 @@ Same index has been used twice in api definition: %s
         raise ValueError(msg)
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
-    indexes = set()
-    for v in d.values():
-        indexes.add(v[0])
+    indexes = set(v[0] for v in d.values())
     expected = set(range(len(indexes)))
     if not indexes == expected:
         diff = expected.symmetric_difference(indexes)
