@@ -353,27 +353,29 @@ class TestMayShareMemory(TestCase):
 
 class TestInterleave(TestCase):
     def test_basic(self):
-        arrs = [array(a) for a in [(0,1,2), (6,7,8), (0,6,1,7,2,8)]]
+        arrs = [array(a) for a in [(0, 1, 2),  (6, 7, 8),  (0, 6, 1, 7, 2, 8)]]
         c = interleave(arrs[:-1])
         assert_equal(c, arrs[-1])
 
-        arrs = [array(a) for a in [(0,1,2), (6,7,8), (12,13,14),
-                                   (0,6,12,1,7,13,2,8,14)]]
+    def test_triplet(self):
+        arrs = [array(a) for a in [(0, 1, 2),  (6, 7, 8),  (12, 13, 14),
+                                   (0, 6, 12, 1, 7, 13, 2, 8, 14)]]
         c = interleave(arrs[:-1])
         assert_equal(c, arrs[-1])
 
-        arrs = [array(a) for a in [arange(9).reshape((3,3)),
-                              arange(18,27).reshape((3,3)),
-                              arange(36,45).reshape((3,3)),
-                              [[18*(i%3)+3*(i//3)+j for j in range(3)] for\
-                               i in range(9)]]]
+    def test_axis_kw(self):
+        arrs = [array(a) for a in [arange(9).reshape((3, 3)),
+                                   arange(18, 27).reshape((3, 3)),
+                                   arange(36, 45).reshape((3, 3)),
+                                   [[18*(i % 3) + 3*(i // 3) + j for j
+                                     in range(3)] for i in range(9)]]]
         c = interleave(arrs[:-1], axis=0)
         assert_equal(c, arrs[-1])
 
-        arrs = [array(a) for a in [arange(4).reshape((2,2)),
-                                   arange(8,12).reshape((2,2)),
-                                   [[8*(j%2)+(j//2)+2*i for j in range(4)] for\
-                                    i in range(2)]]]
+        arrs = [array(a) for a in [arange(4).reshape((2, 2)),
+                                   arange(8, 12).reshape((2, 2)),
+                                   [[8*(j % 2) + (j // 2) + 2*i for j
+                                     in range(4)] for i in range(2)]]]
         c = interleave(arrs[:-1], axis=1)
         assert_equal(c, arrs[-1])
 
