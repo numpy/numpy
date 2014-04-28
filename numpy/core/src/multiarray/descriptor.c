@@ -410,7 +410,8 @@ _convert_from_array_descr(PyObject *obj, int align)
     PyObject *nameslist;
     PyArray_Descr *new;
     PyArray_Descr *conv;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 0;
 
     n = PyList_GET_SIZE(obj);
@@ -599,7 +600,8 @@ _convert_from_list(PyObject *obj, int align)
     PyObject *nameslist = NULL;
     int ret;
     int maxalign = 0;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
 
     n = PyList_GET_SIZE(obj);
     /*
@@ -935,7 +937,8 @@ _convert_from_dict(PyObject *obj, int align)
     int n, i;
     int totalsize, itemsize;
     int maxalign = 0;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
     int has_out_of_order_fields = 0;
 
     fields = PyDict_New();
