@@ -915,6 +915,6 @@ def interleave(arrays, axis=0):
                   dtype=_nx.find_common_type([a.dtype for a in arrays], []))
     for i, arr in enumerate(arrays):
         slicing = [slice(i, arrays[0].shape[j]*narrays, narrays) if
-                   j == axis else Ellipsis for j in range(arrays[0].ndim)]
+                   j == axis else slice(None) for j in range(arrays[0].ndim)]
         c[slicing] = arr
     return c
