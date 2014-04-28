@@ -860,7 +860,9 @@ def interleave(arrays, axis=0):
     Parameters
     ----------
     arrays : sequence of array_like
-        Input arrays (of same shape)
+        Input arrays, some arrays may have 1 dimension fewer than the
+        highest number of dimensions. Those arrays will then be broadcasted
+        along the requested `axis`.
     axis : int, optional
         Along what axis interleaving should be performed
 
@@ -877,7 +879,7 @@ def interleave(arrays, axis=0):
     Raises
     ------
     ValueError
-        if axis is larger than ndim of arrays
+        if axis is larger than ndim of arrays, or no arrays are passed along
 
     See Also
     --------
@@ -894,27 +896,46 @@ def interleave(arrays, axis=0):
     array([[0, 4, 1, 5],
            [2, 6, 3, 7]])
 
+    broadcasting is also supported:
+
+    >>> a = [[1, 2], [3, 4], [5, 6]]
+    >>> b = [8, 9]
+    >>> interleave((a, b))
+    array([[1, 2],
+           [8, 9],
+           [3, 4],
+           [8, 9],
+           [5, 6],
+           [8, 9]])
+
     """
     narrays = len(arrays)
     if narrays == 0:
         raise ValueError("interleave takes at least one array")
     arrays = [asarray(a) for a in arrays]
-    shp = arrays[0].shape
-    if any(x.shape != shp for x in arrays[1:]):
-        raise ValueError("Shapes of arrays must be consistent")
-    nd = arrays[0].ndim
-    if nd == 0:
+    max_ndim = 0
+    bcast = False
+    for a in arrays:
+        if a.ndim > max_ndim:
+            max_ndim = a.ndim
+            shp = a.shape
+        if a.ndim < max_ndim:
+            bcast = True
+
+    if max_ndim == 0:
         raise ValueError("interleave only works on arrays of 1 "
                          "or more dimensions")
     if axis < 0:
-        axis += nd
-    if (axis >= nd):
+        axis += max_ndim
+    if axis >= max_ndim:
         raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-                         % (axis, nd))
+                         % (axis, max_ndim))
     c = _nx.empty([narrays * n if i == axis else n for i, n in enumerate(shp)],
                   dtype=_nx.find_common_type([a.dtype for a in arrays], []))
     for i, arr in enumerate(arrays):
-        slicing = [slice(i, arrays[0].shape[j]*narrays, narrays) if
-                   j == axis else slice(None) for j in range(arrays[0].ndim)]
+        slicing = [slice(i, shp[j]*narrays, narrays) if
+                   j == axis else slice(None) for j in range(max_ndim)]
+        if bcast:
+            slicing[abs(axis-1)] = Ellipsis
         c[slicing] = arr
     return c

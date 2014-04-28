@@ -379,6 +379,20 @@ class TestInterleave(TestCase):
         c = interleave(arrs[:-1], axis=1)
         assert_equal(c, arrs[-1])
 
+    def test_broadcast(self):
+        arrs = [array(a) for a in [arange(4).reshape((2, 2)),
+                                   ones(2)*9,
+                                   [[0, 1], [9, 9], [2, 3], [9, 9]]]]
+        c = interleave(arrs[:-1])
+        assert_equal(c, arrs[-1])
+
+    def test_broadcast_multidim(self):
+        arrs = [array(a) for a in [arange(4).reshape((2, 2)),
+                                   1,
+                                   [[0, 1], [1, 1], [2, 3], [1, 1]]]]
+        c = interleave(arrs[:-1])
+        assert_equal(c, arrs[-1])
+
 
 # Utility
 def compare_results(res, desired):
