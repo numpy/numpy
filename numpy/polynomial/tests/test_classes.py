@@ -5,6 +5,9 @@ This tests the convert and cast methods of all the polynomial classes.
 """
 from __future__ import division, absolute_import, print_function
 
+import operator as op
+from numbers import Number
+
 import numpy as np
 from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre,
@@ -13,6 +16,7 @@ from numpy.testing import (
     TestCase, assert_almost_equal, assert_raises,
     assert_equal, assert_, run_module_suite, dec)
 from numpy.testing.noseclasses import KnownFailure
+from numpy.compat import long
 
 
 classes = (
@@ -37,6 +41,7 @@ def test_class_methods():
         yield check_sub, Poly
         yield check_mul, Poly
         yield check_floordiv, Poly
+        yield check_truediv, Poly
         yield check_mod, Poly
         yield check_divmod, Poly
         yield check_pow, Poly
@@ -221,12 +226,12 @@ def check_add(Poly):
     assert_poly_almost_equal(tuple(c2) + p1, p3)
     assert_poly_almost_equal(p1 + np.array(c2), p3)
     assert_poly_almost_equal(np.array(c2) + p1, p3)
-    assert_raises(TypeError, p1.__add__, Poly([0], domain=Poly.domain + 1))
-    assert_raises(TypeError, p1.__add__, Poly([0], window=Poly.window + 1))
+    assert_raises(TypeError, op.add, p1, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, op.add, p1, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
-        assert_raises(TypeError, p1.__add__, Chebyshev([0]))
+        assert_raises(TypeError, op.add, p1, Chebyshev([0]))
     else:
-        assert_raises(TypeError, p1.__add__, Polynomial([0]))
+        assert_raises(TypeError, op.add, p1, Polynomial([0]))
 
 
 def check_sub(Poly):
@@ -243,12 +248,12 @@ def check_sub(Poly):
     assert_poly_almost_equal(tuple(c2) - p1, -p3)
     assert_poly_almost_equal(p1 - np.array(c2), p3)
     assert_poly_almost_equal(np.array(c2) - p1, -p3)
-    assert_raises(TypeError, p1.__sub__, Poly([0], domain=Poly.domain + 1))
-    assert_raises(TypeError, p1.__sub__, Poly([0], window=Poly.window + 1))
+    assert_raises(TypeError, op.sub, p1, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, op.sub, p1, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
-        assert_raises(TypeError, p1.__sub__, Chebyshev([0]))
+        assert_raises(TypeError, op.sub, p1, Chebyshev([0]))
     else:
-        assert_raises(TypeError, p1.__sub__, Polynomial([0]))
+        assert_raises(TypeError, op.sub, p1, Polynomial([0]))
 
 
 def check_mul(Poly):
@@ -266,12 +271,12 @@ def check_mul(Poly):
     assert_poly_almost_equal(np.array(c2) * p1, p3)
     assert_poly_almost_equal(p1 * 2, p1 * Poly([2]))
     assert_poly_almost_equal(2 * p1, p1 * Poly([2]))
-    assert_raises(TypeError, p1.__mul__, Poly([0], domain=Poly.domain + 1))
-    assert_raises(TypeError, p1.__mul__, Poly([0], window=Poly.window + 1))
+    assert_raises(TypeError, op.mul, p1, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, op.mul, p1, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
-        assert_raises(TypeError, p1.__mul__, Chebyshev([0]))
+        assert_raises(TypeError, op.mul, p1, Chebyshev([0]))
     else:
-        assert_raises(TypeError, p1.__mul__, Polynomial([0]))
+        assert_raises(TypeError, op.mul, p1, Polynomial([0]))
 
 
 def check_floordiv(Poly):
@@ -293,13 +298,40 @@ def check_floordiv(Poly):
     assert_poly_almost_equal(2 // p2, Poly([0]))
     assert_poly_almost_equal(p2 // 2, 0.5*p2)
     assert_raises(
-        TypeError, p1.__floordiv__, Poly([0], domain=Poly.domain + 1))
+        TypeError, op.floordiv, p1, Poly([0], domain=Poly.domain + 1))
     assert_raises(
-        TypeError, p1.__floordiv__, Poly([0], window=Poly.window + 1))
+        TypeError, op.floordiv, p1, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
-        assert_raises(TypeError, p1.__floordiv__, Chebyshev([0]))
+        assert_raises(TypeError, op.floordiv, p1, Chebyshev([0]))
     else:
-        assert_raises(TypeError, p1.__floordiv__, Polynomial([0]))
+        assert_raises(TypeError, op.floordiv, p1, Polynomial([0]))
+
+
+def check_truediv(Poly):
+    # true division is valid only if the denominator is a Number and
+    # not a python bool.
+    p1 = Poly([1,2,3])
+    p2 = p1 * 5
+
+    for stype in np.ScalarType:
+        if not issubclass(stype, Number) or issubclass(stype, bool):
+            continue
+        s = stype(5)
+        assert_poly_almost_equal(op.truediv(p2, s), p1)
+        assert_raises(TypeError, op.truediv, s, p2)
+    for stype in (int, long, float):
+        s = stype(5)
+        assert_poly_almost_equal(op.truediv(p2, s), p1)
+        assert_raises(TypeError, op.truediv, s, p2)
+    for stype in [complex]:
+        s = stype(5, 0)
+        assert_poly_almost_equal(op.truediv(p2, s), p1)
+        assert_raises(TypeError, op.truediv, s, p2)
+    for s in [tuple(), list(), dict(), bool(), np.array([1])]:
+        assert_raises(TypeError, op.truediv, p2, s)
+        assert_raises(TypeError, op.truediv, s, p2)
+    for ptype in classes:
+        assert_raises(TypeError, op.truediv, p2, ptype(1))
 
 
 def check_mod(Poly):
@@ -321,12 +353,12 @@ def check_mod(Poly):
     assert_poly_almost_equal(np.array(c4) % p2, p3)
     assert_poly_almost_equal(2 % p2, Poly([2]))
     assert_poly_almost_equal(p2 % 2, Poly([0]))
-    assert_raises(TypeError, p1.__mod__, Poly([0], domain=Poly.domain + 1))
-    assert_raises(TypeError, p1.__mod__, Poly([0], window=Poly.window + 1))
+    assert_raises(TypeError, op.mod, p1, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, op.mod, p1, Poly([0], window=Poly.window + 1))
     if Poly is Polynomial:
-        assert_raises(TypeError, p1.__mod__, Chebyshev([0]))
+        assert_raises(TypeError, op.mod, p1, Chebyshev([0]))
     else:
-        assert_raises(TypeError, p1.__mod__, Polynomial([0]))
+        assert_raises(TypeError, op.mod, p1, Polynomial([0]))
 
 
 def check_divmod(Poly):
@@ -464,8 +496,8 @@ def check_pow(Poly):
     for i in range(5):
         assert_poly_almost_equal(tst**i, tgt)
         tgt = tgt * tst
-    assert_raises(ValueError, tgt.__pow__, 1.5)
-    assert_raises(ValueError, tgt.__pow__, -1)
+    assert_raises(ValueError, op.pow, tgt, 1.5)
+    assert_raises(ValueError, op.pow, tgt, -1)
 
 
 def check_call(Poly):
