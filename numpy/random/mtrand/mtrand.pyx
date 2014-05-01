@@ -743,8 +743,9 @@ cdef class RandomState:
         Parameters
         ----------
         size : int or tuple of ints, optional
-            Defines the shape of the returned array of random floats. If None
-            (the default), returns a single float.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -782,10 +783,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        size : tuple of ints, int, optional
-            Shape of output.  If this is, for example, (m,n,k), m*n*k samples
-            are generated.  If no shape is specified, a single sample is
-            returned.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -838,8 +839,9 @@ cdef class RandomState:
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single int is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -940,8 +942,9 @@ cdef class RandomState:
             If an ndarray, a random sample is generated from its elements.
             If an int, the random sample is generated as if a was np.arange(n)
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single value is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
         replace : boolean, optional
             Whether the sample is with or without replacement
         p : 1-D array-like, optional
@@ -1121,9 +1124,9 @@ cdef class RandomState:
             Upper boundary of the output interval.  All values generated will be
             less than high.  The default value is 1.0.
         size : int or tuple of ints, optional
-            Shape of output.  If the given size is, for example, (m,n,k),
-            m*n*k samples are generated.  If no shape is specified, a single sample
-            is returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1309,7 +1312,9 @@ cdef class RandomState:
             If provided, the largest (signed) integer to be drawn from the
             distribution (see above for behavior if ``high=None``).
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single int is returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1376,8 +1381,9 @@ cdef class RandomState:
         Parameters
         ----------
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single value is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1421,9 +1427,10 @@ cdef class RandomState:
             Mean ("centre") of the distribution.
         scale : float
             Standard deviation (spread or "width") of the distribution.
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         See Also
         --------
@@ -1525,9 +1532,10 @@ cdef class RandomState:
             Alpha, non-negative.
         b : float
             Beta, non-negative.
-        size : tuple of ints, optional
-            The number of samples to draw.  The output is packed according to
-            the size given.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1582,9 +1590,10 @@ cdef class RandomState:
         ----------
         scale : float
             The scale parameter, :math:`\\beta = 1/\\lambda`.
-        size : tuple of ints
-            Number of samples to draw.  The output is shaped
-            according to `size`.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         References
         ----------
@@ -1623,8 +1632,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        size : int or tuple of ints
-            Shape of the output.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1653,9 +1664,10 @@ cdef class RandomState:
         ----------
         shape : float
             Parameter, should be > 0.
-        size : int or tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1738,9 +1750,10 @@ cdef class RandomState:
             The shape of the gamma distribution.
         scale : scalar > 0, optional
             The scale of the gamma distribution.  Default is equal to 1.
-        size : shape_tuple, optional
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1834,10 +1847,10 @@ cdef class RandomState:
             Degrees of freedom in numerator. Should be greater than zero.
         dfden : float
             Degrees of freedom in denominator. Should be greater than zero.
-        size : {tuple, int}, optional
-            Output shape.  If the given shape is, e.g., ``(m, n, k)``,
-            then ``m * n * k`` samples are drawn. By default only one sample
-            is returned.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -1934,9 +1947,10 @@ cdef class RandomState:
             Parameter, should be > 1.
         nonc : float
             Parameter, should be >= 0.
-        size : int or tuple of ints
-            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2025,9 +2039,10 @@ cdef class RandomState:
         ----------
         df : int
              Number of degrees of freedom.
-        size : tuple of ints, int, optional
-             Size of the returned array.  By default, a scalar is
-             returned.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2103,8 +2118,10 @@ cdef class RandomState:
             Degrees of freedom, should be >= 1.
         nonc : float
             Non-centrality, should be > 0.
-        size : int or tuple of ints
-            Shape of the output.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Notes
         -----
@@ -2190,8 +2207,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        size : int or tuple of ints
-            Shape of the output.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2256,8 +2275,9 @@ cdef class RandomState:
         df : int
             Degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single value is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2362,9 +2382,10 @@ cdef class RandomState:
             Mode ("center") of the distribution.
         kappa : float
             Dispersion of the distribution, has to be >=0.
-        size : int or tuple of int
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2460,9 +2481,10 @@ cdef class RandomState:
         ----------
         shape : float, > 0.
             Shape of the distribution.
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         See Also
         --------
@@ -2552,9 +2574,10 @@ cdef class RandomState:
         ----------
         a : float
             Shape of the distribution.
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         See Also
         --------
@@ -2645,9 +2668,10 @@ cdef class RandomState:
         ----------
         a : float
             parameter, > 0
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-                    ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2759,6 +2783,10 @@ cdef class RandomState:
             The position, :math:`\\mu`, of the distribution peak.
         scale : float
             :math:`\\lambda`, the exponential decay.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Notes
         -----
@@ -2847,9 +2875,10 @@ cdef class RandomState:
             The location of the mode of the distribution.
         scale : float
             The scale parameter of the distribution.
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -2977,9 +3006,10 @@ cdef class RandomState:
 
         scale : float > 0.
 
-        size : {tuple, int}
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3067,9 +3097,10 @@ cdef class RandomState:
             Mean value of the underlying normal distribution
         sigma : float, > 0.
             Standard deviation of the underlying normal distribution
-        size : tuple of ints
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3185,8 +3216,9 @@ cdef class RandomState:
         scale : scalar
             Scale, also equals the mode. Should be >= 0.
         size : int or tuple of ints, optional
-            Shape of the output. Default is None, in which case a single
-            value is returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Notes
         -----
@@ -3267,8 +3299,9 @@ cdef class RandomState:
         scale : scalar
             Scale parameter, should be >= 0.
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single value is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3327,8 +3360,6 @@ cdef class RandomState:
             raise ValueError("scale <= 0.0")
         return cont2_array(self.internal_state, rk_wald, size, omean, oscale)
 
-
-
     def triangular(self, left, mode, right, size=None):
         """
         triangular(left, mode, right, size=None)
@@ -3349,8 +3380,9 @@ cdef class RandomState:
         right : scalar
             Upper limit, should be larger than `left`.
         size : int or tuple of ints, optional
-            Output shape. Default is None, in which case a single value is
-            returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3434,9 +3466,10 @@ cdef class RandomState:
                 parameter, >= 0.
         p : float
                 parameter, >= 0 and <=1.
-        size : {tuple, int}
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3543,9 +3576,10 @@ cdef class RandomState:
             Parameter, > 0.
         p : float
             Parameter, >= 0 and <=1.
-        size : int or tuple of ints
-            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3636,8 +3670,9 @@ cdef class RandomState:
         lam : float
             Expectation of interval, should be >= 0.
         size : int or tuple of ints, optional
-            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Notes
         -----
@@ -3711,12 +3746,10 @@ cdef class RandomState:
         ----------
         a : float > 1
             Distribution parameter.
-        size : int or tuple of int, optional
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn; a single integer is equivalent in
-            its result to providing a mono-tuple, i.e., a 1-D array of length
-            *size* is returned.  The default is None, in which case a single
-            scalar is returned.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3803,9 +3836,10 @@ cdef class RandomState:
         ----------
         p : float
             The probability of success of an individual trial.
-        size : tuple of ints
-            Number of values to draw from the distribution.  The output
-            is shaped according to `size`.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3867,9 +3901,10 @@ cdef class RandomState:
         nsample : int or array_like
             Number of items sampled.  Must be at least 1 and at most
             ``ngood + nbad``.
-        size : int or tuple of int
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
@@ -3981,9 +4016,10 @@ cdef class RandomState:
 
         scale : float > 0.
 
-        size : {tuple, int}
+        size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
