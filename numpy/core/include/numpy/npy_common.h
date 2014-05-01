@@ -25,6 +25,16 @@
 #define NPY_GCC_OPT_3
 #endif
 
+/*
+ * mark an argument (starting from 1) that must not be NULL and is not checked
+ * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
+ */
+#ifdef HAVE_ATTRIBUTE_NONNULL
+#define NPY_GCC_NONNULL(n) __attribute__((nonnull(n)))
+#else
+#define NPY_GCC_NONNULL(n)
+#endif
+
 #if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
 #define NPY_HAVE_SSE_INTRINSICS
 #endif
@@ -61,6 +71,20 @@
 	#endif
 #else
         #define NPY_INLINE
+#endif
+
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+  #define NPY_RETURNS_BORROWED_REF \
+    __attribute__((cpychecker_returns_borrowed_ref))
+#else
+  #define NPY_RETURNS_BORROWED_REF
+#endif
+
+#ifdef WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE
+  #define NPY_STEALS_REF_TO_ARG(n) \
+   __attribute__((cpychecker_steals_reference_to_arg(n)))
+#else
+ #define NPY_STEALS_REF_TO_ARG(n)
 #endif
 
 /* 64 bit file position support, also on win-amd64. Ticket #1660 */

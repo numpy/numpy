@@ -36,7 +36,7 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
  * For backward compatibility
  *
  * Cast an array using typecode structure.
- * steals reference to at --- cannot be NULL
+ * steals reference to dtype --- cannot be NULL
  *
  * This function always makes a copy of arr, even if the dtype
  * doesn't change.

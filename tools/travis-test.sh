@@ -24,7 +24,7 @@ if [ -z "$USE_DEBUG" ]; then
 else
   sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
   # windows compilers have this requirement
-  CFLAGS="$sysflags -Werror=declaration-after-statement" $PYTHON setup.py build_ext --inplace
+  CFLAGS="$sysflags -Werror=declaration-after-statement -Werror=nonnull" $PYTHON setup.py build_ext --inplace
 fi
 }
 

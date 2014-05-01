@@ -183,13 +183,11 @@ def do_generate_api(targets, sources):
     doc_file = targets[2]
 
     global_vars = sources[0]
-    global_vars_types = sources[1]
-    scalar_bool_values = sources[2]
-    types_api = sources[3]
-    multiarray_funcs = sources[4]
+    scalar_bool_values = sources[1]
+    types_api = sources[2]
+    multiarray_funcs = sources[3]
 
-    # Remove global_vars_type: not a api dict
-    multiarray_api = sources[:1] + sources[2:]
+    multiarray_api = sources[:]
 
     module_list = []
     extension_list = []
@@ -208,18 +206,22 @@ def do_generate_api(targets, sources):
     multiarray_api_dict = {}
     for f in numpyapi_list:
         name = f.name
-        index = multiarray_funcs[name]
-        multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type,
+        index = multiarray_funcs[name][0]
+        annotations = multiarray_funcs[name][1:]
+        multiarray_api_dict[f.name] = FunctionApi(f.name, index, annotations,
+                                                  f.return_type,
                                                   f.args, api_name)
 
-    for name, index in global_vars.items():
-        type = global_vars_types[name]
+    for name, val in global_vars.items():
+        index, type = val
         multiarray_api_dict[name] = GlobalVarApi(name, index, type, api_name)
 
-    for name, index in scalar_bool_values.items():
+    for name, val in scalar_bool_values.items():
+        index = val[0]
         multiarray_api_dict[name] = BoolValuesApi(name, index, api_name)
 
-    for name, index in types_api.items():
+    for name, val in types_api.items():
+        index = val[0]
         multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):

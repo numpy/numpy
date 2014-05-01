@@ -176,9 +176,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
             moredefs.append((fname2def(f), 1))
 
     for dec, fn in OPTIONAL_GCC_ATTRIBUTES:
-        if config.check_funcs_once([fn],
-                                   decl=dict((('%s %s' % (dec, fn), True),)),
-                                   call=False):
+        if config.check_func(fn, decl='int %s %s(void *);' % (dec, fn),
+                             call=False):
             moredefs.append((fname2def(fn), 1))
 
     # C99 functions: float and long double versions
