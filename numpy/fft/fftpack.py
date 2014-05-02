@@ -53,10 +53,9 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         raise ValueError("Invalid number of FFT data points (%d) specified." % n)
 
     try:
-        wsave = fft_cache[n]
-    except(KeyError):
+        wsave = fft_cache.setdefault(n, []).pop()
+    except (IndexError):
         wsave = init_function(n)
-        fft_cache[n] = wsave
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -77,6 +76,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     r = work_function(a, wsave)
     if axis != -1:
         r = swapaxes(r, axis, -1)
+    fft_cache[n].append(wsave)
     return r
 
 
