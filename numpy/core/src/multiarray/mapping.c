@@ -1646,8 +1646,10 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
             return -1;
         }
         if (PyArray_CopyObject(view, op) < 0) {
+            Py_DECREF(view);
             return -1;
         }
+        Py_DECREF(view);
     }
     return 0;
 }
