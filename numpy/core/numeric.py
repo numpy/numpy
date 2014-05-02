@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import os
 import sys
 import warnings
 import collections
@@ -1074,9 +1075,17 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 # try to import blas optimized dot if available
+envbak = os.environ.copy()
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
+
+    # disables openblas affinity setting of the main thread that limits
+    # python threads or processes to one core
+    if 'OPENBLAS_MAIN_FREE' not in os.environ:
+        os.environ['OPENBLAS_MAIN_FREE'] = '1'
+    if 'GOTOBLAS_MAIN_FREE' not in os.environ:
+        os.environ['GOTOBLAS_MAIN_FREE'] = '1'
     from ._dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     # docstrings are in add_newdocs.py
@@ -1088,6 +1097,10 @@ except ImportError:
         pass
     def restoredot():
         pass
+finally:
+    os.environ.clear()
+    os.environ.update(envbak)
+    del envbak
 
 def tensordot(a, b, axes=2):
     """
