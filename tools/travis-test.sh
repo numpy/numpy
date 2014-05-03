@@ -110,7 +110,13 @@ fi
 
 export PYTHON
 export PIP
-if [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
+if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
+  $PIP install --upgrade pip
+  $PIP install wheel
+  $PYTHON setup.py bdist_wheel
+  $PIP install --pre --upgrade --find-links dist numpy
+  run_test
+elif [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
   setup_base
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
