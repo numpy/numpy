@@ -1193,10 +1193,12 @@ class poly1d(object):
     __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
-        return NX.alltrue(self.coeffs == other.coeffs)
+        if self.coeffs.shape != other.coeffs.shape:
+            return False
+        return (self.coeffs == other.coeffs).all()
 
     def __ne__(self, other):
-        return NX.any(self.coeffs != other.coeffs)
+        return not self.__eq__(other)
 
     def __setattr__(self, key, val):
         raise ValueError("Attributes cannot be changed this way.")

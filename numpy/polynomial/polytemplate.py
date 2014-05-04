@@ -737,7 +737,7 @@ class $name(pu.PolyBase) :
             then a minimal domain that covers the points `x` is chosen.  If
             ``[]`` the default domain ``$domain`` is used. The default
             value is $domain in numpy 1.4.x and ``None`` in later versions.
-            The ``'[]`` value was added in numpy 1.5.0.
+            The ``[]`` value was added in numpy 1.5.0.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
@@ -780,10 +780,10 @@ class $name(pu.PolyBase) :
         """
         if domain is None:
             domain = pu.getdomain(x)
-        elif domain == []:
+        elif type(domain) is list and len(domain) == 0:
             domain = $domain
 
-        if window == []:
+        if type(window) is list and len(window) == 0:
             window = $domain
 
         xnew = pu.mapdomain(x, domain, window)

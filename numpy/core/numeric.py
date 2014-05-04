@@ -2388,9 +2388,11 @@ def array_equiv(a1, a2):
     except:
         return False
     try:
-        return bool(asarray(a1 == a2).all())
-    except ValueError:
+        multiarray.broadcast(a1, a2)
+    except:
         return False
+
+    return bool(asarray(a1 == a2).all())
 
 
 _errdict = {"ignore":ERR_IGNORE,

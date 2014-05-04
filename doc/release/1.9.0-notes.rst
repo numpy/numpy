@@ -353,6 +353,26 @@ considered an input error instead of returning the default.
 The ``rank`` function has been deprecated to avoid confusion with
 ``numpy.linalg.matrix_rank``.
 
+Object array equality comparisons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In the future object array comparisons both `==` and `np.equal` will not
+make use of identity checks anymore. For example:
+
+>>> a = np.array([np.array([1, 2, 3]), 1])
+>>> b = np.array([np.array([1, 2, 3]), 1])
+>>> a == b
+
+will consistently return False (and in the future an error) even if the array
+in `a` and `b` was the same object.
+
+The equality operator `==` will in the future raise errors like `np.equal`
+if broadcasting or element comparisons, etc. fails.
+
+Comparison with `arr == None` will in the future do an elementwise comparison
+instead of just returning False. Code should be using `arr is None`.
+
+All of these changes will give Deprecation- or FutureWarnings at this time.
+
 C-API
 ~~~~~
 

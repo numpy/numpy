@@ -438,6 +438,7 @@ class ABCPolyBase(object):
         res = (isinstance(other, self.__class__) and
                np.all(self.domain == other.domain) and
                np.all(self.window == other.window) and
+               (self.coef.shape == other.coef.shape) and
                np.all(self.coef == other.coef))
         return res
 
@@ -792,7 +793,7 @@ class ABCPolyBase(object):
         """
         if domain is None:
             domain = pu.getdomain(x)
-        elif isinstance(domain, list) and len(domain) == 0:
+        elif type(domain) is list and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -836,7 +837,7 @@ class ABCPolyBase(object):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
-        elif isinstance(domain, list) and len(domain) == 0:
+        elif type(domain) is list and len(domain) == 0:
             domain = cls.domain
 
         if window is None:

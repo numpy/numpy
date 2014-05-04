@@ -86,7 +86,7 @@ class _DeprecationTestCase(object):
             elif not ignore_others:
                 raise AssertionError("expected DeprecationWarning but %s given"
                                                             % warning.category)
-        if num_found != num:
+        if num is not None and num_found != num:
             raise AssertionError("%i warnings found but %i expected"
                                                         % (len(self.log), num))
 
@@ -374,6 +374,110 @@ class TestRankDeprecation(_DeprecationTestCase):
         a = np.arange(10)
         assert_warns(np.VisibleDeprecationWarning, np.rank, a)
 
+
+class TestComparisonDepreactions(_DeprecationTestCase):
+    """This tests the deprecation, for non-elementwise comparison logic.
+    This used to mean that when an error occured during element-wise comparison
+    (i.e. broadcasting) NotImplemented was returned, but also in the comparison
+    itself, False was given instead of the error.
+
+    Also test FutureWarning for the None comparison.
+    """
+
+    message = "elementwise comparison failed; " \
+              "this will raise the error in the future."
+
+    def test_normal_types(self):
+        for op in (operator.eq, operator.ne):
+            # Broadcasting errors:
+            self.assert_deprecated(op, args=(np.zeros(3), []))
+            a = np.zeros(3, dtype='i,i')
+            # (warning is issued a couple of times here)
+            self.assert_deprecated(op, args=(a, a[:-1]), num=None)
+
+            # Element comparison error (numpy array can't be compared).
+            a = np.array([1, np.array([1,2,3])], dtype=object)
+            b = np.array([1, np.array([1,2,3])], dtype=object)
+            self.assert_deprecated(op, args=(a, b), num=None)
+
+
+    def test_string(self):
+        # For two string arrays, strings always raised the broadcasting error:
+        a = np.array(['a', 'b'])
+        b = np.array(['a', 'b', 'c'])
+        assert_raises(ValueError, lambda x, y: x == y, a, b)
+
+        # The empty list is not cast to string, this is only to document
+        # that fact (it likely should be changed). This means that the
+        # following works (and returns False) due to dtype mismatch:
+        a == []
+
+
+    def test_none_comparison(self):
+        # Test comparison of None, which should result in elementwise
+        # comparison in the future. [1, 2] == None should be [False, False].
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_warns(FutureWarning, operator.eq, np.arange(3), None)
+            assert_warns(FutureWarning, operator.ne, np.arange(3), None)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', '', FutureWarning)
+            assert_raises(FutureWarning, operator.eq, np.arange(3), None)
+            assert_raises(FutureWarning, operator.ne, np.arange(3), None)
+
+
+class TestIdentityComparisonDepreactions(_DeprecationTestCase):
+    """This tests the equal and not_equal object ufuncs identity check
+    deprecation. This was due to the usage of PyObject_RichCompareBool.
+
+    This tests that for example for `a = np.array([np.nan], dtype=object)`
+    `a == a` it is warned that False and not `np.nan is np.nan` is returned.
+
+    Should be kept in sync with TestComparisonDepreactions and new tests
+    added when the deprecation is over. Requires only removing of @identity@
+    (and blocks) from the ufunc loops.c.src of the OBJECT comparisons.
+    """
+
+    message = "numpy .* will not check object identity in the future."
+
+    def test_identity_equality_mismatch(self):
+        a = np.array([np.nan], dtype=object)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_warns(FutureWarning, np.equal, a, a)
+            assert_warns(FutureWarning, np.not_equal, a, a)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', '', FutureWarning)
+            assert_raises(FutureWarning, np.equal, a, a)
+            assert_raises(FutureWarning, np.not_equal, a, a)
+            # And the other do not warn:
+            np.less(a, a)
+            np.greater(a, a)
+            np.less_equal(a, a)
+            np.greater_equal(a, a)
+
+
+    def test_comparison_error(self):
+        class FunkyType(object):
+            def __eq__(self, other):
+                raise TypeError("I won't compare")
+            def __ne__(self, other):
+                raise TypeError("I won't compare")
+
+        a = np.array([FunkyType()])
+        self.assert_deprecated(np.equal, args=(a, a))
+        self.assert_deprecated(np.not_equal, args=(a, a))
+
+
+    def test_bool_error(self):
+        # The comparison result cannot be interpreted as a bool
+        a = np.array([np.array([1, 2, 3]), None], dtype=object)
+        self.assert_deprecated(np.equal, args=(a, a))
+        self.assert_deprecated(np.not_equal, args=(a, a))
+        
 
 if __name__ == "__main__":
     run_module_suite()

@@ -2562,18 +2562,71 @@ NPY_NO_EXPORT void
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
  * #OP = EQ, NE, GT, GE, LT, LE#
+ * #identity = NPY_TRUE, NPY_FALSE, -1*4#
  */
 NPY_NO_EXPORT void
 OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
+        int ret;
+        PyObject *ret_obj;
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        int ret = PyObject_RichCompareBool(
-                            in1 ? in1 : Py_None,
-                            in2 ? in2 : Py_None, Py_@OP@);
-        if (ret == -1) {
+
+        in1 = in1 ? in1 : Py_None;
+        in2 = in2 ? in2 : Py_None;
+
+        /*
+         * Do not use RichCompareBool because it includes an identity check
+         * (for == and !=).
+         * This is wrong for elementwise behaviour, since it means
+         * that NaN can be equal to NaN and an array is equal to itself.
+         */
+        ret_obj = PyObject_RichCompare(in1, in2, Py_@OP@);
+        if (ret_obj == NULL) {
+#if @identity@ != -1
+            if (in1 == in2) {
+                PyErr_Clear();
+                if (DEPRECATE("numpy @kind@ will not check object identity "
+                              "in the future. The comparison error will "
+                              "be raised.") < 0) {
+                    return;
+                }
+                *((npy_bool *)op1) = @identity@;
+                continue;
+            }
+#endif
             return;
         }
+        ret = PyObject_IsTrue(ret_obj);
+        if (ret == -1) {
+#if @identity@ != -1
+            if (in1 == in2) {
+                PyErr_Clear();
+                if (DEPRECATE("numpy @kind@ will not check object identity "
+                              "in the future. The error trying to get the "
+                              "boolean value of the comparison result will "
+                              "be raised.") < 0) {
+                    return;
+                }
+                *((npy_bool *)op1) = @identity@;
+                continue;
+            }
+#endif
+            return;
+        }
+#if @identity@ != -1
+        if ((in1 == in2) && ((npy_bool)ret != @identity@)) {
+            if (DEPRECATE_FUTUREWARNING(
+                        "numpy @kind@ will not check object identity "
+                        "in the future. The comparison did not return the "
+                        "same result as suggested by the identity (`is`)) "
+                        "and will change.") < 0) {
+                return;
+            }
+            *((npy_bool *)op1) = @identity@;
+            continue;
+        }
+#endif
         *((npy_bool *)op1) = (npy_bool)ret;
     }
 }
