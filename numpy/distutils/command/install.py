@@ -30,7 +30,7 @@ class install(old_install):
         """
         # Explicit request for old-style install?  Just do it
         if self.old_and_unmanageable or self.single_version_externally_managed:
-            return old_install_mod._install.run(self)
+            return old_install_mod.install.run(self)
 
         # Attempt to detect whether we were called from setup() or by another
         # command.  If we were called by setup(), our caller will be the
@@ -48,7 +48,7 @@ class install(old_install):
             # We weren't called from the command line or setup(), so we
             # should run in backward-compatibility mode to support bdist_*
             # commands.
-            old_install_mod._install.run(self)
+            old_install_mod.install.run(self)
         else:
             self.do_egg_install()
 
