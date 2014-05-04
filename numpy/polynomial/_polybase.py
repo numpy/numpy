@@ -9,6 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 from __future__ import division, absolute_import, print_function
 
 from abc import ABCMeta, abstractmethod, abstractproperty
+from numbers import Number
 
 import numpy as np
 from . import polyutils as pu
@@ -206,6 +207,42 @@ class ABCPolyBase(object):
         """
         return isinstance(other, self.__class__)
 
+    def _get_coefficients(self, other):
+        """Interpret other as polynomial coefficients.
+
+        The `other` argument is checked to see if it is of the same
+        class as self with identical domain and window. If so,
+        return its coefficients, otherwise return `other`.
+
+        .. versionadded:: 1.9.0
+
+        Parameters
+        ----------
+        other : anything
+            Object to be checked.
+
+        Returns
+        -------
+        coef:
+            The coefficients of`other` if it is a compatible instance,
+            of ABCPolyBase, otherwise `other`.
+
+        Raises
+        ------
+        TypeError:
+            When `other` is an incompatible instance of ABCPolyBase.
+
+        """
+        if isinstance(other, ABCPolyBase):
+            if not isinstance(other, self.__class__):
+                raise TypeError("Polynomial types differ")
+            elif not np.all(self.domain == other.domain):
+                raise TypeError("Domains differ")
+            elif not np.all(self.window == other.window):
+                raise TypeError("Windows differ")
+            return other.coef
+        return other
+
     def __init__(self, coef, domain=None, window=None):
         [coef] = pu.as_series([coef], trim=False)
         self.coef = coef
@@ -270,54 +307,33 @@ class ABCPolyBase(object):
         return self
 
     def __add__(self, other):
-        if isinstance(other, ABCPolyBase):
-            if not self.has_sametype(other):
-                raise TypeError("Polynomial types differ")
-            elif not self.has_samedomain(other):
-                raise TypeError("Domains differ")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows differ")
-            else:
-                coef = self._add(self.coef, other.coef)
-        else:
-            try:
-                coef = self._add(self.coef, other)
-            except:
-                return NotImplemented
+        try:
+            othercoef = self._get_coefficients(other)
+            coef = self._add(self.coef, othercoef)
+        except TypeError as e:
+            raise e
+        except:
+            return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __sub__(self, other):
-        if isinstance(other, ABCPolyBase):
-            if not self.has_sametype(other):
-                raise TypeError("Polynomial types differ")
-            elif not self.has_samedomain(other):
-                raise TypeError("Domains differ")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows differ")
-            else:
-                coef = self._sub(self.coef, other.coef)
-        else:
-            try:
-                coef = self._sub(self.coef, other)
-            except:
-                return NotImplemented
+        try:
+            othercoef = self._get_coefficients(other)
+            coef = self._sub(self.coef, othercoef)
+        except TypeError as e:
+            raise e
+        except:
+            return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __mul__(self, other):
-        if isinstance(other, ABCPolyBase):
-            if not self.has_sametype(other):
-                raise TypeError("Polynomial types differ")
-            elif not self.has_samedomain(other):
-                raise TypeError("Domains differ")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows differ")
-            else:
-                coef = self._mul(self.coef, other.coef)
-        else:
-            try:
-                coef = self._mul(self.coef, other)
-            except:
-                return NotImplemented
+        try:
+            othercoef = self._get_coefficients(other)
+            coef = self._mul(self.coef, othercoef)
+        except TypeError as e:
+            raise e
+        except:
+            return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
@@ -325,73 +341,42 @@ class ABCPolyBase(object):
         return self.__floordiv__(other)
 
     def __truediv__(self, other):
-        # there is no true divide if the rhs is not a scalar, although it
+        # there is no true divide if the rhs is not a Number, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
-        if np.isscalar(other):
-            # this might be overly restrictive
-            coef = self.coef/other
-            return self.__class__(coef, self.domain, self.window)
-        else:
-            return NotImplemented
+        if not isinstance(other, Number) or isinstance(other, bool):
+            form = "unsupported types for true division: '%s', '%s'"
+            raise TypeError(form % (type(self), type(other)))
+        return self.__floordiv__(other)
 
     def __floordiv__(self, other):
-        if isinstance(other, ABCPolyBase):
-            if not self.has_sametype(other):
-                raise TypeError("Polynomial types differ")
-            elif not self.has_samedomain(other):
-                raise TypeError("Domains differ")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows differ")
-            else:
-                quo, rem = self._div(self.coef, other.coef)
-        else:
-            try:
-                quo, rem = self._div(self.coef, other)
-            except:
-                return NotImplemented
-        return self.__class__(quo, self.domain, self.window)
+        res = self.__divmod__(other)
+        if res is NotImplemented:
+            return res
+        return res[0]
 
     def __mod__(self, other):
-        if isinstance(other, ABCPolyBase):
-            if not self.has_sametype(other):
-                raise TypeError("Polynomial types differ")
-            elif not self.has_samedomain(other):
-                raise TypeError("Domains differ")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows differ")
-            else:
-                quo, rem = self._div(self.coef, other.coef)
-        else:
-            try:
-                quo, rem = self._div(self.coef, other)
-            except:
-                return NotImplemented
-        return self.__class__(rem, self.domain, self.window)
+        res = self.__divmod__(other)
+        if res is NotImplemented:
+            return res
+        return res[1]
 
     def __divmod__(self, other):
-        if isinstance(other, self.__class__):
-            if not self.has_samedomain(other):
-                raise TypeError("Domains are not equal")
-            elif not self.has_samewindow(other):
-                raise TypeError("Windows are not equal")
-            else:
-                quo, rem = self._div(self.coef, other.coef)
-        else:
-            try:
-                quo, rem = self._div(self.coef, other)
-            except:
-                return NotImplemented
+        try:
+            othercoef = self._get_coefficients(other)
+            quo, rem = self._div(self.coef, othercoef)
+        except (TypeError, ZeroDivisionError) as e:
+            raise e
+        except:
+            return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
 
     def __pow__(self, other):
-        try:
-            coef = self._pow(self.coef, other, maxpower = self.maxpower)
-        except:
-            raise
-        return self.__class__(coef, self.domain, self.window)
+        coef = self._pow(self.coef, other, maxpower = self.maxpower)
+        res = self.__class__(coef, self.domain, self.window)
+        return res
 
     def __radd__(self, other):
         try:
@@ -419,33 +404,27 @@ class ABCPolyBase(object):
         return self.__rfloordiv__(other)
 
     def __rtruediv__(self, other):
-        # there is no true divide if the rhs is not a scalar, although it
-        # could return the first n elements of an infinite series.
-        # It is hard to see where n would come from, though.
-        if len(self.coef) == 1:
-            try:
-                quo, rem = self._div(other, self.coef[0])
-            except:
-                return NotImplemented
-        return self.__class__(quo, self.domain, self.window)
+        # An instance of ABCPolyBase is not considered a
+        # Number.
+        return NotImplemented
 
     def __rfloordiv__(self, other):
-        try:
-            quo, rem = self._div(other, self.coef)
-        except:
-            return NotImplemented
-        return self.__class__(quo, self.domain, self.window)
+        res = self.__rdivmod__(other)
+        if res is NotImplemented:
+            return res
+        return res[0]
 
     def __rmod__(self, other):
-        try:
-            quo, rem = self._div(other, self.coef)
-        except:
-            return NotImplemented
-        return self.__class__(rem, self.domain, self.window)
+        res = self.__rdivmod__(other)
+        if res is NotImplemented:
+            return res
+        return res[1]
 
     def __rdivmod__(self, other):
         try:
             quo, rem = self._div(other, self.coef)
+        except ZeroDivisionError as e:
+            raise e
         except:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -456,10 +435,10 @@ class ABCPolyBase(object):
     # some augmented arithmetic operations could be added here
 
     def __eq__(self, other):
-        res = isinstance(other, self.__class__) and\
-              self.has_samecoef(other) and \
-              self.has_samedomain(other) and\
-              self.has_samewindow(other)
+        res = (isinstance(other, self.__class__) and
+               np.all(self.domain == other.domain) and
+               np.all(self.window == other.window) and
+               np.all(self.coef == other.coef))
         return res
 
     def __ne__(self, other):
@@ -813,7 +792,7 @@ class ABCPolyBase(object):
         """
         if domain is None:
             domain = pu.getdomain(x)
-        elif domain == []:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -857,7 +836,7 @@ class ABCPolyBase(object):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
-        elif domain == []:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
