@@ -108,7 +108,7 @@ def _makearray(a):
     wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
-def isComplexType(t):
+def _isComplexType(t):
     return issubclass(t, complexfloating)
 
 _real_types_map = {single : single,
@@ -142,7 +142,7 @@ def _commonType(*arrays):
     is_complex = False
     for a in arrays:
         if issubclass(a.dtype.type, inexact):
-            if isComplexType(a.dtype.type):
+            if _isComplexType(a.dtype.type):
                 is_complex = True
             rt = _realType(a.dtype.type, default=None)
             if rt is None:
@@ -376,7 +376,7 @@ def solve(a, b):
 
         gufunc = _umath_linalg.solve
 
-    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    signature = 'DD->D' if _isComplexType(t) else 'dd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     r = gufunc(a, b, signature=signature, extobj=extobj)
 
@@ -515,7 +515,7 @@ def inv(a):
         # The inner array is 0x0, the ufunc cannot handle this case
         return wrap(empty_like(a, dtype=result_t))
 
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = 'D->D' if _isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
     return wrap(ainv.astype(result_t))
@@ -599,7 +599,7 @@ def cholesky(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = 'D->D' if _isComplexType(t) else 'd->d'
     return wrap(gufunc(a, signature=signature, extobj=extobj).astype(result_t))
 
 # QR decompostion
@@ -744,7 +744,7 @@ def qr(a, mode='reduced'):
     a = _to_native_byte_order(a)
     mn = min(m, n)
     tau = zeros((mn,), t)
-    if isComplexType(t):
+    if _isComplexType(t):
         lapack_routine = lapack_lite.zgeqrf
         routine_name = 'zgeqrf'
     else:
@@ -787,7 +787,7 @@ def qr(a, mode='reduced'):
         q = empty((n, m), t)
     q[:n] = a
 
-    if isComplexType(t):
+    if _isComplexType(t):
         lapack_routine = lapack_lite.zungqr
         routine_name = 'zungqr'
     else:
@@ -890,10 +890,10 @@ def eigvals(a):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    signature = 'D->D' if isComplexType(t) else 'd->D'
+    signature = 'D->D' if _isComplexType(t) else 'd->D'
     w = _umath_linalg.eigvals(a, signature=signature, extobj=extobj)
 
-    if not isComplexType(t):
+    if not _isComplexType(t):
         if all(w.imag == 0):
             w = w.real
             result_t = _realType(result_t)
@@ -966,7 +966,7 @@ def eigvalsh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    signature = 'D->d' if isComplexType(t) else 'd->d'
+    signature = 'D->d' if _isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t))
 
@@ -1099,10 +1099,10 @@ def eig(a):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    signature = 'D->DD' if isComplexType(t) else 'd->DD'
+    signature = 'D->DD' if _isComplexType(t) else 'd->DD'
     w, vt = _umath_linalg.eig(a, signature=signature, extobj=extobj)
 
-    if not isComplexType(t) and all(w.imag == 0.0):
+    if not _isComplexType(t) and all(w.imag == 0.0):
         w = w.real
         vt = vt.real
         result_t = _realType(result_t)
@@ -1213,7 +1213,7 @@ def eigh(a, UPLO='L'):
     else:
         gufunc = _umath_linalg.eigh_up
 
-    signature = 'D->dD' if isComplexType(t) else 'd->dd'
+    signature = 'D->dD' if _isComplexType(t) else 'd->dd'
     w, vt = gufunc(a, signature=signature, extobj=extobj)
     w = w.astype(_realType(result_t))
     vt = vt.astype(result_t)
@@ -1323,7 +1323,7 @@ def svd(a, full_matrices=1, compute_uv=1):
             else:
                 gufunc = _umath_linalg.svd_n_s
 
-        signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
+        signature = 'D->DdD' if _isComplexType(t) else 'd->ddd'
         u, s, vt = gufunc(a, signature=signature, extobj=extobj)
         u = u.astype(result_t)
         s = s.astype(_realType(result_t))
@@ -1335,7 +1335,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         else:
             gufunc = _umath_linalg.svd_n
 
-        signature = 'D->d' if isComplexType(t) else 'd->d'
+        signature = 'D->d' if _isComplexType(t) else 'd->d'
         s = gufunc(a, signature=signature, extobj=extobj)
         s = s.astype(_realType(result_t))
         return s
@@ -1672,7 +1672,7 @@ def slogdet(a):
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
-    signature = 'D->Dd' if isComplexType(t) else 'd->dd'
+    signature = 'D->Dd' if _isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     return sign.astype(result_t), logdet.astype(real_t)
 
@@ -1725,7 +1725,7 @@ def det(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = 'D->D' if _isComplexType(t) else 'd->d'
     return _umath_linalg.det(a, signature=signature).astype(result_t)
 
 # Linear Least Squares
@@ -1836,7 +1836,7 @@ def lstsq(a, b, rcond=-1):
     s = zeros((min(m, n),), real_t)
     nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
     iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
-    if isComplexType(t):
+    if _isComplexType(t):
         lapack_routine = lapack_lite.zgelsd
         lwork = 1
         rwork = zeros((lwork,), real_t)
@@ -1871,7 +1871,7 @@ def lstsq(a, b, rcond=-1):
     if is_1d:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
-            if isComplexType(t):
+            if _isComplexType(t):
                 resids = array([sum(abs(ravel(bstar)[n:])**2)],
                                dtype=result_real_t)
             else:
@@ -1880,7 +1880,7 @@ def lstsq(a, b, rcond=-1):
     else:
         x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
-            if isComplexType(t):
+            if _isComplexType(t):
                 resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
                     result_real_t)
             else:
