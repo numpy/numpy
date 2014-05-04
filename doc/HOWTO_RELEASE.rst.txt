@@ -245,9 +245,10 @@ removed.
 Check the C API version number
 ------------------------------
 The C API version number is recorded in core/code_generators/cversions.txt.
-Before every release this number should be updated by running
-core/code_generators/cversions.py, and main changes noted in a comment.  If
-this is done correctly, compiling the release should not give a warning "API
+Before every release this number should be updated by running the script
+core/cversions.py to get the current hash and updating its value in
+cversions.txt, together with a comment, if its value has changed.  If this
+is done correctly, compiling the release should not give a warning "API
 mismatch detected ..." at the beginning of the build.
 
 The C ABI version number should only be updated for a major release.
