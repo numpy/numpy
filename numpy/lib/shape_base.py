@@ -287,10 +287,6 @@ def column_stack(tup):
     --------
     hstack, vstack, concatenate
 
-    Notes
-    -----
-    This function is equivalent to ``np.vstack(tup).T``.
-
     Examples
     --------
     >>> a = np.array((1,2,3))
