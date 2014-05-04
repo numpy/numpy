@@ -89,13 +89,17 @@ npy_alloc_cache(npy_uintp sz)
 static void *
 npy_alloc_cache_zero(npy_uintp sz)
 {
+    void * p;
+    NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
-        void * p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache,
-                                    &PyDataMem_NEW);
+        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
         memset(p, 0, sz);
         return p;
     }
-    return PyDataMem_NEW_ZEROED(sz, 1);
+    NPY_BEGIN_THREADS;
+    p = PyDataMem_NEW_ZEROED(sz, 1);
+    NPY_END_THREADS;
+    return p;
 }
 
 void
