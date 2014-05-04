@@ -25,7 +25,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast
     )
-from numpy.lib import triu, asfarray
+from numpy.lib import triu, asfarray, iscomplexobj
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
@@ -2054,7 +2054,7 @@ def norm(x, ord=None, axis=None):
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
         x = x.ravel(order='K')
-        if isComplexType(x.dtype.type):
+        if iscomplexobj(x):
             sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
         else:
             sqnorm = dot(x, x)
@@ -2093,7 +2093,7 @@ def norm(x, ord=None, axis=None):
                 # because it will downcast to float64.
                 absx = abs(x)
             else:
-                absx = x if isComplexType(x.dtype.type) else asfarray(x)
+                absx = x if iscomplexobj(x) else asfarray(x)
                 if absx.dtype is x.dtype:
                     absx = abs(absx)
                 else:
