@@ -1,3 +1,5 @@
+#include <numpy/npy_common.h>
+
 #ifndef _NPY_OS_H_
 #define _NPY_OS_H_
 

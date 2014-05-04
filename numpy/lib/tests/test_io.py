@@ -167,6 +167,15 @@ class RoundtripTest(object):
         self.check_roundtrips(a)
 
 
+    @np.testing.dec.slow
+    def test_large_array(self):
+        '''
+           Test IO functions when the arrays are massive.
+           Added for Issue #2806
+        '''
+        a = np.random.randn(300000000) * 10
+        self.roundtrip(a, file_on_disk=True)
+
 class TestSaveLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)

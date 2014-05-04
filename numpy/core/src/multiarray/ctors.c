@@ -14,6 +14,7 @@
 #include "npy_pycompat.h"
 
 #include "common.h"
+#include "numpyos.h"
 #include "ctors.h"
 #include "convert_datatype.h"
 #include "shape.h"
@@ -3176,7 +3177,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         return NULL;
     }
     NPY_BEGIN_ALLOW_THREADS;
-    *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
+    *nread = NumPyOS_fread(PyArray_DATA(r), dtype->elsize, num, fp);
     NPY_END_ALLOW_THREADS;
     return r;
 }

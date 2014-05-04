@@ -25,4 +25,10 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value);
 NPY_NO_EXPORT int
 NumPyOS_ascii_isspace(char c);
 
+NPY_NO_EXPORT size_t
+NumPyOS_fread( void * ptr, size_t size, size_t count, FILE * stream );
+
+NPY_NO_EXPORT size_t
+NumPyOS_fwrite( const void * ptr, size_t size, size_t count, FILE * stream );
+
 #endif
