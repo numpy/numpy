@@ -7018,8 +7018,6 @@ def asarray(a, dtype=None, order=None):
     <class 'numpy.ma.core.MaskedArray'>
 
     """
-    if dtype is None and type(a) is MaskedArray:
-        return a
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=False)
 
 def asanyarray(a, dtype=None):
@@ -7065,8 +7063,6 @@ def asanyarray(a, dtype=None):
     <class 'numpy.ma.core.MaskedArray'>
 
     """
-    if dtype is None and isinstance(a, MaskedArray):
-        return a
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
 
 
