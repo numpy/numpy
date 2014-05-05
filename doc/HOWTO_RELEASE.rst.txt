@@ -244,13 +244,42 @@ removed.
 
 Check the C API version number
 ------------------------------
-The C API version number is recorded in core/code_generators/cversions.txt.
-Before every release this number should be updated by running
-core/code_generators/cversions.py, and main changes noted in a comment.  If
-this is done correctly, compiling the release should not give a warning "API
-mismatch detected ..." at the beginning of the build.
+The C API version needs to be tracked in three places
 
-The C ABI version number should only be updated for a major release.
+- numpy/core/setup_common.py
+- numpy/core/code_generators/cversions.txt
+- numpy/core/include/numpy/numpyconfig.h
+
+There are three steps to the process.
+
+1. If the API has changed, increment the C_API_VERSION in setup_common.py. The
+   API is unchanged only if any code compiled against the current API will be
+   backward compatible with the last released NumPy version. Any changes to
+   C structures or additions to the public interface will make the new API
+   not backward compatible.
+
+2. If the C_API_VERSION in the first step has changed, or if the hash of
+   the API has changed, the cversions.txt file needs to be updated. To
+   check the hash, run the script numpy/core/cversions.py and note the api hash
+   that is printed. If that hash does not match the last hash in cversions.txt
+   the hash has changed. Using both the appropriate C_API_VERSION and hash,
+   add a new entry to cversions.txt. If the API version was not changed, but
+   the hash differs, you will need to comment out the previous entry for that
+   API version. For instance, in NumPy 1.9 annotations were added, which
+   changed the hash, but the API was the same as in 1.8. The hash serves as a
+   check for API changes, but it is not definitive.
+
+   If steps 1 and 2 are done correctly, compiling the release should not give
+   a warning "API mismatch detect at the beginning of the build.
+
+3. The numpy/core/include/numpy/numpyconfig.h will need a new
+   NPY_X_Y_API_VERSION macro, where X and Y are the major and minor version
+   numbers of the release. The value given to that macro only needs to be
+   increased from the previous version if some of the functions or macros in
+   the include files were deprecated.
+
+The C ABI version number in numpy/core/setup_common.py should only be
+updated for a major release.
 
 Check the release notes
 -----------------------
@@ -263,8 +292,8 @@ following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-Also make sure that as soon as the branch is made, there is a new release notes
-file in trunk for the next release.
+Also make sure that as soon as the branch is made, there is a new release
+notes file in trunk for the next release.
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
