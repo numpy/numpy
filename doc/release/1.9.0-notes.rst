@@ -112,6 +112,14 @@ performed, and hence the sequence location will be different after a
 call to distribution.c::rk_binomial_btpe. Any tests which rely on the RNG
 being in a known state should be checked and/or updated as a result.
 
+Random seed enforced to be a 32 bit unsigned integer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.random.seed`` and ``np.random.RandomState`` now throw a ``ValueError``
+if the seed cannot safely be converted to 32 bit unsigned integers.
+Applications that now fail can be fixed by masking the higher 32 bit values to
+zero: ``seed = seed & 0xFFFFFFFF``. This is what is done silently in older
+versions so the random stream remains the same.
+
 New Features
 ============
 

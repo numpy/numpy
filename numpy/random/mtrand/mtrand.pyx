@@ -628,6 +628,7 @@ cdef class RandomState:
         ----------
         seed : int or array_like, optional
             Seed for `RandomState`.
+            Must be convertable to 32 bit unsigned integers.
 
         See Also
         --------
@@ -640,9 +641,15 @@ cdef class RandomState:
             if seed is None:
                 errcode = rk_randomseed(self.internal_state)
             else:
-                rk_seed(operator.index(seed), self.internal_state)
+                idx = operator.index(seed)
+                if idx > int(2**32 - 1) or idx < 0:
+                    raise ValueError("Seed must be between 0 and 4294967295")
+                rk_seed(idx, self.internal_state)
         except TypeError:
-            obj = <ndarray>PyArray_ContiguousFromObject(seed, NPY_LONG, 1, 1)
+            obj = np.asarray(seed).astype(np.int64, casting='safe')
+            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
+                raise ValueError("Seed must be between 0 and 4294967295")
+            obj = obj.astype('L', casting='unsafe')
             init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
                 PyArray_DIM(obj, 0))
 
