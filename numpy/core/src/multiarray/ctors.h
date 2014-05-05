@@ -79,10 +79,5 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
-NPY_NO_EXPORT void
-npy_free_cache(void * p, npy_uintp sd);
-
-NPY_NO_EXPORT void
-npy_free_cache_dim(void * p, npy_uintp sd);
 
 #endif

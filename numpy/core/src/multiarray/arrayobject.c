@@ -50,6 +50,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "sequence.h"
 #include "buffer.h"
 #include "array_assign.h"
+#include "alloc.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)

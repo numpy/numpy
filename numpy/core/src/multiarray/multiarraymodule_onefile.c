@@ -21,6 +21,7 @@
 
 #include "descriptor.c"
 #include "flagsobject.c"
+#include "alloc.c"
 #include "ctors.c"
 #include "iterators.c"
 #include "mapping.c"

@@ -444,6 +444,7 @@ def pre_build(context):
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
             sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
+                pjoin('src', 'multiarray', 'alloc.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
                 pjoin('src', 'multiarray', 'array_assign.c'),
                 pjoin('src', 'multiarray', 'array_assign_array.c'),
