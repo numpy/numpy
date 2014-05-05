@@ -2714,6 +2714,7 @@ finish:
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
+ * #isbool = 1, 0*19#
  * #isfloat = 0*11, 1*7, 0*2#
  * #isnan = nop*11, npy_half_isnan, npy_isnan*6, nop*2#
  * #le = _LESS_THAN_OR_EQUAL*11, npy_half_le, _LESS_THAN_OR_EQUAL*8#
@@ -2741,6 +2742,12 @@ static int
 #if @iscomplex@
     if (@isnan@(mp_im)) {
         /* nan encountered; it's maximal */
+        return 0;
+    }
+#endif
+#if @isbool@
+    if (mp) {
+        /* True encountered; it's maximal */
         return 0;
     }
 #endif
@@ -2772,6 +2779,12 @@ static int
                 break;
             }
 #endif
+#if @isbool@
+            if (mp) {
+                /* True encountered; it's maximal */
+                break;
+            }
+#endif
         }
 #endif
     }
@@ -2794,6 +2807,7 @@ static int
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
+ * #isbool = 1, 0*19#
  * #isfloat = 0*11, 1*7, 0*2#
  * #isnan = nop*11, npy_half_isnan, npy_isnan*6, nop*2#
  * #le = _LESS_THAN_OR_EQUAL*11, npy_half_le, _LESS_THAN_OR_EQUAL*8#
@@ -2824,6 +2838,12 @@ static int
         return 0;
     }
 #endif
+#if @isbool@
+    if (!mp) {
+        /* False encountered; it's minimal */
+        return 0;
+    }
+#endif
 
     for (i = 1; i < n; i++) {
         @incr@;
@@ -2849,6 +2869,12 @@ static int
 #if @isfloat@
             if (@isnan@(mp)) {
                 /* nan encountered, it's minimal */
+                break;
+            }
+#endif
+#if @isbool@
+            if (!mp) {
+                /* False encountered; it's minimal */
                 break;
             }
 #endif

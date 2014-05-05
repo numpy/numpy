@@ -2059,6 +2059,11 @@ class TestArgmax(TestCase):
         ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
           timedelta(days=10, seconds=43)], 2),
 
+        ([False, False, False, False, True], 4),
+        ([False, False, False, True, False], 3),
+        ([True, False, False, False, False], 0),
+        ([True, False, True, False, False], 0),
+
         # Can't reduce a "flexible type"
         #(['a', 'z', 'aa', 'zz'], 3),
         #(['zz', 'a', 'aa', 'a'], 0),
@@ -2144,6 +2149,11 @@ class TestArgmin(TestCase):
           timedelta(days=5, seconds=14)], 0),
         ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
           timedelta(days=10, seconds=43)], 1),
+
+        ([True, True, True, True, False], 4),
+        ([True, True, True, False, True], 3),
+        ([False, True, True, True, True], 0),
+        ([False, True, False, True, True], 0),
 
         # Can't reduce a "flexible type"
         #(['a', 'z', 'aa', 'zz'], 0),
