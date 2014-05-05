@@ -203,12 +203,6 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-
-        /*
-         * Temporary internal definition only, will be removed in upcoming
-         * release, see below
-         * */
-        NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND = 100,
 } NPY_CASTING;
 
 typedef enum {

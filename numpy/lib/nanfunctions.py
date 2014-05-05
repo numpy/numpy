@@ -35,6 +35,10 @@ def _replace_nan(a, val):
     marking the locations where NaNs were present. If `a` is not of
     inexact type, do nothing and return `a` together with a mask of None.
 
+    Note that scalars will end up as array scalars, which is important
+    for using the result as the value of the out argument in some
+    operations.
+
     Parameters
     ----------
     a : array-like
@@ -850,7 +854,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         avg = _divide_by_count(avg, cnt)
 
         # Compute squared deviation from mean.
-        arr -= avg
+        np.subtract(arr, avg, out=arr, casting='unsafe')
         arr = _copyto(arr, 0, mask)
         if issubclass(arr.dtype.type, np.complexfloating):
             sqr = np.multiply(arr, arr.conj(), out=arr).real
