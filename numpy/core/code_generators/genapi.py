@@ -23,7 +23,8 @@ from os.path import join
 __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
-API_FILES = [join('multiarray', 'array_assign_array.c'),
+API_FILES = [join('multiarray', 'alloc.c'),
+             join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'array_assign_scalar.c'),
              join('multiarray', 'arrayobject.c'),
              join('multiarray', 'arraytypes.c.src'),

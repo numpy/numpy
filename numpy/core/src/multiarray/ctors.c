@@ -26,6 +26,7 @@
 #include "array_assign.h"
 #include "mapping.h" /* for array_item_asarray */
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
+#include "alloc.h"
 #include <assert.h>
 
 /*
@@ -886,15 +887,12 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     int i;
     size_t sd;
     npy_intp size;
-    assert(dims != NULL || (nd == 0));
 
     if (descr->subarray) {
         PyObject *ret;
         npy_intp newdims[2*NPY_MAXDIMS];
         npy_intp *newstrides = NULL;
-        if (nd > 0) {
-            memcpy(newdims, dims, nd * sizeof(npy_intp));
-        }
+        memcpy(newdims, dims, nd*sizeof(npy_intp));
         if (strides) {
             newstrides = newdims + NPY_MAXDIMS;
             memcpy(newstrides, strides, nd*sizeof(npy_intp));
@@ -994,7 +992,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->weakreflist = (PyObject *)NULL;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(3*nd);
+        fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
             PyErr_NoMemory();
             goto fail;
@@ -1034,10 +1032,10 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            data = PyDataMem_NEW_ZEROED(sd, 1);
+            data = npy_alloc_cache_zero(sd);
         }
         else {
-            data = PyDataMem_NEW(sd);
+            data = npy_alloc_cache(sd);
         }
         if (data == NULL) {
             PyErr_NoMemory();

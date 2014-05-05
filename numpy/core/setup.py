@@ -792,6 +792,7 @@ def configuration(parent_package='',top_path=None):
             ] + npysort_sources + npymath_sources
 
     multiarray_src = [
+            join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_assign.c'),

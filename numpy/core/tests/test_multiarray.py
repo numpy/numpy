@@ -3990,7 +3990,8 @@ class TestMemEventHook(TestCase):
         # multiarray/multiarray_tests.c.src
         test_pydatamem_seteventhook_start()
         # force an allocation and free of a numpy array
-        a = np.zeros(10)
+        # needs to be larger then limit of small memory cacher in ctors.c
+        a = np.zeros(1000)
         del a
         test_pydatamem_seteventhook_end()
 
