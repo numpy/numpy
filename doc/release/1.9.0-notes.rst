@@ -20,18 +20,21 @@ Dropped Support
 Future Changes
 ==============
 
-* The numpy/polynomial/polytemplate.py file will be removed in 1.10.0.
+* The numpy/polynomial/polytemplate.py file will be removed in NumPy 1.10.0.
 * Default casting for inplace operations will change to 'same_kind' in
-  1.10.0. This will certainly break some code that is currently ignoring the
-  warning.
+  Numpy 1.10.0. This will certainly break some code that is currently
+  ignoring the warning.
 * Relaxed stride checking will be the default in 1.10.0
+* String version checks will break because, e.g., '1.9' > '1.10' is True.
+* The diagonal and diag functions will return writeable views in 1.10.0
 
 Compatibility notes
 ===================
 
 The diagonal and diag functions return readonly views.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In 1.8 they returned readonly copies. In 1.10 they will return writeable
+In NumPy 1.8, the diagonal and diag functions returned readonly copies, in
+NumPy 1.9 they return readonly views, and in 1.10 they will return writeable
 views.
 
 Special scalar float values don't cause upcast to double anymore
