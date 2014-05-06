@@ -10,6 +10,7 @@ Highlights
 
 Dropped Support
 ===============
+* The polytemplate.py file has been removed.
 
 
 Future Changes
