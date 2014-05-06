@@ -1,14 +1,22 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_array_equal, assert_array_almost_equal
-import threading, Queue
+from numpy.testing import TestCase, run_module_suite, assert_array_almost_equal
+from numpy.testing import assert_array_equal
+import threading
+import sys
+if sys.version_info[0] >= 3:
+    import queue
+else:
+    import Queue as queue
+
 
 def fft1(x):
     L = len(x)
     phase = -2j*np.pi*(np.arange(L)/float(L))
     phase = np.arange(L).reshape(-1, 1) * phase
     return np.sum(x*np.exp(phase), axis=1)
+
 
 class TestFFTShift(TestCase):
 
@@ -25,23 +33,24 @@ class TestFFT1D(TestCase):
 
 
 class TestFFTThreadSafe(TestCase):
-    threads = 32
+    threads = 16
     input_shape = (1000, 1000)
 
     def _test_mtsame(self, func, *args):
         def worker(args, q):
             q.put(func(*args))
 
-        q = Queue.Queue()
+        q = queue.Queue()
         expected = func(*args)
 
         # Spin off a bunch of threads to call the same function simultaneously
-        for i in xrange(self.threads):
+        for i in range(self.threads):
             threading.Thread(target=worker, args=(args, q)).start()
 
         # Make sure all threads returned the correct value
-        for i in xrange(self.threads):
-            assert_array_equal(q.get(), expected, 'Function returned wrong value in multithreaded context')
+        for i in range(self.threads):
+            assert_array_equal(q.get(timeout=5), expected,
+                'Function returned wrong value in multithreaded context')
 
     def test_fft(self):
         a = np.ones(self.input_shape) * 1+0j
