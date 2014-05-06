@@ -419,6 +419,10 @@ class NoseTester(object):
             warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
             warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
             warnings.filterwarnings("ignore", category=FutureWarning)
+            # Filter out boolean '-' deprecation messages. This allows
+            # older versions of scipy to test without a flood of messages.
+            warnings.filterwarnings("ignore", message=".*boolean negative.*")
+            warnings.filterwarnings("ignore", message=".*boolean subtract.*")
 
             from .noseclasses import NumpyTestProgram
 
