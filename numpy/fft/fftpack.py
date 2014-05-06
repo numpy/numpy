@@ -53,6 +53,9 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         raise ValueError("Invalid number of FFT data points (%d) specified." % n)
 
     try:
+        # Thread-safety note: We rely on list.pop() here to atomically
+        # retrieve-and-remove a wsave from the cache.  This ensures that no
+        # other thread can get the same wsave while we're using it.
         wsave = fft_cache.setdefault(n, []).pop()
     except (IndexError):
         wsave = init_function(n)
@@ -76,7 +79,12 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     r = work_function(a, wsave)
     if axis != -1:
         r = swapaxes(r, axis, -1)
+
+    # As soon as we put wsave back into the cache, another thread could pick it
+    # up and start using it, so we must not do this until after we're
+    # completely done using it ourselves.
     fft_cache[n].append(wsave)
+
     return r
 
 
