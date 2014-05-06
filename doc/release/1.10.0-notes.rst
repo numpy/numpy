@@ -19,6 +19,7 @@ Future Changes
 
 Compatibility notes
 ===================
+NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
 
 New Features
