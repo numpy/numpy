@@ -767,7 +767,7 @@ def argwhere(a):
            [1, 2]])
 
     """
-    return transpose(asanyarray(a).nonzero())
+    return transpose(nonzero(a))
 
 def flatnonzero(a):
     """
