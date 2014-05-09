@@ -180,6 +180,11 @@ def check_math_capabilities(config, moredefs, mathlibs):
                              call=False):
             moredefs.append((fname2def(fn), 1))
 
+    for fn in ("__thread", "__declspec(thread)"):
+        if config.check_func(fn, decl='int %s a;' % (fn), call=False):
+            m = fn.replace("(", "_").replace(")", "_")
+            moredefs.append((fname2def(m), 1))
+
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
     check_funcs(C99_FUNCS_EXTENDED)

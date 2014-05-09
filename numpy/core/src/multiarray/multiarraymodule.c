@@ -20,6 +20,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -3539,7 +3540,8 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 #ifndef __NPY_PRIVATE_NO_SIGNAL
 
-NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
+static NPY_TLS int sigint_buf_init = 0;
+static NPY_TLS NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
 
 /*NUMPY_API
  */
@@ -3547,7 +3549,17 @@ NPY_NO_EXPORT void
 _PyArray_SigintHandler(int signum)
 {
     PyOS_setsig(signum, SIG_IGN);
-    NPY_SIGLONGJMP(_NPY_SIGINT_BUF, signum);
+    /*
+     * jump buffer may be unitialized as SIGINT allowing functions are usually
+     * run in other threads than the master thread that receives the signal
+     */
+    if (sigint_buf_init > 0) {
+        NPY_SIGLONGJMP(_NPY_SIGINT_BUF, signum);
+    }
+    /*
+     * sending SIGINT to the worker threads to cancel them is job of the
+     * application
+     */
 }
 
 /*NUMPY_API
@@ -3555,6 +3567,7 @@ _PyArray_SigintHandler(int signum)
 NPY_NO_EXPORT void*
 _PyArray_GetSigintBuf(void)
 {
+    sigint_buf_init = 1;
     return (void *)&_NPY_SIGINT_BUF;
 }
 
