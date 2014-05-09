@@ -106,7 +106,7 @@ code has many advantages, among which are:
 
 - vectorization results in more "Pythonic" code (without
   vectorization, our code would still be littered with inefficient and
-  difficult to read ``for`` loops.
+  difficult to read ``for`` loops)
 
 Broadcasting is the term used to describe the implicit
 element-by-element behavior of operations; generally speaking, in
@@ -122,7 +122,7 @@ unambiguous (for detailed "rules" of broadcasting see
 
 NumPy fully supports an object-oriented approach, starting, once
 again, with `ndarray`.  For example, `ndarray` is a class, possessing
-numerous methods and attributes.  Many, of it's methods mirror
-functions in the outer-most NumPy namespace, giving the programmer has
+numerous methods and attributes.  Many of it's methods mirror
+functions in the outer-most NumPy namespace, giving the programmer
 complete freedom to code in whichever paradigm she prefers and/or
 which seems most appropriate to the task at hand.
