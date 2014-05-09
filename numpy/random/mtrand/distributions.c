@@ -323,23 +323,20 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     F = 1.0;
     if (m < y)
     {
-        for (i=m; i<=y; i++)
+        for (i=m+1; i<=y; i++)
         {
             F *= (a/i - s);
         }
     }
     else if (m > y)
     {
-        for (i=y; i<=m; i++)
+        for (i=y+1; i<=m; i++)
         {
             F /= (a/i - s);
         }
     }
-    else
-    {
-        if (v > F) goto Step10;
-        goto Step60;
-    }
+    if (v > F) goto Step10;
+    goto Step60;
 
     Step52:
     rho = (k/(nrq))*((k*(k/3.0 + 0.625) + 0.16666666666666666)/nrq + 0.5);

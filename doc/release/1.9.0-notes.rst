@@ -104,6 +104,14 @@ base class ABCPolyBase. Strictly speaking, there should be a deprecation
 involved, but no external code making use of the old baseclass could be
 found.
 
+Using numpy.random.binomial may change the RNG state vs. numpy < 1.9
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A bug in one of the algorithms to generate a binomial random variate has
+been fixed. This change will likely alter the number of random draws
+performed, and hence the sequence location will be different after a
+call to distribution.c::rk_binomial_btpe. Any tests which rely on the RNG
+being in a known state should be checked and/or updated as a result.
+
 New Features
 ============
 
