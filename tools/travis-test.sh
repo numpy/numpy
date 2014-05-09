@@ -39,6 +39,7 @@ setup_chroot()
   sudo mkdir -p $DIR
   sudo mount -t tmpfs -o size=4G tmpfs $DIR
   set -u
+  sudo apt-get update
   sudo apt-get -qq -y --force-yes install debootstrap eatmydata
   sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
@@ -103,7 +104,7 @@ PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
 if [ -n "$USE_DEBUG" ]; then
-  sudo apt-get update # 06.03.2014, temporary until travis boxes are resynced
+  sudo apt-get update
   sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
   PYTHON=python3-dbg
 fi
