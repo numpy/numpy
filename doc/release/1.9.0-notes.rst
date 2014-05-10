@@ -331,6 +331,12 @@ in either an error being raised, or wrong results computed.
 Improvements
 ============
 
+Better numerical stability for sum in some cases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pairwise summation is now used in the sum method, but only along the fast
+axis and for groups of the values <= 8192 in length. This should also
+improve the accuracy of var and std in some common cases.
+
 Percentile implemented in terms of ``np.partition``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``np.percentile`` has been implemented in terms of ``np.partition`` which
