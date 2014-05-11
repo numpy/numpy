@@ -808,27 +808,29 @@ class TestMaskedArrayArithmetic(TestCase):
 
     def test_count_func(self):
         # Tests count
-        ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
-        ott1= array([0., 1., 2., 3.])
-        if sys.version_info[0] >= 3:
-            self.assertTrue(isinstance(count(ott), np.integer))
-        else:
-            self.assertTrue(isinstance(count(ott), int))
-        assert_equal(3, count(ott))
         assert_equal(1, count(1))
         assert_equal(0, array(1, mask=[1]))
+
+        ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
+        res = count(ott)
+        self.assertTrue(res.dtype.type is np.intp)
+        assert_equal(3, res)
+        
         ott = ott.reshape((2, 2))
-        assert_(isinstance(count(ott, 0), ndarray))
-        if sys.version_info[0] >= 3:
-            assert_(isinstance(count(ott), np.integer))
-        else:
-            assert_(isinstance(count(ott), int))
-        assert_equal(3, count(ott))
-        assert_(getmask(count(ott, 0)) is nomask)
-        assert_equal([1, 2], count(ott, 0))
-        assert_equal(type(count(ott, 0)), type(count(ott1, 0)))
-        assert_equal(count(ott, 0).dtype, count(ott1, 0).dtype)
-        assert_raises(IndexError, ott1.count, 1)
+        res = count(ott)
+        assert_(res.dtype.type is np.intp)
+        assert_equal(3, res)
+        res = count(ott, 0)
+        assert_(isinstance(res, ndarray))
+        assert_equal([1, 2], res)
+        assert_(getmask(res) is nomask)
+
+        ott= array([0., 1., 2., 3.])
+        res = count(ott, 0)
+        assert_(isinstance(res, ndarray))
+        assert_(res.dtype.type is np.intp)
+
+        assert_raises(IndexError, ott.count, 1)
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
