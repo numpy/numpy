@@ -454,10 +454,11 @@ class TestIdentityComparisonDepreactions(_DeprecationTestCase):
             assert_raises(FutureWarning, np.equal, a, a)
             assert_raises(FutureWarning, np.not_equal, a, a)
             # And the other do not warn:
-            np.less(a, a)
-            np.greater(a, a)
-            np.less_equal(a, a)
-            np.greater_equal(a, a)
+            with np.errstate(invalid='ignore'):
+                np.less(a, a)
+                np.greater(a, a)
+                np.less_equal(a, a)
+                np.greater_equal(a, a)
 
 
     def test_comparison_error(self):
@@ -477,7 +478,7 @@ class TestIdentityComparisonDepreactions(_DeprecationTestCase):
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
         self.assert_deprecated(np.equal, args=(a, a))
         self.assert_deprecated(np.not_equal, args=(a, a))
-        
+
 
 if __name__ == "__main__":
     run_module_suite()
