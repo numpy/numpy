@@ -93,7 +93,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array references or is referenced\n"\
+                    "cannot resize an array that "\
+                    "references or is referenced\n"\
                     "by another array in this way.  Use the resize function");
             return NULL;
         }
