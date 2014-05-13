@@ -6,6 +6,7 @@ python:
   - 2.7
   - 3.2
   - 3.3
+  - 3.4
 matrix:
   include:
     - python: 3.3
@@ -35,7 +36,7 @@ before_install:
   # pip install coverage
   - python -V
   - pip install --upgrade pip setuptools
-  - pip install --find-links http://wheels.astropy.org/ --find-links http://wheels2.astropy.org/ --use-wheel Cython
+  - pip install --find-links https://nipy.bic.berkeley.edu/scipy_installers/travis --use-wheel Cython
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 
