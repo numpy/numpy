@@ -105,6 +105,31 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 
 /**end repeat**/
 
+static npy_longlong
+npy_strtoll(const char *str, char **endptr, int base)
+{
+#if defined HAVE_STRTOLL
+    return strtoll(str, endptr, base);
+#elif defined _MSC_VER
+    return _strtoi64(str, endptr, base);
+#else
+    /* ok on 64 bit posix */
+    return PyOS_strtol(str, endptr, base);
+#endif
+}
+
+static npy_ulonglong
+npy_strtoull(const char *str, char **endptr, int base)
+{
+#if defined HAVE_STRTOULL
+    return strtoull(str, endptr, base);
+#elif defined _MSC_VER
+    return _strtoui64(str, endptr, base);
+#else
+    /* ok on 64 bit posix */
+    return PyOS_strtoul(str, endptr, base);
+#endif
+}
 
 /*
  *****************************************************************************
@@ -1506,8 +1531,10 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_datetime, npy_timedelta#
- * #func = (l, ul)*5, l, l#
- * #btype = (npy_long, npy_ulong)*5, npy_long, npy_long#
+ * #func = (PyOS_strtol, PyOS_strtoul)*4, npy_strtoll, npy_strtoull,
+ *         npy_strtoll*2#
+ * #btype = (npy_long, npy_ulong)*4, npy_longlong, npy_ulonglong,
+ *          npy_longlong*2#
  */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr,
@@ -1515,7 +1542,7 @@ static int
 {
     @btype@ result;
 
-    result = PyOS_strto@func@(str, endptr, 10);
+    result = @func@(str, endptr, 10);
     *ip = (@type@) result;
     return 0;
 }
