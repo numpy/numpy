@@ -1498,6 +1498,18 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  *****************************************************************************
  */
 
+static long long
+PyOS_strtoll(const char *str, char **endptr, int base)
+{
+        return strtoll(str, endptr, base);
+}
+
+static unsigned long long
+PyOS_strtoull(const char *str, char **endptr, int base)
+{
+        return strtoull(str, endptr, base);
+}
+
 
 /**begin repeat
  * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
@@ -1506,8 +1518,9 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_datetime, npy_timedelta#
- * #func = (l, ul)*5, l, l#
- * #btype = (npy_long, npy_ulong)*5, npy_long, npy_long#
+ * #func = (l, ul)*4, ll, ull, l, l#
+ * #btype = (npy_long, npy_ulong)*4, npy_longlong, npy_ulonglong,
+ *          npy_long, npy_long#
  */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr,
