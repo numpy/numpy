@@ -1212,11 +1212,15 @@ class TestMethods(TestCase):
                 dt = 'M8[D]'
             if dt == '?':
                 a = np.array([1, 0], dtype=dt)
-                s = [1, 0]
+                # We want the sorter array to be of a type that is different
+                # from np.intp in all platforms, to check for #4698
+                s = np.array([1, 0], dtype=np.int16)
                 out = np.array([1, 0])
             else:
                 a = np.array([3, 4, 1, 2, 0], dtype=dt)
-                s = [4, 2, 3, 0, 1]
+                # We want the sorter array to be of a type that is different
+                # from np.intp in all platforms, to check for #4698
+                s = np.array([4, 2, 3, 0, 1], dtype=np.int16)
                 out = np.array([3, 4, 1, 2, 0], dtype=np.intp)
             b = a.searchsorted(a, 'l', s)
             assert_equal(b, out)

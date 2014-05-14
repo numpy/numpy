@@ -2030,12 +2030,12 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         error = argbinsearch((const char *)PyArray_DATA(ap1),
                              (const char *)PyArray_DATA(ap2),
-                             (const char *)PyArray_DATA(ap3),
+                             (const char *)PyArray_DATA(sorter),
                              (char *)PyArray_DATA(ret),
                              PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                              PyArray_STRIDES(ap1)[0],
                              PyArray_DESCR(ap2)->elsize,
-                             PyArray_STRIDES(ap3)[0], NPY_SIZEOF_INTP, ap2);
+                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
         if (error < 0) {
             PyErr_SetString(PyExc_ValueError,
