@@ -1993,6 +1993,16 @@ class TestRegression(TestCase):
         assert_(not op.eq(lhs, rhs))
         assert_(op.ne(lhs, rhs))
 
+    def test_richcompare_scalar_and_subclass(self):
+        # gh-4709
+        class Foo(np.ndarray):
+            def __eq__(self, other):
+                return "OK"
+        x = np.array([1,2,3]).view(Foo)
+        assert_equal(10 == x, "OK")
+        assert_equal(np.int32(10) == x, "OK")
+        assert_equal(np.array([10]) == x, "OK")
+
 
 if __name__ == "__main__":
     run_module_suite()

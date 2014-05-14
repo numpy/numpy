@@ -1082,7 +1082,11 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
     if (arr == NULL) {
         return NULL;
     }
-    ret = Py_TYPE(arr)->tp_richcompare(arr, other, cmp_op);
+    /*
+     * Call via PyObject_RichCompare to ensure that other.__eq__
+     * has a chance to run when necessary
+     */
+    ret = PyObject_RichCompare(arr, other, cmp_op);
     Py_DECREF(arr);
     return ret;
 }
