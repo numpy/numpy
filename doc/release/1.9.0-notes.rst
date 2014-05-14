@@ -17,6 +17,7 @@ Dropped Support
 * The numpy/testing/numpytest.py file has been removed together with
   the importall function it contained.
 
+
 Future Changes
 ==============
 
@@ -25,8 +26,10 @@ Future Changes
   Numpy 1.10.0. This will certainly break some code that is currently
   ignoring the warning.
 * Relaxed stride checking will be the default in 1.10.0
-* String version checks will break because, e.g., '1.9' > '1.10' is True.
+* String version checks will break because, e.g., '1.9' > '1.10' is True. A
+  NumpyVersion class has been added that can be used for such comparisons.
 * The diagonal and diag functions will return writeable views in 1.10.0
+
 
 Compatibility notes
 ===================
@@ -120,6 +123,7 @@ Applications that now fail can be fixed by masking the higher 32 bit values to
 zero: ``seed = seed & 0xFFFFFFFF``. This is what is done silently in older
 versions so the random stream remains the same.
 
+
 New Features
 ============
 
@@ -178,10 +182,19 @@ this new boolean argument.
 The number of times each unique item comes up in the input can now be
 obtained as an optional return value.
 
-Support for median in nanfunctions 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Taking the median of an ``ndarray`` while ignoring the nans in an array 
+Support for median in nanfunctions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Taking the median of an ``ndarray`` while ignoring the nans in an array
 was added with the ``np.nanmedian`` function.
+
+NumpyVersion class added
+~~~~~~~~~~~~~~~~~~~~~~~~
+The class may be imported from numpy.lib and can be used for version
+comparison when the numpy version goes to 1.10.devel. For example::
+
+    >>> from numpy.lib import NumpyVersion
+    >>> if NumpyVersion(np.__version__) < '1.10.0'):
+    ...     print('Wow, that is an old NumPy version!')
 
 
 Improvements
@@ -242,6 +255,7 @@ MaskedArray support for more complicated base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Built-in assumptions that the baseclass behaved like a plain array are being
 removed. In particalur, ``repr`` and ``str`` should now work more reliably.
+
 
 Changes
 =======

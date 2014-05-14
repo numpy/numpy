@@ -23,6 +23,7 @@ from .npyio import *
 from .financial import *
 from .arrayterator import *
 from .arraypad import *
+from ._version import *
 
 __all__ = ['emath', 'math']
 __all__ += type_check.__all__
