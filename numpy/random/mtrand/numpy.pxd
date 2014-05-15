@@ -121,6 +121,8 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_IterNew(object arr)
     void PyArray_ITER_NEXT(flatiter it) nogil
 
+    dtype PyArray_DescrFromType(int)
+
     void import_array()
 
 # include functions that were once macros in the new api

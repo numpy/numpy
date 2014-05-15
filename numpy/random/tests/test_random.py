@@ -7,6 +7,35 @@ from numpy.testing import (
 from numpy import random
 from numpy.compat import asbytes
 
+class TestSeed(TestCase):
+    def test_scalar(self):
+        s = np.random.RandomState(0)
+        assert_equal(s.randint(1000), 684)
+        s = np.random.RandomState(4294967295)
+        assert_equal(s.randint(1000), 419)
+
+    def test_array(self):
+        s = np.random.RandomState(range(10))
+        assert_equal(s.randint(1000), 468)
+        s = np.random.RandomState(np.arange(10))
+        assert_equal(s.randint(1000), 468)
+        s = np.random.RandomState([0])
+        assert_equal(s.randint(1000), 973)
+        s = np.random.RandomState([4294967295])
+        assert_equal(s.randint(1000), 265)
+
+    def test_invalid_scalar(self):
+        # seed must be a unsigned 32 bit integers
+        assert_raises(TypeError, np.random.RandomState, -0.5)
+        assert_raises(ValueError, np.random.RandomState, -1)
+
+    def test_invalid_array(self):
+        # seed must be a unsigned 32 bit integers
+        assert_raises(TypeError, np.random.RandomState, [-0.5])
+        assert_raises(ValueError, np.random.RandomState, [-1])
+        assert_raises(ValueError, np.random.RandomState, [4294967296])
+        assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
+        assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
 
 class TestBinomial(TestCase):
     def test_n_zero(self):
