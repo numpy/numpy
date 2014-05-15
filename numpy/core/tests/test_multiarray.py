@@ -2444,6 +2444,18 @@ class TestIO(object):
         y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
         assert_array_equal(v, y)
 
+    def test_uint64_fromstring(self):
+        d = np.fromstring("9923372036854775807 104783749223640",
+                          dtype=np.uint64, sep=' ');
+        e = np.array([9923372036854775807, 104783749223640], dtype=np.uint64)
+        assert_array_equal(d, e)
+
+    def test_int64_fromstring(self):
+        d = np.fromstring("-25041670086757 104783749223640",
+                          dtype=np.int64, sep=' ');
+        e = np.array([-25041670086757, 104783749223640], dtype=np.int64)
+        assert_array_equal(d, e)
+
     def test_empty_files_binary(self):
         f = open(self.filename, 'w')
         f.close()

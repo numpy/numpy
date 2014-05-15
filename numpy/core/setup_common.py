@@ -99,7 +99,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "ftello", "fseeko"]
+        "copysign", "nextafter", "ftello", "fseeko",
+        "strtoll", "strtoull"]
 
 
 OPTIONAL_HEADERS = [
