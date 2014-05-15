@@ -1026,39 +1026,105 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override_methods(self):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                if method == "__call__":
-                    return method
-                if method == "reduce":
-                    return method
-                if method == "accumulate":
-                    return method
-                if method == "reduceat":
-                    return method
+                return self, ufunc, method, pos, inputs, kwargs
 
+        # __call__
         a = A()
-        res = np.multiply(1, a)
-        assert_equal(res, "__call__")
+        res = np.multiply.__call__(1, a, foo='bar', answer=42)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], 1)
+        assert_equal(res[4], (1, a))
+        assert_equal(res[5], {'foo': 'bar', 'answer': 42})
 
-        res = np.multiply.reduce(1, a)
-        assert_equal(res, "reduce")
+        # reduce, positional args
+        res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'keepdims': 'keep0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.accumulate(1, a)
-        assert_equal(res, "accumulate")
+        # reduce, kwargs
+        res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
+                                 keepdims='keep0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'keepdims': 'keep0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduceat(1, a)
-        assert_equal(res, "reduceat")
+        # accumulate, pos args
+        res = np.multiply.accumulate(a, 'axis0', 'dtype0', 'out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'accumulate')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply(a, 1)
-        assert_equal(res, "__call__")
+        # accumulate, kwargs
+        res = np.multiply.accumulate(a, axis='axis0', dtype='dtype0',
+                                     out='out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'accumulate')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduce(a, 1)
-        assert_equal(res, "reduce")
+        # reduceat, pos args
+        res = np.multiply.reduceat(a, [4, 2], 'axis0', 'dtype0', 'out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduceat')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2]))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.accumulate(a, 1)
-        assert_equal(res, "accumulate")
+        # reduceat, kwargs
+        res = np.multiply.reduceat(a, [4, 2], axis='axis0', dtype='dtype0',
+                                   out='out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduceat')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2]))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduceat(a, 1)
-        assert_equal(res, "reduceat")
+        # outer
+        res = np.multiply.outer(a, 42)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'outer')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, 42))
+        assert_equal(res[5], {})
+
+        # at
+        res = np.multiply.at(a, [4, 2], 'b0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'at')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
         class A(object):
@@ -1093,7 +1159,6 @@ class TestSpecialMethods(TestCase):
         assert_equal(res6['out'][1], 'out1')
         assert_equal(res7['out'][0], 'out0')
         assert_equal(res7['out'][1], 'out1')
-
 
     def test_ufunc_override_exception(self):
         class A(object):

@@ -4066,7 +4066,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override, 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override,
                                    ufunc->nin);
     if (errval) {
         return NULL;
@@ -4751,6 +4751,8 @@ static PyObject *
 ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
+    int errval;
+    PyObject *override = NULL;
     PyObject *ret;
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ap_new = NULL;
     PyObject *new_args, *tmp;
@@ -4773,6 +4775,15 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (PySequence_Length(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "exactly two arguments expected");
         return NULL;
+    }
+
+    /* `nin`, the last arg, is unused. So we put 0. */
+    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override, 0);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
     }
 
     tmp = PySequence_GetItem(args, 0);
@@ -4844,8 +4855,8 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 
-                                   ufunc->nin);
+    /* `nin`, the last arg, is unused. So we put 0. */
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 0);
     if (errval) {
         return NULL;
     }
@@ -4861,8 +4872,8 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 
-                                   ufunc->nin);
+    /* `nin`, the last arg, is unused. So we put 0. */
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 0);
     if (errval) {
         return NULL;
     }
@@ -4878,8 +4889,8 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 
-                                   ufunc->nin);
+    /* `nin`, the last arg, is unused. So we put 0. */
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 0);
     if (errval) {
         return NULL;
     }
@@ -4931,6 +4942,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int i;
     int nop;
 
+    /* override vars */
+    int errval;
+    PyObject *override = NULL;
+
     NpyIter *iter_buffer;
     NpyIter_IterNextFunc *iternext;
     npy_uint32 op_flags[NPY_MAXARGS];
@@ -4938,6 +4953,15 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int errormask = 0;
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
+
+    /* `nin`, the last arg, is unused. So we put 0. */
+    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override, 0);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
 
     if (ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
