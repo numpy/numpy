@@ -11,9 +11,9 @@ installable binary package for your operating system.
 Windows
 -------
 
-Good solutions for Windows are, The Enthought Python Distribution `(EPD)
-<http://www.enthought.com/products/epd.php>`_ (which provides binary
-installers for Windows, OS X and Redhat) and `Python (x, y)
+Good solutions for Windows are, `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_ (which provides binary
+installers for Windows, OS X and Linux) and `Python (x, y)
 <http://www.pythonxy.com>`_. Both of these packages include Python, NumPy and
 many additional packages.
 
