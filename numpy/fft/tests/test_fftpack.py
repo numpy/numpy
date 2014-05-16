@@ -34,7 +34,7 @@ class TestFFT1D(TestCase):
 
 class TestFFTThreadSafe(TestCase):
     threads = 16
-    input_shape = (1000, 1000)
+    input_shape = (800, 200)
 
     def _test_mtsame(self, func, *args):
         def worker(args, q):
@@ -44,13 +44,15 @@ class TestFFTThreadSafe(TestCase):
         expected = func(*args)
 
         # Spin off a bunch of threads to call the same function simultaneously
-        for i in range(self.threads):
-            threading.Thread(target=worker, args=(args, q)).start()
+        t = [threading.Thread(target=worker, args=(args, q))
+             for i in range(self.threads)]
+        [x.start() for x in t]
 
         # Make sure all threads returned the correct value
         for i in range(self.threads):
             assert_array_equal(q.get(timeout=5), expected,
                 'Function returned wrong value in multithreaded context')
+        [x.join() for x in t]
 
     def test_fft(self):
         a = np.ones(self.input_shape) * 1+0j
