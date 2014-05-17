@@ -55,7 +55,7 @@ if have_setuptools:
     numpy_cmdclass['egg_info'] = egg_info.egg_info
 
 def _dict_append(d, **kws):
-    for k,v in kws.items():
+    for k, v in kws.items():
         if k not in d:
             d[k] = v
             continue
@@ -133,13 +133,13 @@ def setup(**attr):
 
         # create setup dictionary and append to new_attr
         config = configuration()
-        if hasattr(config,'todict'):
+        if hasattr(config, 'todict'):
             config = config.todict()
         _dict_append(new_attr, **config)
 
     # Move extension source libraries to libraries
     libraries = []
-    for ext in new_attr.get('ext_modules',[]):
+    for ext in new_attr.get('ext_modules', []):
         new_libraries = []
         for item in ext.libraries:
             if is_sequence(item):
@@ -207,4 +207,4 @@ def _check_append_ext_library(libraries, lib_name, build_info):
             warnings.warn("[4] libraries list contains %r with"
                           " no build_info" % (lib_name,))
             break
-    libraries.append((lib_name,build_info))
+    libraries.append((lib_name, build_info))

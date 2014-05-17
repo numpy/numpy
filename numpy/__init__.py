@@ -121,6 +121,23 @@ class ModuleDeprecationWarning(DeprecationWarning):
     pass
 
 
+class VisibleDeprecationWarning(UserWarning):
+    """Visible deprecation warning.
+
+    By default, python will not show deprecation warnings, so this class
+    can be used when a very visible warning is helpful, for example because
+    the usage is most likely a user bug.
+
+    """
+    pass
+
+
+# oldnumeric and numarray were removed in 1.9. In case some packages import
+# but do not use them, we define them here for backward compatibility.
+oldnumeric = 'removed'
+numarray = 'removed'
+
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -139,7 +156,7 @@ else:
     except ImportError:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
-        your python intepreter from there."""
+        your python interpreter from there."""
         raise ImportError(msg)
     from .version import git_revision as __git_revision__
     from .version import version as __version__
@@ -151,7 +168,9 @@ else:
         return loader(*packages, **options)
 
     from . import add_newdocs
-    __all__ = ['add_newdocs', 'ModuleDeprecationWarning']
+    __all__ = ['add_newdocs',
+               'ModuleDeprecationWarning',
+               'VisibleDeprecationWarning']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
@@ -195,4 +214,3 @@ else:
     import warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-

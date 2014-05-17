@@ -1,5 +1,6 @@
 #ifndef __LOWLEVEL_STRIDED_LOOPS_H
 #define __LOWLEVEL_STRIDED_LOOPS_H
+#include "common.h"
 #include <npy_config.h>
 
 /*
@@ -325,6 +326,20 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 PyArray_MaskedStridedUnaryOp *stransfer,
                 NpyAuxData *data);
 
+NPY_NO_EXPORT int
+mapiter_trivial_get(PyArrayObject *self, PyArrayObject *ind,
+                       PyArrayObject *result);
+
+NPY_NO_EXPORT int
+mapiter_trivial_set(PyArrayObject *self, PyArrayObject *ind,
+                       PyArrayObject *result);
+
+NPY_NO_EXPORT int
+mapiter_get(PyArrayMapIterObject *mit);
+
+NPY_NO_EXPORT int
+mapiter_set(PyArrayMapIterObject *mit);
+
 /*
  * Prepares shape and strides for a simple raw array iteration.
  * This sorts the strides into FORTRAN order, reverses any negative
@@ -398,26 +413,18 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataC, npy_intp *out_stridesC);
 
 /*
- * return true if pointer is aligned to 'alignment'
- */
-static NPY_INLINE int
-npy_is_aligned(const void * p, const npy_uintp alignment)
-{
-    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
-}
-
-/*
  * Return number of elements that must be peeled from
  * the start of 'addr' with 'nvals' elements of size 'esize'
  * in order to reach 'alignment'.
+ * alignment must be a power of two.
  * see npy_blocked_end for an example
  */
-static NPY_INLINE npy_intp
-npy_aligned_block_offset(const void * addr, const npy_intp esize,
-                         const npy_intp alignment, const npy_intp nvals)
+static NPY_INLINE npy_uintp
+npy_aligned_block_offset(const void * addr, const npy_uintp esize,
+                         const npy_uintp alignment, const npy_uintp nvals)
 {
-    const npy_intp offset = (npy_intp)addr & (alignment - 1);
-    npy_intp peel = offset ? (alignment - offset) / esize : 0;
+    const npy_uintp offset = (npy_uintp)addr & (alignment - 1);
+    npy_uintp peel = offset ? (alignment - offset) / esize : 0;
     peel = nvals < peel ? nvals : peel;
     return peel;
 }
@@ -442,9 +449,9 @@ npy_aligned_block_offset(const void * addr, const npy_intp esize,
  * for(; i < n; i++)
  *   <scalar-op>
  */
-static NPY_INLINE npy_intp
-npy_blocked_end(const npy_intp offset, const npy_intp esize,
-                const npy_intp vsz, const npy_intp nvals)
+static NPY_INLINE npy_uintp
+npy_blocked_end(const npy_uintp offset, const npy_uintp esize,
+                const npy_uintp vsz, const npy_uintp nvals)
 {
     return nvals - offset - (nvals - offset) % (vsz / esize);
 }
@@ -661,7 +668,7 @@ npy_bswap8_unaligned(char * x)
                                              PyArray_DIMS(arr2), \
                                              PyArray_NDIM(arr1)) && \
                         (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                      NPY_ARRAY_F_CONTIGUOUS)) == \
+                                      NPY_ARRAY_F_CONTIGUOUS)) & \
                                 (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
                                               NPY_ARRAY_F_CONTIGUOUS)) \
                         )
@@ -672,12 +679,12 @@ npy_bswap8_unaligned(char * x)
                     PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
                     )
 #define PyArray_PREPARE_TRIVIAL_ITERATION(arr, count, data, stride) \
-                    count = PyArray_SIZE(arr), \
-                    data = PyArray_BYTES(arr), \
+                    count = PyArray_SIZE(arr); \
+                    data = PyArray_BYTES(arr); \
                     stride = ((PyArray_NDIM(arr) == 0) ? 0 : \
                                     ((PyArray_NDIM(arr) == 1) ? \
                                             PyArray_STRIDE(arr, 0) : \
-                                            PyArray_ITEMSIZE(arr))) \
+                                            PyArray_ITEMSIZE(arr)));
 
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\

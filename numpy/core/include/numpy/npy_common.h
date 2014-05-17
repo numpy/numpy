@@ -18,6 +18,49 @@
 #define NPY_GCC_UNROLL_LOOPS
 #endif
 
+/* highest gcc optimization level, enabled autovectorizer */
+#ifdef HAVE_ATTRIBUTE_OPTIMIZE_OPT_3
+#define NPY_GCC_OPT_3 __attribute__((optimize("O3")))
+#else
+#define NPY_GCC_OPT_3
+#endif
+
+/*
+ * mark an argument (starting from 1) that must not be NULL and is not checked
+ * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
+ */
+#ifdef HAVE_ATTRIBUTE_NONNULL
+#define NPY_GCC_NONNULL(n) __attribute__((nonnull(n)))
+#else
+#define NPY_GCC_NONNULL(n)
+#endif
+
+#if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
+#define NPY_HAVE_SSE_INTRINSICS
+#endif
+
+#if defined HAVE_EMMINTRIN_H && defined HAVE__MM_LOAD_PD
+#define NPY_HAVE_SSE2_INTRINSICS
+#endif
+
+/*
+ * give a hint to the compiler which branch is more likely or unlikely
+ * to occur, e.g. rare error cases:
+ *
+ * if (NPY_UNLIKELY(failure == 0))
+ *    return NULL;
+ *
+ * the double !! is to cast the expression (e.g. NULL) to a boolean required by
+ * the intrinsic
+ */
+#ifdef HAVE___BUILTIN_EXPECT
+#define NPY_LIKELY(x) __builtin_expect(!!(x), 1)
+#define NPY_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define NPY_LIKELY(x) (x)
+#define NPY_UNLIKELY(x) (x)
+#endif
+
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
 #elif defined(__GNUC__)
@@ -30,13 +73,80 @@
         #define NPY_INLINE
 #endif
 
-/* Enable 64 bit file position support on win-amd64. Ticket #1660 */
-#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
+#ifdef HAVE___THREAD
+    #define NPY_TLS __thread
+#else
+    #ifdef HAVE___DECLSPEC_THREAD_
+        #define NPY_TLS __declspec(thread)
+    #else
+        #define NPY_TLS
+    #endif
+#endif
+
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+  #define NPY_RETURNS_BORROWED_REF \
+    __attribute__((cpychecker_returns_borrowed_ref))
+#else
+  #define NPY_RETURNS_BORROWED_REF
+#endif
+
+#ifdef WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE
+  #define NPY_STEALS_REF_TO_ARG(n) \
+   __attribute__((cpychecker_steals_reference_to_arg(n)))
+#else
+ #define NPY_STEALS_REF_TO_ARG(n)
+#endif
+
+/* 64 bit file position support, also on win-amd64. Ticket #1660 */
+#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
+    defined(__MINGW32__) || defined(__MINGW64__)
+    #include <io.h>
+
+/* mingw based on 3.4.5 has lseek but not ftell/fseek */
+#if defined(__MINGW32__) || defined(__MINGW64__)
+extern int __cdecl _fseeki64(FILE *, long long, int);
+extern long long __cdecl _ftelli64(FILE *);
+#endif
+
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64
+    #define npy_lseek _lseeki64
+    #define npy_off_t npy_int64
+
+    #if NPY_SIZEOF_INT == 8
+        #define NPY_OFF_T_PYFMT "i"
+    #elif NPY_SIZEOF_LONG == 8
+        #define NPY_OFF_T_PYFMT "l"
+    #elif NPY_SIZEOF_LONGLONG == 8
+        #define NPY_OFF_T_PYFMT "L"
+    #else
+        #error Unsupported size for type off_t
+    #endif
+#else
+#ifdef HAVE_FSEEKO
+    #define npy_fseek fseeko
 #else
     #define npy_fseek fseek
+#endif
+#ifdef HAVE_FTELLO
+    #define npy_ftell ftello
+#else
     #define npy_ftell ftell
+#endif
+    #define npy_lseek lseek
+    #define npy_off_t off_t
+
+    #if NPY_SIZEOF_OFF_T == NPY_SIZEOF_SHORT
+        #define NPY_OFF_T_PYFMT "h"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_INT
+        #define NPY_OFF_T_PYFMT "i"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_LONG
+        #define NPY_OFF_T_PYFMT "l"
+    #elif NPY_SIZEOF_OFF_T == NPY_SIZEOF_LONGLONG
+        #define NPY_OFF_T_PYFMT "L"
+    #else
+        #error Unsupported size for type off_t
+    #endif
 #endif
 
 /* enums for detected endianness */
@@ -71,18 +181,8 @@ typedef Py_uintptr_t npy_uintp;
 #undef constchar
 #endif
 
-#if (PY_VERSION_HEX < 0x02050000)
-  #ifndef PY_SSIZE_T_MIN
-    typedef int Py_ssize_t;
-    #define PY_SSIZE_T_MAX INT_MAX
-    #define PY_SSIZE_T_MIN INT_MIN
-  #endif
-#define NPY_SSIZE_T_PYFMT "i"
-#define constchar const char
-#else
 #define NPY_SSIZE_T_PYFMT "n"
 #define constchar char
-#endif
 
 /* NPY_INTP_FMT Note:
  *      Unlike the other NPY_*_FMT macros which are used with
@@ -944,4 +1044,3 @@ typedef npy_int64 npy_datetime;
 /* End of typedefs for numarray style bit-width names */
 
 #endif
-

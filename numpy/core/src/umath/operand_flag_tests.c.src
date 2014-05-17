@@ -79,7 +79,7 @@ PyMODINIT_FUNC initoperand_flag_tests(void)
                                     PyUFunc_None, "inplace_add",
                                     "inplace_add_docstring", 0);
 
-    /* 
+    /*
      * Set flags to turn off buffering for first input operand,
      * so that result can be written back to input operand.
      */

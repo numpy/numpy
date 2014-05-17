@@ -102,17 +102,11 @@ else:
             from numpy.distutils.misc_util import get_shared_lib_extension
             so_ext = get_shared_lib_extension()
             libname_ext = [libname + so_ext]
-            if sys.version[:3] >= '3.2':
-                # For Python >= 3.2 a tag may be added to lib extension
-                # (platform dependent).  If we find such a tag, try both with
-                # and without it.
-                so_ext2 = get_shared_lib_extension(is_python_ext=True)
-                if not so_ext2 == so_ext:
-                    libname_ext.insert(0, libname + so_ext2)
-            if sys.platform == 'win32':
-                libname_ext.insert(0, '%s.dll' % libname)
-            elif sys.platform == 'darwin':
-                libname_ext.insert(0, '%s.dylib' % libname)
+            # mac, windows and linux >= py3.2 shared library and loadable
+            # module have different extensions so try both
+            so_ext2 = get_shared_lib_extension(is_python_ext=True)
+            if not so_ext2 == so_ext:
+                libname_ext.insert(0, libname + so_ext2)
         else:
             libname_ext = [libname]
 

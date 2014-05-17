@@ -16,7 +16,7 @@ class build_py(old_build_py):
 
         # Find build_src generated *.py files.
         build_src = self.get_finalized_command('build_src')
-        modules += build_src.py_modules_dict.get(package,[])
+        modules += build_src.py_modules_dict.get(package, [])
 
         return modules
 

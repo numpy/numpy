@@ -1,11 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 
 import numpy as np
 from numpy.testing import *
-from numpy.testing.utils import WarningManager
-import warnings
 from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
@@ -68,26 +67,27 @@ def test_array_array():
 
     # test buffer
     _buffer = builtins.get("buffer")
-    if _buffer:
-        assert_equal(np.array(_buffer("1.0"), dtype=np.float64),
-                     np.array(1.0, dtype=np.float64))
-        assert_equal(np.array(_buffer("1.0"), dtype=np.float64).dtype,
-                     np.dtype("float64"))
-        assert_equal(np.array([_buffer("1.0")], dtype=np.float64),
-                     np.array([1.0], dtype=np.float64))
+    if _buffer and sys.version_info[:3] >= (2, 7, 5):
+        # This test fails for earlier versions of Python.
+        # Evidently a bug got fixed in 2.7.5.
+        dat = np.array(_buffer('1.0'), dtype=np.float64)
+        assert_equal(dat, [49.0, 46.0, 48.0])
+        assert_(dat.dtype.type is np.float64)
+
+        dat = np.array(_buffer(b'1.0'))
+        assert_equal(dat, [49, 46, 48])
+        assert_(dat.dtype.type is np.uint8)
 
     # test memoryview, new version of buffer
     _memoryview = builtins.get("memoryview")
     if _memoryview:
-        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
-                              dtype=np.float64),
-                     np.array([49.0, 46.0, 48.0],
-                              dtype=np.float64))
-        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
-                              dtype=np.float64).dtype,
-                     np.dtype("float64"))
-        assert_equal(np.array(_memoryview(bytearray(b'1.0'))).dtype,
-                     np.dtype('uint8'))
+        dat = np.array(_memoryview(b'1.0'), dtype=np.float64)
+        assert_equal(dat, [49.0, 46.0, 48.0])
+        assert_(dat.dtype.type is np.float64)
+
+        dat = np.array(_memoryview(b'1.0'))
+        assert_equal(dat, [49, 46, 48])
+        assert_(dat.dtype.type is np.uint8)
 
     # test array interface
     a = np.array(100.0, dtype=np.float64)
@@ -122,13 +122,13 @@ def test_array_array():
 
     # Try with lists...
     assert_equal(np.array([None] * 10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64) + np.nan)
+                 np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([[None]] * 10, dtype=np.float64),
-                 np.empty((10, 1), dtype=np.float64) + np.nan)
+                 np.full((10, 1), np.nan, dtype=np.float64))
     assert_equal(np.array([[None] * 10], dtype=np.float64),
-                 np.empty((1, 10), dtype=np.float64) + np.nan)
+                 np.full((1, 10), np.nan, dtype=np.float64))
     assert_equal(np.array([[None] * 10] * 10, dtype=np.float64),
-                 np.empty((10, 10), dtype=np.float64) + np.nan)
+                 np.full((10, 10), np.nan, dtype=np.float64))
 
     assert_equal(np.array([1.0] * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
@@ -141,13 +141,13 @@ def test_array_array():
 
     # Try with tuples
     assert_equal(np.array((None,) * 10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64) + np.nan)
+                 np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,)] * 10, dtype=np.float64),
-                 np.empty((10, 1), dtype=np.float64) + np.nan)
+                 np.full((10, 1), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,) * 10], dtype=np.float64),
-                 np.empty((1, 10), dtype=np.float64) + np.nan)
+                 np.full((1, 10), np.nan, dtype=np.float64))
     assert_equal(np.array([(None,) * 10] * 10, dtype=np.float64),
-                 np.empty((10, 10), dtype=np.float64) + np.nan)
+                 np.full((10, 10), np.nan, dtype=np.float64))
 
     assert_equal(np.array((1.0,) * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
@@ -167,19 +167,19 @@ def test_fastCopyAndTranspose():
     assert_(b.flags.owndata)
 
     # 1D array
-    a = np.array([3,2,7,0])
+    a = np.array([3, 2, 7, 0])
     b = np.fastCopyAndTranspose(a)
     assert_equal(b, a.T)
     assert_(b.flags.owndata)
 
     # 2D array
-    a = np.arange(6).reshape(2,3)
+    a = np.arange(6).reshape(2, 3)
     b = np.fastCopyAndTranspose(a)
     assert_equal(b, a.T)
     assert_(b.flags.owndata)
 
 def test_array_astype():
-    a = np.arange(6, dtype='f4').reshape(2,3)
+    a = np.arange(6, dtype='f4').reshape(2, 3)
     # Default behavior: allows unsafe casts, keeps memory layout,
     #                   always copies.
     b = a.astype('i4')
@@ -221,7 +221,7 @@ def test_array_astype():
     b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
-    a = np.matrix([[0,1,2],[3,4,5]], dtype='f4')
+    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
 
     # subok=True passes through a matrix
     b = a.astype('f4', subok=True, copy=False)
@@ -259,8 +259,33 @@ def test_array_astype():
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
 
+    a = np.array(123456789012345678901234567890, dtype='O').astype('S')
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
+    a = np.array(123456789012345678901234567890, dtype='O').astype('U')
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+
+    a = np.array([123456789012345678901234567890], dtype='O').astype('S')
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
+    a = np.array([123456789012345678901234567890], dtype='O').astype('U')
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+
+    a = np.array(123456789012345678901234567890, dtype='S')
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
+    a = np.array(123456789012345678901234567890, dtype='U')
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+
+    a = np.array(sixu('a\u0140'), dtype='U')
+    b = np.ndarray(buffer=a, dtype='uint32', shape=2)
+    assert_(b.size == 2)
+
+    a = np.array([1000], dtype='i4')
+    assert_raises(TypeError, a.astype, 'S1', casting='safe')
+
+    a = np.array(1000, dtype='i4')
+    assert_raises(TypeError, a.astype, 'U1', casting='safe')
+
 def test_copyto_fromscalar():
-    a = np.arange(6, dtype='f4').reshape(2,3)
+    a = np.arange(6, dtype='f4').reshape(2, 3)
 
     # Simple copy
     np.copyto(a, 1.5)
@@ -269,23 +294,23 @@ def test_copyto_fromscalar():
     assert_equal(a, 2.5)
 
     # Where-masked copy
-    mask = np.array([[0,1,0],[0,0,1]], dtype='?')
+    mask = np.array([[0, 1, 0], [0, 0, 1]], dtype='?')
     np.copyto(a, 3.5, where=mask)
-    assert_equal(a, [[2.5,3.5,2.5],[2.5,2.5,3.5]])
-    mask = np.array([[0,1],[1,1],[1,0]], dtype='?')
+    assert_equal(a, [[2.5, 3.5, 2.5], [2.5, 2.5, 3.5]])
+    mask = np.array([[0, 1], [1, 1], [1, 0]], dtype='?')
     np.copyto(a.T, 4.5, where=mask)
-    assert_equal(a, [[2.5,4.5,4.5],[4.5,4.5,3.5]])
+    assert_equal(a, [[2.5, 4.5, 4.5], [4.5, 4.5, 3.5]])
 
 def test_copyto():
-    a = np.arange(6, dtype='i4').reshape(2,3)
+    a = np.arange(6, dtype='i4').reshape(2, 3)
 
     # Simple copy
-    np.copyto(a, [[3,1,5], [6,2,1]])
-    assert_equal(a, [[3,1,5], [6,2,1]])
+    np.copyto(a, [[3, 1, 5], [6, 2, 1]])
+    assert_equal(a, [[3, 1, 5], [6, 2, 1]])
 
     # Overlapping copy should work
-    np.copyto(a[:,:2], a[::-1, 1::-1])
-    assert_equal(a, [[2,6,5], [1,3,1]])
+    np.copyto(a[:, :2], a[::-1, 1::-1])
+    assert_equal(a, [[2, 6, 5], [1, 3, 1]])
 
     # Defaults to 'same_kind' casting
     assert_raises(TypeError, np.copyto, a, 1.5)
@@ -295,27 +320,80 @@ def test_copyto():
     assert_equal(a, 1)
 
     # Copying with a mask
-    np.copyto(a, 3, where=[True,False,True])
-    assert_equal(a, [[3,1,3],[3,1,3]])
+    np.copyto(a, 3, where=[True, False, True])
+    assert_equal(a, [[3, 1, 3], [3, 1, 3]])
 
     # Casting rule still applies with a mask
-    assert_raises(TypeError, np.copyto, a, 3.5, where=[True,False,True])
+    assert_raises(TypeError, np.copyto, a, 3.5, where=[True, False, True])
 
     # Lists of integer 0's and 1's is ok too
-    np.copyto(a, 4.0, casting='unsafe', where=[[0,1,1], [1,0,0]])
-    assert_equal(a, [[3,4,4], [4,1,3]])
+    np.copyto(a, 4.0, casting='unsafe', where=[[0, 1, 1], [1, 0, 0]])
+    assert_equal(a, [[3, 4, 4], [4, 1, 3]])
 
     # Overlapping copy with mask should work
-    np.copyto(a[:,:2], a[::-1, 1::-1], where=[[0,1],[1,1]])
-    assert_equal(a, [[3,4,4], [4,3,3]])
+    np.copyto(a[:, :2], a[::-1, 1::-1], where=[[0, 1], [1, 1]])
+    assert_equal(a, [[3, 4, 4], [4, 3, 3]])
 
     # 'dst' must be an array
-    assert_raises(TypeError, np.copyto, [1,2,3], [2,3,4])
+    assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
+
+def test_copyto_permut():
+    # test explicit overflow case
+    pad = 500
+    l = [True] * pad + [True, True, True, True]
+    r = np.zeros(len(l)-pad)
+    d = np.ones(len(l)-pad)
+    mask = np.array(l)[pad:]
+    np.copyto(r, d, where=mask[::-1])
+
+    # test all permutation of possible masks, 9 should be sufficient for
+    # current 4 byte unrolled code
+    power = 9
+    d = np.ones(power)
+    for i in range(2**power):
+        r = np.zeros(power)
+        l = [(i & x) != 0 for x in range(power)]
+        mask = np.array(l)
+        np.copyto(r, d, where=mask)
+        assert_array_equal(r == 1, l)
+        assert_equal(r.sum(), sum(l))
+
+        r = np.zeros(power)
+        np.copyto(r, d, where=mask[::-1])
+        assert_array_equal(r == 1, l[::-1])
+        assert_equal(r.sum(), sum(l))
+
+        r = np.zeros(power)
+        np.copyto(r[::2], d[::2], where=mask[::2])
+        assert_array_equal(r[::2] == 1, l[::2])
+        assert_equal(r[::2].sum(), sum(l[::2]))
+
+        r = np.zeros(power)
+        np.copyto(r[::2], d[::2], where=mask[::-2])
+        assert_array_equal(r[::2] == 1, l[::-2])
+        assert_equal(r[::2].sum(), sum(l[::-2]))
+
+        for c in [0xFF, 0x7F, 0x02, 0x10]:
+            r = np.zeros(power)
+            mask = np.array(l)
+            imask = np.array(l).view(np.uint8)
+            imask[mask != 0] = 0xFF
+            np.copyto(r, d, where=mask)
+            assert_array_equal(r == 1, l)
+            assert_equal(r.sum(), sum(l))
+
+    r = np.zeros(power)
+    np.copyto(r, d, where=True)
+    assert_equal(r.sum(), r.size)
+    r = np.ones(power)
+    d = np.zeros(power)
+    np.copyto(r, d, where=False)
+    assert_equal(r.sum(), r.size)
 
 def test_copy_order():
-    a = np.arange(24).reshape(2,1,3,4)
+    a = np.arange(24).reshape(2, 1, 3, 4)
     b = a.copy(order='F')
-    c = np.arange(24).reshape(2,1,4,3).swapaxes(2,3)
+    c = np.arange(24).reshape(2, 1, 4, 3).swapaxes(2, 3)
 
     def check_copy_result(x, y, ccontig, fcontig, strides=False):
         assert_(not (x is y))
@@ -381,10 +459,10 @@ def test_copy_order():
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
 def test_contiguous_flags():
-    a = np.ones((4,4,1))[::2,:,:]
+    a = np.ones((4, 4, 1))[::2,:,:]
     if NPY_RELAXED_STRIDES_CHECKING:
         a.strides = a.strides[:2] + (-123,)
-    b = np.ones((2,2,1,2,2)).swapaxes(3,4)
+    b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
         assert_(a.flags.c_contiguous == ccontig)
@@ -394,13 +472,13 @@ def test_contiguous_flags():
     check_contig(a, False, False)
     check_contig(b, False, False)
     if NPY_RELAXED_STRIDES_CHECKING:
-        check_contig(np.empty((2,2,0,2,2)), True, True)
-        check_contig(np.array([[[1],[2]]], order='F'), True, True)
+        check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
+        check_contig(np.array([[[1], [2]]], order='F'), True, True)
     else:
-        check_contig(np.empty((2,2,0,2,2)), True, False)
-        check_contig(np.array([[[1],[2]]], order='F'), False, True)
-    check_contig(np.empty((2,2)), True, False)
-    check_contig(np.empty((2,2), order='F'), False, True)
+        check_contig(np.empty((2, 2, 0, 2, 2)), True, False)
+        check_contig(np.array([[[1], [2]]], order='F'), False, True)
+    check_contig(np.empty((2, 2)), True, False)
+    check_contig(np.empty((2, 2), order='F'), False, True)
 
     # Check that np.array creates correct contiguous flags:
     check_contig(np.array(a, copy=False), False, False)
@@ -410,27 +488,27 @@ def test_contiguous_flags():
     if NPY_RELAXED_STRIDES_CHECKING:
         # Check slicing update of flags and :
         check_contig(a[0], True, True)
-        check_contig(a[None,::4,...,None], True, True)
-        check_contig(b[0,0,...], False, True)
-        check_contig(b[:,:,0:0,:,:], True, True)
+        check_contig(a[None, ::4, ..., None], True, True)
+        check_contig(b[0, 0, ...], False, True)
+        check_contig(b[:,:, 0:0,:,:], True, True)
     else:
         # Check slicing update of flags:
         check_contig(a[0], True, False)
         # Would be nice if this was C-Contiguous:
-        check_contig(a[None,0,...,None], False, False)
-        check_contig(b[0,0,0,...], False, True)
+        check_contig(a[None, 0, ..., None], False, False)
+        check_contig(b[0, 0, 0, ...], False, True)
 
     # Test ravel and squeeze.
     check_contig(a.ravel(), True, True)
-    check_contig(np.ones((1,3,1)).squeeze(), True, True)
+    check_contig(np.ones((1, 3, 1)).squeeze(), True, True)
 
 def test_broadcast_arrays():
     # Test user defined dtypes
-    a = np.array([(1,2,3)], dtype='u4,u4,u4')
-    b = np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4')
+    a = np.array([(1, 2, 3)], dtype='u4,u4,u4')
+    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4')
     result = np.broadcast_arrays(a, b)
-    assert_equal(result[0], np.array([(1,2,3),(1,2,3),(1,2,3)], dtype='u4,u4,u4'))
-    assert_equal(result[1], np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4'))
+    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
+    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
 
 if __name__ == "__main__":
     run_module_suite()

@@ -20,13 +20,13 @@ class TestRegression(TestCase):
                -6.57612485e-01+10.41755503j,
                -6.57612485e-01-10.41755503j,
                1.82126812e+01 +0.j,
-               1.06011014e+01 +0.j ,
-               7.80732773e+00 +0.j ,
+               1.06011014e+01 +0.j,
+               7.80732773e+00 +0.j,
                -7.65390898e-01 +0.j,
-               1.51971555e-15 +0.j ,
+               1.51971555e-15 +0.j,
                -1.51308713e-15 +0.j])
         a = arange(13*13, dtype = float64)
-        a.shape = (13,13)
+        a.shape = (13, 13)
         a = a%17
         va, ve = linalg.eig(a)
         va.sort()
@@ -68,6 +68,23 @@ class TestRegression(TestCase):
         ap = linalg.cholesky(a)
         bp = linalg.cholesky(b)
         assert_array_equal(ap, bp)
+
+    def test_large_svd_32bit(self):
+        # See gh-4442, 64bit would require very large/slow matrices.
+        x = np.eye(1000, 66)
+        np.linalg.svd(x)
+
+    def test_svd_no_uv(self):
+        # gh-4733
+        for shape in (3, 4), (4, 4), (4, 3):
+            for t in float, complex:
+                a = np.ones(shape, dtype=t)
+                w = linalg.svd(a, compute_uv=False)
+                c = np.count_nonzero(np.absolute(w) > 0.5)
+                assert_equal(c, 1)
+                assert_equal(np.linalg.matrix_rank(a), 1)
+                assert_array_less(1, np.linalg.norm(a, ord=2))
+
 
 if __name__ == '__main__':
     run_module_suite()

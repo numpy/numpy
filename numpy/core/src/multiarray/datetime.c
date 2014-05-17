@@ -1193,7 +1193,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* If something overflowed, make both num and denom 0 */
-    if (denom == 0) {
+    if (denom == 0 || num == 0) {
         PyErr_Format(PyExc_OverflowError,
                     "Integer overflow while computing the conversion "
                     "factor between NumPy datetime units %s and %s",
@@ -3522,12 +3522,8 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     return 0;
 
 fail:
-    if (tmp_buffer != NULL) {
-        PyArray_free(tmp_buffer);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyArray_free(tmp_buffer);
+    NpyIter_Deallocate(iter);
 
     return -1;
 }

@@ -59,11 +59,12 @@ See also
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
     'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
@@ -109,7 +110,7 @@ def poly2herm(pol) :
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import poly2herme
+    >>> from numpy.polynomial.hermite import poly2herm
     >>> poly2herm(np.arange(4))
     array([ 1.   ,  2.75 ,  0.5  ,  0.375])
 
@@ -185,7 +186,7 @@ def herm2poly(c) :
 #
 
 # Hermite
-hermdomain = np.array([-1,1])
+hermdomain = np.array([-1, 1])
 
 # Hermite coefficients representing zero.
 hermzero = np.array([0])
@@ -228,7 +229,7 @@ def hermline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl/2])
+        return np.array([off, scl/2])
     else :
         return np.array([off])
 
@@ -1295,7 +1296,7 @@ def hermvander2d(x, y, deg) :
 
     vx = hermvander(x, degx)
     vy = hermvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1360,7 +1361,7 @@ def hermvander3d(x, y, z, deg) :
     vx = hermvander(x, degx)
     vy = hermvander(y, degy)
     vz = hermvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1378,11 +1379,6 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * H_1(x) + ... + c_n * H_n(x),
 
     where `n` is `deg`.
-
-    Since numpy version 1.7.0, hermfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1416,10 +1412,15 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1577,13 +1578,13 @@ def hermcompanion(c):
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(2.*np.arange(1,n))))
+    scl = np.hstack((1., np.sqrt(2.*np.arange(1, n))))
     scl = np.multiply.accumulate(scl)
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.sqrt(.5*np.arange(1,n))
+    top[...] = np.sqrt(.5*np.arange(1, n))
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 
@@ -1747,4 +1748,43 @@ def hermweight(x):
 # Hermite series class
 #
 
-exec(polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]'))
+class Hermite(ABCPolyBase):
+    """An Hermite series class.
+
+    The Hermite class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Laguerre coefficients in order of increasing degree, i.e,
+        ``(1, 2, 3)`` gives ``1*H_0(x) + 2*H_1(X) + 3*H_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(hermadd)
+    _sub = staticmethod(hermsub)
+    _mul = staticmethod(hermmul)
+    _div = staticmethod(hermdiv)
+    _pow = staticmethod(hermpow)
+    _val = staticmethod(hermval)
+    _int = staticmethod(hermint)
+    _der = staticmethod(hermder)
+    _fit = staticmethod(hermfit)
+    _line = staticmethod(hermline)
+    _roots = staticmethod(hermroots)
+    _fromroots = staticmethod(hermfromroots)
+
+    # Virtual properties
+    nickname = 'herm'
+    domain = np.array(hermdomain)
+    window = np.array(hermdomain)

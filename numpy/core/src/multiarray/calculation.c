@@ -109,10 +109,12 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         }
     }
     else {
-        if (PyArray_SIZE(out) !=
-                PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "invalid shape for output array.");
+        if ((PyArray_NDIM(out) != PyArray_NDIM(ap) - 1) ||
+                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
+                                      PyArray_NDIM(out))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "output array does not match result of np.argmax.");
+            goto fail;
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
@@ -222,10 +224,12 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
         }
     }
     else {
-        if (PyArray_SIZE(out) !=
-                PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "invalid shape for output array.");
+        if ((PyArray_NDIM(out) != PyArray_NDIM(ap) - 1) ||
+                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
+                                      PyArray_NDIM(out))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "output array does not match result of np.argmin.");
+            goto fail;
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),

@@ -1,6 +1,9 @@
 {% extends "!layout.html" %}
+
 {% block rootrellink %}
-<li><a href="{{ pathto('index') }}">{{ shorttitle }}</a>{{ reldelim1 }}</li>
+        {% if pagename != 'index' %}
+        <li class="active"><a href="{{ pathto('index') }}">{{ shorttitle|e }}</a></li>
+        {% endif %}
 {% endblock %}
 
 {% block sidebarsearch %}

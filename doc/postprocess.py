@@ -8,7 +8,9 @@ MODE is either 'html' or 'tex'.
 """
 from __future__ import division, absolute_import, print_function
 
-import re, optparse
+import re
+import optparse
+import io
 
 def main():
     p = optparse.OptionParser(__doc__)
@@ -23,7 +25,7 @@ def main():
         p.error('unknown mode %s' % mode)
 
     for fn in args:
-        f = open(fn, 'r')
+        f = io.open(fn, 'r', encoding="utf-8")
         try:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
@@ -32,7 +34,7 @@ def main():
         finally:
             f.close()
 
-        f = open(fn, 'w')
+        f = io.open(fn, 'w', encoding="utf-8")
         f.write("".join(lines))
         f.close()
 
@@ -42,7 +44,7 @@ def process_html(fn, lines):
 def process_tex(lines):
     """
     Remove unnecessary section titles from the LaTeX file.
-    
+
     """
     new_lines = []
     for line in lines:

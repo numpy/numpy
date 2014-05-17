@@ -24,7 +24,7 @@ def _makenames_list(adict, align):
     for fname in fnames:
         obj = adict[fname]
         n = len(obj)
-        if not isinstance(obj, tuple) or n not in [2,3]:
+        if not isinstance(obj, tuple) or n not in [2, 3]:
             raise ValueError("entry not a 2- or 3- tuple")
         if (n > 2) and (obj[2] == fname):
             continue
@@ -108,10 +108,10 @@ def _array_descr(descriptor):
     for field in ordered_fields:
         if field[1] > offset:
             num = field[1] - offset
-            result.append(('','|V%d' % num))
+            result.append(('', '|V%d' % num))
             offset += num
         if len(field) > 3:
-            name = (field[2],field[3])
+            name = (field[2], field[3])
         else:
             name = field[2]
         if field[0].subdtype:

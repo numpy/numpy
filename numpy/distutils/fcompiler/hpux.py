@@ -31,10 +31,10 @@ class HPUXFCompiler(FCompiler):
     def get_library_dirs(self):
         opt = ['/usr/lib/hpux64']
         return opt
-    def get_version(self, force=0, ok_status=[256,0,1]):
+    def get_version(self, force=0, ok_status=[256, 0, 1]):
         # XXX status==256 may indicate 'unrecognized option' or
         #     'no input file'. So, version_cmd needs more work.
-        return FCompiler.get_version(self,force,ok_status)
+        return FCompiler.get_version(self, force, ok_status)
 
 if __name__ == '__main__':
     from distutils import log

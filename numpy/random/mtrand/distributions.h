@@ -7,10 +7,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -30,11 +30,11 @@ extern "C" {
 #endif
 
 /* References:
- * 
+ *
  * Devroye, Luc. _Non-Uniform Random Variate Generation_.
  *  Springer-Verlag, New York, 1986.
  *  http://cgm.cs.mcgill.ca/~luc/rnbookindex.html
- * 
+ *
  * Kachitvichyanukul, V. and Schmeiser, B. W. Binomial Random Variate
  *  Generation. Communications of the ACM, 31, 2 (February, 1988) 216.
  *
@@ -42,15 +42,15 @@ extern "C" {
  *  Variables. Insurance: Mathematics and Economics, (to appear)
  *  http://citeseer.csail.mit.edu/151115.html
  *
- * Marsaglia, G. and Tsang, W. W. A Simple Method for Generating Gamma 
+ * Marsaglia, G. and Tsang, W. W. A Simple Method for Generating Gamma
  * Variables. ACM Transactions on Mathematical Software, Vol. 26, No. 3,
  * September 2000, Pages 363–372.
  */
- 
+
 /* Normal distribution with mean=loc and standard deviation=scale. */
 extern double rk_normal(rk_state *state, double loc, double scale);
 
-/* Standard exponential distribution (mean=1) computed by inversion of the 
+/* Standard exponential distribution (mean=1) computed by inversion of the
  * CDF. */
 extern double rk_standard_exponential(rk_state *state);
 
@@ -60,10 +60,10 @@ extern double rk_exponential(rk_state *state, double scale);
 /* Uniform distribution on interval [loc, loc+scale). */
 extern double rk_uniform(rk_state *state, double loc, double scale);
 
-/* Standard gamma distribution with shape parameter. 
+/* Standard gamma distribution with shape parameter.
  * When shape < 1, the algorithm given by (Devroye p. 304) is used.
  * When shape == 1, a Exponential variate is generated.
- * When shape > 1, the small and fast method of (Marsaglia and Tsang 2000) 
+ * When shape > 1, the small and fast method of (Marsaglia and Tsang 2000)
  * is used.
  */
 extern double rk_standard_gamma(rk_state *state, double shape);
@@ -119,7 +119,7 @@ extern long rk_poisson_mult(rk_state *state, double lam);
 /* Poisson distribution computer by the PTRS algorithm. */
 extern long rk_poisson_ptrs(rk_state *state, double lam);
 
-/* Standard Cauchy distribution computed by dividing standard gaussians 
+/* Standard Cauchy distribution computed by dividing standard gaussians
  * (Devroye p. 451). */
 extern double rk_standard_cauchy(rk_state *state);
 

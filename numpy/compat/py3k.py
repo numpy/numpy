@@ -6,7 +6,8 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1', 'long', 'basestring', 'sixu']
+           'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
+           'integer_types']
 
 import sys
 
@@ -35,7 +36,7 @@ if sys.version_info[0] >= 3:
         return str(s)
 
     def isfileobj(f):
-        return isinstance(f, (io.FileIO, io.BufferedReader))
+        return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
 
     def open_latin1(filename, mode='r'):
         return open(filename, mode=mode, encoding='iso-8859-1')

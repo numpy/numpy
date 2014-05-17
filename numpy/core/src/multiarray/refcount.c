@@ -70,7 +70,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         NPY_COPY_PYOBJECT_PTR(&temp, data);
         Py_XDECREF(temp);
     }
-    else if PyDataType_HASFIELDS(descr) {
+    else if (PyDataType_HASFIELDS(descr)) {
             PyObject *key, *value, *title = NULL;
             PyArray_Descr *new;
             int offset;

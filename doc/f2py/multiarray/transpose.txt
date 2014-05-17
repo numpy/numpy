@@ -1,0 +1,1126 @@
+From: Phil Garner (garner@signal.dra.hmg.gb)
+ Subject: In place matrix transpose
+ Newsgroups: sci.math.num-analysis
+ Date: 1993-08-05 06:35:06 PST
+
+
+Someone was talking about matrix transposes earlier on.  It's a
+curious subject.  I found that an in-place transpose is about 12 times
+slower than the trivial copying method.
+
+Here's somthing I nicked from netlib and translated into C to do the
+in-place one for those that are interested: (matrix must be in one
+block)
+
+
+typedef float scalar; /* float -> double for double precision */
+
+/*
+ * In Place Matrix Transpose
+ * From: Algorithm 380 collected algorithms from ACM.
+ * Converted to C by Phil Garner
+ *
+ * Algorithm appeared in comm. ACM, vol. 13, no. 05,
+ * p. 324.
+ */
+int trans(scalar *a, unsigned m, unsigned n, int *move, int iwrk)
+{
+  scalar b;
+  int i, j, k, i1, i2, ia, ib, ncount, kmi, Max, mn;
+
+  /*
+   * a is a one-dimensional array of length mn=m*n, which
+   * contains the m by n matrix to be transposed.
+   * move is a one-dimensional array of length iwrk
+   * used to store information to speed up the process. the
+   * value iwrk=(m+n)/2 is recommended. Return val indicates the
+   * success or failure of the routine.
+   * normal return = 0
+   * errors
+   * -2, iwrk negative or zero.
+   * ret > 0, (should never occur). in this case
+   * we set ret equal to the final value of i when the search
+   * is completed but some loops have not been moved.
+   * check arguments and initialise
+   */
+
+  /* Function Body */
+  if (n < 2 || m < 2)
+    return 0;
+  if (iwrk < 1)
+    return -2;
+
+  /* If matrix is square, exchange elements a(i,j) and a(j,i). */
+  if (n == m)
+    {
+      for (i = 0; i < m - 1; ++i)
+        for (j = i + 1; j < m; ++j)
+          {
+            i1 = i + j * m;
+            i2 = j + i * m;
+            b = a[i1];
+            a[i1] = a[i2];
+            a[i2] = b;
+          }   return 0;
+    }
+
+  /* Non square matrix */
+  ncount = 2;
+  for (i = 0; i < iwrk; ++i)
+    move[i] = 0;
+
+  if (n > 2)
+    /* Count number,ncount, of single points. */
+    for (ia = 1; ia < n - 1; ++ia)
+      {
+        ib = ia * (m - 1) / (n - 1);
+        if (ia * (m - 1) != ib * (n - 1))
+          continue;
+        ++ncount;
+        i = ia * m + ib;
+        if (i > iwrk)
+          continue;
+        move[i] = 1;
+      }
+
+  /* Set initial values for search. */
+  mn = m * n;
+  k = mn - 1;
+  kmi = k - 1;
+  Max = mn;
+  i = 1;
+
+  while (1)
+    {
+      /* Rearrange elements of a loop. */
+      /* At least one loop must be re-arranged. */
+      i1 = i;
+      while (1)
+        {
+          b = a[i1];
+          while (1)
+            {
+              i2 = n * i1 - k * (i1 / m);
+              if (i1 <= iwrk)
+                move[i1 - 1] = 2;
+              ++ncount;
+              if (i2 == i || i2 >= kmi)
+                {
+                  if (Max == kmi || i2 == i)
+                    break;
+                  Max = kmi;
+                }
+              a[i1] = a[i2];
+              i1 = i2;
+            }
+
+          /* Test for symmetric pair of loops. */
+          a[i1] = b;
+          if (ncount >= mn)
+            return 0;
+          if (i2 == Max || Max == kmi)
+            break;
+          Max = kmi;
+          i1 = Max;
+        }
+
+      /* Search for loops to be rearranged. */
+      while (1)
+        {
+          Max = k - i;
+          ++i;
+          kmi = k - i;
+          if (i > Max)
+            return i;
+          if (i <= iwrk)
+            {
+              if (move[i-1] < 1)
+                break;
+              continue;
+            }
+          if (i == n * i - k * (i / m))
+            continue;
+          i1 = i;
+          while (1)
+            {
+              i2 = n * i1 - k * (i1 / m);
+              if (i2 <= i || i2 >= Max)
+                break;
+              i1 = i2;
+            }
+          if (i2 == i)
+            break;
+        }
+    } /* End never reached */
+}
+
+--
+                       ,-----------------------------       ______
+ ____                  | Phil Garner.            \___|     |/   \ \   ____
+/__/ `--,   _L__L\_    | garner@signal.dra.hmg.gb    |    _|`---'  \_/__/ `--,
+`-0---0-'  `-0--0-'    `--OO-------------------O-----'     `---0---' `-0---0-'
+
+ From: Murray Dow (mld900@anusf.anu.edu.au)
+ Subject: Re: In place matrix transpose
+ Newsgroups: sci.math.num-analysis
+ Date: 1993-08-09 19:45:57 PST
+
+
+In article <23qmp3INN3gl@mentor.dra.hmg.gb>, garner@signal.dra.hmg.gb (Phil Garner) writes:
+|> Someone was talking about matrix transposes earlier on.  It's a
+|> curious subject.  I found that an in-place transpose is about 12 times
+|> slower than the trivial copying method.
+|>
+
+Algorithm 380 from CACM is sloweer than ALG 467. Here are my times
+from a VP2200 vector computer. Note that the CACM algorithms are scalar.
+Times are in seconds, for a 900*904 matrix:
+
+380   NAG   467   disc copy
+1.03  1.14  .391  .177
+
+Compare two vector algortihms, one I wrote and the second a matrix
+copy:
+
+My Alg    Matrix copy
+.0095     .0097
+
+Conclusions: dont use Alg 380 from Netlib. If you have the available memory,
+do a matrix copy. If you don't have the memory, I will send you my algorithm
+when I have published it.
+--
+Murray Dow                         GPO Box 4 Canberra ACT 2601 Australia
+Supercomputer Facility             Phone: +61 6 2495028
+Australian National University     Fax:   +61 6 2473425
+mld900@anusf.anu.edu.au
+
+=============================================================================
+
+From: Mark Smotherman (mark@hubcap.clemson.edu)
+ Subject: Matrix transpose benchmark [was Re: MIPS R8000 == TFP?]
+ Newsgroups: comp.arch, comp.benchmarks, comp.sys.super
+ Date: 1994-07-01 06:35:51 PST
+
+
+mccalpin@perelandra.cms.udel.edu (John D. McCalpin) writes:
+
+>
+>Of course, these results are all for the naive algorithm.  I would be
+>interested to see what an efficient blocked algorithm looks like.
+>Anyone care to offer one?  There is clearly a lot of performance
+>to be gained by the effort....
+
+Here is a matrix transpose benchmark generator.  Enter something like
+
+        10d10eij;
+
+and you get a benchmark program with tiles of size 10 for the i and j
+inner loops.  Please email code improvements and flames.
+
+Enjoy!
+
+
+/*---------------------------------------------------------------------------
+
+        Matrix Transpose Generator
+
+        Copyright 1993, Dept. of Computer Science, Clemson University
+
+        Permission to use, copy, modify, and distribute this software and
+        its documentation for any purpose and without fee is hereby granted,
+        provided that the above copyright notice appears in all copies.
+
+        Clemson University and its Dept. of Computer Science make no
+        representations about the suitability of this software for any
+        purpose.  It is provided "as is" without express or implied warranty.
+
+        Original author: Mark Smotherman
+
+  -------------------------------------------------------------------------*/
+
+
+/* tpgen.c version 1.0
+ *
+ * generate a matrix transpose loop nest, with tiling and unrolling
+ * (timing code using getrusage is included in the generated program)
+ *
+ * mark smotherman
+ * mark@cs.clemson.edu
+ * clemson university
+ * 9 july 1993
+ *
+ * a loop nest can be described by the order of its loop indices, so
+ * this program takes as input a simple language describing these indices:
+ *  <number>d  ==> generate tiling loop for index i with step size of <number>
+ *  <number>e  ==> generate tiling loop for index j with step size of <number>
+ *  <number>i  ==> generate loop for index i with unrolling factor of <number>
+ *  <number>j  ==> generate loop for index j with unrolling factor of <number>
+ *  ;          ==> input terminator (required)
+ * rules are:
+ *  i,j tokens must appear
+ *  if d appears, it must appear before i
+ *  if e appears, it must appear before j
+ *  ; must appear
+ * matrix size is controlled by #define N in this program.
+ *
+ * this code was adapted from mmgen.c v1.2 and extended to generate pre-
+ * condition loops for unrolling factors that do not evenly divide the
+ * matrix size (or the tiling step size for loop nests with a tiling loop).
+ * note that this program only provides a preconditioning loop for the
+ * innermost loop.  unrolling factors for non-innermost loops that do not
+ * evenly divide the matrix size (or step size) are not supported.
+ *
+ * my interest in this program generator is to hook it to a sentence
+ * generator and a minimum execution time finder, that is
+ *   while((sentence=sgen())!=NULL){
+ *     genprogram=tpgen(sentence);
+ *     system("cc -O4 genprogram.c");
+ *     system("a.out >> tpresults");
+ *   }
+ *   findmintime(tpresults);
+ * this will find the optimum algorithm for the host system via an
+ * exhaustive search.
+ *
+ * please report bugs and suggestions for enhancements to me.
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define N 500
+
+#define ALLOC1 temp1=(struct line *)malloc(sizeof(struct line));\
+temp1->indentcnt=indentcnt;
+
+#define LINK1 temp1->next=insertbefore;\
+insertafter->next=temp1;\
+insertafter=temp1;
+
+#define INSERT1 temp1->next=start;\
+start=temp1;
+
+#define ALLOC2 temp1=(struct line *)malloc(sizeof(struct line));\
+temp2=(struct line *)malloc(sizeof(struct line));\
+temp1->indentcnt=indentcnt;\
+temp2->indentcnt=indentcnt++;
+
+#define LINK2 temp1->next=temp2;\
+temp2->next=insertbefore;\
+insertafter->next=temp1;\
+insertafter=temp1;\
+insertbefore=temp2;
+
+struct line{ int indentcnt; char line[256]; struct line *next; };
+
+int indentcnt;
+int iflag,jflag;
+int ijflag,jiflag;
+int dflag,eflag;
+int counter;
+int iistep,jjstep;
+int iunroll,junroll;
+int precond;
+
+char c;
+int i,ttp,nt;
+char *p0;
+char tptype[80];
+char number[10];
+
+struct line *start,*head,*insertafter,*insertbefore,*temp1,*temp2;
+
+void processloop();
+void processstmt();
+
+main(){
+
+  indentcnt=0;
+  iflag=jflag=0;
+  ijflag=jiflag=0;
+  dflag=eflag=0;
+  iunroll=junroll=0;
+  counter=1;
+  precond=0;
+  ttp=0;
+
+  start=NULL;
+  ALLOC2
+  sprintf(temp1->line,"/* begin */\nt_start=second();\n");
+  sprintf(temp2->line,"/* end */\nt_end = second();\n");
+  head=temp1; temp1->next=temp2; temp2->next=NULL;
+  insertafter=temp1; insertbefore=temp2;
+
+  while((c=getchar())!=';'){
+    tptype[ttp++]=c;
+    if(isdigit(c)){
+      nt=0;
+      while(isdigit(c)){
+        number[nt++]=c;
+        c=getchar();
+        if(c==';'){ fprintf(stderr,"unexpected ;!\n"); exit(1); }
+        tptype[ttp++]=c;
+      }
+      number[nt]='\0';
+      sscanf(number,"%d",&counter);
+    }
+    switch(c){
+      case 'd':
+        if(iflag){ fprintf(stderr,"d cannot appear after i!\n"); exit(1); }
+        dflag++;
+        ALLOC1
+        sprintf(temp1->line,"#define IISTEP %d\n",counter);
+        INSERT1
+        iistep=counter;
+        counter=1;
+        ALLOC2
+        sprintf(temp1->line,"for(ii=0;ii<%d;ii+=IISTEP){\n",N);
+        sprintf(temp2->line,"}\n",N);
+        LINK2
+        ALLOC1
+        sprintf(temp1->line,"it=min(ii+IISTEP,%d);\n",N);
+        LINK1
+        break;
+      case 'e':
+        if(jflag){ fprintf(stderr,"e cannot appear after j!\n"); exit(1); }
+        eflag++;
+        ALLOC1
+        sprintf(temp1->line,"#define JJSTEP %d\n",counter);
+        INSERT1
+        jjstep=counter;
+        counter=1;
+        ALLOC2
+        sprintf(temp1->line,"for(jj=0;jj<%d;jj+=JJSTEP){\n",N);
+        sprintf(temp2->line,"}\n",N);
+        LINK2
+        ALLOC1
+        sprintf(temp1->line,"jt=min(jj+JJSTEP,%d);\n",N);
+        LINK1
+        break;
+      case 'i':
+        iunroll=counter;
+        counter=1;
+        iflag++; if(jflag) jiflag++;
+        if(dflag) precond=iistep%iunroll; else precond=N%iunroll;
+        if(precond&&(jiflag==0)){
+          fprintf(stderr,"unrolling factor for outer loop i\n");
+          fprintf(stderr,"  does not evenly divide matrix/step size!\n");
+          exit(1);
+        }
+        if(dflag&&(iunroll>1)&&(N%iistep)){
+          fprintf(stderr,"with unrolling of i, step size for tiled loop ii\n");
+          fprintf(stderr,"  does not evenly divide matrix size!\n");
+          exit(1);
+        }
+        processloop('i',dflag,iunroll,precond,junroll);
+        break;
+      case 'j':
+        junroll=counter;
+        counter=1;
+        jflag++; if(iflag) ijflag++;
+        if(eflag) precond=jjstep%junroll; else precond=N%junroll;
+        if(precond&&(ijflag==0)){
+          fprintf(stderr,"unrolling factor for outer loop j\n");
+          fprintf(stderr,"  does not evenly divide matrix/step size!\n");
+          exit(1);
+        }
+        if(eflag&&(junroll>1)&&(N%jjstep)){
+          fprintf(stderr,"with unrolling of j, step size for tiled loop jj\n");
+          fprintf(stderr,"  does not evenly divide matrix size!\n");
+          exit(1);
+        }
+        processloop('j',eflag,junroll,precond,iunroll);
+        break;
+      default: break;
+    }
+  }
+  processstmt();
+
+  tptype[ttp++]=c;
+
+  if((iflag==0)||(jflag==0)){
+    fprintf(stderr,
+      "one of the loops (i,j) was not specified!\n");
+    exit(1);
+  }
+
+  temp1=start;
+  while(temp1!=NULL){
+    printf("%s",temp1->line);
+    temp1=temp1->next;
+  }
+  printf("#include <stdio.h>\n");
+  printf("#include <sys/time.h>\n");
+  printf("#include <sys/resource.h>\n");
+  if(dflag|eflag) printf("#define min(a,b) ((a)<=(b)?(a):(b))\n");
+  printf("double second();\n");
+  printf("double t_start,t_end,t_total;\n");
+  printf("int times;\n");
+  printf("\ndouble b[%d][%d],dummy[10000],bt[%d][%d];\n\nmain(){\n"
+    ,N,N,N,N);
+  if(precond) printf("  int i,j,n;\n"); else printf("  int i,j;\n");
+  if(dflag) printf("  int ii,it;\n");
+  if(eflag) printf("  int jj,jt;\n");
+  printf("/* set coefficients so that result matrix should have \n");
+  printf(" * column entries equal to column index\n");
+  printf(" */\n");
+  printf("  for (i=0;i<%d;i++){\n",N);
+  printf("    for (j=0;j<%d;j++){\n",N);
+  printf("      b[i][j] = (double) i;\n");
+  printf("    }\n");
+  printf("  }\n");
+  printf("\n  t_total=0.0;\n  for(times=0;times<10;times++){\n\n",N);
+  printf("/* try to flush cache */\n");
+  printf("  for(i=0;i<10000;i++){\n",N);
+  printf("    dummy[i] = 0.0;\n");
+  printf("  }\n");
+  printf("%s",head->line);
+  temp1=head->next;
+  while(temp1!=NULL){
+    for(i=0;i<temp1->indentcnt;i++) printf("  ");
+    while((p0=strstr(temp1->line,"+0"))!=NULL){
+      *p0++=' '; *p0=' ';
+    }
+    printf("%s",temp1->line);
+    temp1=temp1->next;
+  }
+  printf("\n  t_total+=t_end-t_start;\n  }\n");
+  printf("/* check result */\n");
+  printf("  for (j=0;j<%d;j++){\n",N);
+  printf("    for (i=0;i<%d;i++){\n",N);
+  printf("      if (bt[i][j]!=((double)j)){\n");
+  printf("        fprintf(stderr,\"error in bt[%cd][%cd]",'%','%');
+  printf("\\n\",i,j);\n");
+  printf("        fprintf(stderr,\" for %s\\n\");\n",tptype);
+  printf("        exit(1);\n");
+  printf("      }\n");
+  printf("    }\n");
+  printf("  }\n");
+  tptype[ttp]='\0';
+  printf("  printf(\"%c10.2f secs\",t_total);\n",'%');
+  printf("  printf(\" for 10 runs of %s\\n\");\n",tptype);
+  printf("}\n");
+  printf("double second(){\n");
+  printf("  void getrusage();\n");
+  printf("  struct rusage ru;\n");
+  printf("  double t;\n");
+  printf("  getrusage(RUSAGE_SELF,&ru);\n");
+  printf("  t = ((double)ru.ru_utime.tv_sec) +\n");
+  printf("    ((double)ru.ru_utime.tv_usec)/1.0e6;\n");
+  printf("  return t;\n");
+  printf("}\n");
+
+}
+
+void processloop(index,flag,unroll,precond,unroll2)
+char index;
+int flag,unroll,precond,unroll2;
+{
+  char build[80],temp[40];
+  int n;
+  if(precond){
+    ALLOC1
+    sprintf(temp1->line,"/* preconditioning loop for unrolling factor */\n");
+    LINK1
+    if(unroll2==1){
+      build[0]='\0';
+      if(flag){
+        if(index='i')
+          sprintf(temp,"n=IISTEP%c%d; ",'%',unroll);
+        else
+          sprintf(temp,"n=JJSTEP%c%d; ",'%',unroll);
+        strcat(build,temp);
+        sprintf(temp,"for(%c=%c%c;%c<%c%c+n;%c++) ",index,index,index,
+          index,index,index,index);
+        strcat(build,temp);
+      }else{
+        sprintf(temp,"n=%d%c%d; ",N,'%',unroll);
+        strcat(build,temp);
+        sprintf(temp,"for(%c=0;%c<n;%c++) ",index,index,index);
+        strcat(build,temp);
+      }
+      sprintf(temp,"bt[i][j]=b[j][i];\n");
+      strcat(build,temp);
+      ALLOC1
+      sprintf(temp1->line,"%s\n",build);
+      LINK1
+    }else{
+      if(flag){
+        ALLOC1
+        if(index=='i')
+          sprintf(temp1->line,"n=IISTEP%c%d;\n",'%',unroll);
+        else
+          sprintf(temp1->line,"n=JJSTEP%c%d;\n",'%',unroll);
+        LINK1
+        ALLOC1
+        sprintf(temp1->line,"for(%c=%c%c;%c<%c%c+n;%c++){\n",index,index,index,
+          index,index,index,index);
+        LINK1
+      }else{
+        ALLOC1
+        sprintf(temp1->line,"n=%d%c%d;\n",N,'%',unroll);
+        LINK1
+        ALLOC1
+        sprintf(temp1->line,"for(%c=0;%c<n;%c++){\n",index,index,index);
+        LINK1
+      }
+      if(index=='i'){
+        for(n=0;n<unroll2;n++){
+          ALLOC1
+          sprintf(temp1->line,"  bt[i][j+%d]=b[j+%d][i];\n",n,n);
+          LINK1
+        }
+      }else{
+        for(n=0;n<unroll2;n++){
+          ALLOC1
+          sprintf(temp1->line,"  bt[i+%d][j]=b[j][i+%d];\n",n,n);
+          LINK1
+        }
+      }
+      ALLOC1
+      sprintf(temp1->line,"}\n");
+      LINK1
+    }
+    ALLOC2
+    if(flag){
+      sprintf(temp1->line,"for(%c=%c%c+n;%c<%ct;%c+=%d){\n",index,index,index,
+        index,index,index,unroll);
+    }else{
+      sprintf(temp1->line,"for(%c=n;%c<%d;%c+=%d){\n",index,index,N,index,
+        unroll);
+    }
+    sprintf(temp2->line,"}\n",N);
+    LINK2
+  }else{
+    ALLOC2
+    if(unroll==1){
+      if(flag){
+        sprintf(temp1->line,"for(%c=%c%c;%c<%ct;%c++){\n",index,index,index,
+          index,index,index);
+      }else{
+        sprintf(temp1->line,"for(%c=0;%c<%d;%c++){\n",index,index,N,index);
+      }
+    }else{
+      if(flag){
+        sprintf(temp1->line,"for(%c=%c%c;%c<%ct;%c+=%d){\n",index,index,index,
+          index,index,index,unroll);
+      }else{
+        sprintf(temp1->line,"for(%c=0;%c<%d;%c+=%d){\n",index,index,N,index,
+          unroll);
+      }
+    }
+    sprintf(temp2->line,"}\n",N);
+    LINK2
+  }
+}
+
+void processstmt()
+{
+  int i,j;
+  for(i=0;i<iunroll;i++){
+    for(j=0;j<junroll;j++){
+      ALLOC1
+      sprintf(temp1->line,"bt[i+%d][j+%d]=b[j+%d][i+%d];\n",i,j,j,i);
+      LINK1
+    }
+  }
+}
+--
+Mark Smotherman, Computer Science Dept., Clemson University, Clemson, SC
+
+=======================================================================
+From: has (h.genceli@bre.com)
+ Subject: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+If I have a matrix nrows x ncols, I can store it in a vector.
+so A(i,j) is really a[i*ncols+j]. So really TRANS of A
+(say B) is really is also a vector B where
+
+0<=i b[j*nrows+i] <nrows, 0<=j<ncols
+b[j*nrows+i] = a[i*ncols+j].
+
+Fine but I want to use only one array a to do this transformation.
+
+i.e a[j*nrows+i] = a[i*ncols+j]. this will itself
+erase some elements so each time a swap is necessary in a loop.
+
+temp = a[j*nrows+i]
+a[j*nrows+i] = a[i*ncols+j]
+a[i*ncols+j] = temp
+
+but still this will lose some info as it is, so indexing
+should have more intelligence in it ???? anybody
+can give me a lead here, thanks.
+
+Has
+
+ From: wei-choon ng (wng@ux8.cso.uiuc.edu)
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+has <h.genceli@bre.com> wrote:
+> If I have a matrix nrows x ncols, I can store it in a vector.
+> so A(i,j) is really a[i*ncols+j]. So really TRANS of A
+> (say B) is really is also a vector B where
+
+[snip]
+
+Hey, if you just want to do a transpose-matrix vector multiply, there is
+no need to explicitly store the transpose matrix in another array and
+doubling the storage!
+
+W.C.
+--
+
+ From: Robin Becker (robin@jessikat.fsnet.co.uk)
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+In article <snr532fo3j1180@corp.supernews.com>, has <h.genceli@bre.com>
+writes
+>If I have a matrix nrows x ncols, I can store it in a vector.
+>so A(i,j) is really a[i*ncols+j]. So really TRANS of A
+>(say B) is really is also a vector B where
+>
+>0<=i b[j*nrows+i] <nrows, 0<=j<ncols
+>b[j*nrows+i] = a[i*ncols+j].
+>
+>Fine but I want to use only one array a to do this transformation.
+>
+>i.e a[j*nrows+i] = a[i*ncols+j]. this will itself
+>erase some elements so each time a swap is necessary in a loop.
+>
+>temp = a[j*nrows+i]
+>a[j*nrows+i] = a[i*ncols+j]
+>a[i*ncols+j] = temp
+>
+>but still this will lose some info as it is, so indexing
+>should have more intelligence in it ???? anybody
+>can give me a lead here, thanks.
+>
+>Has
+>
+>
+>
+
+void dmx_transpose(unsigned n, unsigned m, double* a, double* b)
+{
+        unsigned        size = m*n;
+        if(b!=a){
+                real    *bmn, *aij, *anm;
+                bmn = b + size; /*b+n*m*/
+                anm = a + size;
+                while(b<bmn) for(aij=a++;aij<anm; aij+=n ) *b++ = *aij;
+                }
+        else if(size>3){
+                unsigned i,row,column,current;
+                for(i=1, size -= 2;i<size;i++){
+                        current = i;
+                        do      {
+                                /*current = row+n*column*/
+                                column = current/m;
+                                row = current%m;
+                                current = n*row +  column;
+                                } while(current < i);
+
+                        if (current >i) {
+                                real temp = a[i];
+                                a[i] = a[current];
+                                a[current] = temp;
+                                }
+                        }
+                }
+}
+--
+Robin Becker
+
+ From: E. Robert Tisdale (edwin@netwood.net)
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+Take a look at
+The C++ Scalar, Vector, Matrix and Tensor class library
+
+    http://www.netwood.net/~edwin/svmt/
+
+<Type><System>SubVector&
+        <Type><System>SubVector::transpose(Extent p, Extent q) {
+  <Type><System>SubVector&
+                v = *this;
+  if (1 < p && 1 < q) {
+    // A vector v of extent n = qp is viewed as a q by p matrix U and
+    // a p by q matrix V where U_{ij} = v_{p*i+j} and V_{ij} = v_{q*i+j}.
+    // The vector v is modified in-place so that V is the transpose of U.
+    // The algorithm searches for every sequence k_s of S indices
+    // such that a circular shift of elements v_{k_s} <-- v_{k_{s+1}}
+    // and v_{k_{S-1}} <-- v_{k_0} effects an in-place transpose.
+    Extent      n = q*p;
+    Extent      m = 0;                  // count up to n-2
+    Offset      l = 0;                  // 1 <= l <= n-2
+    while (++l < n-1 && m < n-2) {
+      Offset    k = l;
+      Offset    j = k;
+      while (l < (k = (j%p)*q + j/p)) { // Search backward for k < l.
+        j = k;
+        }
+      // If a sequence of indices beginning with l has any index k < l,
+      // it has already been transposed.  The sequence length S = 1
+      // and diagonal element v_k is its own transpose if k = j.
+      // Skip every index sequence that has already been transposed.
+      if (k == l) {                     // a new sequence
+        if (k < j) {                    // with 1 < S
+          TYPE  x = v[k];               // save v_{k_0}
+          do {
+            v[k] = v[j];                // v_{k_{s}} <-- v_{k_{s+1}}
+            k = j;
+            ++m;
+            } while (l < (j = (k%q)*p + k/q));
+          v[k] = x;                     // v_{k_{S-1}} <-- v_{k_0}
+          }
+        ++m;
+        }
+      }
+    } return v;
+  }
+
+
+
+<Type><System>SubVector&
+
+Read the rest of this message... (50 more lines)
+
+ From: Victor Eijkhout (eijkhout@disco.cs.utk.edu)
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+"Alan Miller" <amiller @ vic.bigpond.net.au> writes:
+
+> The attached routine does an in situ transpose.
+> begin 666 Dtip.f90
+> M4U5"4D]55$E.12!D=&EP("AA+"!N,2P@;C(L(&YD:6TI#0HA("TM+2TM+2TM
+
+Hm. F90? You're not silently allocating a temporary I hope?
+
+(Why did you have to encode this? Now I have to save, this decode, ...
+and all for plain ascii?)
+
+--
+Victor Eijkhout
+"When I was coming up, [..] we knew exactly who the they were. It was us
+versus them, and it was clear who the them was were. Today, we are not
+so sure who the they are, but we know they're there." [G.W. Bush]
+
+ From: Alan Miller (amiller_@_vic.bigpond.net.au)
+ Subject: Re: transpose of a nxm matrix stored in a vector !!!
+ Newsgroups: sci.math.num-analysis
+ Date: 2000/07/25
+
+
+Victor Eijkhout wrote in message ...
+>"Alan Miller" <amiller @ vic.bigpond.net.au> writes:
+>
+>> The attached routine does an in situ transpose.
+>> begin 666 Dtip.f90
+>> M4U5"4D]55$E.12!D=&EP("AA+"!N,2P@;C(L(&YD:6TI#0HA("TM+2TM+2TM
+>
+>Hm. F90? You're not silently allocating a temporary I hope?
+>
+>(Why did you have to encode this? Now I have to save, this decode, ...
+>and all for plain ascii?)
+>
+
+I know the problem.
+I sometimes use a Unix system, and have to use decode64 to read
+attachments.   On the other hand, Windows wraps lines around,
+formats then and generally makes the code unreadable.
+
+The straight code for dtip (double transpose in place) is attached
+this time.
+
+>--
+>Victor Eijkhout
+
+
+--
+Alan Miller, Retired Scientist (Statistician)
+CSIRO Mathematical & Information Sciences
+Alan.Miller -at- vic.cmis.csiro.au
+http://www.ozemail.com.au/~milleraj
+http://users.bigpond.net.au/amiller/
+
+
+=================================================================
+
+From: Darran Edmundson (dedmunds@sfu.ca)
+ Subject: array reordering algorithm?
+ Newsgroups: sci.math.num-analysis
+ Date: 1995/04/30
+
+
+A code I've written refers to a complex array as two separate real arrays.
+However, I have a canned subroutine which expects a single array where the
+real and imaginary values alternate.  Essentially I have a case of mismatched
+data structures, yet for reasons that I'd rather not go into, I'm stuck with them.
+
+Assuming that the two real arrays A and B are sequential in memory, and
+that the single array of alternating real/imaginary values C shares the same
+space, what I need is a porting subroutine that remaps the data from one format
+to the other - using as little space as possible.
+
+I think of the problem as follows.  Imagine an array of dimension 10 containing
+the values 1,3,5,7,9,2,4,6,8,10 in this order.
+
+ A(1) /  1   \  C(1)
+ A(2) |  3   |  C(2)
+ A(3) |  5   |  C(3)
+ A(4) |  7   |  C(4)
+ A(5) \  9   |  C(5)
+             |
+ B(1) /  2   |  C(6)
+ B(2) |  4   |  C(7)
+ B(3) |  6   |  C(8)
+ B(4) |  8   |  C(9)
+ B(5) \ 10   /  C(10)
+
+Given that I know this initial pattern, I want to sort the array C in-place *without
+making comparisons*.  That is, the algorithm can only depend on the initial
+knowledge of the pattern.  Do you see what a sort is going to do?  It will
+make the A and B arrays alternate, i.e. C(1)=A(1), C(2)=B(1), C(3)=A(2),
+C(4)=B(2), etc.  It's not a real sort though because I can't actually refer to the
+values above (i.e. no comparisons) because A and B will be holding real data,
+not this contrived pattern.  The pattern above exists though - it's the
+natural ordering in memory of A and B.
+
+Either pair swapping only or a small amount of workspace can be used.  The
+in-place is important - imagine scaling this problem up to an
+array of 32 or 64 million double precision values and you can easily see how
+duplicating the array is not a feasible solution.
+
+Any ideas?  I've been stumped on this for a day and a half now.
+
+Darran Edmundson
+dedmunds@sfu.ca
+
+ From: Roger Critchlow (rec@elf115.elf.org)
+ Subject: Re: array reordering algorithm?
+ Newsgroups: sci.math.num-analysis
+ Date: 1995/04/30
+
+
+   Any ideas?  I've been stumped on this for a day and a half now.
+
+Here's some code for in situ permutations of arrays that I wrote
+a few years ago.  It all started from the in situ transposition
+algorithms in the Collected Algorithms of the ACM, the references
+for which always get lost during the decryption from fortran.
+
+This is the minimum space algorithm.  All you need to supply is
+a function which computes the new order array index from the old
+order array index.
+
+If you can spare n*m bits to record the indexes of elements which
+have been permuted, then you can speed things up.
+
+-- rec --
+
+------------------------------------------------------------------------
+/*
+** Arbitrary in situ permutations of an m by n array of base type TYPE.
+** Copyright 1995 by Roger E Critchlow Jr, rec@elf.org, San Francisco, CA.
+** Fair use permitted, caveat emptor.
+*/
+typedef int TYPE;
+
+int transposition(int ij, int m, int n)         /* transposition about diagonal from upper left to lower right */
+{ return ((ij%m)*n+ (ij/m)); }
+
+int countertrans(int ij, int m, int n)          /* transposition about diagonal from upper right to lower left */
+{ return ((m-1-(ij%m))*n+ (n-1-(ij/m))); }
+
+int rotate90cw(int ij, int m, int n)            /* 90 degree clockwise rotation */
+{ return ((m-1-(ij%m))*n+ (ij/m)); }
+
+int rotate90ccw(int ij, int m, int n)           /* 90 degree counter clockwise rotation */
+{ return ((ij%m)*n+ (n-1-(ij/m))); }
+
+int rotate180(int ij, int m, int n)             /* 180 degree rotation */
+{ return ((m-1-(ij/n))*n+ (n-1-(ij%n))); }
+
+int reflecth(int ij, int m, int n)              /* reflection across horizontal plane */
+{ return ((m-1-(ij/n))*n+ (ij%n)); }
+
+int reflectv(int ij, int m, int n)              /* reflection across vertical plane */
+{ return ((ij/n)*n+ (n-1-(ij%n))); }
+
+int in_situ_permutation(TYPE a[], int m, int n, int (*origination)(int ij, int m, int n))
+{
+  int ij, oij, dij, n_to_do;
+  TYPE b;
+  n_to_do = m*n;
+  for (ij = 0; ij < m*n && n_to_do > 0; ij += 1) {
+    /* Test for previously permuted */
+    for (oij = origination(ij,m,n); oij > ij; oij = origination(oij,m,n))
+      ;
+    if (oij < ij)
+      continue;
+    /* Chase the cycle */
+    dij = ij;
+    b = a[ij];
+    for (oij = origination(dij,m,n); oij != ij; oij = origination(dij,m,n)) {
+      a[dij] = a[oij];
+      dij = oij;
+      n_to_do -= 1;
+    }
+    a[dij] = b;
+    n_to_do -= 1;
+  } return 0;
+}
+
+#define TESTING 1
+#if TESTING
+
+/* fill a matrix with sequential numbers, row major ordering */
+void fill_matrix_rows(a, m, n) TYPE *a; int m, n;
+{
+  int i, j;
+  for (i = 0; i < m; i += 1)
+    for (j = 0; j < n; j += 1)
+      a[i*n+j] = i*n+j;
+}
+
+/* fill a matrix with sequential numbers, column major ordering */
+void fill_matrix_cols(a, m, n) TYPE *a; int m, n;
+{
+  int i, j;
+  for (i = 0; i < m; i += 1)
+    for (j = 0; j < n; j += 1)
+      a[i*n+j] = j*m+i;
+}
+
+/* test a matrix for sequential numbers, row major ordering */
+int test_matrix_rows(a, m, n) TYPE *a; int m, n;
+{
+  int i, j, o;
+  for (o = i = 0; i < m; i += 1)
+    for (j = 0; j < n; j += 1)
+      o += a[i*n+j] != i*n+j;
+  return o;
+}
+
+/* test a matrix for sequential numbers, column major ordering */
+int test_matrix_cols(a, m, n) TYPE *a; int m, n;
+{
+  int i, j, o;
+  for (o = i = 0; i < m; i += 1)
+    for (j = 0; j < n; j += 1)
+      o += a[i*n+j] != j*m+i;
+  return o;
+}
+
+/* print a matrix */
+void print_matrix(a, m, n) TYPE *a; int m, n;
+{
+  char *format;
+  int i, j;
+  if (m*n < 10) format = "%2d";
+  if (m*n < 100) format = "%3d";
+  if (m*n < 1000) format = "%4d";
+  if (m*n < 10000) format = "%5d";
+  for (i = 0; i < m; i += 1) {
+    for (j = 0; j < n; j += 1)
+      printf(format, a[i*n+j]);
+    printf("\n");
+  }
+}
+
+#if TEST_TRANSPOSE
+#define MAXSIZE 1000
+
+main()
+{
+  int i, j, m, n, o;
+  TYPE a[MAXSIZE];
+  for (m = 1; m < sizeof(a)/sizeof(a[0]); m += 1)
+    for (n = 1; m*n < sizeof(a)/sizeof(a[0]); n += 1) {
+      fill_matrix_rows(a, m, n);                                /* {0 1} {2 3} */
+      if (o = transpose(a, m, n))
+        printf(">> transpose returned %d for a[%d][%d], row major\n", o, m, n);
+      if ((o = test_matrix_cols(a, n, m)) != 0)                 /* {0 2} {1 3} */
+        printf(">> transpose made %d mistakes for a[%d][%d], row major\n", o, m, n);
+      /* column major */
+      fill_matrix_rows(a, m, n);
+      if (o = transpose(a, m, n))
+        printf(">> transpose returned %d for a[%d][%d], column major\n", o, m, n);
+      if ((o = test_matrix_cols(a, n, m)) != 0)
+        printf(">> transpose made %d mistakes for a[%d][%d], column major\n", o, m, n);
+    } return 0;
+}
+#endif                                                          /* TEST_TRANSPOSE */
+
+
+#define TEST_DISPLAY 1
+#if TEST_DISPLAY
+main(argc, argv) int argc; char *argv[];
+{
+  TYPE *a;
+  int m = 5, n = 5;
+  extern void *malloc();
+  if (argc > 1) {
+    m = atoi(argv[1]);
+    if (argc > 2)
+      n = atoi(argv[2]);
+  }
+  a = malloc(m*n*sizeof(TYPE));
+
+  printf("matrix\n");
+  fill_matrix_rows(a, m, n);
+  print_matrix(a, m, n);
+  printf("transposition\n");
+  in_situ_permutation(a, m, n, transposition);
+  print_matrix(a, n, m);
+
+  printf("counter transposition\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, countertrans);
+  print_matrix(a, n, m);
+
+  printf("rotate 90 degrees clockwise\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, rotate90cw);
+  print_matrix(a, n, m);
+
+  printf("rotate 90 degrees counterclockwise\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, rotate90ccw);
+  print_matrix(a, n, m);
+
+  printf("rotate 180 degrees\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, rotate180);
+  print_matrix(a, m, n);
+
+  printf("reflect across horizontal\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, reflecth);
+  print_matrix(a, m, n);
+
+  printf("reflect across vertical\n");
+  fill_matrix_rows(a, m, n);
+  in_situ_permutation(a, m, n, reflectv);
+  print_matrix(a, m, n);
+
+  return 0;
+}
+
+#endif
+#endif

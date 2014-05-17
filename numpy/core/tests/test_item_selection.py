@@ -8,12 +8,12 @@ import sys, warnings
 class TestTake(TestCase):
     def test_simple(self):
         a = [[1, 2], [3, 4]]
-        a_str = [[b'1', b'2'],[b'3', b'4']]
+        a_str = [[b'1', b'2'], [b'3', b'4']]
         modes = ['raise', 'wrap', 'clip']
         indices = [-1, 4]
         index_arrays = [np.empty(0, dtype=np.intp),
                         np.empty(tuple(), dtype=np.intp),
-                        np.empty((1,1), dtype=np.intp)]
+                        np.empty((1, 1), dtype=np.intp)]
         real_indices = {}
         real_indices['raise'] = {-1:1, 4:IndexError}
         real_indices['wrap'] = {-1:1, 4:0}
@@ -59,7 +59,12 @@ class TestTake(TestCase):
             a.take(b, out=a[:6])
             del a
             assert_(all(sys.getrefcount(o) == 3 for o in objects))
-    
+
+    def test_unicode_mode(self):
+        d = np.arange(10)
+        k = b'\xc3\xa4'.decode("UTF8")
+        assert_raises(ValueError, d.take, 5, mode=k)
+
 
 if __name__ == "__main__":
     run_module_suite()

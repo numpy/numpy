@@ -84,9 +84,9 @@ class create_zeros(object):
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
-        ua = zeros((2,3,4), dtype='U%s' % self.ulen)
-        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
-        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        ua = zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
 class test_create_zeros_1(create_zeros, TestCase):
@@ -145,8 +145,8 @@ class create_values(object):
     def test_valuesMD(self):
         """Check creation of multi-dimensional objects with values"""
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4, dtype='U%s' % self.ulen)
-        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
-        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
 class test_create_values_1_ucs2(create_values, TestCase):
@@ -232,11 +232,11 @@ class assign_values(object):
 
     def test_valuesMD(self):
         """Check assignment of multi-dimensional objects with values"""
-        ua = zeros((2,3,4), dtype='U%s' % self.ulen)
-        ua[0,0,0] = self.ucs_value*self.ulen
-        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
-        ua[-1,-1,-1] = self.ucs_value*self.ulen
-        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        ua = zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        ua[0, 0, 0] = self.ucs_value*self.ulen
+        self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
+        ua[-1, -1, -1] = self.ucs_value*self.ulen
+        self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
 class test_assign_values_1_ucs2(assign_values, TestCase):
@@ -310,8 +310,8 @@ class byteorder_values:
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4,
                    dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        self.assertTrue(ua[0,0,0] != ua2[0,0,0])
-        self.assertTrue(ua[-1,-1,-1] != ua2[-1,-1,-1])
+        self.assertTrue(ua[0, 0, 0] != ua2[0, 0, 0])
+        self.assertTrue(ua[-1, -1, -1] != ua2[-1, -1, -1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)

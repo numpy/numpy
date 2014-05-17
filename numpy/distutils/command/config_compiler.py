@@ -24,24 +24,24 @@ class config_fc(Command):
     description = "specify Fortran 77/Fortran 90 compiler information"
 
     user_options = [
-        ('fcompiler=',None,"specify Fortran compiler type"),
+        ('fcompiler=', None, "specify Fortran compiler type"),
         ('f77exec=', None, "specify F77 compiler command"),
         ('f90exec=', None, "specify F90 compiler command"),
-        ('f77flags=',None,"specify F77 compiler flags"),
-        ('f90flags=',None,"specify F90 compiler flags"),
-        ('opt=',None,"specify optimization flags"),
-        ('arch=',None,"specify architecture specific optimization flags"),
-        ('debug','g',"compile with debugging information"),
-        ('noopt',None,"compile without optimization"),
-        ('noarch',None,"compile without arch-dependent optimization"),
+        ('f77flags=', None, "specify F77 compiler flags"),
+        ('f90flags=', None, "specify F90 compiler flags"),
+        ('opt=', None, "specify optimization flags"),
+        ('arch=', None, "specify architecture specific optimization flags"),
+        ('debug', 'g', "compile with debugging information"),
+        ('noopt', None, "compile without optimization"),
+        ('noarch', None, "compile without arch-dependent optimization"),
         ]
 
     help_options = [
-        ('help-fcompiler',None, "list available Fortran compilers",
+        ('help-fcompiler', None, "list available Fortran compilers",
          show_fortran_compilers),
         ]
 
-    boolean_options = ['debug','noopt','noarch']
+    boolean_options = ['debug', 'noopt', 'noarch']
 
     def initialize_options(self):
         self.fcompiler = None
@@ -65,7 +65,7 @@ class config_fc(Command):
         for a in ['fcompiler']:
             l = []
             for c in cmd_list:
-                v = getattr(c,a)
+                v = getattr(c, a)
                 if v is not None:
                     if not isinstance(v, str): v = v.compiler_type
                     if v not in l: l.append(v)
@@ -76,7 +76,7 @@ class config_fc(Command):
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c,a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None: setattr(c, a, v1)
 
     def run(self):
         # Do nothing.
@@ -90,7 +90,7 @@ class config_cc(Command):
     description = "specify C/C++ compiler information"
 
     user_options = [
-        ('compiler=',None,"specify C/C++ compiler type"),
+        ('compiler=', None, "specify C/C++ compiler type"),
         ]
 
     def initialize_options(self):
@@ -106,7 +106,7 @@ class config_cc(Command):
         for a in ['compiler']:
             l = []
             for c in cmd_list:
-                v = getattr(c,a)
+                v = getattr(c, a)
                 if v is not None:
                     if not isinstance(v, str): v = v.compiler_type
                     if v not in l: l.append(v)
@@ -117,7 +117,7 @@ class config_cc(Command):
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c,a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None: setattr(c, a, v1)
         return
 
     def run(self):

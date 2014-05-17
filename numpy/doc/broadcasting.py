@@ -68,8 +68,8 @@ they are compatible::
   Scale  (1d array):             3
   Result (3d array): 256 x 256 x 3
 
-When either of the dimensions compared is one, the larger of the two is
-used.  In other words, the smaller of two axes is stretched or "copied"
+When either of the dimensions compared is one, the other is
+used.  In other words, dimensions with size 1 are stretched or "copied"
 to match the other.
 
 In the following example, both the ``A`` and ``B`` arrays have axes with
@@ -171,9 +171,8 @@ Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
 with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
 
-See `this article <http://www.scipy.org/EricsBroadcastingDoc>`_
+See `this article <http://wiki.scipy.org/EricsBroadcastingDoc>`_
 for illustrations of broadcasting concepts.
 
 """
 from __future__ import division, absolute_import, print_function
-

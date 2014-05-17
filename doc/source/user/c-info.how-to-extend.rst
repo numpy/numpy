@@ -255,7 +255,7 @@ Reference counting
 
 The biggest difficulty when writing extension modules is reference
 counting. It is an important reason for the popularity of f2py, weave,
-pyrex, ctypes, etc.... If you mis-handle reference counts you can get
+Cython, ctypes, etc.... If you mis-handle reference counts you can get
 problems from memory-leaks to segmentation faults. The only strategy I
 know of to handle reference counts correctly is blood, sweat, and
 tears. First, you force it into your head that every Python variable

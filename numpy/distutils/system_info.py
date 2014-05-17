@@ -12,6 +12,7 @@ classes are available:
   lapack_atlas_info
   blas_info
   lapack_info
+  openblas_info
   blas_opt_info       # usage recommended
   lapack_opt_info     # usage recommended
   fftw_info,dfftw_info,sfftw_info
@@ -119,7 +120,6 @@ import copy
 import warnings
 from glob import glob
 from functools import reduce
-
 if sys.version_info[0] < 3:
     from ConfigParser import NoOptionError, ConfigParser
 else:
@@ -137,6 +137,9 @@ from numpy.distutils.misc_util import is_sequence, is_string, \
                                       get_shared_lib_extension
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+import distutils.ccompiler
+import tempfile
+import shutil
 
 
 # Determine number of bits
@@ -217,6 +220,7 @@ else:
                                              '/usr/include/X11'])
 
     import subprocess as sp
+    tmp = None
     try:
         # Explicitly open/close file to avoid ResourceWarning when
         # tests are run in debug mode Python 3.
@@ -234,7 +238,8 @@ else:
             default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
             default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
     finally:
-        tmp.close()
+        if tmp is not None:
+            tmp.close()
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0, os.path.join(sys.prefix, 'lib'))
@@ -269,7 +274,7 @@ def get_standard_file(fname):
     # Home directory
     # And look for the user config file
     try:
-        f = os.environ['HOME']
+        f = os.path.expanduser('~')
     except KeyError:
         pass
     else:
@@ -298,6 +303,10 @@ def get_info(name, notfound_action=0):
           'lapack_atlas': lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads': lapack_atlas_threads_info,  # ditto
           'mkl': mkl_info,
+          # openblas which may or may not have embedded lapack
+          'openblas': openblas_info,          # use blas_opt instead
+          # openblas with embedded lapack
+          'openblas_lapack': openblas_lapack_info, # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -446,7 +455,6 @@ class system_info:
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {}
-        defaults['libraries'] = ''
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
@@ -700,7 +708,7 @@ class system_info:
         else:
             found_libs = self._lib_list(lib_dirs, libs, exts)
             found_dirs = [lib_dirs]
-        if len(found_libs) == len(libs):
+        if len(found_libs) > 0 and len(found_libs) == len(libs):
             info = {'libraries': found_libs, 'library_dirs': found_dirs}
             # Now, check for optional libraries
             if is_sequence(lib_dirs):
@@ -752,9 +760,6 @@ class fftw_info(system_info):
                     'libs':['rfftw', 'fftw'],
                     'includes':['fftw.h', 'rfftw.h'],
                     'macros':[('SCIPY_FFTW_H', None)]}]
-
-    def __init__(self):
-        system_info.__init__(self)
 
     def calc_ver_info(self, ver_param):
         """Returns True on successful version detection, else False"""
@@ -1299,11 +1304,13 @@ def get_atlas_version(**config):
     info = {}
     try:
         s, o = c.get_output(atlas_version_c_text,
-                            libraries=libraries, library_dirs=library_dirs)
+                            libraries=libraries, library_dirs=library_dirs,
+                            use_tee=(system_info.verbosity > 0))
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
-                                library_dirs=library_dirs)
+                                library_dirs=library_dirs,
+                                use_tee=(system_info.verbosity > 0))
             if not s:
                 warnings.warn("""
 *****************************************************
@@ -1366,10 +1373,26 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
 
-        if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
+        openblas_info = get_info('openblas_lapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
+        lapack_mkl_info = get_info('lapack_mkl')
+        if lapack_mkl_info:
+            self.set_info(**lapack_mkl_info)
+            return
+
+        atlas_info = get_info('atlas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas')
+
+        if sys.platform == 'darwin' and not atlas_info:
+            # Use the system lapack from Accelerate or vecLib under OSX
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
                'i386' in platform.platform():
                 intel = 1
             else:
@@ -1394,14 +1417,6 @@ class lapack_opt_info(system_info):
                               define_macros=[('NO_ATLAS_INFO', 3)])
                 return
 
-        lapack_mkl_info = get_info('lapack_mkl')
-        if lapack_mkl_info:
-            self.set_info(**lapack_mkl_info)
-            return
-
-        atlas_info = get_info('atlas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas')
         #atlas_info = {} ## uncomment for testing
         need_lapack = 0
         need_blas = 0
@@ -1455,10 +1470,26 @@ class blas_opt_info(system_info):
 
     def calc_info(self):
 
-        if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
+        blas_mkl_info = get_info('blas_mkl')
+        if blas_mkl_info:
+            self.set_info(**blas_mkl_info)
+            return
+
+        openblas_info = get_info('openblas')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
+        atlas_info = get_info('atlas_blas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_blas')
+
+        if sys.platform == 'darwin' and not atlas_info:
+            # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
                'i386' in platform.platform():
                 intel = 1
             else:
@@ -1487,14 +1518,6 @@ class blas_opt_info(system_info):
                               define_macros=[('NO_ATLAS_INFO', 3)])
                 return
 
-        blas_mkl_info = get_info('blas_mkl')
-        if blas_mkl_info:
-            self.set_info(**blas_mkl_info)
-            return
-
-        atlas_info = get_info('atlas_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas')
         need_blas = 0
         info = {}
         if atlas_info:
@@ -1535,6 +1558,65 @@ class blas_info(system_info):
             return
         info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
+
+
+class openblas_info(blas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    notfounderror = BlasNotFoundError
+
+    def check_embedded_lapack(self, info):
+        return True
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+
+        openblas_libs = self.get_libs('libraries', self._lib_names)
+        if openblas_libs == self._lib_names: # backward compat with 1.8.0
+            openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        info = self.check_libs(lib_dirs, openblas_libs, [])
+        if info is None:
+            return
+
+        if not self.check_embedded_lapack(info):
+            return None
+
+        info['language'] = 'f77'  # XXX: is it generally true?
+        self.set_info(**info)
+
+
+class openblas_lapack_info(openblas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    notfounderror = BlasNotFoundError
+
+    def check_embedded_lapack(self, info):
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        tmpdir = tempfile.mkdtemp()
+        s = """void zungqr();
+        int main(int argc, const char *argv[])
+        {
+            zungqr_();
+            return 0;
+        }"""
+        src = os.path.join(tmpdir, 'source.c')
+        out = os.path.join(tmpdir, 'a.out')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            obj = c.compile([src], output_dir=tmpdir)
+            try:
+                c.link_executable(obj, out, libraries=info['libraries'],
+                                  library_dirs=info['library_dirs'])
+                res = True
+            except distutils.ccompiler.LinkError:
+                res = False
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class blas_src_info(system_info):
@@ -1829,7 +1911,7 @@ class agg2_info(system_info):
         info = {'libraries':
                 [('agg2_src',
                   {'sources': agg2_srcs,
-                   'include_dirs':[os.path.join(src_dir, 'include')],
+                   'include_dirs': [os.path.join(src_dir, 'include')],
                   }
                  )],
                 'include_dirs': [os.path.join(src_dir, 'include')],

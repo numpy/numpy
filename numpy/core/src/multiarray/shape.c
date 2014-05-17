@@ -93,7 +93,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array references or is referenced\n"\
+                    "cannot resize an array that "\
+                    "references or is referenced\n"\
                     "by another array in this way.  Use the resize function");
             return NULL;
         }
@@ -361,7 +362,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oi, oj, ok, ni, nj, nk;
 
     oldnd = 0;
-    /* 
+    /*
      * Remove axes with dimension 1 from the old array. They have no effect
      * but would need special cases since their strides do not matter.
      */
@@ -775,7 +776,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
         PyArray_DIMS(ret)[i] = PyArray_DIMS(ap)[permutation[i]];
         PyArray_STRIDES(ret)[i] = PyArray_STRIDES(ap)[permutation[i]];
     }
-    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
+                        NPY_ARRAY_ALIGNED);
     return (PyObject *)ret;
 }
 
@@ -783,7 +785,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
  * Sorts items so stride is descending, because C-order
  * is the default in the face of ambiguity.
  */
-int _npy_stride_sort_item_comparator(const void *a, const void *b)
+static int _npy_stride_sort_item_comparator(const void *a, const void *b)
 {
     npy_intp astride = ((const npy_stride_sort_item *)a)->stride,
             bstride = ((const npy_stride_sort_item *)b)->stride;

@@ -5,7 +5,7 @@
  * Memoryview is introduced to 2.x series only in 2.7, so for supporting 2.6,
  * we need to have a minimal implementation here.
  */
-#if (PY_VERSION_HEX >= 0x02060000) && (PY_VERSION_HEX < 0x02070000)
+#if PY_VERSION_HEX < 0x02070000
 
 typedef struct {
     PyObject_HEAD

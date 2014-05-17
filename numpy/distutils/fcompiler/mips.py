@@ -16,7 +16,7 @@ class MIPSFCompiler(FCompiler):
         'compiler_f77' : ["f77", "-f77"],
         'compiler_fix' : ["f90", "-fixedform"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f90","-shared"],
+        'linker_so'    : ["f90", "-shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : None
         }
@@ -31,7 +31,7 @@ class MIPSFCompiler(FCompiler):
     def get_flags_arch(self):
         opt = []
         for a in '19 20 21 22_4k 22_5k 24 25 26 27 28 30 32_5k 32_10k'.split():
-            if getattr(cpu,'is_IP%s'%a)():
+            if getattr(cpu, 'is_IP%s'%a)():
                 opt.append('-TARG:platform=IP%s' % a)
                 break
         return opt

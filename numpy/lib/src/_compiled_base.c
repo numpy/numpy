@@ -7,9 +7,6 @@
 #include "numpy/ufuncobject.h"
 #include "string.h"
 
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#endif
 
 static npy_intp
 incr_slot_(double x, double *bins, npy_intp lbins)
@@ -63,29 +60,44 @@ decr_slot_right_(double x, double * bins, npy_intp lbins)
     return 0;
 }
 
-/**
+/*
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic(double * a, int lena)
+check_array_monotonic(const double *a, npy_int lena)
 {
-    int i;
+    npy_intp i;
+    double next;
+    double last = a[0];
 
-    if (a [0] <= a [1]) {
-        /* possibly monotonic increasing */
-        for (i = 1; i < lena - 1; i ++) {
-            if (a [i] > a [i + 1]) {
+    /* Skip repeated values at the beginning of the array */
+    for (i = 1; (i < lena) && (a[i] == last); i++);
+
+    if (i == lena) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+
+    next = a[i];
+    if (last < next) {
+        /* Possibly monotonic increasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last > next) {
                 return 0;
             }
         }
         return 1;
     }
     else {
-        /* possibly monotonic decreasing */
-        for (i = 1; i < lena - 1; i ++) {
-            if (a [i] < a [i + 1]) {
+        /* last > next, possibly monotonic decreasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last < next) {
                 return 0;
             }
         }
@@ -93,39 +105,26 @@ check_array_monotonic(double * a, int lena)
     }
 }
 
-
-
-/* find the index of the maximum element of an integer array */
-static npy_intp
-mxx (npy_intp *i , npy_intp len)
+/* Find the minimum and maximum of an integer array */
+static void
+minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 {
-    npy_intp mx = 0, max = i[0];
-    npy_intp j;
+    npy_intp min = *data;
+    npy_intp max = *data;
 
-    for ( j = 1; j < len; j ++ ) {
-        if ( i [j] > max ) {
-            max = i [j];
-            mx = j;
+    while (--data_len) {
+        const npy_intp val = *(++data);
+        if (val < min) {
+            min = val;
+        }
+        else if (val > max) {
+            max = val;
         }
     }
-    return mx;
+
+    *mn = min;
+    *mx = max;
 }
-
-/* find the index of the minimum element of an integer array */
-static npy_intp
-mnx (npy_intp *i , npy_intp len)
-{
-    npy_intp mn = 0, min = i [0];
-    npy_intp j;
-
-    for ( j = 1; j < len; j ++ )
-        if ( i [j] < min )
-            {min = i [j];
-                mn = j;}
-    return mn;
-}
-
-
 /*
  * arr_bincount is registered as bincount.
  *
@@ -145,7 +144,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyArray_Descr *type;
     PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
     PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
-    npy_intp *numbers, *ians, len , mxi, mni, ans_size, minlength;
+    npy_intp *numbers, *ians, len , mx, mn, ans_size, minlength;
     int i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -162,14 +161,22 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     len = PyArray_SIZE(lst);
     type = PyArray_DescrFromType(NPY_INTP);
 
-    /* handle empty list */
-    if (len < 1) {
-        if (mlength == Py_None) {
-            minlength = 0;
-        }
-        else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+    if (mlength == Py_None) {
+        minlength = 0;
+    }
+    else {
+        minlength = PyArray_PyIntAsIntp(mlength);
+        if (minlength <= 0) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                                "minlength must be positive");
+            }
             goto fail;
         }
+    }
+
+    /* handle empty list */
+    if (len == 0) {
         if (!(ans = (PyArrayObject *)PyArray_Zeros(1, &minlength, type, 0))){
             goto fail;
         }
@@ -178,24 +185,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     numbers = (npy_intp *) PyArray_DATA(lst);
-    mxi = mxx(numbers, len);
-    mni = mnx(numbers, len);
-    if (numbers[mni] < 0) {
+    minmax(numbers, len, &mn, &mx);
+    if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "The first argument of bincount must be non-negative");
         goto fail;
     }
-    ans_size = numbers [mxi] + 1;
+    ans_size = mx + 1;
     if (mlength != Py_None) {
-        if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
-            goto fail;
-        }
-        if (minlength <= 0) {
-            /* superfluous, but may catch incorrect usage */
-            PyErr_SetString(PyExc_ValueError,
-                    "minlength must be positive");
-            goto fail;
-        }
         if (ans_size < minlength) {
             ans_size = minlength;
         }
@@ -683,8 +680,15 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
         }
         for (i = 0; i < lenx; i++) {
-            npy_intp j = binary_search(dz[i], dx, lenxp);
+            const double x = dz[i];
+            npy_intp j;
 
+            if (npy_isnan(x)) {
+                dres[i] = x;
+                continue;
+            }
+
+            j = binary_search(x, dx, lenxp);
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -695,7 +699,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = rval;
             }
             else {
-                dres[i] = slopes[j]*(dz[i] - dx[j]) + dy[j];
+                dres[i] = slopes[j]*(x - dx[j]) + dy[j];
             }
         }
         NPY_END_ALLOW_THREADS;
@@ -704,8 +708,15 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     else {
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < lenx; i++) {
-            npy_intp j = binary_search(dz[i], dx, lenxp);
+            const double x = dz[i];
+            npy_intp j;
 
+            if (npy_isnan(x)) {
+                dres[i] = x;
+                continue;
+            }
+
+            j = binary_search(x, dx, lenxp);
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -716,8 +727,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = rval;
             }
             else {
-                double slope = (dy[j + 1] - dy[j])/(dx[j + 1] - dx[j]);
-                dres[i] = slope*(dz[i] - dx[j]) + dy[j];
+                const double slope = (dy[j + 1] - dy[j])/(dx[j + 1] - dx[j]);
+                dres[i] = slope*(x - dx[j]) + dy[j];
             }
         }
         NPY_END_ALLOW_THREADS;
@@ -983,12 +994,8 @@ fail:
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    if (dimensions.ptr) {
-        PyDimMem_FREE(dimensions.ptr);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
     return NULL;
 }
 
@@ -1250,12 +1257,8 @@ fail:
     Py_XDECREF(ret_arr);
     Py_XDECREF(dtype);
     Py_XDECREF(indices);
-    if (dimensions.ptr) {
-        PyDimMem_FREE(dimensions.ptr);
-    }
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
     return NULL;
 }
 
@@ -1413,6 +1416,9 @@ _packbits( void *In,
     npy_intp out_Nm1;
     int maxi, remain, nonzero, j;
     char *outptr,*inptr;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(out_N);
 
     outptr = Out;    /* pointer to output buffer */
     inptr  = In;     /* pointer to input buffer */
@@ -1447,6 +1453,8 @@ _packbits( void *In,
         *outptr = build;
         outptr += out_stride;
     }
+
+    NPY_END_THREADS;
     return;
 }
 
@@ -1464,6 +1472,9 @@ _unpackbits(void *In,
     unsigned char mask;
     int i, index;
     char *inptr, *outptr;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(in_N);
 
     outptr = Out;
     inptr  = In;
@@ -1476,6 +1487,8 @@ _unpackbits(void *In,
         }
         inptr += in_stride;
     }
+
+    NPY_END_THREADS;
     return;
 }
 

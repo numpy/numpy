@@ -1,13 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
+import os
 import sys
 import warnings
 import collections
 from . import multiarray
 from . import umath
-from .umath import *
+from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
+                    ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
+                    ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
-from .numerictypes import *
+from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -40,7 +43,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory']
+           'ComplexWarning', 'may_share_memory', 'full', 'full_like']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -137,7 +140,21 @@ def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
 
-    Please refer to the documentation for `zeros` for further details.
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of ones with the given shape, dtype, and order.
 
     See Also
     --------
@@ -223,6 +240,111 @@ def ones_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
+def full(shape, fill_value, dtype=None, order='C'):
+    """
+    Return a new array of given shape and type, filled with `fill_value`.
+
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    fill_value : scalar
+        Fill value.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        is chosen as `np.array(fill_value).dtype`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of `fill_value` with the given shape, dtype, and order.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    full_like : Fill an array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> np.full((2, 2), np.inf)
+    array([[ inf,  inf],
+           [ inf,  inf]])
+    >>> np.full((2, 2), 10, dtype=np.int)
+    array([[10, 10],
+           [10, 10]])
+
+    """
+    a = empty(shape, dtype, order)
+    multiarray.copyto(a, fill_value, casting='unsafe')
+    return a
+
+def full_like(a, fill_value, dtype=None, order='K', subok=True):
+    """
+    Return a full array with the same shape and type as a given array.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of
+        the returned array.
+    fill_value : scalar
+        Fill value.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    subok : bool, optional.
+        If True, then the newly created array will use the sub-class
+        type of 'a', otherwise it will be a base-class array. Defaults
+        to True.
+
+    Returns
+    -------
+    out : ndarray
+        Array of `fill_value` with the same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+    full : Fill a new array.
+
+    Examples
+    --------
+    >>> x = np.arange(6, dtype=np.int)
+    >>> np.full_like(x, 1)
+    array([1, 1, 1, 1, 1, 1])
+    >>> np.full_like(x, 0.1)
+    array([0, 0, 0, 0, 0, 0])
+    >>> np.full_like(x, 0.1, dtype=np.double)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+    >>> np.full_like(x, np.nan, dtype=np.double)
+    array([ nan,  nan,  nan,  nan,  nan,  nan])
+
+    >>> y = np.arange(6, dtype=np.double)
+    >>> np.full_like(y, 0.1)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+
+    """
+    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    multiarray.copyto(res, fill_value, casting='unsafe')
+    return res
+
 
 def extend_all(module):
     adict = {}
@@ -235,9 +357,6 @@ def extend_all(module):
     for a in mall:
         if a not in adict:
             __all__.append(a)
-
-extend_all(umath)
-extend_all(numerictypes)
 
 newaxis = None
 
@@ -647,7 +766,7 @@ def argwhere(a):
            [1, 2]])
 
     """
-    return transpose(asanyarray(a).nonzero())
+    return transpose(nonzero(a))
 
 def flatnonzero(a):
     """
@@ -704,7 +823,7 @@ def correlate(a, v, mode='valid', old_behavior=False):
     This function computes the correlation as generally defined in signal
     processing texts::
 
-        z[k] = sum_n a[n] * conj(v[n+k])
+        c_{av}[k] = sum_n a[n+k] * conj(v[n])
 
     with a and v sequences being zero-padded where necessary and conj being
     the conjugate.
@@ -722,9 +841,23 @@ def correlate(a, v, mode='valid', old_behavior=False):
         for complex arrays). If False, uses the conventional signal
         processing definition.
 
+    Returns
+    -------
+    out : ndarray
+        Discrete cross-correlation of `a` and `v`.
+
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
+
+    Notes
+    -----
+    The definition of correlation above is not unique and sometimes correlation
+    may be defined differently. Another common definition is::
+
+        c'_{av}[k] = sum_n a[n] conj(v[n+k])
+
+    which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
 
     Examples
     --------
@@ -734,6 +867,18 @@ def correlate(a, v, mode='valid', old_behavior=False):
     array([ 2. ,  3.5,  3. ])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], "full")
     array([ 0.5,  2. ,  3.5,  3. ,  0. ])
+
+    Using complex sequences:
+
+    >>> np.correlate([1+1j, 2, 3-1j], [0, 1, 0.5j], 'full')
+    array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
+
+    Note that you get the time reversed, complex conjugated result
+    when the two input sequences change places, i.e.,
+    ``c_{va}[k] = c^{*}_{av}[-k]``:
+
+    >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
+    array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
     mode = _mode_from_name(mode)
@@ -747,9 +892,9 @@ for NumPy 2.0.
 The new behavior fits the conventional definition of correlation: inputs are
 never swapped, and the second argument is conjugated for complex arrays.""",
             DeprecationWarning)
-        return multiarray.correlate(a,v,mode)
+        return multiarray.correlate(a, v, mode)
     else:
-        return multiarray.correlate2(a,v,mode)
+        return multiarray.correlate2(a, v, mode)
 
 def convolve(a,v,mode='full'):
     """
@@ -760,6 +905,8 @@ def convolve(a,v,mode='full'):
     probability theory, the sum of two independent random variables is
     distributed according to the convolution of their individual
     distributions.
+
+    If `v` is longer than `a`, the arrays are swapped before computation.
 
     Parameters
     ----------
@@ -794,12 +941,14 @@ def convolve(a,v,mode='full'):
     scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
                                Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
+    polymul : Polynomial multiplication. Same output as convolve, but also
+              accepts poly1d objects as input.
 
     Notes
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (f * g)[n] = \\sum_{m = -\\infty}^{\\infty} f[m] g[n - m]
+    .. math:: (a * v)[n] = \\sum_{m = -\\infty}^{\\infty} a[m] v[n - m]
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
@@ -834,7 +983,7 @@ def convolve(a,v,mode='full'):
     array([ 2.5])
 
     """
-    a,v = array(a, ndmin=1),array(v, ndmin=1)
+    a, v = array(a, ndmin=1), array(v, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
     if len(a) == 0 :
@@ -844,7 +993,7 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
-def outer(a,b):
+def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
@@ -859,13 +1008,20 @@ def outer(a,b):
 
     Parameters
     ----------
-    a, b : array_like, shape (M,), (N,)
-        First and second input vectors.  Inputs are flattened if they
-        are not already 1-dimensional.
+    a : (M,) array_like
+        First input vector.  Input is flattened if
+        not already 1-dimensional.
+    b : (N,) array_like
+        Second input vector.  Input is flattened if
+        not already 1-dimensional.
+    out : (M, N) ndarray, optional
+          A location where the result is stored
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
-    out : ndarray, shape (M, N)
+    out : (M, N) ndarray
         ``out[i, j] = a[i] * b[j]``
 
     See also
@@ -915,12 +1071,20 @@ def outer(a,b):
     """
     a = asarray(a)
     b = asarray(b)
-    return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 # try to import blas optimized dot if available
+envbak = os.environ.copy()
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
+
+    # disables openblas affinity setting of the main thread that limits
+    # python threads or processes to one core
+    if 'OPENBLAS_MAIN_FREE' not in os.environ:
+        os.environ['OPENBLAS_MAIN_FREE'] = '1'
+    if 'GOTOBLAS_MAIN_FREE' not in os.environ:
+        os.environ['GOTOBLAS_MAIN_FREE'] = '1'
     from ._dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     # docstrings are in add_newdocs.py
@@ -932,33 +1096,34 @@ except ImportError:
         pass
     def restoredot():
         pass
+finally:
+    os.environ.clear()
+    os.environ.update(envbak)
+    del envbak
 
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes for arrays >= 1-D.
 
     Given two tensors (arrays of dimension greater than or equal to one),
-    ``a`` and ``b``, and an array_like object containing two array_like
-    objects, ``(a_axes, b_axes)``, sum the products of ``a``'s and ``b``'s
+    `a` and `b`, and an array_like object containing two array_like
+    objects, ``(a_axes, b_axes)``, sum the products of `a`'s and `b`'s
     elements (components) over the axes specified by ``a_axes`` and
     ``b_axes``. The third argument can be a single non-negative
     integer_like scalar, ``N``; if it is such, then the last ``N``
-    dimensions of ``a`` and the first ``N`` dimensions of ``b`` are summed
+    dimensions of `a` and the first ``N`` dimensions of `b` are summed
     over.
 
     Parameters
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-
     axes : variable type
-
-    * integer_like scalar
-      Number of axes to sum over (applies to both arrays); or
-
-    * array_like, shape = (2,), both elements array_like
-      Axes to be summed over, first sequence applying to ``a``, second
-      to ``b``.
+        * integer_like scalar
+          Number of axes to sum over (applies to both arrays); or
+        * (2,) array_like, both elements array_like of the same length
+          List of axes to be summed over, first sequence applying to `a`,
+          second to `b`.
 
     See Also
     --------
@@ -967,7 +1132,7 @@ def tensordot(a, b, axes=2):
     Notes
     -----
     When there is more than one axis to sum over - and they are not the last
-    (first) axes of ``a`` (``b``) - the argument ``axes`` should consist of
+    (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
 
@@ -1050,8 +1215,8 @@ def tensordot(a, b, axes=2):
     try:
         iter(axes)
     except:
-        axes_a = list(range(-axes,0))
-        axes_b = list(range(0,axes))
+        axes_a = list(range(-axes, 0))
+        axes_b = list(range(0, axes))
     else:
         axes_a, axes_b = axes
     try:
@@ -1227,7 +1392,7 @@ def rollaxis(a, axis, start=0):
         start -= 1
     if axis==start:
         return a
-    axes = list(range(0,n))
+    axes = list(range(0, n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
@@ -1281,6 +1446,11 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     inner : Inner product
     outer : Outer product.
     ix_ : Construct index arrays.
+
+    Notes
+    -----
+    .. versionadded:: 1.9.0
+    Supports full broadcasting of the inputs.
 
     Examples
     --------
@@ -1343,39 +1513,86 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     """
     if axis is not None:
-        axisa,axisb,axisc=(axis,)*3
-    a = asarray(a).swapaxes(axisa, 0)
-    b = asarray(b).swapaxes(axisb, 0)
-    msg = "incompatible dimensions for cross product\n"\
-          "(dimension must be 2 or 3)"
-    if (a.shape[0] not in [2,3]) or (b.shape[0] not in [2,3]):
+        axisa, axisb, axisc = (axis,) * 3
+    a = asarray(a)
+    b = asarray(b)
+    # Move working axis to the end of the shape
+    a = rollaxis(a, axisa, a.ndim)
+    b = rollaxis(b, axisb, b.ndim)
+    msg = ("incompatible dimensions for cross product\n"
+           "(dimension must be 2 or 3)")
+    if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
         raise ValueError(msg)
-    if a.shape[0] == 2:
-        if (b.shape[0] == 2):
-            cp = a[0]*b[1] - a[1]*b[0]
+
+        # Create the output array
+    shape = broadcast(a[..., 0], b[..., 0]).shape
+    if a.shape[-1] == 3 or b.shape[-1] == 3:
+        shape += (3,)
+    dtype = promote_types(a.dtype, b.dtype)
+    cp = empty(shape, dtype)
+
+    # create local aliases for readability
+    a0 = a[..., 0]
+    a1 = a[..., 1]
+    if a.shape[-1] == 3:
+        a2 = a[..., 2]
+    b0 = b[..., 0]
+    b1 = b[..., 1]
+    if b.shape[-1] == 3:
+        b2 = b[..., 2]
+    if cp.ndim != 0 and cp.shape[-1] == 3:
+        cp0 = cp[..., 0]
+        cp1 = cp[..., 1]
+        cp2 = cp[..., 2]
+
+    if a.shape[-1] == 2:
+        if b.shape[-1] == 2:
+            # a0 * b1 - a1 * b0
+            multiply(a0, b1, out=cp)
+            cp -= a1 * b0
             if cp.ndim == 0:
                 return cp
             else:
-                return cp.swapaxes(0, axisc)
+                # This works because we are moving the last axis
+                return rollaxis(cp, -1, axisc)
         else:
-            x = a[1]*b[2]
-            y = -a[0]*b[2]
-            z = a[0]*b[1] - a[1]*b[0]
-    elif a.shape[0] == 3:
-        if (b.shape[0] == 3):
-            x = a[1]*b[2] - a[2]*b[1]
-            y = a[2]*b[0] - a[0]*b[2]
-            z = a[0]*b[1] - a[1]*b[0]
+            # cp0 = a1 * b2 - 0  (a2 = 0)
+            # cp1 = 0 - a0 * b2  (a2 = 0)
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a1, b2, out=cp0)
+            multiply(a0, b2, out=cp1)
+            negative(cp1, out=cp1)
+            multiply(a0, b1, out=cp2)
+            cp2 -= a1 * b0
+    elif a.shape[-1] == 3:
+        if b.shape[-1] == 3:
+            # cp0 = a1 * b2 - a2 * b1
+            # cp1 = a2 * b0 - a0 * b2
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a1, b2, out=cp0)
+            tmp = array(a2 * b1)
+            cp0 -= tmp
+            multiply(a2, b0, out=cp1)
+            multiply(a0, b2, out=tmp)
+            cp1 -= tmp
+            multiply(a0, b1, out=cp2)
+            multiply(a1, b0, out=tmp)
+            cp2 -= tmp
         else:
-            x = -a[2]*b[1]
-            y = a[2]*b[0]
-            z = a[0]*b[1] - a[1]*b[0]
-    cp = array([x,y,z])
+            # cp0 = 0 - a2 * b1  (b2 = 0)
+            # cp1 = a2 * b0 - 0  (b2 = 0)
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a2, b1, out=cp0)
+            negative(cp0, out=cp0)
+            multiply(a2, b0, out=cp1)
+            multiply(a0, b1, out=cp2)
+            cp2 -= a1 * b0
+
     if cp.ndim == 1:
         return cp
     else:
-        return cp.swapaxes(0,axisc)
-
+        # This works because we are moving the last axis
+        return rollaxis(cp, -1, axisc)
 
 #Use numarray's printing function
 from .arrayprint import array2string, get_printoptions, set_printoptions
@@ -1623,10 +1840,10 @@ def indices(dimensions, dtype=int):
     dimensions = tuple(dimensions)
     N = len(dimensions)
     if N == 0:
-        return array([],dtype=dtype)
+        return array([], dtype=dtype)
     res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        tmp = arange(dim,dtype=dtype)
+        tmp = arange(dim, dtype=dtype)
         tmp.shape = (1,)*i + (dim,)+(1,)*(N-i-1)
         newdim = dimensions[:i] + (1,)+ dimensions[i+1:]
         val = zeros(newdim, dtype)
@@ -1900,7 +2117,7 @@ def _maketup(descr, val):
     if fields is None:
         return val
     else:
-        res = [_maketup(fields[name][0],val) for name in dt.names]
+        res = [_maketup(fields[name][0], val) for name in dt.names]
         return tuple(res)
 
 def identity(n, dtype=None):
@@ -1964,7 +2181,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
     See Also
     --------
-    all, any, alltrue, sometrue
+    isclose, all, any
 
     Notes
     -----
@@ -1992,6 +2209,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
 
+    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+    # casting of x later.
+    dtype = multiarray.result_type(y, 1.)
+    y = array(y, dtype=dtype, copy=False)
+
     xinf = isinf(x)
     yinf = isinf(y)
     if any(xinf) or any(yinf):
@@ -2005,7 +2227,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
         x = x[~xinf]
         y = y[~xinf]
 
-    return all(less_equal(abs(x-y), atol + rtol * abs(y)))
+    # ignore invalid fpe's
+    with errstate(invalid='ignore'):
+        r = all(less_equal(abs(x - y), atol + rtol * abs(y)))
+
+    return r
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2067,11 +2293,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([True, True])
     """
     def within_tol(x, y, atol, rtol):
-        err = seterr(invalid='ignore')
-        try:
+        with errstate(invalid='ignore'):
             result = less_equal(abs(x-y), atol + rtol * abs(y))
-        finally:
-            seterr(**err)
         if isscalar(a) and isscalar(b):
             result = bool(result)
         return result
@@ -2096,7 +2319,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         cond[~finite] = (x[~finite] == y[~finite])
         if equal_nan:
             # Make NaN == NaN
-            cond[isnan(x) & isnan(y)] = True
+            both_nan = isnan(x) & isnan(y)
+            cond[both_nan] = both_nan[both_nan]
         return cond
 
 def array_equal(a1, a2):
@@ -2180,9 +2404,11 @@ def array_equiv(a1, a2):
     except:
         return False
     try:
-        return bool(asarray(a1 == a2).all())
-    except ValueError:
+        multiarray.broadcast(a1, a2)
+    except:
         return False
+
+    return bool(asarray(a1 == a2).all())
 
 
 _errdict = {"ignore":ERR_IGNORE,
@@ -2255,7 +2481,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.seterr(over='raise')
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
-    >>> np.seterr(all='ignore')  # reset to default
+    >>> np.seterr(**old_settings)  # reset to default
     {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
 
     >>> np.int16(32000) * np.int16(3)
@@ -2579,19 +2805,22 @@ class errstate(object):
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement
     def __init__(self, **kwargs):
-        self.call = kwargs.pop('call',_Unspecified)
+        self.call = kwargs.pop('call', _Unspecified)
         self.kwargs = kwargs
+
     def __enter__(self):
         self.oldstate = seterr(**self.kwargs)
         if self.call is not _Unspecified:
             self.oldcall = seterrcall(self.call)
+
     def __exit__(self, *exc_info):
         seterr(**self.oldstate)
         if self.call is not _Unspecified:
             seterrcall(self.oldcall)
 
+
 def _setdef():
-    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
+    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     umath.seterrobj(defval)
 
 # set the default values
@@ -2602,6 +2831,10 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
+from .umath import *
+from .numerictypes import *
 from . import fromnumeric
 from .fromnumeric import *
 extend_all(fromnumeric)
+extend_all(umath)
+extend_all(numerictypes)

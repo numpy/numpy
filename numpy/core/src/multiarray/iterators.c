@@ -71,7 +71,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
         if (check_index) {
-            if (check_and_adjust_index(&i, max, axis) < 0) {
+            if (check_and_adjust_index(&i, max, axis, NULL) < 0) {
             goto fail;
             }
         }
@@ -668,7 +668,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     itemsize = PyArray_DESCR(self->ao)->elsize;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             PyArray_ITER_RESET(self);
             return NULL;
         }
@@ -702,7 +702,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             Py_DECREF(ind_it);
             Py_DECREF(ret);
             PyArray_ITER_RESET(self);
@@ -926,7 +926,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             return -1;
         }
         PyArray_ITER_GOTO1D(self, num);
@@ -940,7 +940,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     counter = ind_it->size;
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+        if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             Py_DECREF(ind_it);
             return -1;
         }
@@ -975,8 +975,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 "Cannot delete iterator elements");
         return -1;
     }
-    
-    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0) 
+
+    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0)
         return -1;
 
     if (ind == Py_Ellipsis) {
@@ -1017,7 +1017,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         PyErr_Clear();
     }
     else {
-        if (check_and_adjust_index(&start, self->size, -1) < 0) {
+        if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
             goto finish;
         }
         retval = 0;
@@ -1136,11 +1136,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
 
 static PyMappingMethods iter_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)iter_length,                   /*mp_length*/
-#else
-    (inquiry)iter_length,                   /*mp_length*/
-#endif
     (binaryfunc)iter_subscript,             /*mp_subscript*/
     (objobjargproc)iter_ass_subscript,      /*mp_ass_subscript*/
 };
@@ -1162,9 +1158,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
      *  2) underlying array is not contiguous
      *     -- make new 1-d contiguous array with updateifcopy flag set
      *        to copy back to the old array
-     * 
+     *
      *  If underlying array is readonly, then we make the output array readonly
-     *     and updateifcopy does not apply. 
+     *     and updateifcopy does not apply.
      */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));
@@ -1349,9 +1345,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 /** END of Array Iterator **/
@@ -1495,6 +1489,10 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }
@@ -1555,6 +1553,10 @@ PyArray_MultiIterNew(int n, ...)
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+            if (multi->iters[i] == NULL) {
+                err = 1;
+                break;
+            }
             Py_DECREF(arr);
         }
     }
@@ -1826,9 +1828,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 /*========================= Neighborhood iterator ======================*/
@@ -2093,9 +2093,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
             Py_DECREF(*(PyObject**)iter->constant);
         }
     }
-    if (iter->constant != NULL) {
-        PyDataMem_FREE(iter->constant);
-    }
+    PyDataMem_FREE(iter->constant);
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
@@ -2158,7 +2156,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

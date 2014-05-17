@@ -426,8 +426,8 @@ The fieldname base is either `_data` or `_mask`."""
                  self.shape,
                  self.dtype,
                  self.flags.fnc,
-                 self._data.tostring(),
-                 self._mask.tostring(),
+                 self._data.tobytes(),
+                 self._mask.tobytes(),
                  self._fill_value,
                  )
         return state

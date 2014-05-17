@@ -87,18 +87,19 @@ References
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
     'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
     'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
     'chebpts1', 'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d',
-    'chebgrid2d', 'chebgrid3d', 'chebvander2d','chebvander3d',
+    'chebgrid2d', 'chebgrid3d', 'chebvander2d', 'chebvander3d',
     'chebcompanion', 'chebgauss', 'chebweight']
 
 chebtrim = pu.trimcoef
@@ -439,7 +440,7 @@ def cheb2poly(c) :
 #
 
 # Chebyshev default domain.
-chebdomain = np.array([-1,1])
+chebdomain = np.array([-1, 1])
 
 # Chebyshev coefficients representing zero.
 chebzero = np.array([0])
@@ -448,7 +449,7 @@ chebzero = np.array([0])
 chebone = np.array([1])
 
 # Chebyshev coefficients representing the identity x.
-chebx = np.array([0,1])
+chebx = np.array([0, 1])
 
 
 def chebline(off, scl) :
@@ -482,7 +483,7 @@ def chebline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1523,7 +1524,7 @@ def chebvander2d(x, y, deg) :
 
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1588,7 +1589,7 @@ def chebvander3d(x, y, z, deg) :
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
     vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1606,11 +1607,6 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * T_1(x) + ... + c_n * T_n(x),
 
     where `n` is `deg`.
-
-    Since numpy version 1.7.0, chebfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1646,10 +1642,15 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1805,7 +1806,7 @@ def chebcompanion(c):
     top[0] = np.sqrt(.5)
     top[1:] = 1/2
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 
@@ -2012,4 +2013,43 @@ def chebpts2(npts):
 # Chebyshev series class
 #
 
-exec(polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]'))
+class Chebyshev(ABCPolyBase):
+    """A Chebyshev series class.
+
+    The Chebyshev class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    methods listed below.
+
+    Parameters
+    ----------
+    coef : array_like
+        Chebyshev coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*T_0(x) + 2*T_1(x) + 3*T_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(chebadd)
+    _sub = staticmethod(chebsub)
+    _mul = staticmethod(chebmul)
+    _div = staticmethod(chebdiv)
+    _pow = staticmethod(chebpow)
+    _val = staticmethod(chebval)
+    _int = staticmethod(chebint)
+    _der = staticmethod(chebder)
+    _fit = staticmethod(chebfit)
+    _line = staticmethod(chebline)
+    _roots = staticmethod(chebroots)
+    _fromroots = staticmethod(chebfromroots)
+
+    # Virtual properties
+    nickname = 'cheb'
+    domain = np.array(chebdomain)
+    window = np.array(chebdomain)

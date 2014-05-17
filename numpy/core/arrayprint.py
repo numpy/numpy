@@ -214,7 +214,7 @@ def _leading_trailing(a):
             l = [_leading_trailing(a[i]) for i in range(
                 min(len(a), _summaryEdgeItems))]
             l.extend([_leading_trailing(a[-i]) for i in range(
-                min(len(a), _summaryEdgeItems),0,-1)])
+                min(len(a), _summaryEdgeItems), 0, -1)])
         else:
             l = [_leading_trailing(a[i]) for i in range(0, len(a))]
         b = _nc.concatenate(tuple(l))
@@ -510,7 +510,7 @@ def _formatArray(a, format_function, rank, max_line_len,
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
+            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
 
         if summary_insert1:
             s += next_line_prefix + summary_insert1 + "\n"
@@ -521,7 +521,7 @@ def _formatArray(a, format_function, rank, max_line_len,
             s += _formatArray(a[-i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
+            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
         if leading_items or trailing_items > 1:
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
@@ -546,8 +546,8 @@ class FloatFormat(object):
 
     def fillFormat(self, data):
         from . import numeric as _nc
-        errstate = _nc.seterr(all='ignore')
-        try:
+
+        with _nc.errstate(all='ignore'):
             special = isnan(data) | isinf(data)
             valid = not_equal(data, 0) & ~special
             non_zero = absolute(data.compress(valid))
@@ -562,8 +562,6 @@ class FloatFormat(object):
                 if not self.suppress_small and (min_val < 0.0001
                                            or max_val/min_val > 1000.):
                     self.exp_format = True
-        finally:
-            _nc.seterr(**errstate)
 
         if self.exp_format:
             self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
@@ -599,8 +597,8 @@ class FloatFormat(object):
 
     def __call__(self, x, strip_zeros=True):
         from . import numeric as _nc
-        err = _nc.seterr(invalid='ignore')
-        try:
+
+        with _nc.errstate(invalid='ignore'):
             if isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
@@ -614,8 +612,6 @@ class FloatFormat(object):
                         return self.special_fmt % (_inf_str,)
                 else:
                     return self.special_fmt % ('-' + _inf_str,)
-        finally:
-            _nc.seterr(**err)
 
         s = self.format % x
         if self.large_exponent:
@@ -754,4 +750,3 @@ class TimedeltaFormat(object):
 
     def __call__(self, x):
         return self.format % x.astype('i8')
-

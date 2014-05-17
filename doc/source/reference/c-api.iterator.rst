@@ -57,7 +57,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_ITER_GOTO1D`           :cfunc:`NpyIter_GotoIndex` or
                                        :cfunc:`NpyIter_GotoIterIndex`
 :cfunc:`PyArray_ITER_NOTDONE`          Return value of ``iternext`` function pointer
-*Multi-iterator Functions* 
+*Multi-iterator Functions*
 :cfunc:`PyArray_MultiIterNew`          :cfunc:`NpyIter_MultiNew`
 :cfunc:`PyArray_MultiIter_RESET`       :cfunc:`NpyIter_Reset`
 :cfunc:`PyArray_MultiIter_NEXT`        Function pointer from :cfunc:`NpyIter_GetIterNext`
@@ -69,7 +69,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
 :cfunc:`PyArray_Broadcast`             Handled by :cfunc:`NpyIter_MultiNew`
 :cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
-*Other Functions* 
+*Other Functions*
 :cfunc:`PyArray_ConvertToCommonType`   Iterator flag :cdata:`NPY_ITER_COMMON_DTYPE`
 =====================================  =============================================
 
@@ -204,7 +204,7 @@ is used to control the memory layout of the allocated result, typically
          * Make a copy of the iternext function pointer and
          * a few other variables the inner loop needs.
          */
-        iternext = NpyIter_GetIterNext(iter);
+        iternext = NpyIter_GetIterNext(iter, NULL);
         innerstride = NpyIter_GetInnerStrideArray(iter)[0];
         itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
         /*
@@ -229,7 +229,7 @@ is used to control the memory layout of the allocated result, typically
             npy_intp i;
             do {
                 npy_intp size = *innersizeptr;
-                char *src = dataaddr[0], *dst = dataaddr[1];
+                char *src = dataptrarray[0], *dst = dataptrarray[1];
                 for(i = 0; i < size; i++, src += innerstride, dst += itemsize) {
                     memcpy(dst, src, itemsize);
                 }
@@ -369,7 +369,14 @@ Construction and Destruction
 
             Causes the iterator to track a multi-index.
             This prevents the iterator from coalescing axes to
-            produce bigger inner loops.
+            produce bigger inner loops. If the loop is also not buffered
+            and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+            then the iterator size can be ``-1`` to indicate that the iterator
+            is too large. This can happen due to complex broadcasting and
+            will result in errors being created when the setting the iterator
+            range, removing the multi index, or getting the next function.
+            However, it is possible to remove axes again and use the iterator
+            normally if the size is small enough after removal.
 
         .. cvar:: NPY_ITER_EXTERNAL_LOOP
 
@@ -412,8 +419,9 @@ Construction and Destruction
 
             Indicates that arrays with a size of zero should be permitted.
             Since the typical iteration loop does not naturally work with
-            zero-sized arrays, you must check that the IterSize is non-zero
-            before entering the iteration loop.
+            zero-sized arrays, you must check that the IterSize is larger
+            than zero before entering the iteration loop.
+            Currently only the operands are checked, not a forced shape.
 
         .. cvar:: NPY_ITER_REDUCE_OK
 
@@ -649,7 +657,7 @@ Construction and Destruction
     -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
-    
+
     **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling that
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
@@ -721,7 +729,7 @@ Construction and Destruction
 
     **WARNING**: This function may change the internal memory layout of
     the iterator.  Any cached functions or pointers from the iterator
-    must be retrieved again!
+    must be retrieved again! The iterator range will be reset as well.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -887,7 +895,11 @@ Construction and Destruction
 .. cfunction:: npy_intp NpyIter_GetIterSize(NpyIter* iter)
 
     Returns the number of elements being iterated.  This is the product
-    of all the dimensions in the shape.
+    of all the dimensions in the shape.  When a multi index is being tracked
+    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    indicate an iterator is too large.  Such an iterator is invalid, but
+    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    necessary to check for this case.
 
 .. cfunction:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)
 
@@ -1229,7 +1241,7 @@ Functions For Iteration
 
    Gets the array of data pointers directly into the arrays (never
    into the buffers), corresponding to iteration index 0.
-   
+
    These pointers are different from the pointers accepted by
    ``NpyIter_ResetBasePointers``, because the direction along
    some axes may have been reversed.

@@ -45,4 +45,3 @@ Other
 .. autosummary::
 
    i0
-

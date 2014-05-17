@@ -22,7 +22,7 @@ class sdist(old_sdist):
         if dist.has_headers():
             headers = []
             for h in dist.headers:
-                if isinstance(h,str): headers.append(h)
+                if isinstance(h, str): headers.append(h)
                 else: headers.append(h[1])
             self.filelist.extend(headers)
 

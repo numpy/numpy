@@ -171,6 +171,22 @@ int aheapsort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject 
 int amergesort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 
 
+int quicksort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
+int heapsort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
+int mergesort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
+int aquicksort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+
+int quicksort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
+int heapsort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
+int mergesort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
+int aquicksort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+
 int npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp);
 int npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp);
 int npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp);

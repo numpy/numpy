@@ -28,7 +28,7 @@ from setup_common \
         MANDATORY_FUNCS, C_ABI_VERSION, C_API_VERSION
 
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
-NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0")
+NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 
 NUMPYCONFIG_SYM = []
 
@@ -136,6 +136,11 @@ def type_checks(conf):
     NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("Py_intptr_t"),
                            '%d' % size))
 
+    size = conf.check_type_size("off_t", header_name=header_name,
+                                expected_sizes=[4, 8], features=features)
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("off_t"),
+                           '%d' % size))
+
     # We check declaration AND type because that's how distutils does it.
     try:
         conf.check_declaration("PY_LONG_LONG", header_name=header_name,
@@ -234,6 +239,9 @@ def check_math_runtime(conf):
             features=features, mandatory=False, use="M")
     conf.check_functions_at_once(C99_FUNCS_EXTENDED,
             features=features, mandatory=False, use="M")
+    # TODO: add OPTIONAL_HEADERS, OPTIONAL_INTRINSICS and
+    # OPTIONAL_GCC_ATTRIBUTES (see setup.py and gh-3766).  These are
+    # performance optimizations for GCC.
 
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         try:
@@ -408,7 +416,7 @@ def pre_build(context):
                                "lib", "npy-pkg-config", "mlib.ini"))
     inifile_npymath = context.local_node.declare(os.path.join(
                                "lib", "npy-pkg-config", "npymath.ini"))
-    context.register_outputs("numpy_gen_inifiles", "numpyconfig", 
+    context.register_outputs("numpy_gen_inifiles", "numpyconfig",
                              [inifile_mlib, inifile_npymath])
 
     context.register_category("numpy_gen_headers")
@@ -436,6 +444,7 @@ def pre_build(context):
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
             sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
+                pjoin('src', 'multiarray', 'alloc.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
                 pjoin('src', 'multiarray', 'array_assign.c'),
                 pjoin('src', 'multiarray', 'array_assign_array.c'),
@@ -483,7 +492,11 @@ def pre_build(context):
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath")
+                                       use="npysort npymath",
+                                       defines=['_FILE_OFFSET_BITS=64',
+                                                '_LARGEFILE_SOURCE=1',
+                                                '_LARGEFILE64_SOURCE=1']
+                                       )
     context.register_builder("multiarray", builder_multiarray)
 
     def build_ufunc(extension):
@@ -493,6 +506,7 @@ def pre_build(context):
             name="ufunc_api")
 
         ufunc_templates = [
+            "src/umath/loops.h.src",
             "src/umath/loops.c.src",
             "src/umath/funcs.inc.src",
             "src/umath/simd.inc.src"]
@@ -502,9 +516,10 @@ def pre_build(context):
             pattern="umath_generated",
             name="umath_gen")
 
-        includes = ["src/umath", "src/private"]
+        includes = ["src/umath", "src/multiarray", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
             sources = [
+                    pjoin("src", "umath", "loops.h.src"),
                     pjoin("src", "umath", "loops.c.src"),
                     pjoin('src', 'umath', 'reduction.c'),
                     pjoin('src', 'umath', 'ufunc_object.c'),
@@ -525,5 +540,6 @@ def pre_build(context):
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            return context.default_builder(extension, use="CBLAS", includes=["src/private"])
+            return context.default_builder(extension, use="CBLAS",
+                                           includes=["src/multiarray", "src/private"])
     context.register_builder("_dotblas", build_dotblas)

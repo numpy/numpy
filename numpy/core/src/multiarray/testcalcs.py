@@ -33,7 +33,7 @@ def year_offset(year):
     else
         return_val = year*365 + (year-3)/4 - (year-99)/100 + (year-399)/400;
         """
-    return weave.inline(code,['year'])
+    return weave.inline(code, ['year'])
 
 
 def days_from_ymd(year, month, day):

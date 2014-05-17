@@ -16,6 +16,7 @@
 #include "nditer_impl.h"
 
 #include "arrayobject.h"
+#include "scalarmathmodule.h"
 
 /* Internal helper functions private to this file */
 static int
@@ -193,7 +194,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
-                PyArray_malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
+                PyObject_Malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
 
     NPY_IT_TIME_POINT(c_malloc);
 
@@ -216,7 +217,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                         flags,
                         op_flags, op_itflags,
                         &NIT_MASKOP(iter))) {
-        PyArray_free(iter);
+        PyObject_Free(iter);
         return NULL;
     }
     /* Set resetindex to zero as well (it's just after the resetdataptr) */
@@ -260,6 +261,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             buffersize = NIT_ITERSIZE(iter);
         }
         NBF_BUFFERSIZE(bufferdata) = buffersize;
+
+        /*
+         * Initialize for use in FirstVisit, which may be called before
+         * the buffers are filled and the reduce pos is updated.
+         */
+        NBF_REDUCE_POS(bufferdata) = 0;
     }
 
     /*
@@ -548,7 +555,7 @@ NpyIter_Copy(NpyIter *iter)
 
     /* Allocate memory for the new iterator */
     size = NIT_SIZEOF_ITERATOR(itflags, ndim, nop);
-    newiter = (NpyIter*)PyArray_malloc(size);
+    newiter = (NpyIter*)PyObject_Malloc(size);
 
     /* Copy the raw values to the new iterator */
     memcpy(newiter, iter, size);
@@ -639,12 +646,20 @@ NpyIter_Copy(NpyIter *iter)
 NPY_NO_EXPORT int
 NpyIter_Deallocate(NpyIter *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_uint32 itflags;
     /*int ndim = NIT_NDIM(iter);*/
-    int iop, nop = NIT_NOP(iter);
+    int iop, nop;
+    PyArray_Descr **dtype;
+    PyArrayObject **object;
 
-    PyArray_Descr **dtype = NIT_DTYPES(iter);
-    PyArrayObject **object = NIT_OPERANDS(iter);
+    if (iter == NULL) {
+        return NPY_SUCCEED;
+    }
+
+    itflags = NIT_ITFLAGS(iter);
+    nop = NIT_NOP(iter);
+    dtype = NIT_DTYPES(iter);
+    object = NIT_OPERANDS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {
@@ -655,9 +670,7 @@ NpyIter_Deallocate(NpyIter *iter)
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
         for(iop = 0; iop < nop; ++iop, ++buffers) {
-            if (*buffers) {
-                PyArray_free(*buffers);
-            }
+            PyArray_free(*buffers);
         }
         /* read bufferdata */
         transferdata = NBF_READTRANSFERDATA(bufferdata);
@@ -682,7 +695,7 @@ NpyIter_Deallocate(NpyIter *iter)
     }
 
     /* Deallocate the iterator memory */
-    PyArray_free(iter);
+    PyObject_Free(iter);
 
     return NPY_SUCCEED;
 }
@@ -1152,11 +1165,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
 
         /* Check the readonly/writeonly flags, and fill in op_itflags */
         if (!npyiter_check_per_op_flags(op_flags[iop], &op_itflags[iop])) {
-            for (i = 0; i <= iop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
-            return 0;
+            goto fail_iop;
         }
 
         /* Extract the operand which is for masked iteration */
@@ -1165,11 +1174,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 PyErr_SetString(PyExc_ValueError,
                         "Only one iterator operand may receive an "
                         "ARRAYMASK flag");
-                for (i = 0; i <= iop; ++i) {
-                    Py_XDECREF(op[i]);
-                    Py_XDECREF(op_dtype[i]);
-                }
-                return 0;
+                goto fail_iop;
             }
 
             maskop = iop;
@@ -1190,11 +1195,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                         &op_dtype[iop],
                         flags,
                         op_flags[iop], &op_itflags[iop])) {
-            for (i = 0; i <= iop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
-            return 0;
+            goto fail_iop;
         }
     }
 
@@ -1208,13 +1209,9 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
             }
         }
         if (all_null) {
-            for (i = 0; i < nop; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
             PyErr_SetString(PyExc_ValueError,
                     "At least one iterator operand must be non-NULL");
-            return 0;
+            goto fail_nop;
         }
     }
 
@@ -1223,17 +1220,26 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 "An iterator operand was flagged as WRITEMASKED, "
                 "but no ARRAYMASK operand was given to supply "
                 "the mask");
-        return 0;
+        goto fail_nop;
     }
     else if (!any_writemasked_ops && maskop >= 0) {
         PyErr_SetString(PyExc_ValueError,
                 "An iterator operand was flagged as the ARRAYMASK, "
                 "but no WRITEMASKED operands were given to use "
                 "the mask");
-        return 0;
+        goto fail_nop;
     }
 
     return 1;
+
+  fail_nop:
+    iop = nop;
+  fail_iop:
+    for (i = 0; i < iop; ++i) {
+        Py_XDECREF(op[i]);
+        Py_XDECREF(op_dtype[i]);
+    }
+    return 0;
 }
 
 static const char *
@@ -1255,54 +1261,6 @@ npyiter_casting_to_string(NPY_CASTING casting)
     }
 }
 
-static PyObject *
-npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
-{
-    npy_intp i;
-    PyObject *ret, *tmp;
-
-    /*
-     * Negative dimension indicates "newaxis", which can
-     * be discarded for printing if it's a leading dimension.
-     * Find the first non-"newaxis" dimension.
-     */
-    i = 0;
-    while (i < n && vals[i] < 0) {
-        ++i;
-    }
-
-    if (i == n) {
-        return PyUString_FromFormat("()%s", ending);
-    }
-    else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
-    }
-
-    for (; i < n; ++i) {
-        if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
-        }
-        else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
-        }
-        if (tmp == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        PyUString_ConcatAndDel(&ret, tmp);
-        if (ret == NULL) {
-            return NULL;
-        }
-    }
-
-    tmp = PyUString_FromFormat(")%s", ending);
-    PyUString_ConcatAndDel(&ret, tmp);
-    return ret;
-}
 
 static int
 npyiter_check_casting(int nop, PyArrayObject **op,
@@ -1556,6 +1514,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
         NAD_SHAPE(axisdata) = 1;
         NAD_INDEX(axisdata) = 0;
         memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
+        memset(NAD_STRIDES(axisdata), 0, NPY_SIZEOF_INTP*nop);
     }
 
     /* Now process the operands, filling in the axisdata */
@@ -1701,7 +1660,24 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     /* Now fill in the ITERSIZE member */
     NIT_ITERSIZE(iter) = 1;
     for (idim = 0; idim < ndim; ++idim) {
-        NIT_ITERSIZE(iter) *= broadcast_shape[idim];
+        if (npy_mul_with_overflow_intp(&NIT_ITERSIZE(iter),
+                    NIT_ITERSIZE(iter), broadcast_shape[idim])) {
+            if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
+                    !(itflags & NPY_ITFLAG_HASINDEX) &&
+                    !(itflags & NPY_ITFLAG_BUFFER)) {
+                /*
+                 * If RemoveAxis may be called, the size check is delayed
+                 * until either the multi index is removed, or GetIterNext
+                 * is called.
+                 */
+                NIT_ITERSIZE(iter) = -1;
+                break;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, "iterator is too large");
+                return 0;
+            }
+        }
     }
     /* The range defaults to everything */
     NIT_ITERSTART(iter) = 0;
@@ -1722,7 +1698,7 @@ broadcast_error: {
             }
             for (iop = 0; iop < nop; ++iop) {
                 if (op[iop] != NULL) {
-                    tmp = npyiter_shape_string(PyArray_NDIM(op[iop]),
+                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                                     PyArray_DIMS(op[iop]),
                                                     " ");
                     if (tmp == NULL) {
@@ -1746,7 +1722,7 @@ broadcast_error: {
                     return 0;
                 }
 
-                tmp = npyiter_shape_string(ndim, itershape, "");
+                tmp = convert_shape_to_string(ndim, itershape, "");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1769,7 +1745,7 @@ broadcast_error: {
                     int *axes = op_axes[iop];
 
                     tmpstr = (axes == NULL) ? " " : "->";
-                    tmp = npyiter_shape_string(PyArray_NDIM(op[iop]),
+                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                                     PyArray_DIMS(op[iop]),
                                                     tmpstr);
                     if (tmp == NULL) {
@@ -1791,7 +1767,7 @@ broadcast_error: {
                                 remdims[idim] = -1;
                             }
                         }
-                        tmp = npyiter_shape_string(ndim, remdims, " ");
+                        tmp = convert_shape_to_string(ndim, remdims, " ");
                         if (tmp == NULL) {
                             return 0;
                         }
@@ -1813,7 +1789,7 @@ broadcast_error: {
                     return 0;
                 }
 
-                tmp = npyiter_shape_string(ndim, itershape, "");
+                tmp = convert_shape_to_string(ndim, itershape, "");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1849,7 +1825,7 @@ operand_different_than_broadcast: {
         }
 
         /* Operand shape */
-        tmp = npyiter_shape_string(PyArray_NDIM(op[iop]),
+        tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
                                         PyArray_DIMS(op[iop]), "");
         if (tmp == NULL) {
             return 0;
@@ -1882,7 +1858,7 @@ operand_different_than_broadcast: {
                 return 0;
             }
 
-            tmp = npyiter_shape_string(ndim, remdims, "]");
+            tmp = convert_shape_to_string(ndim, remdims, "]");
             if (tmp == NULL) {
                 return 0;
             }
@@ -1902,7 +1878,7 @@ operand_different_than_broadcast: {
         }
 
         /* Broadcast shape */
-        tmp = npyiter_shape_string(ndim, broadcast_shape, "");
+        tmp = convert_shape_to_string(ndim, broadcast_shape, "");
         if (tmp == NULL) {
             return 0;
         }

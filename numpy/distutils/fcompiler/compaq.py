@@ -29,7 +29,7 @@ class CompaqFCompiler(FCompiler):
 
     executables = {
         'version_cmd'  : ['<F90>', "-version"],
-        'compiler_f77' : [fc_exe, "-f77rtl","-fixed"],
+        'compiler_f77' : [fc_exe, "-f77rtl", "-fixed"],
         'compiler_fix' : [fc_exe, "-fixed"],
         'compiler_f90' : [fc_exe],
         'linker_so'    : ['<F90>'],
@@ -41,18 +41,18 @@ class CompaqFCompiler(FCompiler):
     module_include_switch = '-I'
 
     def get_flags(self):
-        return ['-assume no2underscore','-nomixed_str_len_arg']
+        return ['-assume no2underscore', '-nomixed_str_len_arg']
     def get_flags_debug(self):
-        return ['-g','-check bounds']
+        return ['-g', '-check bounds']
     def get_flags_opt(self):
-        return ['-O4','-align dcommons','-assume bigarrays',
-                '-assume nozsize','-math_library fast']
+        return ['-O4', '-align dcommons', '-assume bigarrays',
+                '-assume nozsize', '-math_library fast']
     def get_flags_arch(self):
         return ['-arch host', '-tune host']
     def get_flags_linker_so(self):
         if sys.platform[:5]=='linux':
             return ['-shared']
-        return ['-shared','-Wl,-expect_unresolved,*']
+        return ['-shared', '-Wl,-expect_unresolved,*']
 
 class CompaqVisualFCompiler(FCompiler):
 
@@ -101,7 +101,7 @@ class CompaqVisualFCompiler(FCompiler):
 
     executables = {
         'version_cmd'  : ['<F90>', "/what"],
-        'compiler_f77' : [fc_exe, "/f77rtl","/fixed"],
+        'compiler_f77' : [fc_exe, "/f77rtl", "/fixed"],
         'compiler_fix' : [fc_exe, "/fixed"],
         'compiler_f90' : [fc_exe],
         'linker_so'    : ['<F90>'],
@@ -110,10 +110,10 @@ class CompaqVisualFCompiler(FCompiler):
         }
 
     def get_flags(self):
-        return ['/nologo','/MD','/WX','/iface=(cref,nomixed_str_len_arg)',
-                '/names:lowercase','/assume:underscore']
+        return ['/nologo', '/MD', '/WX', '/iface=(cref,nomixed_str_len_arg)',
+                '/names:lowercase', '/assume:underscore']
     def get_flags_opt(self):
-        return ['/Ox','/fast','/optimize:5','/unroll:0','/math_library:fast']
+        return ['/Ox', '/fast', '/optimize:5', '/unroll:0', '/math_library:fast']
     def get_flags_arch(self):
         return ['/threads']
     def get_flags_debug(self):

@@ -14,14 +14,14 @@ Numarray.   The core API originated with Numeric in 1995 and there are
 patterns such as the heavy use of macros written to mimic Python's
 C-API as well as account for compiler technology of the late 90's.
 There is also only a small group of volunteers who have had very little
-time to spend on improving this API.    
+time to spend on improving this API.
 
 There is an ongoing effort to improve the API.
 It is important in this effort
 to ensure that code that compiles for NumPy 1.X continues to
 compile for NumPy 1.X.  At the same time, certain API's will be marked
 as deprecated so that future-looking code can avoid these API's and
-follow better practices. 
+follow better practices.
 
 Another important role played by deprecation markings in the C API is to move
 towards hiding internal details of the NumPy implementation. For those
@@ -44,7 +44,7 @@ versions of NumPy should not have major C-API changes, however, that
 prevent code that worked on a previous minor release.  For example, we
 will do our best to ensure that code that compiled and worked on NumPy
 1.4 should continue to work on NumPy 1.7 (but perhaps with compiler
-warnings). 
+warnings).
 
 To use the NPY_NO_DEPRECATED_API mechanism, you need to #define it to
 the target API version of NumPy before #including any NumPy headers.

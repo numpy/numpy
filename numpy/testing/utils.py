@@ -9,22 +9,26 @@ import sys
 import re
 import operator
 import warnings
+from functools import partial
+import shutil
+import contextlib
+from tempfile import mkdtemp
 from .nosetester import import_nose
-from numpy.core import float32, empty, arange
+from numpy.core import float32, empty, arange, array_repr, ndarray
 
 if sys.version_info[0] >= 3:
     from io import StringIO
 else:
     from StringIO import StringIO
 
-__all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
+__all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_', 'assert_array_almost_equal_nulp',
+           'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-           'assert_allclose']
+           'assert_allclose', 'IgnoreException']
 
 
 verbose = 0
@@ -33,6 +37,7 @@ verbose = 0
 def assert_(val, msg='') :
     """
     Assert that works in release mode.
+    Accepts callable msg to allow deferring evaluation until failure.
 
     The Python built-in ``assert`` does not work when executing code in
     optimized mode (the ``-O`` flag) - no byte-code is generated for it.
@@ -41,7 +46,11 @@ def assert_(val, msg='') :
 
     """
     if not val :
-        raise AssertionError(msg)
+        try:
+            smsg = msg()
+        except TypeError:
+            smsg = msg
+        raise AssertionError(smsg)
 
 def gisnan(x):
     """like isnan, but always raise an error if type not supported instead of
@@ -71,14 +80,11 @@ def gisfinite(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isfinite, seterr
-    err = seterr(invalid='ignore')
-    try:
+    from numpy.core import isfinite, errstate
+    with errstate(invalid='ignore'):
         st = isfinite(x)
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isfinite not supported for this type")
-    finally:
-        seterr(**err)
     return st
 
 def gisinf(x):
@@ -92,14 +98,11 @@ def gisinf(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isinf, seterr
-    err = seterr(invalid='ignore')
-    try:
+    from numpy.core import isinf, errstate
+    with errstate(invalid='ignore'):
         st = isinf(x)
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isinf not supported for this type")
-    finally:
-        seterr(**err)
     return st
 
 def rand(*args):
@@ -124,7 +127,7 @@ if sys.platform[:5]=='linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            f=open(_proc_pid_stat,'r')
+            f=open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[13])
@@ -135,7 +138,7 @@ if sys.platform[:5]=='linux':
         """ Return virtual memory size in bytes of the running python.
         """
         try:
-            f=open(_proc_pid_stat,'r')
+            f=open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[22])
@@ -170,7 +173,7 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
         if format is None: format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine,object,instance, None, inum,counter) )
+        path = win32pdh.MakeCounterPath( (machine, object, instance, None, inum, counter) )
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)
@@ -191,8 +194,7 @@ if os.name=='nt' and sys.version[:3] > '2.3':
                                         win32pdh.PDH_FMT_LONG, None)
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
-                  verbose=True,
-                  names=('ACTUAL', 'DESIRED')):
+                  verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
     if err_msg:
         if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
@@ -201,8 +203,15 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
             msg.append(err_msg)
     if verbose:
         for i, a in enumerate(arrays):
+
+            if isinstance(a, ndarray):
+                # precision argument is only needed if the objects are ndarrays
+                r_func = partial(array_repr, precision=precision)
+            else:
+                r_func = repr
+
             try:
-                r = repr(a)
+                r = r_func(a)
             except:
                 r = '[repr failed]'
             if r.count('\n') > 3:
@@ -249,16 +258,16 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     if isinstance(desired, dict):
         if not isinstance(actual, dict) :
             raise AssertionError(repr(type(actual)))
-        assert_equal(len(actual),len(desired),err_msg,verbose)
-        for k,i in desired.items():
+        assert_equal(len(actual), len(desired), err_msg, verbose)
+        for k, i in desired.items():
             if k not in actual :
                 raise AssertionError(repr(k))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg), verbose)
         return
-    if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):
-        assert_equal(len(actual),len(desired),err_msg,verbose)
+    if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
+        assert_equal(len(actual), len(desired), err_msg, verbose)
         for k in range(len(desired)):
-            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg), verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
     from numpy.lib import iscomplexobj, real, imag
@@ -319,10 +328,12 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
-    if desired != actual :
+
+    # Explicitly use __eq__ for comparison, ticket #2552
+    if not (desired == actual):
         raise AssertionError(msg)
 
-def print_assert_equal(test_string,actual,desired):
+def print_assert_equal(test_string, actual, desired):
     """
     Test if two objects are equal, and print an error message if test fails.
 
@@ -356,9 +367,9 @@ def print_assert_equal(test_string,actual,desired):
         msg = StringIO()
         msg.write(test_string)
         msg.write(' failed\nACTUAL: \n')
-        pprint.pprint(actual,msg)
+        pprint.pprint(actual, msg)
         msg.write('DESIRED: \n')
-        pprint.pprint(desired,msg)
+        pprint.pprint(desired, msg)
         raise AssertionError(msg.getvalue())
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
@@ -433,8 +444,10 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     except ValueError:
         usecomplex = False
 
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal))
+    def _build_err_msg():
+        header = ('Arrays are not almost equal to %d decimals' % decimal)
+        return build_err_msg([actual, desired], err_msg, verbose=verbose,
+                             header=header)
 
     if usecomplex:
         if iscomplexobj(actual):
@@ -453,7 +466,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             assert_almost_equal(actualr, desiredr, decimal=decimal)
             assert_almost_equal(actuali, desiredi, decimal=decimal)
         except AssertionError:
-            raise AssertionError(msg)
+            raise AssertionError(_build_err_msg())
 
     if isinstance(actual, (ndarray, tuple, list)) \
             or isinstance(desired, (ndarray, tuple, list)):
@@ -465,15 +478,15 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         if not (gisfinite(desired) and gisfinite(actual)):
             if gisnan(desired) or gisnan(actual):
                 if not (gisnan(desired) and gisnan(actual)):
-                    raise AssertionError(msg)
+                    raise AssertionError(_build_err_msg())
             else:
                 if not desired == actual:
-                    raise AssertionError(msg)
+                    raise AssertionError(_build_err_msg())
             return
     except (NotImplementedError, TypeError):
         pass
-    if round(abs(desired - actual),decimal) != 0 :
-        raise AssertionError(msg)
+    if round(abs(desired - actual), decimal) != 0 :
+        raise AssertionError(_build_err_msg())
 
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
@@ -539,13 +552,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         return
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
-    err = np.seterr(invalid='ignore')
-    try:
+    with np.errstate(invalid='ignore'):
         scale = 0.5*(np.abs(desired) + np.abs(actual))
-        scale = np.power(10,np.floor(np.log10(scale)))
-    finally:
-        np.seterr(**err)
-
+        scale = np.power(10, np.floor(np.log10(scale)))
     try:
         sc_desired = desired/scale
     except ZeroDivisionError:
@@ -572,11 +581,11 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
             return
     except (TypeError, NotImplementedError):
         pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10.,-(significant-1)) :
+    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)) :
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
-                         header=''):
+                         header='', precision=6):
     from numpy.core import array, isnan, isinf, any, all, inf
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -593,7 +602,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:' \
                                 % (hasval), verbose=verbose, header=header,
-                                names=('x', 'y'))
+                                names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
     try:
@@ -604,7 +613,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(shapes %s, %s mismatch)' % (x.shape,
                                                                   y.shape),
                                 verbose=verbose, header=header,
-                                names=('x', 'y'))
+                                names=('x', 'y'), precision=precision)
             if not cond :
                 raise AssertionError(msg)
 
@@ -634,7 +643,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             else:
                 val = comparison(x, y)
         else:
-            val = comparison(x,y)
+            val = comparison(x, y)
 
         if isinstance(val, bool):
             cond = val
@@ -649,7 +658,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 err_msg
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
-                                names=('x', 'y'))
+                                names=('x', 'y'), precision=precision)
             if not cond :
                 raise AssertionError(msg)
     except ValueError as e:
@@ -658,7 +667,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         header = 'error during assertion:\n\n%s\n\n%s' % (efmt, header)
 
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
-                            names=('x', 'y'))
+                            names=('x', 'y'), precision=precision)
         raise ValueError(msg)
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
@@ -796,7 +805,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33333,  5.     ])
 
     """
-    from numpy.core import around, number, float_
+    from numpy.core import around, number, float_, result_type, array
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
     def compare(x, y):
@@ -813,12 +822,22 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                 y = y[~yinfid]
         except (TypeError, NotImplementedError):
             pass
+
+        # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+        # casting of x later.
+        dtype = result_type(y, 1.)
+        y = array(y, dtype=dtype, copy=False)
         z = abs(x-y)
+
         if not issubdtype(z.dtype, number):
             z = z.astype(float_) # handle object arrays
+
         return around(z, decimal) <= 10.0**(-decimal)
+
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal))
+             header=('Arrays are not almost equal to %d decimals' % decimal),
+             precision=decimal)
+
 
 def assert_array_less(x, y, err_msg='', verbose=True):
     """
@@ -925,7 +944,9 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M): return
+    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+        return
+
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
     diff_list = []
     while diff:
@@ -1012,6 +1033,7 @@ def raises(*args,**kwargs):
     nose = import_nose()
     return nose.tools.raises(*args,**kwargs)
 
+
 def assert_raises(*args,**kwargs):
     """
     assert_raises(exception_class, callable, *args, **kwargs)
@@ -1026,6 +1048,85 @@ def assert_raises(*args,**kwargs):
     """
     nose = import_nose()
     return nose.tools.assert_raises(*args,**kwargs)
+
+
+assert_raises_regex_impl = None
+
+
+def assert_raises_regex(exception_class, expected_regexp,
+                        callable_obj=None, *args, **kwargs):
+    """
+    Fail unless an exception of class exception_class and with message that
+    matches expected_regexp is thrown by callable when invoked with arguments
+    args and keyword arguments kwargs.
+
+    Name of this function adheres to Python 3.2+ reference, but should work in
+    all versions down to 2.6.
+
+    """
+    nose = import_nose()
+
+    global assert_raises_regex_impl
+    if assert_raises_regex_impl is None:
+        try:
+            # Python 3.2+
+            assert_raises_regex_impl = nose.tools.assert_raises_regex
+        except AttributeError:
+            try:
+                # 2.7+
+                assert_raises_regex_impl = nose.tools.assert_raises_regexp
+            except AttributeError:
+                # 2.6
+
+                # This class is copied from Python2.7 stdlib almost verbatim
+                class _AssertRaisesContext(object):
+                    """A context manager used to implement TestCase.assertRaises* methods."""
+
+                    def __init__(self, expected, expected_regexp=None):
+                        self.expected = expected
+                        self.expected_regexp = expected_regexp
+
+                    def failureException(self, msg):
+                        return AssertionError(msg)
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, exc_type, exc_value, tb):
+                        if exc_type is None:
+                            try:
+                                exc_name = self.expected.__name__
+                            except AttributeError:
+                                exc_name = str(self.expected)
+                            raise self.failureException(
+                                "{0} not raised".format(exc_name))
+                        if not issubclass(exc_type, self.expected):
+                            # let unexpected exceptions pass through
+                            return False
+                        self.exception = exc_value  # store for later retrieval
+                        if self.expected_regexp is None:
+                            return True
+
+                        expected_regexp = self.expected_regexp
+                        if isinstance(expected_regexp, basestring):
+                            expected_regexp = re.compile(expected_regexp)
+                        if not expected_regexp.search(str(exc_value)):
+                            raise self.failureException(
+                                '"%s" does not match "%s"' %
+                                (expected_regexp.pattern, str(exc_value)))
+                        return True
+
+                def impl(cls, regex, callable_obj, *a, **kw):
+                    mgr = _AssertRaisesContext(cls, regex)
+                    if callable_obj is None:
+                        return mgr
+                    with mgr:
+                        callable_obj(*a, **kw)
+                assert_raises_regex_impl = impl
+
+    return assert_raises_regex_impl(exception_class, expected_regexp,
+                                    callable_obj, *args, **kwargs)
+
 
 def decorate_methods(cls, decorator, testmatch=None):
     """
@@ -1108,7 +1209,7 @@ def measure(code_str,times=1,label=None):
 
     """
     frame = sys._getframe(1)
-    locs,globs = frame.f_locals,frame.f_globals
+    locs, globs = frame.f_locals, frame.f_globals
 
     code = compile(code_str,
                    'Test name: %s ' % label,
@@ -1117,7 +1218,7 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies()
     while i < times:
         i += 1
-        exec(code, globs,locs)
+        exec(code, globs, locs)
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 
@@ -1135,7 +1236,7 @@ def _assert_valid_refcount(op):
 
     rc = sys.getrefcount(i)
     for j in range(15):
-        d = op(b,c)
+        d = op(b, c)
 
     assert_(sys.getrefcount(i) >= rc)
 
@@ -1147,6 +1248,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
     It compares the difference between `actual` and `desired` to
     ``atol + rtol * abs(desired)``.
+
+    .. versionadded:: 1.5.0
 
     Parameters
     ----------
@@ -1182,6 +1285,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     import numpy as np
     def compare(x, y):
         return np.allclose(x, y, rtol=rtol, atol=atol)
+
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = 'Not equal to tolerance rtol=%g, atol=%g' % (rtol, atol)
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
@@ -1231,7 +1335,6 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     >>> np.testing.assert_array_almost_equal_nulp(x, x*eps/2 + x)
 
     >>> np.testing.assert_array_almost_equal_nulp(x, x*eps + x)
-    ------------------------------------------------------------
     Traceback (most recent call last):
       ...
     AssertionError: X and Y are not equal to 1 ULP (max is 2)
@@ -1375,6 +1478,8 @@ class WarningMessage(object):
     """
     Holds the result of a single showwarning() call.
 
+    Deprecated in 1.8.0
+
     Notes
     -----
     `WarningMessage` is copied from the Python 2.6 warnings module,
@@ -1415,6 +1520,8 @@ class WarningManager(object):
     named 'warnings' and imported under that name. This argument is only useful
     when testing the warnings module itself.
 
+    Deprecated in 1.8.0
+
     Notes
     -----
     `WarningManager` is a copy of the ``catch_warnings`` context manager
@@ -1452,6 +1559,7 @@ class WarningManager(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
 
+
 def assert_warns(warning_class, func, *args, **kw):
     """
     Fail unless the given callable throws the specified warning.
@@ -1460,6 +1568,8 @@ def assert_warns(warning_class, func, *args, **kw):
     invoked with arguments args and keyword arguments kwargs.
     If a different type of warning is thrown, it will not be caught, and the
     test case will be deemed to have suffered an error.
+
+    .. versionadded:: 1.4.0
 
     Parameters
     ----------
@@ -1477,13 +1587,8 @@ def assert_warns(warning_class, func, *args, **kw):
     The value returned by `func`.
 
     """
-
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-    # warnings module context manager.
-    ctx = WarningManager(record=True)
-    l = ctx.__enter__()
-    warnings.simplefilter('always')
-    try:
+    with warnings.catch_warnings(record=True) as l:
+        warnings.simplefilter('always')
         result = func(*args, **kw)
         if not len(l) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -1491,13 +1596,13 @@ def assert_warns(warning_class, func, *args, **kw):
         if not l[0].category is warning_class:
             raise AssertionError("First warning for %s is not a " \
                     "%s( is %s)" % (func.__name__, warning_class, l[0]))
-    finally:
-        ctx.__exit__()
     return result
 
 def assert_no_warnings(func, *args, **kw):
     """
     Fail if the given callable produces any warnings.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1507,28 +1612,22 @@ def assert_no_warnings(func, *args, **kw):
         Arguments passed to `func`.
     \\*\\*kwargs : Kwargs
         Keyword arguments passed to `func`.
-    
+
     Returns
     -------
     The value returned by `func`.
 
     """
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-    # warnings module context manager.
-    ctx = WarningManager(record=True)
-    l = ctx.__enter__()
-    warnings.simplefilter('always')
-    try:
+    with warnings.catch_warnings(record=True) as l:
+        warnings.simplefilter('always')
         result = func(*args, **kw)
         if len(l) > 0:
             raise AssertionError("Got warnings when calling %s: %s"
                     % (func.__name__, l))
-    finally:
-        ctx.__exit__()
     return result
 
 
-def gen_alignment_data(dtype=float32, type='binary', max_size=24):
+def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
     """
     generator producing data with different alignment and offsets
     to test simd vectorization
@@ -1592,3 +1691,20 @@ def gen_alignment_data(dtype=float32, type='binary', max_size=24):
                     (o, o + 1, o, s - 1, dtype, 'aliased')
                 yield inp1()[:-1], inp1()[:-1], inp2()[1:], bfmt % \
                     (o, o, o + 1, s - 1, dtype, 'aliased')
+
+
+class IgnoreException(Exception):
+    "Ignoring this exception due to disabled feature"
+
+
+@contextlib.contextmanager
+def tempdir(*args, **kwargs):
+    """Context manager to provide a temporary test folder.
+
+    All arguments are passed as this to the underlying tempfile.mkdtemp
+    function.
+
+    """
+    tmpdir = mkdtemp(*args, **kwargs)
+    yield tmpdir
+    shutil.rmtree(tmpdir)

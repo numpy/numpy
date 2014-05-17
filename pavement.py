@@ -24,8 +24,7 @@ as follows::
 Building a simple (no-superpack) windows installer from wine
 ============================================================
 
-It assumes that blas/lapack are in c:\local\lib inside drive_c. Build python
-2.5 and python 2.6 installers.
+It assumes that blas/lapack are in c:\local\lib inside drive_c.
 
     paver bdist_wininst_simple
 
@@ -68,6 +67,7 @@ import subprocess
 import re
 try:
     from hashlib import md5
+    from hashlib import sha256
 except ImportError:
     from md5 import md5
 
@@ -99,17 +99,17 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.10.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'v1.6.0'
+LOG_START = 'v1.9.0b1'
 LOG_END = 'master'
 
 
 #-------------------------------------------------------
 # Hardcoded build/install dirs, virtualenv options, etc.
 #-------------------------------------------------------
-DEFAULT_PYTHON = "2.6"
+DEFAULT_PYTHON = "2.7"
 
 # Where to put the final installers, as put on sourceforge
 SUPERPACK_BUILD = 'build-superpack'
@@ -134,12 +134,11 @@ options(bootstrap=Bunch(bootstrap_dir="bootstrap"),
 )
 
 MPKG_PYTHON = {
-        "2.5": ["/Library/Frameworks/Python.framework/Versions/2.5/bin/python"],
         "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"],
         "2.7": ["/Library/Frameworks/Python.framework/Versions/2.7/bin/python"],
-        "3.1": ["/Library/Frameworks/Python.framework/Versions/3.1/bin/python3"],
         "3.2": ["/Library/Frameworks/Python.framework/Versions/3.2/bin/python3"],
         "3.3": ["/Library/Frameworks/Python.framework/Versions/3.3/bin/python3"],
+        "3.4": ["/Library/Frameworks/Python.framework/Versions/3.4/bin/python3"],
 }
 
 SSE3_CFG = {'ATLAS': r'C:\local\lib\atlas\sse3'}
@@ -150,24 +149,22 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
+        "3.4": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python34/python.exe"],
         "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
-        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     WINDOWS_ENV["DYLD_FALLBACK_LIBRARY_PATH"] = "/usr/X11/lib:/usr/lib"
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
+        "3.4": ["C:\Python34\python.exe"],
         "3.3": ["C:\Python33\python.exe"],
         "3.2": ["C:\Python32\python.exe"],
-        "3.1": ["C:\Python31\python.exe"],
         "2.7": ["C:\Python27\python.exe"],
         "2.6": ["C:\Python26\python.exe"],
-        "2.5": ["C:\Python25\python.exe"],
     }
     # XXX: find out which env variable is necessary to avoid the pb with python
     # 2.6 and random module when importing tempfile
@@ -175,12 +172,11 @@ elif sys.platform == "win32":
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
+        "3.4": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python34/python.exe"],
         "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
-        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
@@ -235,10 +231,7 @@ def bdist_superpack(options):
     pyver = options.python_version
     def copy_bdist(arch):
         # Copy the wininst in dist into the release directory
-        if int(pyver[0]) >= 3:
-            source = os.path.join('build', 'py3k', 'dist', wininst_name(pyver))
-        else:
-            source = os.path.join('dist', wininst_name(pyver))
+        source = os.path.join('dist', wininst_name(pyver))
         target = os.path.join(SUPERPACK_BINDIR, internal_wininst_name(arch))
         if os.path.exists(target):
             os.remove(target)
@@ -445,12 +438,9 @@ def _build_mpkg(pyver):
         ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch x86_64 -Wl,-search_paths_first"
     else:
         ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
-    ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
 
-    if pyver == "2.5":
-        sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
-    else:
-        sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
+    ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
+    sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
 
 @task
 def simple_dmg():
@@ -576,9 +566,20 @@ def sdist(options):
 def compute_md5(idirs):
     released = paver.path.path(idirs).listdir()
     checksums = []
-    for f in released:
+    for f in sorted(released):
         m = md5(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), f))
+        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
+
+    return checksums
+
+def compute_sha256(idirs):
+    # better checksum so gpg signed README.txt containing the sums can be used
+    # to verify the binaries instead of signing all binaries
+    released = paver.path.path(idirs).listdir()
+    checksums = []
+    for f in sorted(released):
+        m = sha256(open(f, 'r').read())
+        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
 
     return checksums
 
@@ -594,8 +595,17 @@ def write_release_task(options, filename='NOTES.txt'):
 Checksums
 =========
 
+MD5
+~~~
+
 """)
     ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
+    ftarget.writelines("""
+SHA256
+~~~~~~
+
+""")
+    ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(

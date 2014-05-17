@@ -3,14 +3,4 @@
 
 #include "numpy/npy_3kcompat.h"
 
-/*
- * Accessing items of ob_base
- */
-
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
-#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
-#endif
-
 #endif /* _NPY_COMPAT_H_ */

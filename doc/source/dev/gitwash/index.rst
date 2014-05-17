@@ -12,5 +12,3 @@ Contents:
    following_latest
    git_development
    git_resources
-
-

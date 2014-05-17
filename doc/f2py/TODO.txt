@@ -1,0 +1,67 @@
+Determine fixed/free format Fortran 90 dialect from the
+contents of Fortran files. See numpy_distutils/command/build_flib.py.
+
+[DONE]
+========================================================================
+Wrapping F90 code as follows:
+
+subroutine foo
+print*,"In foo"
+end subroutine foo
+subroutine bar(func)
+  interface aa      ! bug: this interface block is ignored
+     subroutine foo
+     end subroutine foo
+  end interface
+  !external foo
+  external func
+  call func(foo)
+end subroutine bar
+subroutine gun(a)
+  external a
+  call a()
+end subroutine gun
+subroutine fun
+  call bar(gun)
+end subroutine fun
+
+=========================================================================
+Users Guide needs major revision.
+
+[DONE]
+=========================================================================
+On Thu, 27 Sep 2001, José Luis Gómez Dans wrote:
+
+> Hi,
+>       just one question: does f2py supporte derived types in F90 code?
+> Stuff like something%or and things like that.
+
+Not yet.
+
+=========================================================================
+Date: Tue, 28 Aug 2001 22:23:04 -0700
+From: Patrick LeGresley <plegresl@ape.stanford.edu>
+To: f2py-users@cens.ioc.ee
+Subject: [f2py] Strange initialization of allocatable arrays
+
+I've noticed an odd behavior when setting an allocatable, multidimensional
+array in a module.  If the rank of the array is odd, the initialization is
+fine.  However, if the rank is even only the first element of the array is
+set properly.  See the attached sample code for example.
+
+=========================================================================
+On Wed, 22 Aug 2001, Patrick LeGresley wrote:
+
+> I've noticed that if a parameter is defined in terms of another parameter,
+> that the parameter is replaced not by a number but by another parameter
+> (try the attached subroutine for example).  Is there any way to have f2py
+> automatically recognize the dependencies and generate a signature file
+> without parameter variables ?
+
+It is certainly possible. In fact, f2py has only a basic support for
+PARAMETER statements and it fails in your 'advanced' example to produce a
+robust signature file.
+I am sorry but you have to wait until I'll get back from my travel tour
+(somewhere in the middle of September) and get a chance to work on it.
+
+[DONE]

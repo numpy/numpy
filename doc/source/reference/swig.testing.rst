@@ -6,17 +6,17 @@ Introduction
 
 Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
 interface file is a combinatorial headache.  At present, 12 different
-data types are supported, each with 23 different argument signatures,
-for a total of 276 typemaps supported "out of the box".  Each of these
+data types are supported, each with 74 different argument signatures,
+for a total of 888 typemaps supported "out of the box".  Each of these
 typemaps, in turn, might require several unit tests in order to verify
 expected behavior for both proper and improper inputs.  Currently,
-this results in 1,020 individual unit tests that are performed when
+this results in 1,427 individual unit tests that are performed when
 ``make test`` is run in the ``numpy/docs/swig`` subdirectory.
 
 To facilitate this many similar unit tests, some high-level
 programming techniques are employed, including C and `SWIG`_ macros,
-as well as Python inheritance.  The purpose of this document is to describe 
-the testing infrastructure employed to verify that the ``numpy.i`` 
+as well as Python inheritance.  The purpose of this document is to describe
+the testing infrastructure employed to verify that the ``numpy.i``
 typemaps are working as expected.
 
 Testing Organization
@@ -56,9 +56,11 @@ each data type supported.
 Two-dimensional arrays are tested in exactly the same manner.  The
 above description applies, but with ``Matrix`` substituted for
 ``Vector``.  For three-dimensional tests, substitute ``Tensor`` for
-``Vector``.  For the descriptions that follow, we will reference the
-``Vector`` tests, but the same information applies to ``Matrix`` and
-``Tensor`` tests.
+``Vector``.  For four-dimensional tests, substitute ``SuperTensor``
+for ``Vector``.
+For the descriptions that follow, we will reference the
+``Vector`` tests, but the same information applies to ``Matrix``,
+``Tensor`` and ``SuperTensor`` tests.
 
 The command ``make test`` will ensure that all of the test software is
 built and then run all three test scripts.
@@ -106,7 +108,7 @@ Testing SWIG Interface Files
 ``Vector.i`` is a `SWIG`_ interface file that defines python module
 ``Vector``.  It follows the conventions for using ``numpy.i`` as
 described in this chapter.  It defines a `SWIG`_ macro
-``%apply_numpy_typemaps`` that has a single argument ``TYPE``.  
+``%apply_numpy_typemaps`` that has a single argument ``TYPE``.
 It uses the `SWIG`_ directive ``%apply`` to apply the provided
 typemaps to the argument signatures found in ``Vector.h``.  This macro
 is then implemented for all of the data types supported by

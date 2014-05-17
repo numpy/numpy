@@ -151,7 +151,7 @@ class LapackLibrary(FortranLibrary):
         return routine
 
     def allRoutinesByType(self, typename):
-        routines = sorted((r.name,r) for r in self.allRoutines() if r.type == typename)
+        routines = sorted((r.name, r) for r in self.allRoutines() if r.type == typename)
         return [a[1] for a in routines]
 
 def printRoutineNames(desc, routines):

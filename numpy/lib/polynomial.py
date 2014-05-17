@@ -127,7 +127,7 @@ def poly(seq_of_zeros):
     elif len(sh) == 1:
         pass
     else:
-        raise ValueError("input must be 1d or square 2d array.")
+        raise ValueError("input must be 1d or non-empty square 2d array.")
 
     if len(seq_of_zeros) == 0:
         return 1.0
@@ -141,7 +141,7 @@ def poly(seq_of_zeros):
         roots = NX.asarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
         neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0,roots)))
+                                        NX.compress(roots.imag < 0, roots)))
         if (len(pos_roots) == len(neg_roots) and
             NX.alltrue(neg_roots == pos_roots)):
             a = a.real.copy()
@@ -223,7 +223,7 @@ def roots(p):
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
         A = diag(NX.ones((N-2,), p.dtype), -1)
-        A[0, :] = -p[1:] / p[0]
+        A[0,:] = -p[1:] / p[0]
         roots = eigvals(A)
     else:
         roots = NX.array([])
@@ -470,10 +470,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     in the equations::
 
-        x[0]**n * p[n] + ... + x[0] * p[1] + p[0] = y[0]
-        x[1]**n * p[n] + ... + x[1] * p[1] + p[0] = y[1]
+        x[0]**n * p[0] + ... + x[0] * p[n-1] + p[n] = y[0]
+        x[1]**n * p[0] + ... + x[1] * p[n-1] + p[n] = y[1]
         ...
-        x[k]**n * p[n] + ... + x[k] * p[1] + p[0] = y[k]
+        x[k]**n * p[0] + ... + x[k] * p[n-1] + p[n] = y[k]
 
     The coefficient matrix of the coefficients `p` is a Vandermonde matrix.
 
@@ -589,7 +589,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full :
         return c, resids, rank, s, rcond
     elif cov :
-        Vbase = inv(dot(lhs.T,lhs))
+        Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
         # Some literature ignores the extra -2.0 factor in the denominator, but
         #  it is included here because the covariance of Multivariate Student-T
@@ -599,7 +599,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         if y.ndim == 1:
             return c, Vbase * fac
         else:
-            return c, Vbase[:,:,NX.newaxis] * fac
+            return c, Vbase[:,:, NX.newaxis] * fac
     else :
         return c
 
@@ -806,6 +806,8 @@ def polymul(a1, a2):
     poly1d : A one-dimensional polynomial class.
     poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
     polyval
+    convolve : Array convolution. Same output as polymul, but has parameter
+               for overlap mode.
 
     Examples
     --------
@@ -828,7 +830,7 @@ def polymul(a1, a2):
 
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    a1,a2 = poly1d(a1),poly1d(a2)
+    a1, a2 = poly1d(a1), poly1d(a2)
     val = NX.convolve(a1, a2)
     if truepoly:
         val = poly1d(val)
@@ -1030,6 +1032,8 @@ class poly1d(object):
     coeffs = None
     order = None
     variable = None
+    __hash__ = None
+
     def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
             for key in c_or_r.__dict__.keys():
@@ -1189,10 +1193,12 @@ class poly1d(object):
     __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
-        return NX.alltrue(self.coeffs == other.coeffs)
+        if self.coeffs.shape != other.coeffs.shape:
+            return False
+        return (self.coeffs == other.coeffs).all()
 
     def __ne__(self, other):
-        return NX.any(self.coeffs != other.coeffs)
+        return not self.__eq__(other)
 
     def __setattr__(self, key, val):
         raise ValueError("Attributes cannot be changed this way.")
@@ -1200,7 +1206,7 @@ class poly1d(object):
     def __getattr__(self, key):
         if key in ['r', 'roots']:
             return roots(self.coeffs)
-        elif key in ['c','coef','coefficients']:
+        elif key in ['c', 'coef', 'coefficients']:
             return self.coeffs
         elif key in ['o']:
             return self.order
@@ -1261,4 +1267,4 @@ class poly1d(object):
 
 # Stuff to do on module import
 
-warnings.simplefilter('always',RankWarning)
+warnings.simplefilter('always', RankWarning)

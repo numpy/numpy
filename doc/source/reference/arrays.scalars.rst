@@ -61,14 +61,14 @@ are also provided. The C-like names are associated with character codes,
 which are shown in the table. Use of the character codes, however,
 is discouraged.
 
-Five of the scalar types are essentially equivalent to fundamental
+Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
 ====================  ====================
 Array scalar type     Related Python type
 ====================  ====================
-:class:`int_`         :class:`IntType`
+:class:`int_`         :class:`IntType` (Python 2 only)
 :class:`float_`       :class:`FloatType`
 :class:`complex_`     :class:`ComplexType`
 :class:`str_`         :class:`StringType`
@@ -88,6 +88,11 @@ Python Boolean scalar.
    than Python's default implementation of :class:`bool` as a
    sub-class of int.
 
+.. warning::
+
+   The :class:`int_` type does **not** inherit from the
+   :class:`int` built-in under Python 3, because type :class:`int` is no
+   longer a fixed-width integer type.
 
 .. tip:: The default data type in Numpy is :class:`float_`.
 

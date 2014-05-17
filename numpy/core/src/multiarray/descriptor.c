@@ -63,7 +63,7 @@ _arraydescr_fromctypes(PyObject *obj)
                 /* derived type */
                 PyObject *newtup;
                 PyArray_Descr *derived;
-                newtup = Py_BuildValue("NO", newdescr, length);
+                newtup = Py_BuildValue("NN", newdescr, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
                 if (ret == NPY_SUCCEED) {
@@ -286,6 +286,8 @@ _convert_from_tuple(PyObject *obj)
          */
         PyArray_Dims shape = {NULL, -1};
         PyArray_Descr *newdescr;
+        npy_intp items;
+        int i;
 
         if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
             PyDimMem_FREE(shape.ptr);
@@ -310,28 +312,75 @@ _convert_from_tuple(PyObject *obj)
             PyDimMem_FREE(shape.ptr);
             goto fail;
         }
-        newdescr->elsize = type->elsize;
-        newdescr->elsize *= PyArray_MultiplyList(shape.ptr, shape.len);
-        PyDimMem_FREE(shape.ptr);
+
+        /* validate and set shape */
+        for (i=0; i < shape.len; i++) {
+            if (shape.ptr[i] < 0) {
+                PyErr_SetString(PyExc_ValueError,
+                                "invalid shape in fixed-type tuple: "
+                                "dimension smaller then zero.");
+                PyDimMem_FREE(shape.ptr);
+                goto fail;
+            }
+            if (shape.ptr[i] > NPY_MAX_INT) {
+                PyErr_SetString(PyExc_ValueError,
+                                "invalid shape in fixed-type tuple: "
+                                "dimension does not fit into a C int.");
+                PyDimMem_FREE(shape.ptr);
+                goto fail;
+            }
+        }
+        items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
+        if ((items < 0) || (items > (NPY_MAX_INT / type->elsize))) {
+            PyErr_SetString(PyExc_ValueError,
+                            "invalid shape in fixed-type tuple: dtype size in "
+                            "bytes must fit into a C int.");
+            PyDimMem_FREE(shape.ptr);
+            goto fail;
+        }
+        newdescr->elsize = type->elsize * items;
+        if (newdescr->elsize == -1) {
+            PyDimMem_FREE(shape.ptr);
+            goto fail;
+        }
+
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        if (newdescr->subarray == NULL) {
+            Py_DECREF(newdescr);
+            PyErr_NoMemory();
+            goto fail;
+        }
         newdescr->flags = type->flags;
+        newdescr->alignment = type->alignment;
         newdescr->subarray->base = type;
         type = NULL;
         Py_XDECREF(newdescr->fields);
         Py_XDECREF(newdescr->names);
         newdescr->fields = NULL;
         newdescr->names = NULL;
-        /* Force subarray->shape to always be a tuple */
-        if (PyTuple_Check(val)) {
-            Py_INCREF(val);
-            newdescr->subarray->shape = val;
-        } else {
-            newdescr->subarray->shape = Py_BuildValue("(O)", val);
-            if (newdescr->subarray->shape == NULL) {
-                Py_DECREF(newdescr);
+
+        /*
+         * Create a new subarray->shape tuple (it can be an arbitrary
+         * sequence of integer like objects, neither of which is safe.
+         */
+        newdescr->subarray->shape = PyTuple_New(shape.len);
+        if (newdescr->subarray->shape == NULL) {
+            PyDimMem_FREE(shape.ptr);
+            goto fail;
+        }
+        for (i=0; i < shape.len; i++) {
+            PyTuple_SET_ITEM(newdescr->subarray->shape, i,
+                             PyInt_FromLong((long)shape.ptr[i]));
+
+            if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
+                Py_DECREF(newdescr->subarray->shape);
+                newdescr->subarray->shape = NULL;
+                PyDimMem_FREE(shape.ptr);
                 goto fail;
             }
         }
+
+        PyDimMem_FREE(shape.ptr);
         type = newdescr;
     }
     return type;
@@ -361,7 +410,8 @@ _convert_from_array_descr(PyObject *obj, int align)
     PyObject *nameslist;
     PyArray_Descr *new;
     PyArray_Descr *conv;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 0;
 
     n = PyList_GET_SIZE(obj);
@@ -550,7 +600,8 @@ _convert_from_list(PyObject *obj, int align)
     PyObject *nameslist = NULL;
     int ret;
     int maxalign = 0;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
 
     n = PyList_GET_SIZE(obj);
     /*
@@ -657,6 +708,7 @@ _convert_from_commastring(PyObject *obj, int align)
     if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj) < 1) {
         PyErr_SetString(PyExc_RuntimeError,
                 "_commastring is not returning a list with len >= 1");
+        Py_DECREF(listobj);
         return NULL;
     }
     if (PyList_GET_SIZE(listobj) == 1) {
@@ -885,7 +937,8 @@ _convert_from_dict(PyObject *obj, int align)
     int n, i;
     int totalsize, itemsize;
     int maxalign = 0;
-    char dtypeflags = 0;
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
     int has_out_of_order_fields = 0;
 
     fields = PyDict_New();
@@ -1528,6 +1581,10 @@ PyArray_DescrNew(PyArray_Descr *base)
     Py_XINCREF(newdescr->names);
     if (newdescr->subarray) {
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        if (newdescr->subarray == NULL) {
+            Py_DECREF(newdescr);
+            return (PyArray_Descr *)PyErr_NoMemory();
+        }
         memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(newdescr->subarray->shape);
         Py_INCREF(newdescr->subarray->base);
@@ -1641,12 +1698,14 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_typename_get(PyArray_Descr *self)
 {
-    int len;
+    static const char np_prefix[] = "numpy.";
+    const int np_prefix_len = sizeof(np_prefix) - 1;
     PyTypeObject *typeobj = self->typeobj;
     PyObject *res;
     char *s;
-    /* fixme: not reentrant */
-    static int prefix_len = 0;
+    int len;
+    int prefix_len;
+    int suffix_len;
 
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
         s = strrchr(typeobj->tp_name, '.');
@@ -1659,14 +1718,31 @@ arraydescr_typename_get(PyArray_Descr *self)
         return res;
     }
     else {
-        if (prefix_len == 0) {
-            prefix_len = strlen("numpy.");
-        }
+        /*
+         * NumPy type or subclass
+         *
+         * res is derived from typeobj->tp_name with the following rules:
+         * - if starts with "numpy.", that prefix is removed
+         * - if ends with "_", that suffix is removed
+         */
         len = strlen(typeobj->tp_name);
-        if (*(typeobj->tp_name + (len-1)) == '_') {
-            len -= 1;
+
+        if (! strncmp(typeobj->tp_name, np_prefix, np_prefix_len)) {
+            prefix_len = np_prefix_len;
         }
+        else {
+            prefix_len = 0;
+        }
+
+        if (typeobj->tp_name[len - 1] == '_') {
+            suffix_len = 1;
+        }
+        else {
+            suffix_len = 0;
+        }
+
         len -= prefix_len;
+        len -= suffix_len;
         res = PyUString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
     }
     if (PyTypeNum_ISFLEXIBLE(self->type_num) && self->elsize != 0) {
@@ -2677,7 +2753,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     if (endian != NPY_IGNORE) {
         if (newendian == NPY_SWAP) {
             /* swap byteorder */
-            if PyArray_ISNBO(endian) {
+            if (PyArray_ISNBO(endian)) {
                 endian = NPY_OPPBYTE;
             }
             else {
@@ -3497,7 +3573,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

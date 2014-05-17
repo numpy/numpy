@@ -1,7 +1,7 @@
 # Makefile for Sphinx documentation
 #
 
-PYVER =
+PYVER = 2.7
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
@@ -24,13 +24,13 @@ ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
+	@echo "  html-scipyorg  to make standalone HTML files with scipy.org theming"
 	@echo "  pickle    to make pickle files (usable by e.g. sphinx-web)"
 	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  dist PYVER=... to make a distribution-ready tree"
-	@echo "  upload USER=...  to upload results to docs.scipy.org"
 	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 
 clean:
@@ -56,34 +56,21 @@ gitwash-update:
 # - Different versions of easy_install install to different directories (!)
 #
 
+
 INSTALL_DIR = $(CURDIR)/build/inst-dist/
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 
 DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" SPHINXOPTS="$(SPHINXOPTS)"
 
-UPLOAD_TARGET = $(USER)@docs.scipy.org:/home/docserver/www-root/doc/numpy/
-
-upload:
-	@test -e build/dist || { echo "make dist is required first"; exit 1; }
-	@test output-is-fine -nt build/dist || { \
-		echo "Review the output in build/dist, and do 'touch output-is-fine' before uploading."; exit 1; }
-	rsync -r -z --delete-after -p \
-	    $(if $(shell test -f build/dist/numpy-ref.pdf && echo "y"),, \
-	         --exclude '**-ref.pdf' --exclude '**-user.pdf') \
-	    $(if $(shell test -f build/dist/numpy-chm.zip && echo "y"),, \
-	         --exclude '**-chm.zip') \
-	    build/dist/ $(UPLOAD_TARGET)
-
 dist:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html
+real-dist: dist-build html html-scipyorg
 	test -d build/latex || make latex
 	make -C build/latex all-pdf
 	-test -d build/htmlhelp || make htmlhelp-build
 	-rm -rf build/dist
-	cp -r build/html build/dist
-	perl -pi -e 's#^\s*(<li><a href=".*?">NumPy.*?Manual.*?&raquo;</li>)#<li><a href="/">Numpy and Scipy Documentation</a> &raquo;</li>#;' build/dist/*.html build/dist/*/*.html build/dist/*/*/*.html
+	cp -r build/html-scipyorg build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
 	cp build/latex/numpy-*.pdf build/dist
 	-zip build/dist/numpy-chm.zip build/htmlhelp/numpy.chm
@@ -111,6 +98,12 @@ html: generate
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
+	@echo
+	@echo "Build finished. The HTML pages are in build/html."
+
+html-scipyorg:
+	mkdir -p build/html build/doctrees
+	$(SPHINXBUILD) -t scipyorg -b html $(ALLSPHINXOPTS) build/html-scipyorg $(FILES)
 	@echo
 	@echo "Build finished. The HTML pages are in build/html."
 

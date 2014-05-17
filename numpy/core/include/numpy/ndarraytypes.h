@@ -156,6 +156,12 @@ typedef enum {
 
 
 typedef enum {
+        NPY_INTROSELECT=0,
+} NPY_SELECTKIND;
+#define NPY_NSELECTS (NPY_INTROSELECT + 1)
+
+
+typedef enum {
         NPY_SEARCHLEFT=0,
         NPY_SEARCHRIGHT=1
 } NPY_SEARCHSIDE;
@@ -197,12 +203,6 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-
-        /*
-         * Temporary internal definition only, will be removed in upcoming
-         * release, see below
-         * */
-        NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND = 100,
 } NPY_CASTING;
 
 typedef enum {
@@ -391,6 +391,12 @@ typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
 typedef int (PyArray_SortFunc)(void *, npy_intp, void *);
 typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, void *);
+typedef int (PyArray_PartitionFunc)(void *, npy_intp, npy_intp,
+                                    npy_intp *, npy_intp *,
+                                    void *);
+typedef int (PyArray_ArgPartitionFunc)(void *, npy_intp *, npy_intp, npy_intp,
+                                       npy_intp *, npy_intp *,
+                                       void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
@@ -627,8 +633,8 @@ typedef struct _arr_descr {
  * (PyArray_DATA and friends) to access fields here for a number of
  * releases. Direct access to the members themselves is deprecated.
  * To ensure that your code does not use deprecated access,
- * #define NPY_NO_DEPRECATED_API NPY_1_7_VERSION
- * (or NPY_1_8_VERSION or higher as required).
+ * #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+ * (or NPY_1_8_API_VERSION or higher as required).
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
@@ -675,7 +681,8 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 /*
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
@@ -915,12 +922,16 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
 #define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS)
 
+/* the variable is used in some places, so always define it */
+#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
-#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
+#define NPY_END_THREADS   do { if (_save) \
+                { PyEval_RestoreThread(_save); _save = NULL;} } while (0);
+#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
+                { _save = PyEval_SaveThread();} } while (0);
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
@@ -936,9 +947,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #else
 #define NPY_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
+#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size)
 #define NPY_BEGIN_THREADS_DESCR(dtype)
 #define NPY_END_THREADS_DESCR(dtype)
 #define NPY_ALLOW_C_API_DEF
@@ -1239,8 +1250,12 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-/* Store the information needed for fancy-indexing over an array */
 
+/*
+ * Store the information needed for fancy-indexing over an array. The
+ * fields are slightly unordered to keep consec, dataptr and subspace
+ * where they were originally.
+ */
 typedef struct {
         PyObject_HEAD
         /*
@@ -1255,32 +1270,70 @@ typedef struct {
         npy_intp              index;                   /* current index */
         int                   nd;                      /* number of dims */
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject     *iters[NPY_MAXDIMS];     /* index object
-                                                          iterators */
-        PyArrayIterObject     *ait;                    /* flat Iterator for
-                                                          underlying array */
+        NpyIter               *outer;                  /* index objects
+                                                          iterator */
+        void                  *unused[NPY_MAXDIMS - 2];
+        PyArrayObject         *array;
+        /* Flat iterator for the indexed array. For compatibility solely. */
+        PyArrayIterObject     *ait;
 
-        /* flat iterator for subspace (when numiter < nd) */
-        PyArrayIterObject     *subspace;
+        /*
+         * Subspace array. For binary compatibility (was an iterator,
+         * but only the check for NULL should be used).
+         */
+        PyArrayObject         *subspace;
 
         /*
          * if subspace iteration, then this is the array of axes in
          * the underlying array represented by the index objects
          */
         int                   iteraxes[NPY_MAXDIMS];
-        /*
-         * if subspace iteration, the these are the coordinates to the
-         * start of the subspace.
-         */
-        npy_intp              bscoord[NPY_MAXDIMS];
+        npy_intp              fancy_strides[NPY_MAXDIMS];
 
-        PyObject              *indexobj;               /* creating obj */
+        /* pointer when all fancy indices are 0 */
+        char                  *baseoffset;
+
         /*
-         * consec is first used to indicate wether fancy indices are
-         * consecutive and then denotes at which axis they are inserted
+         * after binding consec denotes at which axis the fancy axes
+         * are inserted.
          */
         int                   consec;
         char                  *dataptr;
+
+        int                   nd_fancy;
+        npy_intp              fancy_dims[NPY_MAXDIMS];
+
+        /* Whether the iterator (any of the iterators) requires API */
+        int                   needs_api;
+
+        /*
+         * Extra op information.
+         */
+        PyArrayObject         *extra_op;
+        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
+        npy_uint32            *extra_op_flags;         /* Iterator flags */
+
+        NpyIter               *extra_op_iter;
+        NpyIter_IterNextFunc  *extra_op_next;
+        char                  **extra_op_ptrs;
+
+        /*
+         * Information about the iteration state.
+         */
+        NpyIter_IterNextFunc  *outer_next;
+        char                  **outer_ptrs;
+        npy_intp              *outer_strides;
+
+        /*
+         * Information about the subspace iterator.
+         */
+        NpyIter               *subspace_iter;
+        NpyIter_IterNextFunc  *subspace_next;
+        char                  **subspace_ptrs;
+        npy_intp              *subspace_strides;
+
+        /* Count for the external loop (which ever it is) for API iteration */
+        npy_intp              iter_count;
 
 } PyArrayMapIterObject;
 
@@ -1383,7 +1436,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
-#if (defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if (defined(NPY_NO_DEPRECATED_API) && (NPY_1_7_API_VERSION <= NPY_NO_DEPRECATED_API))
 /*
  * Changing access macros into functions, to allow for future hiding
  * of the internal memory layout. This later hiding will allow the 2.x series
@@ -1433,13 +1486,13 @@ PyArray_STRIDE(const PyArrayObject *arr, int istride)
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
-static NPY_INLINE PyObject *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
-static NPY_INLINE PyArray_Descr *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
@@ -1732,8 +1785,30 @@ typedef struct {
 typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
                                        void *user_data);
 
-#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
-#include "npy_deprecated_api.h"
+/*
+ * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files
+ * npy_*_*_deprecated_api.h are only included from here and nowhere else.
+ */
+#ifdef NPY_DEPRECATED_INCLUDES
+#error "Do not use the reserved keyword NPY_DEPRECATED_INCLUDES."
 #endif
+#define NPY_DEPRECATED_INCLUDES
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
+#include "npy_1_7_deprecated_api.h"
+#endif
+/*
+ * There is no file npy_1_8_deprecated_api.h since there are no additional
+ * deprecated API features in NumPy 1.8.
+ *
+ * Note to maintainers: insert code like the following in future NumPy
+ * versions.
+ *
+ * #if !defined(NPY_NO_DEPRECATED_API) || \
+ *     (NPY_NO_DEPRECATED_API < NPY_1_9_API_VERSION)
+ * #include "npy_1_9_deprecated_api.h"
+ * #endif
+ */
+#undef NPY_DEPRECATED_INCLUDES
 
 #endif /* NPY_ARRAYTYPES_H */

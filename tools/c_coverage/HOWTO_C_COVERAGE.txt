@@ -115,4 +115,3 @@ removing lines because they are tautologically impossible or to
 combine lines together.  Compiling Numpy without optimizations helps,
 but not completely.  Even despite this flaw, this tool is still
 helpful in identifying large missed blocks or functions.
-

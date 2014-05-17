@@ -88,7 +88,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 
 
 static int
-array_ass_slice(PyArrayObject *self, Py_ssize_t ilow,
+array_assign_slice(PyArrayObject *self, Py_ssize_t ilow,
                 Py_ssize_t ihigh, PyObject *v) {
     int ret;
     PyArrayObject *tmp;
@@ -130,29 +130,16 @@ array_contains(PyArrayObject *self, PyObject *el)
 }
 
 NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)array_length,                  /*sq_length*/
     (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (ssizeargfunc)NULL,
     (ssizeargfunc)array_item,
     (ssizessizeargfunc)array_slice,
-    (ssizeobjargproc)array_ass_item,        /*sq_ass_item*/
-    (ssizessizeobjargproc)array_ass_slice,  /*sq_ass_slice*/
+    (ssizeobjargproc)array_assign_item,        /*sq_ass_item*/
+    (ssizessizeobjargproc)array_assign_slice,  /*sq_ass_slice*/
     (objobjproc) array_contains,            /*sq_contains */
     (binaryfunc) NULL,                      /*sg_inplace_concat */
     (ssizeargfunc)NULL,
-#else
-    (inquiry)array_length,                  /*sq_length*/
-    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
-    (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
-    (intargfunc)array_item,                 /*sq_item*/
-    (intintargfunc)array_slice,             /*sq_slice*/
-    (intobjargproc)array_ass_item,          /*sq_ass_item*/
-    (intintobjargproc)array_ass_slice,      /*sq_ass_slice*/
-    (objobjproc) array_contains,            /*sq_contains */
-    (binaryfunc) NULL,                      /*sg_inplace_concat */
-    (intargfunc) NULL                       /*sg_inplace_repeat */
-#endif
 };
 
 

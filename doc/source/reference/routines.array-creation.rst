@@ -20,6 +20,8 @@ Ones and zeros
    ones_like
    zeros
    zeros_like
+   full
+   full_like
 
 From existing data
 ------------------

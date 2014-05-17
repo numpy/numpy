@@ -13,16 +13,18 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError']
 
 import warnings
 
-from numpy.core import array, asarray, zeros, empty, transpose, \
-        intc, single, double, csingle, cdouble, inexact, complexfloating, \
-        newaxis, ravel, all, Inf, dot, add, multiply, sqrt, maximum, \
-        fastCopyAndTranspose, sum, isfinite, size, finfo, errstate, \
-        geterrobj, longdouble, rollaxis, amin, amax
+from numpy.core import (
+    array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
+    csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
+    add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
+    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
+    broadcast
+    )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -214,9 +216,9 @@ def _assertFinite(*arrays):
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
 
-def _assertNonEmpty(*arrays):
+def _assertNoEmpty2d(*arrays):
     for a in arrays:
-        if size(a) == 0:
+        if a.size == 0 and product(a.shape[-2:]) == 0:
             raise LinAlgError("Arrays cannot be empty")
 
 
@@ -269,7 +271,7 @@ def tensorsolve(a, b, axes=None):
     True
 
     """
-    a,wrap = _makearray(a)
+    a, wrap = _makearray(a)
     b = asarray(b)
     an = a.ndim
 
@@ -349,15 +351,29 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     b, wrap = _makearray(b)
     t, result_t = _commonType(a, b)
 
-    if len(b.shape) == len(a.shape) - 1:
+    # We use the b = (..., M,) logic, only if the number of extra dimensions
+    # match exactly
+    if b.ndim == a.ndim - 1:
+        if a.shape[-1] == 0 and b.shape[-1] == 0:
+            # Legal, but the ufunc cannot handle the 0-sized inner dims
+            # let the ufunc handle all wrong cases.
+            a = a.reshape(a.shape[:-1])
+            bc = broadcast(a, b)
+            return wrap(empty(bc.shape, dtype=result_t))
+
         gufunc = _umath_linalg.solve1
     else:
+        if b.size == 0:
+            if (a.shape[-1] == 0 and b.shape[-2] == 0) or b.shape[-1] == 0:
+                a = a[:,:1].reshape(a.shape[:-1] + (1,))
+                bc = broadcast(a, b)
+                return wrap(empty(bc.shape, dtype=result_t))
+
         gufunc = _umath_linalg.solve
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
@@ -491,10 +507,14 @@ def inv(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+
+    if a.shape[-1] == 0:
+        # The inner array is 0x0, the ufunc cannot handle this case
+        return wrap(empty_like(a, dtype=result_t))
+
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
@@ -717,7 +737,7 @@ def qr(a, mode='reduced'):
 
     a, wrap = _makearray(a)
     _assertRank2(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
@@ -747,7 +767,7 @@ def qr(a, mode='reduced'):
 
     # handle modes that don't return q
     if mode == 'r':
-        r = _fastCopyAndTranspose(result_t, a[:,:mn])
+        r = _fastCopyAndTranspose(result_t, a[:, :mn])
         return wrap(triu(r))
 
     if mode == 'raw':
@@ -789,7 +809,7 @@ def qr(a, mode='reduced'):
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     q = _fastCopyAndTranspose(result_t, q[:mc])
-    r = _fastCopyAndTranspose(result_t, a[:,:mc])
+    r = _fastCopyAndTranspose(result_t, a[:, :mc])
 
     return wrap(q), wrap(triu(r))
 
@@ -862,7 +882,7 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
@@ -894,7 +914,7 @@ def eigvalsh(a, UPLO='L'):
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
-        Same as `lower`, wth 'L' for lower and 'U' for upper triangular.
+        Same as `lower`, with 'L' for lower and 'U' for upper triangular.
         Deprecated.
 
     Returns
@@ -930,6 +950,9 @@ def eigvalsh(a, UPLO='L'):
     array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -939,13 +962,13 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
-    return w.astype(result_t)
+    return w.astype(_realType(result_t))
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1002,7 +1025,7 @@ def eig(a):
 
     The number `w` is an eigenvalue of `a` if there exists a vector
     `v` such that ``dot(a,v) = w * v``. Thus, the arrays `a`, `w`, and
-    `v` satisfy the equations ``dot(a[i,:], v[i]) = w[i] * v[:,i]``
+    `v` satisfy the equations ``dot(a[:,:], v[:,i]) = w[i] * v[:,i]``
     for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
@@ -1174,7 +1197,9 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
-    UPLO = asbytes(UPLO)
+    UPLO = UPLO.upper()
+    if UPLO not in ('L', 'U'):
+        raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
@@ -1183,7 +1208,7 @@ def eigh(a, UPLO='L'):
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
-    if 'L' == UPLO:
+    if UPLO == 'L':
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
@@ -1278,7 +1303,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
 
@@ -1396,10 +1421,10 @@ def cond(x, p=None):
     """
     x = asarray(x) # in case we have a matrix
     if p is None:
-        s = svd(x,compute_uv=False)
+        s = svd(x, compute_uv=False)
         return s[0]/s[-1]
     else:
-        return norm(x,p)*norm(inv(x),p)
+        return norm(x, p)*norm(inv(x), p)
 
 
 def matrix_rank(M, tol=None):
@@ -1555,7 +1580,7 @@ def pinv(a, rcond=1e-15 ):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]
@@ -1566,7 +1591,7 @@ def pinv(a, rcond=1e-15 ):
             s[i] = 1./s[i]
         else:
             s[i] = 0.;
-    res = dot(transpose(vt), multiply(s[:, newaxis],transpose(u)))
+    res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
@@ -1642,7 +1667,7 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -1696,7 +1721,7 @@ def det(a):
 
     """
     a = asarray(a)
-    _assertNonEmpty(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
@@ -1738,7 +1763,7 @@ def lstsq(a, b, rcond=-1):
     residuals : {(), (1,), (K,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
-        If the rank of `a` is < N or > M, this is an empty array.
+        If the rank of `a` is < N or M <= N, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
     rank : int
@@ -1805,7 +1830,7 @@ def lstsq(a, b, rcond=-1):
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
-    bstar[:b.shape[0],:n_rhs] = b.copy()
+    bstar[:b.shape[0], :n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
@@ -2028,16 +2053,20 @@ def norm(x, ord=None, axis=None):
 
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
-        s = (x.conj() * x).real
-        return sqrt(add.reduce((x.conj() * x).ravel().real))
+        x = x.ravel(order='K')
+        if isComplexType(x.dtype.type):
+            sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+        else:
+            sqnorm = dot(x, x)
+        return sqrt(sqnorm)
 
     # Normalize the `axis` argument to a tuple.
+    nd = x.ndim
     if axis is None:
-        axis = tuple(range(x.ndim))
+        axis = tuple(range(nd))
     elif not isinstance(axis, tuple):
         axis = (axis,)
 
-    nd = x.ndim
     if len(axis) == 1:
         if ord == Inf:
             return abs(x).max(axis=axis)
@@ -2058,19 +2087,26 @@ def norm(x, ord=None, axis=None):
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            if x.dtype.type is not longdouble:
+            if x.dtype.type is longdouble:
                 # Convert to a float type, so integer arrays give
                 # float results.  Don't apply asfarray to longdouble arrays,
                 # because it will downcast to float64.
-                absx = asfarray(abs(x))
-            return add.reduce(absx**ord, axis=axis)**(1.0/ord)
+                absx = abs(x)
+            else:
+                absx = x if isComplexType(x.dtype.type) else asfarray(x)
+                if absx.dtype is x.dtype:
+                    absx = abs(absx)
+                else:
+                    # if the type changed, we can safely overwrite absx
+                    abs(absx, out=absx)
+            absx **= ord
+            return add.reduce(absx, axis=axis) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
-        if not (-x.ndim <= row_axis < x.ndim and
-                -x.ndim <= col_axis < x.ndim):
+        if not (-nd <= row_axis < nd and -nd <= col_axis < nd):
             raise ValueError('Invalid axis %r for an array with shape %r' %
                              (axis, x.shape))
-        if row_axis % x.ndim == col_axis % x.ndim:
+        if row_axis % nd == col_axis % nd:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
             return _multi_svd_norm(x, row_axis, col_axis, amax)

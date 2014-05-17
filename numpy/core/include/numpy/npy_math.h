@@ -6,10 +6,14 @@ extern "C" {
 #endif
 
 #include <math.h>
+#ifdef __SUNPRO_CC
+#include <sunmath.h>
+#endif
 #ifdef HAVE_NPY_CONFIG_H
 #include <npy_config.h>
 #endif
 #include <numpy/npy_common.h>
+
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
@@ -114,10 +118,6 @@ double npy_tanh(double x);
 double npy_asin(double x);
 double npy_acos(double x);
 double npy_atan(double x);
-double npy_aexp(double x);
-double npy_alog(double x);
-double npy_asqrt(double x);
-double npy_afabs(double x);
 
 double npy_log(double x);
 double npy_log10(double x);
@@ -143,6 +143,8 @@ double npy_log2(double x);
 double npy_atan2(double x, double y);
 double npy_pow(double x, double y);
 double npy_modf(double x, double* y);
+double npy_frexp(double x, int* y);
+double npy_ldexp(double n, int y);
 
 double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
@@ -247,6 +249,8 @@ float npy_powf(float x, float y);
 float npy_fmodf(float x, float y);
 
 float npy_modff(float x, float* y);
+float npy_frexpf(float x, int* y);
+float npy_ldexpf(float x, int y);
 
 float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
@@ -288,6 +292,8 @@ npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
 npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+npy_longdouble npy_frexpl(npy_longdouble x, int* y);
+npy_longdouble npy_ldexpl(npy_longdouble x, int y);
 
 npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
@@ -452,6 +458,17 @@ npy_clongdouble npy_csinl(npy_clongdouble z);
  * status word.
  */
 
+/*
+ * platform-dependent code translates floating point
+ * status to an integer sum of these values
+ */
+#define NPY_FPE_DIVIDEBYZERO  1
+#define NPY_FPE_OVERFLOW      2
+#define NPY_FPE_UNDERFLOW     4
+#define NPY_FPE_INVALID       8
+
+int npy_get_floatstatus(void);
+int npy_clear_floatstatus(void);
 void npy_set_floatstatus_divbyzero(void);
 void npy_set_floatstatus_overflow(void);
 void npy_set_floatstatus_underflow(void);

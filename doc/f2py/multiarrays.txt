@@ -1,0 +1,119 @@
+From pearu@ioc.ee Thu Dec 30 09:58:01 1999
+Date: Fri, 26 Nov 1999 12:02:42 +0200 (EET)
+From: Pearu Peterson <pearu@ioc.ee>
+To: Users of f2py2e -- Curtis Jensen <cjensen@be-research.ucsd.edu>,
+     Vladimir Janku <vjanku@kvet.sk>,
+     Travis Oliphant <Oliphant.Travis@mayo.edu>
+Subject: Multidimensional arrays in f2py2e
+
+
+Hi!
+
+Below I will describe how f2py2e wraps Fortran multidimensional arrays as
+it constantly causes confusion. As for example, consider Fortran code
+
+	subroutine foo(l,m,n,a)
+	integer l,m,n
+	real*8 a(l,m,n)
+	..
+	end
+Running f2py2e with -h flag, it generates the following signature
+
+subroutine foo(l,m,n,a)
+  integer optional,check(shape(a,2)==l),depend(a) :: l=shape(a,2)
+  integer optional,check(shape(a,1)==m),depend(a) :: m=shape(a,1)
+  integer optional,check(shape(a,0)==n),depend(a) :: n=shape(a,0)
+  real*8 dimension(l,m,n),check(rank(a)==3) :: a
+end subroutine foo
+
+where parameters l,m,n are considered optional and they are initialized in
+Python C/API code using the array a. Note that a can be also a proper
+list, that is, asarray(a) should result in a rank-3 array. But then there
+is an automatic restriction that elements of a (in Python) are not
+changeable (in place) even if Fortran subroutine changes the array a (in
+C,Fortran).
+
+Hint: you can attribute the array a with 'intent(out)' which causes foo to
+return the array a (in Python) if you are to lazy to define a=asarray(a)
+before the call to foo (in Python).
+
+Calling f2py2e without the switch -h, a Python C/API module will be
+generated. After compiling it and importing it to Python
+>>> print foo.__doc__
+shows
+None = foo(a,l=shape(a,2),m=shape(a,1),n=shape(a,0))
+
+You will notice that f2py2e has changed the order of arguments putting the
+optional ones at the end of the argument list.
+Now, you have to be careful when specifying the parameters l,m,n (though
+situations where you need this should be rare). A proper definition
+of the array a should be, say
+
+  a = zeros(n,m,l)
+
+Note that the dimensions l,m,n are in reverse, that is, the array a should
+be transposed when feeding it to the wrapper.
+
+Hint (and a performance hit): To be always consistent with fortran
+arrays, you can define, for example
+  a = zeros(l,m,n)
+and call from Python
+  foo(transpose(a),l,m,n)
+which is equivalent with the given Fortran call
+  call foo(l,m,n,a)
+
+Another hint (not recommended, though): If you don't like optional
+arguments feature at all and want to be strictly consistent with Fortran
+signature, that is, you want to call foo from Python as
+  foo(l,m,n,a)
+then you should edit the signature to
+subroutine foo(l,m,n,a)
+  integer :: l
+  integer :: m
+  integer :: n
+  real*8 dimension(l,m,n),check(rank(a)==3),depend(l,m,n), &
+       check(shape(a,2)==l,shape(a,1)==m,shape(a,0)==n):: a
+end
+Important! Note that now the array a should depend on l,m,n
+so that the checks can be performed in the proper order.
+(you cannot check, say, shape(a,2)==l before initializing a or l)
+(There are other ways to edit the signature in order to get the same
+effect but they are not so safe and I will not discuss about them here).
+
+Hint: If the array a should be a work array (as used frequently in
+Fortran) and you a too lazy (its good lazyness;) to provide it (in Python)
+then you can define it as optional by ediding the signature:
+subroutine foo(l,m,n,a)
+  integer :: l
+  integer :: m
+  integer :: n
+  real*8 dimension(l,m,n),check(rank(a)==3),depend(l,m,n), &
+       check(shape(a,2)==l,shape(a,1)==m,shape(a,0)==n):: a
+  optional a
+end
+Note again that the array a must depend on l,m,n. Then the array a will be
+allocated in the Python C/API module. Not also that
+>>> print foo.__doc__
+shows then
+None = foo(l,m,n,a=)
+Performance hint: If you call the given foo lots of times from Python then
+you don't want to allocate/deallocate the memory in each call. So, it is
+then recommended to define a temporary array in Python, for instance
+>>> tmp = zeros(n,m,l)
+>>> for i in ...:
+>>>   foo(l,m,n,a=tmp)
+
+Important! It is not good at all to define
+  >>> tmp = transpose(zeros(l,m,n))
+because tmp will be then a noncontiguous array and there will be a
+huge performance hit as in Python C/API a new array will be allocated and
+also a copying of arrays will be performed elementwise!
+But
+  >>> tmp = asarray(transpose(zeros(l,m,n)))
+is still ok.
+
+I hope that the above answers lots of your (possible) questions about
+wrapping Fortran multidimensional arrays with f2py2e.
+
+Regards,
+	Pearu

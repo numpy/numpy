@@ -32,7 +32,7 @@ from .fromnumeric import amax as max, amin as min, \
      round_ as round
 from .numeric import absolute as abs
 
-__all__ = ['char','rec','memmap']
+__all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
 __all__ += rec.__all__
@@ -52,13 +52,17 @@ bench = Tester().bench
 # The name numpy.core._ufunc_reconstruct must be
 #   available for unpickling to work.
 def _ufunc_reconstruct(module, name):
-    mod = __import__(module)
+    # The `fromlist` kwarg is required to ensure that `mod` points to the
+    # inner-most module rather than the parent package when module name is
+    # nested. This makes it possible to pickle non-toplevel ufuncs such as
+    # scipy.special.expit for instance.
+    mod = __import__(module, fromlist=[name])
     return getattr(mod, name)
 
 def _ufunc_reduce(func):
     from pickle import whichmodule
     name = func.__name__
-    return _ufunc_reconstruct, (whichmodule(func,name), name)
+    return _ufunc_reconstruct, (whichmodule(func, name), name)
 
 
 import sys

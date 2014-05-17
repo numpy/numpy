@@ -90,7 +90,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     return ed
 
-def unique(ar, return_index=False, return_inverse=False):
+def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     """
     Find the unique elements of an array.
 
@@ -109,6 +109,10 @@ def unique(ar, return_index=False, return_inverse=False):
     return_inverse : bool, optional
         If True, also return the indices of the unique array that can be used
         to reconstruct `ar`.
+    return_counts : bool, optional
+        .. versionadded:: 1.9.0
+        If True, also return the number of times each unique value comes up
+        in `ar`.
 
     Returns
     -------
@@ -120,6 +124,10 @@ def unique(ar, return_index=False, return_inverse=False):
     unique_inverse : ndarray, optional
         The indices to reconstruct the (flattened) original array from the
         unique array. Only provided if `return_inverse` is True.
+    unique_counts : ndarray, optional
+        .. versionadded:: 1.9.0
+        The number of times each of the unique values comes up in the
+        original array. Only provided if `return_counts` is True.
 
     See Also
     --------
@@ -159,45 +167,46 @@ def unique(ar, return_index=False, return_inverse=False):
     array([1, 2, 6, 4, 2, 3, 2])
 
     """
-    try:
-        ar = ar.flatten()
-    except AttributeError:
-        if not return_inverse and not return_index:
-            items = sorted(set(ar))
-            return np.asarray(items)
-        else:
-            ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar).flatten()
+
+    optional_indices = return_index or return_inverse
+    optional_returns = optional_indices or return_counts
 
     if ar.size == 0:
-        if return_inverse and return_index:
-            return ar, np.empty(0, np.bool), np.empty(0, np.bool)
-        elif return_inverse or return_index:
-            return ar, np.empty(0, np.bool)
+        if not optional_returns:
+            ret = ar
         else:
-            return ar
+            ret = (ar,)
+            if return_index:
+                ret += (np.empty(0, np.bool),)
+            if return_inverse:
+                ret += (np.empty(0, np.bool),)
+            if return_counts:
+                ret += (np.empty(0, np.intp),)
+        return ret
 
-    if return_inverse or return_index:
-        if return_index:
-            perm = ar.argsort(kind='mergesort')
-        else:
-            perm = ar.argsort()
+    if optional_indices:
+        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
-        flag = np.concatenate(([True], aux[1:] != aux[:-1]))
+    else:
+        ar.sort()
+        aux = ar
+    flag = np.concatenate(([True], aux[1:] != aux[:-1]))
+
+    if not optional_returns:
+        ret = aux[flag]
+    else:
+        ret = (aux[flag],)
+        if return_index:
+            ret += (perm[flag],)
         if return_inverse:
             iflag = np.cumsum(flag) - 1
             iperm = perm.argsort()
-            if return_index:
-                return aux[flag], perm[flag], iflag[iperm]
-            else:
-                return aux[flag], iflag[iperm]
-        else:
-            return aux[flag], perm[flag]
-
-    else:
-        ar.sort()
-        flag = np.concatenate(([True], ar[1:] != ar[:-1]))
-        return ar[flag]
-
+            ret += (np.take(iflag, iperm),)
+        if return_counts:
+            idx = np.concatenate(np.nonzero(flag) + ([ar.size],))
+            ret += (np.diff(idx),)
+    return ret
 
 def intersect1d(ar1, ar2, assume_unique=False):
     """

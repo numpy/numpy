@@ -10,7 +10,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any
-from numpy.core.numeric import seterr
+from numpy.core.numeric import errstate
 
 # Need to speed this up...especially for longfloat
 
@@ -107,11 +107,8 @@ class MachAr(object):
         """
         # We ignore all errors here because we are purposely triggering
         # underflow to detect the properties of the runninng arch.
-        saverrstate = seterr(under='ignore')
-        try:
+        with errstate(under='ignore'):
             self._do_init(float_conv, int_conv, float_to_float, float_to_str, title)
-        finally:
-            seterr(**saverrstate)
 
     def _do_init(self, float_conv, int_conv, float_to_float, float_to_str, title):
         max_iterN = 10000

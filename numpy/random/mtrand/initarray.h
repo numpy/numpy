@@ -1,4 +1,5 @@
 #include "Python.h"
+#define NO_IMPORT_ARRAY
 #include "numpy/arrayobject.h"
 #include "randomkit.h"
 

@@ -59,11 +59,12 @@ See also
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
     'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
@@ -181,7 +182,7 @@ def lag2poly(c) :
 #
 
 # Laguerre
-lagdomain = np.array([0,1])
+lagdomain = np.array([0, 1])
 
 # Laguerre coefficients representing zero.
 lagzero = np.array([0])
@@ -1294,7 +1295,7 @@ def lagvander2d(x, y, deg) :
 
     vx = lagvander(x, degx)
     vy = lagvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1359,7 +1360,7 @@ def lagvander3d(x, y, z, deg) :
     vx = lagvander(x, degx)
     vy = lagvander(y, degy)
     vz = lagvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1377,11 +1378,6 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
 
     where `n` is `deg`.
-
-    Since numpy version 1.7.0, lagfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1415,10 +1411,15 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1578,10 +1579,10 @@ def lagcompanion(c):
     top = mat.reshape(-1)[1::n+1]
     mid = mat.reshape(-1)[0::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = -np.arange(1,n)
+    top[...] = -np.arange(1, n)
     mid[...] = 2.*np.arange(n) + 1.
     bot[...] = top
-    mat[:,-1] += (c[:-1]/c[-1])*n
+    mat[:, -1] += (c[:-1]/c[-1])*n
     return mat
 
 
@@ -1739,4 +1740,43 @@ def lagweight(x):
 # Laguerre series class
 #
 
-exec(polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]'))
+class Laguerre(ABCPolyBase):
+    """A Laguerre series class.
+
+    The Laguerre class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Laguerre coefficients in order of increasing degree, i.e,
+        ``(1, 2, 3)`` gives ``1*L_0(x) + 2*L_1(X) + 3*L_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [0, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [0, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(lagadd)
+    _sub = staticmethod(lagsub)
+    _mul = staticmethod(lagmul)
+    _div = staticmethod(lagdiv)
+    _pow = staticmethod(lagpow)
+    _val = staticmethod(lagval)
+    _int = staticmethod(lagint)
+    _der = staticmethod(lagder)
+    _fit = staticmethod(lagfit)
+    _line = staticmethod(lagline)
+    _roots = staticmethod(lagroots)
+    _fromroots = staticmethod(lagfromroots)
+
+    # Virtual properties
+    nickname = 'lag'
+    domain = np.array(lagdomain)
+    window = np.array(lagdomain)

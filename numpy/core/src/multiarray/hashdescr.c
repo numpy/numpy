@@ -243,7 +243,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 /*
  * Return 0 if successfull
  */
-static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
+static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 {
     PyObject *l, *tl, *item;
     Py_ssize_t i;
@@ -296,12 +296,12 @@ clean_l:
     return -1;
 }
 
-NPY_NO_EXPORT long
+NPY_NO_EXPORT npy_hash_t
 PyArray_DescrHash(PyObject* odescr)
 {
     PyArray_Descr *descr;
     int st;
-    long hash;
+    npy_hash_t hash;
 
     if (!PyArray_DescrCheck(odescr)) {
         PyErr_SetString(PyExc_ValueError,

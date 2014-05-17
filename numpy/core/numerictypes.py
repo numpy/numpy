@@ -86,7 +86,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
-           'issubdtype', 'datetime_data','datetime_as_string',
+           'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
@@ -98,6 +98,7 @@ from numpy.core.multiarray import (
 import types as _types
 import sys
 from numpy.compat import bytes, long
+import numbers
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -436,7 +437,7 @@ def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
         if isinstance(tup, tuple):
-            if tup[0] not in ['p','P']:
+            if tup[0] not in ['p', 'P']:
                 _sctype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
 
@@ -445,7 +446,7 @@ sctypes = {'int': [],
            'uint':[],
            'float':[],
            'complex':[],
-           'others':[bool,object,str,unicode,void]}
+           'others':[bool, object, str, unicode, void]}
 
 def _add_array_type(typename, bits):
     try:
@@ -541,7 +542,7 @@ except AttributeError:
     # Py3K
     buffer_type = memoryview
 
-_python_types = {int : 'int_',
+_python_types = {int: 'int_',
                  float: 'float_',
                  complex: 'complex_',
                  bool: 'bool_',
@@ -871,7 +872,7 @@ for key in _sctype2char_dict.keys():
     if issubclass(key, allTypes['flexible']):
         _typestr[key] = _sctype2char_dict[key]
     else:
-        _typestr[key] = empty((1,),key).dtype.str[1:]
+        _typestr[key] = empty((1,), key).dtype.str[1:]
 
 # Make sure all typestrings are in sctypeDict
 for key, val in _typestr.items():
@@ -942,7 +943,7 @@ def _find_common_coerce(a, b):
         thisind = __test_types.index(a.char)
     except ValueError:
         return None
-    return _can_coerce_all([a,b], start=thisind)
+    return _can_coerce_all([a, b], start=thisind)
 
 # Find a data-type that all data-types in a list can be coerced to
 def _can_coerce_all(dtypelist, start=0):
@@ -959,6 +960,12 @@ def _can_coerce_all(dtypelist, start=0):
             return newdtype
         thisind += 1
     return None
+
+def _register_types():
+    numbers.Integral.register(integer)
+    numbers.Complex.register(inexact)
+    numbers.Real.register(floating)
+_register_types()
 
 def find_common_type(array_types, scalar_types):
     """
@@ -1030,6 +1037,6 @@ def find_common_type(array_types, scalar_types):
         return None
 
     if index_sc > index_a:
-        return _find_common_coerce(maxsc,maxa)
+        return _find_common_coerce(maxsc, maxa)
     else:
         return maxa

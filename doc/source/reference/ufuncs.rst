@@ -274,6 +274,15 @@ types, are interpreted accordingly in ufuncs) without worrying about
 whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
+
+Overriding Ufunc behavior
+=========================
+
+Classes (including ndarray subclasses) can override how ufuncs act on
+them by defining certain special methods.  For details, see
+:ref:`arrays.classes`.
+
+
 :class:`ufunc`
 ==============
 
@@ -304,16 +313,15 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    Provides a policy for what kind of casting is permitted. For compatibility
-    with previous versions of NumPy, this defaults to 'unsafe'. May be 'no',
-    'equiv', 'safe', 'same_kind', or 'unsafe'. See :func:`can_cast` for
-    explanations of the parameter values.
+    May be 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
+    See :func:`can_cast` for explanations of the parameter values.
 
-    In a future version of numpy, this argument will default to
-    'same_kind'. As part of this transition, starting in version 1.7,
-    ufuncs will produce a DeprecationWarning for calls which are
-    allowed under the 'unsafe' rules, but not under the 'same_kind'
-    rules.
+    Provides a policy for what kind of casting is permitted. For compatibility
+    with previous versions of NumPy, this defaults to 'unsafe' for numpy < 1.7.
+    In numpy 1.7 a transition to 'same_kind' was begun where ufuncs produce a
+    DeprecationWarning for calls which are allowed under the 'unsafe'
+    rules, but not under the 'same_kind' rules. In numpy 1.10 the default
+    will be 'same_kind'.
 
 *order*
 
@@ -417,6 +425,12 @@ an integer (or Boolean) data-type and smaller than the size of the
 :class:`int_` data type, it will be internally upcast to the :class:`int_`
 (or :class:`uint`) data-type.
 
+Ufuncs also have a fifth method that allows in place operations to be
+performed using fancy indexing. No buffering is used on the dimensions where
+fancy indexing is used, so the fancy index can list an item more than once and
+the operation will be performed on the result of the previous operation for
+that item.
+
 .. index::
    pair: ufunc; methods
 
@@ -427,6 +441,7 @@ an integer (or Boolean) data-type and smaller than the size of the
    ufunc.accumulate
    ufunc.reduceat
    ufunc.outer
+   ufunc.at
 
 
 .. warning::

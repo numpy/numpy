@@ -7,8 +7,9 @@ if 'setuptools' in sys.modules:
 else:
     import distutils.command.install as old_install_mod
     have_setuptools = False
-old_install = old_install_mod.install
 from distutils.file_util import write_file
+
+old_install = old_install_mod.install
 
 class install(old_install):
 
@@ -28,9 +29,11 @@ class install(old_install):
         We must pull in the entire code so we can override the level used in the
         _getframe() call since we wrap this call by one more level.
         """
+        from distutils.command.install import install as distutils_install
+
         # Explicit request for old-style install?  Just do it
         if self.old_and_unmanageable or self.single_version_externally_managed:
-            return old_install_mod._install.run(self)
+            return distutils_install.run(self)
 
         # Attempt to detect whether we were called from setup() or by another
         # command.  If we were called by setup(), our caller will be the
@@ -41,14 +44,14 @@ class install(old_install):
         # work.
         #
         caller = sys._getframe(3)
-        caller_module = caller.f_globals.get('__name__','')
+        caller_module = caller.f_globals.get('__name__', '')
         caller_name = caller.f_code.co_name
 
         if caller_module != 'distutils.dist' or caller_name!='run_commands':
             # We weren't called from the command line or setup(), so we
             # should run in backward-compatibility mode to support bdist_*
             # commands.
-            old_install_mod._install.run(self)
+            distutils_install.run(self)
         else:
             self.do_egg_install()
 
@@ -61,7 +64,7 @@ class install(old_install):
             # bdist_rpm fails when INSTALLED_FILES contains
             # paths with spaces. Such paths must be enclosed
             # with double-quotes.
-            f = open(self.record,'r')
+            f = open(self.record, 'r')
             lines = []
             need_rewrite = False
             for l in f:

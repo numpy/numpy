@@ -16,7 +16,10 @@ from distutils.ccompiler import CompileError, LinkError
 import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
-from numpy.distutils.command.autodist import check_inline, check_compiler_gcc4
+from numpy.distutils.command.autodist import (check_gcc_function_attribute,
+                                              check_gcc_variable_attribute,
+                                              check_inline,
+                                              check_compiler_gcc4)
 from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
@@ -80,15 +83,15 @@ class was %s
                     self.fcompiler.customize_cmd(self)
                     self.fcompiler.show_customization()
 
-    def _wrap_method(self,mth,lang,args):
+    def _wrap_method(self, mth, lang, args):
         from distutils.ccompiler import CompileError
         from distutils.errors import DistutilsExecError
         save_compiler = self.compiler
-        if lang in ['f77','f90']:
+        if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError,CompileError):
+        except (DistutilsExecError, CompileError):
             msg = str(get_exception())
             self.compiler = save_compiler
             raise CompileError
@@ -96,7 +99,7 @@ class was %s
         return ret
 
     def _compile (self, body, headers, include_dirs, lang):
-        return self._wrap_method(old_config._compile,lang,
+        return self._wrap_method(old_config._compile, lang,
                                  (body, headers, include_dirs, lang))
 
     def _link (self, body,
@@ -105,14 +108,14 @@ class was %s
         if self.compiler.compiler_type=='msvc':
             libraries = (libraries or [])[:]
             library_dirs = (library_dirs or [])[:]
-            if lang in ['f77','f90']:
+            if lang in ['f77', 'f90']:
                 lang = 'c' # always use system linker when using MSVC compiler
                 if self.fcompiler:
                     for d in self.fcompiler.library_dirs or []:
                         # correct path when compiling in Cygwin but with
                         # normal Win Python
                         if d.startswith('/usr/lib'):
-                            s,o = exec_command(['cygpath', '-w', d],
+                            s, o = exec_command(['cygpath', '-w', d],
                                                use_tee=False)
                             if not s: d = o
                         library_dirs.append(d)
@@ -123,7 +126,7 @@ class was %s
                 if libname.startswith('msvc'): continue
                 fileexists = False
                 for libdir in library_dirs or []:
-                    libfile = os.path.join(libdir,'%s.lib' % (libname))
+                    libfile = os.path.join(libdir, '%s.lib' % (libname))
                     if os.path.isfile(libfile):
                         fileexists = True
                         break
@@ -131,11 +134,11 @@ class was %s
                 # make g77-compiled static libs available to MSVC
                 fileexists = False
                 for libdir in library_dirs:
-                    libfile = os.path.join(libdir,'lib%s.a' % (libname))
+                    libfile = os.path.join(libdir, 'lib%s.a' % (libname))
                     if os.path.isfile(libfile):
                         # copy libname.a file to name.lib so that MSVC linker
                         # can find it
-                        libfile2 = os.path.join(libdir,'%s.lib' % (libname))
+                        libfile2 = os.path.join(libdir, '%s.lib' % (libname))
                         copy_file(libfile, libfile2)
                         self.temp_files.append(libfile2)
                         fileexists = True
@@ -145,14 +148,14 @@ class was %s
                          % (libname, library_dirs))
         elif self.compiler.compiler_type == 'mingw32':
             generate_manifest(self)
-        return self._wrap_method(old_config._link,lang,
+        return self._wrap_method(old_config._link, lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
 
     def check_header(self, header, include_dirs=None, library_dirs=None, lang='c'):
         self._check_compiler()
         return self.try_compile(
-                "/* we need a dummy line to make distutils happy */", 
+                "/* we need a dummy line to make distutils happy */",
                 [header], include_dirs)
 
     def check_decl(self, symbol,
@@ -307,7 +310,10 @@ int main ()
         self._check_compiler()
         body = []
         if decl:
-            body.append("int %s (void);" % func)
+            if type(decl) == str:
+                body.append(decl)
+            else:
+                body.append("int %s (void);" % func)
         # Handle MSVC intrinsics: force MS compiler to make a function call.
         # Useful to test for some functions when built with optimization on, to
         # avoid build error because the intrinsic and our 'fake' test
@@ -399,9 +405,15 @@ int main ()
         """Return True if the C compiler is gcc >= 4."""
         return check_compiler_gcc4(self)
 
+    def check_gcc_function_attribute(self, attribute, name):
+        return check_gcc_function_attribute(self, attribute, name)
+
+    def check_gcc_variable_attribute(self, attribute):
+        return check_gcc_variable_attribute(self, attribute)
+
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
-                   lang="c"):
+                   lang="c", use_tee=None):
         """Try to compile, link to an executable, and run a program
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
@@ -426,7 +438,8 @@ int main ()
                 grabber.restore()
                 raise
             exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.')
+            exitstatus, output = exec_command(exe, execute_in='.',
+                                              use_tee=use_tee)
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)
                 if os.WIFSIGNALED(exitstatus):

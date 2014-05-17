@@ -335,7 +335,7 @@ fortran_call(PyFortranObject *fp, PyObject *arg, PyObject *kw) {
         name=%s,func=%p,data=%p,%p\n",fp->defs[i].name,
         fp->defs[i].func,fp->defs[i].data,&fp->defs[i].data); */
     if (fp->defs[i].rank==-1) {/* is Fortran routine */
-        if ((fp->defs[i].func==NULL)) {
+        if (fp->defs[i].func==NULL) {
             PyErr_Format(PyExc_RuntimeError, "no function to call");
             return NULL;
         }
@@ -741,14 +741,12 @@ PyArrayObject* array_from_pyobj(const int type_num,
         return arr;
     }
 
-    if ((intent & F2PY_INTENT_INOUT)
-        || (intent & F2PY_INTENT_INPLACE)
-        || (intent & F2PY_INTENT_CACHE)) {
-        sprintf(mess,"failed to initialize intent(inout|inplace|cache) array"
-                " -- input must be array but got %s",
-                PyString_AsString(PyObject_Str(PyObject_Type(obj)))
-                );
-        PyErr_SetString(PyExc_TypeError,mess);
+    if ((intent & F2PY_INTENT_INOUT) ||
+            (intent & F2PY_INTENT_INPLACE) ||
+            (intent & F2PY_INTENT_CACHE)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "failed to initialize intent(inout|inplace|cache) "
+                        "array, input not an array");
         return NULL;
     }
 

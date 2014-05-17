@@ -83,16 +83,17 @@ numpy.polynomial.hermite_e
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
     'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
+    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d',
     'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d',
     'legcompanion', 'leggauss', 'legweight']
 
@@ -213,7 +214,7 @@ def leg2poly(c) :
 #
 
 # Legendre
-legdomain = np.array([-1,1])
+legdomain = np.array([-1, 1])
 
 # Legendre coefficients representing zero.
 legzero = np.array([0])
@@ -222,7 +223,7 @@ legzero = np.array([0])
 legone = np.array([1])
 
 # Legendre coefficients representing the identity x.
-legx = np.array([0,1])
+legx = np.array([0, 1])
 
 
 def legline(off, scl) :
@@ -256,7 +257,7 @@ def legline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -1324,7 +1325,7 @@ def legvander2d(x, y, deg) :
 
     vx = legvander(x, degx)
     vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1389,7 +1390,7 @@ def legvander3d(x, y, z, deg) :
     vx = legvander(x, degx)
     vy = legvander(y, degy)
     vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1407,11 +1408,6 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
 
     where `n` is `deg`.
-
-    Since numpy version 1.7.0, legfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1447,10 +1443,15 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
 
     Warns
     -----
@@ -1605,7 +1606,7 @@ def legcompanion(c):
     bot = mat.reshape(-1)[n::n+1]
     top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
     return mat
 
 
@@ -1765,4 +1766,43 @@ def legweight(x):
 # Legendre series class
 #
 
-exec(polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]'))
+class Legendre(ABCPolyBase):
+    """A Legendre series class.
+
+    The Legendre class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Legendre coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(legadd)
+    _sub = staticmethod(legsub)
+    _mul = staticmethod(legmul)
+    _div = staticmethod(legdiv)
+    _pow = staticmethod(legpow)
+    _val = staticmethod(legval)
+    _int = staticmethod(legint)
+    _der = staticmethod(legder)
+    _fit = staticmethod(legfit)
+    _line = staticmethod(legline)
+    _roots = staticmethod(legroots)
+    _fromroots = staticmethod(legfromroots)
+
+    # Virtual properties
+    nickname = 'leg'
+    domain = np.array(legdomain)
+    window = np.array(legdomain)

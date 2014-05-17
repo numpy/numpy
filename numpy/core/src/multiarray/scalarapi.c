@@ -275,6 +275,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
     /* convert to 0-dim array of scalar typecode */
     typecode = PyArray_DescrFromScalar(scalar);
+    if (typecode == NULL) {
+        return NULL;
+    }
     if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
@@ -544,6 +547,9 @@ PyArray_DescrFromScalar(PyObject *sc)
             /* Timedelta */
             descr = PyArray_DescrNewFromType(NPY_TIMEDELTA);
         }
+        if (descr == NULL) {
+            return NULL;
+        }
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
         memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
                sizeof(PyArray_DatetimeMetaData));
@@ -628,7 +634,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     copyswap = descr->f->copyswap;
     type = descr->typeobj;
     swap = !PyArray_ISNBO(descr->byteorder);
-    if PyTypeNum_ISSTRING(type_num) {
+    if (PyTypeNum_ISSTRING(type_num)) {
         /* Eliminate NULL bytes */
         char *dptr = data;
 
@@ -825,8 +831,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 
 /*NUMPY_API
  *
- *Return either an array or the appropriate Python object if the array
- *is 0d and matches a Python type.
+ * Return either an array or the appropriate Python object if the array
+ * is 0d and matches a Python type.
+ * steals reference to mp
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Return(PyArrayObject *mp)

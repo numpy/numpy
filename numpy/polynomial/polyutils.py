@@ -1,41 +1,53 @@
 """
-Utililty objects for the polynomial modules.
+Utililty classes and functions for the polynomial modules.
 
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
 Error objects
 -------------
-- `PolyError` -- base class for this sub-package's errors.
-- `PolyDomainError` -- raised when domains are "mismatched."
+
+.. autosummary::
+   :toctree: generated/
+
+   PolyError            base class for this sub-package's errors.
+   PolyDomainError      raised when domains are mismatched.
 
 Warning objects
 ---------------
-- `RankWarning` -- raised by a least-squares fit when a rank-deficient
-  matrix is encountered.
+
+.. autosummary::
+   :toctree: generated/
+
+   RankWarning  raised in least-squares fit for rank-deficient matrix.
 
 Base class
 ----------
-- `PolyBase` -- The base class for the `Polynomial` and `Chebyshev`
-  classes.
+
+.. autosummary::
+   :toctree: generated/
+
+   PolyBase Obsolete base class for the polynomial classes. Do not use.
 
 Functions
 ---------
-- `as_series` -- turns a list of array_likes into 1-D arrays of common
-  type.
-- `trimseq` -- removes trailing zeros.
-- `trimcoef` -- removes trailing coefficients that are less than a given
-  magnitude (thereby removing the corresponding terms).
-- `getdomain` -- returns a domain appropriate for a given set of abscissae.
-- `mapdomain` -- maps points between domains.
-- `mapparms` -- parameters of the linear map between domains.
+
+.. autosummary::
+   :toctree: generated/
+
+   as_series    convert list of array_likes into 1-D arrays of common type.
+   trimseq      remove trailing zeros.
+   trimcoef     remove small trailing coefficients.
+   getdomain    return the domain appropriate for a given set of abscissae.
+   mapdomain    maps points between domains.
+   mapparms     parameters of the linear map between domains.
 
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['RankWarning', 'PolyError', 'PolyDomainError', 'PolyBase',
-           'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain',
-           'mapparms']
+__all__ = ['RankWarning', 'PolyError', 'PolyDomainError', 'as_series',
+           'trimseq', 'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
+           'PolyBase']
 
 import warnings
 import numpy as np
@@ -67,6 +79,15 @@ class PolyDomainError(PolyError) :
 #
 
 class PolyBase(object) :
+    """
+    Base class for all polynomial types.
+
+    Deprecated in numpy 1.9.0, use the abstract
+    ABCPolyBase class instead. Note that the latter
+    reguires a number of virtual functions to be
+    implemented.
+
+    """
     pass
 
 #

@@ -72,16 +72,16 @@ class CPUInfoBase(object):
     the availability of various CPU features.
     """
 
-    def _try_call(self,func):
+    def _try_call(self, func):
         try:
             return func()
         except:
             pass
 
-    def __getattr__(self,name):
+    def __getattr__(self, name):
         if not name.startswith('_'):
-            if hasattr(self,'_'+name):
-                attr = getattr(self,'_'+name)
+            if hasattr(self, '_'+name):
+                attr = getattr(self, '_'+name)
                 if isinstance(attr, types.MethodType):
                     return lambda func=self._try_call,attr=attr : func(attr)
             else:
@@ -144,10 +144,10 @@ class LinuxCPUInfo(CPUInfoBase):
         return self._is_AMD() and self.info[0]['model'] == '3'
 
     def _is_AthlonK6(self):
-        return re.match(r'.*?AMD-K6',self.info[0]['model name']) is not None
+        return re.match(r'.*?AMD-K6', self.info[0]['model name']) is not None
 
     def _is_AthlonK7(self):
-        return re.match(r'.*?AMD-K7',self.info[0]['model name']) is not None
+        return re.match(r'.*?AMD-K7', self.info[0]['model name']) is not None
 
     def _is_AthlonMP(self):
         return re.match(r'.*?Athlon\(tm\) MP\b',
@@ -246,7 +246,7 @@ class LinuxCPUInfo(CPUInfoBase):
                and (self.info[0]['cpu family'] == '6' \
                     or self.info[0]['cpu family'] == '15' ) \
                and (self.has_sse3() and not self.has_ssse3())\
-               and re.match(r'.*?\blm\b',self.info[0]['flags']) is not None
+               and re.match(r'.*?\blm\b', self.info[0]['flags']) is not None
 
     def _is_Core2(self):
         return self.is_64bit() and self.is_Intel() and \
@@ -259,7 +259,7 @@ class LinuxCPUInfo(CPUInfoBase):
 
     def _is_XEON(self):
         return re.match(r'.*?XEON\b',
-                        self.info[0]['model name'],re.IGNORECASE) is not None
+                        self.info[0]['model name'], re.IGNORECASE) is not None
 
     _is_Xeon = _is_XEON
 
@@ -278,25 +278,25 @@ class LinuxCPUInfo(CPUInfoBase):
         return self.info[0]['f00f_bug']=='yes'
 
     def _has_mmx(self):
-        return re.match(r'.*?\bmmx\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bmmx\b', self.info[0]['flags']) is not None
 
     def _has_sse(self):
-        return re.match(r'.*?\bsse\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bsse\b', self.info[0]['flags']) is not None
 
     def _has_sse2(self):
-        return re.match(r'.*?\bsse2\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bsse2\b', self.info[0]['flags']) is not None
 
     def _has_sse3(self):
-        return re.match(r'.*?\bpni\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bpni\b', self.info[0]['flags']) is not None
 
     def _has_ssse3(self):
-        return re.match(r'.*?\bssse3\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bssse3\b', self.info[0]['flags']) is not None
 
     def _has_3dnow(self):
-        return re.match(r'.*?\b3dnow\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\b3dnow\b', self.info[0]['flags']) is not None
 
     def _has_3dnowext(self):
-        return re.match(r'.*?\b3dnowext\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\b3dnowext\b', self.info[0]['flags']) is not None
 
 class IRIXCPUInfo(CPUInfoBase):
     info = None
@@ -305,7 +305,7 @@ class IRIXCPUInfo(CPUInfoBase):
         if self.info is not None:
             return
         info = key_value_from_command('sysconf', sep=' ',
-                                      successful_status=(0,1))
+                                      successful_status=(0, 1))
         self.__class__.info = info
 
     def _not_impl(self): pass
@@ -316,7 +316,7 @@ class IRIXCPUInfo(CPUInfoBase):
     def _getNCPUs(self):
         return int(self.info.get('NUM_PROCESSORS', 1))
 
-    def __cputype(self,n):
+    def __cputype(self, n):
         return self.info.get('PROCESSORS').split()[0].lower() == 'r%s' % (n)
     def _is_r2000(self): return self.__cputype(2000)
     def _is_r3000(self): return self.__cputype(3000)
@@ -337,7 +337,7 @@ class IRIXCPUInfo(CPUInfoBase):
     def get_ip(self):
         try: return self.info.get('MACHINE')
         except: pass
-    def __machine(self,n):
+    def __machine(self, n):
         return self.info.get('MACHINE').lower() == 'ip%s' % (n)
     def _is_IP19(self): return self.__machine(19)
     def _is_IP20(self): return self.__machine(20)
@@ -380,7 +380,7 @@ class DarwinCPUInfo(CPUInfoBase):
     def _is_ppc(self):
         return self.info['arch']=='ppc'
 
-    def __machine(self,n):
+    def __machine(self, n):
         return self.info['machine'] == 'ppc%s'%n
     def _is_ppc601(self): return self.__machine(601)
     def _is_ppc602(self): return self.__machine(602)
@@ -439,35 +439,35 @@ class SunOSCPUInfo(CPUInfoBase):
         return self.info['arch']=='sun4'
 
     def _is_SUNW(self):
-        return re.match(r'SUNW',self.info['uname_i']) is not None
+        return re.match(r'SUNW', self.info['uname_i']) is not None
     def _is_sparcstation5(self):
-        return re.match(r'.*SPARCstation-5',self.info['uname_i']) is not None
+        return re.match(r'.*SPARCstation-5', self.info['uname_i']) is not None
     def _is_ultra1(self):
-        return re.match(r'.*Ultra-1',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-1', self.info['uname_i']) is not None
     def _is_ultra250(self):
-        return re.match(r'.*Ultra-250',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-250', self.info['uname_i']) is not None
     def _is_ultra2(self):
-        return re.match(r'.*Ultra-2',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-2', self.info['uname_i']) is not None
     def _is_ultra30(self):
-        return re.match(r'.*Ultra-30',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-30', self.info['uname_i']) is not None
     def _is_ultra4(self):
-        return re.match(r'.*Ultra-4',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-4', self.info['uname_i']) is not None
     def _is_ultra5_10(self):
-        return re.match(r'.*Ultra-5_10',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-5_10', self.info['uname_i']) is not None
     def _is_ultra5(self):
-        return re.match(r'.*Ultra-5',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-5', self.info['uname_i']) is not None
     def _is_ultra60(self):
-        return re.match(r'.*Ultra-60',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-60', self.info['uname_i']) is not None
     def _is_ultra80(self):
-        return re.match(r'.*Ultra-80',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-80', self.info['uname_i']) is not None
     def _is_ultraenterprice(self):
-        return re.match(r'.*Ultra-Enterprise',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-Enterprise', self.info['uname_i']) is not None
     def _is_ultraenterprice10k(self):
-        return re.match(r'.*Ultra-Enterprise-10000',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra-Enterprise-10000', self.info['uname_i']) is not None
     def _is_sunfire(self):
-        return re.match(r'.*Sun-Fire',self.info['uname_i']) is not None
+        return re.match(r'.*Sun-Fire', self.info['uname_i']) is not None
     def _is_ultra(self):
-        return re.match(r'.*Ultra',self.info['uname_i']) is not None
+        return re.match(r'.*Ultra', self.info['uname_i']) is not None
 
     def _is_cpusparcv7(self):
         return self.info['processor']=='sparcv7'
@@ -496,22 +496,22 @@ class Win32CPUInfo(CPUInfoBase):
                 import _winreg as winreg
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"\
-                              "\s+stepping\s+(?P<STP>\d+)",re.IGNORECASE)
+                              "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
             chnd=winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum=0
             while True:
                 try:
-                    proc=winreg.EnumKey(chnd,pnum)
+                    proc=winreg.EnumKey(chnd, pnum)
                 except winreg.error:
                     break
                 else:
                     pnum+=1
                     info.append({"Processor":proc})
-                    phnd=winreg.OpenKey(chnd,proc)
+                    phnd=winreg.OpenKey(chnd, proc)
                     pidx=0
                     while True:
                         try:
-                            name,value,vtpe=winreg.EnumValue(phnd,pidx)
+                            name, value, vtpe=winreg.EnumValue(phnd, pidx)
                         except winreg.error:
                             break
                         else:
@@ -524,7 +524,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
         except:
-            print(sys.exc_info()[1],'(ignoring)')
+            print(sys.exc_info()[1], '(ignoring)')
         self.__class__.info = info
 
     def _not_impl(self): pass
@@ -542,11 +542,11 @@ class Win32CPUInfo(CPUInfoBase):
 
     def _is_AMDK5(self):
         return self.is_AMD() and self.info[0]['Family']==5 \
-               and self.info[0]['Model'] in [0,1,2,3]
+               and self.info[0]['Model'] in [0, 1, 2, 3]
 
     def _is_AMDK6(self):
         return self.is_AMD() and self.info[0]['Family']==5 \
-               and self.info[0]['Model'] in [6,7]
+               and self.info[0]['Model'] in [6, 7]
 
     def _is_AMDK6_2(self):
         return self.is_AMD() and self.info[0]['Family']==5 \
@@ -596,11 +596,11 @@ class Win32CPUInfo(CPUInfoBase):
 
     def _is_PentiumII(self):
         return self.is_Intel() and self.info[0]['Family']==6 \
-               and self.info[0]['Model'] in [3,5,6]
+               and self.info[0]['Model'] in [3, 5, 6]
 
     def _is_PentiumIII(self):
         return self.is_Intel() and self.info[0]['Family']==6 \
-               and self.info[0]['Model'] in [7,8,9,10,11]
+               and self.info[0]['Model'] in [7, 8, 9, 10, 11]
 
     def _is_PentiumIV(self):
         return self.is_Intel() and self.info[0]['Family']==15
@@ -624,20 +624,20 @@ class Win32CPUInfo(CPUInfoBase):
     def _has_mmx(self):
         if self.is_Intel():
             return (self.info[0]['Family']==5 and self.info[0]['Model']==4) \
-                   or (self.info[0]['Family'] in [6,15])
+                   or (self.info[0]['Family'] in [6, 15])
         elif self.is_AMD():
-            return self.info[0]['Family'] in [5,6,15]
+            return self.info[0]['Family'] in [5, 6, 15]
         else:
             return False
 
     def _has_sse(self):
         if self.is_Intel():
             return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [7,8,9,10,11]) \
+                    self.info[0]['Model'] in [7, 8, 9, 10, 11]) \
                     or self.info[0]['Family']==15
         elif self.is_AMD():
             return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [6,7,8,10]) \
+                    self.info[0]['Model'] in [6, 7, 8, 10]) \
                     or self.info[0]['Family']==15
         else:
             return False
@@ -652,10 +652,10 @@ class Win32CPUInfo(CPUInfoBase):
             return False
 
     def _has_3dnow(self):
-        return self.is_AMD() and self.info[0]['Family'] in [5,6,15]
+        return self.is_AMD() and self.info[0]['Family'] in [5, 6, 15]
 
     def _has_3dnowext(self):
-        return self.is_AMD() and self.info[0]['Family'] in [6,15]
+        return self.is_AMD() and self.info[0]['Family'] in [6, 15]
 
 if sys.platform.startswith('linux'): # variations: linux2,linux-i386 (any others?)
     cpuinfo = LinuxCPUInfo

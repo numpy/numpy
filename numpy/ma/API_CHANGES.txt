@@ -61,7 +61,7 @@ Previously, ``putmask`` was used like this::
   putmask(x,mask,[3])
 
 which translated to::
-  
+
   x[~mask] = [3]
 
 (Note that a ``True``-value in a mask suppresses a value.)
@@ -133,4 +133,3 @@ New features (non exhaustive list)
 --------
 
 The ``anom`` method returns the deviations from the average (anomalies).
-

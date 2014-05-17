@@ -114,12 +114,14 @@ cdef extern from "numpy/arrayobject.h":
 
     object PyArray_MultiIterNew(int n, ...)
 
-    char *PyArray_MultiIter_DATA(broadcast multi, int i)
-    void PyArray_MultiIter_NEXTi(broadcast multi, int i)
-    void PyArray_MultiIter_NEXT(broadcast multi)
+    char *PyArray_MultiIter_DATA(broadcast multi, int i) nogil
+    void PyArray_MultiIter_NEXTi(broadcast multi, int i) nogil
+    void PyArray_MultiIter_NEXT(broadcast multi) nogil
 
     object PyArray_IterNew(object arr)
-    void PyArray_ITER_NEXT(flatiter it)
+    void PyArray_ITER_NEXT(flatiter it) nogil
+
+    dtype PyArray_DescrFromType(int)
 
     void import_array()
 

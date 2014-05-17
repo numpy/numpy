@@ -280,6 +280,7 @@ import sys
 import os
 import shutil
 import tempfile
+import warnings
 from io import BytesIO
 
 import numpy as np
@@ -291,9 +292,12 @@ from numpy.compat import asbytes, asbytes_nested
 tempdir = None
 
 # Module-level setup.
+
+
 def setup_module():
     global tempdir
     tempdir = tempfile.mkdtemp()
+
 
 def teardown_module():
     global tempdir
@@ -322,7 +326,7 @@ basic_arrays = []
 for scalar in scalars:
     for endian in '<>':
         dtype = np.dtype(scalar).newbyteorder(endian)
-        basic = np.arange(15).astype(dtype)
+        basic = np.arange(1500).astype(dtype)
         basic_arrays.extend([
             # Empty
             np.array([], dtype=dtype),
@@ -331,11 +335,11 @@ for scalar in scalars:
             # 1-D
             basic,
             # 2-D C-contiguous
-            basic.reshape((3,5)),
+            basic.reshape((30, 50)),
             # 2-D F-contiguous
-            basic.reshape((3,5)).T,
+            basic.reshape((30, 50)).T,
             # 2-D non-contiguous
-            basic.reshape((3,5))[::-1,::2],
+            basic.reshape((30, 50))[::-1, ::2],
         ])
 
 # More complicated record arrays.
@@ -354,8 +358,8 @@ Pdescr = [
 # A plain list of tuples with values for testing:
 PbufferT = [
     # x     y                  z
-    ([3,2], [[6.,4.],[6.,4.]], 8),
-    ([4,3], [[7.,5.],[7.,5.]], 9),
+    ([3, 2], [[6., 4.], [6., 4.]], 8),
+    ([4, 3], [[7., 5.], [7., 5.]], 9),
     ]
 
 
@@ -394,8 +398,10 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc', ('NN', 6j), [[6.,4.],[6.,4.]], 8),
-    ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd', ('OO', 7j), [[7.,5.],[7.,5.]], 9),
+    ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
+     'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
+     'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 record_arrays = [
@@ -405,12 +411,39 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
 ]
 
+
+#BytesIO that reads a random number of bytes at a time
+class BytesIOSRandomSize(BytesIO):
+    def read(self, size=None):
+        import random
+        size = random.randint(1, size)
+        return super(BytesIOSRandomSize, self).read(size)
+
+
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
+
+
+def roundtrip_randsize(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    f2 = BytesIOSRandomSize(f.getvalue())
+    arr2 = format.read_array(f2)
+    return arr2
+
+
+def roundtrip_truncated(arr):
+    f = BytesIO()
+    format.write_array(f, arr)
+    #BytesIO is one byte short
+    f2 = BytesIO(f.getvalue()[0:-1])
+    arr2 = format.read_array(f2)
+    return arr2
+
 
 def assert_equal(o1, o2):
     assert_(o1 == o2)
@@ -421,6 +454,28 @@ def test_roundtrip():
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
 
+
+def test_roundtrip_randsize():
+    for arr in basic_arrays + record_arrays:
+        if arr.dtype != object:
+            arr2 = roundtrip_randsize(arr)
+            yield assert_array_equal, arr, arr2
+
+
+def test_roundtrip_truncated():
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            yield assert_raises, ValueError, roundtrip_truncated, arr
+
+
+def test_long_str():
+    # check items larger than internal buffer size, gh-4027
+    long_str_arr = np.ones(1, dtype=np.dtype((str, format.BUFFER_SIZE + 1)))
+    long_str_arr2 = roundtrip(long_str_arr)
+    assert_array_equal(long_str_arr, long_str_arr2)
+
+
+@dec.slow
 def test_memmap_roundtrip():
     # XXX: test crashes nose on windows. Fix this
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
@@ -437,9 +492,10 @@ def test_memmap_roundtrip():
             finally:
                 fp.close()
 
-            fortran_order = (arr.flags.f_contiguous and not arr.flags.c_contiguous)
+            fortran_order = (
+                arr.flags.f_contiguous and not arr.flags.c_contiguous)
             ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
-                shape=arr.shape, fortran_order=fortran_order)
+                                    shape=arr.shape, fortran_order=fortran_order)
             ma[...] = arr
             del ma
 
@@ -458,11 +514,72 @@ def test_memmap_roundtrip():
             del ma
 
 
-def test_write_version_1_0():
+def test_compressed_roundtrip():
+    arr = np.random.rand(200, 200)
+    npz_file = os.path.join(tempdir, 'compressed.npz')
+    np.savez_compressed(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
+def test_version_2_0():
+    f = BytesIO()
+    # requires more than 2 byte for header
+    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    d = np.ones(1000, dtype=dt)
+
+    format.write_array(f, d, version=(2, 0))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', '', UserWarning)
+        format.write_array(f, d)
+        assert_(w[0].category is UserWarning)
+
+    f.seek(0)
+    n = format.read_array(f)
+    assert_array_equal(d, n)
+
+    # 1.0 requested but data cannot be saved this way
+    assert_raises(ValueError, format.write_array, f, d, (1, 0))
+
+
+def test_version_2_0_memmap():
+    # requires more than 2 byte for header
+    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    d = np.ones(1000, dtype=dt)
+    tf = tempfile.mktemp('', 'mmap', dir=tempdir)
+
+    # 1.0 requested but data cannot be saved this way
+    assert_raises(ValueError, format.open_memmap, tf, mode='w+', dtype=d.dtype,
+                            shape=d.shape, version=(1, 0))
+
+    ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+                            shape=d.shape, version=(2, 0))
+    ma[...] = d
+    del ma
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', '', UserWarning)
+        ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+                                shape=d.shape, version=None)
+        assert_(w[0].category is UserWarning)
+        ma[...] = d
+        del ma
+
+    ma = format.open_memmap(tf, mode='r')
+    assert_array_equal(ma, d)
+
+
+def test_write_version():
     f = BytesIO()
     arr = np.arange(1)
     # These should pass.
     format.write_array(f, arr, version=(1, 0))
+    format.write_array(f, arr)
+
+    format.write_array(f, arr, version=None)
+    format.write_array(f, arr)
+
+    format.write_array(f, arr, version=(2, 0))
     format.write_array(f, arr)
 
     # These should all fail.
@@ -470,7 +587,6 @@ def test_write_version_1_0():
         (1, 1),
         (0, 0),
         (0, 1),
-        (2, 0),
         (2, 2),
         (255, 255),
     ]
@@ -501,15 +617,18 @@ malformed_magic = asbytes_nested([
     '',
 ])
 
+
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
         yield raises(ValueError)(format.read_magic), f
 
+
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
         yield raises(ValueError)(format.read_array), f
+
 
 def test_bad_magic_args():
     assert_raises(ValueError, format.magic, -1, 1)
@@ -517,14 +636,16 @@ def test_bad_magic_args():
     assert_raises(ValueError, format.magic, 1, -1)
     assert_raises(ValueError, format.magic, 1, 256)
 
+
 def test_large_header():
     s = BytesIO()
-    d = {'a':1,'b':2}
-    format.write_array_header_1_0(s,d)
+    d = {'a': 1, 'b': 2}
+    format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d = {'a':1,'b':2,'c':'x'*256*256}
+    d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
+
 
 def test_bad_header():
     # header of length less than 2 should fail
@@ -538,19 +659,46 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
-    d = {"shape":(1,2),
-         "descr":"x"}
+    d = {"shape": (1, 2),
+         "descr": "x"}
     s = BytesIO()
-    format.write_array_header_1_0(s,d)
+    format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
-    d = {"shape":(1,2),
-         "fortran_order":False,
-         "descr":"x",
-         "extrakey":-1}
+    d = {"shape": (1, 2),
+         "fortran_order": False,
+         "descr": "x",
+         "extrakey": -1}
     s = BytesIO()
-    format.write_array_header_1_0(s,d)
+    format.write_array_header_1_0(s, d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
+
+
+def test_large_file_support():
+    from nose import SkipTest
+    # try creating a large sparse file
+    with tempfile.NamedTemporaryFile() as tf:
+        try:
+            # seek past end would work too, but linux truncate somewhat
+            # increases the chances that we have a sparse filesystem and can
+            # avoid actually writing 5GB
+            import subprocess as sp
+            sp.check_call(["truncate", "-s", "5368709120", tf.name])
+        except:
+            raise SkipTest("Could not create 5GB large file")
+        # write a small array to the end
+        f = open(tf.name, "wb")
+        f.seek(5368709120)
+        d = np.arange(5)
+        np.save(f, d)
+        f.close()
+        # read it back
+        f = open(tf.name, "rb")
+        f.seek(5368709120)
+        r = np.load(f)
+        f.close()
+        assert_array_equal(r, d)
+
 
 if __name__ == "__main__":
     run_module_suite()

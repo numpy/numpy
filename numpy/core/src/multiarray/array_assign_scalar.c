@@ -72,7 +72,11 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     }
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
@@ -82,9 +86,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
                             shape_it, dst_data, dst_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 
@@ -145,7 +147,11 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     }
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
@@ -157,9 +163,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
                             dst_data, dst_strides_it,
                             wheremask_data, wheremask_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 
@@ -234,10 +238,16 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         }
         else {
             tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
+            if (tmp_src_data == NULL) {
+                PyErr_NoMemory();
+                goto fail;
+            }
             allocated_src_data = 1;
         }
+
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,
                             src_dtype, PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
+            src_data = tmp_src_data;
             goto fail;
         }
 

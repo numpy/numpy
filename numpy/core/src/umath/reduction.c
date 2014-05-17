@@ -250,7 +250,7 @@ check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
  * PyArray_AssignOne(result, NULL, NULL), because this function raises an
  * exception when there are no elements to reduce (which appropriate iff the
  * reduction operation has no identity).
- * 
+ *
  * This means it copies the subarray indexed at zero along each reduction axis
  * into 'result', then returns a view into 'operand' excluding those copied
  * elements.

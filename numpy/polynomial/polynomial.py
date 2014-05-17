@@ -48,7 +48,7 @@ Classes
 -------
 - `Polynomial` -- polynomial class.
 
-See also
+See Also
 --------
 `numpy.polynomial`
 
@@ -58,14 +58,15 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
     'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
     'polyval', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial','polyval2d',
-    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d','polyvander3d']
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d',
+    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
+import warnings
 import numpy as np
 import numpy.linalg as la
+
 from . import polyutils as pu
-import warnings
-from .polytemplate import polytemplate
+from ._polybase import ABCPolyBase
 
 polytrim = pu.trimcoef
 
@@ -75,7 +76,7 @@ polytrim = pu.trimcoef
 #
 
 # Polynomial default domain.
-polydomain = np.array([-1,1])
+polydomain = np.array([-1, 1])
 
 # Polynomial coefficients representing zero.
 polyzero = np.array([0])
@@ -84,7 +85,7 @@ polyzero = np.array([0])
 polyone = np.array([1])
 
 # Polynomial coefficients representing the identity x.
-polyx = np.array([0,1])
+polyx = np.array([0, 1])
 
 #
 # Polynomial series functions
@@ -112,7 +113,7 @@ def polyline(off, scl) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> P.polyline(1,-1)
     array([ 1, -1])
     >>> P.polyval(1, P.polyline(1,-1)) # should be 0
@@ -120,7 +121,7 @@ def polyline(off, scl) :
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off, scl])
     else :
         return np.array([off])
 
@@ -175,7 +176,7 @@ def polyfromroots(roots) :
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> P.polyfromroots((-1,0,1)) # x(x - 1)(x + 1) = x^3 - x
     array([ 0., -1.,  0.,  1.])
     >>> j = complex(0,1)
@@ -224,7 +225,7 @@ def polyadd(c1, c2):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> sum = P.polyadd(c1,c2); sum
@@ -269,7 +270,7 @@ def polysub(c1, c2):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polysub(c1,c2)
@@ -351,7 +352,7 @@ def polymul(c1, c2):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polymul(c1,c2)
@@ -388,7 +389,7 @@ def polydiv(c1, c2):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polydiv(c1,c2)
@@ -512,7 +513,7 @@ def polyder(c, m=1, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3,4) # 1 + 2x + 3x**2 + 4x**3
     >>> P.polyder(c) # (d/dx)(c) = 2 + 6x + 12x**2
     array([  2.,   6.,  12.])
@@ -623,7 +624,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3)
     >>> P.polyint(c) # should return array([0, 1, 1, 1])
     array([ 0.,  1.,  1.,  1.])
@@ -823,7 +824,7 @@ def polyval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -883,7 +884,7 @@ def polygrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = polyval(x, c)
@@ -936,7 +937,7 @@ def polyval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1000,7 +1001,7 @@ def polygrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = polyval(x, c)
@@ -1119,7 +1120,7 @@ def polyvander2d(x, y, deg) :
 
     vx = polyvander(x, degx)
     vy = polyvander(y, degy)
-    v = vx[..., None]*vy[..., None, :]
+    v = vx[..., None]*vy[..., None,:]
     # einsum bug
     #v = np.einsum("...i,...j->...ij", vx, vy)
     return v.reshape(v.shape[:-2] + (-1,))
@@ -1173,7 +1174,7 @@ def polyvander3d(x, y, z, deg) :
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1186,7 +1187,7 @@ def polyvander3d(x, y, z, deg) :
     vx = polyvander(x, degx)
     vy = polyvander(y, degy)
     vz = polyvander(z, degz)
-    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
     # einsum bug
     #v = np.einsum("...i, ...j, ...k->...ijk", vx, vy, vz)
     return v.reshape(v.shape[:-3] + (-1,))
@@ -1206,11 +1207,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * x + ... + c_n * x^n,
 
     where `n` is `deg`.
-
-    Since numpy version 1.7.0, polyfit also supports NA. If any of the
-    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
-    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1249,12 +1245,16 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         the coefficients in column `k` of `coef` represent the polynomial
         fit to the data in `y`'s `k`-th column.
 
-    [residuals, rank, singular_values, rcond] : present when `full` == True
-        Sum of the squared residuals (SSR) of the least-squares fit; the
-        effective rank of the scaled Vandermonde matrix; its singular
-        values; and the specified value of `rcond`.  For more information,
-        see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
 
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+        
     Raises
     ------
     RankWarning
@@ -1310,7 +1310,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
     >>> c, stats = P.polyfit(x,y,3,full=True)
@@ -1424,7 +1424,7 @@ def polycompanion(c):
     mat = np.zeros((n, n), dtype=c.dtype)
     bot = mat.reshape(-1)[n::n+1]
     bot[...] = 1
-    mat[:,-1] -= c[:-1]/c[-1]
+    mat[:, -1] -= c[:-1]/c[-1]
     return mat
 
 
@@ -1490,4 +1490,43 @@ def polyroots(c):
 # polynomial class
 #
 
-exec(polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]'))
+class Polynomial(ABCPolyBase):
+    """A power series class.
+
+    The Polynomial class provides the standard Python numerical methods
+    '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
+    attributes and methods listed in the `ABCPolyBase` documentation.
+
+    Parameters
+    ----------
+    coef : array_like
+        Polynomial coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` give ``1 + 2*x + 3*x**2``.
+    domain : (2,) array_like, optional
+        Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
+        to the interval ``[window[0], window[1]]`` by shifting and scaling.
+        The default value is [-1, 1].
+    window : (2,) array_like, optional
+        Window, see `domain` for its use. The default value is [-1, 1].
+
+        .. versionadded:: 1.6.0
+
+    """
+    # Virtual Functions
+    _add = staticmethod(polyadd)
+    _sub = staticmethod(polysub)
+    _mul = staticmethod(polymul)
+    _div = staticmethod(polydiv)
+    _pow = staticmethod(polypow)
+    _val = staticmethod(polyval)
+    _int = staticmethod(polyint)
+    _der = staticmethod(polyder)
+    _fit = staticmethod(polyfit)
+    _line = staticmethod(polyline)
+    _roots = staticmethod(polyroots)
+    _fromroots = staticmethod(polyfromroots)
+
+    # Virtual properties
+    nickname = 'poly'
+    domain = np.array(polydomain)
+    window = np.array(polydomain)

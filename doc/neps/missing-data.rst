@@ -1,4 +1,7 @@
-:Title: Missing Data Functionality in NumPy
+===================================
+Missing Data Functionality in NumPy
+===================================
+
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Copyright: Copyright 2011 by Enthought, Inc
 :License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
@@ -105,12 +108,12 @@ an array of all missing values must produce the same result as the
 mean of a zero-sized array without missing value support.
 
 This kind of data can arise when conforming sparsely sampled data
-into a regular sampling pattern, and is a useful interpretation to 
+into a regular sampling pattern, and is a useful interpretation to
 use when attempting to get best-guess answers for many statistical queries.
 
 In R, many functions take a parameter "na.rm=T" which means to treat
 the data as if the NA values are not part of the data set. This proposal
-defines a standard parameter "skipna=True" for this same purpose. 
+defines a standard parameter "skipna=True" for this same purpose.
 
 ********************************************
 Implementation Techniques For Missing Values
@@ -1174,7 +1177,7 @@ the discussion are::
     Olivier Delalleau
     Alan G Isaac
     E. Antero Tammi
-    Jason Grout 
+    Jason Grout
     Dag Sverre Seljebotn
     Joe Harrington
     Gary Strangman

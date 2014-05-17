@@ -27,6 +27,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
@@ -53,16 +54,15 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, nop = ufunc->nin + ufunc->nout;
-    PyArray_Descr *obj_dtype;
 
-    obj_dtype = PyArray_DescrFromType(NPY_OBJECT);
-    if (obj_dtype == NULL) {
+    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
+    if (out_dtypes[0] == NULL) {
         return -1;
     }
 
-    for (i = 0; i < nop; ++i) {
-        Py_INCREF(obj_dtype);
-        out_dtypes[i] = obj_dtype;
+    for (i = 1; i < nop; ++i) {
+        Py_INCREF(out_dtypes[0]);
+        out_dtypes[i] = out_dtypes[0];
     }
 
     return 0;
@@ -201,96 +201,28 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
  *****************************************************************************
  */
 
-/* Less automated additions to the ufuncs */
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_wrap = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_finalize = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_ufunc = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_pyvals_name = NULL;
 
-static PyUFuncGenericFunction frexp_functions[] = {
-#ifdef HAVE_FREXPF
-    HALF_frexp,
-    FLOAT_frexp,
-#endif
-    DOUBLE_frexp
-#ifdef HAVE_FREXPL
-    ,LONGDOUBLE_frexp
-#endif
-};
+/* intern some strings used in ufuncs */
+static int
+intern_strings(void)
+{
+    npy_um_str_out = PyUString_InternFromString("out");
+    npy_um_str_subok = PyUString_InternFromString("subok");
+    npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__");
+    npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__");
+    npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
+    npy_um_str_ufunc = PyUString_InternFromString("__numpy_ufunc__");
+    npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME);
 
-static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
-static void * blank6_data[] = { (void *)NULL, (void *)NULL, (void *)NULL,
-                                (void *)NULL, (void *)NULL, (void *)NULL};
-static char frexp_signatures[] = {
-#ifdef HAVE_FREXPF
-    NPY_HALF, NPY_HALF, NPY_INT,
-    NPY_FLOAT, NPY_FLOAT, NPY_INT,
-#endif
-    NPY_DOUBLE, NPY_DOUBLE, NPY_INT
-#ifdef HAVE_FREXPL
-    ,NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_INT
-#endif
-};
-
-#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
-#define LDEXP_LONG(typ) typ##_ldexp
-#else
-#define LDEXP_LONG(typ) typ##_ldexp_long
-#endif
-
-static PyUFuncGenericFunction ldexp_functions[] = {
-#ifdef HAVE_LDEXPF
-    HALF_ldexp,
-    FLOAT_ldexp,
-    LDEXP_LONG(HALF),
-    LDEXP_LONG(FLOAT),
-#endif
-    DOUBLE_ldexp,
-    LDEXP_LONG(DOUBLE)
-#ifdef HAVE_LDEXPL
-    ,
-    LONGDOUBLE_ldexp,
-    LDEXP_LONG(LONGDOUBLE)
-#endif
-};
-
-static char ldexp_signatures[] = {
-#ifdef HAVE_LDEXPF
-    NPY_HALF, NPY_INT, NPY_HALF,
-    NPY_FLOAT, NPY_INT, NPY_FLOAT,
-    NPY_HALF, NPY_LONG, NPY_HALF,
-    NPY_FLOAT, NPY_LONG, NPY_FLOAT,
-#endif
-    NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
-    NPY_DOUBLE, NPY_LONG, NPY_DOUBLE
-#ifdef HAVE_LDEXPL
-    ,NPY_LONGDOUBLE, NPY_INT, NPY_LONGDOUBLE
-    ,NPY_LONGDOUBLE, NPY_LONG, NPY_LONGDOUBLE
-#endif
-};
-
-static void
-InitOtherOperators(PyObject *dictionary) {
-    PyObject *f;
-    int num;
-
-    num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
-                                frexp_signatures, num,
-                                1, 2, PyUFunc_None, "frexp",
-                                "Split the number, x, into a normalized"\
-                                " fraction (y1) and exponent (y2)",0);
-    PyDict_SetItemString(dictionary, "frexp", f);
-    Py_DECREF(f);
-
-    num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data, ldexp_signatures, num,
-                                2, 1, PyUFunc_None, "ldexp",
-                                "Compute y = x1 * 2**x2.",0);
-    PyDict_SetItemString(dictionary, "ldexp", f);
-    Py_DECREF(f);
-
-#if defined(NPY_PY3K)
-    f = PyDict_GetItemString(dictionary, "true_divide");
-    PyDict_SetItemString(dictionary, "divide", f);
-#endif
-    return;
+    return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&
+        npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
 }
 
 /* Setup the umath module */
@@ -384,8 +316,6 @@ PyMODINIT_FUNC initumath(void)
     /* Load the ufunc operators into the array module's namespace */
     InitOperators(d);
 
-    InitOtherOperators(d);
-
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
@@ -403,7 +333,6 @@ PyMODINIT_FUNC initumath(void)
     ADDCONST(ERR_PRINT);
     ADDCONST(ERR_LOG);
     ADDCONST(ERR_DEFAULT);
-    ADDCONST(ERR_DEFAULT2);
 
     ADDCONST(SHIFT_DIVIDEBYZERO);
     ADDCONST(SHIFT_OVERFLOW);
@@ -429,6 +358,11 @@ PyMODINIT_FUNC initumath(void)
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
+#if defined(NPY_PY3K)
+    s = PyDict_GetItemString(d, "true_divide");
+    PyDict_SetItemString(d, "divide", s);
+#endif
+
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");
     /* Setup the array object's numerical structures with appropriate
@@ -437,6 +371,10 @@ PyMODINIT_FUNC initumath(void)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
+
+    if (!intern_strings()) {
+        goto err;
+    }
 
     return RETVAL;
 

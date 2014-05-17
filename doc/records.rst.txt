@@ -84,4 +84,3 @@ reference.
 
   There is a new function  and a new method of array objects both labelled
   dtypescr which can be used to try out the ``PyArray_DescrConverter``.
-

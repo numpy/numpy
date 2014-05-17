@@ -99,6 +99,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             /*
              * After the deprecation the PyNumber_Check could be replaced
              * by PyIndex_Check.
+             * FIXME 1.9 ?
              */
             len = 1;
         }
@@ -145,7 +146,11 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     Py_ssize_t buflen;
+#endif
 
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
@@ -153,6 +158,30 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     if (obj == Py_None) {
         return NPY_SUCCEED;
     }
+
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE) != 0) {
+        PyErr_Clear();
+        buf->flags &= ~NPY_ARRAY_WRITEABLE;
+        if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS) != 0) {
+            return NPY_FAIL;
+        }
+    }
+
+    buf->ptr = view.buf;
+    buf->len = (npy_intp) view.len;
+
+    /*
+     * XXX: PyObject_AsWriteBuffer does also this, but it is unsafe, as there is
+     * no strict guarantee that the buffer sticks around after being released.
+     */
+    PyBuffer_Release(&view);
+
+    /* Point to the base of the buffer object if present */
+    if (PyMemoryView_Check(obj)) {
+        buf->base = PyMemoryView_GET_BASE(obj);
+    }
+#else
     if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
         PyErr_Clear();
         buf->flags &= ~NPY_ARRAY_WRITEABLE;
@@ -164,11 +193,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (npy_intp) buflen;
 
     /* Point to the base of the buffer object if present */
-#if defined(NPY_PY3K)
-    if (PyMemoryView_Check(obj)) {
-        buf->base = PyMemoryView_GET_BASE(obj);
-    }
-#else
     if (PyBuffer_Check(obj)) {
         buf->base = ((PyArray_Chunk *)obj)->base;
     }
@@ -371,6 +395,9 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
 
     if (PyUnicode_Check(obj)) {
         obj = tmp = PyUnicode_AsASCIIString(obj);
+        if (obj == NULL) {
+            return NPY_FAIL;
+        }
     }
 
     *sortkind = NPY_QUICKSORT;
@@ -397,6 +424,48 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     else {
         PyErr_Format(PyExc_ValueError,
                      "%s is an unrecognized kind of sort",
+                     str);
+        Py_XDECREF(tmp);
+        return NPY_FAIL;
+    }
+    Py_XDECREF(tmp);
+    return NPY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Convert object to select kind
+ */
+NPY_NO_EXPORT int
+PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
+{
+    char *str;
+    PyObject *tmp = NULL;
+
+    if (PyUnicode_Check(obj)) {
+        obj = tmp = PyUnicode_AsASCIIString(obj);
+        if (obj == NULL) {
+            return NPY_FAIL;
+        }
+    }
+
+    *selectkind = NPY_INTROSELECT;
+    str = PyBytes_AsString(obj);
+    if (!str) {
+        Py_XDECREF(tmp);
+        return NPY_FAIL;
+    }
+    if (strlen(str) < 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Select kind string must be at least length 1");
+        Py_XDECREF(tmp);
+        return NPY_FAIL;
+    }
+    if (strcmp(str, "introselect") == 0) {
+        *selectkind = NPY_INTROSELECT;
+    }
+    else {
+        PyErr_Format(PyExc_ValueError,
+                     "%s is an unrecognized kind of select",
                      str);
         Py_XDECREF(tmp);
         return NPY_FAIL;
@@ -528,6 +597,9 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         PyObject *tmp;
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
+        if (tmp == NULL) {
+            return NPY_FAIL;
+        }
         ret = PyArray_ClipmodeConverter(tmp, val);
         Py_DECREF(tmp);
         return ret;
@@ -686,9 +758,9 @@ NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-    npy_long long_value = -1;
+    long long long_value = -1;
 #else
-    npy_longlong long_value = -1;
+    long long_value = -1;
 #endif
     PyObject *obj, *err;
     static char *msg = "an integer is required";
@@ -711,7 +783,7 @@ PyArray_PyIntAsIntp(PyObject *o)
      * an exact check, since otherwise __index__ is used.
      */
 #if !defined(NPY_PY3K)
-    if PyInt_CheckExact(o) {
+    if (PyInt_CheckExact(o)) {
   #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
         /* No overflow is possible, so we can just return */
         return PyInt_AS_LONG(o);
@@ -722,7 +794,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     }
     else
 #endif
-    if PyLong_CheckExact(o) {
+    if (PyLong_CheckExact(o)) {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
         long_value = PyLong_AsLongLong(o);
 #else
@@ -762,7 +834,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         PyErr_Clear();
     }
 
-    /*    
+    /*
      * For backward compatibility check the number C-Api number protcol
      * This should be removed up the finish label after deprecation.
      */
@@ -883,8 +955,8 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
                 return -1;
             }
 
-
             vals[i] = PyArray_PyIntAsIntp(op);
+            Py_DECREF(op);
             if(vals[i] == -1) {
                 err = PyErr_Occurred();
                 if (err &&
@@ -1087,7 +1159,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             }
             break;
     }
-   
+
     /*
      * Raise deprecate warning if new type hasn't been
      * set yet and size char is invalid.
