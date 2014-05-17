@@ -940,6 +940,23 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(typec);
         return NULL;
     }
+    if (arrays_overlap(ap1, out)) {
+      /* The array in output is overlaping with the input array. It will 
+	 lead to errors in the computation of dot because that operator is 
+	 non-local.
+       */
+      printf("array1 and out overlap\n");
+      PyArrayObject *safe_ap1;
+      safe_ap1 = (PyArrayObject *)PyArray_NewCopy(ap1, NPY_KEEPORDER);
+      if (safe_ap1 == NULL) {
+	Py_DECREF(ap1);
+	Py_DECREF(typec);
+	return NULL;
+      }
+      Py_DECREF(ap1);
+      ap1 = safe_ap1;
+    }
+
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
