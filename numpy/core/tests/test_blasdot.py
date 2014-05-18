@@ -62,6 +62,20 @@ def test_dot_3args():
     assert_(r is np.dot(f, v, r))
     assert_array_equal(r2, r)
 
+def test_inplace_dot():
+    """ Testing that inplace dot product doesn't fail by overwriting itself.
+    """
+    a = np.array([[1, 2], [3, 4]], dtype=float)
+    b = np.array([[1, 0], [1, 1]], dtype=float)
+    c = np.array([[3, 2], [7, 4]], dtype=float)
+    _ = np.dot(a, b, a)
+    assert_array_equal(a, c)
+    
+    # Reset overwritten 'a'
+    a = np.array([[1, 2], [3, 4]], dtype=float)
+    _ = np.dot(a, b, b)
+    assert_array_equal(b, c)
+
 def test_dot_3args_errors():
     np.random.seed(22)
     f = np.random.random_sample((1024, 16))
