@@ -940,28 +940,43 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(typec);
         return NULL;
     }
-    if (arrays_overlap(ap1, out)) {
-      /* The array in output is overlaping with the input array. It will 
-	 lead to errors in the computation of dot because that operator is 
-	 non-local.
-       */
-      printf("array1 and out overlap\n");
-      PyArrayObject *safe_ap1;
-      safe_ap1 = (PyArrayObject *)PyArray_NewCopy(ap1, NPY_KEEPORDER);
-      if (safe_ap1 == NULL) {
-	Py_DECREF(ap1);
-	Py_DECREF(typec);
-	return NULL;
-      }
-      Py_DECREF(ap1);
-      ap1 = safe_ap1;
-    }
-
+    
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
+    
+    if (out != NULL){
+        if (arrays_overlap(ap1, out)) {
+            /* The array in output is overlaping with the input array. It will 
+	       lead to errors in the computation because that operator is 
+	       non-local.
+            */
+            PyArrayObject *safe_ap1;
+            safe_ap1 = (PyArrayObject *)PyArray_NewCopy(ap1, NPY_KEEPORDER);
+            if (safe_ap1 == NULL) {
+   	        Py_DECREF(ap1);
+   	        Py_DECREF(typec);
+   	        return NULL;
+                }
+            Py_DECREF(ap1);
+            ap1 = safe_ap1;
+        }
+        if (arrays_overlap(ap2, out)) {
+            /* Same test and copy as above for the second array */
+            PyArrayObject *safe_ap2;
+            safe_ap2 = (PyArrayObject *)PyArray_NewCopy(ap2, NPY_KEEPORDER);
+            if (safe_ap2 == NULL) {
+   	        Py_DECREF(ap2);
+   	        Py_DECREF(typec);
+   	        return NULL;
+                }
+            Py_DECREF(ap2);
+            ap2 = safe_ap2;
+        }
+    }
+
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
