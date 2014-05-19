@@ -496,6 +496,10 @@ class TestString(TestCase):
         # Issue gh-2798
         a = np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
 
+    def test_empty_string_to_object(self):
+        # Pull request #4722
+        np.array(["", ""]).astype(object)
+
 class TestDtypeAttributeDeletion(object):
 
     def test_dtype_non_writable_attributes_deletion(self):

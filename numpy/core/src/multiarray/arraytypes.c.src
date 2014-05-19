@@ -426,7 +426,7 @@ STRING_getitem(char *ip, PyArrayObject *ap)
     int size = PyArray_DESCR(ap)->elsize;
 
     ptr = ip + size - 1;
-    while (*ptr-- == '\0' && size > 0) {
+    while (size > 0 && *ptr-- == '\0') {
         size--;
     }
     return PyBytes_FromStringAndSize(ip,size);
