@@ -47,10 +47,10 @@ fi
 
 paver dmg -p 2.7   # 32/64-bit version
 
-paver bdist_superpack -p 3.2
-paver bdist_superpack -p 3.1
-paver bdist_superpack -p 2.7
-paver bdist_superpack -p 2.6
+paver bdist_superpack -p 3.2 -m 1
+paver bdist_superpack -p 3.1 -m 1
+paver bdist_superpack -p 2.7 -m 1
+paver bdist_superpack -p 2.6 -m 1
 
 
 #--------------------------------------------
@@ -67,8 +67,8 @@ paver write_release_and_log
 #-------------------------------------------------------
 # Build basic (no SSE) Windows installers to put on PyPi
 #-------------------------------------------------------
-paver bdist_wininst_simple -p 2.6
-paver bdist_wininst_simple -p 2.7
-paver bdist_wininst_simple -p 3.1
-paver bdist_wininst_simple -p 3.2
+paver bdist_wininst_simple -p 2.6 -m 0
+paver bdist_wininst_simple -p 2.7 -m 0
+paver bdist_wininst_simple -p 3.1 -m 0
+paver bdist_wininst_simple -p 3.2 -m 0
 
