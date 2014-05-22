@@ -449,7 +449,6 @@ class system_info:
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {}
-        defaults['libraries'] = ''
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
