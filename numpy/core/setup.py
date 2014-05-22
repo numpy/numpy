@@ -175,12 +175,12 @@ def check_math_capabilities(config, moredefs, mathlibs):
                              headers=headers):
             moredefs.append((fname2def(f), 1))
 
-    for dec, fn in OPTIONAL_GCC_ATTRIBUTES:
+    for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_func(fn, decl='int %s %s(void *);' % (dec, fn),
                              call=False):
             moredefs.append((fname2def(fn), 1))
 
-    for fn in ("__thread", "__declspec(thread)"):
+    for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
         if config.check_func(fn, decl='int %s a;' % (fn), call=False):
             m = fn.replace("(", "_").replace(")", "_")
             moredefs.append((fname2def(m), 1))
