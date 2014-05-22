@@ -73,7 +73,15 @@ class TestRegression(TestCase):
         # See gh-4442, 64bit would require very large/slow matrices.
         x = np.eye(1000, 66)
         np.linalg.svd(x)
-        
+
+    def test_svd_no_uv(self):
+        # gh-4733
+        for shape in (3, 4), (4, 4), (4, 3):
+            for t in float, complex:
+                a = np.ones(shape, dtype=t)
+                w = linalg.svd(a, compute_uv=False)
+                c = np.count_nonzero(np.absolute(w) > 0.5)
+                assert_equal(c, 1)
 
 if __name__ == '__main__':
     run_module_suite()

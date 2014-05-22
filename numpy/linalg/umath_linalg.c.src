@@ -3052,7 +3052,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "svd when n>=m. ",
         4, 1, 1,
         FUNC_ARRAY_NAME(svd_N),
-        equal_2_types
+        svd_1_1_types
     },
     {
         "svd_n",
