@@ -137,6 +137,9 @@ from numpy.distutils.misc_util import is_sequence, is_string, \
                                       get_shared_lib_extension
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+import distutils.ccompiler
+import tempfile
+import shutil
 
 
 # Determine number of bits
@@ -300,7 +303,10 @@ def get_info(name, notfound_action=0):
           'lapack_atlas': lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads': lapack_atlas_threads_info,  # ditto
           'mkl': mkl_info,
+          # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
+          # openblas with embedded lapack
+          'openblas_lapack': openblas_lapack_info, # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -1367,7 +1373,7 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
 
-        openblas_info = get_info('openblas')
+        openblas_info = get_info('openblas_lapack')
         if openblas_info:
             self.set_info(**openblas_info)
             return
@@ -1560,6 +1566,9 @@ class openblas_info(blas_info):
     _lib_names = ['openblas']
     notfounderror = BlasNotFoundError
 
+    def check_embedded_lapack(self, info):
+        return True
+
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
@@ -1569,8 +1578,45 @@ class openblas_info(blas_info):
         info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
             return
+
+        if not self.check_embedded_lapack(info):
+            return None
+
         info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
+
+
+class openblas_lapack_info(openblas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    notfounderror = BlasNotFoundError
+
+    def check_embedded_lapack(self, info):
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        tmpdir = tempfile.mkdtemp()
+        s = """void zungqr();
+        int main(int argc, const char *argv[])
+        {
+            zungqr_();
+            return 0;
+        }"""
+        src = os.path.join(tmpdir, 'source.c')
+        out = os.path.join(tmpdir, 'a.out')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            obj = c.compile([src], output_dir=tmpdir)
+            try:
+                c.link_executable(obj, out, libraries=info['libraries'],
+                                  library_dirs=info['library_dirs'])
+                res = True
+            except distutils.ccompiler.LinkError:
+                res = False
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class blas_src_info(system_info):
