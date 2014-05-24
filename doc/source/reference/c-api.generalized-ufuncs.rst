@@ -3,15 +3,12 @@ Generalized Universal Function API
 ==================================
 
 There is a general need for looping over not only functions on scalars
-but also over functions on vectors (or arrays), as explained on
-http://scipy.org/scipy/numpy/wiki/GeneralLoopingFunctions.  We propose
-to realize this concept by generalizing the universal functions
-(ufuncs), and provide a C implementation that adds ~500 lines
-to the numpy code base.  In current (specialized) ufuncs, the elementary
-function is limited to element-by-element operations, whereas the
-generalized version supports "sub-array" by "sub-array" operations.
-The Perl vector library PDL provides a similar functionality and its
-terms are re-used in the following.
+but also over functions on vectors (or arrays).
+This concept is realized in Numpy by generalizing the universal functions
+(ufuncs).  In regular ufuncs, the elementary function is limited to
+element-by-element operations, whereas the generalized version (gufuncs)
+supports "sub-array" by "sub-array" operations.  The Perl vector library PDL
+provides a similar functionality and its terms are re-used in the following.
 
 Each generalized ufunc has information associated with it that states
 what the "core" dimensionality of the inputs is, as well as the
@@ -21,12 +18,12 @@ arguments is called the "signature" of a ufunc.  For example, the
 ufunc numpy.add has signature ``(),()->()`` defining two scalar inputs
 and one scalar output.
 
-Another example is (see the GeneralLoopingFunctions page) the function
-``inner1d(a,b)`` with a signature of ``(i),(i)->()``.  This applies the
-inner product along the last axis of each input, but keeps the
-remaining indices intact.  For example, where ``a`` is of shape ``(3,5,N)``
+Another example is the function ``inner1d(a,b)`` with a signature of
+``(i),(i)->()``.  This applies the inner product along the last axis of 
+each input, but keeps the remaining indices intact.
+For example, where ``a`` is of shape ``(3,5,N)``
 and ``b`` is of shape ``(5,N)``, this will return an output of shape ``(3,5)``.
-The underlying elementary function is called 3*5 times.  In the
+The underlying elementary function is called ``3 * 5`` times.  In the
 signature, we specify one core dimension ``(i)`` for each input and zero core
 dimensions ``()`` for the output, since it takes two 1-d arrays and
 returns a scalar.  By using the same name ``i``, we specify that the two
@@ -45,7 +42,6 @@ into core and loop dimensions:
 #. The core dimensions are removed from all inputs and the remaining
    dimensions are broadcasted; defining the loop dimensions.
 #. The output is given by the loop dimensions plus the output core dimensions.
-
 
 
 Definitions
