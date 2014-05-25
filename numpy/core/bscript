@@ -416,7 +416,7 @@ def pre_build(context):
                                "lib", "npy-pkg-config", "mlib.ini"))
     inifile_npymath = context.local_node.declare(os.path.join(
                                "lib", "npy-pkg-config", "npymath.ini"))
-    context.register_outputs("numpy_gen_inifiles", "numpyconfig", 
+    context.register_outputs("numpy_gen_inifiles", "numpyconfig",
                              [inifile_mlib, inifile_npymath])
 
     context.register_category("numpy_gen_headers")
@@ -506,6 +506,7 @@ def pre_build(context):
             name="ufunc_api")
 
         ufunc_templates = [
+            "src/umath/loops.h.src",
             "src/umath/loops.c.src",
             "src/umath/funcs.inc.src",
             "src/umath/simd.inc.src"]
@@ -518,6 +519,7 @@ def pre_build(context):
         includes = ["src/umath", "src/multiarray", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
             sources = [
+                    pjoin("src", "umath", "loops.h.src"),
                     pjoin("src", "umath", "loops.c.src"),
                     pjoin('src', 'umath', 'reduction.c'),
                     pjoin('src', 'umath', 'ufunc_object.c'),

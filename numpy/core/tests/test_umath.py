@@ -663,6 +663,24 @@ class TestFmin(_FilterInvalids):
             assert_equal(np.fmin(arg1, arg2), out)
 
 
+class TestBool(TestCase):
+    def test_truth_table(self):
+        arg1 = [False, False, True, True]
+        arg2 = [False, True, False, True]
+        # OR
+        out = [False, True, True, True]
+        for func in (np.logical_or, np.bitwise_or, np.maximum):
+            assert_equal(func(arg1, arg2), out)
+        # AND
+        out = [False, False, False, True]
+        for func in (np.logical_and, np.bitwise_and, np.minimum):
+            assert_equal(func(arg1, arg2), out)
+        # XOR
+        out = [False, True, True, False]
+        for func in (np.logical_xor, np.bitwise_xor, np.not_equal):
+            assert_equal(func(arg1, arg2), out)
+
+
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
