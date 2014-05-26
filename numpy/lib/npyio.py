@@ -916,9 +916,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 and imaginary part must have separate specifiers,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
-        Character separating columns.
+        String or character separating columns.
     newline : str, optional
-        Character separating lines.
+        String or character separating lines.
 
         .. versionadded:: 1.5.0
     header : str, optional
