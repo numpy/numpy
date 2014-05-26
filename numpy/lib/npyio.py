@@ -918,6 +918,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter : str, optional
         Character separating columns.
     newline : str, optional
+        Character separating lines.
+
         .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
@@ -934,7 +936,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         .. versionadded:: 1.7.0
 
-        Character separating lines.
 
     See Also
     --------
