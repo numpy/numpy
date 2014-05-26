@@ -615,6 +615,96 @@ class TestNanFunctions_Median(TestCase):
                      (1, 1, 7, 1))
 
 
+class TestNanFunctions_Percentile(TestCase):
+
+    def test_mutation(self):
+        # Check that passed array is not modified.
+        ndat = _ndat.copy()
+        np.nanpercentile(ndat, 30)
+        assert_equal(ndat, _ndat)
+
+    def test_keepdims(self):
+        mat = np.eye(3)
+        for axis in [None, 0, 1]:
+            tgt = np.percentile(mat, 70, axis=axis, out=None, overwrite_input=False)
+            res = np.percentile(mat, 70, axis=axis, out=None, overwrite_input=False)
+            assert_(res.ndim == tgt.ndim)
+
+    def test_out(self):
+        mat = np.random.rand(3,3)
+        resout = np.zeros(3)
+        tgt = np.percentile(mat, 42, axis=1)
+        res = np.nanpercentile(mat, 42, axis=1, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+
+    def test_result_values(self):
+        tgt = [np.percentile(d, 28) for d in _rdat]
+        res = np.nanpercentile(_ndat, 28, axis=1)
+        assert_almost_equal(res, tgt)
+        tgt = [np.percentile(d, (28,98)) for d in _rdat]
+        res = np.nanpercentile(_ndat, (28,98), axis=1)
+        assert_almost_equal(res, tgt)
+    
+    def test_allnans(self):
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        for axis in [None, 0, 1]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_(np.isnan(np.nanpercentile(mat, 60, axis=axis)).all())
+                if axis is None:
+                    assert_(len(w) == 1)
+                else:
+                    assert_(len(w) == 3)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+                # Check scalar
+                assert_(np.isnan(np.nanpercentile(np.nan, 60)))
+                if axis is None:
+                    assert_(len(w) == 2)
+                else:
+                    assert_(len(w) == 4)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+
+    def test_empty(self):
+        mat = np.zeros((0, 3))
+        for axis in [0, None]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_(np.isnan(np.nanpercentile(mat, 40, axis=axis)).all())
+                assert_(len(w) == 1)
+                assert_(issubclass(w[0].category, RuntimeWarning))
+        for axis in [1]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
+                assert_(len(w) == 0)
+
+    def test_scalar(self):
+        assert_(np.nanpercentile(0., 100) == 0.)
+
+    def test_extended_axis_invalid(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=-5)
+        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, -5))
+        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=4)
+        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, 4))
+        assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
+
+    def test_keepdims(self):
+        d = np.ones((3, 5, 7, 11))
+        assert_equal(np.nanpercentile(d, 90, axis=None, keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.nanpercentile(d, 90, axis=(0, 1), keepdims=True).shape,
+                     (1, 1, 7, 11))
+        assert_equal(np.nanpercentile(d, 90, axis=(0, 3), keepdims=True).shape,
+                     (1, 5, 7, 1))
+        assert_equal(np.nanpercentile(d, 90, axis=(1,), keepdims=True).shape,
+                     (3, 1, 7, 11))
+        assert_equal(np.nanpercentile(d, 90, axis=(0, 1, 2, 3), keepdims=True).shape,
+                     (1, 1, 1, 1))
+        assert_equal(np.nanpercentile(d, 90, axis=(0, 1, 3), keepdims=True).shape,
+                     (1, 1, 7, 1))
+
 
 
 if __name__ == "__main__":
