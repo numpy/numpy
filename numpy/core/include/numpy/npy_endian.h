@@ -38,6 +38,7 @@
             || defined(NPY_CPU_ARMEB)   \
             || defined(NPY_CPU_SH_BE)   \
             || defined(NPY_CPU_MIPSEB)  \
+            || defined(NPY_CPU_OR1K)    \
             || defined(NPY_CPU_M68K)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else

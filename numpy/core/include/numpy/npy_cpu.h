@@ -69,6 +69,8 @@
     #define NPY_CPU_MIPSEL
 #elif defined(__MIPSEB__)
     #define NPY_CPU_MIPSEB
+#elif defined(__or1k__)
+    #define NPY_CPU_OR1K
 #elif defined(__aarch64__)
     #define NPY_CPU_AARCH64
 #elif defined(__mc68000__)
