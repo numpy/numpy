@@ -544,6 +544,31 @@ OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
 /* VOID */
 
+/* unpack tuple of dtype->fields (descr, offset, title[not-needed]) */
+static int
+unpack_field(PyObject * value, PyArray_Descr ** descr, npy_intp * offset)
+{
+    PyObject * off;
+    if (PyTuple_GET_SIZE(value) < 2) {
+        return -1;
+    }
+    *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
+    off  = PyTuple_GET_ITEM(value, 1);
+
+    if (PyInt_Check(off)) {
+        *offset = PyInt_AsSsize_t(off);
+    }
+    else if (PyLong_Check(off)) {
+        *offset = PyLong_AsSsize_t(off);
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+
 static PyObject *
 VOID_getitem(char *ip, PyArrayObject *ap)
 {
@@ -557,9 +582,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         PyObject *names;
         int i, n;
         PyObject *ret;
-        PyObject *tup, *title;
-        PyArray_Descr *new;
-        int offset;
+        PyObject *tup;
         int savedflags;
 
         /* get the names from the fields dictionary*/
@@ -568,9 +591,11 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         ret = PyTuple_New(n);
         savedflags = PyArray_FLAGS(ap);
         for (i = 0; i < n; i++) {
+            npy_intp offset;
+            PyArray_Descr *new;
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
+            if (unpack_field(tup, &new, &offset) < 0) {
                 Py_DECREF(ret);
                 ((PyArrayObject_fields *)ap)->descr = descr;
                 return NULL;
@@ -687,9 +712,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         PyObject *key;
         PyObject *names;
         int i, n;
-        PyObject *tup, *title;
-        PyArray_Descr *new;
-        int offset;
+        PyObject *tup;
         int savedflags;
 
         res = -1;
@@ -703,9 +726,11 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         savedflags = PyArray_FLAGS(ap);
         for (i = 0; i < n; i++) {
+            PyArray_Descr *new;
+            npy_intp offset;
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
+            if (unpack_field(tup, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)ap)->descr = descr;
                 return -1;
             }
@@ -1968,17 +1993,18 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         return;
     }
     if (PyArray_HASFIELDS(arr)) {
-        PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new, *descr;
-        int offset;
+        PyObject *key, *value;
+        PyArray_Descr *descr;
         Py_ssize_t pos = 0;
 
         descr = PyArray_DESCR(arr);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            npy_intp offset;
+            PyArray_Descr * new;
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (unpack_field(value, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
@@ -2036,17 +2062,18 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         return;
     }
     if (PyArray_HASFIELDS(arr)) {
-        PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new, *descr;
-        int offset;
+        PyObject *key, *value;
+        PyArray_Descr *descr;
         Py_ssize_t pos = 0;
 
         descr = PyArray_DESCR(arr);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            npy_intp offset;
+            PyArray_Descr * new;
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (unpack_field(value, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
@@ -2338,19 +2365,20 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
     npy_bool nonz = NPY_FALSE;
 
     if (PyArray_HASFIELDS(ap)) {
-        PyArray_Descr *descr, *new;
-        PyObject *key, *value, *title;
-        int savedflags, offset;
+        PyArray_Descr *descr;
+        PyObject *key, *value;
+        int savedflags;
         Py_ssize_t pos = 0;
 
         descr = PyArray_DESCR(ap);
         savedflags = PyArray_FLAGS(ap);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            PyArray_Descr * new;
+            npy_intp offset;
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
-                        &title)) {
+            if (unpack_field(value, &new, &offset) < 0) {
                 PyErr_Clear();
                 continue;
             }
@@ -2645,11 +2673,11 @@ UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
-    PyArray_Descr *descr, *new;
+    PyArray_Descr *descr;
     PyObject *names, *key;
-    PyObject *tup, *title;
+    PyObject *tup;
     char *nip1, *nip2;
-    int i, offset, res = 0, swap=0;
+    int i, res = 0, swap=0;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
@@ -2661,9 +2689,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
      */
     names = descr->names;
     for (i = 0; i < PyTuple_GET_SIZE(names); i++) {
+        PyArray_Descr * new;
+        npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(descr->fields, key);
-        if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
+        if (unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
         /*
