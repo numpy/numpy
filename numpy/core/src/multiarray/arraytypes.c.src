@@ -18,6 +18,7 @@
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
+#include "alloc.h"
 
 #include "numpyos.h"
 
@@ -2705,9 +2706,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
         if ((swap) || (new->alignment > 1)) {
-            if ((swap) || (((npy_intp)(nip1) % new->alignment) != 0)) {
+            if ((swap) || (!npy_is_aligned(nip1, new->alignment))) {
                 /* create buffer and copy */
-                nip1 = PyArray_malloc(new->elsize);
+                nip1 = npy_alloc_cache(new->elsize);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -2715,12 +2716,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                 if (swap)
                     new->f->copyswap(nip1, NULL, swap, ap);
             }
-            if ((swap) || (((npy_intp)(nip2) % new->alignment) != 0)) {
+            if ((swap) || (!npy_is_aligned(nip2, new->alignment))) {
                 /* copy data to a buffer */
-                nip2 = PyArray_malloc(new->elsize);
+                nip2 = npy_alloc_cache(new->elsize);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
-                        PyArray_free(nip1);
+                        npy_free_cache(nip1, new->elsize);
                     }
                     goto finish;
                 }
@@ -2732,10 +2733,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, ap);
         if ((swap) || (new->alignment > 1)) {
             if (nip1 != ip1 + offset) {
-                PyArray_free(nip1);
+                npy_free_cache(nip1, new->elsize);
             }
             if (nip2 != ip2 + offset) {
-                PyArray_free(nip2);
+                npy_free_cache(nip2, new->elsize);
             }
         }
         if (res != 0) {
