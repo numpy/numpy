@@ -648,32 +648,6 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 }
 /**end repeat**/
 
-
-NPY_NO_EXPORT void
-BOOL_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        npy_bool in1 = *((npy_bool *)ip1) != 0;
-        npy_bool in2 = *((npy_bool *)ip2) != 0;
-        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
-    }
-}
-
-/**begin repeat
- * #kind = maximum, minimum#
- * #OP =  >, <#
- **/
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        npy_bool in1 = *((npy_bool *)ip1) != 0;
-        npy_bool in2 = *((npy_bool *)ip2) != 0;
-        *((npy_bool *)op1) = (in1 @OP@ in2) ? in1 : in2;
-    }
-}
-/**end repeat**/
-
 /**begin repeat
  * #kind = absolute, logical_not#
  * #OP =  !=, ==#

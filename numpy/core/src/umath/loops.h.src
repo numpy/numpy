@@ -3,20 +3,6 @@
  * vim:syntax=c
  */
 
-/*
- *****************************************************************************
- **               IMPORTANT NOTE for loops.h.src -> loops.h                 **
- *****************************************************************************
- *  The template file loops.h.src is not automatically converted into
- *  loops.h by the build system.  If you edit this file, you must manually
- *  do the conversion using numpy/distutils/conv_template.py from the
- *  command line as follows:
- *
- *  $ cd <NumPy source root directory>
- *  $ python  numpy/distutils/conv_template.py numpy/core/src/umath/loops.h.src
- *  $
- */
-
 #ifndef _NPY_UMATH_LOOPS_H_
 #define _NPY_UMATH_LOOPS_H_
 
@@ -25,11 +11,15 @@
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
 #define BOOL_bitwise_or BOOL_logical_or
+#define BOOL_logical_xor BOOL_not_equal
 #define BOOL_bitwise_xor BOOL_logical_xor
 #define BOOL_multiply BOOL_logical_and
 #define BOOL_subtract BOOL_logical_xor
+#define BOOL_maximum BOOL_logical_or
+#define BOOL_minimum BOOL_logical_and
 #define BOOL_fmax BOOL_maximum
 #define BOOL_fmin BOOL_minimum
+
 
 /*
  *****************************************************************************
@@ -39,26 +29,7 @@
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, logical_xor, add, bitwise_or,
- *         bitwise_xor, bitwise_and, fmax, fmin, invert, multiply, negative,
- *         subtract#
- **/
-
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-/**end repeat**/
-
-/**begin repeat
- * #kind = maximum, minimum#
- * #OP =  >, <#
- **/
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-/**end repeat**/
-
-/**begin repeat
- * #kind = absolute, logical_not#
- * #OP =  !=, ==#
+ *         logical_and, logical_or, absolute, logical_not#
  **/
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));

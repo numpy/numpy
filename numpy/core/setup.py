@@ -863,9 +863,8 @@ def configuration(parent_package='',top_path=None):
         from numpy.distutils.misc_util import get_cmd
 
         subpath = join('src', 'umath')
-        # NOTE: For manual template conversion of loops.h.src, read the note
-        #       in that file.
         sources = [
+            join(local_dir, subpath, 'loops.h.src'),
             join(local_dir, subpath, 'loops.c.src'),
             join(local_dir, subpath, 'simd.inc.src')]
 
@@ -895,6 +894,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'simd.inc.src'),
+            join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'ufunc_type_resolution.c')]
