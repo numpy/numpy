@@ -2388,7 +2388,7 @@
   $2 = &dim_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)
 {
   npy_intp dims[1] = { *$2 };
@@ -2422,7 +2422,7 @@
   $2 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEWM_ARRAY1)
 {
   npy_intp dims[1] = { *$1 };
@@ -2457,7 +2457,7 @@
   $3 = &dim2_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
 {
   npy_intp dims[2] = { *$2, *$3 };
@@ -2492,7 +2492,7 @@
   $3 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_ARRAY2)
 {
   npy_intp dims[2] = { *$1, *$2 };
@@ -2527,7 +2527,7 @@
   $3 = &dim2_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
 {
   npy_intp dims[2] = { *$2, *$3 };
@@ -2562,7 +2562,7 @@
   $3 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_FARRAY2)
 {
   npy_intp dims[2] = { *$1, *$2 };
@@ -2599,7 +2599,7 @@
   $4 = &dim3_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
 {
   npy_intp dims[3] = { *$2, *$3, *$4 };
@@ -2636,7 +2636,7 @@
   $4 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)
 {
   npy_intp dims[3] = { *$1, *$2, *$3 };
@@ -2673,7 +2673,7 @@
   $4 = &dim3_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
 {
   npy_intp dims[3] = { *$2, *$3, *$4 };
@@ -2710,7 +2710,7 @@
   $4 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)
 {
   npy_intp dims[3] = { *$1, *$2, *$3 };
@@ -2748,7 +2748,7 @@
   $5 = &dim4_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
 {
   npy_intp dims[4] = { *$2, *$3, *$4 , *$5 };
@@ -2786,7 +2786,7 @@
   $5 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)
 {
   npy_intp dims[4] = { *$1, *$2, *$3 , *$4 };
@@ -2824,7 +2824,7 @@
   $5 = &dim4_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
 {
   npy_intp dims[4] = { *$2, *$3, *$4 , *$5 };
@@ -2862,7 +2862,7 @@
   $5 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)
 {
   npy_intp dims[4] = { *$1, *$2, *$3 , *$4 };
@@ -2900,7 +2900,7 @@
   $5 = &dim4_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
 {
   npy_intp dims[4] = { *$2, *$3, *$4 , *$5 };
@@ -2938,7 +2938,7 @@
   $5 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)
 {
   npy_intp dims[4] = { *$1, *$2, *$3 , *$4 };
@@ -2976,7 +2976,7 @@
   $5 = &dim4_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
 {
   npy_intp dims[4] = { *$2, *$3, *$4 , *$5 };
@@ -3014,7 +3014,7 @@
   $5 = &data_temp;
 }
 %typemap(argout,
-         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements,NumPy_Utilities")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)
 {
   npy_intp dims[4] = { *$1, *$2, *$3 , *$4 };
