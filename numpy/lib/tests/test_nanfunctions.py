@@ -542,11 +542,41 @@ class TestNanFunctions_Median(TestCase):
             res = np.nanmedian(mat, axis=axis, out=None, overwrite_input=False)
             assert_(res.ndim == tgt.ndim)
 
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always', RuntimeWarning)
+            res = np.nanmedian(d, axis=None, keepdims=True)
+            assert_equal(res.shape, (1, 1, 1, 1))
+            res = np.nanmedian(d, axis=(0, 1), keepdims=True)
+            assert_equal(res.shape, (1, 1, 7, 11))
+            res = np.nanmedian(d, axis=(0, 3), keepdims=True)
+            assert_equal(res.shape, (1, 5, 7, 1))
+            res = np.nanmedian(d, axis=(1,), keepdims=True)
+            assert_equal(res.shape, (3, 1, 7, 11))
+            res = np.nanmedian(d, axis=(0, 1, 2, 3), keepdims=True)
+            assert_equal(res.shape, (1, 1, 1, 1))
+            res = np.nanmedian(d, axis=(0, 1, 3), keepdims=True)
+            assert_equal(res.shape, (1, 1, 7, 1))
+
     def test_out(self):
-        mat = np.random.rand(3,3)
+        mat = np.random.rand(3, 3)
+        nan_mat = np.insert(mat, [0, 2], np.nan, axis=1)
         resout = np.zeros(3)
         tgt = np.median(mat, axis=1)
-        res = np.nanmedian(mat, axis=1, out=resout)
+        res = np.nanmedian(nan_mat, axis=1, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+        # 0-d output:
+        resout = np.zeros(())
+        tgt = np.median(mat, axis=None)
+        res = np.nanmedian(nan_mat, axis=None, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+        res = np.nanmedian(nan_mat, axis=(0, 1), out=resout)
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
 
@@ -599,21 +629,6 @@ class TestNanFunctions_Median(TestCase):
         assert_raises(IndexError, np.nanmedian, d, axis=(0, 4))
         assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
 
-    def test_keepdims(self):
-        d = np.ones((3, 5, 7, 11))
-        assert_equal(np.nanmedian(d, axis=None, keepdims=True).shape,
-                     (1, 1, 1, 1))
-        assert_equal(np.nanmedian(d, axis=(0, 1), keepdims=True).shape,
-                     (1, 1, 7, 11))
-        assert_equal(np.nanmedian(d, axis=(0, 3), keepdims=True).shape,
-                     (1, 5, 7, 1))
-        assert_equal(np.nanmedian(d, axis=(1,), keepdims=True).shape,
-                     (3, 1, 7, 11))
-        assert_equal(np.nanmedian(d, axis=(0, 1, 2, 3), keepdims=True).shape,
-                     (1, 1, 1, 1))
-        assert_equal(np.nanmedian(d, axis=(0, 1, 3), keepdims=True).shape,
-                     (1, 1, 7, 1))
-
 
 class TestNanFunctions_Percentile(TestCase):
 
@@ -626,15 +641,47 @@ class TestNanFunctions_Percentile(TestCase):
     def test_keepdims(self):
         mat = np.eye(3)
         for axis in [None, 0, 1]:
-            tgt = np.percentile(mat, 70, axis=axis, out=None, overwrite_input=False)
-            res = np.percentile(mat, 70, axis=axis, out=None, overwrite_input=False)
+            tgt = np.percentile(mat, 70, axis=axis, out=None,
+                                overwrite_input=False)
+            res = np.nanpercentile(mat, 70, axis=axis, out=None,
+                                   overwrite_input=False)
             assert_(res.ndim == tgt.ndim)
 
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always', RuntimeWarning)
+            res = np.nanpercentile(d, 90, axis=None, keepdims=True)
+            assert_equal(res.shape, (1, 1, 1, 1))
+            res = np.nanpercentile(d, 90, axis=(0, 1), keepdims=True)
+            assert_equal(res.shape, (1, 1, 7, 11))
+            res = np.nanpercentile(d, 90, axis=(0, 3), keepdims=True)
+            assert_equal(res.shape, (1, 5, 7, 1))
+            res = np.nanpercentile(d, 90, axis=(1,), keepdims=True)
+            assert_equal(res.shape, (3, 1, 7, 11))
+            res = np.nanpercentile(d, 90, axis=(0, 1, 2, 3), keepdims=True)
+            assert_equal(res.shape, (1, 1, 1, 1))
+            res = np.nanpercentile(d, 90, axis=(0, 1, 3), keepdims=True)
+            assert_equal(res.shape, (1, 1, 7, 1))
+
     def test_out(self):
-        mat = np.random.rand(3,3)
+        mat = np.random.rand(3, 3)
+        nan_mat = np.insert(mat, [0, 2], np.nan, axis=1)
         resout = np.zeros(3)
         tgt = np.percentile(mat, 42, axis=1)
-        res = np.nanpercentile(mat, 42, axis=1, out=resout)
+        res = np.nanpercentile(nan_mat, 42, axis=1, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+        # 0-d output:
+        resout = np.zeros(())
+        tgt = np.percentile(mat, 42, axis=None)
+        res = np.nanpercentile(nan_mat, 42, axis=None, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+        res = np.nanpercentile(nan_mat, 42, axis=(0, 1), out=resout)
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
 
@@ -642,10 +689,10 @@ class TestNanFunctions_Percentile(TestCase):
         tgt = [np.percentile(d, 28) for d in _rdat]
         res = np.nanpercentile(_ndat, 28, axis=1)
         assert_almost_equal(res, tgt)
-        tgt = [np.percentile(d, (28,98)) for d in _rdat]
-        res = np.nanpercentile(_ndat, (28,98), axis=1)
+        tgt = [np.percentile(d, (28, 98)) for d in _rdat]
+        res = np.nanpercentile(_ndat, (28, 98), axis=1)
         assert_almost_equal(res, tgt)
-    
+
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
         for axis in [None, 0, 1]:
@@ -689,22 +736,6 @@ class TestNanFunctions_Percentile(TestCase):
         assert_raises(IndexError, np.nanpercentile, d, q=5, axis=4)
         assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, 4))
         assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
-
-    def test_keepdims(self):
-        d = np.ones((3, 5, 7, 11))
-        assert_equal(np.nanpercentile(d, 90, axis=None, keepdims=True).shape,
-                     (1, 1, 1, 1))
-        assert_equal(np.nanpercentile(d, 90, axis=(0, 1), keepdims=True).shape,
-                     (1, 1, 7, 11))
-        assert_equal(np.nanpercentile(d, 90, axis=(0, 3), keepdims=True).shape,
-                     (1, 5, 7, 1))
-        assert_equal(np.nanpercentile(d, 90, axis=(1,), keepdims=True).shape,
-                     (3, 1, 7, 11))
-        assert_equal(np.nanpercentile(d, 90, axis=(0, 1, 2, 3), keepdims=True).shape,
-                     (1, 1, 1, 1))
-        assert_equal(np.nanpercentile(d, 90, axis=(0, 1, 3), keepdims=True).shape,
-                     (1, 1, 7, 1))
-
 
 
 if __name__ == "__main__":

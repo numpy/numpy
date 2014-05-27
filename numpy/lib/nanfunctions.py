@@ -603,11 +603,10 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     return avg
 
 
-def _nanmedian1d(arr1d, overwrite_input=False): # This only works on 1d arrays
+def _nanmedian1d(arr1d, overwrite_input=False):
     """
     Private function for rank 1 arrays. Compute the median ignoring NaNs.
     See nanmedian for parameter usage
-    
     """
     c = np.isnan(arr1d)
     s = np.where(c)[0]
@@ -617,10 +616,10 @@ def _nanmedian1d(arr1d, overwrite_input=False): # This only works on 1d arrays
     elif s.size == 0:
         return np.median(arr1d, overwrite_input=overwrite_input)
     else:
-        if overwrite_input: 
+        if overwrite_input:
             x = arr1d
-        else: 
-            x = arr1d.copy() 
+        else:
+            x = arr1d.copy()
         # select non-nans at end of array
         enonan = arr1d[-s.size:][~c[-s.size:]]
         # fill nans in beginning of array with non-nans of end
@@ -641,12 +640,12 @@ def _nanmedian(a, axis=None, out=None, overwrite_input=False):
         if out is None:
             return _nanmedian1d(part, overwrite_input)
         else:
-            out[:] = _nanmedian1d(part, overwrite_input)
+            out[...] = _nanmedian1d(part, overwrite_input)
             return out
     else:
         result = np.apply_along_axis(_nanmedian1d, axis, a, overwrite_input)
         if out is not None:
-            out[:] = result
+            out[...] = result
         return result
 
 
@@ -688,9 +687,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers, or 
-        floats of smaller precision than 64, then the output data-type is 
-        float64.  Otherwise, the output data-type is the same as that of the 
+        A new array holding the result. If the input contains integers, or
+        floats of smaller precision than 64, then the output data-type is
+        float64.  Otherwise, the output data-type is the same as that of the
         input.
 
     See Also
@@ -732,7 +731,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     a = np.asanyarray(a)
     # apply_along_axis in _nanmedian doesn't handle empty arrays well,
     # so deal them upfront
-    if 0 in a.shape:
+    if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
     r, k = _ureduce(a, func=_nanmedian, axis=axis, out=out,
@@ -743,8 +742,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         return r
 
 
-def nanpercentile(a, q, axis=None, out=None,
-               overwrite_input=False, interpolation='linear', keepdims=False):
+def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
+                  interpolation='linear', keepdims=False):
     """
     Compute the qth percentile of the data along the specified axis, while
     ignoring nan values.
@@ -852,7 +851,7 @@ def nanpercentile(a, q, axis=None, out=None,
     q = np.asanyarray(q)
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
-    if 0 in a.shape:
+    if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
     r, k = _ureduce(a, func=_nanpercentile, q=q, axis=axis, out=out,
@@ -867,8 +866,8 @@ def nanpercentile(a, q, axis=None, out=None,
         return r
 
 
-def _nanpercentile(a, q, axis=None, out=None,
-                overwrite_input=False, interpolation='linear', keepdims=False):
+def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
+                   interpolation='linear', keepdims=False):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -879,11 +878,11 @@ def _nanpercentile(a, q, axis=None, out=None,
         part = a.ravel()
         result = _nanpercentile1d(part, q, overwrite_input, interpolation)
     else:
-        result = np.apply_along_axis(_nanpercentile1d, axis, a, q, overwrite_input,
-                interpolation)
+        result = np.apply_along_axis(_nanpercentile1d, axis, a, q,
+                                     overwrite_input, interpolation)
 
     if out is not None:
-        out[:] = result
+        out[...] = result
     return result
 
 
@@ -891,7 +890,7 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     """
     Private function for rank 1 arrays. Compute percentile ignoring NaNs.
     See nanpercentile for parameter usage
-    
+
     """
     c = np.isnan(arr1d)
     s = np.where(c)[0]
@@ -900,19 +899,19 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
         return np.nan
     elif s.size == 0:
         return np.percentile(arr1d, q, overwrite_input=overwrite_input,
-                interpolation=interpolation)
+                             interpolation=interpolation)
     else:
-        if overwrite_input: 
+        if overwrite_input:
             x = arr1d
-        else: 
-            x = arr1d.copy() 
+        else:
+            x = arr1d.copy()
         # select non-nans at end of array
         enonan = arr1d[-s.size:][~c[-s.size:]]
         # fill nans in beginning of array with non-nans of end
         x[s[:enonan.size]] = enonan
         # slice nans away
         return np.percentile(x[:-s.size], q, overwrite_input=True,
-                interpolation=interpolation)
+                             interpolation=interpolation)
 
 
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
