@@ -82,6 +82,9 @@ class TestRegression(TestCase):
                 w = linalg.svd(a, compute_uv=False)
                 c = np.count_nonzero(np.absolute(w) > 0.5)
                 assert_equal(c, 1)
+                assert_equal(np.linalg.matrix_rank(a), 1)
+                assert_array_less(1, np.linalg.norm(a, ord=2))
+
 
 if __name__ == '__main__':
     run_module_suite()
