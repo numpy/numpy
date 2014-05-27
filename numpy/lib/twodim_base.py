@@ -11,8 +11,7 @@ __all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
 
 from numpy.core.numeric import (
     asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, dtype as np_dtype, less, int8, int16, int32, int64,
-    empty, promote_types
+    asarray, where, less, int8, int16, int32, int64, empty, promote_types
     )
 from numpy.core import iinfo
 
@@ -415,8 +414,7 @@ def tri(N, M=None, k=0, dtype=float):
                             arange(-k, M-k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
-    if np_dtype(dtype) != np_dtype(bool):
-        m = m.astype(dtype)
+    m = m.astype(dtype, copy=False)
 
     return m
 
