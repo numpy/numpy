@@ -629,6 +629,12 @@ class TestRandomDist(TestCase):
                          [ 1.19153771588353052,  1.83509849681825354]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_vonmises_small(self):
+        # check infinite loop, gh-4720
+        np.random.seed(self.seed)
+        r = np.random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
+        np.testing.assert_(np.isfinite(r).all())
+
     def test_wald(self):
         np.random.seed(self.seed)
         actual = np.random.wald(mean = 1.23, scale = 1.54, size = (3, 2))
