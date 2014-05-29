@@ -73,6 +73,16 @@
         #define NPY_INLINE
 #endif
 
+#ifdef HAVE___THREAD
+    #define NPY_TLS __thread
+#else
+    #ifdef HAVE___DECLSPEC_THREAD_
+        #define NPY_TLS __declspec(thread)
+    #else
+        #define NPY_TLS
+    #endif
+#endif
+
 #ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
   #define NPY_RETURNS_BORROWED_REF \
     __attribute__((cpychecker_returns_borrowed_ref))

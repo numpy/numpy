@@ -122,16 +122,19 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"), # SSE2
                        ]
 
-# gcc function attributes
-# (attribute as understood by gcc, function name),
+# function attributes
+# tested via "int %s %s(void *);" % (attribute, name)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
-OPTIONAL_GCC_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
-                            'attribute_optimize_unroll_loops'),
-                            ('__attribute__((optimize("O3")))',
-                             'attribute_optimize_opt_3'),
-                            ('__attribute__((nonnull (1)))',
-                             'attribute_nonnull'),
-                          ]
+OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
+                                'attribute_optimize_unroll_loops'),
+                                ('__attribute__((optimize("O3")))',
+                                 'attribute_optimize_opt_3'),
+                                ('__attribute__((nonnull (1)))',
+                                 'attribute_nonnull'),
+                               ]
+
+# variable attributes tested via "int %s a" % attribute
+OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
