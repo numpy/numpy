@@ -3370,9 +3370,13 @@ def meshgrid(*xi, **kwargs):
     """
     ndim = len(xi)
 
-    copy_ = kwargs.get('copy', True)
-    sparse = kwargs.get('sparse', False)
-    indexing = kwargs.get('indexing', 'xy')
+    copy_ = kwargs.pop('copy', True)
+    sparse = kwargs.pop('sparse', False)
+    indexing = kwargs.pop('indexing', 'xy')
+
+    if kwargs:
+        raise TypeError("meshgrid() got an unexpected keyword argument '%s'"
+                        % (list(kwargs)[0],))
 
     if not indexing in ['xy', 'ij']:
         raise ValueError(

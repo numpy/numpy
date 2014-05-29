@@ -1454,6 +1454,13 @@ class TestMeshgrid(TestCase):
         assert_array_equal(X, np.array([[1, 2, 3]]))
         assert_array_equal(Y, np.array([[4], [5], [6], [7]]))
 
+    def test_invalid_arguments(self):
+        # Test that meshgrid complains about invalid arguments
+        # Regression test for issue #4755:
+        # https://github.com/numpy/numpy/issues/4755
+        assert_raises(TypeError, meshgrid, 
+                      [1, 2, 3], [4, 5, 6, 7], indices='ij')
+
 
 class TestPiecewise(TestCase):
     def test_simple(self):
