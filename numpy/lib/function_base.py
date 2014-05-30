@@ -21,7 +21,7 @@ from numpy.core import linspace, atleast_1d, atleast_2d
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, ScalarType, dot, where,
-    newaxis, intp, integer, isscalar
+    intp, integer, isscalar
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -1863,11 +1863,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     if rowvar:
         N = X.shape[1]
         axis = 0
-        tup = (slice(None), newaxis)
     else:
         N = X.shape[0]
         axis = 1
-        tup = (newaxis, slice(None))
 
     # check ddof
     if ddof is None:
@@ -1884,7 +1882,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         y = array(y, copy=False, ndmin=2, dtype=dtype)
         X = concatenate((X, y), axis)
 
-    X -= X.mean(axis=1-axis)[tup]
+    X -= X.mean(axis=1-axis, keepdims=True)
     if not rowvar:
         return (dot(X.T, X.conj()) / fact).squeeze()
     else:
