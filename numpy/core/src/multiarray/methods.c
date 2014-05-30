@@ -1459,7 +1459,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         Py_DECREF(deepcopy);
         Py_DECREF(it);
     }
-    return ret;
+    return (PyObject*)ret;
 }
 
 /* Convert Array to flat list (using getitem) */
