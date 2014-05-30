@@ -5082,12 +5082,12 @@ class MaskedArray(ndarray):
                     filler = maximum_fill_value(self)
             else:
                 filler = fill_value
-            idx = np.indices(self.shape)
+            idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
+                              indexing='ij')
             idx[axis] = self.filled(filler).argsort(axis=axis, kind=kind,
                                                     order=order)
-            idx_l = idx.tolist()
-            tmp_mask = self._mask[idx_l].flat
-            tmp_data = self._data[idx_l].flat
+            tmp_mask = self._mask[idx].flat
+            tmp_data = self._data[idx].flat
             self._data.flat = tmp_data
             self._mask.flat = tmp_mask
         return
@@ -6188,7 +6188,8 @@ def sort(a, axis= -1, kind='quicksort', order=None, endwith=True, fill_value=Non
     else:
         filler = fill_value
 #    return
-    indx = np.indices(a.shape).tolist()
+    indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
+                       indexing='ij')
     indx[axis] = filled(a, filler).argsort(axis=axis, kind=kind, order=order)
     return a[indx]
 sort.__doc__ = MaskedArray.sort.__doc__
