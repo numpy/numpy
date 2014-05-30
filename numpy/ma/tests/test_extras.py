@@ -531,6 +531,19 @@ class TestMedian(TestCase):
         x[x % 5 == 0] = masked
         assert_equal(median(x, 0), [[12, 10], [8, 9], [16, 17]])
 
+    def test_neg_axis(self):
+        x = masked_array(np.arange(30).reshape(10, 3))
+        x[:3] = x[-3:] = masked
+        assert_equal(median(x, axis=-1), median(x, axis=1))
+
+    def test_out(self):
+        x = masked_array(np.arange(30).reshape(10, 3))
+        x[:3] = x[-3:] = masked
+        out = masked_array(np.ones(10))
+        r = median(x, axis=1, out=out)
+        assert_equal(r, out)
+        assert_(type(r) == MaskedArray)
+
 
 class TestCov(TestCase):
 
