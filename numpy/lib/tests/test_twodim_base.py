@@ -254,7 +254,7 @@ class TestHistogram2d(TestCase):
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
-        r = rand(100)+1.
+        r = rand(100) + 1. + 1e6 # histogramdd rounds by decimal=6
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0, 1], [0, 1]))
         assert_array_equal(H, 0)
 
