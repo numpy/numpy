@@ -1401,9 +1401,8 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 static int
 _equivalent_fields(PyObject *field1, PyObject *field2) {
 
-    int val;
     Py_ssize_t ppos;
-    PyObject *keys, *key;
+    PyObject *key;
     PyObject *tuple1, *tuple2;
 
     if (field1 == field2) {
