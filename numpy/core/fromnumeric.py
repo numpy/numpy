@@ -1090,7 +1090,7 @@ def squeeze(a, axis=None):
     Returns
     -------
     squeezed : ndarray
-        The input array, but with with all or a subset of the
+        The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
         or a view into `a`.
 
