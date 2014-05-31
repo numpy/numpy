@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
-    assert_raises
+    assert_raises, assert_array_equal
     )
 
 
@@ -579,6 +579,22 @@ class TestNanFunctions_Median(TestCase):
         res = np.nanmedian(nan_mat, axis=(0, 1), out=resout)
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
+
+    def test_small_large(self):
+        # test the small and large code paths, current cutoff 400 elements
+        for s in [5, 20, 51, 200, 1000]:
+            d = np.random.randn(4, s)
+            # Randomly set some elements to NaN:
+            w = np.random.randint(0, d.size, size=d.size // 5)
+            d.ravel()[w] = np.nan
+            d[:,0] = 1. # ensure at least one good value
+            # use normal median without nans to compare
+            tgt = []
+            for x in d:
+                nonan = np.compress(~np.isnan(x), x)
+                tgt.append(np.median(nonan, overwrite_input=True))
+
+            assert_array_equal(np.nanmedian(d, axis=-1), tgt)
 
     def test_result_values(self):
             tgt = [np.median(d) for d in _rdat]
