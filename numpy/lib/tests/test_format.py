@@ -280,6 +280,7 @@ import sys
 import os
 import shutil
 import tempfile
+import warnings
 from io import BytesIO
 
 import numpy as np
@@ -521,11 +522,64 @@ def test_compressed_roundtrip():
     assert_array_equal(arr, arr1)
 
 
-def test_write_version_1_0():
+def test_version_2_0():
+    f = BytesIO()
+    # requires more than 2 byte for header
+    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    d = np.ones(1000, dtype=dt)
+
+    format.write_array(f, d, version=(2, 0))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', '', UserWarning)
+        format.write_array(f, d)
+        assert_(w[0].category is UserWarning)
+
+    f.seek(0)
+    n = format.read_array(f)
+    assert_array_equal(d, n)
+
+    # 1.0 requested but data cannot be saved this way
+    assert_raises(ValueError, format.write_array, f, d, (1, 0))
+
+
+def test_version_2_0_memmap():
+    # requires more than 2 byte for header
+    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    d = np.ones(1000, dtype=dt)
+    tf = tempfile.mktemp('', 'mmap', dir=tempdir)
+
+    # 1.0 requested but data cannot be saved this way
+    assert_raises(ValueError, format.open_memmap, tf, mode='w+', dtype=d.dtype,
+                            shape=d.shape, version=(1, 0))
+
+    ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+                            shape=d.shape, version=(2, 0))
+    ma[...] = d
+    del ma
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', '', UserWarning)
+        ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+                                shape=d.shape, version=None)
+        assert_(w[0].category is UserWarning)
+        ma[...] = d
+        del ma
+
+    ma = format.open_memmap(tf, mode='r')
+    assert_array_equal(ma, d)
+
+
+def test_write_version():
     f = BytesIO()
     arr = np.arange(1)
     # These should pass.
     format.write_array(f, arr, version=(1, 0))
+    format.write_array(f, arr)
+
+    format.write_array(f, arr, version=None)
+    format.write_array(f, arr)
+
+    format.write_array(f, arr, version=(2, 0))
     format.write_array(f, arr)
 
     # These should all fail.
@@ -533,7 +587,6 @@ def test_write_version_1_0():
         (1, 1),
         (0, 0),
         (0, 1),
-        (2, 0),
         (2, 2),
         (255, 255),
     ]
