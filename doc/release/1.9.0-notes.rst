@@ -196,6 +196,14 @@ comparison when the numpy version goes to 1.10.devel. For example::
     >>> if NumpyVersion(np.__version__) < '1.10.0'):
     ...     print('Wow, that is an old NumPy version!')
 
+Allow saving arrays with large number of named columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The numpy storage format 1.0 only allowed the array header to have a total size
+of 65535 bytes. This can be exceeded by structured arrays with a large number
+of columns. A new format 2.0 has been added which extends the header size to 4
+GiB. `np.save` will automatically save in 2.0 format if the data requires it,
+else it will always use the more compatible 1.0 format.
+
 
 Improvements
 ============
