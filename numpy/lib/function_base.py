@@ -3288,9 +3288,11 @@ def meshgrid(*xi, **kwargs):
     indexing : {'xy', 'ij'}, optional
         Cartesian ('xy', default) or matrix ('ij') indexing of output.
         See Notes for more details.
+       .. versionadded:: 1.7.0
     sparse : bool, optional
          If True a sparse grid is returned in order to conserve memory.
          Default is False.
+        .. versionadded:: 1.7.0
     copy : bool, optional
         If False, a view into the original arrays are returned in order to
         conserve memory.  Default is True.  Please note that
@@ -3298,6 +3300,7 @@ def meshgrid(*xi, **kwargs):
         arrays.  Furthermore, more than one element of a broadcast array
         may refer to a single memory location.  If you need to write to the
         arrays, make copies first.
+       .. versionadded:: 1.7.0
 
     Returns
     -------
