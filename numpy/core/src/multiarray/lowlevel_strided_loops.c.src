@@ -1374,12 +1374,11 @@ NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
                        PyArrayObject *result)
 {
-    char *base_ptr, *self_ptr, *ind_ptr, *result_ptr;
+    char *base_ptr, *ind_ptr, *result_ptr;
     npy_intp self_stride, ind_stride, result_stride;
     npy_intp fancy_dim = PyArray_DIM(self, 0);
 
     npy_intp itersize;
-    npy_intp indval;
 
     int is_aligned = PyArray_ISALIGNED(self) && PyArray_ISALIGNED(result);
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
@@ -1400,7 +1399,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 #if !@isget@
     /* Check the indices beforehand */
     while (itersize--) {
-        indval = *((npy_intp*)ind_ptr);
+        npy_intp indval = *((npy_intp*)ind_ptr);
         if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
             return -1;
         }
@@ -1429,8 +1428,9 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
     default:
 #endif
         while (itersize--) {
+            char * self_ptr;
+            npy_intp indval = *((npy_intp*)ind_ptr);
             assert(npy_is_aligned(ind_ptr, _ALIGN(npy_intp)));
-            indval = *((npy_intp*)ind_ptr);
 #if @isget@
             if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
                 return -1;
@@ -1482,9 +1482,7 @@ NPY_NO_EXPORT int
 mapiter_@name@(PyArrayMapIterObject *mit)
 {
     npy_intp *counter, count;
-    npy_intp indval;
     int i, is_aligned;
-    char *self_ptr;
 
     /* Cached mit info */
     int numiter = mit->numiter;
@@ -1570,11 +1568,11 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #endif
                     count = *counter;
                     while (count--) {
-                        self_ptr = baseoffset;
+                        char * self_ptr = baseoffset;
                         for (i=0; i < @numiter@; i++) {
+                            npy_intp indval = *((npy_intp*)outer_ptrs[i]);
                             assert(npy_is_aligned(outer_ptrs[i],
                                                   _ALIGN(npy_intp)));
-                            indval = *((npy_intp*)outer_ptrs[i]);
 
 #if @isget@ && @one_iter@
                             if (check_and_adjust_index(&indval, fancy_dims[i],
@@ -1683,9 +1681,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
             /* Outer iteration (safe because mit->size != 0) */
             do {
-                self_ptr = baseoffset;
+                char * self_ptr = baseoffset;
                 for (i=0; i < @numiter@; i++) {
-                    indval = *((npy_intp*)outer_ptrs[i]);
+                    npy_intp indval = *((npy_intp*)outer_ptrs[i]);
 
 #if @isget@ && @one_iter@
                     if (check_and_adjust_index(&indval, fancy_dims[i],
