@@ -227,7 +227,7 @@ def bdist_wininst_arch(pyver, msi, arch):
 @task
 @cmdopts([
     ("python-version=", "p", "python version"),
-    ("make_msi=", "msi", "0 or 1. If 1, build a msi instead of an exe.")
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
 ])
 def bdist_superpack(options):
     """Build all arch specific wininst installers."""
@@ -275,7 +275,7 @@ def bdist_superpack(options):
 @task
 @cmdopts([
     ("python-version=", "p", "python version"),
-    ("make_msi=", "msi", "0 or 1. If 1, build a msi instead of an exe.")
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
 ])
 def bdist_wininst_nosse(options):
     """Build the nosse wininst installer."""
@@ -284,7 +284,7 @@ def bdist_wininst_nosse(options):
 @task
 @cmdopts([
     ("python-version=", "p", "python version"),
-    ("make_msi=", "msi", "0 or 1. If 1, build a msi instead of an exe.")
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
 ])
 def bdist_wininst_sse2(options):
     """Build the sse2 wininst installer."""
@@ -293,7 +293,7 @@ def bdist_wininst_sse2(options):
 @task
 @cmdopts([
     ("python-version=", "p", "python version"),
-    ("make_msi=", "msi", "0 or 1. If 1, build a msi instead of an exe.")
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
 ])
 def bdist_wininst_sse3(options):
     """Build the sse3 wininst installer."""
@@ -302,7 +302,7 @@ def bdist_wininst_sse3(options):
 @task
 @cmdopts([
     ("python-version=", "p", "python version"),
-    ("make_msi=", "msi", "0 or 1. If 1, build a msi instead of an exe.")
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
 ])
 def bdist_wininst_simple():
     """Simple wininst-based installer."""
