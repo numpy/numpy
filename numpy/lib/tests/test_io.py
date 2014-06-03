@@ -166,6 +166,13 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
+    def test_format_2_0(self):
+        dt = [(("%d" % i) * 100, float) for i in range(500)]
+        a = np.ones(1000, dtype=dt)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', UserWarning)
+            self.check_roundtrips(a)
+
 
 class TestSaveLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
