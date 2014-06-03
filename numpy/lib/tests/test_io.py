@@ -88,32 +88,32 @@ class RoundtripTest(object):
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
-            # Do not delete the file on windows, because we can't
-            # reopen an already opened file on that platform, so we
-            # need to close the file and reopen it, implying no
-            # automatic deletion.
-            if sys.platform == 'win32' and MAJVER >= 2 and MINVER >= 6:
-                target_file = NamedTemporaryFile(delete=False)
-            else:
-                target_file = NamedTemporaryFile()
+            target_file = NamedTemporaryFile(delete=False)
             load_file = target_file.name
         else:
             target_file = BytesIO()
             load_file = target_file
 
-        arr = args
+        try:
+            arr = args
 
-        save_func(target_file, *arr, **save_kwds)
-        target_file.flush()
-        target_file.seek(0)
+            save_func(target_file, *arr, **save_kwds)
+            target_file.flush()
+            target_file.seek(0)
 
-        if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
-            target_file.close()
+            if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
+                target_file.close()
 
-        arr_reloaded = np.load(load_file, **load_kwds)
+            arr_reloaded = np.load(load_file, **load_kwds)
 
-        self.arr = arr
-        self.arr_reloaded = arr_reloaded
+            self.arr = arr
+            self.arr_reloaded = arr_reloaded
+        finally:
+            if not isinstance(target_file, BytesIO):
+                target_file.close()
+                # holds an open file descriptor so it can't be deleted on win
+                if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
+                    os.remove(target_file.name)
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -178,11 +178,17 @@ class TestSaveLoad(RoundtripTest, TestCase):
 class TestSavezLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
-        for n, arr in enumerate(self.arr):
-            reloaded = self.arr_reloaded['arr_%d' % n]
-            assert_equal(arr, reloaded)
-            assert_equal(arr.dtype, reloaded.dtype)
-            assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+        try:
+            for n, arr in enumerate(self.arr):
+                reloaded = self.arr_reloaded['arr_%d' % n]
+                assert_equal(arr, reloaded)
+                assert_equal(arr.dtype, reloaded.dtype)
+                assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+        finally:
+            # delete tempfile, must be done here on windows
+            if self.arr_reloaded.fid:
+                self.arr_reloaded.fid.close()
+                os.remove(self.arr_reloaded.fid.name)
 
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @np.testing.dec.slow
