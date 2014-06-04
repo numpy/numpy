@@ -318,7 +318,7 @@ _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size)
     case 1: /* no byteswap necessary */
         break;
     case 4:
-        if (npy_is_aligned(p, sizeof(npy_uint32))) {
+        if (npy_is_aligned((void*)((npy_intp)p | stride), sizeof(npy_uint32))) {
             for (a = (char*)p; n > 0; n--, a += stride) {
                 npy_uint32 * a_ = (npy_uint32 *)a;
                 *a_ = npy_bswap4(*a_);
@@ -331,7 +331,7 @@ _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size)
         }
         break;
     case 8:
-        if (npy_is_aligned(p, sizeof(npy_uint64))) {
+        if (npy_is_aligned((void*)((npy_intp)p | stride), sizeof(npy_uint64))) {
             for (a = (char*)p; n > 0; n--, a += stride) {
                 npy_uint64 * a_ = (npy_uint64 *)a;
                 *a_ = npy_bswap8(*a_);
@@ -344,7 +344,7 @@ _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size)
         }
         break;
     case 2:
-        if (npy_is_aligned(p, sizeof(npy_uint16))) {
+        if (npy_is_aligned((void*)((npy_intp)p | stride), sizeof(npy_uint16))) {
             for (a = (char*)p; n > 0; n--, a += stride) {
                 npy_uint16 * a_ = (npy_uint16 *)a;
                 *a_ = npy_bswap2(*a_);
