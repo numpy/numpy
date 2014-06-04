@@ -4354,6 +4354,19 @@ class TestWhere(TestCase):
         assert_raises(ValueError, np.where, c, a, a)
         assert_raises(ValueError, np.where, c[0], a, b)
 
+    def test_string(self):
+        # gh-4778 check strings are properly filled with nulls
+        a = np.array("abc")
+        b = np.array("x" * 753)
+        assert_equal(np.where(True, a, b), "abc")
+        assert_equal(np.where(False, b, a), "abc")
+
+        # check native datatype sized strings
+        a = np.array("abcd")
+        b = np.array("x" * 8)
+        assert_equal(np.where(True, a, b), "abcd")
+        assert_equal(np.where(False, b, a), "abcd")
+
 
 if __name__ == "__main__":
     run_module_suite()
