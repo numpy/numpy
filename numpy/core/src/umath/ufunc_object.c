@@ -1761,7 +1761,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
  *            may be null, in which case the thread global one is fetched
  *  - ufunc_name: name of ufunc
  */
-static int 
+static int
 _check_ufunc_fperr(int errmask, PyObject *extobj, char* ufunc_name) {
     int fperr;
     PyObject *errobj = NULL;
@@ -2230,7 +2230,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
-            NpyIter_Deallocate(iter);
             retval = -1;
             goto fail;
         }
