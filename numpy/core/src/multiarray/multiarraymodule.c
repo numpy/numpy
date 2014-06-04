@@ -2790,6 +2790,9 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
+        /* Get the result from the iterator object array */
+        ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
+
         NPY_BEGIN_THREADS_NDITER(iter);
 
         if (NpyIter_GetIterSize(iter) != 0) {
@@ -2836,10 +2839,10 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                     npy_intp i;
                     for (i = 0; i < n; i++) {
                         if (*csrc) {
-                            copyswapx(dst, xsrc, axswap, ax);
+                            copyswapx(dst, xsrc, axswap, ret);
                         }
                         else {
-                            copyswapy(dst, ysrc, ayswap, ay);
+                            copyswapy(dst, ysrc, ayswap, ret);
                         }
                         dst += itemsize;
                         xsrc += xstride;
@@ -2852,8 +2855,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         NPY_END_THREADS;
 
-        /* Get the result from the iterator object array */
-        ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
         Py_INCREF(ret);
         Py_DECREF(arr);
         Py_DECREF(ax);
