@@ -869,10 +869,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
     }
 
     while(selfit->index < selfit->size) {
-        memmove(selfit->dataptr, arrit->dataptr, PyArray_DESCR(self)->elsize);
-        if (swap) {
-            copyswap(selfit->dataptr, NULL, swap, self);
-        }
+        copyswap(selfit->dataptr, arrit->dataptr, swap, self);
         PyArray_ITER_NEXT(selfit);
         PyArray_ITER_NEXT(arrit);
         if (arrit->index == arrit->size) {
