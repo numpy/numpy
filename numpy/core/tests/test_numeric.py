@@ -2023,6 +2023,35 @@ class TestCross(TestCase):
 
     def test_broadcasting(self):
         # Ticket #2624 (Trac #2032)
+        u = np.tile([1, 2], (11, 1))
+        v = np.tile([3, 4], (11, 1))
+        z = -2
+        assert_equal(np.cross(u, v), z)
+        assert_equal(np.cross(v, u), -z)
+        assert_equal(np.cross(u, u), 0)
+
+        u = np.tile([1, 2], (11, 1)).T
+        v = np.tile([3, 4, 5], (11, 1))
+        z = np.tile([10, -5, -2], (11, 1))
+        assert_equal(np.cross(u, v, axisa=0), z)
+        assert_equal(np.cross(v, u.T), -z)
+        assert_equal(np.cross(v, v), 0)
+
+        u = np.tile([1, 2, 3], (11, 1)).T
+        v = np.tile([3, 4], (11, 1)).T
+        z = np.tile([-12, 9, -2], (11, 1))
+        assert_equal(np.cross(u, v, axisa=0, axisb=0), z)
+        assert_equal(np.cross(v.T, u.T), -z)
+        assert_equal(np.cross(u.T, u.T), 0)
+
+        u = np.tile([1, 2, 3], (5, 1))
+        v = np.tile([4, 5, 6], (5, 1)).T
+        z = np.tile([-3, 6, -3], (5, 1))
+        assert_equal(np.cross(u, v, axisb=0), z)
+        assert_equal(np.cross(v.T, u), -z)
+        assert_equal(np.cross(u, u), 0)
+
+    def test_broadcasting_shapes(self):
         u = np.ones((2, 1, 3))
         v = np.ones((5, 3))
         assert_equal(np.cross(u, v).shape, (2, 5, 3))
