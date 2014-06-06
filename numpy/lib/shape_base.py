@@ -12,7 +12,7 @@ from numpy.core.numeric import asarray, zeros, newaxis, outer, \
 from numpy.core.fromnumeric import product, reshape
 from numpy.core import hstack, vstack, atleast_3d
 
-def apply_along_axis(func1d,axis,arr,*args,**kwargs):
+def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     Apply a function to 1-D slices along the given axis.
 
@@ -32,6 +32,9 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
         Additional arguments to `func1d`.
     kwargs: any
         Additional named arguments to `func1d`.
+
+        .. versionadded:: 1.9.0
+
 
     Returns
     -------
@@ -80,7 +83,7 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
     i[axis] = slice(None, None)
     outshape = asarray(arr.shape).take(indlist)
     i.put(indlist, ind)
-    res = func1d(arr[tuple(i.tolist())],*args,**kwargs)
+    res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
         outarr = zeros(outshape, asarray(res).dtype)
@@ -96,7 +99,7 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
                 ind[n] = 0
                 n -= 1
             i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())],*args,**kwargs)
+            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
             outarr[tuple(ind)] = res
             k += 1
         return outarr
@@ -117,7 +120,7 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
                 ind[n] = 0
                 n -= 1
             i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())],*args,**kwargs)
+            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
             outarr[tuple(i.tolist())] = res
             k += 1
         return outarr
