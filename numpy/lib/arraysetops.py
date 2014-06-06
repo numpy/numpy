@@ -167,13 +167,7 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     array([1, 2, 6, 4, 2, 3, 2])
 
     """
-    try:
-        ar = ar.flatten()
-    except AttributeError:
-        if not return_inverse and not return_index and not return_counts:
-            return np.sort(list((set(ar))))
-        else:
-            ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
     optional_returns = optional_indices or return_counts

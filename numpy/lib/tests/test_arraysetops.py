@@ -97,6 +97,16 @@ class TestSetOps(TestCase):
         aa = [1.+0.j, 1- 1.j, 1]
         assert_array_equal(np.unique(aa), [ 1.-1.j,  1.+0.j])
 
+        # test for ticket #4785
+        a = [(1, 2), (1, 2), (2, 3)]
+        unq = [1, 2, 3]
+        inv = [0, 1, 0, 1, 1, 2]
+        a1 = unique(a)
+        assert_array_equal(a1, unq)
+        a2, a2_inv = unique(a, return_inverse=True)
+        assert_array_equal(a2, unq)
+        assert_array_equal(a2_inv, inv)
+
     def test_intersect1d(self):
         # unique inputs
         a = np.array([5, 7, 1, 2])
