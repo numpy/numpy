@@ -1487,6 +1487,7 @@ class TestPiecewise(TestCase):
         x = piecewise([0, 0], [[False, True]], [lambda x:-1])
         assert_array_equal(x, [0, -1])
 
+    def test_two_conditions(self):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
 
@@ -1504,6 +1505,15 @@ class TestPiecewise(TestCase):
         y = piecewise(x, x > 3, [4, 0])
         assert_(y.ndim == 0)
         assert_(y == 0)
+
+        x = 5
+        y = piecewise(x, [[True], [False]], [1, 0])
+        assert_(y.ndim == 0)
+        assert_(y == 1)
+
+    def test_0d_comparison(self):
+        x = 3
+        y = piecewise(x, [x <= 3, x > 3], [4, 0])
 
 
 class TestBincount(TestCase):
