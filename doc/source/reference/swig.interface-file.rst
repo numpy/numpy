@@ -166,7 +166,7 @@ assignments in lines 19 and 20.
 Using numpy.i
 -------------
 
-The ``numpy.i`` file is currently located in the ``numpy/docs/swig``
+The ``numpy.i`` file is currently located in the ``tools/swig``
 sub-directory under the ``numpy`` installation directory.  Typically,
 you will want to copy it to the directory where you are developing
 your wrappers.
