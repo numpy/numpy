@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import platform
+import warnings
 
 from numpy.testing import *
 from numpy.testing.utils import _gen_alignment_data
@@ -188,6 +189,27 @@ class TestLog2(TestCase):
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
+
+    def test_log2_ints(self):
+        # a good log2 implementation should provide this,
+        # might fail on OS with bad libm
+        for i in range(1, 65):
+            v = np.log2(2.**i)
+            assert_equal(v, float(i), err_msg='at exponent %d' % i)
+
+    def test_log2_special(self):
+        assert_equal(np.log2(1.), 0.)
+        assert_equal(np.log2(np.inf), np.inf)
+        assert_(np.isnan(np.log2(np.nan)))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(np.isnan(np.log2(-1.)))
+            assert_(np.isnan(np.log2(-np.inf)))
+            assert_equal(np.log2(0.), -np.inf)
+            assert_(w[0].category is RuntimeWarning)
+            assert_(w[1].category is RuntimeWarning)
+            assert_(w[2].category is RuntimeWarning)
 
 
 class TestExp2(TestCase):

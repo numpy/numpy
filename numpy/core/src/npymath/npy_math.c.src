@@ -299,7 +299,35 @@ double npy_exp2(double x)
 #ifndef HAVE_LOG2
 double npy_log2(double x)
 {
-    return NPY_LOG2E*npy_log(x);
+#ifdef HAVE_FREXP
+    if (!npy_isfinite(x) || x <= 0.) {
+        /* special value result */
+        return npy_log(x);
+    }
+    else {
+        /*
+         * fallback implementation copied from python3.4 math.log2
+         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
+         *
+         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
+         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
+         * and we get significant cancellation error from the addition of
+         * log(m) / log(2) to e.  The slight rewrite of the expression below
+         * avoids this problem.
+         */
+        int e;
+        double m = frexp(x, &e);
+        if (x >= 1.0) {
+            return log(2.0 * m) / log(2.0) + (e - 1);
+        }
+        else {
+            return log(m) / log(2.0) + e;
+        }
+    }
+#else
+    /* does not provide int(log(2**i)) == i */
+    return NPY_LOG2E * npy_log(x);
+#endif
 }
 #endif
 
