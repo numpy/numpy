@@ -479,6 +479,16 @@ class TestApplyAlongAxis(TestCase):
         xa = apply_along_axis(myfunc, 2, a)
         assert_equal(xa, [[1, 4], [7, 10]])
 
+   # Tests kwargs functions
+    def test_3d_kwargs(self):
+        a = arange(12).reshape(2, 2, 3)
+
+        def myfunc(b, offset=0):
+            return b[1+offset]
+
+        xa = apply_along_axis(myfunc, 2, a, offset=1)
+        assert_equal(xa, [[2, 5], [8, 11]])
+
 
 class TestApplyOverAxes(TestCase):
     # Tests apply_over_axes
