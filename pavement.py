@@ -67,6 +67,7 @@ import subprocess
 import re
 try:
     from hashlib import md5
+    from hashlib import sha256
 except ImportError:
     from md5 import md5
 
@@ -565,9 +566,20 @@ def sdist(options):
 def compute_md5(idirs):
     released = paver.path.path(idirs).listdir()
     checksums = []
-    for f in released:
+    for f in sorted(released):
         m = md5(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), f))
+        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
+
+    return checksums
+
+def compute_sha256(idirs):
+    # better checksum so gpg signed README.txt containing the sums can be used
+    # to verify the binaries instead of signing all binaries
+    released = paver.path.path(idirs).listdir()
+    checksums = []
+    for f in sorted(released):
+        m = sha256(open(f, 'r').read())
+        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
 
     return checksums
 
@@ -583,8 +595,17 @@ def write_release_task(options, filename='NOTES.txt'):
 Checksums
 =========
 
+MD5
+~~~
+
 """)
     ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
+    ftarget.writelines("""
+SHA256
+~~~~~~
+
+""")
+    ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
