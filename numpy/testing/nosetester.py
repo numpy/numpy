@@ -178,7 +178,7 @@ class NoseTester(object):
                 'pyrex_ext',
                 'swig_ext']
 
-    def __init__(self, package=None, raise_warnings="develop"):
+    def __init__(self, package=None, raise_warnings="release"):
         package_name = None
         if package is None:
             f = sys._getframe(1)
