@@ -166,7 +166,7 @@ def fromstr(filestr):
     return filestr, 0
 
 def makenewfile(name, filestr):
-    fid = file(name, 'w')
+    fid = file(name, 'wb')
     fid.write(filestr)
     fid.close()
 
@@ -240,4 +240,6 @@ def converttree(direc=os.path.curdir):
 
 
 if __name__ == '__main__':
+    if not sys.argv[1:]:
+        sys.exit("usage: alter_code1 <path>")
     fromargs(sys.argv)
