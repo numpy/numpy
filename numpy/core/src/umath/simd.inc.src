@@ -480,14 +480,18 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 
 /**end repeat1**/
 
-/* compress 4 vectors to 4/8 bytes in op with filled with 0 or 1 */
+/*
+ * compress 4 vectors to 4/8 bytes in op with filled with 0 or 1
+ * the last vector is passed as a pointer as MSVC 2010 is unable to ignore the
+ * calling convention leading to C2719 on 32 bit, see #4795
+ */
 static NPY_INLINE void
-sse2_compress4_to_byte_@TYPE@(@vtype@ r1, @vtype@ r2, @vtype@ r3, @vtype@ r4,
+sse2_compress4_to_byte_@TYPE@(@vtype@ r1, @vtype@ r2, @vtype@ r3, @vtype@ * r4,
                               npy_bool * op)
 {
     const __m128i mask = @vpre@_set1_epi8(0x1);
     __m128i ir1 = @vpre@_packs_epi32(@cast@(r1), @cast@(r2));
-    __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(r4));
+    __m128i ir2 = @vpre@_packs_epi32(@cast@(r3), @cast@(*r4));
     __m128i rr = @vpre@_packs_epi16(ir1, ir2);
 #if @double@
     rr = @vpre@_packs_epi16(rr, rr);
@@ -535,7 +539,7 @@ sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, b);
             @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, c);
             @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, d);
-            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, &r4, &op[i]);
         }
     }
     else {
@@ -552,7 +556,7 @@ sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b1, b2);
             @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c1, c2);
             @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d1, d2);
-            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+            sse2_compress4_to_byte_@TYPE@(r1, r2, r3, &r4, &op[i]);
         }
     }
     LOOP_BLOCKED_END {
@@ -577,7 +581,7 @@ sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         @vtype@ r2 = @vpre@_@VOP@_@vsuf@(s, b);
         @vtype@ r3 = @vpre@_@VOP@_@vsuf@(s, c);
         @vtype@ r4 = @vpre@_@VOP@_@vsuf@(s, d);
-        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, &r4, &op[i]);
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
@@ -601,7 +605,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
         @vtype@ r2 = @vpre@_@VOP@_@vsuf@(b, s);
         @vtype@ r3 = @vpre@_@VOP@_@vsuf@(c, s);
         @vtype@ r4 = @vpre@_@VOP@_@vsuf@(d, s);
-        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, r4, &op[i]);
+        sse2_compress4_to_byte_@TYPE@(r1, r2, r3, &r4, &op[i]);
     }
     LOOP_BLOCKED_END {
         op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
