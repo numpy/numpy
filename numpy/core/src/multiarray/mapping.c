@@ -1656,6 +1656,56 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
 
 
 /*
+ * This fallback takes the old route of `arr.flat[index] = values`
+ * for one dimensional `arr`. The route can sometimes fail slightly
+ * different (ValueError instead of IndexError), in which case we
+ * warn users about the change. But since it does not actually care *at all*
+ * about shapes, it should only fail for out of bound indexes or
+ * casting errors.
+ */
+NPY_NO_EXPORT int
+attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
+{
+    PyObject *err = PyErr_Occurred();
+    PyArrayIterObject *self_iter = NULL;
+    PyErr_Clear();
+
+    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+    if (self_iter == NULL) {
+        goto fail;
+    }
+    if (iter_ass_subscript(self_iter, ind, op) < 0) {
+        goto fail;
+    }
+    
+    Py_XDECREF((PyObject *)self_iter);
+    Py_DECREF(err);
+
+    if (DEPRECATE(
+            "assignment will raise an error in the future, most likely "
+            "because your index result shape does not match the value array "
+            "shape. You can use `arr.flat[index] = values` to keep the old "
+            "behaviour.") < 0) {
+        return -1;
+    }
+    return 0;
+
+  fail:
+    if (!PyErr_ExceptionMatches(err)) {
+        PyObject *err, *val, *tb;
+        PyErr_Fetch(&err, &val, &tb);
+        DEPRECATE_FUTUREWARNING(
+            "assignment exception type will change in the future");
+        PyErr_Restore(err, val, tb);
+    }
+
+    Py_XDECREF((PyObject *)self_iter);
+    Py_DECREF(err);
+    return -1;
+}
+
+
+/*
  * General assignment with python indexing objects.
  */
 static int
@@ -1899,14 +1949,36 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                              tmp_arr, descr);
 
     if (mit == NULL) {
-        goto fail;
+        /*
+         * This is a deprecated special case to allow non-matching shapes
+         * for the index and value arrays.
+         */
+        if (index_type != HAS_FANCY || index_num != 1) {
+            /* This is not a "flat like" 1-d special case */
+            goto fail;
+        }
+        if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
+            goto fail;
+        }
+        goto success;
     }
 
     if (tmp_arr == NULL) {
         /* Fill extra op */
 
         if (PyArray_CopyObject(mit->extra_op, op) < 0) {
-            goto fail;
+            /*
+             * This is a deprecated special case to allow non-matching shapes
+             * for the index and value arrays.
+             */
+             if (index_type != HAS_FANCY || index_num != 1) {
+                /* This is not a "flat like" 1-d special case */
+                goto fail;
+            }
+            if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
+                goto fail;
+            }
+            goto success;
         }
     }
 
