@@ -1054,12 +1054,12 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->data = data;
 
     /*
-     * If the strides were provided to the function, need to
-     * update the flags to get the right CONTIGUOUS, ALIGN properties
+     * always update the flags to get the right CONTIGUOUS, ALIGN properties
+     * not owned data and input strides may not be aligned and on some
+     * platforms (debian sparc) malloc does not provide enough alignment for
+     * long double types
      */
-    if (strides != NULL) {
-        PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_UPDATE_ALL);
-    }
+    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_UPDATE_ALL);
 
     /*
      * call the __array_finalize__
