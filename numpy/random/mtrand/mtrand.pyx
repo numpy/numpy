@@ -3752,8 +3752,9 @@ cdef class RandomState:
 
         Parameters
         ----------
-        lam : float
-            Expectation of interval, should be >= 0.
+        lam : float or sequence of float
+            Expectation of interval, should be >= 0. A sequence of expectation
+            intervals must be broadcastable over the requested size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -3792,6 +3793,10 @@ cdef class RandomState:
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 14, normed=True)
         >>> plt.show()
+
+        Draw each 100 values for lambda 100 and 500:
+
+        >>> s = np.random.poisson(lam=(100., 500.), size=(100, 2))
 
         """
         cdef ndarray olam

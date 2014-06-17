@@ -1632,11 +1632,11 @@ Conversion
 Shape Manipulation
 ^^^^^^^^^^^^^^^^^^
 
-.. cfunction:: PyObject* PyArray_Newshape(PyArrayObject* self, PyArray_Dims* newshape)
+.. cfunction:: PyObject* PyArray_Newshape(PyArrayObject* self, PyArray_Dims* newshape, NPY_ORDER order)
 
     Result will be a new array (pointing to the same memory location
-    as *self* if possible), but having a shape given by *newshape*
-    . If the new shape is not compatible with the strides of *self*,
+    as *self* if possible), but having a shape given by *newshape*.
+    If the new shape is not compatible with the strides of *self*,
     then a copy of the array with the new specified shape will be
     returned.
 
@@ -1645,6 +1645,7 @@ Shape Manipulation
     Equivalent to :meth:`ndarray.reshape` (*self*, *shape*) where *shape* is a
     sequence. Converts *shape* to a :ctype:`PyArray_Dims` structure and
     calls :cfunc:`PyArray_Newshape` internally.
+    For back-ward compatability -- Not recommended
 
 .. cfunction:: PyObject* PyArray_Squeeze(PyArrayObject* self)
 
