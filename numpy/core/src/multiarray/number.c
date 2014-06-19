@@ -2,7 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-/*#include <stdio.h>*/
+/* #include <stdio.h> */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
@@ -135,7 +135,7 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
          */
         return 0;
     }
-    if (has_ufunc_attr(other) &&
+    if (!has_ufunc_attr(self) && has_ufunc_attr(other) &&
         PyObject_HasAttrString(other, right_name)) {
         return 1;
     }
@@ -337,6 +337,8 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
+    float f;
+    f = 1./0.;
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__add__", "__radd__", 0);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
 }

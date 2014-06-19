@@ -1763,25 +1763,47 @@ class TestBinop(object):
                 err_msg = "%r %r" % (op_name, arr,)
 
                 # Check that ndarray op gives up if it sees a non-subclass
+                # with __numpy_ufunc__ and does not have `__numpy_ufunc__`
+                # itself.
                 if not isinstance(obj, arr.__class__):
-                    assert_equal(getattr(arr, op_name)(obj),
-                                 NotImplemented, err_msg=err_msg)
+                    if hasattr(arr, '__numpy_ufunc__'):
+                        if op_name != rop_name:
+                            # skip for __eq__, __ne__, since those give
+                            # unrelated DeprecationWarning
+                            assert_raises(AssertionError,
+                                          getattr(arr, op_name), obj)
+                    else:
+                        assert_equal(getattr(arr, op_name)(obj),
+                                     NotImplemented, err_msg=err_msg)
 
                 # Check that the Python binops have priority
                 assert_equal(op(obj, arr), "op", err_msg=err_msg)
                 if op_name == rop_name:
-                    assert_equal(op(arr, obj), "op", err_msg=err_msg)
+                    # skip ufunc call for __eq__, __ne__, since those give
+                    # unrelated DeprecationWarning
+                    if not hasattr(arr, '__numpy_ufunc__'):
+                        assert_equal(op(arr, obj), "op", err_msg=err_msg)
                 else:
-                    assert_equal(op(arr, obj), "rop", err_msg=err_msg)
+                    if hasattr(arr, '__numpy_ufunc__'):
+                        assert_raises(AssertionError, op, arr, obj)
+                    else:
+                        assert_equal(op(arr, obj), "rop", err_msg=err_msg)
 
                 # Check that Python binops have priority also for in-place ops
                 if has_iop:
-                    assert_equal(getattr(arr, iop_name)(obj),
-                                 NotImplemented, err_msg=err_msg)
+                    if hasattr(arr, '__numpy_ufunc__'):
+                        assert_raises(AssertionError,
+                                      getattr(arr, iop_name), obj)
+                    else:
+                        assert_equal(getattr(arr, iop_name)(obj),
+                                     NotImplemented, err_msg=err_msg)
                     if op_name != "__pow__":
                         # inplace pow requires the other object to be
                         # integer-like?
-                        assert_equal(iop(arr, obj), "rop", err_msg=err_msg)
+                        if hasattr(arr, '__numpy_ufunc__'):
+                            assert_raises(AssertionError, iop, arr, obj)
+                        else:
+                            assert_equal(iop(arr, obj), "rop", err_msg=err_msg)
 
                 # Check that ufunc call __numpy_ufunc__ normally
                 if np_op is not None:
