@@ -931,6 +931,7 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a']), ([0, 1, 1, 2], [2, 0, 1, 1]))
         assert_equal(np.nonzero(x['b']), ([0, 0, 1, 2, 2], [0, 2, 0, 1, 2]))
 
+        assert_(not x['a'].T.flags.aligned)
         assert_equal(np.count_nonzero(x['a'].T), 4)
         assert_equal(np.count_nonzero(x['b'].T), 5)
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
