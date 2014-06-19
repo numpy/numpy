@@ -6,9 +6,11 @@ import warnings
 import collections
 from . import multiarray
 from . import umath
-from .umath import *
+from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
+                    ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
+                    ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
-from .numerictypes import *
+from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -355,9 +357,6 @@ def extend_all(module):
     for a in mall:
         if a not in adict:
             __all__.append(a)
-
-extend_all(umath)
-extend_all(numerictypes)
 
 newaxis = None
 
@@ -2832,6 +2831,10 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
+from .umath import *
+from .numerictypes import *
 from . import fromnumeric
 from .fromnumeric import *
 extend_all(fromnumeric)
+extend_all(umath)
+extend_all(numerictypes)
