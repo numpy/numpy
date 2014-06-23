@@ -945,11 +945,8 @@ class _MaskedBinaryOperation:
             return result
         # Case 2. : array
         # Revert result to da where masked
-        if m.any():
-            np.copyto(result, 0, casting='unsafe', where=m)
-            # This only makes sense if the operation preserved the dtype
-            if result.dtype == da.dtype:
-                result += m * da
+        if m is not np.ma.nomask:
+            np.copyto(result, da, casting='unsafe', where=m)
         # Transforms to a (subclass of) MaskedArray
         result = result.view(get_masked_subclass(a, b))
         result._mask = m
@@ -1094,8 +1091,7 @@ class _DomainedBinaryOperation:
             else:
                 return result
         # When the mask is True, put back da
-        np.copyto(result, 0, casting='unsafe', where=m)
-        result += m * da
+        np.copyto(result, da, casting='unsafe', where=m)
         result = result.view(get_masked_subclass(a, b))
         result._mask = m
         if isinstance(b, MaskedArray):
