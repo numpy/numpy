@@ -114,9 +114,9 @@ def polyline(off, scl) :
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> P.polynomial.polyline(1,-1)
+    >>> P.polyline(1,-1)
     array([ 1, -1])
-    >>> P.polynomial.polyval(1, P.polyline(1,-1)) # should be 0
+    >>> P.polyval(1, P.polyline(1,-1)) # should be 0
     0.0
 
     """
