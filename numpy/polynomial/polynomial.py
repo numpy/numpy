@@ -113,10 +113,10 @@ def polyline(off, scl) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
-    >>> P.polyline(1,-1)
+    >>> from numpy.polynomial import polynomial as P
+    >>> P.polynomial.polyline(1,-1)
     array([ 1, -1])
-    >>> P.polyval(1, P.polyline(1,-1)) # should be 0
+    >>> P.polynomial.polyval(1, P.polyline(1,-1)) # should be 0
     0.0
 
     """
@@ -176,7 +176,7 @@ def polyfromroots(roots) :
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> P.polyfromroots((-1,0,1)) # x(x - 1)(x + 1) = x^3 - x
     array([ 0., -1.,  0.,  1.])
     >>> j = complex(0,1)
@@ -225,7 +225,7 @@ def polyadd(c1, c2):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> sum = P.polyadd(c1,c2); sum
@@ -270,7 +270,7 @@ def polysub(c1, c2):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polysub(c1,c2)
@@ -352,7 +352,7 @@ def polymul(c1, c2):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polymul(c1,c2)
@@ -389,7 +389,7 @@ def polydiv(c1, c2):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polydiv(c1,c2)
@@ -513,7 +513,7 @@ def polyder(c, m=1, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3,4) # 1 + 2x + 3x**2 + 4x**3
     >>> P.polyder(c) # (d/dx)(c) = 2 + 6x + 12x**2
     array([  2.,   6.,  12.])
@@ -624,7 +624,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3)
     >>> P.polyint(c) # should return array([0, 1, 1, 1])
     array([ 0.,  1.,  1.,  1.])
@@ -1310,7 +1310,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy import polynomial as P
+    >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
     >>> c, stats = P.polyfit(x,y,3,full=True)
