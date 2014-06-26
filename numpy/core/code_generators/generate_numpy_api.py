@@ -8,8 +8,9 @@ from genapi import \
 
 import numpy_api
 
+# use annotated api when running under cpychecker
 h_template = r"""
-#ifdef _MULTIARRAYMODULE
+#if defined(_MULTIARRAYMODULE) || defined(WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE)
 
 typedef struct {
         PyObject_HEAD

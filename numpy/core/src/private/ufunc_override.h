@@ -26,6 +26,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
         else {
             obj = PyTuple_GetSlice(args, nin, nargs);
             PyDict_SetItemString(*normal_kwds, "out", obj);
+            Py_DECREF(obj);
         }
     }
 }

@@ -54,16 +54,15 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, nop = ufunc->nin + ufunc->nout;
-    PyArray_Descr *obj_dtype;
 
-    obj_dtype = PyArray_DescrFromType(NPY_OBJECT);
-    if (obj_dtype == NULL) {
+    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
+    if (out_dtypes[0] == NULL) {
         return -1;
     }
 
-    for (i = 0; i < nop; ++i) {
-        Py_INCREF(obj_dtype);
-        out_dtypes[i] = obj_dtype;
+    for (i = 1; i < nop; ++i) {
+        Py_INCREF(out_dtypes[0]);
+        out_dtypes[i] = out_dtypes[0];
     }
 
     return 0;

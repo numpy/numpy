@@ -473,9 +473,9 @@ def fullapi_hash(api_dicts):
     of the list of items in the API (as a string)."""
     a = []
     for d in api_dicts:
-        for name, index in order_dict(d):
+        for name, data in order_dict(d):
             a.extend(name)
-            a.extend(str(index))
+            a.extend(','.join(map(str, data)))
 
     return md5new(''.join(a).encode('ascii')).hexdigest()
 

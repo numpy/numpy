@@ -28,4 +28,4 @@
 # Version 9 (NumPy 1.9) Added function annotations.
 # The interface has not changed, but the hash is different due to
 # the annotations, so keep the previous version number.
-0x00000009 = 49b27dc2dc7206a775a7376fdbc3b80c
+0x00000009 = 982c4ebb6e7e4c194bf46b1535b4ef1b
