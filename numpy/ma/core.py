@@ -943,7 +943,7 @@ class _MaskedBinaryOperation:
             return result
         # Case 2. : array
         # Revert result to da where masked
-        if m is not np.ma.nomask:
+        if m is not nomask:
             np.copyto(result, da, casting='unsafe', where=m)
         # Transforms to a (subclass of) MaskedArray
         result = result.view(get_masked_subclass(a, b))
