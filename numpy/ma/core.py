@@ -843,8 +843,7 @@ class _MaskedUnaryOperation:
         d = getdata(a)
         # Case 1.1. : Domained function
         if self.domain is not None:
-            with np.errstate():
-                np.seterr(divide='ignore', invalid='ignore')
+            with np.errstate(divide='ignore', invalid='ignore'):
                 result = self.f(d, *args, **kwargs)
             # Make a mask
             m = ~umath.isfinite(result)
@@ -932,8 +931,7 @@ class _MaskedBinaryOperation:
         else:
             m = umath.logical_or(ma, mb)
         # Get the result
-        with np.errstate():
-            np.seterr(divide='ignore', invalid='ignore')
+        with np.errstate(divide='ignore', invalid='ignore'):
             result = self.f(da, db, *args, **kwargs)
         # check it worked
         if result is NotImplemented:
@@ -945,11 +943,8 @@ class _MaskedBinaryOperation:
             return result
         # Case 2. : array
         # Revert result to da where masked
-        if m.any():
-            np.copyto(result, 0, casting='unsafe', where=m)
-            # This only makes sense if the operation preserved the dtype
-            if result.dtype == da.dtype:
-                result += m * da
+        if m is not np.ma.nomask:
+            np.copyto(result, da, casting='unsafe', where=m)
         # Transforms to a (subclass of) MaskedArray
         result = result.view(get_masked_subclass(a, b))
         result._mask = m
@@ -1073,8 +1068,7 @@ class _DomainedBinaryOperation:
         (da, db) = (getdata(a, subok=False), getdata(b, subok=False))
         (ma, mb) = (getmask(a), getmask(b))
         # Get the result
-        with np.errstate():
-            np.seterr(divide='ignore', invalid='ignore')
+        with np.errstate(divide='ignore', invalid='ignore'):
             result = self.f(da, db, *args, **kwargs)
         # check it worked
         if result is NotImplemented:
@@ -1094,8 +1088,7 @@ class _DomainedBinaryOperation:
             else:
                 return result
         # When the mask is True, put back da
-        np.copyto(result, 0, casting='unsafe', where=m)
-        result += m * da
+        np.copyto(result, da, casting='unsafe', where=m)
         result = result.view(get_masked_subclass(a, b))
         result._mask = m
         if isinstance(b, MaskedArray):
@@ -3840,8 +3833,7 @@ class MaskedArray(ndarray):
         "Raise self to the power other, in place."
         other_data = getdata(other)
         other_mask = getmask(other)
-        with np.errstate():
-            np.seterr(divide='ignore', invalid='ignore')
+        with np.errstate(divide='ignore', invalid='ignore'):
             ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
         invalid = np.logical_not(np.isfinite(self._data))
         if invalid.any():
@@ -6110,8 +6102,7 @@ def power(a, b, third=None):
     else:
         basetype = MaskedArray
     # Get the result and view it as a (subclass of) MaskedArray
-    with np.errstate():
-        np.seterr(divide='ignore', invalid='ignore')
+    with np.errstate(divide='ignore', invalid='ignore'):
         result = np.where(m, fa, umath.power(fa, fb)).view(basetype)
     result._update_from(a)
     # Find where we're in trouble w/ NaNs and Infs
