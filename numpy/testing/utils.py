@@ -10,6 +10,9 @@ import re
 import operator
 import warnings
 from functools import partial
+import shutil
+import contextlib
+from tempfile import mkdtemp
 from .nosetester import import_nose
 from numpy.core import float32, empty, arange, array_repr, ndarray
 
@@ -1692,3 +1695,16 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
 
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
+
+
+@contextlib.contextmanager
+def tempdir(*args, **kwargs):
+    """Context manager to provide a temporary test folder.
+
+    All arguments are passed as this to the underlying tempfile.mkdtemp
+    function.
+
+    """
+    tmpdir = mkdtemp(*args, **kwargs)
+    yield tmpdir
+    shutil.rmtree(tmpdir)
