@@ -14,6 +14,10 @@ class TestUfunc(TestCase):
         import pickle
         assert pickle.loads(pickle.dumps(np.sin)) is np.sin
 
+        # Check that ufunc not defined in the top level numpy namespace such as
+        # numpy.core.test_rational.test_add can also be pickled
+        assert pickle.loads(pickle.dumps(test_add)) is test_add
+
     def test_pickle_withstring(self):
         import pickle
         astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
