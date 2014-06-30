@@ -194,8 +194,7 @@ class TestMaskedArray(TestCase):
 
     def test_fix_invalid(self):
         # Checks fix_invalid.
-        with np.errstate():
-            np.seterr(invalid='ignore')
+        with np.errstate(invalid='ignore'):
             data = masked_array([np.nan, 0., 1.], mask=[0, 0, 1])
             data_fixed = fix_invalid(data)
             assert_equal(data_fixed._data, [data.fill_value, 0., 1.])
