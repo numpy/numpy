@@ -4,9 +4,7 @@ import sys
 import gzip
 import os
 import threading
-import shutil
-import contextlib
-from tempfile import mkstemp, mkdtemp, NamedTemporaryFile
+from tempfile import mkstemp, NamedTemporaryFile
 import time
 import warnings
 import gc
@@ -24,13 +22,7 @@ from numpy.ma.testutils import (
     assert_raises, assert_raises_regex, run_module_suite
 )
 from numpy.testing import assert_warns, assert_, build_err_msg
-
-
-@contextlib.contextmanager
-def tempdir(change_dir=False):
-    tmpdir = mkdtemp()
-    yield tmpdir
-    shutil.rmtree(tmpdir)
+from numpy.testing.utils import tempdir
 
 
 class TextIO(BytesIO):
@@ -202,7 +194,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
-        with tempdir() as tmpdir:
+        with tempdir(prefix="numpy_test_big_arrays_") as tmpdir:
             tmp = os.path.join(tmpdir, "file.npz")
             np.savez(tmp, a=a)
             del a
@@ -311,7 +303,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         # Check that zipfile owns file and can close it.
         # This needs to pass a file name to load for the
         # test.
-        with tempdir() as tmpdir:
+        with tempdir(prefix="numpy_test_closing_zipfile_after_load_") as tmpdir:
             fd, tmp = mkstemp(suffix='.npz', dir=tmpdir)
             os.close(fd)
             np.savez(tmp, lab='place holder')
