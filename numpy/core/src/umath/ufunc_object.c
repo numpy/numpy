@@ -73,7 +73,7 @@ static int
 _does_loop_use_arrays(void *data);
 
 static int
-_extract_pyvals(PyObject *ref, char *name, int *bufsize,
+_extract_pyvals(PyObject *ref, const char *name, int *bufsize,
                 int *errmask, PyObject **errobj);
 
 static int
@@ -237,7 +237,7 @@ static int PyUFunc_NUM_NODEFAULTS = 0;
 #endif
 
 static PyObject *
-_get_global_ext_obj(char * name)
+get_global_ext_obj(void)
 {
     PyObject *thedict;
     PyObject *ref = NULL;
@@ -259,12 +259,12 @@ _get_global_ext_obj(char * name)
 
 
 static int
-_get_bufsize_errmask(PyObject * extobj, char * ufunc_name,
+_get_bufsize_errmask(PyObject * extobj, const char *ufunc_name,
                      int *buffersize, int *errormask)
 {
     /* Get the buffersize and errormask */
     if (extobj == NULL) {
-        extobj = _get_global_ext_obj(ufunc_name);
+        extobj = get_global_ext_obj();
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         buffersize, errormask, NULL) < 0) {
@@ -430,7 +430,7 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
  *          if an error handling method is 'call'
  */
 static int
-_extract_pyvals(PyObject *ref, char *name, int *bufsize,
+_extract_pyvals(PyObject *ref, const char *name, int *bufsize,
                 int *errmask, PyObject **errobj)
 {
     PyObject *retval;
@@ -518,41 +518,41 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 NPY_NO_EXPORT int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
-    PyObject *ref = _get_global_ext_obj(name);
+    PyObject *ref = get_global_ext_obj();
 
     return _extract_pyvals(ref, name, bufsize, errmask, errobj);
 }
 
-#define _GETATTR_(str, rstr) do {if (strcmp(name, #str) == 0)     \
+#define GETATTR(str, rstr) do {if (strcmp(name, #str) == 0)     \
         return PyObject_HasAttrString(op, "__" #rstr "__");} while (0);
 
 static int
-_has_reflected_op(PyObject *op, char *name)
+_has_reflected_op(PyObject *op, const char *name)
 {
-    _GETATTR_(add, radd);
-    _GETATTR_(subtract, rsub);
-    _GETATTR_(multiply, rmul);
-    _GETATTR_(divide, rdiv);
-    _GETATTR_(true_divide, rtruediv);
-    _GETATTR_(floor_divide, rfloordiv);
-    _GETATTR_(remainder, rmod);
-    _GETATTR_(power, rpow);
-    _GETATTR_(left_shift, rlshift);
-    _GETATTR_(right_shift, rrshift);
-    _GETATTR_(bitwise_and, rand);
-    _GETATTR_(bitwise_xor, rxor);
-    _GETATTR_(bitwise_or, ror);
+    GETATTR(add, radd);
+    GETATTR(subtract, rsub);
+    GETATTR(multiply, rmul);
+    GETATTR(divide, rdiv);
+    GETATTR(true_divide, rtruediv);
+    GETATTR(floor_divide, rfloordiv);
+    GETATTR(remainder, rmod);
+    GETATTR(power, rpow);
+    GETATTR(left_shift, rlshift);
+    GETATTR(right_shift, rrshift);
+    GETATTR(bitwise_and, rand);
+    GETATTR(bitwise_xor, rxor);
+    GETATTR(bitwise_or, ror);
     /* Comparisons */
-    _GETATTR_(equal, eq);
-    _GETATTR_(not_equal, ne);
-    _GETATTR_(greater, lt);
-    _GETATTR_(less, gt);
-    _GETATTR_(greater_equal, le);
-    _GETATTR_(less_equal, ge);
+    GETATTR(equal, eq);
+    GETATTR(not_equal, ne);
+    GETATTR(greater, lt);
+    GETATTR(less, gt);
+    GETATTR(greater_equal, le);
+    GETATTR(less_equal, ge);
     return 0;
 }
 
-#undef _GETATTR_
+#undef GETATTR
 
 
 /* Return the position of next non-white-space char in the string */
@@ -779,7 +779,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     int i, nargs, nin = ufunc->nin;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
-    char *ufunc_name;
+    const char *ufunc_name;
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
@@ -1762,7 +1762,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
  *  - ufunc_name: name of ufunc
  */
 static int
-_check_ufunc_fperr(int errmask, PyObject *extobj, char* ufunc_name) {
+_check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     int fperr;
     PyObject *errobj = NULL;
     int ret;
@@ -1778,7 +1778,7 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, char* ufunc_name) {
 
     /* Get error object globals */
     if (extobj == NULL) {
-        extobj = _get_global_ext_obj(ufunc_name);
+        extobj = get_global_ext_obj();
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         NULL, NULL, &errobj) < 0) {
@@ -1800,7 +1800,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 {
     int nin, nout;
     int i, j, idim, nop;
-    char *ufunc_name;
+    const char *ufunc_name;
     int retval = -1, subok = 1;
     int needs_api = 0;
 
@@ -2325,7 +2325,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 {
     int nin, nout;
     int i, nop;
-    char *ufunc_name;
+    const char *ufunc_name;
     int retval = -1, subok = 1;
     int need_fancy = 0;
 
@@ -2640,7 +2640,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
@@ -2816,7 +2816,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *dtype;
     PyArrayObject *result;
     PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
-    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
@@ -2912,7 +2912,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3265,7 +3265,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
@@ -4305,7 +4305,7 @@ NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
                         char *types, int ntypes,
                         int nin, int nout, int identity,
-                        char *name, char *doc, int check_return)
+                        const char *name, const char *doc, int check_return)
 {
     return PyUFunc_FromFuncAndDataAndSignature(func, data, types, ntypes,
         nin, nout, identity, name, doc, check_return, NULL);
@@ -4316,7 +4316,7 @@ NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      char *types, int ntypes,
                                      int nin, int nout, int identity,
-                                     char *name, char *doc,
+                                     const char *name, const char *doc,
                                      int check_return, const char *signature)
 {
     PyUFuncObject *ufunc;

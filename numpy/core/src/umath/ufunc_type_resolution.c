@@ -58,7 +58,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -186,7 +186,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -292,7 +292,7 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -433,7 +433,7 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -591,7 +591,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -781,7 +781,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -963,7 +963,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -1106,7 +1106,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    char *ufunc_name;
+    const char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -1875,7 +1875,7 @@ linear_search_type_resolver(PyUFuncObject *self,
 {
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
-    char *ufunc_name;
+    const char *ufunc_name;
     int no_castable_output, use_min_scalar;
 
     /* For making a better error message on coercion error */
@@ -1984,7 +1984,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     npy_intp i, j, n, nin = self->nin, nop = nin + self->nout;
     int n_specified = 0;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
-    char *ufunc_name;
+    const char *ufunc_name;
     int no_castable_output, use_min_scalar;
 
     /* For making a better error message on coercion error */
