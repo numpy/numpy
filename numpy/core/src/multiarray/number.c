@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
+#include "frameobject.h"
 
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -365,7 +366,18 @@ static int can_elide_temp(PyArrayObject * m1, PyObject * m2)
         PyArray_DESCR(m1)->type_num == PyArray_DESCR(m2)->type_num &&
         PyArray_NDIM(m1) == PyArray_NDIM(m2) &&
         (PyArray_FLAGS(m1) & NPY_ARRAY_OWNDATA)) {
+        PyFrameObject * f = PyEval_GetFrame();
+        PyObject ** stack = f->f_valuestack;
+        npy_intp nstack = f->f_code->co_stacksize;
         npy_intp i;
+        for (i = 0; i < nstack; i++) {
+            if (stack[i] == m1) {
+                break;
+            }
+        }
+        if (i == nstack) {
+            return 0;
+        }
         for (i = 0; i < PyArray_NDIM(m2); i++) {
             if (PyArray_DIM(m1, i) != PyArray_DIM(m2, i) ||
                 PyArray_STRIDE(m1, i) != PyArray_STRIDE(m2, i)) {
