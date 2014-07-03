@@ -776,7 +776,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
         PyArray_DIMS(ret)[i] = PyArray_DIMS(ap)[permutation[i]];
         PyArray_STRIDES(ret)[i] = PyArray_STRIDES(ap)[permutation[i]];
     }
-    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
+                        NPY_ARRAY_ALIGNED);
     return (PyObject *)ret;
 }
 

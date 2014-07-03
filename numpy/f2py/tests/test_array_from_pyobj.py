@@ -4,6 +4,7 @@ import unittest
 import os
 import sys
 import copy
+import platform
 
 import nose
 
@@ -81,37 +82,45 @@ class Intent(object):
 
 intent = Intent()
 
-class Type(object):
-    _type_names = ['BOOL', 'BYTE', 'UBYTE', 'SHORT', 'USHORT', 'INT', 'UINT',
-                   'LONG', 'ULONG', 'LONGLONG', 'ULONGLONG',
-                   'FLOAT', 'DOUBLE', 'LONGDOUBLE', 'CFLOAT', 'CDOUBLE',
-                   'CLONGDOUBLE']
-    _type_cache = {}
+_type_names = ['BOOL', 'BYTE', 'UBYTE', 'SHORT', 'USHORT', 'INT', 'UINT',
+               'LONG', 'ULONG', 'LONGLONG', 'ULONGLONG',
+               'FLOAT', 'DOUBLE', 'CFLOAT']
 
-    _cast_dict = {'BOOL':['BOOL']}
-    _cast_dict['BYTE'] = _cast_dict['BOOL'] + ['BYTE']
-    _cast_dict['UBYTE'] = _cast_dict['BOOL'] + ['UBYTE']
-    _cast_dict['BYTE'] = ['BYTE']
-    _cast_dict['UBYTE'] = ['UBYTE']
-    _cast_dict['SHORT'] = _cast_dict['BYTE'] + ['UBYTE', 'SHORT']
-    _cast_dict['USHORT'] = _cast_dict['UBYTE'] + ['BYTE', 'USHORT']
-    _cast_dict['INT'] = _cast_dict['SHORT'] + ['USHORT', 'INT']
-    _cast_dict['UINT'] = _cast_dict['USHORT'] + ['SHORT', 'UINT']
+_cast_dict = {'BOOL':['BOOL']}
+_cast_dict['BYTE'] = _cast_dict['BOOL'] + ['BYTE']
+_cast_dict['UBYTE'] = _cast_dict['BOOL'] + ['UBYTE']
+_cast_dict['BYTE'] = ['BYTE']
+_cast_dict['UBYTE'] = ['UBYTE']
+_cast_dict['SHORT'] = _cast_dict['BYTE'] + ['UBYTE', 'SHORT']
+_cast_dict['USHORT'] = _cast_dict['UBYTE'] + ['BYTE', 'USHORT']
+_cast_dict['INT'] = _cast_dict['SHORT'] + ['USHORT', 'INT']
+_cast_dict['UINT'] = _cast_dict['USHORT'] + ['SHORT', 'UINT']
 
-    _cast_dict['LONG'] = _cast_dict['INT'] + ['LONG']
-    _cast_dict['ULONG'] = _cast_dict['UINT'] + ['ULONG']
+_cast_dict['LONG'] = _cast_dict['INT'] + ['LONG']
+_cast_dict['ULONG'] = _cast_dict['UINT'] + ['ULONG']
 
-    _cast_dict['LONGLONG'] = _cast_dict['LONG'] + ['LONGLONG']
-    _cast_dict['ULONGLONG'] = _cast_dict['ULONG'] + ['ULONGLONG']
+_cast_dict['LONGLONG'] = _cast_dict['LONG'] + ['LONGLONG']
+_cast_dict['ULONGLONG'] = _cast_dict['ULONG'] + ['ULONGLONG']
 
-    _cast_dict['FLOAT'] = _cast_dict['SHORT'] + ['USHORT', 'FLOAT']
-    _cast_dict['DOUBLE'] = _cast_dict['INT'] + ['UINT', 'FLOAT', 'DOUBLE']
-    _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']
+_cast_dict['FLOAT'] = _cast_dict['SHORT'] + ['USHORT', 'FLOAT']
+_cast_dict['DOUBLE'] = _cast_dict['INT'] + ['UINT', 'FLOAT', 'DOUBLE']
 
-    _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
+_cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
+
+# (debian) sparc system malloc does not provide the alignment required by
+# 16 byte long double types this means the inout intent cannot be satisfied and
+# several tests fail as the alignment flag can be randomly true or fals
+# when numpy gains an aligned allocator the tests could be enabled again
+if 'sparc' not in platform.platform().lower():
+    _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
+    _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
+                               ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']
+    _cast_dict['CLONGDOUBLE'] = _cast_dict['LONGDOUBLE'] + \
+                               ['CFLOAT', 'CDOUBLE', 'CLONGDOUBLE']
     _cast_dict['CDOUBLE'] = _cast_dict['DOUBLE'] + ['CFLOAT', 'CDOUBLE']
-    _cast_dict['CLONGDOUBLE'] = _cast_dict['LONGDOUBLE'] + ['CFLOAT', 'CDOUBLE', 'CLONGDOUBLE']
 
+class Type(object):
+    _type_cache = {}
 
     def __new__(cls, name):
         if isinstance(name, dtype):
@@ -138,15 +147,15 @@ class Type(object):
         self.dtypechar = typeinfo[self.NAME][0]
 
     def cast_types(self):
-        return [self.__class__(_m) for _m in self._cast_dict[self.NAME]]
+        return [self.__class__(_m) for _m in _cast_dict[self.NAME]]
 
     def all_types(self):
-        return [self.__class__(_m) for _m in self._type_names]
+        return [self.__class__(_m) for _m in _type_names]
 
     def smaller_types(self):
         bits = typeinfo[self.NAME][3]
         types = []
-        for name in self._type_names:
+        for name in _type_names:
             if typeinfo[name][3]<bits:
                 types.append(Type(name))
         return types
@@ -154,7 +163,7 @@ class Type(object):
     def equal_types(self):
         bits = typeinfo[self.NAME][3]
         types = []
-        for name in self._type_names:
+        for name in _type_names:
             if name==self.NAME: continue
             if typeinfo[name][3]==bits:
                 types.append(Type(name))
@@ -163,7 +172,7 @@ class Type(object):
     def larger_types(self):
         bits = typeinfo[self.NAME][3]
         types = []
-        for name in self._type_names:
+        for name in _type_names:
             if typeinfo[name][3]>bits:
                 types.append(Type(name))
         return types
@@ -532,7 +541,7 @@ class _test_shared_memory:
             assert_(obj.dtype.type is self.type.dtype) # obj type is changed inplace!
 
 
-for t in Type._type_names:
+for t in _type_names:
     exec('''\
 class test_%s_gen(unittest.TestCase,
               _test_shared_memory
