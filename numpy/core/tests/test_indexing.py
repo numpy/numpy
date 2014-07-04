@@ -147,7 +147,7 @@ class TestIndexing(TestCase):
 
     def test_boolean_assignment_value_mismatch(self):
         # A boolean assignment should fail when the shape of the values
-        # cannot be broadcasted to the subscription. (see also gh-3458)
+        # cannot be broadcast to the subscription. (see also gh-3458)
         a = np.arange(4)
         def f(a, v):
             a[a > -1] = v
@@ -188,12 +188,12 @@ class TestIndexing(TestCase):
         # If the strides are not reversed, the 0 in the arange comes last.
         assert_equal(a[0], 0)
 
-        # This also tests that the subspace buffer is initiliazed:
+        # This also tests that the subspace buffer is initialized:
         a = np.ones((5, 2))
         c = np.arange(10).reshape(5, 2)[::-1]
         a[b, :] = c
         assert_equal(a[0], [0, 1])
-    
+
     def test_reversed_strides_result_allocation(self):
         # Test a bug when calculating the output strides for a result array
         # when the subspace size was 1 (and test other cases as well)
@@ -346,7 +346,7 @@ class TestIndexing(TestCase):
         # Reference count of intp for index checks
         a = np.array([0])
         refcount = sys.getrefcount(np.dtype(np.intp))
-        # item setting always checks indices in seperate function:
+        # item setting always checks indices in separate function:
         a[np.array([0], dtype=np.intp)] = 1
         a[np.array([0], dtype=np.uint8)] = 1
         assert_raises(IndexError, a.__setitem__,
@@ -537,11 +537,11 @@ class TestMultiIndexingAutomated(TestCase):
      These test use code to mimic the C-Code indexing for selection.
 
      NOTE: * This still lacks tests for complex item setting.
-           * If you change behavoir of indexing, you might want to modify
+           * If you change behavior of indexing, you might want to modify
              these tests to try more combinations.
            * Behavior was written to match numpy version 1.8. (though a
              first version matched 1.7.)
-           * Only tuple indicies are supported by the mimicing code.
+           * Only tuple indices are supported by the mimicking code.
              (and tested as of writing this)
            * Error types should match most of the time as long as there
              is only one error. For multiple errors, what gets raised
@@ -564,7 +564,7 @@ class TestMultiIndexingAutomated(TestCase):
             slice(4, -1, -2),
             slice(None, None, -3),
             # Some Fancy indexes:
-            np.empty((0, 1, 1), dtype=np.intp), # empty broadcastable
+            np.empty((0, 1, 1), dtype=np.intp), # empty and can be broadcast
             np.array([0, 1, -2]),
             np.array([[2], [0], [1]]),
             np.array([[0, -1], [0, 1]], dtype=np.dtype('intp').newbyteorder()),
@@ -611,7 +611,7 @@ class TestMultiIndexingAutomated(TestCase):
         fancy_dim = 0
         # NOTE: This is a funny twist (and probably OK to change).
         # The boolean array has illegal indexes, but this is
-        # allowed if the broadcasted fancy-indices are 0-sized.
+        # allowed if the broadcast fancy-indices are 0-sized.
         # This variable is to catch that case.
         error_unless_broadcast_to_empty = False
 
@@ -656,7 +656,7 @@ class TestMultiIndexingAutomated(TestCase):
         if arr.ndim - ndim < 0:
             # we can't take more dimensions then we have, not even for 0-d arrays.
             # since a[()] makes sense, but not a[(),]. We will raise an error
-            # lateron, unless a broadcasting error occurs first.
+            # later on, unless a broadcasting error occurs first.
             raise IndexError
 
         if ndim == 0 and not None in in_indices:
@@ -668,7 +668,7 @@ class TestMultiIndexingAutomated(TestCase):
 
         for ax, indx in enumerate(in_indices):
             if isinstance(indx, slice):
-                # convert to an index array anways:
+                # convert to an index array
                 indx = np.arange(*indx.indices(arr.shape[ax]))
                 indices.append(['s', indx])
                 continue
@@ -701,7 +701,7 @@ class TestMultiIndexingAutomated(TestCase):
                     indx = flat_indx
                 else:
                     # This could be changed, a 0-d boolean index can
-                    # make sense (even outide the 0-d indexed array case)
+                    # make sense (even outside the 0-d indexed array case)
                     # Note that originally this is could be interpreted as
                     # integer in the full integer special case.
                     raise IndexError
@@ -753,7 +753,7 @@ class TestMultiIndexingAutomated(TestCase):
             arr = arr.transpose(*(fancy_axes + axes))
 
         # We only have one 'f' index now and arr is transposed accordingly.
-        # Now handle newaxes by reshaping...
+        # Now handle newaxis by reshaping...
         ax = 0
         for indx in indices:
             if indx[0] == 'f':
@@ -771,7 +771,7 @@ class TestMultiIndexingAutomated(TestCase):
                     res = np.broadcast(*indx[1:]) # raises ValueError...
                 else:
                     res = indx[1]
-                # unfortunatly the indices might be out of bounds. So check
+                # unfortunately the indices might be out of bounds. So check
                 # that first, and use mode='wrap' then. However only if
                 # there are any indices...
                 if res.size != 0:
@@ -909,7 +909,7 @@ class TestMultiIndexingAutomated(TestCase):
         # spot and the simple ones in one other spot.
         with warnings.catch_warnings():
             # This is so that np.array(True) is not accepted in a full integer
-            # index, when running the file seperatly.
+            # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
             for simple_pos in [0, 2, 3]:
                 tocheck = [self.fill_indices, self.complex_indices,
