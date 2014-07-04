@@ -390,7 +390,10 @@ int
         /* move pivot into position */
         SWAP(SORTEE(low), SORTEE(hh));
 
-        store_pivot(hh, kth, pivots, npiv);
+        /* kth pivot stored later */
+        if (hh != kth) {
+            store_pivot(hh, kth, pivots, npiv);
+        }
 
         if (hh >= kth)
             high = hh - 1;
@@ -400,10 +403,11 @@ int
 
     /* two elements */
     if (high == low + 1) {
-        if (@TYPE@_LT(v[IDX(high)], v[IDX(low)]))
+        if (@TYPE@_LT(v[IDX(high)], v[IDX(low)])) {
             SWAP(SORTEE(high), SORTEE(low))
-        store_pivot(low, kth, pivots, npiv);
+        }
     }
+    store_pivot(kth, kth, pivots, npiv);
 
     return 0;
 }
