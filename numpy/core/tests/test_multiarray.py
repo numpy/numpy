@@ -1356,6 +1356,12 @@ class TestMethods(TestCase):
                 d[i:].partition(0, kind=k)
             assert_array_equal(d, tgt)
 
+            d = np.array([0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+                          7, 7, 7, 7, 7, 9])
+            kth = [0, 3, 19, 20]
+            assert_equal(np.partition(d, kth, kind=k)[kth], (0, 3, 7, 7))
+            assert_equal(d[np.argpartition(d, kth, kind=k)][kth], (0, 3, 7, 7))
+
             d = np.array([2, 1])
             d.partition(0, kind=k)
             assert_raises(ValueError, d.partition, 2)
@@ -1551,6 +1557,18 @@ class TestMethods(TestCase):
         assert_raises(ValueError, d.partition, 2, kind=k)
         assert_raises(ValueError, d.argpartition, 2, kind=k)
 
+    def test_partition_fuzz(self):
+        # a few rounds of random data testing
+       for j in range(10, 30):
+           for i in range(1, j - 2):
+               d = np.arange(j)
+               np.random.shuffle(d)
+               d = d % np.random.randint(2, 30)
+               idx = np.random.randint(d.size)
+               kth = [0, idx, i, i + 1]
+               tgt = np.sort(d)[kth]
+               assert_array_equal(np.partition(d, kth)[kth], tgt,
+                                  err_msg="data: %r\n kth: %r" % (d, kth))
 
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
