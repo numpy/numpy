@@ -1668,6 +1668,8 @@ attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
 {
     PyObject *err = PyErr_Occurred();
     PyArrayIterObject *self_iter = NULL;
+
+    Py_INCREF(err);
     PyErr_Clear();
 
     self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
@@ -1803,7 +1805,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             /*
              * Deprecated case. The old boolean indexing seemed to have some
              * check to allow wrong dimensional boolean arrays in all cases.
-             * Note that it did *not* allow a wrong number of elements here.
              */
             if (PyArray_NDIM(tmp_arr) > 1) {
                 if (attempt_1d_fallback(self, indices[0].object, tmp_arr) < 0) {
