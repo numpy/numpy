@@ -214,9 +214,6 @@ static PyUFuncGenericFunction frexp_functions[] = {
 #endif
 };
 
-static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
-static void * blank6_data[] = { (void *)NULL, (void *)NULL, (void *)NULL,
-                                (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
 #ifdef HAVE_FREXPF
     NPY_HALF, NPY_HALF, NPY_INT,
@@ -227,6 +224,7 @@ static char frexp_signatures[] = {
     ,NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_INT
 #endif
 };
+static void * blank_data[12];
 
 #if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
 #define LDEXP_LONG(typ) typ##_ldexp
@@ -357,14 +355,16 @@ InitOtherOperators(PyObject *dictionary) {
     int num;
 
     num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
+    assert(sizeof(blank_data) / sizeof(blank_data[0]) >= num);
+    f = PyUFunc_FromFuncAndData(frexp_functions, blank_data,
                                 frexp_signatures, num,
                                 1, 2, PyUFunc_None, "frexp", frdoc, 0);
     PyDict_SetItemString(dictionary, "frexp", f);
     Py_DECREF(f);
 
     num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data,
+    assert(sizeof(blank_data) / sizeof(blank_data[0]) >= num);
+    f = PyUFunc_FromFuncAndData(ldexp_functions, blank_data,
                                 ldexp_signatures, num,
                                 2, 1, PyUFunc_None, "ldexp", lddoc, 0);
     PyDict_SetItemString(dictionary, "ldexp", f);
