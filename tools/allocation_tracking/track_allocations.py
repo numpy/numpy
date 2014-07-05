@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+import gc
 import inspect
 from alloc_hook import NumpyAllocHook
 
@@ -35,12 +36,21 @@ class AllocationTracker(object):
         self.numpy_hook.__exit__()
 
     def hook(self, inptr, outptr, size):
+        # minimize the chances that the garbage collector kicks in during a
+        # cython __dealloc__ call and causes a double delete of the current
+        # object. To avoid this fully the hook would have to avoid all python
+        # api calls, e.g. by being implemented in C like python 3.4's
+        # tracemalloc module
+        gc_on = gc.isenabled()
+        gc.disable()
         if outptr == 0:  # it's a free
             self.free_cb(inptr)
         elif inptr != 0:  # realloc
             self.realloc_cb(inptr, outptr, size)
         else:  # malloc
             self.alloc_cb(outptr, size)
+        if gc_on:
+            gc.enable()
 
     def alloc_cb(self, ptr, size):
         if size >= self.threshold:
