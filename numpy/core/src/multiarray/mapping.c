@@ -1807,7 +1807,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
              * check to allow wrong dimensional boolean arrays in all cases.
              */
             if (PyArray_NDIM(tmp_arr) > 1) {
-                if (attempt_1d_fallback(self, indices[0].object, tmp_arr) < 0) {
+                if (attempt_1d_fallback(self, indices[0].object,
+                                        (PyObject*)tmp_arr) < 0) {
                     goto fail;
                 }
                 goto success;
