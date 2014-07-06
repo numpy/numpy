@@ -1047,7 +1047,7 @@ array_boolean_subscript(PyArrayObject *self,
         Py_INCREF(dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
                             &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                            0, (PyObject *)self);
+                            PyArray_FLAGS(self), (PyObject *)self);
 
         if (ret == NULL) {
             Py_DECREF(tmp);
@@ -1057,9 +1057,6 @@ array_boolean_subscript(PyArrayObject *self,
         if (PyArray_SetBaseObject(ret, (PyObject *)tmp) < 0) {
             Py_DECREF(ret);
             return NULL;
-        }
-        if (_IsWriteable(ret)) {
-            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_WRITEABLE);
         }
     }
 
@@ -1572,7 +1569,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                       PyArray_SHAPE(tmp_arr),
                                       PyArray_STRIDES(tmp_arr),
                                       PyArray_BYTES(tmp_arr),
-                                      0, /* TODO: Flags? */
+                                      PyArray_FLAGS(self),
                                       (PyObject *)self);
 
         if (result == NULL) {
@@ -1585,9 +1582,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(result);
             result = NULL;
             goto finish;
-        }
-        if (_IsWriteable(result)) {
-            PyArray_ENABLEFLAGS(result, NPY_ARRAY_WRITEABLE);
         }
     }
 
@@ -1813,7 +1807,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
              * check to allow wrong dimensional boolean arrays in all cases.
              */
             if (PyArray_NDIM(tmp_arr) > 1) {
-                if (attempt_1d_fallback(self, indices[0].object, tmp_arr) < 0) {
+                if (attempt_1d_fallback(self, indices[0].object,
+                                        (PyObject*)tmp_arr) < 0) {
                     goto fail;
                 }
                 goto success;
