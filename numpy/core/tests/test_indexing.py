@@ -402,8 +402,14 @@ class TestBroadcastedAssignments(TestCase):
 
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
-        assert_raises(ValueError, assign, a, s_[[1, 2, 3],],  np.ones((2, 1)))
-        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
+        
+        with warnings.catch_warnings():
+            # Will be a ValueError as well.
+            warnings.simplefilter("error", DeprecationWarning)
+            assert_raises(DeprecationWarning, assign, a, s_[[1, 2, 3],],
+                          np.ones((2, 1)))
+            assert_raises(DeprecationWarning, assign, a, s_[[[1], [2]],],
+                          np.ones((2,2,1)))
 
 
     def test_simple_broadcasting_errors(self):
