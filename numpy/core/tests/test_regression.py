@@ -181,7 +181,7 @@ class TestRegression(TestCase):
         assert_(np.all(b[yb] > 0.5))
 
     def test_endian_where(self,level=rlevel):
-        """GitHuB issue #369"""
+        """GitHub issue #369"""
         net = np.zeros(3, dtype='>f4')
         net[1] = 0.00458849
         net[2] = 0.605202
@@ -290,7 +290,7 @@ class TestRegression(TestCase):
 
     def test_tobytes_FORTRANORDER_discontiguous(self,level=rlevel):
         """Fix in r2836"""
-        # Create discontiguous Fortran-ordered array
+        # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
         assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
 
@@ -311,7 +311,7 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, bfb)
 
     def test_nonarray_assignment(self):
-        # See also Issue gh-2870, test for nonarray assignment
+        # See also Issue gh-2870, test for non-array assignment
         # and equivalent unsafe casted array assignment
         a = np.arange(10)
         b = np.ones(10, dtype=bool)
@@ -560,7 +560,7 @@ class TestRegression(TestCase):
         assert_(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self, level=rlevel):
-        """Github Issue #2700, setting shape failed for 0-sized arrays"""
+        """GitHub Issue #2700, setting shape failed for 0-sized arrays"""
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
@@ -568,7 +568,7 @@ class TestRegression(TestCase):
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
     @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
     def test_reshape_trailing_ones_strides(self):
-        # Github issue gh-2949, bad strides for trailing ones of new shape
+        # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2] # not contiguous
         strides_c = (16, 8, 8, 8)
         strides_f = (8, 24, 48, 48)
@@ -756,9 +756,9 @@ class TestRegression(TestCase):
         s = np.ones(10, dtype=float)
         x = np.array((15,), dtype=float)
         def ia(x, s, v): x[(s>0)]=v
-        # After removing deprecation, the following is are ValueErrors.
+        # After removing deprecation, the following are ValueErrors.
         # This might seem odd as compared to the value error below. This
-        # is due to the fact that the new code always use "nonzero" logic
+        # is due to the fact that the new code always uses "nonzero" logic
         # and the boolean special case is not taken.
         self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
         self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
@@ -848,7 +848,7 @@ class TestRegression(TestCase):
         cnt0_b = cnt(b)
         cnt0_c = cnt(c)
 
-        # -- 0d -> 1d broadcasted slice assignment
+        # -- 0d -> 1-d broadcast slice assignment
 
         arr = np.zeros(5, dtype=np.object_)
 
@@ -865,7 +865,7 @@ class TestRegression(TestCase):
 
         del arr
 
-        # -- 1d -> 2d broadcasted slice assignment
+        # -- 1-d -> 2-d broadcast slice assignment
 
         arr  = np.zeros((5, 2), dtype=np.object_)
         arr0 = np.zeros(2, dtype=np.object_)
@@ -884,7 +884,7 @@ class TestRegression(TestCase):
 
         del arr, arr0
 
-        # -- 2d copying + flattening
+        # -- 2-d copying + flattening
 
         arr  = np.zeros((5, 2), dtype=np.object_)
 
@@ -1029,8 +1029,8 @@ class TestRegression(TestCase):
         b = np.zeros((2, 1), dtype = np.single)
         try:
             a.compress([True, False], axis = 1, out = b)
-            raise AssertionError("compress with an out which cannot be " \
-                                 "safely casted should not return "\
+            raise AssertionError("compress with an out which cannot be "
+                                 "safely casted should not return "
                                  "successfully")
         except TypeError:
             pass

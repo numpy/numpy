@@ -1224,7 +1224,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
     if (needs_api) {
         /*
-         * FIXME?: most assignment operations stop after the first occurance
+         * FIXME?: most assignment operations stop after the first occurrence
          * of an error. Boolean does not currently, but should at least
          * report the error. (This is only relevant for things like str->int
          * casts which call into python)
@@ -1439,7 +1439,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         /*
          * TODO: Should this be a view or not? The only reason not would be
          *       optimization (i.e. of array[...] += 1) I think.
-         *       Before, it was just self for a single Ellipis.
+         *       Before, it was just self for a single ellipsis.
          */
         result = PyArray_View(self, NULL, NULL);
         /* A single ellipsis, so no need to decref */
@@ -1664,7 +1664,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
 /*
  * This fallback takes the old route of `arr.flat[index] = values`
  * for one dimensional `arr`. The route can sometimes fail slightly
- * different (ValueError instead of IndexError), in which case we
+ * differently (ValueError instead of IndexError), in which case we
  * warn users about the change. But since it does not actually care *at all*
  * about shapes, it should only fail for out of bound indexes or
  * casting errors.
@@ -2448,7 +2448,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NPY_BEGIN_THREADS_DEF;
 
     if (mit->size == 0) {
-        /* All indices got broadcasted away, do *not* check as it always was */
+        /* All indices got broadcast away, do *not* check as it always was */
         return 0;
     }
 
@@ -2671,7 +2671,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      *   1. No subspace iteration is necessary, so the extra_op can
      *      be included into the index iterator (it will be buffered)
      *   2. Subspace iteration is necessary, so the extra op is iterated
-     *      independendly, and the iteration order is fixed at C (could
+     *      independently, and the iteration order is fixed at C (could
      *      also use Fortran order if the array is Fortran order).
      *      In this case the subspace iterator is not buffered.
      *
@@ -2864,7 +2864,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                   NPY_ITER_GROWINNER;
 
     /*
-     * For a single 1-d operand, guarantee itertion order
+     * For a single 1-d operand, guarantee iteration order
      * (scipy used this). Note that subspace may be used.
      */
     if ((mit->numiter == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
@@ -3076,7 +3076,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
   fail:
     /*
-     * Check whether the operand was not broadcastable and replace the error
+     * Check whether the operand could not be broadcast and replace the error
      * in that case. This should however normally be found early with a
      * direct goto to broadcast_error
      */
@@ -3091,7 +3091,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 /* (j < 0 is currently impossible, extra_op is reshaped) */
                 j >= 0 &&
                 PyArray_DIM(extra_op, i) != mit->dimensions[j]) {
-            /* extra_op cannot be broadcasted to the indexing result */
+            /* extra_op cannot be broadcast to the indexing result */
             goto broadcast_error;
         }
     }
@@ -3151,7 +3151,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * that most of this public API is currently not guaranteed
  * to stay the same between versions. If you plan on using
  * it, please consider adding more utility functions here
- * to accomodate new features.
+ * to accommodate new features.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
