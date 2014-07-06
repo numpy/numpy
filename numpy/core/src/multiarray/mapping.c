@@ -1058,6 +1058,9 @@ array_boolean_subscript(PyArrayObject *self,
             Py_DECREF(ret);
             return NULL;
         }
+        if (_IsWriteable(ret)) {
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_WRITEABLE);
+        }
     }
 
     return ret;
@@ -1582,6 +1585,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(result);
             result = NULL;
             goto finish;
+        }
+        if (_IsWriteable(result)) {
+            PyArray_ENABLEFLAGS(result, NPY_ARRAY_WRITEABLE);
         }
     }
 
