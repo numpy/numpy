@@ -46,14 +46,7 @@ main()
 def check_gcc_function_attribute(cmd, attribute, name):
     """Return True if the given function attribute is supported."""
     cmd._check_compiler()
-    body = """
-int %s %s(void*);
-
-int
-main()
-{
-}
-""" % (attribute, name)
+    body = "int %s %s(void*);" % (attribute, name)
     ret, output = cmd.try_output_compile(body, None, None)
     if not ret or len(output) > 0:
         return False
