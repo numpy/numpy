@@ -58,3 +58,10 @@ main()
     if not ret or len(output) > 0:
         return False
     return True
+
+def check_compile_without_warning(cmd, body):
+    cmd._check_compiler()
+    ret, output = cmd.try_output_compile(body, None, None)
+    if not ret or len(output) > 0:
+        return False
+    return True

@@ -17,7 +17,9 @@ import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
-                                              check_inline, check_compiler_gcc4)
+                                              check_inline,
+                                              check_compiler_gcc4,
+                                              check_compile_without_warning)
 from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
@@ -425,6 +427,10 @@ int main ()
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
+
+    def check_compile_without_warning(self, code):
+        """Returns True if the given code may be compiled without warning."""
+        return check_compile_without_warning(self, code)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
