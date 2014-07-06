@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['logspace', 'linspace']
+__all__ = ['logspace', 'linspace', 'arr']
 
 from . import numeric as _nx
 from .numeric import array, result_type
@@ -184,3 +184,51 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype)
+
+
+def arr(string, dtype=None):
+    """
+    Interpret an input string as a 2-D array.
+    
+    Parameters
+    ----------
+    string : str
+        Input string with rows sepearted by semicolons, and columns 
+        optionally seperated by commas.
+
+    dtype : dtype, optional
+        The type of the output array.  If `dtype` is not given, infer the data
+        type from the string.
+
+    Returns
+    -------
+    arr : ndarray
+        The input string interpretted as a 2-D array.
+
+    See Also
+    --------
+    mat : Similar to arr, but returns a matrix.
+
+    Examples
+    --------
+    >>> np.arr('3; 4; 5')
+        array([[3],
+               [4],
+               [5]])
+    
+    >>> np.arr('3; 4; 5', dtype=float)
+        array([[ 3.],
+               [ 4.],
+               [ 5.]])
+    
+    >>> np.arr('1 0 0; 0 1 0; 0 0 1')
+        array([[1, 0, 0],
+               [0, 1, 0],
+               [0, 0, 1]])
+
+    >>> np.arr('4, 5; 6, 7')
+        array([[4, 5],
+               [6, 7]])
+    """
+    from numpy.matrixlib.defmatrix import _convert_from_string
+    return array(_convert_from_string(string), dtype=dtype)

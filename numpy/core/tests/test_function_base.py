@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
-from numpy import logspace, linspace, dtype, array
+from numpy import logspace, linspace, arr, dtype, array
 
 class TestLogspace(TestCase):
 
@@ -109,3 +109,34 @@ class TestLinspace(TestCase):
         a = PhysicalQuantity(0.0)
         b = PhysicalQuantity(1.0)
         assert_equal(linspace(a, b), linspace(0.0, 1.0))
+
+
+class TestArr(TestCase):
+
+    def test_vector(self):
+        a = array([[3], [4], [5]])
+        b = arr('3; 4; 5')
+        assert_equal(a, b)
+
+    def test_respects_dtype(self):
+        a = array([[3.], [4.], [5.]])
+        b = arr('3; 4; 5', dtype=float)
+        assert_almost_equal(a, b)
+
+    def test_square_array(self):
+        a = array([[1, 0, 0],
+                   [0, 1, 0],
+                   [0, 0, 1]])
+        b = arr('1 0 0; 0 1 0; 0 0 1')
+        assert_equal(a, b)
+
+    def test_comma_sep_cols(self):
+        a = array([[4, 5],
+                   [6, 7]])
+        b = arr('4, 5; 6, 7')
+        assert_equal(a, b)
+
+    def test_empty_string(self):
+        self.assertEqual(arr('').shape, (1, 0))
+        self.assertEqual(arr(' ').shape, (1, 0))
+        
