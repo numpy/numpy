@@ -624,63 +624,19 @@ type_num_unsigned_to_signed(int type_num)
     }
 }
 
-/*
- * NOTE: once the UNSAFE_CASTING -> SAME_KIND_CASTING transition is over,
- * we should remove NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND
- * and PyArray_CanCastTypeTo_impl should be renamed back to
- * PyArray_CanCastTypeTo.
- */
-static npy_bool
-PyArray_CanCastTypeTo_impl(PyArray_Descr *from, PyArray_Descr *to,
-                           NPY_CASTING casting);
-
 /*NUMPY_API
  * Returns true if data of type 'from' may be cast to data of type
  * 'to' according to the rule 'casting'.
  */
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
-                      NPY_CASTING casting)
-{
-    /* fast path for basic types */
-    if (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
-        NPY_LIKELY(from->type_num == to->type_num) &&
-        NPY_LIKELY(from->byteorder == to->byteorder)) {
-        return 1;
-    }
-    else if (casting == NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND) {
-        npy_bool unsafe_ok, same_kind_ok;
-        unsafe_ok = PyArray_CanCastTypeTo_impl(from, to, NPY_UNSAFE_CASTING);
-        same_kind_ok = PyArray_CanCastTypeTo_impl(from, to,
-                                                  NPY_SAME_KIND_CASTING);
-        if (unsafe_ok && !same_kind_ok) {
-            char * msg = "Implicitly casting between incompatible kinds. In "
-                "a future numpy release, this will raise an error. "
-                "Use casting=\"unsafe\" if this is intentional.";
-            if (DEPRECATE(msg) < 0) {
-                /* We have no way to propagate an exception :-( */
-                PyErr_Clear();
-                PySys_WriteStderr("Sorry, you requested this warning "
-                                  "be raised as an error, but we couldn't "
-                                  "do it. (See issue #3806 in the numpy "
-                                  "bug tracker.) So FYI, it was: "
-                                  "DeprecationWarning: %s\n",
-                                  msg);
-            }
-        }
-        return unsafe_ok;
-    }
-    else {
-        return PyArray_CanCastTypeTo_impl(from, to, casting);
-    }
-}
-
-static npy_bool
-PyArray_CanCastTypeTo_impl(PyArray_Descr *from, PyArray_Descr *to,
                                                     NPY_CASTING casting)
 {
-    /* If unsafe casts are allowed */
-    if (casting == NPY_UNSAFE_CASTING) {
+    /* Fast path for unsafe casts or basic types */
+    if (casting == NPY_UNSAFE_CASTING ||
+            (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
+             NPY_LIKELY(from->type_num == to->type_num) &&
+             NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
     }
     /* Equivalent types can be cast with any value of 'casting'  */

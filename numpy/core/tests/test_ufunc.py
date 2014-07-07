@@ -838,45 +838,20 @@ class TestUfunc(TestCase):
 
     def test_safe_casting(self):
         # In old versions of numpy, in-place operations used the 'unsafe'
-        # casting rules. In some future version, 'same_kind' will become the
-        # default.
+        # casting rules. In versions >= 1.10, 'same_kind' is the
+        # default and an exception is raised instead of a warning.
+        # when 'same_kind' is not satisfied.
         a = np.array([1, 2, 3], dtype=int)
         # Non-in-place addition is fine
         assert_array_equal(assert_no_warnings(np.add, a, 1.1),
                            [2.1, 3.1, 4.1])
-        assert_warns(DeprecationWarning, np.add, a, 1.1, out=a)
-        assert_array_equal(a, [2, 3, 4])
+        assert_raises(TypeError, np.add, a, 1.1, out=a)
         def add_inplace(a, b):
             a += b
-        assert_warns(DeprecationWarning, add_inplace, a, 1.1)
-        assert_array_equal(a, [3, 4, 5])
-        # Make sure that explicitly overriding the warning is allowed:
+        assert_raises(TypeError, add_inplace, a, 1.1)
+        # Make sure that explicitly overriding the exception is allowed:
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
-        assert_array_equal(a, [4, 5, 6])
-
-        # There's no way to propagate exceptions from the place where we issue
-        # this deprecation warning, so we must throw the exception away
-        # entirely rather than cause it to be raised at some other point, or
-        # trigger some other unsuspecting if (PyErr_Occurred()) { ...} at some
-        # other location entirely.
-        import warnings
-        import sys
-        if sys.version_info[0] >= 3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            old_stderr = sys.stderr
-            try:
-                sys.stderr = StringIO()
-                # No error, but dumps to stderr
-                a += 1.1
-                # No error on the next bit of code executed either
-                1 + 1
-                assert_("Implicitly casting" in sys.stderr.getvalue())
-            finally:
-                sys.stderr = old_stderr
+        assert_array_equal(a, [2, 3, 4])
 
     def test_ufunc_custom_out(self):
         # Test ufunc with built in input types and custom output type
