@@ -41,3 +41,37 @@ main()
 }
 """
     return cmd.try_compile(body, None, None)
+
+
+def check_gcc_function_attribute(cmd, attribute, name):
+    """Return True if the given function attribute is supported."""
+    cmd._check_compiler()
+    body = """
+#pragma GCC diagnostic error "-Wattributes"
+#pragma clang diagnostic error "-Wattributes"
+
+int %s %s(void*);
+
+int
+main()
+{
+}
+""" % (attribute, name)
+    return cmd.try_compile(body, None, None) != 0
+
+def check_gcc_variable_attribute(cmd, attribute):
+    """Return True if the given variable attribute is supported."""
+    cmd._check_compiler()
+    body = """
+#pragma GCC diagnostic error "-Wattributes"
+#pragma clang diagnostic error "-Wattributes"
+
+int %s foo;
+
+int
+main()
+{
+    return 0;
+}
+""" % (attribute, )
+    return cmd.try_compile(body, None, None) != 0
