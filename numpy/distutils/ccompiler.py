@@ -70,8 +70,6 @@ def CCompiler_spawn(self, cmd, display=None):
         else:
             msg = ''
         raise DistutilsExecError('Command "%s" failed with exit status %d%s' % (cmd, s, msg))
-    if hasattr(self, 'config_output'):
-        self.config_output += o
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 

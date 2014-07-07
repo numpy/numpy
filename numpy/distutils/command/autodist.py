@@ -75,10 +75,3 @@ main()
 }
 """ % (attribute, )
     return cmd.try_compile(body, None, None) != 0
-
-def check_compile_without_warning(cmd, body):
-    cmd._check_compiler()
-    ret, output = cmd.try_output_compile(body, None, None)
-    if not ret or len(output) > 0:
-        return False
-    return True

@@ -19,8 +19,7 @@ from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_variable_attribute,
                                               check_inline,
-                                              check_compiler_gcc4,
-                                              check_compile_without_warning)
+                                              check_compiler_gcc4)
 from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
@@ -45,26 +44,6 @@ class config(old_config):
                       DeprecationWarning)
         return old_config.try_run(self, body, headers, include_dirs, libraries,
                                   library_dirs, lang)
-
-    def try_output_compile(self, body, headers=None, include_dirs=None, lang="c"):
-        """Try to compile a source file built from 'body' and 'headers'.
-        Return true on success, false otherwise.
-        """
-        # XXX: this is fairly ugly. Passing the output of executed command
-        # would require heroic efforts so instead we use a dynamically created
-        # instance variable on the compiler class to pass output between
-        # compiler and the config command.
-        self.compiler.config_output = ""
-        self._check_compiler()
-        try:
-            self._compile(body, headers, include_dirs, lang)
-            status = True
-        except CompileError:
-            status = False
-
-        log.info(status and "success!" or "failure.")
-        self._clean()
-        return status, self.compiler.config_output
 
     def _check_compiler (self):
         old_config._check_compiler(self)
@@ -431,10 +410,6 @@ int main ()
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
-
-    def check_compile_without_warning(self, code):
-        """Returns True if the given code may be compiled without warning."""
-        return check_compile_without_warning(self, code)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
