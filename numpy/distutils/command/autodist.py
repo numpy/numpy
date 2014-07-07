@@ -46,11 +46,18 @@ main()
 def check_gcc_function_attribute(cmd, attribute, name):
     """Return True if the given function attribute is supported."""
     cmd._check_compiler()
-    body = "int %s %s(void*);" % (attribute, name)
-    ret, output = cmd.try_output_compile(body, None, None)
-    if not ret or len(output) > 0:
-        return False
-    return True
+    body = """
+#pragma GCC diagnostic error "-Wattributes"
+#pragma clang diagnostic error "-Wattributes"
+
+int %s %s(void*);
+
+int
+main()
+{
+}
+""" % (attribute, name)
+    return cmd.try_compile(body, None, None) != 0
 
 def check_compile_without_warning(cmd, body):
     cmd._check_compiler()
