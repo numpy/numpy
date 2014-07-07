@@ -1047,7 +1047,7 @@ array_boolean_subscript(PyArrayObject *self,
         Py_INCREF(dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
                             &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                            0, (PyObject *)self);
+                            PyArray_FLAGS(self), (PyObject *)self);
 
         if (ret == NULL) {
             Py_DECREF(tmp);
@@ -1221,7 +1221,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
     if (needs_api) {
         /*
-         * FIXME?: most assignment operations stop after the first occurance
+         * FIXME?: most assignment operations stop after the first occurrence
          * of an error. Boolean does not currently, but should at least
          * report the error. (This is only relevant for things like str->int
          * casts which call into python)
@@ -1436,7 +1436,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         /*
          * TODO: Should this be a view or not? The only reason not would be
          *       optimization (i.e. of array[...] += 1) I think.
-         *       Before, it was just self for a single Ellipis.
+         *       Before, it was just self for a single ellipsis.
          */
         result = PyArray_View(self, NULL, NULL);
         /* A single ellipsis, so no need to decref */
@@ -1569,7 +1569,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                       PyArray_SHAPE(tmp_arr),
                                       PyArray_STRIDES(tmp_arr),
                                       PyArray_BYTES(tmp_arr),
-                                      0, /* TODO: Flags? */
+                                      PyArray_FLAGS(self),
                                       (PyObject *)self);
 
         if (result == NULL) {
@@ -1652,6 +1652,58 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
         Py_DECREF(view);
     }
     return 0;
+}
+
+
+/*
+ * This fallback takes the old route of `arr.flat[index] = values`
+ * for one dimensional `arr`. The route can sometimes fail slightly
+ * differently (ValueError instead of IndexError), in which case we
+ * warn users about the change. But since it does not actually care *at all*
+ * about shapes, it should only fail for out of bound indexes or
+ * casting errors.
+ */
+NPY_NO_EXPORT int
+attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
+{
+    PyObject *err = PyErr_Occurred();
+    PyArrayIterObject *self_iter = NULL;
+
+    Py_INCREF(err);
+    PyErr_Clear();
+
+    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+    if (self_iter == NULL) {
+        goto fail;
+    }
+    if (iter_ass_subscript(self_iter, ind, op) < 0) {
+        goto fail;
+    }
+    
+    Py_XDECREF((PyObject *)self_iter);
+    Py_DECREF(err);
+
+    if (DEPRECATE(
+            "assignment will raise an error in the future, most likely "
+            "because your index result shape does not match the value array "
+            "shape. You can use `arr.flat[index] = values` to keep the old "
+            "behaviour.") < 0) {
+        return -1;
+    }
+    return 0;
+
+  fail:
+    if (!PyErr_ExceptionMatches(err)) {
+        PyObject *err, *val, *tb;
+        PyErr_Fetch(&err, &val, &tb);
+        DEPRECATE_FUTUREWARNING(
+            "assignment exception type will change in the future");
+        PyErr_Restore(err, val, tb);
+    }
+
+    Py_XDECREF((PyObject *)self_iter);
+    Py_DECREF(err);
+    return -1;
 }
 
 
@@ -1746,9 +1798,21 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             Py_INCREF(op);
             tmp_arr = (PyArrayObject *)op;
         }
+
         if (array_assign_boolean_subscript(self,
                                            (PyArrayObject *)indices[0].object,
                                            tmp_arr, NPY_CORDER) < 0) {
+            /*
+             * Deprecated case. The old boolean indexing seemed to have some
+             * check to allow wrong dimensional boolean arrays in all cases.
+             */
+            if (PyArray_NDIM(tmp_arr) > 1) {
+                if (attempt_1d_fallback(self, indices[0].object,
+                                        (PyObject*)tmp_arr) < 0) {
+                    goto fail;
+                }
+                goto success;
+            }
             goto fail;
         }
         goto success;
@@ -1899,14 +1963,36 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                              tmp_arr, descr);
 
     if (mit == NULL) {
-        goto fail;
+        /*
+         * This is a deprecated special case to allow non-matching shapes
+         * for the index and value arrays.
+         */
+        if (index_type != HAS_FANCY || index_num != 1) {
+            /* This is not a "flat like" 1-d special case */
+            goto fail;
+        }
+        if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
+            goto fail;
+        }
+        goto success;
     }
 
     if (tmp_arr == NULL) {
         /* Fill extra op */
 
         if (PyArray_CopyObject(mit->extra_op, op) < 0) {
-            goto fail;
+            /*
+             * This is a deprecated special case to allow non-matching shapes
+             * for the index and value arrays.
+             */
+             if (index_type != HAS_FANCY || index_num != 1) {
+                /* This is not a "flat like" 1-d special case */
+                goto fail;
+            }
+            if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
+                goto fail;
+            }
+            goto success;
         }
     }
 
@@ -2357,7 +2443,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NPY_BEGIN_THREADS_DEF;
 
     if (mit->size == 0) {
-        /* All indices got broadcasted away, do *not* check as it always was */
+        /* All indices got broadcast away, do *not* check as it always was */
         return 0;
     }
 
@@ -2580,7 +2666,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      *   1. No subspace iteration is necessary, so the extra_op can
      *      be included into the index iterator (it will be buffered)
      *   2. Subspace iteration is necessary, so the extra op is iterated
-     *      independendly, and the iteration order is fixed at C (could
+     *      independently, and the iteration order is fixed at C (could
      *      also use Fortran order if the array is Fortran order).
      *      In this case the subspace iterator is not buffered.
      *
@@ -2773,7 +2859,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                   NPY_ITER_GROWINNER;
 
     /*
-     * For a single 1-d operand, guarantee itertion order
+     * For a single 1-d operand, guarantee iteration order
      * (scipy used this). Note that subspace may be used.
      */
     if ((mit->numiter == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
@@ -2985,7 +3071,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
   fail:
     /*
-     * Check whether the operand was not broadcastable and replace the error
+     * Check whether the operand could not be broadcast and replace the error
      * in that case. This should however normally be found early with a
      * direct goto to broadcast_error
      */
@@ -3000,7 +3086,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 /* (j < 0 is currently impossible, extra_op is reshaped) */
                 j >= 0 &&
                 PyArray_DIM(extra_op, i) != mit->dimensions[j]) {
-            /* extra_op cannot be broadcasted to the indexing result */
+            /* extra_op cannot be broadcast to the indexing result */
             goto broadcast_error;
         }
     }
@@ -3060,7 +3146,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * that most of this public API is currently not guaranteed
  * to stay the same between versions. If you plan on using
  * it, please consider adding more utility functions here
- * to accomodate new features.
+ * to accommodate new features.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArray(PyArrayObject * a, PyObject * index)

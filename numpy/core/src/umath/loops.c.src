@@ -2572,6 +2572,7 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
             return;
         }
         ret = PyObject_IsTrue(ret_obj);
+        Py_DECREF(ret_obj);
         if (ret == -1) {
 #if @identity@ != -1
             if (in1 == in2) {
@@ -2621,6 +2622,7 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         }
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
+            Py_DECREF(zero);
             return;
         }
         Py_XDECREF(*out);
@@ -2635,6 +2637,7 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         PyObject *ret = PyInt_FromLong(
                             PyObject_Compare(in1 ? in1 : Py_None, zero));
         if (PyErr_Occurred()) {
+            Py_DECREF(zero);
             return;
         }
         Py_XDECREF(*out);

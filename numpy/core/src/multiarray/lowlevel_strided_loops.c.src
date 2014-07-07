@@ -1490,7 +1490,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     /* Constant information */
     npy_intp fancy_dims[NPY_MAXDIMS];
     npy_intp fancy_strides[NPY_MAXDIMS];
+#if @isget@
     int iteraxis;
+#endif
 
     char *baseoffset = mit->baseoffset;
     char **outer_ptrs = mit->outer_ptrs;
@@ -1498,7 +1500,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     PyArrayObject *array= mit->array;
 
     /* Fill constant information */
+#if @isget@
     iteraxis = mit->iteraxes[0];
+#endif
     for (i = 0; i < numiter; i++) {
         fancy_dims[i] = mit->fancy_dims[i];
         fancy_strides[i] = mit->fancy_strides[i];

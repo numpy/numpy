@@ -285,8 +285,7 @@ def load(file, mmap_mode=None):
     Parameters
     ----------
     file : file-like object or string
-        The file to read. Compressed files with the filename extension
-        ``.gz`` are acceptable. File-like objects must support the
+        The file to read. File-like objects must support the
         ``seek()`` and ``read()`` methods. Pickled files require that the
         file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional

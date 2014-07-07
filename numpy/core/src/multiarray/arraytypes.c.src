@@ -3922,7 +3922,8 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* elsize */
     @num@ * sizeof(@fromtype@),
     /* alignment */
-    @num@ * _ALIGN(@fromtype@),
+    @num@ * _ALIGN(@fromtype@) > NPY_MAX_COPY_ALIGNMENT ?
+        NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4264,7 +4265,8 @@ set_typeinfo(PyObject *dict)
 #endif
                 NPY_@name@,
                 NPY_BITSOF_@name@,
-                @num@ * _ALIGN(@type@),
+                @num@ * _ALIGN(@type@) > NPY_MAX_COPY_ALIGNMENT ?
+                    NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@type@),
                 (PyObject *) &Py@Name@ArrType_Type));
     Py_DECREF(s);
 

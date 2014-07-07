@@ -336,6 +336,11 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             smin[i] = smin[i] - .5
             smax[i] = smax[i] + .5
 
+    # avoid rounding issues for comparisons when dealing with inexact types
+    if np.issubdtype(sample.dtype, np.inexact):
+        edge_dt = sample.dtype
+    else:
+        edge_dt = float
     # Create edge arrays
     for i in arange(D):
         if isscalar(bins[i]):
@@ -344,9 +349,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                     "Element at index %s in `bins` should be a positive "
                     "integer." % i)
             nbin[i] = bins[i] + 2  # +2 for outlier bins
-            edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
+            edges[i] = linspace(smin[i], smax[i], nbin[i]-1, dtype=edge_dt)
         else:
-            edges[i] = asarray(bins[i], float)
+            edges[i] = asarray(bins[i], edge_dt)
             nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
         if np.any(np.asarray(dedges[i]) <= 0):

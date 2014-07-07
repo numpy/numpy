@@ -5,6 +5,7 @@ import platform
 from decimal import Decimal
 import warnings
 import itertools
+import platform
 
 import numpy as np
 from numpy.core import *
@@ -931,6 +932,7 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a']), ([0, 1, 1, 2], [2, 0, 1, 1]))
         assert_equal(np.nonzero(x['b']), ([0, 0, 1, 2, 2], [0, 2, 0, 1, 2]))
 
+        assert_(not x['a'].T.flags.aligned)
         assert_equal(np.count_nonzero(x['a'].T), 4)
         assert_equal(np.count_nonzero(x['b'].T), 5)
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
@@ -1048,7 +1050,15 @@ class TestArrayComparisons(TestCase):
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags
-    assert_(x.flags == y.flags)
+    if 'sparc' not in platform.platform().lower():
+        assert_(x.flags == y.flags)
+    else:
+        # sparc arrays may not be aligned for long double types
+        assert_(x.flags.owndata == y.flags.owndata)
+        assert_(x.flags.writeable == y.flags.writeable)
+        assert_(x.flags.c_contiguous == y.flags.c_contiguous)
+        assert_(x.flags.f_contiguous == y.flags.f_contiguous)
+        assert_(x.flags.updateifcopy == y.flags.updateifcopy)
     # check endianness
     assert_(x.dtype.isnative == y.dtype.isnative)
 

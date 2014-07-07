@@ -152,13 +152,13 @@ typedef struct _tagPyUFuncObject {
         int check_return;
 
         /* The name of the ufunc */
-        char *name;
+        const char *name;
 
         /* Array of type numbers, of size ('nargs' * 'ntypes') */
         char *types;
 
         /* Documentation string */
-        char *doc;
+        const char *doc;
 
         void *ptr;
         PyObject *obj;
