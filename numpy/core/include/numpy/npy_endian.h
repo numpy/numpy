@@ -10,9 +10,21 @@
     /* Use endian.h if available */
     #include <endian.h>
 
-    #define NPY_BYTE_ORDER __BYTE_ORDER
-    #define NPY_LITTLE_ENDIAN __LITTLE_ENDIAN
-    #define NPY_BIG_ENDIAN __BIG_ENDIAN
+    #if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && defined(__LITTLE_ENDIAN)
+        #define NPY_BYTE_ORDER    __BYTE_ORDER
+        #define NPY_LITTLE_ENDIAN __LITTLE_ENDIAN
+        #define NPY_BIG_ENDIAN    __BIG_ENDIAN
+    #elif defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) && defined(_LITTLE_ENDIAN)
+        #define NPY_BYTE_ORDER    _BYTE_ORDER
+        #define NPY_LITTLE_ENDIAN _LITTLE_ENDIAN
+        #define NPY_BIG_ENDIAN    _BIG_ENDIAN
+    #elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) && defined(LITTLE_ENDIAN)
+        #define NPY_BYTE_ORDER    BYTE_ORDER
+        #define NPY_LITTLE_ENDIAN LITTLE_ENDIAN
+        #define NPY_BIG_ENDIAN    BIG_ENDIAN
+    #else
+        #error "Endian symbols BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN were not found in <endian.h>"
+    #endif
 #else
     /* Set endianness info using target CPU */
     #include "npy_cpu.h"
