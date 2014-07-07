@@ -59,6 +59,23 @@ main()
 """ % (attribute, name)
     return cmd.try_compile(body, None, None) != 0
 
+def check_gcc_variable_attribute(cmd, attribute):
+    """Return True if the given variable attribute is supported."""
+    cmd._check_compiler()
+    body = """
+#pragma GCC diagnostic error "-Wattributes"
+#pragma clang diagnostic error "-Wattributes"
+
+int %s foo;
+
+int
+main()
+{
+    return 0;
+}
+""" % (attribute, )
+    return cmd.try_compile(body, None, None) != 0
+
 def check_compile_without_warning(cmd, body):
     cmd._check_compiler()
     ret, output = cmd.try_output_compile(body, None, None)

@@ -180,7 +180,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
             moredefs.append((fname2def(fn), 1))
 
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
-        if config.check_compile_without_warning('int %s a;' % (fn)):
+        if config.check_gcc_variable_attribute(fn):
             m = fn.replace("(", "_").replace(")", "_")
             moredefs.append((fname2def(m), 1))
 
