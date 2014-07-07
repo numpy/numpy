@@ -22,10 +22,10 @@
         #define NPY_BYTE_ORDER    BYTE_ORDER
         #define NPY_LITTLE_ENDIAN LITTLE_ENDIAN
         #define NPY_BIG_ENDIAN    BIG_ENDIAN
-    #else
-        #error "Endian symbols BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN were not found in <endian.h>"
     #endif
-#else
+#endif
+
+#ifndef NPY_BYTE_ORDER
     /* Set endianness info using target CPU */
     #include "npy_cpu.h"
 
