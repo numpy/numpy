@@ -37,7 +37,9 @@
      ((abs(args[1] - args[0]) >= (vsize)) || ((abs(args[1] - args[0]) == 0))))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
-    (steps[1] == (esize) && abs(args[1] - args[0]) >= (vsize))
+    (steps[1] == (esize) && abs(args[1] - args[0]) >= (vsize) && \
+     npy_is_aligned(args[1], (esize)) && \
+     npy_is_aligned(args[0], (esize)))
 
 #define IS_BLOCKABLE_BINARY(esize, vsize) \
     (steps[0] == steps[1] && steps[1] == steps[2] && steps[2] == (esize) && \
