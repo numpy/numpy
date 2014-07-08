@@ -143,6 +143,8 @@ double npy_log2(double x);
 double npy_atan2(double x, double y);
 double npy_pow(double x, double y);
 double npy_modf(double x, double* y);
+double npy_frexp(double x, int* y);
+double npy_ldexp(double n, int y);
 
 double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
@@ -247,6 +249,8 @@ float npy_powf(float x, float y);
 float npy_fmodf(float x, float y);
 
 float npy_modff(float x, float* y);
+float npy_frexpf(float x, int* y);
+float npy_ldexpf(float x, int y);
 
 float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
@@ -288,6 +292,8 @@ npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
 npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+npy_longdouble npy_frexpl(npy_longdouble x, int* y);
+npy_longdouble npy_ldexpl(npy_longdouble x, int y);
 
 npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);

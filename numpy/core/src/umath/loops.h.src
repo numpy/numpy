@@ -248,17 +248,13 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_modf(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
-#ifdef HAVE_FREXP@C@
 NPY_NO_EXPORT void
 @TYPE@_frexp(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-#endif
 
-#ifdef HAVE_LDEXP@C@
 NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-#endif
 
 #define @TYPE@_true_divide @TYPE@_divide
 

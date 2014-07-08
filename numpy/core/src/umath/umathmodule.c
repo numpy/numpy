@@ -201,182 +201,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
  *****************************************************************************
  */
 
-/* Less automated additions to the ufuncs */
-
-static PyUFuncGenericFunction frexp_functions[] = {
-#ifdef HAVE_FREXPF
-    HALF_frexp,
-    FLOAT_frexp,
-#endif
-    DOUBLE_frexp
-#ifdef HAVE_FREXPL
-    ,LONGDOUBLE_frexp
-#endif
-};
-
-static char frexp_signatures[] = {
-#ifdef HAVE_FREXPF
-    NPY_HALF, NPY_HALF, NPY_INT,
-    NPY_FLOAT, NPY_FLOAT, NPY_INT,
-#endif
-    NPY_DOUBLE, NPY_DOUBLE, NPY_INT
-#ifdef HAVE_FREXPL
-    ,NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_INT
-#endif
-};
-static void * blank_data[12];
-
-#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
-#define LDEXP_LONG(typ) typ##_ldexp
-#else
-#define LDEXP_LONG(typ) typ##_ldexp_long
-#endif
-
-static PyUFuncGenericFunction ldexp_functions[] = {
-#ifdef HAVE_LDEXPF
-    HALF_ldexp,
-    FLOAT_ldexp,
-    LDEXP_LONG(HALF),
-    LDEXP_LONG(FLOAT),
-#endif
-    DOUBLE_ldexp,
-    LDEXP_LONG(DOUBLE)
-#ifdef HAVE_LDEXPL
-    ,
-    LONGDOUBLE_ldexp,
-    LDEXP_LONG(LONGDOUBLE)
-#endif
-};
-
-static const char frdoc[] =
-    "    Decompose the elements of x into mantissa and twos exponent.\n"
-    "\n"
-    "    Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.\n"
-    "    The mantissa is lies in the open interval(-1, 1), while the twos\n"
-    "    exponent is a signed integer.\n"
-    "\n"
-    "    Parameters\n"
-    "    ----------\n"
-    "    x : array_like\n"
-    "        Array of numbers to be decomposed.\n"
-    "    out1: ndarray, optional\n"
-    "        Output array for the mantissa. Must have the same shape as `x`.\n"
-    "    out2: ndarray, optional\n"
-    "        Output array for the exponent. Must have the same shape as `x`.\n"
-    "\n"
-    "    Returns\n"
-    "    -------\n"
-    "    (mantissa, exponent) : tuple of ndarrays, (float, int)\n"
-    "        `mantissa` is a float array with values between -1 and 1.\n"
-    "        `exponent` is an int array which represents the exponent of 2.\n"
-    "\n"
-    "    See Also\n"
-    "    --------\n"
-    "    ldexp : Compute ``y = x1 * 2**x2``, the inverse of `frexp`.\n"
-    "\n"
-    "    Notes\n"
-    "    -----\n"
-    "    Complex dtypes are not supported, they will raise a TypeError.\n"
-    "\n"
-    "    Examples\n"
-    "    --------\n"
-    "    >>> x = np.arange(9)\n"
-    "    >>> y1, y2 = np.frexp(x)\n"
-    "    >>> y1\n"
-    "    array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,\n"
-    "            0.5  ])\n"
-    "    >>> y2\n"
-    "    array([0, 1, 2, 2, 3, 3, 3, 3, 4])\n"
-    "    >>> y1 * 2**y2\n"
-    "    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])\n"
-    "\n";
-
-
-static char ldexp_signatures[] = {
-#ifdef HAVE_LDEXPF
-    NPY_HALF, NPY_INT, NPY_HALF,
-    NPY_FLOAT, NPY_INT, NPY_FLOAT,
-    NPY_HALF, NPY_LONG, NPY_HALF,
-    NPY_FLOAT, NPY_LONG, NPY_FLOAT,
-#endif
-    NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
-    NPY_DOUBLE, NPY_LONG, NPY_DOUBLE
-#ifdef HAVE_LDEXPL
-    ,NPY_LONGDOUBLE, NPY_INT, NPY_LONGDOUBLE
-    ,NPY_LONGDOUBLE, NPY_LONG, NPY_LONGDOUBLE
-#endif
-};
-
-static const char lddoc[] =
-    "    Returns x1 * 2**x2, element-wise.\n"
-    "\n"
-    "    The mantissas `x1` and twos exponents `x2` are used to construct\n"
-    "    floating point numbers ``x1 * 2**x2``.\n"
-    "\n"
-    "    Parameters\n"
-    "    ----------\n"
-    "    x1 : array_like\n"
-    "        Array of multipliers.\n"
-    "    x2 : array_like, int\n"
-    "        Array of twos exponents.\n"
-    "    out : ndarray, optional\n"
-    "        Output array for the result.\n"
-    "\n"
-    "    Returns\n"
-    "    -------\n"
-    "    y : ndarray or scalar\n"
-    "        The result of ``x1 * 2**x2``.\n"
-    "\n"
-    "    See Also\n"
-    "    --------\n"
-    "    frexp : Return (y1, y2) from ``x = y1 * 2**y2``, inverse to `ldexp`.\n"
-    "\n"
-    "    Notes\n"
-    "    -----\n"
-    "    Complex dtypes are not supported, they will raise a TypeError.\n"
-    "\n"
-    "    `ldexp` is useful as the inverse of `frexp`, if used by itself it is\n"
-    "    more clear to simply use the expression ``x1 * 2**x2``.\n"
-    "\n"
-    "    Examples\n"
-    "    --------\n"
-    "    >>> np.ldexp(5, np.arange(4))\n"
-    "    array([  5.,  10.,  20.,  40.], dtype=float32)\n"
-    "\n"
-    "    >>> x = np.arange(6)\n"
-    "    >>> np.ldexp(*np.frexp(x))\n"
-    "    array([ 0.,  1.,  2.,  3.,  4.,  5.])\n"
-    "\n";
-
-
-static void
-InitOtherOperators(PyObject *dictionary) {
-    PyObject *f;
-    int num;
-
-    num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
-    assert(sizeof(blank_data) / sizeof(blank_data[0]) >= num);
-    f = PyUFunc_FromFuncAndData(frexp_functions, blank_data,
-                                frexp_signatures, num,
-                                1, 2, PyUFunc_None, "frexp", frdoc, 0);
-    PyDict_SetItemString(dictionary, "frexp", f);
-    Py_DECREF(f);
-
-    num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
-    assert(sizeof(blank_data) / sizeof(blank_data[0]) >= num);
-    f = PyUFunc_FromFuncAndData(ldexp_functions, blank_data,
-                                ldexp_signatures, num,
-                                2, 1, PyUFunc_None, "ldexp", lddoc, 0);
-    PyDict_SetItemString(dictionary, "ldexp", f);
-    Py_DECREF(f);
-
-#if defined(NPY_PY3K)
-    f = PyDict_GetItemString(dictionary, "true_divide");
-    PyDict_SetItemString(dictionary, "divide", f);
-#endif
-    return;
-}
-
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
@@ -492,8 +316,6 @@ PyMODINIT_FUNC initumath(void)
     /* Load the ufunc operators into the array module's namespace */
     InitOperators(d);
 
-    InitOtherOperators(d);
-
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
@@ -535,6 +357,11 @@ PyMODINIT_FUNC initumath(void)
     PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+
+#if defined(NPY_PY3K)
+    s = PyDict_GetItemString(d, "true_divide");
+    PyDict_SetItemString(d, "divide", s);
+#endif
 
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");

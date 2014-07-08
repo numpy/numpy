@@ -3324,9 +3324,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     """)
 
-# This doc is not currently used, but has been converted to a C string
-# that can be found in numpy/core/src/umath/umathmodule.c where the
-# frexp ufunc is constructed.
 add_newdoc('numpy.core.umath', 'frexp',
     """
     Decompose the elements of x into mantissa and twos exponent.
@@ -3372,9 +3369,6 @@ add_newdoc('numpy.core.umath', 'frexp',
 
     """)
 
-# This doc is not currently used, but has been converted to a C string
-# that can be found in numpy/core/src/umath/umathmodule.c where the
-# ldexp ufunc is constructed.
 add_newdoc('numpy.core.umath', 'ldexp',
     """
     Returns x1 * 2**x2, element-wise.

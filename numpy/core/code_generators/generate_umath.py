@@ -20,6 +20,12 @@ ReorderableNone = "PyUFunc_ReorderableNone"
 class FullTypeDescr(object):
     pass
 
+class FuncNameSuffix(object):
+    """Stores the suffix to append when generating functions names.
+    """
+    def __init__(self, suffix):
+        self.suffix = suffix
+
 class TypeDescription(object):
     """Type signature for a ufunc.
 
@@ -795,6 +801,30 @@ defdict = {
           None,
           TD(flts),
           ),
+'ldexp' :
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.ldexp'),
+          None,
+          [TypeDescription('e', None, 'ei', 'e'),
+          TypeDescription('f', None, 'fi', 'f'),
+          TypeDescription('e', FuncNameSuffix('long'), 'el', 'e'),
+          TypeDescription('f', FuncNameSuffix('long'), 'fl', 'f'),
+          TypeDescription('d', None, 'di', 'd'),
+          TypeDescription('d', FuncNameSuffix('long'), 'dl', 'd'),
+          TypeDescription('g', None, 'gi', 'g'),
+          TypeDescription('g', FuncNameSuffix('long'), 'gl', 'g'),
+          ],
+          ),
+'frexp' :
+    Ufunc(1, 2, None,
+          docstrings.get('numpy.core.umath.frexp'),
+          None,
+          [TypeDescription('e', None, 'e', 'ei'),
+          TypeDescription('f', None, 'f', 'fi'),
+          TypeDescription('d', None, 'd', 'di'),
+          TypeDescription('g', None, 'g', 'gi'),
+          ],
+          )
 }
 
 if sys.version_info[0] >= 3:
@@ -854,7 +884,7 @@ def make_arrays(funcdict):
             thedict = chartotype1  # one input and one output
 
         for t in uf.type_descriptions:
-            if t.func_data not in (None, FullTypeDescr):
+            if t.func_data not in (None, FullTypeDescr) and not isinstance(t.func_data, FuncNameSuffix):
                 funclist.append('NULL')
                 astype = ''
                 if not t.astype is None:
@@ -880,6 +910,10 @@ def make_arrays(funcdict):
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
                 funclist.append('%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+            elif isinstance(t.func_data, FuncNameSuffix):
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
+                funclist.append('%s_%s_%s' % (tname, name, t.func_data.suffix))
             else:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])

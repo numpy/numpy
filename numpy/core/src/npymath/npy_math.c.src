@@ -343,6 +343,7 @@ double npy_log2(double x)
  * asinh, acosh, atanh
  *
  * hypot, atan2, pow, fmod, modf
+ * ldexp, frexp
  *
  * We assume the above are always available in their double versions.
  *
@@ -405,6 +406,26 @@ double npy_log2(double x)
 }
 #endif
 
+#ifdef ldexp@c@
+#undef ldexp@c@
+#endif
+#ifndef HAVE_LDEXP@C@
+@type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return (@type@) npy_ldexp((double)x, exp);
+}
+#endif 
+
+#ifdef frexp@c@
+#undef frexp@c@
+#endif
+#ifndef HAVE_FREXP@C@
+@type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return (@type@) npy_frexp(x, exp);
+}
+#endif
+
 /**end repeat**/
 
 
@@ -448,6 +469,20 @@ double npy_log2(double x)
 @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return modf@c@(x, iptr);
+}
+#endif
+
+#ifdef HAVE_LDEXP@C@
+@type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return ldexp@c@(x, exp);
+}
+#endif 
+
+#ifdef HAVE_FREXP@C@
+@type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return frexp@c@(x, exp);
 }
 #endif
 
