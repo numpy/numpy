@@ -556,6 +556,42 @@ fail:
     return NULL;
 }
 
+/* check no elison for avoided increfs */
+static PyObject *
+incref_elide(PyObject *dummy, PyObject *args)
+{
+    PyObject *arg = NULL, *res, *tup;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+
+    /* refcount 1 array but should not be elided */
+    arg = PyArray_NewCopy((PyArrayObject*)arg, NPY_KEEPORDER);
+    res = PyNumber_Add(arg, arg);
+
+    /* return original copy, should be equal to input */
+    tup = PyTuple_Pack(2, arg, res);
+    Py_DECREF(arg);
+    Py_DECREF(res);
+    return tup;
+}
+
+/* check no elison for get from list without incref */
+static PyObject *
+incref_elide_l(PyObject *dummy, PyObject *args)
+{
+    PyObject *arg = NULL, *r, *res;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+    /* get item without increasing refcount, item may still be on the python
+     * stack but above the inaccessible top */
+    r = PyList_GetItem(arg, 4);
+    res = PyNumber_Add(r, r);
+
+    return res;
+}
+
 
 #if !defined(NPY_PY3K)
 static PyObject *
@@ -838,6 +874,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_NOARGS, NULL},
     {"test_inplace_increment",
         inplace_increment,
+        METH_VARARGS, NULL},
+    {"incref_elide",
+        incref_elide,
+        METH_VARARGS, NULL},
+    {"incref_elide_l",
+        incref_elide_l,
         METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",

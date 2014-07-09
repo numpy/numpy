@@ -1695,6 +1695,66 @@ class TestMethods(TestCase):
 
 
 class TestBinop(object):
+    def test_inplace(self):
+        # test refcount 1 inplace conversion
+        assert_array_almost_equal(np.array([0.5]) * np.array([1.0, 2.0]),
+                                  [0.5, 1.0])
+
+        d = np.array([0.5, 0.5])[::2]
+        assert_array_almost_equal(d * (d * np.array([1.0, 2.0])),
+                                  [0.25, 0.5])
+
+        a = np.array([0.5])
+        b = np.array([0.5])
+        c = a + b
+        c = a - b
+        c = a * b
+        c = a / b
+        assert_equal(a, b)
+        assert_almost_equal(c, 1.)
+
+        c = a + b * 2. / b * a - a / b
+        assert_equal(a, b)
+        assert_equal(c, 0.5)
+
+        # true divide
+        a = np.array([5])
+        b = np.array([3])
+        c = (a * a) / b
+
+        assert_almost_equal(c, 25 / 3)
+        assert_equal(a, 5)
+        assert_equal(b, 3)
+
+    def test_extension_incref_elide(self):
+        # test extension (e.g. cython) calling PyNumber_* slots without
+        # increasing the reference counts
+        #
+        # def incref_elide(a):
+        #    d = input.copy() # refcount 1
+        #    return d, d + d # PyNumber_Add without increasing refcount
+        from numpy.core.multiarray_tests import incref_elide
+        d = np.ones(5)
+        orig, res = incref_elide(d)
+        # the return original should not be changed to an inplace operation
+        assert_array_equal(orig, d)
+        assert_array_equal(res, d + d)
+
+    def test_extension_incref_elide_stack(self):
+        # scanning if the refcount == 1 object is on the python stack to check
+        # that we are called directly from python is flawed as object may still
+        # be above the stack pointer and we have no access to the top of it
+        #
+        # def incref_elide_l(d):
+        #    return l[4] + l[4] # PyNumber_Add without increasing refcount
+        from numpy.core.multiarray_tests import incref_elide_l
+        # padding with 1 makes sure the object on the stack is not overwriten
+        l = [1, 1, 1, 1, np.ones(5)]
+        res = incref_elide_l(l)
+        # the return original should not be changed to an inplace operation
+        assert_array_equal(l[4], np.ones(5))
+        assert_array_equal(res, l[4] + l[4])
+
     def test_ufunc_override_rop_precedence(self):
         # Check that __rmul__ and other right-hand operations have
         # precedence over __numpy_ufunc__
