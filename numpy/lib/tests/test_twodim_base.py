@@ -311,6 +311,18 @@ def test_tril_triu_ndim3():
         yield assert_equal, a_triu_observed.dtype, a.dtype
         yield assert_equal, a_tril_observed.dtype, a.dtype
 
+def test_tril_triu_with_inf():
+    # Issue 4859
+    arr = np.array([[1, 1, np.inf],
+                    [1, 1, 1],
+                    [np.inf, 1, 1]])
+    out_tril = np.array([[1, 0, 0],
+                         [1, 1, 0],
+                         [np.inf, 1, 1]])
+    out_triu = out_tril.T
+    assert_array_equal(np.triu(arr), out_triu)
+    assert_array_equal(np.tril(arr), out_tril)
+
 
 def test_mask_indices():
     # simple test without offset
