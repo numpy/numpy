@@ -387,7 +387,6 @@ def tri(N, M=None, k=0, dtype=float):
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
 
-
     Returns
     -------
     tri : ndarray of shape (N, M)
@@ -452,7 +451,9 @@ def tril(m, k=0):
 
     """
     m = asanyarray(m)
-    return multiply(tri(*m.shape[-2:], k=k, dtype=bool), m, dtype=m.dtype)
+    mask = tri(*m.shape[-2:], k=k, dtype=bool)
+
+    return where(mask, m, 0)
 
 
 def triu(m, k=0):
@@ -478,7 +479,9 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    return multiply(~tri(*m.shape[-2:], k=k-1, dtype=bool), m, dtype=m.dtype)
+    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+
+    return where(mask, 0, m)
 
 
 # Originally borrowed from John Hunter and matplotlib
