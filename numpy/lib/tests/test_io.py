@@ -991,6 +991,34 @@ M   33  21.99
         test = np.genfromtxt(data, names=True, dtype=None)
         assert_equal(test, ctrl)
 
+    def check_quoter(self, quoter):
+        data = [["a, b c d", "e f", "g" + quoter + ' x'],
+                ["h, i jk", "lm no, p q", "r"]]
+
+        ctrl = np.array([[asbytes(el) for el in row]
+                         for row in data],
+                        dtype='|S10')
+
+        tio = TextIO()
+        for row in data:
+            quoted = []
+            for el in row:
+                text = el.replace(quoter, '\\' + quoter)
+                quoted.append(quoter + text + quoter)
+            line = ','.join(quoted)
+            tio.write(line)
+            tio.write('\n')
+        tio.seek(0)
+
+        test = np.genfromtxt(tio, quoter=quoter, delimiter=",",
+                             dtype='|S10')
+
+        assert_equal(test, ctrl)
+
+    def test_quote(self):
+        self.check_quoter('"')
+        self.check_quoter("'")
+
     def test_autonames_and_usecols(self):
         "Tests names and usecols"
         data = TextIO('A B C D\n aaaa 121 45 9.1')

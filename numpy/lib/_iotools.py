@@ -188,7 +188,8 @@ class LineSplitter(object):
         """
         return lambda input: [_.strip() for _ in method(input)]
     #
-    def __init__(self, delimiter=None, comments=asbytes('#'), autostrip=True):
+    def __init__(self, delimiter=None, quoter=None, comments=asbytes('#'),
+                 autostrip=True):
         self.comments = comments
         # Delimiter is a character
         if isinstance(delimiter, unicode):
@@ -207,6 +208,9 @@ class LineSplitter(object):
         else:
             (_handyman, delimiter) = (self._delimited_splitter, None)
         self.delimiter = delimiter
+        if isinstance(quoter, unicode):
+            quoter = quoter.encode('ascii')
+        self.quoter = quoter
         if autostrip:
             self._handyman = self.autostrip(_handyman)
         else:
@@ -218,7 +222,35 @@ class LineSplitter(object):
         line = line.strip(asbytes(" \r\n"))
         if not line:
             return []
-        return line.split(self.delimiter)
+        if self.quoter is None:
+            return line.split(self.delimiter)
+        else:
+            out = []
+            word = asbytes('')
+            in_quote = False
+            is_escaped = False
+
+            # py3 bytes compat
+            chars = [line[i:i+1] for i in range(len(line))]
+
+            for char in chars:
+                if is_escaped:
+                    word += char
+                    is_escaped = False
+                elif char == asbytes('\\'):
+                    is_escaped = True
+                elif char == self.quoter:
+                    in_quote = not in_quote
+                elif in_quote:
+                    word += char
+                elif char == self.delimiter:
+                    out.append(word)
+                    word = asbytes('')
+                else:
+                    word += char
+            if word:
+                out.append(word)
+            return out
     #
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
