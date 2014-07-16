@@ -129,7 +129,7 @@ numpy/core/src/private/npy_partition.h
 numpy/core/src/private/scalarmathmodule.h
 numpy/core/src/scalarmathmodule.c
 numpy/core/src/umath/funcs.inc
-numpy/core/src/umath/loops.c
+numpy/core/src/umath/loops.[ch]
 numpy/core/src/umath/operand_flag_tests.c
 numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
