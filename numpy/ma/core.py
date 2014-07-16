@@ -5082,10 +5082,16 @@ class MaskedArray(ndarray):
                     filler = maximum_fill_value(self)
             else:
                 filler = fill_value
-            idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
-                              indexing='ij')
-            idx[axis] = self.filled(filler).argsort(axis=axis, kind=kind,
-                                                    order=order)
+
+            sidx = self.filled(filler).argsort(axis=axis, kind=kind,
+                                               order=order)
+            # save meshgrid memory for 1d arrays
+            if self.ndim == 1:
+                idx = sidx
+            else:
+                idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
+                                  indexing='ij')
+                idx[axis] = sidx
             tmp_mask = self._mask[idx].flat
             tmp_data = self._data[idx].flat
             self._data.flat = tmp_data
@@ -6187,10 +6193,16 @@ def sort(a, axis= -1, kind='quicksort', order=None, endwith=True, fill_value=Non
             filler = maximum_fill_value(a)
     else:
         filler = fill_value
-#    return
-    indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
-                       indexing='ij')
-    indx[axis] = filled(a, filler).argsort(axis=axis, kind=kind, order=order)
+
+    sindx = filled(a, filler).argsort(axis=axis, kind=kind, order=order)
+
+    # save meshgrid memory for 1d arrays
+    if a.ndim == 1:
+        indx = sindx
+    else:
+        indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
+                           indexing='ij')
+        indx[axis] = sindx
     return a[indx]
 sort.__doc__ = MaskedArray.sort.__doc__
 
