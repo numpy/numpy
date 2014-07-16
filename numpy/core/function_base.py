@@ -36,6 +36,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
 
+        .. versionadded:: 1.9.0
+
     Returns
     -------
     samples : ndarray
