@@ -249,6 +249,14 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         self.assert_not_deprecated(mult, args=([1], np.int_(3)))
 
 
+    def test_reduce_axis_float_index(self):
+        d = np.zeros((3,3,3))
+        self.assert_deprecated(np.min, args=(d, 0.5))
+        self.assert_deprecated(np.min, num=1, args=(d, (0.5, 1)))
+        self.assert_deprecated(np.min, num=1, args=(d, (1, 2.2)))
+        self.assert_deprecated(np.min, num=2, args=(d, (.2, 1.2)))
+
+
 class TestBooleanArgumentDeprecation(_DeprecationTestCase):
     """This tests that using a boolean as integer argument/indexing is
     deprecated.
