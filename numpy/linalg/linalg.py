@@ -404,7 +404,7 @@ def tensorinv(a, ind=2):
     Returns
     -------
     b : ndarray
-        `a`'s tensordot inverse, shape ``a.shape[:ind] + a.shape[ind:]``.
+        `a`'s tensordot inverse, shape ``a.shape[ind:] + a.shape[:ind]``.
 
     Raises
     ------
