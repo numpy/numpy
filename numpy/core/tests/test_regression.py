@@ -1794,6 +1794,22 @@ class TestRegression(TestCase):
             bytestring = "\x01  ".encode('ascii')
             assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
 
+    def test_pickle_py2_array_latin1_hack(self):
+        # Check that unpickling hacks in Py3 that support
+        # encoding='latin1' work correctly.
+
+        # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
+        data = asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\n"
+                       "tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
+                       "I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
+                       "p13\ntp14\nb.")
+        if sys.version_info[0] >= 3:
+            # This should work:
+            result = pickle.loads(data, encoding='latin1')
+            assert_array_equal(result, np.array([129], dtype='b'))
+            # Should not segfault:
+            assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
+
     def test_structured_type_to_object(self):
         a_rec = np.array([(0, 1), (3, 2)], dtype='i4,i8')
         a_obj = np.empty((2,), dtype=object)

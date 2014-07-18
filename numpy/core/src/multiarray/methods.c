@@ -1670,6 +1670,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
             tmp = PyUnicode_AsLatin1String(rawdata);
             Py_DECREF(rawdata);
             rawdata = tmp;
+            if (tmp == NULL) {
+                /* More informative error message */
+                PyErr_SetString(PyExc_ValueError,
+                                ("Failed to encode latin1 string when unpickling a Numpy array. "
+                                 "pickle.load(a, encoding='latin1') is assumed."));
+                return NULL;
+            }
         }
 #endif
 
