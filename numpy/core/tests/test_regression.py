@@ -398,6 +398,29 @@ class TestRegression(TestCase):
 
         assert_raises(KeyError, np.lexsort, BuggySequence())
 
+    def test_pickle_py2_bytes_encoding(self):
+        # Check that arrays and scalars pickled on Py2 are
+        # unpickleable on Py3 using encoding='bytes'
+
+        test_data = [
+            # (original, py2_pickle)
+            (np.unicode_('\u6f2c'),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
+                     "I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n.")),
+
+            (np.array([9e123], dtype=np.float64),
+             asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
+                     "p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\n"
+                     "p7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\n"
+                     "I0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb.")),
+        ]
+
+        if sys.version_info[:2] >= (3, 4):
+            # encoding='bytes' was added in Py3.4
+            for original, data in test_data:
+                result = pickle.loads(data, encoding='bytes')
+                assert_equal(result, original)
 
     def test_pickle_dtype(self,level=rlevel):
         """Ticket #251"""
