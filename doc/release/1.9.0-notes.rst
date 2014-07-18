@@ -176,6 +176,11 @@ introduced in advanced indexing operations:
 
 * Indexing with more then one ellipsis (``...``) is deprecated.
 
+Non-integer reduction axis indexes are deprecated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Non-integer axis indexes to reduction ufuncs like `add.reduce` or `sum` are
+deprecated.
+
 ``promote_types`` and string dtype
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``promote_types`` function now returns a valid string length when given an
