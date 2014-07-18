@@ -439,7 +439,7 @@ class TestAssertAllclose(unittest.TestCase):
         b[-1] = y * (1 + 1e-8)
         assert_allclose(a, b)
         self.assertRaises(AssertionError, assert_allclose, a, b,
-                          rtol=1e-9)
+                          rtol=1e-9, atol=0)
 
         assert_allclose(6, 10, rtol=0.5)
         self.assertRaises(AssertionError, assert_allclose, 10, 6, rtol=0.5)
