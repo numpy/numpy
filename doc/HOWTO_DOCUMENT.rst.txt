@@ -30,14 +30,14 @@ A Guide to NumPy/SciPy Documentation
 
 Overview
 --------
-In general, we follow the standard Python style conventions as described here:
- * `Style Guide for C Code <http://www.python.org/peps/pep-0007.html>`_
- * `Style Guide for Python Code <http://www.python.org/peps/pep-0008.html>`_
- * `Docstring Conventions <http://www.python.org/peps/pep-0257.html>`_
+We mostly follow the standard Python style conventions as described here:
+ * `Style Guide for C Code <http://python.org/dev/peps/pep-0007/>`_
+ * `Style Guide for Python Code <http://python.org/dev/peps/pep-0008/>`_
+ * `Docstring Conventions <http://python.org/dev/peps/pep-0257/>`_
 
 Additional PEPs of interest regarding documentation of code:
- * `Docstring Processing Framework <http://www.python.org/peps/pep-0256.html>`_
- * `Docutils Design Specification <http://www.python.org/peps/pep-0258.html>`_
+ * `Docstring Processing Framework <http://python.org/dev/peps/pep-0256/>`_
+ * `Docutils Design Specification <http://python.org/dev/peps/pep-0258/>`_
 
 Use a code checker:
  * `pylint <http://www.logilab.org/857>`_
