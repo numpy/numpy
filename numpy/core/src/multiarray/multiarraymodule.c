@@ -1839,7 +1839,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     static char *kwlist[] = {"dtype","obj", NULL};
     PyArray_Descr *typecode;
-    PyObject *obj = NULL;
+    PyObject *obj = NULL, *tmpobj = NULL;
     int alloc = 0;
     void *dptr;
     PyObject *ret;
@@ -1871,14 +1871,31 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             alloc = 1;
         }
         else {
+#if defined(NPY_PY3K)
+            /* Backward compatibility with Python 2 Numpy pickles */
+            if (PyUnicode_Check(obj)) {
+                tmpobj = PyUnicode_AsLatin1String(obj);
+                obj = tmpobj;
+                if (tmpobj == NULL) {
+                    /* More informative error message */
+                    PyErr_SetString(PyExc_ValueError,
+                                    ("Failed to encode Numpy scalar data string to latin1. "
+                                     "pickle.load(a, encoding='latin1') is assumed if unpickling."));
+                    return NULL;
+                }
+            }
+#endif
+
             if (!PyString_Check(obj)) {
                 PyErr_SetString(PyExc_TypeError,
                         "initializing object must be a string");
+                Py_XDECREF(tmpobj);
                 return NULL;
             }
             if (PyString_GET_SIZE(obj) < typecode->elsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "initialization string is too small");
+                Py_XDECREF(tmpobj);
                 return NULL;
             }
             dptr = PyString_AS_STRING(obj);
@@ -1890,6 +1907,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     if (alloc) {
         PyArray_free(dptr);
     }
+    Py_XDECREF(tmpobj);
     return ret;
 }
 

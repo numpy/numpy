@@ -1814,6 +1814,51 @@ class TestRegression(TestCase):
             # Should not segfault:
             assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
 
+    def test_pickle_py2_scalar_latin1_hack(self):
+        # Check that scalar unpickling hack in Py3 that supports
+        # encoding='latin1' work correctly.
+
+        # Python2 output for pickle.dumps(...)
+        datas = [
+            # (original, python2_pickle, koi8r_validity)
+            (np.unicode_('\u6bd2'),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
+                     "tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
+             'invalid'),
+
+            (np.float64(9e123),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\n"
+                     "p2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\n"
+                     "bS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
+             'invalid'),
+
+            (np.bytes_(asbytes('\x9c')),  # different 8-bit code point in KOI8-R vs latin1
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\n"
+                     "I0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\n"
+                     "tp8\nRp9\n."),
+             'different'),
+        ]
+        if sys.version_info[0] >= 3:
+            for original, data, koi8r_validity in datas:
+                result = pickle.loads(data, encoding='latin1')
+                assert_equal(result, original)
+
+                # Decoding under non-latin1 encoding (e.g.) KOI8-R can
+                # produce bad results, but should not segfault.
+                if koi8r_validity == 'different':
+                    # Unicode code points happen to lie within latin1,
+                    # but are different in koi8-r, resulting to silent
+                    # bogus results
+                    result = pickle.loads(data, encoding='koi8-r')
+                    assert_(result != original)
+                elif koi8r_validity == 'invalid':
+                    # Unicode code points outside latin1, so results
+                    # to an encoding exception
+                    assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
+                else:
+                    raise ValueError(koi8r_validity)
+
     def test_structured_type_to_object(self):
         a_rec = np.array([(0, 1), (3, 2)], dtype='i4,i8')
         a_obj = np.empty((2,), dtype=object)
