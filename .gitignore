@@ -15,6 +15,12 @@
 *.tmp
 *.vim
 tags
+cscope.out
+# gnu global
+GPATH
+GRTAGS
+GSYMS
+GTAGS
 
 # Compiled source #
 ###################
