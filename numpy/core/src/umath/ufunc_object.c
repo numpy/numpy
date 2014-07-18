@@ -3750,7 +3750,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
-            long axis = PyInt_AsLong(tmp);
+            int axis = PyArray_PyIntAsInt(tmp);
             if (axis == -1 && PyErr_Occurred()) {
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
@@ -3771,7 +3771,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     /* Try to interpret axis as an integer */
     else {
-        long axis = PyInt_AsLong(axes_in);
+        int axis = PyArray_PyIntAsInt(axes_in);
         /* TODO: PyNumber_Index would be good to use here */
         if (axis == -1 && PyErr_Occurred()) {
             Py_XDECREF(otype);
