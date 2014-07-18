@@ -2498,7 +2498,19 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     if ((fields == Py_None && names != Py_None) ||
         (names == Py_None && fields != Py_None)) {
         PyErr_Format(PyExc_ValueError,
-                "inconsistent fields and names");
+                "inconsistent fields and names in Numpy dtype unpickling");
+        return NULL;
+    }
+
+    if (names != Py_None && !PyTuple_Check(names)) {
+        PyErr_Format(PyExc_ValueError,
+                "non-tuple names in Numpy dtype unpickling");
+        return NULL;
+    }
+
+    if (fields != Py_None && !PyDict_Check(fields)) {
+        PyErr_Format(PyExc_ValueError,
+                "non-dict fields in Numpy dtype unpickling");
         return NULL;
     }
 
@@ -2563,13 +2575,82 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     if (fields != Py_None) {
-        Py_XDECREF(self->fields);
-        self->fields = fields;
-        Py_INCREF(fields);
-        Py_XDECREF(self->names);
-        self->names = names;
-        if (incref_names) {
-            Py_INCREF(names);
+        /*
+         * Ensure names are of appropriate string type
+         */
+        Py_ssize_t i;
+        int names_ok = 1;
+        PyObject *name;
+
+        for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
+            name = PyTuple_GET_ITEM(names, i);
+            if (!PyUString_Check(name)) {
+                names_ok = 0;
+                break;
+            }
+        }
+
+        if (names_ok) {
+            Py_XDECREF(self->fields);
+            self->fields = fields;
+            Py_INCREF(fields);
+            Py_XDECREF(self->names);
+            self->names = names;
+            if (incref_names) {
+                Py_INCREF(names);
+            }
+        }
+        else {
+#if defined(NPY_PY3K)
+            /*
+             * To support pickle.load(f, encoding='bytes') for loading Py2
+             * generated pickles on Py3, we need to be more lenient and convert
+             * field names from byte strings to unicode.
+             */
+            PyObject *tmp, *new_name, *field;
+
+            tmp = PyDict_New();
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->fields);
+            self->fields = tmp;
+
+            tmp = PyTuple_New(PyTuple_GET_SIZE(names));
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->names);
+            self->names = tmp;
+
+            for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
+                name = PyTuple_GET_ITEM(names, i);
+                field = PyDict_GetItem(fields, name);
+                if (!field) {
+                    return NULL;
+                }
+
+                if (PyUnicode_Check(name)) {
+                    new_name = name;
+                    Py_INCREF(new_name);
+                }
+                else {
+                    new_name = PyUnicode_FromEncodedObject(name, "ASCII", "strict");
+                    if (new_name == NULL) {
+                        return NULL;
+                    }
+                }
+
+                PyTuple_SET_ITEM(self->names, i, new_name);
+                if (PyDict_SetItem(self->fields, new_name, field) != 0) {
+                    return NULL;
+                }
+            }
+#else
+            PyErr_Format(PyExc_ValueError,
+                "non-string names in Numpy dtype unpickling");
+            return NULL;
+#endif
         }
     }
 
