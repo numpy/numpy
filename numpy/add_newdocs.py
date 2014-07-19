@@ -4459,12 +4459,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
 
 tobytesdoc = """
-    a.tostring(order='C')
+    a.{name}(order='C')
 
-    Construct a Python string containing the raw data bytes in the array.
+    Construct Python bytes containing the raw data bytes in the array.
 
-    Constructs a Python string showing a copy of the raw contents of
-    data memory. The string can be produced in either 'C' or 'Fortran',
+    Constructs Python bytes showing a copy of the raw contents of
+    data memory. The bytes object can be produced in either 'C' or 'Fortran',
     or 'Any' order (the default is 'C'-order). 'Any' order means C-order
     unless the F_CONTIGUOUS flag in the array is set, in which case it
     means 'Fortran' order.
@@ -4479,29 +4479,31 @@ tobytesdoc = """
 
     Returns
     -------
-    s : str
-        A Python string exhibiting a copy of `a`'s raw data.
+    s : bytes
+        Python bytes exhibiting a copy of `a`'s raw data.
 
     Examples
     --------
     >>> x = np.array([[0, 1], [2, 3]])
     >>> x.tobytes()
-    '\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
     >>> x.tobytes('C') == x.tobytes()
     True
     >>> x.tobytes('F')
-    '\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
 
     """
 
 add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tostring', tobytesdoc.format(deprecated=
+           ('tostring', tobytesdoc.format(name='tostring',
+                                          deprecated=
                                           'This function is a compatibility '
                                           'alias for tobytes. Despite its '
                                           'name it returns bytes not '
                                           'strings.')))
 add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tobytes', tobytesdoc.format(deprecated='.. versionadded:: 1.9.0')))
+           ('tobytes', tobytesdoc.format(name='tobytes',
+                                         deprecated='.. versionadded:: 1.9.0')))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
     """
