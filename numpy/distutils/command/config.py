@@ -62,16 +62,27 @@ class config(old_config):
                     e = get_exception()
                     msg = """\
 Could not initialize compiler instance: do you have Visual Studio
-installed ? If you are trying to build with mingw, please use python setup.py
-build -c mingw32 instead ). If you have Visual Studio installed, check it is
-correctly installed, and the right version (VS 2008 for python 2.6, VS 2003 for
-2.5, etc...). Original exception was: %s, and the Compiler
-class was %s
+installed?  If you are trying to build with MinGW, please use "python setup.py
+build -c mingw32" instead.  If you have Visual Studio installed, check it is
+correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
+VS 2010 for >= 3.3).
+
+Original exception was: %s, and the Compiler class was %s
 ============================================================================""" \
                         % (e, self.compiler.__class__.__name__)
                     print ("""\
 ============================================================================""")
                     raise distutils.errors.DistutilsPlatformError(msg)
+
+            # After MSVC is initialized, add an explicit /MANIFEST to linker
+            # flags.  See issues gh-4245 and gh-4101 for details.  Also
+            # relevant are issues 4431 and 16296 on the Python bug tracker.
+            from distutils import msvc9compiler
+            if msvc9compiler.get_build_version() >= 10:
+                for ldflags in [self.compiler.ldflags_shared,
+                                self.compiler.ldflags_shared_debug]:
+                    if '/MANIFEST' not in ldflags:
+                        ldflags.append('/MANIFEST')
 
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
