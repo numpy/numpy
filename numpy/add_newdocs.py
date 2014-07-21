@@ -5521,6 +5521,8 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
 
+        .. versionadded:: 1.7.0
+
     Returns
     -------
     r : ndarray
