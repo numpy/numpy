@@ -2369,11 +2369,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
     int elsize = -1, alignment = -1;
     int version = 4;
-#if defined(NPY_PY3K)
-    int endian;
-#else
     char endian;
-#endif
+    PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int int_dtypeflags = 0;
@@ -2390,68 +2387,39 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-#if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOOiiiO)"
-#else
-#define _ARGSTR_ "(icOOOiiiO)"
-#endif
-        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+        if (!PyArg_ParseTuple(args, "(iOOOOiiiO)", &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags, &metadata)) {
+            PyErr_Clear();
             return NULL;
-#undef _ARGSTR_
         }
         break;
     case 8:
-#if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOOiii)"
-#else
-#define _ARGSTR_ "(icOOOiii)"
-#endif
-        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+        if (!PyArg_ParseTuple(args, "(iOOOOiii)", &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags)) {
             return NULL;
-#undef _ARGSTR_
         }
         break;
     case 7:
-#if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOOii)"
-#else
-#define _ARGSTR_ "(icOOOii)"
-#endif
-        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+        if (!PyArg_ParseTuple(args, "(iOOOOii)", &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
             return NULL;
-#undef _ARGSTR_
         }
         break;
     case 6:
-#if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOii)"
-#else
-#define _ARGSTR_ "(icOOii)"
-#endif
-        if (!PyArg_ParseTuple(args, _ARGSTR_, &version,
-                    &endian, &subarray, &fields,
+        if (!PyArg_ParseTuple(args, "(iOOOii)", &version,
+                    &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
-            PyErr_Clear();
-#undef _ARGSTR_
+            return NULL;
         }
         break;
     case 5:
         version = 0;
-#if defined(NPY_PY3K)
-#define _ARGSTR_ "(COOii)"
-#else
-#define _ARGSTR_ "(cOOii)"
-#endif
-        if (!PyArg_ParseTuple(args, _ARGSTR_,
-                    &endian, &subarray, &fields, &elsize,
+        if (!PyArg_ParseTuple(args, "(OOOii)",
+                    &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
-#undef _ARGSTR_
             return NULL;
         }
         break;
@@ -2494,11 +2462,55 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         }
     }
 
+    /* Parse endian */
+    if (PyUnicode_Check(endian_obj) || PyBytes_Check(endian_obj)) {
+        PyObject *tmp = NULL;
+        char *str;
+        Py_ssize_t len;
+
+        if (PyUnicode_Check(endian_obj)) {
+            tmp = PyUnicode_AsASCIIString(endian_obj);
+            if (tmp == NULL) {
+                return NULL;
+            }
+            endian_obj = tmp;
+        }
+
+        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) == -1) {
+            Py_XDECREF(tmp);
+            return NULL;
+        }
+        if (len != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                            "endian is not 1-char string in Numpy dtype unpickling");
+            Py_XDECREF(tmp);
+            return NULL;
+        }
+        endian = str[0];
+        Py_XDECREF(tmp);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                        "endian is not a string in Numpy dtype unpickling");
+        return NULL;
+    }
 
     if ((fields == Py_None && names != Py_None) ||
         (names == Py_None && fields != Py_None)) {
         PyErr_Format(PyExc_ValueError,
-                "inconsistent fields and names");
+                "inconsistent fields and names in Numpy dtype unpickling");
+        return NULL;
+    }
+
+    if (names != Py_None && !PyTuple_Check(names)) {
+        PyErr_Format(PyExc_ValueError,
+                "non-tuple names in Numpy dtype unpickling");
+        return NULL;
+    }
+
+    if (fields != Py_None && !PyDict_Check(fields)) {
+        PyErr_Format(PyExc_ValueError,
+                "non-dict fields in Numpy dtype unpickling");
         return NULL;
     }
 
@@ -2563,13 +2575,82 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     if (fields != Py_None) {
-        Py_XDECREF(self->fields);
-        self->fields = fields;
-        Py_INCREF(fields);
-        Py_XDECREF(self->names);
-        self->names = names;
-        if (incref_names) {
-            Py_INCREF(names);
+        /*
+         * Ensure names are of appropriate string type
+         */
+        Py_ssize_t i;
+        int names_ok = 1;
+        PyObject *name;
+
+        for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
+            name = PyTuple_GET_ITEM(names, i);
+            if (!PyUString_Check(name)) {
+                names_ok = 0;
+                break;
+            }
+        }
+
+        if (names_ok) {
+            Py_XDECREF(self->fields);
+            self->fields = fields;
+            Py_INCREF(fields);
+            Py_XDECREF(self->names);
+            self->names = names;
+            if (incref_names) {
+                Py_INCREF(names);
+            }
+        }
+        else {
+#if defined(NPY_PY3K)
+            /*
+             * To support pickle.load(f, encoding='bytes') for loading Py2
+             * generated pickles on Py3, we need to be more lenient and convert
+             * field names from byte strings to unicode.
+             */
+            PyObject *tmp, *new_name, *field;
+
+            tmp = PyDict_New();
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->fields);
+            self->fields = tmp;
+
+            tmp = PyTuple_New(PyTuple_GET_SIZE(names));
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->names);
+            self->names = tmp;
+
+            for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
+                name = PyTuple_GET_ITEM(names, i);
+                field = PyDict_GetItem(fields, name);
+                if (!field) {
+                    return NULL;
+                }
+
+                if (PyUnicode_Check(name)) {
+                    new_name = name;
+                    Py_INCREF(new_name);
+                }
+                else {
+                    new_name = PyUnicode_FromEncodedObject(name, "ASCII", "strict");
+                    if (new_name == NULL) {
+                        return NULL;
+                    }
+                }
+
+                PyTuple_SET_ITEM(self->names, i, new_name);
+                if (PyDict_SetItem(self->fields, new_name, field) != 0) {
+                    return NULL;
+                }
+            }
+#else
+            PyErr_Format(PyExc_ValueError,
+                "non-string names in Numpy dtype unpickling");
+            return NULL;
+#endif
         }
     }
 
