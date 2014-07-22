@@ -5029,6 +5029,10 @@ class MaskedArray(ndarray):
     endwith : {True, False}, optional
         Whether missing values (if any) should be forced in the upper indices
         (at the end of the array) (True) or lower indices (at the beginning).
+        When the array contains unmasked values of the largest (or smallest if
+        False) representable value of the datatype the ordering of these values
+        and the masked values is undefined.  To enforce the masked values are
+        at the end (beginning) in this case one must sort the mask.
     fill_value : {var}, optional
         Value used internally for the masked values.
         If ``fill_value`` is not None, it supersedes ``endwith``.
