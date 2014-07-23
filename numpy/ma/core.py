@@ -5586,9 +5586,8 @@ class mvoid(MaskedArray):
     """
     #
     def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
-                hardmask=False):
-        dtype = dtype or data.dtype
-        _data = np.array(data, dtype=dtype)
+                hardmask=False, copy=False, subok=True):
+        _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
         _data = _data.view(self)
         _data._hardmask = hardmask
         if mask is not nomask:

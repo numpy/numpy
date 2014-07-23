@@ -814,7 +814,7 @@ class TestMaskedArrayArithmetic(TestCase):
         res = count(ott)
         self.assertTrue(res.dtype.type is np.intp)
         assert_equal(3, res)
-        
+
         ott = ott.reshape((2, 2))
         res = count(ott)
         assert_(res.dtype.type is np.intp)
@@ -3522,8 +3522,15 @@ class TestMaskedFields(TestCase):
         assert_equal_records(a[-2]._mask, a._mask[-2])
 
     def test_setitem(self):
-        # Issue 2403
+        # Issue 4866: check that one can set individual items in [record][col]
+        # and [col][record] order
         ndtype = np.dtype([('a', float), ('b', int)])
+        ma = np.ma.MaskedArray([(1.0, 1), (2.0, 2)], dtype=ndtype)
+        ma['a'][1] = 3.0
+        assert_equal(ma['a'], np.array([1.0, 3.0]))
+        ma[1]['a'] = 4.0
+        assert_equal(ma['a'], np.array([1.0, 4.0]))
+        # Issue 2403
         mdtype = np.dtype([('a', bool), ('b', bool)])
         # soft mask
         control = np.array([(False, True), (True, True)], dtype=mdtype)
