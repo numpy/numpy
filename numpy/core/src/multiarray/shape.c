@@ -326,8 +326,12 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         }
     }
     else {
-        Py_INCREF(zero);
-        NPY_COPY_PYOBJECT_PTR(optr, &zero);
+        npy_intp i;
+        for (i = 0; i < dtype->elsize / sizeof(zero); i++) {
+            Py_INCREF(zero);
+            NPY_COPY_PYOBJECT_PTR(optr, &zero);
+            optr += sizeof(zero);
+        }
     }
     return;
 }

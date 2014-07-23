@@ -275,8 +275,12 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         }
     }
     else {
-        Py_XINCREF(obj);
-        NPY_COPY_PYOBJECT_PTR(optr, &obj);
+        npy_intp i;
+        for (i = 0; i < dtype->elsize / sizeof(obj); i++) {
+            Py_XINCREF(obj);
+            NPY_COPY_PYOBJECT_PTR(optr, &obj);
+            optr += sizeof(obj);
+        }
         return;
     }
 }
