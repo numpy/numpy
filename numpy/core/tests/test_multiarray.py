@@ -511,6 +511,10 @@ class TestCreation(TestCase):
         assert_array_equal(d, [0] * 13)
         assert_equal(np.count_nonzero(d), 0)
 
+    def test_zeros_obj_obj(self):
+        d = zeros(10, dtype=[('k', object, 2)])
+        assert_array_equal(d['k'], 0)
+
     def test_sequence_non_homogenous(self):
         assert_equal(np.array([4, 2**80]).dtype, np.object)
         assert_equal(np.array([4, 2**80, 4]).dtype, np.object)
@@ -2861,6 +2865,14 @@ class TestResize(TestCase):
         x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
+
+    def test_obj_obj(self):
+        # check memory is initialized on resize, gh-4857
+        a = ones(10, dtype=[('k', object, 2)])
+        a.resize(15,)
+        assert_equal(a.shape, (15,))
+        assert_array_equal(a['k'][-5:], 0)
+        assert_array_equal(a['k'][:-5], 1)
 
 
 class TestRecord(TestCase):
