@@ -1697,6 +1697,43 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(order='K'), [2, 3, 0, 1])
         assert_(a.ravel(order='K').flags.owndata)
 
+    def test_conjugate(self):
+        a = np.array([1-1j, 1+1j, 23+23.0j])
+        ac = a.conj()
+        assert_equal(a.real, ac.real)
+        assert_equal(a.imag, -ac.imag)
+        assert_equal(ac, a.conjugate())
+        assert_equal(ac, np.conjugate(a))
+
+        a = np.array([1-1j, 1+1j, 23+23.0j], 'F')
+        ac = a.conj()
+        assert_equal(a.real, ac.real)
+        assert_equal(a.imag, -ac.imag)
+        assert_equal(ac, a.conjugate())
+        assert_equal(ac, np.conjugate(a))
+
+        a = np.array([1, 2, 3])
+        ac = a.conj()
+        assert_equal(a, ac)
+        assert_equal(ac, a.conjugate())
+        assert_equal(ac, np.conjugate(a))
+
+        a = np.array([1.0, 2.0, 3.0])
+        ac = a.conj()
+        assert_equal(a, ac)
+        assert_equal(ac, a.conjugate())
+        assert_equal(ac, np.conjugate(a))
+
+        a = np.array([1-1j, 1+1j, 1, 2.0], object)
+        ac = a.conj()
+        assert_equal(ac, [k.conjugate() for k in a])
+        assert_equal(ac, a.conjugate())
+        assert_equal(ac, np.conjugate(a))
+
+        a = np.array([1-1j, 1, 2.0, 'f'], object)
+        assert_raises(AttributeError, lambda: a.conj())
+        assert_raises(AttributeError, lambda: a.conjugate()) 
+
 
 class TestBinop(object):
     def test_inplace(self):
