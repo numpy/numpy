@@ -162,7 +162,7 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
 #define GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, left_name, right_name, inplace, slot_name) \
     do {                                                                          \
         if (needs_right_binop_forward((PyObject *)m1, m2, right_name, inplace) && \
-                !SAME_SLOTS(m1, m2, slot_name)) {                                 \
+                (inplace || !SAME_SLOTS(m1, m2, slot_name))) {                    \
             Py_INCREF(Py_NotImplemented);                                         \
             return Py_NotImplemented;                                             \
         }                                                                         \
