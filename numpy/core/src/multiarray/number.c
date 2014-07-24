@@ -111,6 +111,13 @@ has_ufunc_attr(PyObject * obj) {
  *       [occurs if the other object is a strict subclass provided
  *       the operation is not in-place]
  *
+ * An additional check is made in GIVE_UP_IF_HAS_RIGHT_BINOP macro below:
+ *
+ * (iv) other.__class__.__r*__ is not self.__class__.__r*__
+ *
+ *      This is needed, because CPython does not call __rmul__ if
+ *      the tp_number slots of the two objects are the same.
+ *
  * This always prioritizes the __r*__ routines over __numpy_ufunc__, independent
  * of whether the other object is an ndarray subclass or not.
  */
@@ -146,13 +153,19 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
     }
 }
 
-#define GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, left_name, right_name, inplace)  \
-    do {                                                                \
-        if (needs_right_binop_forward((PyObject *)m1, m2, right_name,   \
-                                      inplace)) {                       \
-            Py_INCREF(Py_NotImplemented);                               \
-            return Py_NotImplemented;                                   \
-        }                                                               \
+/* In pure-Python, SAME_SLOTS can be replaced by
+   getattr(m1, op_name) is getattr(m2, op_name) */
+#define SAME_SLOTS(m1, m2, slot_name)                                   \
+    (Py_TYPE(m1)->tp_as_number != NULL && Py_TYPE(m2)->tp_as_number != NULL && \
+     Py_TYPE(m1)->tp_as_number->slot_name == Py_TYPE(m2)->tp_as_number->slot_name)
+
+#define GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, left_name, right_name, inplace, slot_name) \
+    do {                                                                          \
+        if (needs_right_binop_forward((PyObject *)m1, m2, right_name, inplace) && \
+                !SAME_SLOTS(m1, m2, slot_name)) {                                 \
+            Py_INCREF(Py_NotImplemented);                                         \
+            return Py_NotImplemented;                                             \
+        }                                                                         \
     } while (0)
 
 
@@ -339,21 +352,21 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__add__", "__radd__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__add__", "__radd__", 0, nb_add);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
 }
 
 static PyObject *
 array_subtract(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__sub__", "__rsub__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__sub__", "__rsub__", 0, nb_subtract);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.subtract);
 }
 
 static PyObject *
 array_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mul__", "__rmul__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mul__", "__rmul__", 0, nb_multiply);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
 
@@ -361,7 +374,7 @@ array_multiply(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__div__", "__rdiv__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__div__", "__rdiv__", 0, nb_divide);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -369,7 +382,7 @@ array_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_remainder(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mod__", "__rmod__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mod__", "__rmod__", 0, nb_remainder);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
@@ -533,7 +546,7 @@ array_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
 {
     /* modulo is ignored! */
     PyObject *value;
-    GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__pow__", "__rpow__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__pow__", "__rpow__", 0, nb_power);
     value = fast_scalar_power(a1, o2, 0);
     if (!value) {
         value = PyArray_GenericBinaryFunction(a1, o2, n_ops.power);
@@ -563,56 +576,56 @@ array_invert(PyArrayObject *m1)
 static PyObject *
 array_left_shift(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__lshift__", "__rlshift__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__lshift__", "__rlshift__", 0, nb_lshift);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.left_shift);
 }
 
 static PyObject *
 array_right_shift(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__rshift__", "__rrshift__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__rshift__", "__rrshift__", 0, nb_rshift);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.right_shift);
 }
 
 static PyObject *
 array_bitwise_and(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__and__", "__rand__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__and__", "__rand__", 0, nb_and);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
 static PyObject *
 array_bitwise_or(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__or__", "__ror__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__or__", "__ror__", 0, nb_or);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
 static PyObject *
 array_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__xor__", "__rxor__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__xor__", "__rxor__", 0, nb_xor);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
 
 static PyObject *
 array_inplace_add(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__iadd__", "__radd__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__iadd__", "__radd__", 1, nb_inplace_add);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.add);
 }
 
 static PyObject *
 array_inplace_subtract(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__isub__", "__rsub__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__isub__", "__rsub__", 1, nb_inplace_subtract);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.subtract);
 }
 
 static PyObject *
 array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__imul__", "__rmul__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__imul__", "__rmul__", 1, nb_inplace_multiply);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.multiply);
 }
 
@@ -620,7 +633,7 @@ array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__idiv__", "__rdiv__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__idiv__", "__rdiv__", 1, nb_inplace_divide);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -628,7 +641,7 @@ array_inplace_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_remainder(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__imod__", "__rmod__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__imod__", "__rmod__", 1, nb_inplace_remainder);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.remainder);
 }
 
@@ -637,7 +650,7 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
 {
     /* modulo is ignored! */
     PyObject *value;
-    GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__ipow__", "__rpow__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__ipow__", "__rpow__", 1, nb_inplace_power);
     value = fast_scalar_power(a1, o2, 1);
     if (!value) {
         value = PyArray_GenericInplaceBinaryFunction(a1, o2, n_ops.power);
@@ -648,56 +661,56 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
 static PyObject *
 array_inplace_left_shift(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ilshift__", "__rlshift__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ilshift__", "__rlshift__", 1, nb_inplace_lshift);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.left_shift);
 }
 
 static PyObject *
 array_inplace_right_shift(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__irshift__", "__rrshift__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__irshift__", "__rrshift__", 1, nb_inplace_rshift);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.right_shift);
 }
 
 static PyObject *
 array_inplace_bitwise_and(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__iand__", "__rand__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__iand__", "__rand__", 1, nb_inplace_and);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
 static PyObject *
 array_inplace_bitwise_or(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ior__", "__ror__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ior__", "__ror__", 1, nb_inplace_or);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
 static PyObject *
 array_inplace_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ixor__", "__rxor__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ixor__", "__rxor__", 1, nb_inplace_xor);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
 
 static PyObject *
 array_floor_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__floordiv__", "__rfloordiv__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__floordiv__", "__rfloordiv__", 0, nb_floor_divide);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.floor_divide);
 }
 
 static PyObject *
 array_true_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__truediv__", "__rtruediv__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__truediv__", "__rtruediv__", 0, nb_true_divide);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
 }
 
 static PyObject *
 array_inplace_floor_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ifloordiv__", "__rfloordiv__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__ifloordiv__", "__rfloordiv__", 1, nb_inplace_floor_divide);
     return PyArray_GenericInplaceBinaryFunction(m1, m2,
                                                 n_ops.floor_divide);
 }
@@ -705,7 +718,7 @@ array_inplace_floor_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
 {
-    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__itruediv__", "__rtruediv__", 1);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__itruediv__", "__rtruediv__", 1, nb_inplace_true_divide);
     return PyArray_GenericInplaceBinaryFunction(m1, m2,
                                                 n_ops.true_divide);
 }
@@ -737,7 +750,7 @@ static PyObject *
 array_divmod(PyArrayObject *op1, PyObject *op2)
 {
     PyObject *divp, *modp, *result;
-    GIVE_UP_IF_HAS_RIGHT_BINOP(op1, op2, "__divmod__", "__rdivmod__", 0);
+    GIVE_UP_IF_HAS_RIGHT_BINOP(op1, op2, "__divmod__", "__rdivmod__", 0, nb_divmod);
 
     divp = array_floor_divide(op1, op2);
     if (divp == NULL) {
