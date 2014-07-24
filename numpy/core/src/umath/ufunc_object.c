@@ -3954,8 +3954,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
          * is used for add and multiply reduction to avoid overflow
          */
         int typenum = PyArray_TYPE(mp);
-        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-            && ((strcmp(ufunc->name,"add") == 0)
+        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum)) &&
+            (ufunc->name[0] == 'a' || ufunc->name[0] == 'm') &&
+            ((strcmp(ufunc->name,"add") == 0)
                 || (strcmp(ufunc->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_LONG;
