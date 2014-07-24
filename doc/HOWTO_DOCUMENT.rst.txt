@@ -31,7 +31,7 @@ A Guide to NumPy/SciPy Documentation
 Overview
 --------
 In general, we follow the standard Python style conventions as described here:
- * `Style Guide for C Code <http://legacy.python.org/dev/peps/pep-000/>`_
+ * `Style Guide for C Code <http://legacy.python.org/dev/peps/pep-0007/>`_
  * `Style Guide for Python Code <http://legacy.python.org/dev/peps/pep-0008/>`_
  * `Docstring Conventions <http://legacy.python.org/dev/peps/pep-0257/>`_
 
