@@ -4489,6 +4489,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      int unused, const char *signature)
 {
     PyUFuncObject *ufunc;
+    npy_intp type;
 
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -4533,7 +4534,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     ufunc->doc = doc;
 
-    ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*ufunc->nargs);
+    ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*(ufunc->nargs +
+                                                         NPY_NTYPES));
     if (ufunc->op_flags == NULL) {
         return PyErr_NoMemory();
     }
@@ -4552,6 +4554,25 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
         if (_parse_signature(ufunc, signature) != 0) {
             Py_DECREF(ufunc);
             return NULL;
+        }
+    }
+
+    /*
+     * stuff a jump index to the first entry of a certain dtype behind the public ABI
+     * the table allows faster lookup of inner loops
+     */
+    for (type = 0; type < NPY_NTYPES; type++) {
+        npy_uint32 * typeskip = ufunc->op_flags + ufunc->nargs;
+        npy_intp j;
+        for (j = 0; j < ufunc->ntypes; j++) {
+            if (ufunc->types[j * ufunc->nargs] == type) {
+                typeskip[type] = j;
+                break;
+            }
+        }
+        /* no type registered, full scan required (can this even happen? */
+        if (j == ufunc->ntypes) {
+            typeskip[type] = 0;
         }
     }
     return (PyObject *)ufunc;

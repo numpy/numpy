@@ -1283,15 +1283,14 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     const char *ufunc_name;
     PyObject *errmsg;
     int i, j;
-
-    ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    npy_uint32 offset;
 
     /*
      * If there are user-loops search them first.
      * TODO: There needs to be a loop selection acceleration structure,
      *       like a hash table.
      */
-    if (ufunc->userloops) {
+    if (NPY_UNLIKELY(ufunc->userloops)) {
         switch (find_userloop(ufunc, dtypes,
                     out_innerloop, out_innerloopdata)) {
             /* Error */
@@ -1303,11 +1302,21 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * op_flags has a jump index to the first entry of dtype[0] stuffed behind
+     * the public ABI
+     */
+    if (NPY_LIKELY(dtypes[0]->type_num < NPY_NTYPES)) {
+        offset = ufunc->op_flags[nargs + dtypes[0]->type_num];
+    }
+    else {
+        offset = 0;
+    }
     types = ufunc->types;
-    for (i = 0; i < ufunc->ntypes; ++i) {
+    for (i = offset; i < ufunc->ntypes; ++i) {
         /* Copy the types into an int array for matching */
         for (j = 0; j < nargs; ++j) {
-            if (types[j] != dtypes[j]->type_num) {
+            if (types[i * nargs + j] != dtypes[j]->type_num) {
                 break;
             }
         }
@@ -1316,10 +1325,9 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
             *out_innerloopdata = ufunc->data[i];
             return 0;
         }
-
-        types += nargs;
     }
 
+    ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     errmsg = PyUString_FromFormat("ufunc '%s' did not contain a loop "
                     "with signature matching types ", ufunc_name);
     for (i = 0; i < nargs; ++i) {
