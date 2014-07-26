@@ -35,6 +35,8 @@ Future Changes
 * String version checks will break because, e.g., '1.9' > '1.10' is True. A
   NumpyVersion class has been added that can be used for such comparisons.
 * The diagonal and diag functions will return writeable views in 1.10.0
+* The `S` and/or `a` dtypes may be changed to represent Python strings
+  instead of bytes, in Python 3 these two types are very different.
 
 
 Compatibility notes
