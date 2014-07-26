@@ -1080,7 +1080,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
      * platforms (debian sparc) malloc does not provide enough alignment for
      * long double types
      */
-    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)fa,
+                        strides ? NPY_ARRAY_UPDATE_ALL : NPY_ARRAY_ALIGNED);
 
     /*
      * call the __array_finalize__
