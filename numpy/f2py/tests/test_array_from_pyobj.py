@@ -111,7 +111,7 @@ _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
 # 16 byte long double types this means the inout intent cannot be satisfied and
 # several tests fail as the alignment flag can be randomly true or fals
 # when numpy gains an aligned allocator the tests could be enabled again
-if 'sparc' not in platform.platform().lower():
+if 'sparc' not in platform.platform().lower() and sys.platform != 'win32':
     _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
     _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
                                ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']
