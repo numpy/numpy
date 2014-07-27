@@ -12,6 +12,7 @@
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "multiarraymodule.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -1069,7 +1070,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     if ((subtype != &PyArray_Type)) {
         PyObject *res, *func, *args;
 
-        func = PyObject_GetAttrString((PyObject *)fa, "__array_finalize__");
+        func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
         if (func && func != Py_None) {
             if (NpyCapsule_Check(func)) {
                 /* A C-function is stored here */
@@ -3368,7 +3369,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 #endif
         ) {
         PyObject *newbuf;
-        newbuf = PyObject_GetAttrString(buf, "__buffer__");
+        newbuf = PyObject_GetAttr(buf, npy_ma_str_buffer);
         if (newbuf == NULL) {
             Py_DECREF(type);
             return NULL;

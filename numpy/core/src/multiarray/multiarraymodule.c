@@ -56,6 +56,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "common.h"
 #include "ufunc_override.h"
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
+#include "multiarraymodule.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1615,6 +1616,72 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                         "only 2 non-keyword arguments accepted");
         return NULL;
     }
+
+    /* super-fast path for ndarray argument calls */
+    if (PyTuple_GET_SIZE(args) == 0) {
+        goto full_path;
+    }
+    op = PyTuple_GET_ITEM(args, 0);
+    if (PyArray_CheckExact(op)) {
+        PyObject * dtype_obj = Py_None;
+        oparr = (PyArrayObject *)op;
+        /* get dtype which can be positional */
+        if (PyTuple_GET_SIZE(args) == 2) {
+            dtype_obj = PyTuple_GET_ITEM(args, 1);
+        }
+        else if (kws) {
+            dtype_obj = PyDict_GetItem(kws, npy_ma_str_dtype);
+            if (dtype_obj == NULL) {
+                dtype_obj = Py_None;
+            }
+        }
+        if (dtype_obj != Py_None) {
+            goto full_path;
+        }
+
+        /* array(ndarray) */
+        if (kws == NULL) {
+            ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
+            goto finish;
+        }
+        else {
+            /* fast path for copy=False rest default (np.asarray) */
+            PyObject * copy_obj, * order_obj, *ndmin_obj;
+            copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
+            if (copy_obj != Py_False) {
+                goto full_path;
+            }
+            copy = NPY_FALSE;
+
+            /* order does not matter for 1d arrays */
+            if (PyArray_NDIM(op) > 1) {
+                order_obj = PyDict_GetItem(kws, npy_ma_str_order);
+                if (order_obj != Py_None && order_obj != NULL) {
+                    goto full_path;
+                }
+            }
+
+            ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
+            if (ndmin_obj) {
+                ndmin = PyLong_AsLong(ndmin_obj);
+                if (ndmin == -1 && PyErr_Occurred()) {
+                    goto clean_type;
+                }
+                else if (ndmin > NPY_MAXDIMS) {
+                    goto full_path;
+                }
+            }
+
+            /* copy=False with default dtype, order and ndim */
+            if (STRIDING_OK(oparr, order)) {
+                ret = oparr;
+                Py_INCREF(ret);
+                goto finish;
+            }
+        }
+    }
+
+full_path:
     if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
@@ -4022,6 +4089,38 @@ set_flaginfo(PyObject *d)
     return;
 }
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_buffer = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
+
+static int
+intern_strings(void)
+{
+    npy_ma_str_array = PyUString_InternFromString("__array__");
+    npy_ma_str_array_prepare = PyUString_InternFromString("__array_prepare__");
+    npy_ma_str_array_wrap = PyUString_InternFromString("__array_wrap__");
+    npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
+    npy_ma_str_buffer = PyUString_InternFromString("__buffer__");
+    npy_ma_str_ufunc = PyUString_InternFromString("__numpy_ufunc__");
+    npy_ma_str_order = PyUString_InternFromString("order");
+    npy_ma_str_copy = PyUString_InternFromString("copy");
+    npy_ma_str_dtype = PyUString_InternFromString("dtype");
+    npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
+
+    return npy_ma_str_array && npy_ma_str_array_prepare &&
+           npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
+           npy_ma_str_array_finalize && npy_ma_str_ufunc &&
+           npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
+           npy_ma_str_ndmin;
+}
+
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -4193,6 +4292,10 @@ PyMODINIT_FUNC initmultiarray(void) {
                             (PyObject *)&NpyBusDayCalendar_Type);
 
     set_flaginfo(d);
+
+    if (!intern_strings()) {
+        goto err;
+    }
 
     if (set_typeinfo(d) != 0) {
         goto err;

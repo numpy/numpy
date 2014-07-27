@@ -246,6 +246,33 @@ class TestArrayConstruction(TestCase):
         r = np.array([[True, False], [True, False], [False, True]])
         assert_equal(r, tgt.T)
 
+    def test_array_empty(self):
+        assert_raises(TypeError, np.array)
+
+    def test_array_copy_false(self):
+        d = np.array([1, 2, 3])
+        e = np.array(d, copy=False)
+        d[1] = 3
+        assert_array_equal(e, [1, 3, 3])
+        e = np.array(d, copy=False, order='F')
+        d[1] = 4
+        assert_array_equal(e, [1, 4, 3])
+        e[2] = 7
+        assert_array_equal(d, [1, 4, 7])
+
+    def test_array_copy_true(self):
+        d = np.array([[1,2,3], [1, 2, 3]])
+        e = np.array(d, copy=True)
+        d[0, 1] = 3
+        e[0, 2] = -7
+        assert_array_equal(e, [[1, 2, -7], [1, 2, 3]])
+        assert_array_equal(d, [[1, 3, 3], [1, 2, 3]])
+        e = np.array(d, copy=True, order='F')
+        d[0, 1] = 5
+        e[0, 2] = 7
+        assert_array_equal(e, [[1, 3, 7], [1, 2, 3]])
+        assert_array_equal(d, [[1, 5, 3], [1,2,3]])
+
 
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):
