@@ -222,7 +222,7 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
 
 def assert_equal(actual,desired,err_msg='',verbose=True):
     """
-    Raise an assertion if two objects are not equal.
+    Raises an AssertionError if two objects are not equal.
 
     Given two objects (scalars, lists, tuples, dictionaries or numpy arrays),
     check that all elements of these objects are equal. An exception is raised
@@ -374,7 +374,8 @@ def print_assert_equal(test_string, actual, desired):
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """
-    Raise an assertion if two items are not equal up to desired precision.
+    Raises an AssertionError if two items are not equal up to desired
+    precision.
 
     .. note:: It is recommended to use one of `assert_allclose`,
               `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
@@ -491,7 +492,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """
-    Raise an assertion if two items are not equal up to significant digits.
+    Raises an AssertionError if two items are not equal up to significant
+    digits.
 
     .. note:: It is recommended to use one of `assert_allclose`,
               `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
@@ -672,7 +674,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
     """
-    Raise an assertion if two array_like objects are not equal.
+    Raises an AssertionError if two array_like objects are not equal.
 
     Given two array_like objects, check that the shape is equal and all
     elements of these objects are equal. An exception is raised at
@@ -738,7 +740,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
 
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     """
-    Raise an assertion if two objects are not equal up to desired precision.
+    Raises an AssertionError if two objects are not equal up to desired
+    precision.
 
     .. note:: It is recommended to use one of `assert_allclose`,
               `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
@@ -841,7 +844,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
 def assert_array_less(x, y, err_msg='', verbose=True):
     """
-    Raise an assertion if two array_like objects are not ordered by less than.
+    Raises an AssertionError if two array_like objects are not ordered by less
+    than.
 
     Given two array_like objects, check that the shape is equal and all
     elements of the first object are strictly smaller than those of the
@@ -1243,7 +1247,8 @@ def _assert_valid_refcount(op):
 def assert_allclose(actual, desired, rtol=1e-7, atol=0,
                     err_msg='', verbose=True):
     """
-    Raise an assertion if two objects are not equal up to desired tolerance.
+    Raises an AssertionError if two objects are not equal up to desired
+    tolerance.
 
     The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
     It compares the difference between `actual` and `desired` to

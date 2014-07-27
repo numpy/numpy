@@ -244,7 +244,7 @@ PyArrayDescr_Type
         Indicates that items of this data-type must be reference
         counted (using :cfunc:`Py_INCREF` and :cfunc:`Py_DECREF` ).
 
-    .. cvar:: NPY_ITEM_LISTPICKLE
+    .. cvar:: NPY_LIST_PICKLE
 
         Indicates arrays of this data-type must be converted to a list
         before pickling.
