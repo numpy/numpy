@@ -12,7 +12,7 @@ from nose.plugins.skip import SkipTest
 
 import numpy as np
 from numpy.testing import (dec, run_module_suite, assert_raises,
-                           assert_warns, assert_array_equal)
+                           assert_warns, assert_array_equal, assert_)
 
 
 class _DeprecationTestCase(object):
@@ -433,6 +433,26 @@ class TestComparisonDepreactions(_DeprecationTestCase):
             warnings.filterwarnings('error', '', FutureWarning)
             assert_raises(FutureWarning, operator.eq, np.arange(3), None)
             assert_raises(FutureWarning, operator.ne, np.arange(3), None)
+
+    def test_scalar_none_comparison(self):
+        # Scalars should still just return false and not give a warnings.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_(not np.float32(1) == None)
+            assert_(not np.str_('test') == None)
+            # This is dubious (see below):
+            assert_(not np.datetime64('NaT') == None)
+
+            assert_(np.float32(1) != None)
+            assert_(np.str_('test') != None)
+            # This is dubious (see below):
+            assert_(np.datetime64('NaT') != None)
+        assert_(len(w) == 0)
+
+        # For documentaiton purpose, this is why the datetime is dubious.
+        # At the time of deprecation this was no behaviour change, but
+        # it has to be considered when the deprecations is done.
+        assert_(np.equal(np.datetime64('NaT'), None))
 
 
 class TestIdentityComparisonDepreactions(_DeprecationTestCase):
