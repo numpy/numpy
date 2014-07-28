@@ -1653,8 +1653,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             }
             copy = NPY_FALSE;
 
-            /* order does not matter for 1d arrays */
-            if (PyArray_NDIM(op) > 1) {
+            /* order does not matter for contiguous 1d arrays */
+            if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
+                !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
                 order_obj = PyDict_GetItem(kws, npy_ma_str_order);
                 if (order_obj != Py_None && order_obj != NULL) {
                     goto full_path;
