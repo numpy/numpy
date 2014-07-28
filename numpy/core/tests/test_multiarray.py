@@ -273,6 +273,16 @@ class TestArrayConstruction(TestCase):
         assert_array_equal(e, [[1, 3, 7], [1, 2, 3]])
         assert_array_equal(d, [[1, 5, 3], [1,2,3]])
 
+    def test_array_cont(self):
+        d = np.ones(10)[::2]
+        assert_(np.ascontiguousarray(d).flags.c_contiguous)
+        assert_(np.ascontiguousarray(d).flags.f_contiguous)
+        assert_(np.asfortranarray(d).flags.c_contiguous)
+        assert_(np.asfortranarray(d).flags.f_contiguous)
+        d = np.ones((10, 10))[::2,::2]
+        assert_(np.ascontiguousarray(d).flags.c_contiguous)
+        assert_(np.asfortranarray(d).flags.f_contiguous)
+
 
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):
