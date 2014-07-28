@@ -1078,6 +1078,24 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     PyObject *arr, *ret;
 
+    /*
+     * If the other object is None, False is always right. This avoids
+     * the array None comparison, at least until deprecation it is fixed.
+     * After that, this may be removed and numpy false would be returned.
+     *
+     * NOTE: np.equal(NaT, None) evaluates to TRUE! This is an
+     *       an inconsistency, which may has to be considered
+     *       when the deprecation is finished.
+     */
+    if (other == Py_None) {
+        if (cmp_op == Py_EQ) {
+            Py_RETURN_FALSE;
+        }
+        if (cmp_op == Py_NE) {
+            Py_RETURN_TRUE;
+        }
+    }
+
     arr = PyArray_FromScalar(self, NULL);
     if (arr == NULL) {
         return NULL;
