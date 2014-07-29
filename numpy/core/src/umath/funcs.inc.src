@@ -55,8 +55,6 @@ npy_ObjectPower(PyObject *x, PyObject *y)
     return PyNumber_Power(x, y, Py_None);
 }
 
-
-#if defined(NPY_PY3K)
 /**begin repeat
  * #Kind = Max, Min#
  * #OP = Py_GE, Py_LE#
@@ -81,33 +79,6 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
     return result;
 }
 /**end repeat**/
-
-#else
-/**begin repeat
- * #Kind = Max, Min#
- * #OP = >=, <=#
- */
-static PyObject *
-npy_Object@Kind@(PyObject *i1, PyObject *i2)
-{
-    PyObject *result;
-    int cmp;
-
-    if (PyObject_Cmp(i1, i2, &cmp) < 0) {
-        return NULL;
-    }
-    if (cmp @OP@ 0) {
-        result = i1;
-    }
-    else {
-        result = i2;
-    }
-    Py_INCREF(result);
-    return result;
-}
-/**end repeat**/
-#endif
-
 
 /* Emulates Python's 'a or b' behavior */
 static PyObject *
