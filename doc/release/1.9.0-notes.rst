@@ -247,6 +247,11 @@ a problem cannot occur.
 
 This change was already applied to the 1.8.1 release.
 
+``zeros_like`` for string dtypes now returns empty strings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To match the `zeros` function `zeros_like` now returns an array initialized
+with empty strings instead of an array filled with `'0'`.
+
 
 New Features
 ============

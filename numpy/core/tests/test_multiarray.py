@@ -552,6 +552,40 @@ class TestCreation(TestCase):
         d = zeros(10, dtype=[('k', object, 2)])
         assert_array_equal(d['k'], 0)
 
+    def test_zeros_like_like_zeros(self):
+        # test zeros_like returns the same as zeros
+        for c in np.typecodes['All']:
+            if c == 'V':
+                continue
+            d = zeros((3,3), dtype=c)
+            assert_array_equal(zeros_like(d), d)
+            assert_equal(zeros_like(d).dtype, d.dtype)
+        # explicitly check some special cases
+        d = zeros((3,3), dtype='S5')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+        d = zeros((3,3), dtype='U5')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+
+        d = zeros((3,3), dtype='<i4')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+        d = zeros((3,3), dtype='>i4')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+
+        d = zeros((3,3), dtype='<M8[s]')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+        d = zeros((3,3), dtype='>M8[s]')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+
+        d = zeros((3,3), dtype='f4,f4')
+        assert_array_equal(zeros_like(d), d)
+        assert_equal(zeros_like(d).dtype, d.dtype)
+
     def test_sequence_non_homogenous(self):
         assert_equal(np.array([4, 2**80]).dtype, np.object)
         assert_equal(np.array([4, 2**80, 4]).dtype, np.object)
