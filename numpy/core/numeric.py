@@ -131,7 +131,9 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
-    multiarray.copyto(res, 0, casting='unsafe')
+    # needed instead of a 0 to get same result as zeros for for string dtypes
+    z = zeros(1, dtype=res.dtype)
+    multiarray.copyto(res, z, casting='unsafe')
     return res
 
 def ones(shape, dtype=None, order='C'):
