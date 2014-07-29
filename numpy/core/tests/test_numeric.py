@@ -1899,6 +1899,14 @@ class TestLikeFuncs(TestCase):
         self.check_like_function(np.full_like, 123.456, True)
         self.check_like_function(np.full_like, np.inf, True)
 
+    def test_zeros_like_same_as_zeros_all_types(self):
+        for dt in np.typecodes['All']:
+            dt = 'V1' if dt == 'V' else dt
+            dt = 'M8[D]' if dt == 'M' else dt
+            zeros_arr = np.zeros((2, 2), dtype=dt)
+            assert_array_equal(zeros_arr, np.zeros_like(zeros_arr))
+
+
 class _TestCorrelate(TestCase):
     def _setup(self, dt):
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
