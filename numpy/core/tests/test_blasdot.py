@@ -152,6 +152,7 @@ def test_dot_array_order():
                     assert_almost_equal(b.dot(c), _dot(b, c), decimal=prec)
                     assert_almost_equal(c.T.dot(b.T), _dot(c.T, b.T), decimal=prec)
 
+@dec.skipif(True) # ufunc override disabled for 1.9
 def test_dot_override():
     class A(object):
         def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
