@@ -718,7 +718,6 @@ def mirr(values, finance_rate, reinvest_rate):
         Modified internal rate of return
 
     """
-
     values = np.asarray(values, dtype=np.double)
     n = values.size
     pos = values > 0
@@ -728,8 +727,3 @@ def mirr(values, finance_rate, reinvest_rate):
     numer = np.abs(npv(reinvest_rate, values*pos))
     denom = np.abs(npv(finance_rate, values*neg))
     return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
-
-if __name__ == '__main__':
-    import doctest
-    import numpy as np
-    doctest.testmod(verbose=True)

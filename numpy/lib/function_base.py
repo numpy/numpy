@@ -1,15 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-__docformat__ = "restructuredtext en"
-__all__ = [
-    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-    'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
-
 import warnings
 import sys
 import collections
@@ -20,27 +10,38 @@ import numpy.core.numeric as _nx
 from numpy.core import linspace, atleast_1d, atleast_2d
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
-    empty_like, ndarray, around, floor, ceil, take, ScalarType, dot, where,
-    intp, integer, isscalar
+    empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
+    integer, isscalar
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, log10
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, choose, sort, partition, mean
+    ravel, nonzero, sort, partition, mean
     )
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
+from .utils import deprecate
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
-from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 from numpy.compat import long
 
 # Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
     range = xrange
+
+
+__all__ = [
+    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
+    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+    'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
+    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
+    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    ]
 
 
 def iterable(y):

@@ -33,13 +33,12 @@ Example::
 """
 from __future__ import division, absolute_import, print_function
 
-__docformat__ = "restructuredtext en"
-
 import os
 import sys
-from shutil import rmtree, copyfile, copyfileobj
+import shutil
 
 _open = open
+
 
 # Using a class instead of a module-level dictionary
 # to reduce the inital 'import numpy' overhead by
@@ -209,7 +208,7 @@ class DataSource (object):
     def __del__(self):
         # Remove temp directories
         if self._istmpdest:
-            rmtree(self._destpath)
+            shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
         """Test if the filename is a zip file by looking at the file extension.
@@ -294,7 +293,7 @@ class DataSource (object):
                 openedurl = urlopen(path)
                 f = _open(upath, 'wb')
                 try:
-                    copyfileobj(openedurl, f)
+                    shutil.copyfileobj(openedurl, f)
                 finally:
                     f.close()
                     openedurl.close()

@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.compat import long
 
+
 __all__ = ['pad']
 
 
@@ -1419,7 +1420,6 @@ def pad(array, pad_width, mode=None, **kwargs):
 
             method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis] - 1
-            repeat = safe_pad
             while ((pad_before > safe_pad) or (pad_after > safe_pad)):
                 offset = 0
                 pad_iter_b = min(safe_pad,
@@ -1443,7 +1443,6 @@ def pad(array, pad_width, mode=None, **kwargs):
             # length, to keep the period of the reflections consistent.
             method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis]
-            repeat = safe_pad
             while ((pad_before > safe_pad) or
                    (pad_after > safe_pad)):
                 pad_iter_b = min(safe_pad,
@@ -1462,7 +1461,6 @@ def pad(array, pad_width, mode=None, **kwargs):
             # for indexing tricks. We can only safely pad the original axis
             # length, to keep the period of the reflections consistent.
             safe_pad = newmat.shape[axis]
-            repeat = safe_pad
             while ((pad_before > safe_pad) or
                    (pad_after > safe_pad)):
                 pad_iter_b = min(safe_pad,
@@ -1473,7 +1471,6 @@ def pad(array, pad_width, mode=None, **kwargs):
                 pad_before -= pad_iter_b
                 pad_after -= pad_iter_a
                 safe_pad += pad_iter_b + pad_iter_a
-
             newmat = _pad_wrap(newmat, (pad_before, pad_after), axis)
 
     return newmat

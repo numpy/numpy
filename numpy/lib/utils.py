@@ -6,13 +6,13 @@ import types
 import re
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core import product, ndarray, ufunc, asarray
+from numpy.core import ndarray, ufunc, asarray
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
     'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
     'lookfor', 'byte_bounds', 'safe_eval'
-]
+    ]
 
 def get_include():
     """
@@ -1134,11 +1134,11 @@ def safe_eval(source):
     walker = SafeEval()
     try:
         ast = compiler.parse(source, mode="eval")
-    except SyntaxError as err:
+    except SyntaxError:
         raise
     try:
         return walker.visit(ast)
-    except SyntaxError as err:
+    except SyntaxError:
         raise
 
 #-----------------------------------------------------------------------------

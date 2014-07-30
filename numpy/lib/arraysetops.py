@@ -26,11 +26,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d',
-           'unique', 'in1d']
-
 import numpy as np
-from numpy.lib.utils import deprecate
+
+
+__all__ = [
+    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
+    'in1d'
+    ]
+
 
 def ediff1d(ary, to_end=None, to_begin=None):
     """

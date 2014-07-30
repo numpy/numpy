@@ -22,16 +22,13 @@ if sys.version_info[0] < 3:
 
 _check_fill_value = np.ma.core._check_fill_value
 
-__all__ = ['append_fields',
-           'drop_fields',
-           'find_duplicates',
-           'get_fieldstructure',
-           'join_by',
-           'merge_arrays',
-           'rec_append_fields', 'rec_drop_fields', 'rec_join',
-           'recursive_fill_fields', 'rename_fields',
-           'stack_arrays',
-           ]
+
+__all__ = [
+    'append_fields', 'drop_fields', 'find_duplicates',
+    'get_fieldstructure', 'join_by', 'merge_arrays',
+    'rec_append_fields', 'rec_drop_fields', 'rec_join',
+    'recursive_fill_fields', 'rename_fields', 'stack_arrays',
+    ]
 
 
 def recursive_fill_fields(input, output):
@@ -896,7 +893,9 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()
     r2 = r2.ravel()
-    (nb1, nb2) = (len(r1), len(r2))
+    # Fixme: nb2 below is never used. Commenting out for pyflakes.
+    # (nb1, nb2) = (len(r1), len(r2))
+    nb1 = len(r1)
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision

@@ -3,17 +3,17 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
-           'triu', 'tril', 'vander', 'histogram2d', 'mask_indices',
-           'tril_indices', 'tril_indices_from', 'triu_indices',
-           'triu_indices_from',
-           ]
-
 from numpy.core.numeric import (
-    asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, less, int8, int16, int32, int64, empty, promote_types
+    asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
+    where, int8, int16, int32, int64, empty, promote_types
     )
 from numpy.core import iinfo
+
+
+__all__ = [
+    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+    'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
+    'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
 
 
 i1 = iinfo(int8)

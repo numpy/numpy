@@ -33,7 +33,8 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    ]
 
 
 def seek_gzip_factory(f):
@@ -1596,7 +1597,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Make sure we have the corrected keys in user_converters...
     user_converters.update(uc_update)
 
-    miss_chars = [_.missing_values for _ in converters]
+    # Fixme: possible error as following variable never used.
+    #miss_chars = [_.missing_values for _ in converters]
 
     # Initialize the output lists ...
     # ... rows
