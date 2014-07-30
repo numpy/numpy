@@ -287,7 +287,7 @@ class TestMiscFunctions(TestCase):
         ndtype = (int, float, float)
         assert_equal(easy_dtype(ndtype),
                      np.dtype([('f0', int), ('f1', float), ('f2', float)]))
-                # As list of types w names
+        # As list of types w names
         ndtype = (int, float, float)
         assert_equal(easy_dtype(ndtype, names="a, b, c"),
                      np.dtype([('a', int), ('b', float), ('c', float)]))

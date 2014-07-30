@@ -96,8 +96,8 @@ class TestSetOps(TestCase):
         check_all(aa, bb, i1, i2, c, dt)
 
         # test for ticket #2799
-        aa = [1.+0.j, 1- 1.j, 1]
-        assert_array_equal(np.unique(aa), [ 1.-1.j,  1.+0.j])
+        aa = [1. + 0.j, 1 - 1.j, 1]
+        assert_array_equal(np.unique(aa), [1. - 1.j, 1. + 0.j])
 
         # test for ticket #4785
         a = [(1, 2), (1, 2), (2, 3)]
