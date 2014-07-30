@@ -1365,24 +1365,6 @@ def trim_zeros(filt, trim='fb'):
     return filt[first:last]
 
 
-@deprecate
-def unique(x):
-    """
-    This function is deprecated.  Use numpy.lib.arraysetops.unique()
-    instead.
-    """
-    try:
-        tmp = x.flatten()
-        if tmp.size == 0:
-            return tmp
-        tmp.sort()
-        idx = concatenate(([True], tmp[1:] != tmp[:-1]))
-        return tmp[idx]
-    except AttributeError:
-        items = sorted(set(x))
-        return asarray(items)
-
-
 def extract(condition, arr):
     """
     Return the elements of an array that satisfy some condition.

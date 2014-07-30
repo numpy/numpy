@@ -1250,17 +1250,6 @@ class TestHistogramdd(TestCase):
         assert_(hist[1] == 0.0)
 
 
-class TestUnique(TestCase):
-    def test_simple(self):
-        x = np.array([4, 3, 2, 1, 1, 2, 3, 4, 0])
-        assert_(np.all(np.unique(x) == [0, 1, 2, 3, 4]))
-        assert_(np.unique(np.array([1, 1, 1, 1, 1])) == np.array([1]))
-        x = ['widget', 'ham', 'foo', 'bar', 'foo', 'ham']
-        assert_(np.all(np.unique(x) == ['bar', 'foo', 'ham', 'widget']))
-        x = np.array([5 + 6j, 1 + 1j, 1 + 10j, 10, 5 + 6j])
-        assert_(np.all(np.unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
-
-
 class TestCheckFinite(TestCase):
     def test_simple(self):
         a = [1, 2, 3]
