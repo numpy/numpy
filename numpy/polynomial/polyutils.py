@@ -45,13 +45,11 @@ Functions
 """
 from __future__ import division, absolute_import, print_function
 
+import numpy as np
+
 __all__ = [
     'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
     'trimcoef', 'getdomain', 'mapdomain', 'mapparms', 'PolyBase']
-
-import warnings
-import numpy as np
-import sys
 
 #
 # Warnings and Exceptions

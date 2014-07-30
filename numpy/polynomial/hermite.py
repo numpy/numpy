@@ -1568,7 +1568,6 @@ def hermcompanion(c):
     .. versionadded::1.7.0
 
     """
-    accprod = np.multiply.accumulate
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
