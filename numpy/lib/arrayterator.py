@@ -9,7 +9,6 @@ a user-specified number of elements.
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
 from operator import mul
 from functools import reduce
 

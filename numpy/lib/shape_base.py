@@ -1,16 +1,21 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['column_stack', 'row_stack', 'dstack', 'array_split', 'split', 'hsplit',
-           'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
-           'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
-
 import warnings
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, zeros, newaxis, outer, \
-     concatenate, isscalar, array, asanyarray
+from numpy.core.numeric import (
+    asarray, zeros, outer, concatenate, isscalar, array, asanyarray
+    )
 from numpy.core.fromnumeric import product, reshape
-from numpy.core import hstack, vstack, atleast_3d
+from numpy.core import vstack, atleast_3d
+
+
+__all__ = [
+    'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
+    'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
+    'apply_along_axis', 'kron', 'tile', 'get_array_wrap'
+    ]
+
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """

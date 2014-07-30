@@ -141,12 +141,8 @@ class container(object):
         bitwise_or(self.array, other, self.array)
         return self
 
-    def __neg__(self):
-        return self._rc(-self.array)
     def __pos__(self):
         return self._rc(self.array)
-    def __abs__(self):
-        return self._rc(abs(self.array))
     def __invert__(self):
         return self._rc(invert(self.array))
 
