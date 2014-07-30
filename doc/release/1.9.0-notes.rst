@@ -6,8 +6,6 @@ This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
 
 Highlights
 ==========
-* Addition of `__numpy_ufunc__` to allow overriding ufuncs in ndarray
-  subclasses.
 * Numerous performance improvements in various areas, most notably indexing and
   operations on small arrays are significantly faster.
   Indexing operations now also release the GIL.
@@ -268,13 +266,6 @@ Generalized axis support for median and percentile
 ufunc reductions do since 1.7. One can now say axis=(index, index) to pick a
 list of axes for the reduction. The ``keepdims`` keyword argument was also
 added to allow convenient broadcasting to arrays of the original shape.
-
-Ufunc and Dot Overrides
-~~~~~~~~~~~~~~~~~~~~~~~
-For better compatibility with external objects you can now override
-universal functions (ufuncs), ``numpy.core._dotblas.dot``, and
-``numpy.core.multiarray.dot`` (the numpy.dot functions). By defining a
-``__numpy_ufunc__`` method.
 
 Dtype parameter added to ``np.linspace`` and ``np.logspace``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

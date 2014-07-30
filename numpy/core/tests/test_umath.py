@@ -962,6 +962,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override(self):
         class A(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
@@ -988,6 +989,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(res0[5], {})
         assert_equal(res1[5], {})
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_mro(self):
 
         # Some multi arg functions for testing.
@@ -1081,6 +1083,7 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, 2, c_sub, c)
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_methods(self):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1184,6 +1187,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[3], 0)
         assert_equal(res[4], (a, [4, 2], 'b0'))
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_out(self):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1218,6 +1222,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][0], 'out0')
         assert_equal(res7['out'][1], 'out1')
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_exception(self):
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):

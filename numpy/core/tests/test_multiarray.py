@@ -1640,6 +1640,7 @@ class TestMethods(TestCase):
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_dot_override(self):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1770,6 +1771,7 @@ class TestMethods(TestCase):
 
 
 class TestBinop(object):
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_rop_precedence(self):
         # Check that __rmul__ and other right-hand operations have
         # precedence over __numpy_ufunc__
@@ -1888,6 +1890,7 @@ class TestBinop(object):
             yield check, op_name, True
             yield check, op_name, False
 
+    @dec.skipif(True) # ufunc override disabled for 1.9
     def test_ufunc_override_rop_simple(self):
         # Check parts of the binary op overriding behavior in an
         # explicit test case that is easier to understand.

@@ -188,6 +188,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /* Pos of each override in args */
     int with_override_pos[NPY_MAXARGS];
 
+    /* disabled until remaining issues are fixed */
+    *result = NULL;
+    return 0;
+
     /*
      * Check inputs
      */

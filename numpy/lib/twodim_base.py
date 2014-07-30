@@ -453,7 +453,7 @@ def tril(m, k=0):
     m = asanyarray(m)
     mask = tri(*m.shape[-2:], k=k, dtype=bool)
 
-    return where(mask, m, 0)
+    return where(mask, m, zeros(1, m.dtype))
 
 
 def triu(m, k=0):
@@ -481,7 +481,7 @@ def triu(m, k=0):
     m = asanyarray(m)
     mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
 
-    return where(mask, 0, m)
+    return where(mask, zeros(1, m.dtype), m)
 
 
 # Originally borrowed from John Hunter and matplotlib
