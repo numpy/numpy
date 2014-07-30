@@ -400,14 +400,14 @@ class TestFitting(TestCase):
             return x*(x - 1)*(x - 2)
 
         # Test exceptions
-        assert_raises(ValueError, cheb.chebfit, [1],    [1],     -1)
-        assert_raises(TypeError,  cheb.chebfit, [[1]],  [1],      0)
-        assert_raises(TypeError,  cheb.chebfit, [],     [1],      0)
-        assert_raises(TypeError,  cheb.chebfit, [1],    [[[1]]],  0)
-        assert_raises(TypeError,  cheb.chebfit, [1, 2], [1],      0)
-        assert_raises(TypeError,  cheb.chebfit, [1],    [1, 2],   0)
-        assert_raises(TypeError,  cheb.chebfit, [1],    [1],   0, w=[[1]])
-        assert_raises(TypeError,  cheb.chebfit, [1],    [1],   0, w=[1, 1])
+        assert_raises(ValueError, cheb.chebfit, [1], [1], -1)
+        assert_raises(TypeError, cheb.chebfit, [[1]], [1], 0)
+        assert_raises(TypeError, cheb.chebfit, [], [1], 0)
+        assert_raises(TypeError, cheb.chebfit, [1], [[[1]]], 0)
+        assert_raises(TypeError, cheb.chebfit, [1, 2], [1], 0)
+        assert_raises(TypeError, cheb.chebfit, [1], [1, 2], 0)
+        assert_raises(TypeError, cheb.chebfit, [1], [1], 0, w=[[1]])
+        assert_raises(TypeError, cheb.chebfit, [1], [1], 0, w=[1, 1])
 
         # Test fit
         x = np.linspace(0, 2)
@@ -532,7 +532,7 @@ class TestMisc(TestCase):
         assert_almost_equal(cheb.chebpts1(2), tgt)
         tgt = [-0.86602540378443871, 0, 0.86602540378443871]
         assert_almost_equal(cheb.chebpts1(3), tgt)
-        tgt = [-0.9238795325, -0.3826834323,  0.3826834323,  0.9238795325]
+        tgt = [-0.9238795325, -0.3826834323, 0.3826834323, 0.9238795325]
         assert_almost_equal(cheb.chebpts1(4), tgt)
 
     def test_chebpts2(self):
