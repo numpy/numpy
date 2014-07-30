@@ -66,18 +66,18 @@ import numpy.linalg as la
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
-__all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
-    'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
-    'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
-    'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
-    'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
-    'hermvander2d', 'hermvander3d', 'hermcompanion', 'hermgauss',
-    'hermweight']
+__all__ = [
+    'hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline', 'hermadd',
+    'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow', 'hermval',
+    'hermder', 'hermint', 'herm2poly', 'poly2herm', 'hermfromroots',
+    'hermvander', 'hermfit', 'hermtrim', 'hermroots', 'Hermite',
+    'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d', 'hermvander2d',
+    'hermvander3d', 'hermcompanion', 'hermgauss', 'hermweight']
 
 hermtrim = pu.trimcoef
 
 
-def poly2herm(pol) :
+def poly2herm(pol):
     """
     poly2herm(pol)
 
@@ -118,12 +118,12 @@ def poly2herm(pol) :
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1) :
+    for i in range(deg, -1, -1):
         res = hermadd(hermmulx(res), pol[i])
     return res
 
 
-def herm2poly(c) :
+def herm2poly(c):
     """
     Convert a Hermite series to a polynomial.
 
@@ -174,7 +174,7 @@ def herm2poly(c) :
         c0 = c[-2]
         c1 = c[-1]
         # i is the current degree of c1
-        for i in range(n - 1, 1, -1) :
+        for i in range(n - 1, 1, -1):
             tmp = c0
             c0 = polysub(c[i - 2], c1*(2*(i - 1)))
             c1 = polyadd(tmp, polymulx(c1)*2)
@@ -198,7 +198,7 @@ hermone = np.array([1])
 hermx = np.array([0, 1/2])
 
 
-def hermline(off, scl) :
+def hermline(off, scl):
     """
     Hermite series whose graph is a straight line.
 
@@ -228,13 +228,13 @@ def hermline(off, scl) :
     5.0
 
     """
-    if scl != 0 :
+    if scl != 0:
         return np.array([off, scl/2])
-    else :
+    else:
         return np.array([off])
 
 
-def hermfromroots(roots) :
+def hermfromroots(roots):
     """
     Generate a Hermite series with given roots.
 
@@ -284,9 +284,9 @@ def hermfromroots(roots) :
     array([ 0.+0.j,  0.+0.j])
 
     """
-    if len(roots) == 0 :
+    if len(roots) == 0:
         return np.ones(1)
-    else :
+    else:
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
         p = [hermline(-r, 1) for r in roots]
@@ -340,10 +340,10 @@ def hermadd(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] += c2
         ret = c1
-    else :
+    else:
         c2[:c1.size] += c1
         ret = c2
     return pu.trimseq(ret)
@@ -388,10 +388,10 @@ def hermsub(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] -= c2
         ret = c1
-    else :
+    else:
         c2 = -c2
         c2[:c1.size] += c1
         ret = c2
@@ -501,13 +501,13 @@ def hermmul(c1, c2):
     elif len(c) == 2:
         c0 = c[0]*xs
         c1 = c[1]*xs
-    else :
+    else:
         nd = len(c)
         c0 = c[-2]*xs
         c1 = c[-1]*xs
-        for i in range(3, len(c) + 1) :
+        for i in range(3, len(c) + 1):
             tmp = c0
-            nd =  nd - 1
+            nd = nd - 1
             c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
             c1 = hermadd(tmp, hermmulx(c1)*2)
     return hermadd(c0, hermmulx(c1)*2)
@@ -560,16 +560,16 @@ def hermdiv(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0 :
+    if c2[-1] == 0:
         raise ZeroDivisionError()
 
     lc1 = len(c1)
     lc2 = len(c2)
-    if lc1 < lc2 :
+    if lc1 < lc2:
         return c1[:1]*0, c1
-    elif lc2 == 1 :
+    elif lc2 == 1:
         return c1/c2[-1], c1[:1]*0
-    else :
+    else:
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
@@ -580,7 +580,7 @@ def hermdiv(c1, c2):
         return quo, pu.trimseq(rem)
 
 
-def hermpow(c, pow, maxpower=16) :
+def hermpow(c, pow, maxpower=16):
     """Raise a Hermite series to a power.
 
     Returns the Hermite series `c` raised to the power `pow`. The
@@ -617,24 +617,24 @@ def hermpow(c, pow, maxpower=16) :
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)
-    if power != pow or power < 0 :
+    if power != pow or power < 0:
         raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower :
+    elif maxpower is not None and power > maxpower:
         raise ValueError("Power is too large")
-    elif power == 0 :
+    elif power == 0:
         return np.array([1], dtype=c.dtype)
-    elif power == 1 :
+    elif power == 1:
         return c
-    else :
+    else:
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in range(2, power + 1):
             prd = hermmul(prd, c)
         return prd
 
 
-def hermder(c, m=1, scl=1, axis=0) :
+def hermder(c, m=1, scl=1, axis=0):
     """
     Differentiate a Hermite series.
 
@@ -712,7 +712,7 @@ def hermder(c, m=1, scl=1, axis=0) :
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
-    else :
+    else:
         for i in range(cnt):
             n = n - 1
             c *= scl
@@ -816,9 +816,9 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
-    if len(k) > cnt :
+    if len(k) > cnt:
         raise ValueError("Too many integration constants")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
@@ -832,7 +832,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
-    for i in range(cnt) :
+    for i in range(cnt):
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -924,22 +924,22 @@ def hermval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-       c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,)*x.ndim)
 
     x2 = x*2
-    if len(c) == 1 :
+    if len(c) == 1:
         c0 = c[0]
         c1 = 0
-    elif len(c) == 2 :
+    elif len(c) == 2:
         c0 = c[0]
         c1 = c[1]
-    else :
+    else:
         nd = len(c)
         c0 = c[-2]
         c1 = c[-1]
-        for i in range(3, len(c) + 1) :
+        for i in range(3, len(c) + 1):
             tmp = c0
-            nd =  nd - 1
+            nd = nd - 1
             c0 = c[-i] - c1*(2*(nd - 1))
             c1 = tmp + c1*x2
     return c0 + c1*x2
@@ -1174,7 +1174,7 @@ def hermgrid3d(x, y, z, c):
     return c
 
 
-def hermvander(x, deg) :
+def hermvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
@@ -1229,15 +1229,15 @@ def hermvander(x, deg) :
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
-    if ideg > 0 :
+    if ideg > 0:
         x2 = x*2
         v[1] = x2
-        for i in range(2, ideg + 1) :
+        for i in range(2, ideg + 1):
             v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
     return np.rollaxis(v, 0, v.ndim)
 
 
-def hermvander2d(x, y, deg) :
+def hermvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1300,7 +1300,7 @@ def hermvander2d(x, y, deg) :
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def hermvander3d(x, y, z, deg) :
+def hermvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1491,13 +1491,13 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     y = np.asarray(y) + 0.0
 
     # check arguments.
-    if deg < 0 :
+    if deg < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
         raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2 :
+    if y.ndim < 1 or y.ndim > 2:
         raise TypeError("expected 1D or 2D array for y")
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
@@ -1517,7 +1517,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         rhs = rhs * w
 
     # set rcond
-    if rcond is None :
+    if rcond is None:
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
@@ -1536,9 +1536,9 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, pu.RankWarning)
 
-    if full :
+    if full:
         return c, [resids, rank, s, rcond]
-    else :
+    else:
         return c
 
 
@@ -1636,9 +1636,9 @@ def hermroots(c):
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
-    if len(c) <= 1 :
+    if len(c) <= 1:
         return np.array([], dtype=c.dtype)
-    if len(c) == 2 :
+    if len(c) == 2:
         return np.array([-.5*c[0]/c[1]])
 
     m = hermcompanion(c)

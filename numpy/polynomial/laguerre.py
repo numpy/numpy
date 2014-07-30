@@ -66,17 +66,18 @@ import numpy.linalg as la
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
-__all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
-    'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
-    'lagval', 'lagder', 'lagint', 'lag2poly', 'poly2lag', 'lagfromroots',
-    'lagvander', 'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d',
-    'lagval3d', 'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d',
-    'lagcompanion', 'laggauss', 'lagweight']
+__all__ = [
+    'lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline', 'lagadd',
+    'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow', 'lagval', 'lagder',
+    'lagint', 'lag2poly', 'poly2lag', 'lagfromroots', 'lagvander',
+    'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d', 'lagval3d',
+    'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d', 'lagcompanion',
+    'laggauss', 'lagweight']
 
 lagtrim = pu.trimcoef
 
 
-def poly2lag(pol) :
+def poly2lag(pol):
     """
     poly2lag(pol)
 
@@ -117,12 +118,12 @@ def poly2lag(pol) :
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1) :
+    for i in range(deg, -1, -1):
         res = lagadd(lagmulx(res), pol[i])
     return res
 
 
-def lag2poly(c) :
+def lag2poly(c):
     """
     Convert a Laguerre series to a polynomial.
 
@@ -194,7 +195,7 @@ lagone = np.array([1])
 lagx = np.array([1, -1])
 
 
-def lagline(off, scl) :
+def lagline(off, scl):
     """
     Laguerre series whose graph is a straight line.
 
@@ -224,13 +225,13 @@ def lagline(off, scl) :
     5.0
 
     """
-    if scl != 0 :
+    if scl != 0:
         return np.array([off + scl, -scl])
-    else :
+    else:
         return np.array([off])
 
 
-def lagfromroots(roots) :
+def lagfromroots(roots):
     """
     Generate a Laguerre series with given roots.
 
@@ -280,9 +281,9 @@ def lagfromroots(roots) :
     array([ 0.+0.j,  0.+0.j])
 
     """
-    if len(roots) == 0 :
+    if len(roots) == 0:
         return np.ones(1)
-    else :
+    else:
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
         p = [lagline(-r, 1) for r in roots]
@@ -337,10 +338,10 @@ def lagadd(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] += c2
         ret = c1
-    else :
+    else:
         c2[:c1.size] += c1
         ret = c2
     return pu.trimseq(ret)
@@ -385,10 +386,10 @@ def lagsub(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] -= c2
         ret = c1
-    else :
+    else:
         c2 = -c2
         c2[:c1.size] += c1
         ret = c2
@@ -499,13 +500,13 @@ def lagmul(c1, c2):
     elif len(c) == 2:
         c0 = c[0]*xs
         c1 = c[1]*xs
-    else :
+    else:
         nd = len(c)
         c0 = c[-2]*xs
         c1 = c[-1]*xs
-        for i in range(3, len(c) + 1) :
+        for i in range(3, len(c) + 1):
             tmp = c0
-            nd =  nd - 1
+            nd = nd - 1
             c0 = lagsub(c[-i]*xs, (c1*(nd - 1))/nd)
             c1 = lagadd(tmp, lagsub((2*nd - 1)*c1, lagmulx(c1))/nd)
     return lagadd(c0, lagsub(c1, lagmulx(c1)))
@@ -556,16 +557,16 @@ def lagdiv(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0 :
+    if c2[-1] == 0:
         raise ZeroDivisionError()
 
     lc1 = len(c1)
     lc2 = len(c2)
-    if lc1 < lc2 :
+    if lc1 < lc2:
         return c1[:1]*0, c1
-    elif lc2 == 1 :
+    elif lc2 == 1:
         return c1/c2[-1], c1[:1]*0
-    else :
+    else:
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
@@ -576,7 +577,7 @@ def lagdiv(c1, c2):
         return quo, pu.trimseq(rem)
 
 
-def lagpow(c, pow, maxpower=16) :
+def lagpow(c, pow, maxpower=16):
     """Raise a Laguerre series to a power.
 
     Returns the Laguerre series `c` raised to the power `pow`. The
@@ -613,24 +614,24 @@ def lagpow(c, pow, maxpower=16) :
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)
-    if power != pow or power < 0 :
+    if power != pow or power < 0:
         raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower :
+    elif maxpower is not None and power > maxpower:
         raise ValueError("Power is too large")
-    elif power == 0 :
+    elif power == 0:
         return np.array([1], dtype=c.dtype)
-    elif power == 1 :
+    elif power == 1:
         return c
-    else :
+    else:
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in range(2, power + 1):
             prd = lagmul(prd, c)
         return prd
 
 
-def lagder(c, m=1, scl=1, axis=0) :
+def lagder(c, m=1, scl=1, axis=0):
     """
     Differentiate a Laguerre series.
 
@@ -708,7 +709,7 @@ def lagder(c, m=1, scl=1, axis=0) :
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
-    else :
+    else:
         for i in range(cnt):
             n = n - 1
             c *= scl
@@ -815,9 +816,9 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
-    if len(k) > cnt :
+    if len(k) > cnt:
         raise ValueError("Too many integration constants")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
@@ -831,7 +832,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
-    for i in range(cnt) :
+    for i in range(cnt):
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -924,22 +925,21 @@ def lagval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-       c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,)*x.ndim)
 
-
-    if len(c) == 1 :
+    if len(c) == 1:
         c0 = c[0]
         c1 = 0
-    elif len(c) == 2 :
+    elif len(c) == 2:
         c0 = c[0]
         c1 = c[1]
-    else :
+    else:
         nd = len(c)
         c0 = c[-2]
         c1 = c[-1]
-        for i in range(3, len(c) + 1) :
+        for i in range(3, len(c) + 1):
             tmp = c0
-            nd =  nd - 1
+            nd = nd - 1
             c0 = c[-i] - (c1*(nd - 1))/nd
             c1 = tmp + (c1*((2*nd - 1) - x))/nd
     return c0 + c1*(1 - x)
@@ -1174,7 +1174,7 @@ def laggrid3d(x, y, z, c):
     return c
 
 
-def lagvander(x, deg) :
+def lagvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
@@ -1229,14 +1229,14 @@ def lagvander(x, deg) :
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
-    if ideg > 0 :
+    if ideg > 0:
         v[1] = 1 - x
-        for i in range(2, ideg + 1) :
+        for i in range(2, ideg + 1):
             v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
     return np.rollaxis(v, 0, v.ndim)
 
 
-def lagvander2d(x, y, deg) :
+def lagvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1299,7 +1299,7 @@ def lagvander2d(x, y, deg) :
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def lagvander3d(x, y, z, deg) :
+def lagvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1490,13 +1490,13 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     y = np.asarray(y) + 0.0
 
     # check arguments.
-    if deg < 0 :
+    if deg < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
         raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2 :
+    if y.ndim < 1 or y.ndim > 2:
         raise TypeError("expected 1D or 2D array for y")
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
@@ -1516,7 +1516,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         rhs = rhs * w
 
     # set rcond
-    if rcond is None :
+    if rcond is None:
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
@@ -1535,9 +1535,9 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, pu.RankWarning)
 
-    if full :
+    if full:
         return c, [resids, rank, s, rcond]
-    else :
+    else:
         return c
 
 
@@ -1634,9 +1634,9 @@ def lagroots(c):
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
-    if len(c) <= 1 :
+    if len(c) <= 1:
         return np.array([], dtype=c.dtype)
-    if len(c) == 2 :
+    if len(c) == 2:
         return np.array([1 + c[0]/c[1]])
 
     m = lagcompanion(c)
@@ -1651,8 +1651,8 @@ def laggauss(deg):
 
     Computes the sample points and weights for Gauss-Laguerre quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[0, \inf]` with the
-    weight function :math:`f(x) = \exp(-x)`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[0, \inf]`
+    with the weight function :math:`f(x) = \exp(-x)`.
 
     Parameters
     ----------
