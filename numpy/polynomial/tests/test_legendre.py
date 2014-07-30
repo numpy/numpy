@@ -120,7 +120,6 @@ class TestEvaluation(TestCase):
         y = [polyval(x, c) for c in Llist]
         for i in range(10):
             msg = "At i=%d" % i
-            ser = np.zeros
             tgt = y[i]
             res = leg.legval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

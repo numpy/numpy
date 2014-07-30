@@ -6,7 +6,9 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import numpy.polynomial.hermite_e as herme
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, assert_almost_equal, assert_raises,
+    assert_equal, assert_, run_module_suite)
 
 He0 = np.array([1])
 He1 = np.array([0, 1])
@@ -117,7 +119,6 @@ class TestEvaluation(TestCase):
         y = [polyval(x, c) for c in Helist]
         for i in range(10):
             msg = "At i=%d" % i
-            ser = np.zeros
             tgt = y[i]
             res = herme.hermeval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

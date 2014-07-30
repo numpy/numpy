@@ -116,7 +116,6 @@ class TestEvaluation(TestCase):
         y = [polyval(x, c) for c in Llist]
         for i in range(7):
             msg = "At i=%d" % i
-            ser = np.zeros
             tgt = y[i]
             res = lag.lagval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

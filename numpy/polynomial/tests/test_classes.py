@@ -10,12 +10,10 @@ from numbers import Number
 
 import numpy as np
 from numpy.polynomial import (
-    Polynomial, Legendre, Chebyshev, Laguerre,
-    Hermite, HermiteE)
+    Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite, dec)
-from numpy.testing.noseclasses import KnownFailure
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    run_module_suite)
 from numpy.compat import long
 
 
@@ -410,6 +408,9 @@ def check_roots(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     tgt = np.sort(random((5,)))
+    res = np.sort(Poly.fromroots(tgt, domain=d, window=w).roots())
+    assert_almost_equal(res, tgt)
+    # default domain and window
     res = np.sort(Poly.fromroots(tgt).roots())
     assert_almost_equal(res, tgt)
 
@@ -468,6 +469,12 @@ def check_deriv(Poly):
     p3 = p1.integ(1, k=[1])
     assert_almost_equal(p2.deriv(1).coef, p3.coef)
     assert_almost_equal(p2.deriv(2).coef, p1.coef)
+    # default domain and window
+    p1 = Poly([1, 2, 3])
+    p2 = p1.integ(2, k=[1, 2])
+    p3 = p1.integ(1, k=[1])
+    assert_almost_equal(p2.deriv(1).coef, p3.coef)
+    assert_almost_equal(p2.deriv(2).coef, p1.coef)
 
 
 def check_linspace(Poly):
@@ -491,11 +498,18 @@ def check_linspace(Poly):
 def check_pow(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
-    tgt = Poly([1], domain=d, window=d)
-    tst = Poly([1, 2, 3], domain=d, window=d)
+    tgt = Poly([1], domain=d, window=w)
+    tst = Poly([1, 2, 3], domain=d, window=w)
     for i in range(5):
         assert_poly_almost_equal(tst**i, tgt)
         tgt = tgt * tst
+    # default domain and window
+    tgt = Poly([1])
+    tst = Poly([1, 2, 3])
+    for i in range(5):
+        assert_poly_almost_equal(tst**i, tgt)
+        tgt = tgt * tst
+    # check error for invalid powers
     assert_raises(ValueError, op.pow, tgt, 1.5)
     assert_raises(ValueError, op.pow, tgt, -1)
 
