@@ -3,11 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
-from numpy.lib.arraysetops import *
-
-import warnings
+from numpy.testing import (
+    run_module_suite, TestCase, assert_array_equal
+    )
+from numpy.lib.arraysetops import (
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
+    )
 
 
 class TestSetOps(TestCase):

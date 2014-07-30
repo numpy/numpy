@@ -4,7 +4,10 @@ import os
 import sys
 
 import numpy as np
-from numpy.testing import *
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
 from numpy.testing.utils import _assert_valid_refcount
 from numpy.compat import unicode
 
@@ -13,12 +16,12 @@ rlevel = 1
 
 class TestRegression(TestCase):
     def test_poly1d(self, level=rlevel):
-        """Ticket #28"""
+        # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
                      np.poly1d([-1, 1]))
 
     def test_cov_parameters(self, level=rlevel):
-        """Ticket #91"""
+        # Ticket #91
         x = np.random.random((3, 3))
         y = x.copy()
         np.cov(x, rowvar=1)
@@ -26,68 +29,68 @@ class TestRegression(TestCase):
         assert_array_equal(x, y)
 
     def test_mem_digitize(self, level=rlevel):
-        """Ticket #95"""
+        # Ticket #95
         for i in range(100):
             np.digitize([1, 2, 3, 4], [1, 3])
             np.digitize([0, 1, 2, 3, 4], [1, 3])
 
     def test_unique_zero_sized(self, level=rlevel):
-        """Ticket #205"""
+        # Ticket #205
         assert_array_equal([], np.unique(np.array([])))
 
     def test_mem_vectorise(self, level=rlevel):
-        """Ticket #325"""
+        # Ticket #325
         vt = np.vectorize(lambda *args: args)
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)))
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1,
            1, 2)), np.zeros((2, 2)))
 
     def test_mgrid_single_element(self, level=rlevel):
-        """Ticket #339"""
+        # Ticket #339
         assert_array_equal(np.mgrid[0:0:1j], [0])
         assert_array_equal(np.mgrid[0:0], [])
 
     def test_refcount_vectorize(self, level=rlevel):
-        """Ticket #378"""
+        # Ticket #378
         def p(x, y):
             return 123
         v = np.vectorize(p)
         _assert_valid_refcount(v)
 
     def test_poly1d_nan_roots(self, level=rlevel):
-        """Ticket #396"""
+        # Ticket #396
         p = np.poly1d([np.nan, np.nan, 1], r=0)
         self.assertRaises(np.linalg.LinAlgError, getattr, p, "r")
 
     def test_mem_polymul(self, level=rlevel):
-        """Ticket #448"""
+        # Ticket #448
         np.polymul([], [1.])
 
     def test_mem_string_concat(self, level=rlevel):
-        """Ticket #469"""
+        # Ticket #469
         x = np.array([])
         np.append(x, 'asdasd\tasdasd')
 
     def test_poly_div(self, level=rlevel):
-        """Ticket #553"""
+        # Ticket #553
         u = np.poly1d([1, 2, 3])
         v = np.poly1d([1, 2, 3, 4, 5])
         q, r = np.polydiv(u, v)
         assert_equal(q*v + r, u)
 
     def test_poly_eq(self, level=rlevel):
-        """Ticket #554"""
+        # Ticket #554
         x = np.poly1d([1, 2, 3])
         y = np.poly1d([3, 4])
         assert_(x != y)
         assert_(x == x)
 
     def test_mem_insert(self, level=rlevel):
-        """Ticket #572"""
+        # Ticket #572
         np.lib.place(1, 1, 1)
 
     def test_polyfit_build(self):
-        """Ticket #628"""
+        # Ticket #628
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,
                9.95368241e+00, -3.14526520e+02]
         x = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
@@ -108,7 +111,7 @@ class TestRegression(TestCase):
         assert_array_almost_equal(ref, tested)
 
     def test_polydiv_type(self):
-        """Make polydiv work for complex types"""
+        # Make polydiv work for complex types
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=np.complex)
         q, r = np.polydiv(x, x)
@@ -119,11 +122,11 @@ class TestRegression(TestCase):
         assert_(q.dtype == np.float, msg)
 
     def test_histogramdd_too_many_bins(self):
-        """Ticket 928."""
+        # Ticket 928.
         assert_raises(ValueError, np.histogramdd, np.ones((1, 10)), bins=2**10)
 
     def test_polyint_type(self):
-        """Ticket #944"""
+        # Ticket #944
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=np.complex)
         assert_(np.polyint(x).dtype == np.complex, msg)
@@ -132,12 +135,12 @@ class TestRegression(TestCase):
         assert_(np.polyint(x).dtype == np.float, msg)
 
     def test_ndenumerate_crash(self):
-        """Ticket 1140"""
+        # Ticket 1140
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
     def test_asfarray_none(self, level=rlevel):
-        """Test for changeset r5065"""
+        # Test for changeset r5065
         assert_array_equal(np.array([np.nan]), np.asfarray([None]))
 
     def test_large_fancy_indexing(self, level=rlevel):
@@ -155,7 +158,8 @@ class TestRegression(TestCase):
             n = 3
             a = np.ones((n,)*5)
             i = np.random.randint(0, n, size=thesize)
-            g = a[np.ix_(i, i, i, i, i)]
+            a[np.ix_(i, i, i, i, i)]
+
         self.assertRaises(ValueError, dp)
         self.assertRaises(ValueError, dp2)
 
@@ -165,7 +169,7 @@ class TestRegression(TestCase):
         assert_(np.r_[x, x].dtype == dt)
 
     def test_who_with_0dim_array(self, level=rlevel):
-        """ticket #1243"""
+        # ticket #1243
         import os
         import sys
 
@@ -173,7 +177,7 @@ class TestRegression(TestCase):
         sys.stdout = open(os.devnull, 'w')
         try:
             try:
-                tmp = np.who({'foo': np.array(1)})
+                np.who({'foo': np.array(1)})
             except:
                 raise AssertionError("ticket #1243")
         finally:
@@ -183,29 +187,29 @@ class TestRegression(TestCase):
     def test_include_dirs(self):
         # As a sanity check, just test that get_include
         # includes something reasonable.  Somewhat
-        # related to ticket #1405."""
+        # related to ticket #1405.
         include_dirs = [np.get_include()]
         for path in include_dirs:
             assert_(isinstance(path, (str, unicode)))
             assert_(path != '')
 
     def test_polyder_return_type(self):
-        """Ticket #1249"""
+        # Ticket #1249
         assert_(isinstance(np.polyder(np.poly1d([1]), 0), np.poly1d))
         assert_(isinstance(np.polyder([1], 0), np.ndarray))
         assert_(isinstance(np.polyder(np.poly1d([1]), 1), np.poly1d))
         assert_(isinstance(np.polyder([1], 1), np.ndarray))
 
     def test_append_fields_dtype_list(self):
-        """Ticket #1676"""
+        # Ticket #1676
         from numpy.lib.recfunctions import append_fields
-        F = False
+
         base = np.array([1, 2, 3], dtype=np.int32)
-        data = np.eye(3).astype(np.int32)
         names = ['a', 'b', 'c']
+        data = np.eye(3).astype(np.int32)
         dlist = [np.float64, np.int32, np.int32]
         try:
-            a = append_fields(base, names, data, dlist)
+            append_fields(base, names, data, dlist)
         except:
             raise AssertionError()
 

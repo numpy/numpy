@@ -284,9 +284,12 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.testing import *
-from numpy.lib import format
 from numpy.compat import asbytes, asbytes_nested
+from numpy.testing import (
+    run_module_suite, assert_, assert_array_equal, assert_raises, raises,
+    dec
+    )
+from numpy.lib import format
 
 
 tempdir = None
@@ -445,7 +448,7 @@ def roundtrip_truncated(arr):
     return arr2
 
 
-def assert_equal(o1, o2):
+def assert_equal_(o1, o2):
     assert_(o1 == o2)
 
 
@@ -477,7 +480,7 @@ def test_long_str():
 
 @dec.slow
 def test_memmap_roundtrip():
-    # XXX: test crashes nose on windows. Fix this
+    # Fixme: test crashes nose on windows.
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
@@ -506,11 +509,10 @@ def test_memmap_roundtrip():
             fp = open(mfn, 'rb')
             memmap_bytes = fp.read()
             fp.close()
-            yield assert_equal, normal_bytes, memmap_bytes
+            yield assert_equal_, normal_bytes, memmap_bytes
 
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
-            #yield assert_array_equal, ma, arr
             del ma
 
 

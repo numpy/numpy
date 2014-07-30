@@ -2,9 +2,11 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 from numpy.core import arange
-from numpy.testing import *
-import numpy.lib.utils as utils
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal
+    )
 from numpy.lib import deprecate
+import numpy.lib.utils as utils
 
 if sys.version_info[0] >= 3:
     from io import StringIO

@@ -1,10 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
-from numpy import (array, ones, r_, mgrid, unravel_index, zeros, where,
-                   ndenumerate, fill_diagonal, diag_indices,
-                   diag_indices_from, s_, index_exp, ndindex)
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    assert_almost_equal, assert_array_almost_equal, assert_raises
+    )
+from numpy.lib.index_tricks import (
+    mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
+    index_exp, ndindex, r_, s_
+    )
 
 
 class TestRavelUnravelIndex(TestCase):
@@ -106,18 +110,20 @@ class TestGrid(TestCase):
         d = mgrid[-1:1:0.1, -2:2:0.2]
         assert_(c.shape == (2, 10, 10))
         assert_(d.shape == (2, 20, 20))
-        assert_array_equal(c[0][0, :], -ones(10, 'd'))
-        assert_array_equal(c[1][:, 0], -2*ones(10, 'd'))
-        assert_array_almost_equal(c[0][-1, :], ones(10, 'd'), 11)
-        assert_array_almost_equal(c[1][:, -1], 2*ones(10, 'd'), 11)
-        assert_array_almost_equal(d[0, 1, :]-d[0, 0, :], 0.1*ones(20, 'd'), 11)
-        assert_array_almost_equal(d[1, :, 1]-d[1, :, 0], 0.2*ones(20, 'd'), 11)
+        assert_array_equal(c[0][0, :], -np.ones(10, 'd'))
+        assert_array_equal(c[1][:, 0], -2*np.ones(10, 'd'))
+        assert_array_almost_equal(c[0][-1, :], np.ones(10, 'd'), 11)
+        assert_array_almost_equal(c[1][:, -1], 2*np.ones(10, 'd'), 11)
+        assert_array_almost_equal(d[0, 1, :] - d[0, 0, :],
+                                  0.1*np.ones(20, 'd'), 11)
+        assert_array_almost_equal(d[1, :, 1] - d[1, :, 0],
+                                  0.2*np.ones(20, 'd'), 11)
 
 
 class TestConcatenator(TestCase):
     def test_1d(self):
-        assert_array_equal(r_[1, 2, 3, 4, 5, 6], array([1, 2, 3, 4, 5, 6]))
-        b = ones(5)
+        assert_array_equal(r_[1, 2, 3, 4, 5, 6], np.array([1, 2, 3, 4, 5, 6]))
+        b = np.ones(5)
         c = r_[b, 0, 0, b]
         assert_array_equal(c, [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1])
 
@@ -126,12 +132,12 @@ class TestConcatenator(TestCase):
         assert_(g.dtype == 'f8')
 
     def test_more_mixed_type(self):
-        g = r_[-10.1, array([1]), array([2, 3, 4]), 10.0]
+        g = r_[-10.1, np.array([1]), np.array([2, 3, 4]), 10.0]
         assert_(g.dtype == 'f8')
 
     def test_2d(self):
-        b = rand(5, 5)
-        c = rand(5, 5)
+        b = np.random.rand(5, 5)
+        c = np.random.rand(5, 5)
         d = r_['1', b, c]  # append columns
         assert_(d.shape == (5, 10))
         assert_array_equal(d[:, :5], b)
@@ -144,7 +150,7 @@ class TestConcatenator(TestCase):
 
 class TestNdenumerate(TestCase):
     def test_basic(self):
-        a = array([[1, 2], [3, 4]])
+        a = np.array([[1, 2], [3, 4]])
         assert_equal(list(ndenumerate(a)),
                      [((0, 0), 1), ((0, 1), 2), ((1, 0), 3), ((1, 1), 4)])
 
@@ -169,18 +175,18 @@ def test_c_():
 
 
 def test_fill_diagonal():
-    a = zeros((3, 3), int)
+    a = np.zeros((3, 3), int)
     fill_diagonal(a, 5)
     yield (assert_array_equal, a,
-           array([[5, 0, 0],
+           np.array([[5, 0, 0],
                   [0, 5, 0],
                   [0, 0, 5]]))
 
     #Test tall matrix
-    a = zeros((10, 3), int)
+    a = np.zeros((10, 3), int)
     fill_diagonal(a, 5)
     yield (assert_array_equal, a,
-           array([[5, 0, 0],
+           np.array([[5, 0, 0],
                   [0, 5, 0],
                   [0, 0, 5],
                   [0, 0, 0],
@@ -192,10 +198,10 @@ def test_fill_diagonal():
                   [0, 0, 0]]))
 
     #Test tall matrix wrap
-    a = zeros((10, 3), int)
+    a = np.zeros((10, 3), int)
     fill_diagonal(a, 5, True)
     yield (assert_array_equal, a,
-           array([[5, 0, 0],
+           np.array([[5, 0, 0],
                   [0, 5, 0],
                   [0, 0, 5],
                   [0, 0, 0],
@@ -207,29 +213,29 @@ def test_fill_diagonal():
                   [0, 5, 0]]))
 
     #Test wide matrix
-    a = zeros((3, 10), int)
+    a = np.zeros((3, 10), int)
     fill_diagonal(a, 5)
     yield (assert_array_equal, a,
-           array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+           np.array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                   [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
                   [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]]))
 
     # The same function can operate on a 4-d array:
-    a = zeros((3, 3, 3, 3), int)
+    a = np.zeros((3, 3, 3, 3), int)
     fill_diagonal(a, 4)
-    i = array([0, 1, 2])
-    yield (assert_equal, where(a != 0), (i, i, i, i))
+    i = np.array([0, 1, 2])
+    yield (assert_equal, np.where(a != 0), (i, i, i, i))
 
 
 def test_diag_indices():
     di = diag_indices(4)
-    a = array([[1,  2,  3,  4],
+    a = np.array([[1,  2,  3,  4],
                [5,  6,  7,  8],
                [9,  10, 11, 12],
                [13, 14, 15, 16]])
     a[di] = 100
     yield (assert_array_equal, a,
-           array([[100, 2,   3,   4],
+           np.array([[100, 2,   3,   4],
                   [5,   100, 7,   8],
                   [9,   10,  100, 12],
                   [13,  14,  15,  100]]))
@@ -238,10 +244,10 @@ def test_diag_indices():
     d3 = diag_indices(2, 3)
 
     # And use it to set the diagonal of a zeros array to 1:
-    a = zeros((2, 2, 2), int)
+    a = np.zeros((2, 2, 2), int)
     a[d3] = 1
     yield (assert_array_equal, a,
-           array([[[1, 0],
+           np.array([[[1, 0],
                    [0, 0]],
 
                   [[0, 0],
@@ -256,26 +262,26 @@ def test_diag_indices_from():
 
 
 def test_ndindex():
-    x = list(np.ndindex(1, 2, 3))
-    expected = [ix for ix, e in np.ndenumerate(np.zeros((1, 2, 3)))]
+    x = list(ndindex(1, 2, 3))
+    expected = [ix for ix, e in ndenumerate(np.zeros((1, 2, 3)))]
     assert_array_equal(x, expected)
 
-    x = list(np.ndindex((1, 2, 3)))
+    x = list(ndindex((1, 2, 3)))
     assert_array_equal(x, expected)
 
     # Test use of scalars and tuples
-    x = list(np.ndindex((3,)))
-    assert_array_equal(x, list(np.ndindex(3)))
+    x = list(ndindex((3,)))
+    assert_array_equal(x, list(ndindex(3)))
 
     # Make sure size argument is optional
-    x = list(np.ndindex())
+    x = list(ndindex())
     assert_equal(x, [()])
 
-    x = list(np.ndindex(()))
+    x = list(ndindex(()))
     assert_equal(x, [()])
 
     # Make sure 0-sized ndindex works correctly
-    x = list(np.ndindex(*[0]))
+    x = list(ndindex(*[0]))
     assert_equal(x, [])
 
 

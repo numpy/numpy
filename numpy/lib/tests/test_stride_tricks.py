@@ -1,15 +1,17 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import *
-from numpy.lib.stride_tricks import broadcast_arrays
-from numpy.lib.stride_tricks import as_strided
+from numpy.testing import (
+    run_module_suite, assert_equal, assert_array_equal,
+    assert_raises
+    )
+from numpy.lib.stride_tricks import as_strided, broadcast_arrays
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
-    """ Broadcast a list of arrays with the given input shapes and check the
-    common output shape.
-    """
+    # Broadcast a list of arrays with the given input shapes and check the
+    # common output shape.
+
     inarrays = [np.zeros(s) for s in input_shapes]
     outarrays = broadcast_arrays(*inarrays)
     outshapes = [a.shape for a in outarrays]
@@ -18,17 +20,17 @@ def assert_shapes_correct(input_shapes, expected_shape):
 
 
 def assert_incompatible_shapes_raise(input_shapes):
-    """ Broadcast a list of arrays with the given (incompatible) input shapes
-    and check that they raise a ValueError.
-    """
+    # Broadcast a list of arrays with the given (incompatible) input shapes
+    # and check that they raise a ValueError.
+
     inarrays = [np.zeros(s) for s in input_shapes]
     assert_raises(ValueError, broadcast_arrays, *inarrays)
 
 
 def assert_same_as_ufunc(shape0, shape1, transposed=False, flipped=False):
-    """ Broadcast two shapes against each other and check that the data layout
-    is the same as if a ufunc did the broadcasting.
-    """
+    # Broadcast two shapes against each other and check that the data layout
+    # is the same as if a ufunc did the broadcasting.
+
     x0 = np.zeros(shape0, dtype=int)
     # Note that multiply.reduce's identity element is 1.0, so when shape1==(),
     # this gives the desired n==1.
@@ -66,8 +68,8 @@ def test_one_off():
 
 
 def test_same_input_shapes():
-    """ Check that the final shape is just the input shape.
-    """
+    # Check that the final shape is just the input shape.
+
     data = [
         (),
         (1,),
@@ -93,9 +95,9 @@ def test_same_input_shapes():
 
 
 def test_two_compatible_by_ones_input_shapes():
-    """ Check that two different input shapes (of the same length but some have
-    1s) broadcast to the correct shape.
-    """
+    # Check that two different input shapes of the same length, but some have
+    # ones, broadcast to the correct shape.
+
     data = [
         [[(1,), (3,)], (3,)],
         [[(1, 3), (3, 3)], (3, 3)],
@@ -118,9 +120,9 @@ def test_two_compatible_by_ones_input_shapes():
 
 
 def test_two_compatible_by_prepending_ones_input_shapes():
-    """ Check that two different input shapes (of different lengths) broadcast
-    to the correct shape.
-    """
+    # Check that two different input shapes (of different lengths) broadcast
+    # to the correct shape.
+
     data = [
         [[(), (3,)], (3,)],
         [[(3,), (3, 3)], (3, 3)],
@@ -150,8 +152,8 @@ def test_two_compatible_by_prepending_ones_input_shapes():
 
 
 def test_incompatible_shapes_raise_valueerror():
-    """ Check that a ValueError is raised for incompatible shapes.
-    """
+    # Check that a ValueError is raised for incompatible shapes.
+
     data = [
         [(3,), (4,)],
         [(2, 3), (2,)],
@@ -165,8 +167,8 @@ def test_incompatible_shapes_raise_valueerror():
 
 
 def test_same_as_ufunc():
-    """ Check that the data layout is the same as if a ufunc did the operation.
-    """
+    # Check that the data layout is the same as if a ufunc did the operation.
+
     data = [
         [[(1,), (3,)], (3,)],
         [[(1, 3), (3, 3)], (3, 3)],

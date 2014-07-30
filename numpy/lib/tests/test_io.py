@@ -4,24 +4,22 @@ import sys
 import gzip
 import os
 import threading
-from tempfile import mkstemp, NamedTemporaryFile
 import time
 import warnings
 import gc
 from io import BytesIO
 from datetime import datetime
+from tempfile import mkstemp, NamedTemporaryFile
 
 import numpy as np
 import numpy.ma as ma
-from numpy.lib._iotools import (ConverterError, ConverterLockError,
-                                ConversionWarning)
-from numpy.compat import asbytes, asbytes_nested, bytes, asstr
-from nose import SkipTest
+from numpy.lib._iotools import ConverterError, ConversionWarning
+from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import (
     TestCase, assert_equal, assert_array_equal,
     assert_raises, assert_raises_regex, run_module_suite
 )
-from numpy.testing import assert_warns, assert_, build_err_msg
+from numpy.testing import assert_warns, assert_
 from numpy.testing.utils import tempdir
 
 
@@ -199,7 +197,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             np.savez(tmp, a=a)
             del a
             npfile = np.load(tmp)
-            a = npfile['a']
+            npfile['a']
             npfile.close()
 
     def test_multiple_arrays(self):
@@ -258,9 +256,9 @@ class TestSavezLoad(RoundtripTest, TestCase):
             fp = open(tmp, 'rb', 10000)
             fp.seek(0)
             assert_(not fp.closed)
-            _ = np.load(fp)['data']
+            np.load(fp)['data']
+            # must not get closed by .load(opened fp)
             assert_(not fp.closed)
-                    # must not get closed by .load(opened fp)
             fp.seek(0)
             assert_(not fp.closed)
 
@@ -379,9 +377,8 @@ class TestSaveTxt(TestCase):
         assert_raises(ValueError, np.savetxt, c, a, fmt=99)
 
     def test_header_footer(self):
-        """
-        Test the functionality of the header and footer keyword argument.
-        """
+        # Test the functionality of the header and footer keyword argument.
+
         c = BytesIO()
         a = np.array([(1, 2), (3, 4)], dtype=np.int)
         test_header_footer = 'Test header / footer'
@@ -652,9 +649,7 @@ class TestLoadTxt(TestCase):
         assert_array_equal(data, [33, 66])
 
     def test_dtype_with_object(self):
-        "Test using an explicit dtype with an object"
-        from datetime import date
-        import time
+        # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
         ndtype = [('idx', int), ('code', np.object)]
@@ -811,21 +806,16 @@ class Testfromregex(TestCase):
         assert_array_equal(x, a)
 
 
-#####--------------------------------------------------------------------------
-
-
 class TestFromTxt(TestCase):
-    #
+
     def test_record(self):
-        "Test w/ explicit dtype"
+        # Test w/ explicit dtype
         data = TextIO('1 2\n3 4')
-#        data.seek(0)
         test = np.ndfromtxt(data, dtype=[('x', np.int32), ('y', np.int32)])
         control = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         assert_equal(test, control)
         #
         data = TextIO('M 64.0 75.0\nF 25.0 60.0')
-#        data.seek(0)
         descriptor = {'names': ('gender', 'age', 'weight'),
                       'formats': ('S1', 'i4', 'f4')}
         control = np.array([('M', 64.0, 75.0), ('F', 25.0, 60.0)],
@@ -834,31 +824,31 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
     def test_array(self):
-        "Test outputing a standard ndarray"
+        # Test outputing a standard ndarray
         data = TextIO('1 2\n3 4')
         control = np.array([[1, 2], [3, 4]], dtype=int)
         test = np.ndfromtxt(data, dtype=int)
         assert_array_equal(test, control)
-        #
+
         data.seek(0)
         control = np.array([[1, 2], [3, 4]], dtype=float)
         test = np.loadtxt(data, dtype=float)
         assert_array_equal(test, control)
 
     def test_1D(self):
-        "Test squeezing to 1D"
+        # Test squeezing to 1D
         control = np.array([1, 2, 3, 4], int)
-        #
+
         data = TextIO('1\n2\n3\n4\n')
         test = np.ndfromtxt(data, dtype=int)
         assert_array_equal(test, control)
-        #
+
         data = TextIO('1,2,3,4\n')
         test = np.ndfromtxt(data, dtype=int, delimiter=',')
         assert_array_equal(test, control)
 
     def test_comments(self):
-        "Test the stripping of comments"
+        # Test the stripping of comments
         control = np.array([1, 2, 3, 5], int)
         # Comment on its own line
         data = TextIO('# comment\n1,2,3,5\n')
@@ -870,14 +860,14 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
     def test_skiprows(self):
-        "Test row skipping"
+        # Test row skipping
         control = np.array([1, 2, 3, 5], int)
         kwargs = dict(dtype=int, delimiter=',')
-        #
+
         data = TextIO('comment\n1,2,3,5\n')
         test = np.ndfromtxt(data, skip_header=1, **kwargs)
         assert_equal(test, control)
-        #
+
         data = TextIO('# comment\n1,2,3,5\n')
         test = np.loadtxt(data, skiprows=1, **kwargs)
         assert_equal(test, control)
@@ -900,15 +890,13 @@ class TestFromTxt(TestCase):
             # Footer too small to get rid of all invalid values
             assert_raises(ValueError, np.genfromtxt,
                           TextIO(basestr), skip_footer=1)
-    #        except ValueError:
-    #            pass
             a = np.genfromtxt(
                 TextIO(basestr), skip_footer=1, invalid_raise=False)
             assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
-            #
+
             a = np.genfromtxt(TextIO(basestr), skip_footer=3)
             assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
-            #
+
             basestr = '1 1\n2  \n3 3\n4 4\n5  \n6 6\n7 7\n'
             a = np.genfromtxt(
                 TextIO(basestr), skip_footer=1, invalid_raise=False)
@@ -918,7 +906,7 @@ class TestFromTxt(TestCase):
             assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.]]))
 
     def test_header(self):
-        "Test retrieving a header"
+        # Test retrieving a header
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
         test = np.ndfromtxt(data, dtype=None, names=True)
         control = {'gender': np.array([b'M', b'F']),
@@ -929,7 +917,7 @@ class TestFromTxt(TestCase):
         assert_equal(test['weight'], control['weight'])
 
     def test_auto_dtype(self):
-        "Test the automatic definition of the output dtype"
+        # Test the automatic definition of the output dtype
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
         test = np.ndfromtxt(data, dtype=None)
         control = [np.array([b'A', b'BCD']),
@@ -942,14 +930,14 @@ class TestFromTxt(TestCase):
             assert_equal(test['f%i' % i], ctrl)
 
     def test_auto_dtype_uniform(self):
-        "Tests whether the output dtype can be uniformized"
+        # Tests whether the output dtype can be uniformized
         data = TextIO('1 2 3 4\n5 6 7 8\n')
         test = np.ndfromtxt(data, dtype=None)
         control = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
         assert_equal(test, control)
 
     def test_fancy_dtype(self):
-        "Check that a nested dtype isn't MIA"
+        # Check that a nested dtype isn't MIA
         data = TextIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         test = np.ndfromtxt(data, dtype=fancydtype, delimiter=',')
@@ -957,7 +945,7 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
     def test_names_overwrite(self):
-        "Test overwriting the names of the dtype"
+        # Test overwriting the names of the dtype
         descriptor = {'names': ('g', 'a', 'w'),
                       'formats': ('S1', 'i4', 'f4')}
         data = TextIO(b'M 64.0 75.0\nF 25.0 60.0')
@@ -969,14 +957,14 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
     def test_commented_header(self):
-        "Check that names can be retrieved even if the line is commented out."
+        # Check that names can be retrieved even if the line is commented out.
         data = TextIO("""
 #gender age weight
 M   21  72.100000
 F   35  58.330000
 M   33  21.99
         """)
-        # The # is part of the first name and should be deleted automatically.
+        # The `#` is part of the first name and should be deleted automatically.
         test = np.genfromtxt(data, names=True, dtype=None)
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
                         dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
@@ -992,7 +980,7 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_autonames_and_usecols(self):
-        "Tests names and usecols"
+        # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         test = np.ndfromtxt(data, usecols=('A', 'C', 'D'),
                             names=True, dtype=None)
@@ -1001,7 +989,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_converters_with_usecols(self):
-        "Test the combination user-defined converters and usecol"
+        # Test the combination user-defined converters and usecol
         data = TextIO('1,2,3,,5\n6,7,8,9,10\n')
         test = np.ndfromtxt(data, dtype=int, delimiter=',',
                             converters={3: lambda s: int(s or - 999)},
@@ -1010,7 +998,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_converters_with_usecols_and_names(self):
-        "Tests names and usecols"
+        # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         test = np.ndfromtxt(data, usecols=('A', 'C', 'D'), names=True,
                             dtype=None, converters={'C': lambda s: 2 * int(s)})
@@ -1019,7 +1007,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_converters_cornercases(self):
-        "Test the conversion to datetime."
+        # Test the conversion to datetime.
         converter = {
             'date': lambda s: strptime(s, '%Y-%m-%d %H:%M:%SZ')}
         data = TextIO('2009-02-03 12:00:00Z, 72214.0')
@@ -1030,7 +1018,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_converters_cornercases2(self):
-        "Test the conversion to datetime64."
+        # Test the conversion to datetime64.
         converter = {
             'date': lambda s: np.datetime64(strptime(s, '%Y-%m-%d %H:%M:%SZ'))}
         data = TextIO('2009-02-03 12:00:00Z, 72214.0')
@@ -1041,12 +1029,12 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_unused_converter(self):
-        "Test whether unused converters are forgotten"
+        # Test whether unused converters are forgotten
         data = TextIO("1 21\n  3 42\n")
         test = np.ndfromtxt(data, usecols=(1,),
                             converters={0: lambda s: int(s, 16)})
         assert_equal(test, [21, 42])
-        #
+
         data.seek(0)
         test = np.ndfromtxt(data, usecols=(1,),
                             converters={1: lambda s: int(s, 16)})
@@ -1066,7 +1054,7 @@ M   33  21.99
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
     def test_tricky_converter_bug1666(self):
-        "Test some corner case"
+        # Test some corner case
         s = TextIO('q1,2\nq3,4')
         cnv = lambda s: float(s[1:])
         test = np.genfromtxt(s, delimiter=',', converters={0: cnv})
@@ -1086,9 +1074,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_dtype_with_object(self):
-        "Test using an explicit dtype with an object"
-        from datetime import date
-        import time
+        # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
         ndtype = [('idx', int), ('code', np.object)]
@@ -1100,7 +1086,7 @@ M   33  21.99
             [(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
             dtype=ndtype)
         assert_equal(test, control)
-        #
+
         ndtype = [('nest', [('idx', int), ('code', np.object)])]
         try:
             test = np.genfromtxt(TextIO(data), delimiter=";",
@@ -1112,7 +1098,7 @@ M   33  21.99
             raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
-        "Test user_converters w/ explicit (standard) dtype"
+        # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
         test = np.genfromtxt(data, delimiter=",", names=None, dtype=float,
                              usecols=(2, 3), converters={2: bytes})
@@ -1121,7 +1107,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_spacedelimiter(self):
-        "Test space delimiter"
+        # Test space delimiter
         data = TextIO("1  2  3  4   5\n6  7  8  9  10")
         test = np.ndfromtxt(data)
         control = np.array([[1., 2., 3., 4., 5.],
@@ -1129,7 +1115,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_integer_delimiter(self):
-        "Test using an integer for delimiter"
+        # Test using an integer for delimiter
         data = "  1  2  3\n  4  5 67\n890123  4"
         test = np.genfromtxt(TextIO(data), delimiter=3)
         control = np.array([[1, 2, 3], [4, 5, 67], [890, 123, 4]])
@@ -1143,7 +1129,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_missing_with_tabs(self):
-        "Test w/ a delimiter tab"
+        # Test w/ a delimiter tab
         txt = "1\t2\t3\n\t2\t\n1\t\t3"
         test = np.genfromtxt(TextIO(txt), delimiter="\t",
                              usemask=True,)
@@ -1153,7 +1139,7 @@ M   33  21.99
         assert_equal(test.mask, ctrl_m)
 
     def test_usecols(self):
-        "Test the selection of columns"
+        # Test the selection of columns
         # Select 1 column
         control = np.array([[1, 2], [3, 4]], float)
         data = TextIO()
@@ -1161,7 +1147,7 @@ M   33  21.99
         data.seek(0)
         test = np.ndfromtxt(data, dtype=float, usecols=(1,))
         assert_equal(test, control[:, 1])
-        #
+
         control = np.array([[1, 2, 3], [3, 4, 5]], float)
         data = TextIO()
         np.savetxt(data, control)
@@ -1174,7 +1160,7 @@ M   33  21.99
         assert_equal(test, control[:, 1:])
 
     def test_usecols_as_css(self):
-        "Test giving usecols with a comma-separated string"
+        # Test giving usecols with a comma-separated string
         data = "1 2 3\n4 5 6"
         test = np.genfromtxt(TextIO(data),
                              names="a, b, c", usecols="a, c")
@@ -1182,7 +1168,7 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_usecols_with_structured_dtype(self):
-        "Test usecols with an explicit structured dtype"
+        # Test usecols with an explicit structured dtype
         data = TextIO("JOE 70.1 25.3\nBOB 60.5 27.9")
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
@@ -1192,12 +1178,12 @@ M   33  21.99
         assert_equal(test['temp'], [25.3, 27.9])
 
     def test_usecols_with_integer(self):
-        "Test usecols with an integer"
+        # Test usecols with an integer
         test = np.genfromtxt(TextIO(b"1 2 3\n4 5 6"), usecols=0)
         assert_equal(test, np.array([1., 4.]))
 
     def test_usecols_with_named_columns(self):
-        "Test usecols with named columns"
+        # Test usecols with named columns
         ctrl = np.array([(1, 3), (4, 6)], dtype=[('a', float), ('c', float)])
         data = "1 2 3\n4 5 6"
         kwargs = dict(names="a, b, c")
@@ -1208,7 +1194,7 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_empty_file(self):
-        "Test that an empty file raises the proper warning."
+        # Test that an empty file raises the proper warning.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore",
                                     message="genfromtxt: Empty input file:")
@@ -1217,7 +1203,7 @@ M   33  21.99
             assert_equal(test, np.array([]))
 
     def test_fancy_dtype_alt(self):
-        "Check that a nested dtype isn't MIA"
+        # Check that a nested dtype isn't MIA
         data = TextIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         test = np.mafromtxt(data, dtype=fancydtype, delimiter=',')
@@ -1242,7 +1228,7 @@ M   33  21.99
                            dtype=[('A', np.int), ('B', np.int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
-        #
+
         data.seek(0)
         test = np.mafromtxt(data, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
@@ -1255,7 +1241,7 @@ M   33  21.99
         data = "A, B, C\n0, 0., 0j\n1, N/A, 1j\n-9, 2.2, N/A\n3, -99, 3j"
         basekwargs = dict(dtype=None, delimiter=",", names=True,)
         mdtype = [('A', int), ('B', float), ('C', complex)]
-        #
+
         test = np.mafromtxt(TextIO(data), missing_values="N/A",
                             **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
@@ -1263,7 +1249,7 @@ M   33  21.99
                            mask=[(0, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)],
                            dtype=mdtype)
         assert_equal(test, control)
-        #
+
         basekwargs['dtype'] = mdtype
         test = np.mafromtxt(TextIO(data),
                             missing_values={0: -9, 1: -99, 2: -999j}, **basekwargs)
@@ -1272,7 +1258,7 @@ M   33  21.99
                            mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                            dtype=mdtype)
         assert_equal(test, control)
-        #
+
         test = np.mafromtxt(TextIO(data),
                             missing_values={0: -9, 'B': -99, 'C': -999j},
                             **basekwargs)
@@ -1283,7 +1269,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_user_filling_values(self):
-        "Test with missing and filling values"
+        # Test with missing and filling values
         ctrl = np.array([(0, 3), (4, -999)], dtype=[('a', int), ('b', int)])
         data = "N/A, 2, 3\n4, ,???"
         kwargs = dict(delimiter=",",
@@ -1295,7 +1281,7 @@ M   33  21.99
         ctrl = np.array([(0, 2, 3), (4, 0, -999)],
                         dtype=[(_, int) for _ in "abc"])
         assert_equal(test, ctrl)
-        #
+
         test = np.genfromtxt(TextIO(data), usecols=(0, -1), **kwargs)
         ctrl = np.array([(0, 3), (4, -999)], dtype=[(_, int) for _ in "ac"])
         assert_equal(test, ctrl)
@@ -1311,7 +1297,7 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
 
     def test_with_masked_column_uniform(self):
-        "Test masked column"
+        # Test masked column
         data = TextIO('1 2 3\n4 5 6\n')
         test = np.genfromtxt(data, dtype=None,
                              missing_values='2,5', usemask=True)
@@ -1319,7 +1305,7 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_with_masked_column_various(self):
-        "Test masked column"
+        # Test masked column
         data = TextIO('True 2 3\nFalse 5 6\n')
         test = np.genfromtxt(data, dtype=None,
                              missing_values='2,5', usemask=True)
@@ -1329,15 +1315,15 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_invalid_raise(self):
-        "Test invalid raise"
+        # Test invalid raise
         data = ["1, 1, 1, 1, 1"] * 50
         for i in range(5):
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
-        #
+
         kwargs = dict(delimiter=",", dtype=None, names=True)
-        # XXX: is there a better way to get the return value of the callable in
+        # Fixme: is there a better way to get the return value of the callable in
         # assert_warns ?
         ret = {}
 
@@ -1347,13 +1333,13 @@ M   33  21.99
         mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
-        #
+
         mdata.seek(0)
         assert_raises(ValueError, np.ndfromtxt, mdata,
                       delimiter=",", names=True)
 
     def test_invalid_raise_with_usecols(self):
-        "Test invalid_raise with usecols"
+        # Test invalid_raise with usecols
         data = ["1, 1, 1, 1, 1"] * 50
         for i in range(5):
             data[10 * i] = "2, 2, 2, 2 2"
@@ -1361,7 +1347,7 @@ M   33  21.99
         mdata = TextIO("\n".join(data))
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        # XXX: is there a better way to get the return value of the callable in
+        # Fixme: is there a better way to get the return value of the callable in
         # assert_warns ?
         ret = {}
 
@@ -1371,7 +1357,7 @@ M   33  21.99
         mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
-        #
+
         mdata.seek(0)
         mtest = np.ndfromtxt(mdata, usecols=(0, 1), **kwargs)
         assert_equal(len(mtest), 50)
@@ -1380,7 +1366,7 @@ M   33  21.99
         assert_equal(mtest, control)
 
     def test_inconsistent_dtype(self):
-        "Test inconsistent dtype"
+        # Test inconsistent dtype
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
@@ -1390,7 +1376,7 @@ M   33  21.99
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
     def test_default_field_format(self):
-        "Test default format"
+        # Test default format
         data = "0, 1, 2.3\n4, 5, 6.7"
         mtest = np.ndfromtxt(TextIO(data),
                              delimiter=",", dtype=None, defaultfmt="f%02i")
@@ -1399,7 +1385,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_single_dtype_wo_names(self):
-        "Test single dtype w/o names"
+        # Test single dtype w/o names
         data = "0, 1, 2.3\n4, 5, 6.7"
         mtest = np.ndfromtxt(TextIO(data),
                              delimiter=",", dtype=float, defaultfmt="f%02i")
@@ -1407,7 +1393,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_single_dtype_w_explicit_names(self):
-        "Test single dtype w explicit names"
+        # Test single dtype w explicit names
         data = "0, 1, 2.3\n4, 5, 6.7"
         mtest = np.ndfromtxt(TextIO(data),
                              delimiter=",", dtype=float, names="a, b, c")
@@ -1416,7 +1402,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_single_dtype_w_implicit_names(self):
-        "Test single dtype w implicit names"
+        # Test single dtype w implicit names
         data = "a, b, c\n0, 1, 2.3\n4, 5, 6.7"
         mtest = np.ndfromtxt(TextIO(data),
                              delimiter=",", dtype=float, names=True)
@@ -1425,7 +1411,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_easy_structured_dtype(self):
-        "Test easy structured dtype"
+        # Test easy structured dtype
         data = "0, 1, 2.3\n4, 5, 6.7"
         mtest = np.ndfromtxt(TextIO(data), delimiter=",",
                              dtype=(int, float, float), defaultfmt="f_%02i")
@@ -1434,7 +1420,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_autostrip(self):
-        "Test autostrip"
+        # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
         kwargs = dict(delimiter=",", dtype=None)
         mtest = np.ndfromtxt(TextIO(data), **kwargs)
@@ -1447,7 +1433,7 @@ M   33  21.99
         assert_equal(mtest, ctrl)
 
     def test_replace_space(self):
-        "Test the 'replace_space' option"
+        # Test the 'replace_space' option
         txt = "A.A, B (B), C:C\n1, 2, 3.14"
         # Test default: replace ' ' by '_' and delete non-alphanum chars
         test = np.genfromtxt(TextIO(txt),
@@ -1471,7 +1457,7 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_incomplete_names(self):
-        "Test w/ incomplete names"
+        # Test w/ incomplete names
         data = "A,,C\n0,1,2\n3,4,5"
         kwargs = dict(delimiter=",", names=True)
         # w/ dtype=None
@@ -1485,7 +1471,7 @@ M   33  21.99
         test = np.ndfromtxt(TextIO(data), **kwargs)
 
     def test_names_auto_completion(self):
-        "Make sure that names are properly completed"
+        # Make sure that names are properly completed
         data = "1 2 3\n 4 5 6"
         test = np.genfromtxt(TextIO(data),
                              dtype=(int, float, int), names="a")
@@ -1494,33 +1480,33 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_names_with_usecols_bug1636(self):
-        "Make sure we pick up the right names w/ usecols"
+        # Make sure we pick up the right names w/ usecols
         data = "A,B,C,D,E\n0,1,2,3,4\n0,1,2,3,4\n0,1,2,3,4"
         ctrl_names = ("A", "C", "E")
         test = np.genfromtxt(TextIO(data),
                              dtype=(int, int, int), delimiter=",",
                              usecols=(0, 2, 4), names=True)
         assert_equal(test.dtype.names, ctrl_names)
-        #
+
         test = np.genfromtxt(TextIO(data),
                              dtype=(int, int, int), delimiter=",",
                              usecols=("A", "C", "E"), names=True)
         assert_equal(test.dtype.names, ctrl_names)
-        #
+
         test = np.genfromtxt(TextIO(data),
                              dtype=int, delimiter=",",
                              usecols=("A", "C", "E"), names=True)
         assert_equal(test.dtype.names, ctrl_names)
 
     def test_fixed_width_names(self):
-        "Test fix-width w/ names"
+        # Test fix-width w/ names
         data = "    A    B   C\n    0    1 2.3\n   45   67   9."
         kwargs = dict(delimiter=(5, 5, 4), names=True, dtype=None)
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
         test = np.ndfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
-        #
+
         kwargs = dict(delimiter=5, names=True, dtype=None)
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
@@ -1528,7 +1514,7 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_filling_values(self):
-        "Test missing values"
+        # Test missing values
         data = b"1, 2, 3\n1, , 5\n0, 6, \n"
         kwargs = dict(delimiter=",", dtype=None, filling_values=-999)
         ctrl = np.array([[1, 2, 3], [1, -999, 5], [0, 6, -999]], dtype=int)
@@ -1545,7 +1531,6 @@ M   33  21.99
         assert_equal(test[1], b' testNonetherestofthedata')
 
     def test_recfromtxt(self):
-        #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
         test = np.recfromtxt(data, **kwargs)
@@ -1553,7 +1538,7 @@ M   33  21.99
                            dtype=[('A', np.int), ('B', np.int)])
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
-        #
+
         data = TextIO('A,B\n0,1\n2,N/A')
         test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
@@ -1564,7 +1549,6 @@ M   33  21.99
         assert_equal(test.A, [0, 2])
 
     def test_recfromcsv(self):
-        #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
         test = np.recfromcsv(data, dtype=None, **kwargs)
@@ -1572,7 +1556,7 @@ M   33  21.99
                            dtype=[('A', np.int), ('B', np.int)])
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
-        #
+
         data = TextIO('A,B\n0,1\n2,N/A')
         test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
@@ -1581,14 +1565,14 @@ M   33  21.99
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
-        #
+
         data = TextIO('A,B\n0,1\n2,3')
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', np.int), ('b', np.int)])
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
-        #
+
         data = TextIO('A,B\n0,1\n2,3')
         dtype = [('a', np.int), ('b', np.float)]
         test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)

@@ -78,8 +78,11 @@ poly1d([ 2.])
 (poly1d([ 1., -1.]), poly1d([ 0.]))
 
 '''
-from numpy.testing import *
 import numpy as np
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    assert_almost_equal, rundocs
+    )
 
 
 class TestDocs(TestCase):
