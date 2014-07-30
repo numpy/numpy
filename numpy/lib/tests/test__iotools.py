@@ -5,12 +5,14 @@ import time
 from datetime import date
 
 import numpy as np
+from numpy.compat import asbytes, asbytes_nested
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal
+    )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
     has_nested_fields, easy_dtype, flatten_dtype
     )
-from numpy.testing import *
-from numpy.compat import asbytes, asbytes_nested
 
 
 class TestLineSplitter(TestCase):

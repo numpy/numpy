@@ -1,7 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_almost_equal
+    )
 
 
 class TestFinancial(TestCase):

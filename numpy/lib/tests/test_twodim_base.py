@@ -15,7 +15,7 @@ from numpy import (
     )
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes_nested
 
 
 def get_mat(n):
