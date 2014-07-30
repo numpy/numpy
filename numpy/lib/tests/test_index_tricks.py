@@ -229,16 +229,16 @@ def test_fill_diagonal():
 
 def test_diag_indices():
     di = diag_indices(4)
-    a = np.array([[1,  2,  3,  4],
-               [5,  6,  7,  8],
-               [9,  10, 11, 12],
+    a = np.array([[1, 2, 3, 4],
+               [5, 6, 7, 8],
+               [9, 10, 11, 12],
                [13, 14, 15, 16]])
     a[di] = 100
     yield (assert_array_equal, a,
-           np.array([[100, 2,   3,   4],
-                  [5,   100, 7,   8],
-                  [9,   10,  100, 12],
-                  [13,  14,  15,  100]]))
+           np.array([[100, 2, 3, 4],
+                  [5, 100, 7, 8],
+                  [9, 10, 100, 12],
+                  [13, 14, 15, 100]]))
 
     # Now, we create indices to manipulate a 3-d array:
     d3 = diag_indices(2, 3)

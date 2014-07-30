@@ -1078,7 +1078,7 @@ class TestHistogram(TestCase):
 
     def test_f32_rounding(self):
         # gh-4799, check that the rounding of the edges works with float32
-        x = np.array([276.318359  , -69.593948  , 21.329449], dtype=np.float32)
+        x = np.array([276.318359, -69.593948, 21.329449], dtype=np.float32)
         y = np.array([5005.689453, 4481.327637, 6010.369629], dtype=np.float32)
         counts_hist, xedges, yedges = np.histogram2d(x, y, bins=100)
         assert_equal(counts_hist.sum(), 3.)
@@ -1121,7 +1121,7 @@ class TestHistogram(TestCase):
 class TestHistogramdd(TestCase):
     def test_simple(self):
         x = np.array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5],
-                      [.5,  .5, 1.5], [.5,  1.5, 2.5], [.5,  2.5, 2.5]])
+                      [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
         H, edges = histogramdd(x, (2, 3, 3),
                                range=[[-1, 1], [0, 3], [0, 3]])
         answer = np.array([[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
@@ -1289,7 +1289,7 @@ class TestCorrCoef(TestCase):
 
     def test_non_array(self):
         assert_almost_equal(np.corrcoef([0, 1, 0], [1, 0, 1]),
-                            [[1., -1.], [-1.,  1.]])
+                            [[1., -1.], [-1., 1.]])
 
     def test_simple(self):
         assert_almost_equal(corrcoef(self.A), self.res1)
@@ -1728,10 +1728,10 @@ class TestScoreatpercentile(TestCase):
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50), 5.5)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([ 4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         assert_equal(np.percentile(x, 50, axis=0), r0)
         assert_equal(np.percentile(x, 50, axis=0).shape, r0.shape)
-        r1 = np.array([ 1.5,  5.5,  9.5])
+        r1 = np.array([1.5, 5.5, 9.5])
         assert_almost_equal(np.percentile(x, 50, axis=1), r1)
         assert_equal(np.percentile(x, 50, axis=1).shape, r1.shape)
 
@@ -1749,11 +1749,11 @@ class TestScoreatpercentile(TestCase):
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50, interpolation='lower'), 5.)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([ 4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         c0 = np.percentile(x, 50, interpolation='lower', axis=0)
         assert_equal(c0, r0)
         assert_equal(c0.shape, r0.shape)
-        r1 = np.array([ 1.,  5.,  9.])
+        r1 = np.array([1., 5., 9.])
         c1 = np.percentile(x, 50, interpolation='lower', axis=1)
         assert_almost_equal(c1, r1)
         assert_equal(c1.shape, r1.shape)
@@ -1802,22 +1802,22 @@ class TestScoreatpercentile(TestCase):
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
-        r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
+        r0 = np.array([[2., 3., 4., 5.], [4., 5., 6., 7.]])
         out = np.empty((2, 4))
         assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
         assert_equal(out, r0)
-        r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
+        r1 = np.array([[0.75, 4.75, 8.75], [1.5, 5.5, 9.5]])
         out = np.empty((2, 3))
         assert_equal(np.percentile(x, (25, 50), axis=1, out=out), r1)
         assert_equal(out, r1)
 
         # q.dim > 1, int
-        r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
+        r0 = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])
         out = np.empty((2, 4), dtype=x.dtype)
         c = np.percentile(x, (25, 50), interpolation='lower', axis=0, out=out)
         assert_equal(c, r0)
         assert_equal(out, r0)
-        r1 = np.array([[0,  4,  8], [1,  5,  9]])
+        r1 = np.array([[0, 4, 8], [1, 5, 9]])
         out = np.empty((2, 3), dtype=x.dtype)
         c = np.percentile(x, (25, 50), interpolation='lower', axis=1, out=out)
         assert_equal(c, r1)
@@ -1850,7 +1850,6 @@ class TestScoreatpercentile(TestCase):
                            (2, 11, 1, 1))
         assert_array_equal(np.array(np.percentile(d, [10, 50], axis=3)).shape,
                            (2, 11, 1, 2))
-
 
     def test_percentile_no_overwrite(self):
         a = np.array([2, 3, 4, 1])
@@ -1886,7 +1885,7 @@ class TestScoreatpercentile(TestCase):
 
         d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
         np.random.shuffle(d)
-        assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
+        assert_equal(np.percentile(d, 25, axis=(0, 1, 2))[0],
                      np.percentile(d[:, :, :, 0].flatten(), 25))
         assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
                      np.percentile(d[:, :, 1, :].flatten(), [10, 90]))
@@ -1938,7 +1937,7 @@ class TestMedian(TestCase):
         assert_equal(np.median(a0), 1)
         assert_allclose(np.median(a1), 0.5)
         assert_allclose(np.median(a2), 2.5)
-        assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
+        assert_allclose(np.median(a2, axis=0), [1.5, 2.5, 3.5])
         assert_equal(np.median(a2, axis=1), [1, 4])
         assert_allclose(np.median(a2, axis=None), 2.5)
 
@@ -1965,8 +1964,8 @@ class TestMedian(TestCase):
                 np.median(a, axis=ax)
             assert_array_equal(a, orig)
 
-        assert_allclose(np.median(a3, axis=0), [3,  4])
-        assert_allclose(np.median(a3.T, axis=1), [3,  4])
+        assert_allclose(np.median(a3, axis=0), [3, 4])
+        assert_allclose(np.median(a3.T, axis=1), [3, 4])
         assert_allclose(np.median(a3), 3.5)
         assert_allclose(np.median(a3, axis=None), 3.5)
         assert_allclose(np.median(a3.T), 3.5)
@@ -1983,15 +1982,15 @@ class TestMedian(TestCase):
         assert_allclose(np.median(a1.copy(), overwrite_input=True), 0.5)
         assert_allclose(np.median(a2.copy(), overwrite_input=True), 2.5)
         assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=0),
-                        [1.5,  2.5,  3.5])
+                        [1.5, 2.5, 3.5])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=1), [1, 4])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=None), 2.5)
         assert_allclose(
-            np.median(a3.copy(), overwrite_input=True, axis=0), [3,  4])
+            np.median(a3.copy(), overwrite_input=True, axis=0), [3, 4])
         assert_allclose(np.median(a3.T.copy(), overwrite_input=True, axis=1),
-                        [3,  4])
+                        [3, 4])
 
         a4 = np.arange(3 * 4 * 5, dtype=np.float32).reshape((3, 4, 5))
         map(np.random.shuffle, a4)
@@ -2026,7 +2025,7 @@ class TestMedian(TestCase):
         assert_equal(np.median(a), -7)
 
     def test_object(self):
-        o = np.arange(7.);
+        o = np.arange(7.)
         assert_(type(np.median(o.astype(object))), float)
         o[2] = np.nan
         assert_(type(np.median(o.astype(object))), float)
@@ -2083,7 +2082,6 @@ class TestMedian(TestCase):
                      (1, 1, 1, 1))
         assert_equal(np.median(d, axis=(0, 1, 3), keepdims=True).shape,
                      (1, 1, 7, 1))
-
 
 
 class TestAdd_newdoc_ufunc(TestCase):

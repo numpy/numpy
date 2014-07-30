@@ -708,7 +708,7 @@ class TestLoadTxt(TestCase):
         assert_(c.dtype.str == '<f4')
         assert_array_equal(a, np.array([b'M', b'F']))
         assert_array_equal(b, np.array([21, 35]))
-        assert_array_equal(c, np.array([72.,  58.]))
+        assert_array_equal(c, np.array([72., 58.]))
 
     def test_ndmin_keyword(self):
         c = TextIO()
