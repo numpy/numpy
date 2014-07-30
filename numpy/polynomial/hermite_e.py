@@ -67,7 +67,7 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
-    'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
+    'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermepow',
     'hermeval',
     'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
     'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE',
