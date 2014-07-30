@@ -88,6 +88,8 @@ PyArray_SetNumericOps(PyObject *dict)
 
 static int
 has_ufunc_attr(PyObject * obj) {
+    /* ufunc override disabled for 1.9 */
+    return 0;
     /* attribute check is expensive for scalar operations, avoid if possible */
     if (PyArray_CheckExact(obj) || _is_basic_python_type(obj)) {
         return 0;
