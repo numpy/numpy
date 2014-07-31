@@ -925,6 +925,27 @@ class matrix(N.ndarray):
         """
         return self.__array__().ravel()
 
+
+    def ravel(self):
+        """
+        Return a flattened array.
+
+        Refer to `numpy.ravel` for full documentation.
+
+        See Also
+        --------
+        numpy.ravel : equivalent function
+
+        ndarray.flat : a flat iterator on the array.
+
+        Notes
+        -----
+        This returns a matrix.
+
+        """
+        return np.core.multiarray.ndarray.ravel(self)
+
+
     def getT(self):
         """
         Returns the transpose of the matrix.
