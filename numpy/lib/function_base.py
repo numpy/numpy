@@ -1,15 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-__docformat__ = "restructuredtext en"
-__all__ = [
-    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-    'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
-
 import warnings
 import sys
 import collections
@@ -20,27 +10,37 @@ import numpy.core.numeric as _nx
 from numpy.core import linspace, atleast_1d, atleast_2d
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
-    empty_like, ndarray, around, floor, ceil, take, ScalarType, dot, where,
-    intp, integer, isscalar
+    empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
+    integer, isscalar
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, log10
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, choose, sort, partition, mean
+    ravel, nonzero, sort, partition, mean
     )
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
-from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 from numpy.compat import long
 
 # Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
     range = xrange
+
+
+__all__ = [
+    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
+    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+    'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
+    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
+    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    ]
 
 
 def iterable(y):
@@ -371,8 +371,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         Ncount[i] = digitize(sample[:, i], edges[i])
 
     # Using digitize, values that fall on an edge are put in the right bin.
-    # For the rightmost bin, we want values equal to the right
-    # edge to be counted in the last bin, and not as an outlier.
+    # For the rightmost bin, we want values equal to the right edge to be
+    # counted in the last bin, and not as an outlier.
     for i in arange(D):
         # Rounding precision
         mindiff = dedges[i].min()
@@ -380,7 +380,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
             not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (around(sample[:, i], decimal) == around(edges[i][-1], decimal))
+            on_edge = (around(sample[:, i], decimal) ==
+                       around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
             Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
 
@@ -1365,24 +1366,6 @@ def trim_zeros(filt, trim='fb'):
     return filt[first:last]
 
 
-@deprecate
-def unique(x):
-    """
-    This function is deprecated.  Use numpy.lib.arraysetops.unique()
-    instead.
-    """
-    try:
-        tmp = x.flatten()
-        if tmp.size == 0:
-            return tmp
-        tmp.sort()
-        idx = concatenate(([True], tmp[1:] != tmp[:-1]))
-        return tmp[idx]
-    except AttributeError:
-        items = sorted(set(x))
-        return asarray(items)
-
-
 def extract(condition, arr):
     """
     Return the elements of an array that satisfy some condition.
@@ -1626,6 +1609,7 @@ class vectorize(object):
     further degrades performance.
 
     """
+
     def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
                  cache=False):
         self.pyfunc = pyfunc
@@ -3379,7 +3363,7 @@ def meshgrid(*xi, **kwargs):
         raise TypeError("meshgrid() got an unexpected keyword argument '%s'"
                         % (list(kwargs)[0],))
 
-    if not indexing in ['xy', 'ij']:
+    if indexing not in ['xy', 'ij']:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
 
@@ -3440,7 +3424,7 @@ def delete(arr, obj, axis=None):
     Notes
     -----
     Often it is preferable to use a boolean mask. For example:
-    
+
     >>> mask = np.ones(len(arr), dtype=bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]

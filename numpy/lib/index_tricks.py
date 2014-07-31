@@ -1,27 +1,29 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['ravel_multi_index',
-           'unravel_index',
-           'mgrid',
-           'ogrid',
-           'r_', 'c_', 's_',
-           'index_exp', 'ix_',
-           'ndenumerate', 'ndindex',
-           'fill_diagonal', 'diag_indices', 'diag_indices_from']
-
 import sys
-import numpy.core.numeric as _nx
-from numpy.core.numeric import ( asarray, ScalarType, array, alltrue, cumprod,
-                                 arange )
-from numpy.core.numerictypes import find_common_type
 import math
+
+import numpy.core.numeric as _nx
+from numpy.core.numeric import (
+    asarray, ScalarType, array, alltrue, cumprod, arange
+    )
+from numpy.core.numerictypes import find_common_type
 
 from . import function_base
 import numpy.matrixlib as matrix
 from .function_base import diff
 from numpy.lib._compiled_base import ravel_multi_index, unravel_index
 from numpy.lib.stride_tricks import as_strided
+
 makemat = matrix.matrix
+
+
+__all__ = [
+    'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
+    's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
+    'diag_indices', 'diag_indices_from'
+    ]
+
 
 def ix_(*args):
     """
@@ -142,8 +144,10 @@ class nd_grid(object):
             [4]]), array([[0, 1, 2, 3, 4]])]
 
     """
+
     def __init__(self, sparse=False):
         self.sparse = sparse
+
     def __getitem__(self, key):
         try:
             size = []
@@ -151,16 +155,19 @@ class nd_grid(object):
             for k in range(len(key)):
                 step = key[k].step
                 start = key[k].start
-                if start is None: start=0
-                if step is None: step=1
+                if start is None:
+                    start = 0
+                if step is None:
+                    step = 1
                 if isinstance(step, complex):
                     size.append(int(abs(step)))
                     typ = float
                 else:
-                    size.append(int(math.ceil((key[k].stop - start)/(step*1.0))))
-                if isinstance(step, float) or \
-                    isinstance(start, float) or \
-                    isinstance(key[k].stop, float):
+                    size.append(
+                        int(math.ceil((key[k].stop - start)/(step*1.0))))
+                if (isinstance(step, float) or
+                        isinstance(start, float) or
+                        isinstance(key[k].stop, float)):
                     typ = float
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
@@ -170,8 +177,10 @@ class nd_grid(object):
             for k in range(len(size)):
                 step = key[k].step
                 start = key[k].start
-                if start is None: start=0
-                if step is None: step=1
+                if start is None:
+                    start = 0
+                if step is None:
+                    step = 1
                 if isinstance(step, complex):
                     step = int(abs(step))
                     if step != 1:
@@ -188,13 +197,14 @@ class nd_grid(object):
             step = key.step
             stop = key.stop
             start = key.start
-            if start is None: start = 0
+            if start is None:
+                start = 0
             if isinstance(step, complex):
                 step = abs(step)
                 length = int(step)
                 if step != 1:
                     step = (key.stop-start)/float(step-1)
-                stop = key.stop+step
+                stop = key.stop + step
                 return _nx.arange(0, length, 1, float)*step + start
             else:
                 return _nx.arange(start, stop, step)
@@ -207,8 +217,8 @@ class nd_grid(object):
 
 mgrid = nd_grid(sparse=False)
 ogrid = nd_grid(sparse=True)
-mgrid.__doc__ = None # set in numpy.add_newdocs
-ogrid.__doc__ = None # set in numpy.add_newdocs
+mgrid.__doc__ = None  # set in numpy.add_newdocs
+ogrid.__doc__ = None  # set in numpy.add_newdocs
 
 class AxisConcatenator(object):
     """
@@ -217,6 +227,7 @@ class AxisConcatenator(object):
     For detailed documentation on usage, see `r_`.
 
     """
+
     def _retval(self, res):
         if self.matrix:
             oldndim = res.ndim
@@ -256,7 +267,8 @@ class AxisConcatenator(object):
                 step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
-                if start is None: start = 0
+                if start is None:
+                    start = 0
                 if step is None:
                     step = 1
                 if isinstance(step, complex):
@@ -431,6 +443,7 @@ class RClass(AxisConcatenator):
     matrix([[1, 2, 3, 4, 5, 6]])
 
     """
+
     def __init__(self):
         AxisConcatenator.__init__(self, 0)
 
@@ -453,6 +466,7 @@ class CClass(AxisConcatenator):
     array([[1, 2, 3, 0, 0, 4, 5, 6]])
 
     """
+
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
@@ -484,6 +498,7 @@ class ndenumerate(object):
     (1, 1) 4
 
     """
+
     def __init__(self, arr):
         self.iter = asarray(arr).flat
 
@@ -536,10 +551,12 @@ class ndindex(object):
     (2, 1, 0)
 
     """
+
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
+        x = as_strided(_nx.zeros(1), shape=shape,
+                       strides=_nx.zeros_like(shape))
         self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
                               order='C')
 
@@ -556,18 +573,20 @@ class ndindex(object):
 
     def __next__(self):
         """
-        Standard iterator method, updates the index and returns the index tuple.
+        Standard iterator method, updates the index and returns the index
+        tuple.
 
         Returns
         -------
         val : tuple of ints
-            Returns a tuple containing the indices of the current iteration.
+            Returns a tuple containing the indices of the current
+            iteration.
 
         """
         next(self._it)
         return self._it.multi_index
 
-    next =  __next__
+    next = __next__
 
 
 # You can do all this with slice() plus a few special objects,
@@ -624,6 +643,7 @@ class IndexExpression(object):
     array([2, 4])
 
     """
+
     def __init__(self, maketuple):
         self.maketuple = maketuple
 
@@ -743,7 +763,7 @@ def fill_diagonal(a, val, wrap=False):
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
-        if not alltrue(diff(a.shape)==0):
+        if not alltrue(diff(a.shape) == 0):
             raise ValueError("All dimensions of input must be of equal length")
         step = 1 + (cumprod(a.shape[:-1])).sum()
 

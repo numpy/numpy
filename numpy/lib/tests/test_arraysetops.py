@@ -3,11 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
-from numpy.lib.arraysetops import *
-
-import warnings
+from numpy.testing import (
+    run_module_suite, TestCase, assert_array_equal
+    )
+from numpy.lib.arraysetops import (
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
+    )
 
 
 class TestSetOps(TestCase):
@@ -94,8 +96,8 @@ class TestSetOps(TestCase):
         check_all(aa, bb, i1, i2, c, dt)
 
         # test for ticket #2799
-        aa = [1.+0.j, 1- 1.j, 1]
-        assert_array_equal(np.unique(aa), [ 1.-1.j,  1.+0.j])
+        aa = [1. + 0.j, 1 - 1.j, 1]
+        assert_array_equal(np.unique(aa), [1. - 1.j, 1. + 0.j])
 
         # test for ticket #4785
         a = [(1, 2), (1, 2), (2, 3)]

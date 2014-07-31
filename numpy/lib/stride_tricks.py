@@ -12,9 +12,10 @@ import numpy as np
 __all__ = ['broadcast_arrays']
 
 class DummyArray(object):
-    """ Dummy object that just exists to hang __array_interface__ dictionaries
+    """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """
+
     def __init__(self, interface, base=None):
         self.__array_interface__ = interface
         self.base = base
@@ -81,8 +82,8 @@ def broadcast_arrays(*args):
     strides = [list(x.strides) for x in args]
     nds = [len(s) for s in shapes]
     biggest = max(nds)
-    # Go through each array and prepend dimensions of length 1 to each of the
-    # shapes in order to make the number of dimensions equal.
+    # Go through each array and prepend dimensions of length 1 to each of
+    # the shapes in order to make the number of dimensions equal.
     for i in range(len(args)):
         diff = biggest - nds[i]
         if diff > 0:
@@ -99,23 +100,24 @@ def broadcast_arrays(*args):
             raise ValueError("shape mismatch: two or more arrays have "
                 "incompatible dimensions on axis %r." % (axis,))
         elif len(unique) == 2:
-            # There is exactly one non-1 length. The common shape will take this
-            # value.
+            # There is exactly one non-1 length. The common shape will take
+            # this value.
             unique.remove(1)
             new_length = unique.pop()
             common_shape.append(new_length)
-            # For each array, if this axis is being broadcasted from a length of
-            # 1, then set its stride to 0 so that it repeats its data.
+            # For each array, if this axis is being broadcasted from a
+            # length of 1, then set its stride to 0 so that it repeats its
+            # data.
             for i in range(len(args)):
                 if shapes[i][axis] == 1:
                     shapes[i][axis] = new_length
                     strides[i][axis] = 0
         else:
-            # Every array has a length of 1 on this axis. Strides can be left
-            # alone as nothing is broadcasted.
+            # Every array has a length of 1 on this axis. Strides can be
+            # left alone as nothing is broadcasted.
             common_shape.append(1)
 
     # Construct the new arrays.
     broadcasted = [as_strided(x, shape=sh, strides=st) for (x, sh, st) in
-        zip(args, shapes, strides)]
+                   zip(args, shapes, strides)]
     return broadcasted

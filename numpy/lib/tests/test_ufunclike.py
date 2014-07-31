@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
-from numpy.testing.decorators import deprecated
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal
+    )
 
 
 class TestUfunclike(TestCase):

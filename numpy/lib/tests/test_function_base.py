@@ -3,14 +3,20 @@ from __future__ import division, absolute_import, print_function
 import warnings
 
 import numpy as np
+from numpy.random import rand
+from numpy.compat import long
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex
     )
-from numpy.random import rand
-from numpy.lib import *
-from numpy.compat import long
+from numpy.lib.function_base import (
+    average, select, insert, diff, delete, gradient, angle, trim_zeros,
+    place, vectorize, digitize, unwrap, hamming, hanning, bartlett,
+    blackman, kaiser, extract, trapz, sinc, histogram, histogramdd,
+    corrcoef, cov, i0, msort, meshgrid,
+    piecewise, interp, add_newdoc_ufunc
+    )
 
 
 class TestAny(TestCase):
@@ -58,7 +64,7 @@ class TestCopy(TestCase):
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:
-        #   https://github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783
+        # https://github.com/scikit-learn/scikit-learn/commit/7842748
         a = np.array([[1, 2], [3, 4]])
         assert_(a.flags.c_contiguous)
         assert_(not a.flags.f_contiguous)
@@ -349,7 +355,8 @@ class TestCumsum(TestCase):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
         for ctype in [np.int8, np.uint8, np.int16, np.uint16, np.int32,
-                      np.uint32, np.float32, np.float64, np.complex64, np.complex128]:
+                      np.uint32, np.float32, np.float64, np.complex64,
+                      np.complex128]:
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
 
@@ -374,9 +381,9 @@ class TestProd(TestCase):
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
             if ctype in ['1', 'b']:
-                self.assertRaises(ArithmeticError, prod, a)
-                self.assertRaises(ArithmeticError, prod, a2, 1)
-                self.assertRaises(ArithmeticError, prod, a)
+                self.assertRaises(ArithmeticError, np.prod, a)
+                self.assertRaises(ArithmeticError, np.prod, a2, 1)
+                self.assertRaises(ArithmeticError, np.prod, a)
             else:
                 assert_equal(np.prod(a, axis=0), 26400)
                 assert_array_equal(np.prod(a2, axis=0),
@@ -394,9 +401,9 @@ class TestCumprod(TestCase):
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
             if ctype in ['1', 'b']:
-                self.assertRaises(ArithmeticError, cumprod, a)
-                self.assertRaises(ArithmeticError, cumprod, a2, 1)
-                self.assertRaises(ArithmeticError, cumprod, a)
+                self.assertRaises(ArithmeticError, np.cumprod, a)
+                self.assertRaises(ArithmeticError, np.cumprod, a2, 1)
+                self.assertRaises(ArithmeticError, np.cumprod, a)
             else:
                 assert_array_equal(np.cumprod(a, axis=-1),
                                    np.array([1, 2, 20, 220,
@@ -446,9 +453,9 @@ class TestDelete(TestCase):
         if not isinstance(indices, (slice, int, long, np.integer)):
             indices = np.asarray(indices, dtype=np.intp)
             indices = indices[(indices >= 0) & (indices < 5)]
-        assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
+        assert_array_equal(np.setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
-        xor = setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
+        xor = np.setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
         assert_array_equal(xor, self.nd_a[0, :, 0], err_msg=msg)
 
     def test_slices(self):
@@ -569,7 +576,8 @@ class TestAngle(TestCase):
 
 
 class TestTrimZeros(TestCase):
-    """ only testing for integer splits.
+    """Testing for integer splits.
+
     """
     def test_basic(self):
         a = np.array([0, 0, 1, 2, 3, 4, 0])
@@ -644,10 +652,10 @@ class TestVectorize(TestCase):
         assert_array_equal(r1, r2)
 
     def test_keywords(self):
-        import math
 
         def foo(a, b=1):
             return a + b
+
         f = vectorize(foo)
         args = np.array([1, 2, 3])
         r1 = f(args)
@@ -663,16 +671,16 @@ class TestVectorize(TestCase):
         # inspect the func_code.
         import random
         try:
-            f = vectorize(random.randrange)
+            vectorize(random.randrange)
         except:
             raise AssertionError()
 
     def test_keywords2_ticket_2100(self):
-        r"""Test kwarg support: enhancement ticket 2100"""
-        import math
+        # Test kwarg support: enhancement ticket 2100
 
         def foo(a, b=1):
             return a + b
+
         f = vectorize(foo)
         args = np.array([1, 2, 3])
         r1 = f(a=args)
@@ -685,7 +693,7 @@ class TestVectorize(TestCase):
         assert_array_equal(r1, r2)
 
     def test_keywords3_ticket_2100(self):
-        """Test excluded with mixed positional and kwargs: ticket 2100"""
+        # Test excluded with mixed positional and kwargs: ticket 2100
         def mypolyval(x, p):
             _p = list(p)
             res = _p.pop(0)
@@ -699,7 +707,7 @@ class TestVectorize(TestCase):
         assert_array_equal(ans, vpolyval([0, 1], [1, 2, 3]))
 
     def test_keywords4_ticket_2100(self):
-        """Test vectorizing function with no positional args."""
+        # Test vectorizing function with no positional args.
         @vectorize
         def f(**kw):
             res = 1.0
@@ -709,7 +717,7 @@ class TestVectorize(TestCase):
         assert_array_equal(f(a=[1, 2], b=[3, 4]), [3, 8])
 
     def test_keywords5_ticket_2100(self):
-        """Test vectorizing function with no kwargs args."""
+        # Test vectorizing function with no kwargs args.
         @vectorize
         def f(*v):
             return np.prod(v)
@@ -729,7 +737,7 @@ class TestVectorize(TestCase):
         assert_equal(f.__doc__, doc)
 
     def test_UnboundMethod_ticket_1156(self):
-        """Regression test for issue 1156"""
+        # Regression test for issue 1156
         class Foo:
             b = 2
 
@@ -741,7 +749,7 @@ class TestVectorize(TestCase):
                            np.arange(9)**2)
 
     def test_execution_order_ticket_1487(self):
-        """Regression test for dependence on execution order: issue 1487"""
+        # Regression test for dependence on execution order: issue 1487
         f1 = vectorize(lambda x: x)
         res1a = f1(np.arange(3))
         res1b = f1(np.arange(0.1, 3))
@@ -752,15 +760,13 @@ class TestVectorize(TestCase):
         assert_equal(res1b, res2b)
 
     def test_string_ticket_1892(self):
-        """Test vectorization over strings: issue 1892."""
+        # Test vectorization over strings: issue 1892.
         f = np.vectorize(lambda x: x)
         s = '0123456789'*10
         assert_equal(s, f(s))
-        #z = f(np.array([s,s]))
-        #assert_array_equal([s,s], f(s))
 
     def test_cache(self):
-        """Ensure that vectorized func called exactly once per argument."""
+        # Ensure that vectorized func called exactly once per argument.
         _calls = [0]
 
         @vectorize
@@ -837,7 +843,7 @@ class TestDigitize(TestCase):
 
 class TestUnwrap(TestCase):
     def test_simple(self):
-                #check that unwrap removes jumps greather that 2*pi
+        #check that unwrap removes jumps greather that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
         #check that unwrap maintans continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
@@ -847,28 +853,28 @@ class TestFilterwindows(TestCase):
     def test_hanning(self):
         #check symmetry
         w = hanning(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_array_almost_equal(w, np.flipud(w), 7)
         #check known value
         assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self):
         #check symmetry
         w = hamming(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_array_almost_equal(w, np.flipud(w), 7)
         #check known value
         assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self):
         #check symmetry
         w = bartlett(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_array_almost_equal(w, np.flipud(w), 7)
         #check known value
         assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self):
         #check symmetry
         w = blackman(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_array_almost_equal(w, np.flipud(w), 7)
         #check known value
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
@@ -949,7 +955,7 @@ class TestSinc(TestCase):
         assert_(sinc(0) == 1)
         w = sinc(np.linspace(-1, 1, 100))
         #check symmetry
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_array_almost_equal(w, np.flipud(w), 7)
 
     def test_array_like(self):
         x = [0, 0.5]
@@ -1059,20 +1065,20 @@ class TestHistogram(TestCase):
         # Check the type of the returned histogram
         a = np.arange(10) + .5
         h, b = histogram(a)
-        assert_(issubdtype(h.dtype, int))
+        assert_(np.issubdtype(h.dtype, int))
 
         h, b = histogram(a, normed=True)
-        assert_(issubdtype(h.dtype, float))
+        assert_(np.issubdtype(h.dtype, float))
 
         h, b = histogram(a, weights=np.ones(10, int))
-        assert_(issubdtype(h.dtype, int))
+        assert_(np.issubdtype(h.dtype, int))
 
         h, b = histogram(a, weights=np.ones(10, float))
-        assert_(issubdtype(h.dtype, float))
+        assert_(np.issubdtype(h.dtype, float))
 
     def test_f32_rounding(self):
         # gh-4799, check that the rounding of the edges works with float32
-        x = np.array([276.318359  , -69.593948  , 21.329449], dtype=np.float32)
+        x = np.array([276.318359, -69.593948, 21.329449], dtype=np.float32)
         y = np.array([5005.689453, 4481.327637, 6010.369629], dtype=np.float32)
         counts_hist, xedges, yedges = np.histogram2d(x, y, bins=100)
         assert_equal(counts_hist.sum(), 3.)
@@ -1115,7 +1121,7 @@ class TestHistogram(TestCase):
 class TestHistogramdd(TestCase):
     def test_simple(self):
         x = np.array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5],
-                      [.5,  .5, 1.5], [.5,  1.5, 2.5], [.5,  2.5, 2.5]])
+                      [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
         H, edges = histogramdd(x, (2, 3, 3),
                                range=[[-1, 1], [0, 3], [0, 3]])
         answer = np.array([[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
@@ -1136,7 +1142,7 @@ class TestHistogramdd(TestCase):
         assert_array_almost_equal(H, answer / 6., 4)
         # Check that a sequence of arrays is accepted and H has the correct
         # shape.
-        z = [np.squeeze(y) for y in split(x, 3, axis=1)]
+        z = [np.squeeze(y) for y in np.split(x, 3, axis=1)]
         H, edges = histogramdd(
             z, bins=(4, 3, 2), range=[[-2, 2], [0, 3], [0, 2]])
         answer = np.array([[[0, 0], [0, 0], [0, 0]],
@@ -1196,8 +1202,8 @@ class TestHistogramdd(TestCase):
         assert_array_max_ulp(a, np.zeros((2, 2, 2)))
 
     def test_bins_errors(self):
-        """There are two ways to specify bins. Check for the right errors when
-        mixing those."""
+        # There are two ways to specify bins. Check for the right errors when
+        # mixing those.
         x = np.arange(8).reshape(2, 4)
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
         assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
@@ -1208,7 +1214,7 @@ class TestHistogramdd(TestCase):
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
 
     def test_inf_edges(self):
-        """Test using +/-inf bin edges works. See #1788."""
+        # Test using +/-inf bin edges works. See #1788.
         with np.errstate(invalid='ignore'):
             x = np.arange(6).reshape(3, 2)
             expected = np.array([[1, 0], [0, 1], [0, 1]])
@@ -1220,8 +1226,8 @@ class TestHistogramdd(TestCase):
             assert_allclose(h, expected)
 
     def test_rightmost_binedge(self):
-        """Test event very close to rightmost binedge.
-        See Github issue #4266"""
+        # Test event very close to rightmost binedge.
+        # See Github issue #4266
         x = [0.9999999995]
         bins = [[0.,0.5,1.0]]
         hist, _ = histogramdd(x, bins=bins)
@@ -1244,17 +1250,6 @@ class TestHistogramdd(TestCase):
         assert_(hist[1] == 0.0)
 
 
-class TestUnique(TestCase):
-    def test_simple(self):
-        x = np.array([4, 3, 2, 1, 1, 2, 3, 4, 0])
-        assert_(np.all(unique(x) == [0, 1, 2, 3, 4]))
-        assert_(unique(np.array([1, 1, 1, 1, 1])) == np.array([1]))
-        x = ['widget', 'ham', 'foo', 'bar', 'foo', 'ham']
-        assert_(np.all(unique(x) == ['bar', 'foo', 'ham', 'widget']))
-        x = np.array([5 + 6j, 1 + 1j, 1 + 10j, 10, 5 + 6j])
-        assert_(np.all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
-
-
 class TestCheckFinite(TestCase):
     def test_simple(self):
         a = [1, 2, 3]
@@ -1265,7 +1260,7 @@ class TestCheckFinite(TestCase):
         assert_raises(ValueError, np.lib.asarray_chkfinite, c)
 
     def test_dtype_order(self):
-        """Regression test for missing dtype and order arguments"""
+        # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
         a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
         assert_(a.dtype == np.float64)
@@ -1294,7 +1289,7 @@ class TestCorrCoef(TestCase):
 
     def test_non_array(self):
         assert_almost_equal(np.corrcoef([0, 1, 0], [1, 0, 1]),
-                            [[1., -1.], [-1.,  1.]])
+                            [[1., -1.], [-1., 1.]])
 
     def test_simple(self):
         assert_almost_equal(corrcoef(self.A), self.res1)
@@ -1521,6 +1516,7 @@ class TestPiecewise(TestCase):
     def test_0d_comparison(self):
         x = 3
         y = piecewise(x, [x <= 3, x > 3], [4, 0])
+        assert_array_equal(y, 4)
 
 
 class TestBincount(TestCase):
@@ -1732,10 +1728,10 @@ class TestScoreatpercentile(TestCase):
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50), 5.5)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([ 4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         assert_equal(np.percentile(x, 50, axis=0), r0)
         assert_equal(np.percentile(x, 50, axis=0).shape, r0.shape)
-        r1 = np.array([ 1.5,  5.5,  9.5])
+        r1 = np.array([1.5, 5.5, 9.5])
         assert_almost_equal(np.percentile(x, 50, axis=1), r1)
         assert_equal(np.percentile(x, 50, axis=1).shape, r1.shape)
 
@@ -1753,11 +1749,11 @@ class TestScoreatpercentile(TestCase):
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50, interpolation='lower'), 5.)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([ 4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         c0 = np.percentile(x, 50, interpolation='lower', axis=0)
         assert_equal(c0, r0)
         assert_equal(c0.shape, r0.shape)
-        r1 = np.array([ 1.,  5.,  9.])
+        r1 = np.array([1., 5., 9.])
         c1 = np.percentile(x, 50, interpolation='lower', axis=1)
         assert_almost_equal(c1, r1)
         assert_equal(c1.shape, r1.shape)
@@ -1806,22 +1802,22 @@ class TestScoreatpercentile(TestCase):
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
-        r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
+        r0 = np.array([[2., 3., 4., 5.], [4., 5., 6., 7.]])
         out = np.empty((2, 4))
         assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
         assert_equal(out, r0)
-        r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
+        r1 = np.array([[0.75, 4.75, 8.75], [1.5, 5.5, 9.5]])
         out = np.empty((2, 3))
         assert_equal(np.percentile(x, (25, 50), axis=1, out=out), r1)
         assert_equal(out, r1)
 
         # q.dim > 1, int
-        r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
+        r0 = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])
         out = np.empty((2, 4), dtype=x.dtype)
         c = np.percentile(x, (25, 50), interpolation='lower', axis=0, out=out)
         assert_equal(c, r0)
         assert_equal(out, r0)
-        r1 = np.array([[0,  4,  8], [1,  5,  9]])
+        r1 = np.array([[0, 4, 8], [1, 5, 9]])
         out = np.empty((2, 3), dtype=x.dtype)
         c = np.percentile(x, (25, 50), interpolation='lower', axis=1, out=out)
         assert_equal(c, r1)
@@ -1854,7 +1850,6 @@ class TestScoreatpercentile(TestCase):
                            (2, 11, 1, 1))
         assert_array_equal(np.array(np.percentile(d, [10, 50], axis=3)).shape,
                            (2, 11, 1, 2))
-
 
     def test_percentile_no_overwrite(self):
         a = np.array([2, 3, 4, 1])
@@ -1890,7 +1885,7 @@ class TestScoreatpercentile(TestCase):
 
         d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
         np.random.shuffle(d)
-        assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
+        assert_equal(np.percentile(d, 25, axis=(0, 1, 2))[0],
                      np.percentile(d[:, :, :, 0].flatten(), 25))
         assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
                      np.percentile(d[:, :, 1, :].flatten(), [10, 90]))
@@ -1942,7 +1937,7 @@ class TestMedian(TestCase):
         assert_equal(np.median(a0), 1)
         assert_allclose(np.median(a1), 0.5)
         assert_allclose(np.median(a2), 2.5)
-        assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
+        assert_allclose(np.median(a2, axis=0), [1.5, 2.5, 3.5])
         assert_equal(np.median(a2, axis=1), [1, 4])
         assert_allclose(np.median(a2, axis=None), 2.5)
 
@@ -1969,8 +1964,8 @@ class TestMedian(TestCase):
                 np.median(a, axis=ax)
             assert_array_equal(a, orig)
 
-        assert_allclose(np.median(a3, axis=0), [3,  4])
-        assert_allclose(np.median(a3.T, axis=1), [3,  4])
+        assert_allclose(np.median(a3, axis=0), [3, 4])
+        assert_allclose(np.median(a3.T, axis=1), [3, 4])
         assert_allclose(np.median(a3), 3.5)
         assert_allclose(np.median(a3, axis=None), 3.5)
         assert_allclose(np.median(a3.T), 3.5)
@@ -1987,15 +1982,15 @@ class TestMedian(TestCase):
         assert_allclose(np.median(a1.copy(), overwrite_input=True), 0.5)
         assert_allclose(np.median(a2.copy(), overwrite_input=True), 2.5)
         assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=0),
-                        [1.5,  2.5,  3.5])
+                        [1.5, 2.5, 3.5])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=1), [1, 4])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=None), 2.5)
         assert_allclose(
-            np.median(a3.copy(), overwrite_input=True, axis=0), [3,  4])
+            np.median(a3.copy(), overwrite_input=True, axis=0), [3, 4])
         assert_allclose(np.median(a3.T.copy(), overwrite_input=True, axis=1),
-                        [3,  4])
+                        [3, 4])
 
         a4 = np.arange(3 * 4 * 5, dtype=np.float32).reshape((3, 4, 5))
         map(np.random.shuffle, a4)
@@ -2030,7 +2025,7 @@ class TestMedian(TestCase):
         assert_equal(np.median(a), -7)
 
     def test_object(self):
-        o = np.arange(7.);
+        o = np.arange(7.)
         assert_(type(np.median(o.astype(object))), float)
         o[2] = np.nan
         assert_(type(np.median(o.astype(object))), float)
@@ -2087,7 +2082,6 @@ class TestMedian(TestCase):
                      (1, 1, 1, 1))
         assert_equal(np.median(d, axis=(0, 1, 3), keepdims=True).shape,
                      (1, 1, 7, 1))
-
 
 
 class TestAdd_newdoc_ufunc(TestCase):
