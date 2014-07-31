@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['column_stack', 'row_stack', 'dstack', 'array_split', 'split', 'hsplit',
            'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
-           'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
+           'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'interleave']
 
 import warnings
 
@@ -852,3 +852,91 @@ def tile(A, reps):
         shape[i] = dim_out
         n //= max(dim_in, 1)
     return c.reshape(shape)
+
+
+def interleave(arrays, axis=0):
+    """
+    Interleaves multiple arrays along a user specified axis.
+
+    Parameters
+    ----------
+    arrays : sequence of array_like
+        Input arrays, some arrays may have 1 dimension fewer than the
+        highest number of dimensions. Those arrays will then be broadcasted
+        along the requested `axis`.
+    axis : int, optional
+        Along what axis interleaving should be performed
+
+    Returns
+    -------
+    interleave: ndarray
+        Interleaved array of rank equal to arrays in `arrays` with shape
+        in `axis` dimension multiplied with number of arrays in `arrays`.
+
+    Notes
+    -----
+    .. versionadded:: 1.9.0
+
+    Raises
+    ------
+    ValueError
+        if axis is larger than ndim of arrays, or no arrays are passed along
+
+    See Also
+    --------
+    concatenate
+
+    Examples
+    --------
+    >>> a = np.arange(3)
+    >>> interleave(a, a+6)
+    array([0, 6, 1, 7, 2, 8])
+
+    >>> a = np.arange(4).reshape((2,2))
+    >>> interleave(a, a+4, axis=1)
+    array([[0, 4, 1, 5],
+           [2, 6, 3, 7]])
+
+    broadcasting is also supported:
+
+    >>> a = [[1, 2], [3, 4], [5, 6]]
+    >>> b = [8, 9]
+    >>> interleave((a, b))
+    array([[1, 2],
+           [8, 9],
+           [3, 4],
+           [8, 9],
+           [5, 6],
+           [8, 9]])
+
+    """
+    narrays = len(arrays)
+    if narrays == 0:
+        raise ValueError("interleave takes at least one array")
+    arrays = [asarray(a) for a in arrays]
+    max_ndim = 0
+    bcast = False
+    for a in arrays:
+        if a.ndim > max_ndim:
+            max_ndim = a.ndim
+            shp = a.shape
+        if a.ndim < max_ndim:
+            bcast = True
+
+    if max_ndim == 0:
+        raise ValueError("interleave only works on arrays of 1 "
+                         "or more dimensions")
+    if axis < 0:
+        axis += max_ndim
+    if axis >= max_ndim:
+        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
+                         % (axis, max_ndim))
+    c = _nx.empty([narrays * n if i == axis else n for i, n in enumerate(shp)],
+                  dtype=_nx.find_common_type([a.dtype for a in arrays], []))
+    for i, arr in enumerate(arrays):
+        slicing = [slice(i, shp[j]*narrays, narrays) if
+                   j == axis else slice(None) for j in range(max_ndim)]
+        if bcast:
+            slicing[abs(axis-1)] = Ellipsis
+        c[slicing] = arr
+    return c

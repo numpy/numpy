@@ -69,6 +69,7 @@ Joining arrays
    dstack
    hstack
    vstack
+   interleave
 
 Splitting arrays
 ================
