@@ -15,7 +15,7 @@ from numpy import (
     )
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes_nested
 
 
 def get_mat(n):
@@ -79,12 +79,12 @@ class TestEye(TestCase):
                             [0, 1, 0]]))
 
     def test_eye_bounds(self):
-        assert_equal(eye(2, 2,  1), [[0, 1], [0, 0]])
+        assert_equal(eye(2, 2, 1), [[0, 1], [0, 0]])
         assert_equal(eye(2, 2, -1), [[0, 0], [1, 0]])
-        assert_equal(eye(2, 2,  2), [[0, 0], [0, 0]])
+        assert_equal(eye(2, 2, 2), [[0, 0], [0, 0]])
         assert_equal(eye(2, 2, -2), [[0, 0], [0, 0]])
-        assert_equal(eye(3, 2,  2), [[0, 0], [0, 0], [0, 0]])
-        assert_equal(eye(3, 2,  1), [[0, 1], [0, 0], [0, 0]])
+        assert_equal(eye(3, 2, 2), [[0, 0], [0, 0], [0, 0]])
+        assert_equal(eye(3, 2, 1), [[0, 1], [0, 0], [0, 0]])
         assert_equal(eye(3, 2, -1), [[0, 0], [1, 0], [0, 1]])
         assert_equal(eye(3, 2, -2), [[0, 0], [0, 0], [1, 0]])
         assert_equal(eye(3, 2, -3), [[0, 0], [0, 0], [0, 0]])
@@ -248,13 +248,13 @@ class TestHistogram2d(TestCase):
         y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])
         H, xed, yed = histogram2d(
             x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
-        answer = array([[1,  1,  .5],
-                        [1,  1,  .5],
+        answer = array([[1, 1, .5],
+                        [1, 1, .5],
                         [.5, .5, .25]])/9.
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
-        r = rand(100) + 1. + 1e6 # histogramdd rounds by decimal=6
+        r = rand(100) + 1. + 1e6  # histogramdd rounds by decimal=6
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0, 1], [0, 1]))
         assert_array_equal(H, 0)
 
@@ -363,29 +363,29 @@ def test_tril_indices():
     il3 = tril_indices(4, m=5)
     il4 = tril_indices(4, k=2, m=5)
 
-    a = np.array([[1,  2,  3,  4],
-                  [5,  6,  7,  8],
-                  [9,  10, 11, 12],
+    a = np.array([[1, 2, 3, 4],
+                  [5, 6, 7, 8],
+                  [9, 10, 11, 12],
                   [13, 14, 15, 16]])
     b = np.arange(1, 21).reshape(4, 5)
 
     # indexing:
     yield (assert_array_equal, a[il1],
-           array([1,  5,  6,  9, 10, 11, 13, 14, 15, 16]))
+           array([1, 5, 6, 9, 10, 11, 13, 14, 15, 16]))
     yield (assert_array_equal, b[il3],
            array([1, 6, 7, 11, 12, 13, 16, 17, 18, 19]))
 
     # And for assigning values:
     a[il1] = -1
     yield (assert_array_equal, a,
-           array([[-1,  2,  3, 4],
-                  [-1, -1,  7, 8],
+           array([[-1, 2, 3, 4],
+                  [-1, -1, 7, 8],
                   [-1, -1, -1, 12],
                   [-1, -1, -1, -1]]))
     b[il3] = -1
     yield (assert_array_equal, b,
-           array([[-1,  2,  3,  4,  5],
-                  [-1, -1,  8,  9, 10],
+           array([[-1, 2, 3, 4, 5],
+                  [-1, -1, 8, 9, 10],
                   [-1, -1, -1, 14, 15],
                   [-1, -1, -1, -1, 20]]))
     # These cover almost the whole array (two diagonals right of the main one):
@@ -397,8 +397,8 @@ def test_tril_indices():
                   [-10, -10, -10, -10]]))
     b[il4] = -10
     yield (assert_array_equal, b,
-           array([[-10, -10, -10,   4,   5],
-                  [-10, -10, -10, -10,  10],
+           array([[-10, -10, -10, 4, 5],
+                  [-10, -10, -10, -10, 10],
                   [-10, -10, -10, -10, -10],
                   [-10, -10, -10, -10, -10]]))
 
@@ -410,15 +410,15 @@ class TestTriuIndices(object):
         iu3 = triu_indices(4, m=5)
         iu4 = triu_indices(4, k=2, m=5)
 
-        a = np.array([[1,  2,  3,  4],
-                      [5,  6,  7,  8],
-                      [9,  10, 11, 12],
+        a = np.array([[1, 2, 3, 4],
+                      [5, 6, 7, 8],
+                      [9, 10, 11, 12],
                       [13, 14, 15, 16]])
         b = np.arange(1, 21).reshape(4, 5)
 
         # Both for indexing:
         yield (assert_array_equal, a[iu1],
-               array([1, 2,  3,  4,  6, 7, 8, 11, 12, 16]))
+               array([1, 2, 3, 4, 6, 7, 8, 11, 12, 16]))
         yield (assert_array_equal, b[iu3],
                array([1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 19, 20]))
 
@@ -426,13 +426,13 @@ class TestTriuIndices(object):
         a[iu1] = -1
         yield (assert_array_equal, a,
                array([[-1, -1, -1, -1],
-                      [5,  -1, -1, -1],
-                      [9,  10, -1, -1],
+                      [5, -1, -1, -1],
+                      [9, 10, -1, -1],
                       [13, 14, 15, -1]]))
         b[iu3] = -1
         yield (assert_array_equal, b,
                array([[-1, -1, -1, -1, -1],
-                      [ 6, -1, -1, -1, -1],
+                      [6, -1, -1, -1, -1],
                       [11, 12, -1, -1, -1],
                       [16, 17, 18, -1, -1]]))
 
@@ -440,10 +440,10 @@ class TestTriuIndices(object):
         # main one):
         a[iu2] = -10
         yield (assert_array_equal, a,
-               array([[-1,  -1, -10, -10],
-                      [5,   -1, -1,  -10],
-                      [9,   10, -1,  -1],
-                      [13,  14, 15,  -1]]))
+               array([[-1, -1, -10, -10],
+                      [5, -1, -1, -10],
+                      [9, 10, -1, -1],
+                      [13, 14, 15, -1]]))
         b[iu4] = -10
         yield (assert_array_equal, b,
                array([[-1, -1, -10, -10, -10],
@@ -470,10 +470,10 @@ class TestVander(object):
     def test_basic(self):
         c = np.array([0, 1, -2, 3])
         v = vander(c)
-        powers = np.array([[ 0,  0, 0,  0, 1],
-                           [ 1,  1, 1,  1, 1],
+        powers = np.array([[0, 0, 0, 0, 1],
+                           [1, 1, 1, 1, 1],
                            [16, -8, 4, -2, 1],
-                           [81, 27, 9,  3, 1]])
+                           [81, 27, 9, 3, 1]])
         # Check default value of N:
         yield (assert_array_equal, v, powers[:, 1:])
         # Check a range of N values, including 0 and 5 (greater than default)
@@ -485,14 +485,14 @@ class TestVander(object):
     def test_dtypes(self):
         c = array([11, -12, 13], dtype=np.int8)
         v = vander(c)
-        expected = np.array([[121,  11, 1],
+        expected = np.array([[121, 11, 1],
                              [144, -12, 1],
-                             [169,  13, 1]])
+                             [169, 13, 1]])
         yield (assert_array_equal, v, expected)
 
         c = array([1.0+1j, 1.0-1j])
         v = vander(c, N=3)
-        expected = np.array([[ 2j, 1+1j, 1],
+        expected = np.array([[2j, 1+1j, 1],
                              [-2j, 1-1j, 1]])
         # The data is floating point, but the values are small integers,
         # so assert_array_equal *should* be safe here (rather than, say,

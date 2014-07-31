@@ -17,9 +17,7 @@ Functions
 from __future__ import division, absolute_import, print_function
 
 import warnings
-import operator
 import numpy as np
-from numpy.core.fromnumeric import partition
 from numpy.lib.function_base import _ureduce as _ureduce
 
 __all__ = [
