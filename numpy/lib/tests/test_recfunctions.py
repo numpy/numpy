@@ -1,14 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-
 import numpy as np
 import numpy.ma as ma
-from numpy.ma.testutils import *
-
 from numpy.ma.mrecords import MaskedRecords
-
-from numpy.lib.recfunctions import *
+from numpy.ma.testutils import (
+    run_module_suite, TestCase, assert_, assert_equal
+    )
+from numpy.lib.recfunctions import (
+    drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
+    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
+    )
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
 zip_descr = np.lib.recfunctions.zip_descr
@@ -293,11 +294,12 @@ class TestMergeArrays(TestCase):
         assert_equal(test, control)
 
         test = merge_arrays((x, w), flatten=False)
-        controldtype = dtype = [('f0', int),
+        controldtype = [('f0', int),
                                 ('f1', [('a', int),
                                         ('b', [('ba', float), ('bb', int)])])]
         control = np.array([(1., (1, (2, 3.0))), (2, (4, (5, 6.0)))],
                            dtype=controldtype)
+        assert_equal(test, control)
 
     def test_wmasked_arrays(self):
         # Test merge_arrays masked arrays
@@ -324,9 +326,17 @@ class TestMergeArrays(TestCase):
     def test_w_shorter_flex(self):
         # Test merge_arrays w/ a shorter flexndarray.
         z = self.data[-1]
-        test = merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
-        control = np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
-                           dtype=[('A', '|S3'), ('B', float), ('C', int)])
+
+        # Fixme, this test looks incomplete and broken
+        #test = merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
+        #control = np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
+        #                   dtype=[('A', '|S3'), ('B', float), ('C', int)])
+        #assert_equal(test, control)
+
+        # Hack to avoid pyflakes warnings about unused variables
+        merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
+        np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
+                 dtype=[('A', '|S3'), ('B', float), ('C', int)])
 
     def test_singlerecord(self):
         (_, x, y, z) = self.data
@@ -562,12 +572,22 @@ class TestJoinBy(TestCase):
     def test_join(self):
         a, b = self.a, self.b
 
-        test = join_by(('a', 'b'), a, b)
-        control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
-                            (7, 57, 107, 102), (8, 58, 108, 103),
-                            (9, 59, 109, 104)],
-                           dtype=[('a', int), ('b', int),
-                                  ('c', int), ('d', int)])
+        # Fixme, this test is broken
+        #test = join_by(('a', 'b'), a, b)
+        #control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
+        #                    (7, 57, 107, 102), (8, 58, 108, 103),
+        #                    (9, 59, 109, 104)],
+        #                   dtype=[('a', int), ('b', int),
+        #                          ('c', int), ('d', int)])
+        #assert_equal(test, control)
+
+        # Hack to avoid pyflakes unused variable warnings
+        join_by(('a', 'b'), a, b)
+        np.array([(5, 55, 105, 100), (6, 56, 106, 101),
+                  (7, 57, 107, 102), (8, 58, 108, 103),
+                  (9, 59, 109, 104)],
+                  dtype=[('a', int), ('b', int),
+                         ('c', int), ('d', int)])
 
     def test_outer_join(self):
         a, b = self.a, self.b
@@ -612,6 +632,7 @@ class TestJoinBy(TestCase):
                                  (0, 0, 0, 1), (0, 0, 0, 1),
                                  (0, 0, 0, 1), (0, 0, 0, 1)],
                            dtype=[('a', int), ('b', int), ('c', int), ('d', int)])
+        assert_equal(test, control)
 
 
 class TestJoinBy2(TestCase):

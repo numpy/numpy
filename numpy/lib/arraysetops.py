@@ -26,11 +26,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d',
-           'unique', 'in1d']
-
 import numpy as np
-from numpy.lib.utils import deprecate
+
+
+__all__ = [
+    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
+    'in1d'
+    ]
+
 
 def ediff1d(ary, to_end=None, to_begin=None):
     """
@@ -242,7 +245,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
         # Might be faster than unique( intersect1d( ar1, ar2 ) )?
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    aux = np.concatenate( (ar1, ar2) )
+    aux = np.concatenate((ar1, ar2))
     aux.sort()
     return aux[:-1][aux[1:] == aux[:-1]]
 
@@ -279,13 +282,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = np.concatenate( (ar1, ar2) )
+    aux = np.concatenate((ar1, ar2))
     if aux.size == 0:
         return aux
 
     aux.sort()
 #    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
-    flag = np.concatenate( ([True], aux[1:] != aux[:-1], [True] ) )
+    flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))
 #    flag2 = ediff1d( flag ) == 0
     flag2 = flag[1:] == flag[:-1]
     return aux[flag2]
@@ -368,7 +371,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
 
-    ar = np.concatenate( (ar1, ar2) )
+    ar = np.concatenate((ar1, ar2))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
@@ -378,8 +381,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         bool_ar = (sar[1:] != sar[:-1])
     else:
         bool_ar = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (bool_ar, [invert]) )
-    indx = order.argsort(kind='mergesort')[:len( ar1 )]
+    flag = np.concatenate((bool_ar, [invert]))
+    indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:
         return flag[indx]
@@ -414,7 +417,7 @@ def union1d(ar1, ar2):
     array([-2, -1,  0,  1,  2])
 
     """
-    return unique( np.concatenate( (ar1, ar2) ) )
+    return unique(np.concatenate((ar1, ar2)))
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """

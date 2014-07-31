@@ -1,7 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_almost_equal
+    )
 
 
 class TestFinancial(TestCase):
@@ -139,7 +141,7 @@ class TestFinancial(TestCase):
 
     def test_broadcast(self):
         assert_almost_equal(np.nper(0.075, -2000, 0, 100000., [0, 1]),
-                            [21.5449442,  20.76156441], 4)
+                            [21.5449442, 20.76156441], 4)
 
         assert_almost_equal(np.ipmt(0.1/12, list(range(5)), 24, 2000),
                             [-17.29165168, -16.66666667, -16.03647345,

@@ -58,7 +58,7 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     'G'
 
     """
-    typecodes = [(isinstance(t, str) and t) or asarray(t).dtype.char\
+    typecodes = [(isinstance(t, str) and t) or asarray(t).dtype.char
                  for t in typechars]
     intersection = [t for t in typecodes if t in typeset]
     if not intersection:
@@ -266,7 +266,7 @@ def iscomplexobj(x):
     True
 
     """
-    return issubclass( asarray(x).dtype.type, _nx.complexfloating)
+    return issubclass(asarray(x).dtype.type, _nx.complexfloating)
 
 def isrealobj(x):
     """
@@ -300,7 +300,7 @@ def isrealobj(x):
     False
 
     """
-    return not issubclass( asarray(x).dtype.type, _nx.complexfloating)
+    return not issubclass(asarray(x).dtype.type, _nx.complexfloating)
 
 #-----------------------------------------------------------------------------
 
@@ -464,28 +464,28 @@ def asscalar(a):
 
 #-----------------------------------------------------------------------------
 
-_namefromtype = {'S1' : 'character',
-                 '?' : 'bool',
-                 'b' : 'signed char',
-                 'B' : 'unsigned char',
-                 'h' : 'short',
-                 'H' : 'unsigned short',
-                 'i' : 'integer',
-                 'I' : 'unsigned integer',
-                 'l' : 'long integer',
-                 'L' : 'unsigned long integer',
-                 'q' : 'long long integer',
-                 'Q' : 'unsigned long long integer',
-                 'f' : 'single precision',
-                 'd' : 'double precision',
-                 'g' : 'long precision',
-                 'F' : 'complex single precision',
-                 'D' : 'complex double precision',
-                 'G' : 'complex long double precision',
-                 'S' : 'string',
-                 'U' : 'unicode',
-                 'V' : 'void',
-                 'O' : 'object'
+_namefromtype = {'S1': 'character',
+                 '?': 'bool',
+                 'b': 'signed char',
+                 'B': 'unsigned char',
+                 'h': 'short',
+                 'H': 'unsigned short',
+                 'i': 'integer',
+                 'I': 'unsigned integer',
+                 'l': 'long integer',
+                 'L': 'unsigned long integer',
+                 'q': 'long long integer',
+                 'Q': 'unsigned long long integer',
+                 'f': 'single precision',
+                 'd': 'double precision',
+                 'g': 'long precision',
+                 'F': 'complex single precision',
+                 'D': 'complex double precision',
+                 'G': 'complex long double precision',
+                 'S': 'string',
+                 'U': 'unicode',
+                 'V': 'void',
+                 'O': 'object'
                  }
 
 def typename(char):
@@ -544,12 +544,12 @@ def typename(char):
 #determine the "minimum common type" for a group of arrays.
 array_type = [[_nx.single, _nx.double, _nx.longdouble],
               [_nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.single : 0,
-                   _nx.double : 1,
-                   _nx.longdouble : 2,
-                   _nx.csingle : 0,
-                   _nx.cdouble : 1,
-                   _nx.clongdouble : 2}
+array_precision = {_nx.single: 0,
+                   _nx.double: 1,
+                   _nx.longdouble: 2,
+                   _nx.csingle: 0,
+                   _nx.cdouble: 1,
+                   _nx.clongdouble: 2}
 def common_type(*arrays):
     """
     Return a scalar type which is common to the input arrays.

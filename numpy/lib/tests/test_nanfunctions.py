@@ -10,17 +10,17 @@ from numpy.testing import (
 
 
 # Test data
-_ndat = np.array([[0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
-                  [0.5351, -0.9403, np.nan,  0.2100, 0.4759, 0.2833],
-                  [np.nan, np.nan, np.nan,  0.1042, np.nan, -0.5954],
-                  [0.1610, np.nan, np.nan,  0.1859, 0.3146, np.nan]])
+_ndat = np.array([[0.6244, np.nan, 0.2692, 0.0116, np.nan, 0.1170],
+                  [0.5351, -0.9403, np.nan, 0.2100, 0.4759, 0.2833],
+                  [np.nan, np.nan, np.nan, 0.1042, np.nan, -0.5954],
+                  [0.1610, np.nan, np.nan, 0.1859, 0.3146, np.nan]])
 
 
 # Rows of _ndat with nans removed
-_rdat = [np.array([ 0.6244, 0.2692, 0.0116, 0.1170]),
-         np.array([ 0.5351, -0.9403, 0.2100, 0.4759, 0.2833]),
-         np.array([ 0.1042, -0.5954]),
-         np.array([ 0.1610, 0.1859, 0.3146])]
+_rdat = [np.array([0.6244, 0.2692, 0.0116, 0.1170]),
+         np.array([0.5351, -0.9403, 0.2100, 0.4759, 0.2833]),
+         np.array([0.1042, -0.5954]),
+         np.array([0.1610, 0.1859, 0.3146])]
 
 
 class TestNanFunctions_MinMax(TestCase):
@@ -205,7 +205,7 @@ class TestNanFunctions_IntTypes(TestCase):
     int_types = (np.int8, np.int16, np.int32, np.int64, np.uint8,
                  np.uint16, np.uint32, np.uint64)
 
-    mat = np.array([127, 39,  93,  87, 46])
+    mat = np.array([127, 39, 93, 87, 46])
 
     def integer_arrays(self):
         for dtype in self.int_types:
@@ -383,13 +383,13 @@ class TestNanFunctions_MeanVarStd(TestCase):
     def test_dtype_error(self):
         for f in self.nanfuncs:
             for dtype in [np.bool_, np.int_, np.object]:
-                assert_raises( TypeError, f, _ndat, axis=1, dtype=np.int)
+                assert_raises(TypeError, f, _ndat, axis=1, dtype=np.int)
 
     def test_out_dtype_error(self):
         for f in self.nanfuncs:
             for dtype in [np.bool_, np.int_, np.object]:
                 out = np.empty(_ndat.shape[0], dtype=dtype)
-                assert_raises( TypeError, f, _ndat, axis=1, out=out)
+                assert_raises(TypeError, f, _ndat, axis=1, out=out)
 
     def test_keepdims(self):
         mat = np.eye(3)
@@ -587,7 +587,7 @@ class TestNanFunctions_Median(TestCase):
             # Randomly set some elements to NaN:
             w = np.random.randint(0, d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
-            d[:,0] = 1. # ensure at least one good value
+            d[:,0] = 1.  # ensure at least one good value
             # use normal median without nans to compare
             tgt = []
             for x in d:

@@ -150,7 +150,7 @@ else:
 
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
-BUFFER_SIZE = 2 ** 18 #size of buffer for reading npz files in bytes
+BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
@@ -231,10 +231,10 @@ def dtype_to_descr(dtype):
 
     """
     if dtype.names is not None:
-        # This is a record array. The .descr is fine.
-        # XXX: parts of the record array with an empty name, like padding bytes,
-        # still get fiddled with. This needs to be fixed in the C implementation
-        # of dtype().
+        # This is a record array. The .descr is fine.  XXX: parts of the
+        # record array with an empty name, like padding bytes, still get
+        # fiddled with. This needs to be fixed in the C implementation of
+        # dtype().
         return dtype.descr
     else:
         return dtype.str
@@ -293,9 +293,9 @@ def _write_array_header(fp, d, version=None):
     header.append("}")
     header = "".join(header)
     # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a 16-byte
-    # boundary.  Hopefully, some system, possibly memory-mapping, can take
-    # advantage of our premature optimization.
+    # string, the header-length short and the header are aligned on a
+    # 16-byte boundary.  Hopefully, some system, possibly memory-mapping,
+    # can take advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
     header = asbytes(header + ' '*topad + '\n')
@@ -325,8 +325,8 @@ def write_array_header_1_0(fp, d):
     ----------
     fp : filelike object
     d : dict
-        This has the appropriate entries for writing its string representation
-        to the header of the file.
+        This has the appropriate entries for writing its string
+        representation to the header of the file.
     """
     _write_array_header(fp, d, (1, 0))
 
@@ -341,8 +341,8 @@ def write_array_header_2_0(fp, d):
     ----------
     fp : filelike object
     d : dict
-        This has the appropriate entries for writing its string representation
-        to the header of the file.
+        This has the appropriate entries for writing its string
+        representation to the header of the file.
     """
     _write_array_header(fp, d, (2, 0))
 
@@ -363,9 +363,9 @@ def read_array_header_1_0(fp):
     shape : tuple of int
         The shape of the array.
     fortran_order : bool
-        The array data will be written out directly if it is either C-contiguous
-        or Fortran-contiguous. Otherwise, it will be made contiguous before
-        writing it out.
+        The array data will be written out directly if it is either
+        C-contiguous or Fortran-contiguous. Otherwise, it will be made
+        contiguous before writing it out.
     dtype : dtype
         The dtype of the file's data.
 
@@ -396,9 +396,9 @@ def read_array_header_2_0(fp):
     shape : tuple of int
         The shape of the array.
     fortran_order : bool
-        The array data will be written out directly if it is either C-contiguous
-        or Fortran-contiguous. Otherwise, it will be made contiguous before
-        writing it out.
+        The array data will be written out directly if it is either
+        C-contiguous or Fortran-contiguous. Otherwise, it will be made
+        contiguous before writing it out.
     dtype : dtype
         The dtype of the file's data.
 
@@ -428,9 +428,9 @@ def _read_array_header(fp, version):
     else:
         raise ValueError("Invalid version %r" % version)
 
-    # The header is a pretty-printed string representation of a literal Python
-    # dictionary with trailing newlines padded to a 16-byte boundary. The keys
-    # are strings.
+    # The header is a pretty-printed string representation of a literal
+    # Python dictionary with trailing newlines padded to a 16-byte
+    # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
@@ -449,7 +449,7 @@ def _read_array_header(fp, version):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-        not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
+            not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
         msg = "shape is not valid: %r"
         raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
@@ -474,13 +474,13 @@ def write_array(fp, array, version=None):
     Parameters
     ----------
     fp : file_like object
-        An open, writable file object, or similar object with a ``.write()``
-        method.
+        An open, writable file object, or similar object with a
+        ``.write()`` method.
     array : ndarray
         The array to write to disk.
     version : (int, int) or None, optional
-        The version number of the format. None means use the oldest supported
-        version that is able to store the data.  Default: None
+        The version number of the format. None means use the oldest
+        supported version that is able to store the data.  Default: None
 
     Raises
     ------
@@ -504,8 +504,9 @@ def write_array(fp, array, version=None):
     buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
 
     if array.dtype.hasobject:
-        # We contain Python objects so we cannot write out the data directly.
-        # Instead, we will pickle it out with version 2 of the pickle protocol.
+        # We contain Python objects so we cannot write out the data
+        # directly.  Instead, we will pickle it out with version 2 of the
+        # pickle protocol.
         pickle.dump(array, fp, protocol=2)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
@@ -563,13 +564,13 @@ def read_array(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
-            # This is not a real file. We have to read it the memory-intensive
-            # way.
-            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking
-            # large reads from gzip streams. Chunk reads to BUFFER_SIZE bytes to
-            # avoid issue and reduce memory overhead of the read. In
-            # non-chunked case count < max_read_count, so only one read is
-            # performed.
+            # This is not a real file. We have to read it the
+            # memory-intensive way.
+            # crc32 module fails on reads greater than 2 ** 32 bytes,
+            # breaking large reads from gzip streams. Chunk reads to
+            # BUFFER_SIZE bytes to avoid issue and reduce memory overhead
+            # of the read. In non-chunked case count < max_read_count, so
+            # only one read is performed.
 
             max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
@@ -604,25 +605,24 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         object.
     mode : str, optional
         The mode in which to open the file; the default is 'r+'.  In
-        addition to the standard file modes, 'c' is also accepted to
-        mean "copy on write."  See `memmap` for the available mode strings.
+        addition to the standard file modes, 'c' is also accepted to mean
+        "copy on write."  See `memmap` for the available mode strings.
     dtype : data-type, optional
         The data type of the array if we are creating a new file in "write"
-        mode, if not, `dtype` is ignored.  The default value is None,
-        which results in a data-type of `float64`.
+        mode, if not, `dtype` is ignored.  The default value is None, which
+        results in a data-type of `float64`.
     shape : tuple of int
         The shape of the array if we are creating a new file in "write"
         mode, in which case this parameter is required.  Otherwise, this
         parameter is ignored and is thus optional.
     fortran_order : bool, optional
         Whether the array should be Fortran-contiguous (True) or
-        C-contiguous (False, the default) if we are creating a new file
-        in "write" mode.
+        C-contiguous (False, the default) if we are creating a new file in
+        "write" mode.
     version : tuple of int (major, minor) or None
         If the mode is a "write" mode, then this is the version of the file
-        format used to create the file.
-        None means use the oldest supported version that is able to store the
-        data.  Default: None
+        format used to create the file.  None means use the oldest
+        supported version that is able to store the data.  Default: None
 
     Returns
     -------
@@ -642,15 +642,15 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     """
     if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use" \
+        raise ValueError("Filename must be a string.  Memmap cannot use"
                          " existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
         _check_version(version)
-        # Ensure that the given dtype is an authentic dtype object rather than
-        # just something that can be interpreted as a dtype object.
+        # Ensure that the given dtype is an authentic dtype object rather
+        # than just something that can be interpreted as a dtype object.
         dtype = numpy.dtype(dtype)
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
@@ -713,9 +713,9 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     """
     data = bytes()
     while True:
-        # io files (default in python3) return None or raise on would-block,
-        # python2 file will truncate, probably nothing can be done about that.
-        # note that regular files can't be non-blocking
+        # io files (default in python3) return None or raise on
+        # would-block, python2 file will truncate, probably nothing can be
+        # done about that.  note that regular files can't be non-blocking
         try:
             r = fp.read(size - len(data))
             data += r
@@ -725,6 +725,6 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"
-        raise ValueError(msg %(error_template, size, len(data)))
+        raise ValueError(msg % (error_template, size, len(data)))
     else:
         return data
