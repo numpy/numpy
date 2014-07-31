@@ -143,7 +143,7 @@ def poly(seq_of_zeros):
         neg_roots = NX.conjugate(sort_complex(
                                         NX.compress(roots.imag < 0, roots)))
         if (len(pos_roots) == len(neg_roots) and
-            NX.alltrue(neg_roots == pos_roots)):
+                NX.alltrue(neg_roots == pos_roots)):
             a = a.real.copy()
 
     return a
@@ -412,15 +412,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     deg : int
         Degree of the fitting polynomial
     rcond : float, optional
-        Relative condition number of the fit. Singular values smaller than this
-        relative to the largest singular value will be ignored. The default
-        value is len(x)*eps, where eps is the relative precision of the float
-        type, about 2e-16 in most cases.
+        Relative condition number of the fit. Singular values smaller than
+        this relative to the largest singular value will be ignored. The
+        default value is len(x)*eps, where eps is the relative precision of
+        the float type, about 2e-16 in most cases.
     full : bool, optional
-        Switch determining nature of return value. When it is
-        False (the default) just the coefficients are returned, when True
-        diagnostic information from the singular value decomposition is also
-        returned.
+        Switch determining nature of return value. When it is False (the
+        default) just the coefficients are returned, when True diagnostic
+        information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
         weights to apply to the y-coordinates of the sample points.
     cov : bool, optional
@@ -430,18 +429,21 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     Returns
     -------
     p : ndarray, shape (M,) or (M, K)
-        Polynomial coefficients, highest power first.
-        If `y` was 2-D, the coefficients for `k`-th data set are in ``p[:,k]``.
+        Polynomial coefficients, highest power first.  If `y` was 2-D, the
+        coefficients for `k`-th data set are in ``p[:,k]``.
 
-    residuals, rank, singular_values, rcond : present only if `full` = True
-        Residuals of the least-squares fit, the effective rank of the scaled
-        Vandermonde coefficient matrix, its singular values, and the specified
-        value of `rcond`. For more details, see `linalg.lstsq`.
+    residuals, rank, singular_values, rcond :
+        Present only if `full` = True.  Residuals of the least-squares fit,
+        the effective rank of the scaled Vandermonde coefficient matrix,
+        its singular values, and the specified value of `rcond`. For more
+        details, see `linalg.lstsq`.
 
-    V : ndaray, shape (M,M) or (M,M,K) : present only if `full` = False and `cov`=True
-        The covariance matrix of the polynomial coefficient estimates.  The diagonal
-        of this matrix are the variance estimates for each coefficient.  If y is a 2-d
-        array, then the covariance matrix for the `k`-th data set are in ``V[:,:,k]``
+    V : ndarray, shape (M,M) or (M,M,K)
+        Present only if `full` = False and `cov`=True.  The covariance
+        matrix of the polynomial coefficient estimates.  The diagonal of
+        this matrix are the variance estimates for each coefficient.  If y
+        is a 2-D array, then the covariance matrix for the `k`-th data set
+        are in ``V[:,:,k]``
 
 
     Warns
@@ -531,8 +533,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     >>> import matplotlib.pyplot as plt
     >>> xp = np.linspace(-2, 6, 100)
-    >>> plt.plot(x, y, '.', xp, p(xp), '-', xp, p30(xp), '--')
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    >>> _ = plt.plot(x, y, '.', xp, p(xp), '-', xp, p30(xp), '--')
     >>> plt.ylim(-2,2)
     (-2, 2)
     >>> plt.show()
@@ -543,19 +544,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     y = NX.asarray(y) + 0.0
 
     # check arguments.
-    if deg < 0 :
+    if deg < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
         raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2 :
+    if y.ndim < 1 or y.ndim > 2:
         raise TypeError("expected 1D or 2D array for y")
-    if x.shape[0] != y.shape[0] :
+    if x.shape[0] != y.shape[0]:
         raise TypeError("expected x and y to have same length")
 
     # set rcond
-    if rcond is None :
+    if rcond is None:
         rcond = len(x)*finfo(x.dtype).eps
 
     # set up least squares equation for powers of x
@@ -567,7 +568,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         w = NX.asarray(w) + 0.0
         if w.ndim != 1:
             raise TypeError("expected a 1-d array for weights")
-        if w.shape[0] != y.shape[0] :
+        if w.shape[0] != y.shape[0]:
             raise TypeError("expected w and y to have the same length")
         lhs *= w[:, NX.newaxis]
         if rhs.ndim == 2:
@@ -586,9 +587,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         msg = "Polyfit may be poorly conditioned"
         warnings.warn(msg, RankWarning)
 
-    if full :
+    if full:
         return c, resids, rank, s, rcond
-    elif cov :
+    elif cov:
         Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
         # Some literature ignores the extra -2.0 factor in the denominator, but
@@ -600,7 +601,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             return c, Vbase * fac
         else:
             return c, Vbase[:,:, NX.newaxis] * fac
-    else :
+    else:
         return c
 
 
@@ -917,8 +918,8 @@ def _raise_power(astr, wrap=70):
         n = span[1]
         toadd2 = partstr + ' '*(len(power)-1)
         toadd1 = ' '*(len(partstr)-1) + power
-        if ((len(line2)+len(toadd2) > wrap) or \
-            (len(line1)+len(toadd1) > wrap)):
+        if ((len(line2) + len(toadd2) > wrap) or
+                (len(line1) + len(toadd1) > wrap)):
             output += line1 + "\n" + line2 + "\n "
             line1 = toadd1
             line2 = toadd2
@@ -1126,7 +1127,6 @@ class poly1d(object):
                 thestr = newstr
         return _raise_power(thestr)
 
-
     def __call__(self, val):
         return polyval(self.coeffs, val)
 
@@ -1214,7 +1214,8 @@ class poly1d(object):
             try:
                 return self.__dict__[key]
             except KeyError:
-                raise AttributeError("'%s' has no attribute '%s'" % (self.__class__, key))
+                raise AttributeError(
+                    "'%s' has no attribute '%s'" % (self.__class__, key))
 
     def __getitem__(self, val):
         ind = self.order - val

@@ -244,7 +244,6 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     ramp_arr = _arange_ndarray(arr, padshape, axis,
                                reverse=True).astype(np.float64)
 
-
     # Appropriate slicing to extract n-dimensional edge along `axis`
     edge_slice = tuple(slice(None) if i != axis else 0
                        for (i, x) in enumerate(arr.shape))

@@ -119,7 +119,8 @@ def fv(rate, nper, pmt, pv, when='end'):
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pmt, pv, when)
     zer = np.zeros(miter.shape)
-    fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
+    fact = np.where(rate == zer, nper + zer,
+                    (1 + rate*when)*(temp - 1)/rate + zer)
     return -(pv*temp + pmt*fact)
 
 def pmt(rate, nper, pv, fv=0, when='end'):
@@ -210,7 +211,8 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pv, fv, when)
     zer = np.zeros(miter.shape)
-    fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
+    fact = np.where(rate == zer, nper + zer,
+                    (1 + rate*when)*(temp - 1)/rate + zer)
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
@@ -279,7 +281,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
         B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
         miter = np.broadcast(rate, pmt, pv, fv, when)
         zer = np.zeros(miter.shape)
-        return np.where(rate==zer, A+zer, B+zer) + 0.0
+        return np.where(rate == zer, A + zer, B + zer) + 0.0
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -365,7 +367,8 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
 
     """
     when = _convert_when(when)
-    rate, per, nper, pv, fv, when = np.broadcast_arrays(rate, per, nper, pv, fv, when)
+    rate, per, nper, pv, fv, when = np.broadcast_arrays(rate, per, nper,
+                                                        pv, fv, when)
     total_pmt = pmt(rate, nper, pv, fv, when)
     ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
     try:
@@ -507,12 +510,16 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     return -(fv + pmt*fact)/temp
 
 # Computed with Sage
-#  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x - p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r + p*((r + 1)^n - 1)*w/r)
+#  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x -
+#  p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r +
+#  p*((r + 1)^n - 1)*w/r)
 
 def _g_div_gp(r, n, p, x, y, w):
     t1 = (r+1)**n
     t2 = (r+1)**(n-1)
-    return (y + t1*x + p*(t1 - 1)*(r*w + 1)/r)/(n*t2*x - p*(t1 - 1)*(r*w + 1)/(r**2) + n*p*t2*(r*w + 1)/r + p*(t1 - 1)*w/r)
+    return ((y + t1*x + p*(t1 - 1)*(r*w + 1)/r) /
+                (n*t2*x - p*(t1 - 1)*(r*w + 1)/(r**2) + n*p*t2*(r*w + 1)/r +
+                 p*(t1 - 1)*w/r))
 
 # Use Newton's iteration until the change is less than 1e-6
 #  for all values or a maximum of 100 iterations is reached.
@@ -572,7 +579,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     while (iter < maxiter) and not close:
         rnp1 = rn - _g_div_gp(rn, nper, pmt, pv, fv, when)
         diff = abs(rnp1-rn)
-        close = np.all(diff<tol)
+        close = np.all(diff < tol)
         iter += 1
         rn = rnp1
     if not close:
@@ -593,9 +600,9 @@ def irr(values):
     ----------
     values : array_like, shape(N,)
         Input cash flows per time period.  By convention, net "deposits"
-        are negative and net "withdrawals" are positive.  Thus, for example,
-        at least the first element of `values`, which represents the initial
-        investment, will typically be negative.
+        are negative and net "withdrawals" are positive.  Thus, for
+        example, at least the first element of `values`, which represents
+        the initial investment, will typically be negative.
 
     Returns
     -------
@@ -605,13 +612,13 @@ def irr(values):
     Notes
     -----
     The IRR is perhaps best understood through an example (illustrated
-    using np.irr in the Examples section below).  Suppose one invests
-    100 units and then makes the following withdrawals at regular
-    (fixed) intervals: 39, 59, 55, 20.  Assuming the ending value is 0,
-    one's 100 unit investment yields 173 units; however, due to the
-    combination of compounding and the periodic withdrawals, the
-    "average" rate of return is neither simply 0.73/4 nor (1.73)^0.25-1.
-    Rather, it is the solution (for :math:`r`) of the equation:
+    using np.irr in the Examples section below).  Suppose one invests 100
+    units and then makes the following withdrawals at regular (fixed)
+    intervals: 39, 59, 55, 20.  Assuming the ending value is 0, one's 100
+    unit investment yields 173 units; however, due to the combination of
+    compounding and the periodic withdrawals, the "average" rate of return
+    is neither simply 0.73/4 nor (1.73)^0.25-1.  Rather, it is the solution
+    (for :math:`r`) of the equation:
 
     .. math:: -100 + \\frac{39}{1+r} + \\frac{59}{(1+r)^2}
      + \\frac{55}{(1+r)^3} + \\frac{20}{(1+r)^4} = 0
@@ -663,18 +670,18 @@ def npv(rate, values):
         The discount rate.
     values : array_like, shape(M, )
         The values of the time series of cash flows.  The (fixed) time
-        interval between cash flow "events" must be the same as that
-        for which `rate` is given (i.e., if `rate` is per year, then
-        precisely a year is understood to elapse between each cash flow
-        event).  By convention, investments or "deposits" are negative,
-        income or "withdrawals" are positive; `values` must begin with
-        the initial investment, thus `values[0]` will typically be
-        negative.
+        interval between cash flow "events" must be the same as that for
+        which `rate` is given (i.e., if `rate` is per year, then precisely
+        a year is understood to elapse between each cash flow event).  By
+        convention, investments or "deposits" are negative, income or
+        "withdrawals" are positive; `values` must begin with the initial
+        investment, thus `values[0]` will typically be negative.
 
     Returns
     -------
     out : float
-        The NPV of the input cash flow series `values` at the discount `rate`.
+        The NPV of the input cash flow series `values` at the discount
+        `rate`.
 
     Notes
     -----
@@ -705,8 +712,9 @@ def mirr(values, finance_rate, reinvest_rate):
     Parameters
     ----------
     values : array_like
-        Cash flows (must contain at least one positive and one negative value)
-        or nan is returned.  The first value is considered a sunk cost at time zero.
+        Cash flows (must contain at least one positive and one negative
+        value) or nan is returned.  The first value is considered a sunk
+        cost at time zero.
     finance_rate : scalar
         Interest rate paid on the cash flows
     reinvest_rate : scalar
