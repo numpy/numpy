@@ -463,7 +463,7 @@ class matrix(N.ndarray):
         ----------
         order : {'C', 'F', 'A'}, optional
             Whether to flatten in C (row-major), Fortran (column-major) order,
-            or preserve the C/Fortran ordering from `a`.
+            or preserve the C/Fortran ordering from `m`.
             The default is 'C'.
 
         Returns
@@ -478,10 +478,10 @@ class matrix(N.ndarray):
 
         Examples
         --------
-        >>> a = np.matrix([[1,2], [3,4]])
-        >>> a.flatten()
+        >>> m = np.matrix([[1,2], [3,4]])
+        >>> m.flatten()
         matrix([[1, 2, 3, 4]])
-        >>> a.flatten('F')
+        >>> m.flatten('F')
         matrix([[1, 3, 2, 4]])
 
         """
