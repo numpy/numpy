@@ -43,7 +43,7 @@ _fft_cache = {}
 _real_fft_cache = {}
 
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
-             work_function=fftpack.cfftf, fft_cache = _fft_cache ):
+             work_function=fftpack.cfftf, fft_cache=_fft_cache):
     a = asarray(a)
 
     if n is None:
