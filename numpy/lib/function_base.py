@@ -367,8 +367,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         Ncount[i] = digitize(sample[:, i], edges[i])
 
     # Using digitize, values that fall on an edge are put in the right bin.
-    # For the rightmost bin, we want values equal to the right
-    # edge to be counted in the last bin, and not as an outlier.
+    # For the rightmost bin, we want values equal to the right edge to be
+    # counted in the last bin, and not as an outlier.
     for i in arange(D):
         # Rounding precision
         mindiff = dedges[i].min()
@@ -376,7 +376,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             decimal = int(-log10(mindiff)) + 6
             # Find which points are on the rightmost edge.
             not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (around(sample[:, i], decimal) == around(edges[i][-1], decimal))
+            on_edge = (around(sample[:, i], decimal) ==
+                       around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
             Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
 
@@ -1622,6 +1623,7 @@ class vectorize(object):
     further degrades performance.
 
     """
+
     def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
                  cache=False):
         self.pyfunc = pyfunc
@@ -3375,7 +3377,7 @@ def meshgrid(*xi, **kwargs):
         raise TypeError("meshgrid() got an unexpected keyword argument '%s'"
                         % (list(kwargs)[0],))
 
-    if not indexing in ['xy', 'ij']:
+    if indexing not in ['xy', 'ij']:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
 
@@ -3436,7 +3438,7 @@ def delete(arr, obj, axis=None):
     Notes
     -----
     Often it is preferable to use a boolean mask. For example:
-    
+
     >>> mask = np.ones(len(arr), dtype=bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]

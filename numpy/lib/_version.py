@@ -52,6 +52,7 @@ class NumpyVersion():
     >>> NumpyVersion('1.7')  # raises ValueError, add ".0"
 
     """
+
     def __init__(self, vstring):
         self.vstring = vstring
         ver_main = re.match(r'\d[.]\d+[.]\d+', vstring)

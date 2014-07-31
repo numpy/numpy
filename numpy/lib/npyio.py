@@ -112,6 +112,7 @@ class BagObj(object):
     "Doesn't matter what you want, you're gonna get this"
 
     """
+
     def __init__(self, obj):
         # Use weakref to make NpzFile objects collectable by refcount
         self._obj = weakref.proxy(obj)
@@ -185,6 +186,7 @@ class NpzFile(object):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+
     def __init__(self, fid, own_fid=False):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
@@ -868,7 +870,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Verify that the array has at least dimensions `ndmin`.
     # Check correctness of the values of `ndmin`
-    if not ndmin in [0, 1, 2]:
+    if ndmin not in [0, 1, 2]:
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
     # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
@@ -1392,7 +1394,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = next(fhd)
             if names is True:
                 if comments in first_line:
-                    first_line = asbytes('').join(first_line.split(comments)[1:])
+                    first_line = (
+                        asbytes('').join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
@@ -1689,23 +1692,17 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if usemask:
             masks = masks[:-skip_footer]
 
-
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
-    #
-    #    if loose:
-    #        conversionfuncs = [conv._loose_call for conv in converters]
-    #    else:
-    #        conversionfuncs = [conv._strict_call for conv in converters]
-    #    for (i, vals) in enumerate(rows):
-    #        rows[i] = tuple([convert(val)
-    #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = list(zip(*[[converter._loose_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)]))
+        rows = list(
+            zip(*[[conv._loose_call(_r) for _r in map(itemgetter(i), rows)]
+                  for (i, conv) in enumerate(converters)]))
     else:
-        rows = list(zip(*[[converter._strict_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)]))
+        rows = list(
+            zip(*[[conv._strict_call(_r) for _r in map(itemgetter(i), rows)]
+                  for (i, conv) in enumerate(converters)]))
+
     # Reset the dtype
     data = rows
     if dtype is None:
@@ -1767,7 +1764,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if user_converters:
                 ishomogeneous = True
                 descr = []
-                for (i, ttype) in enumerate([conv.type for conv in converters]):
+                for i, ttype in enumerate([conv.type for conv in converters]):
                     # Keep the dtype of the current converter
                     if i in user_converters:
                         ishomogeneous &= (ttype == dtype.type)

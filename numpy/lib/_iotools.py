@@ -11,7 +11,7 @@ import numpy.core.numeric as nx
 from numpy.compat import asbytes, bytes, asbytes_nested, basestring
 
 if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object,  str
+    from builtins import bool, int, float, complex, object, str
     unicode = str
 else:
     from __builtin__ import bool, int, float, complex, object, unicode, str
@@ -20,6 +20,7 @@ else:
 if sys.version_info[0] >= 3:
     def _bytes_to_complex(s):
         return complex(s.decode('ascii'))
+
     def _bytes_to_name(s):
         return s.decode('ascii')
 else:
@@ -148,10 +149,6 @@ def flatten_dtype(ndtype, flatten_base=False):
         return types
 
 
-
-
-
-
 class LineSplitter(object):
     """
     Object to split a string at a given delimiter or at given places.
@@ -188,6 +185,7 @@ class LineSplitter(object):
         """
         return lambda input: [_.strip() for _ in method(input)]
     #
+
     def __init__(self, delimiter=None, comments=asbytes('#'), autostrip=True):
         self.comments = comments
         # Delimiter is a character
@@ -203,7 +201,8 @@ class LineSplitter(object):
             delimiter = [slice(i, j) for (i, j) in zip(idx[:-1], idx[1:])]
         # Delimiter is a single integer
         elif int(delimiter):
-            (_handyman, delimiter) = (self._fixedwidth_splitter, int(delimiter))
+            (_handyman, delimiter) = (
+                    self._fixedwidth_splitter, int(delimiter))
         else:
             (_handyman, delimiter) = (self._delimited_splitter, None)
         self.delimiter = delimiter
@@ -212,6 +211,7 @@ class LineSplitter(object):
         else:
             self._handyman = _handyman
     #
+
     def _delimited_splitter(self, line):
         if self.comments is not None:
             line = line.split(self.comments)[0]
@@ -220,6 +220,7 @@ class LineSplitter(object):
             return []
         return line.split(self.delimiter)
     #
+
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
             line = line.split(self.comments)[0]
@@ -230,6 +231,7 @@ class LineSplitter(object):
         slices = [slice(i, i + fixed) for i in range(0, len(line), fixed)]
         return [line[s] for s in slices]
     #
+
     def _variablewidth_splitter(self, line):
         if self.comments is not None:
             line = line.split(self.comments)[0]
@@ -238,9 +240,9 @@ class LineSplitter(object):
         slices = self.delimiter
         return [line[s] for s in slices]
     #
+
     def __call__(self, line):
         return self._handyman(line)
-
 
 
 class NameValidator(object):
@@ -248,22 +250,22 @@ class NameValidator(object):
     Object to validate a list of strings to use as field names.
 
     The strings are stripped of any non alphanumeric character, and spaces
-    are replaced by '_'. During instantiation, the user can define a list of
-    names to exclude, as well as a list of invalid characters. Names in the
-    exclusion list are appended a '_' character.
+    are replaced by '_'. During instantiation, the user can define a list
+    of names to exclude, as well as a list of invalid characters. Names in
+    the exclusion list are appended a '_' character.
 
-    Once an instance has been created, it can be called with a list of names,
-    and a list of valid names will be created.
-    The `__call__` method accepts an optional keyword "default" that sets
-    the default name in case of ambiguity. By default this is 'f', so
-    that names will default to `f0`, `f1`, etc.
+    Once an instance has been created, it can be called with a list of
+    names, and a list of valid names will be created.  The `__call__`
+    method accepts an optional keyword "default" that sets the default name
+    in case of ambiguity. By default this is 'f', so that names will
+    default to `f0`, `f1`, etc.
 
     Parameters
     ----------
     excludelist : sequence, optional
-        A list of names to exclude. This list is appended to the default list
-        ['return', 'file', 'print']. Excluded names are appended an underscore:
-        for example, `file` becomes `file_` if supplied.
+        A list of names to exclude. This list is appended to the default
+        list ['return', 'file', 'print']. Excluded names are appended an
+        underscore: for example, `file` becomes `file_` if supplied.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
@@ -278,8 +280,8 @@ class NameValidator(object):
 
     Notes
     -----
-    Calling an instance of `NameValidator` is the same as calling its method
-    `validate`.
+    Calling an instance of `NameValidator` is the same as calling its
+    method `validate`.
 
     Examples
     --------
@@ -298,6 +300,7 @@ class NameValidator(object):
     defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set("""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
     #
+
     def __init__(self, excludelist=None, deletechars=None,
                  case_sensitive=None, replace_space='_'):
         # Process the exclusion list ..
@@ -326,18 +329,18 @@ class NameValidator(object):
 
     def validate(self, names, defaultfmt="f%i", nbfields=None):
         """
-        Validate a list of strings to use as field names for a structured array.
+        Validate a list of strings as field names for a structured array.
 
         Parameters
         ----------
         names : sequence of str
             Strings to be validated.
         defaultfmt : str, optional
-            Default format string, used if validating a given string reduces its
-            length to zero.
+            Default format string, used if validating a given string
+            reduces its length to zero.
         nboutput : integer, optional
-            Final number of validated names, used to expand or shrink the initial
-            list of names.
+            Final number of validated names, used to expand or shrink the
+            initial list of names.
 
         Returns
         -------
@@ -346,8 +349,8 @@ class NameValidator(object):
 
         Notes
         -----
-        A `NameValidator` instance can be called directly, which is the same as
-        calling `validate`. For examples, see `NameValidator`.
+        A `NameValidator` instance can be called directly, which is the
+        same as calling `validate`. For examples, see `NameValidator`.
 
         """
         # Initial checks ..............
@@ -394,9 +397,9 @@ class NameValidator(object):
             seen[item] = cnt + 1
         return tuple(validatednames)
     #
+
     def __call__(self, names, defaultfmt="f%i", nbfields=None):
         return self.validate(names, defaultfmt=defaultfmt, nbfields=nbfields)
-
 
 
 def str2bool(value):
@@ -462,22 +465,22 @@ class ConversionWarning(UserWarning):
     pass
 
 
-
 class StringConverter(object):
     """
-    Factory class for function transforming a string into another object (int,
-    float).
+    Factory class for function transforming a string into another object
+    (int, float).
 
     After initialization, an instance can be called to transform a string
-    into another object. If the string is recognized as representing a missing
-    value, a default value is returned.
+    into another object. If the string is recognized as representing a
+    missing value, a default value is returned.
 
     Attributes
     ----------
     func : function
         Function used for the conversion.
     default : any
-        Default value to return when the input corresponds to a missing value.
+        Default value to return when the input corresponds to a missing
+        value.
     type : type
         Type of the output.
     _status : int
@@ -494,14 +497,13 @@ class StringConverter(object):
         If a `dtype`, specifies the input data type, used to define a basic
         function and a default value for missing data. For example, when
         `dtype` is float, the `func` attribute is set to `float` and the
-        default value to `np.nan`.
-        If a function, this function is used to convert a string to another
-        object. In this case, it is recommended to give an associated default
-        value as input.
+        default value to `np.nan`.  If a function, this function is used to
+        convert a string to another object. In this case, it is recommended
+        to give an associated default value as input.
     default : any, optional
-        Value to return by default, that is, when the string to be converted
-        is flagged as missing. If not given, `StringConverter` tries to supply
-        a reasonable default value.
+        Value to return by default, that is, when the string to be
+        converted is flagged as missing. If not given, `StringConverter`
+        tries to supply a reasonable default value.
     missing_values : sequence of str, optional
         Sequence of strings indicating a missing value.
     locked : bool, optional
@@ -517,19 +519,23 @@ class StringConverter(object):
                (nx.string_, bytes, asbytes('???'))]
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
     #
+
     @classmethod
     def _getdtype(cls, val):
         """Returns the dtype of the input variable."""
         return np.array(val).dtype
     #
+
     @classmethod
     def _getsubdtype(cls, val):
         """Returns the type of the dtype of the input variable."""
         return np.array(val).dtype.type
     #
-    # This is a bit annoying. We want to return the "general" type in most cases
-    # (ie. "string" rather than "S10"), but we want to return the specific type
-    # for datetime64 (ie. "datetime64[us]" rather than "datetime64").
+    # This is a bit annoying. We want to return the "general" type in most
+    # cases (ie. "string" rather than "S10"), but we want to return the
+    # specific type for datetime64 (ie. "datetime64[us]" rather than
+    # "datetime64").
+
     @classmethod
     def _dtypeortype(cls, dtype):
         """Returns dtype for datetime64 and type of dtype otherwise."""
@@ -537,15 +543,17 @@ class StringConverter(object):
             return dtype
         return dtype.type
     #
+
     @classmethod
     def upgrade_mapper(cls, func, default=None):
         """
-    Upgrade the mapper of a StringConverter by adding a new function and its
-    corresponding default.
+    Upgrade the mapper of a StringConverter by adding a new function and
+    its corresponding default.
 
-    The input function (or sequence of functions) and its associated default
-    value (if any) is inserted in penultimate position of the mapper.
-    The corresponding type is estimated from the dtype of the default value.
+    The input function (or sequence of functions) and its associated
+    default value (if any) is inserted in penultimate position of the
+    mapper.  The corresponding type is estimated from the dtype of the
+    default value.
 
     Parameters
     ----------
@@ -577,6 +585,7 @@ class StringConverter(object):
             for (fct, dft) in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
     #
+
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
                  locked=False):
         # Convert unicode (for Py3)
@@ -600,12 +609,13 @@ class StringConverter(object):
             except TypeError:
                 # dtype_or_func must be a function, then
                 if not hasattr(dtype_or_func, '__call__'):
-                    errmsg = "The input argument `dtype` is neither a function"\
-                             " or a dtype (got '%s' instead)"
+                    errmsg = ("The input argument `dtype` is neither a"
+                              " function nor a dtype (got '%s' instead)")
                     raise TypeError(errmsg % type(dtype_or_func))
                 # Set the function
                 self.func = dtype_or_func
-                # If we don't have a default, try to guess it or set it to None
+                # If we don't have a default, try to guess it or set it to
+                # None
                 if default is None:
                     try:
                         default = self.func(asbytes('0'))
@@ -638,7 +648,7 @@ class StringConverter(object):
                 elif issubclass(dtype.type, np.int64):
                     self.func = np.int64
                 else:
-                    self.func = lambda x : int(float(x))
+                    self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
             self.missing_values = set([asbytes('')])
@@ -652,12 +662,14 @@ class StringConverter(object):
         self._checked = False
         self._initial_default = default
     #
+
     def _loose_call(self, value):
         try:
             return self.func(value)
         except ValueError:
             return self.default
     #
+
     def _strict_call(self, value):
         try:
             return self.func(value)
@@ -668,18 +680,20 @@ class StringConverter(object):
                 return self.default
             raise ValueError("Cannot convert string '%s'" % value)
     #
+
     def __call__(self, value):
         return self._callingfunction(value)
     #
+
     def upgrade(self, value):
         """
-        Try to find the best converter for a given string, and return the result.
+        Rind the best converter for a given string, and return the result.
 
         The supplied string `value` is converted by testing different
-        converters in order. First the `func` method of the `StringConverter`
-        instance is tried, if this fails other available converters are tried.
-        The order in which these other converters are tried is determined by the
-        `_status` attribute of the instance.
+        converters in order. First the `func` method of the
+        `StringConverter` instance is tried, if this fails other available
+        converters are tried.  The order in which these other converters
+        are tried is determined by the `_status` attribute of the instance.
 
         Parameters
         ----------
@@ -733,7 +747,9 @@ class StringConverter(object):
             # Complains if we try to upgrade by the maximum
             _status = self._status
             if _status == _statusmax:
-                raise ConverterError("Could not find a valid conversion function")
+                raise ConverterError(
+                    "Could not find a valid conversion function"
+                    )
             elif _status < _statusmax - 1:
                 _status += 1
             (self.type, self.func, default) = self._mapper[_status]
@@ -754,23 +770,24 @@ class StringConverter(object):
         func : function
             Conversion function.
         default : any, optional
-            Value to return by default, that is, when the string to be converted
-            is flagged as missing. If not given, `StringConverter` tries to supply
-            a reasonable default value.
+            Value to return by default, that is, when the string to be
+            converted is flagged as missing. If not given,
+            `StringConverter` tries to supply a reasonable default value.
         testing_value : str, optional
             A string representing a standard input value of the converter.
-            This string is used to help defining a reasonable default value.
+            This string is used to help defining a reasonable default
+            value.
         missing_values : sequence of str, optional
             Sequence of strings indicating a missing value.
         locked : bool, optional
-            Whether the StringConverter should be locked to prevent automatic
-            upgrade or not. Default is False.
+            Whether the StringConverter should be locked to prevent
+            automatic upgrade or not. Default is False.
 
         Notes
         -----
-        `update` takes the same parameters as the constructor of `StringConverter`,
-        except that `func` does not accept a `dtype` whereas `dtype_or_func` in
-        the constructor does.
+        `update` takes the same parameters as the constructor of
+        `StringConverter`, except that `func` does not accept a `dtype`
+        whereas `dtype_or_func` in the constructor does.
 
         """
         self.func = func
@@ -796,7 +813,6 @@ class StringConverter(object):
             self.missing_values = []
 
 
-
 def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
     """
     Convenience function to create a `np.dtype` object.
@@ -807,17 +823,18 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
     Parameters
     ----------
     ndtype : var
-        Definition of the dtype. Can be any string or dictionary
-        recognized by the `np.dtype` function, or a sequence of types.
+        Definition of the dtype. Can be any string or dictionary recognized
+        by the `np.dtype` function, or a sequence of types.
     names : str or sequence, optional
         Sequence of strings to use as field names for a structured dtype.
-        For convenience, `names` can be a string of a comma-separated list of
-        names.
+        For convenience, `names` can be a string of a comma-separated list
+        of names.
     defaultfmt : str, optional
         Format string used to define missing names, such as ``"f%i"``
         (default) or ``"fields_%02i"``.
     validationargs : optional
-        A series of optional arguments used to initialize a `NameValidator`.
+        A series of optional arguments used to initialize a
+        `NameValidator`.
 
     Examples
     --------
@@ -865,8 +882,8 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif (nbtypes > 0):
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
-            if (ndtype.names == tuple("f%i" % i for i in range(nbtypes))) and \
-               (defaultfmt != "f%i"):
+            if ((ndtype.names == tuple("f%i" % i for i in range(nbtypes))) and
+                    (defaultfmt != "f%i")):
                 ndtype.names = validate([''] * nbtypes, defaultfmt=defaultfmt)
             # Explicit initial names : just validate
             else:
