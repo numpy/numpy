@@ -457,7 +457,9 @@ class matrix(N.ndarray):
     # To update docstring from array to matrix...
     def flatten(self, order='C'):
         """
-        Return a copy of the matrix collapsed into one dimension.
+        Return a flattened copy of the matrix.
+
+        All `N` elements of the matrix are placed into a single row.
 
         Parameters
         ----------
@@ -469,7 +471,8 @@ class matrix(N.ndarray):
         Returns
         -------
         y : matrix
-            A copy of the input matrix, flattened to one dimension.
+            A copy of the matrix, flattened to a `(1, N)` matrix where `N`
+            is the number of elements in the original matrix.
 
         See Also
         --------
