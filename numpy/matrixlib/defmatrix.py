@@ -454,6 +454,42 @@ class matrix(N.ndarray):
         """
         return N.ndarray.sum(self, axis, dtype, out, keepdims=True)._collapse(axis)
 
+    # To update docstring from array to matrix...
+    def flatten(self, order='C'):
+        """
+        Return a flattened copy of the matrix.
+
+        All `N` elements of the matrix are placed into a single row.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A'}, optional
+            Whether to flatten in C (row-major), Fortran (column-major) order,
+            or preserve the C/Fortran ordering from `m`.
+            The default is 'C'.
+
+        Returns
+        -------
+        y : matrix
+            A copy of the matrix, flattened to a `(1, N)` matrix where `N`
+            is the number of elements in the original matrix.
+
+        See Also
+        --------
+        ravel : Return a flattened array.
+        flat : A 1-D flat iterator over the matrix.
+
+        Examples
+        --------
+        >>> m = np.matrix([[1,2], [3,4]])
+        >>> m.flatten()
+        matrix([[1, 2, 3, 4]])
+        >>> m.flatten('F')
+        matrix([[1, 3, 2, 4]])
+
+        """
+        return N.ndarray.flatten(self, order=order)
+
     def mean(self, axis=None, dtype=None, out=None):
         """
         Returns the average of the matrix elements along the given axis.
