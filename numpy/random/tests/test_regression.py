@@ -44,7 +44,7 @@ class TestRegression(TestCase):
         b = np.random.permutation(long(12))
         assert_array_equal(a, b)
 
-    def test_randint_range(self) :
+    def test_randint_range(self):
         # Test for ticket #1690
         lmax = np.iinfo('l').max
         lmin = np.iinfo('l').min
