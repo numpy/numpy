@@ -1,7 +1,7 @@
 from os.path import join
 
 from numpy.compat import isfileobj
-from numpy.testing import TestCase, assert_
+from numpy.testing import assert_
 from numpy.testing.utils import tempdir
 
 
