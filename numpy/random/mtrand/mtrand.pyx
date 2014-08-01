@@ -1068,7 +1068,7 @@ cdef class RandomState:
             if pop_size is 0:
                 raise ValueError("a must be non-empty")
 
-        if None != p:
+        if p is not None:
             d = len(p)
             p = <ndarray>PyArray_ContiguousFromObject(p, NPY_DOUBLE, 1, 1)
             pix = <double*>PyArray_DATA(p)
@@ -1090,7 +1090,7 @@ cdef class RandomState:
 
         # Actual sampling
         if replace:
-            if None != p:
+            if p is not None:
                 cdf = p.cumsum()
                 cdf /= cdf[-1]
                 uniform_samples = self.random_sample(shape)
@@ -1103,7 +1103,7 @@ cdef class RandomState:
                 raise ValueError("Cannot take a larger sample than "
                                  "population when 'replace=False'")
 
-            if None != p:
+            if p is not None:
                 if np.count_nonzero(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
