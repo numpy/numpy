@@ -57,7 +57,6 @@ else:
     asstr = str
     strchar = 'S'
 
-
     def isfileobj(f):
         return isinstance(f, file)
 
