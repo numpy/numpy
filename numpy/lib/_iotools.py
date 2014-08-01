@@ -687,7 +687,7 @@ class StringConverter(object):
 
     def upgrade(self, value):
         """
-        Rind the best converter for a given string, and return the result.
+        Find the best converter for a given string, and return the result.
 
         The supplied string `value` is converted by testing different
         converters in order. First the `func` method of the
