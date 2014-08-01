@@ -952,8 +952,9 @@ class matrix(N.ndarray):
         Returns
         -------
         ret : matrix
-            A copy of the matrix, flattened to a `(1, N)` matrix where `N`
+            Return the matrix flattened to shape `(1, N)` where `N`
             is the number of elements in the original matrix.
+            A copy is made only if necessary.
 
         See Also
         --------
