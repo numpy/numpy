@@ -81,6 +81,7 @@ def getargs(co):
             while step < len(code):
                 op = ord(code[step])
                 step = step + 1
+                # Fixme: dis is undefined.
                 if op >= dis.HAVE_ARGUMENT:
                     opname = dis.opname[op]
                     value = ord(code[step]) + ord(code[step+1])*256
@@ -103,9 +104,11 @@ def getargs(co):
                                 remain.pop()
                                 size = count.pop()
                                 stack[-size:] = [stack[-size:]]
-                                if not remain: break
+                                if not remain:
+                                    break
                                 remain[-1] = remain[-1] - 1
-                            if not remain: break
+                            if not remain:
+                                break
             args[i] = stack[0]
 
     varargs = None
@@ -204,10 +207,11 @@ def formatargvalues(args, varargs, varkw, locals,
         specs.append(formatvarargs(varargs) + formatvalue(locals[varargs]))
     if varkw:
         specs.append(formatvarkw(varkw) + formatvalue(locals[varkw]))
-    return '(' + string.join(specs, ', ') + ')'
+    return '(' + ''.join(specs, ', ') + ')'
 
 if __name__ == '__main__':
     import inspect
+
     def foo(x, y, z=None):
         return None
 
