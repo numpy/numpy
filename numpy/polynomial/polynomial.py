@@ -55,11 +55,12 @@ See Also
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
-    'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
-    'polyval', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d',
-    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+__all__ = [
+    'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
+    'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
+    'polyder', 'polyint', 'polyfromroots', 'polyvander', 'polyfit',
+    'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
+    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
 import warnings
 import numpy as np
@@ -92,7 +93,7 @@ polyx = np.array([0, 1])
 #
 
 
-def polyline(off, scl) :
+def polyline(off, scl):
     """
     Returns an array representing a linear polynomial.
 
@@ -120,13 +121,13 @@ def polyline(off, scl) :
     0.0
 
     """
-    if scl != 0 :
+    if scl != 0:
         return np.array([off, scl])
-    else :
+    else:
         return np.array([off])
 
 
-def polyfromroots(roots) :
+def polyfromroots(roots):
     """
     Generate a monic polynomial with given roots.
 
@@ -184,9 +185,9 @@ def polyfromroots(roots) :
     array([ 1.+0.j,  0.+0.j,  1.+0.j])
 
     """
-    if len(roots) == 0 :
+    if len(roots) == 0:
         return np.ones(1)
-    else :
+    else:
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
         p = [polyline(-r, 1) for r in roots]
@@ -236,10 +237,10 @@ def polyadd(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] += c2
         ret = c1
-    else :
+    else:
         c2[:c1.size] += c1
         ret = c2
     return pu.trimseq(ret)
@@ -281,10 +282,10 @@ def polysub(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2) :
+    if len(c1) > len(c2):
         c1[:c2.size] -= c2
         ret = c1
-    else :
+    else:
         c2 = -c2
         c2[:c1.size] += c1
         ret = c2
@@ -400,29 +401,29 @@ def polydiv(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0 :
+    if c2[-1] == 0:
         raise ZeroDivisionError()
 
     len1 = len(c1)
     len2 = len(c2)
-    if len2 == 1 :
+    if len2 == 1:
         return c1/c2[-1], c1[:1]*0
-    elif len1 < len2 :
+    elif len1 < len2:
         return c1[:1]*0, c1
-    else :
+    else:
         dlen = len1 - len2
         scl = c2[-1]
-        c2  = c2[:-1]/scl
+        c2 = c2[:-1]/scl
         i = dlen
         j = len1 - 1
-        while i >= 0 :
+        while i >= 0:
             c1[i:j] -= c2*c1[j]
             i -= 1
             j -= 1
         return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
 
 
-def polypow(c, pow, maxpower=None) :
+def polypow(c, pow, maxpower=None):
     """Raise a polynomial to a power.
 
     Returns the polynomial `c` raised to the power `pow`. The argument
@@ -456,19 +457,19 @@ def polypow(c, pow, maxpower=None) :
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)
-    if power != pow or power < 0 :
+    if power != pow or power < 0:
         raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower :
+    elif maxpower is not None and power > maxpower:
         raise ValueError("Power is too large")
-    elif power == 0 :
+    elif power == 0:
         return np.array([1], dtype=c.dtype)
-    elif power == 1 :
+    elif power == 1:
         return c
-    else :
+    else:
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in range(2, power + 1):
             prd = np.convolve(prd, c)
         return prd
 
@@ -550,7 +551,7 @@ def polyder(c, m=1, scl=1, axis=0):
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
-    else :
+    else:
         for i in range(cnt):
             n = n - 1
             c *= scl
@@ -650,9 +651,9 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
-    if len(k) > cnt :
+    if len(k) > cnt:
         raise ValueError("Too many integration constants")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
@@ -660,7 +661,6 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The axis is out of range")
     if iaxis < 0:
         iaxis += c.ndim
-
 
     if cnt == 0:
         return c
@@ -775,7 +775,7 @@ def polyval(x, c, tensor=True):
         c = c.reshape(c.shape + (1,)*x.ndim)
 
     c0 = c[-1] + x*0
-    for i in range(2, len(c) + 1) :
+    for i in range(2, len(c) + 1):
         c0 = c[-i] + c0*x
     return c0
 
@@ -1010,7 +1010,7 @@ def polygrid3d(x, y, z, c):
     return c
 
 
-def polyvander(x, deg) :
+def polyvander(x, deg):
     """Vandermonde matrix of given degree.
 
     Returns the Vandermonde matrix of degree `deg` and sample points
@@ -1059,14 +1059,14 @@ def polyvander(x, deg) :
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
-    if ideg > 0 :
+    if ideg > 0:
         v[1] = x
-        for i in range(2, ideg + 1) :
+        for i in range(2, ideg + 1):
             v[i] = v[i-1]*x
     return np.rollaxis(v, 0, v.ndim)
 
 
-def polyvander2d(x, y, deg) :
+def polyvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1126,7 +1126,7 @@ def polyvander2d(x, y, deg) :
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def polyvander3d(x, y, z, deg) :
+def polyvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
@@ -1254,7 +1254,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         rcond -- value of `rcond`.
 
         For more details, see `linalg.lstsq`.
-        
+
     Raises
     ------
     RankWarning
@@ -1337,13 +1337,13 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     y = np.asarray(y) + 0.0
 
     # check arguments.
-    if deg < 0 :
+    if deg < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
         raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2 :
+    if y.ndim < 1 or y.ndim > 2:
         raise TypeError("expected 1D or 2D array for y")
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
@@ -1363,7 +1363,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         rhs = rhs * w
 
     # set rcond
-    if rcond is None :
+    if rcond is None:
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
@@ -1382,9 +1382,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, pu.RankWarning)
 
-    if full :
+    if full:
         return c, [resids, rank, s, rcond]
-    else :
+    else:
         return c
 
 
@@ -1415,7 +1415,7 @@ def polycompanion(c):
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
-    if len(c) < 2 :
+    if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
         return np.array([[-c[0]/c[1]]])
