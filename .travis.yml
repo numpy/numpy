@@ -32,6 +32,7 @@ before_install:
   - pip install nose
   # pip install coverage
   - python -V
+  - pip install --upgrade pip setuptools
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 
