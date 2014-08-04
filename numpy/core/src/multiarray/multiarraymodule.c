@@ -576,6 +576,12 @@ PyArray_Concatenate(PyObject *op, int axis)
     PyArrayObject **arrays;
     PyArrayObject *ret;
 
+    if (!PySequence_Check(op)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "The first input argument needs to be a sequence");
+        return NULL;
+    }
+
     /* Convert the input list into arrays */
     narrays = PySequence_Size(op);
     if (narrays < 0) {
