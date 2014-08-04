@@ -16,6 +16,11 @@
 
 #include "conversion_utils.h"
 
+static int
+PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
+static npy_intp
+PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
+
 /****************************************************************
 * Useful function for conversion when used with PyArg_ParseTuple
 ****************************************************************/
@@ -215,8 +220,9 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         *axis = NPY_MAXDIMS;
     }
     else {
-        *axis = PyArray_PyIntAsInt(obj);
-        if (PyErr_Occurred()) {
+        *axis = PyArray_PyIntAsInt_ErrMsg(obj,
+                               "an integer is required for the axis");
+        if (error_converting(*axis)) {
             return NPY_FAIL;
         }
     }
@@ -251,7 +257,8 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
-            int axis = PyArray_PyIntAsInt(tmp);
+            int axis = PyArray_PyIntAsInt_ErrMsg(tmp,
+                          "integers are required for the axis tuple elements");
             int axis_orig = axis;
             if (error_converting(axis)) {
                 return NPY_FAIL;
@@ -281,7 +288,8 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 
         memset(out_axis_flags, 0, ndim);
 
-        axis = PyArray_PyIntAsInt(axis_in);
+        axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
+                                   "an integer is required for the axis");
         axis_orig = axis;
 
         if (error_converting(axis)) {
@@ -736,13 +744,12 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 * Other conversion functions
 *****************************/
 
-/*NUMPY_API*/
-NPY_NO_EXPORT int
-PyArray_PyIntAsInt(PyObject *o)
+static int
+PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg)
 {
     npy_intp long_value;
     /* This assumes that NPY_SIZEOF_INTP >= NPY_SIZEOF_INT */
-    long_value = PyArray_PyIntAsIntp(o);
+    long_value = PyArray_PyIntAsIntp_ErrMsg(o, msg);
 
 #if (NPY_SIZEOF_INTP > NPY_SIZEOF_INT)
     if ((long_value < INT_MIN) || (long_value > INT_MAX)) {
@@ -754,8 +761,14 @@ PyArray_PyIntAsInt(PyObject *o)
 }
 
 /*NUMPY_API*/
-NPY_NO_EXPORT npy_intp
-PyArray_PyIntAsIntp(PyObject *o)
+NPY_NO_EXPORT int
+PyArray_PyIntAsInt(PyObject *o)
+{
+    return PyArray_PyIntAsInt_ErrMsg(o, "an integer is required");
+}
+
+static npy_intp
+PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
     long long long_value = -1;
@@ -763,7 +776,6 @@ PyArray_PyIntAsIntp(PyObject *o)
     long long_value = -1;
 #endif
     PyObject *obj, *err;
-    static char *msg = "an integer is required";
 
     if (!o) {
         PyErr_SetString(PyExc_TypeError, msg);
@@ -907,6 +919,13 @@ PyArray_PyIntAsIntp(PyObject *o)
   #endif
 #endif
     return long_value;
+}
+
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_intp
+PyArray_PyIntAsIntp(PyObject *o)
+{
+    return PyArray_PyIntAsIntp_ErrMsg(o, "an integer is required");
 }
 
 
