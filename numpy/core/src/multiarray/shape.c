@@ -613,7 +613,7 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
             else {
                 PyErr_SetString(PyExc_ValueError,
                         "cannot select an axis to squeeze out "
-                        "which has size greater than one");
+                        "which has size not equal to one");
                 return NULL;
             }
         }
