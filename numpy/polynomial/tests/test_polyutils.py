@@ -5,7 +5,9 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.polyutils as pu
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, assert_almost_equal, assert_raises,
+    assert_equal, assert_, run_module_suite)
 
 
 class TestMisc(TestCase):
@@ -101,3 +103,7 @@ class TestDomain(TestCase):
         tgt = [-1 + 1j, 1 - 1j]
         res = pu.mapparms(dom1, dom2)
         assert_almost_equal(res, tgt)
+
+
+if __name__ == "__main__":
+    run_module_suite()

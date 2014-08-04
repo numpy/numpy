@@ -374,7 +374,7 @@ class ABCPolyBase(object):
         return quo, rem
 
     def __pow__(self, other):
-        coef = self._pow(self.coef, other, maxpower = self.maxpower)
+        coef = self._pow(self.coef, other, maxpower=self.maxpower)
         res = self.__class__(coef, self.domain, self.window)
         return res
 
@@ -720,8 +720,6 @@ class ABCPolyBase(object):
         x = np.linspace(domain[0], domain[1], n)
         y = self(x)
         return x, y
-
-
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,

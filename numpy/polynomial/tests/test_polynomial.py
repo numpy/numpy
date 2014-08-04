@@ -420,14 +420,14 @@ class TestMisc(TestCase):
             return x*(x - 1)*(x - 2)
 
         # Test exceptions
-        assert_raises(ValueError, poly.polyfit, [1],    [1],     -1)
-        assert_raises(TypeError,  poly.polyfit, [[1]],  [1],      0)
-        assert_raises(TypeError,  poly.polyfit, [],     [1],      0)
-        assert_raises(TypeError,  poly.polyfit, [1],    [[[1]]],  0)
-        assert_raises(TypeError,  poly.polyfit, [1, 2], [1],      0)
-        assert_raises(TypeError,  poly.polyfit, [1],    [1, 2],   0)
-        assert_raises(TypeError,  poly.polyfit, [1],    [1],   0, w=[[1]])
-        assert_raises(TypeError,  poly.polyfit, [1],    [1],   0, w=[1, 1])
+        assert_raises(ValueError, poly.polyfit, [1], [1], -1)
+        assert_raises(TypeError, poly.polyfit, [[1]], [1], 0)
+        assert_raises(TypeError, poly.polyfit, [], [1], 0)
+        assert_raises(TypeError, poly.polyfit, [1], [[[1]]], 0)
+        assert_raises(TypeError, poly.polyfit, [1, 2], [1], 0)
+        assert_raises(TypeError, poly.polyfit, [1], [1, 2], 0)
+        assert_raises(TypeError, poly.polyfit, [1], [1], 0, w=[[1]])
+        assert_raises(TypeError, poly.polyfit, [1], [1], 0, w=[1, 1])
 
         # Test fit
         x = np.linspace(0, 2)
