@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
-from numpy import core
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar, binary_repr, identity, asanyarray
 from numpy.core.numerictypes import issubdtype
@@ -963,7 +962,7 @@ class matrix(N.ndarray):
         numpy.ravel : related function which returns an ndarray
 
         """
-        return core.multiarray.ndarray.ravel(self, order=order)
+        return N.ndarray.ravel(self, order=order)
 
 
     def getT(self):
