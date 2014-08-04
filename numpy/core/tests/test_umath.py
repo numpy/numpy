@@ -711,6 +711,12 @@ class TestMinMax(TestCase):
                     inp[i] = -1e10
                     assert_equal(inp.min(), -1e10, err_msg=msg)
 
+    def test_lower_align(self):
+        # check data that is not aligned to element size
+        # i.e doubles are aligned to 4 bytes on i386
+        d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        assert_equal(d.max(), d[0])
+        assert_equal(d.min(), d[0])
 
 
 class TestAbsolute(TestCase):
@@ -735,6 +741,21 @@ class TestAbsolute(TestCase):
                             assert_array_equal(np.abs(inp), d, err_msg=msg)
                             np.abs(inp, out=out)
                             assert_array_equal(out, d, err_msg=msg)
+
+                            assert_array_equal(-inp, -1*inp, err_msg=msg)
+                            np.negative(inp, out=out)
+                            assert_array_equal(out, -1*inp, err_msg=msg)
+
+    def test_lower_align(self):
+        # check data that is not aligned to element size
+        # i.e doubles are aligned to 4 bytes on i386
+        d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        assert_equal(np.abs(d), d)
+        assert_equal(np.negative(d), -d)
+        np.negative(d, out=d)
+        np.negative(np.ones_like(d), out=d)
+        np.abs(d, out=d)
+        np.abs(np.ones_like(d), out=d)
 
 
 class TestSpecialMethods(TestCase):

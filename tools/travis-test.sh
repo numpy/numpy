@@ -24,7 +24,7 @@ if [ -z "$USE_DEBUG" ]; then
 else
   sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
   # windows compilers have this requirement
-  CFLAGS="$sysflags -Werror=declaration-after-statement" $PYTHON setup.py build_ext --inplace
+  CFLAGS="$sysflags -Werror=declaration-after-statement -Werror=nonnull" $PYTHON setup.py build_ext --inplace
 fi
 }
 
@@ -39,6 +39,7 @@ setup_chroot()
   sudo mkdir -p $DIR
   sudo mount -t tmpfs -o size=4G tmpfs $DIR
   set -u
+  sudo apt-get update
   sudo apt-get -qq -y --force-yes install debootstrap eatmydata
   sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
@@ -49,7 +50,7 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
 }
 
 setup_bento()
@@ -103,14 +104,20 @@ PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
 if [ -n "$USE_DEBUG" ]; then
-  sudo apt-get update # 06.03.2014, temporary until travis boxes are resynced
+  sudo apt-get update
   sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
   PYTHON=python3-dbg
 fi
 
 export PYTHON
 export PIP
-if [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
+if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
+  $PIP install --upgrade pip
+  $PIP install wheel
+  $PYTHON setup.py bdist_wheel
+  $PIP install --pre --upgrade --find-links dist numpy
+  run_test
+elif [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
   setup_base
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
