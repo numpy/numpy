@@ -354,19 +354,27 @@ array_inplace_bitwise_or(PyArrayObject *m1, PyObject *m2);
 static PyObject *
 array_inplace_bitwise_xor(PyArrayObject *m1, PyObject *m2);
 
+PyFrameObject * last_frame = NULL;
+int lasti = -1;
+PyArrayObject * last_array = NULL;
 /*
  * check if m1 is a temporary (refcnt == 1) so we can do inplace operations
  * instead of creating a new temporary
  */
 static int can_elide_temp(PyArrayObject * m1, PyObject * m2)
 {
+    PyFrameObject * f = PyEval_GetFrame();
+    int can = lasti != f->f_lasti && last_frame == f;
+    lasti = f->f_lasti;
+    last_frame = f;
+    if (!can)
+        return 0;
     if (Py_REFCNT(m1) == 1 && /* TODO: use m2 == 1 too */
         PyArray_CheckExact(m1) && PyArray_CheckExact(m2) &&
         PyArray_DESCR(m1)->type_num != NPY_VOID &&
         PyArray_DESCR(m1)->type_num == PyArray_DESCR(m2)->type_num &&
         PyArray_NDIM(m1) == PyArray_NDIM(m2) &&
         (PyArray_FLAGS(m1) & NPY_ARRAY_OWNDATA)) {
-        PyFrameObject * f = PyEval_GetFrame();
         PyObject ** stack = f->f_valuestack;
         npy_intp nstack = f->f_code->co_stacksize;
         npy_intp i;
