@@ -951,10 +951,10 @@ def configuration(parent_package='',top_path=None):
     #blas_info = {}
     def get_dotblas_sources(ext, build_dir):
         if blas_info:
-            if ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', []):
-                return None # dotblas needs ATLAS, Fortran compiled blas will not be sufficient.
-            return ext.depends[:1]
-        return None # no extension module will be built
+            if ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+                return ext.depends[:1]
+        # dotblas needs CBLAS, Fortran compiled BLAS will not work.
+        return None
 
     config.add_extension('_dotblas',
                          sources = [get_dotblas_sources],
