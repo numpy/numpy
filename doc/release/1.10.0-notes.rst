@@ -116,8 +116,8 @@ extensions is now performed in *n* parallel processes.
 The parallelization is limited to files within one extension so projects using
 Cython will not profit because it builds extensions from single files.
 
-*genfromtxt* has an new ``max_rows`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*genfromtxt* has a new ``max_rows`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A ``max_rows`` argument has been added to *genfromtxt* to limit the
 number of rows read in a single call. Using this functionality, it is
 possible to read in multiple arrays stored in a single file by making
@@ -141,6 +141,14 @@ because if your test comes after another that has already caused the warning,
 you will not be able to emit the warning or test it. The context manager
 ``clear_and_catch_warnings`` clears warnings from the module registry on entry
 and resets them on exit, meaning that warnings can be re-raised.
+
+*cov* has new ``fweights`` and ``aweights`` arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``fweights`` and ``aweights`` arguments add new functionality to
+covariance calculations by applying two types of weighting to observation
+vectors. An array of ``fweights`` indicates the number of repeats of each
+observation vector, and an array of ``aweights`` provides their relative
+importance or probability.
 
 Improvements
 ============

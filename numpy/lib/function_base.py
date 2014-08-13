@@ -18,7 +18,7 @@ from numpy.core.umath import (
     mod, exp, log10
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, sort, partition, mean
+    ravel, nonzero, sort, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
@@ -1829,15 +1829,17 @@ class vectorize(object):
         return _res
 
 
-def cov(m, y=None, rowvar=1, bias=0, ddof=None):
+def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
     """
-    Estimate a covariance matrix, given data.
+    Estimate a covariance matrix, given data and weights.
 
     Covariance indicates the level to which two variables vary together.
     If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
     then the covariance matrix element :math:`C_{ij}` is the covariance of
     :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
     of :math:`x_i`.
+
+    See the notes for an outline of the algorithm.
 
     Parameters
     ----------
@@ -1846,23 +1848,35 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         Each row of `m` represents a variable, and each column a single
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
-        An additional set of variables and observations. `y` has the same
-        form as that of `m`.
+        An additional set of variables and observations. `y` has the same form
+        as that of `m`.
     rowvar : int, optional
         If `rowvar` is non-zero (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : int, optional
-        Default normalization is by ``(N - 1)``, where ``N`` is the number of
-        observations given (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``. These values can be overridden by using
-        the keyword ``ddof`` in numpy versions >= 1.5.
+        Default normalization is by ``(N - 1)``, where ``N`` corresponds to the
+        number of observations given (unbiased estimate). If `bias` is 1, then
+        normalization is by ``N``. These values can be overridden by using the
+        keyword ``ddof`` in numpy versions >= 1.5.
     ddof : int, optional
         .. versionadded:: 1.5
-        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
-        the number of observations; this overrides the value implied by
-        ``bias``. The default value is ``None``.
+        If not ``None`` the default value implied by `bias` is overridden.
+        Note that ``ddof=1`` will return the unbiased estimate, even if both
+        `fweights` and `aweights` are specified, and ``ddof=0`` will return
+        the simple average. See the notes for the details. The default value
+        is ``None``.
+    fweights : array_like, int, optional
+        .. versionadded:: 1.10
+        1-D array of integer freguency weights; the number of times each
+        observation vector should be repeated.
+    aweights : array_like, optional
+        .. versionadded:: 1.10
+        1-D array of observation vector weights. These relative weights are
+        typically large for observations considered "important" and smaller for
+        observations considered less "important". If ``ddof=0`` the array of
+        weights can be used to assign probabilities to observation vectors.
 
     Returns
     -------
@@ -1872,6 +1886,22 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     See Also
     --------
     corrcoef : Normalized covariance matrix
+
+    Notes
+    -----
+    Assume that the observations are in the columns of the observation
+    array `m` and let ``f = fweights`` and ``a = aweights`` for brevity. The
+    steps to compute the weighted covariance are as follows::
+
+        >>> w = f * a
+        >>> v1 = np.sum(w)
+        >>> v2 = np.sum(w * a)
+        >>> m -= np.sum(m * w, axis=1, keepdims=True) / v1
+        >>> cov = np.dot(m * w, m.T) * v1 / (v1**2 - ddof * v2)
+
+    Note that when ``a == 1``, the normalization factor
+    ``v1 / (v1**2 - ddof * v2)`` goes over to ``1 / (np.sum(f) - ddof)``
+    as it should.
 
     Examples
     --------
@@ -1921,36 +1951,79 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         y = np.asarray(y)
         dtype = np.result_type(m, y, np.float64)
     X = array(m, ndmin=2, dtype=dtype)
+    if rowvar == 0 and X.shape[0] != 1:
+        X = X.T
+    if X.shape[0] == 0:
+        return np.array([]).reshape(0, 0)
+    if y is not None:
+        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        if rowvar == 0 and y.shape[0] != 1:
+            y = y.T
+        X = np.vstack((X, y))
 
-    if X.shape[0] == 1:
-        rowvar = 1
-    if rowvar:
-        N = X.shape[1]
-        axis = 0
-    else:
-        N = X.shape[0]
-        axis = 1
-
-    # check ddof
     if ddof is None:
         if bias == 0:
             ddof = 1
         else:
             ddof = 0
-    fact = float(N - ddof)
+
+    # Get the product of frequencies and weights
+    w = None
+    if fweights is not None:
+        fweights = np.asarray(fweights, dtype=np.float)
+        if not np.all(fweights == np.around(fweights)):
+            raise TypeError(
+                "fweights must be integer")
+        if fweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional fweights")
+        if fweights.shape[0] != X.shape[1]:
+            raise RuntimeError(
+                "incompatible numbers of samples and fweights")
+        if any(fweights < 0):
+            raise ValueError(
+                "fweights cannot be negative")
+        w = fweights
+    if aweights is not None:
+        aweights = np.asarray(aweights, dtype=np.float)
+        if aweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional aweights")
+        if aweights.shape[0] != X.shape[1]:
+            raise RuntimeError(
+                "incompatible numbers of samples and aweights")
+        if any(aweights < 0):
+            raise ValueError(
+                "aweights cannot be negative")
+        if w is None:
+            w = aweights
+        else:
+            w *= aweights
+
+    avg, w_sum = average(X, axis=1, weights=w, returned=True)
+    w_sum = w_sum[0]
+
+    # Determine the normalization
+    if w is None:
+        fact = float(X.shape[1] - ddof)
+    else:
+        if ddof == 0:
+            fact = w_sum
+        elif aweights is None:
+            fact = w_sum - ddof
+        else:
+            fact = w_sum - ddof*sum(w*aweights)/w_sum
+
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
         fact = 0.0
 
-    if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=dtype)
-        X = concatenate((X, y), axis)
-
-    X -= X.mean(axis=1-axis, keepdims=True)
-    if not rowvar:
-        return (dot(X.T, X.conj()) / fact).squeeze()
+    X -= avg[:, None]
+    if w is None:
+        X_T = X.T
     else:
-        return (dot(X, X.T.conj()) / fact).squeeze()
+        X_T = (X*w).T
+    return (dot(X, X_T.conj())/fact).squeeze()
 
 
 def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
