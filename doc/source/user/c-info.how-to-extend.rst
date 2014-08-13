@@ -82,7 +82,7 @@ a variable indicating whether the method uses keyword arguments or
 not, and docstrings. These are explained in the next section. If you
 want to add constants to the module, then you store the returned value
 from Py_InitModule which is a module object. The most general way to
-add itmes to the module is to get the module dictionary using
+add items to the module is to get the module dictionary using
 PyModule_GetDict(module). With the module dictionary, you can add
 whatever you like to the module manually. An easier way to add objects
 to the module is to use one of three additional Python C-API calls
@@ -212,7 +212,7 @@ special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
 increments the reference count of the :ctype:`PyObject *` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :ctype:`PyObject *` C-variable. You should use 'N' if you ave
+corresponding :ctype:`PyObject *` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
