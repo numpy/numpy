@@ -24,121 +24,6 @@ static char module_doc[] =
 
 static PyArray_DotFunc *oldFunctions[NPY_NTYPES];
 
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    if (stride <= 0 || stride % itemsize != 0) {
-        return 0;
-    }
-    stride /= itemsize;
-
-    if (stride > INT_MAX) {
-        return 0;
-    }
-    return stride;
-}
-
-/*
- * The following functions do a "chunked" dot product using BLAS when
- * sizeof(npy_intp) > sizeof(int), because BLAS libraries can typically not
- * handle more than INT_MAX elements per call.
- *
- * The chunksize is the greatest power of two less than INT_MAX.
- */
-#if NPY_MAX_INTP > INT_MAX
-# define CHUNKSIZE  (INT_MAX / 2 + 1)
-#else
-# define CHUNKSIZE  NPY_MAX_INTP
-#endif
-
-static void
-FLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
-          npy_intp n, void *tmp)
-{
-    int na = blas_stride(stridea, sizeof(float));
-    int nb = blas_stride(strideb, sizeof(float));
-
-    if (na && nb) {
-        double r = 0.;          /* double for stability */
-        float *fa = a, *fb = b;
-
-        while (n > 0) {
-            int chunk = MIN(n, CHUNKSIZE);
-
-            r += cblas_sdot(chunk, fa, na, fb, nb);
-            fa += chunk * na;
-            fb += chunk * nb;
-            n -= chunk;
-        }
-        *((float *)res) = r;
-    }
-    else {
-        oldFunctions[NPY_FLOAT](a, stridea, b, strideb, res, n, tmp);
-    }
-}
-
-static void
-DOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
-           npy_intp n, void *tmp)
-{
-    int na = blas_stride(stridea, sizeof(double));
-    int nb = blas_stride(strideb, sizeof(double));
-
-    if (na && nb) {
-        double r = 0.;
-        double *da = a, *db = b;
-
-        while (n > 0) {
-            int chunk = MIN(n, CHUNKSIZE);
-
-            r += cblas_ddot(chunk, da, na, db, nb);
-            da += chunk * na;
-            db += chunk * nb;
-            n -= chunk;
-        }
-        *((double *)res) = r;
-    }
-    else {
-        oldFunctions[NPY_DOUBLE](a, stridea, b, strideb, res, n, tmp);
-    }
-}
-
-static void
-CFLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
-           npy_intp n, void *tmp)
-{
-    int na = blas_stride(stridea, sizeof(npy_cfloat));
-    int nb = blas_stride(strideb, sizeof(npy_cfloat));
-
-    if (na && nb) {
-        cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
-    }
-    else {
-        oldFunctions[NPY_CFLOAT](a, stridea, b, strideb, res, n, tmp);
-    }
-}
-
-static void
-CDOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
-            npy_intp n, void *tmp)
-{
-    int na = blas_stride(stridea, sizeof(npy_cdouble));
-    int nb = blas_stride(strideb, sizeof(npy_cdouble));
-
-    if (na && nb) {
-        cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb,
-                        (double *)res);
-    }
-    else {
-        oldFunctions[NPY_CDOUBLE](a, stridea, b, strideb, res, n, tmp);
-    }
-}
 
 /*
  * Helper: call appropriate BLAS dot function for typenum.
@@ -149,20 +34,8 @@ blas_dot(int typenum, npy_intp n,
          void *a, npy_intp stridea, void *b, npy_intp strideb, void *res)
 {
     PyArray_DotFunc *dot = NULL;
-    switch (typenum) {
-        case NPY_DOUBLE:
-            dot = DOUBLE_dot;
-            break;
-        case NPY_FLOAT:
-            dot = FLOAT_dot;
-            break;
-        case NPY_CDOUBLE:
-            dot = CDOUBLE_dot;
-            break;
-        case NPY_CFLOAT:
-            dot = CFLOAT_dot;
-            break;
-    }
+
+    dot = oldFunctions[typenum];
     assert(dot != NULL);
     dot(a, stridea, b, strideb, res, n, NULL);
 }
@@ -257,19 +130,15 @@ dotblas_alterdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (!altered) {
         descr = PyArray_DescrFromType(NPY_FLOAT);
         oldFunctions[NPY_FLOAT] = descr->f->dotfunc;
-        descr->f->dotfunc = (PyArray_DotFunc *)FLOAT_dot;
 
         descr = PyArray_DescrFromType(NPY_DOUBLE);
         oldFunctions[NPY_DOUBLE] = descr->f->dotfunc;
-        descr->f->dotfunc = (PyArray_DotFunc *)DOUBLE_dot;
 
         descr = PyArray_DescrFromType(NPY_CFLOAT);
         oldFunctions[NPY_CFLOAT] = descr->f->dotfunc;
-        descr->f->dotfunc = (PyArray_DotFunc *)CFLOAT_dot;
 
         descr = PyArray_DescrFromType(NPY_CDOUBLE);
         oldFunctions[NPY_CDOUBLE] = descr->f->dotfunc;
-        descr->f->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
 
         altered = NPY_TRUE;
     }

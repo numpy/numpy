@@ -846,15 +846,22 @@ def configuration(parent_package='',top_path=None):
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
 
+    blas_info = get_info('blas_opt', 0)
+    if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+        extra_info = blas_info
+    else:
+        extra_info = {}
+
     config.add_extension('multiarray',
-                         sources = multiarray_src +
+                         sources=multiarray_src +
                                  [generate_config_h,
-                                 generate_numpyconfig_h,
-                                 generate_numpy_api,
-                                 join(codegen_dir, 'generate_numpy_api.py'),
-                                 join('*.py')],
-                         depends = deps + multiarray_deps,
-                         libraries = ['npymath', 'npysort'])
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  join(codegen_dir, 'generate_numpy_api.py'),
+                                  join('*.py')],
+                         depends=deps + multiarray_deps,
+                         libraries=['npymath', 'npysort'],
+                         extra_info=extra_info)
 
     #######################################################################
     #                           umath module                              #
