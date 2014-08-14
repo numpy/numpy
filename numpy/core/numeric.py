@@ -1078,30 +1078,32 @@ def outer(a, b, out=None):
 # try to import blas optimized dot if available
 envbak = os.environ.copy()
 try:
-    # importing this changes the dot function for basic 4 types
-    # to blas-optimized versions.
-
     # disables openblas affinity setting of the main thread that limits
     # python threads or processes to one core
     if 'OPENBLAS_MAIN_FREE' not in os.environ:
         os.environ['OPENBLAS_MAIN_FREE'] = '1'
     if 'GOTOBLAS_MAIN_FREE' not in os.environ:
         os.environ['GOTOBLAS_MAIN_FREE'] = '1'
-    from ._dotblas import dot, vdot, inner, alterdot, restoredot
+    from ._dotblas import dot, vdot, inner
 except ImportError:
     # docstrings are in add_newdocs.py
     inner = multiarray.inner
     dot = multiarray.dot
     def vdot(a, b):
         return dot(asarray(a).ravel().conj(), asarray(b).ravel())
-    def alterdot():
-        pass
-    def restoredot():
-        pass
 finally:
     os.environ.clear()
     os.environ.update(envbak)
     del envbak
+
+
+def alterdot():
+    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
+
+
+def restoredot():
+    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
+
 
 def tensordot(a, b, axes=2):
     """

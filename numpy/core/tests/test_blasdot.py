@@ -26,12 +26,10 @@ except ImportError:
 
 @dec.skipif(_dotblas is None, "Numpy is not compiled with _dotblas")
 def test_blasdot_used():
-    from numpy.core import dot, vdot, inner, alterdot, restoredot
+    from numpy.core import dot, vdot, inner
     assert_(dot is _dotblas.dot)
     assert_(vdot is _dotblas.vdot)
     assert_(inner is _dotblas.inner)
-    assert_(alterdot is _dotblas.alterdot)
-    assert_(restoredot is _dotblas.restoredot)
 
 
 def test_dot_2args():

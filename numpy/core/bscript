@@ -488,14 +488,22 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'usertypes.c')]
         else:
             sources = extension.sources
+
+        use = 'npysort npymath'
+        defines = ['_FILE_OFFSET_BITS=64',
+                   '_LARGEFILE_SOURCE=1',
+                   '_LARGEFILE64_SOURCE=1']
+
+        if bld.env.HAS_CBLAS:
+            use += ' CBLAS'
+            defines.append('HAVE_CBLAS')
+
         includes = ["src/multiarray", "src/private"]
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath",
-                                       defines=['_FILE_OFFSET_BITS=64',
-                                                '_LARGEFILE_SOURCE=1',
-                                                '_LARGEFILE64_SOURCE=1']
+                                       use=use,
+                                       defines=defines
                                        )
     context.register_builder("multiarray", builder_multiarray)
 

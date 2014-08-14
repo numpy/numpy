@@ -5,13 +5,11 @@ to document how deprecations should eventually be turned into errors.
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
 import operator
 import warnings
-from nose.plugins.skip import SkipTest
 
 import numpy as np
-from numpy.testing import (dec, run_module_suite, assert_raises,
+from numpy.testing import (run_module_suite, assert_raises,
                            assert_warns, assert_array_equal, assert_)
 
 
@@ -34,10 +32,8 @@ class _DeprecationTestCase(object):
         warnings.filterwarnings("always", message=self.message,
                                     category=DeprecationWarning)
 
-
     def tearDown(self):
         self.warn_ctx.__exit__()
-
 
     def assert_deprecated(self, function, num=1, ignore_others=False,
                         function_fails=False,
@@ -102,7 +98,6 @@ class _DeprecationTestCase(object):
                 if exceptions == tuple():
                     raise AssertionError("Error raised during function call")
 
-
     def assert_not_deprecated(self, function, args=(), kwargs={}):
         """Test if DeprecationWarnings are given and raised.
 
@@ -143,6 +138,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
 
     def test_indexing(self):
         a = np.array([[[5]]])
+
         def assert_deprecated(*args, **kwargs):
             self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
 
@@ -172,7 +168,6 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[0.0:, 0.0], num=2)
         assert_deprecated(lambda: a[0.0:, 0.0,:], num=2)
 
-
     def test_valid_indexing(self):
         a = np.array([[[5]]])
         assert_not_deprecated = self.assert_not_deprecated
@@ -183,9 +178,9 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_not_deprecated(lambda: a[:, 0,:])
         assert_not_deprecated(lambda: a[:,:,:])
 
-
     def test_slicing(self):
         a = np.array([[5]])
+
         def assert_deprecated(*args, **kwargs):
             self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
 
@@ -217,7 +212,6 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         # should still get the DeprecationWarning if step = 0.
         assert_deprecated(lambda: a[::0.0], function_fails=True)
 
-
     def test_valid_slicing(self):
         a = np.array([[[5]]])
         assert_not_deprecated = self.assert_not_deprecated
@@ -231,7 +225,6 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_not_deprecated(lambda: a[:2:2])
         assert_not_deprecated(lambda: a[1:2:2])
 
-
     def test_non_integer_argument_deprecations(self):
         a = np.array([[5]])
 
@@ -240,14 +233,12 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.take, args=(a, [0], 1.))
         self.assert_deprecated(np.take, args=(a, [0], np.float64(1.)))
 
-
     def test_non_integer_sequence_multiplication(self):
         # Numpy scalar sequence multiply should not work with non-integers
         def mult(a, b):
             return a * b
         self.assert_deprecated(mult, args=([1], np.float_(3)))
         self.assert_not_deprecated(mult, args=([1], np.int_(3)))
-
 
     def test_reduce_axis_float_index(self):
         d = np.zeros((3,3,3))
@@ -303,7 +294,6 @@ class TestArrayToIndexDeprecation(_DeprecationTestCase):
         # Check slicing. Normal indexing checks arrays specifically.
         self.assert_deprecated(lambda: a[a:a:a], exceptions=(), num=3)
 
-
 class TestNonIntegerArrayLike(_DeprecationTestCase):
     """Tests that array likes, i.e. lists give a deprecation warning
     when they cannot be safely cast to an integer.
@@ -319,7 +309,6 @@ class TestNonIntegerArrayLike(_DeprecationTestCase):
                                exceptions=IndexError)
 
         self.assert_not_deprecated(a.__getitem__, ([],))
-
 
     def test_boolean_futurewarning(self):
         a = np.arange(10)
@@ -378,12 +367,13 @@ class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.
     """
+
     def test(self):
         a = np.arange(10)
         assert_warns(np.VisibleDeprecationWarning, np.rank, a)
 
 
-class TestComparisonDepreactions(_DeprecationTestCase):
+class TestComparisonDeprecations(_DeprecationTestCase):
     """This tests the deprecation, for non-elementwise comparison logic.
     This used to mean that when an error occured during element-wise comparison
     (i.e. broadcasting) NotImplemented was returned, but also in the comparison
@@ -408,7 +398,6 @@ class TestComparisonDepreactions(_DeprecationTestCase):
             b = np.array([1, np.array([1,2,3])], dtype=object)
             self.assert_deprecated(op, args=(a, b), num=None)
 
-
     def test_string(self):
         # For two string arrays, strings always raised the broadcasting error:
         a = np.array(['a', 'b'])
@@ -419,7 +408,6 @@ class TestComparisonDepreactions(_DeprecationTestCase):
         # that fact (it likely should be changed). This means that the
         # following works (and returns False) due to dtype mismatch:
         a == []
-
 
     def test_none_comparison(self):
         # Test comparison of None, which should result in elementwise
@@ -455,14 +443,14 @@ class TestComparisonDepreactions(_DeprecationTestCase):
         assert_(np.equal(np.datetime64('NaT'), None))
 
 
-class TestIdentityComparisonDepreactions(_DeprecationTestCase):
+class TestIdentityComparisonDeprecations(_DeprecationTestCase):
     """This tests the equal and not_equal object ufuncs identity check
     deprecation. This was due to the usage of PyObject_RichCompareBool.
 
     This tests that for example for `a = np.array([np.nan], dtype=object)`
     `a == a` it is warned that False and not `np.nan is np.nan` is returned.
 
-    Should be kept in sync with TestComparisonDepreactions and new tests
+    Should be kept in sync with TestComparisonDeprecations and new tests
     added when the deprecation is over. Requires only removing of @identity@
     (and blocks) from the ufunc loops.c.src of the OBJECT comparisons.
     """
@@ -488,11 +476,11 @@ class TestIdentityComparisonDepreactions(_DeprecationTestCase):
                 np.less_equal(a, a)
                 np.greater_equal(a, a)
 
-
     def test_comparison_error(self):
         class FunkyType(object):
             def __eq__(self, other):
                 raise TypeError("I won't compare")
+
             def __ne__(self, other):
                 raise TypeError("I won't compare")
 
@@ -500,12 +488,24 @@ class TestIdentityComparisonDepreactions(_DeprecationTestCase):
         self.assert_deprecated(np.equal, args=(a, a))
         self.assert_deprecated(np.not_equal, args=(a, a))
 
-
     def test_bool_error(self):
         # The comparison result cannot be interpreted as a bool
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
         self.assert_deprecated(np.equal, args=(a, a))
         self.assert_deprecated(np.not_equal, args=(a, a))
+
+
+class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
+    """The alterdot/restoredot functions are deprecated.
+
+    These functions no longer do anything in numpy 1.10, so should not be
+    used.
+
+    """
+
+    def test_alterdot_restoredot_deprecation(self):
+        self.assert_deprecated(np.alterdot)
+        self.assert_deprecated(np.restoredot)
 
 
 if __name__ == "__main__":
