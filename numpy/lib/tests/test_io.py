@@ -1300,6 +1300,16 @@ M   33  21.99
         ctrl = np.array([(0, 3), (4, -999)], dtype=[(_, int) for _ in "ac"])
         assert_equal(test, ctrl)
 
+        data2 = "1,2,*,4\n5,*,7,8\n"
+        test = np.genfromtxt(TextIO(data2), delimiter=',', dtype=int,
+                             missing_values="*", filling_values=0)
+        ctrl = np.array([[1, 2, 0, 4], [5, 0, 7, 8]])
+        assert_equal(test, ctrl)
+        test = np.genfromtxt(TextIO(data2), delimiter=',', dtype=int,
+                             missing_values="*", filling_values=-1)
+        ctrl = np.array([[1, 2, -1, 4], [5, -1, 7, 8]])
+        assert_equal(test, ctrl)
+
     def test_withmissing_float(self):
         data = TextIO('A,B\n0,1.5\n2,-999.00')
         test = np.mafromtxt(data, dtype=None, delimiter=',',
