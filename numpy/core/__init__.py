@@ -3,7 +3,21 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
+
+# disables openblas affinity setting of the main thread that limits
+# python threads or processes to one core
+import os
+envbak = os.environ.copy()
+if 'openblas_main_free' not in os.environ:
+    os.environ['openblas_main_free'] = '1'
+if 'gotoblas_main_free' not in os.environ:
+    os.environ['gotoblas_main_free'] = '1'
 from . import multiarray
+os.environ.clear()
+os.environ.update(envbak)
+del envbak
+del os
+
 from . import umath
 from . import _internal # for freeze programs
 from . import numerictypes as nt

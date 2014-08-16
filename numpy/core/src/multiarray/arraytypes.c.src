@@ -3143,7 +3143,7 @@ blas_stride(npy_intp stride, unsigned itemsize)
  * #type = npy_float, npy_double#
  * #prefix = s, d#
  */
-static void
+NPY_NO_EXPORT void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
            npy_intp n, void *NPY_UNUSED(ignore))
 {
@@ -3192,7 +3192,7 @@ static void
  * #type = npy_float, npy_double#
  * #prefix = c, z#
  */
-static void
+NPY_NO_EXPORT void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
            char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
