@@ -840,17 +840,18 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c')]
 
+    blas_info = get_info('blas_opt', 0)
+    if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+        extra_info = blas_info
+        multiarray_src.append(join('src', 'multiarray', 'cblasfuncs.c'))
+    else:
+        extra_info = {}
 
     if not ENABLE_SEPARATE_COMPILATION:
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
 
-    blas_info = get_info('blas_opt', 0)
-    if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
-        extra_info = blas_info
-    else:
-        extra_info = {}
 
     config.add_extension('multiarray',
                          sources=multiarray_src +

@@ -1080,15 +1080,14 @@ envbak = os.environ.copy()
 try:
     # disables openblas affinity setting of the main thread that limits
     # python threads or processes to one core
-    if 'OPENBLAS_MAIN_FREE' not in os.environ:
-        os.environ['OPENBLAS_MAIN_FREE'] = '1'
-    if 'GOTOBLAS_MAIN_FREE' not in os.environ:
-        os.environ['GOTOBLAS_MAIN_FREE'] = '1'
-    from ._dotblas import dot, vdot, inner
+    if 'openblas_main_free' not in os.environ:
+        os.environ['openblas_main_free'] = '1'
+    if 'gotoblas_main_free' not in os.environ:
+        os.environ['gotoblas_main_free'] = '1'
+    from ._dotblas import vdot, inner
 except ImportError:
     # docstrings are in add_newdocs.py
     inner = multiarray.inner
-    dot = multiarray.dot
     def vdot(a, b):
         return dot(asarray(a).ravel().conj(), asarray(b).ravel())
 finally:
@@ -1096,6 +1095,7 @@ finally:
     os.environ.update(envbak)
     del envbak
 
+dot = multiarray.dot
 
 def alterdot():
     warnings.warn("alterdot no longer does anything.", DeprecationWarning)

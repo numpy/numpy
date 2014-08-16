@@ -486,6 +486,9 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'shape.c'),
                 pjoin('src', 'multiarray', 'ucsnarrow.c'),
                 pjoin('src', 'multiarray', 'usertypes.c')]
+
+            if bld.env.HAS_CBLAS:
+                sources.append(pjoin('src', 'multiarray', 'cblasfuncs.c'))
         else:
             sources = extension.sources
 

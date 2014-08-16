@@ -20,7 +20,7 @@ def pbuild(context):
         return context.default_builder(extension,
                                        includes=includes,
                                        **kw)
- 
+
     context.register_builder("lapack_lite", build_lapack_lite)
     context.register_builder("_umath_linalg", build_lapack_lite)
 

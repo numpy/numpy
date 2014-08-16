@@ -2,7 +2,7 @@
  * This file includes all the .c files needed for a complete multiarray module.
  * This is used in the case where separate compilation is not enabled
  *
- * Note that the order of the includs matters
+ * Note that the order of the includes matters
  */
 
 #include "common.c"
@@ -50,9 +50,10 @@
 #include "array_assign_scalar.c"
 #include "array_assign_array.c"
 #include "ucsnarrow.c"
-
 #include "arrayobject.c"
-
 #include "numpymemoryview.c"
-
 #include "multiarraymodule.c"
+
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.c"
+#endif

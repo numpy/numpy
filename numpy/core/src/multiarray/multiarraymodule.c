@@ -57,6 +57,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ufunc_override.h"
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
 #include "multiarraymodule.h"
+#include "cblasfuncs.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -915,7 +916,17 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 }
 
 /*NUMPY_API
- * Numeric.matrixproduct(a,v,out)
+ * Numeric.matrixproduct(a,v)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
+{
+    return PyArray_MatrixProduct2(op1, op2, NULL);
+}
+
+/*NUMPY_API
+ * Numeric.matrixproduct2(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
@@ -950,8 +961,18 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
-        goto fail;
+        Py_DECREF(ap1);
+        return NULL;
     }
+
+#if defined(HAVE_CBLAS)
+    if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
+            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+        return cblas_matrixproduct(typenum, ap1, ap2, out);
+    }
+#endif
+
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
@@ -986,14 +1007,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if(PyArray_NDIM(ap2) > 1) {
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
-    /*
-      fprintf(stderr, "nd=%d dimensions=", nd);
-      for(i=0; i<j; i++)
-      fprintf(stderr, "%d ", dimensions[i]);
-      fprintf(stderr, "\n");
-    */
 
-    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1]; is2 = PyArray_STRIDES(ap2)[matchDim];
+    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
+    is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
     ret = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum);
     if (ret == NULL) {
@@ -1052,15 +1068,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     return NULL;
 }
 
-/*NUMPY_API
- *Numeric.matrixproduct(a,v)
- * just like inner product but does the swapaxes stuff on the fly
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
-{
-    return PyArray_MatrixProduct2(op1, op2, NULL);
-}
 
 /*NUMPY_API
  * Copy and Transpose
@@ -2203,6 +2210,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     static PyUFuncObject *cached_npy_dot = NULL;
     PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
+    PyArrayObject *ret;
     char* kwlist[] = {"a", "b", "out", NULL };
     PyObject *module;
 
@@ -2235,7 +2243,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
                         "'out' must be an array");
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o));
+    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
+    return PyArray_Return(ret);
 }
 
 static int
