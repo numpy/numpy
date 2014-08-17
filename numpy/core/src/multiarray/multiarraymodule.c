@@ -2216,16 +2216,15 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 static PyObject *
 array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
-    int errval;
     static PyUFuncObject *cached_npy_dot = NULL;
+    int errval;
     PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
     char* kwlist[] = {"a", "b", "out", NULL };
-    PyObject *module;
 
     if (cached_npy_dot == NULL) {
-        module = PyImport_ImportModule("numpy.core.multiarray");
+        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
         cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
                                               PyModule_GetDict(module), "dot");
 
