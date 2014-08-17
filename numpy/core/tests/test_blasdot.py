@@ -28,7 +28,6 @@ except ImportError:
 def test_blasdot_used():
     from numpy.core import vdot, inner
     assert_(vdot is _dotblas.vdot, "vdot")
-    assert_(inner is _dotblas.inner, "inner")
 
 
 def test_dot_2args():

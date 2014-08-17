@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 import collections
-from . import multiarray
+from numpy.core import multiarray
 from . import umath
 from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
@@ -1084,7 +1084,7 @@ try:
         os.environ['openblas_main_free'] = '1'
     if 'gotoblas_main_free' not in os.environ:
         os.environ['gotoblas_main_free'] = '1'
-    from ._dotblas import vdot, inner
+    from ._dotblas import vdot
 except ImportError:
     # docstrings are in add_newdocs.py
     inner = multiarray.inner
@@ -1096,6 +1096,7 @@ finally:
     del envbak
 
 dot = multiarray.dot
+inner = multiarray.inner
 
 def alterdot():
     warnings.warn("alterdot no longer does anything.", DeprecationWarning)
