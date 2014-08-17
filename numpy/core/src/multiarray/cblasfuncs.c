@@ -665,7 +665,6 @@ fail:
     return NULL;
 }
 
-#if 0
 
 /*
  * innerproduct(a,b)
@@ -674,57 +673,24 @@ fail:
  * floating point types. Like the generic NumPy equivalent the product
  * sum is over the last dimension of a and b.
  * NB: The first argument is not conjugated.
+ *
+ * This is for use by PyArray_InnerProduct. It is assumed on entry that the
+ * arrays ap1 and ap2 have a common data type given by typenum that is
+ * float, double, cfloat, or cdouble and have dimension <= 2, and have the
+ * contiguous flag set. The * __numpy_ufunc__ nonsense is also assumed to
+ * have been taken care of.
  */
 
 NPY_NO_EXPORT PyObject *
-cblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
 {
-    PyObject *op1, *op2;
-    PyArrayObject *ap1, *ap2, *ret;
     int j, l, lda, ldb;
-    int typenum, nd;
+    int nd;
+    double prior1, prior2;
+    PyArrayObject *ret;
     npy_intp dimensions[NPY_MAXDIMS];
     PyTypeObject *subtype;
-    double prior1, prior2;
 
-    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
-        return NULL;
-    }
-
-    /*
-     * Inner product using the BLAS.  The product sum is taken along the last
-     * dimensions of the two arrays.
-     * Only speeds things up for float double and complex types.
-     */
-
-
-    typenum = PyArray_ObjectType(op1, 0);
-    typenum = PyArray_ObjectType(op2, typenum);
-
-    /* This function doesn't handle other types */
-    if ((typenum != NPY_DOUBLE && typenum != NPY_CDOUBLE &&
-            typenum != NPY_FLOAT && typenum != NPY_CFLOAT)) {
-        return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(op1, op2));
-    }
-
-    ret = NULL;
-    ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 0, 0);
-    if (ap1 == NULL) {
-        return NULL;
-    }
-    ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 0, 0);
-    if (ap2 == NULL) {
-        goto fail;
-    }
-
-    if ((PyArray_NDIM(ap1) > 2) || (PyArray_NDIM(ap2) > 2)) {
-        /* This function doesn't handle dimensions greater than 2 */
-        ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1,
-                                                    (PyObject *)ap2);
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
-        return PyArray_Return(ret);
-    }
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         /* One of ap1 or ap2 is a scalar */
@@ -748,7 +714,8 @@ cblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1)-1);
 
         if (PyArray_DIM(ap2, PyArray_NDIM(ap2)-1) != l) {
-            PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+            PyErr_SetString(PyExc_ValueError,
+                    "matrices are not aligned");
             goto fail;
         }
         nd = PyArray_NDIM(ap1)+PyArray_NDIM(ap2)-2;
@@ -769,7 +736,8 @@ cblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
                                        typenum, NULL, NULL, 0, 0,
-                                       (PyObject *)(prior2 > prior1 ? ap2 : ap1));
+                                       (PyObject *)
+                                           (prior2 > prior1 ? ap2 : ap1));
 
     if (ret == NULL) {
         goto fail;
@@ -780,26 +748,36 @@ cblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (PyArray_NDIM(ap2) == 0) {
         /* Multiplication by a scalar -- Level 1 BLAS */
         if (typenum == NPY_DOUBLE) {
-            cblas_daxpy(l, *((double *)PyArray_DATA(ap2)), (double *)PyArray_DATA(ap1), 1,
+            cblas_daxpy(l,
+                        *((double *)PyArray_DATA(ap2)),
+                        (double *)PyArray_DATA(ap1), 1,
                         (double *)PyArray_DATA(ret), 1);
         }
         else if (typenum == NPY_CDOUBLE) {
-            cblas_zaxpy(l, (double *)PyArray_DATA(ap2), (double *)PyArray_DATA(ap1), 1,
+            cblas_zaxpy(l,
+                        (double *)PyArray_DATA(ap2),
+                        (double *)PyArray_DATA(ap1), 1,
                         (double *)PyArray_DATA(ret), 1);
         }
         else if (typenum == NPY_FLOAT) {
-            cblas_saxpy(l, *((float *)PyArray_DATA(ap2)), (float *)PyArray_DATA(ap1), 1,
+            cblas_saxpy(l,
+                        *((float *)PyArray_DATA(ap2)),
+                        (float *)PyArray_DATA(ap1), 1,
                         (float *)PyArray_DATA(ret), 1);
         }
         else if (typenum == NPY_CFLOAT) {
-            cblas_caxpy(l, (float *)PyArray_DATA(ap2), (float *)PyArray_DATA(ap1), 1,
+            cblas_caxpy(l,
+                        (float *)PyArray_DATA(ap2),
+                        (float *)PyArray_DATA(ap1), 1,
                         (float *)PyArray_DATA(ret), 1);
         }
     }
     else if (PyArray_NDIM(ap1) == 1 && PyArray_NDIM(ap2) == 1) {
         /* Dot product between two vectors -- Level 1 BLAS */
-        blas_dot(typenum, l, PyArray_DATA(ap1), PyArray_ITEMSIZE(ap1),
-                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2), PyArray_DATA(ret));
+        blas_dot(typenum, l,
+                 PyArray_DATA(ap1), PyArray_ITEMSIZE(ap1),
+                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2),
+                 PyArray_DATA(ret));
     }
     else if (PyArray_NDIM(ap1) == 2 && PyArray_NDIM(ap2) == 1) {
         /* Matrix-vector multiplication -- Level 2 BLAS */
@@ -834,6 +812,7 @@ cblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return NULL;
 }
 
+#if 0
 
 /*
  * vdot(a,b)

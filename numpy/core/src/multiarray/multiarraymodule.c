@@ -836,8 +836,18 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
-        goto fail;
+        Py_DECREF(ap1);
+        return NULL;
     }
+
+#if defined(HAVE_CBLAS)
+    if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
+            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+        return cblas_innerproduct(typenum, ap1, ap2);
+    }
+#endif
+
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
