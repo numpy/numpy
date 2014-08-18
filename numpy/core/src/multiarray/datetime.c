@@ -1920,21 +1920,25 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
     }
 
     if (PyBytes_AsStringAndSize(ascii, &str, &len) < 0) {
+        Py_DECREF(ascii);
         return -1;
     }
 
     if (len > 0 && str[0] == '[') {
-        return parse_datetime_metadata_from_metastr(str, len, out_meta);
+        int r = parse_datetime_metadata_from_metastr(str, len, out_meta);
+        Py_DECREF(ascii);
+        return r;
     }
     else {
         if (parse_datetime_extended_unit_from_string(str, len,
                                                 NULL, out_meta) < 0) {
+            Py_DECREF(ascii);
             return -1;
         }
 
+        Py_DECREF(ascii);
         return 0;
     }
-
 }
 
 /*
@@ -2380,7 +2384,6 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             Py_DECREF(bytes);
             return -1;
         }
-        Py_DECREF(bytes);
 
         /* Use the detected unit if none was specified */
         if (meta->base == -1) {
@@ -2389,9 +2392,11 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
+            Py_DECREF(bytes);
             return -1;
         }
 
+        Py_DECREF(bytes);
         return 0;
     }
     /* Do no conversion on raw integers */
@@ -2580,6 +2585,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 succeeded = 1;
             }
         }
+        Py_DECREF(bytes);
 
         if (succeeded) {
             /* Use generic units if none was specified */
