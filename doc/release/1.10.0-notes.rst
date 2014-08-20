@@ -8,6 +8,9 @@ Highlights
 ==========
 * numpy.distutils now supports parallel compilation via the --jobs/-j argument
   passed to setup.py build
+* Addition of `np.linalg.multi_dot`: compute the dot product of two or more
+  arrays in a single function call, while automatically selecting the fastest
+  evaluation order.
 
 
 Dropped Support
