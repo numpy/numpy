@@ -10,6 +10,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -31,6 +32,12 @@
 
 #include "numpyos.h"
 #include <string.h>
+
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.h"
+#include <cblas.h>
+#include <limits.h>
+#endif
 
 
 /*
@@ -3156,7 +3163,7 @@ NPY_NO_EXPORT void
         double sum = 0.;  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < CHUNKSIZE ? n : CHUNKSIZE;
+            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
 
             sum += cblas_@prefix@dot(chunk,
                                      (@type@ *) ip1, is1b,
@@ -3204,7 +3211,7 @@ NPY_NO_EXPORT void
         double sum[2] = {0., 0.};  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < CHUNKSIZE ? n : CHUNKSIZE;
+            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             @type@ tmp[2];
 
             cblas_@prefix@dotu_sub((int)n, ip1, is1b, ip2, is2b, tmp);
@@ -3232,12 +3239,13 @@ NPY_NO_EXPORT void
             const @type@ ip2i = ((@type@ *)ip2)[1];
 
             sumr += ip1r * ip2r - ip1i * ip2i;
-            sumi += ip1i * ip2r + ip1r * ip2i;
+            sumi += ip1r * ip2i + ip1i * ip2r;
         }
         ((@type@ *)op)[0] = sumr;
         ((@type@ *)op)[1] = sumi;
     }
 }
+
 /**end repeat**/
 
 /**************************** NO CBLAS VERSIONS *****************************/
@@ -3299,7 +3307,8 @@ HALF_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
     *((npy_half *)op) = npy_float_to_half(tmp);
 }
 
-static void CLONGDOUBLE_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
+static void
+CLONGDOUBLE_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
                             char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
     npy_longdouble tmpr = 0.0L;
@@ -3313,7 +3322,7 @@ static void CLONGDOUBLE_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
         const npy_longdouble ip2i = ((npy_longdouble *)ip2)[1];
 
         tmpr += ip1r * ip2r - ip1i * ip2i;
-        tmpi += ip1i * ip2r + ip1r * ip2i;
+        tmpi += ip1r * ip2i + ip1i * ip2r;
     }
     ((npy_longdouble *)op)[0] = tmpr;
     ((npy_longdouble *)op)[1] = tmpi;

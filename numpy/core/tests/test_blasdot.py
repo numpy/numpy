@@ -19,16 +19,6 @@ class TestInner(TestCase):
         p = inner_(a, a)
         assert_almost_equal(p, 0, decimal = DECPREC)
 
-try:
-    import numpy.core._dotblas as _dotblas
-except ImportError:
-    _dotblas = None
-
-@dec.skipif(_dotblas is None, "Numpy is not compiled with _dotblas")
-def test_blasdot_used():
-    from numpy.core import vdot, inner
-    assert_(vdot is _dotblas.vdot, "vdot")
-
 
 def test_dot_2args():
     from numpy.core import dot

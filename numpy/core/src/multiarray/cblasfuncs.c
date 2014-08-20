@@ -691,7 +691,6 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
     npy_intp dimensions[NPY_MAXDIMS];
     PyTypeObject *subtype;
 
-
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         /* One of ap1 or ap2 is a scalar */
         if (PyArray_NDIM(ap1) == 0) {
@@ -711,14 +710,14 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
          * (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2)
          *  Both ap1 and ap2 are vectors or matrices
          */
-        l = PyArray_DIM(ap1, PyArray_NDIM(ap1)-1);
+        l = PyArray_DIM(ap1, PyArray_NDIM(ap1) - 1);
 
-        if (PyArray_DIM(ap2, PyArray_NDIM(ap2)-1) != l) {
+        if (PyArray_DIM(ap2, PyArray_NDIM(ap2) - 1) != l) {
             PyErr_SetString(PyExc_ValueError,
                     "matrices are not aligned");
             goto fail;
         }
-        nd = PyArray_NDIM(ap1)+PyArray_NDIM(ap2)-2;
+        nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
 
         if (nd == 1)
             dimensions[0] = (PyArray_NDIM(ap1) == 2) ?
@@ -742,7 +741,8 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
     if (ret == NULL) {
         goto fail;
     }
-    NPY_BEGIN_ALLOW_THREADS
+
+    NPY_BEGIN_ALLOW_THREADS;
     memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
 
     if (PyArray_NDIM(ap2) == 0) {
@@ -800,115 +800,6 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
              PyArray_DIM(ap1, 0), PyArray_DIM(ap2, 0), PyArray_DIM(ap1, 1),
              ap1, lda, ap2, ldb, ret);
     }
-    NPY_END_ALLOW_THREADS
-    Py_DECREF(ap1);
-    Py_DECREF(ap2);
-    return PyArray_Return(ret);
-
- fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(ret);
-    return NULL;
-}
-
-#if 0
-
-/*
- * vdot(a,b)
- *
- * Returns the dot product of a and b for scalars and vectors of
- * floating point and complex types.  The first argument, a, is conjugated.
- */
-static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
-    PyObject *op1, *op2;
-    PyArrayObject *ap1 = NULL, *ap2  = NULL, *ret = NULL;
-    int l;
-    int typenum;
-    npy_intp dimensions[NPY_MAXDIMS];
-    PyArray_Descr *type;
-
-    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
-        return NULL;
-    }
-
-    /*
-     * Conjugating dot product using the BLAS for vectors.
-     * Multiplies op1 and op2, each of which must be vector.
-     */
-    typenum = PyArray_ObjectType(op1, 0);
-    typenum = PyArray_ObjectType(op2, typenum);
-
-    type = PyArray_DescrFromType(typenum);
-    Py_INCREF(type);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
-    if (ap1 == NULL) {
-        Py_DECREF(type);
-        goto fail;
-    }
-    op1 = PyArray_Flatten(ap1, 0);
-    if (op1 == NULL) {
-        Py_DECREF(type);
-        goto fail;
-    }
-    Py_DECREF(ap1);
-    ap1 = (PyArrayObject *)op1;
-
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
-    if (ap2 == NULL) {
-        goto fail;
-    }
-    op2 = PyArray_Flatten(ap2, 0);
-    if (op2 == NULL) {
-        goto fail;
-    }
-    Py_DECREF(ap2);
-    ap2 = (PyArrayObject *)op2;
-
-    if (typenum != NPY_FLOAT && typenum != NPY_DOUBLE &&
-        typenum != NPY_CFLOAT && typenum != NPY_CDOUBLE) {
-        if (PyTypeNum_ISCOMPLEX(typenum)) {
-            op1 = PyArray_Conjugate(ap1, NULL);
-            if (op1 == NULL) {
-                goto fail;
-            }
-            Py_DECREF(ap1);
-            ap1 = (PyArrayObject *)op1;
-        }
-        ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1,
-                                                    (PyObject *)ap2);
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
-        return PyArray_Return(ret);
-    }
-
-    if (PyArray_DIM(ap2, 0) != PyArray_DIM(ap1, PyArray_NDIM(ap1)-1)) {
-        PyErr_SetString(PyExc_ValueError, "vectors have different lengths");
-        goto fail;
-    }
-    l = PyArray_DIM(ap1, PyArray_NDIM(ap1)-1);
-
-    ret = (PyArrayObject *)PyArray_SimpleNew(0, dimensions, typenum);
-    if (ret == NULL) {
-        goto fail;
-    }
-
-    NPY_BEGIN_ALLOW_THREADS;
-
-    /* Dot product between two vectors -- Level 1 BLAS */
-    if (typenum == NPY_DOUBLE || typenum == NPY_FLOAT) {
-        blas_dot(typenum, l, PyArray_DATA(ap1), PyArray_ITEMSIZE(ap1),
-                 PyArray_DATA(ap2), PyArray_ITEMSIZE(ap2), PyArray_DATA(ret));
-    }
-    else if (typenum == NPY_CDOUBLE) {
-        cblas_zdotc_sub(l, (double *)PyArray_DATA(ap1), 1,
-                        (double *)PyArray_DATA(ap2), 1, (double *)PyArray_DATA(ret));
-    }
-    else if (typenum == NPY_CFLOAT) {
-        cblas_cdotc_sub(l, (float *)PyArray_DATA(ap1), 1,
-                        (float *)PyArray_DATA(ap2), 1, (float *)PyArray_DATA(ret));
-    }
-
     NPY_END_ALLOW_THREADS;
 
     Py_DECREF(ap1);
@@ -921,4 +812,3 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     Py_XDECREF(ret);
     return NULL;
 }
-#endif

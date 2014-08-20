@@ -772,6 +772,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
+            join('src', 'multiarray', 'vdot.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -838,7 +839,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
             join('src', 'multiarray', 'usertypes.c'),
-            join('src', 'multiarray', 'ucsnarrow.c')]
+            join('src', 'multiarray', 'ucsnarrow.c'),
+            join('src', 'multiarray', 'vdot.c'),
+            ]
 
     blas_info = get_info('blas_opt', 0)
     if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
@@ -950,28 +953,6 @@ def configuration(parent_package='',top_path=None):
                          libraries = ['npymath'],
                          )
 
-    #######################################################################
-    #                          _dotblas module                            #
-    #######################################################################
-
-    # Configure blasdot
-    blas_info = get_info('blas_opt', 0)
-    #blas_info = {}
-    def get_dotblas_sources(ext, build_dir):
-        if blas_info:
-            if ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
-                return ext.depends[:1]
-        # dotblas needs CBLAS, Fortran compiled BLAS will not work.
-        return None
-
-    config.add_extension('_dotblas',
-                         sources = [get_dotblas_sources],
-                         depends = [join('blasdot', '_dotblas.c'),
-                                  join('blasdot', 'cblas.h'),
-                                  ],
-                         include_dirs = ['blasdot'],
-                         extra_info = blas_info
-                         )
 
     #######################################################################
     #                        umath_tests module                           #

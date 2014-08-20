@@ -3,6 +3,7 @@
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
+#include <limits.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -207,6 +208,35 @@ _is_basic_python_type(PyObject * obj)
 
     return 0;
 }
+
+/*
+ * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
+ * (BLAS won't handle negative or zero strides the way we want).
+ */
+static NPY_INLINE int
+blas_stride(npy_intp stride, unsigned itemsize)
+{
+    /*
+     * Should probably check pointer alignment also, but this may cause
+     * problems if we require complex to be 16 byte aligned.
+     */
+    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
+        stride /= itemsize;
+        if (stride <= INT_MAX) {
+            return stride;
+        }
+    }
+    return 0;
+}
+
+/*
+ * Define a chunksize for CBLAS. CBLAS counts in integers.
+ */
+#if NPY_MAX_INTP > INT_MAX
+# define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
+#else
+# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
+#endif
 
 #include "ucsnarrow.h"
 
