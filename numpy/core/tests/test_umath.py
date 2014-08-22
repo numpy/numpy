@@ -540,6 +540,17 @@ class TestMaximum(_FilterInvalids):
         out  = np.array([nan, nan, nan])
         assert_equal(np.maximum(arg1, arg2), out)
 
+    def test_object_nans(self):
+        # Multiple checks to give this a chance to
+        # fail if cmp is used instead of rich compare.
+        # Failure cannot be guaranteed.
+        for i in range(1):
+            x = np.array(float('nan'), np.object)
+            y = 1.0
+            z = np.array(float('nan'), np.object)
+            assert_(np.maximum(x, y) == 1.0)
+            assert_(np.maximum(z, y) == 1.0)
+
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
@@ -586,6 +597,17 @@ class TestMinimum(_FilterInvalids):
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([nan, nan, nan])
         assert_equal(np.minimum(arg1, arg2), out)
+
+    def test_object_nans(self):
+        # Multiple checks to give this a chance to
+        # fail if cmp is used instead of rich compare.
+        # Failure cannot be guaranteed.
+        for i in range(1):
+            x = np.array(float('nan'), np.object)
+            y = 1.0
+            z = np.array(float('nan'), np.object)
+            assert_(np.minimum(x, y) == 1.0)
+            assert_(np.minimum(z, y) == 1.0)
 
     def test_complex_nans(self):
         nan = np.nan
