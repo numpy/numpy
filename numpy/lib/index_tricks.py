@@ -727,6 +727,7 @@ def fill_diagonal(a, val, wrap=False):
     # tall matrices no wrap
     >>> a = np.zeros((5, 3),int)
     >>> fill_diagonal(a, 4)
+    >>> a
     array([[4, 0, 0],
            [0, 4, 0],
            [0, 0, 4],
@@ -735,7 +736,8 @@ def fill_diagonal(a, val, wrap=False):
 
     # tall matrices wrap
     >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4)
+    >>> fill_diagonal(a, 4, wrap=True)
+    >>> a
     array([[4, 0, 0],
            [0, 4, 0],
            [0, 0, 4],
@@ -744,7 +746,8 @@ def fill_diagonal(a, val, wrap=False):
 
     # wide matrices
     >>> a = np.zeros((3, 5),int)
-    >>> fill_diagonal(a, 4)
+    >>> fill_diagonal(a, 4, wrap=True)
+    >>> a
     array([[4, 0, 0, 0, 0],
            [0, 4, 0, 0, 0],
            [0, 0, 4, 0, 0]])
