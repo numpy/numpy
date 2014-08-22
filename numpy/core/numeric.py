@@ -1082,10 +1082,54 @@ inner = multiarray.inner
 vdot = multiarray.vdot
 
 def alterdot():
+    """
+    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
+
+    Typically, as a user of Numpy, you do not explicitly call this
+    function. If Numpy is built with an accelerated BLAS, this function is
+    automatically called when Numpy is imported.
+
+    When Numpy is built with an accelerated BLAS like ATLAS, these
+    functions are replaced to make use of the faster implementations.  The
+    faster implementations only affect float32, float64, complex64, and
+    complex128 arrays. Furthermore, the BLAS API only includes
+    matrix-matrix, matrix-vector, and vector-vector products. Products of
+    arrays with larger dimensionalities use the built in functions and are
+    not accelerated.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and alterdot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    restoredot : `restoredot` undoes the effects of `alterdot`.
+
+    """
     warnings.warn("alterdot no longer does anything.", DeprecationWarning)
 
 
 def restoredot():
+    """
+    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
+    implementations.
+
+    Typically, the user will only need to call this when troubleshooting
+    and installation problem, reproducing the conditions of a build without
+    an accelerated BLAS, or when being very careful about benchmarking
+    linear algebra operations.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and restoredot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    alterdot : `restoredot` undoes the effects of `alterdot`.
+
+    """
     warnings.warn("restoredot no longer does anything.", DeprecationWarning)
 
 
