@@ -398,8 +398,7 @@ matmul = multiarray.matmul
 
 
 def asarray(a, dtype=None, order=None):
-    """
-    Convert the input to an array.
+    """Convert the input to an array.
 
     Parameters
     ----------
@@ -410,8 +409,9 @@ def asarray(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F' for FORTRAN)
-        memory representation.  Defaults to 'C'.
+        Whether to use row-major (C-style) or
+        column-major (Fortran-style) memory representation.
+        Defaults to 'C'.
 
     Returns
     -------
@@ -468,8 +468,7 @@ def asarray(a, dtype=None, order=None):
     return array(a, dtype, copy=False, order=order)
 
 def asanyarray(a, dtype=None, order=None):
-    """
-    Convert the input to an ndarray, but pass ndarray subclasses through.
+    """Convert the input to an ndarray, but pass ndarray subclasses through.
 
     Parameters
     ----------
@@ -480,8 +479,8 @@ def asanyarray(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F') memory
-        representation.  Defaults to 'C'.
+        Whether to use row-major (C-style) or column-major
+        (Fortran-style) memory representation.  Defaults to 'C'.
 
     Returns
     -------

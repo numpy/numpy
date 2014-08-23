@@ -547,8 +547,7 @@ def average(a, axis=None, weights=None, returned=False):
 
 
 def asarray_chkfinite(a, dtype=None, order=None):
-    """
-    Convert the input to an array, checking for NaNs or Infs.
+    """Convert the input to an array, checking for NaNs or Infs.
 
     Parameters
     ----------
@@ -559,8 +558,9 @@ def asarray_chkfinite(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Defaults to 'C'.
+         Whether to use row-major (C-style) or
+         column-major (Fortran-style) memory representation.
+         Defaults to 'C'.
 
     Returns
     -------

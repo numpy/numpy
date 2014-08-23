@@ -1,5 +1,4 @@
-"""
-==============
+"""==============
 Array indexing
 ==============
 
@@ -229,10 +228,13 @@ most straightforward case, the boolean array has the same shape: ::
  >>> y[b]
  array([21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34])
 
-The result is a 1-D array containing all the elements in the indexed
-array corresponding to all the true elements in the boolean array. As
-with index arrays, what is returned is a copy of the data, not a view
-as one gets with slices.
+Unlike in the case of integer index arrays, in the boolean case, the
+result is a 1-D array containing all the elements in the indexed array
+corresponding to all the true elements in the boolean array. The
+elements in the indexed array are always iterated and returned in
+:term:`row-major` (C-style) order. The result is also identical to
+``y[np.nonzero(b)]``. As with index arrays, what is returned is a copy
+of the data, not a view as one gets with slices.
 
 The result will be multidimensional if y has more dimensions than b.
 For example: ::
