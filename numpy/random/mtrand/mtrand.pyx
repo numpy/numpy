@@ -4250,12 +4250,12 @@ cdef class RandomState:
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
 
-        >>> mean = [0,0]
-        >>> cov = [[1,0],[0,100]] # diagonal covariance, points lie on x or y-axis
+        >>> mean = [0, 0]
+        >>> cov = [[1, 0], [0, 100]] # diagonal covariance, points lie on x or y-axis
 
         >>> import matplotlib.pyplot as plt
-        >>> x,y = np.random.multivariate_normal(mean,cov,5000).T
-        >>> plt.plot(x,y,'x'); plt.axis('equal'); plt.show()
+        >>> x, y = np.random.multivariate_normal(mean,cov,5000).T
+        >>> plt.plot(x, y, 'x'); plt.axis('equal'); plt.show()
 
         Note that the covariance matrix must be non-negative definite.
 
@@ -4269,16 +4269,16 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> mean = (1,2)
-        >>> cov = [[1,0],[1,0]]
-        >>> x = np.random.multivariate_normal(mean,cov,(3,3))
+        >>> mean = (1, 2)
+        >>> cov = [[1, 0], [1, 0]]
+        >>> x = np.random.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
         standard deviation:
 
-        >>> print list( (x[0,0,:] - mean) < 0.6 )
+        >>> print(list((x[0,0,:] - mean) < 0.6))
         [True, True]
 
         """
