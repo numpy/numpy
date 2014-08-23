@@ -279,7 +279,7 @@ def header_data_from_array_1_0(array):
     d['descr'] = dtype_to_descr(array.dtype)
     return d
 
-def _write_array_header(fp, d, version=None):
+def _write_array_header(fp, d, version=None,fixedheaderlen=0,extrapad=0):
     """ Write the header for an array and returns the version used
 
     Parameters
@@ -292,6 +292,10 @@ def _write_array_header(fp, d, version=None):
         None means use oldest that works
         explicit version will raise a ValueError if the format does not
         allow saving this data.  Default: None
+    fixedheaderlen: int, positive or zero, multiple of 16
+        If greater than zero, means the fixed number of bytes reserved for the array header in the binary file; useful if header
+        needs to be rewritten when some data is already present. Header will be padded with ' ' to specified length.
+        Must be a multiple of 16 to keep compatibility with padding convention. Default: 0
     Returns
     -------
     version : tuple of int
@@ -308,8 +312,23 @@ def _write_array_header(fp, d, version=None):
     # string, the header-length short and the header are aligned on a
     # 16-byte boundary.  Hopefully, some system, possibly memory-mapping,
     # can take advantage of our premature optimization.
+
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
+
+    current_header_len += topad
+    if fixedheaderlen >= current_header_len:
+        if (fixedheaderlen % 16) > 0 or extrapad != 0:
+            raise ValueError("fixedheaderlen is not a multiple of 16 or both fixedheaderlen"
+                    "and extrapad are specified")
+        topad += fixedheaderlen - current_header_len
+        current_header_len = fixedheaderlen
+    elif fixedheaderlen != 0:
+        raise ValueError("Requested header size is too small or negative.")
+    else:
+        topad += extrapad
+        current_header_len += extrapad
+
     header = header + ' '*topad + '\n'
     header = asbytes(_filter_header(header))
 
@@ -327,7 +346,7 @@ def _write_array_header(fp, d, version=None):
 
     fp.write(header_prefix)
     fp.write(header)
-    return version
+    return version, current_header_len
 
 def write_array_header_1_0(fp, d):
     """ Write the header for an array using the 1.0 format.
@@ -552,7 +571,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     """
     _check_version(version)
     used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
-                                   version)
+                                   version)[0]
     # this warning can be removed when 1.9 has aged enough
     if version != (2, 0) and used_ver == (2, 0):
         warnings.warn("Stored array in format 2.0. It can only be"
@@ -746,7 +765,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            used_ver = _write_array_header(fp, d, version)
+            used_ver = _write_array_header(fp, d, version)[0]
             # this warning can be removed when 1.9 has aged enough
             if version != (2, 0) and used_ver == (2, 0):
                 warnings.warn("Stored array in format 2.0. It can only be"
