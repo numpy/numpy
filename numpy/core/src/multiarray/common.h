@@ -3,6 +3,7 @@
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
+#include <numpy/npy_3kcompat.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -68,9 +69,6 @@ NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
-
-NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 
 
 /*
@@ -208,16 +206,121 @@ _is_basic_python_type(PyObject * obj)
     return 0;
 }
 
+
+/**
+ * Convert an array shape to a string such as "(1, 2)".
+ *
+ * @param Dimensionality of the shape
+ * @param npy_intp pointer to shape array
+ * @param String to append after the shape `(1, 2)%s`.
+ *
+ * @return Python unicode string
+ */
+static NPY_INLINE PyObject *
+convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if it's a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    for (i = 0; i < n && vals[i] < 0; i++);
+
+    if (i == n) {
+        return PyUString_FromFormat("()%s", ending);
+    }
+    else {
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyUString_FromString(",newaxis");
+        }
+        else {
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+        }
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        PyUString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    if (i == 1) {
+        tmp = PyUString_FromFormat(",)%s", ending);
+    }
+    else {
+        tmp = PyUString_FromFormat(")%s", ending);
+    }
+    PyUString_ConcatAndDel(&ret, tmp);
+    return ret;
+}
+
+
 /*
  * Sets ValueError with "matrices not aligned" message for np.dot and friends
- * when shape[i] = m doesn't match shape[j] = n.
+ * when a.shape[i] should match b.shape[j], but doesn't.
  */
 static NPY_INLINE void
-not_aligned(int i, int j, Py_ssize_t m, Py_ssize_t n)
+not_aligned(PyArrayObject *a, int i, PyArrayObject *b, int j)
 {
-    PyErr_Format(PyExc_ValueError,
-                 "matrices are not aligned: shape[%d] (%zd) != shape[%d] (%zd)",
-                 i, m, j, n);
+    PyObject *errmsg = NULL, *format = NULL, *fmt_args = NULL,
+             *i_obj = NULL, *j_obj = NULL,
+             *shape1 = NULL, *shape2 = NULL,
+             *shape1_i = NULL, *shape2_j = NULL;
+
+    format = PyUString_FromString("shapes %s and %s not aligned:"
+                                  " %d (dim %d) != %d (dim %d)");
+
+    shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
+    shape2 = convert_shape_to_string(PyArray_NDIM(b), PyArray_DIMS(b), "");
+
+    i_obj = PyLong_FromLong(i);
+    j_obj = PyLong_FromLong(j);
+
+    shape1_i = PyLong_FromSsize_t(PyArray_DIM(a, i));
+    shape2_j = PyLong_FromSsize_t(PyArray_DIM(b, j));
+
+    if (!format || !shape1 || !shape2 || !i_obj || !j_obj ||
+            !shape1_i || !shape2_j) {
+        goto end;
+    }
+
+    fmt_args = PyTuple_Pack(6, shape1, shape2,
+                            shape1_i, i_obj, shape2_j, j_obj);
+    if (fmt_args == NULL) {
+        goto end;
+    }
+
+    errmsg = PyUString_Format(format, fmt_args);
+    if (errmsg != NULL) {
+        PyErr_SetObject(PyExc_ValueError, errmsg);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "shapes are not aligned");
+    }
+
+end:
+    Py_XDECREF(errmsg);
+    Py_XDECREF(fmt_args);
+    Py_XDECREF(format);
+    Py_XDECREF(i_obj);
+    Py_XDECREF(j_obj);
+    Py_XDECREF(shape1);
+    Py_XDECREF(shape2);
+    Py_XDECREF(shape1_i);
+    Py_XDECREF(shape2_j);
 }
 
 #include "ucsnarrow.h"

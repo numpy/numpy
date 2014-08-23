@@ -841,8 +841,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_DIMS(ap2)[PyArray_NDIM(ap2) - 1] != l) {
-        not_aligned(PyArray_NDIM(ap1) - 1, PyArray_NDIM(ap2) - 1,
-                    l, PyArray_DIMS(ap2)[PyArray_NDIM(ap2) - 1]);
+        not_aligned(ap1, PyArray_NDIM(ap1) - 1, ap2, PyArray_NDIM(ap2) - 1);
         goto fail;
     }
 
@@ -962,8 +961,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         matchDim = 0;
     }
     if (PyArray_DIMS(ap2)[matchDim] != l) {
-        not_aligned(PyArray_NDIM(ap1) - 1, matchDim,
-                    l, PyArray_DIMS(ap2)[matchDim]);
+        not_aligned(ap1, PyArray_NDIM(ap1) - 1, ap2, matchDim);
         goto fail;
     }
     nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
