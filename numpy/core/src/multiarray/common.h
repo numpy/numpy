@@ -208,6 +208,18 @@ _is_basic_python_type(PyObject * obj)
     return 0;
 }
 
+/*
+ * Sets ValueError with "matrices not aligned" message for np.dot and friends
+ * when shape[i] = m doesn't match shape[j] = n.
+ */
+static NPY_INLINE void
+not_aligned(int i, int j, Py_ssize_t m, Py_ssize_t n)
+{
+    PyErr_Format(PyExc_ValueError,
+                 "matrices are not aligned: shape[%d] (%zd) != shape[%d] (%zd)",
+                 i, m, j, n);
+}
+
 #include "ucsnarrow.h"
 
 #endif

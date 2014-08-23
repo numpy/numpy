@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "common.h"
 #include "ufunc_override.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
@@ -529,7 +530,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
             l = PyArray_DIM(oap1, PyArray_NDIM(oap1) - 1);
 
             if (PyArray_DIM(oap2, 0) != l) {
-                PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+                not_aligned(PyArray_NDIM(oap1) - 1, 0,
+                            l, PyArray_DIM(oap2, 0));
                 goto fail;
             }
             nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
@@ -579,7 +581,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1) - 1);
 
         if (PyArray_DIM(ap2, 0) != l) {
-            PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+            not_aligned(PyArray_NDIM(ap1) - 1, 0,
+                        l, PyArray_DIM(ap2, 0));
             goto fail;
         }
         nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
@@ -1007,7 +1010,8 @@ dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1)-1);
 
         if (PyArray_DIM(ap2, PyArray_NDIM(ap2)-1) != l) {
-            PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+            not_aligned(PyArray_NDIM(ap1) - 1, PyArray_NDIM(ap2) - 1,
+                        l, PyArray_DIM(ap2, PyArray_NDIM(ap2) - 1));
             goto fail;
         }
         nd = PyArray_NDIM(ap1)+PyArray_NDIM(ap2)-2;
