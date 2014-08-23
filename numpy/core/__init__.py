@@ -3,15 +3,14 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
-
-# disables openblas affinity setting of the main thread that limits
+# disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 import os
 envbak = os.environ.copy()
-if 'openblas_main_free' not in os.environ:
-    os.environ['openblas_main_free'] = '1'
-if 'gotoblas_main_free' not in os.environ:
-    os.environ['gotoblas_main_free'] = '1'
+if 'OPENBLAS_MAIN_FREE' not in os.environ:
+    os.environ['OPENBLAS_MAIN_FREE'] = '1'
+if 'GOTOBLAS_MAIN_FREE' not in os.environ:
+    os.environ['GOTOBLAS_MAIN_FREE'] = '1'
 from . import multiarray
 os.environ.clear()
 os.environ.update(envbak)
