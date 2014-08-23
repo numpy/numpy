@@ -33,7 +33,7 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource','IncrementalWriter'
     ]
 
 
@@ -252,6 +252,99 @@ class NpzFile(object):
 
     def __contains__(self, key):
         return self.files.__contains__(key)
+
+class IncrementalWriter:
+    """
+    Class for the incremental writing of compatible multiple numpy array into one binary .npy file by concatenating the arrays.
+    Creating an instance opens the file. First call to ``save()`` write header to file and saves dtype in the object instance. Subsequent calls to ``save()`` 
+    append data to existing file and updates the header.; written arrays may differ only in axis 0. Support only writing in C order."""
+#TODO: implement header reading to open for append and for partial reading.
+    EXTRAPAD=32
+    def __init__(self, fname, flush=True, hdrupdate=False,version=None,mode='wb'):
+        """
+        Prepares an instance for multiple calls of ``save()`` for incremental data writing into a binary ``.npy`` file.
+
+        Parameters
+        ----------
+        fname :file-like object or string
+            Name of the file or file-like object supporting seek() and write()
+        flush: bool, optional
+            Calls ``flush()`` at the end of each ``save()``.
+        hdrupdate: bool, optional
+            updates header after each call to save, (seeks back to beginning of the file, rewrites header then seeks to end). Otherwise header will be updated at close().
+        Without header update, header will contain the first data block."""
+        if isfileobj(fname):
+            self.fp = fname
+            self.hfilepos = fname.tell()
+        else:
+            self.fp = open(fname, mode)
+            self.hfilepos = 0
+        self.flush = flush
+        self.hdisklen = 0
+        self.hdrupdate = hdrupdate
+        self.version = version
+
+    def save(self, arr,headercheck=True):
+        arr=np.asanyarray(arr)
+        if len(arr.shape)<1:
+            raise ValueError("Array must be at least 1-dimensional.")
+        # In case of fortran contiguous arrays, tofile() would produce a fortran order file.
+        # At the moment we support the shape update for C order only
+        # If arr is neither, then we can assume that tofile() will generate C order 
+        # (same approach at format.write_array)
+        if arr.flags.f_contiguous and not arr.flags.c_contiguous:
+            raise NotImplemented,  "Fortran contiguous arrays are not implemented"
+        if arr.dtype.hasobject:
+            raise TypeError,  "Object arrays cannot be appended in .npy format"
+        if self.hdisklen==0:
+            # First call to save()
+            self.hdict=format.header_data_from_array_1_0(arr)
+            # Write header with extra padding
+            version, hdisklen = format._write_array_header(self.fp,self.hdict,version=self.version,extrapad=self.EXTRAPAD)
+            self.hdisklen = hdisklen
+        else:
+            newshape= (arr.shape[0] + self.hdict['shape'][0], ) +  arr.shape[1:]
+            if headercheck:
+                h_arr = format.header_data_from_array_1_0(arr)
+                self.hdict['shape'] = self.hdict['shape'][1:]
+                h_arr['shape'] = h_arr['shape'][1:]
+                # All description and shapes except axis 0 must be the same
+                if h_arr != self.hdict:
+                    raise ValueError,  "Incompatible array definition"
+            self.hdict['shape'] = newshape
+            if self.hdrupdate:
+                self.updateheader()
+
+        arr.tofile(self.fp) # Write data, it supposed to be C order in the file
+        if self.flush:
+            self.fp.flush()
+
+    def updateheader(self):
+        """
+        Seeks back to the origin of the file and rewrites the header updating the array's shape."""
+        if self.hdisklen>0:  # Else, we haven't written to the file anything
+            filepos=self.fp.tell()
+            self.fp.seek(self.hfilepos) # Back to the header beginning
+            format._write_array_header(self.fp,self.hdict, version=self.version, fixedlen=self.hdisklen)
+            self.fp.seek(filepos)
+
+    def close(self):
+        """
+        Updates the header in the file if necessary and closes the file writer."""
+        if self.fp is not None:
+            if not self.hdrupdate:
+                self.updateheader()
+            self.fp.close()
+            self.fp=None
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 
 def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
