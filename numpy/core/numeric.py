@@ -404,8 +404,8 @@ def asarray(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F' for FORTRAN)
-        memory representation.  Defaults to 'C'.
+        Whether to use :term:`row-major` ('C') or :term:`column-major`
+        ('F' for FORTRAN) memory representation.  Defaults to 'C'.
 
     Returns
     -------
@@ -474,8 +474,8 @@ def asanyarray(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F') memory
-        representation.  Defaults to 'C'.
+        Whether to use :term:`row-major` ('C') or :term:`column-major`
+        ('F') memory representation.  Defaults to 'C'.
 
     Returns
     -------

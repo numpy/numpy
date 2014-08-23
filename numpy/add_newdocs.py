@@ -28,9 +28,9 @@ add_newdoc('numpy.core', 'flatiter',
     It allows iterating over the array as if it were a 1-D array,
     either in a for-loop or by calling its `next` method.
 
-    Iteration is done in C-contiguous style, with the last index varying the
-    fastest. The iterator can also be indexed using basic slicing or
-    advanced indexing.
+    Iteration is done in :term:`row-major` order (C-contiguous style,
+    with the last index varying the fastest). The iterator can also be
+    indexed using basic slicing or advanced indexing.
 
     See Also
     --------

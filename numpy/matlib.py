@@ -21,8 +21,9 @@ def empty(shape, dtype=None, order='C'):
     dtype : data-type, optional
         Desired output data-type.
     order : {'C', 'F'}, optional
-        Whether to store multi-dimensional data in C (row-major) or
-        Fortran (column-major) order in memory.
+        Whether to store multi-dimensional data in :term:`row-major`
+        (C-style) or :term:`column-major` (Fortran-style) order in
+        memory.
 
     See Also
     --------

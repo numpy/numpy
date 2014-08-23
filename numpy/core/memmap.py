@@ -79,9 +79,10 @@ class memmap(ndarray):
         will be 1-D with the number of elements determined by file size
         and data-type.
     order : {'C', 'F'}, optional
-        Specify the order of the ndarray memory layout: C (row-major) or
-        Fortran (column-major).  This only has an effect if the shape is
-        greater than 1-D.  The default order is 'C'.
+        Specify the order of the ndarray memory layout:
+        :term:`row-major` ('C') or :term:`column-major` ('F').  This
+        only has an effect if the shape is greater than 1-D.  The
+        default order is 'C'.
 
     Attributes
     ----------
