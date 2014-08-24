@@ -252,12 +252,13 @@ class Gnu95FCompiler(GnuFCompiler):
     possible_executables = ['gfortran', 'f95']
     executables = {
         'version_cmd'  : ["<F90>", "--version"],
-        'compiler_f77' : [None, "-Wall", "-ffixed-form",
+        'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_f90' : [None, "-Wall", "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_fix' : [None, "-Wall", "-ffixed-form",
+        'compiler_f90' : [None, "-Wall", "-g",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'linker_so'    : ["<F90>", "-Wall"],
+        'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
+                          "-fno-second-underscore"] + _EXTRAFLAGS,
+        'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
         'linker_exe'   : [None, "-Wall"]
