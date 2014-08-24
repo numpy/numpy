@@ -1865,6 +1865,14 @@ class TestScoreatpercentile(TestCase):
         np.percentile(a, [50])
         assert_equal(a, np.array([2, 3, 4, 1]))
 
+    def test_no_p_overwrite(self):
+        p = np.linspace(0., 100., num=5)
+        np.percentile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, np.linspace(0., 100., num=5))
+        p = np.linspace(0., 100., num=5).tolist()
+        np.percentile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, np.linspace(0., 100., num=5).tolist())
+
     def test_percentile_overwrite(self):
         a = np.array([2, 3, 4, 1])
         b = np.percentile(a, [50], overwrite_input=True)
