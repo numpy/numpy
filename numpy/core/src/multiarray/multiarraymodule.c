@@ -860,7 +860,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_DIMS(ap2)[PyArray_NDIM(ap2) - 1] != l) {
-        PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+        dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1,
+                            ap2, PyArray_NDIM(ap2) - 1);
         goto fail;
     }
 
@@ -1001,7 +1002,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         matchDim = 0;
     }
     if (PyArray_DIMS(ap2)[matchDim] != l) {
-        PyErr_SetString(PyExc_ValueError, "objects are not aligned");
+        dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1, ap2, matchDim);
         goto fail;
     }
     nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
