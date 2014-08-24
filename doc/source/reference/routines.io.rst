@@ -12,6 +12,7 @@ Numpy binary files (NPY, NPZ)
    save
    savez
    savez_compressed
+   IncrementalWriter
 
 The format of these binary file types is documented in
 http://docs.scipy.org/doc/numpy/neps/npy-format.html  
