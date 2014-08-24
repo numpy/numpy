@@ -3031,7 +3031,7 @@ def percentile(a, q, axis=None, out=None,
     array([ 3.5])
 
     """
-    q = asarray(q, dtype=np.float64)
+    q = array(q, dtype=np.float64, copy=True)
     r, k = _ureduce(a, func=_percentile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
