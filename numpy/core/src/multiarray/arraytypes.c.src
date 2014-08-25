@@ -3696,6 +3696,7 @@ static int
  * #align = char, char, npy_ucs4#
  * #NAME = Void, String, Unicode#
  * #endian = |, |, =#
+ * #flags = 0, 0, NPY_NEEDS_INIT#
  */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
@@ -3775,8 +3776,8 @@ static PyArray_Descr @from@_Descr = {
     NPY_@from@LTR,
     /* byteorder */
     '@endian@',
-    /* flags */
-    0,
+    /* flags, unicode needs init as py3.3 does not like printing garbage  */
+    @flags@,
     /* type_num */
     NPY_@from@,
     /* elsize */
