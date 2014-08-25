@@ -220,6 +220,9 @@ class GnuFCompiler(FCompiler):
     def get_flags_arch(self):
         return []
 
+    def runtime_library_dir_option(self, dir):
+        return '-Wl,-rpath="%s"' % dir
+
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
     compiler_aliases = ('gfortran',)
