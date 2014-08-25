@@ -710,7 +710,7 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
          */
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1) - 1);
 
-        if (PyArray_DIM(ap2, PyArray_NDIM(ap2)-1) != l) {
+        if (PyArray_DIM(ap2, PyArray_NDIM(ap2) - 1) != l) {
             dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1,
                                 ap2, PyArray_NDIM(ap2) - 1);
             goto fail;
