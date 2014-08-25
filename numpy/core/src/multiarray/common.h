@@ -73,6 +73,13 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 
+/*
+ * Sets ValueError with "matrices not aligned" message for np.dot and friends
+ * when a.shape[i] should match b.shape[j], but doesn't.
+ */
+NPY_NO_EXPORT void
+dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
+
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for
