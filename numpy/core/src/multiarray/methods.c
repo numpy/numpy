@@ -1901,6 +1901,16 @@ array_dumps(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
+array_sizeof(PyArrayObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+    return PyObject_GetAttrString(self, "nbytes");
+}
+
+
+static PyObject *
 array_transpose(PyArrayObject *self, PyObject *args)
 {
     PyObject *shape = Py_None;
@@ -2306,6 +2316,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
+        METH_VARARGS, NULL},
+
+    /* for the sys module */
+    {"__sizeof__",
+        (PyCFunction) array_sizeof,
         METH_VARARGS, NULL},
 
     /* for the copy module */

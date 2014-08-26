@@ -1921,6 +1921,11 @@ static PyMethodDef gentype_methods[] = {
         (PyCFunction)gentype_wraparray,
         METH_VARARGS, doc_sc_wraparray},
 
+    /* for the sys module */
+    {"__sizeof__",
+        (PyCFunction)gentype_itemsize_get,
+        METH_VARARGS, NULL},
+
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype_copy,

@@ -4566,5 +4566,31 @@ class TestWhere(TestCase):
         assert_equal(np.where(False, b, a), "abcd")
 
 
+class TestSizeOf(TestCase):
+
+    def test_empty_array(self):
+        x = np.array([])
+        assert_equal(0, sys.getsizeof(x))
+
+    def check_array(self, dtype):
+        elem_size = sys.getsizeof(dtype(0))
+
+        for length in [10, 50, 100, 500]:
+            x = np.arange(length, dtype=dtype)
+            assert_equal(length * elem_size, sys.getsizeof(x))
+
+    def test_array_int32(self):
+        self.check_array(np.int32)
+
+    def test_array_int64(self):
+        self.check_array(np.int64)
+
+    def test_array_float32(self):
+        self.check_array(np.float32)
+
+    def test_array_float64(self):
+        self.check_array(np.float64)
+
+
 if __name__ == "__main__":
     run_module_suite()
