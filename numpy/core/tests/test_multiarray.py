@@ -586,6 +586,12 @@ class TestCreation(TestCase):
         assert_array_equal(zeros_like(d), d)
         assert_equal(zeros_like(d).dtype, d.dtype)
 
+    def test_empty_unicode(self):
+        # don't throw decode errors on garbage memory
+        for i in range(5, 100, 5):
+            d = np.empty(i, dtype='U')
+            str(d)
+
     def test_sequence_non_homogenous(self):
         assert_equal(np.array([4, 2**80]).dtype, np.object)
         assert_equal(np.array([4, 2**80, 4]).dtype, np.object)
