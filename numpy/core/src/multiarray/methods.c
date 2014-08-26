@@ -1901,12 +1901,15 @@ array_dumps(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_sizeof(PyArrayObject *self, PyObject *args)
+array_sizeof(PyArrayObject *self)
 {
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
+    /* object + dimension and strides */
+    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+        PyArray_NDIM(self) * sizeof(npy_intp) * 2;
+    if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
+        nbytes += PyArray_NBYTES(self);
     }
-    return PyObject_GetAttrString(self, "nbytes");
+    return PyLong_FromSsize_t(nbytes);
 }
 
 
@@ -2321,7 +2324,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for the sys module */
     {"__sizeof__",
         (PyCFunction) array_sizeof,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
 
     /* for the copy module */
     {"__copy__",

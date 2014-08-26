@@ -4570,14 +4570,14 @@ class TestSizeOf(TestCase):
 
     def test_empty_array(self):
         x = np.array([])
-        assert_equal(0, sys.getsizeof(x))
+        assert_(sys.getsizeof(x) > 0)
 
     def check_array(self, dtype):
-        elem_size = sys.getsizeof(dtype(0))
+        elem_size = dtype(0).itemsize
 
         for length in [10, 50, 100, 500]:
             x = np.arange(length, dtype=dtype)
-            assert_equal(length * elem_size, sys.getsizeof(x))
+            assert_(sys.getsizeof(x) > length * elem_size)
 
     def test_array_int32(self):
         self.check_array(np.int32)
@@ -4590,6 +4590,26 @@ class TestSizeOf(TestCase):
 
     def test_array_float64(self):
         self.check_array(np.float64)
+
+    def test_view(self):
+        d = np.ones(100)
+        assert_(sys.getsizeof(d[...]) < sys.getsizeof(d))
+
+    def test_reshape(self):
+        d = np.ones(100)
+        assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
+
+    def test_resize(self):
+        d = np.ones(100)
+        old = sys.getsizeof(d)
+        d.resize(50)
+        assert_(old > sys.getsizeof(d))
+        d.resize(150)
+        assert_(old < sys.getsizeof(d))
+
+    def test_error(self):
+        d = np.ones(100)
+        assert_raises(TypeError, d.__sizeof__, "a")
 
 
 if __name__ == "__main__":

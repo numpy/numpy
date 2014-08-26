@@ -277,7 +277,11 @@ class TestSizeOf(TestCase):
     def test_equal_nbytes(self):
         for type in types:
             x = type(0)
-            assert_equal(sys.getsizeof(x), x.nbytes)
+            assert_(sys.getsizeof(x) > x.nbytes)
+
+    def test_error(self):
+        d = np.float32()
+        assert_raises(TypeError, d.__sizeof__, "a")
 
 
 if __name__ == "__main__":
