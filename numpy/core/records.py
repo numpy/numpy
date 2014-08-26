@@ -284,8 +284,7 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(ndarray):
-    """
-    Construct an ndarray that allows field access using attributes.
+    """Construct an ndarray that allows field access using attributes.
 
     Arrays may have a data-types containing fields, analogous
     to columns in a spread sheet.  An example is ``[(x, int), (y, float)]``,
@@ -334,7 +333,8 @@ class recarray(ndarray):
     offset : int, optional
         Start reading buffer (`buf`) from this offset onwards.
     order : {'C', 'F'}, optional
-        :term:`Row-major <row-major>` or :term:`column-major` order.
+        :term:`Row-major <row-major>`, C-style or
+        :term:`column-major`, Fortran-style order.
 
     Returns
     -------

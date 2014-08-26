@@ -1281,8 +1281,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     return asarray(a).trace(offset, axis1, axis2, dtype, out)
 
 def ravel(a, order='C'):
-    """
-    Return a flattened array.
+    """Return a flattened array.
 
     A 1-D array, containing the elements of the input, is returned.  A copy is
     made only if needed.
@@ -1294,10 +1293,10 @@ def ravel(a, order='C'):
         `order`, and packed as a 1-D array.
     order : {'C','F', 'A', 'K'}, optional
         The elements of `a` are read using this index order. 'C' means
-        to index the elements in :term:`row-major` (C-like) order,
+        to index the elements in :term:`row-major`, C-style order,
         with the last axis index changing fastest, back to the first
         axis index changing slowest.  'F' means to index the elements
-        in :term:`column-major` (Fortran-like) index order, with the
+        in :term:`column-major`, Fortran-style order, with the
         first index changing fastest, and the last index changing
         slowest. Note that the 'C' and 'F' options take no account of
         the memory layout of the underlying array, and only refer to
@@ -1321,12 +1320,12 @@ def ravel(a, order='C'):
 
     Notes
     -----
-    In :term:`row-major` (C-like) order, in two dimensions, the row
+    In :term:`row-major`, C-style order, in two dimensions, the row
     index varies the slowest, and the column index the quickest.  This
     can be generalized to multiple dimensions, where row-major order
     implies that the index along the first axis varies slowest, and
     the index along the last quickest.  The opposite holds for
-    Fortran-like, or column-major, index ordering.
+    :term:`column-major`, Fortran-style index ordering.
 
     Examples
     --------
@@ -1380,7 +1379,7 @@ def nonzero(a):
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
-    :term:`row-major` (C-style) order. The corresponding non-zero
+    :term:`row-major`, C-style order. The corresponding non-zero
     values can be obtained with::
 
         a[nonzero(a)]

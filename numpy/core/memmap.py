@@ -21,8 +21,7 @@ mode_equivalents = {
     }
 
 class memmap(ndarray):
-    """
-    Create a memory-map to an array stored in a *binary* file on disk.
+    """Create a memory-map to an array stored in a *binary* file on disk.
 
     Memory-mapped files are used for accessing small segments of large files
     on disk, without reading the entire file into memory.  Numpy's
@@ -80,9 +79,9 @@ class memmap(ndarray):
         and data-type.
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
-        :term:`row-major` ('C') or :term:`column-major` ('F').  This
-        only has an effect if the shape is greater than 1-D.  The
-        default order is 'C'.
+        :term:`row-major`, C-style or :term:`column-major`,
+        Fortran-style.  This only has an effect if the shape is
+        greater than 1-D.  The default order is 'C'.
 
     Attributes
     ----------
