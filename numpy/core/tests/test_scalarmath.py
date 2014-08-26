@@ -271,5 +271,18 @@ class TestRepr(object):
         for t in [np.float32, np.float64]:
             yield self._test_type_repr, t
 
+
+class TestSizeOf(TestCase):
+
+    def test_equal_nbytes(self):
+        for type in types:
+            x = type(0)
+            assert_(sys.getsizeof(x) > x.nbytes)
+
+    def test_error(self):
+        d = np.float32()
+        assert_raises(TypeError, d.__sizeof__, "a")
+
+
 if __name__ == "__main__":
     run_module_suite()
