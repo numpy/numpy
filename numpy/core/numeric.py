@@ -985,7 +985,7 @@ def convolve(a,v,mode='full'):
     array([ 2.5])
 
     """
-    a, v = array(a, ndmin=1), array(v, ndmin=1)
+    a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
     if len(a) == 0 :
