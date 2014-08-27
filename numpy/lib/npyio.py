@@ -1574,22 +1574,25 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                           for (miss, fill) in zipit]
     # Update the converters to use the user-defined ones
     uc_update = []
-    for (i, conv) in user_converters.items():
+    for (j, conv) in user_converters.items():
         # If the converter is specified by column names, use the index instead
-        if _is_string_like(i):
+        if _is_string_like(j):
             try:
-                i = names.index(i)
+                j = names.index(j)
+                i = j
             except ValueError:
                 continue
         elif usecols:
             try:
-                i = usecols.index(i)
+                i = usecols.index(j)
             except ValueError:
                 # Unused converter specified
                 continue
-        # Find the value to test:
+        else:
+            i = j
+        # Find the value to test - first_line is not filtered by usecols:
         if len(first_line):
-            testing_value = first_values[i]
+            testing_value = first_values[j]
         else:
             testing_value = None
         converters[i].update(conv, locked=True,
