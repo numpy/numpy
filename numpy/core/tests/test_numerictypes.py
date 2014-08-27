@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 from numpy.testing import *
 from numpy.compat import asbytes, asunicode
 import numpy as np
@@ -363,7 +364,9 @@ class TestMultipleFields(TestCase):
     def setUp(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
     def _bad_call(self):
-        return self.ary['f0', 'f1']
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            return self.ary['f0', 'f1']
     def test_no_tuple(self):
         self.assertRaises(IndexError, self._bad_call)
     def test_return(self):

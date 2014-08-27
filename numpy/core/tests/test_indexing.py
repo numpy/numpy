@@ -34,8 +34,8 @@ class TestIndexing(TestCase):
 
         # Regression, it needs to fall through integer and fancy indexing
         # cases, so need the with statement to ignore the non-integer error.
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', '', DeprecationWarning)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', DeprecationWarning)
             a = np.array([1.])
             assert_(isinstance(a[0.], np.float_))
 
@@ -111,7 +111,9 @@ class TestIndexing(TestCase):
         # Index out of bounds produces IndexError
         assert_raises(IndexError, a.__getitem__, 1<<30)
         # Index overflow produces IndexError
-        assert_raises(IndexError, a.__getitem__, 1<<64)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            assert_raises(IndexError, a.__getitem__, 1<<64)
 
     def test_single_bool_index(self):
         # Single boolean index
