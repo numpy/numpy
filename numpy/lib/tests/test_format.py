@@ -676,6 +676,8 @@ def test_bad_header():
 
 def test_large_file_support():
     from nose import SkipTest
+    if (sys.platform == 'win32' or sys.platform == 'cygwin'):
+        raise SkipTest("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
     tf_name = os.path.join(tempdir, 'sparse_file')
     try:
