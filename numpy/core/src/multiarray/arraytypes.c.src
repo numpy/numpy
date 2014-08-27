@@ -5,6 +5,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "npy_pycompat.h"
@@ -19,6 +20,9 @@
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+#include <emmintrin.h>
+#endif
 
 #include "numpyos.h"
 #include <string.h>
@@ -2759,26 +2763,52 @@ finish:
 
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
 
+static int
+BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
+            PyArrayObject *NPY_UNUSED(aip))
+
+{
+    npy_intp i = 0;
+    /* memcmp like logical_and on i386 is maybe slower for small arrays */
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+    const __m128i zero = _mm_setzero_si128();
+    for (; i < n - (n % 32); i+=32) {
+        __m128i d1 = _mm_loadu_si128((__m128i*)&ip[i]);
+        __m128i d2 = _mm_loadu_si128((__m128i*)&ip[i + 16]);
+        d1 = _mm_cmpeq_epi8(d1, zero);
+        d2 = _mm_cmpeq_epi8(d2, zero);
+        if (_mm_movemask_epi8(_mm_min_epu8(d1, d2)) != 0xFFFF) {
+            break;
+        }
+    }
+#endif
+    for (; i < n; i++) {
+        if (ip[i]) {
+            *max_ind = i;
+            return 0;
+        }
+    }
+    *max_ind = 0;
+    return 0;
+}
+
 /**begin repeat
  *
- * #fname = BOOL,
- *          BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *          LONG, ULONG, LONGLONG, ULONGLONG,
  *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          DATETIME, TIMEDELTA#
- * #type = npy_bool,
- *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
- * #isbool = 1, 0*19#
- * #isfloat = 0*11, 1*7, 0*2#
- * #isnan = nop*11, npy_half_isnan, npy_isnan*6, nop*2#
- * #le = _LESS_THAN_OR_EQUAL*11, npy_half_le, _LESS_THAN_OR_EQUAL*8#
- * #iscomplex = 0*15, 1*3, 0*2#
- * #incr = ip++*15, ip+=2*3, ip++*2#
+ * #isfloat = 0*10, 1*7, 0*2#
+ * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
+ * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
+ * #iscomplex = 0*14, 1*3, 0*2#
+ * #incr = ip++*14, ip+=2*3, ip++*2#
  */
 static int
 @fname@_argmax(@type@ *ip, npy_intp n, npy_intp *max_ind,
@@ -2801,12 +2831,6 @@ static int
 #if @iscomplex@
     if (@isnan@(mp_im)) {
         /* nan encountered; it's maximal */
-        return 0;
-    }
-#endif
-#if @isbool@
-    if (mp) {
-        /* True encountered; it's maximal */
         return 0;
     }
 #endif
@@ -2835,12 +2859,6 @@ static int
 #if @isfloat@
             if (@isnan@(mp)) {
                 /* nan encountered, it's maximal */
-                break;
-            }
-#endif
-#if @isbool@
-            if (mp) {
-                /* True encountered; it's maximal */
                 break;
             }
 #endif
