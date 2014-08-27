@@ -111,7 +111,9 @@ class TestIndexing(TestCase):
         # Index out of bounds produces IndexError
         assert_raises(IndexError, a.__getitem__, 1<<30)
         # Index overflow produces IndexError
-        assert_raises(IndexError, a.__getitem__, 1<<64)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            assert_raises(IndexError, a.__getitem__, 1<<64)
 
     def test_single_bool_index(self):
         # Single boolean index
