@@ -1920,6 +1920,13 @@ class _TestCorrelate(TestCase):
         z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z2)
 
+    def test_no_overwrite(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        np.correlate(d, k)
+        assert_array_equal(d, np.ones(100))
+        assert_array_equal(k, np.ones(3))
+
 class TestCorrelate(_TestCorrelate):
     old_behavior = True
     def _setup(self, dt):
@@ -1957,6 +1964,19 @@ class TestCorrelateNew(_TestCorrelate):
         r_z = r_z[::-1].conjugate()
         z = np.correlate(y, x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, r_z)
+
+class TestConvolve(TestCase):
+    def test_object(self):
+        d = [1.] * 100
+        k = [1.] * 3
+        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3))
+
+    def test_no_overwrite(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        np.convolve(d, k)
+        assert_array_equal(d, np.ones(100))
+        assert_array_equal(k, np.ones(3))
 
 class TestArgwhere(object):
     def test_2D(self):
