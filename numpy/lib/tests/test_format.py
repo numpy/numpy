@@ -678,28 +678,28 @@ def test_bad_header():
 
 def test_large_file_support():
     from nose import SkipTest
+    if (sys.platform == 'win32' or sys.platform == 'cygwin'):
+        raise SkipTest("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
-    with tempfile.NamedTemporaryFile() as tf:
-        try:
-            # seek past end would work too, but linux truncate somewhat
-            # increases the chances that we have a sparse filesystem and can
-            # avoid actually writing 5GB
-            import subprocess as sp
-            sp.check_call(["truncate", "-s", "5368709120", tf.name])
-        except:
-            raise SkipTest("Could not create 5GB large file")
-        # write a small array to the end
-        f = open(tf.name, "wb")
+    tf_name = os.path.join(tempdir, 'sparse_file')
+    try:
+        # seek past end would work too, but linux truncate somewhat
+        # increases the chances that we have a sparse filesystem and can
+        # avoid actually writing 5GB
+        import subprocess as sp
+        sp.check_call(["truncate", "-s", "5368709120", tf_name])
+    except:
+        raise SkipTest("Could not create 5GB large file")
+    # write a small array to the end
+    with open(tf_name, "wb") as f:
         f.seek(5368709120)
         d = np.arange(5)
         np.save(f, d)
-        f.close()
-        # read it back
-        f = open(tf.name, "rb")
+    # read it back
+    with open(tf_name, "rb") as f:
         f.seek(5368709120)
         r = np.load(f)
-        f.close()
-        assert_array_equal(r, d)
+    assert_array_equal(r, d)
 
 
 if __name__ == "__main__":
