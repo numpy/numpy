@@ -23,6 +23,8 @@ class DummyArray(object):
 def as_strided(x, shape=None, strides=None, subok=False):
     """ Make an ndarray from the given array with the given shape and strides.
     """
+    # first convert input to array, possibly keeping subclass
+    x = np.array(x, copy=False, subok=subok)
     interface = dict(x.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
@@ -32,11 +34,13 @@ def as_strided(x, shape=None, strides=None, subok=False):
     # Make sure dtype is correct in case of custom dtype
     if array.dtype.kind == 'V':
         array.dtype = x.dtype
-    if subok and isinstance(x, np.ndarray) and type(x) is not type(array):
+    if type(x) is not type(array):
+        # if input was an ndarray subclass and subclasses were OK,
+        # then view the result as that subclass.
         array = array.view(type=type(x))
-        # we have done something akin to a view from x, so we should let a
-        # possible subclass finalize (if it has it implemented)
-        if callable(getattr(array, '__array_finalize__', None)):
+        # Since we have done something akin to a view from x, we should let
+        # the subclass finalize (if it has it implemented, i.e., is not None).
+        if array.__array_finalize__:
             array.__array_finalize__(x)
     return array
 

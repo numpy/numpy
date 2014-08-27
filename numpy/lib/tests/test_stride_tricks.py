@@ -234,7 +234,13 @@ def test_as_strided():
     assert_array_equal(a_view, expected)
 
 
-class SimpleSubClass(np.ndarray):
+class VerySimpleSubClass(np.ndarray):
+    def __new__(cls, *args, **kwargs):
+        kwargs['subok'] = True
+        return np.array(*args, **kwargs).view(cls)
+
+
+class SimpleSubClass(VerySimpleSubClass):
     def __new__(cls, *args, **kwargs):
         kwargs['subok'] = True
         self = np.array(*args, **kwargs).view(cls)
@@ -246,13 +252,20 @@ class SimpleSubClass(np.ndarray):
 
 
 def test_subclasses():
-    a = SimpleSubClass([1, 2, 3, 4])
-    assert_(type(a) is SimpleSubClass)
+    # test that subclass is preserved only if subok=True
+    a = VerySimpleSubClass([1, 2, 3, 4])
+    assert_(type(a) is VerySimpleSubClass)
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,))
     assert_(type(a_view) is np.ndarray)
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
-    assert_(a_view.info == 'simple finalized')
+    assert_(type(a_view) is VerySimpleSubClass)
+    # test that if a subclass has __array_finalize__, it is used
+    a = SimpleSubClass([1, 2, 3, 4])
+    a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
     assert_(type(a_view) is SimpleSubClass)
+    assert_(a_view.info == 'simple finalized')
+
+    # similar tests for broadcast_arrays
     b = np.arange(len(a)).reshape(-1, 1)
     a_view, b_view = broadcast_arrays(a, b)
     assert_(type(a_view) is np.ndarray)
