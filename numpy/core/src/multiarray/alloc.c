@@ -13,9 +13,14 @@
 
 #define NBUCKETS 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 8 /* 1 + number of cache entries per bucket */
-static void * datacache[NBUCKETS][NCACHE];
-static void * dimcache[NBUCKETS_DIM][NCACHE];
+#define NCACHE 7 /* number of cache entries per bucket */
+/* this structure fits neatly into a cacheline */
+typedef struct {
+    npy_uintp available; /* number of cached pointers */
+    void * ptrs[NCACHE];
+} cache_bucket;
+static cache_bucket datacache[NBUCKETS];
+static cache_bucket dimcache[NBUCKETS_DIM];
 
 /*
  * very simplistic small memory block cache to avoid more expensive libc
@@ -25,15 +30,13 @@ static void * dimcache[NBUCKETS_DIM][NCACHE];
  */
 static NPY_INLINE void *
 _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
-                 void * (*cache)[NCACHE], void * (*alloc)(size_t))
+                 cache_bucket * cache, void * (*alloc)(size_t))
 {
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     if (nelem < msz) {
-        /* first entry is used as fill counter */
-        npy_uintp * idx = (npy_uintp *)&(cache[nelem][0]);
-        if (*idx > 0) {
-            return cache[nelem][(*idx)--];
+        if (cache[nelem].available > 0) {
+            return cache[nelem].ptrs[--(cache[nelem].available)];
         }
     }
     return alloc(nelem * esz);
@@ -45,13 +48,11 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
  */
 static NPY_INLINE void
 _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
-                void * (*cache)[NCACHE], void (*dealloc)(void *))
+                cache_bucket * cache, void (*dealloc)(void *))
 {
     if (p != NULL && nelem < msz) {
-        /* first entry is used as fill counter */
-        npy_uintp * idx = (npy_uintp *)&(cache[nelem][0]);
-        if (*idx < NCACHE - 1) {
-            cache[nelem][++(*idx)] = p;
+        if (cache[nelem].available < NCACHE) {
+            cache[nelem].ptrs[cache[nelem].available++] = p;
             return;
         }
     }
