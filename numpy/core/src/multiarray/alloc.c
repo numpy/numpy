@@ -76,7 +76,9 @@ npy_alloc_cache_zero(npy_uintp sz)
     NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
-        memset(p, 0, sz);
+        if (p) {
+            memset(p, 0, sz);
+        }
         return p;
     }
     NPY_BEGIN_THREADS;
