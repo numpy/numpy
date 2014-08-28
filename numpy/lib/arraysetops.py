@@ -204,8 +204,9 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
             ret += (perm[flag],)
         if return_inverse:
             iflag = np.cumsum(flag) - 1
-            iperm = perm.argsort()
-            ret += (np.take(iflag, iperm),)
+            inv_idx = np.empty_like(ar, dtype=np.intp)
+            inv_idx[perm] = iflag
+            ret += (inv_idx,)
         if return_counts:
             idx = np.concatenate(np.nonzero(flag) + ([ar.size],))
             ret += (np.diff(idx),)
