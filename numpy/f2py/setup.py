@@ -32,12 +32,10 @@ from __version__ import version
 def configuration(parent_package='',top_path=None):
     config = Configuration('f2py', parent_package, top_path)
 
-    config.add_data_dir('docs')
     config.add_data_dir('tests')
 
     config.add_data_files('src/fortranobject.c',
                           'src/fortranobject.h',
-                          'f2py.1'
                           )
 
     config.make_svn_version_py()
