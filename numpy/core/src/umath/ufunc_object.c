@@ -340,6 +340,28 @@ _is_alnum_underscore(char ch)
 }
 
 /*
+ * Convert a string into a number
+ */
+ static npy_intp
+ _get_size(const char* str)
+ {
+    char *stop;
+    #if defined(_MSC_VER)
+        #define strtoll _strtoi64
+    #endif
+    npy_intp size = (npy_intp)strtoll(str, &stop, 10);
+    #if defined(_MSC_VER)
+        #undef strtoll
+    #endif
+
+    if (stop == str || _is_alpha_underscore(*stop)) {
+        /* not a well formed number */
+         return -1;
+    }
+    return size;
+ }
+
+/*
  * Return the ending position of a variable name
  */
 static int
@@ -406,10 +428,13 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     ufunc->core_enabled = 1;
     ufunc->core_num_dim_ix = 0;
     ufunc->core_num_dims = PyArray_malloc(sizeof(int) * ufunc->nargs);
-    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len); /* shrink this later */
     ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
-    if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL
-        || ufunc->core_offsets == NULL) {
+    /* The next two items will be shrunk later */
+    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len);
+    ufunc->core_dim_szs = PyArray_malloc(sizeof(npy_intp) * len);
+
+    if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL ||
+        ufunc->core_offsets == NULL || ufunc->core_dim_szs == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
@@ -438,8 +463,15 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         while (signature[i] != ')') {
             /* loop over core dimensions */
             int j = 0;
-            if (!_is_alpha_underscore(signature[i])) {
-                parse_error = "expect dimension name";
+            npy_intp frozen_size = -1;
+            if (signature[i] == '\0') {
+                parse_error = "unexpected end of signature string";
+                goto fail;
+            }
+
+            if (!_is_alpha_underscore(signature[i]) &&
+                (frozen_size = _get_size(signature + i)) < 0) {
+                parse_error = "expect dimension name or frozen size";
                 goto fail;
             }
             while (j < ufunc->core_num_dim_ix) {
@@ -450,6 +482,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             }
             if (j >= ufunc->core_num_dim_ix) {
                 var_names[j] = signature+i;
+                ufunc->core_dim_szs[j] = frozen_size;
                 ufunc->core_num_dim_ix++;
             }
             ufunc->core_dim_ixs[cur_core_dim] = j;
@@ -494,6 +527,9 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     }
     ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int)*cur_core_dim);
+    // ufunc->core_dim_szs = PyArray_realloc(ufunc->core_dim_szs,
+            // sizeof(npy_intp)*ufunc->core_num_dim_ix);
+
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
         ufunc->core_enabled = 0;
@@ -2378,6 +2414,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         if(retval < 0) {
             goto fail;
         }
+    }
+    /*
+     * Validate the core dimensions of all the operands,
+     * and collect all of the labeled core dimension sizes
+     * into the array 'core_dim_sizes'. Initialize them to
+     * 1, for example in the case where the operand broadcasts
+     * to a core dimension, it won't be visited.
+     */
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        npy_intp frozen_size = ufunc->core_dim_szs[i];
+        core_dim_sizes[i] = frozen_size == -1 ? 1 : frozen_size;
     }
 
     /* Collect the lengths of the labelled core dimensions */
@@ -4651,6 +4698,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->core_dim_ixs = NULL;
     ufunc->core_offsets = NULL;
     ufunc->core_signature = NULL;
+    ufunc->core_dim_szs = NULL;
     if (signature != NULL) {
         if (_parse_signature(ufunc, signature) != 0) {
             Py_DECREF(ufunc);
@@ -4997,6 +5045,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
+    PyArray_free(ufunc->core_dim_szs);
     PyArray_free(ufunc->core_offsets);
     PyArray_free(ufunc->core_signature);
     PyArray_free(ufunc->ptr);
