@@ -209,6 +209,11 @@ typedef struct _tagPyUFuncObject {
          * set by nditer object.
          */
         npy_uint32 iter_flags;
+
+        /*
+         * sizes of frozen core dimensions, or -1 if unset
+         */
+         npy_intp *core_dim_szs;
 } PyUFuncObject;
 
 #include "arrayobject.h"

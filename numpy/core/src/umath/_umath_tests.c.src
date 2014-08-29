@@ -195,6 +195,41 @@ static void
 
 /**end repeat**/
 
+char *cross1d_signature = "(3),(3)->(3)";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long, npy_double#
+*/
+
+/*
+ *  This implements the cross product:
+ *        out[n, 0] = in1[n, 1]*in2[n, 2] - in1[n, 2]*in2[n, 1]
+ *        out[n, 1] = in1[n, 2]*in2[n, 0] - in1[n, 0]*in2[n, 2]
+ *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
+ */
+static void
+@TYPE@_cross1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp is1=steps[0], is2=steps[1], os = steps[2];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+
+        *(@typ@ *)op = *(@typ@ *)(ip1 + is1) * *(@typ@ *)(ip2 + 2*is2) -
+                       *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)(ip2 + is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)ip2 -
+                       *(@typ@ *)ip1 * *(@typ@ *)(ip2 + 2*is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)ip1 * *(@typ@ *)(ip2 + is2) -
+                       *(@typ@ *)(ip1 + is1) * *(@typ@ *)ip2;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
 char *euclidean_pdist_signature = "(n,d)->(p)";
 
 /**begin repeat
@@ -285,6 +320,26 @@ static void
 
 /**end repeat**/
 
+/*  The following lines were generated using a slightly modified
+    version of code_generators/generate_umath.py and adding these
+    lines to defdict:
+
+defdict = {
+'inner1d' :
+    Ufunc(2, 1, None_,
+        r'''inner on the last dimension and broadcast on the rest \n"
+        "     \"(i),(i)->()\" \n''',
+          TD('ld'),
+          ),
+'innerwt' :
+    Ufunc(3, 1, None_,
+          r'''inner1d with a weight argument \n"
+          "     \"(i),(i),(i)->()\" \n''',
+          TD('ld'),
+          ),
+}
+
+*/
 
 static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
@@ -295,7 +350,9 @@ static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-
+static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static void * cross1d_data[] = { (void *)NULL, (void *)NULL };
+static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
 static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
@@ -375,6 +432,16 @@ addUfuncs(PyObject *dictionary) {
         return -1;
     }
     PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cross1d_functions, cross1d_data,
+                    cross1d_signatures, 2, 2, 1, PyUFunc_None, "cross1d",
+                    "cross product on the last dimension and broadcast on the rest \n"\
+                    "     \"(3),(3)->(3)\" \n",
+                    0, cross1d_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "cross1d", f);
     Py_DECREF(f);
 
     return 0;
