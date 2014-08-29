@@ -177,6 +177,43 @@ static void
 
 /**end repeat**/
 
+char *cross1d_signature = "(3),(3)->(3)";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long, npy_double#
+*/
+
+/*
+ *  This implements the cross product:
+ *        out[n, 0] = in1[n, 1]*in2[n, 2] - in1[n, 2]*in2[n, 1]
+ *        out[n, 1] = in1[n, 2]*in2[n, 0] - in1[n, 0]*in2[n, 2]
+ *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
+ */
+static void
+@TYPE@_cross1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1], os = steps[2];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+
+        *(@typ@ *)op = *(@typ@ *)(ip1 + is1) * *(@typ@ *)(ip2 + 2*is2) -
+                       *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)(ip2 + is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)ip2 -
+                       *(@typ@ *)ip1 * *(@typ@ *)(ip2 + 2*is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)ip1 * *(@typ@ *)(ip2 + is2) -
+                       *(@typ@ *)(ip1 + is1) * *(@typ@ *)ip2;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
 /*  The following lines were generated using a slightly modified
     version of code_generators/generate_umath.py and adding these
     lines to defdict:
@@ -207,6 +244,9 @@ static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static void * cross1d_data[] = { (void *)NULL, (void *)NULL };
+static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 static void
 addUfuncs(PyObject *dictionary) {
@@ -234,6 +274,14 @@ addUfuncs(PyObject *dictionary) {
                                     0, matrix_multiply_signature);
     PyDict_SetItemString(dictionary, "matrix_multiply", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cross1d_functions, cross1d_data, cross1d_signatures, 2,
+                                    2, 1, PyUFunc_None, "cross1d",
+                                    "cross product on the last dimension and broadcast on the rest \n"\
+                                    "     \"(3),(3)->(3)\" \n",
+                                    0, cross1d_signature);
+    PyDict_SetItemString(dictionary, "cross1d", f);
+    Py_DECREF(f);
+
 }
 
 /*

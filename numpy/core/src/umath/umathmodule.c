@@ -121,6 +121,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->core_num_dim_ix = 0;
     self->core_num_dims = NULL;
     self->core_dim_ixs = NULL;
+    self->core_dim_szs = NULL;
     self->core_offsets = NULL;
     self->core_signature = NULL;
     self->op_flags = PyArray_malloc(sizeof(npy_uint32)*self->nargs);
