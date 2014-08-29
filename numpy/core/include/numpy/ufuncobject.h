@@ -130,8 +130,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
-        int reserved1;
+        /* Used to be unused field 'check_return', repurposed in 1.16 */
+        int version;
 
         /* The name of the ufunc */
         const char *name;
@@ -209,9 +209,34 @@ typedef struct _tagPyUFuncObject {
          * set by nditer object.
          */
         npy_uint32 iter_flags;
+
+        /* New in version 1 and above */
+
+        /*
+         * for each core_num_dim_ix distinct dimension names,
+         * the possible "frozen" size (-1 if not frozen).
+         */
+        npy_intp *core_dim_sizes;
+
+        /*
+         * for each distinct core dimension, a set of flags OR'd together
+         * e.g., UFUNC_CORE_CAN_IGNORE if signature has ?
+         *       UFUNC_CORE_FROZEN for a numerical dimension
+         */
+        npy_uint32 *core_dim_flags;
+
 } PyUFuncObject;
 
 #include "arrayobject.h"
+
+/* the core dimension is fixed. */
+#define UFUNC_CORE_DIM_FROZEN 0x0001
+/* the core dimension may be absent */
+#define UFUNC_CORE_DIM_CAN_IGNORE 0x0002
+/* flags inferred during execution */
+#define UFUNC_CORE_DIM_MISSING 0x0001000
+
+#define UFUNC_CORE_DIM_SIZE_UNSET -1
 
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1

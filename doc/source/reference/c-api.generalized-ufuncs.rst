@@ -129,8 +129,9 @@ The formal syntax of signatures is as follows::
     <Argument>             ::= "(" <Core dimension list> ")"
     <Core dimension list>  ::= nil | <Core dimension name> |
                                <Core dimension name> "," <Core dimension list>
-    <Core dimension name>  ::= valid Python variable name
-
+    <Core dimension name>  ::= valid Python variable name |
+                               valid integer |
+                               valid Python variable name ?
 
 Notes:
 
@@ -139,22 +140,35 @@ Notes:
    Each dimension name typically corresponds to one level of looping in the
    elementary function's implementation.
 #. White spaces are ignored.
+#. An integer as a dimension name freezes that dimension to the value,
+#. The name can be suffixed with a question mark, this make the dimension a
+   core dimension only if it exists on the input or output, otherwise 1 is used.
 
 Here are some examples of signatures:
 
-+-------------+------------------------+-----------------------------------+
-| add         | ``(),()->()``          |                                   |
-+-------------+------------------------+-----------------------------------+
-| inner1d     | ``(i),(i)->()``        |                                   |
-+-------------+------------------------+-----------------------------------+
-| sum1d       | ``(i)->()``            |                                   |
-+-------------+------------------------+-----------------------------------+
-| dot2d       | ``(m,n),(n,p)->(m,p)`` | matrix multiplication             |
-+-------------+------------------------+-----------------------------------+
-| outer_inner | ``(i,t),(j,t)->(i,j)`` | inner over the last dimension,    |
-|             |                        | outer over the second to last,    |
-|             |                        | and loop/broadcast over the rest. |
-+-------------+------------------------+-----------------------------------+
++-------------+----------------------------+-----------------------------------+
+| add         | ``(),()->()``              |                                   |
++-------------+----------------------------+-----------------------------------+
+| inner1d     | ``(i),(i)->()``            |                                   |
++-------------+----------------------------+-----------------------------------+
+| sum1d       | ``(i)->()``                |                                   |
++-------------+----------------------------+-----------------------------------+
+| dot2d       | ``(m,n),(n,p)->(m,p)``     | matrix multiplication             |
++-------------+----------------------------+-----------------------------------+
+| dot2d       | ``(n),(n,p)->(p)``         | vector-matrix multiplication      |
++-------------+----------------------------+-----------------------------------+
+| dot2d       | ``(n),(n)->()``            | vector-vector multiplication      |
++-------------+----------------------------+-----------------------------------+
+| dot2d       | ``(m,n),(n)->(m)``         | matrix-vector multiplication      |
++-------------+----------------------------+-----------------------------------+
+| dot2d       | ``(m?,n),(n,p?)->(m?,p?)`` | all four of the above at once     |
++-------------+----------------------------+-----------------------------------+
+| cross1d     | ``(3),(3)->(3)``           | cross product where last dim is 3 |
++-------------+----------------------------+-----------------------------------+
+| outer_inner | ``(i,t),(j,t)->(i,j)``     | inner over the last dimension,    |
+|             |                            | outer over the second to last,    |
+|             |                            | and loop/broadcast over the rest. |
++-------------+----------------------------+-----------------------------------+
 
 C-API for implementing Elementary Functions
 -------------------------------------------
