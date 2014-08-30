@@ -310,6 +310,16 @@ class TestInsert(TestCase):
         np.insert([0, 1, 2], x, [3, 4, 5])
         assert_equal(x, np.array([1, 1, 1]))
 
+    def test_structured_array(self):
+        a = np.array([(1, 'a'), (2, 'b'), (3, 'c')],
+                     dtype=[('foo', 'i'), ('bar', 'a1')])
+        val = (4, 'd')
+        b = np.insert(a, 0, val)
+        assert_array_equal(b[0], np.array(val, dtype=b.dtype))
+        val = [(4, 'd')] * 2
+        b = np.insert(a, [0, 2], val)
+        assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
+
 
 class TestAmax(TestCase):
     def test_basic(self):
@@ -1458,7 +1468,7 @@ class TestMeshgrid(TestCase):
         # Test that meshgrid complains about invalid arguments
         # Regression test for issue #4755:
         # https://github.com/numpy/numpy/issues/4755
-        assert_raises(TypeError, meshgrid, 
+        assert_raises(TypeError, meshgrid,
                       [1, 2, 3], [4, 5, 6, 7], indices='ij')
 
 
