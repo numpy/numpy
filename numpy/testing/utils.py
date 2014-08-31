@@ -1289,7 +1289,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     """
     import numpy as np
     def compare(x, y):
-        return np.allclose(x, y, rtol=rtol, atol=atol)
+        return np.core.numeric._allclose_points(x, y, rtol=rtol, atol=atol)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = 'Not equal to tolerance rtol=%g, atol=%g' % (rtol, atol)

@@ -449,6 +449,11 @@ class TestAssertAllclose(unittest.TestCase):
         # Should not raise:
         assert_allclose(a, a)
 
+    def test_report_fail_percentage(self):
+        a = np.array([1, 1, 1, 1])
+        b = np.array([1, 1, 1, 2])
+        with self.assertRaisesRegexp(AssertionError, "25.0%"):
+            assert_allclose(a, b)
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
     @dec.knownfailureif(True, "Github issue #347")
