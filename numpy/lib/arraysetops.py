@@ -333,6 +333,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     `in1d` can be considered as an element-wise function version of the
     python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly
     equivalent to ``np.array([item in b for item in a])``.
+    However, this idea fails if `ar2` is a set, or similar (non-sequence)
+    container:  As ``ar2`` is converted to an array, in those cases
+    ``asarray(ar2)`` is an object array rather than the expected array of
+    contained values.
 
     .. versionadded:: 1.4.0
 
