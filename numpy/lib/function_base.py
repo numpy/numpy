@@ -559,8 +559,8 @@ def asarray_chkfinite(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-         Whether to use :term:`row-major`, C-style or
-         :term:`column-major`, Fortran-style memory representation.
+         Whether to use row-major (C-style) or
+         column-major (Fortran-style) memory representation.
          Defaults to 'C'.
 
     Returns

@@ -28,7 +28,7 @@ add_newdoc('numpy.core', 'flatiter',
     It allows iterating over the array as if it were a 1-D array,
     either in a for-loop or by calling its `next` method.
 
-    Iteration is done in :term:`row-major`, C-style order (the last
+    Iteration is done in row-major, C-style order (the last
     index varying the fastest). The iterator can also be indexed using
     basic slicing or advanced indexing.
 
@@ -745,8 +745,8 @@ add_newdoc('numpy.core.multiarray', 'empty',
     dtype : data-type, optional
         Desired output data-type.
     order : {'C', 'F'}, optional
-        Whether to store multi-dimensional data in :term:`row-major`,
-        C-style or :term:`column-major`, Fortran-style order in
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
         memory.
 
     Returns
@@ -2315,7 +2315,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     strides : tuple of ints, optional
         Strides of data in memory.
     order : {'C', 'F'}, optional
-        :term:`Row-major <row-major>`, C-style or :term:`column-major`, Fortran-style order.
+        Row-major (C-style) or column-major (Fortran-style) order.
 
     Attributes
     ----------
@@ -3459,8 +3459,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
     Parameters
     ----------
     order : {'C', 'F', 'A'}, optional
-        Whether to flatten in :term:`row-major`, C-style or
-        :term:`column-major`, Fortran-style order or preserve the
+        Whether to flatten in row-major (C-style) or
+        column-major (Fortran-style) order or preserve the
         C/Fortran ordering from `a`.  The default is 'C'.
 
     Returns
@@ -5036,8 +5036,8 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
         wrap will clip to 0 instead.
     order : {'C', 'F'}, optional
         Determines whether the multi-index should be viewed as
-        indexing in :term:`row-major`, C-style or
-        :term:`column-major`, Fortran-style order.
+        indexing in row-major (C-style) or column-major
+        (Fortran-style) order.
 
     Returns
     -------
@@ -5086,10 +5086,8 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
         The shape of the array to use for unraveling ``indices``.
     order : {'C', 'F'}, optional
         .. versionadded:: 1.6.0
-
         Determines whether the indices should be viewed as indexing in
-        :term:`row-major`, C-style or :term:`column-major`,
-        Fortran-style order.
+        row-major (C-style) or column-major (Fortran-style) order.
 
     Returns
     -------

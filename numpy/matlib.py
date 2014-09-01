@@ -20,8 +20,8 @@ def empty(shape, dtype=None, order='C'):
     dtype : data-type, optional
         Desired output data-type.
     order : {'C', 'F'}, optional
-        Whether to store multi-dimensional data in :term:`row-major`,
-        C-style or :term:`column-major`, Fortran-style order in
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
         memory.
 
     See Also

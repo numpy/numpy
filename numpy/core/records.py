@@ -333,8 +333,7 @@ class recarray(ndarray):
     offset : int, optional
         Start reading buffer (`buf`) from this offset onwards.
     order : {'C', 'F'}, optional
-        :term:`Row-major <row-major>`, C-style or
-        :term:`column-major`, Fortran-style order.
+        Row-major (C-style) or column-major (Fortran-style) order.
 
     Returns
     -------
