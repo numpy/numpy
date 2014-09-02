@@ -443,7 +443,8 @@ def pre_build(context):
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
-            sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
+            sources = [
+                pjoin('src', 'multiarray', 'arrayobject.c'),
                 pjoin('src', 'multiarray', 'alloc.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
                 pjoin('src', 'multiarray', 'array_assign.c'),
@@ -485,17 +486,30 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'sequence.c'),
                 pjoin('src', 'multiarray', 'shape.c'),
                 pjoin('src', 'multiarray', 'ucsnarrow.c'),
-                pjoin('src', 'multiarray', 'usertypes.c')]
+                pjoin('src', 'multiarray', 'usertypes.c'),
+                pjoin('src', 'multiarray', 'vdot.c'),
+                ]
+
+            if bld.env.HAS_CBLAS:
+                sources.append(pjoin('src', 'multiarray', 'cblasfuncs.c'))
         else:
             sources = extension.sources
+
+        use = 'npysort npymath'
+        defines = ['_FILE_OFFSET_BITS=64',
+                   '_LARGEFILE_SOURCE=1',
+                   '_LARGEFILE64_SOURCE=1']
+
+        if bld.env.HAS_CBLAS:
+            use += ' CBLAS'
+            defines.append('HAVE_CBLAS')
+
         includes = ["src/multiarray", "src/private"]
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath",
-                                       defines=['_FILE_OFFSET_BITS=64',
-                                                '_LARGEFILE_SOURCE=1',
-                                                '_LARGEFILE64_SOURCE=1']
+                                       use=use,
+                                       defines=defines
                                        )
     context.register_builder("multiarray", builder_multiarray)
 
@@ -537,9 +551,3 @@ def pre_build(context):
     context.tweak_extension("scalarmath", use="npymath", includes=["src/private"])
     context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
     context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
-
-    def build_dotblas(extension):
-        if bld.env.HAS_CBLAS:
-            return context.default_builder(extension, use="CBLAS",
-                                           includes=["src/multiarray", "src/private"])
-    context.register_builder("_dotblas", build_dotblas)

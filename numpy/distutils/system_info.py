@@ -434,7 +434,7 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info:
+class system_info(object):
 
     """ get_info() is the only public method. Don't use others.
     """
@@ -962,7 +962,8 @@ class mkl_info(system_info):
         if info is None:
             return
         dict_append(info,
-                    define_macros=[('SCIPY_MKL_H', None)],
+                    define_macros=[('SCIPY_MKL_H', None),
+                                   ('HAVE_CBLAS', None)],
                     include_dirs=incl_dirs)
         if sys.platform == 'win32':
             pass  # win32 has no pthread library
@@ -1120,6 +1121,7 @@ class atlas_blas_info(atlas_info):
             h = os.path.dirname(h)
             dict_append(info, include_dirs=[h])
         info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
 
         atlas_version, atlas_extra_info = get_atlas_version(**atlas)
         dict_append(atlas, **atlas_extra_info)
@@ -1414,7 +1416,8 @@ class lapack_opt_info(system_info):
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3)])
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
                 return
 
         #atlas_info = {} ## uncomment for testing
@@ -1515,7 +1518,8 @@ class blas_opt_info(system_info):
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3)])
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
                 return
 
         need_blas = 0
@@ -1556,8 +1560,32 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        info['language'] = 'f77'  # XXX: is it generally true?
+        if self.has_cblas():
+            info['language'] = 'c'
+            info['define_macros'] = [('HAVE_CBLAS', None)]
+        else:
+            info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
+
+    def has_cblas(self):
+        # primitive cblas check by looking for the header
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        tmpdir = tempfile.mkdtemp()
+        s = """#include <cblas.h>"""
+        src = os.path.join(tmpdir, 'source.c')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            try:
+                c.compile([src], output_dir=tmpdir,
+                          include_dirs=self.get_include_dirs())
+                res = True
+            except distutils.ccompiler.CompileError:
+                res = False
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class openblas_info(blas_info):
@@ -1580,9 +1608,10 @@ class openblas_info(blas_info):
             return
 
         if not self.check_embedded_lapack(info):
-            return None
+            return
 
-        info['language'] = 'f77'  # XXX: is it generally true?
+        info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
 

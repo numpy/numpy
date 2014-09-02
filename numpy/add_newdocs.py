@@ -2174,43 +2174,6 @@ add_newdoc('numpy.core', 'einsum',
 
     """)
 
-add_newdoc('numpy.core', 'alterdot',
-    """
-    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
-
-    Typically, as a user of Numpy, you do not explicitly call this function. If
-    Numpy is built with an accelerated BLAS, this function is automatically
-    called when Numpy is imported.
-
-    When Numpy is built with an accelerated BLAS like ATLAS, these functions
-    are replaced to make use of the faster implementations.  The faster
-    implementations only affect float32, float64, complex64, and complex128
-    arrays. Furthermore, the BLAS API only includes matrix-matrix,
-    matrix-vector, and vector-vector products. Products of arrays with larger
-    dimensionalities use the built in functions and are not accelerated.
-
-    See Also
-    --------
-    restoredot : `restoredot` undoes the effects of `alterdot`.
-
-    """)
-
-add_newdoc('numpy.core', 'restoredot',
-    """
-    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
-    implementations.
-
-    Typically, the user will only need to call this when troubleshooting and
-    installation problem, reproducing the conditions of a build without an
-    accelerated BLAS, or when being very careful about benchmarking linear
-    algebra operations.
-
-    See Also
-    --------
-    alterdot : `restoredot` undoes the effects of `alterdot`.
-
-    """)
-
 add_newdoc('numpy.core', 'vdot',
     """
     vdot(a, b)
