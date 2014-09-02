@@ -333,11 +333,10 @@ class TestLog1p(TestCase):
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
 
     def test_special(self):
-        assert_equal(ncu.log1p(np.nan), np.nan)
-        assert_equal(ncu.log1p(np.inf), np.inf)
-        with np.errstate(divide="ignore"):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(ncu.log1p(np.nan), np.nan)
+            assert_equal(ncu.log1p(np.inf), np.inf)
             assert_equal(ncu.log1p(-1.), -np.inf)
-        with np.errstate(invalid="ignore"):
             assert_equal(ncu.log1p(-2.), np.nan)
             assert_equal(ncu.log1p(-np.inf), np.nan)
 
