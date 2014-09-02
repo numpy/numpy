@@ -3763,7 +3763,9 @@ def insert(arr, obj, values, axis=None):
         if (index < 0):
             index += N
 
-        values = array(values, copy=False, ndmin=arr.ndim)
+        # There are some object array corner cases here, but we cannot avoid
+        # that:
+        values = array(values, copy=False, ndmin=arr.ndim, dtype=arr.dtype)
         if indices.ndim == 0:
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that
