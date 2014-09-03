@@ -90,7 +90,7 @@ def run_module_suite(file_to_run=None, argv=None):
     argv: list of strings
         Arguments to be passed to the nose test runner. ``argv[0]`` is
         ignored. All command line arguments accepted by ``nosetests``
-        will work.
+        will work. If it is the default value None, sys.argv is used.
 
         .. versionadded:: 1.9.0
 
@@ -117,7 +117,7 @@ def run_module_suite(file_to_run=None, argv=None):
             raise AssertionError
 
     if argv is None:
-        argv = ['', file_to_run]
+        argv = sys.argv + [file_to_run]
     else:
         argv = argv + [file_to_run]
 

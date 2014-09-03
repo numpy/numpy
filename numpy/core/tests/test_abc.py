@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import TestCase, assert_
+from numpy.testing import TestCase, assert_, run_module_suite
 
 import numbers
 from numpy.core.numerictypes import sctypes
@@ -43,3 +42,6 @@ class ABC(TestCase):
             assert_(issubclass(t, numbers.Integral),
                     "{0} is not subclass of Integral".format(t.__name__))
 
+
+if __name__ == "__main__":
+    run_module_suite()
