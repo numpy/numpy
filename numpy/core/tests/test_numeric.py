@@ -1049,9 +1049,9 @@ class TestArrayComparisons(TestCase):
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
-    # Check flags, debian sparc and win32 don't provide 16 byte alignment
-    if (x.dtype.alignment > 8 and
-            'sparc' not in platform.platform().lower() and
+    # Check flags, 32 bit arches typically don't provide 16 byte alignment
+    if ((x.dtype.alignment <= 8 or
+            np.intp().dtype.itemsize != 4) and
             sys.platform != 'win32'):
         assert_(x.flags == y.flags)
     else:
