@@ -9,7 +9,8 @@ import platform
 import nose
 
 from numpy.testing import *
-from numpy import array, alltrue, ndarray, asarray, can_cast, zeros, dtype
+from numpy import (array, alltrue, ndarray, asarray, can_cast, zeros, dtype,
+                   intp, clongdouble)
 from numpy.core.multiarray import typeinfo
 
 import util
@@ -107,11 +108,12 @@ _cast_dict['DOUBLE'] = _cast_dict['INT'] + ['UINT', 'FLOAT', 'DOUBLE']
 
 _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
 
-# (debian) sparc system malloc does not provide the alignment required by
+# 32 bit system malloc typically does not provide the alignment required by
 # 16 byte long double types this means the inout intent cannot be satisfied and
 # several tests fail as the alignment flag can be randomly true or fals
 # when numpy gains an aligned allocator the tests could be enabled again
-if 'sparc' not in platform.platform().lower() and sys.platform != 'win32':
+if ((intp().dtype.itemsize != 4 or clongdouble().dtype.alignment <= 8) and
+        sys.platform != 'win32'):
     _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
     _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
                                ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']
