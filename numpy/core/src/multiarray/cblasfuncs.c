@@ -8,10 +8,10 @@
 
 #include <Python.h>
 #include <assert.h>
-#include <limits.h>
 #include <cblas.h>
 #include <numpy/arrayobject.h>
 #include "arraytypes.h"
+#include "common.h"
 
 
 /*

@@ -3,10 +3,6 @@
 #include "Python.h"
 #include "structmember.h"
 
-#include <limits.h>
-#if defined(HAVE_CBLAS)
-#include <cblas.h>
-#endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -3108,41 +3104,6 @@ static int
 
 /************************** MAYBE USE CBLAS *********************************/
 
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-#if defined(HAVE_CBLAS)
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    /*
-     * Should probably check pointer alignment also, but this may cause
-     * problems if we require complex to be 16 byte aligned.
-     */
-    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
-        stride /= itemsize;
-        if (stride <= INT_MAX) {
-            return stride;
-        }
-    }
-    return 0;
-}
-#endif
-
-
-/*
- * The following functions do a "chunked" dot product using BLAS when
- * sizeof(npy_intp) > sizeof(int), because BLAS libraries can typically not
- * handle more than INT_MAX elements per call.
- *
- * The chunksize is the greatest power of two less than INT_MAX.
- */
-#if NPY_MAX_INTP > INT_MAX
-# define CHUNKSIZE  (INT_MAX / 2 + 1)
-#else
-# define CHUNKSIZE  NPY_MAX_INTP
-#endif
 
 /**begin repeat
  *

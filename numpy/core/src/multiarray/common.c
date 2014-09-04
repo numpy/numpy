@@ -787,7 +787,7 @@ offset_bounds_from_strides(const int itemsize, const int nd,
  * @param Dimensionality of the shape
  * @param npy_intp pointer to shape array
  * @param String to append after the shape `(1, 2)%s`.
- * 
+ *
  * @return Python unicode string
  */
 NPY_NO_EXPORT PyObject *
