@@ -109,3 +109,7 @@ class TestLinspace(TestCase):
         a = PhysicalQuantity(0.0)
         b = PhysicalQuantity(1.0)
         assert_equal(linspace(a, b), linspace(0.0, 1.0))
+
+
+if __name__ == "__main__":
+    run_module_suite()

@@ -4,7 +4,8 @@ import numpy as np
 import sys
 from numpy.core import zeros, float64
 from numpy.testing import dec, TestCase, assert_almost_equal, assert_, \
-     assert_raises, assert_array_equal, assert_allclose, assert_equal
+     assert_raises, assert_array_equal, assert_allclose, assert_equal, \
+     run_module_suite
 from numpy.core.multiarray import inner as inner_
 
 DECPREC = 14
@@ -169,3 +170,7 @@ def test_dot_override():
     assert_equal(c.dot(a), "A")
     assert_raises(TypeError, np.dot, b, c)
     assert_raises(TypeError, c.dot, b)
+
+
+if __name__ == "__main__":
+    run_module_suite()

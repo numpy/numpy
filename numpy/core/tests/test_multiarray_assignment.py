@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase
+from numpy.testing import run_module_suite
 
 ndims = 2
 size = 10
@@ -78,3 +78,7 @@ def test_overlapping_assignments():
         dstidx = tuple([a[1] for a in ind])
 
         yield _check_assignment, srcidx, dstidx
+
+
+if __name__ == "__main__":
+    run_module_suite()
