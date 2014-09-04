@@ -250,8 +250,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             l = PyArray_DIM(oap1, PyArray_NDIM(oap1) - 1);
 
             if (PyArray_DIM(oap2, 0) != l) {
-                PyErr_SetString(PyExc_ValueError,
-                        "matrices are not aligned");
+                dot_alignment_error(oap1, PyArray_NDIM(oap1) - 1, oap2, 0);
                 goto fail;
             }
             nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
@@ -302,8 +301,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1) - 1);
 
         if (PyArray_DIM(ap2, 0) != l) {
-            PyErr_SetString(PyExc_ValueError,
-                    "matrices are not aligned");
+            dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1, ap2, 0);
             goto fail;
         }
         nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
@@ -713,8 +711,8 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
         l = PyArray_DIM(ap1, PyArray_NDIM(ap1) - 1);
 
         if (PyArray_DIM(ap2, PyArray_NDIM(ap2) - 1) != l) {
-            PyErr_SetString(PyExc_ValueError,
-                    "matrices are not aligned");
+            dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1,
+                                ap2, PyArray_NDIM(ap2) - 1);
             goto fail;
         }
         nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;

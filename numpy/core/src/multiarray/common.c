@@ -836,7 +836,59 @@ convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
     }
     else {
         tmp = PyUString_FromFormat(")%s", ending);
-        }
+    }
     PyUString_ConcatAndDel(&ret, tmp);
     return ret;
+}
+
+
+NPY_NO_EXPORT void
+dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
+{
+    PyObject *errmsg = NULL, *format = NULL, *fmt_args = NULL,
+             *i_obj = NULL, *j_obj = NULL,
+             *shape1 = NULL, *shape2 = NULL,
+             *shape1_i = NULL, *shape2_j = NULL;
+
+    format = PyUString_FromString("shapes %s and %s not aligned:"
+                                  " %d (dim %d) != %d (dim %d)");
+
+    shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
+    shape2 = convert_shape_to_string(PyArray_NDIM(b), PyArray_DIMS(b), "");
+
+    i_obj = PyLong_FromLong(i);
+    j_obj = PyLong_FromLong(j);
+
+    shape1_i = PyLong_FromSsize_t(PyArray_DIM(a, i));
+    shape2_j = PyLong_FromSsize_t(PyArray_DIM(b, j));
+
+    if (!format || !shape1 || !shape2 || !i_obj || !j_obj ||
+            !shape1_i || !shape2_j) {
+        goto end;
+    }
+
+    fmt_args = PyTuple_Pack(6, shape1, shape2,
+                            shape1_i, i_obj, shape2_j, j_obj);
+    if (fmt_args == NULL) {
+        goto end;
+    }
+
+    errmsg = PyUString_Format(format, fmt_args);
+    if (errmsg != NULL) {
+        PyErr_SetObject(PyExc_ValueError, errmsg);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "shapes are not aligned");
+    }
+
+end:
+    Py_XDECREF(errmsg);
+    Py_XDECREF(fmt_args);
+    Py_XDECREF(format);
+    Py_XDECREF(i_obj);
+    Py_XDECREF(j_obj);
+    Py_XDECREF(shape1);
+    Py_XDECREF(shape2);
+    Py_XDECREF(shape1_i);
+    Py_XDECREF(shape2_j);
 }
