@@ -125,7 +125,10 @@ fortran_doc (FortranDataDef def) {
     if (def.doc!=NULL)
         size += strlen(def.doc);
     p = (char*)malloc (size);
-    if (p==NULL) goto fail;
+    if (p==NULL) {
+        /* No need to call free() because p is NULL */
+        return PyErr_NoMemory();
+    }
     p[0] = '\0'; /* make sure that the buffer has zero length */
     if (def.rank==-1) {
         if (def.doc==NULL) {
