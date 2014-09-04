@@ -244,6 +244,14 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(a, b))
 
+    def test_subclass(self):
+        a = np.array([[1., 2.], [3., 4.]])
+        b = np.ma.masked_array([[1., 2.], [0., 4.]],
+                               [[False, False], [True, False]])
+        assert_array_almost_equal(a, b)
+        assert_array_almost_equal(b, a)
+        assert_array_almost_equal(b, b)
+
 class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_almost_equal
