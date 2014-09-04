@@ -59,9 +59,9 @@ setup_bento()
   cd ..
 
   # Waf
-  wget http://waf.googlecode.com/files/waf-1.7.13.tar.bz2
-  tar xjvf waf-1.7.13.tar.bz2
-  cd waf-1.7.13
+  wget http://ftp.waf.io/pub/release/waf-1.7.16.tar.bz2
+  tar xjvf waf-1.7.16.tar.bz2
+  cd waf-1.7.16
   python waf-light
   export WAFDIR=$PWD
   cd ..

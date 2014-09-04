@@ -772,6 +772,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
+            join('src', 'multiarray', 'vdot.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -838,23 +839,33 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
             join('src', 'multiarray', 'usertypes.c'),
-            join('src', 'multiarray', 'ucsnarrow.c')]
+            join('src', 'multiarray', 'ucsnarrow.c'),
+            join('src', 'multiarray', 'vdot.c'),
+            ]
 
+    blas_info = get_info('blas_opt', 0)
+    if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+        extra_info = blas_info
+        multiarray_src.append(join('src', 'multiarray', 'cblasfuncs.c'))
+    else:
+        extra_info = {}
 
     if not ENABLE_SEPARATE_COMPILATION:
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
 
+
     config.add_extension('multiarray',
-                         sources = multiarray_src +
+                         sources=multiarray_src +
                                  [generate_config_h,
-                                 generate_numpyconfig_h,
-                                 generate_numpy_api,
-                                 join(codegen_dir, 'generate_numpy_api.py'),
-                                 join('*.py')],
-                         depends = deps + multiarray_deps,
-                         libraries = ['npymath', 'npysort'])
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  join(codegen_dir, 'generate_numpy_api.py'),
+                                  join('*.py')],
+                         depends=deps + multiarray_deps,
+                         libraries=['npymath', 'npysort'],
+                         extra_info=extra_info)
 
     #######################################################################
     #                           umath module                              #
@@ -942,28 +953,6 @@ def configuration(parent_package='',top_path=None):
                          libraries = ['npymath'],
                          )
 
-    #######################################################################
-    #                          _dotblas module                            #
-    #######################################################################
-
-    # Configure blasdot
-    blas_info = get_info('blas_opt', 0)
-    #blas_info = {}
-    def get_dotblas_sources(ext, build_dir):
-        if blas_info:
-            if ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', []):
-                return None # dotblas needs ATLAS, Fortran compiled blas will not be sufficient.
-            return ext.depends[:1]
-        return None # no extension module will be built
-
-    config.add_extension('_dotblas',
-                         sources = [get_dotblas_sources],
-                         depends = [join('blasdot', '_dotblas.c'),
-                                  join('blasdot', 'cblas.h'),
-                                  ],
-                         include_dirs = ['blasdot'],
-                         extra_info = blas_info
-                         )
 
     #######################################################################
     #                        umath_tests module                           #

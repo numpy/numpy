@@ -3355,6 +3355,44 @@ class TestStats(TestCase):
         res = dat.var(1)
         assert_(res.info == dat.info)
 
+class TestVdot(TestCase):
+    def test_basic(self):
+        dt_numeric = np.typecodes['AllFloat'] + np.typecodes['AllInteger']
+        dt_complex = np.typecodes['Complex']
+
+        # test real
+        a = np.eye(3)
+        for dt in dt_numeric + 'O':
+            b = a.astype(dt)
+            res = np.vdot(b, b)
+            assert_(np.isscalar(res))
+            assert_equal(np.vdot(b, b), 3)
+
+        # test complex
+        a = np.eye(3) * 1j
+        for dt in dt_complex + 'O':
+            b = a.astype(dt)
+            res = np.vdot(b, b)
+            assert_(np.isscalar(res))
+            assert_equal(np.vdot(b, b), 3)
+
+        # test boolean
+        b = np.eye(3, dtype=np.bool)
+        res = np.vdot(b, b)
+        assert_(np.isscalar(res))
+        assert_equal(np.vdot(b, b), True)
+
+    def test_vdot_array_order(self):
+        a = array([[1, 2], [3, 4]], order='C')
+        b = array([[1, 2], [3, 4]], order='F')
+        res = np.vdot(a, a)
+
+        # integer arrays are exact
+        assert_equal(np.vdot(a, b), res)
+        assert_equal(np.vdot(b, a), res)
+        assert_equal(np.vdot(b, b), res)
+
+
 class TestDot(TestCase):
     def test_dot_2args(self):
         from numpy.core.multiarray import dot
@@ -3417,12 +3455,40 @@ class TestDot(TestCase):
         r = np.empty((1024, 32), dtype=int)
         assert_raises(ValueError, dot, f, v, r)
 
+    def test_dot_array_order(self):
+        a = array([[1, 2], [3, 4]], order='C')
+        b = array([[1, 2], [3, 4]], order='F')
+        res = np.dot(a, a)
+
+        # integer arrays are exact
+        assert_equal(np.dot(a, b), res)
+        assert_equal(np.dot(b, a), res)
+        assert_equal(np.dot(b, b), res)
+
     def test_dot_scalar_and_matrix_of_objects(self):
         # Ticket #2469
         arr = np.matrix([1, 2], dtype=object)
         desired = np.matrix([[3, 6]], dtype=object)
         assert_equal(np.dot(arr, 3), desired)
         assert_equal(np.dot(3, arr), desired)
+
+    def test_dot_override(self):
+        class A(object):
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return "A"
+
+        class B(object):
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return NotImplemented
+
+        a = A()
+        b = B()
+        c = np.array([[1]])
+
+        assert_equal(np.dot(a, b), "A")
+        assert_equal(c.dot(a), "A")
+        assert_raises(TypeError, np.dot, b, c)
+        assert_raises(TypeError, c.dot, b)
 
 
 class TestInner(TestCase):
@@ -3433,6 +3499,14 @@ class TestInner(TestCase):
         desired = np.matrix([[3, 6]], dtype=object)
         assert_equal(np.inner(arr, 3), desired)
         assert_equal(np.inner(3, arr), desired)
+
+    def test_vecself(self):
+        # Ticket 844.
+        # Inner product of a vector with itself segfaults or give
+        # meaningless result
+        a = zeros(shape = (1, 80), dtype = float64)
+        p = inner(a, a)
+        assert_almost_equal(p, 0, decimal=14)
 
 
 class TestSummarization(TestCase):
@@ -3453,7 +3527,6 @@ class TestSummarization(TestCase):
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
         assert_(repr(A) == reprA)
-
 
 class TestChoose(TestCase):
     def setUp(self):
