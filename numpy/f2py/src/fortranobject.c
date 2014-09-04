@@ -125,6 +125,7 @@ fortran_doc (FortranDataDef def) {
     if (def.doc!=NULL)
         size += strlen(def.doc);
     p = (char*)malloc (size);
+    if (p==NULL) goto fail;
     p[0] = '\0'; /* make sure that the buffer has zero length */
     if (def.rank==-1) {
         if (def.doc==NULL) {
