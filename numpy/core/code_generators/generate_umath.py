@@ -697,6 +697,13 @@ defdict = {
           TD(inexact, f='sqrt', astype={'e':'f'}),
           TD(P, f='sqrt'),
           ),
+'cbrt':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.cbrt'),
+          None,
+          TD(flts, f='cbrt', astype={'e':'f'}),
+          TD(P, f='cbrt'),
+          ),
 'ceil':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.ceil'),

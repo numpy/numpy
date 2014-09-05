@@ -12,6 +12,7 @@ typedef struct {
     PyObject *reciprocal;
     PyObject *_ones_like;
     PyObject *sqrt;
+    PyObject *cbrt;
     PyObject *negative;
     PyObject *absolute;
     PyObject *invert;

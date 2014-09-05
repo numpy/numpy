@@ -486,6 +486,25 @@ double npy_log2(double x)
 }
 #endif
 
+/* C99 but not mandatory */
+
+#ifndef HAVE_CBRT@C@
+@type@ npy_cbrt@c@(@type@ x)
+{
+    if (x < 0) {
+        return -npy_pow@c@(-x, 1. / 3.);
+    }
+    else {
+        return npy_pow@c@(x, 1. / 3.);
+    }
+}
+#else
+@type@ npy_cbrt@c@(@type@ x)
+{
+    return cbrt@c@(x);
+}
+#endif
+
 /**end repeat**/
 
 
