@@ -4287,16 +4287,16 @@ static void init_basetypes(void)
 
 
 NPY_NO_EXPORT int
-get_typeobj_idx(PyObject * obj)
+get_typeobj_idx(PyTypeObject * obj)
 {
     npy_intp imin = 0, imax = sizeof(typeobjects) / sizeof(typeobjects[0]) - 1;
     while (imax >= imin)
     {
         npy_intp imid = ((imax - imin) / 2) + imin;
-        if(typeobjects[imid].type == (PyTypeObject*)obj) {
+        if(typeobjects[imid].type == obj) {
             return imid;
         }
-        else if (typeobjects[imid].type < (PyTypeObject*)obj) {
+        else if (typeobjects[imid].type < obj) {
             imin = imid + 1;
         }
         else {
@@ -4308,12 +4308,18 @@ get_typeobj_idx(PyObject * obj)
 }
 
 NPY_NO_EXPORT int
+is_anyscalar_exact(PyObject *obj)
+{
+    return get_typeobj_idx(Py_TYPE(obj)) >= 0;
+}
+
+NPY_NO_EXPORT int
 _typenum_fromtypeobj(PyObject *type, int user)
 {
     int typenum, i;
 
     typenum = NPY_NOTYPE;
-    i = get_typeobj_idx(type);
+    i = get_typeobj_idx((PyTypeObject*)type);
     if (i >= 0) {
         typenum = typeobjects[i].typenum;
     }
