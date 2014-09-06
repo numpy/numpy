@@ -6,6 +6,7 @@ from numpy.testing import (
         assert_warns)
 from numpy import random
 from numpy.compat import asbytes
+import sys
 
 class TestSeed(TestCase):
     def test_scalar(self):
@@ -681,7 +682,13 @@ class TestThread:
         for s, o in zip(self.seeds, out2):
             function(np.random.RandomState(s), o)
 
-        np.testing.assert_array_equal(out1, out2)
+        # these platforms change x87 fpu precision mode in threads
+        if (np.intp().dtype.itemsize == 4 and
+                (sys.platform == "win32" or
+                 sys.platform.startswith("gnukfreebsd"))):
+            np.testing.assert_array_almost_equal(out1, out2)
+        else:
+            np.testing.assert_array_equal(out1, out2)
 
     def test_normal(self):
         def gen_random(state, out):
