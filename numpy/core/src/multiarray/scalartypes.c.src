@@ -25,6 +25,8 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 
+#include <stdlib.h>
+
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
@@ -4049,11 +4051,13 @@ initialize_casting_tables(void)
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
+static void init_basetypes(void);
 
 
 NPY_NO_EXPORT void
 initialize_numeric_types(void)
 {
+    init_basetypes();
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
     PyGenericArrType_Type.tp_as_number = &gentype_as_number;
     PyGenericArrType_Type.tp_as_buffer = &gentype_as_buffer;
@@ -4229,34 +4233,79 @@ initialize_numeric_types(void)
     PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
 }
 
+typedef struct {
+    PyTypeObject * type;
+    int typenum;
+} scalar_type;
 
-/* the order of this table is important */
-static PyTypeObject *typeobjects[] = {
-    &PyBoolArrType_Type,
-    &PyByteArrType_Type,
-    &PyUByteArrType_Type,
-    &PyShortArrType_Type,
-    &PyUShortArrType_Type,
-    &PyIntArrType_Type,
-    &PyUIntArrType_Type,
-    &PyLongArrType_Type,
-    &PyULongArrType_Type,
-    &PyLongLongArrType_Type,
-    &PyULongLongArrType_Type,
-    &PyFloatArrType_Type,
-    &PyDoubleArrType_Type,
-    &PyLongDoubleArrType_Type,
-    &PyCFloatArrType_Type,
-    &PyCDoubleArrType_Type,
-    &PyCLongDoubleArrType_Type,
-    &PyObjectArrType_Type,
-    &PyStringArrType_Type,
-    &PyUnicodeArrType_Type,
-    &PyVoidArrType_Type,
-    &PyDatetimeArrType_Type,
-    &PyTimedeltaArrType_Type,
-    &PyHalfArrType_Type
+static scalar_type typeobjects[] = {
+    {&PyBoolArrType_Type, NPY_BOOL},
+    {&PyByteArrType_Type, NPY_BYTE},
+    {&PyUByteArrType_Type, NPY_UBYTE},
+    {&PyShortArrType_Type, NPY_SHORT},
+    {&PyUShortArrType_Type, NPY_USHORT},
+    {&PyIntArrType_Type, NPY_INT},
+    {&PyUIntArrType_Type, NPY_UINT},
+    {&PyLongArrType_Type, NPY_LONG},
+    {&PyULongArrType_Type, NPY_ULONG},
+    {&PyLongLongArrType_Type, NPY_LONGLONG},
+    {&PyULongLongArrType_Type, NPY_ULONGLONG},
+    {&PyFloatArrType_Type, NPY_FLOAT},
+    {&PyDoubleArrType_Type, NPY_DOUBLE},
+    {&PyLongDoubleArrType_Type, NPY_LONGDOUBLE},
+    {&PyCFloatArrType_Type, NPY_CFLOAT},
+    {&PyCDoubleArrType_Type, NPY_CDOUBLE},
+    {&PyCLongDoubleArrType_Type, NPY_CLONGDOUBLE},
+    {&PyObjectArrType_Type, NPY_OBJECT},
+    {&PyStringArrType_Type, NPY_STRING},
+    {&PyUnicodeArrType_Type, NPY_UNICODE},
+    {&PyVoidArrType_Type, NPY_VOID},
+    {&PyDatetimeArrType_Type, NPY_DATETIME},
+    {&PyTimedeltaArrType_Type, NPY_TIMEDELTA},
+    {&PyHalfArrType_Type, NPY_HALF}
 };
+
+static int compare_types(const void * a_, const void * b_)
+{
+    const PyTypeObject * a = ((const scalar_type *)a_)->type;
+    const PyTypeObject * b = ((const scalar_type *)b_)->type;
+    if (a < b) {
+        return -1;
+    }
+    else if (a > b) {
+        return 1;
+    }
+    return 0;
+}
+
+static void init_basetypes(void)
+{
+    qsort(typeobjects, sizeof(typeobjects) / sizeof(typeobjects[0]),
+          sizeof(typeobjects[0]),
+          compare_types);
+}
+
+
+NPY_NO_EXPORT int
+get_typeobj_idx(PyObject * obj)
+{
+    npy_intp imin = 0, imax = sizeof(typeobjects) / sizeof(typeobjects[0]) - 1;
+    while (imax >= imin)
+    {
+        npy_intp imid = ((imax - imin) / 2) + imin;
+        if(typeobjects[imid].type == (PyTypeObject*)obj) {
+            return imid;
+        }
+        else if (typeobjects[imid].type < (PyTypeObject*)obj) {
+            imin = imid + 1;
+        }
+        else {
+            imax = imid - 1;
+        }
+    }
+
+    return -1;
+}
 
 NPY_NO_EXPORT int
 _typenum_fromtypeobj(PyObject *type, int user)
@@ -4264,13 +4313,9 @@ _typenum_fromtypeobj(PyObject *type, int user)
     int typenum, i;
 
     typenum = NPY_NOTYPE;
-    i = 0;
-    while(i < NPY_NTYPES) {
-        if (type == (PyObject *)typeobjects[i]) {
-            typenum = i;
-            break;
-        }
-        i++;
+    i = get_typeobj_idx(type);
+    if (i >= 0) {
+        typenum = typeobjects[i].typenum;
     }
 
     if (!user) {
