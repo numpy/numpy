@@ -87,6 +87,19 @@ class TestDivision(TestCase):
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
 
+class TestCbrt(TestCase):
+    def test_cbrt_scalar(self):
+        assert_almost_equal((np.cbrt(np.float32(-2.5)**3)), -2.5)
+
+    def test_cbrt(self):
+        x = np.array([1., 2., -3., np.inf, -np.inf])
+        assert_almost_equal(np.cbrt(x**3), x)
+
+        assert_(np.isnan(np.cbrt(np.nan)))
+        assert_equal(np.cbrt(np.inf), np.inf)
+        assert_equal(np.cbrt(-np.inf), -np.inf)
+
+
 class TestPower(TestCase):
     def test_power_float(self):
         x = np.array([1., 2., 3.])

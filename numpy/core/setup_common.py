@@ -100,7 +100,7 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull"]
+        "strtoll", "strtoull", "cbrt"]
 
 
 OPTIONAL_HEADERS = [
@@ -145,7 +145,7 @@ C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
         "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
         "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
         "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-        "exp2", "log2", "copysign", "nextafter"]
+        "exp2", "log2", "copysign", "nextafter", "cbrt"]
 
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]

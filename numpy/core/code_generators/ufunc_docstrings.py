@@ -3104,6 +3104,35 @@ add_newdoc('numpy.core.umath', 'sqrt',
 
     """)
 
+add_newdoc('numpy.core.umath', 'cbrt',
+    """
+    Return the cube-root of an array, element-wise.
+
+    .. versionadded:: 1.10.0
+
+    Parameters
+    ----------
+    x : array_like
+        The values whose cube-roots are required.
+    out : ndarray, optional
+        Alternate array object in which to put the result; if provided, it
+        must have the same shape as `x`
+
+    Returns
+    -------
+    y : ndarray
+        An array of the same shape as `x`, containing the cube
+        cube-root of each element in `x`.
+        If `out` was provided, `y` is a reference to it.
+
+
+    Examples
+    --------
+    >>> np.cbrt([1,8,27])
+    array([ 1.,  2.,  3.])
+
+    """)
+
 add_newdoc('numpy.core.umath', 'square',
     """
     Return the element-wise square of the input.

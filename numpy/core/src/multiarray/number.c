@@ -54,6 +54,7 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(reciprocal);
     SET(_ones_like);
     SET(sqrt);
+    SET(cbrt);
     SET(negative);
     SET(absolute);
     SET(invert);
