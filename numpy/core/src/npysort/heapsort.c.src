@@ -184,6 +184,10 @@ heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
     @type@ *a = start - len;
     npy_intp i, j, l;
 
+    if (tmp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
     for (l = n>>1; l > 0; --l) {
         @TYPE@_COPY(tmp, a + l*len, len);
         for (i = l, j = l<<1; j <= n;) {
