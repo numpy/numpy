@@ -3003,7 +3003,7 @@ def percentile(a, q, axis=None, out=None,
     nearest neighbors as well as the `interpolation` parameter will
     determine the percentile if the normalized ranking does not match q
     exactly. This function is the same as the median if ``q=50``, the same
-    as the minimum if ``q=0``and the same as the maximum if ``q=100``.
+    as the minimum if ``q=0`` and the same as the maximum if ``q=100``.
 
     Examples
     --------
