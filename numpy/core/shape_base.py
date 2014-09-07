@@ -1,10 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
-           'stack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
+           'stack', 'vstack']
+
 
 from . import numeric as _nx
-from .numeric import asanyarray, newaxis
+from .numeric import array, asanyarray, newaxis
 
 def atleast_1d(*arys):
     """
@@ -202,6 +203,7 @@ def vstack(tup):
     dstack : Stack arrays in sequence depth wise (along third dimension).
     concatenate : Join a sequence of arrays along an existing axis.
     vsplit : Split array into a list of multiple sub-arrays vertically.
+    block : Create block arrays.
 
     Notes
     -----
@@ -253,6 +255,7 @@ def hstack(tup):
     dstack : Stack arrays in sequence depth wise (along third axis).
     concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
+    block : Create block arrays.
 
     Notes
     -----
@@ -278,6 +281,7 @@ def hstack(tup):
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
+
 
 def stack(arrays, axis=0):
     """
@@ -305,6 +309,7 @@ def stack(arrays, axis=0):
     --------
     concatenate : Join a sequence of arrays along an existing axis.
     split : Split array into a list of multiple sub-arrays of equal size.
+    block : Create block arrays.
 
     Examples
     --------
@@ -348,3 +353,83 @@ def stack(arrays, axis=0):
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
     return _nx.concatenate(expanded_arrays, axis=axis)
+
+
+def block(tup_tup):
+    """
+    Create block arrays similar to Matlab's "square bracket stacking":
+
+            [A A; B B]
+
+    You can create a block array with the same notation you use for
+    `np.array`.
+
+    Parameters
+    ----------
+    tup_tup : sequence of sequence of ndarrays
+        1-D arrays are treated as row vectors.
+
+    Returns
+    -------
+    stacked : ndarray
+        The 2-D array formed by stacking the given arrays.
+
+    See Also
+    --------
+    stack : Stack arrays in sequence along a new dimension.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+    concatenate : Join a sequence of arrays together.
+    vsplit : Split array into a list of multiple sub-arrays vertically.
+
+    Examples
+    --------
+    Stacking in a row:
+    >>> A = np.array([[1, 2, 3]])
+    >>> B = np.array([[2, 3, 4]])
+    >>> block([A, B])
+    array([[1, 2, 3, 2, 3, 4]])
+
+    >>> A = np.array([[1, 1], [1, 1]])
+    >>> B = 2 * A
+    >>> block([A, B])
+    array([[1, 1, 2, 2],
+           [1, 1, 2, 2]])
+
+    >>> # the tuple notation also works
+    >>> block((A, B))
+    array([[1, 1, 2, 2],
+           [1, 1, 2, 2]])
+
+    >>> # block matrix with arbitrary shaped elements
+    >>> One = np.array([[1, 1, 1]])
+    >>> Two = np.array([[2, 2, 2]])
+    >>> Three = np.array([[3, 3, 3, 3, 3, 3]])
+    >>> four = np.array([4, 4, 4, 4, 4, 4])
+    >>> five = np.array([5])
+    >>> six = np.array([6, 6, 6, 6, 6])
+    >>> Zeros = np.zeros((2, 6), dtype=int)
+    >>> block([[One, Two],
+    ...        [Three],
+    ...        [four],
+    ...        [five, six],
+    ...        [Zeros]])
+    array([[1, 1, 1, 2, 2, 2],
+           [3, 3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4, 4],
+           [5, 6, 6, 6, 6, 6],
+           [0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0]])
+
+    >>> # 1-D vectors are treated as row arrays
+    >>> a = np.array([1, 1])
+    >>> b = np.array([2, 2])
+    >>> block([a, b])
+    array([[1, 1, 2, 2]])
+    """
+    if isinstance(tup_tup[0], list) or isinstance(tup_tup[0], tuple):
+        result = vstack([hstack(row) for row in tup_tup])
+    else:
+        result = hstack(tup_tup)
+    return atleast_2d(result)
