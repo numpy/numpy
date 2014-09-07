@@ -175,6 +175,13 @@ to ``logspace``, but with start and stop specified directly:
 ``geomspace(start, stop)`` behaves the same as 
 ``logspace(log10(start), log10(stop))``.
 
+New ``block`` function for creating blocked arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Add a new ``block`` function to the current stacking functions ``vstack``,
+``hstack``, and ``stack``. It is similar to Matlab's square bracket
+notation for creating block matrices.
+
+
 Improvements
 ============
 
