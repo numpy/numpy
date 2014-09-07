@@ -341,6 +341,9 @@ multiarray_funcs_api = {
     'PyArray_SelectkindConverter':          (298,),
     'PyDataMem_NEW_ZEROED':                 (299,),
     # End 1.8 API
+    # End 1.9 API
+    'PyArray_CheckAnyScalarExact':          (300, NonNull(1)),
+    # End 1.10 API
 }
 
 ufunc_types_api = {

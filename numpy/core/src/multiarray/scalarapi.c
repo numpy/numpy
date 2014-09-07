@@ -161,6 +161,15 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 }
 
 /*NUMPY_API
+ * return true an object is exactly a numpy scalar
+ */
+NPY_NO_EXPORT int
+PyArray_CheckAnyScalarExact(PyObject * obj)
+{
+    return is_anyscalar_exact(obj);
+}
+
+/*NUMPY_API
  * Convert to c-type
  *
  * no error checking is performed -- ctypeptr must be same type as scalar

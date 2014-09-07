@@ -90,7 +90,8 @@ PyArray_SetNumericOps(PyObject *dict)
 static int
 has_ufunc_attr(PyObject * obj) {
     /* attribute check is expensive for scalar operations, avoid if possible */
-    if (PyArray_CheckExact(obj) || _is_basic_python_type(obj)) {
+    if (PyArray_CheckExact(obj) || PyArray_CheckAnyScalarExact(obj) ||
+        _is_basic_python_type(obj)) {
         return 0;
     }
     else {

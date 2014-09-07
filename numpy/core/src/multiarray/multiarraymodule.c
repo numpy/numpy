@@ -72,8 +72,12 @@ PyArray_GetPriority(PyObject *obj, double default_)
     PyObject *ret;
     double priority = NPY_PRIORITY;
 
-    if (PyArray_CheckExact(obj))
+    if (PyArray_CheckExact(obj)) {
         return priority;
+    }
+    else if (PyArray_CheckAnyScalarExact(obj)) {
+        return NPY_SCALAR_PRIORITY;
+    }
 
     ret = PyArray_GetAttrString_SuppressException(obj, "__array_priority__");
     if (ret == NULL) {
