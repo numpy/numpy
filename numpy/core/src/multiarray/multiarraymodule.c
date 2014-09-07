@@ -57,6 +57,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ufunc_override.h"
 #include "scalarmathmodule.h" /* for npy_mul_with_overflow_intp */
 #include "multiarraymodule.h"
+#include "cblasfuncs.h"
+#include "vdot.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -835,8 +837,18 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
-        goto fail;
+        Py_DECREF(ap1);
+        return NULL;
     }
+
+#if defined(HAVE_CBLAS)
+    if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
+            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+        return cblas_innerproduct(typenum, ap1, ap2);
+    }
+#endif
+
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
@@ -848,7 +860,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_DIMS(ap2)[PyArray_NDIM(ap2) - 1] != l) {
-        PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+        dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1,
+                            ap2, PyArray_NDIM(ap2) - 1);
         goto fail;
     }
 
@@ -882,7 +895,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     }
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1) - 1];
     is2 = PyArray_STRIDES(ap2)[PyArray_NDIM(ap2) - 1];
-    op = PyArray_DATA(ret); os = PyArray_DESCR(ret)->elsize;
+    op = PyArray_DATA(ret);
+    os = PyArray_DESCR(ret)->elsize;
     axis = PyArray_NDIM(ap1) - 1;
     it1 = (PyArrayIterObject *) PyArray_IterAllButAxis((PyObject *)ap1, &axis);
     axis = PyArray_NDIM(ap2) - 1;
@@ -915,7 +929,17 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 }
 
 /*NUMPY_API
- * Numeric.matrixproduct(a,v,out)
+ * Numeric.matrixproduct(a,v)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
+{
+    return PyArray_MatrixProduct2(op1, op2, NULL);
+}
+
+/*NUMPY_API
+ * Numeric.matrixproduct2(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
@@ -950,8 +974,18 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
-        goto fail;
+        Py_DECREF(ap1);
+        return NULL;
     }
+
+#if defined(HAVE_CBLAS)
+    if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
+            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+        return cblas_matrixproduct(typenum, ap1, ap2, out);
+    }
+#endif
+
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
@@ -968,7 +1002,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         matchDim = 0;
     }
     if (PyArray_DIMS(ap2)[matchDim] != l) {
-        PyErr_SetString(PyExc_ValueError, "objects are not aligned");
+        dot_alignment_error(ap1, PyArray_NDIM(ap1) - 1, ap2, matchDim);
         goto fail;
     }
     nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
@@ -986,14 +1020,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if(PyArray_NDIM(ap2) > 1) {
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
-    /*
-      fprintf(stderr, "nd=%d dimensions=", nd);
-      for(i=0; i<j; i++)
-      fprintf(stderr, "%d ", dimensions[i]);
-      fprintf(stderr, "\n");
-    */
 
-    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1]; is2 = PyArray_STRIDES(ap2)[matchDim];
+    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
+    is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
     ret = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum);
     if (ret == NULL) {
@@ -1052,15 +1081,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     return NULL;
 }
 
-/*NUMPY_API
- *Numeric.matrixproduct(a,v)
- * just like inner product but does the swapaxes stuff on the fly
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
-{
-    return PyArray_MatrixProduct2(op1, op2, NULL);
-}
 
 /*NUMPY_API
  * Copy and Transpose
@@ -1953,8 +1973,9 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 if (tmpobj == NULL) {
                     /* More informative error message */
                     PyErr_SetString(PyExc_ValueError,
-                                    ("Failed to encode Numpy scalar data string to latin1. "
-                                     "pickle.load(a, encoding='latin1') is assumed if unpickling."));
+                            "Failed to encode Numpy scalar data string to "
+                            "latin1,\npickle.load(a, encoding='latin1') is "
+                            "assumed if unpickling.");
                     return NULL;
                 }
             }
@@ -2199,15 +2220,15 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 static PyObject *
 array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
-    int errval;
     static PyUFuncObject *cached_npy_dot = NULL;
+    int errval;
     PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
+    PyArrayObject *ret;
     char* kwlist[] = {"a", "b", "out", NULL };
-    PyObject *module;
 
     if (cached_npy_dot == NULL) {
-        module = PyImport_ImportModule("numpy.core.multiarray");
+        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
         cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
                                               PyModule_GetDict(module), "dot");
 
@@ -2235,8 +2256,119 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
                         "'out' must be an array");
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o));
+    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
+    return PyArray_Return(ret);
 }
+
+
+static PyObject *
+array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    int typenum;
+    char *ip1, *ip2, *op;
+    npy_intp n, stride;
+    PyObject *op1, *op2;
+    PyArrayObject *ap1 = NULL, *ap2  = NULL, *ret = NULL;
+    PyArray_Descr *type;
+    PyArray_DotFunc *vdot;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+        return NULL;
+    }
+
+    /*
+     * Conjugating dot product using the BLAS for vectors.
+     * Flattens both op1 and op2 before dotting.
+     */
+    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op2, typenum);
+
+    type = PyArray_DescrFromType(typenum);
+    Py_INCREF(type);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(type);
+        goto fail;
+    }
+    op1 = PyArray_Ravel(ap1, NPY_CORDER);
+    if (op1 == NULL) {
+        Py_DECREF(type);
+        goto fail;
+    }
+    Py_DECREF(ap1);
+    ap1 = (PyArrayObject *)op1;
+
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
+    if (ap2 == NULL) {
+        goto fail;
+    }
+    op2 = PyArray_Ravel(ap2, NPY_CORDER);
+    if (op2 == NULL) {
+        goto fail;
+    }
+    Py_DECREF(ap2);
+    ap2 = (PyArrayObject *)op2;
+
+    if (PyArray_DIM(ap2, 0) != PyArray_DIM(ap1, 0)) {
+        PyErr_SetString(PyExc_ValueError,
+                "vectors have different lengths");
+        goto fail;
+    }
+
+    /* array scalar output */
+    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, typenum);
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    n = PyArray_DIM(ap1, 0);
+    stride = type->elsize;
+    ip1 = PyArray_DATA(ap1);
+    ip2 = PyArray_DATA(ap2);
+    op = PyArray_DATA(ret);
+
+    switch (typenum) {
+        case NPY_CFLOAT:
+            vdot = (PyArray_DotFunc *)CFLOAT_vdot;
+            break;
+        case NPY_CDOUBLE:
+            vdot = (PyArray_DotFunc *)CDOUBLE_vdot;
+            break;
+        case NPY_CLONGDOUBLE:
+            vdot = (PyArray_DotFunc *)CLONGDOUBLE_vdot;
+            break;
+        case NPY_OBJECT:
+            vdot = (PyArray_DotFunc *)OBJECT_vdot;
+            break;
+        default:
+            vdot = type->f->dotfunc;
+            if (vdot == NULL) {
+                PyErr_SetString(PyExc_ValueError,
+                        "function not available for this data type");
+                goto fail;
+            }
+    }
+
+    if (n < 500) {
+        vdot(ip1, stride, ip2, stride, op, n, NULL);
+    }
+    else {
+        NPY_BEGIN_THREADS_DESCR(type);
+        vdot(ip1, stride, ip2, stride, op, n, NULL);
+        NPY_END_THREADS_DESCR(type);
+    }
+
+    Py_XDECREF(ap1);
+    Py_XDECREF(ap2);
+    return PyArray_Return(ret);
+fail:
+    Py_XDECREF(ap1);
+    Py_XDECREF(ap2);
+    Py_XDECREF(ret);
+    return NULL;
+}
+
 
 static int
 einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
@@ -3804,6 +3936,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"vdot",
+        (PyCFunction)array_vdot,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"einsum",
         (PyCFunction)array_einsum,

@@ -11,6 +11,7 @@ Highlights
 Dropped Support
 ===============
 * The polytemplate.py file has been removed.
+* The _dotblas module is no longer available.
 
 
 Future Changes
@@ -39,6 +40,17 @@ Improvements
 Changes
 =======
 
+dotblas functionality moved to multiarray
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The cblas versions of dot, inner, and vdot have been integrated into
+the multiarray module. In particular, vdot is now a multiarray function,
+which it was not before.
+
 
 Deprecations
 ============
+
+alterdot, restoredot Deprecated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The alterdot and restoredot functions no longer do anything, and are
+deprecated.

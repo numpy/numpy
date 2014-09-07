@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 import collections
-from . import multiarray
+from numpy.core import multiarray
 from . import umath
 from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
@@ -1077,31 +1077,61 @@ def outer(a, b, out=None):
 
 # try to import blas optimized dot if available
 envbak = os.environ.copy()
-try:
-    # importing this changes the dot function for basic 4 types
-    # to blas-optimized versions.
+dot = multiarray.dot
+inner = multiarray.inner
+vdot = multiarray.vdot
 
-    # disables openblas affinity setting of the main thread that limits
-    # python threads or processes to one core
-    if 'OPENBLAS_MAIN_FREE' not in os.environ:
-        os.environ['OPENBLAS_MAIN_FREE'] = '1'
-    if 'GOTOBLAS_MAIN_FREE' not in os.environ:
-        os.environ['GOTOBLAS_MAIN_FREE'] = '1'
-    from ._dotblas import dot, vdot, inner, alterdot, restoredot
-except ImportError:
-    # docstrings are in add_newdocs.py
-    inner = multiarray.inner
-    dot = multiarray.dot
-    def vdot(a, b):
-        return dot(asarray(a).ravel().conj(), asarray(b).ravel())
-    def alterdot():
-        pass
-    def restoredot():
-        pass
-finally:
-    os.environ.clear()
-    os.environ.update(envbak)
-    del envbak
+def alterdot():
+    """
+    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
+
+    Typically, as a user of Numpy, you do not explicitly call this
+    function. If Numpy is built with an accelerated BLAS, this function is
+    automatically called when Numpy is imported.
+
+    When Numpy is built with an accelerated BLAS like ATLAS, these
+    functions are replaced to make use of the faster implementations.  The
+    faster implementations only affect float32, float64, complex64, and
+    complex128 arrays. Furthermore, the BLAS API only includes
+    matrix-matrix, matrix-vector, and vector-vector products. Products of
+    arrays with larger dimensionalities use the built in functions and are
+    not accelerated.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and alterdot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    restoredot : `restoredot` undoes the effects of `alterdot`.
+
+    """
+    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
+
+
+def restoredot():
+    """
+    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
+    implementations.
+
+    Typically, the user will only need to call this when troubleshooting
+    and installation problem, reproducing the conditions of a build without
+    an accelerated BLAS, or when being very careful about benchmarking
+    linear algebra operations.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and restoredot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    alterdot : `restoredot` undoes the effects of `alterdot`.
+
+    """
+    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
+
 
 def tensordot(a, b, axes=2):
     """
