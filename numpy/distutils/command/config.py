@@ -173,7 +173,7 @@ Original exception was: %s, and the Compiler class was %s
                    headers=None, include_dirs=None):
         self._check_compiler()
         body = """
-int main()
+int main(void)
 {
 #ifndef %s
     (void) %s;
@@ -188,7 +188,7 @@ int main()
                          headers=None, include_dirs=None):
         self._check_compiler()
         body = """
-int main()
+int main(void)
 {
 #if %s
 #else
@@ -208,7 +208,7 @@ int main()
 
         # First check the type can be compiled
         body = r"""
-int main() {
+int main(void) {
   if ((%(name)s *) 0)
     return 0;
   if (sizeof (%(name)s))
@@ -236,7 +236,7 @@ int main() {
         # First check the type can be compiled
         body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
     test_array [0] = 0
@@ -252,7 +252,7 @@ int main ()
         if expected:
             body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
     test_array [0] = 0
@@ -273,7 +273,7 @@ int main ()
         # this fails to *compile* if size > sizeof(type)
         body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
     test_array [0] = 0
