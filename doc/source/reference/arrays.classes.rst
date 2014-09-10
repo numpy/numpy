@@ -41,7 +41,7 @@ Numpy provides several hooks that classes can customize:
 
 .. function:: class.__numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
 
-   .. versionadded:: 1.9
+   .. versionadded:: 1.10
 
    Any class (ndarray subclass or not) can define this method to
    override behavior of Numpy's ufuncs. This works quite similarly to
