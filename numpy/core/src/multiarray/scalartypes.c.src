@@ -2933,7 +2933,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         if (PyErr_Occurred() || (memu > NPY_MAX_INT)) {
             PyErr_Clear();
             PyErr_Format(PyExc_OverflowError,
-                    "size must be smaller than %d",
+                    "size cannot be greater than %d",
                     (int) NPY_MAX_INT);
             return NULL;
         }
