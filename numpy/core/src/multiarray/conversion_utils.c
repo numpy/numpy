@@ -116,7 +116,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
     if (len > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError, "sequence too large; "
-                     "must be smaller than %d", NPY_MAXDIMS);
+                     "cannot be greater than %d", NPY_MAXDIMS);
         return NPY_FAIL;
     }
     if (len > 0) {
