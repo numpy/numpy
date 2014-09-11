@@ -206,14 +206,17 @@ prepare_index(PyArrayObject *self, PyObject *index,
             n = 0;
             make_tuple = 1;
         }
-        n = PySequence_Size(index);
+        else {
+            n = PySequence_Size(index);
+        }
         if (n < 0 || n >= NPY_MAXDIMS) {
             n = 0;
         }
         for (i = 0; i < n; i++) {
             PyObject *tmp_obj = PySequence_GetItem(index, i);
             if (tmp_obj == NULL) {
-                make_tuple = 1;
+                PyErr_Clear();
+                make_tuple = 0;
                 break;
             }
             if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)
