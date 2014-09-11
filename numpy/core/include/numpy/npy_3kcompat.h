@@ -298,7 +298,7 @@ npy_PyFile_DupClose(PyObject *file, FILE* handle)
 #else
 
 /* DEPRECATED, DO NOT USE */
-#define npy_PyFile_DupClose(f, h, p) npy_PyFile_DupClose2((f), (h), (p))
+#define npy_PyFile_DupClose(f, h) npy_PyFile_DupClose2((f), (h), 0)
 
 /* use these */
 static NPY_INLINE FILE *
