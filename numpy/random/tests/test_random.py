@@ -680,9 +680,7 @@ class TestThread(object):
             function(np.random.RandomState(s), o)
 
         # these platforms change x87 fpu precision mode in threads
-        if (np.intp().dtype.itemsize == 4 and
-                (sys.platform == "win32" or
-                 sys.platform.startswith("gnukfreebsd"))):
+        if (np.intp().dtype.itemsize == 4 and sys.platform == "win32"):
             np.testing.assert_array_almost_equal(out1, out2)
         else:
             np.testing.assert_array_equal(out1, out2)
