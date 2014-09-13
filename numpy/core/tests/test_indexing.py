@@ -378,6 +378,37 @@ class TestIndexing(TestCase):
         d[b % 2 == 0]
         d[b % 2 == 0] = x[::2]
 
+    def test_tuple_subclass(self):
+        arr = np.ones((5, 5))
+
+        # A tuple subclass should also be an nd-index
+        class TupleSubclass(tuple):
+            pass
+        index = ([1], [1])
+        index = TupleSubclass(index)
+        assert_(arr[index].shape == (1,))
+        # Unlike the non nd-index:
+        assert_(arr[index,].shape != (1,))
+
+    def test_broken_sequence_not_nd_index(self):
+        # See gh-5063:
+        # If we have an object which claims to be a sequence, but fails
+        # on item getting, this should not be converted to an nd-index (tuple)
+        # If this object happens to be a valid index otherwise, it should work
+        # This object here is very dubious and probably bad though:
+        class SequenceLike(object):
+            def __index__(self):
+                return 0
+
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, item):
+                raise IndexError('Not possible')
+
+        arr = np.arange(10)
+        assert_array_equal(arr[SequenceLike()], arr[SequenceLike(),])
+
 
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):
