@@ -880,7 +880,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
 def argmax(a, axis=None):
     """
-    Indices of the maximum values along an axis.
+    Returns the indices of the maximum values along an axis.
 
     Parameters
     ----------
@@ -937,12 +937,52 @@ def argmax(a, axis=None):
 
 def argmin(a, axis=None):
     """
-    Return the indices of the minimum values along an axis.
+    Returns the indices of the minimum values along an axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int, optional
+        By default, the index is into the flattened array, otherwise
+        along the specified axis.
+
+    Returns
+    -------
+    index_array : ndarray of ints
+        Array of indices into the array. It has the same shape as `a.shape`
+        with the dimension along `axis` removed.
 
     See Also
     --------
-    argmax : Similar function.  Please refer to `numpy.argmax` for detailed
-        documentation.
+    ndarray.argmin, argmax
+    amin : The minimum value along a given axis.
+    unravel_index : Convert a flat index into an index tuple.
+
+    Notes
+    -----
+    In case of multiple occurrences of the minimum values, the indices
+    corresponding to the first occurrence are returned.
+
+    Examples
+    --------
+    >>> a = np.arange(6).reshape(2,3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.argmin(a)
+    0
+    >>> np.argmin(a, axis=0)
+    array([0, 0, 0])
+    >>> np.argmin(a, axis=1)
+    array([0, 0])
+
+    >>> b = np.arange(6)
+    >>> b[4] = 0
+    >>> b
+    array([0, 1, 2, 3, 0, 5])
+    >>> np.argmin(b) # Only the first occurrence is returned.
+    0
 
     """
     try:
