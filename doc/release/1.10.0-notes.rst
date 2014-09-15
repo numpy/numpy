@@ -12,6 +12,7 @@ Dropped Support
 ===============
 * The polytemplate.py file has been removed.
 * The _dotblas module is no longer available.
+* The testcalcs.py file has been removed.
 
 
 Future Changes
