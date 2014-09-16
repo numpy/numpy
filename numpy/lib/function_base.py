@@ -1392,6 +1392,8 @@ def extract(condition, arr):
     This is equivalent to ``np.compress(ravel(condition), ravel(arr))``.  If
     `condition` is boolean ``np.extract`` is equivalent to ``arr[condition]``.
 
+    Note that `place` does the exact opposite of `extract`.
+
     Parameters
     ----------
     condition : array_like
@@ -1407,7 +1409,7 @@ def extract(condition, arr):
 
     See Also
     --------
-    take, put, copyto, compress
+    take, put, copyto, compress, place
 
     Examples
     --------
