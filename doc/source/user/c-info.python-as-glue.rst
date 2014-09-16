@@ -249,6 +249,11 @@ necessary to tell f2py that the value of n depends on the input a (so
 that it won't try to create the variable n until the variable a is
 created).
 
+After modifying ``add.pyf``, the python interface file can be generated
+by compiling both add.f95 and add.pyf::
+
+    f2py -c add.pyf add.f95 
+
 The new interface has docstring:
 
     >>> print add.zadd.__doc__
