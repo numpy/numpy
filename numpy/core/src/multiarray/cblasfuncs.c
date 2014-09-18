@@ -8,8 +8,8 @@
 
 #include <Python.h>
 #include <assert.h>
-#include <cblas.h>
 #include <numpy/arrayobject.h>
+#include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
 

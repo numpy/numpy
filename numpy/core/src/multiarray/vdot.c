@@ -3,10 +3,7 @@
 #include <Python.h>
 #include "common.h"
 #include "vdot.h"
-
-#if defined(HAVE_CBLAS)
-#include <cblas.h>
-#endif
+#include "npy_cblas.h"
 
 
 /*

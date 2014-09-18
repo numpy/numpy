@@ -29,11 +29,9 @@
 #include "numpyos.h"
 #include <string.h>
 
-#if defined(HAVE_CBLAS)
 #include "cblasfuncs.h"
-#include <cblas.h>
+#include "npy_cblas.h"
 #include <limits.h>
-#endif
 
 
 /*
