@@ -1765,7 +1765,7 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(), a.reshape(-1))
         assert_equal(a.ravel(order='A'), a.reshape(-1, order='A'))
 
-        a = np.array([[0, 1], [2, 3]])[::-1,:]
+        a = np.array([[0, 1], [2, 3]])[::-1, :]
         assert_equal(a.ravel(), [2, 3, 0, 1])
         assert_equal(a.ravel(order='C'), [2, 3, 0, 1])
         assert_equal(a.ravel(order='F'), [2, 0, 3, 1])
@@ -1773,6 +1773,70 @@ class TestMethods(TestCase):
         # 'K' doesn't reverse the axes of negative strides
         assert_equal(a.ravel(order='K'), [2, 3, 0, 1])
         assert_(a.ravel(order='K').flags.owndata)
+
+        # Not contiguous and 1-sized axis with non matching stride
+        a = np.arange(2**3 * 2)[::2]
+        a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
+        strides = list(a.strides)
+        strides[1] = 123
+        a.strides = strides
+        assert_(np.may_share_memory(a.ravel(order='K'), a))
+        assert_equal(a.ravel('K'), np.arange(0, 15, 2))
+
+        # General case of possible ravel that is not contiguous but
+        # works and includes a 1-sized axis with non matching stride
+        a = a.swapaxes(-1, -2)  # swap back to C-order
+        assert_(np.may_share_memory(a.ravel(order='C'), a))
+        assert_(np.may_share_memory(a.ravel(order='K'), a))
+
+        a = a.T  # swap all to Fortran order
+        assert_(np.may_share_memory(a.ravel(order='F'), a))
+        assert_(np.may_share_memory(a.ravel(order='K'), a))
+
+        # Test negative strides:
+        a = np.arange(4)[::-1].reshape(2, 2)
+        assert_(np.may_share_memory(a.ravel(order='C'), a))
+        assert_(np.may_share_memory(a.ravel(order='K'), a))
+        assert_equal(a.ravel('C'), [3, 2, 1, 0])
+        assert_equal(a.ravel('K'), [3, 2, 1, 0])
+
+        # Test keeporder with weirdly strided 1-sized dims (1-d first stride)
+        a = np.arange(8)[::2].reshape(1, 2, 2, 1)  # neither C, nor F order
+        strides = list(a.strides)
+        strides[0] = -12
+        strides[-1] = 0
+        a.strides = strides
+        assert_(np.may_share_memory(a.ravel(order='K'), a))
+        assert_equal(a.ravel('K'), a.ravel('C'))
+
+        # 1-element tidy strides test (NPY_RELAXED_STRIDES_CHECKING):
+        a = np.array([[1]])
+        a.strides = (123, 432)
+        # If the stride is not 8, NPY_RELAXED_STRIDES_CHECKING is messing
+        # them up on purpose:
+        if np.ones(1).strides == (8,):
+            assert_(np.may_share_memory(a.ravel('K'), a))
+            assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
+
+        for order in ('C', 'F', 'A', 'K'):
+            # 0-d corner case:
+            a = np.array(0)
+            assert_equal(a.ravel(order), [0])
+            assert_(np.may_share_memory(a.ravel(order), a))
+
+        #Test that certain non-inplace ravels work right (mostly) for 'K':
+        b = np.arange(2**4 * 2)[::2].reshape(2, 2, 2, 2)
+        a = b[..., ::2]
+        assert_equal(a.ravel('K'), [0, 4, 8, 12, 16, 20, 24, 28])
+        assert_equal(a.ravel('C'), [0, 4, 8, 12, 16, 20, 24, 28])
+        assert_equal(a.ravel('A'), [0, 4, 8, 12, 16, 20, 24, 28])
+        assert_equal(a.ravel('F'), [0, 16, 8, 24, 4, 20, 12, 28])
+
+        a = b[::2, ...]
+        assert_equal(a.ravel('K'), [0, 2, 4, 6, 8, 10, 12, 14])
+        assert_equal(a.ravel('C'), [0, 2, 4, 6, 8, 10, 12, 14])
+        assert_equal(a.ravel('A'), [0, 2, 4, 6, 8, 10, 12, 14])
+        assert_equal(a.ravel('F'), [0, 8, 4, 12, 2, 10, 6, 14])
 
     def test_conjugate(self):
         a = np.array([1-1j, 1+1j, 23+23.0j])
