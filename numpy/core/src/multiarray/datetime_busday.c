@@ -850,7 +850,7 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
         obj = obj_str;
     }
 
-    if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+    if (PyBytes_AsStringAndSize(obj, &str, &len) == -1) {
         Py_DECREF(obj);
         return 0;
     }

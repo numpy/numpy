@@ -1840,7 +1840,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         }
         unit_str = tmp;
     }
-    if (PyBytes_AsStringAndSize(unit_str, &basestr, &len) < 0) {
+    if (PyBytes_AsStringAndSize(unit_str, &basestr, &len) == -1) {
         Py_DECREF(unit_str);
         return -1;
     }
@@ -1919,7 +1919,7 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
         return -1;
     }
 
-    if (PyBytes_AsStringAndSize(ascii, &str, &len) < 0) {
+    if (PyBytes_AsStringAndSize(ascii, &str, &len) == -1) {
         Py_DECREF(ascii);
         return -1;
     }

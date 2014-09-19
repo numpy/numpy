@@ -48,7 +48,7 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
         Py_ssize_t len;
         int i;
 
-        if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+        if (PyBytes_AsStringAndSize(obj, &str, &len) == -1) {
             Py_DECREF(obj);
             return 0;
         }

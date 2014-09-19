@@ -269,7 +269,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 #else
             tmp = name;
 #endif
-            if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) < 0) {
+            if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) == -1) {
+                PyErr_Clear();
                 PyErr_SetString(PyExc_ValueError, "invalid field name");
                 return -1;
             }
