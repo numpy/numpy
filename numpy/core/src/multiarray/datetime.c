@@ -2369,7 +2369,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             bytes = obj;
             Py_INCREF(bytes);
         }
-        if (PyBytes_AsStringAndSize(bytes, &str, &len) == -1) {
+        if (PyBytes_AsStringAndSize(bytes, &str, &len) < 0) {
             Py_DECREF(bytes);
             return -1;
         }
@@ -2558,7 +2558,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             bytes = obj;
             Py_INCREF(bytes);
         }
-        if (PyBytes_AsStringAndSize(bytes, &str, &len) == -1) {
+        if (PyBytes_AsStringAndSize(bytes, &str, &len) < 0) {
             Py_DECREF(bytes);
             return -1;
         }

@@ -689,7 +689,7 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
         return ret;
     }
 
-    if (PyBytes_AsStringAndSize(obj, &str, &length) == -1) {
+    if (PyBytes_AsStringAndSize(obj, &str, &length) < 0) {
         return 0;
     }
 

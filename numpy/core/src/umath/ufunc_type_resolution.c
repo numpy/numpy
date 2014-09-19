@@ -2044,7 +2044,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
             type_tup = str_obj;
         }
 
-        if (!PyBytes_AsStringAndSize(type_tup, &str, &length) < 0) {
+        if (PyBytes_AsStringAndSize(type_tup, &str, &length) < 0) {
             Py_XDECREF(str_obj);
             return -1;
         }

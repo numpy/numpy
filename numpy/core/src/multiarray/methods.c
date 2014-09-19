@@ -1687,7 +1687,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len)) {
+        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len) < 0) {
             Py_DECREF(rawdata);
             return NULL;
         }
