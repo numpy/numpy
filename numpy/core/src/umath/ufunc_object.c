@@ -927,7 +927,8 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
             }
 #endif
 
-            if (PyBytes_AsStringAndSize(key, &str, &length) == -1) {
+            if (PyBytes_AsStringAndSize(key, &str, &length) < 0) {
+                PyErr_Clear();
                 PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
                 goto fail;
             }

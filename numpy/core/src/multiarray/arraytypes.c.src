@@ -503,7 +503,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         return -1;
     }
 #endif
-    if (PyBytes_AsStringAndSize(temp, &ptr, &len) == -1) {
+    if (PyBytes_AsStringAndSize(temp, &ptr, &len) < 0) {
         Py_DECREF(temp);
         return -1;
     }

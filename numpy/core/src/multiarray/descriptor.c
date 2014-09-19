@@ -2476,7 +2476,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             endian_obj = tmp;
         }
 
-        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) == -1) {
+        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) < 0) {
             Py_XDECREF(tmp);
             return NULL;
         }

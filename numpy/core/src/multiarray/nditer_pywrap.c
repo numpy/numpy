@@ -129,7 +129,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             f = f_str;
         }
 
-        if (PyBytes_AsStringAndSize(f, &str, &length) == -1) {
+        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
             Py_DECREF(f);
             return 0;
         }
@@ -238,7 +238,7 @@ npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
         return ret;
     }
 
-    if (PyBytes_AsStringAndSize(order_in, &str, &length) == -1) {
+    if (PyBytes_AsStringAndSize(order_in, &str, &length) < 0) {
         return 0;
     }
 
@@ -300,7 +300,8 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
             f = f_str;
         }
 
-        if (PyBytes_AsStringAndSize(f, &str, &length) == -1) {
+        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+            PyErr_Clear();
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
                    "op_flags must be a tuple or array of per-op flag-tuples");
