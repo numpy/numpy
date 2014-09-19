@@ -3346,97 +3346,6 @@ buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 #endif
 
-#ifndef _MSC_VER
-#include <setjmp.h>
-#include <signal.h>
-jmp_buf _NPY_SIGSEGV_BUF;
-static void
-_SigSegv_Handler(int signum)
-{
-    longjmp(_NPY_SIGSEGV_BUF, signum);
-}
-#endif
-
-#define _test_code() { \
-        test = *((char*)memptr); \
-        if (!ro) { \
-            *((char *)memptr) = '\0'; \
-            *((char *)memptr) = test; \
-        } \
-        test = *((char*)memptr+size-1); \
-        if (!ro) { \
-            *((char *)memptr+size-1) = '\0'; \
-            *((char *)memptr+size-1) = test; \
-        } \
-    }
-
-static PyObject *
-as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
-{
-    PyObject *mem;
-    Py_ssize_t size;
-    npy_bool ro = NPY_FALSE, check = NPY_TRUE;
-    void *memptr;
-    static char *kwlist[] = {"mem", "size", "readonly", "check", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O" NPY_SSIZE_T_PYFMT "|O&O&", kwlist,
-                &mem, &size, PyArray_BoolConverter, &ro,
-                PyArray_BoolConverter, &check)) {
-        return NULL;
-    }
-    memptr = PyLong_AsVoidPtr(mem);
-    if (memptr == NULL) {
-        return NULL;
-    }
-    if (check) {
-        /*
-         * Try to dereference the start and end of the memory region
-         * Catch segfault and report error if it occurs
-         */
-        char test;
-        int err = 0;
-
-#ifdef _MSC_VER
-        __try {
-            _test_code();
-        }
-        __except(1) {
-            err = 1;
-        }
-#else
-        PyOS_sighandler_t _npy_sig_save;
-        _npy_sig_save = PyOS_setsig(SIGSEGV, _SigSegv_Handler);
-        if (setjmp(_NPY_SIGSEGV_BUF) == 0) {
-            _test_code();
-        }
-        else {
-            err = 1;
-        }
-        PyOS_setsig(SIGSEGV, _npy_sig_save);
-#endif
-        if (err) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot use memory location as a buffer.");
-            return NULL;
-        }
-    }
-
-
-#if defined(NPY_PY3K)
-    PyErr_SetString(PyExc_RuntimeError,
-            "XXX -- not implemented!");
-    return NULL;
-#else
-    if (ro) {
-        return PyBuffer_FromMemory(memptr, size);
-    }
-    return PyBuffer_FromReadWriteMemory(memptr, size);
-#endif
-}
-
-#undef _test_code
-
 static PyObject *
 format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
@@ -4002,9 +3911,6 @@ static struct PyMethodDef array_module_methods[] = {
         (PyCFunction)buffer_buffer,
         METH_VARARGS | METH_KEYWORDS, NULL},
 #endif
-    {"int_asbuffer",
-        (PyCFunction)as_buffer,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"format_longfloat",
         (PyCFunction)format_longfloat,
         METH_VARARGS | METH_KEYWORDS, NULL},
