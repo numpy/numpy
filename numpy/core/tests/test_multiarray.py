@@ -2366,6 +2366,11 @@ class TestArgmax(TestCase):
         a.argmax(-1, out=out)
         assert_equal(out, a.argmax(-1))
 
+    def test_argmax_unicode(self):
+        d = np.zeros(6031, dtype='<U9')
+        d[5942] = "as"
+        assert_equal(d.argmax(), 5942)
+
 
 class TestArgmin(TestCase):
 
@@ -2470,6 +2475,11 @@ class TestArgmin(TestCase):
         out = np.ones(10, dtype=np.int_)
         a.argmin(-1, out=out)
         assert_equal(out, a.argmin(-1))
+
+    def test_argmin_unicode(self):
+        d = np.ones(6031, dtype='<U9')
+        d[6001] = "0"
+        assert_equal(d.argmin(), 6001)
 
 
 class TestMinMax(TestCase):
