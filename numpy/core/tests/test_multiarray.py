@@ -4260,19 +4260,20 @@ class TestNewBufferProtocol(object):
 
     def test_relaxed_strides(self):
         # Test that relaxed strides are converted to non-relaxed
-        x = np.zeros((5, 10), dtype=">f4")
+        c = np.ones((1, 10, 10), dtype='i8')
 
-        # Add an extra dimension in such a way that the strides will
-        # contain -1 markers
-        c = np.array([x])
-        assert memoryview(c).strides == (200, 40, 4)
+        # Check for NPY_RELAXED_STRIDES_CHECKING:
+        if np.ones((10, 1), order="C").flags.f_contiguous:
+            c.strides = (-1, 80, 8)
+
+        assert memoryview(c).strides == (800, 80, 8)
 
         # Writing C-contiguous data to a BytesIO buffer should work
         fd = io.BytesIO()
         fd.write(c.data)
 
         fortran = c.T
-        assert memoryview(fortran).strides == (4, 40, 200)
+        assert memoryview(fortran).strides == (8, 80, 800)
 
 
 class TestArrayAttributeDeletion(object):
