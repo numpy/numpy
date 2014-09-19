@@ -24,7 +24,7 @@ loads = pickle.loads
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero',
            'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',
-           'frombuffer', 'int_asbuffer', 'where', 'argwhere', 'copyto',
+           'frombuffer', 'where', 'argwhere', 'copyto',
            'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -377,7 +377,6 @@ may_share_memory = multiarray.may_share_memory
 if sys.version_info[0] < 3:
     newbuffer = multiarray.newbuffer
     getbuffer = multiarray.getbuffer
-int_asbuffer = multiarray.int_asbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
