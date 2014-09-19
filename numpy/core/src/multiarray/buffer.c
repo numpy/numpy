@@ -628,6 +628,8 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 {
     PyArrayObject *self;
     _buffer_info_t *info = NULL;
+    int i;
+    Py_ssize_t sd;
 
     self = (PyArrayObject*)obj;
 
@@ -702,6 +704,30 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
     if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES) {
         view->strides = info->strides;
+
+#ifdef NPY_RELAXED_STRIDES_CHECKING
+        /*
+         * If NPY_RELAXED_STRIDES_CHECKING is on, the array may be
+         * contiguous, but it won't look that way to Python when it
+         * tries to determine contiguity by looking at the strides
+         * (since one of the elements may be -1).  In that case, just
+         * regenerate strides from shape.
+         */
+        if (PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)) {
+            sd = view->itemsize;
+            for (i = view->ndim-1; i >= 0; --i) {
+                view->strides[i] = sd;
+                sd *= view->shape[i];
+            }
+        }
+        else if (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)) {
+            sd = view->itemsize;
+            for (i = 0; i < view->ndim; ++i) {
+                view->strides[i] = sd;
+                sd *= view->shape[i];
+            }
+        }
+#endif
     }
     else {
         view->strides = NULL;

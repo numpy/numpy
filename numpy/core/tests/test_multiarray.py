@@ -4258,6 +4258,22 @@ class TestNewBufferProtocol(object):
         x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
         self._check_roundtrip(x3)
 
+    def test_relaxed_strides(self):
+        # Test that relaxed strides are converted to non-relaxed
+        x = np.zeros((5, 10), dtype=">f4")
+
+        # Add an extra dimension in such a way that the strides will
+        # contain -1 markers
+        c = np.array([x])
+        assert memoryview(c).strides == (200, 40, 4)
+
+        # Writing C-contiguous data to a BytesIO buffer should work
+        fd = io.BytesIO()
+        fd.write(c.data)
+
+        fortran = c.T
+        assert memoryview(fortran).strides == (4, 40, 200)
+
 
 class TestArrayAttributeDeletion(object):
 
