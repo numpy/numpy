@@ -2991,7 +2991,7 @@ static int
     memcpy(mp, ip, elsize);
     *max_ind = 0;
     for (i = 1; i < n; i++) {
-        ip += elsize;
+        ip += elsize / sizeof(@type@);
         if (@fname@_compare(ip, mp, aip) > 0) {
             memcpy(mp, ip, elsize);
             *max_ind = i;
@@ -3048,7 +3048,7 @@ static int
     memcpy(mp, ip, elsize);
     *min_ind = 0;
     for(i=1; i<n; i++) {
-        ip += elsize;
+        ip += elsize / sizeof(@type@);
         if (@fname@_compare(mp,ip,aip) > 0) {
             memcpy(mp, ip, elsize);
             *min_ind=i;
