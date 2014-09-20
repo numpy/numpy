@@ -1178,7 +1178,7 @@ def fromregex(file, regexp, dtype):
 
 
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
-               skiprows=0, skip_header=0, skip_footer=0, converters=None,
+               skiprows=0, skip_header=0, skip_footer=0, nrows=None, converters=None,
                missing='', missing_values=None, filling_values=None,
                usecols=None, names=None,
                excludelist=None, deletechars=None, replace_space='_',
@@ -1214,6 +1214,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The number of lines to skip at the beginning of the file.
     skip_footer : int, optional
         The number of lines to skip at the end of the file.
+    nrows : int, optional
+        The number of lines to read. Should not use with skip_footer in the
+        same time.
     converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
@@ -1341,7 +1344,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         missing = asbytes(missing)
     if isinstance(missing_values, (unicode, list, tuple)):
         missing_values = asbytes_nested(missing_values)
-
+        
+    # Initial nrows and make sure skip_footer not specified
+    if nrows is None:
+        nrows = np.inf #to make sure len(rows) would allways be smaller than nrows
+    elif skip_footer:
+        raise ValueError(
+            "nrows and skip_footer should not be specified in the same time")
+    
     #
     if usemask:
         from numpy.ma import MaskedArray, make_mask_descr
@@ -1621,6 +1631,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Parse each line
     for (i, line) in enumerate(itertools.chain([first_line, ], fhd)):
+        if len(rows) >= nrows:
+            break
         values = split_line(line)
         nbvalues = len(values)
         # Skip an empty line
@@ -1644,6 +1656,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if own_fhd:
         fhd.close()
+    
+    if (nrows is not np.inf) and (len(rows) < nrows):
+        raise ValueError(
+            "%d lines required but only got %d lines" %(nrows, len(nrows))
+        # Which Exception is better? Or we'd better define a new one?
 
     # Upgrade the converters (if needed)
     if dtype is None:
