@@ -1204,7 +1204,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                usecols=None, names=None,
                excludelist=None, deletechars=None, replace_space='_',
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
-               unpack=None, usemask=False, loose=True, invalid_raise=True):
+               unpack=None, usemask=False, loose=True, invalid_raise=True,
+               nrows=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1285,6 +1286,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
         If False, a warning is emitted and the offending lines are skipped.
+    nrows : int,  optional
+        The number of rows to read. Must not be used with skip_footer at the
+        same time.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -1353,6 +1359,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
 
     """
+    # Check keywords conflict
+    if skip_footer and (nrows is not None):
+        raise ValueError(
+                "keywords 'skip_footer' and 'nrows' can not be specified "
+                "at the same time")
+
     # Py3 data conversions to bytes, for convenience
     if comments is not None:
         comments = asbytes(comments)
@@ -1642,6 +1654,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Parse each line
     for (i, line) in enumerate(itertools.chain([first_line, ], fhd)):
+        if (nrows is not None) and (len(rows) >= nrows):
+            break
         values = split_line(line)
         nbvalues = len(values)
         # Skip an empty line
@@ -1665,6 +1679,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if own_fhd:
         fhd.close()
+
+    if (nrows is not None) and (len(rows) != nrows):
+        raise AssertionError(
+                "%d rows required but got %d valid rows instead"
+                %(nrows,  len(rows)))
 
     # Upgrade the converters (if needed)
     if dtype is None:

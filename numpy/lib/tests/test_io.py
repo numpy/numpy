@@ -1641,6 +1641,32 @@ M   33  21.99
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 
+    def test_nrows(self):
+        #
+        data = '1 1\n2 2\n0 \n3 3\n4 4\n5  \n6  \n7  \n'
+        test = np.genfromtxt(TextIO(data),  nrows=2)
+        control = np.array([[1., 1.], [2., 2.]])
+        assert_equal(test,   control)
+        # Test keywords conflict
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), skip_footer=1, nrows=4)
+        # Test with invalid value
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), nrows=4)
+        # Test with invalid not raise
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            test = np.genfromtxt(TextIO(data), nrows=4, invalid_raise=False)
+            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
+            assert_equal(test, control)
+        # Test without enough valid rows
+        assert_raises(AssertionError, np.genfromtxt, TextIO(data), nrows=5)
+
+        data = 'a b\n#c d\n1 1\n2 2\n#0 \n3 3\n4 4\n5  \n6  \n7  \n'
+        # Test with header, names and comments
+        test = np.genfromtxt(TextIO(data), skip_header=1, nrows=4, names=True)
+        control = np.array([(1.0, 1.0), (2.0, 2.0), (3.0, 3.0), (4.0, 4.0)],
+                      dtype=[('c', '<f8'), ('d', '<f8')])
+        assert_equal(test, control)
+
     def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
         wanted = np.arange(6).reshape((2, 3))
