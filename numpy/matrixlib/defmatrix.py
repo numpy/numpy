@@ -1161,6 +1161,12 @@ def bmat(obj, ldict=None, gdict=None):
     obj : str or array_like
         Input data.  Names of variables in the current scope may be
         referenced, even if `obj` is a string.
+    ldict : dict, optional
+        A dictionary that replaces local operands in current frame.
+        Ignored if `obj` is not a string or `gdict` is `None`.
+    gdict : dict, optional
+        A dictionary that replaces global operands in current frame.
+        Ignored if `obj` is not a string.
 
     Returns
     -------
