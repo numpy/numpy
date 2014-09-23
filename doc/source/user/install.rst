@@ -37,15 +37,16 @@ Most of the major distributions provide packages for NumPy, but these can lag
 behind the most recent NumPy release. Pre-built binary packages for Ubuntu are
 available on the `scipy ppa
 <https://edge.launchpad.net/~scipy/+archive/ppa>`_. Redhat binaries are
-available in the `EPD <http://www.enthought.com/products/epd.php>`_.
+available in the `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_.
 
 Mac OS X
 --------
 
 A universal binary installer for NumPy is available from the `download site
 <http://sourceforge.net/project/showfiles.php?group_id=1369&
-package_id=175103>`_. The `EPD <http://www.enthought.com/products/epd.php>`_
-provides NumPy binaries.
+package_id=175103>`_. The `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_ provides NumPy binaries.
 
 Building from source
 ====================
