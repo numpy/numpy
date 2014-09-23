@@ -1266,8 +1266,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         number of columns.
         If False, a warning is emitted and the offending lines are skipped.
     nrows : int,  optional
-        The number of rows to read. Should not use with skip_footer at the
+        The number of rows to read. Must not be used with skip_footer at the
         same time.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -1339,7 +1341,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Check keywords conflict
     if skip_footer and (nrows is not None):
         raise ValueError(
-                "keywords 'skip_footer' and 'nrows' should not be specified "
+                "keywords 'skip_footer' and 'nrows' can not be specified "
                 "at the same time")
 
     # Py3 data conversions to bytes, for convenience
