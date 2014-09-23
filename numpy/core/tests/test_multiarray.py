@@ -636,6 +636,20 @@ class TestCreation(TestCase):
         assert_(a.dtype == np.dtype(object))
         assert_raises(ValueError, np.array, [Fail()])
 
+    def test_no_len_object_type(self):
+        # gh-5100, want object array from iterable object without len()
+        class Point2:
+            def __init__(self):
+                pass
+
+            def __getitem__(self, ind):
+                if ind in [0, 1]:
+                    return ind
+                else:
+                    raise IndexError()
+        d = np.array([Point2(), Point2(), Point2()])
+        assert_equal(d.dtype, np.dtype(object))
+
 
 class TestStructured(TestCase):
     def test_subarray_field_access(self):

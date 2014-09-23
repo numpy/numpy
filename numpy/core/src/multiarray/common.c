@@ -518,12 +518,20 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
+    /*
+     * fails if convertable to list but no len is defined which some libraries
+     * require to get object arrays
+     */
+    size = PySequence_Size(obj);
+    if (size < 0) {
+        goto fail;
+    }
+
     /* Recursive case, first check the sequence contains only one type */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
-    size = PySequence_Fast_GET_SIZE(seq);
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
