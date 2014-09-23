@@ -3797,7 +3797,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'copyto',
     """
-    copyto(dst, src, casting='same_kind', where=None, preservena=False)
+    copyto(dst, src, casting='same_kind', where=None)
 
     Copies values from one array to another, broadcasting as necessary.
 
@@ -3825,9 +3825,6 @@ add_newdoc('numpy.core.multiarray', 'copyto',
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
-    preservena : bool, optional
-        If set to True, leaves any NA values in `dst` untouched. This
-        is similar to the "hard mask" feature in numpy.ma.
 
     """)
 
@@ -3841,11 +3838,6 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     If `values` is not the same size as `a` and `mask` then it will repeat.
     This gives behavior different from ``a[mask] = values``.
-
-    .. note:: The `putmask` functionality is also provided by `copyto`, which
-              can be significantly faster and in addition is NA-aware
-              (`preservena` keyword).  Replacing `putmask` with
-              ``np.copyto(a, values, where=mask)`` is recommended.
 
     Parameters
     ----------
