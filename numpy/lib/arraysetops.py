@@ -204,7 +204,7 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
             ret += (perm[flag],)
         if return_inverse:
             iflag = np.cumsum(flag) - 1
-            inv_idx = np.empty_like(ar, dtype=np.intp)
+            inv_idx = np.empty(ar.shape, dtype=np.intp)
             inv_idx[perm] = iflag
             ret += (inv_idx,)
         if return_counts:

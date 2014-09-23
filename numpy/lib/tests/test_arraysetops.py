@@ -109,6 +109,12 @@ class TestSetOps(TestCase):
         assert_array_equal(a2, unq)
         assert_array_equal(a2_inv, inv)
 
+        # test for chararrays with return_inverse (gh-5099)
+        a = np.chararray(5)
+        a[...] = ''
+        a2, a2_inv = np.unique(a, return_inverse=True)
+        assert_array_equal(a2_inv, np.zeros(5))
+
     def test_intersect1d(self):
         # unique inputs
         a = np.array([5, 7, 1, 2])
