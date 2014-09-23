@@ -2991,7 +2991,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             NULL, arr, ax, ay
         };
         npy_uint32 op_flags[4] = {
-            NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE,
+            NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_NO_SUBTYPE,
             NPY_ITER_READONLY, NPY_ITER_READONLY, NPY_ITER_READONLY
         };
         PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
