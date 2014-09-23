@@ -831,6 +831,9 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     typenum = PyArray_ObjectType(op2, typenum);
 
     typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        return NULL;
+    }
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
