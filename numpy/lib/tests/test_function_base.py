@@ -1663,6 +1663,13 @@ class TestInterpPolar(TestCase):
         y = [ 1., 2., 1.5, 1.5, 3., 3.25, 3.5, 3.75, 4.]
         assert_almost_equal(interp_polar(x, xp, yp, degrees=True), y)
 
+        x = [190, -190, 180, 540, -10, -5, 0, -355, -350]
+        xp = [-170, 170, 350, 10]
+        yp = [1, 2, 3, 4]
+        y = [1., 2., 1.5, 1.5, 3., 3.10045815, 3.5, 3.89954185, 4.]
+        assert_almost_equal(interp_polar(x, xp, yp, degrees=True,
+                            smooth=True), y)
+
 
 def compare_results(res, desired):
     for i in range(len(desired)):
