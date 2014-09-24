@@ -1236,18 +1236,20 @@ def interp_polar(x, xp, yp, degrees=False, smooth=False):
     ydata = r*np.sin(xp)
     dist = np.subtract.outer(xpts, xdata)**2
     dist += np.subtract.outer(ypts, ydata)**2
-    asort = np.argsort(dist, axis=1)
-    sdist = np.sort(dist, axis=1)
+    asort = np.argpartition(dist, [1], axis=1)
+    col0 = asort[:,0]
+    col1 = asort[:,1]
     if smooth:
         # linear distance
+        sdist = dist[np.arange(dist.shape[0])[:,None], asort[:, :2]]
         d1 = sdist[:,0]
         d2 = sdist[:,1]
     else:
         # arc distance
-        x1 = xdata[asort[:,0]]
-        x2 = xdata[asort[:,1]]
-        y1 = ydata[asort[:,0]]
-        y2 = ydata[asort[:,1]]
+        x1 = xdata[col0]
+        x2 = xdata[col1]
+        y1 = ydata[col0]
+        y2 = ydata[col1]
         def calc_arc(xa, ya, xb, yb):
             xm = 0.5*(xa + xb)
             ym = 0.5*(ya + yb)
@@ -1260,8 +1262,8 @@ def interp_polar(x, xp, yp, degrees=False, smooth=False):
     den = (d1+d2)
     den[den==0] = 1.e-15
     factor = d1/den
-    yp1 = yp[asort[:,0]]
-    yp2 = yp[asort[:,1]]
+    yp1 = yp[col0]
+    yp2 = yp[col1]
     return yp1*(1-factor) + yp2*factor
 
 def angle(z, deg=0):
