@@ -1589,7 +1589,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             Py_INCREF(strobj);
         }
 
-        if (PyBytes_AsStringAndSize(strobj, &str, &len) < 0) {
+        if (PyBytes_AsStringAndSize(strobj, &str, &len) == -1) {
             Py_DECREF(strobj);
             goto fail;
         }
@@ -1637,7 +1637,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             char *str;
             Py_ssize_t len;
 
-            if (PyBytes_AsStringAndSize(timezone_obj, &str, &len) < 0) {
+            if (PyBytes_AsStringAndSize(timezone_obj, &str, &len) == -1) {
                 goto fail;
             }
 
