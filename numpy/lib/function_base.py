@@ -1179,92 +1179,88 @@ def interp(x, xp, fp, left=None, right=None):
     else:
         return compiled_interp(x, xp, fp, left, right)
 
-def interp_polar(x, xp, yp, degrees=False, smooth=False):
-    """One-dimensional linear interpolation for polar coordinates
+def interp_polar(theta, thetap, yp, degrees=False):
+    """One-dimensional linear interpolation for angular coordinates
 
-    This function supports angular inputs at any range, and uses a
+    This function supports only angular coordinates at any range and uses a
     spatial-based interpolation to overcome angle discontinuities.
 
     Parameters
     ----------
-    x : array_like
-        The angular coordinates of the interpolated values.
-    xp : array_like
-        The angular coordinates of the data points. At least two data points
-        are required.
+    theta : array_like
+        The angular theta-coordinates of the interpolated values.
+    thetap : array_like
+        The angular theta-coordinates of the data points. At least two data
+        points are required.
     yp : array_like
-        The response being interpolated, same length as `xp`.
+        The response being interpolated, same length as `thetap`.
     degrees : bool, optional
         If the input angles are in degrees.
-    smooth : bool, optional
-        If ``True`` the linear interpolation is computed based on the shortest
-        distance instead of the arc distance, resulting in a smoothed pattern.
 
     Returns
     -------
     y : np.ndarray
-        The interpolated values, same shape as `x`.
+        The interpolated values, same shape as `theta`.
 
     Examples
     --------
-
-    >>> interp_polar([190, -190, 180, 540, -10, -5, 0, -355, -350],
-    ...              [-170, 170, 350, 10],
-    ...              [   1,   2,   3,  4], degrees=True)
-    [ 1.    2.    1.5   1.5   3.    3.25  3.5   3.75  4.  ]
+    >>> interp_polar([-180, -170, -185, 185, -10, -5, 0, 365],
+    ...              [190, -190, 350, -350], [5, 10, 3, 4], degrees=True)
+    array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
 
     """
-    r = 1.e3 # any arbitrary float within the machine limits can be used here
-    x = np.asarray(x)
-    xp = np.asarray(xp)
+    # input checks
+    theta = np.asarray(theta)
+    thetap = np.asarray(thetap)
     yp = np.asarray(yp)
-    if x.ndim!=1 or xp.ndim!=1 or yp.ndim!=1:
-        raise ValueError("Inputs must be 1-D arrays")
-    if xp.shape[0] != yp.shape[0]:
-        raise ValueError("Inputs `xp` and `yp` must have the same shape")
-    if xp.shape[0]<2:
+    if theta.ndim!=1 or thetap.ndim!=1 or yp.ndim!=1:
+        raise ValueError("Inputs must be 1-D sequences")
+    if thetap.shape[0] != yp.shape[0]:
+        raise ValueError("Inputs `thetap` and `yp` must have the same shape")
+    if thetap.shape[0]<2:
         raise ValueError("At least two data points are required")
-    if not degrees and (x.max() > 4*np.pi or xp.max() > 4*np.pi):
+    if not degrees and (theta.max() > 4*np.pi or thetap.max() > 4*np.pi):
         warnings.warn("High input angles found and treated as radians",
                 RuntimeWarning)
     if degrees:
-        x = np.deg2rad(x)
-        xp = np.deg2rad(xp)
-    xpts = r*np.cos(x)
-    ypts = r*np.sin(x)
-    xdata = r*np.cos(xp)
-    ydata = r*np.sin(xp)
-    dist = np.subtract.outer(xpts, xdata)**2
-    dist += np.subtract.outer(ypts, ydata)**2
-    asort = np.argpartition(dist, kth=1, axis=1)
-    k0 = asort[:,0]
-    k1 = asort[:,1]
-    if smooth:
-        # linear distance
-        sdist = dist[np.arange(dist.shape[0])[:,None], asort[:, :2]]
-        d1 = sdist[:,0]
-        d2 = sdist[:,1]
-    else:
-        # arc distance
-        x1 = xdata[k0]
-        x2 = xdata[k1]
-        y1 = ydata[k0]
-        y2 = ydata[k1]
-        def calc_arc(xa, ya, xb, yb):
-            xm = 0.5*(xa + xb)
-            ym = 0.5*(ya + yb)
-            posm = (xm**2 + ym**2)**0.5
-            posa = (xa**2 + ya**2)**0.5
-            theta = 2*np.arccos(posm/posa)
-            return r*theta
-        d1 = calc_arc(x1, y1, xpts, ypts)
-        d2 = calc_arc(xpts, ypts, x2, y2)
-    den = (d1+d2)
+        theta = np.deg2rad(theta)
+        thetap = np.deg2rad(thetap)
+
+    # eliminating discontinuity between 360 and 0
+    theta = theta % (2*np.pi)
+    theta[theta>=np.pi] -= 2*np.pi
+    check = thetap>=np.pi
+    thetap = np.hstack((thetap, thetap[check] - 2*np.pi))
+    yp = np.hstack((yp, yp[check]))
+
+    # recovering continuity between +180 and -180
+    check = thetap<0
+    thetap = np.hstack((thetap, thetap[check] + 2*np.pi))
+    yp = np.hstack((yp, yp[check]))
+
+    # getting indices used in the interpolation
+    asort_thetap = np.argsort(thetap)
+    thetap = thetap[asort_thetap]
+    yp = yp[asort_thetap]
+    a = np.searchsorted(thetap, theta)
+
+    # closing the cycle
+    thetap = np.hstack((thetap, thetap[0:1]))
+    yp = np.hstack((yp, yp[0:1]))
+
+    # indices for the first and second points
+    k0 = a-1
+    k1 = a
+
+    # interpolating
+    d0 = np.abs(theta - thetap[k0])
+    d1 = np.abs(theta - thetap[k1])
+    den = (d0+d1)
     den[den==0] = 1.e-15
-    factor = d1/den
-    yp1 = yp[k0]
-    yp2 = yp[k1]
-    return yp1*(1-factor) + yp2*factor
+    factor = d0/den
+    yp0 = yp[k0]
+    yp1 = yp[k1]
+    return yp0*(1-factor) + yp1*factor
 
 def angle(z, deg=0):
     """
