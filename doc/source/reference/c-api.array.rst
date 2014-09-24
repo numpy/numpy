@@ -1806,14 +1806,23 @@ Item selection and manipulation
     :cfunc:`PyArray_Sort` (...) can also be used to sort the array
     directly.
 
-.. cfunction:: PyObject* PyArray_SearchSorted(PyArrayObject* self, PyObject* values)
+.. cfunction:: PyObject* PyArray_SearchSorted(PyArrayObject* self, PyObject* values, NPY_SEARCHSIDE side, PyObject* perm)
 
-    Equivalent to :meth:`ndarray.searchsorted` (*self*, *values*). Assuming
-    *self* is a 1-d array in ascending order representing bin
-    boundaries then the output is an array the same shape as *values*
-    of bin numbers, giving the bin into which each item in *values*
-    would be placed. No checking is done on whether or not self is in
-    ascending order.
+    Equivalent to :meth:`ndarray.searchsorted` (*self*, *values*, *side*,
+    *perm*). Assuming *self* is a 1-d array in ascending order, then the
+    output is an array of indices the same shape as *values* such that, if
+    the elements in *values* were inserted before the indices, the order of
+    *self* would be preserved. No checking is done on whether or not self is
+    in ascending order.
+
+    The *side* argument indicates whther the index returned should be that of
+    the first suitable location (if :cdata:`NPY_SEARCHLEFT`) or of the last
+    (if :cdata:`NPY_SEARCHRIGHT`).
+
+    The *sorter* argument, if not ``NULL``, must be a 1D array of integer
+    indices the same length as *self*, that sorts it into ascending order.
+    This is typically the result of a call to :cfunc:`PyArray_ArgSort` (...)
+    Binary search is used to find the required insertion points.
 
 .. cfunction:: int PyArray_Partition(PyArrayObject *self, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
 
@@ -1887,10 +1896,10 @@ Calculation
 
 .. note::
 
-    The out argument specifies where to place the result. If out is 
-    NULL, then the output array is created, otherwise the output is 
-    placed in out which must be the correct size and type. A new 
-    reference to the ouput array is always returned even when out 
+    The out argument specifies where to place the result. If out is
+    NULL, then the output array is created, otherwise the output is
+    placed in out which must be the correct size and type. A new
+    reference to the ouput array is always returned even when out
     is not NULL. The caller of the routine has the responsability
     to ``DECREF`` out if not NULL or a memory-leak will occur.
 
