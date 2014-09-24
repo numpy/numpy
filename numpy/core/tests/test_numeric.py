@@ -1902,16 +1902,30 @@ class TestLikeFuncs(TestCase):
 class _TestCorrelate(TestCase):
     def _setup(self, dt):
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
+        self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
         self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
-        self.z2 = np.array([ -5.,  -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
+        self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
+        self.z2 = np.array([-5., -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
+        self.zs = np.array([-3., -14., -30., -48., -66., -84.,
+                           -102., -54., -19.], dtype=dt)
 
     def test_float(self):
         self._setup(np.float)
         z = np.correlate(self.x, self.y, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.x, self.y[:-1], 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z1_4)
         z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z2)
+        z = np.correlate(self.x[::-1], self.y, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z1r)
+        z = np.correlate(self.y, self.x[::-1], 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z2r)
+        z = np.correlate(self.xs, self.y, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.zs)
 
     def test_object(self):
         self._setup(Decimal)
@@ -1935,6 +1949,7 @@ class TestCorrelate(_TestCorrelate):
         # as well
         _TestCorrelate._setup(self, dt)
         self.z2 = self.z1
+        self.z2r = self.z1r
 
     @dec.deprecated()
     def test_complex(self):

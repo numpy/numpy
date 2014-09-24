@@ -59,6 +59,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "multiarraymodule.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
+#include "templ_common.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1221,10 +1222,18 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         ip2 -= is2;
         op += os;
     }
-    for (i = 0; i < (n1 - n2 + 1); i++) {
-        dot(ip1, is1, ip2, is2, op, n, ret);
-        ip1 += is1;
-        op += os;
+    if (small_correlate(ip1, is1, n1 - n2 + 1, PyArray_TYPE(ap1),
+                        ip2, is2, n, PyArray_TYPE(ap2),
+                        op, os)) {
+        ip1 += is1 * (n1 - n2 + 1);
+        op += os * (n1 - n2 + 1);
+    }
+    else {
+        for (i = 0; i < (n1 - n2 + 1); i++) {
+            dot(ip1, is1, ip2, is2, op, n, ret);
+            ip1 += is1;
+            op += os;
+        }
     }
     for (i = 0; i < n_right; i++) {
         n--;
