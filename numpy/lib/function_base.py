@@ -40,7 +40,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'interp_polar',
+    'add_newdoc_ufunc'
     ]
 
 
@@ -1178,6 +1179,88 @@ def interp(x, xp, fp, left=None, right=None):
     else:
         return compiled_interp(x, xp, fp, left, right)
 
+def interp_polar(theta, thetap, yp, degrees=False):
+    """One-dimensional linear interpolation for angular coordinates
+
+    This function supports only angular coordinates at any range and uses a
+    spatial-based interpolation to overcome angle discontinuities.
+
+    Parameters
+    ----------
+    theta : array_like
+        The angular theta-coordinates of the interpolated values.
+    thetap : array_like
+        The angular theta-coordinates of the data points. At least two data
+        points are required.
+    yp : array_like
+        The response being interpolated, same length as `thetap`.
+    degrees : bool, optional
+        If the input angles are in degrees.
+
+    Returns
+    -------
+    y : np.ndarray
+        The interpolated values, same shape as `theta`.
+
+    Examples
+    --------
+    >>> interp_polar([-180, -170, -185, 185, -10, -5, 0, 365],
+    ...              [190, -190, 350, -350], [5, 10, 3, 4], degrees=True)
+    array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
+
+    """
+    # input checks
+    theta = np.asarray(theta)
+    thetap = np.asarray(thetap)
+    yp = np.asarray(yp)
+    if theta.ndim!=1 or thetap.ndim!=1 or yp.ndim!=1:
+        raise ValueError("Inputs must be 1-D sequences")
+    if thetap.shape[0] != yp.shape[0]:
+        raise ValueError("Inputs `thetap` and `yp` must have the same shape")
+    if thetap.shape[0]<2:
+        raise ValueError("At least two data points are required")
+    if not degrees and (theta.max() > 4*np.pi or thetap.max() > 4*np.pi):
+        warnings.warn("High input angles found and treated as radians",
+                RuntimeWarning)
+    if degrees:
+        theta = np.deg2rad(theta)
+        thetap = np.deg2rad(thetap)
+
+    # eliminating discontinuity between 360 and 0
+    theta = theta % (2*np.pi)
+    theta[theta>=np.pi] -= 2*np.pi
+    check = thetap>=np.pi
+    thetap = np.hstack((thetap, thetap[check] - 2*np.pi))
+    yp = np.hstack((yp, yp[check]))
+
+    # recovering continuity between +180 and -180
+    check = thetap<0
+    thetap = np.hstack((thetap, thetap[check] + 2*np.pi))
+    yp = np.hstack((yp, yp[check]))
+
+    # getting indices used in the interpolation
+    asort_thetap = np.argsort(thetap)
+    thetap = thetap[asort_thetap]
+    yp = yp[asort_thetap]
+    a = np.searchsorted(thetap, theta)
+
+    # closing the cycle
+    thetap = np.hstack((thetap, thetap[0:1]))
+    yp = np.hstack((yp, yp[0:1]))
+
+    # indices for the first and second points
+    k0 = a-1
+    k1 = a
+
+    # interpolating
+    d0 = np.abs(theta - thetap[k0])
+    d1 = np.abs(theta - thetap[k1])
+    den = (d0+d1)
+    den[den==0] = 1.e-15
+    factor = d0/den
+    yp0 = yp[k0]
+    yp1 = yp[k1]
+    return yp0*(1-factor) + yp1*factor
 
 def angle(z, deg=0):
     """

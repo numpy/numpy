@@ -1643,6 +1643,24 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(np.pi, xp, fp), 0.0)
 
 
+class TestInterpPolar(TestCase):
+    def test_exceptions(self):
+        assert_raises(ValueError, interp_polar, 0, [0, 1], [1, 2])
+        assert_raises(ValueError, interp_polar, [0], [1], [1, 2])
+        assert_raises(ValueError, interp_polar, [0], [1], [1])
+        assert_raises(ValueError, interp_polar, [0], [], [])
+
+    def test_basic(self):
+        x_deg = [-180, -170, -185, 185, -10, -5, 0, 365]
+        xp_deg = [190, -190, 350, -350]
+        x_rad = np.deg2rad(x_deg)
+        xp_rad = np.deg2rad(xp_deg)
+        yp = [5, 10, 3, 4]
+        y = [7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75]
+        assert_almost_equal(interp_polar(x_rad, xp_rad, yp, degrees=False), y)
+        assert_almost_equal(interp_polar(x_deg, xp_deg, yp, degrees=True), y)
+
+
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
