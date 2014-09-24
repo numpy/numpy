@@ -1236,7 +1236,7 @@ def interp_polar(x, xp, yp, degrees=False, smooth=False):
     ydata = r*np.sin(xp)
     dist = np.subtract.outer(xpts, xdata)**2
     dist += np.subtract.outer(ypts, ydata)**2
-    asort = np.argpartition(dist, [1], axis=1)
+    asort = np.argpartition(dist, kth=1, axis=1)
     col0 = asort[:,0]
     col1 = asort[:,1]
     if smooth:
