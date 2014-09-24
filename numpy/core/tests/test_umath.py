@@ -262,7 +262,7 @@ class TestLogAddExp2(_FilterInvalids):
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
@@ -325,7 +325,7 @@ class TestLogAddExp(_FilterInvalids):
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
