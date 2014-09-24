@@ -720,21 +720,43 @@ class TestFmin(_FilterInvalids):
 
 
 class TestBool(TestCase):
-    def test_truth_table(self):
+    def test_truth_table_logical(self):
+        # 2, 3 and 4 serves as true values
+        input1 = [0, 0, 3, 2]
+        input2 = [0, 4, 0, 2]
+
+        typecodes = (np.typecodes['AllFloat']
+                     + np.typecodes['AllInteger']
+                     + '?')     # boolean
+        for dtype in map(np.dtype, typecodes):
+            arg1 = np.asarray(input1, dtype=dtype)
+            arg2 = np.asarray(input2, dtype=dtype)
+
+            # OR
+            out = [False, True, True, True]
+            for func in (np.logical_or, np.maximum):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+            # AND
+            out = [False, False, False, True]
+            for func in (np.logical_and, np.minimum):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+            # XOR
+            out = [False, True, True, False]
+            for func in (np.logical_xor, np.not_equal):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+
+    def test_truth_table_bitwise(self):
         arg1 = [False, False, True, True]
         arg2 = [False, True, False, True]
-        # OR
+
         out = [False, True, True, True]
-        for func in (np.logical_or, np.bitwise_or, np.maximum):
-            assert_equal(func(arg1, arg2), out)
-        # AND
+        assert_equal(np.bitwise_or(arg1, arg2), out)
+
         out = [False, False, False, True]
-        for func in (np.logical_and, np.bitwise_and, np.minimum):
-            assert_equal(func(arg1, arg2), out)
-        # XOR
+        assert_equal(np.bitwise_and(arg1, arg2), out)
+
         out = [False, True, True, False]
-        for func in (np.logical_xor, np.bitwise_xor, np.not_equal):
-            assert_equal(func(arg1, arg2), out)
+        assert_equal(np.bitwise_xor(arg1, arg2), out)
 
 
 class TestFloatingPoint(TestCase):
