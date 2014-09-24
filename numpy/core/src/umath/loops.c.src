@@ -838,9 +838,9 @@ NPY_NO_EXPORT void
 @TYPE@_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        const int t1 = !!*(@type@ *)ip1;
+        const int t2 = !!*(@type@ *)ip2;
+        *((npy_bool *)op1) = (t1 != t2);
     }
 }
 
@@ -1515,9 +1515,9 @@ NPY_NO_EXPORT void
 @TYPE@_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        const int t1 = !!*(@type@ *)ip1;
+        const int t2 = !!*(@type@ *)ip2;
+        *((npy_bool *)op1) = (t1 != t2);
     }
 }
 
@@ -1864,7 +1864,7 @@ HALF_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_U
     BINARY_LOOP {
         const int in1 = !npy_half_iszero(*(npy_half *)ip1);
         const int in2 = !npy_half_iszero(*(npy_half *)ip2);
-        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        *((npy_bool *)op1) = (in1 != in2);
     }
 }
 
@@ -2346,7 +2346,7 @@ NPY_NO_EXPORT void
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
         const npy_bool tmp1 = (in1r || in1i);
         const npy_bool tmp2 = (in2r || in2i);
-        *((npy_bool *)op1) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
+        *((npy_bool *)op1) = tmp1 != tmp2;
     }
 }
 
