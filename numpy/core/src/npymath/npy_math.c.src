@@ -414,7 +414,7 @@ double npy_log2(double x)
 {
     return (@type@) npy_ldexp((double)x, exp);
 }
-#endif 
+#endif
 
 #ifdef frexp@c@
 #undef frexp@c@
@@ -477,7 +477,7 @@ double npy_log2(double x)
 {
     return ldexp@c@(x, exp);
 }
-#endif 
+#endif
 
 #ifdef HAVE_FREXP@C@
 @type@ npy_frexp@c@(@type@ x, int* exp)
@@ -545,31 +545,43 @@ double npy_log2(double x)
 
 @type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log1p@c@(npy_exp@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log1p@c@(npy_exp@c@(tmp));
+    if (x == y) {
+        /* Handles infinites of the same sign without warnings */
+        return x + LOGE2;
     }
     else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log1p@c@(npy_exp@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log1p@c@(npy_exp@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return x + y;
+        }
     }
 }
 
 @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+    if (x == y) {
+        /* Handles infinites of the same sign without warnings */
+        return x + 1;
     }
     else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return x + y;
+        }
     }
 }
 
