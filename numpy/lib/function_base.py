@@ -40,7 +40,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'interp_polar',
+    'add_newdoc_ufunc'
     ]
 
 
@@ -1178,6 +1179,90 @@ def interp(x, xp, fp, left=None, right=None):
     else:
         return compiled_interp(x, xp, fp, left, right)
 
+def interp_polar(x, xp, yp, degrees=False, smooth=False):
+    """One-dimensional linear interpolation for polar coordinates
+
+    This function supports angular inputs at any range, and uses a
+    spatial-based interpolation to overcome angle discontinuities.
+
+    Parameters
+    ----------
+    x : array_like
+        The angular coordinates of the interpolated values.
+    xp : array_like
+        The angular coordinates of the data points. At least two data points
+        are required.
+    yp : array_like
+        The response being interpolated, same length as `xp`.
+    degrees : bool, optional
+        If the input angles are in degrees.
+    smooth : bool, optional
+        If ``True`` the linear interpolation is computed based on the shortest
+        distance instead of the arc distance, resulting in a smoothed pattern.
+
+    Returns
+    -------
+    y : np.ndarray
+        The interpolated values, same shape as `x`.
+
+    Examples
+    --------
+
+    >>> interp_polar([190, -190, 180, 540, -10, -5, 0, -355, -350],
+    ...              [-170, 170, 350, 10],
+    ...              [   1,   2,   3,  4], degrees=True)
+    [ 1.    2.    1.5   1.5   3.    3.25  3.5   3.75  4.  ]
+
+    """
+    r = 1.e3 # any arbitrary float within the machine limits can be used here
+    x = np.asarray(x)
+    xp = np.asarray(xp)
+    yp = np.asarray(yp)
+    if x.ndim!=1 or xp.ndim!=1 or yp.ndim!=1:
+        raise ValueError("Inputs must be 1-D arrays")
+    if xp.shape[0] != yp.shape[0]:
+        raise ValueError("Inputs `xp` and `yp` must have the same shape")
+    if xp.shape[0]<2:
+        raise ValueError("At least two data points are required")
+    if not degrees and (x.max() > 4*np.pi or xp.max() > 4*np.pi):
+        warnings.warn("High input angles found and treated as radians",
+                RuntimeWarning)
+    if degrees:
+        x = np.deg2rad(x)
+        xp = np.deg2rad(xp)
+    xpts = r*np.cos(x)
+    ypts = r*np.sin(x)
+    xdata = r*np.cos(xp)
+    ydata = r*np.sin(xp)
+    dist = np.subtract.outer(xpts, xdata)**2
+    dist += np.subtract.outer(ypts, ydata)**2
+    asort = np.argsort(dist, axis=1)
+    sdist = np.sort(dist, axis=1)
+    if smooth:
+        # linear distance
+        d1 = sdist[:,0]
+        d2 = sdist[:,1]
+    else:
+        # arc distance
+        x1 = xdata[asort[:,0]]
+        x2 = xdata[asort[:,1]]
+        y1 = ydata[asort[:,0]]
+        y2 = ydata[asort[:,1]]
+        def calc_arc(xa, ya, xb, yb):
+            xm = 0.5*(xa + xb)
+            ym = 0.5*(ya + yb)
+            posm = (xm**2 + ym**2)**0.5
+            posa = (xa**2 + ya**2)**0.5
+            theta = 2*np.arccos(posm/posa)
+            return r*theta
+        d1 = calc_arc(x1, y1, xpts, ypts)
+        d2 = calc_arc(xpts, ypts, x2, y2)
+    den = (d1+d2)
+    den[den==0] = 1.e-15
+    factor = d1/den
+    yp1 = yp[asort[:,0]]
+    yp2 = yp[asort[:,1]]
+    return yp1*(1-factor) + yp2*factor
 
 def angle(z, deg=0):
     """

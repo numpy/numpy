@@ -1643,6 +1643,21 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(np.pi, xp, fp), 0.0)
 
 
+class TestInterpPolar(TestCase):
+    def test_exceptions(self):
+        assert_raises(ValueError, interp_polar, 0, [0, 1], [1, 2])
+        assert_raises(ValueError, interp_polar, [0], [1], [1, 2])
+        assert_raises(ValueError, interp_polar, [0], [1], [1])
+        assert_raises(ValueError, interp_polar, [0], [], [])
+
+    def test_basic(self):
+        x = [190, -190, 180, 540, -10, -5, 0, -355, -350]
+        xp = [-170, 170, 350, 10]
+        yp = [1, 2, 3, 4]
+        y = [ 1., 2., 1.5, 1.5, 3., 3.25, 3.5, 3.75, 4.]
+        assert_almost_equal(interp_polar(x, xp, yp), y)
+
+
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
