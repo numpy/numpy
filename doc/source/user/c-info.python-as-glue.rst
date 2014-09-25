@@ -65,7 +65,7 @@ high-level language for scientific and engineering programming.
 Their are two basic approaches to calling compiled code: writing an
 extension module that is then imported to Python using the import
 command, or calling a shared-library subroutine directly from Python
-using the ctypes module (included in the standard distribution with
+using the ctypes module (included in the standard distribution since
 Python 2.5). The first method is the most common (but with the
 inclusion of ctypes into Python 2.5 this status may change).
 
@@ -902,14 +902,13 @@ libraries), or weave (for inline C-code).
 ctypes
 ======
 
-Ctypes is a python extension module (downloaded separately for Python
-<2.5 and included with Python 2.5) that allows you to call an
-arbitrary function in a shared library directly from Python. This
-approach allows you to interface with C-code directly from Python.
-This opens up an enormous number of libraries for use from Python. The
-drawback, however, is that coding mistakes can lead to ugly program
-crashes very easily (just as can happen in C) because there is little
-type or bounds checking done on the parameters. This is especially
+Ctypes is a Python extension module, included in the stdlib, that
+allows you to call an arbitrary function in a shared library directly
+from Python. This approach allows you to interface with C-code directly
+from Python. This opens up an enormous number of libraries for use from
+Python. The drawback, however, is that coding mistakes can lead to ugly
+program crashes very easily (just as can happen in C) because there is
+little type or bounds checking done on the parameters. This is especially
 true when array data is passed in as a pointer to a raw memory
 location. The responsibility is then on you that the subroutine will
 not access memory outside the actual array area. But, if you don't

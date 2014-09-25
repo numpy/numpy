@@ -267,13 +267,6 @@ they inherit from the ndarray): :meth:`.flush() <memmap.flush>` which
 must be called manually by the user to ensure that any changes to the
 array actually get written to disk.
 
-.. note::
-
-    Memory-mapped arrays use the the Python memory-map object which
-    (prior to Python 2.5) does not allow files to be larger than a
-    certain size depending on the platform. This size is always
-    < 2GB even on 64-bit systems.
-
 .. autosummary::
    :toctree: generated/
 

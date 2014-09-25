@@ -507,7 +507,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     /*
      * ## 2
      *
-     * At least Python versions <= 2.5.2 and <= 2.6.1
+     * At least Python versions <= 2.6.1
      *
      * Fails to do best-efforts parsing of strings of the form "1<DP>234"
      * where <DP> is the decimal point under the foreign locale.
