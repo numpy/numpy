@@ -440,6 +440,7 @@ def pre_build(context):
                 "src/multiarray/arraytypes.c.src",
                 "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src",
+                "src/multiarray/templ_common.h.src",
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
@@ -453,6 +454,7 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),
+                pjoin('src', 'multiarray', 'templ_common.h.src'),
                 pjoin('src', 'multiarray', 'conversion_utils.c'),
                 pjoin('src', 'multiarray', 'convert.c'),
                 pjoin('src', 'multiarray', 'convert_datatype.c'),

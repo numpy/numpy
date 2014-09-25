@@ -751,6 +751,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'templ_common.h.src'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
             join('src', 'multiarray', 'conversion_utils.h'),
@@ -826,6 +827,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
             join('src', 'multiarray', 'multiarraymodule.c'),
+            join('src', 'multiarray', 'templ_common.h.src'),
             join('src', 'multiarray', 'nditer_templ.c.src'),
             join('src', 'multiarray', 'nditer_api.c'),
             join('src', 'multiarray', 'nditer_constr.c'),
@@ -854,6 +856,7 @@ def configuration(parent_package='',top_path=None):
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
+        multiarray_src.append(join('src', 'multiarray', 'templ_common.h.src'))
 
 
     config.add_extension('multiarray',
