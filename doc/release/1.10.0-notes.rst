@@ -37,6 +37,13 @@ and a bit faster.
 Improvements
 ============
 
+`np.poly` now casts integer inputs to float
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.poly` will now cast 1-dimensional input arrays of integer type to double
+precision floating point, to prevent integer overflow when computing the monic
+polynomial. It is still possible to obtain higher precision results by
+passing in an array of object type, filled e.g. with Python ints.
+
 
 Changes
 =======
