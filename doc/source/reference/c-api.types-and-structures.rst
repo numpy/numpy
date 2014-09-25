@@ -1031,9 +1031,9 @@ PyArray_Chunk
 
    This is equivalent to the buffer object structure in Python up to
    the ptr member. On 32-bit platforms (*i.e.* if :cdata:`NPY_SIZEOF_INT`
-   == :cdata:`NPY_SIZEOF_INTP` ) or in Python 2.5, the len member also
-   matches an equivalent member of the buffer object. It is useful to
-   represent a generic single- segment chunk of memory.
+   == :cdata:`NPY_SIZEOF_INTP`), the len member also matches an equivalent
+   member of the buffer object. It is useful to represent a generic
+   single-segment chunk of memory.
 
    .. code-block:: c
 
