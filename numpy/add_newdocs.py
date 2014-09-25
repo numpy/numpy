@@ -4869,6 +4869,13 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
 
+    .. versionadded:: 1.10.0
+
+    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
+    that a binary search is used to bin the values, which scales much better
+    for larger number of bins than the previous linear search. It also removes
+    the requirement for the input array to be 1-dimensional.
+
     Examples
     --------
     >>> x = np.array([0.2, 6.4, 3.0, 1.6])

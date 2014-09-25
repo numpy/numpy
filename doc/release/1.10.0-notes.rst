@@ -37,6 +37,13 @@ and a bit faster.
 Improvements
 ============
 
+`np.digitize` using binary search
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.digitize` is now implemented in terms of `np.searchsorted`. This means
+that a binary search is used to bin the values, which scales much better
+for larger number of bins than the previous linear search. It also removes
+the requirement for the input array to be 1-dimensional.
+
 `np.poly` now casts integer inputs to float
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `np.poly` will now cast 1-dimensional input arrays of integer type to double
