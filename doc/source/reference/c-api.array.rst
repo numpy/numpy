@@ -3113,6 +3113,12 @@ Group 1
         Useful to regain the GIL in situations where it was released
         using the BEGIN form of this macro.
 
+    .. cfunction:: NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
+
+        Useful to release the GIL only if *loop_size* exceeds a
+        minimum threshold, currently set to 500. Should be matched
+        with a .. cmacro::`NPY_END_THREADS` to regain the GIL.
+
 Group 2
 """""""
 
