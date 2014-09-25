@@ -211,6 +211,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyObject *ret = NULL;
     npy_intp len_bins;
     int monotonic, right = 0;
+    NPY_BEGIN_THREADS_DEF
 
     static char *kwlist[] = {"x", "bins", "right", NULL};
 
@@ -239,8 +240,11 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         goto fail;
     }
 
+    NPY_BEGIN_THREADS_THRESHOLDED(len_bins)
     monotonic = check_array_monotonic((const double *)PyArray_DATA(arr_bins),
                                       len_bins);
+    NPY_END_THREADS
+
     if (monotonic == 0) {
         PyErr_SetString(PyExc_ValueError,
                         "bins must be monotonically increasing or decreasing");
@@ -281,10 +285,12 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                         (npy_intp *)PyArray_DATA((PyArrayObject *)ret);
         npy_intp len_ret = PyArray_SIZE((PyArrayObject *)ret);
 
+        NPY_BEGIN_THREADS_THRESHOLDED(len_ret)
         while (len_ret--) {
             *ret_data = len_bins - *ret_data;
             ret_data++;
         }
+        NPY_END_THREADS
     }
 
     fail:
