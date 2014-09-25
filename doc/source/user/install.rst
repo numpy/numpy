@@ -59,18 +59,19 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 2.4.x, 2.5.x or 2.6.x
+1) Python 2.6.x, 2.7.x, 3.2.x or newer
 
-   On Debian and derivative (Ubuntu): python, python-dev
+   On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
    On Windows: the official python installer at
    `www.python.org <http://www.python.org>`_ is enough
 
    Make sure that the Python package distutils is installed before
-   continuing. For example, in Debian GNU/Linux, distutils is included
-   in the python-dev package.
+   continuing. For example, in Debian GNU/Linux, installing python-dev
+   also installs distutils.
 
-   Python must also be compiled with the zlib module enabled.
+   Python must also be compiled with the zlib module enabled. This is
+   practically always the case with pre-packaged Pythons.
 
 2) Compilers
 
