@@ -546,7 +546,7 @@ double npy_log2(double x)
 @type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
     if (x == y) {
-        /* Handles infinites of the same sign without warnings */
+        /* Handles infinities of the same sign without warnings */
         return x + LOGE2;
     }
     else {
@@ -559,7 +559,7 @@ double npy_log2(double x)
         }
         else {
             /* NaNs */
-            return x + y;
+            return tmp;
         }
     }
 }
@@ -567,7 +567,7 @@ double npy_log2(double x)
 @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
     if (x == y) {
-        /* Handles infinites of the same sign without warnings */
+        /* Handles infinities of the same sign without warnings */
         return x + 1;
     }
     else {
@@ -580,7 +580,7 @@ double npy_log2(double x)
         }
         else {
             /* NaNs */
-            return x + y;
+            return tmp;
         }
     }
 }
