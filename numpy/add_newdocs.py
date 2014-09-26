@@ -4837,7 +4837,8 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     Parameters
     ----------
     x : array_like
-        Input array to be binned.
+        Input array to be binned. Prior to Numpy 1.10.0, this array had to
+        be 1-dimensional, but can now have any shape.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
     right : bool, optional
