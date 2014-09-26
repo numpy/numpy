@@ -713,7 +713,8 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
          * (since one of the elements may be -1).  In that case, just
          * regenerate strides from shape.
          */
-        if (PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)) {
+        if (PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
+            !((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS)) {
             sd = view->itemsize;
             for (i = view->ndim-1; i >= 0; --i) {
                 view->strides[i] = sd;
@@ -947,7 +948,7 @@ _descriptor_from_pep3118_format_fast(char *s, PyObject **result)
         *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
         Py_DECREF(descr);
     }
-    
+
     return 1;
 }
 
