@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_equal, assert_array_equal,
-    assert_raises
+    assert_raises, assert_
     )
 from numpy.lib.stride_tricks import as_strided, broadcast_arrays
 
@@ -232,6 +232,50 @@ def test_as_strided():
     a_view = as_strided(a, shape=(3, 4), strides=(0, 1 * a.itemsize))
     expected = np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]])
     assert_array_equal(a_view, expected)
+
+
+class VerySimpleSubClass(np.ndarray):
+    def __new__(cls, *args, **kwargs):
+        kwargs['subok'] = True
+        return np.array(*args, **kwargs).view(cls)
+
+
+class SimpleSubClass(VerySimpleSubClass):
+    def __new__(cls, *args, **kwargs):
+        kwargs['subok'] = True
+        self = np.array(*args, **kwargs).view(cls)
+        self.info = 'simple'
+        return self
+
+    def __array_finalize__(self, obj):
+        self.info = getattr(obj, 'info', '') + ' finalized'
+
+
+def test_subclasses():
+    # test that subclass is preserved only if subok=True
+    a = VerySimpleSubClass([1, 2, 3, 4])
+    assert_(type(a) is VerySimpleSubClass)
+    a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,))
+    assert_(type(a_view) is np.ndarray)
+    a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
+    assert_(type(a_view) is VerySimpleSubClass)
+    # test that if a subclass has __array_finalize__, it is used
+    a = SimpleSubClass([1, 2, 3, 4])
+    a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
+    assert_(type(a_view) is SimpleSubClass)
+    assert_(a_view.info == 'simple finalized')
+
+    # similar tests for broadcast_arrays
+    b = np.arange(len(a)).reshape(-1, 1)
+    a_view, b_view = broadcast_arrays(a, b)
+    assert_(type(a_view) is np.ndarray)
+    assert_(type(b_view) is np.ndarray)
+    assert_(a_view.shape == b_view.shape)
+    a_view, b_view = broadcast_arrays(a, b, subok=True)
+    assert_(type(a_view) is SimpleSubClass)
+    assert_(a_view.info == 'simple finalized')
+    assert_(type(b_view) is np.ndarray)
+    assert_(a_view.shape == b_view.shape)
 
 
 if __name__ == "__main__":
