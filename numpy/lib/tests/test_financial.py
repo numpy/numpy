@@ -48,8 +48,7 @@ class TestFinancial(TestCase):
                             -250.0, 3)
         # This one handles the case where we use broadcast and arguments passed in are arrays
         assert_almost_equal(np.pmt([[0.0,0.8],[0.3, 0.8]], [12,3], [2000,20000]),np.array([[  -166.666, -19311.258],[  -626.908, -19311.258]]), 3)
--2000, 0, 100000.),
-                            21.54, 2)
+-2000, 0, 100000.),21.54, 2)
 
     def test_nper2(self):
         assert_almost_equal(np.nper(0.0, -2000, 0, 100000.),
