@@ -365,6 +365,7 @@ def nan_to_num(x):
             y = x.copy()
         except AttributeError:
             y = array(x)
+            t = y.dtype.type
     if not issubclass(t, _nx.integer):
         if not y.shape:
             y = array([x])
