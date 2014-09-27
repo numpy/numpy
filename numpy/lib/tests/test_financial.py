@@ -42,6 +42,10 @@ class TestFinancial(TestCase):
     def test_pmt(self):
         assert_almost_equal(np.pmt(0.08/12, 5*12, 15000),
                             -304.146, 3)
+        # This is to test the edge case where rate == 0.0. 
+        # It would fail on this case if the fix for checking rate == 0.0 was not there.
+        assert_almost_equal(np.pmt(0.0, 5*12, 15000),
+                            -250.0, 3)
 
     def test_ppmt(self):
         np.round(np.ppmt(0.1/12, 1, 60, 55000), 2) == 710.25
