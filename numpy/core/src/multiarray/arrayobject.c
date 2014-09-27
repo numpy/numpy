@@ -555,21 +555,13 @@ array_repr_builtin(PyArrayObject *self, int repr)
 {
     PyObject *ret;
     char *string;
-    int n, max_n;
-
-    max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
+    /* max_n initial value is arbitrary, dump_data will extend it */
+    int n = 0, max_n = PyArray_NBYTES(self) * 4 + 7;
 
     if ((string = PyArray_malloc(max_n)) == NULL) {
         return PyErr_NoMemory();
     }
 
-    if (repr) {
-        n = 6;
-        sprintf(string, "array(");
-    }
-    else {
-        n = 0;
-    }
     if (dump_data(&string, &n, &max_n, PyArray_DATA(self),
                   PyArray_NDIM(self), PyArray_DIMS(self),
                   PyArray_STRIDES(self), self) < 0) {
@@ -579,14 +571,15 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
     if (repr) {
         if (PyArray_ISEXTENDED(self)) {
-            char buf[100];
-            PyOS_snprintf(buf, sizeof(buf), "%d", PyArray_DESCR(self)->elsize);
-            sprintf(string+n, ", '%c%s')", PyArray_DESCR(self)->type, buf);
-            ret = PyUString_FromStringAndSize(string, n + 6 + strlen(buf));
+            ret = PyUString_FromFormat("array(%s, '%c%d')",
+                                       string,
+                                       PyArray_DESCR(self)->type,
+                                       PyArray_DESCR(self)->elsize);
         }
         else {
-            sprintf(string+n, ", '%c')", PyArray_DESCR(self)->type);
-            ret = PyUString_FromStringAndSize(string, n+6);
+            ret = PyUString_FromFormat("array(%s, '%c')",
+                                       string,
+                                       PyArray_DESCR(self)->type);
         }
     }
     else {
