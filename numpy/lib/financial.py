@@ -211,11 +211,15 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pv, fv, when)
     zer = np.zeros(miter.shape)
-    fact=zer
-    if rate==0.0:
-        fact=map(np.asarray,[nper + zer])
-    else:
-        fact=map(np.asarray,[(1 + rate*when)*(temp - 1)/rate + zer])
+    fact= np.zeros(miter.shape)
+    # result=np.zeros(miter.shape)
+    numerator = (1 + rate*when)*(temp - 1)
+    np.divide(numerator, rate, where=(rate!=0), out=fact)
+    # print ('fact' , fact)
+    factforZeroRate = nper + zer
+    np.copyto(fact, factforZeroRate , where=(rate==0))
+    # print ('fact' , fact)
+    # np.copyto(fact, factforZeroRate , where=(rate==0))
     # fact = np.where(rate == 0.0, nper + zer,
     #                 (1 + rate*when)*(temp - 1)/rate + zer)
     return -(fv + pv*temp) / fact
