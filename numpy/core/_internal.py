@@ -310,6 +310,7 @@ def _index_fields(ary, fields):
 
 _pep3118_native_map = {
     '?': '?',
+    'c': 'c',
     'b': 'b',
     'B': 'B',
     'h': 'h',
@@ -336,6 +337,7 @@ _pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
 
 _pep3118_standard_map = {
     '?': '?',
+    'c': 'c',
     'b': 'b',
     'B': 'B',
     'h': 'i2',
