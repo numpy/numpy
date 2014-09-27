@@ -46,15 +46,9 @@ class TestFinancial(TestCase):
         # It would fail on this case if the fix for checking rate == 0.0 was not there.
         assert_almost_equal(np.pmt(0.0, 5*12, 15000),
                             -250.0, 3)
-
-    def test_ppmt(self):
-        np.round(np.ppmt(0.1/12, 1, 60, 55000), 2) == 710.25
-
-    def test_ipmt(self):
-        np.round(np.ipmt(0.1/12, 1, 24, 2000), 2) == 16.67
-
-    def test_nper(self):
-        assert_almost_equal(np.nper(0.075, -2000, 0, 100000.),
+        # This one handles the case where we use broadcast and arguments passed in are arrays
+        assert_almost_equal(np.pmt([[0.0,0.8],[0.3, 0.8]], [12,3], [2000,20000]),np.array([[  -166.666, -19311.258],[  -626.908, -19311.258]]), 3)
+-2000, 0, 100000.),
                             21.54, 2)
 
     def test_nper2(self):
