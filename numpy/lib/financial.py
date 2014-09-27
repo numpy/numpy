@@ -204,7 +204,6 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     In order to pay-off (i.e., have a future-value of 0) the $200,000 obtained
     today, a monthly payment of $1,854.02 would be required.  Note that this
     example illustrates usage of `fv` having a default value of 0.
-
     """
     when = _convert_when(when)
     (rate, nper, pv, fv, when) = map(np.asarray, [rate, nper, pv, fv, when])
@@ -212,7 +211,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     miter = np.broadcast(rate, nper, pv, fv, when)
     zer = np.zeros(miter.shape)
     fact = np.where(rate == zer, nper + zer,
-                    (1 + rate*when)*(temp - 1)/rate + zer)
+                    (1 + rate*when)*(temp - 1)/(rate + zer))
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
