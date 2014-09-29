@@ -31,6 +31,9 @@ cdef extern from "math.h":
     double sin(double x)
     double cos(double x)
 
+cdef extern from "numpy/npy_math.h":
+    int npy_isfinite(double x)
+
 cdef extern from "mtrand_py_helper.h":
     object empty_py_bytes(npy_intp length, void **bytes)
 
@@ -1220,14 +1223,19 @@ cdef class RandomState:
 
         """
         cdef ndarray olow, ohigh, odiff
-        cdef double flow, fhigh
+        cdef double flow, fhigh, fscale
         cdef object temp
 
         flow = PyFloat_AsDouble(low)
         fhigh = PyFloat_AsDouble(high)
+
+        fscale = fhigh - flow
+        if not npy_isfinite(fscale):
+            raise OverflowError('Range exceeds valid bounds')
+
         if not PyErr_Occurred():
             return cont2_array_sc(self.internal_state, rk_uniform, size, flow,
-                                  fhigh-flow, self.lock)
+                                  fscale, self.lock)
 
         PyErr_Clear()
         olow = <ndarray>PyArray_FROM_OTF(low, NPY_DOUBLE, NPY_ARRAY_ALIGNED)

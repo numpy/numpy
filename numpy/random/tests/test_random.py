@@ -619,6 +619,18 @@ class TestRandomDist(TestCase):
                             [5.48995325769805476, 8.47493103280052118]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_uniform_range_bounds(self):
+        fmin = np.finfo('float').min
+        fmax = np.finfo('float').max
+
+        func = np.random.uniform
+        np.testing.assert_raises(OverflowError, func, -np.inf, 0)
+        np.testing.assert_raises(OverflowError, func,  0,      np.inf)
+        np.testing.assert_raises(OverflowError, func,  fmin,   fmax)
+
+        # (fmax / 1e17) - fmin is within range, so this should not throw
+        np.random.uniform(low=fmin, high=fmax / 1e17)
+
     def test_vonmises(self):
         np.random.seed(self.seed)
         actual = np.random.vonmises(mu=1.23, kappa=1.54, size=(3, 2))
