@@ -19,6 +19,7 @@ from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_variable_attribute,
                                               check_inline,
+                                              check_restrict,
                                               check_compiler_gcc4)
 from numpy.distutils.compat import get_exception
 
@@ -411,6 +412,11 @@ int main (void)
         """Return the inline keyword recognized by the compiler, empty string
         otherwise."""
         return check_inline(self)
+
+    def check_restrict(self):
+        """Return the restrict keyword recognized by the compiler, empty string
+        otherwise."""
+        return check_restrict(self)
 
     def check_compiler_gcc4(self):
         """Return True if the C compiler is gcc >= 4."""
