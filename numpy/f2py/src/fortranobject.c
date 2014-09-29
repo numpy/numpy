@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+#include <string.h>
+
 /*
   This file implements: FortranObject, array_from_pyobj, copy_ND_array
 
@@ -100,88 +103,141 @@ static PyMethodDef fortran_methods[] = {
 #endif
 
 
+/* Returns number of bytes consumed from buf, or -1 on error. */
+static Py_ssize_t
+format_def(char *buf, Py_ssize_t size, FortranDataDef def)
+{
+    char *p = buf;
+    int i, n;
+
+    n = PyOS_snprintf(p, size, "array(%" NPY_INTP_FMT, def.dims.d[0]);
+    if (n < 0 || n >= size) {
+        return -1;
+    }
+    p += n;
+    size -= n;
+
+    for (i = 1; i < def.rank; i++) {
+        n = PyOS_snprintf(p, size, ",%" NPY_INTP_FMT, def.dims.d[i]);
+        if (n < 0 || n >= size) {
+            return -1;
+        }
+        p += n;
+        size -= n;
+    }
+
+    if (size <= 0) {
+        return -1;
+    }
+
+    p[size] = ')';
+    p++;
+    size--;
+
+    if (def.data == NULL) {
+        static const char notalloc[] = ", not allocated";
+        if (size < sizeof(notalloc)) {
+            return -1;
+        }
+        memcpy(p, notalloc, sizeof(notalloc));
+    }
+
+    return p - buf;
+}
+
 static PyObject *
-fortran_doc (FortranDataDef def) {
-    char *p;
-    /*
-      p is used as a buffer to hold generated documentation strings.
-      A common operation in generating the documentation strings, is
-      appending a string to the buffer p. Earlier, the following
-      idiom was:
-
-        sprintf(p, "%s<string to be appended>", p);
-
-      but this does not work when _FORTIFY_SOURCE=2 is enabled: instead
-      of appending the string, the string is inserted.
-
-      As a fix, the following idiom should be used for appending
-      strings to a buffer p:
-
-        sprintf(p + strlen(p), "<string to be appended>");
-     */
+fortran_doc(FortranDataDef def)
+{
+    char *buf, *p;
     PyObject *s = NULL;
-    int i;
-    unsigned size=100;
-    if (def.doc!=NULL)
+    Py_ssize_t n, origsize, size = 100;
+
+    if (def.doc != NULL) {
         size += strlen(def.doc);
-    p = (char*)malloc (size);
-    if (p==NULL) {
-        /* No need to call free() because p is NULL */
+    }
+    origsize = size;
+    buf = p = (char *)PyMem_Malloc(size);
+    if (buf == NULL) {
         return PyErr_NoMemory();
     }
-    p[0] = '\0'; /* make sure that the buffer has zero length */
-    if (def.rank==-1) {
-        if (def.doc==NULL) {
-            if (sprintf(p,"%s - ",def.name)==0) goto fail;
-            if (sprintf(p+strlen(p),"no docs available")==0)
+
+    if (def.rank == -1) {
+        if (def.doc) {
+            n = strlen(def.doc);
+            if (n > size) {
                 goto fail;
-        } else {
-            if (sprintf(p+strlen(p),"%s",def.doc)==0)
-                goto fail;
-        }
-    } else {
-        PyArray_Descr *d = PyArray_DescrFromType(def.type);
-        if (sprintf(p+strlen(p),"'%c'-",d->type)==0) {
-	  Py_DECREF(d);
-	  goto fail;
-	}
-        Py_DECREF(d);
-        if (def.data==NULL) {
-            if (sprintf(p+strlen(p),"array(%" NPY_INTP_FMT,def.dims.d[0])==0)
-	      goto fail;
-            for(i=1;i<def.rank;++i)
-                if (sprintf(p+strlen(p),",%" NPY_INTP_FMT,def.dims.d[i])==0)
-		  goto fail;
-            if (sprintf(p+strlen(p),"), not allocated")==0)
-	      goto fail;
-        } else {
-            if (def.rank>0) {
-                if (sprintf(p+strlen(p),"array(%"NPY_INTP_FMT,def.dims.d[0])==0)
-		  goto fail;
-                for(i=1;i<def.rank;i++)
-                    if (sprintf(p+strlen(p),",%" NPY_INTP_FMT,def.dims.d[i])==0)
-		      goto fail;
-                if (sprintf(p+strlen(p),")")==0) goto fail;
-            } else {
-                if (sprintf(p+strlen(p),"scalar")==0) goto fail;
             }
+            memcpy(p, def.doc, n);
+            p += n;
+            size -= n;
+        }
+        else {
+            n = PyOS_snprintf(p, size, "%s - no docs available", def.name);
+            if (n < 0 || n >= size) {
+                goto fail;
+            }
+            p += n;
+            size -= n;
         }
     }
-    if (sprintf(p+strlen(p),"\n")==0) goto fail;
-    if (strlen(p)>size) {
-        fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%zd>%d(size):"\
-		" too long doc string required, increase size\n",\
-		strlen(p),size);
+    else {
+        PyArray_Descr *d = PyArray_DescrFromType(def.type);
+        n = PyOS_snprintf(p, size, "'%c'-", d->type);
+        Py_DECREF(d);
+        if (n < 0 || n >= size) {
+            goto fail;
+        }
+        p += n;
+        size -= n;
+
+        if (def.data == NULL) {
+            n = format_def(p, size, def) == -1;
+            if (n < 0) {
+                goto fail;
+            }
+            p += n;
+            size -= n;
+        }
+        else if (def.rank > 0) {
+            n = format_def(p, size, def);
+            if (n < 0) {
+                goto fail;
+            }
+            p += n;
+            size -= n;
+        }
+        else {
+            n = strlen("scalar");
+            if (size < n) {
+                goto fail;
+            }
+            memcpy(p, "scalar", n);
+            p += n;
+            size -= n;
+        }
+    }
+    if (size <= 1) {
         goto fail;
     }
+    *p++ = '\n';
+    size--;
+
+    /* p now points one beyond the last character of the string in buf */
 #if PY_VERSION_HEX >= 0x03000000
-    s = PyUnicode_FromString(p);
+    s = PyUnicode_FromStringAndSize(buf, p - buf);
 #else
-    s = PyString_FromString(p);
+    s = PyString_FromStringAndSize(buf, p - buf);
 #endif
- fail:
-    free(p);
+
+    PyMem_Free(buf);
     return s;
+
+ fail:
+    fprintf(stderr, "fortranobject.c: fortran_doc: len(p)=%zd>%zd=size:"
+                    " too long docstring required, increase size\n",
+            p - buf, origsize);
+    PyMem_Free(buf);
+    return NULL;
 }
 
 static FortranDataDef *save_def; /* save pointer of an allocatable array */
@@ -623,11 +679,11 @@ PyArrayObject* array_from_pyobj(const int type_num,
         /* intent(cache), optional, intent(hide) */
         if (count_nonpos(rank,dims)) {
             int i;
-            sprintf(mess,"failed to create intent(cache|hide)|optional array"
-                    "-- must have defined dimensions but got (");
+            strcpy(mess, "failed to create intent(cache|hide)|optional array"
+                   "-- must have defined dimensions but got (");
             for(i=0;i<rank;++i)
                 sprintf(mess+strlen(mess),"%" NPY_INTP_FMT ",",dims[i]);
-            sprintf(mess+strlen(mess),")");
+            strcat(mess, ")");
             PyErr_SetString(PyExc_ValueError,mess);
             return NULL;
         }
@@ -660,9 +716,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
                     Py_INCREF(obj);
                 return (PyArrayObject *)obj;
             }
-            sprintf(mess,"failed to initialize intent(cache) array");
+            strcpy(mess, "failed to initialize intent(cache) array");
             if (!PyArray_ISONESEGMENT(obj))
-                sprintf(mess+strlen(mess)," -- input must be in one segment");
+                strcat(mess, " -- input must be in one segment");
             if (PyArray_ITEMSIZE(arr)<elsize)
                 sprintf(mess+strlen(mess)," -- expected at least elsize=%d but got %d",
                         elsize,PyArray_ITEMSIZE(arr)
@@ -698,11 +754,11 @@ PyArrayObject* array_from_pyobj(const int type_num,
         }
 
         if (intent & F2PY_INTENT_INOUT) {
-            sprintf(mess,"failed to initialize intent(inout) array");
+            strcpy(mess, "failed to initialize intent(inout) array");
             if ((intent & F2PY_INTENT_C) && !PyArray_ISCARRAY(arr))
-                sprintf(mess+strlen(mess)," -- input not contiguous");
+                strcat(mess, " -- input not contiguous");
             if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))
-                sprintf(mess+strlen(mess)," -- input not fortran contiguous");
+                strcat(mess, " -- input not fortran contiguous");
             if (PyArray_ITEMSIZE(arr)!=elsize)
                 sprintf(mess+strlen(mess)," -- expected elsize=%d but got %d",
                         elsize,
