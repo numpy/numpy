@@ -429,19 +429,46 @@ array_dealloc(PyArrayObject *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/*
+ * Extend string. On failure, returns NULL and leaves *strp alone.
+ * XXX we do this in multiple places; time for a string library?
+ */
+static char *
+extend(char **strp, Py_ssize_t n, Py_ssize_t *maxp)
+{
+    char *str = *strp;
+    Py_ssize_t new_cap;
+
+    if (n >= *maxp - 16) {
+        new_cap = *maxp * 2;
+
+        if (new_cap <= *maxp) {     /* overflow */
+            return NULL;
+        }
+        str = PyArray_realloc(*strp, new_cap);
+        if (str != NULL) {
+            *strp = str;
+            *maxp = new_cap;
+        }
+    }
+    return str;
+}
+
 static int
-dump_data(char **string, int *n, int *max_n, char *data, int nd,
+dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
           npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
 {
     PyArray_Descr *descr=PyArray_DESCR(self);
-    PyObject *op, *sp;
+    PyObject *op = NULL, *sp = NULL;
     char *ostring;
-    npy_intp i, N;
+    npy_intp i, N, ret = 0;
 
-#define CHECK_MEMORY do { if (*n >= *max_n-16) {         \
-        *max_n *= 2;                                     \
-        *string = (char *)PyArray_realloc(*string, *max_n); \
-    }} while (0)
+#define CHECK_MEMORY do {                           \
+        if (extend(string, *n, max_n) == NULL) {    \
+            ret = -1;                               \
+            goto end;                               \
+        }                                           \
+    } while (0)
 
     if (nd == 0) {
         if ((op = descr->f->getitem(data, self)) == NULL) {
@@ -449,17 +476,14 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
         }
         sp = PyObject_Repr(op);
         if (sp == NULL) {
-            Py_DECREF(op);
-            return -1;
+            ret = -1;
+            goto end;
         }
         ostring = PyString_AsString(sp);
         N = PyString_Size(sp)*sizeof(char);
         *n += N;
         CHECK_MEMORY;
         memmove(*string + (*n - N), ostring, N);
-        Py_DECREF(sp);
-        Py_DECREF(op);
-        return 0;
     }
     else {
         CHECK_MEMORY;
@@ -482,10 +506,14 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
         CHECK_MEMORY;
         (*string)[*n] = ']';
         *n += 1;
-        return 0;
     }
 
 #undef CHECK_MEMORY
+
+end:
+    Py_XDECREF(op);
+    Py_XDECREF(sp);
+    return ret;
 }
 
 /*NUMPY_API
@@ -555,21 +583,13 @@ array_repr_builtin(PyArrayObject *self, int repr)
 {
     PyObject *ret;
     char *string;
-    int n, max_n;
-
-    max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
+    /* max_n initial value is arbitrary, dump_data will extend it */
+    Py_ssize_t n = 0, max_n = PyArray_NBYTES(self) * 4 + 7;
 
     if ((string = PyArray_malloc(max_n)) == NULL) {
         return PyErr_NoMemory();
     }
 
-    if (repr) {
-        n = 6;
-        sprintf(string, "array(");
-    }
-    else {
-        n = 0;
-    }
     if (dump_data(&string, &n, &max_n, PyArray_DATA(self),
                   PyArray_NDIM(self), PyArray_DIMS(self),
                   PyArray_STRIDES(self), self) < 0) {
@@ -579,14 +599,15 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
     if (repr) {
         if (PyArray_ISEXTENDED(self)) {
-            char buf[100];
-            PyOS_snprintf(buf, sizeof(buf), "%d", PyArray_DESCR(self)->elsize);
-            sprintf(string+n, ", '%c%s')", PyArray_DESCR(self)->type, buf);
-            ret = PyUString_FromStringAndSize(string, n + 6 + strlen(buf));
+            ret = PyUString_FromFormat("array(%s, '%c%d')",
+                                       string,
+                                       PyArray_DESCR(self)->type,
+                                       PyArray_DESCR(self)->elsize);
         }
         else {
-            sprintf(string+n, ", '%c')", PyArray_DESCR(self)->type);
-            ret = PyUString_FromStringAndSize(string, n+6);
+            ret = PyUString_FromFormat("array(%s, '%c')",
+                                       string,
+                                       PyArray_DESCR(self)->type);
         }
     }
     else {

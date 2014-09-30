@@ -743,16 +743,9 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
 fail:
     PyArray_free((void*)var_names);
     if (parse_error) {
-        char *buf = PyArray_malloc(sizeof(char) * (len + 200));
-        if (buf) {
-            sprintf(buf, "%s at position %d in \"%s\"",
-                    parse_error, i, signature);
-            PyErr_SetString(PyExc_ValueError, signature);
-            PyArray_free(buf);
-        }
-        else {
-            PyErr_NoMemory();
-        }
+        PyErr_Format(PyExc_ValueError,
+                     "%s at position %d in \"%s\"",
+                     parse_error, i, signature);
     }
     return -1;
 }
@@ -4729,10 +4722,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_repr(PyUFuncObject *ufunc)
 {
-    char buf[100];
-
-    sprintf(buf, "<ufunc '%.50s'>", ufunc->name);
-    return PyUString_FromString(buf);
+    return PyUString_FromFormat("<ufunc '%s'>", ufunc->name);
 }
 
 
