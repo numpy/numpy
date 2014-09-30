@@ -4837,14 +4837,15 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     Parameters
     ----------
     x : array_like
-        Input array to be binned. It has to be 1-dimensional.
+        Input array to be binned. Prior to Numpy 1.10.0, this array had to
+        be 1-dimensional, but can now have any shape.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
     right : bool, optional
         Indicating whether the intervals include the right or the left bin
         edge. Default behavior is (right==False) indicating that the interval
-        does not include the right edge. The left bin and is open in this
-        case. Ie., bins[i-1] <= x < bins[i] is the default behavior for
+        does not include the right edge. The left bin end is open in this
+        case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
 
     Returns
@@ -4855,7 +4856,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     Raises
     ------
     ValueError
-        If the input is not 1-dimensional, or if `bins` is not monotonic.
+        If `bins` is not monotonic.
     TypeError
         If the type of the input is complex.
 
@@ -4868,6 +4869,13 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     If values in `x` are such that they fall outside the bin range,
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
+
+    .. versionadded:: 1.10.0
+
+    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
+    that a binary search is used to bin the values, which scales much better
+    for larger number of bins than the previous linear search. It also removes
+    the requirement for the input array to be 1-dimensional.
 
     Examples
     --------
@@ -4885,7 +4893,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     1.0 <= 1.6 < 2.5
 
     >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
-    >>> bins = np.array([0,5,10,15,20])
+    >>> bins = np.array([0, 5, 10, 15, 20])
     >>> np.digitize(x,bins,right=True)
     array([1, 2, 3, 4, 4])
     >>> np.digitize(x,bins,right=False)

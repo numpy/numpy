@@ -8,58 +8,6 @@
 #include "string.h"
 
 
-static npy_intp
-incr_slot_(double x, double *bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = 0; i < lbins; i ++ ) {
-        if ( x < bins [i] ) {
-            return i;
-        }
-    }
-    return lbins;
-}
-
-static npy_intp
-decr_slot_(double x, double * bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = lbins - 1; i >= 0; i -- ) {
-        if (x < bins [i]) {
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
-static npy_intp
-incr_slot_right_(double x, double *bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = 0; i < lbins; i ++ ) {
-        if ( x <= bins [i] ) {
-            return i;
-        }
-    }
-    return lbins;
-}
-
-static npy_intp
-decr_slot_right_(double x, double * bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = lbins - 1; i >= 0; i -- ) {
-        if (x <= bins [i]) {
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
 /*
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,
@@ -125,6 +73,7 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
     *mn = min;
     *mx = max;
 }
+
 /*
  * arr_bincount is registered as bincount.
  *
@@ -244,143 +193,111 @@ fail:
     return NULL;
 }
 
-
 /*
- * digitize (x, bins, right=False) returns an array of python integers the same
- * length of x. The values i returned are such that bins [i - 1] <= x <
- * bins [i] if bins is monotonically increasing, or bins [i - 1] > x >=
- * bins [i] if bins is monotonically decreasing.  Beyond the bounds of
- * bins, returns either i = 0 or i = len (bins) as appropriate.
- * if right == True the comparison is bins [i - 1] < x <= bins[i]
- * or bins [i - 1] >= x > bins[i]
+ * digitize(x, bins, right=False) returns an array of integers the same length
+ * as x. The values i returned are such that bins[i - 1] <= x < bins[i] if
+ * bins is monotonically increasing, or bins[i - 1] > x >= bins[i] if bins
+ * is monotonically decreasing.  Beyond the bounds of bins, returns either
+ * i = 0 or i = len(bins) as appropriate. If right == True the comparison
+ * is bins [i - 1] < x <= bins[i] or bins [i - 1] >= x > bins[i]
  */
 static PyObject *
 arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    /* self is not used */
-    PyObject *ox, *obins;
-    PyArrayObject *ax = NULL, *abins = NULL, *aret = NULL;
-    double *dx, *dbins;
-    npy_intp lbins, lx;             /* lengths */
-    npy_intp right = 0; /* whether right or left is inclusive */
-    npy_intp *iret;
-    int m, i;
+    PyObject *obj_x = NULL;
+    PyObject *obj_bins = NULL;
+    PyArrayObject *arr_x = NULL;
+    PyArrayObject *arr_bins = NULL;
+    PyObject *ret = NULL;
+    npy_intp len_bins;
+    int monotonic, right = 0;
+    NPY_BEGIN_THREADS_DEF
+
     static char *kwlist[] = {"x", "bins", "right", NULL};
-    PyArray_Descr *type;
-    char bins_non_monotonic = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist, &ox, &obins,
-                &right)) {
-        goto fail;
-    }
-    type = PyArray_DescrFromType(NPY_DOUBLE);
-    ax = (PyArrayObject *)PyArray_FromAny(ox, type,
-                                        1, 1, NPY_ARRAY_CARRAY, NULL);
-    if (ax == NULL) {
-        goto fail;
-    }
-    Py_INCREF(type);
-    abins = (PyArrayObject *)PyArray_FromAny(obins, type,
-                                        1, 1, NPY_ARRAY_CARRAY, NULL);
-    if (abins == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+                                     &obj_x, &obj_bins, &right)) {
         goto fail;
     }
 
-    lx = PyArray_SIZE(ax);
-    dx = (double *)PyArray_DATA(ax);
-    lbins = PyArray_SIZE(abins);
-    dbins = (double *)PyArray_DATA(abins);
-    aret = (PyArrayObject *)PyArray_SimpleNew(1, &lx, NPY_INTP);
-    if (aret == NULL) {
+    /* PyArray_SearchSorted will make `x` contiguous even if we don't */
+    arr_x = (PyArrayObject *)PyArray_FROMANY(obj_x, NPY_DOUBLE, 0, 0,
+                                             NPY_ARRAY_CARRAY_RO);
+    if (arr_x == NULL) {
         goto fail;
     }
-    iret = (npy_intp *)PyArray_DATA(aret);
 
-    if (lx <= 0 || lbins < 0) {
+    /* TODO: `bins` could be strided, needs change to check_array_monotonic */
+    arr_bins = (PyArrayObject *)PyArray_FROMANY(obj_bins, NPY_DOUBLE, 1, 1,
+                                               NPY_ARRAY_CARRAY_RO);
+    if (arr_bins == NULL) {
+        goto fail;
+    }
+
+    len_bins = PyArray_SIZE(arr_bins);
+    if (len_bins == 0) {
+        PyErr_SetString(PyExc_ValueError, "bins must have non-zero length");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(len_bins)
+    monotonic = check_array_monotonic((const double *)PyArray_DATA(arr_bins),
+                                      len_bins);
+    NPY_END_THREADS
+
+    if (monotonic == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "Both x and bins must have non-zero length");
+                        "bins must be monotonically increasing or decreasing");
+        goto fail;
+    }
+
+    /* PyArray_SearchSorted needs an increasing array */
+    if (monotonic == - 1) {
+        PyArrayObject *arr_tmp = NULL;
+        npy_intp shape = PyArray_DIM(arr_bins, 0);
+        npy_intp stride = -PyArray_STRIDE(arr_bins, 0);
+        void *data = (void *)(PyArray_BYTES(arr_bins) - stride * (shape - 1));
+
+        arr_tmp = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &shape,
+                                               NPY_DOUBLE, &stride, data, 0,
+                                               PyArray_FLAGS(arr_bins), NULL);
+        if (!arr_tmp) {
             goto fail;
-    }
-    NPY_BEGIN_ALLOW_THREADS;
-    if (lbins == 1)  {
-        if (right == 0) {
-            for (i = 0; i < lx; i++) {
-                if (dx [i] >= dbins[0]) {
-                    iret[i] = 1;
-                }
-                else {
-                    iret[i] = 0;
-                }
-            }
         }
-        else {
-            for (i = 0; i < lx; i++) {
-                if (dx [i] > dbins[0]) {
-                    iret[i] = 1;
-                }
-                else {
-                    iret[i] = 0;
-                }
-            }
 
-        }
-    }
-    else {
-        m = check_array_monotonic(dbins, lbins);
-        if (right == 0) {
-            if ( m == -1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
-                }
-            }
-            else if ( m == 1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
-                }
-            }
-            else {
-            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
-                bins_non_monotonic = 1;
-            }
-        }
-        else {
-            if ( m == -1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = decr_slot_right_ ((double)dx[i], dbins,
-                                                                lbins);
-                }
-            }
-            else if ( m == 1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = incr_slot_right_ ((double)dx[i], dbins,
-                                                               lbins);
-                }
-            }
-            else {
-            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
-                bins_non_monotonic = 1;
-            }
+        if (PyArray_SetBaseObject(arr_tmp, (PyObject *)arr_bins) < 0) {
 
+            Py_DECREF(arr_tmp);
+            goto fail;
         }
+        arr_bins = arr_tmp;
     }
-    NPY_END_ALLOW_THREADS;
-    if (bins_non_monotonic) {
-        PyErr_SetString(PyExc_ValueError,
-                "The bins must be monotonically increasing or decreasing");
+
+    ret = PyArray_SearchSorted(arr_bins, (PyObject *)arr_x,
+                               right ? NPY_SEARCHLEFT : NPY_SEARCHRIGHT, NULL);
+    if (!ret) {
         goto fail;
     }
-    Py_DECREF(ax);
-    Py_DECREF(abins);
-    return (PyObject *)aret;
 
-fail:
-    Py_XDECREF(ax);
-    Py_XDECREF(abins);
-    Py_XDECREF(aret);
-    return NULL;
+    /* If bins is decreasing, ret has bins from end, not start */
+    if (monotonic == -1) {
+        npy_intp *ret_data =
+                        (npy_intp *)PyArray_DATA((PyArrayObject *)ret);
+        npy_intp len_ret = PyArray_SIZE((PyArrayObject *)ret);
+
+        NPY_BEGIN_THREADS_THRESHOLDED(len_ret)
+        while (len_ret--) {
+            *ret_data = len_bins - *ret_data;
+            ret_data++;
+        }
+        NPY_END_THREADS
+    }
+
+    fail:
+        Py_DECREF(arr_x);
+        Py_DECREF(arr_bins);
+        return ret;
 }
-
-
 
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
