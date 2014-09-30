@@ -130,7 +130,10 @@ import_array()
 import numpy as np
 import operator
 import warnings
-from threading import Lock
+try:
+    from threading import Lock
+except ImportError:
+    from dummy_threading import Lock
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size,
                         object lock):
