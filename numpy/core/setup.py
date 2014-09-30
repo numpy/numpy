@@ -446,6 +446,11 @@ def configuration(parent_package='',top_path=None):
             if sys.platform=='win32' or os.name=='nt':
                 win32_checks(moredefs)
 
+            # C99 restrict keyword
+            restrict = config_cmd.check_restrict()
+            if restrict:
+                moredefs.append(('NPY_RESTRICT', restrict))
+
             # Inline check
             inline = config_cmd.check_inline()
 
