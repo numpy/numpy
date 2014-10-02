@@ -42,6 +42,7 @@ class TestFinancial(TestCase):
     def test_pmt(self):
         assert_almost_equal(np.pmt(0.08/12, 5*12, 15000),
                             -304.146, 3)
+        assert_almost_equal(np.pmt([0.8,0.3],[12 1],20000),array([-16013.842,-26000.000]),3)
 
     def test_ppmt(self):
         np.round(np.ppmt(0.1/12, 1, 60, 55000), 2) == 710.25

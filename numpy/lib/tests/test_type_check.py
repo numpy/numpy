@@ -79,6 +79,13 @@ class TestMintypecode(TestCase):
         assert_equal(mintypecode('idD'), 'D')
 
 
+class TestAsscalar(TestCase):
+
+    def test_basic(self):
+        assert_(np.asscalar(3))
+        assert_(np.asscalar([3]))
+
+
 class TestIsscalar(TestCase):
 
     def test_basic(self):
