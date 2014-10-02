@@ -759,6 +759,17 @@ class TestBool(TestCase):
         assert_equal(np.bitwise_xor(arg1, arg2), out)
 
 
+class TestInt(TestCase):
+    def test_logical_not(self):
+        x = np.ones(10, dtype=np.int16)
+        o = np.ones(10 * 2, dtype=np.bool)
+        tgt = o.copy()
+        tgt[::2] = False
+        os = o[::2]
+        assert_array_equal(np.logical_not(x, out=os), False)
+        assert_array_equal(o, tgt)
+
+
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)

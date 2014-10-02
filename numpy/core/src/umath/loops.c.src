@@ -47,20 +47,23 @@
  *****************************************************************************
  */
 
+/* unary loop input and output contiguous */
+#define IS_UNARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
+                                  steps[1] == sizeof(tout))
 
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
 
-/* binary loop input and output continous */
+/* binary loop input and output contiguous */
 #define IS_BINARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
                                    steps[1] == sizeof(tin) && \
                                    steps[2] == sizeof(tout))
-/* binary loop input and output continous with first scalar */
+/* binary loop input and output contiguous with first scalar */
 #define IS_BINARY_CONT_S1(tin, tout) (steps[0] == 0 && \
                                    steps[1] == sizeof(tin) && \
                                    steps[2] == sizeof(tout))
-/* binary loop input and output continous with second scalar */
+/* binary loop input and output contiguous with second scalar */
 #define IS_BINARY_CONT_S2(tin, tout) (steps[0] == sizeof(tin) && \
                                    steps[1] == 0 && \
                                    steps[2] == sizeof(tout))
@@ -79,6 +82,33 @@
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
 
+/*
+ * loop with contiguous specialization
+ * op should be the code working on `tin in` and
+ * storing the result in `tout * out`
+ * combine with NPY_GCC_OPT_3 to allow autovectorization
+ * should only be used where its worthwhile to avoid code bloat
+ */
+#define UNARY_LOOP_FAST(tin, tout, op) \
+    do { \
+    /* condition allows compiler to optimize the generic macro */ \
+    if (IS_UNARY_CONT(tin, tout)) { \
+        UNARY_LOOP { \
+            const tin in = *(tin *)ip1; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    else { \
+        UNARY_LOOP { \
+            const tin in = *(tin *)ip1; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    } \
+    while (0)
+
 #define UNARY_LOOP_TWO_OUT\
     char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
     npy_intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
@@ -92,6 +122,51 @@
     npy_intp n = dimensions[0];\
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
+
+/*
+ * loop with contiguous specialization
+ * op should be the code working on `tin in1`, `tin in2` and
+ * storing the result in `tout * out`
+ * combine with NPY_GCC_OPT_3 to allow autovectorization
+ * should only be used where its worthwhile to avoid code bloat
+ */
+#define BINARY_LOOP_FAST(tin, tout, op) \
+    do { \
+    /* condition allows compiler to optimize the generic macro */ \
+    if (IS_BINARY_CONT(tin, tout)) { \
+        BINARY_LOOP { \
+            const tin in1 = *(tin *)ip1; \
+            const tin in2 = *(tin *)ip2; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    else if (IS_BINARY_CONT_S1(tin, tout)) { \
+        const tin in1 = *(tin *)args[0]; \
+        BINARY_LOOP { \
+            const tin in2 = *(tin *)ip2; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    else if (IS_BINARY_CONT_S2(tin, tout)) { \
+        const tin in2 = *(tin *)args[1]; \
+        BINARY_LOOP { \
+            const tin in1 = *(tin *)ip1; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    else { \
+        BINARY_LOOP { \
+            const tin in1 = *(tin *)ip1; \
+            const tin in2 = *(tin *)ip2; \
+            tout * out = (tout *)op1; \
+            op; \
+        } \
+    } \
+    } \
+    while (0)
 
 #define BINARY_REDUCE_LOOP_INNER\
     char *ip2 = args[1]; \
@@ -703,58 +778,40 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1*in1;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = in * in);
 }
 
 NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = (@type@)(1.0/in1);
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = 1.0 / in);
 }
 
 NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = in);
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = (@type@)(-(@type@)in1);
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = -in);
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_logical_not(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((npy_bool *)op1) = !in1;
-    }
+    UNARY_LOOP_FAST(@type@, npy_bool, *out = !in);
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_invert(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = ~in1;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = ~in);
 }
 
 /**begin repeat1
@@ -764,7 +821,7 @@ NPY_NO_EXPORT void
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
@@ -774,11 +831,7 @@ NPY_NO_EXPORT void
         *((@type@ *)iop1) = io1;
     }
     else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = in1 @OP@ in2;
-        }
+        BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
     }
 }
 
@@ -797,39 +850,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
      * gcc vectorization of this is not good (PR60575) but manual integer
      * vectorization is too tedious to be worthwhile
      */
-    if (IS_BINARY_CONT(@type@, npy_bool)) {
-        npy_intp i, n = dimensions[0];
-        @type@ * a = (@type@ *)args[0], * b = (@type@ *)args[1];
-        npy_bool * o = (npy_bool *)args[2];
-        for (i = 0; i < n; i++) {
-            o[i] = a[i] @OP@ b[i];
-        }
-    }
-    else if (IS_BINARY_CONT_S1(@type@, npy_bool)) {
-        npy_intp i, n = dimensions[0];
-        @type@ a = *(@type@ *)args[0];
-        @type@ * b = (@type@ *)args[1];
-        npy_bool * o = (npy_bool *)args[2];
-        for (i = 0; i < n; i++) {
-            o[i] = a @OP@ b[i];
-        }
-    }
-    else if (IS_BINARY_CONT_S2(@type@, npy_bool)) {
-        npy_intp i, n = dimensions[0];
-        @type@ * a = (@type@ *)args[0];
-        @type@ b = *(@type@*)args[1];
-        npy_bool * o = (npy_bool *)args[2];
-        for (i = 0; i < n; i++) {
-            o[i] = a[i] @OP@ b;
-        }
-    }
-    else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
-        }
-    }
+    BINARY_LOOP_FAST(@type@, npy_bool, *out = in1 @OP@ in2);
 }
 
 /**end repeat1**/
@@ -914,22 +935,16 @@ NPY_NO_EXPORT void
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = (in1 >= 0) ? in1 : -in1;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = (in >= 0) ? in : -in);
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
 NPY_NO_EXPORT void
@@ -997,13 +1012,10 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : 0;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : 0);
 }
 
 NPY_NO_EXPORT void
