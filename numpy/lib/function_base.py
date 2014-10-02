@@ -1102,7 +1102,7 @@ def diff(a, n=1, axis=-1):
         return a[slice1]-a[slice2]
 
 
-def interp(x, xp, fp, left=None, right=None):
+def interp(x, xp, fp, left=None, right=None, period=None):
     """
     One-dimensional linear interpolation.
 
@@ -1115,7 +1115,9 @@ def interp(x, xp, fp, left=None, right=None):
         The x-coordinates of the interpolated values.
 
     xp : 1-D sequence of floats
-        The x-coordinates of the data points, must be increasing.
+        The x-coordinates of the data points, must be increasing if argument
+        `period` is not specified. Otherwise, `xp` is internally sorted after
+        normalizing the periodic boundaries with ``xp = xp % period``.
 
     fp : 1-D sequence of floats
         The y-coordinates of the data points, same length as `xp`.
@@ -1126,6 +1128,12 @@ def interp(x, xp, fp, left=None, right=None):
     right : float, optional
         Value to return for `x > xp[-1]`, default is `fp[-1]`.
 
+    period : None or float, optional
+        .. versionadded:: 1.10.0
+        A period for the x-coordinates. This parameter allows the proper
+        interpolation of angular x-coordinates. Parameters `left` and `right`
+        are ignored if `period` is specified.
+
     Returns
     -------
     y : {float, ndarray}
@@ -1135,6 +1143,8 @@ def interp(x, xp, fp, left=None, right=None):
     ------
     ValueError
         If `xp` and `fp` have different length
+        If `xp` or `fp` are not 1-D sequences
+        If `period == 0`
 
     Notes
     -----
@@ -1143,7 +1153,6 @@ def interp(x, xp, fp, left=None, right=None):
     A simple check for increasing is::
 
         np.all(np.diff(xp) > 0)
-
 
     Examples
     --------
@@ -1170,13 +1179,51 @@ def interp(x, xp, fp, left=None, right=None):
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.show()
 
+    Interpolation with periodic x-coordinates:
+
+    >>> x = [-180, -170, -185, 185, -10, -5, 0, 365]
+    >>> xp = [190, -190, 350, -350]
+    >>> fp = [5, 10, 3, 4]
+    >>> np.interp(x, xp, fp, period=360)
+    array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
+
     """
-    if isinstance(x, (float, int, number)):
-        return compiled_interp([x], xp, fp, left, right).item()
-    elif isinstance(x, np.ndarray) and x.ndim == 0:
-        return compiled_interp([x], xp, fp, left, right).item()
+    if period is None:
+        if isinstance(x, (float, int, number)):
+            return compiled_interp([x], xp, fp, left, right).item()
+        elif isinstance(x, np.ndarray) and x.ndim == 0:
+            return compiled_interp([x], xp, fp, left, right).item()
+        else:
+            return compiled_interp(x, xp, fp, left, right)
     else:
-        return compiled_interp(x, xp, fp, left, right)
+        if period == 0:
+            raise ValueError("period must be a non-zero value")
+        period = abs(period)
+        left = None
+        right = None
+        return_array = True
+        if isinstance(x, (float, int, number)):
+            return_array = False
+            x = [x]
+        x = np.asarray(x, dtype=np.float64)
+        xp = np.asarray(xp, dtype=np.float64)
+        fp = np.asarray(fp, dtype=np.float64)
+        if xp.ndim != 1 or fp.ndim != 1:
+            raise ValueError("Data points must be 1-D sequences")
+        if xp.shape[0] != fp.shape[0]:
+            raise ValueError("fp and xp are not of the same length")
+        # normalizing periodic boundaries
+        x = x % period
+        xp = xp % period
+        asort_xp = np.argsort(xp)
+        xp = xp[asort_xp]
+        fp = fp[asort_xp]
+        xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
+        fp = np.concatenate((fp[-1:], fp, fp[0:1]))
+        if return_array:
+            return compiled_interp(x, xp, fp, left, right)
+        else:
+            return compiled_interp(x, xp, fp, left, right).item()
 
 
 def angle(z, deg=0):

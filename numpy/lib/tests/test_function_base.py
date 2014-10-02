@@ -1602,6 +1602,9 @@ class TestInterp(TestCase):
     def test_exceptions(self):
         assert_raises(ValueError, interp, 0, [], [])
         assert_raises(ValueError, interp, 0, [0], [1, 2])
+        assert_raises(ValueError, interp, 0, [0, 1], [1, 2], period=0)
+        assert_raises(ValueError, interp, 0, [], [], period=360)
+        assert_raises(ValueError, interp, 0, [0], [1, 2], period=360)
 
     def test_basic(self):
         x = np.linspace(0, 1, 5)
@@ -1641,6 +1644,16 @@ class TestInterp(TestCase):
         xp = np.arange(0, 10, 0.0001)
         fp = np.sin(xp)
         assert_almost_equal(np.interp(np.pi, xp, fp), 0.0)
+
+    def test_period(self):
+        x = [-180, -170, -185, 185, -10, -5, 0, 365]
+        xp = [190, -190, 350, -350]
+        fp = [5, 10, 3, 4]
+        y = [7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75]
+        assert_almost_equal(np.interp(x, xp, fp, period=360), y)
+        x = np.array(x, order='F').reshape(2, -1)
+        y = np.array(y, order='C').reshape(2, -1)
+        assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
 def compare_results(res, desired):
