@@ -2234,7 +2234,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         else {
             /* Update the combined axis dimensions and strides */
             i = idim + combineoffset;
-            if (combineoffset < 0 &&
+            if (combineoffset < 0 && new_dims[i] != 0 &&
                         new_dims[i] != PyArray_DIM(op, idim)) {
                 PyErr_Format(PyExc_ValueError,
                         "dimensions in operand %d for collapsing "
