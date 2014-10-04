@@ -1,12 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import sys
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex
+    assert_allclose, assert_array_max_ulp, assert_warns,
+    assert_raises_regex, dec
     )
 from numpy.random import rand
 from numpy.lib import *
@@ -2119,6 +2121,8 @@ class TestAdd_newdoc_ufunc(TestCase):
 
 
 class TestAdd_newdoc(TestCase):
+
+    @dec.skipif(sys.flags.optimize == 2)
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."

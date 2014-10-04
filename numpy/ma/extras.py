@@ -434,8 +434,10 @@ def apply_over_axes(func, a, axes):
                 raise ValueError("function is not returning "
                         "an array of the correct shape")
     return val
-apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
-    :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
+
+if apply_over_axes.__doc__ is not None:
+    apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
+        :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
     """
 
     Examples
@@ -462,7 +464,7 @@ apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
     [[[46]
       [--]
       [124]]]
-"""
+    """
 
 
 def average(a, axis=None, weights=None, returned=False):

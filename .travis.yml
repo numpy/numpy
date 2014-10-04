@@ -13,7 +13,7 @@ matrix:
     - python: 3.2
       env: USE_DEBUG=1
     - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=0
+      env: NPY_SEPARATE_COMPILATION=0 PYTHON_OO=1
     - python: 3.4
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 2.7
