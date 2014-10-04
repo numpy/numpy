@@ -1583,7 +1583,7 @@ def hermcompanion(c):
     bot = mat.reshape(-1)[n::n+1]
     top[...] = np.sqrt(.5*np.arange(1, n))
     bot[...] = top
-    mat[:, -1] -= scl*c[:-1]/(2.0 *c[-1])
+    mat[:, -1] -= scl*c[:-1]/(2.0*c[-1])
     return mat
 
 
@@ -1646,6 +1646,49 @@ def hermroots(c):
     return r
 
 
+def _normed_hermite_n(x, n):
+    """
+    Evaluate a normalized Hermite polynomial.
+
+    Compute the value of the normalized Hermite polynomial of degree ``n``
+    at the points ``x``.
+
+
+    Parameters
+    ----------
+    x : ndarray of double.
+        Points at which to evaluate the function
+    n : int
+        Degree of the normalized Hermite function to be evaluated.
+
+    Returns
+    -------
+    values : ndarray
+        The shape of the return value is described above.
+
+    Notes
+    -----
+    .. versionadded:: 1.10.0
+
+    This function is needed for finding the Gauss points and integration
+    weights for high degrees. The values of the standard Hermite functions
+    overflow when n >= 207.
+
+    """
+    if n == 0:
+        return np.ones(x.shape)/np.sqrt(np.sqrt(np.pi))
+
+    c0 = 0.
+    c1 = 1./np.sqrt(np.sqrt(np.pi))
+    nd = float(n)
+    for i in range(n - 1):
+        tmp = c0
+        c0 = -c1*np.sqrt((nd - 1.)/nd)
+        c1 = tmp + c1*x*np.sqrt(2./nd)
+        nd = nd - 1.0
+    return c0 + c1*x*np.sqrt(2)
+
+
 def hermgauss(deg):
     """
     Gauss-Hermite quadrature.
@@ -1688,22 +1731,21 @@ def hermgauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
+    c = np.array([0]*deg + [1], dtype=np.float64)
     m = hermcompanion(c)
-    x = la.eigvals(m)
+    x = la.eigvalsh(m)
     x.sort()
 
     # improve roots by one application of Newton
-    dy = hermval(x, c)
-    df = hermval(x, hermder(c))
+    dy = _normed_hermite_n(x, ideg)
+    df = _normed_hermite_n(x, ideg - 1) * np.sqrt(2*ideg)
     x -= dy/df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
-    fm = hermval(x, c[1:])
+    fm = _normed_hermite_n(x, ideg - 1)
     fm /= np.abs(fm).max()
-    df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1/(fm * fm)
 
     # for Hermite we can also symmetrize
     w = (w + w[::-1])/2
