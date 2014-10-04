@@ -1577,13 +1577,13 @@ def hermcompanion(c):
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(2.*np.arange(1, n))))
-    scl = np.multiply.accumulate(scl)
+    scl = np.hstack((1., 1./np.sqrt(2.*np.arange(n - 1, 0, -1))))
+    scl = np.multiply.accumulate(scl)[::-1]
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
     top[...] = np.sqrt(.5*np.arange(1, n))
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= scl*c[:-1]/(2.0 *c[-1])
     return mat
 
 
