@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 from numpy.core import arange
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal
+    run_module_suite, assert_, assert_equal, dec
     )
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
@@ -14,6 +14,7 @@ else:
     from StringIO import StringIO
 
 
+@dec.skipif(sys.flags.optimize == 2)
 def test_lookfor():
     out = StringIO()
     utils.lookfor('eigenvalue', module='numpy', output=out,
