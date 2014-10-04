@@ -88,6 +88,7 @@ run_test()
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
   fi
+
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
   mkdir -p empty
@@ -107,6 +108,10 @@ if [ -n "$USE_DEBUG" ]; then
   sudo apt-get update
   sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
   PYTHON=python3-dbg
+fi
+
+if [ -n "$PYTHON_OO" ]; then
+  PYTHON="$PYTHON -OO"
 fi
 
 export PYTHON
