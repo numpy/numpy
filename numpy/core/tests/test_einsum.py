@@ -568,6 +568,17 @@ class TestEinSum(TestCase):
         tp = np.tensordot(A,B, axes=(0,0))
         assert_equal(es, tp)
 
+    def test_einsum_fixed_collapsingbug(self):
+        # Issue #5147
+        x = np.random.normal(0, 1, (5, 5, 5, 5))
+        y1 = np.einsum('aabb->ab', x)
+        for i in xrange(5):
+            for j in xrange(5):
+                assert y1[i,j] == x[i,i,j,j]
+        y2 = np.zeros((5, 5))
+        np.einsum('aabb->ab', x, out=y2)
+        assert (y1 == y2).all()
+
 
 if __name__ == "__main__":
     run_module_suite()
