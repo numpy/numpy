@@ -717,7 +717,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     """
     # Type conversions for Py3 convenience
-    comments = asbytes(comments)
+    if comments is not None:
+        comments = asbytes(comments)
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
@@ -790,7 +791,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter."""
-        line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
+        if comments is None:
+            line = asbytes(line).strip(asbytes('\r\n'))
+        else:
+            line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
         if line:
             return line.split(delimiter)
         else:
