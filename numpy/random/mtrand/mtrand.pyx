@@ -979,7 +979,7 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=None, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None, algorithm=None):
         """
         choice(a, size=None, replace=True, p=None)
 
@@ -1135,14 +1135,23 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                # perform a partial Knuth shuffle.
-                tmp_idx_array = np.arange(pop_size)
-                i = 0
-                while i < output_size:
-                    j = rk_interval(pop_size - 1 - i, self.internal_state)+i #rand int from [i, pop_size-1]
-                    tmp_idx_array[i], tmp_idx_array[j] = tmp_idx_array[j], tmp_idx_array[i]
-                    i = i + 1
-                idx = tmp_idx_array[:output_size]
+                if algorithm is None:
+                    algorithm="legacy-shuffle"
+                    msg="".join((
+                        "The 'legacy-shuffle' option is deprecated in favor of faster algorithms.\n",
+                        "It is the default for now to maintain backward compatibility"))
+                    warnings.warn(msg, DeprecationWarning)
+                if algorithm == "legacy-shuffle":
+                    idx = self.permutation(pop_size)[:size]
+                elif algorithm == "shuffle":
+                    # perform a truncated Knuth shuffle.
+                    tmp_idx_array = np.arange(pop_size)
+                    i = 0
+                    while i < output_size:
+                        j = rk_interval(pop_size - 1 - i, self.internal_state)+i #rand int from [i, pop_size-1]
+                        tmp_idx_array[i], tmp_idx_array[j] = tmp_idx_array[j], tmp_idx_array[i]
+                        i = i + 1
+                    idx = tmp_idx_array[:output_size]
                 if shape is not None:
                     idx.shape = shape
 
