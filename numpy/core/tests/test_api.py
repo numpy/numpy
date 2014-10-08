@@ -377,7 +377,7 @@ def test_copyto_permut():
             r = np.zeros(power)
             mask = np.array(l)
             imask = np.array(l).view(np.uint8)
-            imask[mask != 0] = 0xFF
+            imask[mask != 0] = c
             np.copyto(r, d, where=mask)
             assert_array_equal(r == 1, l)
             assert_equal(r.sum(), sum(l))
