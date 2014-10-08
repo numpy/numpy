@@ -440,7 +440,7 @@ def pre_build(context):
                 "src/multiarray/arraytypes.c.src",
                 "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src",
-                "src/multiarray/templ_common.h.src",
+                "src/private/templ_common.h.src",
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
@@ -454,7 +454,6 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),
-                pjoin('src', 'multiarray', 'templ_common.h.src'),
                 pjoin('src', 'multiarray', 'conversion_utils.c'),
                 pjoin('src', 'multiarray', 'convert.c'),
                 pjoin('src', 'multiarray', 'convert_datatype.c'),
@@ -490,6 +489,7 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'ucsnarrow.c'),
                 pjoin('src', 'multiarray', 'usertypes.c'),
                 pjoin('src', 'multiarray', 'vdot.c'),
+                pjoin('src', 'private', 'templ_common.h.src'),
                 ]
 
             if bld.env.HAS_CBLAS:
@@ -522,6 +522,7 @@ def pre_build(context):
             name="ufunc_api")
 
         ufunc_templates = [
+            "src/umath/scalarmath.c.src",
             "src/umath/loops.h.src",
             "src/umath/loops.c.src",
             "src/umath/funcs.inc.src",
@@ -535,6 +536,7 @@ def pre_build(context):
         includes = ["src/umath", "src/multiarray", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
             sources = [
+                    pjoin("src", "umath", "scalarmath.c.src"),
                     pjoin("src", "umath", "loops.h.src"),
                     pjoin("src", "umath", "loops.c.src"),
                     pjoin('src', 'umath', 'reduction.c'),
@@ -550,6 +552,5 @@ def pre_build(context):
                                        use="npymath")
     context.register_builder("umath", build_ufunc)
 
-    context.tweak_extension("scalarmath", use="npymath", includes=["src/private"])
     context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
     context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])

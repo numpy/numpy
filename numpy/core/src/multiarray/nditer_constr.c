@@ -16,7 +16,7 @@
 #include "nditer_impl.h"
 
 #include "arrayobject.h"
-#include "scalarmathmodule.h"
+#include "templ_common.h"
 
 /* Internal helper functions private to this file */
 static int

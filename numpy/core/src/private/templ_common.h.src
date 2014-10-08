@@ -1,10 +1,9 @@
-/*
- * some overflow checking integer arithmetic
- */
-#include <numpy/npy_common.h>
+#ifndef __NPY_TYPED_COMMON_INC
+#define __NPY_TYPED_COMMON_INC
 
-#ifndef __NPY_SCALARMATHMODULE_H__
-#define __NPY_SCALARMATHMODULE_H__
+/* utility functions that profit from templates */
+
+#include "numpy/npy_common.h"
 
 /**begin repeat
  *  #name = int, uint, long, ulong,

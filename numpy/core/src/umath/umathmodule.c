@@ -44,6 +44,8 @@
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
 
+NPY_NO_EXPORT int initscalarmath(PyObject *);
+
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
@@ -371,6 +373,8 @@ PyMODINIT_FUNC initumath(void)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
+
+    initscalarmath(m);
 
     if (!intern_strings()) {
         goto err;

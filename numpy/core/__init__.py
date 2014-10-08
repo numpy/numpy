@@ -30,7 +30,6 @@ from . import records as rec
 from .records import *
 from .memmap import *
 from .defchararray import chararray
-from . import scalarmath
 from . import function_base
 from .function_base import *
 from . import machar
