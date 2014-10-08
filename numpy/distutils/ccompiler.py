@@ -16,7 +16,7 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args
+                                      quote_args, get_num_build_jobs
 from numpy.distutils.compat import get_exception
 
 
@@ -165,9 +165,10 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         return []
     # FIXME:RELATIVE_IMPORT
     if sys.version_info[0] < 3:
-        from .fcompiler import FCompiler
+        from .fcompiler import FCompiler, is_f_file, has_f90_header
     else:
-        from numpy.distutils.fcompiler import FCompiler
+        from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+                                               has_f90_header)
     if isinstance(self, FCompiler):
         display = []
         for fc in ['f77', 'f90', 'fix']:
@@ -189,20 +190,45 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
     log.info(display)
 
-    # build any sources in same order as they were originally specified
-    #   especially important for fortran .f90 files using modules
+    def single_compile(args):
+        obj, (src, ext) = args
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
+        f77_objects, other_objects = [], []
         for obj in objects:
             if obj in objects_to_build:
                 src, ext = build[obj]
                 if self.compiler_type=='absoft':
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
-                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+                if is_f_file(src) and not has_f90_header(src):
+                    f77_objects.append((obj, (src, ext)))
+                else:
+                    other_objects.append((obj, (src, ext)))
+
+        # f77 objects can be built in parallel
+        build_items = f77_objects
+        # build f90 modules serial, module files are generated during
+        # compilation and may be used by files later in the list so the
+        # ordering is important
+        for o in other_objects:
+            single_compile(o)
     else:
-        for obj, (src, ext) in build.items():
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        build_items = build.items()
+
+    jobs = get_num_build_jobs()
+    if len(build) > 1 and jobs > 1:
+        # build parallel
+        import multiprocessing.pool
+        pool = multiprocessing.pool.ThreadPool(jobs)
+        pool.map(single_compile, build_items)
+        pool.close()
+    else:
+        # build serial
+        for o in build_items:
+            single_compile(o)
 
     # Return *all* object filenames, not just the ones we just built.
     return objects

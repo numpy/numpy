@@ -6,6 +6,8 @@ This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
 
 Highlights
 ==========
+* numpy.distutils now supports parallel compilation via the --jobs/-j argument
+  passed to setup.py build
 
 
 Dropped Support
@@ -34,6 +36,13 @@ New Features
 `np.cbrt` wraps the C99 cube root function `cbrt`.
 Compared to `np.power(x, 1./3.)` it is well defined for negative real floats
 and a bit faster.
+
+numpy.distutils now allows parallel compilation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By passing `--jobs=n` or `-j n` to `setup.py build` the compilation of
+extensions is now performed in `n` parallel processes.
+The parallelization is limited to files within one extension so projects using
+Cython will not profit because it builds extensions from single files.
 
 
 Improvements
