@@ -1575,13 +1575,13 @@ def hermecompanion(c):
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., np.sqrt(np.arange(1, n))))
-    scl = np.multiply.accumulate(scl)
+    scl = np.hstack((1., 1./np.sqrt(np.arange(n - 1, 0, -1))))
+    scl = np.multiply.accumulate(scl)[::-1]
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
     top[...] = np.sqrt(np.arange(1, n))
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])
+    mat[:, -1] -= scl*c[:-1]/c[-1]
     return mat
 
 
@@ -1644,6 +1644,49 @@ def hermeroots(c):
     return r
 
 
+def _normed_hermite_e_n(x, n):
+    """
+    Evaluate a normalized HermiteE polynomial.
+
+    Compute the value of the normalized HermiteE polynomial of degree ``n``
+    at the points ``x``.
+
+
+    Parameters
+    ----------
+    x : ndarray of double.
+        Points at which to evaluate the function
+    n : int
+        Degree of the normalized HermiteE function to be evaluated.
+
+    Returns
+    -------
+    values : ndarray
+        The shape of the return value is described above.
+
+    Notes
+    -----
+    .. versionadded:: 1.10.0
+
+    This function is needed for finding the Gauss points and integration
+    weights for high degrees. The values of the standard HermiteE functions
+    overflow when n >= 207.
+
+    """
+    if n == 0:
+        return np.ones(x.shape)/np.sqrt(np.sqrt(2*np.pi))
+
+    c0 = 0.
+    c1 = 1./np.sqrt(np.sqrt(2*np.pi))
+    nd = float(n)
+    for i in range(n - 1):
+        tmp = c0
+        c0 = -c1*np.sqrt((nd - 1.)/nd)
+        c1 = tmp + c1*x*np.sqrt(1./nd)
+        nd = nd - 1.0
+    return c0 + c1*x
+
+
 def hermegauss(deg):
     """
     Gauss-HermiteE quadrature.
@@ -1688,20 +1731,19 @@ def hermegauss(deg):
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0]*deg + [1])
     m = hermecompanion(c)
-    x = la.eigvals(m)
+    x = la.eigvalsh(m)
     x.sort()
 
     # improve roots by one application of Newton
-    dy = hermeval(x, c)
-    df = hermeval(x, hermeder(c))
+    dy = _normed_hermite_e_n(x, ideg)
+    df = _normed_hermite_e_n(x, ideg - 1) * np.sqrt(ideg)
     x -= dy/df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
-    fm = hermeval(x, c[1:])
+    fm = _normed_hermite_e_n(x, ideg - 1)
     fm /= np.abs(fm).max()
-    df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1/(fm * fm)
 
     # for Hermite_e we can also symmetrize
     w = (w + w[::-1])/2
