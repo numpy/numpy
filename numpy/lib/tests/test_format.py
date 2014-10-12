@@ -524,6 +524,16 @@ def test_compressed_roundtrip():
     assert_array_equal(arr, arr1)
 
 
+def test_python2_python3_interoperability():
+    if sys.version_info[0] >= 3:
+        fname = 'win64python2.npy'
+    else:
+        fname = 'python3.npy'
+    path = os.path.join(os.path.dirname(__file__), 'data', fname)
+    data = np.load(path)
+    assert_array_equal(data, np.ones(2))
+
+
 def test_version_2_0():
     f = BytesIO()
     # requires more than 2 byte for header
