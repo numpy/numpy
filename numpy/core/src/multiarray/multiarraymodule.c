@@ -247,7 +247,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
     npy_intp newd1;
     PyArray_Descr *descr;
-    char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
+    static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
     if (DEPRECATE(msg) < 0) {
         return -1;
@@ -268,7 +268,7 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 {
     npy_intp newdims[2];
     PyArray_Descr *descr;
-    char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
+    static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
     if (DEPRECATE(msg) < 0) {
         return -1;
@@ -340,8 +340,9 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     }
 
     if (ndim == 1 && axis != 0) {
-        char msg[] = "axis != 0 for ndim == 1; this will raise an error in "
-                     "future versions of numpy";
+        static const char msg[] = "axis != 0 for ndim == 1; "
+                                  "this will raise an error in "
+                                  "future versions of numpy";
         if (DEPRECATE(msg) < 0) {
             return NULL;
         }
