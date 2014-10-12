@@ -1002,8 +1002,6 @@ class SafeEval(object):
     This includes strings with lists, dicts and tuples using the abstract
     syntax tree created by ``compiler.parse``.
 
-    For an example of usage, see `safe_eval`.
-
     See Also
     --------
     safe_eval
@@ -1104,21 +1102,11 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: <class '_ast.Call'>
+    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
 
     """
-    # Local imports to speed up numpy's import time.
-    import warnings
+    # Local import to speed up numpy's import time.
     import ast
 
-    walker = SafeEval()
-    try:
-        res = ast.parse(source, mode="eval")
-    except SyntaxError:
-        raise
-    try:
-        return walker.visit(res)
-    except SyntaxError:
-        raise
-
+    return ast.literal_eval(source)
 #-----------------------------------------------------------------------------
