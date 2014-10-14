@@ -883,28 +883,33 @@ def copy(a, order='K'):
 # Basic operations
 
 
-def gradient(f, *varargs):
+def gradient(f, *varargs, **kwargs):
     """
     Return the gradient of an N-dimensional array.
-
+    
     The gradient is computed using second order accurate central differences
-    in the interior and second order accurate one-sides (forward or backwards)
-    differences at the boundaries. The returned gradient hence has the same
-    shape as the input array.
+    in the interior and either first differences or second order accurate 
+    one-sides (forward or backwards) differences at the boundaries. The
+    returned gradient hence has the same shape as the input array.
 
     Parameters
     ----------
     f : array_like
-      An N-dimensional array containing samples of a scalar function.
-    `*varargs` : scalars
-      0, 1, or N scalars specifying the sample distances in each direction,
-      that is: `dx`, `dy`, `dz`, ... The default distance is 1.
+        An N-dimensional array containing samples of a scalar function.
+    varargs : list of scalar, optional
+        N scalars specifying the sample distances for each dimension,
+        i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
+    edge_order : {1, 2}, optional
+        Gradient is calculated using N\ :sup:`th` order accurate differences
+        at the boundaries. Default: 1.
+      
+        .. versionadded:: 1.9.1
 
     Returns
     -------
     gradient : ndarray
-      N arrays of the same shape as `f` giving the derivative of `f` with
-      respect to each dimension.
+        N arrays of the same shape as `f` giving the derivative of `f` with
+        respect to each dimension.
 
     Examples
     --------
@@ -916,15 +921,14 @@ def gradient(f, *varargs):
 
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
     [array([[ 2.,  2., -1.],
-           [ 2.,  2., -1.]]),
-    array([[ 1. ,  2.5,  4. ],
-           [ 1. ,  1. ,  1. ]])]
+            [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
+            [ 1. ,  1. ,  1. ]])]
 
-    >>> x = np.array([0,1,2,3,4])
-    >>> dx = gradient(x)
+    >>> x = np.array([0, 1, 2, 3, 4])
+    >>> dx = np.gradient(x)
     >>> y = x**2
-    >>> gradient(y,dx)
-    array([0.,  2.,  4.,  6.,  8.])
+    >>> np.gradient(y, dx, edge_order=2)
+    array([-0.,  2.,  4.,  6.,  8.])
     """
     f = np.asanyarray(f)
     N = len(f.shape)  # number of dimensions
@@ -938,6 +942,13 @@ def gradient(f, *varargs):
     else:
         raise SyntaxError(
             "invalid number of arguments")
+
+    edge_order = kwargs.pop('edge_order', 1)
+    if kwargs:
+        raise TypeError('"{}" are not valid keyword arguments.'.format(
+                                                  '", "'.join(kwargs.keys())))
+    if edge_order > 2:
+        raise ValueError("'edge_order' greater than 2 not supported")
 
     # use central differences on interior and one-sided differences on the
     # endpoints. This preserves second order-accuracy over the full domain.
@@ -978,7 +989,7 @@ def gradient(f, *varargs):
                 "at least two elements are required.")
 
         # Numerical differentiation: 1st order edges, 2nd order interior
-        if y.shape[axis] == 2:
+        if y.shape[axis] == 2 or edge_order == 1:
             # Use first order differences for time data
             out = np.empty_like(y, dtype=otype)
 
