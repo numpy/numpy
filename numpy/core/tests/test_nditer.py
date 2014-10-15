@@ -2481,13 +2481,8 @@ def test_iter_non_writable_attribute_deletion():
             "iterationneedsapi", "has_multi_index", "has_index", "dtypes",
             "ndim", "nop", "itersize", "finished"]
 
-    if sys.version[:3] == '2.4':
-        error = TypeError
-    else:
-        error = AttributeError
-
     for s in attr:
-        assert_raises(error, delattr, it, s)
+        assert_raises(AttributeError, delattr, it, s)
 
 
 def test_iter_writable_attribute_deletion():

@@ -88,26 +88,24 @@ main()
 if __name__ == "__main__":
 
     config = configuration(top_path='')
-    version = config.get_version()
     print('F2PY Version', version)
     config = config.todict()
 
-    if sys.version[:3]>='2.3':
-        config['download_url'] = "http://cens.ioc.ee/projects/f2py2e/2.x"\
-                                 "/F2PY-2-latest.tar.gz"
-        config['classifiers'] = [
-            'Development Status :: 5 - Production/Stable',
-            'Intended Audience :: Developers',
-            'Intended Audience :: Science/Research',
-            'License :: OSI Approved :: NumPy License',
-            'Natural Language :: English',
-            'Operating System :: OS Independent',
-            'Programming Language :: C',
-            'Programming Language :: Fortran',
-            'Programming Language :: Python',
-            'Topic :: Scientific/Engineering',
-            'Topic :: Software Development :: Code Generators',
-            ]
+    config['download_url'] = "http://cens.ioc.ee/projects/f2py2e/2.x"\
+                             "/F2PY-2-latest.tar.gz"
+    config['classifiers'] = [
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: NumPy License',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: C',
+        'Programming Language :: Fortran',
+        'Programming Language :: Python',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Software Development :: Code Generators',
+        ]
     setup(version=version,
           description       = "F2PY - Fortran to Python Interface Generaton",
           author            = "Pearu Peterson",

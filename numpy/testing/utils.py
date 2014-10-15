@@ -159,7 +159,7 @@ else:
         """ Return memory usage of running python. [Not implemented]"""
         raise NotImplementedError
 
-if os.name=='nt' and sys.version[:3] > '2.3':
+if os.name=='nt':
     # Code "stolen" from enthought/debug/memusage.py
     def GetPerformanceAttributes(object, counter, instance = None,
                                  inum=-1, format = None, machine=None):

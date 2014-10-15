@@ -407,11 +407,6 @@ class build_ext (old_build_ext):
         if ext.language=='c++' and cxx_compiler is not None:
             linker = cxx_compiler.link_shared_object
 
-        if sys.version[:3]>='2.3':
-            kws = {'target_lang':ext.language}
-        else:
-            kws = {}
-
         linker(objects, ext_filename,
                libraries=libraries,
                library_dirs=library_dirs,
@@ -419,7 +414,8 @@ class build_ext (old_build_ext):
                extra_postargs=extra_args,
                export_symbols=self.get_export_symbols(ext),
                debug=self.debug,
-               build_temp=self.build_temp,**kws)
+               build_temp=self.build_temp,
+               target_lang=ext.language)
 
     def _add_dummy_mingwex_sym(self, c_sources):
         build_src = self.get_finalized_command("build_src").build_src
