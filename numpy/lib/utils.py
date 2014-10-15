@@ -4,6 +4,7 @@ import os
 import sys
 import types
 import re
+import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
@@ -1002,13 +1003,16 @@ class SafeEval(object):
     This includes strings with lists, dicts and tuples using the abstract
     syntax tree created by ``compiler.parse``.
 
-    For an example of usage, see `safe_eval`.
+    .. deprecated:: 1.10.0
 
     See Also
     --------
     safe_eval
 
     """
+    def __init__(self):
+        warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
+                      DeprecationWarning)
 
     def visit(self, node):
         cls = node.__class__
@@ -1104,21 +1108,11 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: <class '_ast.Call'>
+    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
 
     """
-    # Local imports to speed up numpy's import time.
-    import warnings
+    # Local import to speed up numpy's import time.
     import ast
 
-    walker = SafeEval()
-    try:
-        res = ast.parse(source, mode="eval")
-    except SyntaxError:
-        raise
-    try:
-        return walker.visit(res)
-    except SyntaxError:
-        raise
-
+    return ast.literal_eval(source)
 #-----------------------------------------------------------------------------

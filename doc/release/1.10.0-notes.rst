@@ -17,6 +17,8 @@ Dropped Support
 
 Future Changes
 ==============
+* The SafeEval class will be removed.
+* The alterdot and restoredot functions will be removed.
 
 
 Compatibility notes
@@ -64,6 +66,11 @@ which it was not before.
 
 Deprecations
 ============
+
+SafeEval
+~~~~~~~~
+The SafeEval class in numpy/lib/utils.py is deprecated and will be removed
+in the next release.
 
 alterdot, restoredot Deprecated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
