@@ -4,6 +4,7 @@ import os
 import sys
 import types
 import re
+import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
@@ -1002,11 +1003,16 @@ class SafeEval(object):
     This includes strings with lists, dicts and tuples using the abstract
     syntax tree created by ``compiler.parse``.
 
+    .. deprecated:: 1.10.0
+
     See Also
     --------
     safe_eval
 
     """
+    def __init__(self):
+        warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
+                      DeprecationWarning)
 
     def visit(self, node):
         cls = node.__class__
