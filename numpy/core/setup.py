@@ -78,27 +78,13 @@ def is_npy_no_signal():
 def is_npy_no_smp():
     """Return True if the NPY_NO_SMP symbol must be defined in public
     header (when SMP support cannot be reliably enabled)."""
-    # Python 2.3 causes a segfault when
-    #  trying to re-acquire the thread-state
-    #  which is done in error-handling
-    #  ufunc code.  NPY_ALLOW_C_API and friends
-    #  cause the segfault. So, we disable threading
-    #  for now.
-    if sys.version[:5] < '2.4.2':
-        nosmp = 1
-    else:
-        # Perhaps a fancier check is in order here.
-        #  so that threads are only enabled if there
-        #  are actually multiple CPUS? -- but
-        #  threaded code can be nice even on a single
-        #  CPU so that long-calculating code doesn't
-        #  block.
-        try:
-            nosmp = os.environ['NPY_NOSMP']
-            nosmp = 1
-        except KeyError:
-            nosmp = 0
-    return nosmp == 1
+    # Perhaps a fancier check is in order here.
+    #  so that threads are only enabled if there
+    #  are actually multiple CPUS? -- but
+    #  threaded code can be nice even on a single
+    #  CPU so that long-calculating code doesn't
+    #  block.
+    return 'NPY_NOSMP' in os.environ
 
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
