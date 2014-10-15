@@ -279,11 +279,11 @@ def check_types(config_cmd, ext, build_dir):
     expected['long'] = [8, 4]
     expected['float'] = [4]
     expected['double'] = [8]
-    expected['long double'] = [8, 12, 16]
-    expected['Py_intptr_t'] = [4, 8]
+    expected['long double'] = [16, 12, 8]
+    expected['Py_intptr_t'] = [8, 4]
     expected['PY_LONG_LONG'] = [8]
     expected['long long'] = [8]
-    expected['off_t'] = [4, 8]
+    expected['off_t'] = [8, 4]
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
