@@ -2028,7 +2028,11 @@ class TestMedian(TestCase):
         # check array scalar result
         assert_equal(np.median(a).ndim, 0)
         a[1] = np.nan
-        assert_equal(np.median(a).ndim, 0)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a).ndim, 0)
+            assert_(w[0].category is RuntimeWarning)
+
 
     def test_axis_keyword(self):
         a3 = np.array([[2, 3],
@@ -2101,26 +2105,72 @@ class TestMedian(TestCase):
 
         a = MySubClass([1,2,3])
         assert_equal(np.median(a), -7)
-        
+
+    def test_out(self):
+        o = np.zeros((4,))
+        d = np.ones((3, 4))
+        assert_equal(np.median(d, 0, out=o), o)
+        o = np.zeros((3,))
+        assert_equal(np.median(d, 1, out=o), o)
+        o = np.zeros(())
+        assert_equal(np.median(d, out=o), o)
+
+    def test_out_nan(self):
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            o = np.zeros((4,))
+            d = np.ones((3, 4))
+            d[2, 1] = np.nan
+            assert_equal(np.median(d, 0, out=o), o)
+            o = np.zeros((3,))
+            assert_equal(np.median(d, 1, out=o), o)
+            o = np.zeros(())
+            assert_equal(np.median(d, out=o), o)
+
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)
         a[2] = np.nan
-        assert_equal(np.median(a), np.nan)
-        assert_equal(np.median(a, axis=0), np.nan)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a), np.nan)
+            assert_equal(np.median(a, axis=0), np.nan)
+            assert_(w[0].category is RuntimeWarning)
+            assert_(w[1].category is RuntimeWarning)
+
         a = np.arange(24, dtype=float).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
         a[1, 1, 2] = np.nan
 
-        #no axis                
-        assert_equal(np.median(a), np.nan)
+        #no axis
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a), np.nan)
+            assert_equal(np.median(a).ndim, 0)
+            assert_(w[0].category is RuntimeWarning)
+
         #axis0
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 0)
         b[2, 3] = np.nan; b[1, 2] = np.nan
-        assert_equal(np.median(a, 0), b)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a, 0), b)
+            assert_equal(len(w), 2)
+
         #axis1
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 1)
         b[1, 3] = np.nan; b[1, 2] = np.nan
-        assert_equal(np.median(a, 1), b)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a, 1), b)
+            assert_equal(len(w), 2)
+
+       #axis02
+        b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), (0, 2))
+        b[1] = np.nan; b[2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a, (0, 2)), b)
+            assert_equal(len(w), 2)
 
     def test_object(self):
         o = np.arange(7.);
