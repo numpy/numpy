@@ -241,6 +241,11 @@ def intersect1d(ar1, ar2, assume_unique=False):
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
 
+    To intersect more than two arrays, use functools.reduce:
+
+    >>> from functools import reduce
+    >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
+    array([3])
     """
     if not assume_unique:
         # Might be faster than unique( intersect1d( ar1, ar2 ) )?
@@ -421,6 +426,11 @@ def union1d(ar1, ar2):
     >>> np.union1d([-1, 0, 1], [-2, 0, 2])
     array([-2, -1,  0,  1,  2])
 
+    To find the union of more than two arrays, use functools.reduce:
+
+    >>> from functools import reduce
+    >>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
+    array([1, 2, 3, 4, 6])
     """
     return unique(np.concatenate((ar1, ar2)))
 
