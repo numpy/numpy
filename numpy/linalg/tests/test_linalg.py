@@ -951,6 +951,7 @@ class _TestNorm(object):
         assert_raises(ValueError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
+class TestNorm_NonSystematic(object):
     def test_longdouble_norm(self):
         # Non-regression test: p-norm of longdouble would previously raise
         # UnboundLocalError.
