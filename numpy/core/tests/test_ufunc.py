@@ -388,21 +388,18 @@ class TestUfunc(TestCase):
         msg = "extend & broadcast loop dimensions"
         b = np.arange(4).reshape((2, 2))
         assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "broadcast in core dimensions"
+        # Broadcast in core dimensions
         a = np.arange(8).reshape((4, 2))
         b = np.arange(4).reshape((4, 1))
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "extend & broadcast core and loop dimensions"
+        assert_raises(ValueError, umt.inner1d, a, b)
+        # Extend core dimensions
         a = np.arange(8).reshape((4, 2))
         b = np.array(7)
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "broadcast should fail"
+        assert_raises(ValueError, umt.inner1d, a, b)
+        # Broadcast should fail"
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
-        try:
-            ret = umt.inner1d(a, b)
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        assert_raises(ValueError, umt.inner1d, a, b)
 
     def test_type_cast(self):
         msg = "type cast"
@@ -542,8 +539,8 @@ class TestUfunc(TestCase):
                         a2 = d2.transpose(p2)[s2]
                         ref = ref and a1.base != None
                         ref = ref and a2.base != None
-                        if broadcastable(a1.shape[-1], a2.shape[-2]) and \
-                           broadcastable(a1.shape[0], a2.shape[0]):
+                        if (a1.shape[-1] == a2.shape[-2] and
+                                broadcastable(a1.shape[0], a2.shape[0])):
                             assert_array_almost_equal(
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
@@ -552,6 +549,15 @@ class TestUfunc(TestCase):
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
+
+    def test_euclidean_pdist(self):
+        a = np.arange(12, dtype=np.float).reshape(4, 3)
+        out = np.empty((a.shape[0] * (a.shape[0] - 1) // 2,), dtype=a.dtype)
+        umt.euclidean_pdist(a, out)
+        b = np.sqrt(np.sum((a[:, None] - a)**2, axis=-1))
+        b = b[~np.tri(a.shape[0], dtype=bool)]
+        assert_almost_equal(out, b)
+        assert_raises(ValueError, umt.euclidean_pdist ,a)
 
     def test_object_logical(self):
         a = np.array([3, None, True, False, "test", ""], dtype=object)
