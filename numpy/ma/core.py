@@ -5073,7 +5073,11 @@ class MaskedArray(ndarray):
                 return self
             if fill_value is None:
                 if endwith:
-                    filler = minimum_fill_value(self)
+                    # nan > inf
+                    if np.issubdtype(self.dtype, np.floating):
+                        filler = np.nan
+                    else:
+                        filler = minimum_fill_value(self)
                 else:
                     filler = maximum_fill_value(self)
             else:
@@ -6182,7 +6186,11 @@ def sort(a, axis= -1, kind='quicksort', order=None, endwith=True, fill_value=Non
         axis = 0
     if fill_value is None:
         if endwith:
-            filler = minimum_fill_value(a)
+            # nan > inf
+            if np.issubdtype(a.dtype, np.floating):
+                filler = np.nan
+            else:
+                filler = minimum_fill_value(a)
         else:
             filler = maximum_fill_value(a)
     else:
