@@ -645,6 +645,22 @@ class TestNanFunctions_Median(TestCase):
         assert_raises(IndexError, np.nanmedian, d, axis=(0, 4))
         assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
 
+    def test_float_special(self):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('ignore', RuntimeWarning)
+            a = np.array([[np.inf,  np.nan], [np.nan, np.nan]])
+            assert_equal(np.nanmedian(a, axis=0), [np.inf,  np.nan])
+            assert_equal(np.nanmedian(a, axis=1), [np.inf,  np.nan])
+            assert_equal(np.nanmedian(a), np.inf)
+
+            # minimum fill value check
+            a = np.array([[np.nan, np.nan, np.inf], [np.nan, np.nan, np.inf]])
+            assert_equal(np.nanmedian(a, axis=1), np.inf)
+
+            # no mask path
+            a = np.array([[np.inf, np.inf], [np.inf, np.inf]])
+            assert_equal(np.nanmedian(a, axis=1), np.inf)
+
 
 class TestNanFunctions_Percentile(TestCase):
 

@@ -504,6 +504,9 @@ class TestApplyOverAxes(TestCase):
 
 
 class TestMedian(TestCase):
+    def test_pytype(self):
+        r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
+        assert_equal(r, np.inf)
 
     def test_2d(self):
         # Tests median w/ 2D
