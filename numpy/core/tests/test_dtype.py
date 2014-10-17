@@ -508,13 +508,8 @@ class TestDtypeAttributeDeletion(object):
                 "isbuiltin", "isnative", "isalignedstruct", "fields",
                 "metadata", "hasobject"]
 
-        if sys.version[:3] == '2.4':
-            error = TypeError
-        else:
-            error = AttributeError
-
         for s in attr:
-            assert_raises(error, delattr, dt, s)
+            assert_raises(AttributeError, delattr, dt, s)
 
 
     def test_dtype_writable_attributes_deletion(self):

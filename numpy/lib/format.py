@@ -141,7 +141,7 @@ import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, isfileobj, long, basestring
+from numpy.compat import asbytes, asstr, isfileobj, long, basestring
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -298,7 +298,8 @@ def _write_array_header(fp, d, version=None):
     # can take advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
-    header = asbytes(header + ' '*topad + '\n')
+    header = header + ' '*topad + '\n'
+    header = asbytes(_filter_header(header))
 
     if len(header) >= (256*256) and version == (1, 0):
         raise ValueError("header does not fit inside %s bytes required by the"
@@ -410,6 +411,45 @@ def read_array_header_2_0(fp):
     """
     _read_array_header(fp, version=(2, 0))
 
+
+def _filter_header(s):
+    """Clean up 'L' in npz header ints.
+
+    Cleans up the 'L' in strings representing integers. Needed to allow npz
+    headers produced in Python2 to be read in Python3.
+
+    Parameters
+    ----------
+    s : byte string
+        Npy file header.
+
+    Returns
+    -------
+    header : str
+        Cleaned up header.
+
+    """
+    import tokenize
+    if sys.version_info[0] >= 3:
+        from io import StringIO
+    else:
+        from StringIO import StringIO
+
+    tokens = []
+    last_token_was_number = False
+    for token in tokenize.generate_tokens(StringIO(asstr(s)).read):
+        token_type = token[0]
+        token_string = token[1]
+        if (last_token_was_number and
+                token_type == tokenize.NAME and
+                token_string == "L"):
+            continue
+        else:
+            tokens.append(token)
+        last_token_was_number = (token_type == tokenize.NUMBER)
+    return tokenize.untokenize(tokens)
+
+
 def _read_array_header(fp, version):
     """
     see read_array_header_1_0
@@ -434,6 +474,7 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
+    header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:

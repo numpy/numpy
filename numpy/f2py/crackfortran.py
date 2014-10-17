@@ -1274,7 +1274,7 @@ def markinnerspaces(line):
     cb=''
     for c in line:
         if cb=='\\' and c in ['\\', '\'', '"']:
-            l=l+c;
+            l=l+c
             cb=c
             continue
         if f==0 and c in ['\'', '"']: cc=c; cc1={'\'':'"','"':'\''}[c]
@@ -2198,8 +2198,10 @@ def analyzevars(block):
                     if 'intent' not in vars[n]:
                         vars[n]['intent']=[]
                     for c in [x.strip() for x in markoutercomma(intent).split('@,@')]:
-                        if not c in vars[n]['intent']:
-                            vars[n]['intent'].append(c)
+                        # Remove spaces so that 'in out' becomes 'inout'
+                        tmp = c.replace(' ', '')
+                        if tmp not in vars[n]['intent']:
+                            vars[n]['intent'].append(tmp)
                     intent=None
                 if note:
                     note=note.replace('\\n\\n', '\n\n')
@@ -2220,7 +2222,7 @@ def analyzevars(block):
                     if 'check' not in vars[n]:
                         vars[n]['check']=[]
                     for c in [x.strip() for x in markoutercomma(check).split('@,@')]:
-                        if not c in vars[n]['check']:
+                        if c not in vars[n]['check']:
                             vars[n]['check'].append(c)
                     check=None
             if dim and 'dimension' not in vars[n]:

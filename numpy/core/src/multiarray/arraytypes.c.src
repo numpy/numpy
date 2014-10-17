@@ -3801,6 +3801,90 @@ static int
 
 #define OBJECT_fasttake NULL
 
+/*
+ *****************************************************************************
+ **                       small correlate                                   **
+ *****************************************************************************
+ */
+
+/*
+ * Compute correlation of data with with small kernels
+ * Calling a BLAS dot product for the inner loop of the correlation is overkill
+ * for small kernels. It is faster to compute it directly.
+ * Intended to be used by _pyarray_correlate so no input verifications is done
+ * especially it does not handle the boundaries, they should be handled by the
+ * caller.
+ * Returns 0 if kernel is considered too large or types are not supported, then
+ * the regular array dot should be used to process the data.
+ *
+ * d_, dstride, nd, dtype: data pointer, its stride in bytes, number of
+ *                         elements and type of data
+ * k_, kstride, nk, ktype: kernel pointer, its stride in bytes, number of
+ *                         elements and type of data
+ * out_, ostride: output data pointer and its stride in bytes
+ */
+NPY_NO_EXPORT int
+small_correlate(const char * d_, npy_intp dstride,
+                npy_intp nd, enum NPY_TYPES dtype,
+                const char * k_, npy_intp kstride,
+                npy_intp nk, enum NPY_TYPES ktype,
+                char * out_, npy_intp ostride)
+{
+    /* only handle small kernels and uniform types */
+    if (nk > 11 || dtype != ktype) {
+        return 0;
+    }
+
+    switch (dtype) {
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double#
+ *  #TYPE = NPY_FLOAT, NPY_DOUBLE#
+ */
+        case @TYPE@:
+            {
+                npy_intp i;
+                const @type@ * d = (@type@*)d_;
+                const @type@ * k = (@type@*)k_;
+                @type@ * out = (@type@*)out_;
+                dstride /= sizeof(@type@);
+                kstride /= sizeof(@type@);
+                ostride /= sizeof(@type@);
+                /* unroll inner loop to optimize register usage of the kernel*/
+                switch (nk) {
+/**begin repeat1
+ *  #ksz_outer = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11# */
+                    case @ksz_outer@:
+                    {
+/**begin repeat2
+ *  #ksz = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11# */
+#if @ksz@ <= @ksz_outer@
+                        /* load kernel */
+                        const @type@ k@ksz@ = k[(@ksz@ - 1) * kstride];
+#endif
+/**end repeat2**/
+                        for (i = 0; i < nd; i++) {
+                            @type@ s = 0;
+/**begin repeat2
+ *  #ksz = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11# */
+#if @ksz@ <= @ksz_outer@
+                            s += d[(i + @ksz@ - 1) * dstride] * k@ksz@;
+#endif
+/**end repeat2**/
+                            out[i * ostride] = s;
+                        }
+                        return 1;
+                    }
+/**end repeat1**/
+                    default:
+                        return 0;
+                }
+            }
+/**end repeat**/
+        default:
+            return 0;
+    }
+}
 
 /*
  *****************************************************************************
@@ -4175,8 +4259,12 @@ datetime_dtype_metadata_clone(NpyAuxData *data)
 /*
  * Initializes the c_metadata field for the _builtin_descrs DATETIME
  * and TIMEDELTA.
+ *
+ * must not be static, gcc 4.1.2 on redhat 5 then miscompiles this function
+ * see gh-5163
+ *
  */
-static int
+NPY_NO_EXPORT int
 initialize_builtin_datetime_metadata(void)
 {
     PyArray_DatetimeDTypeMetaData *data1, *data2;

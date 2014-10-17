@@ -78,27 +78,13 @@ def is_npy_no_signal():
 def is_npy_no_smp():
     """Return True if the NPY_NO_SMP symbol must be defined in public
     header (when SMP support cannot be reliably enabled)."""
-    # Python 2.3 causes a segfault when
-    #  trying to re-acquire the thread-state
-    #  which is done in error-handling
-    #  ufunc code.  NPY_ALLOW_C_API and friends
-    #  cause the segfault. So, we disable threading
-    #  for now.
-    if sys.version[:5] < '2.4.2':
-        nosmp = 1
-    else:
-        # Perhaps a fancier check is in order here.
-        #  so that threads are only enabled if there
-        #  are actually multiple CPUS? -- but
-        #  threaded code can be nice even on a single
-        #  CPU so that long-calculating code doesn't
-        #  block.
-        try:
-            nosmp = os.environ['NPY_NOSMP']
-            nosmp = 1
-        except KeyError:
-            nosmp = 0
-    return nosmp == 1
+    # Perhaps a fancier check is in order here.
+    #  so that threads are only enabled if there
+    #  are actually multiple CPUS? -- but
+    #  threaded code can be nice even on a single
+    #  CPU so that long-calculating code doesn't
+    #  block.
+    return 'NPY_NOSMP' in os.environ
 
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
@@ -279,11 +265,11 @@ def check_types(config_cmd, ext, build_dir):
     expected['long'] = [8, 4]
     expected['float'] = [4]
     expected['double'] = [8]
-    expected['long double'] = [8, 12, 16]
-    expected['Py_intptr_t'] = [4, 8]
+    expected['long double'] = [16, 12, 8]
+    expected['Py_intptr_t'] = [8, 4]
     expected['PY_LONG_LONG'] = [8]
     expected['long long'] = [8]
-    expected['off_t'] = [4, 8]
+    expected['off_t'] = [8, 4]
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
@@ -323,7 +309,8 @@ def check_types(config_cmd, ext, build_dir):
         # definition is binary compatible with C99 complex type (check done at
         # build time in npy_common.h)
         complex_def = "struct {%s __x; %s __y;}" % (type, type)
-        res = config_cmd.check_type_size(complex_def, expected=2*expected[type])
+        res = config_cmd.check_type_size(complex_def,
+                                         expected=[2 * x for x in expected[type]])
         if res >= 0:
             public_defines.append(('NPY_SIZEOF_COMPLEX_%s' % sym2def(type), '%d' % res))
         else:

@@ -1,12 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import sys
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex
+    assert_allclose, assert_array_max_ulp, assert_warns,
+    assert_raises_regex, dec
     )
 from numpy.random import rand
 from numpy.lib import *
@@ -534,7 +536,7 @@ class TestGradient(TestCase):
              '1910-10-12', '1910-12-12', '1912-12-12'],
             dtype='datetime64[D]')
         dx = np.array(
-            [-7, -3, 0, 31, 61, 396, 1066],
+            [-5, -3, 0, 31, 61, 396, 731],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
         assert_(dx.dtype == np.dtype('timedelta64[D]'))
@@ -545,7 +547,7 @@ class TestGradient(TestCase):
             [-5, -3, 10, 12, 61, 321, 300],
             dtype='timedelta64[D]')
         dx = np.array(
-            [-3, 7, 7, 25, 154, 119, -161],
+            [2, 7, 7, 25, 154, 119, -21],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
         assert_(dx.dtype == np.dtype('timedelta64[D]'))
@@ -559,7 +561,7 @@ class TestGradient(TestCase):
         dx = x[1] - x[0]
         y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
         analytical = 6 * x ** 2 + 8 * x + 2
-        num_error = np.abs((np.gradient(y, dx) / analytical) - 1)
+        num_error = np.abs((np.gradient(y, dx, edge_order=2) / analytical) - 1)
         assert_(np.all(num_error < 0.03) == True)
 
 
@@ -2132,6 +2134,8 @@ class TestAdd_newdoc_ufunc(TestCase):
 
 
 class TestAdd_newdoc(TestCase):
+
+    @dec.skipif(sys.flags.optimize == 2)
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."

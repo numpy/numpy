@@ -172,10 +172,20 @@ def check_long_double_representation(cmd):
     body = LONG_DOUBLE_REPRESENTATION_SRC % {'type': 'long double'}
 
     # We need to use _compile because we need the object filename
-    src, object = cmd._compile(body, None, None, 'c')
+    src, obj = cmd._compile(body, None, None, 'c')
     try:
-        type = long_double_representation(pyod(object))
-        return type
+        ltype = long_double_representation(pyod(obj))
+        return ltype
+    except ValueError:
+        # try linking to support CC="gcc -flto" or icc -ipo
+        # struct needs to be volatile so it isn't optimized away
+        body = body.replace('struct', 'volatile struct')
+        body += "int main(void) { return 0; }\n"
+        src, obj = cmd._compile(body, None, None, 'c')
+        cmd.temp_files.append("_configtest")
+        cmd.compiler.link_executable([obj], "_configtest")
+        ltype = long_double_representation(pyod("_configtest"))
+        return ltype
     finally:
         cmd._clean()
 
