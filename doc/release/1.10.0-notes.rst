@@ -53,6 +53,14 @@ precision floating point, to prevent integer overflow when computing the monic
 polynomial. It is still possible to obtain higher precision results by
 passing in an array of object type, filled e.g. with Python ints.
 
+`np.interp` can now be used with periodic functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`np.interp` now has a new parameter `period` that supplies the period of the
+input data `xp`. In such case, the input data is properly normalized to the
+given period and one end point is added to each extremity of `xp` in order to
+close the previous and the next period cycles, resulting in the correct
+interpolation behavior.
+
 
 Changes
 =======
