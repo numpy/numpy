@@ -75,7 +75,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
            'mod', 'multiply', 'mvoid',
            'negative', 'nomask', 'nonzero', 'not_equal',
-           'ones', 'outer', 'outerproduct',
+           'ones', 'ones_like', 'outer', 'outerproduct',
            'power', 'prod', 'product', 'ptp', 'put', 'putmask',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
            'right_shift', 'round_', 'round',
@@ -84,7 +84,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'swapaxes',
            'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
            'var', 'where',
-           'zeros']
+           'zeros', 'zeros_like']
 
 MaskType = np.bool_
 nomask = MaskType(0)
@@ -7242,10 +7242,11 @@ class _convert2ma:
     """
     __doc__ = None
     #
-    def __init__(self, funcname, params=None):
+    def __init__(self, funcname, params=None, copy=False):
         self._func = getattr(np, funcname)
         self.__doc__ = self.getdoc()
         self._extras = params or {}
+        self._copy = copy
     #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
@@ -7271,22 +7272,24 @@ class _convert2ma:
             result.fill_value = _extras.get("fill_value", None)
         if "hardmask" in common_params:
             result._hardmask = bool(_extras.get("hard_mask", False))
+        if self._copy:
+            result._mask = result._mask.copy()
         return result
 
 arange = _convert2ma('arange', params=dict(fill_value=None, hardmask=False))
 clip = np.clip
 diff = np.diff
 empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
-empty_like = _convert2ma('empty_like')
+empty_like = _convert2ma('empty_like', copy=True)
 frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
 identity = _convert2ma('identity', params=dict(fill_value=None, hardmask=False))
 indices = np.indices
 ones = _convert2ma('ones', params=dict(fill_value=None, hardmask=False))
-ones_like = np.ones_like
+ones_like = _convert2ma('ones_like', copy=True)
 squeeze = np.squeeze
 zeros = _convert2ma('zeros', params=dict(fill_value=None, hardmask=False))
-zeros_like = np.zeros_like
+zeros_like = _convert2ma('zeros_like', copy=True)
 
 ###############################################################################
 def append(a, b, axis=None):

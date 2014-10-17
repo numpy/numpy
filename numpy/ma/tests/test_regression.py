@@ -71,5 +71,17 @@ class TestRegression(TestCase):
         # ddof should not have an effect (it gets cancelled out)
         assert_allclose(r0.data, r1.data)
 
+    def test_like_mask_copy(self):
+        """Issue gh-3145"""
+        m = [False, False, False, True]
+        a = np.ma.array([1, 2, 3, 4], mask=m)
+        a_empty = np.ma.empty_like(a)
+        a_ones = np.ma.ones_like(a)
+        a_zeros = np.ma.zeros_like(a)
+        a.mask = False
+        assert_array_equal(a_empty.mask, m)
+        assert_array_equal(a_ones.mask, m)
+        assert_array_equal(a_zeros.mask, m)
+
 if __name__ == "__main__":
     run_module_suite()
