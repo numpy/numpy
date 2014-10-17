@@ -2095,9 +2095,14 @@ def amax(a, axis=None, out=None, keepdims=False):
     ----------
     a : array_like
         Input data.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Axis or axes along which to operate.  By default, flattened input is
         used.
+
+        .. versionadded: 1.7.0
+
+        If this is a tuple of ints, the maximum is selected over multiple axes,
+        instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
@@ -2180,9 +2185,14 @@ def amin(a, axis=None, out=None, keepdims=False):
     ----------
     a : array_like
         Input data.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Axis or axes along which to operate.  By default, flattened input is
         used.
+
+        .. versionadded: 1.7.0
+
+        If this is a tuple of ints, the minimum is selected over multiple axes,
+        instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
@@ -2695,9 +2705,14 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     a : array_like
         Array containing numbers whose mean is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Axis or axes along which the means are computed. The default is to
         compute the mean of the flattened array.
+
+        .. versionadded: 1.7.0
+
+        If this is a tuple of ints, a mean is performed over multiple axes,
+        instead of a single axis or all the axes as before.
     dtype : data-type, optional
         Type to use in computing the mean.  For integer inputs, the default
         is `float64`; for floating point inputs, it is the same as the
@@ -2780,9 +2795,14 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     ----------
     a : array_like
         Calculate the standard deviation of these values.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Axis or axes along which the standard deviation is computed. The
         default is to compute the standard deviation of the flattened array.
+
+        .. versionadded: 1.7.0
+
+        If this is a tuple of ints, a standard deviation is performed over
+        multiple axes, instead of a single axis or all the axes as before.
     dtype : dtype, optional
         Type to use in computing the standard deviation. For arrays of
         integer type the default is float64, for arrays of float types it is
@@ -2883,9 +2903,14 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     a : array_like
         Array containing numbers whose variance is desired.  If `a` is not an
         array, a conversion is attempted.
-    axis : int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Axis or axes along which the variance is computed.  The default is to
         compute the variance of the flattened array.
+
+        .. versionadded: 1.7.0
+
+        If this is a tuple of ints, a variance is performed over multiple axes,
+        instead of a single axis or all the axes as before.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
         the default is `float32`; for arrays of float types it is the same as
