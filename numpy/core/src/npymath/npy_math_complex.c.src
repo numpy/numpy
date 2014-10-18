@@ -247,7 +247,8 @@
 #ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1 = {z};
+    __@ctype@_to_c99_cast z1;
+    z1.npy_z = z;
     return @kind@@c@(z1.c99_z);
 }
 #endif
@@ -260,8 +261,9 @@
 #ifdef HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1 = {z};
+    __@ctype@_to_c99_cast z1;
     __@ctype@_to_c99_cast ret;
+    z1.npy_z = z;
     ret.c99_z = @kind@@c@(z1.c99_z);
     return ret.npy_z;
 }
@@ -275,9 +277,11 @@
 #ifdef HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ x, @ctype@ y)
 {
-    __@ctype@_to_c99_cast xcast = {x};
-    __@ctype@_to_c99_cast ycast = {y};
+    __@ctype@_to_c99_cast xcast;
+    __@ctype@_to_c99_cast ycast;
     __@ctype@_to_c99_cast ret;
+    xcast.npy_z = x;
+    ycast.npy_z = y;
     ret.c99_z = @kind@@c@(xcast.c99_z, ycast.c99_z);
     return ret.npy_z;
 }
