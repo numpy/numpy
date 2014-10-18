@@ -1400,7 +1400,7 @@ class lapack_opt_info(system_info):
             if os.path.exists('/System/Library/Frameworks'
                               '/Accelerate.framework/'):
                 if intel:
-                    args.extend(['-msse3'])
+                    args.extend(['-msse3', '-DAPPLE_ACCELERATE_SGEMV_PATCH'])
                 else:
                     args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
@@ -1497,7 +1497,7 @@ class blas_opt_info(system_info):
             if os.path.exists('/System/Library/Frameworks'
                               '/Accelerate.framework/'):
                 if intel:
-                    args.extend(['-msse3'])
+                    args.extend(['-msse3', '-DAPPLE_ACCELERATE_SGEMV_PATCH'])
                 else:
                     args.extend(['-faltivec'])
                 args.extend([
