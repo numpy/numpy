@@ -3745,7 +3745,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
             int axis = PyArray_PyIntAsInt(tmp);
-            if (axis == -1 && PyErr_Occurred()) {
+            int axis_orig = axis;
+            PyObject *error = PyErr_Occurred();
+            if (axis == -1 && error != NULL) { ;
+                /*
+                 * Need to re-raise the exact same exception returned by
+                 * PyArray_PyIntAsInt to not break the deprecation tests
+                 */
+                PyErr_Clear();
+                PyErr_SetString(error,
+                        "'axis' tuple entries must be integers");
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -3754,8 +3763,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                 axis += ndim;
             }
             if (axis < 0 || axis >= ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "'axis' entry is out of bounds");
+                PyErr_Format(PyExc_ValueError,
+                             "'axis' entry %d is out of bounds [-%d, %d)",
+                             axis_orig, ndim, ndim);
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -3766,8 +3776,17 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     /* Try to interpret axis as an integer */
     else {
         int axis = PyArray_PyIntAsInt(axes_in);
+        int axis_orig = axis;
+        PyObject *error = PyErr_Occurred();
         /* TODO: PyNumber_Index would be good to use here */
-        if (axis == -1 && PyErr_Occurred()) {
+        if (axis == -1 && error != NULL) {
+            /*
+             * Need to re-raise the exact same exception returned by
+             * PyArray_PyIntAsInt to not break the deprecation tests
+             */
+            PyErr_Clear();
+            PyErr_SetString(error,
+                    "'axis' must be None, an integer or a tuple of integers");
             Py_XDECREF(otype);
             Py_DECREF(mp);
             return NULL;
@@ -3780,8 +3799,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             axis = 0;
         }
         else if (axis < 0 || axis >= ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "'axis' entry is out of bounds");
+            PyErr_Format(PyExc_ValueError,
+                         "'axis' entry %d is out of bounds [-%d, %d)",
+                         axis_orig, ndim, ndim);
             Py_XDECREF(otype);
             Py_DECREF(mp);
             return NULL;

@@ -1073,6 +1073,9 @@ class TestUfunc(TestCase):
         assert_equal(f(d), r)
         # a, axis=0, dtype=None, out=None, keepdims=False
         assert_equal(f(d, axis=0), r)
+        assert_equal(f(d, axis=None), 10)
+        assert_equal(f(d, axis=(0, 1)), 10)
+        assert_equal(f(d, axis=(-1, -2)), 10)
         assert_equal(f(d, 0), r)
         assert_equal(f(d, 0, dtype=None), r)
         assert_equal(f(d, 0, dtype='i'), r)
@@ -1098,6 +1101,12 @@ class TestUfunc(TestCase):
         assert_raises(TypeError, f, d, axis="invalid")
         assert_raises(TypeError, f, d, axis="invalid", dtype=None,
                       keepdims=True)
+        assert_raises(TypeError, f, d, axis=[-1, -2])
+        assert_raises(TypeError, f, d, axis=(-1, 'invalid'))
+        assert_raises(ValueError, f, d, axis=(0, -3))
+        assert_raises(ValueError, f, d, axis=(0, 2))
+
+
         # invalid dtype
         assert_raises(TypeError, f, d, 0, "invalid")
         assert_raises(TypeError, f, d, dtype="invalid")

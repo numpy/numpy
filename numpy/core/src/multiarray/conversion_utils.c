@@ -258,7 +258,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
             int axis = PyArray_PyIntAsInt_ErrMsg(tmp,
-                          "integers are required for the axis tuple elements");
+                          "'axis' tuple entries must be integers");
             int axis_orig = axis;
             if (error_converting(axis)) {
                 return NPY_FAIL;
@@ -289,7 +289,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         memset(out_axis_flags, 0, ndim);
 
         axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
-                                   "an integer is required for the axis");
+                   "'axis' must be None, an integer or a tuple of integers");
         axis_orig = axis;
 
         if (error_converting(axis)) {
