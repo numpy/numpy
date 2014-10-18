@@ -2790,12 +2790,50 @@ class MaskedArray(ndarray):
         """
         # Get main attributes .........
         self._update_from(obj)
+        # We have to decide how to initialize self.mask, based on
+        # obj.mask. This is very difficult.  There might be some
+        # correspondence between the elements in the array we are being
+        # created from (= obj) and us. Or... there might not. This method can
+        # be called in all kinds of places for all kinds of reasons -- could
+        # be empty_like, could be slicing, could be a ufunc, could be a view,
+        # ... The numpy subclassing interface simply doesn't give us any way
+        # to know, which means that at best this method will be based on
+        # guesswork and heuristics. To make things worse, there isn't even any
+        # clear consensus about what the desired behavior is. For instance,
+        # most users think that np.empty_like(marr) -- which goes via this
+        # method -- should return a masked array with an empty mask (see
+        # gh-3404 and linked discussions), but others disagree, and they have
+        # existing code which depends on empty_like returning an array that
+        # matches the input mask.
+        #
+        # Historically our algorithm was: if the template object mask had the
+        # same *number of elements* as us, then we used *it's mask object
+        # itself* as our mask, so that writes to us would also write to the
+        # original array. This is horribly broken in multiple ways.
+        #
+        # Now what we do instead is, if the template object mask has the same
+        # number of elements as us, and we do not have the same base pointer
+        # as the template object (b/c views like arr[...] should keep the same
+        # mask), then we make a copy of the template object mask and use
+        # that. This is also horribly broken but somewhat less so. Maybe.
         if isinstance(obj, ndarray):
-            odtype = obj.dtype
-            if odtype.names:
-                _mask = getattr(obj, '_mask', make_mask_none(obj.shape, odtype))
+            # XX: This looks like a bug -- shouldn't it check self.dtype
+            # instead?
+            if obj.dtype.names:
+                _mask = getattr(obj, '_mask',
+                                make_mask_none(obj.shape, obj.dtype))
             else:
                 _mask = getattr(obj, '_mask', nomask)
+            # If self and obj point to exactly the same data, then probably
+            # self is a simple view of obj (e.g., self = obj[...]), so they
+            # should share the same mask. (This isn't 100% reliable, e.g. self
+            # could be the first row of obj, or have strange strides, but as a
+            # heuristic it's not bad.) In all other cases, we make a copy of
+            # the mask, so that future modifications to 'self' do not end up
+            # side-effecting 'obj' as well.
+            if (obj.__array_interface__["data"][0]
+                    != self.__array_interface__["data"][0]):
+                _mask = _mask.copy()
         else:
             _mask = nomask
         self._mask = _mask
