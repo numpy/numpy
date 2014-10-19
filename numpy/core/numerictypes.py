@@ -670,7 +670,7 @@ def issubclass_(arg1, arg2):
     Determine if a class is a subclass of a second class.
 
     `issubclass_` is equivalent to the Python built-in ``issubclass``,
-    except that it returns False instead of raising a TypeError is one
+    except that it returns False instead of raising a TypeError if one
     of the arguments is not a class.
 
     Parameters
