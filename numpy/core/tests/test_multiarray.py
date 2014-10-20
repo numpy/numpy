@@ -1873,7 +1873,7 @@ class TestMethods(TestCase):
 
         a = np.array([1-1j, 1, 2.0, 'f'], object)
         assert_raises(AttributeError, lambda: a.conj())
-        assert_raises(AttributeError, lambda: a.conjugate()) 
+        assert_raises(AttributeError, lambda: a.conjugate())
 
 
 class TestBinop(object):
@@ -4274,6 +4274,14 @@ class TestNewBufferProtocol(object):
 
         fortran = c.T
         assert memoryview(fortran).strides == (8, 80, 800)
+
+        arr = np.ones((1, 10))
+        if arr.flags.f_contiguous:
+            shape, strides = get_buffer_info(arr, ['F_CONTIGUOUS'])
+            assert_(strides[0] == 8)
+            arr = np.ones((10, 1), order='F')
+            shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
+            assert_(strides[-1] == 8)
 
 
 class TestArrayAttributeDeletion(object):
