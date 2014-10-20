@@ -2074,6 +2074,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
     if axis is None:
         axis = tuple(range(nd))
     elif not isinstance(axis, tuple):
+        try:
+            axis = int(axis)
+        except:
+            raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
     if len(axis) == 1:
