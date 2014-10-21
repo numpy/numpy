@@ -506,9 +506,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
     Parameters
     ----------
-    actual : scalar
+    actual : array_like
         The object to check.
-    desired : scalar
+    desired : array_like
         The expected object.
     significant : int, optional
         Desired precision, default is 7.
@@ -548,42 +548,34 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
     """
     import numpy as np
+    def compare(x, y):
+        if y is x:
+            return True
+        # Normalized the numbers to be in range (-10.0,10.0)
+        # scale = float(pow(10,math.floor(math.log10(0.5*(abs(y)+abs(x))))))
+        with np.errstate(invalid='ignore'):
+            scale = 0.5*(np.abs(y) + np.abs(x))
+            scale = np.power(10, np.floor(np.log10(scale)))
+        try:
+            sc_y = y/scale
+        except ZeroDivisionError:
+            sc_y = 0.0
+        try:
+            sc_x = x/scale
+        except ZeroDivisionError:
+            sc_x = 0.0
 
-    (actual, desired) = map(float, (actual, desired))
-    if desired==actual:
+        return np.abs(sc_y - sc_x) < np.power(10., -(significant - 1))
+
+    header = 'Items are not equal to %d significant digits:' % significant
+
+    if isinstance(actual, (np.ndarray, tuple, list)) \
+            or isinstance(desired, (np.ndarray, tuple, list)):
+        assert_array_compare(compare, actual, desired, err_msg=str(err_msg), verbose=verbose, header=header)
         return
-    # Normalized the numbers to be in range (-10.0,10.0)
-    # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
-    with np.errstate(invalid='ignore'):
-        scale = 0.5*(np.abs(desired) + np.abs(actual))
-        scale = np.power(10, np.floor(np.log10(scale)))
-    try:
-        sc_desired = desired/scale
-    except ZeroDivisionError:
-        sc_desired = 0.0
-    try:
-        sc_actual = actual/scale
-    except ZeroDivisionError:
-        sc_actual = 0.0
-    msg = build_err_msg([actual, desired], err_msg,
-                header='Items are not equal to %d significant digits:' %
-                                 significant,
-                verbose=verbose)
-    try:
-        # If one of desired/actual is not finite, handle it specially here:
-        # check that both are nan if any is a nan, and test for equality
-        # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            if gisnan(desired) or gisnan(actual):
-                if not (gisnan(desired) and gisnan(actual)):
-                    raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
-            return
-    except (TypeError, NotImplementedError):
-        pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)) :
+
+    if not np.all(compare(actual, desired)):
+        msg = build_err_msg([actual, desired], err_msg, header=header, verbose=verbose)
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
