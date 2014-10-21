@@ -515,9 +515,9 @@ def average(a, axis=None, weights=None, returned=False):
         scl = avg.dtype.type(a.size/avg.size)
     else:
         a = a + 0.0
-        wgt_dtype = np.result_type(a.dtype, weights.dtype)
-        wgt = np.array(weights, dtype=wgt_dtype, copy=0)
-
+        wgt = np.array(weights, copy=0)
+        wgt = wgt.astype(np.result_type(a.dtype, wgt.dtype))
+        #wgt = np.asarray(weights, dtype=wgt_dtype, copy=0)
         # Sanity checks
         if a.shape != wgt.shape:
             if axis is None:
