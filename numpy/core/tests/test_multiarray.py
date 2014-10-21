@@ -1887,7 +1887,41 @@ class TestMethods(TestCase):
 
         a = np.array([1-1j, 1, 2.0, 'f'], object)
         assert_raises(AttributeError, lambda: a.conj())
-        assert_raises(AttributeError, lambda: a.conjugate()) 
+        assert_raises(AttributeError, lambda: a.conjugate())
+
+    def test_put(self):
+        icodes = np.typecodes['AllInteger']
+        fcodes = np.typecodes['AllFloat']
+        for dt in icodes + fcodes + 'O':
+            tgt = np.array([0, 1, 0, 3, 0, 5], dtype=dt)
+
+            # test 1-d
+            a = np.zeros(6, dtype=dt)
+            a.put([1, 3, 5], [1, 3, 5])
+            assert_equal(a, tgt)
+
+            # test 2-d
+            a = np.zeros((2, 3), dtype=dt)
+            a.put([1, 3, 5], [1, 3, 5])
+            assert_equal(a, tgt.reshape(2, 3))
+
+        for dt in '?':
+            tgt = np.array([False, True, False, True, False, True], dtype=dt)
+
+            # test 1-d
+            a = np.zeros(6, dtype=dt)
+            a.put([1, 3, 5], [True]*3)
+            assert_equal(a, tgt)
+
+            # test 2-d
+            a = np.zeros((2, 3), dtype=dt)
+            a.put([1, 3, 5], [True]*3)
+            assert_equal(a, tgt.reshape(2, 3))
+
+        # check must be writeable
+        a = np.zeros(6)
+        a.flags.writeable = False
+        assert_raises(ValueError, a.put, [1, 3, 5], [1, 3, 5])
 
 
 class TestBinop(object):
