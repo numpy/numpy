@@ -485,6 +485,24 @@ do {                                                            \
  * support is available
  */
 #ifdef NPY_USE_C99_COMPLEX
+
+/* Microsoft C defines _MSC_VER */
+#ifdef _MSC_VER
+typedef union {
+        npy_cdouble npy_z;
+        _Dcomplex c99_z;
+} __npy_cdouble_to_c99_cast;
+
+typedef union {
+        npy_cfloat npy_z;
+        _Fcomplex c99_z;
+} __npy_cfloat_to_c99_cast;
+
+typedef union {
+        npy_clongdouble npy_z;
+        _Lcomplex c99_z;
+} __npy_clongdouble_to_c99_cast;
+#else /* !_MSC_VER */
 typedef union {
         npy_cdouble npy_z;
         complex double c99_z;
@@ -499,7 +517,9 @@ typedef union {
         npy_clongdouble npy_z;
         complex long double c99_z;
 } __npy_clongdouble_to_c99_cast;
-#else
+#endif /* !_MSC_VER */
+
+#else /* !NPY_USE_C99_COMPLEX */
 typedef union {
         npy_cdouble npy_z;
         npy_cdouble c99_z;
@@ -514,6 +534,6 @@ typedef union {
         npy_clongdouble npy_z;
         npy_clongdouble c99_z;
 } __npy_clongdouble_to_c99_cast;
-#endif
+#endif /* !NPY_USE_C99_COMPLEX */
 
 #endif /* !_NPY_MATH_PRIVATE_H_ */
