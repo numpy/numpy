@@ -2226,6 +2226,13 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
 
+        # check empty_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = empty_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view(masked_array)
+        assert_(np.may_share_memory(a.mask, b.mask))
+
     def test_put(self):
         # Tests put.
         d = arange(5)
