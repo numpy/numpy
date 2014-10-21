@@ -338,29 +338,45 @@ class TestApproxEqual(unittest.TestCase):
         self.assertRaises(AssertionError,
                 lambda: self._assert_func(x, y, significant=7))
 
-    def test_nan_array(self):
-        anan = np.array(np.nan)
-        aone = np.array(1)
-        ainf = np.array(np.inf)
-        self._assert_func(anan, anan)
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+    def test_nan_and_inf_array(self):
+        self._assert_func(np.array([1, np.nan]),
+                          np.array([1, np.nan]))
 
-    def test_nan_items(self):
-        anan = np.array(np.nan)
-        aone = np.array(1)
-        ainf = np.array(np.inf)
+        self._assert_func(np.array([np.nan, np.nan]),
+                          np.array([np.nan, np.nan]))
+
+        self._assert_func(np.array([np.nan, np.inf]),
+                          np.array([np.nan, np.inf]))
+
+        self.assertRaises(AssertionError,
+              self._assert_func, np.array([np.nan, np.inf]),
+                                 np.array([np.nan, np.nan]))
+
+        self.assertRaises(AssertionError,
+              self._assert_func, np.array([     1, np.inf]),
+                                 np.array([np.nan, np.inf]))
+
+    def test_nan_and_inf_items(self):
+        anan = np.nan
+        aone = 1
+        ainf = np.inf
         self._assert_func(anan, anan)
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
-        self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+        self._assert_func(ainf, ainf)
+        self.assertRaises(AssertionError, lambda : self._assert_func(ainf, -ainf))
+        self.assertRaises(AssertionError, lambda : self._assert_func(anan, aone))
+        self.assertRaises(AssertionError, lambda : self._assert_func(ainf, aone))
+        self.assertRaises(AssertionError, lambda : self._assert_func(anan, ainf))
+        self.assertRaises(AssertionError, lambda : self._assert_func(ainf, anan))
+
+    def test_rank1_array(self):
+        x = np.array([1234.22, 1.0])
+        y = np.array([1234.23, 1.0])
+        self._assert_func(x, y, significant=4)
+
+    def test_rank2_array(self):
+        x = np.array([[1234.22, 1.0], [2.0, 3.0]])
+        y = np.array([[1234.23, 1.0], [2.0, 3.0]])
+        self._assert_func(x, y, significant=4)
 
 class TestRaises(unittest.TestCase):
     def setUp(self):
