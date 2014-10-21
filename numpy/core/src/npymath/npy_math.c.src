@@ -491,7 +491,11 @@ double npy_log2(double x)
 #ifndef HAVE_CBRT@C@
 @type@ npy_cbrt@c@(@type@ x)
 {
-    if (x < 0) {
+    /* don't set invalid flag */
+    if (npy_isnan(x)) {
+        return NPY_NAN;
+    }
+    else if (x < 0) {
         return -npy_pow@c@(-x, 1. / 3.);
     }
     else {
