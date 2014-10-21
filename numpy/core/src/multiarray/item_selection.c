@@ -265,6 +265,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                         "put: first argument must be an array");
         return NULL;
     }
+
+    if (PyArray_FailUnlessWriteable(self, "put: output array") < 0) {
+        return NULL;
+    }
+
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
         int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
