@@ -1943,7 +1943,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         ufunc_name, i < nin ? "Input" : "Output",
                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
                         ufunc->core_signature, num_dims);
-                retval = - 1;
+                retval = -1;
                 goto fail;
             }
 

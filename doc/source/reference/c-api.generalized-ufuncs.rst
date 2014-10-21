@@ -18,30 +18,52 @@ arguments is called the "signature" of a ufunc.  For example, the
 ufunc numpy.add has signature ``(),()->()`` defining two scalar inputs
 and one scalar output.
 
-Another example is the function ``inner1d(a,b)`` with a signature of
-``(i),(i)->()``.  This applies the inner product along the last axis of 
+Another example is the function ``inner1d(a, b)`` with a signature of
+``(i),(i)->()``.  This applies the inner product along the last axis of
 each input, but keeps the remaining indices intact.
-For example, where ``a`` is of shape ``(3,5,N)``
-and ``b`` is of shape ``(5,N)``, this will return an output of shape ``(3,5)``.
+For example, where ``a`` is of shape ``(3, 5, N)`` and ``b`` is of shape
+``(5, N)``, this will return an output of shape ``(3,5)``.
 The underlying elementary function is called ``3 * 5`` times.  In the
 signature, we specify one core dimension ``(i)`` for each input and zero core
 dimensions ``()`` for the output, since it takes two 1-d arrays and
 returns a scalar.  By using the same name ``i``, we specify that the two
-corresponding dimensions should be of the same size (or one of them is
-of size 1 and will be broadcasted).
+corresponding dimensions should be of the same size.
 
 The dimensions beyond the core dimensions are called "loop" dimensions.  In
-the above example, this corresponds to ``(3,5)``.
+the above example, this corresponds to ``(3, 5)``.
 
-The usual numpy "broadcasting" rules apply, where the signature
-determines how the dimensions of each input/output object are split
-into core and loop dimensions:
+The signature determines how the dimensions of each input/output array are
+split into core and loop dimensions:
 
-#. While an input array has a smaller dimensionality than the corresponding
-   number of core dimensions, 1's are pre-pended to its shape.
+#. Each dimension in the signature is matched to a dimension of the
+   corresponding passed-in array, starting from the end of the shape tuple.
+   These are the core dimensions, and they must be present in the arrays, or
+   an error will be raised.
+#. Core dimensions assigned to the same label in the signature (e.g. the
+   ``i`` in ``inner1d``'s ``(i),(i)->()``) must have exactly matching sizes,
+   no broadcasting is performed.
 #. The core dimensions are removed from all inputs and the remaining
-   dimensions are broadcasted; defining the loop dimensions.
-#. The output is given by the loop dimensions plus the output core dimensions.
+   dimensions are broadcast together, defining the loop dimensions.
+#. The shape of each output is determined from the loop dimensions plus the
+   output's core dimensions
+
+Typically, the size of all core dimensions in an output will be determined by
+the size of a core dimension with the same label in an input array. This is
+not a requirement, and it is possible to define a signature where a label
+comes up for the first time in an output, although some precautions must be
+taken when calling such a function. An example would be the function
+``euclidean_pdist(a)``, with signature ``(n,d)->(p)``, that given an array of
+``n`` ``d``-dimensional vectors, computes all unique pairwise Euclidean
+distances among them. The output dimension ``p`` must therefore be equal to
+``n * (n - 1) / 2``, but it is the caller's responsibility to pass in an
+output array of the right size. If the size of a core dimension of an output
+cannot be determined from a passed in input or output array, an error will be
+raised.
+
+Note: Prior to Numpy 1.10.0, less strict checks were in place: missing core
+dimensions were created by prepending 1's to the shape as necessary, core
+dimensions with the same label were broadcast together, and undetermined
+dimensions were created with size 1.
 
 
 Definitions
@@ -70,7 +92,7 @@ Core Dimension
 Dimension Name
     A dimension name represents a core dimension in the signature.
     Different dimensions may share a name, indicating that they are of
-    the same size (or are broadcastable).
+    the same size.
 
 Dimension Index
     A dimension index is an integer representing a dimension name. It
@@ -93,8 +115,7 @@ following format:
 * Dimension lists for different arguments are separated by ``","``.
   Input/output arguments are separated by ``"->"``.
 * If one uses the same dimension name in multiple locations, this
-  enforces the same size (or broadcastable size) of the corresponding
-  dimensions.
+  enforces the same size of the corresponding dimensions.
 
 The formal syntax of signatures is as follows::
 
@@ -111,10 +132,9 @@ The formal syntax of signatures is as follows::
 Notes:
 
 #. All quotes are for clarity.
-#. Core dimensions that share the same name must be broadcastable, as
-   the two ``i`` in our example above.  Each dimension name typically
-   corresponding to one level of looping in the elementary function's
-   implementation.
+#. Core dimensions that share the same name must have the exact same size.
+   Each dimension name typically corresponds to one level of looping in the
+   elementary function's implementation.
 #. White spaces are ignored.
 
 Here are some examples of signatures:

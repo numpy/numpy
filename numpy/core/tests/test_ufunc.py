@@ -388,15 +388,15 @@ class TestUfunc(TestCase):
         msg = "extend & broadcast loop dimensions"
         b = np.arange(4).reshape((2, 2))
         assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        # Broadcast in core dimensions
+        # Broadcast in core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.arange(4).reshape((4, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
-        # Extend core dimensions
+        # Extend core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.array(7)
         assert_raises(ValueError, umt.inner1d, a, b)
-        # Broadcast should fail"
+        # Broadcast should fail
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
@@ -557,7 +557,8 @@ class TestUfunc(TestCase):
         b = np.sqrt(np.sum((a[:, None] - a)**2, axis=-1))
         b = b[~np.tri(a.shape[0], dtype=bool)]
         assert_almost_equal(out, b)
-        assert_raises(ValueError, umt.euclidean_pdist ,a)
+        # An output array is required to determine p with signature (n,d)->(p)
+        assert_raises(ValueError, umt.euclidean_pdist, a)
 
     def test_object_logical(self):
         a = np.array([3, None, True, False, "test", ""], dtype=object)

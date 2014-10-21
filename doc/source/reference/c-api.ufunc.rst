@@ -114,7 +114,6 @@ Functions
         data type, it will be internally upcast to the int_ (or uint)
         data type.
 
-
     :param doc:
         Allows passing in a documentation string to be stored with the
         ufunc.  The documentation string should not contain the name
@@ -127,6 +126,21 @@ Functions
         corresponding *check_return* integer does exist in the ufunc
         structure and it does get set with this value when the ufunc
         object is created.
+
+.. cfunction:: PyObject* PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction* func,
+   void** data, char* types, int ntypes, int nin, int nout, int identity,
+   char* name, char* doc, int check_return, char *signature)
+
+   This function is very similar to PyUFunc_FromFuncAndData above, but has
+   an extra *signature* argument, to define generalized universal functions.
+   Similarly to how ufuncs are built around an element-by-element operation,
+   gufuncs are around subarray-by-subarray operations, the signature defining
+   the subarrays to operate on.
+
+   :param signature:
+        The signature for the new gufunc. Setting it to NULL is equivalent
+        to calling PyUFunc_FromFuncAndData. A copy of the string is made,
+        so the passed in buffer can be freed.
 
 .. cfunction:: int PyUFunc_RegisterLoopForType(PyUFuncObject* ufunc,
    int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)

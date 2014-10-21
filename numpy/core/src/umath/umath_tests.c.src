@@ -41,7 +41,6 @@
 #define BEGIN_OUTER_LOOP_2      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
 
-
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
@@ -193,7 +192,7 @@ char *euclidean_pdist_signature = "(n,d)->(p)";
 /*
  *  This implements the function
  *        out[j*(2*n-3-j)+k-1] = sum_d { (in1[j, d] - in1[k, d])^2 }
- *  with k > j > n, i.e. computes all unique pairwise euclidean distances.
+ *  with 0 < k < j < n, i.e. computes all unique pairwise euclidean distances.
  */
 
 static void

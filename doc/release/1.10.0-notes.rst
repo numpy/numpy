@@ -47,6 +47,14 @@ The cblas versions of dot, inner, and vdot have been integrated into
 the multiarray module. In particular, vdot is now a multiarray function,
 which it was not before.
 
+stricter check of gufunc signature compliance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inputs to generalized universal functions are now more strictly checked
+against the function's signature: all core dimensions are now required to
+be present in input arrays; core dimensions with the same label must have
+the exact same size; and output core dimension's must be specified, either
+by a same label input core dimension or by a passed-in output array.
+
 
 Deprecations
 ============
