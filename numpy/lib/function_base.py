@@ -515,7 +515,8 @@ def average(a, axis=None, weights=None, returned=False):
         scl = avg.dtype.type(a.size/avg.size)
     else:
         a = a + 0.0
-        wgt = np.array(weights, dtype=a.dtype, copy=0)
+        wgt_dtype = np.result_type(a.dtype, weights.dtype)
+        wgt = np.array(weights, dtype=wgt_dtype, copy=0)
 
         # Sanity checks
         if a.shape != wgt.shape:
@@ -886,9 +887,9 @@ def copy(a, order='K'):
 def gradient(f, *varargs, **kwargs):
     """
     Return the gradient of an N-dimensional array.
-    
+
     The gradient is computed using second order accurate central differences
-    in the interior and either first differences or second order accurate 
+    in the interior and either first differences or second order accurate
     one-sides (forward or backwards) differences at the boundaries. The
     returned gradient hence has the same shape as the input array.
 
@@ -902,7 +903,7 @@ def gradient(f, *varargs, **kwargs):
     edge_order : {1, 2}, optional
         Gradient is calculated using N\ :sup:`th` order accurate differences
         at the boundaries. Default: 1.
-      
+
         .. versionadded:: 1.9.1
 
     Returns
