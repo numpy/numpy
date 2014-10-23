@@ -3047,7 +3047,7 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
  * Returns true if the object is something that is best considered
  * a Datetime, false otherwise.
  */
-static npy_bool
+static NPY_GCC_NONNULL(1) npy_bool
 is_any_numpy_datetime(PyObject *obj)
 {
     return (PyArray_IsScalar(obj, Datetime) ||
@@ -3296,7 +3296,8 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         }
     }
     else {
-        if (is_any_numpy_datetime(start) || is_any_numpy_datetime(stop)) {
+        if ((start && is_any_numpy_datetime(start)) ||
+            is_any_numpy_datetime(stop)) {
             type_nums[0] = NPY_DATETIME;
         }
         else {
