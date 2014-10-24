@@ -1412,6 +1412,11 @@ class TestDateTime(TestCase):
                                 np.datetime64('2012-02-03T14Z', 's'),
                                 np.timedelta64(5, 'Y'))
 
+    def test_datetime_arange_no_dtype(self):
+        d = np.array('2010-01-04', dtype="M8[D]")
+        assert_equal(np.arange(d, d + 1), d)
+        assert_raises(ValueError, np.arange, d)
+
     def test_timedelta_arange(self):
         a = np.arange(3, 10, dtype='m8')
         assert_equal(a.dtype, np.dtype('m8'))
@@ -1429,6 +1434,11 @@ class TestDateTime(TestCase):
                                 np.timedelta64(5, 'M'))
         assert_raises(TypeError, np.arange, np.timedelta64(0, 'Y'),
                                 np.timedelta64(5, 'D'))
+
+    def test_timedelta_arange_no_dtype(self):
+        d = np.array(5, dtype="m8[D]")
+        assert_equal(np.arange(d, d + 1), d)
+        assert_raises(ValueError, np.arange, d)
 
     def test_datetime_maximum_reduce(self):
         a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='M8[D]')
