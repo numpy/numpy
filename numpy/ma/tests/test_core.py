@@ -30,6 +30,11 @@ pi = np.pi
 class TestMaskedArray(TestCase):
     # Base test class for MaskedArrays.
 
+    # Python 2.6 compatibility
+    if not hasattr(TestCase, 'assertIsInstance'):
+        def assertIsInstance(self, obj, cls):
+            self.assertTrue(isinstance(obj, cls)
+
     def setUp(self):
         # Base data definition.
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
