@@ -726,6 +726,16 @@ class TestMaskedArrayArithmetic(TestCase):
         self.assertTrue(isinstance(na + ma, MaskedArray))
         self.assertTrue(isinstance(ma + na, MaskedArray))
 
+        class X(int):
+            __array_priority__ = 20
+            def __radd__(self, other):
+                return X()
+            __rsub__ = __rmul__ = __radd__
+            
+        self.assertIsInstance(ma + X(), X)
+        self.assertIsInstance(ma - X(), X)
+        self.assertIsInstance(ma * X(), X)
+
     def test_limits_arithmetic(self):
         tiny = np.finfo(float).tiny
         a = array([tiny, 1. / tiny, 0.])
