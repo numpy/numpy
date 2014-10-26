@@ -1921,7 +1921,7 @@ class TestMethods(TestCase):
 
         a = np.array([1-1j, 1, 2.0, 'f'], object)
         assert_raises(AttributeError, lambda: a.conj())
-        assert_raises(AttributeError, lambda: a.conjugate()) 
+        assert_raises(AttributeError, lambda: a.conjugate())
 
 
 class TestBinop(object):
@@ -4315,6 +4315,31 @@ class TestNewBufferProtocol(object):
                     ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
         x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
         self._check_roundtrip(x3)
+
+    def test_relaxed_strides(self):
+        # Test that relaxed strides are converted to non-relaxed
+        c = np.ones((1, 10, 10), dtype='i8')
+
+        # Check for NPY_RELAXED_STRIDES_CHECKING:
+        if np.ones((10, 1), order="C").flags.f_contiguous:
+            c.strides = (-1, 80, 8)
+
+        assert memoryview(c).strides == (800, 80, 8)
+
+        # Writing C-contiguous data to a BytesIO buffer should work
+        fd = io.BytesIO()
+        fd.write(c.data)
+
+        fortran = c.T
+        assert memoryview(fortran).strides == (8, 80, 800)
+
+        arr = np.ones((1, 10))
+        if arr.flags.f_contiguous:
+            shape, strides = get_buffer_info(arr, ['F_CONTIGUOUS'])
+            assert_(strides[0] == 8)
+            arr = np.ones((10, 1), order='F')
+            shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
+            assert_(strides[-1] == 8)
 
 
 class TestArrayAttributeDeletion(object):
