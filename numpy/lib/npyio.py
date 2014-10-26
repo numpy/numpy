@@ -1518,7 +1518,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the filling_values ...............................
     # Rename the input for convenience
-    user_filling_values = filling_values or []
+    user_filling_values = filling_values
+    if user_filling_values is None:
+        user_filling_values = []
     # Define the default
     filling_values = [None] * nbcols
     # We have a dictionary : update each entry individually
