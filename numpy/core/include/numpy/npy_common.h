@@ -133,6 +133,7 @@ extern long long __cdecl _ftelli64(FILE *);
 #else
     #define npy_ftell ftell
 #endif
+    #include <sys/types.h>
     #define npy_lseek lseek
     #define npy_off_t off_t
 
