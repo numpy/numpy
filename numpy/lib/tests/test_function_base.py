@@ -526,8 +526,18 @@ class TestGradient(TestCase):
 
     def test_masked(self):
         # Make sure that gradient supports subclasses like masked arrays
-        x = np.ma.array([[1, 1], [3, 4]])
-        assert_equal(type(gradient(x)[0]), type(x))
+        x = np.ma.array([[1, 1], [3, 4]],
+                        mask=[[False, False], [False, False]])
+        out = gradient(x)[0]
+        assert_equal(type(out), type(x))
+        # And make sure that the output and input don't have aliased mask
+        # arrays
+        assert_(x.mask is not out.mask)
+        # Also check that edge_order=2 doesn't alter the original mask
+        x2 = np.ma.arange(5)
+        x2[2] = np.ma.masked
+        np.gradient(x2, edge_order=2)
+        assert_array_equal(x2.mask, [False, False, True, False, False])
 
     def test_datetime64(self):
         # Make sure gradient() can handle special types like datetime64

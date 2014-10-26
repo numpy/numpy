@@ -1037,7 +1037,8 @@ def gradient(f, *varargs, **kwargs):
             out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
 
         # divide by step size
-        outvals.append(out / dx[axis])
+        out /= dx[axis]
+        outvals.append(out)
 
         # reset the slice object in this dimension to ":"
         slice1[axis] = slice(None)
