@@ -8,6 +8,7 @@ Issues fixed
 
 * gh-5184: restore linear edge behaviour of gradient to as it was in < 1.9.
   The second order behaviour is available via the `edge_order` keyword
+* gh-4007: workaround Accelerate sgemv crash on OSX 10.9
 * gh-5100: restore object dtype inference from iterable objects without `len()`
 * gh-5163: avoid gcc-4.1.2 (red hat 5) miscompilation causing a crash
 * gh-5138: fix nanmedian on arrays containing inf
