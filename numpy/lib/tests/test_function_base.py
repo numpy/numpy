@@ -97,6 +97,13 @@ class TestAverage(TestCase):
         y6 = np.matrix(rand(5, 5))
         assert_array_equal(y6.mean(0), average(y6, 0))
 
+
+        y7 = rand(5).astype(np.float32)
+        y8 = rand(5).astype(np.float64)
+
+        assert_(np.average(y7, weights = y8).dtype == np.result_type(y7, y8))
+
+
     def test_weights(self):
         y = np.arange(10)
         w = np.arange(10)
