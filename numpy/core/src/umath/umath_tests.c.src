@@ -38,6 +38,9 @@
     INIT_OUTER_LOOP_3           \
     npy_intp s3 = *steps++;
 
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
@@ -58,13 +61,14 @@ char *inner1d_signature = "(i),(i)->()";
 /**begin repeat
 
    #TYPE=LONG,DOUBLE#
-   #typ=npy_long, npy_double#
+   #typ=npy_long,npy_double#
 */
 
 /*
  *  This implements the function
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
+
 static void
 @TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
@@ -91,7 +95,7 @@ char *innerwt_signature = "(i),(i),(i)->()";
 /**begin repeat
 
    #TYPE=LONG,DOUBLE#
-   #typ=npy_long, npy_double#
+   #typ=npy_long,npy_double#
 */
 
 
@@ -127,14 +131,13 @@ char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 /**begin repeat
 
    #TYPE=FLOAT,DOUBLE,LONG#
-   #typ=npy_float, npy_double,npy_long#
+   #typ=npy_float,npy_double,npy_long#
 */
 
 /*
  *  This implements the function
  *        out[k, m, p] = sum_n { in1[k, m, n] * in2[k, n, p] }.
  */
-
 
 static void
 @TYPE@_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -177,26 +180,65 @@ static void
 
 /**end repeat**/
 
-/*  The following lines were generated using a slightly modified
-    version of code_generators/generate_umath.py and adding these
-    lines to defdict:
+char *euclidean_pdist_signature = "(n,d)->(p)";
 
-defdict = {
-'inner1d' :
-    Ufunc(2, 1, None_,
-        r'''inner on the last dimension and broadcast on the rest \n"
-        "     \"(i),(i)->()\" \n''',
-          TD('ld'),
-          ),
-'innerwt' :
-    Ufunc(3, 1, None_,
-          r'''inner1d with a weight argument \n"
-          "     \"(i),(i),(i)->()\" \n''',
-          TD('ld'),
-          ),
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float,npy_double#
+   #sqrt_func=sqrtf,sqrt#
+*/
+
+/*
+ *  This implements the function
+ *        out[j*(2*n-3-j)+k-1] = sum_d { (in1[j, d] - in1[k, d])^2 }
+ *  with 0 < k < j < n, i.e. computes all unique pairwise euclidean distances.
+ */
+
+static void
+@TYPE@_euclidean_pdist(char **args, npy_intp *dimensions, npy_intp *steps,
+                       void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    npy_intp len_n = *dimensions++;
+    npy_intp len_d = *dimensions++;
+    npy_intp len_p = *dimensions;
+    npy_intp stride_n = *steps++;
+    npy_intp stride_d = *steps++;
+    npy_intp stride_p = *steps;
+
+    assert(len_n * (len_n - 1) / 2 == len_p);
+
+    BEGIN_OUTER_LOOP_2
+        const char *data_this = (const char *)args[0];
+        char *data_out = args[1];
+        npy_intp n;
+        for (n = 0; n < len_n; ++n) {
+            const char *data_that = data_this + stride_n;
+            npy_intp nn;
+            for (nn = n + 1; nn < len_n; ++nn) {
+                const char *ptr_this = data_this;
+                const char *ptr_that = data_that;
+                @typ@ out = 0;
+                npy_intp d;
+                for (d = 0; d < len_d; ++d) {
+                    const @typ@ delta = *(const @typ@ *)ptr_this -
+                                        *(const @typ@ *)ptr_that;
+                    out += delta * delta;
+                    ptr_this += stride_d;
+                    ptr_that += stride_d;
+                }
+                *(@typ@ *)data_out = @sqrt_func@(out);
+                data_that += stride_n;
+                data_out += stride_p;
+            }
+            data_this += stride_n;
+        }
+    END_OUTER_LOOP
 }
 
-*/
+/**end repeat**/
+
 
 static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
@@ -208,38 +250,48 @@ static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multip
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
+static PyUFuncGenericFunction euclidean_pdist_functions[] =
+                            { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
+static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
+static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
+                                             NPY_DOUBLE, NPY_DOUBLE };
+
+
 static void
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
 
-    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data, inner1d_signatures, 2,
-                                    2, 1, PyUFunc_None, "inner1d",
-                                    "inner on the last dimension and broadcast on the rest \n"\
-                                    "     \"(i),(i)->()\" \n",
-                                    0, inner1d_signature);
+    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data,
+                    inner1d_signatures, 2, 2, 1, PyUFunc_None, "inner1d",
+                    "inner on the last dimension and broadcast on the rest \n"
+                    "     \"(i),(i)->()\" \n",
+                    0, inner1d_signature);
     PyDict_SetItemString(dictionary, "inner1d", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data, innerwt_signatures, 2,
-                                    3, 1, PyUFunc_None, "innerwt",
-                                    "inner1d with a weight argument \n"\
-                                    "     \"(i),(i),(i)->()\" \n",
-                                    0, innerwt_signature);
+    f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data,
+                    innerwt_signatures, 2, 3, 1, PyUFunc_None, "innerwt",
+                    "inner1d with a weight argument \n"
+                    "     \"(i),(i),(i)->()\" \n",
+                    0, innerwt_signature);
     PyDict_SetItemString(dictionary, "innerwt", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
-                                    matrix_multiply_data, matrix_multiply_signatures,
-                                    3, 2, 1, PyUFunc_None, "matrix_multiply",
-                                    "matrix multiplication on last two dimensions \n"\
-                                    "     \"(m,n),(n,p)->(m,p)\" \n",
-                                    0, matrix_multiply_signature);
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matrix_multiply",
+                    "matrix multiplication on last two dimensions \n"
+                    "     \"(m,n),(n,p)->(m,p)\" \n",
+                    0, matrix_multiply_signature);
     PyDict_SetItemString(dictionary, "matrix_multiply", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(euclidean_pdist_functions,
+                    eucldiean_pdist_data, euclidean_pdist_signatures,
+                    2, 1, 1, PyUFunc_None, "euclidean_pdist",
+                    "pairwise euclidean distance on last two dimensions \n"
+                    "     \"(n,d)->(p)\" \n",
+                    0, euclidean_pdist_signature);
+    PyDict_SetItemString(dictionary, "euclidean_pdist", f);
+    Py_DECREF(f);
 }
-
-/*
-    End of auto-generated code.
-*/
-
 
 
 static PyObject *
