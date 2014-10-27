@@ -268,7 +268,7 @@ class record(nt.void):
         """Pretty-print all fields."""
         # pretty-print all fields
         names = self.dtype.names
-        maxlen = max([len(name) for name in names])
+        maxlen = max(len(name) for name in names)
         rows = []
         fmt = '%% %ds: %%s' % maxlen
         for name in names:
