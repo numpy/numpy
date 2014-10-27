@@ -12,6 +12,7 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
+from numpy.build_utils.apple_accelerate import uses_accelerate_framework, get_sgemv_fix
 
 from setup_common import *
 
@@ -839,6 +840,8 @@ def configuration(parent_package='',top_path=None):
     if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
         extra_info = blas_info
         multiarray_src.append(join('src', 'multiarray', 'cblasfuncs.c'))
+        if uses_accelerate_framework(blas_info):
+            multiarray_src += get_sgemv_fix()
     else:
         extra_info = {}
 
