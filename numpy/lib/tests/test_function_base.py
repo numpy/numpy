@@ -124,6 +124,11 @@ class TestAverage(TestCase):
         assert_array_equal(average(y1, weights=w2, axis=1), desired)
         assert_equal(average(y1, weights=w2), 5.)
 
+        y3 = rand(5).astype(np.float32)
+        w3 = rand(5).astype(np.float64)
+
+        assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
+
     def test_returned(self):
         y = np.array([[1, 2, 3], [4, 5, 6]])
 
