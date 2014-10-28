@@ -1686,6 +1686,20 @@ class TestStdVar(TestCase):
         assert_almost_equal(std(self.A, ddof=2)**2,
                             self.real_var*len(self.A)/float(len(self.A)-2))
 
+    def test_out_scalar(self):
+        d = np.arange(10)
+        out = np.array(0.)
+        r = np.std(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+        r = np.var(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+        r = np.mean(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+
+
 class TestStdVarComplex(TestCase):
     def test_basic(self):
         A = array([1, 1.j, -1, -1.j])

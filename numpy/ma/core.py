@@ -780,6 +780,8 @@ class _DomainSafeDivide:
         # component of numpy's import time.
         if self.tolerance is None:
             self.tolerance = np.finfo(float).tiny
+        # don't call ma ufuncs from __array_wrap__ which would fail for scalars
+        a, b = np.asarray(a), np.asarray(b)
         return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
