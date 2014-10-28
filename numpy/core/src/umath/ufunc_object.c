@@ -3971,18 +3971,19 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
     PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
     PyObject *obj, *wrap = NULL;
 
-    /* If a 'subok' parameter is passed and isn't True, don't wrap */
+    /*
+     * If a 'subok' parameter is passed and isn't True, don't wrap but put None
+     * into slots with out arguments which means return the out argument
+     */
     if (kwds != NULL && (obj = PyDict_GetItem(kwds,
                                               npy_um_str_subok)) != NULL) {
         if (obj != Py_True) {
-            for (i = 0; i < nout; i++) {
-                output_wrap[i] = NULL;
-            }
-            return;
+            /* skip search for wrap members */
+            goto handle_out;
         }
     }
 
-    nargs = PyTuple_GET_SIZE(args);
+
     for (i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(args, i);
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
@@ -4040,6 +4041,8 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
      * exact ndarray so that no PyArray_Return is
      * done in that case.
      */
+handle_out:
+    nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nout; i++) {
         int j = nin + i;
         int incref = 1;

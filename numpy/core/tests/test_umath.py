@@ -36,6 +36,36 @@ class TestConstants(TestCase):
     def test_euler_gamma(self):
         assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
 
+class TestOut(TestCase):
+    def test_out_subok(self):
+        for b in (True, False):
+            aout = np.array(0.5)
+
+            r = np.add(aout, 2, out=aout)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            r = np.add(aout, 2, out=aout, subok=b)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            r = np.add(aout, 2, aout, subok=False)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            d = np.ones(5)
+            o1 = np.zeros(5)
+            o2 = np.zeros(5, dtype=np.int32)
+            r1, r2 = np.frexp(d, o1, o2, subok=b)
+            assert_(r1 is o1)
+            assert_array_equal(r1, o1)
+            assert_(r2 is o2)
+            assert_array_equal(r2, o2)
+
+            r1, r2 = np.frexp(d, out=o1, subok=b)
+            assert_(r1 is o1)
+            assert_array_equal(r1, o1)
+
 
 class TestDivision(TestCase):
     def test_division_int(self):
