@@ -88,7 +88,11 @@ SafeEval
 The SafeEval class in numpy/lib/utils.py is deprecated and will be removed
 in the next release.
 
-alterdot, restoredot Deprecated
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+alterdot, restoredot
+~~~~~~~~~~~~~~~~~~~~
 The alterdot and restoredot functions no longer do anything, and are
 deprecated.
+
+pkgload, PackageLoader
+~~~~~~~~~~~~~~~~~~~~~~
+These ways of loading packages are now deprecated.
