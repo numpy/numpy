@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import warnings
 
 __all__ = ['PackageLoader']
 
@@ -162,7 +163,10 @@ class PackageLoader(object):
         postpone= : bool
              when True, don't load packages [default: False]
 
-     """
+        """
+        warnings.warn('pkgload and PackageLoader are obsolete '
+                'and will be removed in a future version of numpy',
+                DeprecationWarning)
         frame = self.parent_frame
         self.info_modules = {}
         if options.get('force', False):
