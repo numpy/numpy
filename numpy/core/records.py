@@ -71,7 +71,6 @@ _byteorderconv = {'b':'>',
 # are equally allowed
 
 numfmt = nt.typeDict
-_typestr = nt._typestr
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
@@ -527,15 +526,12 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
-        formats = ''
+        formats = []
         for obj in arrayList:
             if not isinstance(obj, ndarray):
                 raise ValueError("item in the array list must be an ndarray.")
-            formats += _typestr[obj.dtype.type]
-            if issubclass(obj.dtype.type, nt.flexible):
-                formats += repr(obj.itemsize)
-            formats += ','
-        formats = formats[:-1]
+            formats.append(obj.dtype.str)
+        formats = ','.join(formats)
 
     if dtype is not None:
         descr = sb.dtype(dtype)

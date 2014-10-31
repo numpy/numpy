@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import sys
 from os import path
 import numpy as np
 from numpy.testing import *
@@ -15,6 +16,14 @@ class TestFromrecords(TestCase):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
+        assert_equal(r['col1'].dtype.kind, 'i')
+        if sys.version_info[0] >= 3:
+            assert_equal(r['col2'].dtype.kind, 'U')
+            assert_equal(r['col2'].dtype.itemsize, 12)
+        else:
+            assert_equal(r['col2'].dtype.kind, 'S')
+            assert_equal(r['col2'].dtype.itemsize, 3)
+        assert_equal(r['col3'].dtype.kind, 'f')
 
     def test_method_array(self):
         r = np.rec.array(asbytes('abcdefg') * 100, formats='i2,a3,i4', shape=3, byteorder='big')
