@@ -1892,6 +1892,16 @@ class TestBinop(object):
         assert_(isinstance(obj2, SomeClass2))
 
 
+class TestCAPI(TestCase):
+    def test_IsPythonScalar(self):
+        from numpy.core.multiarray_tests import IsPythonScalar
+        assert_(IsPythonScalar(b'foobar'))
+        assert_(IsPythonScalar(1))
+        assert_(IsPythonScalar(2**80))
+        assert_(IsPythonScalar(2.))
+        assert_(IsPythonScalar("a"))
+
+
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1, 2, 3])
