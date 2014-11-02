@@ -1,6 +1,9 @@
 #!/bin/sh
 set -ex
 
+# travis boxes give you 1.5 cpus
+export NPY_NUM_BUILD_JOBS=2
+
 # setup env
 if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   # much faster package installation

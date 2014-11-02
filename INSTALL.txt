@@ -35,6 +35,21 @@ Building NumPy requires the following software installed:
 Python__ http://www.python.org
 nose__ http://somethingaboutorange.com/mrl/projects/nose/
 
+Basic Installation
+==================
+
+To install numpy run:
+
+    python setup.py build -j 4 install --prefix $HOME/.local
+
+This will compile numpy on 4 CPUs and install it into the specified prefix.
+To perform an inplace build that can be run from the source folder run:
+
+   python setup.py build_ext --inplace -j 4
+
+The number of build jobs can also be specified via the environment variable
+NPY_NUM_BUILD_JOBS.
+
 Fortran ABI mismatch
 ====================
 
@@ -65,40 +80,34 @@ this means that g77 has been used. If libgfortran.so is a dependency,
 gfortran has been used. If both are dependencies, this means both have been
 used, which is almost always a very bad idea.
 
-Building with ATLAS support
-===========================
+Building with optimized BLAS support
+====================================
 
-Ubuntu 8.10 (Intrepid)
-----------------------
+Ubuntu/Debian
+-------------
 
-You can install the necessary packages for optimized ATLAS with this
-command:
+In order to build with optimized a BLAS providing development package must be installed.
+Options are for example:
 
-    sudo apt-get install libatlas-base-dev
+ - libblas-dev
+   reference BLAS not very optimized
+ - libatlas-base-dev
+   generic tuned ATLAS, it is recommended to tune it to the available hardware,
+   see /usr/share/doc/libatlas3-base/README.Debian for instructions
+ - libopenblas-base
+   fast and runtime detected so no tuning required but as of version 2.11 still
+   suffers from correctness issues on some CPUs, test your applications
+   thoughly.
 
-If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performance. For
-example, for SSE2:
+The actual implementation can be exchanged also after installation via the
+alternatives mechanism:
 
-    sudo apt-get install libatlas3gf-sse2
+   update-alternatives --config libblas.so.3
+   update-alternatives --config liblapack.so.3
 
-*NOTE*: if you build your own atlas, Intrepid changed its default fortran
-compiler to gfortran. So you should rebuild everything from scratch,
-including lapack, to use it on Intrepid.
+Or by preloading a specific BLAS library with
+    LD_PRELOAD=/usr/lib/atlas-base/atlas/libblas.so.3 python ...
 
-Ubuntu 8.04 and lower
----------------------
-
-You can install the necessary packages for optimized ATLAS with this
-command:
-
-    sudo apt-get install atlas3-base-dev
-
-If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performance. For
-example, for SSE2:
-
-    sudo apt-get install atlas3-sse2
 
 Windows 64 bits notes
 =====================

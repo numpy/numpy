@@ -30,6 +30,8 @@ class build_clib(old_build_clib):
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
         ('inplace', 'i', 'Build in-place'),
+        ('jobs=', 'j',
+         "number of parallel jobs"),
         ]
 
     boolean_options = old_build_clib.boolean_options + ['inplace']
@@ -38,7 +40,16 @@ class build_clib(old_build_clib):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
         self.inplace = 0
-        return
+        self.jobs = None
+
+    def finalize_options(self):
+        if self.jobs:
+            try:
+                self.jobs = int(self.jobs)
+            except ValueError:
+                raise ValueError("--jobs/-j argument must be an integer")
+        old_build_clib.finalize_options(self)
+        self.set_undefined_options('build', ('jobs', 'jobs'))
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:
