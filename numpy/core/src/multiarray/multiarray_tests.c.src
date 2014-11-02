@@ -2,6 +2,22 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 
+/* test PyArray_IsPythonScalar, before including private py3 compat header */
+static PyObject *
+IsPythonScalar(PyObject * dummy, PyObject *args)
+{
+    PyObject *arg = NULL;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+    if (PyArray_IsPythonScalar(arg)) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
 #include "npy_pycompat.h"
 
 /*
@@ -860,6 +876,9 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
 
 
 static PyMethodDef Multiarray_TestsMethods[] = {
+    {"IsPythonScalar",
+        IsPythonScalar,
+        METH_VARARGS, NULL},
     {"test_neighborhood_iterator",
         test_neighborhood_iterator,
         METH_VARARGS, NULL},

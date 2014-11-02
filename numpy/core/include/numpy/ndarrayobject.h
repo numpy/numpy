@@ -14,6 +14,7 @@ extern "C" CONFUSE_EMACS
        everything when you're typing */
 #endif
 
+#include <Python.h>
 #include "ndarraytypes.h"
 
 /* Includes the "function" C-API -- these are all stored in a
@@ -50,24 +51,32 @@ extern "C" CONFUSE_EMACS
 
 #define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) ||               \
                                 PyArray_IsZeroDim(m))
-
+#if PY_MAJOR_VERSION >= 3
+#define PyArray_IsPythonNumber(obj)                                           \
+        (PyFloat_Check(obj) || PyComplex_Check(obj) ||                        \
+         PyLong_Check(obj) || PyBool_Check(obj))
+#define PyArray_IsIntegerScalar(obj) (PyLong_Check(obj)                       \
+              || PyArray_IsScalar((obj), Integer))
+#define PyArray_IsPythonScalar(obj)                                           \
+        (PyArray_IsPythonNumber(obj) || PyBytes_Check(obj) ||                 \
+         PyUnicode_Check(obj))
+#else
 #define PyArray_IsPythonNumber(obj)                                           \
         (PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) ||    \
          PyLong_Check(obj) || PyBool_Check(obj))
-
+#define PyArray_IsIntegerScalar(obj) (PyInt_Check(obj)                        \
+              || PyLong_Check(obj)                                            \
+              || PyArray_IsScalar((obj), Integer))
 #define PyArray_IsPythonScalar(obj)                                           \
         (PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||                \
          PyUnicode_Check(obj))
+#endif
 
 #define PyArray_IsAnyScalar(obj)                                              \
         (PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
 
 #define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) ||           \
                                      PyArray_CheckScalar(obj))
-
-#define PyArray_IsIntegerScalar(obj) (PyInt_Check(obj)                        \
-              || PyLong_Check(obj)                                            \
-              || PyArray_IsScalar((obj), Integer))
 
 
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ?                   \
