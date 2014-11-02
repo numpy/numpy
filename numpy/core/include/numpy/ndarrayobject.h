@@ -56,7 +56,7 @@ extern "C" CONFUSE_EMACS
          PyLong_Check(obj) || PyBool_Check(obj))
 
 #define PyArray_IsPythonScalar(obj)                                           \
-        (PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||                \
+        (PyArray_IsPythonNumber(obj) || PyBytes_Check(obj) ||                 \
          PyUnicode_Check(obj))
 
 #define PyArray_IsAnyScalar(obj)                                              \
