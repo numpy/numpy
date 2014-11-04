@@ -1392,7 +1392,7 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        Output array.
+        `a` with its axes permuted.  A view is returned whenever possible.
 
     See Also
     --------
