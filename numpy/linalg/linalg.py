@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast
+    broadcast, einsum, arange
     )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -1526,7 +1526,7 @@ def pinv(a, rcond=1e-15 ):
 
     Parameters
     ----------
-    a : (M, N) array_like
+    a : (..., M, N) array_like
       Matrix to be pseudo-inverted.
     rcond : float
       Cutoff for small singular values.
@@ -1536,7 +1536,7 @@ def pinv(a, rcond=1e-15 ):
 
     Returns
     -------
-    B : (N, M) ndarray
+    B : (..., N, M) ndarray
       The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
       is `B`.
 
@@ -1547,6 +1547,9 @@ def pinv(a, rcond=1e-15 ):
 
     Notes
     -----
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
+
     The pseudo-inverse of a matrix A, denoted :math:`A^+`, is
     defined as: "the matrix that 'solves' [the least-squares problem]
     :math:`Ax = b`," i.e., if :math:`\\bar{x}` is said solution, then
@@ -1583,15 +1586,16 @@ def pinv(a, rcond=1e-15 ):
     _assertNoEmpty2d(a)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
-    m = u.shape[0]
-    n = vt.shape[1]
-    cutoff = rcond*maximum.reduce(s)
-    for i in range(min(n, m)):
-        if s[i] > cutoff:
-            s[i] = 1./s[i]
-        else:
-            s[i] = 0.;
-    res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
+    m = u.shape[-2]
+    n = vt.shape[-1]
+    cutoff = rcond * maximum.reduce(s, axis=-1, keepdims=True)
+    mask = s > cutoff
+    s[mask] = 1. / s[mask]
+    s[~mask] = 0
+    if a.ndim > 2:
+        res = einsum('...ji,...kj->...ik', vt, multiply(s[..., newaxis, :], u))
+    else:
+        res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant

@@ -207,7 +207,7 @@ for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
     for case in src:
         if not isinstance(case.a, np.ndarray):
             continue
-        
+
         a = np.array([case.a, 2*case.a, 3*case.a])
         if case.b is None:
             b = None
@@ -548,11 +548,19 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgTestCase):
+class TestPinv(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
-        assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
+        assert_almost_equal(dot_generalized(a, a_ginv),
+                            identity_like_generalized(a))
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.pinv(x).dtype, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
