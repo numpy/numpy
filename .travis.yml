@@ -31,7 +31,7 @@ before_install:
   # pip install coverage
   - python -V
   - pip install --upgrade pip setuptools
-  - pip install --no-index --find-links http://travis-wheels.scikit-image.org cython
+  - pip install --find-links http://travis-wheels.scikit-image.org --install-option="--no-cython-compile" Cython
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 
