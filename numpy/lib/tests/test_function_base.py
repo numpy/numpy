@@ -29,9 +29,9 @@ class TestAny(TestCase):
         assert_array_equal(np.sometrue(y1, axis=1), [0, 1, 1])
 
     def test_bool(self):
-        y1 = [0, 0, 0, 1]
+        y1 = np.array([0, 0, 0, 1], dtype=object)
         assert_equal(True, np.any(y1))
-        y2 = [0, 0, 0, 0]
+        y2 = np.array([0, 0, 0, 0], dtype=object)
         assert_equal(False, np.any(y2))
 
 
@@ -52,9 +52,9 @@ class TestAll(TestCase):
         assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
 
     def test_bool(self):
-        y1 = [0, 1, 1, 0]
+        y1 = np.array([0, 1, 1, 0], dtype=object)
         assert_equal(False, np.all(y1))
-        y2 = [1, 1, 1, 1]
+        y2 = np.array([1, 1, 1, 1], dtype=object)
         assert_equal(True, np.all(y2))
 
 

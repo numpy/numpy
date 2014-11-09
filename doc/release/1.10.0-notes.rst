@@ -47,6 +47,10 @@ The cblas versions of dot, inner, and vdot have been integrated into
 the multiarray module. In particular, vdot is now a multiarray function,
 which it was not before.
 
+Any and all return boolean values for object arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+np.any and np.all now return boolean values for object arrays
+
 
 Deprecations
 ============
