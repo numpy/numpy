@@ -1056,7 +1056,7 @@ if (#varname#_capi==Py_None) {
     """\
 \t\tint *_i,capi_i=0;
 \t\tCFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-\t\tif (initforcomb(capi_#varname#_tmp->dimensions,PyArray_NDIM(capi_#varname#_tmp),1)) {
+\t\tif (initforcomb(PyArray_DIMS(capi_#varname#_tmp),PyArray_NDIM(capi_#varname#_tmp),1)) {
 \t\t\twhile ((_i = nextforcomb()))
 \t\t\t\t#varname#[capi_i++] = #init#; /* fortran way */
 \t\t} else {

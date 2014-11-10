@@ -345,7 +345,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
                 for(k=0;k<fp->defs[i].rank;k++) dims[k]=-1;
                 if ((arr = array_from_pyobj(fp->defs[i].type,dims,fp->defs[i].rank,F2PY_INTENT_IN,v))==NULL)
                     return -1;
-                (*(fp->defs[i].func))(&fp->defs[i].rank,arr->dimensions,set_data,&flag);
+                (*(fp->defs[i].func))(&fp->defs[i].rank,PyArray_DIMS(arr),set_data,&flag);
             } else {             /* deallocate */
                 for(k=0;k<fp->defs[i].rank;k++) dims[k]=0;
                 (*(fp->defs[i].func))(&fp->defs[i].rank,dims,set_data,&flag);
@@ -359,7 +359,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
         if (fp->defs[i].data!=NULL) { /* copy Python object to Fortran array */
             npy_intp s = PyArray_MultiplyList(fp->defs[i].dims.d,PyArray_NDIM(arr));
             if (s==-1)
-                s = PyArray_MultiplyList(arr->dimensions,PyArray_NDIM(arr));
+                s = PyArray_MultiplyList(PyArray_DIMS(arr),PyArray_NDIM(arr));
             if (s<0 ||
                 (memcpy(fp->defs[i].data,PyArray_DATA(arr),s*PyArray_ITEMSIZE(arr)))==NULL) {
                 if ((PyObject*)arr!=v) {
@@ -777,7 +777,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
         {
             PyArrayObject *retarr = (PyArrayObject *) \
-                PyArray_New(&PyArray_Type, PyArray_NDIM(arr), arr->dimensions, type_num,
+                PyArray_New(&PyArray_Type, PyArray_NDIM(arr), PyArray_DIMS(arr), type_num,
                             NULL,NULL,0,
                             !(intent&F2PY_INTENT_C),
                             NULL);
@@ -849,7 +849,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         npy_intp d;
         /* Fill dims where -1 or 0; check dimensions; calc new_size; */
         for(i=0;i<PyArray_NDIM(arr);++i) {
-            d = arr->dimensions[i];
+            d = PyArray_DIM(arr,i);
             if (dims[i] >= 0) {
                 if (d>1 && dims[i]!=d) {
                     fprintf(stderr,"%d-th dimension must be fixed to %" NPY_INTP_FMT
@@ -888,7 +888,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         int i;
         npy_intp d;
         for (i=0; i<rank; ++i) {
-	    d = arr->dimensions[i];
+	    d = PyArray_DIM(arr,i);
             if (dims[i]>=0) {
                 if (d > 1 && d!=dims[i]) {
                     fprintf(stderr,"%d-th dimension must be fixed to %" NPY_INTP_FMT
@@ -911,7 +911,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         int effrank;
         npy_intp size;
         for (i=0,effrank=0;i<PyArray_NDIM(arr);++i)
-            if (arr->dimensions[i]>1) ++effrank;
+            if (PyArray_DIM(arr,i)>1) ++effrank;
         if (dims[rank-1]>=0)
             if (effrank>rank) {
                 fprintf(stderr,"too many axes: %d (effrank=%d), expected rank=%d\n",
@@ -920,9 +920,9 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
             }
 
         for (i=0,j=0;i<rank;++i) {
-            while (j<PyArray_NDIM(arr) && arr->dimensions[j]<2) ++j;
+            while (j<PyArray_NDIM(arr) && PyArray_DIM(arr,j)<2) ++j;
             if (j>=PyArray_NDIM(arr)) d = 1;
-            else d = arr->dimensions[j++];
+            else d = PyArray_DIM(arr,j++);
             if (dims[i]>=0) {
                 if (d>1 && d!=dims[i]) {
                     fprintf(stderr,"%d-th dimension must be fixed to %" NPY_INTP_FMT
@@ -936,9 +936,9 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         }
 
         for (i=rank;i<PyArray_NDIM(arr);++i) { /* [[1,2],[3,4]] -> [1,2,3,4] */
-            while (j<PyArray_NDIM(arr) && arr->dimensions[j]<2) ++j;
+            while (j<PyArray_NDIM(arr) && PyArray_DIM(arr,j)<2) ++j;
             if (j>=PyArray_NDIM(arr)) d = 1;
-            else d = arr->dimensions[j++];
+            else d = PyArray_DIM(arr,j++);
             dims[rank-1] *= d;
         }
         for (i=0,size=1;i<rank;++i) size *= dims[i];
@@ -948,7 +948,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
                     size,arr_size,rank,effrank,PyArray_NDIM(arr));
             for (i=0;i<rank;++i) fprintf(stderr," %" NPY_INTP_FMT,dims[i]);
             fprintf(stderr," ], arr.dims=[");
-            for (i=0;i<PyArray_NDIM(arr);++i) fprintf(stderr," %" NPY_INTP_FMT,arr->dimensions[i]);
+            for (i=0;i<PyArray_NDIM(arr);++i) fprintf(stderr," %" NPY_INTP_FMT,PyArray_DIM(arr,i));
             fprintf(stderr," ]\n");
             return 1;
         }

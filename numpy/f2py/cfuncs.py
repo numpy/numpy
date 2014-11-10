@@ -249,7 +249,7 @@ cppmacros['len..']="""\
 #define rank(var) var ## _Rank
 #define shape(var,dim) var ## _Dims[dim]
 #define old_rank(var) (PyArray_NDIM((PyArrayObject *)(capi_ ## var ## _tmp)))
-#define old_shape(var,dim) (((PyArrayObject *)(capi_ ## var ## _tmp))->dimensions[dim])
+#define old_shape(var,dim) PyArray_DIM(((PyArrayObject *)(capi_ ## var ## _tmp)),dim)
 #define fshape(var,dim) shape(var,rank(var)-dim-1)
 #define len(var) shape(var,0)
 #define flen(var) fshape(var,0)
@@ -537,14 +537,14 @@ cfuncs['calcarrindex']="""\
 static int calcarrindex(int *i,PyArrayObject *arr) {
 \tint k,ii = i[0];
 \tfor (k=1; k < PyArray_NDIM(arr); k++)
-\t\tii += (ii*(arr->dimensions[k] - 1)+i[k]); /* assuming contiguous arr */
+\t\tii += (ii*(PyArray_DIM(arr,k) - 1)+i[k]); /* assuming contiguous arr */
 \treturn ii;
 }"""
 cfuncs['calcarrindextr']="""\
 static int calcarrindextr(int *i,PyArrayObject *arr) {
 \tint k,ii = i[PyArray_NDIM(arr)-1];
 \tfor (k=1; k < PyArray_NDIM(arr); k++)
-\t\tii += (ii*(arr->dimensions[PyArray_NDIM(arr)-k-1] - 1)+i[PyArray_NDIM(arr)-k-1]); /* assuming contiguous arr */
+\t\tii += (ii*(PyArray_DIM(arr,PyArray_NDIM(arr)-k-1) - 1)+i[PyArray_NDIM(arr)-k-1]); /* assuming contiguous arr */
 \treturn ii;
 }"""
 cfuncs['forcomb']="""\
