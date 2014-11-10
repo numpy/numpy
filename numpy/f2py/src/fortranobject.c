@@ -361,7 +361,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
             if (s==-1)
                 s = PyArray_MultiplyList(arr->dimensions,PyArray_NDIM(arr));
             if (s<0 ||
-                (memcpy(fp->defs[i].data,arr->data,s*PyArray_ITEMSIZE(arr)))==NULL) {
+                (memcpy(fp->defs[i].data,PyArray_DATA(arr),s*PyArray_ITEMSIZE(arr)))==NULL) {
                 if ((PyObject*)arr!=v) {
                     Py_DECREF(arr);
                 }

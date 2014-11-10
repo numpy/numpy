@@ -1047,7 +1047,7 @@ if (#varname#_capi==Py_None) {
 \t\tif (!PyErr_Occurred())
 \t\t\tPyErr_SetString(#modulename#_error,\"failed in converting #nth# `#varname#\' of #pyname# to C/Fortran array\" );
 \t} else {
-\t\t#varname# = (#ctype# *)(capi_#varname#_tmp->data);
+\t\t#varname# = (#ctype# *)(PyArray_DATA(capi_#varname#_tmp));
 """,
 {hasinitvalue:[
     {isintent_nothide:'\tif (#varname#_capi == Py_None) {'},

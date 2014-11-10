@@ -384,7 +384,7 @@ cb_arg_rules=[
 \t\t\tfprintf(stderr,\"rv_cb_arr is NULL\\n\");
 \t\t\tgoto capi_fail;
 \t\t}
-\t\tMEMCOPY(#varname_i#,rv_cb_arr->data,PyArray_NBYTES(rv_cb_arr));
+\t\tMEMCOPY(#varname_i#,PyArray_DATA(rv_cb_arr),PyArray_NBYTES(rv_cb_arr));
 \t\tif (capi_tmp != (PyObject *)rv_cb_arr) {
 \t\t\tPy_DECREF(rv_cb_arr);
 \t\t}
