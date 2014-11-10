@@ -710,17 +710,17 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
         if (intent & F2PY_INTENT_CACHE) {
             /* intent(cache) */
-            if (PyArray_ISONESEGMENT(obj)
-                && PyArray_ITEMSIZE((PyArrayObject *)obj)>=elsize) {
-                if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims)) {
+            if (PyArray_ISONESEGMENT(arr)
+                && PyArray_ITEMSIZE(arr)>=elsize) {
+                if (check_and_fix_dimensions(arr,rank,dims)) {
                     return NULL; /*XXX: set exception */
                 }
                 if (intent & F2PY_INTENT_OUT)
-                    Py_INCREF(obj);
-                return (PyArrayObject *)obj;
+                    Py_INCREF(arr);
+                return arr;
             }
             strcpy(mess, "failed to initialize intent(cache) array");
-            if (!PyArray_ISONESEGMENT(obj))
+            if (!PyArray_ISONESEGMENT(arr))
                 strcat(mess, " -- input must be in one segment");
             if (PyArray_ITEMSIZE(arr)<elsize)
                 sprintf(mess+strlen(mess)," -- expected at least elsize=%d but got %d",
@@ -818,7 +818,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
         arr = (PyArrayObject *) \
             PyArray_FromAny(obj,PyArray_DescrFromType(type_num), 0,0,
                             ((intent & F2PY_INTENT_C)?NPY_ARRAY_CARRAY:NPY_ARRAY_FARRAY) \
-                            | NPY_FORCECAST, NULL);
+                            | NPY_ARRAY_FORCECAST, NULL);
         if (arr==NULL)
             return NULL;
         if (check_and_fix_dimensions(arr,rank,dims))
