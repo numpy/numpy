@@ -58,11 +58,11 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
                     int n = fp->defs[i].rank-1;
                     v = PyArray_New(&PyArray_Type, n, fp->defs[i].dims.d,
                                     NPY_STRING, NULL, fp->defs[i].data, fp->defs[i].dims.d[n],
-                                    NPY_FARRAY, NULL);
+                                    NPY_ARRAY_FARRAY, NULL);
                 }
                 else {
                     v = PyArray_New(&PyArray_Type, fp->defs[i].rank, fp->defs[i].dims.d,
-                                    fp->defs[i].type, NULL, fp->defs[i].data, 0, NPY_FARRAY,
+                                    fp->defs[i].type, NULL, fp->defs[i].data, 0, NPY_ARRAY_FARRAY,
                                     NULL);
                 }
                 if (v==NULL) return NULL;
@@ -273,7 +273,7 @@ fortran_getattr(PyFortranObject *fp, char *name) {
                 k = fp->defs[i].rank;
             if (fp->defs[i].data !=NULL) {              /* array is allocated */
                 PyObject *v = PyArray_New(&PyArray_Type, k, fp->defs[i].dims.d,
-                                          fp->defs[i].type, NULL, fp->defs[i].data, 0, NPY_FARRAY,
+                                          fp->defs[i].type, NULL, fp->defs[i].data, 0, NPY_ARRAY_FARRAY,
                                           NULL);
                 if (v==NULL) return NULL;
                 /* Py_INCREF(v); */
@@ -817,7 +817,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
         F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
         arr = (PyArrayObject *) \
             PyArray_FromAny(obj,PyArray_DescrFromType(type_num), 0,0,
-                            ((intent & F2PY_INTENT_C)?NPY_CARRAY:NPY_FARRAY) \
+                            ((intent & F2PY_INTENT_C)?NPY_ARRAY_CARRAY:NPY_ARRAY_FARRAY) \
                             | NPY_FORCECAST, NULL);
         if (arr==NULL)
             return NULL;
