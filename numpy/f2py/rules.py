@@ -1027,7 +1027,7 @@ if (#varname#_capi==Py_None) {
 
 # \tif ((#varname#_capi != Py_None) && PyArray_Check(#varname#_capi) \\
 # \t\t&& (#varname#_capi != (PyObject *)capi_#varname#_tmp)) {
-# \t\tif (((PyArrayObject *)#varname#_capi)->nd != capi_#varname#_tmp->nd) {
+# \t\tif (PyArray_NDIM((PyArrayObject *)#varname#_capi) != PyArray_NDIM(capi_#varname#_tmp)) {
 # \t\t\tif (#varname#_capi != capi_#varname#_tmp->base)
 # \t\t\t\tcopy_ND_array((PyArrayObject *)capi_#varname#_tmp->base,(PyArrayObject *)#varname#_capi);
 # \t\t} else
@@ -1056,7 +1056,7 @@ if (#varname#_capi==Py_None) {
     """\
 \t\tint *_i,capi_i=0;
 \t\tCFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-\t\tif (initforcomb(capi_#varname#_tmp->dimensions,capi_#varname#_tmp->nd,1)) {
+\t\tif (initforcomb(capi_#varname#_tmp->dimensions,PyArray_NDIM(capi_#varname#_tmp),1)) {
 \t\t\twhile ((_i = nextforcomb()))
 \t\t\t\t#varname#[capi_i++] = #init#; /* fortran way */
 \t\t} else {
