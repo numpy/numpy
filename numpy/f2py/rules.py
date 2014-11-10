@@ -1028,8 +1028,8 @@ if (#varname#_capi==Py_None) {
 # \tif ((#varname#_capi != Py_None) && PyArray_Check(#varname#_capi) \\
 # \t\t&& (#varname#_capi != (PyObject *)capi_#varname#_tmp)) {
 # \t\tif (PyArray_NDIM((PyArrayObject *)#varname#_capi) != PyArray_NDIM(capi_#varname#_tmp)) {
-# \t\t\tif (#varname#_capi != capi_#varname#_tmp->base)
-# \t\t\t\tcopy_ND_array((PyArrayObject *)capi_#varname#_tmp->base,(PyArrayObject *)#varname#_capi);
+# \t\t\tif (#varname#_capi != PyArray_BASE(capi_#varname#_tmp))
+# \t\t\t\tcopy_ND_array(PyArray_BASE((PyArrayObject *)capi_#varname#_tmp),(PyArrayObject *)#varname#_capi);
 # \t\t} else
 # \t\t\tcopy_ND_array(capi_#varname#_tmp,(PyArrayObject *)#varname#_capi);
 # \t}

@@ -223,7 +223,7 @@ cppmacros['SWAP']="""\
 \ta = b;\\
 \tb = c;}
 """
-#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) ((m)->flags & NPY_CONTIGUOUS)'
+#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_CONTIGUOUS)'
 cppmacros['PRINTPYOBJERR']="""\
 #define PRINTPYOBJERR(obj)\\
 \tfprintf(stderr,\"#modulename#.error is related to \");\\
@@ -318,15 +318,15 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 /* New SciPy */
 #define TRYPYARRAYTEMPLATECHAR case NPY_STRING: *(char *)(PyArray_DATA(arr))=*v; break;
 #define TRYPYARRAYTEMPLATELONG case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;
-#define TRYPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (arr->descr->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr)); break;
+#define TRYPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr)); break;
 
 #define TRYPYARRAYTEMPLATE(ctype,typecode) \\
         PyArrayObject *arr = NULL;\\
         if (!obj) return -2;\\
         if (!PyArray_Check(obj)) return -1;\\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
-        if (arr->descr->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
-        switch (arr->descr->type_num) {\\
+        if (PyArray_DESCR(arr)->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
+        switch (PyArray_DESCR(arr)->type_num) {\\
                 case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_INT: *(int *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;\\
@@ -344,7 +344,7 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_OBJECT: (arr->descr->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr), arr); break;\\
+                case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr), arr); break;\\
         default: return -2;\\
         };\\
         return 1
@@ -352,18 +352,18 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 
 needs['TRYCOMPLEXPYARRAYTEMPLATE']=['PRINTPYOBJERR']
 cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
-#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (arr->descr->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;
+#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;
 #define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
         PyArrayObject *arr = NULL;\\
         if (!obj) return -2;\\
         if (!PyArray_Check(obj)) return -1;\\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYCOMPLEXPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
-        if (arr->descr->type==typecode) {\\
+        if (PyArray_DESCR(arr)->type==typecode) {\\
             *(ctype *)(PyArray_DATA(arr))=(*v).r;\\
             *(ctype *)(PyArray_DATA(arr)+sizeof(ctype))=(*v).i;\\
             return 1;\\
         }\\
-        switch (arr->descr->type_num) {\\
+        switch (PyArray_DESCR(arr)->type_num) {\\
                 case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r;*(double *)(PyArray_DATA(arr)+sizeof(double))=(*v).i;break;\\
                 case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=(*v).r;*(float *)(PyArray_DATA(arr)+sizeof(float))=(*v).i;break;\\
                 case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -381,7 +381,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;break;\\
-                case NPY_OBJECT: (arr->descr->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;\\
+                case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;\\
                 default: return -2;\\
         };\\
         return -1;
@@ -391,11 +391,11 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 ## \tif (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 ## \telse arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
 ## \tif (arr) {\\
-## \t\tif (arr->descr->type_num==NPY_OBJECT) {\\
-## \t\t\tif (!ctype ## _from_pyobj(v,(arr->descr->getitem)(PyArray_DATA(arr)),\"\"))\\
+## \t\tif (PyArray_DESCR(arr)->type_num==NPY_OBJECT) {\\
+## \t\t\tif (!ctype ## _from_pyobj(v,(PyArray_DESCR(arr)->getitem)(PyArray_DATA(arr)),\"\"))\\
 ## \t\t\tgoto capi_fail;\\
 ## \t\t} else {\\
-## \t\t\t(arr->descr->cast[typenum])(PyArray_DATA(arr),1,(char*)v,1,1);\\
+## \t\t\t(PyArray_DESCR(arr)->cast[typenum])(PyArray_DATA(arr),1,(char*)v,1,1);\\
 ## \t\t}\\
 ## \t\tif ((PyObject *)arr != obj) { Py_DECREF(arr); }\\
 ## \t\treturn 1;\\
@@ -407,11 +407,11 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 ## \tif (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 ## \telse arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
 ## \tif (arr) {\\
-## \t\tif (arr->descr->type_num==NPY_OBJECT) {\\
-## \t\t\tif (!ctype ## _from_pyobj(v,(arr->descr->getitem)(PyArray_DATA(arr)),\"\"))\\
+## \t\tif (PyArray_DESCR(arr)->type_num==NPY_OBJECT) {\\
+## \t\t\tif (!ctype ## _from_pyobj(v,(PyArray_DESCR(arr)->getitem)(PyArray_DATA(arr)),\"\"))\\
 ## \t\t\tgoto capi_fail;\\
 ## \t\t} else {\\
-## \t\t\t(arr->descr->cast[typenum])((void *)(PyArray_DATA(arr)),1,(void *)(v),1,1);\\
+## \t\t\t(PyArray_DESCR(arr)->cast[typenum])((void *)(PyArray_DATA(arr)),1,(void *)(v),1,1);\\
 ## \t\t}\\
 ## \t\tif ((PyObject *)arr != obj) { Py_DECREF(arr); }\\
 ## \t\treturn 1;\\
@@ -623,7 +623,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\t\tgoto capi_fail;
 \t\t}
 \t\tif (*len == -1)
-\t\t\t*len = (arr->descr->elsize)*PyArray_SIZE(arr);
+\t\t\t*len = (PyArray_DESCR(arr)->elsize)*PyArray_SIZE(arr);
 \t\tSTRINGMALLOC(*str,*len);
 \t\tSTRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
 \t\treturn 1;

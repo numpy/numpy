@@ -766,7 +766,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
                         );
             if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
                 sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
-                        arr->descr->type,typechar);
+                        PyArray_DESCR(arr)->type,typechar);
 	    if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
 	      sprintf(mess+strlen(mess)," -- input not %d-aligned", F2PY_GET_ALIGNMENT(intent));
             PyErr_SetString(PyExc_ValueError,mess);
