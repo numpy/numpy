@@ -223,7 +223,7 @@ cppmacros['SWAP']="""\
 \ta = b;\\
 \tb = c;}
 """
-#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_CONTIGUOUS)'
+#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)'
 cppmacros['PRINTPYOBJERR']="""\
 #define PRINTPYOBJERR(obj)\\
 \tfprintf(stderr,\"#modulename#.error is related to \");\\
