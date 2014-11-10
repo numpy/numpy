@@ -326,6 +326,10 @@ class TestDtypedescr(TestCase):
         d2 = dtype('f8')
         assert_equal(d2, dtype(float64))
 
+    def test_byteorders(self):
+        self.assertNotEqual(dtype('<i4'), dtype('>i4'))
+        self.assertNotEqual(dtype([('a', '<i4')]), dtype([('a', '>i4')]))
+
 class TestZeroRank(TestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
@@ -724,6 +728,12 @@ class TestStructured(TestCase):
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
+
+    def test_cast_with_swap(self):
+        a = np.array([(1,)], dtype=[('a', '<i4')])
+        b = a.astype([('a', '>i4')])
+        assert_equal(b, a.byteswap().newbyteorder())
+        assert_equal(a['a'][0], b['a'][0])
 
 
 class TestBool(TestCase):
