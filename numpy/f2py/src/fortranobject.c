@@ -616,7 +616,8 @@ void dump_dims(int rank, npy_intp* dims) {
     }
     printf("]\n");
 }
-void dump_attrs(const PyArrayObject* arr) {
+void dump_attrs(const PyArrayObject* obj) {
+    const PyArrayObject_fields *arr = (const PyArrayObject_fields*) obj;
     int rank = PyArray_NDIM(arr);
     npy_intp size = PyArray_Size((PyObject *)arr);
     printf("\trank = %d, flags = %d, size = %" NPY_INTP_FMT  "\n",
@@ -630,7 +631,9 @@ void dump_attrs(const PyArrayObject* arr) {
 
 #define SWAPTYPE(a,b,t) {t c; c = (a); (a) = (b); (b) = c; }
 
-static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
+static int swap_arrays(PyArrayObject* obj1, PyArrayObject* obj2) {
+    PyArrayObject_fields *arr1 = (PyArrayObject_fields*) obj1,
+                         *arr2 = (PyArrayObject_fields*) obj2;
     SWAPTYPE(arr1->data,arr2->data,char*);
     SWAPTYPE(arr1->nd,arr2->nd,int);
     SWAPTYPE(arr1->dimensions,arr2->dimensions,npy_intp*);
