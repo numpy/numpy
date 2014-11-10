@@ -326,7 +326,7 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
         if (!PyArray_Check(obj)) return -1;\\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
         if (PyArray_DESCR(arr)->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
-        switch (PyArray_DESCR(arr)->type_num) {\\
+        switch (PyArray_TYPE(arr)) {\\
                 case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_INT: *(int *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;\\
@@ -363,7 +363,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
             *(ctype *)(PyArray_DATA(arr)+sizeof(ctype))=(*v).i;\\
             return 1;\\
         }\\
-        switch (PyArray_DESCR(arr)->type_num) {\\
+        switch (PyArray_TYPE(arr)) {\\
                 case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r;*(double *)(PyArray_DATA(arr)+sizeof(double))=(*v).i;break;\\
                 case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=(*v).r;*(float *)(PyArray_DATA(arr)+sizeof(float))=(*v).i;break;\\
                 case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -391,7 +391,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 ## \tif (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 ## \telse arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
 ## \tif (arr) {\\
-## \t\tif (PyArray_DESCR(arr)->type_num==NPY_OBJECT) {\\
+## \t\tif (PyArray_TYPE(arr)==NPY_OBJECT) {\\
 ## \t\t\tif (!ctype ## _from_pyobj(v,(PyArray_DESCR(arr)->getitem)(PyArray_DATA(arr)),\"\"))\\
 ## \t\t\tgoto capi_fail;\\
 ## \t\t} else {\\
@@ -407,7 +407,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 ## \tif (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 ## \telse arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
 ## \tif (arr) {\\
-## \t\tif (PyArray_DESCR(arr)->type_num==NPY_OBJECT) {\\
+## \t\tif (PyArray_TYPE(arr)==NPY_OBJECT) {\\
 ## \t\t\tif (!ctype ## _from_pyobj(v,(PyArray_DESCR(arr)->getitem)(PyArray_DATA(arr)),\"\"))\\
 ## \t\t\tgoto capi_fail;\\
 ## \t\t} else {\\
@@ -623,7 +623,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\t\tgoto capi_fail;
 \t\t}
 \t\tif (*len == -1)
-\t\t\t*len = (PyArray_DESCR(arr)->elsize)*PyArray_SIZE(arr);
+\t\t\t*len = (PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr);
 \t\tSTRINGMALLOC(*str,*len);
 \t\tSTRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
 \t\treturn 1;
