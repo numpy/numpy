@@ -327,6 +327,10 @@ class TestDtypedescr(TestCase):
         d2 = dtype('f8')
         assert_equal(d2, dtype(float64))
 
+    def test_byteorders(self):
+        self.assertNotEqual(dtype('<i4'), dtype('>i4'))
+        self.assertNotEqual(dtype([('a', '<i4')]), dtype([('a', '>i4')]))
+
 class TestZeroRank(TestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
@@ -725,6 +729,65 @@ class TestStructured(TestCase):
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
+
+    def test_casting(self):
+        # Check that casting a structured array to change its byte order
+        # works
+        a = np.array([(1,)], dtype=[('a', '<i4')])
+        assert_(np.can_cast(a.dtype, [('a', '>i4')], casting='unsafe'))
+        b = a.astype([('a', '>i4')])
+        assert_equal(b, a.byteswap().newbyteorder())
+        assert_equal(a['a'][0], b['a'][0])
+
+        # Check that equality comparison works on structured arrays if
+        # they are 'equiv'-castable
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
+        b = np.array([(42, 5), (1, 10)], dtype=[('b', '>f8'), ('a', '<i4')])
+        assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
+        assert_equal(a == b, [True, True])
+
+        # Check that 'equiv' casting can reorder fields and change byte
+        # order
+        assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
+        c = a.astype(b.dtype, casting='equiv')
+        assert_equal(a == c, [True, True])
+
+        # Check that 'safe' casting can change byte order and up-cast
+        # fields
+        t = [('a', '<i8'), ('b', '>f8')]
+        assert_(np.can_cast(a.dtype, t, casting='safe'))
+        c = a.astype(t, casting='safe')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        # Check that 'same_kind' casting can change byte order and
+        # change field widths within a "kind"
+        t = [('a', '<i4'), ('b', '>f4')]
+        assert_(np.can_cast(a.dtype, t, casting='same_kind'))
+        c = a.astype(t, casting='same_kind')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        # Check that casting fails if the casting rule should fail on
+        # any of the fields
+        t = [('a', '>i8'), ('b', '<f4')]
+        assert_(not np.can_cast(a.dtype, t, casting='safe'))
+        assert_raises(TypeError, a.astype, t, casting='safe')
+        t = [('a', '>i2'), ('b', '<f8')]
+        assert_(not np.can_cast(a.dtype, t, casting='equiv'))
+        assert_raises(TypeError, a.astype, t, casting='equiv')
+        t = [('a', '>i8'), ('b', '<i2')]
+        assert_(not np.can_cast(a.dtype, t, casting='same_kind'))
+        assert_raises(TypeError, a.astype, t, casting='same_kind')
+        assert_(not np.can_cast(a.dtype, b.dtype, casting='no'))
+        assert_raises(TypeError, a.astype, b.dtype, casting='no')
+
+        # Check that non-'unsafe' casting can't change the set of field names
+        for casting in ['no', 'safe', 'equiv', 'same_kind']:
+            t = [('a', '>i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
+            t = [('a', '>i4'), ('b', '<f8'), ('c', 'i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
 
 
 class TestBool(TestCase):
