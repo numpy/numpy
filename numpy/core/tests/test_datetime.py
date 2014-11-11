@@ -1417,6 +1417,12 @@ class TestDateTime(TestCase):
         assert_equal(np.arange(d, d + 1), d)
         assert_raises(ValueError, np.arange, d)
 
+    def test_datetime_arange_int(self):
+        a = np.arange(-2, 4, dtype='M8[Y]')
+        assert_equal(a,
+                     np.array(['1968', '1969', '1970', '1971', '1972', '1973'],
+                              dtype='datetime64[Y]'))
+
     def test_timedelta_arange(self):
         a = np.arange(3, 10, dtype='m8')
         assert_equal(a.dtype, np.dtype('m8'))
