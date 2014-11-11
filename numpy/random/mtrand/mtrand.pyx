@@ -2919,7 +2919,7 @@ cdef class RandomState:
 
         Plot Gaussian for comparison:
 
-        >>> g = (1/(scale * np.sqrt(2 * np.pi)) * 
+        >>> g = (1/(scale * np.sqrt(2 * np.pi)) *
         ...      np.exp(-(x - loc)**2 / (2 * scale**2)))
         >>> plt.plot(x,g)
 
@@ -4220,8 +4220,8 @@ cdef class RandomState:
         mean : 1-D array_like, of length N
             Mean of the N-dimensional distribution.
         cov : 2-D array_like, of shape (N, N)
-            Covariance matrix of the distribution.  Must be symmetric and
-            positive-semidefinite for "physically meaningful" results.
+            Covariance matrix of the distribution. It must be symmetric and
+            positive-semidefinite for proper sampling.
         size : int or tuple of ints, optional
             Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
@@ -4268,7 +4268,9 @@ cdef class RandomState:
         >>> x,y = np.random.multivariate_normal(mean,cov,5000).T
         >>> plt.plot(x,y,'x'); plt.axis('equal'); plt.show()
 
-        Note that the covariance matrix must be non-negative definite.
+        Note that the covariance matrix must be positive semidefinite (a.k.a.
+        nonnegative-definite). Otherwise, the behavior of this method is
+        undefined and backwards compatibility is not guaranteed.
 
         References
         ----------
