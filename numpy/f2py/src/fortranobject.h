@@ -4,6 +4,8 @@
 extern "C" {
 #endif
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include "Python.h"
 
 #ifdef FORTRANOBJECT_C
@@ -119,7 +121,7 @@ int F2PyCapsule_Check(PyObject *ptr);
 
 #endif
 
-#define ISCONTIGUOUS(m) ((m)->flags & NPY_CONTIGUOUS)
+#define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)
 #define F2PY_INTENT_IN 1
 #define F2PY_INTENT_INOUT 2
 #define F2PY_INTENT_OUT 4
