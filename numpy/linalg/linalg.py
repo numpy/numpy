@@ -2162,12 +2162,13 @@ def multi_dot(arrays):
     Compute the dot product of two or more arrays in a single function call,
     while automatically selecting the fastest evaluation order.
 
-    `multi_dot` chains `numpy.dot` and uses an optimal parenthesizations
-    of the matrices [1]_ [2]_. Depending on the shape of the matrices
+    `multi_dot` chains `numpy.dot` and uses optimal parenthesization
+    of the matrices [1]_ [2]_. Depending on the shapes of the matrices,
     this can speed up the multiplication a lot.
 
-    The first and last argument can be 1-D and are treated respectively as
-    row and column vector. The other arguments must be 2-D.
+    If the first argument is 1-D it is treated as a row vector.
+    If the last argument is 1-D it is treated as a column vector.
+    The other arguments must be 2-D.
 
     Think of `multi_dot` as::
 
@@ -2177,8 +2178,9 @@ def multi_dot(arrays):
     Parameters
     ----------
     arrays : sequence of array_like
-        First and last argument can be 1-D and are treated respectively as
-        row and column vector, the other arguments must be 2-D.
+        If the first argument is 1-D it is treated as row vector.
+        If the last argument is 1-D it is treated as column vector.
+        The other arguments must be 2-D.
 
     Returns
     -------
@@ -2199,7 +2201,7 @@ def multi_dot(arrays):
     --------
     `multi_dot` allows you to write::
 
-    >>> import numpy as np
+    >>> from numpy.linalg import multi_dot
     >>> # Prepare some data
     >>> A = np.random.random(10000, 100)
     >>> B = np.random.random(100, 1000)
@@ -2269,10 +2271,10 @@ def multi_dot(arrays):
 
 def _multi_dot_three(A, B, C):
     """
-    Find best ordering for three arrays and do the multiplication.
+    Find the best order for three arrays and do the multiplication.
 
-    Doing in manually instead of using dynamic programing is
-    approximately 15 times faster.
+    For three arguments `_multi_dot_three` is approximately 15 times faster
+    than `_multi_dot_matrix_chain_order`
 
     """
     # cost1 = cost((AB)C)
@@ -2290,7 +2292,7 @@ def _multi_dot_three(A, B, C):
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     """
-    Return a np.array which encodes the opimal order of mutiplications.
+    Return a np.array that encodes the optimal order of mutiplications.
 
     The optimal order array is then used by `_multi_dot()` to do the
     multiplication.
