@@ -729,11 +729,41 @@ class TestStructured(TestCase):
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
 
-    def test_cast_with_swap(self):
+    def test_casting(self):
         a = np.array([(1,)], dtype=[('a', '<i4')])
         b = a.astype([('a', '>i4')])
         assert_equal(b, a.byteswap().newbyteorder())
         assert_equal(a['a'][0], b['a'][0])
+
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
+        b = np.array([(42, 5), (1, 10)], dtype=[('b', '>f8'), ('a', '<i4')])
+
+        assert_equal(a == b, [True, True])
+
+        c = a.astype(b.dtype, casting='equiv')
+        assert_equal(a == c, [True, True])
+
+        t = [('a', '<i8'), ('b', '>f8')]
+        c = a.astype(t, casting='safe')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        t = [('a', '<i4'), ('b', '>f4')]
+        c = a.astype(t, casting='same_kind')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        with self.assertRaises(TypeError):
+            a.astype([('a', '>i8'), ('b', '<f4')], casting='safe')
+
+        with self.assertRaises(TypeError):
+            a.astype([('a', '>i2'), ('b', '<f8')], casting='equiv')
+
+        with self.assertRaises(TypeError):
+            a.astype([('a', '>i8'), ('b', '<i2')], casting='same_kind')
+
+        with self.assertRaises(TypeError):
+            a.astype(b.dtype, casting='no')
 
 
 class TestBool(TestCase):
