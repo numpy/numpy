@@ -753,17 +753,16 @@ class TestStructured(TestCase):
         assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
                      [True, True])
 
-        with self.assertRaises(TypeError):
-            a.astype([('a', '>i8'), ('b', '<f4')], casting='safe')
+        assert_raises(TypeError, a.astype, [('a', '>i8'), ('b', '<f4')],
+                      casting='safe')
 
-        with self.assertRaises(TypeError):
-            a.astype([('a', '>i2'), ('b', '<f8')], casting='equiv')
+        assert_raises(TypeError, a.astype, [('a', '>i2'), ('b', '<f8')],
+                      casting='equiv')
 
-        with self.assertRaises(TypeError):
-            a.astype([('a', '>i8'), ('b', '<i2')], casting='same_kind')
+        assert_raises(TypeError, a.astype, [('a', '>i8'), ('b', '<i2')],
+                      casting='same_kind')
 
-        with self.assertRaises(TypeError):
-            a.astype(b.dtype, casting='no')
+        assert_raises(TypeError, a.astype, b.dtype, casting='no')
 
 
 class TestBool(TestCase):
