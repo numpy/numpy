@@ -553,9 +553,9 @@ void f2py_report_on_exit(int exit_flag,void *name) {
 
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
 static void f2py_report_on_array_copy(PyArrayObject* arr) {
-    const long arr_size = PyArray_Size((PyObject *)arr);
+    const npy_intp arr_size = PyArray_Size((PyObject *)arr);
     if (arr_size>F2PY_REPORT_ON_ARRAY_COPY) {
-        fprintf(stderr,"copied an array: size=%ld, elsize=%d\n",
+        fprintf(stderr,"copied an array: size=%ld, elsize=%"NPY_INTP_FMT"\n",
                 arr_size, PyArray_ITEMSIZE(arr));
     }
 }
@@ -723,8 +723,10 @@ PyArrayObject* array_from_pyobj(const int type_num,
             if (!PyArray_ISONESEGMENT(arr))
                 strcat(mess, " -- input must be in one segment");
             if (PyArray_ITEMSIZE(arr)<elsize)
-                sprintf(mess+strlen(mess)," -- expected at least elsize=%d but got %d",
-                        elsize,PyArray_ITEMSIZE(arr)
+                sprintf(mess+strlen(mess),
+                        " -- expected at least elsize=%d but got %" NPY_INTP_FMT,
+                        elsize,
+                        PyArray_ITEMSIZE(arr)
                         );
             PyErr_SetString(PyExc_ValueError,mess);
             return NULL;
@@ -763,7 +765,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
             if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))
                 strcat(mess, " -- input not fortran contiguous");
             if (PyArray_ITEMSIZE(arr)!=elsize)
-                sprintf(mess+strlen(mess)," -- expected elsize=%d but got %d",
+                sprintf(mess+strlen(mess),
+                        " -- expected elsize=%d but got %" NPY_INTP_FMT,
                         elsize,
                         PyArray_ITEMSIZE(arr)
                         );
