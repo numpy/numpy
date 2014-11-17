@@ -1,0 +1,33 @@
+NumPy 1.9.1 Release Notes
+*************************
+
+This is a bugfix only release in the 1.9.x series.
+
+Issues fixed
+============
+
+* gh-5184: restore linear edge behaviour of gradient to as it was in < 1.9.
+  The second order behaviour is available via the `edge_order` keyword
+* gh-4007: workaround Accelerate sgemv crash on OSX 10.9
+* gh-5100: restore object dtype inference from iterable objects without `len()`
+* gh-5163: avoid gcc-4.1.2 (red hat 5) miscompilation causing a crash
+* gh-5138: fix nanmedian on arrays containing inf
+* gh-5240: fix not returning out array from ufuncs with subok=False set
+* gh-5203: copy inherited masks in MaskedArray.__array_finalize__
+* gh-2317: genfromtxt did not handle filling_values=0 correctly
+* gh-5067: restore api of npy_PyFile_DupClose in python2
+* gh-5063: cannot convert invalid sequence index to tuple
+* gh-5082: Segmentation fault with argmin() on unicode arrays
+* gh-5095: don't propagate subtypes from np.where
+* gh-5104: np.inner segfaults with SciPy's sparse matrices
+* gh-5251: Issue with fromarrays not using correct format for unicode arrays
+* gh-5136: Import dummy_threading if importing threading fails
+* gh-5148: Make numpy import when run with Python flag '-OO'
+* gh-5147: Einsum double contraction in particular order causes ValueError
+* gh-479: Make f2py work with intent(in out)
+* gh-5170: Make python2 .npy files readable in python3
+* gh-5027: Use 'll' as the default length specifier for long long
+* gh-4896: fix build error with MSVC 2013 caused by C99 complex support
+* gh-4465: Make PyArray_PutTo respect writeable flag
+* gh-5225: fix crash when using arange on datetime without dtype set
+* gh-5231: fix build in c99 mode
