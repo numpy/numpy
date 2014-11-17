@@ -932,8 +932,8 @@ add_newdoc('numpy.core.umath', 'divide',
     Returns
     -------
     y : {ndarray, scalar}
-        The quotient `x1/x2`, element-wise. Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The quotient ``x1/x2``, element-wise. Returns a scalar if
+        both ``x1`` and ``x2`` are scalars.
 
     See Also
     --------
@@ -942,13 +942,13 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Notes
     -----
-    Equivalent to `x1` / `x2` in terms of array-broadcasting.
+    Equivalent to ``x1`` / ``x2`` in terms of array-broadcasting.
 
-    Behavior on division by zero can be changed using `seterr`.
+    Behavior on division by zero can be changed using ``seterr``.
 
-    When both `x1` and `x2` are of an integer type, `divide` will return
-    integers and throw away the fractional part. Moreover, division by zero
-    always yields zero in integer arithmetic.
+    In Python 2, when both ``x1`` and ``x2`` are of an integer type,
+    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
+    like ``true_divide``.
 
     Examples
     --------
@@ -961,20 +961,20 @@ add_newdoc('numpy.core.umath', 'divide',
            [ Inf,  4. ,  2.5],
            [ Inf,  7. ,  4. ]])
 
-    Note the behavior with integer types:
+    Note the behavior with integer types (Python 2 only):
 
     >>> np.divide(2, 4)
     0
     >>> np.divide(2, 4.)
     0.5
 
-    Division by zero always yields zero in integer arithmetic, and does not
-    raise an exception or a warning:
+    Division by zero always yields zero in integer arithmetic (again,
+    Python 2 only), and does not raise an exception or a warning:
 
     >>> np.divide(np.array([0, 1], dtype=int), np.array([0, 0], dtype=int))
     array([0, 0])
 
-    Division by zero can, however, be caught using `seterr`:
+    Division by zero can, however, be caught using ``seterr``:
 
     >>> old_err_state = np.seterr(divide='raise')
     >>> np.divide(1, 0)
