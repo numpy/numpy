@@ -6,11 +6,9 @@
 
 static PyObject *ErrorObject;
 
-/* ----------------------------------------------------- */
+static const char fftpack_cfftf__doc__[] = "";
 
-static char fftpack_cfftf__doc__[] = "";
-
-PyObject *
+static PyObject *
 fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -61,9 +59,9 @@ fail:
     return NULL;
 }
 
-static char fftpack_cfftb__doc__[] = "";
+static const char fftpack_cfftb__doc__[] = "";
 
-PyObject *
+static PyObject *
 fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -114,7 +112,7 @@ fail:
     return NULL;
 }
 
-static char fftpack_cffti__doc__[] ="";
+static const char fftpack_cffti__doc__[] = "";
 
 static PyObject *
 fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -143,9 +141,9 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     return (PyObject *)op;
 }
 
-static char fftpack_rfftf__doc__[] ="";
+static const char fftpack_rfftf__doc__[] = "";
 
-PyObject *
+static PyObject *
 fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -187,7 +185,6 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     rptr = (double *)PyArray_DATA(ret);
     dptr = (double *)PyArray_DATA(data);
 
-
     Py_BEGIN_ALLOW_THREADS;
     NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
@@ -211,10 +208,9 @@ fail:
     return NULL;
 }
 
-static char fftpack_rfftb__doc__[] ="";
+static const char fftpack_rfftb__doc__[] = "";
 
-
-PyObject *
+static PyObject *
 fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -274,8 +270,7 @@ fail:
     return NULL;
 }
 
-
-static char fftpack_rffti__doc__[] ="";
+static const char fftpack_rffti__doc__[] = "";
 
 static PyObject *
 fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -316,11 +311,6 @@ static struct PyMethodDef fftpack_methods[] = {
     {NULL, NULL, 0, NULL}          /* sentinel */
 };
 
-
-/* Initialization function for the module (*must* be called initfftpack) */
-
-static char fftpack_module_documentation[] = "" ;
-
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -349,6 +339,8 @@ initfftpack_lite(void)
 #if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
 #else
+    static const char fftpack_module_documentation[] = "";
+
     m = Py_InitModule4("fftpack_lite", fftpack_methods,
             fftpack_module_documentation,
             (PyObject*)NULL,PYTHON_API_VERSION);
