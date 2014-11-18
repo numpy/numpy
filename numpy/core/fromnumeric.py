@@ -513,6 +513,12 @@ def transpose(a, axes=None):
     See Also
     --------
     rollaxis
+    argsort
+
+    Notes
+    -----
+    Use `transpose(a, argsort(axes))` to invert the transposition of tensors
+    when using the `axes` keyword argument.
 
     Examples
     --------
