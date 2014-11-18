@@ -216,6 +216,17 @@ class TestSavezLoad(RoundtripTest, TestCase):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
+    
+    def test_BagObj(self):
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
+        c = BytesIO()
+        np.savez(c, file_a=a, file_b=b)
+        c.seek(0)
+        l = np.load(c)
+        assert_equal(sorted(dir(l.f)), ['file_a','file_b'])
+        assert_equal(a, l.f.file_a)
+        assert_equal(b, l.f.file_b)
 
     def test_savez_filename_clashes(self):
         # Test that issue #852 is fixed
