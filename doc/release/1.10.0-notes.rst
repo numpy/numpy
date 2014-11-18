@@ -8,7 +8,7 @@ Highlights
 ==========
 * numpy.distutils now supports parallel compilation via the --jobs/-j argument
   passed to setup.py build
-* Addition of `np.linalg.multi_dot`: compute the dot product of two or more
+* Addition of *np.linalg.multi_dot*: compute the dot product of two or more
   arrays in a single function call, while automatically selecting the fastest
   evaluation order.
 
@@ -34,16 +34,16 @@ NPY_RELAXED_STRIDE_CHECKING is now true by default.
 New Features
 ============
 
-`np.cbrt` to compute cube root for real floats
+*np.cbrt* to compute cube root for real floats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.cbrt` wraps the C99 cube root function `cbrt`.
-Compared to `np.power(x, 1./3.)` it is well defined for negative real floats
+*np.cbrt* wraps the C99 cube root function *cbrt*.
+Compared to *np.power(x, 1./3.)* it is well defined for negative real floats
 and a bit faster.
 
 numpy.distutils now allows parallel compilation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By passing `--jobs=n` or `-j n` to `setup.py build` the compilation of
-extensions is now performed in `n` parallel processes.
+By passing *--jobs=n* or *-j n* to *setup.py build* the compilation of
+extensions is now performed in *n* parallel processes.
 The parallelization is limited to files within one extension so projects using
 Cython will not profit because it builds extensions from single files.
 
@@ -51,25 +51,25 @@ Cython will not profit because it builds extensions from single files.
 Improvements
 ============
 
-`np.digitize` using binary search
+*np.digitize* using binary search
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.digitize` is now implemented in terms of `np.searchsorted`. This means
+*np.digitize* is now implemented in terms of *np.searchsorted*. This means
 that a binary search is used to bin the values, which scales much better
 for larger number of bins than the previous linear search. It also removes
 the requirement for the input array to be 1-dimensional.
 
-`np.poly` now casts integer inputs to float
+*np.poly* now casts integer inputs to float
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.poly` will now cast 1-dimensional input arrays of integer type to double
+*np.poly* will now cast 1-dimensional input arrays of integer type to double
 precision floating point, to prevent integer overflow when computing the monic
 polynomial. It is still possible to obtain higher precision results by
 passing in an array of object type, filled e.g. with Python ints.
 
-`np.interp` can now be used with periodic functions
+*np.interp* can now be used with periodic functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`np.interp` now has a new parameter `period` that supplies the period of the
-input data `xp`. In such case, the input data is properly normalized to the
-given period and one end point is added to each extremity of `xp` in order to
+*np.interp* now has a new parameter *period* that supplies the period of the
+input data *xp*. In such case, the input data is properly normalized to the
+given period and one end point is added to each extremity of *xp* in order to
 close the previous and the next period cycles, resulting in the correct
 interpolation behavior.
 
