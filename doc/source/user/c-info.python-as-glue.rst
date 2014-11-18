@@ -436,248 +436,193 @@ written C-code.
    single: f2py
 
 
-Pyrex
-=====
+Cython
+======
 
-Pyrex is a way to write C-extension modules using Python-like syntax.
-It is an interesting way to generate extension modules that is growing
-in popularity, particularly among people who have rusty or non-
-existent C-skills. It does require the user to write the "interface"
-code and so is more time-consuming than SWIG or f2py if you are trying
-to interface to a large library of code. However, if you are writing
-an extension module that will include quite a bit of your own
-algorithmic code, as well, then Pyrex is a good match. A big weakness
-perhaps is the inability to easily and quickly access the elements of
-a multidimensional array.
+`Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
+(optional) static typing for speed, and allows mixing C or C++ code
+into your modules. It produces C or C++ extensions that can be linked into
+the Python interpreter.
+
+If you are writing an extension module that will include quite a bit of your
+own algorithmic code as well, then Cython is a good match. Among its killer
+features is the ability to easily and quickly access the elements of a
+multidimensional array.
 
 .. index::
-   single: pyrex
+   single: cython
 
-Notice that Pyrex is an extension-module generator only. Unlike f2py,
+Notice that Cython is an extension-module generator only. Unlike f2py,
 it includes no automatic facility for compiling and linking
 the extension module (which must be done in the usual fashion). It
-does provide a modified distutils class called build_ext which lets
-you build an extension module from a .pyx source. Thus, you could
-write in a setup.py file:
+does provide a modified distutils class called ``build_ext`` which lets
+you build an extension module from a ``.pyx`` source. Thus, you could
+write in a ``setup.py`` file:
 
 .. code-block:: python
 
-    from Pyrex.Distutils import build_ext
+    from Cython.Distutils import build_ext
     from distutils.extension import Extension
     from distutils.core import setup
-
     import numpy
-    py_ext = Extension('mine', ['mine.pyx'],
-             include_dirs=[numpy.get_include()])
 
     setup(name='mine', description='Nothing',
-          ext_modules=[pyx_ext],
+          ext_modules=[Extension('filter', ['filter.pyx'],
+                                 include_dirs=[numpy.get_include()])],
           cmdclass = {'build_ext':build_ext})
 
 Adding the NumPy include directory is, of course, only necessary if
-you are using NumPy arrays in the extension module (which is what I
-assume you are using Pyrex for). The distutils extensions in NumPy
+you are using NumPy arrays in the extension module (which is what we
+assume you are using Cython for). The distutils extensions in NumPy
 also include support for automatically producing the extension-module
 and linking it from a ``.pyx`` file. It works so that if the user does
-not have Pyrex installed, then it looks for a file with the same
+not have Cython installed, then it looks for a file with the same
 file-name but a ``.c`` extension which it then uses instead of trying
 to produce the ``.c`` file again.
 
-Pyrex does not natively understand NumPy arrays. However, it is not
-difficult to include information that lets Pyrex deal with them
-usefully. In fact, the numpy.random.mtrand module was written using
-Pyrex so an example of Pyrex usage is already included in the NumPy
-source distribution. That experience led to the creation of a standard
-c_numpy.pxd file that you can use to simplify interacting with NumPy
-array objects in a Pyrex-written extension. The file may not be
-complete (it wasn't at the time of this writing). If you have
-additions you'd like to contribute, please send them. The file is
-located in the .../site-packages/numpy/doc/pyrex directory where you
-have Python installed. There is also an example in that directory of
-using Pyrex to construct a simple extension module. It shows that
-Pyrex looks a lot like Python but also contains some new syntax that
-is necessary in order to get C-like speed.
-
-If you just use Pyrex to compile a standard Python module, then you
-will get a C-extension module that runs either as fast or, possibly,
-more slowly than the equivalent Python module. Speed increases are
-possible only when you use cdef to statically define C variables and
-use a special construct to create for loops:
-
-.. code-block:: none
-
-    cdef int i
-    for i from start <= i < stop
+If you just use Cython to compile a standard Python module, then you
+will get a C extension module that typically runs a bit faster than the
+equivalent Python module. Further speed increases can be gained by using
+the ``cdef`` keyword to statically define C variables.
 
 Let's look at two examples we've seen before to see how they might be
-implemented using Pyrex. These examples were compiled into extension
-modules using Pyrex-0.9.3.1.
+implemented using Cython. These examples were compiled into extension
+modules using Cython 0.21.1.
 
 
-Pyrex-add
----------
+Complex addition in Cython
+--------------------------
 
-Here is part of a Pyrex-file I named add.pyx which implements the add
-functions we previously implemented using f2py:
-
-.. code-block:: none
-
-    cimport c_numpy
-    from c_numpy cimport import_array, ndarray, npy_intp, npy_cdouble, \
-         npy_cfloat, NPY_DOUBLE, NPY_CDOUBLE, NPY_FLOAT, \
-         NPY_CFLOAT
-
-    #We need to initialize NumPy
-    import_array()
-
-    def zadd(object ao, object bo):
-        cdef ndarray c, a, b
-        cdef npy_intp i
-        a = c_numpy.PyArray_ContiguousFromAny(ao,
-                      NPY_CDOUBLE, 1, 1)
-        b = c_numpy.PyArray_ContiguousFromAny(bo,
-                      NPY_CDOUBLE, 1, 1)
-        c = c_numpy.PyArray_SimpleNew(a.nd, a.dimensions,
-                     a.descr.type_num)
-        for i from 0 <= i < a.dimensions[0]:
-            (<npy_cdouble *>c.data)[i].real = \
-                 (<npy_cdouble *>a.data)[i].real + \
-                 (<npy_cdouble *>b.data)[i].real
-            (<npy_cdouble *>c.data)[i].imag = \
-                 (<npy_cdouble *>a.data)[i].imag + \
-                 (<npy_cdouble *>b.data)[i].imag
-        return c
-
-This module shows use of the ``cimport`` statement to load the
-definitions from the c_numpy.pxd file. As shown, both versions of the
-import statement are supported. It also shows use of the NumPy C-API
-to construct NumPy arrays from arbitrary input objects. The array c is
-created using PyArray_SimpleNew. Then the c-array is filled by
-addition. Casting to a particiular data-type is accomplished using
-<cast \*>. Pointers are de-referenced with bracket notation and
-members of structures are accessed using '.' notation even if the
-object is techinically a pointer to a structure. The use of the
-special for loop construct ensures that the underlying code will have
-a similar C-loop so the addition calculation will proceed quickly.
-Notice that we have not checked for NULL after calling to the C-API
---- a cardinal sin when writing C-code. For routines that return
-Python objects, Pyrex inserts the checks for NULL into the C-code for
-you and returns with failure if need be. There is also a way to get
-Pyrex to automatically check for exceptions when you call functions
-that don't return Python objects. See the documentation of Pyrex for
-details.
-
-
-Pyrex-filter
-------------
-
-The two-dimensional example we created using weave is a bit uglier to
-implement in Pyrex because two-dimensional indexing using Pyrex is not
-as simple. But, it is straightforward (and possibly faster because of
-pre-computed indices). Here is the Pyrex-file I named image.pyx.
+Here is part of a Cython module named ``add.pyx`` which implements the
+complex addition functions we previously implemented using f2py:
 
 .. code-block:: none
 
-    cimport c_numpy
-    from c_numpy cimport import_array, ndarray, npy_intp,\
-         NPY_DOUBLE, NPY_CDOUBLE, \
-         NPY_FLOAT, NPY_CFLOAT, NPY_ALIGNED \
+    cimport cython
+    cimport numpy as np
+    import numpy as np
 
-    #We need to initialize NumPy
-    import_array()
-    def filter(object ao):
-        cdef ndarray a, b
-        cdef npy_intp i, j, M, N, oS
-        cdef npy_intp r,rm1,rp1,c,cm1,cp1
-        cdef double value
-        # Require an ALIGNED array
-        # (but not necessarily contiguous)
-        #  We will use strides to access the elements.
-        a = c_numpy.PyArray_FROMANY(ao, NPY_DOUBLE, \
-                    2, 2, NPY_ALIGNED)
-        b = c_numpy.PyArray_SimpleNew(a.nd,a.dimensions, \
-                                      a.descr.type_num)
-        M = a.dimensions[0]
-        N = a.dimensions[1]
-        S0 = a.strides[0]
-        S1 = a.strides[1]
-        for i from 1 <= i < M-1:
-            r = i*S0
-            rm1 = r-S0
-            rp1 = r+S0
-            oS = i*N
-            for j from 1 <= j < N-1:
-                c = j*S1
-                cm1 = c-S1
-                cp1 = c+S1
-                (<double *>b.data)[oS+j] = \
-                   (<double *>(a.data+r+c))[0] + \
-                   ((<double *>(a.data+rm1+c))[0] + \
-                    (<double *>(a.data+rp1+c))[0] + \
-                    (<double *>(a.data+r+cm1))[0] + \
-                    (<double *>(a.data+r+cp1))[0])*0.5 + \
-                   ((<double *>(a.data+rm1+cm1))[0] + \
-                    (<double *>(a.data+rp1+cm1))[0] + \
-                    (<double *>(a.data+rp1+cp1))[0] + \
-                    (<double *>(a.data+rm1+cp1))[0])*0.25
-        return b
+    # We need to initialize NumPy.
+    np.import_array()
+
+    #@cython.boundscheck(False)
+    def zadd(in1, in2):
+        cdef double complex[:] a = in1.ravel()
+        cdef double complex[:] b = in2.ravel()
+
+        out = np.empty(a.shape[0], np.complex64)
+        cdef double complex[:] c = out.ravel()
+
+        for i in range(c.shape[0]):
+            c[i].real = a[i].real + b[i].real
+            c[i].imag = a[i].imag + b[i].imag
+
+        return out
+
+This module shows use of the ``cimport`` statement to load the definitions
+from the ``numpy.pxd`` header that ships with Cython. It looks like NumPy is
+imported twice; ``cimport`` only makes the NumPy C-API available, while the
+regular ``import`` causes a Python-style import at runtime and makes it
+possible to call into the familiar NumPy Python API.
+
+The example also demonstrates Cython's "typed memoryviews", which are like
+NumPy arrays at the C level, in the sense that they are shaped and strides
+arrays that know their own extent (unlike a C array addressed through a bare
+pointer). The syntax ``double complex[:]`` denotes a one-dimensional array
+(vector) of doubles, with arbitrary strides. A contiguous array of ints would
+be ``int[::1]``, while a matrix of floats would be ``float[:, :]``.
+
+Shown commented is the ``cython.boundscheck`` decorator, which turns
+bounds-checking for memory view accesses on or off on a per-function basis.
+We can use this to further speed up our code, at the expense of safety
+(or a manual check prior to entering the loop).
+
+Other than the view syntax, the function is immediately readable to a Python
+programmer. Static typing of the variable ``i`` is implicit. Instead of the
+view syntax, we could also have used Cython's special NumPy array syntax,
+but the view syntax is preferred.
+
+
+Image filter in Cython
+----------------------
+
+The two-dimensional example we created using Fortran is just as easy to write
+in Cython:
+
+.. code-block:: none
+
+    cimport numpy as np
+    import numpy as np
+
+    np.import_array()
+
+    def filter(img):
+        cdef double[:, :] a = np.asarray(img, dtype=np.double)
+        out = np.zeros(img.shape, dtype=np.double)
+        cdef double[:, ::1] b = out
+
+        cdef np.npy_intp i, j
+
+        for i in range(1, a.shape[0] - 1):
+            for j in range(1, a.shape[1] - 1):
+                b[i, j] = (a[i, j]
+                           + .5 * (  a[i-1, j] + a[i+1, j]
+                                   + a[i, j-1] + a[i, j+1])
+                           + .25 * (  a[i-1, j-1] + a[i-1, j+1]
+                                    + a[i+1, j-1] + a[i+1, j+1]))
+
+        return out
 
 This 2-d averaging filter runs quickly because the loop is in C and
-the pointer computations are done only as needed. However, it is not
-particularly easy to understand what is happening. A 2-d image, ``in``
-, can be filtered using this code very quickly using:
+the pointer computations are done only as needed. If the code above is
+compiled as a module ``image``, then a 2-d image, ``img``, can be filtered
+using this code very quickly using:
 
 .. code-block:: python
 
     import image
-    out = image.filter(in)
+    out = image.filter(img)
+
+Regarding the code, two things are of note: firstly, it is impossible to
+return a memory view to Python. Instead, a NumPy array ``out`` is first
+created, and then a view ``b`` onto this array is used for the computation.
+Secondly, the view ``b`` is typed ``double[:, ::1]``. This means 2-d array
+with contiguous rows, i.e., C matrix order. Specifying the order explicitly
+can speed up some algorithms since they can skip stride computations.
 
 
 Conclusion
 ----------
 
-There are several disadvantages of using Pyrex:
+Cython is the extension mechanism of choice for several scientific Python
+libraries, including Pandas, SAGE, scikit-image and scikit-learn,
+as well as the XML processing library LXML.
+The language and compiler are well-maintained.
 
-1. The syntax for Pyrex can get a bit bulky, and it can be confusing at
-   first to understand what kind of objects you are getting and how to
-   interface them with C-like constructs.
+There are several disadvantages of using Cython:
 
-2. Inappropriate Pyrex syntax or incorrect calls to C-code or type-
-   mismatches can result in failures such as
+1. When coding custom algorithms, and sometimes when wrapping existing C
+   libraries, some familiarity with C is required. In particular, when using
+   C memory management (``malloc`` and friends), it's easy to introduce
+   memory leaks. However, just compiling a Python module renamed to ``.pyx``
+   can already speed it up, and adding a few type declarations can give
+   dramatic speedups in some code.
 
-    1. Pyrex failing to generate the extension module source code,
-
-    2. Compiler failure while generating the extension module binary due to
-       incorrect C syntax,
-
-    3. Python failure when trying to use the module.
-
-
-3. It is easy to lose a clean separation between Python and C which makes
+2. It is easy to lose a clean separation between Python and C which makes
    re-using your C-code for other non-Python-related projects more
    difficult.
 
-4. Multi-dimensional arrays are "bulky" to index (appropriate macros
-   may be able to fix this).
-
-5. The C-code generated by Pyrex is hard to read and modify (and typically
+3. The C-code generated by Cython is hard to read and modify (and typically
    compiles with annoying but harmless warnings).
 
-Writing a good Pyrex extension module still takes a bit of effort
-because not only does it require (a little) familiarity with C, but
-also with Pyrex's brand of Python-mixed-with C. One big advantage of
-Pyrex-generated extension modules is that they are easy to distribute
-using distutils. In summary, Pyrex is a very capable tool for either
-gluing C-code or generating an extension module quickly and should not
-be over-looked. It is especially useful for people that can't or won't
-write C-code or Fortran code. But, if you are already able to write
-simple subroutines in C or Fortran, then I would use one of the other
-approaches such as f2py (for Fortran) or ctypes (for C shared libraries).
+One big advantage of Cython-generated extension modules is that they are
+easy to distribute. In summary, Cython is a very capable tool for either
+gluing C code or generating an extension module quickly and should not be
+over-looked. It is especially useful for people that can't or won't write
+C or Fortran code.
 
 .. index::
-   single: pyrex
-
-
+   single: cython
 
 
 ctypes
@@ -1150,8 +1095,8 @@ Additional tools you may find useful
 These tools have been found useful by others using Python and so are
 included here. They are discussed separately because I see them as
 either older ways to do things more modernly handled by f2py,
-Pyrex, or ctypes (SWIG, PyFort, PyInline) or because I don't know much
-about them (SIP, Boost, Instant). I have not added links to these
+Cython, or ctypes (SWIG, PyFort) or because I don't know much
+about them (SIP, Boost). I have not added links to these
 methods because my experience is that you can find the most relevant
 link faster using Google or some other search engine, and any links
 provided here would be quickly dated. Do not assume that just because
