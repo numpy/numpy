@@ -122,6 +122,14 @@ class BagObj(object):
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
             raise AttributeError(key)
+    
+    def __dir__(self):
+        """
+        Enables dir(bagobj) to list the files in an NpzFile.
+        
+        This also enables tab-completion in an interpreter or IPython.
+        """
+        return object.__getattribute__(self, '_obj').keys()
 
 
 def zipfile_factory(*args, **kwargs):
