@@ -356,16 +356,15 @@ version of the input.
 Calling f2py from Python
 ------------------------
 
-The f2py program is written in Python and can be run from inside your
-module. An example of the final interface executed using Python code is:
+The f2py program is written in Python and can be run from inside your code
+to compile Fortran code at runtime, as follows:
 
 .. code-block:: python
 
-    import numpy.f2py as f2py
-    fid = open('add.f')
-    source = fid.read()
-    fid.close()
-    f2py.compile(source, modulename='add')
+    from numpy import f2py
+    with open("add.f") as sourcefile:
+        sourcecode = sourcefile.read()
+    f2py.compile(sourcecode, modulename='add')
     import add
 
 The source string can be any valid Fortran code. If you want to save
@@ -441,13 +440,13 @@ Cython
 
 `Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
 (optional) static typing for speed, and allows mixing C or C++ code
-into your modules. It produces C or C++ extensions that can be linked into
-the Python interpreter.
+into your modules. It produces C or C++ extensions that can be compiled
+and imported in Python code.
 
 If you are writing an extension module that will include quite a bit of your
-own algorithmic code as well, then Cython is a good match. Among its killer
-features is the ability to easily and quickly access the elements of a
-multidimensional array.
+own algorithmic code as well, then Cython is a good match. Among its
+features is the ability to easily and quickly
+work with multidimensional arrays.
 
 .. index::
    single: cython
@@ -526,7 +525,7 @@ regular ``import`` causes a Python-style import at runtime and makes it
 possible to call into the familiar NumPy Python API.
 
 The example also demonstrates Cython's "typed memoryviews", which are like
-NumPy arrays at the C level, in the sense that they are shaped and strides
+NumPy arrays at the C level, in the sense that they are shaped and strided
 arrays that know their own extent (unlike a C array addressed through a bare
 pointer). The syntax ``double complex[:]`` denotes a one-dimensional array
 (vector) of doubles, with arbitrary strides. A contiguous array of ints would
@@ -1093,10 +1092,10 @@ Additional tools you may find useful
 ====================================
 
 These tools have been found useful by others using Python and so are
-included here. They are discussed separately because I see them as
-either older ways to do things more modernly handled by f2py,
-Cython, or ctypes (SWIG, PyFort) or because I don't know much
-about them (SIP, Boost). I have not added links to these
+included here. They are discussed separately because they are
+either older ways to do things now handled by f2py, Cython, or ctypes
+(SWIG, PyFort) or because I don't know much about them (SIP, Boost).
+I have not added links to these
 methods because my experience is that you can find the most relevant
 link faster using Google or some other search engine, and any links
 provided here would be quickly dated. Do not assume that just because
