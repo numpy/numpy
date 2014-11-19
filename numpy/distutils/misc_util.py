@@ -87,9 +87,9 @@ def get_num_build_jobs():
         return envjobs
 
     # any of these three may have the job set, take the largest
-    cmdattr = (getattr(dist.get_command_obj('build'), 'jobs'),
-               getattr(dist.get_command_obj('build_ext'), 'jobs'),
-               getattr(dist.get_command_obj('build_clib'), 'jobs'))
+    cmdattr = (getattr(dist.get_command_obj('build'), 'jobs', None),
+               getattr(dist.get_command_obj('build_ext'), 'jobs', None),
+               getattr(dist.get_command_obj('build_clib'), 'jobs', None))
     if all(x is None for x in cmdattr):
         return envjobs
     else:
