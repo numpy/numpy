@@ -89,6 +89,7 @@ number of non-zero elements in an array.
         NpyIter* iter;
         NpyIter_IterNextFunc *iternext;
         char** dataptr;
+        npy_intp nonzero_count;
         npy_intp* strideptr,* innersizeptr;
 
         /* Handle zero-sized arrays specially */
@@ -136,7 +137,7 @@ number of non-zero elements in an array.
         /* The location of the inner loop size which the iterator may update */
         innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        /* The iteration loop */
+        nonzero_count = 0;
         do {
             /* Get the inner loop data/stride/count values */
             char* data = *dataptr;
