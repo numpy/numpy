@@ -18,8 +18,6 @@ preservation of memory layouts, and buffering of data with the wrong
 alignment or type, without requiring difficult coding.
 
 This page documents the API for the iterator.
-The C-API naming convention chosen is based on the one in the numpy-refactor
-branch, so will integrate naturally into the refactored code base.
 The iterator is named ``NpyIter`` and functions are
 named ``NpyIter_*``.
 
