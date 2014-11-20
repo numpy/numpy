@@ -1,9 +1,0 @@
-#ifndef __NPY_TYPED_COMMON_INC
-#define __NPY_TYPED_COMMON_INC
-
-/* utility functions that profit from templates */
-
-#include "numpy/npy_common.h"
-
-
-#endif

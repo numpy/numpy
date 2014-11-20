@@ -29,10 +29,6 @@ Library:
     Extension: umath_tests
         Sources:
             src/umath/umath_tests.c.src
-    Extension: scalarmath
-        Sources:
-            src/private/scalarmathmodule.h.src,
-            src/scalarmathmodule.c.src
     Extension: test_rational
         Sources:
             src/umath/test_rational.c.src

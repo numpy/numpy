@@ -725,7 +725,8 @@ def configuration(parent_package='',top_path=None):
                    join(local_dir, subpath, 'arraytypes.c.src'),
                    join(local_dir, subpath, 'nditer_templ.c.src'),
                    join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'einsum.c.src')]
+                   join(local_dir, subpath, 'einsum.c.src'),
+                   join(local_dir, 'src', 'private', 'templ_common.h.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -741,7 +742,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
-            join('src', 'multiarray', 'templ_common.h.src'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
             join('src', 'multiarray', 'conversion_utils.h'),
@@ -764,6 +764,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
+            join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -817,7 +818,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
             join('src', 'multiarray', 'multiarraymodule.c'),
-            join('src', 'multiarray', 'templ_common.h.src'),
             join('src', 'multiarray', 'nditer_templ.c.src'),
             join('src', 'multiarray', 'nditer_api.c'),
             join('src', 'multiarray', 'nditer_constr.c'),
@@ -833,6 +833,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
+            join('src', 'private', 'templ_common.h.src'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -846,7 +847,6 @@ def configuration(parent_package='',top_path=None):
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
-        multiarray_src.append(join('src', 'multiarray', 'templ_common.h.src'))
 
 
     config.add_extension('multiarray',
@@ -874,6 +874,7 @@ def configuration(parent_package='',top_path=None):
         sources = [
             join(local_dir, subpath, 'loops.h.src'),
             join(local_dir, subpath, 'loops.c.src'),
+            join(local_dir, subpath, 'scalarmath.c.src'),
             join(local_dir, subpath, 'simd.inc.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
@@ -905,11 +906,13 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
+            join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c')]
 
     umath_deps = [
             generate_umath_py,
             join('src', 'multiarray', 'common.h'),
+            join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
@@ -928,21 +931,6 @@ def configuration(parent_package='',top_path=None):
                                  generate_umath_c,
                                  generate_ufunc_api],
                          depends = deps + umath_deps,
-                         libraries = ['npymath'],
-                         )
-
-    #######################################################################
-    #                         scalarmath module                           #
-    #######################################################################
-
-    config.add_extension('scalarmath',
-                         sources = [join('src', 'scalarmathmodule.c.src'),
-                                    join('src', 'private', 'scalarmathmodule.h.src'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  generate_ufunc_api],
-                         depends = deps + npymath_sources,
                          libraries = ['npymath'],
                          )
 

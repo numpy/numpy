@@ -14,7 +14,7 @@
 /* Indicate that this .c file is allowed to include the header */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
-#include "scalarmathmodule.h"
+#include "templ_common.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
