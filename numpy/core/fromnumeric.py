@@ -1088,6 +1088,9 @@ def resize(a, new_shape):
     Examples
     --------
     >>> a=np.array([[0,1],[2,3]])
+    >>> np.resize(a,(2,3))
+    array([[0, 1, 2],
+           [3, 0, 1]])
     >>> np.resize(a,(1,4))
     array([[0, 1, 2, 3]])
     >>> np.resize(a,(2,4))
