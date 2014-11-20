@@ -21,13 +21,14 @@
 static NPY_INLINE int
 npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
 {
+#ifdef HAVE___BUILTIN_MUL_OVERFLOW
+    return __builtin_mul_overflow(a, b, r);
+#else
     const @type@ half_sz = (((@type@)1 << (sizeof(a) * 8 / 2)) - 1);
 
     *r = a * b;
     /*
      * avoid expensive division on common no overflow case
-     * could be improved via compiler intrinsics e.g. via clang
-     * __builtin_mul_with_overflow, gcc __int128 or cpu overflow flags
      */
     if (NPY_UNLIKELY((a | b) >= half_sz) &&
         a != 0 && b > @MAX@ / a) {
@@ -35,6 +36,7 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
     }
 
     return 0;
+#endif
 }
 /**end repeat**/
 
