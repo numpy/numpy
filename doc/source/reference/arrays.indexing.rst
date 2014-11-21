@@ -357,11 +357,10 @@ faster when ``obj.shape == x.shape``.
 
 If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
 filled with the elements of *x* corresponding to the :const:`True`
-values of *obj*.
-The search order will be C-style (last index varies the fastest). If
-*obj* has :const:`True` values at entries that are outside of the
-bounds of *x*, then an index error will be raised. If *obj* is smaller
-than *x* it is identical to filling it with :const:`False`.
+values of *obj*.  The search order will be :term:`row-major`,
+C-style. If *obj* has :const:`True` values at entries that are outside
+of the bounds of *x*, then an index error will be raised. If *obj* is
+smaller than *x* it is identical to filling it with :const:`False`.
 
 .. admonition:: Example
 
