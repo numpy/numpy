@@ -664,13 +664,13 @@ add_newdoc('numpy.core.multiarray', 'array',
         nested sequence, or if a copy is needed to satisfy any of the other
         requirements (`dtype`, `order`, etc.).
     order : {'C', 'F', 'A'}, optional
-        Specify the order of the array.  If order is 'C' (default), then the
-        array will be in C-contiguous order (last-index varies the
-        fastest).  If order is 'F', then the returned array
-        will be in Fortran-contiguous order (first-index varies the
-        fastest).  If order is 'A', then the returned array may
-        be in any order (either C-, Fortran-contiguous, or even
-        discontiguous).
+        Specify the order of the array.  If order is 'C', then the array
+        will be in C-contiguous order (last-index varies the fastest).
+        If order is 'F', then the returned array will be in
+        Fortran-contiguous order (first-index varies the fastest).
+        If order is 'A' (default), then the returned array may be
+        in any order (either C-, Fortran-contiguous, or even discontiguous),
+        unless a copy is required, in which case it will be C-contiguous.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
         the returned array will be forced to be a base-class array (default).
