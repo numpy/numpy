@@ -553,7 +553,7 @@ void f2py_report_on_exit(int exit_flag,void *name) {
 
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
 static void f2py_report_on_array_copy(PyArrayObject* arr) {
-    const long arr_size = PyArray_Size((PyObject *)arr);
+    const npy_intp arr_size = PyArray_Size((PyObject *)arr);
     if (arr_size>F2PY_REPORT_ON_ARRAY_COPY) {
         fprintf(stderr,"copied an array: size=%ld, elsize=%"NPY_INTP_FMT"\n",
                 arr_size, PyArray_ITEMSIZE(arr));
