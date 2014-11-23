@@ -1,5 +1,4 @@
 #define FORTRANOBJECT_C
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "fortranobject.h"
 
 #ifdef __cplusplus
@@ -1033,6 +1032,4 @@ F2PyCapsule_Check(PyObject *ptr)
 #ifdef __cplusplus
 }
 #endif
-
-#undef NPY_NO_DEPRECATED_API
 /************************* EOF fortranobject.c *******************************/
