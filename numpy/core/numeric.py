@@ -1156,7 +1156,7 @@ def tensordot(a, b, axes=2):
           N axes in `a` and the first N axes in `b`, in the sequence that
           higher-order axes evaluated first); by default N=2 is the tensor 
           contraction, aka. double-dot operator. Or,
-        * array_like of length 2, both elements array_like of the same length
+        * (2,) array_like, both elements array_like of the same length
           List of axes to be summed over, first sequence applying to `a`,
           second to `b`.
 
