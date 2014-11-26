@@ -1152,8 +1152,11 @@ def tensordot(a, b, axes=2):
         Tensors to "dot".
     axes : variable type
         * integer_like scalar
-          Number of axes to sum over (applies to both arrays); or
-        * (2,) array_like, both elements array_like of the same length
+          The number of axes (an integer N) to sum over (applies to the last 
+          N axes in `a` and the first N axes in `b`, in the sequence that
+          higher-order axes evaluated first); by default N=2 is the tensor 
+          contraction, aka. double-dot operator. Or,
+        * array_like of length 2, both elements array_like of the same length
           List of axes to be summed over, first sequence applying to `a`,
           second to `b`.
 
