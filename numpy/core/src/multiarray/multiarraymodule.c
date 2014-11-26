@@ -227,7 +227,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
             goto fail;
         }
         for (i = 0; i < n; i++) {
-            ptr3[i] = ptr3[n + (m-1)*i];
+            ptr3[i] = (char **) &ptr3[n + m * i];
             for (j = 0; j < m; j++) {
                 ptr3[i][j] = PyArray_BYTES(ap) + i*PyArray_STRIDES(ap)[0] + j*PyArray_STRIDES(ap)[1];
             }
