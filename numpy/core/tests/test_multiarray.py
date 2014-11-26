@@ -68,6 +68,17 @@ class TestFlags(TestCase):
         assert_equal(self.a.flags.aligned, True)
         assert_equal(self.a.flags.updateifcopy, False)
 
+    def test_string_align(self):
+        a = np.zeros(4, dtype=np.dtype('|S4'))
+        assert_(a.flags.aligned)
+        # not power of two are accessed bytewise and thus considered aligned
+        a = np.zeros(5, dtype=np.dtype('|S4'))
+        assert_(a.flags.aligned)
+
+    def test_void_align(self):
+        a = np.zeros(4, dtype=np.dtype([("a", "i4"), ("b", "i4")]))
+        assert_(a.flags.aligned)
+
 class TestHash(TestCase):
     # see #3793
     def test_int(self):
