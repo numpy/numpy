@@ -1150,12 +1150,13 @@ def tensordot(a, b, axes=2):
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-    axes : variable type
-        * integer_like scalar
-          Number of axes to sum over (applies to both arrays); or
-        * (2,) array_like, both elements array_like of the same length
-          List of axes to be summed over, first sequence applying to `a`,
-          second to `b`.
+    axes : {integer_like, array_like}
+        * integer_like
+          If an int N, sum over the last N axes of `a` and the first N axes
+          of `b` in order. The sizes of the corresponding axes must match.
+        * (2,) array_like
+          Or, a list of axes to be summed over, first sequence applying to `a`,
+          second to `b`. Both elements array_like must be of the same length.
 
     See Also
     --------
@@ -1163,6 +1164,15 @@ def tensordot(a, b, axes=2):
 
     Notes
     -----
+    Three common use cases are:
+        ``axes = 0`` : tensor product $a\otimes b$
+        ``axes = 1`` : tensor dot product $a\cdot b$
+        ``axes = 2`` : (default) tensor double contraction $a:b$
+    
+    When `axes` is integer_like, the sequence for evaluation will be: first 
+    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and 
+    Nth axis in `b` last.
+    
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
@@ -1211,7 +1221,7 @@ def tensordot(a, b, axes=2):
     array([[a, b],
            [c, d]], dtype=object)
 
-    >>> np.tensordot(a, A) # third argument default is 2
+    >>> np.tensordot(a, A) # third argument default is 2 for double-contraction
     array([abbcccdddd, aaaaabbbbbbcccccccdddddddd], dtype=object)
 
     >>> np.tensordot(a, A, 1)
@@ -1220,7 +1230,7 @@ def tensordot(a, b, axes=2):
            [[aaaaacccccc, bbbbbdddddd],
             [aaaaaaacccccccc, bbbbbbbdddddddd]]], dtype=object)
 
-    >>> np.tensordot(a, A, 0) # "Left for reader" (result too long to incl.)
+    >>> np.tensordot(a, A, 0) # tensor product (result too long to incl.)
     array([[[[[a, b],
               [c, d]],
               ...
