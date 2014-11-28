@@ -33,24 +33,74 @@ class GnuFCompiler(FCompiler):
     compiler_aliases = ('g77',)
     description = 'GNU Fortran 77 compiler'
 
+    def _vstring_paren_strip(self, vstring):
+        '''A private function for removing potentially nested parentheses from
+        a string.'''
+        # Number of left parenthesis
+        lparen = 1
+        # Run through the string until the closing bracket is found.
+        for index in range(1, len(vstring)):
+            if vstring[index] == '(':
+                lparen += 1
+            elif vstring[index] == ')':
+                lparen -= 1
+                if lparen == 0:
+                    string_no_paren = vstring[index+1:]
+                    break
+        return string_no_paren
+
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
-        m = re.search(r'GNU Fortran', version_string)
-        if not m:
+        if "GNU Fortran" not in version_string:
             return None
-        m = re.search(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
-        if m:
-            return ('gfortran', m.group(1))
-        m = re.search(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
+        
+        # Drop the preamble.
+        string_no_gnu = re.sub(r'GNU Fortran\s+', '', version_string) 
+        # This is the compiled version search regex
+        match_comp = re.compile(r'([0-9-.]+)')
+        
+        # When '95' comes directly after the preample that implies 'gfortran'
+        if string_no_gnu.startswith('95'):
+            # Get rid of 95 and spaces
+            string_no_95 = re.sub(r'95\s+', '', string_no_gnu)
+            # If the first character is '(', then we need to do some extra checks.
+            if string_no_95.startswith('('):
+                # Check if 'GCC #.#.#' is in this string.
+                m = re.search(r'GCC\s+([0-9-.]+)', string_no_95)
+                # If not, drop the section in parenteses
+                if not m:
+                    short_no_95 = self._vstring_paren_strip(string_no_95)
+                    m = match_comp.search(short_no_95)
+            # Just do a regular search if no parentheses
+            else:
+                m = match_comp.search(string_no_95)
+            v = m.group(1)
+            return ('gfortran', v)
+        
+        # If the first character after the preamble is '(', that suggests a gcc 
+        # built with --with-pkgversion=*some_string*. Remove characters in
+        # potentially nested parentheses.
+        elif string_no_gnu.startswith('('):
+            # Remove the stuff in (nested) parentheses and run match
+            string_no_paren = self._vstring_paren_strip(string_no_gnu)
+            m = match_comp.search(string_no_paren)
+        else:
+            # If isn't a starting parenthesis, check the string as usual
+            m = match_comp.search(string_no_gnu)
+            
         if m:
             v = m.group(1)
-            if v.startswith('0') or v.startswith('2') or v.startswith('3'):
-                # the '0' is for early g77's
+            # startswith can take a tuple only with >= Py2.5. Ok?
+            if v.startswith(('0', '2', '3',)):
                 return ('g77', v)
             else:
-                # at some point in the 4.x series, the ' 95' was dropped
-                # from the version string
                 return ('gfortran', v)
+        
+        # If it gets this far without a return, then there is something wrong with
+        # the version string. Throw an error to make it clear.
+        raise ValueError("Fortran version not found in the following string:\n" +
+            version_string)
+
 
     def version_match(self, version_string):
         v = self.gnu_version_match(version_string)
