@@ -102,8 +102,19 @@ class GnuFCompiler(FCompiler):
         
         # If it gets this far without a return, then there is something wrong
         # with the version string. Throw an error to make it clear.
-        raise ValueError("Fortran version not found in the following string:\n" +
-            version_string)
+        with tempfile.NamedTemporaryFile(suffix='.for', mode='w') as tmp:        
+            tmp.write("[__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__]\n")
+            tmp.flush()
+            try:
+                p = Popen(['gfortran', '-cpp', '-E', tmp.name], 
+                        stdout=PIPE, universal_newlines=True)
+                stdout, _ = p.communicate()
+                version_list = eval(stdout)
+                version_join = '.'.join(version_list)
+                return ('gfortran', v)
+            except:
+                print("Fortran version not found in the following string:")
+                print(version_string)
 
 
     def version_match(self, version_string):
