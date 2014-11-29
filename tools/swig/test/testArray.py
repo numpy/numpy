@@ -269,12 +269,113 @@ class Array2TestCase(unittest.TestCase):
 
 ######################################################################
 
+class ArrayZTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.length = 5
+        self.array3 = Array.ArrayZ(self.length)
+
+    def testConstructor0(self):
+        "Test ArrayZ default constructor"
+        a = Array.ArrayZ()
+        self.failUnless(isinstance(a, Array.ArrayZ))
+        self.failUnless(len(a) == 0)
+
+    def testConstructor1(self):
+        "Test ArrayZ length constructor"
+        self.failUnless(isinstance(self.array3, Array.ArrayZ))
+
+    def testConstructor2(self):
+        "Test ArrayZ array constructor"
+        na = np.arange(self.length, dtype=np.complex128)
+        aa = Array.ArrayZ(na)
+        self.failUnless(isinstance(aa, Array.ArrayZ))
+
+    def testConstructor3(self):
+        "Test ArrayZ copy constructor"
+        for i in range(self.array3.length()): self.array3[i] = complex(i,-i)
+        arrayCopy = Array.ArrayZ(self.array3)
+        self.failUnless(arrayCopy == self.array3)
+
+    def testConstructorBad(self):
+        "Test ArrayZ length constructor, negative"
+        self.assertRaises(ValueError, Array.ArrayZ, -4)
+
+    def testLength(self):
+        "Test ArrayZ length method"
+        self.failUnless(self.array3.length() == self.length)
+
+    def testLen(self):
+        "Test ArrayZ __len__ method"
+        self.failUnless(len(self.array3) == self.length)
+
+    def testResize0(self):
+        "Test ArrayZ resize method, length"
+        newLen = 2 * self.length
+        self.array3.resize(newLen)
+        self.failUnless(len(self.array3) == newLen)
+
+    def testResize1(self):
+        "Test ArrayZ resize method, array"
+        a = np.zeros((2*self.length,), dtype=np.complex128)
+        self.array3.resize(a)
+        self.failUnless(len(self.array3) == a.size)
+
+    def testResizeBad(self):
+        "Test ArrayZ resize method, negative length"
+        self.assertRaises(ValueError, self.array3.resize, -5)
+
+    def testSetGet(self):
+        "Test ArrayZ __setitem__, __getitem__ methods"
+        n = self.length
+        for i in range(n):
+            self.array3[i] = i*i
+        for i in range(n):
+            self.failUnless(self.array3[i] == i*i)
+
+    def testSetBad1(self):
+        "Test ArrayZ __setitem__ method, negative index"
+        self.assertRaises(IndexError, self.array3.__setitem__, -1, 0)
+
+    def testSetBad2(self):
+        "Test ArrayZ __setitem__ method, out-of-range index"
+        self.assertRaises(IndexError, self.array3.__setitem__, self.length+1, 0)
+
+    def testGetBad1(self):
+        "Test ArrayZ __getitem__ method, negative index"
+        self.assertRaises(IndexError, self.array3.__getitem__, -1)
+
+    def testGetBad2(self):
+        "Test ArrayZ __getitem__ method, out-of-range index"
+        self.assertRaises(IndexError, self.array3.__getitem__, self.length+1)
+
+    def testAsString(self):
+        "Test ArrayZ asString method"
+        for i in range(self.array3.length()): self.array3[i] = complex(i+1,-i-1)
+        self.failUnless(self.array3.asString() == "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]")
+
+    def testStr(self):
+        "Test ArrayZ __str__ method"
+        for i in range(self.array3.length()): self.array3[i] = complex(i-2,(i-2)*2)
+        self.failUnless(str(self.array3) == "[ (-2,-4), (-1,-2), (0,0), (1,2), (2,4) ]")
+
+    def testView(self):
+        "Test ArrayZ view method"
+        for i in range(self.array3.length()): self.array3[i] = complex(i+1,i+2)
+        a = self.array3.view()
+        self.failUnless(isinstance(a, np.ndarray))
+        self.failUnless(len(a) == self.length)
+        self.failUnless((a == [1+2j, 2+3j, 3+4j, 4+5j, 5+6j]).all())
+
+######################################################################
+
 if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Array1TestCase))
     suite.addTest(unittest.makeSuite(Array2TestCase))
+    suite.addTest(unittest.makeSuite(ArrayZTestCase))
 
     # Execute the test suite
     print("Testing Classes of Module Array")

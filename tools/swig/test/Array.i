@@ -6,6 +6,7 @@
 #define SWIG_FILE_WITH_INIT
 #include "Array1.h"
 #include "Array2.h"
+#include "ArrayZ.h"
 %}
 
 // Get the NumPy typemaps
@@ -50,6 +51,12 @@
       {(int nrows, int ncols, long* data          )};
 %apply (int* DIM1 , int* DIM2 , long** ARGOUTVIEW_ARRAY2)
       {(int* nrows, int* ncols, long** data             )};
+
+// Apply the 1D NumPy typemaps
+%apply (int DIM1  , std::complex<double>* INPLACE_ARRAY1)
+      {(int length, std::complex<double>* data          )};
+%apply (std::complex<double>** ARGOUTVIEW_ARRAY1, int* DIM1  )
+      {(std::complex<double>** data             , int* length)};
 
 // Array1 support
 %include "Array1.h"
@@ -100,3 +107,29 @@
     return self->asString();
   }
 }
+
+// ArrayZ support
+%include "ArrayZ.h"
+%extend ArrayZ
+{
+  void __setitem__(int i, std::complex<double> v)
+  {
+    self->operator[](i) = v;
+  }
+
+  std::complex<double> __getitem__(int i)
+  {
+    return self->operator[](i);
+  }
+
+  int __len__()
+  {
+    return self->length();
+  }
+
+  std::string __str__()
+  {
+    return self->asString();
+  }
+}
+

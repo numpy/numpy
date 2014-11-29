@@ -15,7 +15,8 @@ numpy_include = numpy.get_include()
 _Array = Extension("_Array",
                    ["Array_wrap.cxx",
                     "Array1.cxx",
-                    "Array2.cxx"],
+                    "Array2.cxx",
+                    "ArrayZ.cxx"],
                    include_dirs = [numpy_include],
                    )
 

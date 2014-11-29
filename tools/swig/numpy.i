@@ -3071,15 +3071,13 @@
  *    %numpy_typemaps(long double, NPY_LONGDOUBLE, int)
  */
 
-/* ***************************************************************
- * Swig complains about a syntax error for the following macro
- * expansions:
- *
- *    %numpy_typemaps(complex float,  NPY_CFLOAT , int)
- *
- *    %numpy_typemaps(complex double, NPY_CDOUBLE, int)
- *
- *    %numpy_typemaps(complex long double, NPY_CLONGDOUBLE, int)
- */
+%#ifdef __cplusplus
+
+%include <std_complex.i>
+
+%numpy_typemaps(std::complex<float>,  NPY_CFLOAT , int)
+%numpy_typemaps(std::complex<double>, NPY_CDOUBLE, int)
+
+%#endif
 
 #endif /* SWIGPYTHON */

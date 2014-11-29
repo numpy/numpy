@@ -5,7 +5,8 @@ PROXIES    = $(INTERFACES:.i=.py      )
 
 # Default target: build the tests
 .PHONY : all
-all: $(WRAPPERS) Array1.cxx Array1.h Farray.cxx Farray.h Vector.cxx Vector.h \
+all: $(WRAPPERS) Array1.cxx Array1.h Array2.cxx Array2.h ArrayZ.cxx ArrayZ.h \
+    Farray.cxx Farray.h Vector.cxx Vector.h \
 	Matrix.cxx Matrix.h Tensor.cxx Tensor.h Fortran.h Fortran.cxx
 	./setup.py build_ext -i
 
