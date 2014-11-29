@@ -33,21 +33,25 @@ class GnuFCompiler(FCompiler):
     compiler_aliases = ('g77',)
     description = 'GNU Fortran 77 compiler'
 
-    def _vstring_paren_strip(self, vstring):
-        '''A private function for removing potentially nested parentheses from
-        a string.'''
+    def _vstring_paren_strip(self, s):
+        '''Remove potentially nested parentheses from the start of a string.
+        
+        This function accepts a string that starts with '(' and removes the
+        (potentially nested) opening parenthetical statement. The truncated
+        string is returned.'''
         # Number of left parenthesis
-        lparen = 1
+        cnt = 1
         # Run through the string until the closing bracket is found.
-        for index in range(1, len(vstring)):
-            if vstring[index] == '(':
-                lparen += 1
-            elif vstring[index] == ')':
-                lparen -= 1
-                if lparen == 0:
-                    string_no_paren = vstring[index+1:]
-                    break
-        return string_no_paren
+        for index in range(1, len(s)):
+            if s[index] == '(':
+                cnt += 1
+            elif s[index] == ')':
+                cnt -= 1
+                if cnt == 0:
+                    return s[index+1:]
+
+        raise ValueError('The following string contains unclosed ' +
+                'parentheses: \n' + s)
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
@@ -96,8 +100,8 @@ class GnuFCompiler(FCompiler):
             else:
                 return ('gfortran', v)
         
-        # If it gets this far without a return, then there is something wrong with
-        # the version string. Throw an error to make it clear.
+        # If it gets this far without a return, then there is something wrong
+        # with the version string. Throw an error to make it clear.
         raise ValueError("Fortran version not found in the following string:\n" +
             version_string)
 
