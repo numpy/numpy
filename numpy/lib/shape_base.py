@@ -94,7 +94,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     if not asscalar:
         try:
             len(res)
-        except TypeError:
+        except (TypeError, AttributeError):
             asscalar = True
     if asscalar:
         outarr = zeros(outshape, asarray(res).dtype)

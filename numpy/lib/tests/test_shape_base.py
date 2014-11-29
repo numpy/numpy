@@ -37,6 +37,14 @@ class TestApplyAlongAxis(TestCase):
         a = np.ones(4)
         assert_array_equal(apply_along_axis(return_none, 0, a), [None, None, None, None])
 
+    def test_return_object(self):
+        class NotAScalar():
+            def __eq__(this, other):
+                return isinstance(other, NotAScalar)
+        a = np.arange(27).reshape((3, 3, 3))
+        assert_array_equal(apply_along_axis(lambda x: NotAScalar(), 0, a),
+                           np.full((3, 3), NotAScalar(), np.object))
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
