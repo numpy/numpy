@@ -7,7 +7,7 @@ from datetime import date
 import numpy as np
 from numpy.compat import asbytes, asbytes_nested
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal
+    run_module_suite, TestCase, assert_, assert_equal, assert_allclose
     )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
@@ -76,7 +76,7 @@ class TestLineSplitter(TestCase):
         test = LineSplitter((6, 6, 9))(strg)
         assert_equal(test, asbytes_nested(['1', '3  4', '5  6']))
 
-#-------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 class TestNameValidator(TestCase):
@@ -127,7 +127,7 @@ class TestNameValidator(TestCase):
         assert_(validator(namelist) is None)
         assert_equal(validator(namelist, nbfields=3), ['f0', 'f1', 'f2'])
 
-#-------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def _bytes_to_date(s):
@@ -150,13 +150,17 @@ class TestStringConverter(TestCase):
         "Tests the upgrade method."
         converter = StringConverter()
         assert_equal(converter._status, 0)
-        converter.upgrade(asbytes('0'))
+        # test int
+        assert_equal(converter.upgrade(asbytes('0')), 0)
         assert_equal(converter._status, 1)
-        converter.upgrade(asbytes('0.'))
+        # test float
+        assert_allclose(converter.upgrade(asbytes('0.')), 0.0)
         assert_equal(converter._status, 2)
-        converter.upgrade(asbytes('0j'))
+        # test complex
+        assert_equal(converter.upgrade(asbytes('0j')), complex('0j'))
         assert_equal(converter._status, 3)
-        converter.upgrade(asbytes('a'))
+        # test str
+        assert_equal(converter.upgrade(asbytes('a')), asbytes('a'))
         assert_equal(converter._status, len(converter._mapper) - 1)
 
     def test_missing(self):
