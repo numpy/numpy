@@ -27,6 +27,7 @@ else:
     _bytes_to_complex = complex
     _bytes_to_name = str
 
+
 def _is_string_like(obj):
     """
     Check whether obj behaves like a string.
@@ -36,6 +37,7 @@ def _is_string_like(obj):
     except (TypeError, ValueError):
         return False
     return True
+
 
 def _is_bytes_like(obj):
     """
@@ -445,12 +447,14 @@ class ConverterError(Exception):
     """
     pass
 
+
 class ConverterLockError(ConverterError):
     """
     Exception raised when an attempt is made to upgrade a locked converter.
 
     """
     pass
+
 
 class ConversionWarning(UserWarning):
     """
@@ -708,7 +712,7 @@ class StringConverter(object):
         """
         self._checked = True
         try:
-            self._strict_call(value)
+            return self._strict_call(value)
         except ValueError:
             # Raise an exception if we locked the converter...
             if self._locked:
@@ -728,7 +732,7 @@ class StringConverter(object):
                 self.default = self._initial_default
             else:
                 self.default = default
-            self.upgrade(value)
+            return self.upgrade(value)
 
     def iterupgrade(self, value):
         self._checked = True
