@@ -1088,7 +1088,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 fh.write(asbytes(format % tuple(row2) + newline))
         else:
             for row in X:
-                fh.write(asbytes(format % tuple(row) + newline))
+                try:
+                    fh.write(asbytes(format % tuple(row) + newline))
+                except TypeError:
+                    raise TypeError("Mismatch between array dtype ('%s') and "
+                                    "format specifier ('%s')"
+                                    % (str(X.dtype), format))
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
             fh.write(asbytes(comments + footer + newline))
