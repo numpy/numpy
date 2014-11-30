@@ -22,7 +22,7 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-        test_inplace_increment, get_buffer_info
+        test_inplace_increment, get_buffer_info, test_as_c_array
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -4077,6 +4077,23 @@ class TestMapIter(TestCase):
         vals = [50, 4, 100.1]
         test_inplace_increment(b, index, vals)
         assert_equal(b, [ 100.1,  51.,   6.,   3.,   4.,   5. ])
+
+
+class TestAsCArray(TestCase):
+    def test_1darray(self):
+        array = np.arange(24, dtype=np.double)
+        from_c = test_as_c_array(array, 3)
+        assert_equal(array[3], from_c)
+
+    def test_2darray(self):
+        array = np.arange(24, dtype=np.double).reshape(3, 8)
+        from_c = test_as_c_array(array, 2, 4)
+        assert_equal(array[2, 4], from_c)
+
+    def test_3darray(self):
+        array = np.arange(24, dtype=np.double).reshape(2, 3, 4)
+        from_c = test_as_c_array(array, 1, 2, 3)
+        assert_equal(array[1, 2, 3], from_c)
 
 
 class PriorityNdarray():
