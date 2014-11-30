@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import collections
 import tempfile
 import sys
 import os
@@ -4846,6 +4847,13 @@ class TestSizeOf(TestCase):
     def test_error(self):
         d = np.ones(100)
         assert_raises(TypeError, d.__sizeof__, "a")
+
+
+class TestHashing(TestCase):
+
+    def test_collections_hashable(self):
+        x = np.array([])
+        self.assertFalse(isinstance(x, collections.Hashable))
 
 
 if __name__ == "__main__":
