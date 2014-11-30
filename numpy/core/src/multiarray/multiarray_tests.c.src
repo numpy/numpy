@@ -719,6 +719,81 @@ array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
     return NULL;
 }
 
+/*
+ * Test C-api PyArray_AsCArray item getter
+ */
+static PyObject *
+test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyArrayObject *array_obj;
+    npy_intp dims[3];   // max 3-dim
+    npy_intp i=0, j=0, k=0;
+    npy_intp num_dims = 0;
+    PyArray_Descr *descr = NULL;
+    double *array1 = NULL;
+    double **array2 = NULL;
+    double ***array3 = NULL;
+    double temp = 9999;
+
+    if (!PyArg_ParseTuple(args, "O!l|ll",
+                &PyArray_Type, &array_obj,
+                &i, &j, &k)) {
+        return NULL;
+    }
+
+    if (NULL == array_obj) {
+        return NULL;
+    }
+
+    num_dims = PyArray_NDIM(array_obj);
+    descr = PyArray_DESCR(array_obj);
+
+    switch (num_dims) {
+        case 1:
+            if (PyArray_AsCArray(
+                    (PyObject **) &array_obj,
+                    (void *) &array1,
+                    dims,
+                    1,
+                    descr) < 0) {
+                PyErr_SetString(PyExc_RuntimeError, "error converting 1D array");
+                return NULL;
+            }
+            temp = array1[i];
+            PyArray_Free((PyObject *) array_obj, (void *) array1);
+            break;
+        case 2:
+            if (PyArray_AsCArray(
+                    (PyObject **) &array_obj,
+                    (void **) &array2,
+                    dims,
+                    2,
+                    descr) < 0) {
+                PyErr_SetString(PyExc_RuntimeError, "error converting 2D array");
+                return NULL;
+            }
+            temp = array2[i][j];
+            PyArray_Free((PyObject *) array_obj, (void *) array2);
+            break;
+        case 3:
+            if (PyArray_AsCArray(
+                    (PyObject **) &array_obj,
+                    (void ***) &array3,
+                    dims,
+                    3,
+                    descr) < 0) {
+                PyErr_SetString(PyExc_RuntimeError, "error converting 3D array");
+                return NULL;
+            }
+            temp = array3[i][j][k];
+            PyArray_Free((PyObject *) array_obj, (void *) array3);
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError, "array.ndim not in [1, 3]");
+            return NULL;
+    }
+    return Py_BuildValue("f", temp);
+}
 
 /*
  * Test nditer of too large arrays using remove axis, etc.
@@ -849,6 +924,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"array_indexing",
         array_indexing,
+        METH_VARARGS, NULL},
+    {"test_as_c_array",
+        test_as_c_array,
         METH_VARARGS, NULL},
     {"test_nditer_too_large",
         test_nditer_too_large,
