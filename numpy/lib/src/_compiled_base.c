@@ -1376,9 +1376,9 @@ pack_bits(PyObject *input, int axis)
     if (inp == NULL) {
         return NULL;
     }
-    if (!PyArray_ISINTEGER(inp)) {
+    if (!PyArray_ISBOOL(inp) && !PyArray_ISINTEGER(inp)) {
         PyErr_SetString(PyExc_TypeError,
-                "Expected an input array of integer data type");
+                "Expected an input array of integer or boolean data type");
         goto fail;
     }
 
