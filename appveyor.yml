@@ -1,0 +1,51 @@
+environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\appveyor\\run_with_env.cmd"
+
+  matrix:
+    # Minimalistic build matrix that should capture most platform related bugs
+    # The free account of AppVeyor has restricted resources making it not
+    # realistic to test all the possible version and archictecture
+    # combinations.
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4.1"
+      PYTHON_ARCH: "64"
+
+install:
+  # Install Python (from the official .msi of http://python.org) and pip when
+  # not already installed.
+  - "powershell ./tools/appveyor/install.ps1"
+
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Install build dependencies: speed up install by not compiling Cython
+  - "%CMD_IN_ENV% pip install --install-option=\"--no-cython-compile\" Cython"
+
+  # Test dependencies
+  - "pip install nose"
+
+  # Build and install numpy
+  - "%CMD_IN_ENV% pip install ."
+
+build: false  # Not a C# project, build stuff at the test step instead.
+
+test_script:
+  - "mkdir empty"
+  - "cd empty"
+  - "python ..\\tools\\test-installed-numpy.py"
+  - "cd .."
