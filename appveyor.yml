@@ -12,11 +12,19 @@ environment:
     # combinations.
 
     - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.8"
+      PYTHON_VERSION: "2.7.9"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4.2"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.9"
+      PYTHON_ARCH: "64"
+
     - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.1"
+      PYTHON_VERSION: "3.4.2"
       PYTHON_ARCH: "64"
 
 install:
