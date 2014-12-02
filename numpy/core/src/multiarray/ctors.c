@@ -3573,6 +3573,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         goto done;
     }
     value = PyIter_Next(iter);
+    if (PyErr_Occurred()) {
+        goto done;
+    }
     elcount[0] = (count < 0) ? 0 : count;
     if (PySequence_Check(value) && (dtype->fields == Py_None)) {
         elcount[1] = PySequence_Length(value);
