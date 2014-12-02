@@ -922,6 +922,13 @@ class TestFromiter(TestCase):
                     [4, 2, 9], [5, 2, 10]]
         self.assertRaises(TypeError, fromiter, s, dtype=int)
 
+        s = [[], [], [2, 1, 7], [3, 1, 8],
+                    [4, 2, 9], [5, 2, 10]]
+        self.assertRaises(ValueError, fromiter, s, dtype=int)
+
+        s = [[], [], []]
+        self.assertRaises(ValueError, fromiter, s, dtype=int)
+
     def load_data_2d(self, n, eindex):
         # Raise an exception at the desired index in the iterator of sequences.
         for e in range(n):
