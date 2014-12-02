@@ -888,6 +888,18 @@ class TestFromiter(TestCase):
         self.assertRaises(NIterError, np.fromiter,
                           self.load_data(count, eindex), dtype=int, count=count)
 
+    def test_sequences(self):
+        a = fromiter(([x, x // 2, x+5] for x in range(6)), dtype=int)
+        expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
+                    [4, 2, 9], [5, 2, 10]], dtype=int)
+        self.assertTrue(alltrue(a == expected))
+
+        a = fromiter(([x, x // 2, x+5, x+1] for x in range(6)), dtype=int)
+        expected = array([[0, 0, 5, 1], [1, 0, 6, 2], [2, 1, 7, 3],
+                    [3, 1, 8, 4], [4, 2, 9, 5], [5, 2, 10,  6]], dtype=int)
+        self.assertTrue(alltrue(a == expected))
+
+
 
 class TestNonzero(TestCase):
     def test_nonzero_trivial(self):
