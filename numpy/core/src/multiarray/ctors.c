@@ -3637,14 +3637,32 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             }
         } else {
             iter2 = PyObject_GetIter(value);
+            if (iter2 == NULL) {
+                Py_DECREF(value);
+                goto done;
+            }
             for (j = 0; j < elcount[1]; j++) {
                 item = PyArray_GETPTR2(ret, i, j);
                 value2 = PyIter_Next(iter2);
-                if (PyArray_DESCR(ret)->f->setitem(value2, item, ret) == -1) {
-                    Py_DECREF(value2);
+                if (value2 == NULL) {
+                    PyErr_SetString(PyExc_ValueError, "sequence too short");
                     Py_DECREF(value);
                     goto done;
                 }
+                if (PyArray_DESCR(ret)->f->setitem(value2, item, ret) == -1) {
+                    Py_DECREF(value2);
+                    Py_DECREF(value);
+                    Py_DECREF(iter2);
+                    goto done;
+                }
+            }
+            value2 = PyIter_Next(iter2);
+            if (value2 != NULL) {
+                PyErr_SetString(PyExc_ValueError, "sequence too long");
+                Py_DECREF(value2);
+                Py_DECREF(value);
+                Py_DECREF(iter2);
+                goto done;
             }
             Py_DECREF(iter2);
         }
