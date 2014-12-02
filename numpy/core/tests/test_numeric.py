@@ -922,6 +922,50 @@ class TestFromiter(TestCase):
                     [4, 2, 9], [5, 2, 10]]
         self.assertRaises(TypeError, fromiter, s, dtype=int)
 
+    def load_data_2d(self, n, eindex):
+        # Raise an exception at the desired index in the iterator of sequences.
+        for e in range(n):
+            if e == eindex:
+                raise NIterError('error at index %s' % eindex)
+            yield [1, 2, 3]
+
+    def test_iterator_sequences_exception1(self):
+        count, eindex = 10, 0
+        self.assertRaises(NIterError, np.fromiter,
+                          self.load_data_2d(count, eindex), dtype=int)
+
+        count, eindex = 10, 5
+        self.assertRaises(NIterError, np.fromiter,
+                          self.load_data_2d(count, eindex), dtype=int)
+
+    def test_iterator_sequences_exception2(self):
+        # User exception in the iterator
+        s = [[1, 4, 5], self.load_data(3, 0)]
+        self.assertRaises(NIterError, np.fromiter, s, dtype=int)
+
+        # User exception in the iterator
+        s = [[1, 4, 5], self.load_data(3, 1)]
+        self.assertRaises(NIterError, np.fromiter, s, dtype=int)
+
+        # User exception in the iterator
+        s = [[1, 4, 5], self.load_data(3, 2)]
+        self.assertRaises(NIterError, np.fromiter, s, dtype=int)
+
+        s = [[1, 4, 5], self.load_data(3, 3)]
+        expected = array([[1, 4, 5], [0, 1, 2]], dtype=int)
+        self.assertTrue(alltrue(fromiter(s, dtype=int) == expected))
+
+        # User exception in the iterator
+        s = [[1, 4, 5], self.load_data(4, 3)]
+        self.assertRaises(NIterError, np.fromiter, s, dtype=int)
+
+        s = [[1, 4, 5], self.load_data(4, 3), [1, 2, 3]]
+        self.assertRaises(NIterError, np.fromiter, s, dtype=int)
+
+        # Sequence is too long
+        s = [[1, 4, 5], self.load_data(4, 4)]
+        self.assertRaises(ValueError, np.fromiter, s, dtype=int)
+
 
 
 class TestNonzero(TestCase):
