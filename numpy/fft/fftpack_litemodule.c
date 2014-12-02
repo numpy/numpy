@@ -1,8 +1,8 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "fftpack.h"
 #include "Python.h"
 #include "numpy/arrayobject.h"
+#include "fftpack.h"
 
 static PyObject *ErrorObject;
 
@@ -45,7 +45,7 @@ fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     Py_BEGIN_ALLOW_THREADS;
     NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
-        cfftf(npts, dptr, wsave);
+        npy_cfftf(npts, dptr, wsave);
         dptr += npts*2;
     }
     NPY_SIGINT_OFF;
@@ -98,7 +98,7 @@ fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     Py_BEGIN_ALLOW_THREADS;
     NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
-        cfftb(npts, dptr, wsave);
+        npy_cfftb(npts, dptr, wsave);
         dptr += npts*2;
     }
     NPY_SIGINT_OFF;
@@ -124,7 +124,7 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "l", &n)) {
         return NULL;
     }
-    /*Magic size needed by cffti*/
+    /*Magic size needed by npy_cffti*/
     dim = 4*n + 15;
     /*Create a 1 dimensional array of dimensions of type double*/
     op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
@@ -134,7 +134,7 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
 
     Py_BEGIN_ALLOW_THREADS;
     NPY_SIGINT_ON;
-    cffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
+    npy_cffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
     NPY_SIGINT_OFF;
     Py_END_ALLOW_THREADS;
 
@@ -189,7 +189,7 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr+1), dptr, npts*sizeof(double));
-        rfftf(npts, rptr+1, wsave);
+        npy_rfftf(npts, rptr+1, wsave);
         rptr[0] = rptr[1];
         rptr[1] = 0.0;
         rptr += rstep;
@@ -253,7 +253,7 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr + 1), (dptr + 2), (npts - 1)*sizeof(double));
         rptr[0] = dptr[0];
-        rfftb(npts, rptr, wsave);
+        npy_rfftb(npts, rptr, wsave);
         rptr += npts;
         dptr += npts*2;
     }
@@ -282,7 +282,7 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
   if (!PyArg_ParseTuple(args, "l", &n)) {
       return NULL;
   }
-  /*Magic size needed by rffti*/
+  /*Magic size needed by npy_rffti*/
   dim = 2*n + 15;
   /*Create a 1 dimensional array of dimensions of type double*/
   op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
@@ -291,7 +291,7 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
   }
   Py_BEGIN_ALLOW_THREADS;
   NPY_SIGINT_ON;
-  rffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
+  npy_rffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
   NPY_SIGINT_OFF;
   Py_END_ALLOW_THREADS;
 
