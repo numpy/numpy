@@ -246,6 +246,8 @@ class NoseTester(object):
 
         import numpy
         print("NumPy version %s" % numpy.__version__)
+        relaxed_strides = numpy.ones((10, 1), order="C").flags.f_contiguous
+        print("NumPy relaxed strides checking option:", relaxed_strides)
         npdir = os.path.dirname(numpy.__file__)
         print("NumPy is installed in %s" % npdir)
 
