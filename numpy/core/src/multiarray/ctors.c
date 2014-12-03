@@ -3580,12 +3580,14 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (PySequence_Check(value) && (dtype->fields == Py_None)) {
         elcount[1] = PySequence_Length(value);
         if (elcount[1] < 1) elcount[1] = 1;
-    } else {
+    }
+    else {
         elcount[1] = 1;
     }
     if (elcount[1] == 1) {
         ndim = 1;
-    } else {
+    }
+    else {
         ndim = 2;
     }
 
@@ -3638,7 +3640,8 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                 Py_DECREF(value);
                 goto done;
             }
-        } else {
+        }
+        else {
             iter2 = PyObject_GetIter(value);
             if (iter2 == NULL) {
                 Py_DECREF(value);
@@ -3669,7 +3672,8 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                     Py_DECREF(value);
                     goto done;
                 }
-            } else {
+            }
+            else {
                 PyErr_SetString(PyExc_ValueError, "sequence too long");
                 Py_DECREF(value2);
                 Py_DECREF(iter2);
