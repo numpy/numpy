@@ -619,6 +619,10 @@ typedef struct _PyArray_Descr {
          * for NumPy 1.7.0.
          */
         NpyAuxData *c_metadata;
+        /* Cached hash value (-1 if not yet computed).
+         * This was added for NumPy 2.0.0.
+         */
+        npy_hash_t hash;
 } PyArray_Descr;
 
 typedef struct _arr_descr {

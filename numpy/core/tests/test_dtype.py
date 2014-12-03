@@ -125,6 +125,21 @@ class TestRecord(TestCase):
                       'titles': ['RRed pixel', 'Blue pixel']})
         assert_dtype_not_equal(a, b)
 
+    def test_mutate(self):
+        # Mutating a dtype should reset the cached hash value
+        a = np.dtype([('yo', np.int)])
+        b = np.dtype([('yo', np.int)])
+        c = np.dtype([('ye', np.int)])
+        assert_dtype_equal(a, b)
+        assert_dtype_not_equal(a, c)
+        a.names = ['ye']
+        assert_dtype_equal(a, c)
+        assert_dtype_not_equal(a, b)
+        state = b.__reduce__()[2]
+        a.__setstate__(state)
+        assert_dtype_equal(a, b)
+        assert_dtype_not_equal(a, c)
+
     def test_not_lists(self):
         """Test if an appropriate exception is raised when passing bad values to
         the dtype constructor.
