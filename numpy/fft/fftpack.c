@@ -8,6 +8,9 @@ Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber (Version 4, 
 
 #include <math.h>
 #include <stdio.h>
+#include <Python.h>
+#include <numpy/ndarraytypes.h>
+
 #define DOUBLE
 
 #ifdef DOUBLE
@@ -29,7 +32,7 @@ extern "C" {
 
 /* ----------------------------------------------------------------------
    passf2, passf3, passf4, passf5, passf. Complex FFT passes fwd and bwd.
----------------------------------------------------------------------- */
+----------------------------------------------------------------------- */
 
 static void passf2(int ido, int l1, const Treal cc[], Treal ch[], const Treal wa1[], int isign)
   /* isign==+1 for backward transform */
@@ -1142,9 +1145,9 @@ static void radbg(int ido, int ip, int l1, int idl1,
     }
   } /* radbg */
 
-  /* ----------------------------------------------------------------------
-cfftf1, cfftf, cfftb, cffti1, cffti. Complex FFTs.
----------------------------------------------------------------------- */
+  /* ------------------------------------------------------------
+cfftf1, npy_cfftf, npy_cfftb, cffti1, npy_cffti. Complex FFTs.
+--------------------------------------------------------------- */
 
 static void cfftf1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifac[MAXFAC+2], int isign)
   {
@@ -1204,24 +1207,24 @@ static void cfftf1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifa
   } /* cfftf1 */
 
 
-void cfftf(int n, Treal c[], Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_cfftf(int n, Treal c[], Treal wsave[])
   {
     int iw1, iw2;
     if (n == 1) return;
     iw1 = 2*n;
     iw2 = iw1 + 2*n;
     cfftf1(n, c, wsave, wsave+iw1, (int*)(wsave+iw2), -1);
-  } /* cfftf */
+  } /* npy_cfftf */
 
 
-void cfftb(int n, Treal c[], Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_cfftb(int n, Treal c[], Treal wsave[])
   {
     int iw1, iw2;
     if (n == 1) return;
     iw1 = 2*n;
     iw2 = iw1 + 2*n;
     cfftf1(n, c, wsave, wsave+iw1, (int*)(wsave+iw2), +1);
-  } /* cfftb */
+  } /* npy_cfftb */
 
 
 static void factorize(int n, int ifac[MAXFAC+2], const int ntryh[NSPECIAL])
@@ -1304,17 +1307,17 @@ static void cffti1(int n, Treal wa[], int ifac[MAXFAC+2])
   } /* cffti1 */
 
 
-void cffti(int n, Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_cffti(int n, Treal wsave[])
  {
     int iw1, iw2;
     if (n == 1) return;
     iw1 = 2*n;
     iw2 = iw1 + 2*n;
     cffti1(n, wsave+iw1, (int*)(wsave+iw2));
-  } /* cffti */
+  } /* npy_cffti */
 
-  /* ----------------------------------------------------------------------
-rfftf1, rfftb1, rfftf, rfftb, rffti1, rffti. Treal FFTs.
+  /* -------------------------------------------------------------------
+rfftf1, rfftb1, npy_rfftf, npy_rfftb, rffti1, npy_rffti. Treal FFTs.
 ---------------------------------------------------------------------- */
 
 static void rfftf1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifac[MAXFAC+2])
@@ -1378,7 +1381,7 @@ static void rfftf1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifa
   } /* rfftf1 */
 
 
-void rfftb1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifac[MAXFAC+2])
+static void rfftb1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifac[MAXFAC+2])
   {
     int i;
     int k1, l1, l2, na, nf, ip, iw, ix2, ix3, ix4, ido, idl1;
@@ -1434,18 +1437,18 @@ void rfftb1(int n, Treal c[], Treal ch[], const Treal wa[], const int ifac[MAXFA
   } /* rfftb1 */
 
 
-void rfftf(int n, Treal r[], Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_rfftf(int n, Treal r[], Treal wsave[])
   {
     if (n == 1) return;
     rfftf1(n, r, wsave, wsave+n, (int*)(wsave+2*n));
-  } /* rfftf */
+  } /* npy_rfftf */
 
 
-void rfftb(int n, Treal r[], Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_rfftb(int n, Treal r[], Treal wsave[])
   {
     if (n == 1) return;
     rfftb1(n, r, wsave, wsave+n, (int*)(wsave+2*n));
-  } /* rfftb */
+  } /* npy_rfftb */
 
 
 static void rffti1(int n, Treal wa[], int ifac[MAXFAC+2])
@@ -1490,11 +1493,11 @@ static void rffti1(int n, Treal wa[], int ifac[MAXFAC+2])
   } /* rffti1 */
 
 
-void rffti(int n, Treal wsave[])
+NPY_VISIBILITY_HIDDEN void npy_rffti(int n, Treal wsave[])
   {
     if (n == 1) return;
     rffti1(n, wsave+n, (int*)(wsave+2*n));
-  } /* rffti */
+  } /* npy_rffti */
 
 #ifdef __cplusplus
 }

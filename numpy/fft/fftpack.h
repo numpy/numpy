@@ -15,13 +15,13 @@ extern "C" {
 #define Treal float
 #endif
 
-extern void cfftf(int N, Treal data[], const Treal wrk[]);
-extern void cfftb(int N, Treal data[], const Treal wrk[]);
-extern void cffti(int N, Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_cfftf(int N, Treal data[], const Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_cfftb(int N, Treal data[], const Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_cffti(int N, Treal wrk[]);
 
-extern void rfftf(int N, Treal data[], const Treal wrk[]);
-extern void rfftb(int N, Treal data[], const Treal wrk[]);
-extern void rffti(int N, Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_rfftf(int N, Treal data[], const Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_rfftb(int N, Treal data[], const Treal wrk[]);
+extern NPY_VISIBILITY_HIDDEN void npy_rffti(int N, Treal wrk[]);
 
 #ifdef __cplusplus
 }
