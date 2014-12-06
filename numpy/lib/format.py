@@ -35,7 +35,7 @@ Capabilities
 
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
-  able to create a solution in his preferred programming language to
+  able to create a solution in their preferred programming language to
   read most ``.npy`` files that he has been given without much
   documentation.
 
