@@ -737,7 +737,6 @@ class TestStructured(TestCase):
 
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
         b = np.array([(42, 5), (1, 10)], dtype=[('b', '>f8'), ('a', '<i4')])
-
         assert_equal(a == b, [True, True])
 
         c = a.astype(b.dtype, casting='equiv')
@@ -755,13 +754,10 @@ class TestStructured(TestCase):
 
         assert_raises(TypeError, a.astype, [('a', '>i8'), ('b', '<f4')],
                       casting='safe')
-
         assert_raises(TypeError, a.astype, [('a', '>i2'), ('b', '<f8')],
                       casting='equiv')
-
         assert_raises(TypeError, a.astype, [('a', '>i8'), ('b', '<i2')],
                       casting='same_kind')
-
         assert_raises(TypeError, a.astype, b.dtype, casting='no')
 
 

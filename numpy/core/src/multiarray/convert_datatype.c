@@ -638,7 +638,6 @@ can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
     if (field1 == NULL || field2 == NULL) {
         return 0;
     }
-
     if (PyDict_Size(field1) != PyDict_Size(field2)) {
         return 0;
     }
@@ -712,7 +711,8 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 case NPY_EQUIV_CASTING:
                 case NPY_SAFE_CASTING:
                 case NPY_SAME_KIND_CASTING:
-                    /* `from' and `to' must have the same fields, and
+                    /* 
+                     * `from' and `to' must have the same fields, and
                      * corresponding fields must be (recursively) castable.
                      */
                     return can_cast_fields(from->fields, to->fields, casting);
