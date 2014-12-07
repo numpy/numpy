@@ -781,6 +781,13 @@ class TestStructured(TestCase):
         assert_(not np.can_cast(a.dtype, b.dtype, casting='no'))
         assert_raises(TypeError, a.astype, b.dtype, casting='no')
 
+        # Check that non-'unsafe' casting can't change the set of field names
+        for casting in ['no', 'safe', 'equiv', 'same_kind']:
+            t = [('a', '>i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
+            t = [('a', '>i4'), ('b', '<f8'), ('c', 'i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
+
 
 class TestBool(TestCase):
     def test_test_interning(self):
