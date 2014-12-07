@@ -624,7 +624,17 @@ type_num_unsigned_to_signed(int type_num)
     }
 }
 
-/* Compare two field dictionaries for castability. */
+/*
+ * Compare two field dictionaries for castability.
+ *
+ * Return 1 if 'field1' can be cast to 'field2' according to the rule
+ * 'casting', 0 if not.
+ *
+ * Castabiliy of field dictionaries is defined recursively: 'field1' and
+ * 'field2' must have the same field names (possibly in different
+ * orders), and the corresponding field types must be castable according
+ * to the given casting rule.
+ */
 static int
 can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
 {

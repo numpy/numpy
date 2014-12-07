@@ -730,28 +730,40 @@ class TestStructured(TestCase):
         assert_equal(a == b, [False, True])
 
     def test_casting(self):
+        # Check that casting a structured array to change its byte order
+        # works
         a = np.array([(1,)], dtype=[('a', '<i4')])
         b = a.astype([('a', '>i4')])
         assert_equal(b, a.byteswap().newbyteorder())
         assert_equal(a['a'][0], b['a'][0])
 
+        # Check that equality comparison works on structured arrays if
+        # they should be 'equiv'-castable
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
         b = np.array([(42, 5), (1, 10)], dtype=[('b', '>f8'), ('a', '<i4')])
         assert_equal(a == b, [True, True])
 
+        # Check that 'equiv' casting can reorder fields and change byte
+        # order
         c = a.astype(b.dtype, casting='equiv')
         assert_equal(a == c, [True, True])
 
+        # Check that 'safe' casting can change byte order and up-cast
+        # fields
         t = [('a', '<i8'), ('b', '>f8')]
         c = a.astype(t, casting='safe')
         assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
                      [True, True])
 
+        # Check that 'same_kind' casting can change byte order and
+        # change field widths within a "kind"
         t = [('a', '<i4'), ('b', '>f4')]
         c = a.astype(t, casting='same_kind')
         assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
                      [True, True])
 
+        # Check that casting fails if the casting rule should fail on
+        # any of the fields
         assert_raises(TypeError, a.astype, [('a', '>i8'), ('b', '<f4')],
                       casting='safe')
         assert_raises(TypeError, a.astype, [('a', '>i2'), ('b', '<f8')],
