@@ -295,8 +295,8 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     fail:
-        Py_DECREF(arr_x);
-        Py_DECREF(arr_bins);
+        Py_XDECREF(arr_x);
+        Py_XDECREF(arr_bins);
         return ret;
 }
 

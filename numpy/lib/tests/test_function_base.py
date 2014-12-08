@@ -861,6 +861,13 @@ class TestDigitize(TestCase):
         bins = [1, 1, 0, 1]
         assert_raises(ValueError, digitize, x, bins)
 
+    def test_casting_error(self):
+        x = [1, 2, 3+1.j]
+        bins = [1, 2, 3]
+        assert_raises(TypeError, digitize, x, bins)
+        x, bins = bins, x
+        assert_raises(TypeError, digitize, x, bins)
+
 
 class TestUnwrap(TestCase):
     def test_simple(self):
