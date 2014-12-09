@@ -18,14 +18,14 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-        'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
-        'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
-        'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
-        'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-        'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
-        'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
-        'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
-        ]
+    'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
+    'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+    'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
+    'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
+    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
+    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    ]
 
 
 try:
@@ -35,6 +35,7 @@ except AttributeError:
 
 # save away Python sum
 _sum_ = sum
+
 
 # functions that are now methods
 def _wrapit(obj, method, *args, **kwds):
@@ -138,14 +139,15 @@ def reshape(a, newshape, order='C'):
     order : {'C', 'F', 'A'}, optional
         Read the elements of `a` using this index order, and place the elements
         into the reshaped array using this index order.  'C' means to
-        read / write the elements using C-like index order, with the last axis index
-        changing fastest, back to the first axis index changing slowest.  'F'
-        means to read / write the elements using Fortran-like index order, with
-        the first index changing fastest, and the last index changing slowest.
+        read / write the elements using C-like index order, with the last axis
+        index changing fastest, back to the first axis index changing slowest.
+        'F' means to read / write the elements using Fortran-like index order,
+        with the first index changing fastest, and the last index changing
+        slowest.
         Note that the 'C' and 'F' options take no account of the memory layout
         of the underlying array, and only refer to the order of indexing.  'A'
-        means to read / write the elements in Fortran-like index order if `a` is
-        Fortran *contiguous* in memory, C-like order otherwise.
+        means to read / write the elements in Fortran-like index order if `a`
+        is Fortran *contiguous* in memory, C-like order otherwise.
 
     Returns
     -------
@@ -167,15 +169,15 @@ def reshape(a, newshape, order='C'):
      >>> a = np.zeros((10, 2))
      # A transpose make the array non-contiguous
      >>> b = a.T
-     # Taking a view makes it possible to modify the shape without modifying the
-     # initial object.
+     # Taking a view makes it possible to modify the shape without modifying
+     # the initial object.
      >>> c = b.view()
      >>> c.shape = (20)
      AttributeError: incompatible shape for a non-contiguous array
 
     The `order` keyword gives the index ordering both for *fetching* the values
-    from `a`, and then *placing* the values into the output array.  For example,
-    let's say you have an array:
+    from `a`, and then *placing* the values into the output array.
+    For example, let's say you have an array:
 
     >>> a = np.arange(6).reshape((3, 2))
     >>> a
@@ -1102,7 +1104,8 @@ def resize(a, new_shape):
         new_shape = (new_shape,)
     a = ravel(a)
     Na = len(a)
-    if not Na: return mu.zeros(new_shape, a.dtype.char)
+    if not Na:
+        return mu.zeros(new_shape, a.dtype.char)
     total_size = um.multiply.reduce(new_shape)
     n_copies = int(total_size / Na)
     extra = total_size % Na
@@ -1114,7 +1117,7 @@ def resize(a, new_shape):
         n_copies = n_copies+1
         extra = Na-extra
 
-    a = concatenate( (a,)*n_copies)
+    a = concatenate((a,)*n_copies)
     if extra > 0:
         a = a[:-extra]
 
@@ -1329,6 +1332,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     return asarray(a).trace(offset, axis1, axis2, dtype, out)
 
+
 def ravel(a, order='C'):
     """
     Return a flattened array.
@@ -1346,13 +1350,14 @@ def ravel(a, order='C'):
         index the elements in C-like order, with the last axis index changing
         fastest, back to the first axis index changing slowest.   'F' means to
         index the elements in Fortran-like index order, with the first index
-        changing fastest, and the last index changing slowest. Note that the 'C'
-        and 'F' options take no account of the memory layout of the underlying
-        array, and only refer to the order of axis indexing.  'A' means to read
-        the elements in Fortran-like index order if `a` is Fortran *contiguous*
-        in memory, C-like order otherwise.  'K' means to read the elements in
-        the order they occur in memory, except for reversing the data when
-        strides are negative.  By default, 'C' index order is used.
+        changing fastest, and the last index changing slowest. Note that the
+        'C' and 'F' options take no account of the memory layout of the
+        underlying array, and only refer to the order of axis indexing.
+        'A' means to read the elements in Fortran-like index order if `a` is
+        Fortran *contiguous* in memory, C-like order otherwise.  'K' means to
+        read the elements in the order they occur in memory, except for
+        reversing the data when strides are negative.  By default, 'C' index
+        order is used.
 
     Returns
     -------
@@ -1757,14 +1762,15 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
             sum = a.sum
         except AttributeError:
             return _methods._sum(a, axis=axis, dtype=dtype,
-                                out=out, keepdims=keepdims)
+                                 out=out, keepdims=keepdims)
         # NOTE: Dropping the keepdims parameters here...
         return sum(axis=axis, dtype=dtype, out=out)
     else:
         return _methods._sum(a, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
+                             out=out, keepdims=keepdims)
 
-def product (a, axis=None, dtype=None, out=None, keepdims=False):
+
+def product(a, axis=None, dtype=None, out=None, keepdims=False):
     """
     Return the product of array elements over a given axis.
 
@@ -1773,7 +1779,8 @@ def product (a, axis=None, dtype=None, out=None, keepdims=False):
     prod : equivalent function; see for details.
 
     """
-    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    return um.multiply.reduce(a, axis=axis, dtype=dtype,
+                              out=out, keepdims=keepdims)
 
 
 def sometrue(a, axis=None, out=None, keepdims=False):
@@ -1794,7 +1801,8 @@ def sometrue(a, axis=None, out=None, keepdims=False):
     except TypeError:
         return arr.any(axis=axis, out=out)
 
-def alltrue (a, axis=None, out=None, keepdims=False):
+
+def alltrue(a, axis=None, out=None, keepdims=False):
     """
     Check if all elements of input array are true.
 
@@ -1809,6 +1817,7 @@ def alltrue (a, axis=None, out=None, keepdims=False):
         return arr.all(axis=axis, out=out, keepdims=keepdims)
     except TypeError:
         return arr.all(axis=axis, out=out)
+
 
 def any(a, axis=None, out=None, keepdims=False):
     """
@@ -1890,6 +1899,7 @@ def any(a, axis=None, out=None, keepdims=False):
     except TypeError:
         return arr.any(axis=axis, out=out)
 
+
 def all(a, axis=None, out=None, keepdims=False):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -1963,7 +1973,8 @@ def all(a, axis=None, out=None, keepdims=False):
     except TypeError:
         return arr.all(axis=axis, out=out)
 
-def cumsum (a, axis=None, dtype=None, out=None):
+
+def cumsum(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative sum of the elements along a given axis.
 
@@ -2179,12 +2190,13 @@ def amax(a, axis=None, out=None, keepdims=False):
             amax = a.max
         except AttributeError:
             return _methods._amax(a, axis=axis,
-                                out=out, keepdims=keepdims)
+                                  out=out, keepdims=keepdims)
         # NOTE: Dropping the keepdims parameter
         return amax(axis=axis, out=out)
     else:
         return _methods._amax(a, axis=axis,
-                            out=out, keepdims=keepdims)
+                              out=out, keepdims=keepdims)
+
 
 def amin(a, axis=None, out=None, keepdims=False):
     """
@@ -2269,12 +2281,13 @@ def amin(a, axis=None, out=None, keepdims=False):
             amin = a.min
         except AttributeError:
             return _methods._amin(a, axis=axis,
-                                out=out, keepdims=keepdims)
+                                  out=out, keepdims=keepdims)
         # NOTE: Dropping the keepdims parameter
         return amin(axis=axis, out=out)
     else:
         return _methods._amin(a, axis=axis,
-                            out=out, keepdims=keepdims)
+                              out=out, keepdims=keepdims)
+
 
 def alen(a):
     """
@@ -2399,11 +2412,12 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
             prod = a.prod
         except AttributeError:
             return _methods._prod(a, axis=axis, dtype=dtype,
-                                out=out, keepdims=keepdims)
+                                  out=out, keepdims=keepdims)
         return prod(axis=axis, dtype=dtype, out=out)
     else:
         return _methods._prod(a, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
+                              out=out, keepdims=keepdims)
+
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """
@@ -2790,7 +2804,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
             pass
 
     return _methods._mean(a, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
+                          out=out, keepdims=keepdims)
+
 
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
@@ -2896,10 +2911,11 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
             pass
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                keepdims=keepdims)
+                         keepdims=keepdims)
+
 
 def var(a, axis=None, dtype=None, out=None, ddof=0,
-                            keepdims=False):
+        keepdims=False):
     """
     Compute the variance along the specified axis.
 
@@ -3003,4 +3019,4 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
             pass
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                keepdims=keepdims)
+                         keepdims=keepdims)
