@@ -999,7 +999,7 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : {ndarray, bool}
+    out : ndarray or bool
         Output array of bools, or a single bool if x1 and x2 are scalars.
 
     See Also
@@ -1632,7 +1632,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         For scalar input, the result is a new boolean with value True if
         the input is NaN; otherwise the value is False.
 
@@ -2046,7 +2046,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         AND operation on corresponding elements of `x1` and `x2`.
 
@@ -2112,7 +2112,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         OR operation on elements of `x1` and `x2`.
 
