@@ -461,7 +461,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     Returns
     -------
-    average, [sum_of_weights] : {array_type, double}
+    average, [sum_of_weights] : array_type or double
         Return the average along the specified axis. When returned is `True`,
         return a tuple with the average as the first element and the sum
         of the weights as the second element. The return type is `Float`
@@ -1147,7 +1147,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Returns
     -------
-    y : {float, ndarray}
+    y : float or ndarray
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1250,7 +1250,7 @@ def angle(z, deg=0):
 
     Returns
     -------
-    angle : {ndarray, scalar}
+    angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
 
@@ -1980,7 +1980,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         observations (unbiased estimate). If `bias` is 1, then
         normalization is by ``N``. These values can be overridden by using
         the keyword ``ddof`` in numpy versions >= 1.5.
-    ddof : {None, int}, optional
+    ddof : int, optional
         .. versionadded:: 1.5
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by
