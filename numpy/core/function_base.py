@@ -32,7 +32,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     retstep : bool, optional
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
-    dtype : dtype
+    dtype : dtype, optional
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
 
@@ -44,7 +44,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
         There are `num` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``
         (depending on whether `endpoint` is True or False).
-    step : float (only if `retstep` is True)
+    step : float
+        Only returned if `retstep` is True
+
         Size of spacing between samples.
 
 
