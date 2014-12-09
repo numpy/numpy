@@ -148,7 +148,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
         Number of compounding periods
     pv : array_like
         Present value
-    fv : array_like (optional)
+    fv : array_like, (optional)
         Future value (default = 0)
     when : {{'begin', 1}, {'end', 0}}, {string, int}
         When payments are due ('begin' (1) or 'end' (0))
