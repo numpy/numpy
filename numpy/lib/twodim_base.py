@@ -293,7 +293,7 @@ def diag(v, k=0):
            [0, 0, 8]])
 
     """
-    v = asarray(v)
+    v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
         n = s[0]+abs(k)

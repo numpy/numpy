@@ -1268,7 +1268,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
            [5, 7]])
 
     """
-    return asarray(a).diagonal(offset, axis1, axis2)
+    return asanyarray(a).diagonal(offset, axis1, axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
