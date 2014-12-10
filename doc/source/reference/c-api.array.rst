@@ -108,9 +108,12 @@ sub-types).
 
 .. cfunction:: int PyArray_FLAGS(PyArrayObject* arr)
 
-.. cfunction:: int PyArray_ITEMSIZE(PyArrayObject* arr)
+.. cfunction:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
 
     Return the itemsize for the elements of this array.
+
+    Note that, in the old API that was deprecated in version 1.7, this function
+    had the return type ``int``.
 
 .. cfunction:: int PyArray_TYPE(PyArrayObject* arr)
 
