@@ -556,7 +556,7 @@ static void f2py_report_on_array_copy(PyArrayObject* arr) {
     const npy_intp arr_size = PyArray_Size((PyObject *)arr);
     if (arr_size>F2PY_REPORT_ON_ARRAY_COPY) {
         fprintf(stderr,"copied an array: size=%ld, elsize=%"NPY_INTP_FMT"\n",
-                arr_size, PyArray_ITEMSIZE(arr));
+                arr_size, (npy_intp)PyArray_ITEMSIZE(arr));
     }
 }
 static void f2py_report_on_array_copy_fromany(void) {
@@ -726,7 +726,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
                 sprintf(mess+strlen(mess),
                         " -- expected at least elsize=%d but got %" NPY_INTP_FMT,
                         elsize,
-                        PyArray_ITEMSIZE(arr)
+                        (npy_intp)PyArray_ITEMSIZE(arr)
                         );
             PyErr_SetString(PyExc_ValueError,mess);
             return NULL;
@@ -768,7 +768,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
                 sprintf(mess+strlen(mess),
                         " -- expected elsize=%d but got %" NPY_INTP_FMT,
                         elsize,
-                        PyArray_ITEMSIZE(arr)
+                        (npy_intp)PyArray_ITEMSIZE(arr)
                         );
             if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
                 sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
