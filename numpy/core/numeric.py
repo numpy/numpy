@@ -1150,7 +1150,8 @@ def tensordot(a, b, axes=2):
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-    axes : integer or (2,) array_like
+
+    axes : int or (2,) array_like
         * integer_like
           If an int N, sum over the last N axes of `a` and the first N axes
           of `b` in order. The sizes of the corresponding axes must match.
