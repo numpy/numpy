@@ -10,6 +10,13 @@ classes are available:
   atlas_blas_info
   atlas_blas_threads_info
   lapack_atlas_info
+  lapack_atlas_threads_info
+  atlas_3_10_info
+  atlas_3_10_threads_info
+  atlas_3_10_blas_info,
+  atlas_3_10_blas_threads_info,
+  lapack_atlas_3_10_info
+  lapack_atlas_3_10_threads_info
   blas_info
   lapack_info
   openblas_info
@@ -302,6 +309,12 @@ def get_info(name, notfound_action=0):
           'atlas_blas_threads': atlas_blas_threads_info,
           'lapack_atlas': lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads': lapack_atlas_threads_info,  # ditto
+          'atlas_3_10': atlas_3_10_info,  # use lapack_opt or blas_opt instead
+          'atlas_3_10_threads': atlas_3_10_threads_info,                # ditto
+          'atlas_3_10_blas': atlas_3_10_blas_info,
+          'atlas_3_10_blas_threads': atlas_3_10_blas_threads_info,
+          'lapack_atlas_3_10': lapack_atlas_3_10_info,  # use lapack_opt instead
+          'lapack_atlas_3_10_threads': lapack_atlas_3_10_threads_info,  # ditto
           'mkl': mkl_info,
           # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
@@ -1148,6 +1161,63 @@ class lapack_atlas_threads_info(atlas_threads_info):
     _lib_names = ['lapack_atlas'] + atlas_threads_info._lib_names
 
 
+class atlas_3_10_info(atlas_info):
+    _lib_names = ['satlas']
+    _lib_atlas = _lib_names
+    _lib_lapack = _lib_names
+
+
+class atlas_3_10_blas_info(atlas_3_10_info):
+    _lib_names = ['satlas']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        info = {}
+        atlas_libs = self.get_libs('atlas_libs',
+                                   self._lib_names)
+        atlas = self.check_libs2(lib_dirs, atlas_libs, [])
+        if atlas is None:
+            return
+        include_dirs = self.get_include_dirs()
+        h = (self.combine_paths(lib_dirs + include_dirs, 'cblas.h') or [None])
+        h = h[0]
+        if h:
+            h = os.path.dirname(h)
+            dict_append(info, include_dirs=[h])
+        info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
+
+        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
+        dict_append(atlas, **atlas_extra_info)
+
+        dict_append(info, **atlas)
+
+        self.set_info(**info)
+        return
+
+
+class atlas_3_10_threads_info(atlas_3_10_info):
+    dir_env_var = ['PTATLAS', 'ATLAS']
+    _lib_names = ['tatlas']
+    #if sys.platfcorm[:7] == 'freebsd':
+        ## I don't think freebsd supports 3.10 at this time - 2014
+    _lib_atlas = _lib_names
+    _lib_lapack = _lib_names
+
+
+class atlas_3_10_blas_threads_info(atlas_3_10_blas_info):
+    dir_env_var = ['PTATLAS', 'ATLAS']
+    _lib_names = ['tatlas']
+
+
+class lapack_atlas_3_10_info(atlas_3_10_info):
+    pass
+
+
+class lapack_atlas_3_10_threads_info(atlas_3_10_threads_info):
+    pass
+
+
 class lapack_info(system_info):
     section = 'lapack'
     dir_env_var = 'LAPACK'
@@ -1366,7 +1436,6 @@ Make sure that -lgfortran is used for C++ extensions.
     return result
 
 
-
 class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
@@ -1383,7 +1452,11 @@ class lapack_opt_info(system_info):
             self.set_info(**lapack_mkl_info)
             return
 
-        atlas_info = get_info('atlas_threads')
+        atlas_info = get_info('atlas_3_10_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_3_10')
+        if not atlas_info:
+            atlas_info = get_info('atlas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas')
 
@@ -1480,7 +1553,11 @@ class blas_opt_info(system_info):
             self.set_info(**openblas_info)
             return
 
-        atlas_info = get_info('atlas_blas_threads')
+        atlas_info = get_info('atlas_3_10_blas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_3_10_blas')
+        if not atlas_info:
+            atlas_info = get_info('atlas_blas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
