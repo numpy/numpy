@@ -432,7 +432,8 @@ def save(file, arr):
 
     Notes
     -----
-    For a description of the ``.npy`` format, see `format`.
+    For a description of the ``.npy`` format, see the module docstring
+    of `numpy.lib.format`.
 
     Examples
     --------
