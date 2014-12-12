@@ -3365,9 +3365,9 @@ add_newdoc('numpy.core.umath', 'frexp',
     ----------
     x : array_like
         Array of numbers to be decomposed.
-    out1: ndarray, optional
+    out1 : ndarray, optional
         Output array for the mantissa. Must have the same shape as `x`.
-    out2: ndarray, optional
+    out2 : ndarray, optional
         Output array for the exponent. Must have the same shape as `x`.
 
     Returns
