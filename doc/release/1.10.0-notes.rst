@@ -28,8 +28,16 @@ Future Changes
 
 Compatibility notes
 ===================
+
+relaxed stride checking
+~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
+diag and diagonal
+~~~~~~~~~~~~~~~~~
+Both diag and diagonal now preserve subtypes. This will change the
+dimensions of the returned diagonal in the case of matrices and that
+may lead to problems in using the result.
 
 New Features
 ============
