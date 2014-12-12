@@ -19,6 +19,8 @@ __all__ = [
 i1 = iinfo(int8)
 i2 = iinfo(int16)
 i4 = iinfo(int32)
+
+
 def _min_int(low, high):
     """ get small int that fits the range """
     if high <= i1.max and low >= i1.min:
@@ -293,7 +295,7 @@ def diag(v, k=0):
            [0, 0, 8]])
 
     """
-    v = asarray(v)
+    v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
         n = s[0]+abs(k)
