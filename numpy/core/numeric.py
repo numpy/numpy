@@ -1150,7 +1150,8 @@ def tensordot(a, b, axes=2):
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-    axes : {integer_like, array_like}
+
+    axes : int or (2,) array_like
         * integer_like
           If an int N, sum over the last N axes of `a` and the first N axes
           of `b` in order. The sizes of the corresponding axes must match.
@@ -1168,11 +1169,11 @@ def tensordot(a, b, axes=2):
         ``axes = 0`` : tensor product $a\otimes b$
         ``axes = 1`` : tensor dot product $a\cdot b$
         ``axes = 2`` : (default) tensor double contraction $a:b$
-    
-    When `axes` is integer_like, the sequence for evaluation will be: first 
-    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and 
+
+    When `axes` is integer_like, the sequence for evaluation will be: first
+    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
     Nth axis in `b` last.
-    
+
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
