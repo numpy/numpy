@@ -2,27 +2,24 @@
 # Authors: Olivier Grisel, Jonathan Helmus and Kyle Kastner
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
 
-$BASE_URL = "https://www.python.org/ftp/python/"
+$SEVEN_ZIP_URL = "http://sourceforge.net/projects/sevenzip/files/7-Zip/9.35/7z935-x64.msi/download"
+$SEVEN_ZIP_FILENAME = "7z935-x64.msi"
+$PYTHOHN_BASE_URL = "https://www.python.org/ftp/python/"
 $GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 $GET_PIP_PATH = "C:\get-pip.py"
 
 
-function DownloadPython ($python_version, $platform_suffix) {
+function DownloadFile ($url, $filename, $download_folder) {
     $webclient = New-Object System.Net.WebClient
-    $filename = "python-" + $python_version + $platform_suffix + ".msi"
-    $url = $BASE_URL + $python_version + "/" + $filename
-
-    $basedir = $pwd.Path + "\"
-    $filepath = $basedir + $filename
-    if (Test-Path $filename) {
+    $filepath = $download_folder + "\" + $filename
+    if (Test-Path $filepath) {
         Write-Host "Reusing" $filepath
         return $filepath
     }
-
     # Download and retry up to 3 times in case of network transient errors.
     Write-Host "Downloading" $filename "from" $url
     $retry_attempts = 2
-    for($i=0; $i -lt $retry_attempts; $i++){
+    for ($i=0; $i -lt $retry_attempts; $i++) {
         try {
             $webclient.DownloadFile($url, $filepath)
             break
@@ -30,47 +27,71 @@ function DownloadPython ($python_version, $platform_suffix) {
         Catch [Exception]{
             Start-Sleep 1
         }
-   }
-   if (Test-Path $filepath) {
+    }
+    if (Test-Path $filepath) {
        Write-Host "File saved at" $filepath
-   } else {
+    } else {
        # Retry once to get the error message if any at the last try
        $webclient.DownloadFile($url, $filepath)
-   }
-   return $filepath
+    }
+    return $filepath
 }
 
 
-function InstallPython ($python_version, $architecture, $python_home) {
-    Write-Host "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
-    if (Test-Path $python_home) {
-        Write-Host $python_home "already exists, skipping."
-        return $false
+function InstallMsi ($msipath, $target_dir) {
+    Write-Host "Installing" $msipath "to" $target_dir
+    if (Test-Path $target_dir) {
+        Write-Host $target_dir "already exists, skipping."
+        return
     }
+    $install_log = $msipath + ".log"
+    $install_args = "/qn /log $install_log /i $msipath TARGETDIR=$target_dir INSTALLDIR=$target_dir"
+    $uninstall_args = "/qn /x $msipath"
+    RunCommand "msiexec.exe" $install_args
+    if (-not(Test-Path $target_dir)) {
+        Write-Host "$msipath seems to be installed else-where, reinstalling."
+        RunCommand "msiexec.exe" $uninstall_args
+        RunCommand "msiexec.exe" $install_args
+    }
+    if (Test-Path $target_dir) {
+        Write-Host "$msipath installation complete"
+    } else {
+        Write-Host "Failed to install $msipath in $target_dir"
+        Get-Content -Path $install_log
+        Exit 1
+    }
+}
+
+
+function DownloadPython ($python_version, $architecture, $download_folder) {
     if ($architecture -eq "32") {
         $platform_suffix = ""
     } else {
         $platform_suffix = ".amd64"
     }
-    $msipath = DownloadPython $python_version $platform_suffix
-    Write-Host "Installing" $msipath "to" $python_home
-    $install_log = $python_home + ".log"
-    $install_args = "/qn /log $install_log /i $msipath TARGETDIR=$python_home"
-    $uninstall_args = "/qn /x $msipath"
-    RunCommand "msiexec.exe" $install_args
-    if (-not(Test-Path $python_home)) {
-        Write-Host "Python seems to be installed else-where, reinstalling."
-        RunCommand "msiexec.exe" $uninstall_args
-        RunCommand "msiexec.exe" $install_args
-    }
-    if (Test-Path $python_home) {
-        Write-Host "Python $python_version ($architecture) installation complete"
-    } else {
-        Write-Host "Failed to install Python in $python_home"
-        Get-Content -Path $install_log
-        Exit 1
-    }
+    $filename = "python-" + $python_version + $platform_suffix + ".msi"
+    $url = $PYTHOHN_BASE_URL + $python_version + "/" + $filename
+    $msipath = DownloadFile $url $filename $download_folder
+    Write-Host $msipath
+    return $msipath
 }
+
+
+function InstallPython ($python_version, $architecture, $python_home, $download_folder) {
+    Write-Host "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
+    if (Test-Path $python_home) {
+        Write-Host $python_home "already exists, skipping."
+        return
+    }
+    $msipath = DownloadPython $python_version $architecture $download_folder
+    InstallMsi $msipath $python_home
+}
+
+function InstallSevenZip ($target_dir, $download_folder) {
+    $msipath = DownloadFile $SEVEN_ZIP_URL $SEVEN_ZIP_FILENAME $download_folder
+    InstallMsi $msipath $target_dir
+}
+
 
 function RunCommand ($command, $command_args) {
     Write-Host $command $command_args
@@ -94,8 +115,25 @@ function InstallPip ($python_home) {
 
 
 function main () {
-    InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
-    InstallPip $env:PYTHON
+    # Use environment variables to pass parameters: use reasonable defaults
+    # to make it easier to debug
+    $download_folder = $env:DOWNLOAD_FOLDER
+    if ( !$download_folder ) { $download_folder = $pwd.Path + "\Downloads"; }
+    if (-not(Test-Path $download_folder)) {
+        Write-Host "Creating download folder at $download_folder"
+        mkdir $download_folder
+    }
+    $python_version = $env:PYTHON_VERSION
+    if ( !$python_version ) { $python_version = "3.4.2"; }
+    $python_arch = $env:PYTHON_ARCH
+    if ( !$python_arch ) { $python_arch = "64"; }
+    $python_home = $env:PYTHON
+    if ( !$python_home ) { $python_home = "C:\Python34-x64"; }
+    $sevenzip_home = $env:SEVENZIP_HOME
+    if ( !$sevenzip_home ) { $sevenzip_home = "C:\7zip"; }
+    InstallPython $python_version $python_arch $python_home $download_folder
+    InstallSevenZip $sevenzip_home $download_folder
+    InstallPip $python_home
 }
 
 main

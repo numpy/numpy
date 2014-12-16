@@ -4,6 +4,7 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\appveyor\\run_with_env.cmd"
+    DOWNLOAD_FOLDER: "C:\\Downloads"
 
   matrix:
     # Minimalistic build matrix that should capture most platform related bugs
@@ -15,17 +16,17 @@ environment:
       PYTHON_VERSION: "2.7.9"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.2"
-      PYTHON_ARCH: "32"
+#    - PYTHON: "C:\\Python34"
+#      PYTHON_VERSION: "3.4.2"
+#      PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7.9"
-      PYTHON_ARCH: "64"
+#    - PYTHON: "C:\\Python27-x64"
+#      PYTHON_VERSION: "2.7.9"
+#      PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.2"
-      PYTHON_ARCH: "64"
+#    - PYTHON: "C:\\Python34-x64"
+#      PYTHON_VERSION: "3.4.2"
+#      PYTHON_ARCH: "64"
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
@@ -57,3 +58,7 @@ test_script:
   - "cd empty"
   - "python ..\\tools\\test-installed-numpy.py"
   - "cd .."
+
+cache:
+  - C:\Downloads
+  - C:\pip-cache
