@@ -8,6 +8,10 @@ $PYTHOHN_BASE_URL = "https://www.python.org/ftp/python/"
 $GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 $GET_PIP_PATH = "C:\get-pip.py"
 
+$OPENBLAS_BASE_URL = "https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/"
+$OPENBLAS_64_FILENAME = "openblas-x86-64-2014-07.7z"
+$OPENBLAS_32_FILENAME = "openblas-i686-2014-07.7z"
+
 
 function DownloadFile ($url, $filename, $download_folder) {
     $webclient = New-Object System.Net.WebClient
@@ -114,6 +118,24 @@ function InstallPip ($python_home) {
 }
 
 
+function InstallOpenBLAS ($openblas_home, $architecture, $download_folder) {
+    if (Test-Path $openblas_home) {
+        Write-Host $openblas_home "already exists, skipping."
+        return
+    }
+
+    if ( $architecture -eq "32" ) {
+        $filename = $OPENBLAS_32_FILENAME
+    } else {
+        $filename = $OPENBLAS_64_FILENAME
+    }
+    $url = $OPENBLAS_BASE_URL + $filename
+    $archive_path = DownloadFile $url $filename $download_folder
+    Write-Host "Extracting $archive_path to $openblas_home"
+    7z x -o"$openblas_home" $archive_path
+}
+
+
 function main () {
     # Use environment variables to pass parameters: use reasonable defaults
     # to make it easier to debug
@@ -134,6 +156,11 @@ function main () {
     $sevenzip_home = $env:SEVENZIP_HOME
     if ( $sevenzip_home ) {
         InstallSevenZip $sevenzip_home $download_folder
+        $env:Path = $sevenzip_home + ';' + $env:Path
+    }
+    $openblas_home = $env:OPENBLAS_HOME
+    if ( $openblas_home ) {
+        InstallOpenBLAS $openblas_home $python_arch $download_folder
     }
 }
 

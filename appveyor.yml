@@ -5,6 +5,7 @@ environment:
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\appveyor\\run_with_env.cmd"
     DOWNLOAD_FOLDER: "C:\\Downloads"
+    OPENBLAS_HOME: "C:\\OpenBLAS"
 
   matrix:
     # Minimalistic build matrix that should capture most platform related bugs
@@ -32,6 +33,9 @@ install:
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
   - "powershell ./tools/appveyor/install.ps1"
+
+  # Configure numpy to build against OpenBLAS
+  - ps: "cp .\\tools\\appveyor\\openblas-$env:PYTHON_ARCH.site.cfg site.cfg"
 
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
