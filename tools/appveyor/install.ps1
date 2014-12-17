@@ -129,11 +129,12 @@ function main () {
     if ( !$python_arch ) { $python_arch = "64"; }
     $python_home = $env:PYTHON
     if ( !$python_home ) { $python_home = "C:\Python34-x64"; }
-    $sevenzip_home = $env:SEVENZIP_HOME
-    if ( !$sevenzip_home ) { $sevenzip_home = "C:\7zip"; }
     InstallPython $python_version $python_arch $python_home $download_folder
-    InstallSevenZip $sevenzip_home $download_folder
     InstallPip $python_home
+    $sevenzip_home = $env:SEVENZIP_HOME
+    if ( $sevenzip_home ) {
+        InstallSevenZip $sevenzip_home $download_folder
+    }
 }
 
 main
