@@ -2325,6 +2325,9 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(ar._mask, [0, 0, 0, 0])
         assert_equal(ar._data, [1, 2, 3, 4])
         assert_equal(ar.fill_value, -99)
+        # Test index ordering
+        assert_equal(a.ravel(order='C'), [1, 2, 3, 4])
+        assert_equal(a.ravel(order='F'), [1, 3, 2, 4])
 
     def test_reshape(self):
         # Tests reshape
