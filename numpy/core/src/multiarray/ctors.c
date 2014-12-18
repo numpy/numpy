@@ -3597,6 +3597,10 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         goto done;
     }
 
+    /*
+     * We would need to alter the memory RENEW code to decrement any
+     * reference counts before throwing away any memory.
+     */
     if (PyDataType_REFCHK(dtype)) {
         PyErr_SetString(PyExc_ValueError,
                 "cannot create object arrays from iterator");
