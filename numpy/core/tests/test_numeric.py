@@ -888,7 +888,7 @@ class TestFromiter(TestCase):
         self.assertRaises(NIterError, np.fromiter,
                           self.load_data(count, eindex), dtype=int, count=count)
 
-    def test_sequences(self):
+    def test_sequences_of_sequences(self):
         a = fromiter(([x, x // 2, x+5] for x in range(6)), dtype=int)
         expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
                           [4, 2, 9], [5, 2, 10]], dtype=int)
@@ -900,7 +900,7 @@ class TestFromiter(TestCase):
                           dtype=int)
         self.assertTrue(alltrue(a == expected))
 
-    def test_sequences_improper(self):
+    def test_sequences_of_sequences_improper(self):
         s = [[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
                           [4, 2, 9], [5, 2, 10]]
         expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
