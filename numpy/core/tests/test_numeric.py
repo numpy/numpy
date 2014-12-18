@@ -903,8 +903,7 @@ class TestFromiter(TestCase):
     def test_sequences_of_sequences_improper(self):
         s = [[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
                           [4, 2, 9], [5, 2, 10]]
-        expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
-                          [4, 2, 9], [5, 2, 10]], dtype=int)
+        expected = array(s, dtype=int)
         self.assertTrue(alltrue(fromiter(s, dtype=int) == expected))
 
         s = [[0, 0, 5], [1, 0], [2, 1, 7], [3, 1, 8],
