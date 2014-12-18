@@ -891,39 +891,40 @@ class TestFromiter(TestCase):
     def test_sequences(self):
         a = fromiter(([x, x // 2, x+5] for x in range(6)), dtype=int)
         expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]], dtype=int)
+                          [4, 2, 9], [5, 2, 10]], dtype=int)
         self.assertTrue(alltrue(a == expected))
 
         a = fromiter(([x, x // 2, x+5, x+1] for x in range(6)), dtype=int)
         expected = array([[0, 0, 5, 1], [1, 0, 6, 2], [2, 1, 7, 3],
-                    [3, 1, 8, 4], [4, 2, 9, 5], [5, 2, 10,  6]], dtype=int)
+                          [3, 1, 8, 4], [4, 2, 9, 5], [5, 2, 10,  6]],
+                          dtype=int)
         self.assertTrue(alltrue(a == expected))
 
     def test_sequences_improper(self):
         s = [[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         expected = array([[0, 0, 5], [1, 0, 6], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]], dtype=int)
+                          [4, 2, 9], [5, 2, 10]], dtype=int)
         self.assertTrue(alltrue(fromiter(s, dtype=int) == expected))
 
         s = [[0, 0, 5], [1, 0], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         self.assertRaises(ValueError, fromiter, s, dtype=int)
 
         s = [[0, 0, 5], [1, 0, 6, 7], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         self.assertRaises(ValueError, fromiter, s, dtype=int)
 
         s = [[0, 0, 5], [], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         self.assertRaises(ValueError, fromiter, s, dtype=int)
 
         s = [[0, 0, 5], 5, [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         self.assertRaises(TypeError, fromiter, s, dtype=int)
 
         s = [[], [], [2, 1, 7], [3, 1, 8],
-                    [4, 2, 9], [5, 2, 10]]
+                          [4, 2, 9], [5, 2, 10]]
         self.assertRaises(ValueError, fromiter, s, dtype=int)
 
         s = [[], [], []]
