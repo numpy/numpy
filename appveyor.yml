@@ -36,6 +36,7 @@ install:
 
   # Configure numpy to build against OpenBLAS
   - ps: "cp .\\tools\\appveyor\\openblas-$env:PYTHON_ARCH.site.cfg site.cfg"
+  - ps: "cp C:\\OpenBLAS\\*\\bin\\libopenblas.dll numpy\\core"
 
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
