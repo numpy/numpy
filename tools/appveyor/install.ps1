@@ -12,6 +12,10 @@ $OPENBLAS_BASE_URL = "https://bitbucket.org/carlkl/mingw-w64-for-python/download
 $OPENBLAS_64_FILENAME = "openblas-x86-64-2014-07.7z"
 $OPENBLAS_32_FILENAME = "openblas-i686-2014-07.7z"
 
+$MINGW_BASE_URL = $OPENBLAS_BASE_URL
+$MINGW_32_FILENAME = "mingw32static-2014-11.7z"
+$MINGW_64_FILENAME = "mingw64static-2014-11.7z"
+
 $MSVC_PYTHON27_FILENAME = "VCForPython27.msi"
 $MSVC_PYTHON27_BASE_URL = "http://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/"
 
@@ -148,6 +152,23 @@ function InstallMSVCForPython27 ($download_folder) {
     InstallMsi $msipath $false
 }
 
+function InstallStaticMingw ($mingw_home, $architecture, $download_folder) {
+    if (Test-Path $mingw_home) {
+        Write-Host $mingw_home "already exists, skipping."
+        return
+    }
+
+    if ( $architecture -eq "32" ) {
+        $filename = $MINGW_32_FILENAME
+    } else {
+        $filename = $MINGW_64_FILENAME
+    }
+    $url = $MINGW_BASE_URL + $filename
+    $archive_path = DownloadFile $url $filename $download_folder
+    Write-Host "Extracting $archive_path to $mingw_home"
+    7z x -o"$mingw_home" $archive_path
+}
+
 
 function main () {
     # Use environment variables to pass parameters: use reasonable defaults
@@ -169,7 +190,6 @@ function main () {
     InstallPython $python_version $python_arch $python_home $download_folder
     InstallPip $python_home
 
-
     # Already installed on AppVeyor but useful for reproducing the build
     # env on a local machine
     $sevenzip_home = $env:SEVENZIP_HOME
@@ -180,10 +200,17 @@ function main () {
         InstallMSVCForPython27 $download_folder
     }
 
-    # This requires the 7z command in $env:Pat
+    # This requires the 7z command in $env:Path
     $openblas_home = $env:OPENBLAS_HOME
     if ( $openblas_home ) {
         InstallOpenBLAS $openblas_home $python_arch $download_folder
+    }
+
+    # We need mingw's gendeff command to generate the export library for
+    # MSVC to link against libopenblas.dll
+    $mingw_home = $env:MINGW_HOME
+    if ( $mingw_home ) {
+        InstallStaticMingw $mingw_home $python_arch $download_folder
     }
 }
 
