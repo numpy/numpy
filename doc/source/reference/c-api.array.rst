@@ -463,7 +463,7 @@ From other objects
 
     .. cvar:: NPY_ARRAY_IN_ARRAY
 
-        :cdata:`NPY_ARRAY_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
     .. cvar:: NPY_ARRAY_IN_FARRAY
 
