@@ -38,7 +38,7 @@ install:
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
   # the parent CMD process).
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%MINGW_HOME%\\bin;%PATH%"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%MINGW_HOME%\\mingw%PYTHON_ARCH%static\\bin;%PATH%"
 
   # Configure numpy to build against OpenBLAS
   - "copy .\\tools\\appveyor\\openblas-site.cfg site.cfg"
