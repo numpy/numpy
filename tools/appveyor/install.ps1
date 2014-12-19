@@ -206,7 +206,7 @@ function main () {
         InstallOpenBLAS $openblas_home $python_arch $download_folder
     }
 
-    # We need mingw's gendeff command to generate the export library for
+    # We need mingw's gendef command to generate the export library for
     # MSVC to link against libopenblas.dll
     $mingw_home = $env:MINGW_HOME
     if ( $mingw_home ) {

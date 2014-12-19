@@ -6,7 +6,7 @@ environment:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\appveyor\\run_with_env.cmd"
     DOWNLOAD_FOLDER: "C:\\Downloads"
     OPENBLAS_HOME: "C:\\OpenBLAS"
-    MINGW_HOME: "C:\\mingw"
+    MINGW_HOME: "C:\\mingw-static"
 
   matrix:
     # Minimalistic build matrix that should capture most platform related bugs
