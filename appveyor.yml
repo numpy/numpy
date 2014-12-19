@@ -41,11 +41,11 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%MINGW_HOME%\\bin;%PATH%"
 
   # Configure numpy to build against OpenBLAS
-  - ps: "cp .\\tools\\appveyor\\openblas-site.cfg site.cfg"
+  - "copy .\\tools\\appveyor\\openblas-site.cfg site.cfg"
   - ps: "cp C:\\OpenBLAS\\*\\bin\\libopenblas.dll numpy\\core"
-  - ps: "gendef numpy\\core\\libopenblas.dll"
+  - "gendef numpy\\core\\libopenblas.dll"
   - "%CMD_IN_ENV% lib /machine:X64 /def:libopenblas.def"
-  - ps: "cp libopenblas.lib numpy\\core\\libopenblas.lib"
+  - "copy libopenblas.lib numpy\\core\\libopenblas.lib"
   - ps: "mkdir numpy\\core\\openblas"
   - ps: "cp C:\\OpenBLAS\\*\\include\\*.h numpy\\core\\openblas"
 
