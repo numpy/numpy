@@ -35,19 +35,19 @@ install:
   # not already installed.
   - "powershell ./tools/appveyor/install.ps1"
 
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%MINGW_HOME%\\bin;%PATH%"
+
   # Configure numpy to build against OpenBLAS
   - ps: "cp .\\tools\\appveyor\\openblas-site.cfg site.cfg"
   - ps: "cp C:\\OpenBLAS\\*\\bin\\libopenblas.dll numpy\\core"
-  - ps: "$env:MINGW_HOME\\bin\\gendeff numpy\\core\\libopenblas.dll"
+  - ps: "gendef numpy\\core\\libopenblas.dll"
   - "%CMD_IN_ENV% lib /machine:X64 /def:libopenblas.def"
   - ps: "cp libopenblas.lib numpy\\core\\libopenblas.lib"
   - ps: "mkdir numpy\\core\\openblas"
   - ps: "cp C:\\OpenBLAS\\*\\include\\*.h numpy\\core\\openblas"
-
-  # Prepend newly installed Python to the PATH of this build (this cannot be
-  # done from inside the powershell script as it would require to restart
-  # the parent CMD process).
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   # Check that we have the expected version and architecture for Python
   - "python --version"
