@@ -839,7 +839,9 @@ def configuration(parent_package='',top_path=None):
     blas_info = get_info('blas_opt', 0)
     if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
         extra_info = blas_info
-        multiarray_src.append(join('src', 'multiarray', 'cblasfuncs.c'))
+        multiarray_src.extend([join('src', 'multiarray', 'cblasfuncs.c'),
+                               join('src', 'multiarray', 'python_xerbla.c'),
+                              ])
     else:
         extra_info = {}
 

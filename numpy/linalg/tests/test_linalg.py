@@ -1152,6 +1152,8 @@ def test_xerbla_override():
     # and may, or may not, abort the process depending on the LAPACK package.
     from nose import SkipTest
 
+    XERBLA_OK = 255
+
     try:
         pid = os.fork()
     except (OSError, AttributeError):
@@ -1181,15 +1183,16 @@ def test_xerbla_override():
                 a, a, 0, 0)
         except ValueError as e:
             if "DORGQR parameter number 5" in str(e):
-                # success
-                os._exit(os.EX_OK)
+                # success, reuse error code to mark success as
+                # FORTRAN STOP returns as success.
+                os._exit(XERBLA_OK)
 
         # Did not abort, but our xerbla was not linked in.
         os._exit(os.EX_CONFIG)
     else:
         # parent
         pid, status = os.wait()
-        if os.WEXITSTATUS(status) != os.EX_OK or os.WIFSIGNALED(status):
+        if os.WEXITSTATUS(status) != XERBLA_OK:
             raise SkipTest('Numpy xerbla not linked in.')
 
 

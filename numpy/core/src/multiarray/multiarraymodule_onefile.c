@@ -56,5 +56,6 @@
 #include "multiarraymodule.c"
 
 #if defined(HAVE_CBLAS)
+#include "python_xerbla.c"
 #include "cblasfuncs.c"
 #endif
