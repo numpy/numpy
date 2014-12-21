@@ -2720,6 +2720,7 @@ class MaskedArray(ndarray):
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
+		print (mask)
                 _data._mask = mask
                 _data._sharedmask = not copy
             else:
