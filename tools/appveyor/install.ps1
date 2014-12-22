@@ -2,7 +2,7 @@
 # Authors: Olivier Grisel, Jonathan Helmus and Kyle Kastner
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
 
-$SEVEN_ZIP_URL = "http://sourceforge.net/projects/sevenzip/files/7-Zip/9.35/7z935-x64.msi/download"
+$SEVEN_ZIP_URL = "http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.35/7z935-x64.msi"
 $SEVEN_ZIP_FILENAME = "7z935-x64.msi"
 $PYTHOHN_BASE_URL = "https://www.python.org/ftp/python/"
 $GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
