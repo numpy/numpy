@@ -44,7 +44,7 @@ install:
   - "copy .\\tools\\appveyor\\openblas-site.cfg site.cfg"
   - ps: "cp C:\\OpenBLAS\\*\\bin\\libopenblas.dll numpy\\core"
   - "gendef numpy\\core\\libopenblas.dll"
-  - "%CMD_IN_ENV% lib /machine:X64 /def:libopenblas.def"
+  - "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\BIN\\lib /machine:X64 /def:libopenblas.def"
   - "copy libopenblas.lib numpy\\core\\libopenblas.lib"
   - ps: "mkdir numpy\\core\\openblas"
   - ps: "cp C:\\OpenBLAS\\*\\include\\*.h numpy\\core\\openblas"
