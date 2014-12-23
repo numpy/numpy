@@ -120,7 +120,6 @@ fi
 export PYTHON
 export PIP
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
-  $PIP install --upgrade pip
   $PIP install wheel
   $PYTHON setup.py bdist_wheel
   $PIP install --pre --upgrade --find-links dist numpy
