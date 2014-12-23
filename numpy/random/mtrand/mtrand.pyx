@@ -607,8 +607,8 @@ cdef class RandomState:
     def __init__(self, seed=None):
         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
 
-        self.seed(seed)
         self.lock = Lock()
+        self.seed(seed)
 
     def __dealloc__(self):
         if self.internal_state != NULL:
@@ -639,19 +639,22 @@ cdef class RandomState:
         cdef ndarray obj "arrayObject_obj"
         try:
             if seed is None:
-                errcode = rk_randomseed(self.internal_state)
+                with self.lock:
+                    errcode = rk_randomseed(self.internal_state)
             else:
                 idx = operator.index(seed)
                 if idx > int(2**32 - 1) or idx < 0:
                     raise ValueError("Seed must be between 0 and 4294967295")
-                rk_seed(idx, self.internal_state)
+                with self.lock:
+                    rk_seed(idx, self.internal_state)
         except TypeError:
             obj = np.asarray(seed).astype(np.int64, casting='safe')
             if ((obj > int(2**32 - 1)) | (obj < 0)).any():
                 raise ValueError("Seed must be between 0 and 4294967295")
             obj = obj.astype('L', casting='unsafe')
-            init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
-                PyArray_DIM(obj, 0))
+            with self.lock:
+                init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
+                    PyArray_DIM(obj, 0))
 
     def get_state(self):
         """
@@ -936,7 +939,8 @@ cdef class RandomState:
 
         diff = <unsigned long>hi - <unsigned long>lo - 1UL
         if size is None:
-            rv = lo + <long>rk_interval(diff, self. internal_state)
+            with self.lock:
+                rv = lo + <long>rk_interval(diff, self. internal_state)
             return rv
         else:
             array = <ndarray>np.empty(size, int)
@@ -4581,20 +4585,22 @@ cdef class RandomState:
             # each row. So we can't just use ordinary assignment to swap the
             # rows; we need a bounce buffer.
             buf = np.empty_like(x[0])
-            while i > 0:
-                j = rk_interval(i, self.internal_state)
-                buf[...] = x[j]
-                x[j] = x[i]
-                x[i] = buf
-                i = i - 1
+            with self.lock:
+                while i > 0:
+                    j = rk_interval(i, self.internal_state)
+                    buf[...] = x[j]
+                    x[j] = x[i]
+                    x[i] = buf
+                    i = i - 1
         else:
             # For single-dimensional arrays, lists, and any other Python
             # sequence types, indexing returns a real object that's
             # independent of the array contents, so we can just swap directly.
-            while i > 0:
-                j = rk_interval(i, self.internal_state)
-                x[i], x[j] = x[j], x[i]
-                i = i - 1
+            with self.lock:
+                while i > 0:
+                    j = rk_interval(i, self.internal_state)
+                    x[i], x[j] = x[j], x[i]
+                    i = i - 1
 
     def permutation(self, object x):
         """
