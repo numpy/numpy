@@ -479,7 +479,9 @@ def pre_build(context):
                 ]
 
             if bld.env.HAS_CBLAS:
-                sources.append(pjoin('src', 'multiarray', 'cblasfuncs.c'))
+                sources.extend([pjoin('src', 'multiarray', 'cblasfuncs.c'),
+                                pjoin('src', 'multiarray', 'python_xerbla.c'),
+                               ])
         else:
             sources = extension.sources
 
