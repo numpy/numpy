@@ -954,12 +954,13 @@ def configuration(parent_package='',top_path=None):
         if blas_info:
             if ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', []):
                 return None # dotblas needs ATLAS, Fortran compiled blas will not be sufficient.
-            return ext.depends[:2]
+            return ext.depends[:3]
         return None # no extension module will be built
 
     config.add_extension('_dotblas',
                          sources = [get_dotblas_sources],
                          depends = [join('blasdot', '_dotblas.c'),
+                                    join('blasdot', 'python_xerbla.c'),
                                     join('blasdot', 'apple_sgemv_patch.c'),
                                     join('blasdot', 'cblas.h'),
                                   ],
