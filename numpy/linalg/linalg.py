@@ -1352,7 +1352,7 @@ def cond(x, p=None):
     ----------
     x : (M, N) array_like
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm:
 
         =====  ============================
@@ -1360,6 +1360,7 @@ def cond(x, p=None):
         =====  ============================
         None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
+        'nuc'  nuclear norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
@@ -1368,8 +1369,9 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
-        the root-of-sum-of-squares norm.
+        inf means the numpy.inf object, the Frobenius norm is
+        the root-of-sum-of-squares norm, and the nuclear norm is
+        the sum of singular values.
 
     Returns
     -------
@@ -1892,7 +1894,7 @@ def lstsq(a, b, rcond=-1):
 
 
 def _multi_svd_norm(x, row_axis, col_axis, op):
-    """Compute the extreme singular values of the 2-D matrices in `x`.
+    """Compute a function of the singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by numpy.linalg.norm().
 
@@ -1902,16 +1904,16 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     row_axis, col_axis : int
         The axes of `x` that hold the 2-D matrices.
     op : callable
-        This should be either numpy.amin or numpy.amax.
+        This should be either numpy.amin or numpy.amax or numpy.sum.
 
     Returns
     -------
     result : float or ndarray
         If `x` is 2-D, the return values is a float.
         Otherwise, it is an array with ``x.ndim - 2`` dimensions.
-        The return values are either the minimum or maximum of the
+        The return values are either the minimum or maximum or sum of the
         singular values of the matrices, depending on whether `op`
-        is `numpy.amin` or `numpy.amax`.
+        is `numpy.amin` or `numpy.amax` or `numpy.sum`.
 
     """
     if row_axis > col_axis:
@@ -1933,7 +1935,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     ----------
     x : array_like
         Input array.  If `axis` is None, `x` must be 1-D or 2-D.
-    ord : {non-zero int, inf, -inf, 'fro'}, optional
+    ord : {non-zero int, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
         `inf` object.
     axis : {int, 2-tuple of ints, None}, optional
@@ -1966,6 +1968,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     =====  ============================  ==========================
     None   Frobenius norm                2-norm
     'fro'  Frobenius norm                --
+    'nuc'  nuclear norm                  --
     inf    max(sum(abs(x), axis=1))      max(abs(x))
     -inf   min(sum(abs(x), axis=1))      min(abs(x))
     0      --                            sum(x != 0)
@@ -1979,6 +1982,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
     The Frobenius norm is given by [1]_:
 
         :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
+
+    The nuclear norm is the sum of singular values.
 
     References
     ----------
@@ -2143,6 +2148,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+        elif ord == 'nuc':
+            ret = _multi_svd_norm(x, row_axis, col_axis, sum)
         else:
             raise ValueError("Invalid norm order for matrices.")
         if keepdims:
