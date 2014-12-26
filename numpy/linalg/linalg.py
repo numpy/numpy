@@ -1352,7 +1352,7 @@ def cond(x, p=None):
     ----------
     x : (M, N) array_like
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
         Order of the norm:
 
         =====  ============================
@@ -1360,7 +1360,6 @@ def cond(x, p=None):
         =====  ============================
         None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
-        'nuc'  nuclear norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
@@ -1369,9 +1368,8 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, the Frobenius norm is
-        the root-of-sum-of-squares norm, and the nuclear norm is
-        the sum of singular values.
+        inf means the numpy.inf object, and the Frobenius norm is
+        the root-of-sum-of-squares norm.
 
     Returns
     -------
@@ -1927,7 +1925,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     """
     Matrix or vector norm.
 
-    This function is able to return one of seven different matrix norms,
+    This function is able to return one of eight different matrix norms,
     or one of an infinite number of vector norms (described below), depending
     on the value of the ``ord`` parameter.
 
