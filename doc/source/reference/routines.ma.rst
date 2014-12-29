@@ -184,6 +184,8 @@ Finding masked data
    ma.flatnotmasked_edges
    ma.notmasked_contiguous
    ma.notmasked_edges
+   ma.clump_masked
+   ma.clump_unmasked
 
 
 Modifying a mask

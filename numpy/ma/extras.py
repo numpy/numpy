@@ -658,13 +658,13 @@ def median(a, axis=None, out=None, overwrite_input=False):
     Examples
     --------
     >>> x = np.ma.array(np.arange(8), mask=[0]*4 + [1]*4)
-    >>> np.ma.extras.median(x)
+    >>> np.ma.median(x)
     1.5
 
     >>> x = np.ma.array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
-    >>> np.ma.extras.median(x)
+    >>> np.ma.median(x)
     2.5
-    >>> np.ma.extras.median(x, axis=-1, overwrite_input=True)
+    >>> np.ma.median(x, axis=-1, overwrite_input=True)
     masked_array(data = [ 2.  5.],
                  mask = False,
            fill_value = 1e+20)
@@ -753,11 +753,11 @@ def compress_rowcols(x, axis=None):
      [False False False]],
            fill_value = 999999)
 
-    >>> np.ma.extras.compress_rowcols(x)
+    >>> np.ma.compress_rowcols(x)
     array([[7, 8]])
-    >>> np.ma.extras.compress_rowcols(x, 0)
+    >>> np.ma.compress_rowcols(x, 0)
     array([[6, 7, 8]])
-    >>> np.ma.extras.compress_rowcols(x, 1)
+    >>> np.ma.compress_rowcols(x, 1)
     array([[1, 2],
            [4, 5],
            [7, 8]])
@@ -788,7 +788,7 @@ def compress_rows(a):
     """
     Suppress whole rows of a 2-D array that contain masked values.
 
-    This is equivalent to ``np.ma.extras.compress_rowcols(a, 0)``, see
+    This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
     `extras.compress_rowcols` for details.
 
     See Also
@@ -802,7 +802,7 @@ def compress_cols(a):
     """
     Suppress whole columns of a 2-D array that contain masked values.
 
-    This is equivalent to ``np.ma.extras.compress_rowcols(a, 1)``, see
+    This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
     `extras.compress_rowcols` for details.
 
     See Also
@@ -1233,7 +1233,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Examples
     --------
     >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
-    >>> np.ma.extras.setdiff1d(x, [1, 2])
+    >>> np.ma.setdiff1d(x, [1, 2])
     masked_array(data = [3 --],
                  mask = [False  True],
            fill_value = 999999)
@@ -1645,7 +1645,7 @@ def notmasked_edges(a, axis=None):
     >>> np.array(am[~am.mask])
     array([0, 1, 2, 3, 6])
 
-    >>> np.ma.extras.notmasked_edges(ma)
+    >>> np.ma.notmasked_edges(ma)
     array([0, 6])
 
     """
@@ -1684,7 +1684,7 @@ def flatnotmasked_contiguous(a):
     Examples
     --------
     >>> a = np.ma.arange(10)
-    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    >>> np.ma.flatnotmasked_contiguous(a)
     slice(0, 10, None)
 
     >>> mask = (a < 3) | (a > 8) | (a == 5)
@@ -1692,10 +1692,10 @@ def flatnotmasked_contiguous(a):
     >>> np.array(a[~a.mask])
     array([3, 4, 6, 7, 8])
 
-    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    >>> np.ma.flatnotmasked_contiguous(a)
     [slice(3, 5, None), slice(6, 9, None)]
     >>> a[:] = np.ma.masked
-    >>> print np.ma.extras.flatnotmasked_edges(a)
+    >>> print np.ma.flatnotmasked_edges(a)
     None
 
     """
@@ -1748,7 +1748,7 @@ def notmasked_contiguous(a, axis=None):
     >>> np.array(ma[~ma.mask])
     array([0, 1, 2, 3, 6])
 
-    >>> np.ma.extras.notmasked_contiguous(ma)
+    >>> np.ma.notmasked_contiguous(ma)
     [slice(0, 4, None), slice(6, 7, None)]
 
     """
@@ -1817,7 +1817,7 @@ def clump_unmasked(a):
     --------
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
-    >>> np.ma.extras.clump_unmasked(a)
+    >>> np.ma.clump_unmasked(a)
     [slice(3, 6, None), slice(7, 8, None)]
 
     """
@@ -1861,7 +1861,7 @@ def clump_masked(a):
     --------
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
-    >>> np.ma.extras.clump_masked(a)
+    >>> np.ma.clump_masked(a)
     [slice(0, 3, None), slice(6, 7, None), slice(8, 10, None)]
 
     """
