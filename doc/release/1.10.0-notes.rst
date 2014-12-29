@@ -29,6 +29,12 @@ Future Changes
 Compatibility notes
 ===================
 
+numpy version string
+~~~~~~~~~~~~~~~~~~~~
+The numpy version string for development builds has been changed from
+``x.y.z.dev-githash`` to ``x.y.z.dev+githash`` (note the +) in order to comply
+with PEP 440.
+
 relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
