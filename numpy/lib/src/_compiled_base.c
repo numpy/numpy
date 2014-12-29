@@ -1,64 +1,13 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#include "Python.h"
-#include "structmember.h"
+#include <Python.h>
+#include <structmember.h>
+#include <string.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
 #include "numpy/ufuncobject.h"
-#include "string.h"
 
-
-static npy_intp
-incr_slot_(double x, double *bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = 0; i < lbins; i ++ ) {
-        if ( x < bins [i] ) {
-            return i;
-        }
-    }
-    return lbins;
-}
-
-static npy_intp
-decr_slot_(double x, double * bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = lbins - 1; i >= 0; i -- ) {
-        if (x < bins [i]) {
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
-static npy_intp
-incr_slot_right_(double x, double *bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = 0; i < lbins; i ++ ) {
-        if ( x <= bins [i] ) {
-            return i;
-        }
-    }
-    return lbins;
-}
-
-static npy_intp
-decr_slot_right_(double x, double * bins, npy_intp lbins)
-{
-    npy_intp i;
-
-    for ( i = lbins - 1; i >= 0; i -- ) {
-        if (x <= bins [i]) {
-            return i + 1;
-        }
-    }
-    return 0;
-}
 
 /*
  * Returns -1 if the array is monotonic decreasing,
@@ -125,6 +74,7 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
     *mn = min;
     *mx = max;
 }
+
 /*
  * arr_bincount is registered as bincount.
  *
@@ -161,14 +111,22 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     len = PyArray_SIZE(lst);
     type = PyArray_DescrFromType(NPY_INTP);
 
-    /* handle empty list */
-    if (len < 1) {
-        if (mlength == Py_None) {
-            minlength = 0;
-        }
-        else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+    if (mlength == Py_None) {
+        minlength = 0;
+    }
+    else {
+        minlength = PyArray_PyIntAsIntp(mlength);
+        if (minlength <= 0) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                                "minlength must be positive");
+            }
             goto fail;
         }
+    }
+
+    /* handle empty list */
+    if (len == 0) {
         if (!(ans = (PyArrayObject *)PyArray_Zeros(1, &minlength, type, 0))){
             goto fail;
         }
@@ -185,15 +143,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     ans_size = mx + 1;
     if (mlength != Py_None) {
-        if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
-            goto fail;
-        }
-        if (minlength <= 0) {
-            /* superfluous, but may catch incorrect usage */
-            PyErr_SetString(PyExc_ValueError,
-                    "minlength must be positive");
-            goto fail;
-        }
         if (ans_size < minlength) {
             ans_size = minlength;
         }
@@ -245,143 +194,111 @@ fail:
     return NULL;
 }
 
-
 /*
- * digitize (x, bins, right=False) returns an array of python integers the same
- * length of x. The values i returned are such that bins [i - 1] <= x <
- * bins [i] if bins is monotonically increasing, or bins [i - 1] > x >=
- * bins [i] if bins is monotonically decreasing.  Beyond the bounds of
- * bins, returns either i = 0 or i = len (bins) as appropriate.
- * if right == True the comparison is bins [i - 1] < x <= bins[i]
- * or bins [i - 1] >= x > bins[i]
+ * digitize(x, bins, right=False) returns an array of integers the same length
+ * as x. The values i returned are such that bins[i - 1] <= x < bins[i] if
+ * bins is monotonically increasing, or bins[i - 1] > x >= bins[i] if bins
+ * is monotonically decreasing.  Beyond the bounds of bins, returns either
+ * i = 0 or i = len(bins) as appropriate. If right == True the comparison
+ * is bins [i - 1] < x <= bins[i] or bins [i - 1] >= x > bins[i]
  */
 static PyObject *
 arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    /* self is not used */
-    PyObject *ox, *obins;
-    PyArrayObject *ax = NULL, *abins = NULL, *aret = NULL;
-    double *dx, *dbins;
-    npy_intp lbins, lx;             /* lengths */
-    npy_intp right = 0; /* whether right or left is inclusive */
-    npy_intp *iret;
-    int m, i;
+    PyObject *obj_x = NULL;
+    PyObject *obj_bins = NULL;
+    PyArrayObject *arr_x = NULL;
+    PyArrayObject *arr_bins = NULL;
+    PyObject *ret = NULL;
+    npy_intp len_bins;
+    int monotonic, right = 0;
+    NPY_BEGIN_THREADS_DEF
+
     static char *kwlist[] = {"x", "bins", "right", NULL};
-    PyArray_Descr *type;
-    char bins_non_monotonic = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist, &ox, &obins,
-                &right)) {
-        goto fail;
-    }
-    type = PyArray_DescrFromType(NPY_DOUBLE);
-    ax = (PyArrayObject *)PyArray_FromAny(ox, type,
-                                        1, 1, NPY_ARRAY_CARRAY, NULL);
-    if (ax == NULL) {
-        goto fail;
-    }
-    Py_INCREF(type);
-    abins = (PyArrayObject *)PyArray_FromAny(obins, type,
-                                        1, 1, NPY_ARRAY_CARRAY, NULL);
-    if (abins == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+                                     &obj_x, &obj_bins, &right)) {
         goto fail;
     }
 
-    lx = PyArray_SIZE(ax);
-    dx = (double *)PyArray_DATA(ax);
-    lbins = PyArray_SIZE(abins);
-    dbins = (double *)PyArray_DATA(abins);
-    aret = (PyArrayObject *)PyArray_SimpleNew(1, &lx, NPY_INTP);
-    if (aret == NULL) {
+    /* PyArray_SearchSorted will make `x` contiguous even if we don't */
+    arr_x = (PyArrayObject *)PyArray_FROMANY(obj_x, NPY_DOUBLE, 0, 0,
+                                             NPY_ARRAY_CARRAY_RO);
+    if (arr_x == NULL) {
         goto fail;
     }
-    iret = (npy_intp *)PyArray_DATA(aret);
 
-    if (lx <= 0 || lbins < 0) {
+    /* TODO: `bins` could be strided, needs change to check_array_monotonic */
+    arr_bins = (PyArrayObject *)PyArray_FROMANY(obj_bins, NPY_DOUBLE, 1, 1,
+                                               NPY_ARRAY_CARRAY_RO);
+    if (arr_bins == NULL) {
+        goto fail;
+    }
+
+    len_bins = PyArray_SIZE(arr_bins);
+    if (len_bins == 0) {
+        PyErr_SetString(PyExc_ValueError, "bins must have non-zero length");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(len_bins)
+    monotonic = check_array_monotonic((const double *)PyArray_DATA(arr_bins),
+                                      len_bins);
+    NPY_END_THREADS
+
+    if (monotonic == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "Both x and bins must have non-zero length");
+                        "bins must be monotonically increasing or decreasing");
+        goto fail;
+    }
+
+    /* PyArray_SearchSorted needs an increasing array */
+    if (monotonic == - 1) {
+        PyArrayObject *arr_tmp = NULL;
+        npy_intp shape = PyArray_DIM(arr_bins, 0);
+        npy_intp stride = -PyArray_STRIDE(arr_bins, 0);
+        void *data = (void *)(PyArray_BYTES(arr_bins) - stride * (shape - 1));
+
+        arr_tmp = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &shape,
+                                               NPY_DOUBLE, &stride, data, 0,
+                                               PyArray_FLAGS(arr_bins), NULL);
+        if (!arr_tmp) {
             goto fail;
-    }
-    NPY_BEGIN_ALLOW_THREADS;
-    if (lbins == 1)  {
-        if (right == 0) {
-            for (i = 0; i < lx; i++) {
-                if (dx [i] >= dbins[0]) {
-                    iret[i] = 1;
-                }
-                else {
-                    iret[i] = 0;
-                }
-            }
         }
-        else {
-            for (i = 0; i < lx; i++) {
-                if (dx [i] > dbins[0]) {
-                    iret[i] = 1;
-                }
-                else {
-                    iret[i] = 0;
-                }
-            }
 
-        }
-    }
-    else {
-        m = check_array_monotonic(dbins, lbins);
-        if (right == 0) {
-            if ( m == -1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
-                }
-            }
-            else if ( m == 1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
-                }
-            }
-            else {
-            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
-                bins_non_monotonic = 1;
-            }
-        }
-        else {
-            if ( m == -1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = decr_slot_right_ ((double)dx[i], dbins,
-                                                                lbins);
-                }
-            }
-            else if ( m == 1 ) {
-                for ( i = 0; i < lx; i ++ ) {
-                    iret [i] = incr_slot_right_ ((double)dx[i], dbins,
-                                                               lbins);
-                }
-            }
-            else {
-            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
-                bins_non_monotonic = 1;
-            }
+        if (PyArray_SetBaseObject(arr_tmp, (PyObject *)arr_bins) < 0) {
 
+            Py_DECREF(arr_tmp);
+            goto fail;
         }
+        arr_bins = arr_tmp;
     }
-    NPY_END_ALLOW_THREADS;
-    if (bins_non_monotonic) {
-        PyErr_SetString(PyExc_ValueError,
-                "The bins must be monotonically increasing or decreasing");
+
+    ret = PyArray_SearchSorted(arr_bins, (PyObject *)arr_x,
+                               right ? NPY_SEARCHLEFT : NPY_SEARCHRIGHT, NULL);
+    if (!ret) {
         goto fail;
     }
-    Py_DECREF(ax);
-    Py_DECREF(abins);
-    return (PyObject *)aret;
 
-fail:
-    Py_XDECREF(ax);
-    Py_XDECREF(abins);
-    Py_XDECREF(aret);
-    return NULL;
+    /* If bins is decreasing, ret has bins from end, not start */
+    if (monotonic == -1) {
+        npy_intp *ret_data =
+                        (npy_intp *)PyArray_DATA((PyArrayObject *)ret);
+        npy_intp len_ret = PyArray_SIZE((PyArrayObject *)ret);
+
+        NPY_BEGIN_THREADS_THRESHOLDED(len_ret)
+        while (len_ret--) {
+            *ret_data = len_bins - *ret_data;
+            ret_data++;
+        }
+        NPY_END_THREADS
+    }
+
+    fail:
+        Py_XDECREF(arr_x);
+        Py_XDECREF(arr_bins);
+        return ret;
 }
-
-
 
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
@@ -1395,121 +1312,73 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return Py_None;
 }
 
-/*  PACKBITS
- *
- *  This function packs binary (0 or 1) 1-bit per pixel arrays
- *  into contiguous bytes.
- *
+/*
+ * This function packs boolean values in the input array into the bits of a
+ * byte array. Truth values are determined as usual: 0 is false, everything
+ * else is true.
  */
-
-static void
-_packbits( void *In,
-           int element_size,  /* in bytes */
-           npy_intp in_N,
+static NPY_INLINE void
+pack_inner(const char *inptr,
+           npy_intp element_size,   /* in bytes */
+           npy_intp n_in,
            npy_intp in_stride,
-           void *Out,
-           npy_intp out_N,
-           npy_intp out_stride
-)
+           char *outptr,
+           npy_intp n_out,
+           npy_intp out_stride)
 {
-    char build;
-    int i, index;
-    npy_intp out_Nm1;
-    int maxi, remain, nonzero, j;
-    char *outptr,*inptr;
-
-    outptr = Out;    /* pointer to output buffer */
-    inptr  = In;     /* pointer to input buffer */
-
     /*
-     * Loop through the elements of In
+     * Loop through the elements of inptr.
      * Determine whether or not it is nonzero.
-     *  Yes: set correspdoning bit (and adjust build value)
+     *  Yes: set corresponding bit (and adjust build value)
      *  No:  move on
      * Every 8th value, set the value of build and increment the outptr
      */
+    npy_intp index;
+    int remain = n_in % 8;              /* uneven bits */
 
-    remain = in_N % 8;                      /* uneven bits */
-    if (remain == 0) {
+    if (remain == 0) {                  /* assumes n_in > 0 */
         remain = 8;
     }
-    out_Nm1 = out_N - 1;
-    for (index = 0; index < out_N; index++) {
-        build = 0;
-        maxi = (index != out_Nm1 ? 8 : remain);
+    for (index = 0; index < n_out; index++) {
+        char build = 0;
+        int i, maxi;
+        npy_intp j;
+
+        maxi = (index == n_out - 1) ? remain : 8;
         for (i = 0; i < maxi; i++) {
             build <<= 1;
-            nonzero = 0;
             for (j = 0; j < element_size; j++) {
-                nonzero += (*(inptr++) != 0);
+                build |= (inptr[j] != 0);
             }
-            inptr += (in_stride - element_size);
-            build += (nonzero != 0);
+            inptr += in_stride;
         }
-        if (index == out_Nm1) build <<= (8-remain);
-        /* printf("Here: %d %d %d %d\n",build,slice,index,maxi); */
+        if (index == n_out - 1) {
+            build <<= 8 - remain;
+        }
         *outptr = build;
         outptr += out_stride;
     }
-    return;
 }
 
-
-static void
-_unpackbits(void *In,
-        int NPY_UNUSED(el_size),  /* unused */
-        npy_intp in_N,
-        npy_intp in_stride,
-        void *Out,
-        npy_intp NPY_UNUSED(out_N),
-        npy_intp out_stride
-        )
-{
-    unsigned char mask;
-    int i, index;
-    char *inptr, *outptr;
-
-    outptr = Out;
-    inptr  = In;
-    for (index = 0; index < in_N; index++) {
-        mask = 128;
-        for (i = 0; i < 8; i++) {
-            *outptr = ((mask & (unsigned char)(*inptr)) != 0);
-            outptr += out_stride;
-            mask >>= 1;
-        }
-        inptr += in_stride;
-    }
-    return;
-}
-
-/* Fixme -- pack and unpack should be separate routines */
 static PyObject *
-pack_or_unpack_bits(PyObject *input, int axis, int unpack)
+pack_bits(PyObject *input, int axis)
 {
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
     npy_intp outdims[NPY_MAXDIMS];
     int i;
-    void (*thefunc)(void *, int, npy_intp, npy_intp, void *, npy_intp, npy_intp);
     PyArrayIterObject *it, *ot;
+    NPY_BEGIN_THREADS_DEF;
 
     inp = (PyArrayObject *)PyArray_FROM_O(input);
 
     if (inp == NULL) {
         return NULL;
     }
-    if (unpack) {
-        if (PyArray_TYPE(inp) != NPY_UBYTE) {
-            PyErr_SetString(PyExc_TypeError,
-                    "Expected an input array of unsigned byte data type");
-            goto fail;
-        }
-    }
-    else if (!PyArray_ISINTEGER(inp)) {
+    if (!PyArray_ISBOOL(inp) && !PyArray_ISINTEGER(inp)) {
         PyErr_SetString(PyExc_TypeError,
-                "Expected an input array of integer data type");
+                "Expected an input array of integer or boolean data type");
         goto fail;
     }
 
@@ -1518,66 +1387,43 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     if (new == NULL) {
         return NULL;
     }
-    /* Handle zero-dim array separately */
+    /* Handle empty array separately */
     if (PyArray_SIZE(new) == 0) {
         return PyArray_Copy(new);
     }
 
     if (PyArray_NDIM(new) == 0) {
-        if (unpack) {
-            /* Handle 0-d array by converting it to a 1-d array */
-            PyArrayObject *temp;
-            PyArray_Dims newdim = {NULL, 1};
-            npy_intp shape = 1;
+        char *optr, *iptr;
 
-            newdim.ptr = &shape;
-            temp = (PyArrayObject *)PyArray_Newshape(new, &newdim, NPY_CORDER);
-            if (temp == NULL) {
-                goto fail;
-            }
-            Py_DECREF(new);
-            new = temp;
+        out = (PyArrayObject *)PyArray_New(Py_TYPE(new), 0, NULL, NPY_UBYTE,
+                NULL, NULL, 0, 0, NULL);
+        if (out == NULL) {
+            goto fail;
         }
-        else {
-            char *optr, *iptr;
-            out = (PyArrayObject *)PyArray_New(Py_TYPE(new), 0, NULL, NPY_UBYTE,
-                    NULL, NULL, 0, 0, NULL);
-            if (out == NULL) {
-                goto fail;
+        optr = PyArray_DATA(out);
+        iptr = PyArray_DATA(new);
+        *optr = 0;
+        for (i = 0; i < PyArray_ITEMSIZE(new); i++) {
+            if (*iptr != 0) {
+                *optr = 1;
+                break;
             }
-            optr = PyArray_DATA(out);
-            iptr = PyArray_DATA(new);
-            *optr = 0;
-            for (i = 0; i<PyArray_ITEMSIZE(new); i++) {
-                if (*iptr != 0) {
-                    *optr = 1;
-                    break;
-                }
-                iptr++;
-            }
-            goto finish;
+            iptr++;
         }
+        goto finish;
     }
 
 
     /* Setup output shape */
-    for (i=0; i<PyArray_NDIM(new); i++) {
+    for (i = 0; i < PyArray_NDIM(new); i++) {
         outdims[i] = PyArray_DIM(new, i);
     }
 
-    if (unpack) {
-        /* Multiply axis dimension by 8 */
-        outdims[axis] <<= 3;
-        thefunc = _unpackbits;
-    }
-    else {
-        /*
-         * Divide axis dimension by 8
-         * 8 -> 1, 9 -> 2, 16 -> 2, 17 -> 3 etc..
-         */
-        outdims[axis] = ((outdims[axis] - 1) >> 3) + 1;
-        thefunc = _packbits;
-    }
+    /*
+     * Divide axis dimension by 8
+     * 8 -> 1, 9 -> 2, 16 -> 2, 17 -> 3 etc..
+     */
+    outdims[axis] = ((outdims[axis] - 1) >> 3) + 1;
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
@@ -1595,18 +1441,131 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
         goto fail;
     }
 
-    while(PyArray_ITER_NOTDONE(it)) {
-        thefunc(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
-                PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
-                PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
-                PyArray_STRIDE(out, axis));
+    NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(out, axis));
+    while (PyArray_ITER_NOTDONE(it)) {
+        pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
+                   PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
+                   PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
+                   PyArray_STRIDE(out, axis));
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
     }
+    NPY_END_THREADS;
+
     Py_DECREF(it);
     Py_DECREF(ot);
 
 finish:
+    Py_DECREF(new);
+    return (PyObject *)out;
+
+fail:
+    Py_XDECREF(new);
+    Py_XDECREF(out);
+    return NULL;
+}
+
+static PyObject *
+unpack_bits(PyObject *input, int axis)
+{
+    PyArrayObject *inp;
+    PyArrayObject *new = NULL;
+    PyArrayObject *out = NULL;
+    npy_intp outdims[NPY_MAXDIMS];
+    int i;
+    PyArrayIterObject *it, *ot;
+    npy_intp n_in, in_stride, out_stride;
+    NPY_BEGIN_THREADS_DEF;
+
+    inp = (PyArrayObject *)PyArray_FROM_O(input);
+
+    if (inp == NULL) {
+        return NULL;
+    }
+    if (PyArray_TYPE(inp) != NPY_UBYTE) {
+        PyErr_SetString(PyExc_TypeError,
+                "Expected an input array of unsigned byte data type");
+        goto fail;
+    }
+
+    new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
+    Py_DECREF(inp);
+    if (new == NULL) {
+        return NULL;
+    }
+    /* Handle zero-dim array separately */
+    if (PyArray_SIZE(new) == 0) {
+        return PyArray_Copy(new);
+    }
+
+    if (PyArray_NDIM(new) == 0) {
+        /* Handle 0-d array by converting it to a 1-d array */
+        PyArrayObject *temp;
+        PyArray_Dims newdim = {NULL, 1};
+        npy_intp shape = 1;
+
+        newdim.ptr = &shape;
+        temp = (PyArrayObject *)PyArray_Newshape(new, &newdim, NPY_CORDER);
+        if (temp == NULL) {
+            goto fail;
+        }
+        Py_DECREF(new);
+        new = temp;
+    }
+
+    /* Setup output shape */
+    for (i=0; i<PyArray_NDIM(new); i++) {
+        outdims[i] = PyArray_DIM(new, i);
+    }
+
+    /* Multiply axis dimension by 8 */
+    outdims[axis] <<= 3;
+
+    /* Create output array */
+    out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
+                        PyArray_NDIM(new), outdims, NPY_UBYTE,
+                        NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+    if (out == NULL) {
+        goto fail;
+    }
+    /* Setup iterators to iterate over all but given axis */
+    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
+    ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
+    if (it == NULL || ot == NULL) {
+        Py_XDECREF(it);
+        Py_XDECREF(ot);
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(new, axis));
+
+    n_in = PyArray_DIM(new, axis);
+    in_stride = PyArray_STRIDE(new, axis);
+    out_stride = PyArray_STRIDE(out, axis);
+
+    while (PyArray_ITER_NOTDONE(it)) {
+        npy_intp index;
+        unsigned const char *inptr = PyArray_ITER_DATA(it);
+        char *outptr = PyArray_ITER_DATA(ot);
+
+        for (index = 0; index < n_in; index++) {
+            unsigned char mask = 128;
+
+            for (i = 0; i < 8; i++) {
+                *outptr = ((mask & (*inptr)) != 0);
+                outptr += out_stride;
+                mask >>= 1;
+            }
+            inptr += in_stride;
+        }
+        PyArray_ITER_NEXT(it);
+        PyArray_ITER_NEXT(ot);
+    }
+    NPY_END_THREADS;
+
+    Py_DECREF(it);
+    Py_DECREF(ot);
+
     Py_DECREF(new);
     return (PyObject *)out;
 
@@ -1628,7 +1587,7 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
-    return pack_or_unpack_bits(obj, axis, 0);
+    return pack_bits(obj, axis);
 }
 
 static PyObject *
@@ -1642,7 +1601,7 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
-    return pack_or_unpack_bits(obj, axis, 1);
+    return unpack_bits(obj, axis);
 }
 
 /* The docstrings for many of these methods are in add_newdocs.py. */

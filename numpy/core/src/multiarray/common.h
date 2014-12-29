@@ -2,8 +2,21 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
+#include <numpy/ndarraytypes.h>
+#include <limits.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
+
+#ifdef NPY_ALLOW_THREADS
+#define NPY_BEGIN_THREADS_NDITER(iter) \
+        do { \
+            if (!NpyIter_IterationNeedsAPI(iter)) { \
+                NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
+            } \
+        } while(0)
+#else
+#define NPY_BEGIN_THREADS_NDITER(iter)
+#endif
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -52,9 +65,6 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
-NPY_NO_EXPORT int
-_is_basic_python_type(PyObject * obj);
-
 NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
@@ -63,6 +73,13 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 
+/*
+ * Sets ValueError with "matrices not aligned" message for np.dot and friends
+ * when a.shape[i] should match b.shape[j], but doesn't.
+ */
+NPY_NO_EXPORT void
+dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
+
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for
@@ -70,12 +87,17 @@ convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
  * 0 <= *index < max_item, and returns 0.
  * 'axis' should be the array axis that is being indexed over, if known. If
  * unknown, use -1.
+ * If _save is NULL it is assumed the GIL is taken
+ * If _save is not NULL it is assumed the GIL is not taken and it
+ * is acquired in the case of an error
  */
 static NPY_INLINE int
-check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
+check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
+                       PyThreadState * _save)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*index < -max_item) || (*index >= max_item))) {
+        NPY_END_THREADS;
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
@@ -85,8 +107,7 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
         } else {
             PyErr_Format(PyExc_IndexError,
                          "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT,
-                         *index, max_item);
+                         "for size %"NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }
@@ -166,6 +187,63 @@ npy_memchr(char * haystack, char needle,
 
     return p;
 }
+
+static NPY_INLINE int
+_is_basic_python_type(PyObject * obj)
+{
+    if (obj == Py_None ||
+            PyBool_Check(obj) ||
+            /* Basic number types */
+#if !defined(NPY_PY3K)
+            PyInt_CheckExact(obj) ||
+            PyString_CheckExact(obj) ||
+#endif
+            PyLong_CheckExact(obj) ||
+            PyFloat_CheckExact(obj) ||
+            PyComplex_CheckExact(obj) ||
+            /* Basic sequence types */
+            PyList_CheckExact(obj) ||
+            PyTuple_CheckExact(obj) ||
+            PyDict_CheckExact(obj) ||
+            PyAnySet_CheckExact(obj) ||
+            PyUnicode_CheckExact(obj) ||
+            PyBytes_CheckExact(obj) ||
+            PySlice_Check(obj)) {
+
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
+ * (BLAS won't handle negative or zero strides the way we want).
+ */
+static NPY_INLINE int
+blas_stride(npy_intp stride, unsigned itemsize)
+{
+    /*
+     * Should probably check pointer alignment also, but this may cause
+     * problems if we require complex to be 16 byte aligned.
+     */
+    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
+        stride /= itemsize;
+        if (stride <= INT_MAX) {
+            return stride;
+        }
+    }
+    return 0;
+}
+
+/*
+ * Define a chunksize for CBLAS. CBLAS counts in integers.
+ */
+#if NPY_MAX_INTP > INT_MAX
+# define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
+#else
+# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
+#endif
 
 #include "ucsnarrow.h"
 

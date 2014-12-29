@@ -454,6 +454,96 @@ class matrix(N.ndarray):
         """
         return N.ndarray.sum(self, axis, dtype, out, keepdims=True)._collapse(axis)
 
+
+    # To update docstring from array to matrix...
+    def squeeze(self, axis=None):
+        """
+        Return a possibly reshaped matrix.
+
+        Refer to `numpy.squeeze` for more documentation.
+
+        Parameters
+        ----------
+        axis : None or int or tuple of ints, optional
+            Selects a subset of the single-dimensional entries in the shape.
+            If an axis is selected with shape entry greater than one,
+            an error is raised.
+
+        Returns
+        -------
+        squeezed : matrix
+            The matrix, but as a (1, N) matrix if it had shape (N, 1).
+
+        See Also
+        --------
+        numpy.squeeze : related function
+
+        Notes
+        -----
+        If `m` has a single column then that column is returned
+        as the single row of a matrix.  Otherwise `m` is returned.
+        The returned matrix is always either `m` itself or a view into `m`.
+        Supplying an axis keyword argument will not affect the returned matrix
+        but it may cause an error to be raised.
+
+        Examples
+        --------
+        >>> c = np.matrix([[1], [2]])
+        >>> c
+        matrix([[1],
+                [2]])
+        >>> c.squeeze()
+        matrix([[1, 2]])
+        >>> r = c.T
+        >>> r
+        matrix([[1, 2]])
+        >>> r.squeeze()
+        matrix([[1, 2]])
+        >>> m = np.matrix([[1, 2], [3, 4]])
+        >>> m.squeeze()
+        matrix([[1, 2],
+                [3, 4]])
+
+        """
+        return N.ndarray.squeeze(self, axis=axis)
+
+
+    # To update docstring from array to matrix...
+    def flatten(self, order='C'):
+        """
+        Return a flattened copy of the matrix.
+
+        All `N` elements of the matrix are placed into a single row.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A'}, optional
+            Whether to flatten in C (row-major), Fortran (column-major) order,
+            or preserve the C/Fortran ordering from `m`.
+            The default is 'C'.
+
+        Returns
+        -------
+        y : matrix
+            A copy of the matrix, flattened to a `(1, N)` matrix where `N`
+            is the number of elements in the original matrix.
+
+        See Also
+        --------
+        ravel : Return a flattened array.
+        flat : A 1-D flat iterator over the matrix.
+
+        Examples
+        --------
+        >>> m = np.matrix([[1,2], [3,4]])
+        >>> m.flatten()
+        matrix([[1, 2, 3, 4]])
+        >>> m.flatten('F')
+        matrix([[1, 3, 2, 4]])
+
+        """
+        return N.ndarray.flatten(self, order=order)
+
     def mean(self, axis=None, dtype=None, out=None):
         """
         Returns the average of the matrix elements along the given axis.
@@ -925,6 +1015,46 @@ class matrix(N.ndarray):
         """
         return self.__array__().ravel()
 
+
+    def ravel(self, order='C'):
+        """
+        Return a flattened matrix.
+
+        Refer to `numpy.ravel` for more documentation.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A', 'K'}, optional
+            The elements of `m` are read using this index order. 'C' means to
+            index the elements in C-like order, with the last axis index
+            changing fastest, back to the first axis index changing slowest.
+            'F' means to index the elements in Fortran-like index order, with
+            the first index changing fastest, and the last index changing
+            slowest. Note that the 'C' and 'F' options take no account of the
+            memory layout of the underlying array, and only refer to the order
+            of axis indexing.  'A' means to read the elements in Fortran-like
+            index order if `m` is Fortran *contiguous* in memory, C-like order
+            otherwise.  'K' means to read the elements in the order they occur
+            in memory, except for reversing the data when strides are negative.
+            By default, 'C' index order is used.
+
+        Returns
+        -------
+        ret : matrix
+            Return the matrix flattened to shape `(1, N)` where `N`
+            is the number of elements in the original matrix.
+            A copy is made only if necessary.
+
+        See Also
+        --------
+        matrix.flatten : returns a similar output matrix but always a copy
+        matrix.flat : a flat iterator on the array.
+        numpy.ravel : related function which returns an ndarray
+
+        """
+        return N.ndarray.ravel(self, order=order)
+
+
     def getT(self):
         """
         Returns the transpose of the matrix.
@@ -1031,6 +1161,12 @@ def bmat(obj, ldict=None, gdict=None):
     obj : str or array_like
         Input data.  Names of variables in the current scope may be
         referenced, even if `obj` is a string.
+    ldict : dict, optional
+        A dictionary that replaces local operands in current frame.
+        Ignored if `obj` is not a string or `gdict` is `None`.
+    gdict : dict, optional
+        A dictionary that replaces global operands in current frame.
+        Ignored if `obj` is not a string.
 
     Returns
     -------

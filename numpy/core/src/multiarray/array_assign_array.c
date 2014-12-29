@@ -99,9 +99,7 @@ raw_array_assign_array(int ndim, npy_intp *shape,
                             dst_data, dst_strides_it,
                             src_data, src_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 
@@ -194,9 +192,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
                             src_data, src_strides_it,
                             wheremask_data, wheremask_strides_it);
 
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
+    NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
 

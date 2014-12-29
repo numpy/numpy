@@ -2,7 +2,7 @@
  * This file includes all the .c files needed for a complete multiarray module.
  * This is used in the case where separate compilation is not enabled
  *
- * Note that the order of the includs matters
+ * Note that the order of the includes matters
  */
 
 #include "common.c"
@@ -15,12 +15,14 @@
 #include "datetime_busday.c"
 #include "datetime_busdaycal.c"
 #include "arraytypes.c"
+#include "vdot.c"
 
 #include "hashdescr.c"
 #include "numpyos.c"
 
 #include "descriptor.c"
 #include "flagsobject.c"
+#include "alloc.c"
 #include "ctors.c"
 #include "iterators.c"
 #include "mapping.c"
@@ -49,9 +51,11 @@
 #include "array_assign_scalar.c"
 #include "array_assign_array.c"
 #include "ucsnarrow.c"
-
 #include "arrayobject.c"
-
 #include "numpymemoryview.c"
-
 #include "multiarraymodule.c"
+
+#if defined(HAVE_CBLAS)
+#include "python_xerbla.c"
+#include "cblasfuncs.c"
+#endif

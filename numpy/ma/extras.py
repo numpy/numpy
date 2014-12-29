@@ -416,26 +416,55 @@ def apply_over_axes(func, a, axes):
     """
     (This docstring will be overwritten)
     """
-    val = np.asarray(a)
-    msk = getmaskarray(a)
+    val = asarray(a)
     N = a.ndim
     if array(axes).ndim == 0:
         axes = (axes,)
     for axis in axes:
         if axis < 0: axis = N + axis
         args = (val, axis)
-        res = ma.array(func(*(val, axis)), mask=func(*(msk, axis)))
+        res = func(*args)
         if res.ndim == val.ndim:
-            (val, msk) = (res._data, res._mask)
+            val = res
         else:
             res = ma.expand_dims(res, axis)
             if res.ndim == val.ndim:
-                (val, msk) = (res._data, res._mask)
+                val = res
             else:
-                raise ValueError("Function is not returning"\
-                                 " an array of correct shape")
+                raise ValueError("function is not returning "
+                        "an array of the correct shape")
     return val
-apply_over_axes.__doc__ = np.apply_over_axes.__doc__
+
+if apply_over_axes.__doc__ is not None:
+    apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
+        :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
+    """
+
+    Examples
+    --------
+    >>> a = ma.arange(24).reshape(2,3,4)
+    >>> a[:,0,1] = ma.masked
+    >>> a[:,1,:] = ma.masked
+    >>> print a
+    [[[0 -- 2 3]
+      [-- -- -- --]
+      [8 9 10 11]]
+
+     [[12 -- 14 15]
+      [-- -- -- --]
+      [20 21 22 23]]]
+    >>> print ma.apply_over_axes(ma.sum, a, [0,2])
+    [[[46]
+      [--]
+      [124]]]
+
+    Tuple axis arguments to ufuncs are equivalent:
+
+    >>> print ma.sum(a, axis=(0,2)).reshape((1,-1,1))
+    [[[46]
+      [--]
+      [124]]]
+    """
 
 
 def average(a, axis=None, weights=None, returned=False):
@@ -629,27 +658,21 @@ def median(a, axis=None, out=None, overwrite_input=False):
     Examples
     --------
     >>> x = np.ma.array(np.arange(8), mask=[0]*4 + [1]*4)
-    >>> np.ma.extras.median(x)
+    >>> np.ma.median(x)
     1.5
 
     >>> x = np.ma.array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
-    >>> np.ma.extras.median(x)
+    >>> np.ma.median(x)
     2.5
-    >>> np.ma.extras.median(x, axis=-1, overwrite_input=True)
+    >>> np.ma.median(x, axis=-1, overwrite_input=True)
     masked_array(data = [ 2.  5.],
                  mask = False,
            fill_value = 1e+20)
 
     """
-    def _median1D(data):
-        counts = filled(count(data), 0)
-        (idx, rmd) = divmod(counts, 2)
-        if rmd:
-            choice = slice(idx, idx + 1)
-        else:
-            choice = slice(idx - 1, idx + 1)
-        return data[choice].mean(0)
-    #
+    if not hasattr(a, 'mask') or np.count_nonzero(a.mask) == 0:
+        return masked_array(np.median(getattr(a, 'data', a), axis=axis,
+                      out=out, overwrite_input=overwrite_input), copy=False)
     if overwrite_input:
         if axis is None:
             asorted = a.ravel()
@@ -660,14 +683,36 @@ def median(a, axis=None, out=None, overwrite_input=False):
     else:
         asorted = sort(a, axis=axis)
     if axis is None:
-        result = _median1D(asorted)
+        axis = 0
+    elif axis < 0:
+        axis += a.ndim
+
+    counts = asorted.shape[axis] - (asorted.mask).sum(axis=axis)
+    h = counts // 2
+    # create indexing mesh grid for all but reduced axis
+    axes_grid = [np.arange(x) for i, x in enumerate(asorted.shape)
+                 if i != axis]
+    ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
+    # insert indices of low and high median
+    ind.insert(axis, h - 1)
+    low = asorted[ind]
+    ind[axis] = h
+    high = asorted[ind]
+    # duplicate high if odd number of elements so mean does nothing
+    odd = counts % 2 == 1
+    if asorted.ndim == 1:
+        if odd:
+            low = high
     else:
-        result = apply_along_axis(_median1D, axis, asorted)
-    if out is not None:
-        out = result
-    return result
+        low[odd] = high[odd]
 
-
+    if np.issubdtype(asorted.dtype, np.inexact):
+        # avoid inf / x = masked
+        s = np.ma.sum([low, high], axis=0, out=out)
+        np.true_divide(s.data, 2., casting='unsafe', out=s.data)
+    else:
+        s = np.ma.mean([low, high], axis=0, out=out)
+    return s
 
 
 #..............................................................................
@@ -708,11 +753,11 @@ def compress_rowcols(x, axis=None):
      [False False False]],
            fill_value = 999999)
 
-    >>> np.ma.extras.compress_rowcols(x)
+    >>> np.ma.compress_rowcols(x)
     array([[7, 8]])
-    >>> np.ma.extras.compress_rowcols(x, 0)
+    >>> np.ma.compress_rowcols(x, 0)
     array([[6, 7, 8]])
-    >>> np.ma.extras.compress_rowcols(x, 1)
+    >>> np.ma.compress_rowcols(x, 1)
     array([[1, 2],
            [4, 5],
            [7, 8]])
@@ -743,7 +788,7 @@ def compress_rows(a):
     """
     Suppress whole rows of a 2-D array that contain masked values.
 
-    This is equivalent to ``np.ma.extras.compress_rowcols(a, 0)``, see
+    This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
     `extras.compress_rowcols` for details.
 
     See Also
@@ -757,7 +802,7 @@ def compress_cols(a):
     """
     Suppress whole columns of a 2-D array that contain masked values.
 
-    This is equivalent to ``np.ma.extras.compress_rowcols(a, 1)``, see
+    This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
     `extras.compress_rowcols` for details.
 
     See Also
@@ -842,9 +887,9 @@ def mask_rowcols(a, axis=None):
           fill_value=999999)
 
     """
-    a = asarray(a)
+    a = array(a, subok=False)
     if a.ndim != 2:
-        raise NotImplementedError("compress2d works for 2D arrays only.")
+        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
     m = getmask(a)
     # Nothing is masked: return a
     if m is nomask or not m.any():
@@ -1188,7 +1233,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Examples
     --------
     >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
-    >>> np.ma.extras.setdiff1d(x, [1, 2])
+    >>> np.ma.setdiff1d(x, [1, 2])
     masked_array(data = [3 --],
                  mask = [False  True],
            fill_value = 999999)
@@ -1600,7 +1645,7 @@ def notmasked_edges(a, axis=None):
     >>> np.array(am[~am.mask])
     array([0, 1, 2, 3, 6])
 
-    >>> np.ma.extras.notmasked_edges(ma)
+    >>> np.ma.notmasked_edges(ma)
     array([0, 6])
 
     """
@@ -1639,7 +1684,7 @@ def flatnotmasked_contiguous(a):
     Examples
     --------
     >>> a = np.ma.arange(10)
-    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    >>> np.ma.flatnotmasked_contiguous(a)
     slice(0, 10, None)
 
     >>> mask = (a < 3) | (a > 8) | (a == 5)
@@ -1647,10 +1692,10 @@ def flatnotmasked_contiguous(a):
     >>> np.array(a[~a.mask])
     array([3, 4, 6, 7, 8])
 
-    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    >>> np.ma.flatnotmasked_contiguous(a)
     [slice(3, 5, None), slice(6, 9, None)]
     >>> a[:] = np.ma.masked
-    >>> print np.ma.extras.flatnotmasked_edges(a)
+    >>> print np.ma.flatnotmasked_edges(a)
     None
 
     """
@@ -1703,7 +1748,7 @@ def notmasked_contiguous(a, axis=None):
     >>> np.array(ma[~ma.mask])
     array([0, 1, 2, 3, 6])
 
-    >>> np.ma.extras.notmasked_contiguous(ma)
+    >>> np.ma.notmasked_contiguous(ma)
     [slice(0, 4, None), slice(6, 7, None)]
 
     """
@@ -1772,7 +1817,7 @@ def clump_unmasked(a):
     --------
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
-    >>> np.ma.extras.clump_unmasked(a)
+    >>> np.ma.clump_unmasked(a)
     [slice(3, 6, None), slice(7, 8, None)]
 
     """
@@ -1816,7 +1861,7 @@ def clump_masked(a):
     --------
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
-    >>> np.ma.extras.clump_masked(a)
+    >>> np.ma.clump_masked(a)
     [slice(0, 3, None), slice(6, 7, None), slice(8, 10, None)]
 
     """

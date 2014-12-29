@@ -592,6 +592,15 @@ class TestDateTime(TestCase):
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[s]'), np.dtype('m8[as]'))
 
+    def test_cast_overflow(self):
+        # gh-4486
+        def cast():
+            numpy.datetime64("1971-01-01 00:00:00.000000000000000").astype("<M8[D]")
+        assert_raises(OverflowError, cast)
+        def cast2():
+            numpy.datetime64("2014").astype("<M8[fs]")
+        assert_raises(OverflowError, cast2)
+
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
@@ -1403,6 +1412,11 @@ class TestDateTime(TestCase):
                                 np.datetime64('2012-02-03T14Z', 's'),
                                 np.timedelta64(5, 'Y'))
 
+    def test_datetime_arange_no_dtype(self):
+        d = np.array('2010-01-04', dtype="M8[D]")
+        assert_equal(np.arange(d, d + 1), d)
+        assert_raises(ValueError, np.arange, d)
+
     def test_timedelta_arange(self):
         a = np.arange(3, 10, dtype='m8')
         assert_equal(a.dtype, np.dtype('m8'))
@@ -1420,6 +1434,11 @@ class TestDateTime(TestCase):
                                 np.timedelta64(5, 'M'))
         assert_raises(TypeError, np.arange, np.timedelta64(0, 'Y'),
                                 np.timedelta64(5, 'D'))
+
+    def test_timedelta_arange_no_dtype(self):
+        d = np.array(5, dtype="m8[D]")
+        assert_equal(np.arange(d, d + 1), d)
+        assert_raises(ValueError, np.arange, d)
 
     def test_datetime_maximum_reduce(self):
         a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='M8[D]')

@@ -244,7 +244,7 @@ PyArrayDescr_Type
         Indicates that items of this data-type must be reference
         counted (using :cfunc:`Py_INCREF` and :cfunc:`Py_DECREF` ).
 
-    .. cvar:: NPY_ITEM_LISTPICKLE
+    .. cvar:: NPY_LIST_PICKLE
 
         Indicates arrays of this data-type must be converted to a list
         before pickling.
@@ -466,10 +466,10 @@ PyArrayDescr_Type
 
         A pointer to a function that compares two elements of the
         array, ``arr``, pointed to by ``d1`` and ``d2``. This
-        function requires behaved arrays. The return value is 1 if *
-        ``d1`` > * ``d2``, 0 if * ``d1`` == * ``d2``, and -1 if *
-        ``d1`` < * ``d2``. The array object arr is used to retrieve
-        itemsize and field information for flexible arrays.
+        function requires behaved (aligned and not swapped) arrays.
+        The return value is 1 if * ``d1`` > * ``d2``, 0 if * ``d1`` == *
+        ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
+        used to retrieve itemsize and field information for flexible arrays.
 
     .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind,
        void* arr)
@@ -646,9 +646,9 @@ PyUFunc_Type
           void **data;
           int ntypes;
           int check_return;
-          char *name;
+          const char *name;
           char *types;
-          char *doc;
+          const char *doc;
           void *ptr;
           PyObject *obj;
           PyObject *userloops;
@@ -1031,9 +1031,9 @@ PyArray_Chunk
 
    This is equivalent to the buffer object structure in Python up to
    the ptr member. On 32-bit platforms (*i.e.* if :cdata:`NPY_SIZEOF_INT`
-   == :cdata:`NPY_SIZEOF_INTP` ) or in Python 2.5, the len member also
-   matches an equivalent member of the buffer object. It is useful to
-   represent a generic single- segment chunk of memory.
+   == :cdata:`NPY_SIZEOF_INTP`), the len member also matches an equivalent
+   member of the buffer object. It is useful to represent a generic
+   single-segment chunk of memory.
 
    .. code-block:: c
 
@@ -1119,8 +1119,8 @@ PyArrayInterface
        A character indicating what kind of array is present according to the
        typestring convention with 't' -> bitfield, 'b' -> Boolean, 'i' ->
        signed integer, 'u' -> unsigned integer, 'f' -> floating point, 'c' ->
-       complex floating point, 'O' -> object, 'S' -> string, 'U' -> unicode,
-       'V' -> void.
+       complex floating point, 'O' -> object, 'S' -> (byte-)string, 'U' ->
+       unicode, 'V' -> void.
 
    .. cmember:: int PyArrayInterface.itemsize
 

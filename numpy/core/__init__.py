@@ -3,7 +3,20 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
+# disables OpenBLAS affinity setting of the main thread that limits
+# python threads or processes to one core
+import os
+envbak = os.environ.copy()
+if 'OPENBLAS_MAIN_FREE' not in os.environ:
+    os.environ['OPENBLAS_MAIN_FREE'] = '1'
+if 'GOTOBLAS_MAIN_FREE' not in os.environ:
+    os.environ['GOTOBLAS_MAIN_FREE'] = '1'
 from . import multiarray
+os.environ.clear()
+os.environ.update(envbak)
+del envbak
+del os
+
 from . import umath
 from . import _internal # for freeze programs
 from . import numerictypes as nt
@@ -17,7 +30,6 @@ from . import records as rec
 from .records import *
 from .memmap import *
 from .defchararray import chararray
-from . import scalarmath
 from . import function_base
 from .function_base import *
 from . import machar
@@ -52,7 +64,11 @@ bench = Tester().bench
 # The name numpy.core._ufunc_reconstruct must be
 #   available for unpickling to work.
 def _ufunc_reconstruct(module, name):
-    mod = __import__(module)
+    # The `fromlist` kwarg is required to ensure that `mod` points to the
+    # inner-most module rather than the parent package when module name is
+    # nested. This makes it possible to pickle non-toplevel ufuncs such as
+    # scipy.special.expit for instance.
+    mod = __import__(module, fromlist=[name])
     return getattr(mod, name)
 
 def _ufunc_reduce(func):

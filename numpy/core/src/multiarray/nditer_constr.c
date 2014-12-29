@@ -16,7 +16,7 @@
 #include "nditer_impl.h"
 
 #include "arrayobject.h"
-#include "scalarmathmodule.h"
+#include "templ_common.h"
 
 /* Internal helper functions private to this file */
 static int
@@ -261,6 +261,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             buffersize = NIT_ITERSIZE(iter);
         }
         NBF_BUFFERSIZE(bufferdata) = buffersize;
+
+        /*
+         * Initialize for use in FirstVisit, which may be called before
+         * the buffers are filled and the reduce pos is updated.
+         */
+        NBF_REDUCE_POS(bufferdata) = 0;
     }
 
     /*
@@ -1656,8 +1662,21 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     for (idim = 0; idim < ndim; ++idim) {
         if (npy_mul_with_overflow_intp(&NIT_ITERSIZE(iter),
                     NIT_ITERSIZE(iter), broadcast_shape[idim])) {
-            PyErr_SetString(PyExc_ValueError, "iterator is too large");
-            return 0;
+            if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
+                    !(itflags & NPY_ITFLAG_HASINDEX) &&
+                    !(itflags & NPY_ITFLAG_BUFFER)) {
+                /*
+                 * If RemoveAxis may be called, the size check is delayed
+                 * until either the multi index is removed, or GetIterNext
+                 * is called.
+                 */
+                NIT_ITERSIZE(iter) = -1;
+                break;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, "iterator is too large");
+                return 0;
+            }
         }
     }
     /* The range defaults to everything */

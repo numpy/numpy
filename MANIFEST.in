@@ -8,7 +8,6 @@ include COMPATIBILITY
 include *.txt
 include setupegg.py
 include site.cfg.example
-include tools/py3tool.py
 include numpy/random/mtrand/generate_mtrand_c.py
 recursive-include numpy/random/mtrand *.pyx *.pxd
 # Adding scons build related files not found by distutils
@@ -20,9 +19,7 @@ include doc/Makefile doc/postprocess.py
 recursive-include doc/release *
 recursive-include doc/source *
 recursive-include doc/sphinxext *
-recursive-include doc/cython *
-recursive-include doc/pyrex *
-recursive-include doc/swig *
+recursive-include tools/swig *
 recursive-include doc/scipy-sphinx-theme *
 recursive-include doc/f2py *
 

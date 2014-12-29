@@ -19,7 +19,7 @@ from setup_common import *
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
-NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0")
+NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
@@ -78,27 +78,13 @@ def is_npy_no_signal():
 def is_npy_no_smp():
     """Return True if the NPY_NO_SMP symbol must be defined in public
     header (when SMP support cannot be reliably enabled)."""
-    # Python 2.3 causes a segfault when
-    #  trying to re-acquire the thread-state
-    #  which is done in error-handling
-    #  ufunc code.  NPY_ALLOW_C_API and friends
-    #  cause the segfault. So, we disable threading
-    #  for now.
-    if sys.version[:5] < '2.4.2':
-        nosmp = 1
-    else:
-        # Perhaps a fancier check is in order here.
-        #  so that threads are only enabled if there
-        #  are actually multiple CPUS? -- but
-        #  threaded code can be nice even on a single
-        #  CPU so that long-calculating code doesn't
-        #  block.
-        try:
-            nosmp = os.environ['NPY_NOSMP']
-            nosmp = 1
-        except KeyError:
-            nosmp = 0
-    return nosmp == 1
+    # Perhaps a fancier check is in order here.
+    #  so that threads are only enabled if there
+    #  are actually multiple CPUS? -- but
+    #  threaded code can be nice even on a single
+    #  CPU so that long-calculating code doesn't
+    #  block.
+    return 'NPY_NOSMP' in os.environ
 
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
@@ -175,11 +161,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
                              headers=headers):
             moredefs.append((fname2def(f), 1))
 
-    for dec, fn in OPTIONAL_GCC_ATTRIBUTES:
-        if config.check_funcs_once([fn],
-                                   decl=dict((('%s %s' % (dec, fn), True),)),
-                                   call=False):
+    for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
+        if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
+
+    for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
+        if config.check_gcc_variable_attribute(fn):
+            m = fn.replace("(", "_").replace(")", "_")
+            moredefs.append((fname2def(m), 1))
 
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
@@ -276,11 +265,11 @@ def check_types(config_cmd, ext, build_dir):
     expected['long'] = [8, 4]
     expected['float'] = [4]
     expected['double'] = [8]
-    expected['long double'] = [8, 12, 16]
-    expected['Py_intptr_t'] = [4, 8]
+    expected['long double'] = [16, 12, 8]
+    expected['Py_intptr_t'] = [8, 4]
     expected['PY_LONG_LONG'] = [8]
     expected['long long'] = [8]
-    expected['off_t'] = [4, 8]
+    expected['off_t'] = [8, 4]
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
@@ -320,7 +309,8 @@ def check_types(config_cmd, ext, build_dir):
         # definition is binary compatible with C99 complex type (check done at
         # build time in npy_common.h)
         complex_def = "struct {%s __x; %s __y;}" % (type, type)
-        res = config_cmd.check_type_size(complex_def, expected=2*expected[type])
+        res = config_cmd.check_type_size(complex_def,
+                                         expected=[2 * x for x in expected[type]])
         if res >= 0:
             public_defines.append(('NPY_SIZEOF_COMPLEX_%s' % sym2def(type), '%d' % res))
         else:
@@ -443,6 +433,9 @@ def configuration(parent_package='',top_path=None):
             if sys.platform=='win32' or os.name=='nt':
                 win32_checks(moredefs)
 
+            # C99 restrict keyword
+            moredefs.append(('NPY_RESTRICT', config_cmd.check_restrict()))
+
             # Inline check
             inline = config_cmd.check_inline()
 
@@ -466,7 +459,7 @@ def configuration(parent_package='',top_path=None):
                            'MOTOROLA_EXTENDED_12_BYTES_BE',
                            'IEEE_QUAD_LE', 'IEEE_QUAD_BE',
                            'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE',
-                           'DOUBLE_DOUBLE_BE']:
+                           'DOUBLE_DOUBLE_BE', 'DOUBLE_DOUBLE_LE']:
                     moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
                 else:
                     raise ValueError("Unrecognized long double format: %s" % rep)
@@ -732,7 +725,8 @@ def configuration(parent_package='',top_path=None):
                    join(local_dir, subpath, 'arraytypes.c.src'),
                    join(local_dir, subpath, 'nditer_templ.c.src'),
                    join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'einsum.c.src')]
+                   join(local_dir, subpath, 'einsum.c.src'),
+                   join(local_dir, 'src', 'private', 'templ_common.h.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -769,6 +763,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
+            join('src', 'multiarray', 'vdot.h'),
+            join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -793,6 +789,7 @@ def configuration(parent_package='',top_path=None):
             ] + npysort_sources + npymath_sources
 
     multiarray_src = [
+            join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_assign.c'),
@@ -834,23 +831,36 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
             join('src', 'multiarray', 'usertypes.c'),
-            join('src', 'multiarray', 'ucsnarrow.c')]
+            join('src', 'multiarray', 'ucsnarrow.c'),
+            join('src', 'multiarray', 'vdot.c'),
+            join('src', 'private', 'templ_common.h.src'),
+            ]
 
+    blas_info = get_info('blas_opt', 0)
+    if blas_info and  ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+        extra_info = blas_info
+        multiarray_src.extend([join('src', 'multiarray', 'cblasfuncs.c'),
+                               join('src', 'multiarray', 'python_xerbla.c'),
+                              ])
+    else:
+        extra_info = {}
 
     if not ENABLE_SEPARATE_COMPILATION:
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
 
+
     config.add_extension('multiarray',
-                         sources = multiarray_src +
+                         sources=multiarray_src +
                                  [generate_config_h,
-                                 generate_numpyconfig_h,
-                                 generate_numpy_api,
-                                 join(codegen_dir, 'generate_numpy_api.py'),
-                                 join('*.py')],
-                         depends = deps + multiarray_deps,
-                         libraries = ['npymath', 'npysort'])
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  join(codegen_dir, 'generate_numpy_api.py'),
+                                  join('*.py')],
+                         depends=deps + multiarray_deps,
+                         libraries=['npymath', 'npysort'],
+                         extra_info=extra_info)
 
     #######################################################################
     #                           umath module                              #
@@ -863,10 +873,10 @@ def configuration(parent_package='',top_path=None):
         from numpy.distutils.misc_util import get_cmd
 
         subpath = join('src', 'umath')
-        # NOTE: For manual template conversion of loops.h.src, read the note
-        #       in that file.
         sources = [
+            join(local_dir, subpath, 'loops.h.src'),
             join(local_dir, subpath, 'loops.c.src'),
+            join(local_dir, subpath, 'scalarmath.c.src'),
             join(local_dir, subpath, 'simd.inc.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
@@ -895,13 +905,16 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'simd.inc.src'),
+            join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
+            join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c')]
 
     umath_deps = [
             generate_umath_py,
             join('src', 'multiarray', 'common.h'),
+            join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
@@ -923,43 +936,6 @@ def configuration(parent_package='',top_path=None):
                          libraries = ['npymath'],
                          )
 
-    #######################################################################
-    #                         scalarmath module                           #
-    #######################################################################
-
-    config.add_extension('scalarmath',
-                         sources = [join('src', 'scalarmathmodule.c.src'),
-                                    join('src', 'private', 'scalarmathmodule.h.src'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  generate_ufunc_api],
-                         depends = deps + npymath_sources,
-                         libraries = ['npymath'],
-                         )
-
-    #######################################################################
-    #                          _dotblas module                            #
-    #######################################################################
-
-    # Configure blasdot
-    blas_info = get_info('blas_opt', 0)
-    #blas_info = {}
-    def get_dotblas_sources(ext, build_dir):
-        if blas_info:
-            if ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', []):
-                return None # dotblas needs ATLAS, Fortran compiled blas will not be sufficient.
-            return ext.depends[:1]
-        return None # no extension module will be built
-
-    config.add_extension('_dotblas',
-                         sources = [get_dotblas_sources],
-                         depends = [join('blasdot', '_dotblas.c'),
-                                  join('blasdot', 'cblas.h'),
-                                  ],
-                         include_dirs = ['blasdot'],
-                         extra_info = blas_info
-                         )
 
     #######################################################################
     #                        umath_tests module                           #

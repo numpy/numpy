@@ -9,16 +9,14 @@ def configuration(parent_package='',top_path=None):
 
     config.add_include_dirs(join('..', 'core', 'include'))
 
-
     config.add_extension('_compiled_base',
                          sources=[join('src', '_compiled_base.c')]
                          )
 
-    config.add_data_dir('benchmarks')
     config.add_data_dir('tests')
 
     return config
 
-if __name__=='__main__':
+if __name__ == '__main__':
     from numpy.distutils.core import setup
     setup(configuration=configuration)

@@ -479,6 +479,16 @@ class TestApplyAlongAxis(TestCase):
         xa = apply_along_axis(myfunc, 2, a)
         assert_equal(xa, [[1, 4], [7, 10]])
 
+   # Tests kwargs functions
+    def test_3d_kwargs(self):
+        a = arange(12).reshape(2, 2, 3)
+
+        def myfunc(b, offset=0):
+            return b[1+offset]
+
+        xa = apply_along_axis(myfunc, 2, a, offset=1)
+        assert_equal(xa, [[2, 5], [8, 11]])
+
 
 class TestApplyOverAxes(TestCase):
     # Tests apply_over_axes
@@ -489,10 +499,14 @@ class TestApplyOverAxes(TestCase):
         assert_equal(test, ctrl)
         a[(a % 2).astype(np.bool)] = masked
         test = apply_over_axes(np.sum, a, [0, 2])
-        ctrl = np.array([[[30], [44], [60]]])
+        ctrl = np.array([[[28], [44], [60]]])
+        assert_equal(test, ctrl)
 
 
 class TestMedian(TestCase):
+    def test_pytype(self):
+        r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
+        assert_equal(r, np.inf)
 
     def test_2d(self):
         # Tests median w/ 2D
@@ -529,6 +543,19 @@ class TestMedian(TestCase):
         x = np.ma.arange(24).reshape(4, 3, 2)
         x[x % 5 == 0] = masked
         assert_equal(median(x, 0), [[12, 10], [8, 9], [16, 17]])
+
+    def test_neg_axis(self):
+        x = masked_array(np.arange(30).reshape(10, 3))
+        x[:3] = x[-3:] = masked
+        assert_equal(median(x, axis=-1), median(x, axis=1))
+
+    def test_out(self):
+        x = masked_array(np.arange(30).reshape(10, 3))
+        x[:3] = x[-3:] = masked
+        out = masked_array(np.ones(10))
+        r = median(x, axis=1, out=out)
+        assert_equal(r, out)
+        assert_(type(r) == MaskedArray)
 
 
 class TestCov(TestCase):

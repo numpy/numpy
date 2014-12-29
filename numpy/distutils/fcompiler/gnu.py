@@ -35,22 +35,23 @@ class GnuFCompiler(FCompiler):
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
-        m = re.search(r'GNU Fortran', version_string)
-        if not m:
-            return None
-        m = re.search(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
+        # Try to find a valid version string
+        m = re.search(r'([0-9.]+)', version_string)
         if m:
-            return ('gfortran', m.group(1))
-        m = re.search(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
-        if m:
-            v = m.group(1)
-            if v.startswith('0') or v.startswith('2') or v.startswith('3'):
-                # the '0' is for early g77's
-                return ('g77', v)
-            else:
-                # at some point in the 4.x series, the ' 95' was dropped
-                # from the version string
-                return ('gfortran', v)
+            # g77 provides a longer version string that starts with GNU
+            # Fortran
+            if version_string.startswith('GNU Fortran'):
+                return ('g77', m.group(1))
+
+            # gfortran only outputs a version string such as #.#.#, so check
+            # if the match is at the start of the string
+            elif m.start() == 0:
+                return ('gfortran', m.group(1))
+
+        # If these checks fail, then raise an error to make the problem easy
+        # to find.
+        err = 'A valid Fortran verison was not found in this string:\n'
+        raise ValueError(err + version_string)
 
     def version_match(self, version_string):
         v = self.gnu_version_match(version_string)
@@ -68,7 +69,7 @@ class GnuFCompiler(FCompiler):
 
     possible_executables = ['g77', 'f77']
     executables = {
-        'version_cmd'  : [None, "--version"],
+        'version_cmd'  : [None, "-dumpversion"],
         'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
         'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
@@ -220,6 +221,9 @@ class GnuFCompiler(FCompiler):
     def get_flags_arch(self):
         return []
 
+    def runtime_library_dir_option(self, dir):
+        return '-Wl,-rpath="%s"' % dir
+
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
     compiler_aliases = ('gfortran',)
@@ -251,13 +255,14 @@ class Gnu95FCompiler(GnuFCompiler):
 
     possible_executables = ['gfortran', 'f95']
     executables = {
-        'version_cmd'  : ["<F90>", "--version"],
-        'compiler_f77' : [None, "-Wall", "-ffixed-form",
+        'version_cmd'  : ["<F90>", "-dumpversion"],
+        'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_f90' : [None, "-Wall", "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_fix' : [None, "-Wall", "-ffixed-form",
+        'compiler_f90' : [None, "-Wall", "-g",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'linker_so'    : ["<F90>", "-Wall"],
+        'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
+                          "-fno-second-underscore"] + _EXTRAFLAGS,
+        'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
         'linker_exe'   : [None, "-Wall"]

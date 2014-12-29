@@ -154,7 +154,8 @@ class TestRegression(TestCase):
                               {'names':['a'],'formats':['foo']}, align=1)
 
     @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and platform.architecture()[0] == "64bit"),
+                        (sys.platform == "win32" and
+                         platform.architecture()[0] == "64bit"),
                         "numpy.intp('0xff', 16) not supported on Py3, "
                         "as it does not inherit from Python int")
     def test_intp(self,level=rlevel):
@@ -180,7 +181,7 @@ class TestRegression(TestCase):
         assert_(np.all(b[yb] > 0.5))
 
     def test_endian_where(self,level=rlevel):
-        """GitHuB issue #369"""
+        """GitHub issue #369"""
         net = np.zeros(3, dtype='>f4')
         net[1] = 0.00458849
         net[2] = 0.605202
@@ -289,7 +290,7 @@ class TestRegression(TestCase):
 
     def test_tobytes_FORTRANORDER_discontiguous(self,level=rlevel):
         """Fix in r2836"""
-        # Create discontiguous Fortran-ordered array
+        # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
         assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
 
@@ -310,7 +311,7 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, bfb)
 
     def test_nonarray_assignment(self):
-        # See also Issue gh-2870, test for nonarray assignment
+        # See also Issue gh-2870, test for non-array assignment
         # and equivalent unsafe casted array assignment
         a = np.arange(10)
         b = np.ones(10, dtype=bool)
@@ -397,6 +398,41 @@ class TestRegression(TestCase):
 
         assert_raises(KeyError, np.lexsort, BuggySequence())
 
+    def test_pickle_py2_bytes_encoding(self):
+        # Check that arrays and scalars pickled on Py2 are
+        # unpickleable on Py3 using encoding='bytes'
+
+        test_data = [
+            # (original, py2_pickle)
+            (np.unicode_('\u6f2c'),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
+                     "I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n.")),
+
+            (np.array([9e123], dtype=np.float64),
+             asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
+                     "p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\n"
+                     "p7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\n"
+                     "I0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb.")),
+
+            (np.array([(9e123,)], dtype=[('name', float)]),
+             asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n"
+                     "(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n"
+                     "(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n"
+                     "(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\n"
+                     "I-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\n"
+                     "bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb.")),
+        ]
+
+        if sys.version_info[:2] >= (3, 4):
+            # encoding='bytes' was added in Py3.4
+            for original, data in test_data:
+                result = pickle.loads(data, encoding='bytes')
+                assert_equal(result, original)
+
+                if isinstance(result, np.ndarray) and result.dtype.names:
+                    for name in result.dtype.names:
+                        assert_(isinstance(name, str))
 
     def test_pickle_dtype(self,level=rlevel):
         """Ticket #251"""
@@ -559,7 +595,7 @@ class TestRegression(TestCase):
         assert_(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self, level=rlevel):
-        """Github Issue #2700, setting shape failed for 0-sized arrays"""
+        """GitHub Issue #2700, setting shape failed for 0-sized arrays"""
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
@@ -567,7 +603,7 @@ class TestRegression(TestCase):
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
     @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
     def test_reshape_trailing_ones_strides(self):
-        # Github issue gh-2949, bad strides for trailing ones of new shape
+        # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2] # not contiguous
         strides_c = (16, 8, 8, 8)
         strides_f = (8, 24, 48, 48)
@@ -755,8 +791,12 @@ class TestRegression(TestCase):
         s = np.ones(10, dtype=float)
         x = np.array((15,), dtype=float)
         def ia(x, s, v): x[(s>0)]=v
-        self.assertRaises(ValueError, ia, x, s, np.zeros(9, dtype=float))
-        self.assertRaises(ValueError, ia, x, s, np.zeros(11, dtype=float))
+        # After removing deprecation, the following are ValueErrors.
+        # This might seem odd as compared to the value error below. This
+        # is due to the fact that the new code always uses "nonzero" logic
+        # and the boolean special case is not taken.
+        self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
+        self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
         # Old special case (different code path):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
 
@@ -843,7 +883,7 @@ class TestRegression(TestCase):
         cnt0_b = cnt(b)
         cnt0_c = cnt(c)
 
-        # -- 0d -> 1d broadcasted slice assignment
+        # -- 0d -> 1-d broadcast slice assignment
 
         arr = np.zeros(5, dtype=np.object_)
 
@@ -860,7 +900,7 @@ class TestRegression(TestCase):
 
         del arr
 
-        # -- 1d -> 2d broadcasted slice assignment
+        # -- 1-d -> 2-d broadcast slice assignment
 
         arr  = np.zeros((5, 2), dtype=np.object_)
         arr0 = np.zeros(2, dtype=np.object_)
@@ -879,7 +919,7 @@ class TestRegression(TestCase):
 
         del arr, arr0
 
-        # -- 2d copying + flattening
+        # -- 2-d copying + flattening
 
         arr  = np.zeros((5, 2), dtype=np.object_)
 
@@ -1024,8 +1064,8 @@ class TestRegression(TestCase):
         b = np.zeros((2, 1), dtype = np.single)
         try:
             a.compress([True, False], axis = 1, out = b)
-            raise AssertionError("compress with an out which cannot be " \
-                                 "safely casted should not return "\
+            raise AssertionError("compress with an out which cannot be "
+                                 "safely casted should not return "
                                  "successfully")
         except TypeError:
             pass
@@ -1793,6 +1833,67 @@ class TestRegression(TestCase):
             bytestring = "\x01  ".encode('ascii')
             assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
 
+    def test_pickle_py2_array_latin1_hack(self):
+        # Check that unpickling hacks in Py3 that support
+        # encoding='latin1' work correctly.
+
+        # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
+        data = asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\n"
+                       "tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
+                       "I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
+                       "p13\ntp14\nb.")
+        if sys.version_info[0] >= 3:
+            # This should work:
+            result = pickle.loads(data, encoding='latin1')
+            assert_array_equal(result, np.array([129], dtype='b'))
+            # Should not segfault:
+            assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
+
+    def test_pickle_py2_scalar_latin1_hack(self):
+        # Check that scalar unpickling hack in Py3 that supports
+        # encoding='latin1' work correctly.
+
+        # Python2 output for pickle.dumps(...)
+        datas = [
+            # (original, python2_pickle, koi8r_validity)
+            (np.unicode_('\u6bd2'),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
+                     "tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
+             'invalid'),
+
+            (np.float64(9e123),
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\n"
+                     "p2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\n"
+                     "bS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
+             'invalid'),
+
+            (np.bytes_(asbytes('\x9c')),  # different 8-bit code point in KOI8-R vs latin1
+             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\n"
+                     "I0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\n"
+                     "tp8\nRp9\n."),
+             'different'),
+        ]
+        if sys.version_info[0] >= 3:
+            for original, data, koi8r_validity in datas:
+                result = pickle.loads(data, encoding='latin1')
+                assert_equal(result, original)
+
+                # Decoding under non-latin1 encoding (e.g.) KOI8-R can
+                # produce bad results, but should not segfault.
+                if koi8r_validity == 'different':
+                    # Unicode code points happen to lie within latin1,
+                    # but are different in koi8-r, resulting to silent
+                    # bogus results
+                    result = pickle.loads(data, encoding='koi8-r')
+                    assert_(result != original)
+                elif koi8r_validity == 'invalid':
+                    # Unicode code points outside latin1, so results
+                    # to an encoding exception
+                    assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
+                else:
+                    raise ValueError(koi8r_validity)
+
     def test_structured_type_to_object(self):
         a_rec = np.array([(0, 1), (3, 2)], dtype='i4,i8')
         a_obj = np.empty((2,), dtype=object)
@@ -1963,6 +2064,44 @@ class TestRegression(TestCase):
         assert_equal(int(arr), int(arr_cp))
         self.assertTrue(arr is not arr_cp)
         self.assertTrue(isinstance(arr_cp, type(arr)))
+
+    def test_bool_subscript_crash(self):
+        # gh-4494
+        c = np.rec.array([(1, 2, 3), (4, 5, 6)])
+        masked = c[np.array([True, False])]
+        base = masked.base
+        del masked, c
+        base.dtype
+
+    def test_richcompare_crash(self):
+        # gh-4613
+        import operator as op
+
+        # dummy class where __array__ throws exception
+        class Foo(object):
+            __array_priority__ = 1002
+            def __array__(self,*args,**kwargs):
+                raise Exception()
+
+        rhs = Foo()
+        lhs = np.array(1)
+        for f in [op.lt, op.le, op.gt, op.ge]:
+            if sys.version_info[0] >= 3:
+                assert_raises(TypeError, f, lhs, rhs)
+            else:
+                f(lhs, rhs)
+        assert_(not op.eq(lhs, rhs))
+        assert_(op.ne(lhs, rhs))
+
+    def test_richcompare_scalar_and_subclass(self):
+        # gh-4709
+        class Foo(np.ndarray):
+            def __eq__(self, other):
+                return "OK"
+        x = np.array([1,2,3]).view(Foo)
+        assert_equal(10 == x, "OK")
+        assert_equal(np.int32(10) == x, "OK")
+        assert_equal(np.array([10]) == x, "OK")
 
 
 if __name__ == "__main__":

@@ -29,6 +29,8 @@
             #define HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
         #elif defined(NPY_CPU_PPC) || defined(NPY_CPU_PPC64)
             #define HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE
+        #elif defined(NPY_CPU_PPC64LE)
+            #define HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_LE
         #endif
     #endif
 #endif
@@ -41,7 +43,8 @@
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE) || \
       defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE) || \
-      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE))
+      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE))
     #error No long double representation defined
 #endif
 

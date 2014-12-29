@@ -93,7 +93,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array references or is referenced\n"\
+                    "cannot resize an array that "\
+                    "references or is referenced\n"\
                     "by another array in this way.  Use the resize function");
             return NULL;
         }
@@ -325,8 +326,12 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         }
     }
     else {
-        Py_INCREF(zero);
-        NPY_COPY_PYOBJECT_PTR(optr, &zero);
+        npy_intp i;
+        for (i = 0; i < dtype->elsize / sizeof(zero); i++) {
+            Py_INCREF(zero);
+            NPY_COPY_PYOBJECT_PTR(optr, &zero);
+            optr += sizeof(zero);
+        }
     }
     return;
 }
@@ -608,7 +613,7 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
             else {
                 PyErr_SetString(PyExc_ValueError,
                         "cannot select an axis to squeeze out "
-                        "which has size greater than one");
+                        "which has size not equal to one");
                 return NULL;
             }
         }
@@ -775,7 +780,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
         PyArray_DIMS(ret)[i] = PyArray_DIMS(ap)[permutation[i]];
         PyArray_STRIDES(ret)[i] = PyArray_STRIDES(ap)[permutation[i]];
     }
-    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
+                        NPY_ARRAY_ALIGNED);
     return (PyObject *)ret;
 }
 
@@ -942,10 +948,8 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
 
     newdim.ptr = val;
 
-    if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(arr) ? NPY_FORTRANORDER : NPY_CORDER;
-    }
-    else if (order == NPY_KEEPORDER) {
+    if (order == NPY_KEEPORDER) {
+        /* This handles some corner cases, such as 0-d arrays as well */
         if (PyArray_IS_C_CONTIGUOUS(arr)) {
             order = NPY_CORDER;
         }
@@ -954,41 +958,54 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         }
     }
 
-    if (order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(arr)) {
-        return PyArray_Newshape(arr, &newdim, NPY_CORDER);
-    }
-    else if (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(arr)) {
-        return PyArray_Newshape(arr, &newdim, NPY_FORTRANORDER);
+    if (order != NPY_KEEPORDER) {
+        return PyArray_Newshape(arr, &newdim, order);
     }
     /* For KEEPORDER, check if we can make a flattened view */
-    else if (order == NPY_KEEPORDER) {
+    else {
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
-        npy_intp stride;
+        npy_intp stride, base_stride = NPY_MIN_INTP;
         int i, ndim = PyArray_NDIM(arr);
 
         PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
                                 PyArray_STRIDES(arr), strideperm);
-
-        stride = strideperm[ndim-1].stride;
+        
         for (i = ndim-1; i >= 0; --i) {
-            if (strideperm[i].stride != stride) {
+            if (PyArray_DIM(arr, strideperm[i].perm) == 1) {
+                /* A size one dimension does not matter */
+                continue;
+            }
+            if (base_stride == NPY_MIN_INTP) {
+                stride = strideperm[i].stride;
+                base_stride = stride;
+            }
+            else if (strideperm[i].stride != stride) {
                 break;
             }
             stride *= PyArray_DIM(arr, strideperm[i].perm);
         }
 
+#if NPY_RELAXED_STRIDES_CHECKING == 0
+        /*
+         * For tidyness, cannot be reached with relaxed strides checking
+         * since the array is guaranteed contiguous (without, not sure...)
+         */
+        if (base_stride == NPY_MIN_INTP) {
+            base_stride = PyArray_ITEMSIZE(arr);
+        }
+#endif
+
         /* If all the strides matched a contiguous layout, return a view */
         if (i < 0) {
             PyArrayObject *ret;
 
-            stride = strideperm[ndim-1].stride;
             val[0] = PyArray_SIZE(arr);
 
             Py_INCREF(PyArray_DESCR(arr));
             ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
                                PyArray_DESCR(arr),
                                1, val,
-                               &stride,
+                               &base_stride,
                                PyArray_BYTES(arr),
                                PyArray_FLAGS(arr),
                                (PyObject *)arr);

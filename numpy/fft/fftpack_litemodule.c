@@ -1,16 +1,14 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "fftpack.h"
 #include "Python.h"
 #include "numpy/arrayobject.h"
+#include "fftpack.h"
 
 static PyObject *ErrorObject;
 
-/* ----------------------------------------------------- */
+static const char fftpack_cfftf__doc__[] = "";
 
-static char fftpack_cfftf__doc__[] = "";
-
-PyObject *
+static PyObject *
 fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -44,14 +42,14 @@ fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 
     nrepeats = PyArray_SIZE(data)/npts;
     dptr = (double *)PyArray_DATA(data);
-    NPY_SIGINT_ON;
     Py_BEGIN_ALLOW_THREADS;
+    NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
-        cfftf(npts, dptr, wsave);
+        npy_cfftf(npts, dptr, wsave);
         dptr += npts*2;
     }
-    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
+    Py_END_ALLOW_THREADS;
     PyArray_Free(op2, (char *)wsave);
     return (PyObject *)data;
 
@@ -61,9 +59,9 @@ fail:
     return NULL;
 }
 
-static char fftpack_cfftb__doc__[] = "";
+static const char fftpack_cfftb__doc__[] = "";
 
-PyObject *
+static PyObject *
 fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -97,14 +95,14 @@ fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 
     nrepeats = PyArray_SIZE(data)/npts;
     dptr = (double *)PyArray_DATA(data);
-    NPY_SIGINT_ON;
     Py_BEGIN_ALLOW_THREADS;
+    NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
-        cfftb(npts, dptr, wsave);
+        npy_cfftb(npts, dptr, wsave);
         dptr += npts*2;
     }
-    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
+    Py_END_ALLOW_THREADS;
     PyArray_Free(op2, (char *)wsave);
     return (PyObject *)data;
 
@@ -114,7 +112,7 @@ fail:
     return NULL;
 }
 
-static char fftpack_cffti__doc__[] ="";
+static const char fftpack_cffti__doc__[] = "";
 
 static PyObject *
 fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -126,7 +124,7 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "l", &n)) {
         return NULL;
     }
-    /*Magic size needed by cffti*/
+    /*Magic size needed by npy_cffti*/
     dim = 4*n + 15;
     /*Create a 1 dimensional array of dimensions of type double*/
     op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
@@ -134,18 +132,18 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
-    NPY_SIGINT_ON;
     Py_BEGIN_ALLOW_THREADS;
-    cffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
-    Py_END_ALLOW_THREADS;
+    NPY_SIGINT_ON;
+    npy_cffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
     NPY_SIGINT_OFF;
+    Py_END_ALLOW_THREADS;
 
     return (PyObject *)op;
 }
 
-static char fftpack_rfftf__doc__[] ="";
+static const char fftpack_rfftf__doc__[] = "";
 
-PyObject *
+static PyObject *
 fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -187,19 +185,18 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     rptr = (double *)PyArray_DATA(ret);
     dptr = (double *)PyArray_DATA(data);
 
-
-    NPY_SIGINT_ON;
     Py_BEGIN_ALLOW_THREADS;
+    NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr+1), dptr, npts*sizeof(double));
-        rfftf(npts, rptr+1, wsave);
+        npy_rfftf(npts, rptr+1, wsave);
         rptr[0] = rptr[1];
         rptr[1] = 0.0;
         rptr += rstep;
         dptr += npts;
     }
-    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
+    Py_END_ALLOW_THREADS;
     PyArray_Free(op2, (char *)wsave);
     Py_DECREF(data);
     return (PyObject *)ret;
@@ -211,10 +208,9 @@ fail:
     return NULL;
 }
 
-static char fftpack_rfftb__doc__[] ="";
+static const char fftpack_rfftb__doc__[] = "";
 
-
-PyObject *
+static PyObject *
 fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
@@ -252,17 +248,17 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     rptr = (double *)PyArray_DATA(ret);
     dptr = (double *)PyArray_DATA(data);
 
-    NPY_SIGINT_ON;
     Py_BEGIN_ALLOW_THREADS;
+    NPY_SIGINT_ON;
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr + 1), (dptr + 2), (npts - 1)*sizeof(double));
         rptr[0] = dptr[0];
-        rfftb(npts, rptr, wsave);
+        npy_rfftb(npts, rptr, wsave);
         rptr += npts;
         dptr += npts*2;
     }
-    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
+    Py_END_ALLOW_THREADS;
     PyArray_Free(op2, (char *)wsave);
     Py_DECREF(data);
     return (PyObject *)ret;
@@ -274,8 +270,7 @@ fail:
     return NULL;
 }
 
-
-static char fftpack_rffti__doc__[] ="";
+static const char fftpack_rffti__doc__[] = "";
 
 static PyObject *
 fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -287,18 +282,18 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
   if (!PyArg_ParseTuple(args, "l", &n)) {
       return NULL;
   }
-  /*Magic size needed by rffti*/
+  /*Magic size needed by npy_rffti*/
   dim = 2*n + 15;
   /*Create a 1 dimensional array of dimensions of type double*/
   op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   if (op == NULL) {
       return NULL;
   }
-  NPY_SIGINT_ON;
   Py_BEGIN_ALLOW_THREADS;
-  rffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
-  Py_END_ALLOW_THREADS;
+  NPY_SIGINT_ON;
+  npy_rffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
   NPY_SIGINT_OFF;
+  Py_END_ALLOW_THREADS;
 
   return (PyObject *)op;
 }
@@ -315,11 +310,6 @@ static struct PyMethodDef fftpack_methods[] = {
     {"rffti",   fftpack_rffti,  1,      fftpack_rffti__doc__},
     {NULL, NULL, 0, NULL}          /* sentinel */
 };
-
-
-/* Initialization function for the module (*must* be called initfftpack) */
-
-static char fftpack_module_documentation[] = "" ;
 
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
@@ -349,6 +339,8 @@ initfftpack_lite(void)
 #if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
 #else
+    static const char fftpack_module_documentation[] = "";
+
     m = Py_InitModule4("fftpack_lite", fftpack_methods,
             fftpack_module_documentation,
             (PyObject*)NULL,PYTHON_API_VERSION);

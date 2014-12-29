@@ -34,6 +34,7 @@ C_ABI_VERSION = 0x01000009
 #
 # 0x00000008 - 1.7.x
 # 0x00000009 - 1.8.x
+# 0x00000009 - 1.9.x
 C_API_VERSION = 0x00000009
 
 class MismatchCAPIWarning(Warning):
@@ -98,7 +99,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "ftello", "fseeko"]
+        "copysign", "nextafter", "ftello", "fseeko",
+        "strtoll", "strtoull", "cbrt"]
 
 
 OPTIONAL_HEADERS = [
@@ -116,16 +118,24 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
+                       ("__builtin_mul_overflow", '5, 5, (int*)5'),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"), # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"), # SSE2
                        ]
 
-# gcc function attributes
-# (attribute as understood by gcc, function name),
+# function attributes
+# tested via "int %s %s(void *);" % (attribute, name)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
-OPTIONAL_GCC_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
-                            'attribute_optimize_unroll_loops'),
-                          ]
+OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
+                                'attribute_optimize_unroll_loops'),
+                                ('__attribute__((optimize("O3")))',
+                                 'attribute_optimize_opt_3'),
+                                ('__attribute__((nonnull (1)))',
+                                 'attribute_nonnull'),
+                               ]
+
+# variable attributes tested via "int %s a" % attribute
+OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
@@ -136,7 +146,7 @@ C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
         "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
         "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
         "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-        "exp2", "log2", "copysign", "nextafter"]
+        "exp2", "log2", "copysign", "nextafter", "cbrt"]
 
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
@@ -163,10 +173,20 @@ def check_long_double_representation(cmd):
     body = LONG_DOUBLE_REPRESENTATION_SRC % {'type': 'long double'}
 
     # We need to use _compile because we need the object filename
-    src, object = cmd._compile(body, None, None, 'c')
+    src, obj = cmd._compile(body, None, None, 'c')
     try:
-        type = long_double_representation(pyod(object))
-        return type
+        ltype = long_double_representation(pyod(obj))
+        return ltype
+    except ValueError:
+        # try linking to support CC="gcc -flto" or icc -ipo
+        # struct needs to be volatile so it isn't optimized away
+        body = body.replace('struct', 'volatile struct')
+        body += "int main(void) { return 0; }\n"
+        src, obj = cmd._compile(body, None, None, 'c')
+        cmd.temp_files.append("_configtest")
+        cmd.compiler.link_executable([obj], "_configtest")
+        ltype = long_double_representation(pyod("_configtest"))
+        return ltype
     finally:
         cmd._clean()
 
@@ -256,6 +276,8 @@ _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
 _DOUBLE_DOUBLE_BE = ['301', '235', '157', '064', '124', '000', '000', '000'] + \
                     ['000'] * 8
+_DOUBLE_DOUBLE_LE = ['000', '000', '000', '124', '064', '157', '235', '301'] + \
+                    ['000'] * 8
 
 def long_double_representation(lines):
     """Given a binary dump as given by GNU od -b, look for long double
@@ -295,6 +317,8 @@ def long_double_representation(lines):
                         return 'IEEE_QUAD_LE'
                     elif read[8:-8] == _DOUBLE_DOUBLE_BE:
                         return 'DOUBLE_DOUBLE_BE'
+                    elif read[8:-8] == _DOUBLE_DOUBLE_LE:
+                        return 'DOUBLE_DOUBLE_LE'
                 elif read[:16] == _BEFORE_SEQ:
                     if read[16:-8] == _IEEE_DOUBLE_LE:
                         return 'IEEE_DOUBLE_LE'

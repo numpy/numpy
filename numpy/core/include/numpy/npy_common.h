@@ -18,6 +18,23 @@
 #define NPY_GCC_UNROLL_LOOPS
 #endif
 
+/* highest gcc optimization level, enabled autovectorizer */
+#ifdef HAVE_ATTRIBUTE_OPTIMIZE_OPT_3
+#define NPY_GCC_OPT_3 __attribute__((optimize("O3")))
+#else
+#define NPY_GCC_OPT_3
+#endif
+
+/*
+ * mark an argument (starting from 1) that must not be NULL and is not checked
+ * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
+ */
+#ifdef HAVE_ATTRIBUTE_NONNULL
+#define NPY_GCC_NONNULL(n) __attribute__((nonnull(n)))
+#else
+#define NPY_GCC_NONNULL(n)
+#endif
+
 #if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
 #define NPY_HAVE_SSE_INTRINSICS
 #endif
@@ -56,6 +73,30 @@
         #define NPY_INLINE
 #endif
 
+#ifdef HAVE___THREAD
+    #define NPY_TLS __thread
+#else
+    #ifdef HAVE___DECLSPEC_THREAD_
+        #define NPY_TLS __declspec(thread)
+    #else
+        #define NPY_TLS
+    #endif
+#endif
+
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+  #define NPY_RETURNS_BORROWED_REF \
+    __attribute__((cpychecker_returns_borrowed_ref))
+#else
+  #define NPY_RETURNS_BORROWED_REF
+#endif
+
+#ifdef WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE
+  #define NPY_STEALS_REF_TO_ARG(n) \
+   __attribute__((cpychecker_steals_reference_to_arg(n)))
+#else
+ #define NPY_STEALS_REF_TO_ARG(n)
+#endif
+
 /* 64 bit file position support, also on win-amd64. Ticket #1660 */
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
     defined(__MINGW32__) || defined(__MINGW64__)
@@ -92,6 +133,7 @@ extern long long __cdecl _ftelli64(FILE *);
 #else
     #define npy_ftell ftell
 #endif
+    #include <sys/types.h>
     #define npy_lseek lseek
     #define npy_off_t off_t
 
@@ -223,18 +265,9 @@ typedef unsigned PY_LONG_LONG npy_ulonglong;
 #  ifdef _MSC_VER
 #    define NPY_LONGLONG_FMT         "I64d"
 #    define NPY_ULONGLONG_FMT        "I64u"
-#  elif defined(__APPLE__) || defined(__FreeBSD__)
-/*   "%Ld" only parses 4 bytes -- "L" is floating modifier on MacOS X/BSD */
+#  else
 #    define NPY_LONGLONG_FMT         "lld"
 #    define NPY_ULONGLONG_FMT        "llu"
-/*
-     another possible variant -- *quad_t works on *BSD, but is deprecated:
-     #define LONGLONG_FMT   "qd"
-     #define ULONGLONG_FMT   "qu"
-*/
-#  else
-#    define NPY_LONGLONG_FMT         "Ld"
-#    define NPY_ULONGLONG_FMT        "Lu"
 #  endif
 #  ifdef _MSC_VER
 #    define NPY_LONGLONG_SUFFIX(x)   (x##i64)

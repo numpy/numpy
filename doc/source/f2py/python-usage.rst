@@ -17,20 +17,14 @@ computational part of such functions is implemented in C or Fortran
 and wrapped with F2PY (or any other tool capable of providing CObject
 of a function).
 
-.. example::
-
-  Consider a `Fortran 77 file`__ ``ftype.f``:
+Consider a Fortran 77 file ``ftype.f``:
 
   .. include:: ftype.f
      :literal:
 
-  and build a wrapper using::
+and build a wrapper using ``f2py -c ftype.f -m ftype``.
 
-    f2py -c ftype.f -m ftype
-
-  __ ftype.f
-
-  In Python:
+In Python:
 
   .. include:: ftype_session.dat
      :literal:
@@ -54,18 +48,14 @@ type-casting only the real part of a complex number is used.
 order to *in situ* changes to be effective. It is recommended to use
 arrays with proper type but also other types work.
 
-.. example::
-
-  Consider the following `Fortran 77 code`__:
+Consider the following Fortran 77 code:
 
   .. include:: scalar.f
      :literal:
 
-  and wrap it using ``f2py -c -m scalar scalar.f``.
+and wrap it using ``f2py -c -m scalar scalar.f``.
 
-  __ scalar.f
-
-  In Python:
+In Python:
 
   .. include:: scalar_session.dat
      :literal:
@@ -88,18 +78,14 @@ Because Python strings are immutable, an ``intent(inout)`` argument
 expects an array version of a string in order to *in situ* changes to
 be effective.
 
-.. example::
-
-  Consider the following `Fortran 77 code`__:
+Consider the following Fortran 77 code:
 
   .. include:: string.f
      :literal:
 
-  and wrap it using ``f2py -c -m mystring string.f``.
+and wrap it using ``f2py -c -m mystring string.f``.
 
-  __ string.f
-
-  Python session:
+Python session:
 
   .. include:: string_session.dat
      :literal:
@@ -164,18 +150,14 @@ them to Fortran routines, use a function
 ``as_column_major_storage(<array>)`` that is provided by all F2PY
 generated extension modules.
 
-.. example::
-
-  Consider `Fortran 77 code`__:
+Consider Fortran 77 code:
 
   .. include:: array.f
      :literal:
 
-  and wrap it using ``f2py -c -m arr array.f -DF2PY_REPORT_ON_ARRAY_COPY=1``.
+and wrap it using ``f2py -c -m arr array.f -DF2PY_REPORT_ON_ARRAY_COPY=1``.
 
-  __ array.f
-
-  In Python:
+In Python:
 
   .. include:: array_session.dat
      :literal:
@@ -187,19 +169,14 @@ Call-back arguments
 
 F2PY supports calling Python functions from Fortran or C codes.
 
-
-.. example::
-
-  Consider the following `Fortran 77 code`__
+Consider the following Fortran 77 code:
 
   .. include:: callback.f
      :literal:
 
-  and wrap it using ``f2py -c -m callback callback.f``.
+and wrap it using ``f2py -c -m callback callback.f``.
 
-  __ callback.f
-
-  In Python:
+In Python:
 
   .. include:: callback_session.dat
      :literal:
@@ -217,53 +194,41 @@ block, use ``use`` statement as illustrated below. The same signature
 of a callback argument can be referred in different routine
 signatures.
 
-.. example::
-
-  We use the same `Fortran 77 code`__ as in previous example but now
-  we'll pretend that F2PY was not able to guess the signatures of
-  call-back arguments correctly. First, we create an initial signature
-  file ``callback2.pyf`` using F2PY::
+We use the same Fortran 77 code as in previous example but now
+we'll pretend that F2PY was not able to guess the signatures of
+call-back arguments correctly. First, we create an initial signature
+file ``callback2.pyf`` using F2PY::
 
     f2py -m callback2 -h callback2.pyf callback.f
 
-  Then modify it as follows
+Then modify it as follows
 
   .. include:: callback2.pyf
      :literal:
 
-  Finally, build the extension module using::
+Finally, build the extension module using ``f2py -c callback2.pyf callback.f``.
 
-    f2py -c callback2.pyf callback.f
-
-  An example Python session would be identical to the previous example
-  except that argument names would differ.
-
-  __ callback.f
+An example Python session would be identical to the previous example
+except that argument names would differ.
 
 Sometimes a Fortran package may require that users provide routines
 that the package will use. F2PY can construct an interface to such
 routines so that Python functions could be called from Fortran.
 
-.. example::
-
-  Consider the following `Fortran 77 subroutine`__ that takes an array
-  and applies a function ``func`` to its elements.
+Consider the following `Fortran 77 subroutine`__ that takes an array
+and applies a function ``func`` to its elements.
 
   .. include:: calculate.f
      :literal:
 
-  __ calculate.f
+It is expected that function ``func`` has been defined
+externally. In order to use a Python function as ``func``, it must
+have an attribute ``intent(callback)`` (it must be specified before
+the ``external`` statement).
 
-  It is expected that function ``func`` has been defined
-  externally. In order to use a Python function as ``func``, it must
-  have an attribute ``intent(callback)`` (it must be specified before
-  the ``external`` statement).
+Finally, build an extension module using ``f2py -c -m foo calculate.f``
 
-  Finally, build an extension module using::
-
-    f2py -c -m foo calculate.f
-
-  In Python:
+In Python:
 
   .. include:: calculate_session.dat
      :literal:
@@ -278,18 +243,14 @@ Then it is not necessary to pass the function in the argument list to
 the Fortran function. This may be desired if the Fortran function calling
 the python callback function is itself called by another Fortran function.
 
-.. example::
-
-  Consider the following `Fortran 77 subroutine`__.
+Consider the following Fortran 77 subroutine:
 
   .. include:: extcallback.f
      :literal:
 
-  __ extcallback.f
+and wrap it using ``f2py -c -m pfromf extcallback.f``.
 
-  and wrap it using ``f2py -c -m pfromf extcallback.f``.
-
-  In Python:
+In Python:
 
   .. include:: extcallback_session.dat
      :literal:
@@ -343,7 +304,6 @@ following rules are applied:
 * If ``k > l``, then only ``x_1, ..., x_l`` are set.
 
 
-
 Common blocks
 ==============
 
@@ -359,21 +319,18 @@ directly link to data members in common blocks. Data members can be
 changed by direct assignment or by in-place changes to the
 corresponding array objects.
 
-.. example::
-
-  Consider the following `Fortran 77 code`__
+Consider the following Fortran 77 code:
 
   .. include:: common.f
      :literal:
 
-  and wrap it using ``f2py -c -m common common.f``.
+and wrap it using ``f2py -c -m common common.f``.
 
-  __ common.f
-
-  In Python:
+In Python:
 
   .. include:: common_session.dat
      :literal:
+
 
 Fortran 90 module data
 =======================
@@ -381,39 +338,32 @@ Fortran 90 module data
 The F2PY interface to Fortran 90 module data is similar to Fortran 77
 common blocks.
 
-.. example::
-
-  Consider the following `Fortran 90 code`__
+Consider the following Fortran 90 code:
 
   .. include:: moddata.f90
      :literal:
 
-  and wrap it using ``f2py -c -m moddata moddata.f90``.
+and wrap it using ``f2py -c -m moddata moddata.f90``.
 
-  __ moddata.f90
-
-  In Python:
+In Python:
 
   .. include:: moddata_session.dat
      :literal:
+
 
 Allocatable arrays
 -------------------
 
 F2PY has basic support for Fortran 90 module allocatable arrays.
 
-.. example::
-
-  Consider the following `Fortran 90 code`__
+Consider the following Fortran 90 code:
 
   .. include:: allocarr.f90
      :literal:
 
-  and wrap it using ``f2py -c -m allocarr allocarr.f90``.
+and wrap it using ``f2py -c -m allocarr allocarr.f90``.
 
-  __ allocarr.f90
-
-  In Python:
+In Python:
 
   .. include:: allocarr_session.dat
      :literal:

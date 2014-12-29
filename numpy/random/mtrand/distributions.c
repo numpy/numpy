@@ -323,23 +323,20 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     F = 1.0;
     if (m < y)
     {
-        for (i=m; i<=y; i++)
+        for (i=m+1; i<=y; i++)
         {
             F *= (a/i - s);
         }
     }
     else if (m > y)
     {
-        for (i=y; i<=m; i++)
+        for (i=y+1; i<=m; i++)
         {
             F /= (a/i - s);
         }
     }
-    else
-    {
-        if (v > F) goto Step10;
-        goto Step60;
-    }
+    if (v > F) goto Step10;
+    goto Step60;
 
     Step52:
     rho = (k/(nrq))*((k*(k/3.0 + 0.625) + 0.16666666666666666)/nrq + 0.5);
@@ -559,7 +556,7 @@ double rk_standard_t(rk_state *state, double df)
 */
 double rk_vonmises(rk_state *state, double mu, double kappa)
 {
-    double r, rho, s;
+    double s;
     double U, V, W, Y, Z;
     double result, mod;
     int neg;
@@ -570,9 +567,19 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
     }
     else
     {
-        r = 1 + sqrt(1 + 4*kappa*kappa);
-        rho = (r - sqrt(2*r))/(2*kappa);
-        s = (1 + rho*rho)/(2*rho);
+        /* with double precision rho is zero until 1.4e-8 */
+        if (kappa < 1e-5) {
+            /*
+             * second order taylor expansion around kappa = 0
+             * precise until relatively large kappas as second order is 0
+             */
+            s = (1./kappa + kappa);
+        }
+        else {
+            double r = 1 + sqrt(1 + 4*kappa*kappa);
+            double rho = (r - sqrt(2*r)) / (2*kappa);
+            s = (1 + rho*rho)/(2*rho);
+        }
 
         while (1)
         {

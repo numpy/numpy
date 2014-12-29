@@ -2,6 +2,22 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 
+/* test PyArray_IsPythonScalar, before including private py3 compat header */
+static PyObject *
+IsPythonScalar(PyObject * dummy, PyObject *args)
+{
+    PyObject *arg = NULL;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+    if (PyArray_IsPythonScalar(arg)) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
 #include "npy_pycompat.h"
 
 /*
@@ -556,6 +572,42 @@ fail:
     return NULL;
 }
 
+/* check no elison for avoided increfs */
+static PyObject *
+incref_elide(PyObject *dummy, PyObject *args)
+{
+    PyObject *arg = NULL, *res, *tup;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+
+    /* refcount 1 array but should not be elided */
+    arg = PyArray_NewCopy((PyArrayObject*)arg, NPY_KEEPORDER);
+    res = PyNumber_Add(arg, arg);
+
+    /* return original copy, should be equal to input */
+    tup = PyTuple_Pack(2, arg, res);
+    Py_DECREF(arg);
+    Py_DECREF(res);
+    return tup;
+}
+
+/* check no elison for get from list without incref */
+static PyObject *
+incref_elide_l(PyObject *dummy, PyObject *args)
+{
+    PyObject *arg = NULL, *r, *res;
+    if (!PyArg_ParseTuple(args, "O", &arg)) {
+        return NULL;
+    }
+    /* get item without increasing refcount, item may still be on the python
+     * stack but above the inaccessible top */
+    r = PyList_GetItem(arg, 4);
+    res = PyNumber_Add(r, r);
+
+    return res;
+}
+
 
 #if !defined(NPY_PY3K)
 static PyObject *
@@ -720,7 +772,113 @@ array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 
+/*
+ * Test nditer of too large arrays using remove axis, etc.
+ */
+static PyObject *
+test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
+    NpyIter *iter;
+    PyObject *array_tuple, *arr;
+    PyArrayObject *arrays[NPY_MAXARGS];
+    npy_uint32 op_flags[NPY_MAXARGS];
+    Py_ssize_t nop;
+    int i, axis, mode;
+
+    npy_intp index[NPY_MAXARGS] = {0};
+    char *msg;
+
+    if (!PyArg_ParseTuple(args, "Oii", &array_tuple, &axis, &mode)) {
+        return NULL;
+    }
+
+    if (!PyTuple_CheckExact(array_tuple)) {
+        PyErr_SetString(PyExc_ValueError, "tuple required as first argument");
+        return NULL;
+    }
+    nop = PyTuple_Size(array_tuple);
+    if (nop > NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError, "tuple must be smaller then maxargs");
+        return NULL;
+    }
+
+    for (i=0; i < nop; i++) {
+        arr = PyTuple_GET_ITEM(array_tuple, i);
+        if (!PyArray_CheckExact(arr)) {
+            PyErr_SetString(PyExc_ValueError, "require base class ndarray");
+            return NULL;
+        }
+        arrays[i] = (PyArrayObject *)arr;
+        op_flags[i] = NPY_ITER_READONLY;
+    }
+
+    iter = NpyIter_MultiNew(nop, arrays, NPY_ITER_MULTI_INDEX | NPY_ITER_RANGED,
+                            NPY_KEEPORDER, NPY_NO_CASTING, op_flags, NULL);
+
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    /* Remove an axis (negative, do not remove any) */
+    if (axis >= 0) {
+        if (!NpyIter_RemoveAxis(iter, axis)) {
+            goto fail;
+        }
+    }
+
+    switch (mode) {
+        /* Test IterNext getting */
+        case 0:
+            if (NpyIter_GetIterNext(iter, NULL) == NULL) {
+                goto fail;
+            }
+            break;
+        case 1:
+            if (NpyIter_GetIterNext(iter, &msg) == NULL) {
+                PyErr_SetString(PyExc_ValueError, msg);
+                goto fail;
+            }
+            break;
+        /* Test Multi Index removal */
+        case 2:
+            if (!NpyIter_RemoveMultiIndex(iter)) {
+                goto fail;
+            }
+            break;
+        /* Test GotoMultiIndex (just 0 hardcoded) */
+        case 3:
+            if (!NpyIter_GotoMultiIndex(iter, index)) {
+                goto fail;
+            }
+            break;
+        /* Test setting iterrange (hardcoded range of 0, 1) */
+        case 4:
+            if (!NpyIter_ResetToIterIndexRange(iter, 0, 1, NULL)) {
+                goto fail;
+            }
+            break;
+        case 5:
+            if (!NpyIter_ResetToIterIndexRange(iter, 0, 1, &msg)) {
+                PyErr_SetString(PyExc_ValueError, msg);
+                goto fail;
+            }
+            break;
+        /* Do nothing */
+        default:
+            break;
+    }
+
+    NpyIter_Deallocate(iter);
+    Py_RETURN_NONE;
+  fail:
+    NpyIter_Deallocate(iter);
+    return NULL;
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
+    {"IsPythonScalar",
+        IsPythonScalar,
+        METH_VARARGS, NULL},
     {"test_neighborhood_iterator",
         test_neighborhood_iterator,
         METH_VARARGS, NULL},
@@ -736,6 +894,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
+    {"incref_elide",
+        incref_elide,
+        METH_VARARGS, NULL},
+    {"incref_elide_l",
+        incref_elide_l,
+        METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",
         int_subclass,
@@ -746,6 +910,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"array_indexing",
         array_indexing,
+        METH_VARARGS, NULL},
+    {"test_nditer_too_large",
+        test_nditer_too_large,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

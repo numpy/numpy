@@ -65,6 +65,8 @@ Inspecting the array
    ma.nonzero
    ma.shape
    ma.size
+   ma.is_masked
+   ma.is_mask
 
    ma.MaskedArray.data
    ma.MaskedArray.mask
@@ -141,6 +143,7 @@ Joining arrays
 
    ma.column_stack
    ma.concatenate
+   ma.append
    ma.dstack
    ma.hstack
    ma.vstack
@@ -181,6 +184,8 @@ Finding masked data
    ma.flatnotmasked_edges
    ma.notmasked_contiguous
    ma.notmasked_edges
+   ma.clump_masked
+   ma.clump_unmasked
 
 
 Modifying a mask

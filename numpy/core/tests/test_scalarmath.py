@@ -83,6 +83,18 @@ class TestBaseMath(TestCase):
                 np.add(1, inp2, out=out)
                 assert_almost_equal(out, exp1, err_msg=msg)
 
+    def test_lower_align(self):
+        # check data that is not aligned to element size
+        # i.e doubles are aligned to 4 bytes on i386
+        d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        o = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        assert_almost_equal(d + d, d * 2)
+        np.add(d, d, out=o)
+        np.add(np.ones_like(d), d, out=o)
+        np.add(d, np.ones_like(d), out=o)
+        np.add(np.ones_like(d), d)
+        np.add(d, np.ones_like(d))
+
 
 class TestPower(TestCase):
     def test_small_types(self):
@@ -258,6 +270,19 @@ class TestRepr(object):
         # float
         for t in [np.float32, np.float64]:
             yield self._test_type_repr, t
+
+
+class TestSizeOf(TestCase):
+
+    def test_equal_nbytes(self):
+        for type in types:
+            x = type(0)
+            assert_(sys.getsizeof(x) > x.nbytes)
+
+    def test_error(self):
+        d = np.float32()
+        assert_raises(TypeError, d.__sizeof__, "a")
+
 
 if __name__ == "__main__":
     run_module_suite()

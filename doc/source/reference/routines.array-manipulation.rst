@@ -54,6 +54,8 @@ Changing kind of array
    asmatrix
    asfarray
    asfortranarray
+   ascontiguousarray
+   asarray_chkfinite
    asscalar
    require
 

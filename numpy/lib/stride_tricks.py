@@ -12,16 +12,19 @@ import numpy as np
 __all__ = ['broadcast_arrays']
 
 class DummyArray(object):
-    """ Dummy object that just exists to hang __array_interface__ dictionaries
+    """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """
+
     def __init__(self, interface, base=None):
         self.__array_interface__ = interface
         self.base = base
 
-def as_strided(x, shape=None, strides=None):
+def as_strided(x, shape=None, strides=None, subok=False):
     """ Make an ndarray from the given array with the given shape and strides.
     """
+    # first convert input to array, possibly keeping subclass
+    x = np.array(x, copy=False, subok=subok)
     interface = dict(x.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
@@ -31,9 +34,17 @@ def as_strided(x, shape=None, strides=None):
     # Make sure dtype is correct in case of custom dtype
     if array.dtype.kind == 'V':
         array.dtype = x.dtype
+    if type(x) is not type(array):
+        # if input was an ndarray subclass and subclasses were OK,
+        # then view the result as that subclass.
+        array = array.view(type=type(x))
+        # Since we have done something akin to a view from x, we should let
+        # the subclass finalize (if it has it implemented, i.e., is not None).
+        if array.__array_finalize__:
+            array.__array_finalize__(x)
     return array
 
-def broadcast_arrays(*args):
+def broadcast_arrays(*args, **kwargs):
     """
     Broadcast any number of arrays against each other.
 
@@ -41,6 +52,10 @@ def broadcast_arrays(*args):
     ----------
     `*args` : array_likes
         The arrays to broadcast.
+
+    subok : bool, optional
+        If True, then sub-classes will be passed-through, otherwise
+        the returned arrays will be forced to be a base-class array (default).
 
     Returns
     -------
@@ -72,7 +87,11 @@ def broadcast_arrays(*args):
            [3, 3, 3]])]
 
     """
-    args = [np.asarray(_m) for _m in args]
+    subok = kwargs.pop('subok', False)
+    if kwargs:
+        raise TypeError('broadcast_arrays() got an unexpected keyword '
+                        'argument {}'.format(kwargs.pop()))
+    args = [np.array(_m, copy=False, subok=subok) for _m in args]
     shapes = [x.shape for x in args]
     if len(set(shapes)) == 1:
         # Common case where nothing needs to be broadcasted.
@@ -81,8 +100,8 @@ def broadcast_arrays(*args):
     strides = [list(x.strides) for x in args]
     nds = [len(s) for s in shapes]
     biggest = max(nds)
-    # Go through each array and prepend dimensions of length 1 to each of the
-    # shapes in order to make the number of dimensions equal.
+    # Go through each array and prepend dimensions of length 1 to each of
+    # the shapes in order to make the number of dimensions equal.
     for i in range(len(args)):
         diff = biggest - nds[i]
         if diff > 0:
@@ -99,23 +118,24 @@ def broadcast_arrays(*args):
             raise ValueError("shape mismatch: two or more arrays have "
                 "incompatible dimensions on axis %r." % (axis,))
         elif len(unique) == 2:
-            # There is exactly one non-1 length. The common shape will take this
-            # value.
+            # There is exactly one non-1 length. The common shape will take
+            # this value.
             unique.remove(1)
             new_length = unique.pop()
             common_shape.append(new_length)
-            # For each array, if this axis is being broadcasted from a length of
-            # 1, then set its stride to 0 so that it repeats its data.
+            # For each array, if this axis is being broadcasted from a
+            # length of 1, then set its stride to 0 so that it repeats its
+            # data.
             for i in range(len(args)):
                 if shapes[i][axis] == 1:
                     shapes[i][axis] = new_length
                     strides[i][axis] = 0
         else:
-            # Every array has a length of 1 on this axis. Strides can be left
-            # alone as nothing is broadcasted.
+            # Every array has a length of 1 on this axis. Strides can be
+            # left alone as nothing is broadcasted.
             common_shape.append(1)
 
     # Construct the new arrays.
-    broadcasted = [as_strided(x, shape=sh, strides=st) for (x, sh, st) in
-        zip(args, shapes, strides)]
+    broadcasted = [as_strided(x, shape=sh, strides=st, subok=subok)
+                   for (x, sh, st) in zip(args, shapes, strides)]
     return broadcasted

@@ -9,9 +9,8 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
-
+#include "ufunc_override.h"
 #include "common.h"
 #include "ctors.h"
 #include "calculation.h"
@@ -65,8 +64,9 @@ get_forwarding_ndarray_method(const char *name)
                 "NumPy internal error: could not find function "
                 "numpy.core._methods.%s", name);
     }
-
-    Py_INCREF(callable);
+    else {
+        Py_INCREF(callable);
+    }
     Py_DECREF(module_methods);
     return callable;
 }
@@ -351,9 +351,9 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 }
 
 
-/* steals typed reference */
 /*NUMPY_API
   Get a subset of bytes from each element of the array
+  steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
@@ -409,6 +409,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 /*NUMPY_API
   Set a subset of bytes from each element of the array
+  steals reference to dtype, must not be NULL
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
@@ -588,7 +589,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         own = 0;
     }
 
-    fd = npy_PyFile_Dup(file, "wb", &orig_pos);
+    fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
     if (fd == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be a string or open file");
@@ -597,7 +598,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (PyArray_ToFile(self, fd, sep, format) < 0) {
         goto fail;
     }
-    if (npy_PyFile_DupClose(file, fd, orig_pos) < 0) {
+    if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
@@ -647,7 +648,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (check_and_adjust_index(&value, size, -1) < 0) {
+        if (check_and_adjust_index(&value, size, -1, NULL) < 0) {
             return NULL;
         }
 
@@ -724,7 +725,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (check_and_adjust_index(&value, size, -1) < 0) {
+        if (check_and_adjust_index(&value, size, -1, NULL) < 0) {
             return NULL;
         }
 
@@ -1457,7 +1458,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         Py_DECREF(deepcopy);
         Py_DECREF(it);
     }
-    return ret;
+    return (PyObject*)ret;
 }
 
 /* Convert Array to flat list (using getitem) */
@@ -1668,6 +1669,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
             tmp = PyUnicode_AsLatin1String(rawdata);
             Py_DECREF(rawdata);
             rawdata = tmp;
+            if (tmp == NULL) {
+                /* More informative error message */
+                PyErr_SetString(PyExc_ValueError,
+                                ("Failed to encode latin1 string when unpickling a Numpy array. "
+                                 "pickle.load(a, encoding='latin1') is assumed."));
+                return NULL;
+            }
         }
 #endif
 
@@ -1678,7 +1686,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len)) {
+        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len) < 0) {
             Py_DECREF(rawdata);
             return NULL;
         }
@@ -1823,6 +1831,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
+            Py_DECREF(cpick);
             return -1;
         }
     }
@@ -1887,6 +1896,19 @@ array_dumps(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     return PyArray_Dumps((PyObject *)self, 2);
+}
+
+
+static PyObject *
+array_sizeof(PyArrayObject *self)
+{
+    /* object + dimension and strides */
+    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+        PyArray_NDIM(self) * sizeof(npy_intp) * 2;
+    if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
+        nbytes += PyArray_NBYTES(self);
+    }
+    return PyLong_FromSsize_t(nbytes);
 }
 
 
@@ -1988,31 +2010,52 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *fname, *ret, *b, *out = NULL;
-    static PyObject *numpycore = NULL;
-    char * kwords[] = {"b", "out", NULL };
+    static PyUFuncObject *cached_npy_dot = NULL;
+    int errval;
+    PyObject *override = NULL;
+    PyObject *a = (PyObject *)self, *b, *o = Py_None;
+    PyObject *newargs;
+    PyArrayObject *ret;
+    char* kwlist[] = {"b", "out", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwords, &b, &out)) {
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &b, &o)) {
         return NULL;
     }
 
-    /* Since blas-dot is exposed only on the Python side, we need to grab it
-     * from there */
-    if (numpycore == NULL) {
-        numpycore = PyImport_ImportModule("numpy.core");
-        if (numpycore == NULL) {
-            return NULL;
-        }
+    if (cached_npy_dot == NULL) {
+        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
+        cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
+                                              PyModule_GetDict(module), "dot");
+
+        Py_INCREF(cached_npy_dot);
+        Py_DECREF(module);
     }
-    fname = PyUString_FromString("dot");
-    if (out == NULL) {
-        ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, NULL);
+
+    if ((newargs = PyTuple_Pack(3, a, b, o)) == NULL) {
+        return NULL;
     }
-    else {
-        ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, out, NULL);
+    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__",
+                                   newargs, NULL, &override, 2);
+    Py_DECREF(newargs);
+
+    if (errval) {
+        return NULL;
     }
-    Py_DECREF(fname);
-    return ret;
+    else if (override) {
+        return override;
+    }
+
+    if (o == Py_None) {
+        o = NULL;
+    }
+    if (o != NULL && !PyArray_Check(o)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "'out' must be an array");
+        return NULL;
+    }
+    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
+    return PyArray_Return(ret);
 }
 
 
@@ -2297,6 +2340,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
         METH_VARARGS, NULL},
+
+    /* for the sys module */
+    {"__sizeof__",
+        (PyCFunction) array_sizeof,
+        METH_NOARGS, NULL},
 
     /* for the copy module */
     {"__copy__",

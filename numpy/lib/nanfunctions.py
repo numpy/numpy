@@ -18,11 +18,11 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import numpy as np
-
+from numpy.lib.function_base import _ureduce as _ureduce
 
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanvar', 'nanstd'
+    'nanmedian', 'nanpercentile', 'nanvar', 'nanstd'
     ]
 
 
@@ -32,6 +32,10 @@ def _replace_nan(a, val):
     the `val` value, and return the copy together with a boolean mask
     marking the locations where NaNs were present. If `a` is not of
     inexact type, do nothing and return `a` together with a mask of None.
+
+    Note that scalars will end up as array scalars, which is important
+    for using the result as the value of the out argument in some
+    operations.
 
     Parameters
     ----------
@@ -228,7 +232,7 @@ def nanmin(a, axis=None, out=None, keepdims=False):
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
         if np.any(mask):
-            res = _copyto(res, mask, np.nan)
+            res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
 
@@ -327,7 +331,7 @@ def nanmax(a, axis=None, out=None, keepdims=False):
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
         if np.any(mask):
-            res = _copyto(res, mask, np.nan)
+            res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
 
@@ -601,6 +605,335 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     return avg
 
 
+def _nanmedian1d(arr1d, overwrite_input=False):
+    """
+    Private function for rank 1 arrays. Compute the median ignoring NaNs.
+    See nanmedian for parameter usage
+    """
+    c = np.isnan(arr1d)
+    s = np.where(c)[0]
+    if s.size == arr1d.size:
+        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+        return np.nan
+    elif s.size == 0:
+        return np.median(arr1d, overwrite_input=overwrite_input)
+    else:
+        if overwrite_input:
+            x = arr1d
+        else:
+            x = arr1d.copy()
+        # select non-nans at end of array
+        enonan = arr1d[-s.size:][~c[-s.size:]]
+        # fill nans in beginning of array with non-nans of end
+        x[s[:enonan.size]] = enonan
+        # slice nans away
+        return np.median(x[:-s.size], overwrite_input=True)
+
+
+def _nanmedian(a, axis=None, out=None, overwrite_input=False):
+    """
+    Private function that doesn't support extended axis or keepdims.
+    These methods are extended to this function using _ureduce
+    See nanmedian for parameter usage
+
+    """
+    if axis is None or a.ndim == 1:
+        part = a.ravel()
+        if out is None:
+            return _nanmedian1d(part, overwrite_input)
+        else:
+            out[...] = _nanmedian1d(part, overwrite_input)
+            return out
+    else:
+        # for small medians use sort + indexing which is still faster than
+        # apply_along_axis
+        if a.shape[axis] < 400:
+            return _nanmedian_small(a, axis, out, overwrite_input)
+        result = np.apply_along_axis(_nanmedian1d, axis, a, overwrite_input)
+        if out is not None:
+            out[...] = result
+        return result
+
+def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
+    """
+    sort + indexing median, faster for small medians along multiple dimensions
+    due to the high overhead of apply_along_axis
+    see nanmedian for parameter usage
+    """
+    a = np.ma.masked_array(a, np.isnan(a))
+    m = np.ma.median(a, axis=axis, overwrite_input=overwrite_input)
+    for i in range(np.count_nonzero(m.mask.ravel())):
+        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+    if out is not None:
+        out[...] = m.filled(np.nan)
+        return out
+    return m.filled(np.nan)
+
+def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=False):
+    """
+    Compute the median along the specified axis, while ignoring NaNs.
+
+    Returns the median of the array elements.
+
+    .. versionadded:: 1.9.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    axis : int, optional
+        Axis along which the medians are computed. The default (axis=None)
+        is to compute the median along a flattened version of the array.
+        A sequence of axes is supported since version 1.9.0.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape and buffer length as the expected output, but the
+        type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+       If True, then allow use of memory of input array (a) for
+       calculations. The input array will be modified by the call to
+       median. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. Note that, if `overwrite_input` is True and the input
+       is not already an ndarray, an error will be raised.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+
+
+    Returns
+    -------
+    median : ndarray
+        A new array holding the result. If the input contains integers, or
+        floats of smaller precision than 64, then the output data-type is
+        float64.  Otherwise, the output data-type is the same as that of the
+        input.
+
+    See Also
+    --------
+    mean, median, percentile
+
+    Notes
+    -----
+    Given a vector V of length N, the median of V is the middle value of
+    a sorted copy of V, ``V_sorted`` - i.e., ``V_sorted[(N-1)/2]``, when N is
+    odd.  When N is even, it is the average of the two middle values of
+    ``V_sorted``.
+
+    Examples
+    --------
+    >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
+    >>> a[0, 1] = np.nan
+    >>> a
+    array([[ 10.,  nan,   4.],
+       [  3.,   2.,   1.]])
+    >>> np.median(a)
+    nan
+    >>> np.nanmedian(a)
+    3.0
+    >>> np.nanmedian(a, axis=0)
+    array([ 6.5,  2.,  2.5])
+    >>> np.median(a, axis=1)
+    array([ 7.,  2.])
+    >>> b = a.copy()
+    >>> np.nanmedian(b, axis=1, overwrite_input=True)
+    array([ 7.,  2.])
+    >>> assert not np.all(a==b)
+    >>> b = a.copy()
+    >>> np.nanmedian(b, axis=None, overwrite_input=True)
+    3.0
+    >>> assert not np.all(a==b)
+
+    """
+    a = np.asanyarray(a)
+    # apply_along_axis in _nanmedian doesn't handle empty arrays well,
+    # so deal them upfront
+    if a.size == 0:
+        return np.nanmean(a, axis, out=out, keepdims=keepdims)
+
+    r, k = _ureduce(a, func=_nanmedian, axis=axis, out=out,
+                    overwrite_input=overwrite_input)
+    if keepdims:
+        return r.reshape(k)
+    else:
+        return r
+
+
+def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
+                  interpolation='linear', keepdims=False):
+    """
+    Compute the qth percentile of the data along the specified axis, while
+    ignoring nan values.
+
+    Returns the qth percentile of the array elements.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    q : float in range of [0,100] (or sequence of floats)
+        Percentile to compute which must be between 0 and 100 inclusive.
+    axis : int or sequence of int, optional
+        Axis along which the percentiles are computed. The default (None)
+        is to compute the percentiles along a flattened version of the array.
+        A sequence of axes is supported since version 1.9.0.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow use of memory of input array `a` for
+        calculations. The input array will be modified by the call to
+        percentile. This will save memory when you do not need to preserve
+        the contents of the input array. In this case you should not make
+        any assumptions about the content of the passed in array `a` after
+        this function completes -- treat it as undefined. Default is False.
+        Note that, if the `a` input is not already an array this parameter
+        will have no effect, `a` will be converted to an array internally
+        regardless of the value of this parameter.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to use,
+        when the desired quantile lies between two data points `i` and `j`:
+            * linear: `i + (j - i) * fraction`, where `fraction` is the
+              fractional part of the index surrounded by `i` and `j`.
+            * lower: `i`.
+            * higher: `j`.
+            * nearest: `i` or `j` whichever is nearest.
+            * midpoint: (`i` + `j`) / 2.
+
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+
+    Returns
+    -------
+    nanpercentile : scalar or ndarray
+        If a single percentile `q` is given and axis=None a scalar is
+        returned.  If multiple percentiles `q` are given an array holding
+        the result is returned. The results are listed in the first axis.
+        (If `out` is specified, in which case that array is returned
+        instead).  If the input contains integers, or floats of smaller
+        precision than 64, then the output data-type is float64. Otherwise,
+        the output data-type is the same as that of the input.
+
+    See Also
+    --------
+    nanmean, nanmedian, percentile, median, mean
+
+    Notes
+    -----
+    Given a vector V of length N, the q-th percentile of V is the q-th ranked
+    value in a sorted copy of V.  The values and distances of the two
+    nearest neighbors as well as the `interpolation` parameter will
+    determine the percentile if the normalized ranking does not match q
+    exactly. This function is the same as the median if ``q=50``, the same
+    as the minimum if ``q=0``and the same as the maximum if ``q=100``.
+
+    Examples
+    --------
+    >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
+    >>> a[0][1] = np.nan
+    >>> a
+    array([[ 10.,  nan,   4.],
+       [  3.,   2.,   1.]])
+    >>> np.percentile(a, 50)
+    nan
+    >>> np.nanpercentile(a, 50)
+    3.5
+    >>> np.nanpercentile(a, 50, axis=0)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> np.nanpercentile(a, 50, axis=1)
+    array([[ 7.],
+           [ 2.]])
+    >>> m = np.nanpercentile(a, 50, axis=0)
+    >>> out = np.zeros_like(m)
+    >>> np.nanpercentile(a, 50, axis=0, out=m)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> m
+    array([[ 6.5,  4.5,  2.5]])
+    >>> b = a.copy()
+    >>> np.nanpercentile(b, 50, axis=1, overwrite_input=True)
+    array([[ 7.],
+           [ 2.]])
+    >>> assert not np.all(a==b)
+    >>> b = a.copy()
+    >>> np.nanpercentile(b, 50, axis=None, overwrite_input=True)
+    array([ 3.5])
+
+    """
+
+    a = np.asanyarray(a)
+    q = np.asanyarray(q)
+    # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
+    # so deal them upfront
+    if a.size == 0:
+        return np.nanmean(a, axis, out=out, keepdims=keepdims)
+
+    r, k = _ureduce(a, func=_nanpercentile, q=q, axis=axis, out=out,
+                    overwrite_input=overwrite_input,
+                    interpolation=interpolation)
+    if keepdims:
+        if q.ndim == 0:
+            return r.reshape(k)
+        else:
+            return r.reshape([len(q)] + k)
+    else:
+        return r
+
+
+def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
+                   interpolation='linear', keepdims=False):
+    """
+    Private function that doesn't support extended axis or keepdims.
+    These methods are extended to this function using _ureduce
+    See nanpercentile for parameter usage
+
+    """
+    if axis is None:
+        part = a.ravel()
+        result = _nanpercentile1d(part, q, overwrite_input, interpolation)
+    else:
+        result = np.apply_along_axis(_nanpercentile1d, axis, a, q,
+                                     overwrite_input, interpolation)
+
+    if out is not None:
+        out[...] = result
+    return result
+
+
+def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
+    """
+    Private function for rank 1 arrays. Compute percentile ignoring NaNs.
+    See nanpercentile for parameter usage
+
+    """
+    c = np.isnan(arr1d)
+    s = np.where(c)[0]
+    if s.size == arr1d.size:
+        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+        return np.nan
+    elif s.size == 0:
+        return np.percentile(arr1d, q, overwrite_input=overwrite_input,
+                             interpolation=interpolation)
+    else:
+        if overwrite_input:
+            x = arr1d
+        else:
+            x = arr1d.copy()
+        # select non-nans at end of array
+        enonan = arr1d[-s.size:][~c[-s.size:]]
+        # fill nans in beginning of array with non-nans of end
+        x[s[:enonan.size]] = enonan
+        # slice nans away
+        return np.percentile(x[:-s.size], q, overwrite_input=True,
+                             interpolation=interpolation)
+
+
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
@@ -708,7 +1041,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         avg = _divide_by_count(avg, cnt)
 
         # Compute squared deviation from mean.
-        arr -= avg
+        np.subtract(arr, avg, out=arr, casting='unsafe')
         arr = _copyto(arr, 0, mask)
         if issubclass(arr.dtype.type, np.complexfloating):
             sqr = np.multiply(arr, arr.conj(), out=arr).real

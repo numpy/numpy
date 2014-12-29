@@ -108,9 +108,12 @@ sub-types).
 
 .. cfunction:: int PyArray_FLAGS(PyArrayObject* arr)
 
-.. cfunction:: int PyArray_ITEMSIZE(PyArrayObject* arr)
+.. cfunction:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
 
     Return the itemsize for the elements of this array.
+
+    Note that, in the old API that was deprecated in version 1.7, this function
+    had the return type ``int``.
 
 .. cfunction:: int PyArray_TYPE(PyArrayObject* arr)
 
@@ -190,7 +193,7 @@ From scratch
 
 .. cfunction:: PyObject* PyArray_NewFromDescr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
     This is the main array creation function. Most new arrays are
     created with this flexible function.
@@ -460,7 +463,7 @@ From other objects
 
     .. cvar:: NPY_ARRAY_IN_ARRAY
 
-        :cdata:`NPY_ARRAY_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
     .. cvar:: NPY_ARRAY_IN_FARRAY
 
@@ -1632,11 +1635,11 @@ Conversion
 Shape Manipulation
 ^^^^^^^^^^^^^^^^^^
 
-.. cfunction:: PyObject* PyArray_Newshape(PyArrayObject* self, PyArray_Dims* newshape)
+.. cfunction:: PyObject* PyArray_Newshape(PyArrayObject* self, PyArray_Dims* newshape, NPY_ORDER order)
 
     Result will be a new array (pointing to the same memory location
-    as *self* if possible), but having a shape given by *newshape*
-    . If the new shape is not compatible with the strides of *self*,
+    as *self* if possible), but having a shape given by *newshape*.
+    If the new shape is not compatible with the strides of *self*,
     then a copy of the array with the new specified shape will be
     returned.
 
@@ -1645,6 +1648,7 @@ Shape Manipulation
     Equivalent to :meth:`ndarray.reshape` (*self*, *shape*) where *shape* is a
     sequence. Converts *shape* to a :ctype:`PyArray_Dims` structure and
     calls :cfunc:`PyArray_Newshape` internally.
+    For back-ward compatability -- Not recommended
 
 .. cfunction:: PyObject* PyArray_Squeeze(PyArrayObject* self)
 
@@ -1805,14 +1809,23 @@ Item selection and manipulation
     :cfunc:`PyArray_Sort` (...) can also be used to sort the array
     directly.
 
-.. cfunction:: PyObject* PyArray_SearchSorted(PyArrayObject* self, PyObject* values)
+.. cfunction:: PyObject* PyArray_SearchSorted(PyArrayObject* self, PyObject* values, NPY_SEARCHSIDE side, PyObject* perm)
 
-    Equivalent to :meth:`ndarray.searchsorted` (*self*, *values*). Assuming
-    *self* is a 1-d array in ascending order representing bin
-    boundaries then the output is an array the same shape as *values*
-    of bin numbers, giving the bin into which each item in *values*
-    would be placed. No checking is done on whether or not self is in
-    ascending order.
+    Equivalent to :meth:`ndarray.searchsorted` (*self*, *values*, *side*,
+    *perm*). Assuming *self* is a 1-d array in ascending order, then the
+    output is an array of indices the same shape as *values* such that, if
+    the elements in *values* were inserted before the indices, the order of
+    *self* would be preserved. No checking is done on whether or not self is
+    in ascending order.
+
+    The *side* argument indicates whther the index returned should be that of
+    the first suitable location (if :cdata:`NPY_SEARCHLEFT`) or of the last
+    (if :cdata:`NPY_SEARCHRIGHT`).
+
+    The *sorter* argument, if not ``NULL``, must be a 1D array of integer
+    indices the same length as *self*, that sorts it into ascending order.
+    This is typically the result of a call to :cfunc:`PyArray_ArgSort` (...)
+    Binary search is used to find the required insertion points.
 
 .. cfunction:: int PyArray_Partition(PyArrayObject *self, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
 
@@ -1886,10 +1899,10 @@ Calculation
 
 .. note::
 
-    The out argument specifies where to place the result. If out is 
-    NULL, then the output array is created, otherwise the output is 
-    placed in out which must be the correct size and type. A new 
-    reference to the ouput array is always returned even when out 
+    The out argument specifies where to place the result. If out is
+    NULL, then the output array is created, otherwise the output is
+    placed in out which must be the correct size and type. A new
+    reference to the ouput array is always returned even when out
     is not NULL. The caller of the routine has the responsability
     to ``DECREF`` out if not NULL or a memory-leak will occur.
 
@@ -2899,9 +2912,13 @@ the C-API is needed then some additional steps must be taken.
 
     .. code-block:: c
 
-        #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #define NO_IMPORT_ARRAY
+        #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #include numpy/arrayobject.h
+
+    You can also put the common two last lines into an extension-local
+    header file as long as you make sure that NO_IMPORT_ARRAY is
+    #defined before #including that file.
 
 Checking the API Version
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3098,6 +3115,12 @@ Group 1
 
         Useful to regain the GIL in situations where it was released
         using the BEGIN form of this macro.
+
+    .. cfunction:: NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
+
+        Useful to release the GIL only if *loop_size* exceeds a
+        minimum threshold, currently set to 500. Should be matched
+        with a .. cmacro::`NPY_END_THREADS` to regain the GIL.
 
 Group 2
 """""""

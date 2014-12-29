@@ -35,7 +35,7 @@ Capabilities
 
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
-  able to create a solution in his preferred programming language to
+  able to create a solution in their preferred programming language to
   read most ``.npy`` files that he has been given without much
   documentation.
 
@@ -139,8 +139,9 @@ from __future__ import division, absolute_import, print_function
 import numpy
 import sys
 import io
+import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, isfileobj, long, basestring
+from numpy.compat import asbytes, asstr, isfileobj, long, basestring
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -149,7 +150,15 @@ else:
 
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
-BUFFER_SIZE = 2 ** 18 #size of buffer for reading npz files in bytes
+BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
+
+# difference between version 1.0 and 2.0 is a 4 byte (I) header length
+# instead of 2 bytes (H) allowing storage of large structured arrays
+
+def _check_version(version):
+    if version not in [(1, 0), (2, 0), None]:
+        msg = "we only support format version (1,0) and (2, 0), not %s"
+        raise ValueError(msg % (version,))
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -222,10 +231,10 @@ def dtype_to_descr(dtype):
 
     """
     if dtype.names is not None:
-        # This is a record array. The .descr is fine.
-        # XXX: parts of the record array with an empty name, like padding bytes,
-        # still get fiddled with. This needs to be fixed in the C implementation
-        # of dtype().
+        # This is a record array. The .descr is fine.  XXX: parts of the
+        # record array with an empty name, like padding bytes, still get
+        # fiddled with. This needs to be fixed in the C implementation of
+        # dtype().
         return dtype.descr
     else:
         return dtype.str
@@ -258,8 +267,8 @@ def header_data_from_array_1_0(array):
     d['descr'] = dtype_to_descr(array.dtype)
     return d
 
-def write_array_header_1_0(fp, d):
-    """ Write the header for an array using the 1.0 format.
+def _write_array_header(fp, d, version=None):
+    """ Write the header for an array and returns the version used
 
     Parameters
     ----------
@@ -267,6 +276,14 @@ def write_array_header_1_0(fp, d):
     d : dict
         This has the appropriate entries for writing its string representation
         to the header of the file.
+    version: tuple or None
+        None means use oldest that works
+        explicit version will raise a ValueError if the format does not
+        allow saving this data.  Default: None
+    Returns
+    -------
+    version : tuple of int
+        the file version which needs to be used to store the data
     """
     import struct
     header = ["{"]
@@ -276,17 +293,59 @@ def write_array_header_1_0(fp, d):
     header.append("}")
     header = "".join(header)
     # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a 16-byte
-    # boundary.  Hopefully, some system, possibly memory-mapping, can take
-    # advantage of our premature optimization.
+    # string, the header-length short and the header are aligned on a
+    # 16-byte boundary.  Hopefully, some system, possibly memory-mapping,
+    # can take advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
-    header = asbytes(header + ' '*topad + '\n')
-    if len(header) >= (256*256):
-        raise ValueError("header does not fit inside %s bytes" % (256*256))
-    header_len_str = struct.pack('<H', len(header))
+    header = header + ' '*topad + '\n'
+    header = asbytes(_filter_header(header))
+
+    if len(header) >= (256*256) and version == (1, 0):
+        raise ValueError("header does not fit inside %s bytes required by the"
+                         " 1.0 format" % (256*256))
+    if len(header) < (256*256):
+        header_len_str = struct.pack('<H', len(header))
+        version = (1, 0)
+    elif len(header) < (2**32):
+        header_len_str = struct.pack('<I', len(header))
+        version = (2, 0)
+    else:
+        raise ValueError("header does not fit inside 4 GiB required by "
+                         "the 2.0 format")
+
+    fp.write(magic(*version))
     fp.write(header_len_str)
     fp.write(header)
+    return version
+
+def write_array_header_1_0(fp, d):
+    """ Write the header for an array using the 1.0 format.
+
+    Parameters
+    ----------
+    fp : filelike object
+    d : dict
+        This has the appropriate entries for writing its string
+        representation to the header of the file.
+    """
+    _write_array_header(fp, d, (1, 0))
+
+
+def write_array_header_2_0(fp, d):
+    """ Write the header for an array using the 2.0 format.
+        The 2.0 format allows storing very large structured arrays.
+
+    .. versionadded:: 1.9.0
+
+    Parameters
+    ----------
+    fp : filelike object
+    d : dict
+        This has the appropriate entries for writing its string
+        representation to the header of the file.
+    """
+    _write_array_header(fp, d, (2, 0))
 
 def read_array_header_1_0(fp):
     """
@@ -305,9 +364,9 @@ def read_array_header_1_0(fp):
     shape : tuple of int
         The shape of the array.
     fortran_order : bool
-        The array data will be written out directly if it is either C-contiguous
-        or Fortran-contiguous. Otherwise, it will be made contiguous before
-        writing it out.
+        The array data will be written out directly if it is either
+        C-contiguous or Fortran-contiguous. Otherwise, it will be made
+        contiguous before writing it out.
     dtype : dtype
         The dtype of the file's data.
 
@@ -317,19 +376,105 @@ def read_array_header_1_0(fp):
         If the data is invalid.
 
     """
+    _read_array_header(fp, version=(1, 0))
+
+def read_array_header_2_0(fp):
+    """
+    Read an array header from a filelike object using the 2.0 file format
+    version.
+
+    This will leave the file object located just after the header.
+
+    .. versionadded:: 1.9.0
+
+    Parameters
+    ----------
+    fp : filelike object
+        A file object or something with a `.read()` method like a file.
+
+    Returns
+    -------
+    shape : tuple of int
+        The shape of the array.
+    fortran_order : bool
+        The array data will be written out directly if it is either
+        C-contiguous or Fortran-contiguous. Otherwise, it will be made
+        contiguous before writing it out.
+    dtype : dtype
+        The dtype of the file's data.
+
+    Raises
+    ------
+    ValueError
+        If the data is invalid.
+
+    """
+    _read_array_header(fp, version=(2, 0))
+
+
+def _filter_header(s):
+    """Clean up 'L' in npz header ints.
+
+    Cleans up the 'L' in strings representing integers. Needed to allow npz
+    headers produced in Python2 to be read in Python3.
+
+    Parameters
+    ----------
+    s : byte string
+        Npy file header.
+
+    Returns
+    -------
+    header : str
+        Cleaned up header.
+
+    """
+    import tokenize
+    if sys.version_info[0] >= 3:
+        from io import StringIO
+    else:
+        from StringIO import StringIO
+
+    tokens = []
+    last_token_was_number = False
+    for token in tokenize.generate_tokens(StringIO(asstr(s)).read):
+        token_type = token[0]
+        token_string = token[1]
+        if (last_token_was_number and
+                token_type == tokenize.NAME and
+                token_string == "L"):
+            continue
+        else:
+            tokens.append(token)
+        last_token_was_number = (token_type == tokenize.NUMBER)
+    return tokenize.untokenize(tokens)
+
+
+def _read_array_header(fp, version):
+    """
+    see read_array_header_1_0
+    """
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    hlength_str = _read_bytes(fp, 2, "array header length")
-    header_length = struct.unpack('<H', hlength_str)[0]
-    header = _read_bytes(fp, header_length, "array header")
+    if version == (1, 0):
+        hlength_str = _read_bytes(fp, 2, "array header length")
+        header_length = struct.unpack('<H', hlength_str)[0]
+        header = _read_bytes(fp, header_length, "array header")
+    elif version == (2, 0):
+        hlength_str = _read_bytes(fp, 4, "array header length")
+        header_length = struct.unpack('<I', hlength_str)[0]
+        header = _read_bytes(fp, header_length, "array header")
+    else:
+        raise ValueError("Invalid version %r" % version)
 
-    # The header is a pretty-printed string representation of a literal Python
-    # dictionary with trailing newlines padded to a 16-byte boundary. The keys
-    # are strings.
+    # The header is a pretty-printed string representation of a literal
+    # Python dictionary with trailing newlines padded to a 16-byte
+    # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
+    header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
@@ -345,7 +490,7 @@ def read_array_header_1_0(fp):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-        not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
+            not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
         msg = "shape is not valid: %r"
         raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
@@ -359,7 +504,7 @@ def read_array_header_1_0(fp):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=(1, 0)):
+def write_array(fp, array, version=None):
     """
     Write an array to an NPY file, including a header.
 
@@ -370,12 +515,13 @@ def write_array(fp, array, version=(1, 0)):
     Parameters
     ----------
     fp : file_like object
-        An open, writable file object, or similar object with a ``.write()``
-        method.
+        An open, writable file object, or similar object with a
+        ``.write()`` method.
     array : ndarray
         The array to write to disk.
-    version : (int, int), optional
-        The version number of the format.  Default: (1, 0)
+    version : (int, int) or None, optional
+        The version number of the format. None means use the oldest
+        supported version that is able to store the data.  Default: None
 
     Raises
     ------
@@ -387,18 +533,21 @@ def write_array(fp, array, version=(1, 0)):
         are not picklable.
 
     """
-    if version != (1, 0):
-        msg = "we only support format version (1,0), not %s"
-        raise ValueError(msg % (version,))
-    fp.write(magic(*version))
-    write_array_header_1_0(fp, header_data_from_array_1_0(array))
+    _check_version(version)
+    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
+                                   version)
+    # this warning can be removed when 1.9 has aged enough
+    if version != (2, 0) and used_ver == (2, 0):
+        warnings.warn("Stored array in format 2.0. It can only be"
+                      "read by NumPy >= 1.9", UserWarning)
 
     # Set buffer size to 16 MiB to hide the Python loop overhead.
     buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
 
     if array.dtype.hasobject:
-        # We contain Python objects so we cannot write out the data directly.
-        # Instead, we will pickle it out with version 2 of the pickle protocol.
+        # We contain Python objects so we cannot write out the data
+        # directly.  Instead, we will pickle it out with version 2 of the
+        # pickle protocol.
         pickle.dump(array, fp, protocol=2)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
@@ -440,10 +589,8 @@ def read_array(fp):
 
     """
     version = read_magic(fp)
-    if version != (1, 0):
-        msg = "only support version (1,0) of file format, not %r"
-        raise ValueError(msg % (version,))
-    shape, fortran_order, dtype = read_array_header_1_0(fp)
+    _check_version(version)
+    shape, fortran_order, dtype = _read_array_header(fp, version)
     if len(shape) == 0:
         count = 1
     else:
@@ -458,13 +605,13 @@ def read_array(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
-            # This is not a real file. We have to read it the memory-intensive
-            # way.
-            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking
-            # large reads from gzip streams. Chunk reads to BUFFER_SIZE bytes to
-            # avoid issue and reduce memory overhead of the read. In
-            # non-chunked case count < max_read_count, so only one read is
-            # performed.
+            # This is not a real file. We have to read it the
+            # memory-intensive way.
+            # crc32 module fails on reads greater than 2 ** 32 bytes,
+            # breaking large reads from gzip streams. Chunk reads to
+            # BUFFER_SIZE bytes to avoid issue and reduce memory overhead
+            # of the read. In non-chunked case count < max_read_count, so
+            # only one read is performed.
 
             max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
 
@@ -486,7 +633,7 @@ def read_array(fp):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=(1, 0)):
+                fortran_order=False, version=None):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -499,23 +646,24 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         object.
     mode : str, optional
         The mode in which to open the file; the default is 'r+'.  In
-        addition to the standard file modes, 'c' is also accepted to
-        mean "copy on write."  See `memmap` for the available mode strings.
+        addition to the standard file modes, 'c' is also accepted to mean
+        "copy on write."  See `memmap` for the available mode strings.
     dtype : data-type, optional
         The data type of the array if we are creating a new file in "write"
-        mode, if not, `dtype` is ignored.  The default value is None,
-        which results in a data-type of `float64`.
+        mode, if not, `dtype` is ignored.  The default value is None, which
+        results in a data-type of `float64`.
     shape : tuple of int
         The shape of the array if we are creating a new file in "write"
         mode, in which case this parameter is required.  Otherwise, this
         parameter is ignored and is thus optional.
     fortran_order : bool, optional
         Whether the array should be Fortran-contiguous (True) or
-        C-contiguous (False, the default) if we are creating a new file
-        in "write" mode.
-    version : tuple of int (major, minor)
+        C-contiguous (False, the default) if we are creating a new file in
+        "write" mode.
+    version : tuple of int (major, minor) or None
         If the mode is a "write" mode, then this is the version of the file
-        format used to create the file.  Default: (1,0)
+        format used to create the file.  None means use the oldest
+        supported version that is able to store the data.  Default: None
 
     Returns
     -------
@@ -535,17 +683,15 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     """
     if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use" \
+        raise ValueError("Filename must be a string.  Memmap cannot use"
                          " existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
-        if version != (1, 0):
-            msg = "only support version (1,0) of file format, not %r"
-            raise ValueError(msg % (version,))
-        # Ensure that the given dtype is an authentic dtype object rather than
-        # just something that can be interpreted as a dtype object.
+        _check_version(version)
+        # Ensure that the given dtype is an authentic dtype object rather
+        # than just something that can be interpreted as a dtype object.
         dtype = numpy.dtype(dtype)
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
@@ -558,8 +704,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            fp.write(magic(*version))
-            write_array_header_1_0(fp, d)
+            used_ver = _write_array_header(fp, d, version)
+            # this warning can be removed when 1.9 has aged enough
+            if version != (2, 0) and used_ver == (2, 0):
+                warnings.warn("Stored array in format 2.0. It can only be"
+                              "read by NumPy >= 1.9", UserWarning)
             offset = fp.tell()
         finally:
             fp.close()
@@ -568,10 +717,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         fp = open(filename, 'rb')
         try:
             version = read_magic(fp)
-            if version != (1, 0):
-                msg = "only support version (1,0) of file format, not %r"
-                raise ValueError(msg % (version,))
-            shape, fortran_order, dtype = read_array_header_1_0(fp)
+            _check_version(version)
+
+            shape, fortran_order, dtype = _read_array_header(fp, version)
             if dtype.hasobject:
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
@@ -606,9 +754,9 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     """
     data = bytes()
     while True:
-        # io files (default in python3) return None or raise on would-block,
-        # python2 file will truncate, probably nothing can be done about that.
-        # note that regular files can't be non-blocking
+        # io files (default in python3) return None or raise on
+        # would-block, python2 file will truncate, probably nothing can be
+        # done about that.  note that regular files can't be non-blocking
         try:
             r = fp.read(size - len(data))
             data += r
@@ -618,6 +766,6 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"
-        raise ValueError(msg %(error_template, size, len(data)))
+        raise ValueError(msg % (error_template, size, len(data)))
     else:
         return data

@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import warnings
 
 __all__ = ['PackageLoader']
 
@@ -111,13 +112,13 @@ class PackageLoader(object):
             depend_dict[name] = getattr(info_module, 'depends', [])
         package_names = []
 
-        for name in depend_dict.keys():
+        for name in list(depend_dict.keys()):
             if not depend_dict[name]:
                 package_names.append(name)
                 del depend_dict[name]
 
         while depend_dict:
-            for name, lst in depend_dict.items():
+            for name, lst in list(depend_dict.items()):
                 new_lst = [n for n in lst if n in depend_dict]
                 if not new_lst:
                     package_names.append(name)
@@ -162,7 +163,10 @@ class PackageLoader(object):
         postpone= : bool
              when True, don't load packages [default: False]
 
-     """
+        """
+        warnings.warn('pkgload and PackageLoader are obsolete '
+                'and will be removed in a future version of numpy',
+                DeprecationWarning)
         frame = self.parent_frame
         self.info_modules = {}
         if options.get('force', False):

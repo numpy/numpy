@@ -126,7 +126,7 @@
 # better performance.  Note that the AMD library has nothing to do with AMD
 # (Advanced Micro Devices), the CPU company.
 #
-# UMFPACK is not needed for numpy or scipy.
+# UMFPACK is not used by numpy.
 #
 #   http://www.cise.ufl.edu/research/sparse/umfpack/
 #   http://www.cise.ufl.edu/research/sparse/amd/
@@ -141,7 +141,7 @@
 # FFT libraries
 # -------------
 # There are two FFT libraries that we can configure here: FFTW (2 and 3) and djbfft.
-# Note that these libraries are not needed for numpy or scipy.
+# Note that these libraries are not used by for numpy or scipy.
 #
 #   http://fftw.org/
 #   http://cr.yp.to/djbfft.html

@@ -28,7 +28,7 @@ from setup_common \
         MANDATORY_FUNCS, C_ABI_VERSION, C_API_VERSION
 
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
-NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0")
+NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 
 NUMPYCONFIG_SYM = []
 
@@ -60,27 +60,13 @@ def define_no_smp():
     #--------------------------------
     # Checking SMP and thread options
     #--------------------------------
-    # Python 2.3 causes a segfault when
-    #  trying to re-acquire the thread-state
-    #  which is done in error-handling
-    #  ufunc code.  NPY_ALLOW_C_API and friends
-    #  cause the segfault. So, we disable threading
-    #  for now.
-    if sys.version[:5] < '2.4.2':
-        nosmp = 1
-    else:
-        # Perhaps a fancier check is in order here.
-        #  so that threads are only enabled if there
-        #  are actually multiple CPUS? -- but
-        #  threaded code can be nice even on a single
-        #  CPU so that long-calculating code doesn't
-        #  block.
-        try:
-            nosmp = os.environ['NPY_NOSMP']
-            nosmp = 1
-        except KeyError:
-            nosmp = 0
-    return nosmp == 1
+    # Perhaps a fancier check is in order here.
+    #  so that threads are only enabled if there
+    #  are actually multiple CPUS? -- but
+    #  threaded code can be nice even on a single
+    #  CPU so that long-calculating code doesn't
+    #  block.
+    return 'NPY_NOSMP' in os.environ
 
 def write_numpy_config(conf):
     subst_dict = {}
@@ -416,7 +402,7 @@ def pre_build(context):
                                "lib", "npy-pkg-config", "mlib.ini"))
     inifile_npymath = context.local_node.declare(os.path.join(
                                "lib", "npy-pkg-config", "npymath.ini"))
-    context.register_outputs("numpy_gen_inifiles", "numpyconfig", 
+    context.register_outputs("numpy_gen_inifiles", "numpyconfig",
                              [inifile_mlib, inifile_npymath])
 
     context.register_category("numpy_gen_headers")
@@ -440,10 +426,13 @@ def pre_build(context):
                 "src/multiarray/arraytypes.c.src",
                 "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src",
+                "src/private/templ_common.h.src",
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
-            sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
+            sources = [
+                pjoin('src', 'multiarray', 'arrayobject.c'),
+                pjoin('src', 'multiarray', 'alloc.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
                 pjoin('src', 'multiarray', 'array_assign.c'),
                 pjoin('src', 'multiarray', 'array_assign_array.c'),
@@ -484,17 +473,33 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'sequence.c'),
                 pjoin('src', 'multiarray', 'shape.c'),
                 pjoin('src', 'multiarray', 'ucsnarrow.c'),
-                pjoin('src', 'multiarray', 'usertypes.c')]
+                pjoin('src', 'multiarray', 'usertypes.c'),
+                pjoin('src', 'multiarray', 'vdot.c'),
+                pjoin('src', 'private', 'templ_common.h.src'),
+                ]
+
+            if bld.env.HAS_CBLAS:
+                sources.extend([pjoin('src', 'multiarray', 'cblasfuncs.c'),
+                                pjoin('src', 'multiarray', 'python_xerbla.c'),
+                               ])
         else:
             sources = extension.sources
+
+        use = 'npysort npymath'
+        defines = ['_FILE_OFFSET_BITS=64',
+                   '_LARGEFILE_SOURCE=1',
+                   '_LARGEFILE64_SOURCE=1']
+
+        if bld.env.HAS_CBLAS:
+            use += ' CBLAS'
+            defines.append('HAVE_CBLAS')
+
         includes = ["src/multiarray", "src/private"]
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npysort npymath",
-                                       defines=['_FILE_OFFSET_BITS=64',
-                                                '_LARGEFILE_SOURCE=1',
-                                                '_LARGEFILE64_SOURCE=1']
+                                       use=use,
+                                       defines=defines
                                        )
     context.register_builder("multiarray", builder_multiarray)
 
@@ -505,6 +510,8 @@ def pre_build(context):
             name="ufunc_api")
 
         ufunc_templates = [
+            "src/umath/scalarmath.c.src",
+            "src/umath/loops.h.src",
             "src/umath/loops.c.src",
             "src/umath/funcs.inc.src",
             "src/umath/simd.inc.src"]
@@ -517,6 +524,8 @@ def pre_build(context):
         includes = ["src/umath", "src/multiarray", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
             sources = [
+                    pjoin("src", "umath", "scalarmath.c.src"),
+                    pjoin("src", "umath", "loops.h.src"),
                     pjoin("src", "umath", "loops.c.src"),
                     pjoin('src', 'umath', 'reduction.c'),
                     pjoin('src', 'umath', 'ufunc_object.c'),
@@ -531,12 +540,5 @@ def pre_build(context):
                                        use="npymath")
     context.register_builder("umath", build_ufunc)
 
-    context.tweak_extension("scalarmath", use="npymath", includes=["src/private"])
     context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
     context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
-
-    def build_dotblas(extension):
-        if bld.env.HAS_CBLAS:
-            return context.default_builder(extension, use="CBLAS",
-                                           includes=["src/multiarray", "src/private"])
-    context.register_builder("_dotblas", build_dotblas)

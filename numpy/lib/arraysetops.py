@@ -26,11 +26,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d',
-           'unique', 'in1d']
-
 import numpy as np
-from numpy.lib.utils import deprecate
+
+
+__all__ = [
+    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
+    'in1d'
+    ]
+
 
 def ediff1d(ary, to_end=None, to_begin=None):
     """
@@ -90,7 +93,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     return ed
 
-def unique(ar, return_index=False, return_inverse=False):
+def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     """
     Find the unique elements of an array.
 
@@ -109,6 +112,10 @@ def unique(ar, return_index=False, return_inverse=False):
     return_inverse : bool, optional
         If True, also return the indices of the unique array that can be used
         to reconstruct `ar`.
+    return_counts : bool, optional
+        .. versionadded:: 1.9.0
+        If True, also return the number of times each unique value comes up
+        in `ar`.
 
     Returns
     -------
@@ -120,6 +127,10 @@ def unique(ar, return_index=False, return_inverse=False):
     unique_inverse : ndarray, optional
         The indices to reconstruct the (flattened) original array from the
         unique array. Only provided if `return_inverse` is True.
+    unique_counts : ndarray, optional
+        .. versionadded:: 1.9.0
+        The number of times each of the unique values comes up in the
+        original array. Only provided if `return_counts` is True.
 
     See Also
     --------
@@ -159,44 +170,47 @@ def unique(ar, return_index=False, return_inverse=False):
     array([1, 2, 6, 4, 2, 3, 2])
 
     """
-    try:
-        ar = ar.flatten()
-    except AttributeError:
-        if not return_inverse and not return_index:
-            return np.sort(list(set(ar)))
-        else:
-            ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar).flatten()
+
+    optional_indices = return_index or return_inverse
+    optional_returns = optional_indices or return_counts
 
     if ar.size == 0:
-        if return_inverse and return_index:
-            return ar, np.empty(0, np.bool), np.empty(0, np.bool)
-        elif return_inverse or return_index:
-            return ar, np.empty(0, np.bool)
+        if not optional_returns:
+            ret = ar
         else:
-            return ar
-
-    if return_inverse or return_index:
-        if return_index:
-            perm = ar.argsort(kind='mergesort')
-        else:
-            perm = ar.argsort()
-        aux = ar[perm]
-        flag = np.concatenate(([True], aux[1:] != aux[:-1]))
-        if return_inverse:
-            iflag = np.cumsum(flag) - 1
-            iperm = perm.argsort()
+            ret = (ar,)
             if return_index:
-                return aux[flag], perm[flag], iflag[iperm]
-            else:
-                return aux[flag], iflag[iperm]
-        else:
-            return aux[flag], perm[flag]
+                ret += (np.empty(0, np.bool),)
+            if return_inverse:
+                ret += (np.empty(0, np.bool),)
+            if return_counts:
+                ret += (np.empty(0, np.intp),)
+        return ret
 
+    if optional_indices:
+        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
+        aux = ar[perm]
     else:
         ar.sort()
-        flag = np.concatenate(([True], ar[1:] != ar[:-1]))
-        return ar[flag]
+        aux = ar
+    flag = np.concatenate(([True], aux[1:] != aux[:-1]))
 
+    if not optional_returns:
+        ret = aux[flag]
+    else:
+        ret = (aux[flag],)
+        if return_index:
+            ret += (perm[flag],)
+        if return_inverse:
+            iflag = np.cumsum(flag) - 1
+            inv_idx = np.empty(ar.shape, dtype=np.intp)
+            inv_idx[perm] = iflag
+            ret += (inv_idx,)
+        if return_counts:
+            idx = np.concatenate(np.nonzero(flag) + ([ar.size],))
+            ret += (np.diff(idx),)
+    return ret
 
 def intersect1d(ar1, ar2, assume_unique=False):
     """
@@ -227,12 +241,17 @@ def intersect1d(ar1, ar2, assume_unique=False):
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
 
+    To intersect more than two arrays, use functools.reduce:
+
+    >>> from functools import reduce
+    >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
+    array([3])
     """
     if not assume_unique:
         # Might be faster than unique( intersect1d( ar1, ar2 ) )?
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    aux = np.concatenate( (ar1, ar2) )
+    aux = np.concatenate((ar1, ar2))
     aux.sort()
     return aux[:-1][aux[1:] == aux[:-1]]
 
@@ -269,13 +288,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = np.concatenate( (ar1, ar2) )
+    aux = np.concatenate((ar1, ar2))
     if aux.size == 0:
         return aux
 
     aux.sort()
 #    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
-    flag = np.concatenate( ([True], aux[1:] != aux[:-1], [True] ) )
+    flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))
 #    flag2 = ediff1d( flag ) == 0
     flag2 = flag[1:] == flag[:-1]
     return aux[flag2]
@@ -319,6 +338,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     `in1d` can be considered as an element-wise function version of the
     python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly
     equivalent to ``np.array([item in b for item in a])``.
+    However, this idea fails if `ar2` is a set, or similar (non-sequence)
+    container:  As ``ar2`` is converted to an array, in those cases
+    ``asarray(ar2)`` is an object array rather than the expected array of
+    contained values.
 
     .. versionadded:: 1.4.0
 
@@ -358,7 +381,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
 
-    ar = np.concatenate( (ar1, ar2) )
+    ar = np.concatenate((ar1, ar2))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
@@ -368,8 +391,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         bool_ar = (sar[1:] != sar[:-1])
     else:
         bool_ar = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (bool_ar, [invert]) )
-    indx = order.argsort(kind='mergesort')[:len( ar1 )]
+    flag = np.concatenate((bool_ar, [invert]))
+    indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:
         return flag[indx]
@@ -403,8 +426,13 @@ def union1d(ar1, ar2):
     >>> np.union1d([-1, 0, 1], [-2, 0, 2])
     array([-2, -1,  0,  1,  2])
 
+    To find the union of more than two arrays, use functools.reduce:
+
+    >>> from functools import reduce
+    >>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
+    array([1, 2, 3, 4, 6])
     """
-    return unique( np.concatenate( (ar1, ar2) ) )
+    return unique(np.concatenate((ar1, ar2)))
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """

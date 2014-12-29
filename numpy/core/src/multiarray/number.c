@@ -54,6 +54,7 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(reciprocal);
     SET(_ones_like);
     SET(sqrt);
+    SET(cbrt);
     SET(negative);
     SET(absolute);
     SET(invert);
@@ -89,7 +90,8 @@ PyArray_SetNumericOps(PyObject *dict)
 static int
 has_ufunc_attr(PyObject * obj) {
     /* attribute check is expensive for scalar operations, avoid if possible */
-    if (PyArray_CheckExact(obj) || _is_basic_python_type(obj)) {
+    if (PyArray_CheckExact(obj) || PyArray_CheckAnyScalarExact(obj) ||
+        _is_basic_python_type(obj)) {
         return 0;
     }
     else {
@@ -392,7 +394,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
         return NPY_FLOAT_SCALAR;
     }
     if (PyArray_Check(o2)) {
-        if ((PyArray_NDIM(o2) == 0) &&
+        if ((PyArray_NDIM((PyArrayObject *)o2) == 0) &&
                 ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
                  (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) {
             temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);

@@ -5,6 +5,7 @@ import platform
 from decimal import Decimal
 import warnings
 import itertools
+import platform
 
 import numpy as np
 from numpy.core import *
@@ -346,33 +347,54 @@ class TestBoolCmp(TestCase):
             self.ed[s:s+4] = [(i & 2**x) != 0 for x in range(4)]
             s += 4
 
+        self.nf = self.f.copy()
+        self.nd = self.d.copy()
+        self.nf[self.ef] = np.nan
+        self.nd[self.ed] = np.nan
+
     def test_float(self):
         # offset for alignment test
         for i in range(4):
-            assert_array_equal(self.f[i:] != 0, self.ef[i:])
             assert_array_equal(self.f[i:] > 0, self.ef[i:])
             assert_array_equal(self.f[i:] - 1 >= 0, self.ef[i:])
             assert_array_equal(self.f[i:] == 0, ~self.ef[i:])
             assert_array_equal(-self.f[i:] < 0, self.ef[i:])
             assert_array_equal(-self.f[i:] + 1 <= 0, self.ef[i:])
+            r = self.f[i:] != 0
+            assert_array_equal(r, self.ef[i:])
+            r2 = self.f[i:] != np.zeros_like(self.f[i:])
+            r3 = 0 != self.f[i:]
+            assert_array_equal(r, r2)
+            assert_array_equal(r, r3)
+            # check bool == 0x1
+            assert_array_equal(r.view(np.int8), r.astype(np.int8))
+            assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
+            assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
-            assert_array_equal(0 != self.f[i:], self.ef[i:])
-            assert_array_equal(np.zeros_like(self.f)[i:] != self.f[i:],
-                               self.ef[i:])
+            # isnan on amd64 takes the same codepath
+            assert_array_equal(np.isnan(self.nf[i:]), self.ef[i:])
 
     def test_double(self):
         # offset for alignment test
         for i in range(2):
-            assert_array_equal(self.d[i:] != 0, self.ed[i:])
             assert_array_equal(self.d[i:] > 0, self.ed[i:])
             assert_array_equal(self.d[i:] - 1 >= 0, self.ed[i:])
             assert_array_equal(self.d[i:] == 0, ~self.ed[i:])
             assert_array_equal(-self.d[i:] < 0, self.ed[i:])
             assert_array_equal(-self.d[i:] + 1 <= 0, self.ed[i:])
+            r = self.d[i:] != 0
+            assert_array_equal(r, self.ed[i:])
+            r2 = self.d[i:] != np.zeros_like(self.d[i:])
+            r3 = 0 != self.d[i:]
+            assert_array_equal(r, r2)
+            assert_array_equal(r, r3)
+            # check bool == 0x1
+            assert_array_equal(r.view(np.int8), r.astype(np.int8))
+            assert_array_equal(r2.view(np.int8), r2.astype(np.int8))
+            assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
-            assert_array_equal(0 != self.d[i:], self.ed[i:])
-            assert_array_equal(np.zeros_like(self.d)[i:] != self.d[i:],
-                               self.ed[i:])
+            # isnan on amd64 takes the same codepath
+            assert_array_equal(np.isnan(self.nd[i:]), self.ed[i:])
 
 
 class TestSeterr(TestCase):
@@ -910,10 +932,25 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a']), ([0, 1, 1, 2], [2, 0, 1, 1]))
         assert_equal(np.nonzero(x['b']), ([0, 0, 1, 2, 2], [0, 2, 0, 1, 2]))
 
+        assert_(not x['a'].T.flags.aligned)
         assert_equal(np.count_nonzero(x['a'].T), 4)
         assert_equal(np.count_nonzero(x['b'].T), 5)
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
         assert_equal(np.nonzero(x['b'].T), ([0, 0, 1, 2, 2], [0, 1, 2, 0, 2]))
+
+    def test_sparse(self):
+        # test special sparse condition boolean code path
+        for i in range(20):
+            c = np.zeros(200, dtype=np.bool)
+            c[i::20] = True
+            assert_equal(np.nonzero(c)[0], np.arange(i, 200 + i, 20))
+
+            c = np.zeros(400, dtype=np.bool)
+            c[10 + i:20 + i] = True
+            c[20 + i*2] = True
+            assert_equal(np.nonzero(c)[0],
+                         np.concatenate((np.arange(10 +i, 20 + i), [20 +i*2])))
+
 
 class TestIndex(TestCase):
     def test_boolean(self):
@@ -1012,8 +1049,17 @@ class TestArrayComparisons(TestCase):
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
-    # Check flags
-    assert_(x.flags == y.flags)
+    # Check flags, 32 bit arches typically don't provide 16 byte alignment
+    if ((x.dtype.alignment <= 8 or
+            np.intp().dtype.itemsize != 4) and
+            sys.platform != 'win32'):
+        assert_(x.flags == y.flags)
+    else:
+        assert_(x.flags.owndata == y.flags.owndata)
+        assert_(x.flags.writeable == y.flags.writeable)
+        assert_(x.flags.c_contiguous == y.flags.c_contiguous)
+        assert_(x.flags.f_contiguous == y.flags.f_contiguous)
+        assert_(x.flags.updateifcopy == y.flags.updateifcopy)
     # check endianness
     assert_(x.dtype.isnative == y.dtype.isnative)
 
@@ -1651,6 +1697,20 @@ class TestStdVar(TestCase):
         assert_almost_equal(std(self.A, ddof=2)**2,
                             self.real_var*len(self.A)/float(len(self.A)-2))
 
+    def test_out_scalar(self):
+        d = np.arange(10)
+        out = np.array(0.)
+        r = np.std(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+        r = np.var(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+        r = np.mean(d, out=out)
+        assert_(r is out)
+        assert_array_equal(r, out)
+
+
 class TestStdVarComplex(TestCase):
     def test_basic(self):
         A = array([1, 1.j, -1, -1.j])
@@ -1856,16 +1916,30 @@ class TestLikeFuncs(TestCase):
 class _TestCorrelate(TestCase):
     def _setup(self, dt):
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
+        self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
         self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
-        self.z2 = np.array([ -5.,  -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
+        self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
+        self.z2 = np.array([-5., -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
+        self.zs = np.array([-3., -14., -30., -48., -66., -84.,
+                           -102., -54., -19.], dtype=dt)
 
     def test_float(self):
         self._setup(np.float)
         z = np.correlate(self.x, self.y, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.x, self.y[:-1], 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z1_4)
         z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z2)
+        z = np.correlate(self.x[::-1], self.y, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z1r)
+        z = np.correlate(self.y, self.x[::-1], 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z2r)
+        z = np.correlate(self.xs, self.y, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.zs)
 
     def test_object(self):
         self._setup(Decimal)
@@ -1873,6 +1947,13 @@ class _TestCorrelate(TestCase):
         assert_array_almost_equal(z, self.z1)
         z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z2)
+
+    def test_no_overwrite(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        np.correlate(d, k)
+        assert_array_equal(d, np.ones(100))
+        assert_array_equal(k, np.ones(3))
 
 class TestCorrelate(_TestCorrelate):
     old_behavior = True
@@ -1882,6 +1963,7 @@ class TestCorrelate(_TestCorrelate):
         # as well
         _TestCorrelate._setup(self, dt)
         self.z2 = self.z1
+        self.z2r = self.z1r
 
     @dec.deprecated()
     def test_complex(self):
@@ -1911,6 +1993,19 @@ class TestCorrelateNew(_TestCorrelate):
         r_z = r_z[::-1].conjugate()
         z = np.correlate(y, x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, r_z)
+
+class TestConvolve(TestCase):
+    def test_object(self):
+        d = [1.] * 100
+        k = [1.] * 3
+        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3))
+
+    def test_no_overwrite(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        np.convolve(d, k)
+        assert_array_equal(d, np.ones(100))
+        assert_array_equal(k, np.ones(3))
 
 class TestArgwhere(object):
     def test_2D(self):
@@ -1988,6 +2083,35 @@ class TestCross(TestCase):
 
     def test_broadcasting(self):
         # Ticket #2624 (Trac #2032)
+        u = np.tile([1, 2], (11, 1))
+        v = np.tile([3, 4], (11, 1))
+        z = -2
+        assert_equal(np.cross(u, v), z)
+        assert_equal(np.cross(v, u), -z)
+        assert_equal(np.cross(u, u), 0)
+
+        u = np.tile([1, 2], (11, 1)).T
+        v = np.tile([3, 4, 5], (11, 1))
+        z = np.tile([10, -5, -2], (11, 1))
+        assert_equal(np.cross(u, v, axisa=0), z)
+        assert_equal(np.cross(v, u.T), -z)
+        assert_equal(np.cross(v, v), 0)
+
+        u = np.tile([1, 2, 3], (11, 1)).T
+        v = np.tile([3, 4], (11, 1)).T
+        z = np.tile([-12, 9, -2], (11, 1))
+        assert_equal(np.cross(u, v, axisa=0, axisb=0), z)
+        assert_equal(np.cross(v.T, u.T), -z)
+        assert_equal(np.cross(u.T, u.T), 0)
+
+        u = np.tile([1, 2, 3], (5, 1))
+        v = np.tile([4, 5, 6], (5, 1)).T
+        z = np.tile([-3, 6, -3], (5, 1))
+        assert_equal(np.cross(u, v, axisb=0), z)
+        assert_equal(np.cross(v.T, u), -z)
+        assert_equal(np.cross(u, u), 0)
+
+    def test_broadcasting_shapes(self):
         u = np.ones((2, 1, 3))
         v = np.ones((5, 3))
         assert_equal(np.cross(u, v).shape, (2, 5, 3))
@@ -2002,6 +2126,15 @@ class TestCross(TestCase):
         assert_raises(ValueError, np.cross, u, v, axisa=-5, axisb=2)
         assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=-4)
 
+def test_outer_out_param():
+    arr1 = np.ones((5,))
+    arr2 = np.ones((2,))
+    arr3 = np.linspace(-2, 2, 5)
+    out1 = np.ndarray(shape=(5,5))
+    out2 = np.ndarray(shape=(2, 5))
+    res1 = np.outer(arr1, arr3, out1)
+    assert_equal(res1, out1)
+    assert_equal(np.outer(arr2, arr3, out2), out2)
 
 if __name__ == "__main__":
     run_module_suite()

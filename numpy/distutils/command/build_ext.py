@@ -34,6 +34,8 @@ class build_ext (old_build_ext):
     user_options = old_build_ext.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
+        ('jobs=', 'j',
+         "number of parallel jobs"),
         ]
 
     help_options = old_build_ext.help_options + [
@@ -44,12 +46,19 @@ class build_ext (old_build_ext):
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
+        self.jobs = None
 
     def finalize_options(self):
+        if self.jobs:
+            try:
+                self.jobs = int(self.jobs)
+            except ValueError:
+                raise ValueError("--jobs/-j argument must be an integer")
         incl_dirs = self.include_dirs
         old_build_ext.finalize_options(self)
         if incl_dirs is not None:
             self.include_dirs.extend(self.distribution.include_dirs or [])
+        self.set_undefined_options('build', ('jobs', 'jobs'))
 
     def run(self):
         if not self.extensions:
@@ -407,11 +416,6 @@ class build_ext (old_build_ext):
         if ext.language=='c++' and cxx_compiler is not None:
             linker = cxx_compiler.link_shared_object
 
-        if sys.version[:3]>='2.3':
-            kws = {'target_lang':ext.language}
-        else:
-            kws = {}
-
         linker(objects, ext_filename,
                libraries=libraries,
                library_dirs=library_dirs,
@@ -419,7 +423,8 @@ class build_ext (old_build_ext):
                extra_postargs=extra_args,
                export_symbols=self.get_export_symbols(ext),
                debug=self.debug,
-               build_temp=self.build_temp,**kws)
+               build_temp=self.build_temp,
+               target_lang=ext.language)
 
     def _add_dummy_mingwex_sym(self, c_sources):
         build_src = self.get_finalized_command("build_src").build_src

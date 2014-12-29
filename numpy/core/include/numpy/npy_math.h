@@ -118,15 +118,12 @@ double npy_tanh(double x);
 double npy_asin(double x);
 double npy_acos(double x);
 double npy_atan(double x);
-double npy_aexp(double x);
-double npy_alog(double x);
-double npy_asqrt(double x);
-double npy_afabs(double x);
 
 double npy_log(double x);
 double npy_log10(double x);
 double npy_exp(double x);
 double npy_sqrt(double x);
+double npy_cbrt(double x);
 
 double npy_fabs(double x);
 double npy_ceil(double x);
@@ -147,6 +144,8 @@ double npy_log2(double x);
 double npy_atan2(double x, double y);
 double npy_pow(double x, double y);
 double npy_modf(double x, double* y);
+double npy_frexp(double x, int* y);
+double npy_ldexp(double n, int y);
 
 double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
@@ -231,6 +230,7 @@ float npy_ceilf(float x);
 float npy_rintf(float x);
 float npy_truncf(float x);
 float npy_sqrtf(float x);
+float npy_cbrtf(float x);
 float npy_log10f(float x);
 float npy_logf(float x);
 float npy_expf(float x);
@@ -251,6 +251,8 @@ float npy_powf(float x, float y);
 float npy_fmodf(float x, float y);
 
 float npy_modff(float x, float* y);
+float npy_frexpf(float x, int* y);
+float npy_ldexpf(float x, int y);
 
 float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
@@ -272,6 +274,7 @@ npy_longdouble npy_ceill(npy_longdouble x);
 npy_longdouble npy_rintl(npy_longdouble x);
 npy_longdouble npy_truncl(npy_longdouble x);
 npy_longdouble npy_sqrtl(npy_longdouble x);
+npy_longdouble npy_cbrtl(npy_longdouble x);
 npy_longdouble npy_log10l(npy_longdouble x);
 npy_longdouble npy_logl(npy_longdouble x);
 npy_longdouble npy_expl(npy_longdouble x);
@@ -292,6 +295,8 @@ npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
 npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+npy_longdouble npy_frexpl(npy_longdouble x, int* y);
+npy_longdouble npy_ldexpl(npy_longdouble x, int y);
 
 npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);

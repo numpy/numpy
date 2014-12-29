@@ -14,6 +14,10 @@ class TestUfunc(TestCase):
         import pickle
         assert pickle.loads(pickle.dumps(np.sin)) is np.sin
 
+        # Check that ufunc not defined in the top level numpy namespace such as
+        # numpy.core.test_rational.test_add can also be pickled
+        assert pickle.loads(pickle.dumps(test_add)) is test_add
+
     def test_pickle_withstring(self):
         import pickle
         astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
@@ -384,21 +388,18 @@ class TestUfunc(TestCase):
         msg = "extend & broadcast loop dimensions"
         b = np.arange(4).reshape((2, 2))
         assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "broadcast in core dimensions"
+        # Broadcast in core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.arange(4).reshape((4, 1))
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "extend & broadcast core and loop dimensions"
+        assert_raises(ValueError, umt.inner1d, a, b)
+        # Extend core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.array(7)
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
-        msg = "broadcast should fail"
+        assert_raises(ValueError, umt.inner1d, a, b)
+        # Broadcast should fail
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
-        try:
-            ret = umt.inner1d(a, b)
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        assert_raises(ValueError, umt.inner1d, a, b)
 
     def test_type_cast(self):
         msg = "type cast"
@@ -538,8 +539,8 @@ class TestUfunc(TestCase):
                         a2 = d2.transpose(p2)[s2]
                         ref = ref and a1.base != None
                         ref = ref and a2.base != None
-                        if broadcastable(a1.shape[-1], a2.shape[-2]) and \
-                           broadcastable(a1.shape[0], a2.shape[0]):
+                        if (a1.shape[-1] == a2.shape[-2] and
+                                broadcastable(a1.shape[0], a2.shape[0])):
                             assert_array_almost_equal(
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
@@ -548,6 +549,16 @@ class TestUfunc(TestCase):
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
+
+    def test_euclidean_pdist(self):
+        a = np.arange(12, dtype=np.float).reshape(4, 3)
+        out = np.empty((a.shape[0] * (a.shape[0] - 1) // 2,), dtype=a.dtype)
+        umt.euclidean_pdist(a, out)
+        b = np.sqrt(np.sum((a[:, None] - a)**2, axis=-1))
+        b = b[~np.tri(a.shape[0], dtype=bool)]
+        assert_almost_equal(out, b)
+        # An output array is required to determine p with signature (n,d)->(p)
+        assert_raises(ValueError, umt.euclidean_pdist, a)
 
     def test_object_logical(self):
         a = np.array([3, None, True, False, "test", ""], dtype=object)
@@ -588,6 +599,15 @@ class TestUfunc(TestCase):
         assert_equal(np.all(a), False)
         assert_equal(np.max(a), True)
         assert_equal(np.min(a), False)
+        assert_equal(np.array([[1]], dtype=object).sum(), 1)
+        assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
+
+    def test_object_scalar_multiply(self):
+        # Tickets #2469 and #4482
+        arr = np.matrix([1, 2], dtype=object)
+        desired = np.matrix([[3, 6]], dtype=object)
+        assert_equal(np.multiply(arr, 3), desired)
+        assert_equal(np.multiply(3, arr), desired)
 
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
@@ -637,7 +657,6 @@ class TestUfunc(TestCase):
             pass
         a = np.array(1).view(MyArray)
         assert_(type(np.any(a)) is MyArray)
-
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
@@ -825,45 +844,20 @@ class TestUfunc(TestCase):
 
     def test_safe_casting(self):
         # In old versions of numpy, in-place operations used the 'unsafe'
-        # casting rules. In some future version, 'same_kind' will become the
-        # default.
+        # casting rules. In versions >= 1.10, 'same_kind' is the
+        # default and an exception is raised instead of a warning.
+        # when 'same_kind' is not satisfied.
         a = np.array([1, 2, 3], dtype=int)
         # Non-in-place addition is fine
         assert_array_equal(assert_no_warnings(np.add, a, 1.1),
                            [2.1, 3.1, 4.1])
-        assert_warns(DeprecationWarning, np.add, a, 1.1, out=a)
-        assert_array_equal(a, [2, 3, 4])
+        assert_raises(TypeError, np.add, a, 1.1, out=a)
         def add_inplace(a, b):
             a += b
-        assert_warns(DeprecationWarning, add_inplace, a, 1.1)
-        assert_array_equal(a, [3, 4, 5])
-        # Make sure that explicitly overriding the warning is allowed:
+        assert_raises(TypeError, add_inplace, a, 1.1)
+        # Make sure that explicitly overriding the exception is allowed:
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
-        assert_array_equal(a, [4, 5, 6])
-
-        # There's no way to propagate exceptions from the place where we issue
-        # this deprecation warning, so we must throw the exception away
-        # entirely rather than cause it to be raised at some other point, or
-        # trigger some other unsuspecting if (PyErr_Occurred()) { ...} at some
-        # other location entirely.
-        import warnings
-        import sys
-        if sys.version_info[0] >= 3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            old_stderr = sys.stderr
-            try:
-                sys.stderr = StringIO()
-                # No error, but dumps to stderr
-                a += 1.1
-                # No error on the next bit of code executed either
-                1 + 1
-                assert_("Implicitly casting" in sys.stderr.getvalue())
-            finally:
-                sys.stderr = old_stderr
+        assert_array_equal(a, [2, 3, 4])
 
     def test_ufunc_custom_out(self):
         # Test ufunc with built in input types and custom output type
@@ -1077,6 +1071,65 @@ class TestUfunc(TestCase):
         values = np.array(['a', 1], dtype=np.object)
         self.assertRaises(TypeError, np.add.at, values, [0, 1], 1)
         assert_array_equal(values, np.array(['a', 1], dtype=np.object))
+
+    def test_reduce_arguments(self):
+        f = np.add.reduce
+        d = np.ones((5,2), dtype=int)
+        o = np.ones((2,), dtype=d.dtype)
+        r = o * 5
+        assert_equal(f(d), r)
+        # a, axis=0, dtype=None, out=None, keepdims=False
+        assert_equal(f(d, axis=0), r)
+        assert_equal(f(d, 0), r)
+        assert_equal(f(d, 0, dtype=None), r)
+        assert_equal(f(d, 0, dtype='i'), r)
+        assert_equal(f(d, 0, 'i'), r)
+        assert_equal(f(d, 0, None), r)
+        assert_equal(f(d, 0, None, out=None), r)
+        assert_equal(f(d, 0, None, out=o), r)
+        assert_equal(f(d, 0, None, o), r)
+        assert_equal(f(d, 0, None, None), r)
+        assert_equal(f(d, 0, None, None, keepdims=False), r)
+        assert_equal(f(d, 0, None, None, True), r.reshape((1,) + r.shape))
+        # multiple keywords
+        assert_equal(f(d, axis=0, dtype=None, out=None, keepdims=False), r)
+        assert_equal(f(d, 0, dtype=None, out=None, keepdims=False), r)
+        assert_equal(f(d, 0, None, out=None, keepdims=False), r)
+
+        # too little
+        assert_raises(TypeError, f)
+        # too much
+        assert_raises(TypeError, f, d, 0, None, None, False, 1)
+        # invalid axis
+        assert_raises(TypeError, f, d, "invalid")
+        assert_raises(TypeError, f, d, axis="invalid")
+        assert_raises(TypeError, f, d, axis="invalid", dtype=None,
+                      keepdims=True)
+        # invalid dtype
+        assert_raises(TypeError, f, d, 0, "invalid")
+        assert_raises(TypeError, f, d, dtype="invalid")
+        assert_raises(TypeError, f, d, dtype="invalid", out=None)
+        # invalid out
+        assert_raises(TypeError, f, d, 0, None, "invalid")
+        assert_raises(TypeError, f, d, out="invalid")
+        assert_raises(TypeError, f, d, out="invalid", dtype=None)
+        # keepdims boolean, no invalid value
+        # assert_raises(TypeError, f, d, 0, None, None, "invalid")
+        # assert_raises(TypeError, f, d, keepdims="invalid", axis=0, dtype=None)
+        # invalid mix
+        assert_raises(TypeError, f, d, 0, keepdims="invalid", dtype="invalid",
+                     out=None)
+
+        # invalid keyord
+        assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",
+                      out=None)
+        assert_raises(TypeError, f, d, invalid=0)
+        assert_raises(TypeError, f, d, axis=0, dtype=None, keepdims=True,
+                      out=None, invalid=0)
+        assert_raises(TypeError, f, d, axis=0, dtype=None,
+                      out=None, invalid=0)
+        assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
+
 
 if __name__ == "__main__":
     run_module_suite()

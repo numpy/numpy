@@ -686,7 +686,7 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The ceiling of each element in `x`, with `float` dtype.
 
     See Also
@@ -716,7 +716,7 @@ add_newdoc('numpy.core.umath', 'trunc',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The truncated value of each element in `x`.
 
     See Also
@@ -931,9 +931,9 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The quotient `x1/x2`, element-wise. Returns a scalar if
-        both  `x1` and `x2` are scalars.
+    y : ndarray or scalar
+        The quotient ``x1/x2``, element-wise. Returns a scalar if
+        both ``x1`` and ``x2`` are scalars.
 
     See Also
     --------
@@ -942,13 +942,13 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Notes
     -----
-    Equivalent to `x1` / `x2` in terms of array-broadcasting.
+    Equivalent to ``x1`` / ``x2`` in terms of array-broadcasting.
 
-    Behavior on division by zero can be changed using `seterr`.
+    Behavior on division by zero can be changed using ``seterr``.
 
-    When both `x1` and `x2` are of an integer type, `divide` will return
-    integers and throw away the fractional part. Moreover, division by zero
-    always yields zero in integer arithmetic.
+    In Python 2, when both ``x1`` and ``x2`` are of an integer type,
+    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
+    like ``true_divide``.
 
     Examples
     --------
@@ -961,20 +961,20 @@ add_newdoc('numpy.core.umath', 'divide',
            [ Inf,  4. ,  2.5],
            [ Inf,  7. ,  4. ]])
 
-    Note the behavior with integer types:
+    Note the behavior with integer types (Python 2 only):
 
     >>> np.divide(2, 4)
     0
     >>> np.divide(2, 4.)
     0.5
 
-    Division by zero always yields zero in integer arithmetic, and does not
-    raise an exception or a warning:
+    Division by zero always yields zero in integer arithmetic (again,
+    Python 2 only), and does not raise an exception or a warning:
 
     >>> np.divide(np.array([0, 1], dtype=int), np.array([0, 0], dtype=int))
     array([0, 0])
 
-    Division by zero can, however, be caught using `seterr`:
+    Division by zero can, however, be caught using ``seterr``:
 
     >>> old_err_state = np.seterr(divide='raise')
     >>> np.divide(1, 0)
@@ -999,7 +999,7 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : {ndarray, bool}
+    out : ndarray or bool
         Output array of bools, or a single bool if x1 and x2 are scalars.
 
     See Also
@@ -1172,7 +1172,7 @@ add_newdoc('numpy.core.umath', 'fabs',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The absolute values of `x`, the returned values are always floats.
 
     See Also
@@ -1202,7 +1202,7 @@ add_newdoc('numpy.core.umath', 'floor',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The floor of each element in `x`.
 
     See Also
@@ -1632,7 +1632,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         For scalar input, the result is a new boolean with value True if
         the input is NaN; otherwise the value is False.
 
@@ -2046,7 +2046,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         AND operation on corresponding elements of `x1` and `x2`.
 
@@ -2112,7 +2112,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         OR operation on elements of `x1` and `x2`.
 
@@ -2193,7 +2193,7 @@ add_newdoc('numpy.core.umath', 'maximum',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The maximum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2251,7 +2251,7 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2309,7 +2309,7 @@ add_newdoc('numpy.core.umath', 'fmax',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2366,7 +2366,7 @@ add_newdoc('numpy.core.umath', 'fmin',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2780,7 +2780,7 @@ add_newdoc('numpy.core.umath', 'rint',
 
     Returns
     -------
-    out : {ndarray, scalar}
+    out : ndarray or scalar
         Output array is same shape and type as `x`.
 
     See Also
@@ -3104,6 +3104,35 @@ add_newdoc('numpy.core.umath', 'sqrt',
 
     """)
 
+add_newdoc('numpy.core.umath', 'cbrt',
+    """
+    Return the cube-root of an array, element-wise.
+
+    .. versionadded:: 1.10.0
+
+    Parameters
+    ----------
+    x : array_like
+        The values whose cube-roots are required.
+    out : ndarray, optional
+        Alternate array object in which to put the result; if provided, it
+        must have the same shape as `x`
+
+    Returns
+    -------
+    y : ndarray
+        An array of the same shape as `x`, containing the cube
+        cube-root of each element in `x`.
+        If `out` was provided, `y` is a reference to it.
+
+
+    Examples
+    --------
+    >>> np.cbrt([1,8,27])
+    array([ 1.,  2.,  3.])
+
+    """)
+
 add_newdoc('numpy.core.umath', 'square',
     """
     Return the element-wise square of the input.
@@ -3324,9 +3353,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     """)
 
-# This doc is not currently used, but has been converted to a C string
-# that can be found in numpy/core/src/umath/umathmodule.c where the
-# frexp ufunc is constructed.
 add_newdoc('numpy.core.umath', 'frexp',
     """
     Decompose the elements of x into mantissa and twos exponent.
@@ -3339,9 +3365,9 @@ add_newdoc('numpy.core.umath', 'frexp',
     ----------
     x : array_like
         Array of numbers to be decomposed.
-    out1: ndarray, optional
+    out1 : ndarray, optional
         Output array for the mantissa. Must have the same shape as `x`.
-    out2: ndarray, optional
+    out2 : ndarray, optional
         Output array for the exponent. Must have the same shape as `x`.
 
     Returns
@@ -3372,9 +3398,6 @@ add_newdoc('numpy.core.umath', 'frexp',
 
     """)
 
-# This doc is not currently used, but has been converted to a C string
-# that can be found in numpy/core/src/umath/umathmodule.c where the
-# ldexp ufunc is constructed.
 add_newdoc('numpy.core.umath', 'ldexp',
     """
     Returns x1 * 2**x2, element-wise.

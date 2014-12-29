@@ -13,15 +13,13 @@ matrix:
     - python: 3.2
       env: USE_DEBUG=1
     - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=0
-    - python: 3.3
-      env: NPY_SEPARATE_COMPILATION=0
-    - python: 2.7
-      env: NPY_RELAXED_STRIDES_CHECKING=1
-    - python: 3.3
-      env: NPY_RELAXED_STRIDES_CHECKING=1
+      env: NPY_SEPARATE_COMPILATION=0 PYTHON_OO=1
+    - python: 3.4
+      env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 2.7
       env: USE_BENTO=1
+    - python: 2.7
+      env: USE_WHEEL=1
 before_install:
   - uname -a
   - free -m
@@ -32,6 +30,9 @@ before_install:
   - pip install nose
   # pip install coverage
   - python -V
+  - pip install --upgrade pip setuptools
+  # Speed up install by not compiling Cython
+  - pip install --install-option="--no-cython-compile" Cython
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 

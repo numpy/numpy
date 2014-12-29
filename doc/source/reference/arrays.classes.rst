@@ -41,7 +41,7 @@ Numpy provides several hooks that classes can customize:
 
 .. function:: class.__numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
 
-   .. versionadded:: 1.9
+   .. versionadded:: 1.10
 
    Any class (ndarray subclass or not) can define this method to
    override behavior of Numpy's ufuncs. This works quite similarly to
@@ -266,13 +266,6 @@ Memory-mapped-file arrays have one additional method (besides those
 they inherit from the ndarray): :meth:`.flush() <memmap.flush>` which
 must be called manually by the user to ensure that any changes to the
 array actually get written to disk.
-
-.. note::
-
-    Memory-mapped arrays use the the Python memory-map object which
-    (prior to Python 2.5) does not allow files to be larger than a
-    certain size depending on the platform. This size is always
-    < 2GB even on 64-bit systems.
 
 .. autosummary::
    :toctree: generated/

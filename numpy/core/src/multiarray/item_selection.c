@@ -129,12 +129,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     func = PyArray_DESCR(self)->f->fasttake;
     if (func == NULL) {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
+                    if (check_and_adjust_index(&tmp, max_item, axis,
+                                               _save) < 0) {
                         goto fail;
                     }
                     tmp_src = src + tmp * chunk;
@@ -216,8 +219,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
             break;
         }
+        NPY_END_THREADS;
     }
     else {
+        /* no gil release, need it for error reporting */
         err = func(dest, src, (npy_intp *)(PyArray_DATA(indices)),
                     max_item, n, m, nelem, clipmode);
         if (err) {
@@ -260,6 +265,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                         "put: first argument must be an array");
         return NULL;
     }
+
+    if (PyArray_FailUnlessWriteable(self, "put: output array") < 0) {
+        return NULL;
+    }
+
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
         int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
@@ -300,7 +310,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk*(i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
                     goto fail;
                 }
                 PyArray_Item_INCREF(src, PyArray_DESCR(self));
@@ -345,12 +355,14 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_THRESHOLDED(ni);
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + chunk * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
                     goto fail;
                 }
                 memmove(dest + tmp * chunk, src, chunk);
@@ -387,6 +399,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             }
             break;
         }
+        NPY_END_THREADS;
     }
 
  finish:
@@ -482,6 +495,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         }
     }
     else {
+        NPY_BEGIN_THREADS_DEF;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         func = PyArray_DESCR(self)->f->fastputmask;
         if (func == NULL) {
             for (i = 0; i < ni; i++) {
@@ -495,6 +510,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         else {
             func(dest, PyArray_DATA(mask), ni, PyArray_DATA(values), nv);
         }
+        NPY_END_THREADS;
     }
 
     Py_XDECREF(values);
@@ -2019,12 +2035,12 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         error = argbinsearch((const char *)PyArray_DATA(ap1),
                              (const char *)PyArray_DATA(ap2),
-                             (const char *)PyArray_DATA(ap3),
+                             (const char *)PyArray_DATA(sorter),
                              (char *)PyArray_DATA(ret),
                              PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                              PyArray_STRIDES(ap1)[0],
                              PyArray_DESCR(ap2)->elsize,
-                             PyArray_STRIDES(ap3)[0], NPY_SIZEOF_INTP, ap2);
+                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
         if (error < 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -2224,32 +2240,22 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 }
 
 /*
- * count number of nonzero bytes in 16 byte block
+ * count number of nonzero bytes in 48 byte block
  * w must be aligned to 8 bytes
  *
  * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
  * but a 32 bit type version would make it even faster on these platforms
  */
-static NPY_INLINE int
-count_nonzero_bytes_128(const npy_uint64 * w)
+static NPY_INLINE npy_intp
+count_nonzero_bytes_384(const npy_uint64 * w)
 {
     const npy_uint64 w1 = w[0];
     const npy_uint64 w2 = w[1];
-
-    /*
-     * bytes not exclusively 0 or 1, sum them individually.
-     * should only happen if one does weird stuff with views or external
-     * buffers.
-     */
-    if (NPY_UNLIKELY(((w1 | w2)  & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
-        /* reload from pointer to avoid a unnecessary stack spill with gcc */
-        const char * c = (const char *)w;
-        npy_uintp i, count = 0;
-        for (i = 0; i < 16; i++) {
-            count += (c[i] != 0);
-        }
-        return count;
-    }
+    const npy_uint64 w3 = w[2];
+    const npy_uint64 w4 = w[3];
+    const npy_uint64 w5 = w[4];
+    const npy_uint64 w6 = w[5];
+    npy_intp r;
 
     /*
      * last part of sideways add popcount, first three bisections can be
@@ -2258,7 +2264,27 @@ count_nonzero_bytes_128(const npy_uint64 * w)
      * multiplication overflow well defined for unsigned types.
      * w1 + w2 guaranteed to not overflow as we only have 0 and 1 data.
      */
-    return ((w1 + w2) * 0x0101010101010101ULL) >> 56ULL;
+    r = ((w1 + w2 + w3 + w4 + w5 + w6) * 0x0101010101010101ULL) >> 56ULL;
+
+    /*
+     * bytes not exclusively 0 or 1, sum them individually.
+     * should only happen if one does weird stuff with views or external
+     * buffers.
+     * Doing this after the optimistic computation allows saving registers and
+     * better pipelining
+     */
+    if (NPY_UNLIKELY(
+             ((w1 | w2 | w3 | w4 | w5 | w6) & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
+        /* reload from pointer to avoid a unnecessary stack spill with gcc */
+        const char * c = (const char *)w;
+        npy_uintp i, count = 0;
+        for (i = 0; i < 48; i++) {
+            count += (c[i] != 0);
+        }
+        return count;
+    }
+
+    return r;
 }
 
 /*
@@ -2274,6 +2300,7 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp i, coord[NPY_MAXDIMS];
     npy_intp count = 0;
+    NPY_BEGIN_THREADS_DEF;
 
     /* Use raw iteration with no heap memory allocation */
     if (PyArray_PrepareOneRawArrayIter(
@@ -2289,6 +2316,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
         return 0;
     }
 
+    NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
+
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
@@ -2297,9 +2326,9 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
             const char *e = data + shape[0];
             if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
                     npy_is_aligned(d, sizeof(npy_uint64))) {
-                npy_uintp stride = 2 * sizeof(npy_uint64);
+                npy_uintp stride = 6 * sizeof(npy_uint64);
                 for (; d < e - (shape[0] % stride); d += stride) {
-                    count += count_nonzero_bytes_128((const npy_uint64 *)d);
+                    count += count_nonzero_bytes_384((const npy_uint64 *)d);
                 }
             }
             for (; d < e; ++d) {
@@ -2317,6 +2346,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
             }
         } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
+
+    NPY_END_THREADS;
 
     return count;
 }
@@ -2338,6 +2369,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
+    NPY_BEGIN_THREADS_DEF;
 
     /* Special low-overhead version specific to the boolean type */
     if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
@@ -2387,6 +2419,9 @@ PyArray_CountNonzero(PyArrayObject *self)
         NpyIter_Deallocate(iter);
         return -1;
     }
+
+    NPY_BEGIN_THREADS_NDITER(iter);
+
     dataptr = NpyIter_GetDataPtrArray(iter);
     strideptr = NpyIter_GetInnerStrideArray(iter);
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
@@ -2406,6 +2441,8 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     } while(iternext(iter));
 
+    NPY_END_THREADS;
+
     NpyIter_Deallocate(iter);
 
     return PyErr_Occurred() ? -1 : nonzero_count;
@@ -2424,10 +2461,7 @@ PyArray_Nonzero(PyArrayObject *self)
     PyObject *ret_tuple;
     npy_intp ret_dims[2];
     PyArray_NonzeroFunc *nonzero = PyArray_DESCR(self)->f->nonzero;
-    char *data;
-    npy_intp stride, count;
     npy_intp nonzero_count;
-    npy_intp *multi_index;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
@@ -2454,23 +2488,51 @@ PyArray_Nonzero(PyArrayObject *self)
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim <= 1) {
-        npy_intp j;
+        npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
+        char * data = PyArray_BYTES(self);
+        npy_intp stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
+        npy_intp count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
+        NPY_BEGIN_THREADS_DEF;
 
-        multi_index = (npy_intp *)PyArray_DATA(ret);
-        data = PyArray_BYTES(self);
-        stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
-        count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
+        /* nothing to do */
+        if (nonzero_count == 0) {
+            goto finish;
+        }
 
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+
+        /* avoid function call for bool */
         if (PyArray_ISBOOL(self)) {
-            /* avoid function call for bool */
-            for (j = 0; j < count; ++j) {
-                if (*data != 0) {
-                    *multi_index++ = j;
+            /*
+             * use fast memchr variant for sparse data, see gh-4370
+             * the fast bool count is followed by this sparse path is faster
+             * than combining the two loops, even for larger arrays
+             */
+            if (((double)nonzero_count / count) <= 0.1) {
+                npy_intp subsize;
+                npy_intp j = 0;
+                while (1) {
+                    npy_memchr(data + j * stride, 0, stride, count - j,
+                               &subsize, 1);
+                    j += subsize;
+                    if (j >= count) {
+                        break;
+                    }
+                    *multi_index++ = j++;
                 }
-                data += stride;
+            }
+            else {
+                npy_intp j;
+                for (j = 0; j < count; ++j) {
+                    if (*data != 0) {
+                        *multi_index++ = j;
+                    }
+                    data += stride;
+                }
             }
         }
         else {
+            npy_intp j;
             for (j = 0; j < count; ++j) {
                 if (nonzero(data, self)) {
                     *multi_index++ = j;
@@ -2478,6 +2540,8 @@ PyArray_Nonzero(PyArrayObject *self)
                 data += stride;
             }
         }
+
+        NPY_END_THREADS;
 
         goto finish;
     }
@@ -2498,6 +2562,8 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     if (NpyIter_GetIterSize(iter) != 0) {
+        npy_intp * multi_index;
+        NPY_BEGIN_THREADS_DEF;
         /* Get the pointers for inner loop iteration */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -2511,6 +2577,9 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
         dataptr = NpyIter_GetDataPtrArray(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
@@ -2533,6 +2602,8 @@ PyArray_Nonzero(PyArrayObject *self)
                 }
             } while(iternext(iter));
         }
+
+        NPY_END_THREADS;
     }
 
     NpyIter_Deallocate(iter);
@@ -2558,7 +2629,7 @@ finish:
     else {
         for (i = 0; i < ndim; ++i) {
             PyArrayObject *view;
-            stride = ndim*NPY_SIZEOF_INTP;
+            npy_intp stride = ndim * NPY_SIZEOF_INTP;
 
             view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,
                                 &nonzero_count,
@@ -2601,7 +2672,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         npy_intp shapevalue = shape[idim];
         npy_intp ind = multi_index[idim];
 
-        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
+        if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
           return NULL;
         }
         data += ind * strides[idim];
@@ -2630,7 +2701,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
         npy_intp shapevalue = shape[idim];
         npy_intp ind = multi_index[idim];
 
-        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
+        if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
             return -1;
         }
         data += ind * strides[idim];

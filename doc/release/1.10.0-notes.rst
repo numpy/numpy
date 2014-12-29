@@ -1,0 +1,124 @@
+NumPy 1.10.0 Release Notes
+**************************
+
+This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
+
+
+Highlights
+==========
+* numpy.distutils now supports parallel compilation via the --jobs/-j argument
+  passed to setup.py build
+* Addition of *np.linalg.multi_dot*: compute the dot product of two or more
+  arrays in a single function call, while automatically selecting the fastest
+  evaluation order.
+
+
+Dropped Support
+===============
+* The polytemplate.py file has been removed.
+* The _dotblas module is no longer available.
+* The testcalcs.py file has been removed.
+
+
+Future Changes
+==============
+* The SafeEval class will be removed.
+* The alterdot and restoredot functions will be removed.
+
+
+Compatibility notes
+===================
+
+numpy version string
+~~~~~~~~~~~~~~~~~~~~
+The numpy version string for development builds has been changed from
+``x.y.z.dev-githash`` to ``x.y.z.dev+githash`` (note the +) in order to comply
+with PEP 440.
+
+relaxed stride checking
+~~~~~~~~~~~~~~~~~~~~~~~
+NPY_RELAXED_STRIDE_CHECKING is now true by default.
+
+diag and diagonal
+~~~~~~~~~~~~~~~~~
+Both diag and diagonal now preserve subtypes. This will change the
+dimensions of the returned diagonal in the case of matrices and that
+may lead to problems in using the result.
+
+New Features
+============
+
+*np.cbrt* to compute cube root for real floats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.cbrt* wraps the C99 cube root function *cbrt*.
+Compared to *np.power(x, 1./3.)* it is well defined for negative real floats
+and a bit faster.
+
+numpy.distutils now allows parallel compilation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By passing *--jobs=n* or *-j n* to *setup.py build* the compilation of
+extensions is now performed in *n* parallel processes.
+The parallelization is limited to files within one extension so projects using
+Cython will not profit because it builds extensions from single files.
+
+
+Improvements
+============
+
+*np.digitize* using binary search
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.digitize* is now implemented in terms of *np.searchsorted*. This means
+that a binary search is used to bin the values, which scales much better
+for larger number of bins than the previous linear search. It also removes
+the requirement for the input array to be 1-dimensional.
+
+*np.poly* now casts integer inputs to float
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.poly* will now cast 1-dimensional input arrays of integer type to double
+precision floating point, to prevent integer overflow when computing the monic
+polynomial. It is still possible to obtain higher precision results by
+passing in an array of object type, filled e.g. with Python ints.
+
+*np.interp* can now be used with periodic functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.interp* now has a new parameter *period* that supplies the period of the
+input data *xp*. In such case, the input data is properly normalized to the
+given period and one end point is added to each extremity of *xp* in order to
+close the previous and the next period cycles, resulting in the correct
+interpolation behavior.
+
+
+Changes
+=======
+
+dotblas functionality moved to multiarray
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The cblas versions of dot, inner, and vdot have been integrated into
+the multiarray module. In particular, vdot is now a multiarray function,
+which it was not before.
+
+stricter check of gufunc signature compliance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inputs to generalized universal functions are now more strictly checked
+against the function's signature: all core dimensions are now required to
+be present in input arrays; core dimensions with the same label must have
+the exact same size; and output core dimension's must be specified, either
+by a same label input core dimension or by a passed-in output array.
+
+
+Deprecations
+============
+
+SafeEval
+~~~~~~~~
+The SafeEval class in numpy/lib/utils.py is deprecated and will be removed
+in the next release.
+
+alterdot, restoredot
+~~~~~~~~~~~~~~~~~~~~
+The alterdot and restoredot functions no longer do anything, and are
+deprecated.
+
+pkgload, PackageLoader
+~~~~~~~~~~~~~~~~~~~~~~
+These ways of loading packages are now deprecated.

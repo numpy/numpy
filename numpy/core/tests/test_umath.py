@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import platform
+import warnings
 
 from numpy.testing import *
 from numpy.testing.utils import _gen_alignment_data
@@ -34,6 +35,36 @@ class TestConstants(TestCase):
 
     def test_euler_gamma(self):
         assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
+
+class TestOut(TestCase):
+    def test_out_subok(self):
+        for b in (True, False):
+            aout = np.array(0.5)
+
+            r = np.add(aout, 2, out=aout)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            r = np.add(aout, 2, out=aout, subok=b)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            r = np.add(aout, 2, aout, subok=False)
+            assert_(r is aout)
+            assert_array_equal(r, aout)
+
+            d = np.ones(5)
+            o1 = np.zeros(5)
+            o2 = np.zeros(5, dtype=np.int32)
+            r1, r2 = np.frexp(d, o1, o2, subok=b)
+            assert_(r1 is o1)
+            assert_array_equal(r1, o1)
+            assert_(r2 is o2)
+            assert_array_equal(r2, o2)
+
+            r1, r2 = np.frexp(d, out=o1, subok=b)
+            assert_(r1 is o1)
+            assert_array_equal(r1, o1)
 
 
 class TestDivision(TestCase):
@@ -84,6 +115,19 @@ class TestDivision(TestCase):
         x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
+
+
+class TestCbrt(TestCase):
+    def test_cbrt_scalar(self):
+        assert_almost_equal((np.cbrt(np.float32(-2.5)**3)), -2.5)
+
+    def test_cbrt(self):
+        x = np.array([1., 2., -3., np.inf, -np.inf])
+        assert_almost_equal(np.cbrt(x**3), x)
+
+        assert_(np.isnan(np.cbrt(np.nan)))
+        assert_equal(np.cbrt(np.inf), np.inf)
+        assert_equal(np.cbrt(-np.inf), -np.inf)
 
 
 class TestPower(TestCase):
@@ -189,6 +233,27 @@ class TestLog2(TestCase):
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
 
+    def test_log2_ints(self):
+        # a good log2 implementation should provide this,
+        # might fail on OS with bad libm
+        for i in range(1, 65):
+            v = np.log2(2.**i)
+            assert_equal(v, float(i), err_msg='at exponent %d' % i)
+
+    def test_log2_special(self):
+        assert_equal(np.log2(1.), 0.)
+        assert_equal(np.log2(np.inf), np.inf)
+        assert_(np.isnan(np.log2(np.nan)))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(np.isnan(np.log2(-1.)))
+            assert_(np.isnan(np.log2(-np.inf)))
+            assert_equal(np.log2(0.), -np.inf)
+            assert_(w[0].category is RuntimeWarning)
+            assert_(w[1].category is RuntimeWarning)
+            assert_(w[2].category is RuntimeWarning)
+
 
 class TestExp2(TestCase):
     def test_exp2_values(self) :
@@ -227,7 +292,7 @@ class TestLogAddExp2(_FilterInvalids):
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
@@ -290,7 +355,7 @@ class TestLogAddExp(_FilterInvalids):
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g'] :
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
@@ -311,11 +376,10 @@ class TestLog1p(TestCase):
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
 
     def test_special(self):
-        assert_equal(ncu.log1p(np.nan), np.nan)
-        assert_equal(ncu.log1p(np.inf), np.inf)
-        with np.errstate(divide="ignore"):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(ncu.log1p(np.nan), np.nan)
+            assert_equal(ncu.log1p(np.inf), np.inf)
             assert_equal(ncu.log1p(-1.), -np.inf)
-        with np.errstate(invalid="ignore"):
             assert_equal(ncu.log1p(-2.), np.nan)
             assert_equal(ncu.log1p(-np.inf), np.nan)
 
@@ -518,6 +582,17 @@ class TestMaximum(_FilterInvalids):
         out  = np.array([nan, nan, nan])
         assert_equal(np.maximum(arg1, arg2), out)
 
+    def test_object_nans(self):
+        # Multiple checks to give this a chance to
+        # fail if cmp is used instead of rich compare.
+        # Failure cannot be guaranteed.
+        for i in range(1):
+            x = np.array(float('nan'), np.object)
+            y = 1.0
+            z = np.array(float('nan'), np.object)
+            assert_(np.maximum(x, y) == 1.0)
+            assert_(np.maximum(z, y) == 1.0)
+
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
@@ -564,6 +639,17 @@ class TestMinimum(_FilterInvalids):
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([nan, nan, nan])
         assert_equal(np.minimum(arg1, arg2), out)
+
+    def test_object_nans(self):
+        # Multiple checks to give this a chance to
+        # fail if cmp is used instead of rich compare.
+        # Failure cannot be guaranteed.
+        for i in range(1):
+            x = np.array(float('nan'), np.object)
+            y = 1.0
+            z = np.array(float('nan'), np.object)
+            assert_(np.minimum(x, y) == 1.0)
+            assert_(np.minimum(z, y) == 1.0)
 
     def test_complex_nans(self):
         nan = np.nan
@@ -663,6 +749,57 @@ class TestFmin(_FilterInvalids):
             assert_equal(np.fmin(arg1, arg2), out)
 
 
+class TestBool(TestCase):
+    def test_truth_table_logical(self):
+        # 2, 3 and 4 serves as true values
+        input1 = [0, 0, 3, 2]
+        input2 = [0, 4, 0, 2]
+
+        typecodes = (np.typecodes['AllFloat']
+                     + np.typecodes['AllInteger']
+                     + '?')     # boolean
+        for dtype in map(np.dtype, typecodes):
+            arg1 = np.asarray(input1, dtype=dtype)
+            arg2 = np.asarray(input2, dtype=dtype)
+
+            # OR
+            out = [False, True, True, True]
+            for func in (np.logical_or, np.maximum):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+            # AND
+            out = [False, False, False, True]
+            for func in (np.logical_and, np.minimum):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+            # XOR
+            out = [False, True, True, False]
+            for func in (np.logical_xor, np.not_equal):
+                assert_equal(func(arg1, arg2).astype(bool), out)
+
+    def test_truth_table_bitwise(self):
+        arg1 = [False, False, True, True]
+        arg2 = [False, True, False, True]
+
+        out = [False, True, True, True]
+        assert_equal(np.bitwise_or(arg1, arg2), out)
+
+        out = [False, False, False, True]
+        assert_equal(np.bitwise_and(arg1, arg2), out)
+
+        out = [False, True, True, False]
+        assert_equal(np.bitwise_xor(arg1, arg2), out)
+
+
+class TestInt(TestCase):
+    def test_logical_not(self):
+        x = np.ones(10, dtype=np.int16)
+        o = np.ones(10 * 2, dtype=np.bool)
+        tgt = o.copy()
+        tgt[::2] = False
+        os = o[::2]
+        assert_array_equal(np.logical_not(x, out=os), False)
+        assert_array_equal(o, tgt)
+
+
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
@@ -713,6 +850,13 @@ class TestMinMax(TestCase):
                     inp[i] = -1e10
                     assert_equal(inp.min(), -1e10, err_msg=msg)
 
+    def test_lower_align(self):
+        # check data that is not aligned to element size
+        # i.e doubles are aligned to 4 bytes on i386
+        d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        assert_equal(d.max(), d[0])
+        assert_equal(d.min(), d[0])
+
 
 class TestAbsoluteNegative(TestCase):
     def test_abs_neg_blocked(self):
@@ -744,6 +888,17 @@ class TestAbsoluteNegative(TestCase):
                             assert_array_equal(-inp, -1*inp, err_msg=msg)
                             np.negative(inp, out=out)
                             assert_array_equal(out, -1*inp, err_msg=msg)
+
+    def test_lower_align(self):
+        # check data that is not aligned to element size
+        # i.e doubles are aligned to 4 bytes on i386
+        d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
+        assert_equal(np.abs(d), d)
+        assert_equal(np.negative(d), -d)
+        np.negative(d, out=d)
+        np.negative(np.ones_like(d), out=d)
+        np.abs(d, out=d)
+        np.abs(np.ones_like(d), out=d)
 
 
 class TestSpecialMethods(TestCase):
@@ -1026,39 +1181,105 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override_methods(self):
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                if method == "__call__":
-                    return method
-                if method == "reduce":
-                    return method
-                if method == "accumulate":
-                    return method
-                if method == "reduceat":
-                    return method
+                return self, ufunc, method, pos, inputs, kwargs
 
+        # __call__
         a = A()
-        res = np.multiply(1, a)
-        assert_equal(res, "__call__")
+        res = np.multiply.__call__(1, a, foo='bar', answer=42)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], 1)
+        assert_equal(res[4], (1, a))
+        assert_equal(res[5], {'foo': 'bar', 'answer': 42})
 
-        res = np.multiply.reduce(1, a)
-        assert_equal(res, "reduce")
+        # reduce, positional args
+        res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'keepdims': 'keep0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.accumulate(1, a)
-        assert_equal(res, "accumulate")
+        # reduce, kwargs
+        res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
+                                 keepdims='keep0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'keepdims': 'keep0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduceat(1, a)
-        assert_equal(res, "reduceat")
+        # accumulate, pos args
+        res = np.multiply.accumulate(a, 'axis0', 'dtype0', 'out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'accumulate')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply(a, 1)
-        assert_equal(res, "__call__")
+        # accumulate, kwargs
+        res = np.multiply.accumulate(a, axis='axis0', dtype='dtype0',
+                                     out='out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'accumulate')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a,))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduce(a, 1)
-        assert_equal(res, "reduce")
+        # reduceat, pos args
+        res = np.multiply.reduceat(a, [4, 2], 'axis0', 'dtype0', 'out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduceat')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2]))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.accumulate(a, 1)
-        assert_equal(res, "accumulate")
+        # reduceat, kwargs
+        res = np.multiply.reduceat(a, [4, 2], axis='axis0', dtype='dtype0',
+                                   out='out0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduceat')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2]))
+        assert_equal(res[5], {'dtype':'dtype0',
+                               'out': 'out0',
+                               'axis': 'axis0'})
 
-        res = np.multiply.reduceat(a, 1)
-        assert_equal(res, "reduceat")
+        # outer
+        res = np.multiply.outer(a, 42)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'outer')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, 42))
+        assert_equal(res[5], {})
+
+        # at
+        res = np.multiply.at(a, [4, 2], 'b0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'at')
+        assert_equal(res[3], 0)
+        assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
         class A(object):
@@ -1093,7 +1314,6 @@ class TestSpecialMethods(TestCase):
         assert_equal(res6['out'][1], 'out1')
         assert_equal(res7['out'][0], 'out0')
         assert_equal(res7['out'][1], 'out1')
-
 
     def test_ufunc_override_exception(self):
         class A(object):

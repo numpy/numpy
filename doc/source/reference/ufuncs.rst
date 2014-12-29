@@ -313,16 +313,15 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    Provides a policy for what kind of casting is permitted. For compatibility
-    with previous versions of NumPy, this defaults to 'unsafe'. May be 'no',
-    'equiv', 'safe', 'same_kind', or 'unsafe'. See :func:`can_cast` for
-    explanations of the parameter values.
+    May be 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
+    See :func:`can_cast` for explanations of the parameter values.
 
-    In a future version of numpy, this argument will default to
-    'same_kind'. As part of this transition, starting in version 1.7,
-    ufuncs will produce a DeprecationWarning for calls which are
-    allowed under the 'unsafe' rules, but not under the 'same_kind'
-    rules.
+    Provides a policy for what kind of casting is permitted. For compatibility
+    with previous versions of NumPy, this defaults to 'unsafe' for numpy < 1.7.
+    In numpy 1.7 a transition to 'same_kind' was begun where ufuncs produce a
+    DeprecationWarning for calls which are allowed under the 'unsafe'
+    rules, but not under the 'same_kind' rules. In numpy 1.10 the default
+    will be 'same_kind'.
 
 *order*
 

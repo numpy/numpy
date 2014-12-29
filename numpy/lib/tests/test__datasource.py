@@ -2,11 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
-import numpy.lib._datasource as datasource
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
+
 from numpy.compat import asbytes
-from numpy.testing import *
+from numpy.testing import (
+    run_module_suite, TestCase, assert_
+    )
+import numpy.lib._datasource as datasource
 
 if sys.version_info[0] >= 3:
     import urllib.request as urllib_request
@@ -63,7 +66,7 @@ def valid_textfile(filedir):
 
 def invalid_textfile(filedir):
     # Generate and return an invalid filename.
-    fd, path = mkstemp(suffix='.txt', prefix='dstmp_',  dir=filedir)
+    fd, path = mkstemp(suffix='.txt', prefix='dstmp_', dir=filedir)
     os.close(fd)
     os.remove(path)
     return path
@@ -213,7 +216,7 @@ class TestDataSourceAbspath(TestCase):
         tmpfile = valid_textfile(self.tmpdir)
         tmpfilename = os.path.split(tmpfile)[-1]
         # Test with filename only
-        self.assertEqual(tmpfile, self.ds.abspath(os.path.split(tmpfile)[-1]))
+        self.assertEqual(tmpfile, self.ds.abspath(tmpfilename))
         # Test filename with complete path
         self.assertEqual(tmpfile, self.ds.abspath(tmpfile))
 

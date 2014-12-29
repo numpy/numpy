@@ -28,12 +28,12 @@ double npy_copysign(double x, double y)
 #if !defined(HAVE_DECL_SIGNBIT)
 #include "_signbit.c"
 
-static int _npy_signbit_f(float x)
+int _npy_signbit_f(float x)
 {
     return _npy_signbit_d((double) x);
 }
 
-static int _npy_signbit_ld(long double x)
+int _npy_signbit_ld(long double x)
 {
     return _npy_signbit_d((double) x);
 }
@@ -133,7 +133,8 @@ static float _nextf(float x, int p)
     return x;
 }
 
-#ifdef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
+#if defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+    defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE)
 
 /*
  * FIXME: this is ugly and untested. The asm part only works with gcc, and we

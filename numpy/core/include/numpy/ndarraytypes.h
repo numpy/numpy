@@ -203,12 +203,6 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-
-        /*
-         * Temporary internal definition only, will be removed in upcoming
-         * release, see below
-         * */
-        NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND = 100,
 } NPY_CASTING;
 
 typedef enum {
@@ -928,12 +922,14 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
 #define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS)
 
+/* the variable is used in some places, so always define it */
+#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
-#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
+#define NPY_END_THREADS   do { if (_save) \
+                { PyEval_RestoreThread(_save); _save = NULL;} } while (0);
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
                 { _save = PyEval_SaveThread();} } while (0);
 
@@ -951,7 +947,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #else
 #define NPY_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size)
@@ -1491,13 +1486,13 @@ PyArray_STRIDE(const PyArrayObject *arr, int istride)
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
-static NPY_INLINE PyObject *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
-static NPY_INLINE PyArray_Descr *
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;

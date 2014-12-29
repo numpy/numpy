@@ -98,6 +98,7 @@ from numpy.core.multiarray import (
 import types as _types
 import sys
 from numpy.compat import bytes, long
+import numbers
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -669,7 +670,7 @@ def issubclass_(arg1, arg2):
     Determine if a class is a subclass of a second class.
 
     `issubclass_` is equivalent to the Python built-in ``issubclass``,
-    except that it returns False instead of raising a TypeError is one
+    except that it returns False instead of raising a TypeError if one
     of the arguments is not a class.
 
     Parameters
@@ -959,6 +960,12 @@ def _can_coerce_all(dtypelist, start=0):
             return newdtype
         thisind += 1
     return None
+
+def _register_types():
+    numbers.Integral.register(integer)
+    numbers.Complex.register(inexact)
+    numbers.Real.register(floating)
+_register_types()
 
 def find_common_type(array_types, scalar_types):
     """

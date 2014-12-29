@@ -11,7 +11,7 @@ work right away.
 
 
 Asserts
-=======
+-------
 .. autosummary::
    :toctree: generated/
 
@@ -25,6 +25,7 @@ Asserts
    assert_array_less
    assert_equal
    assert_raises
+   assert_raises_regex
    assert_warns
    assert_string_equal
 

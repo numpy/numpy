@@ -10,6 +10,13 @@ classes are available:
   atlas_blas_info
   atlas_blas_threads_info
   lapack_atlas_info
+  lapack_atlas_threads_info
+  atlas_3_10_info
+  atlas_3_10_threads_info
+  atlas_3_10_blas_info,
+  atlas_3_10_blas_threads_info,
+  lapack_atlas_3_10_info
+  lapack_atlas_3_10_threads_info
   blas_info
   lapack_info
   openblas_info
@@ -137,6 +144,9 @@ from numpy.distutils.misc_util import is_sequence, is_string, \
                                       get_shared_lib_extension
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+import distutils.ccompiler
+import tempfile
+import shutil
 
 
 # Determine number of bits
@@ -299,8 +309,17 @@ def get_info(name, notfound_action=0):
           'atlas_blas_threads': atlas_blas_threads_info,
           'lapack_atlas': lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads': lapack_atlas_threads_info,  # ditto
+          'atlas_3_10': atlas_3_10_info,  # use lapack_opt or blas_opt instead
+          'atlas_3_10_threads': atlas_3_10_threads_info,                # ditto
+          'atlas_3_10_blas': atlas_3_10_blas_info,
+          'atlas_3_10_blas_threads': atlas_3_10_blas_threads_info,
+          'lapack_atlas_3_10': lapack_atlas_3_10_info,  # use lapack_opt instead
+          'lapack_atlas_3_10_threads': lapack_atlas_3_10_threads_info,  # ditto
           'mkl': mkl_info,
+          # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
+          # openblas with embedded lapack
+          'openblas_lapack': openblas_lapack_info, # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -428,7 +447,7 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info:
+class system_info(object):
 
     """ get_info() is the only public method. Don't use others.
     """
@@ -449,7 +468,6 @@ class system_info:
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {}
-        defaults['libraries'] = ''
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
@@ -756,9 +774,6 @@ class fftw_info(system_info):
                     'includes':['fftw.h', 'rfftw.h'],
                     'macros':[('SCIPY_FFTW_H', None)]}]
 
-    def __init__(self):
-        system_info.__init__(self)
-
     def calc_ver_info(self, ver_param):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
@@ -960,7 +975,8 @@ class mkl_info(system_info):
         if info is None:
             return
         dict_append(info,
-                    define_macros=[('SCIPY_MKL_H', None)],
+                    define_macros=[('SCIPY_MKL_H', None),
+                                   ('HAVE_CBLAS', None)],
                     include_dirs=incl_dirs)
         if sys.platform == 'win32':
             pass  # win32 has no pthread library
@@ -1118,6 +1134,7 @@ class atlas_blas_info(atlas_info):
             h = os.path.dirname(h)
             dict_append(info, include_dirs=[h])
         info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
 
         atlas_version, atlas_extra_info = get_atlas_version(**atlas)
         dict_append(atlas, **atlas_extra_info)
@@ -1144,6 +1161,63 @@ class lapack_atlas_info(atlas_info):
 
 class lapack_atlas_threads_info(atlas_threads_info):
     _lib_names = ['lapack_atlas'] + atlas_threads_info._lib_names
+
+
+class atlas_3_10_info(atlas_info):
+    _lib_names = ['satlas']
+    _lib_atlas = _lib_names
+    _lib_lapack = _lib_names
+
+
+class atlas_3_10_blas_info(atlas_3_10_info):
+    _lib_names = ['satlas']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        info = {}
+        atlas_libs = self.get_libs('atlas_libs',
+                                   self._lib_names)
+        atlas = self.check_libs2(lib_dirs, atlas_libs, [])
+        if atlas is None:
+            return
+        include_dirs = self.get_include_dirs()
+        h = (self.combine_paths(lib_dirs + include_dirs, 'cblas.h') or [None])
+        h = h[0]
+        if h:
+            h = os.path.dirname(h)
+            dict_append(info, include_dirs=[h])
+        info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
+
+        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
+        dict_append(atlas, **atlas_extra_info)
+
+        dict_append(info, **atlas)
+
+        self.set_info(**info)
+        return
+
+
+class atlas_3_10_threads_info(atlas_3_10_info):
+    dir_env_var = ['PTATLAS', 'ATLAS']
+    _lib_names = ['tatlas']
+    #if sys.platfcorm[:7] == 'freebsd':
+        ## I don't think freebsd supports 3.10 at this time - 2014
+    _lib_atlas = _lib_names
+    _lib_lapack = _lib_names
+
+
+class atlas_3_10_blas_threads_info(atlas_3_10_blas_info):
+    dir_env_var = ['PTATLAS', 'ATLAS']
+    _lib_names = ['tatlas']
+
+
+class lapack_atlas_3_10_info(atlas_3_10_info):
+    pass
+
+
+class lapack_atlas_3_10_threads_info(atlas_3_10_threads_info):
+    pass
 
 
 class lapack_info(system_info):
@@ -1302,11 +1376,13 @@ def get_atlas_version(**config):
     info = {}
     try:
         s, o = c.get_output(atlas_version_c_text,
-                            libraries=libraries, library_dirs=library_dirs)
+                            libraries=libraries, library_dirs=library_dirs,
+                            use_tee=(system_info.verbosity > 0))
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
-                                library_dirs=library_dirs)
+                                library_dirs=library_dirs,
+                                use_tee=(system_info.verbosity > 0))
             if not s:
                 warnings.warn("""
 *****************************************************
@@ -1362,14 +1438,13 @@ Make sure that -lgfortran is used for C++ extensions.
     return result
 
 
-
 class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
 
     def calc_info(self):
 
-        openblas_info = get_info('openblas')
+        openblas_info = get_info('openblas_lapack')
         if openblas_info:
             self.set_info(**openblas_info)
             return
@@ -1379,7 +1454,11 @@ class lapack_opt_info(system_info):
             self.set_info(**lapack_mkl_info)
             return
 
-        atlas_info = get_info('atlas_threads')
+        atlas_info = get_info('atlas_3_10_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_3_10')
+        if not atlas_info:
+            atlas_info = get_info('atlas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas')
 
@@ -1410,7 +1489,8 @@ class lapack_opt_info(system_info):
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3)])
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
                 return
 
         #atlas_info = {} ## uncomment for testing
@@ -1476,11 +1556,15 @@ class blas_opt_info(system_info):
             self.set_info(**openblas_info)
             return
 
-        atlas_info = get_info('atlas_blas_threads')
+        atlas_info = get_info('atlas_3_10_blas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_3_10_blas')
+        if not atlas_info:
+            atlas_info = get_info('atlas_blas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin'and not atlas_info:
+        if sys.platform == 'darwin' and not atlas_info:
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
@@ -1511,7 +1595,8 @@ class blas_opt_info(system_info):
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3)])
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
                 return
 
         need_blas = 0
@@ -1552,8 +1637,32 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        info['language'] = 'f77'  # XXX: is it generally true?
+        if self.has_cblas():
+            info['language'] = 'c'
+            info['define_macros'] = [('HAVE_CBLAS', None)]
+        else:
+            info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
+
+    def has_cblas(self):
+        # primitive cblas check by looking for the header
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        tmpdir = tempfile.mkdtemp()
+        s = """#include <cblas.h>"""
+        src = os.path.join(tmpdir, 'source.c')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            try:
+                c.compile([src], output_dir=tmpdir,
+                          include_dirs=self.get_include_dirs())
+                res = True
+            except distutils.ccompiler.CompileError:
+                res = False
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class openblas_info(blas_info):
@@ -1561,6 +1670,9 @@ class openblas_info(blas_info):
     dir_env_var = 'OPENBLAS'
     _lib_names = ['openblas']
     notfounderror = BlasNotFoundError
+
+    def check_embedded_lapack(self, info):
+        return True
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
@@ -1571,8 +1683,46 @@ class openblas_info(blas_info):
         info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
             return
-        info['language'] = 'f77'  # XXX: is it generally true?
+
+        if not self.check_embedded_lapack(info):
+            return
+
+        info['language'] = 'c'
+        info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
+
+
+class openblas_lapack_info(openblas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    notfounderror = BlasNotFoundError
+
+    def check_embedded_lapack(self, info):
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        tmpdir = tempfile.mkdtemp()
+        s = """void zungqr();
+        int main(int argc, const char *argv[])
+        {
+            zungqr_();
+            return 0;
+        }"""
+        src = os.path.join(tmpdir, 'source.c')
+        out = os.path.join(tmpdir, 'a.out')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            obj = c.compile([src], output_dir=tmpdir)
+            try:
+                c.link_executable(obj, out, libraries=info['libraries'],
+                                  library_dirs=info['library_dirs'])
+                res = True
+            except distutils.ccompiler.LinkError:
+                res = False
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class blas_src_info(system_info):

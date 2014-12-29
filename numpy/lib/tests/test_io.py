@@ -4,9 +4,7 @@ import sys
 import gzip
 import os
 import threading
-import shutil
-import contextlib
-from tempfile import mkstemp, mkdtemp, NamedTemporaryFile
+from tempfile import mkstemp, NamedTemporaryFile
 import time
 import warnings
 import gc
@@ -19,15 +17,12 @@ from numpy.lib._iotools import (ConverterError, ConverterLockError,
                                 ConversionWarning)
 from numpy.compat import asbytes, asbytes_nested, bytes, asstr
 from nose import SkipTest
-from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
-                                assert_raises, run_module_suite)
+from numpy.ma.testutils import (
+    TestCase, assert_equal, assert_array_equal,
+    assert_raises, assert_raises_regex, run_module_suite
+)
 from numpy.testing import assert_warns, assert_, build_err_msg
-
-@contextlib.contextmanager
-def tempdir(change_dir=False):
-    tmpdir = mkdtemp()
-    yield tmpdir
-    shutil.rmtree(tmpdir)
+from numpy.testing.utils import tempdir
 
 
 class TextIO(BytesIO):
@@ -85,32 +80,32 @@ class RoundtripTest(object):
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
-            # Do not delete the file on windows, because we can't
-            # reopen an already opened file on that platform, so we
-            # need to close the file and reopen it, implying no
-            # automatic deletion.
-            if sys.platform == 'win32' and MAJVER >= 2 and MINVER >= 6:
-                target_file = NamedTemporaryFile(delete=False)
-            else:
-                target_file = NamedTemporaryFile()
+            target_file = NamedTemporaryFile(delete=False)
             load_file = target_file.name
         else:
             target_file = BytesIO()
             load_file = target_file
 
-        arr = args
+        try:
+            arr = args
 
-        save_func(target_file, *arr, **save_kwds)
-        target_file.flush()
-        target_file.seek(0)
+            save_func(target_file, *arr, **save_kwds)
+            target_file.flush()
+            target_file.seek(0)
 
-        if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
-            target_file.close()
+            if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
+                target_file.close()
 
-        arr_reloaded = np.load(load_file, **load_kwds)
+            arr_reloaded = np.load(load_file, **load_kwds)
 
-        self.arr = arr
-        self.arr_reloaded = arr_reloaded
+            self.arr = arr
+            self.arr_reloaded = arr_reloaded
+        finally:
+            if not isinstance(target_file, BytesIO):
+                target_file.close()
+                # holds an open file descriptor so it can't be deleted on win
+                if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
+                    os.remove(target_file.name)
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -163,6 +158,13 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
+    def test_format_2_0(self):
+        dt = [(("%d" % i) * 100, float) for i in range(500)]
+        a = np.ones(1000, dtype=dt)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', UserWarning)
+            self.check_roundtrips(a)
+
 
 class TestSaveLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
@@ -175,18 +177,24 @@ class TestSaveLoad(RoundtripTest, TestCase):
 class TestSavezLoad(RoundtripTest, TestCase):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
-        for n, arr in enumerate(self.arr):
-            reloaded = self.arr_reloaded['arr_%d' % n]
-            assert_equal(arr, reloaded)
-            assert_equal(arr.dtype, reloaded.dtype)
-            assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+        try:
+            for n, arr in enumerate(self.arr):
+                reloaded = self.arr_reloaded['arr_%d' % n]
+                assert_equal(arr, reloaded)
+                assert_equal(arr.dtype, reloaded.dtype)
+                assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+        finally:
+            # delete tempfile, must be done here on windows
+            if self.arr_reloaded.fid:
+                self.arr_reloaded.fid.close()
+                os.remove(self.arr_reloaded.fid.name)
 
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @np.testing.dec.slow
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
-        with tempdir() as tmpdir:
+        with tempdir(prefix="numpy_test_big_arrays_") as tmpdir:
             tmp = os.path.join(tmpdir, "file.npz")
             np.savez(tmp, a=a)
             del a
@@ -208,6 +216,17 @@ class TestSavezLoad(RoundtripTest, TestCase):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
+    
+    def test_BagObj(self):
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
+        c = BytesIO()
+        np.savez(c, file_a=a, file_b=b)
+        c.seek(0)
+        l = np.load(c)
+        assert_equal(sorted(dir(l.f)), ['file_a','file_b'])
+        assert_equal(a, l.f.file_a)
+        assert_equal(b, l.f.file_b)
 
     def test_savez_filename_clashes(self):
         # Test that issue #852 is fixed
@@ -295,7 +314,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         # Check that zipfile owns file and can close it.
         # This needs to pass a file name to load for the
         # test.
-        with tempdir() as tmpdir:
+        with tempdir(prefix="numpy_test_closing_zipfile_after_load_") as tmpdir:
             fd, tmp = mkstemp(suffix='.npz', dir=tmpdir)
             os.close(fd)
             np.savez(tmp, lab='place holder')
@@ -759,6 +778,14 @@ class TestLoadTxt(TestCase):
         res = np.loadtxt(count())
         assert_array_equal(res, np.arange(10))
 
+    def test_bad_line(self):
+        c = TextIO()
+        c.write('1 2 3\n4 5 6\n2 3')
+        c.seek(0)
+
+        # Check for exception and that exception contains line number
+        assert_raises_regex(ValueError, "3", np.loadtxt, c)
+
 
 class Testfromregex(TestCase):
     # np.fromregex expects files opened in binary mode.
@@ -1069,6 +1096,21 @@ M   33  21.99
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
 
+    def test_dtype_with_converters_and_usecols(self):
+        dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
+        dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
+        dtyp = [('E1','i4'),('E2','i4'),('E3','i2'),('N', 'i1')]
+        conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
+        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             names=None, converters=conv)
+        control = np.rec.array([[1,5,-1,0], [2,8,-1,1], [3,3,-2,3]], dtype=dtyp)
+        assert_equal(test, control)
+        dtyp = [('E1','i4'),('E2','i4'),('N', 'i1')]
+        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             usecols=(0,1,3), names=None, converters=conv)
+        control = np.rec.array([[1,5,0], [2,8,1], [3,3,3]], dtype=dtyp)
+        assert_equal(test, control)
+
     def test_dtype_with_object(self):
         "Test using an explicit dtype with an object"
         from datetime import date
@@ -1282,6 +1324,16 @@ M   33  21.99
         #
         test = np.genfromtxt(TextIO(data), usecols=(0, -1), **kwargs)
         ctrl = np.array([(0, 3), (4, -999)], dtype=[(_, int) for _ in "ac"])
+        assert_equal(test, ctrl)
+
+        data2 = "1,2,*,4\n5,*,7,8\n"
+        test = np.genfromtxt(TextIO(data2), delimiter=',', dtype=int,
+                             missing_values="*", filling_values=0)
+        ctrl = np.array([[1, 2, 0, 4], [5, 0, 7, 8]])
+        assert_equal(test, ctrl)
+        test = np.genfromtxt(TextIO(data2), delimiter=',', dtype=int,
+                             missing_values="*", filling_values=-1)
+        ctrl = np.array([[1, 2, -1, 4], [5, -1, 7, 8]])
         assert_equal(test, ctrl)
 
     def test_withmissing_float(self):
@@ -1570,6 +1622,14 @@ M   33  21.99
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', np.int), ('b', np.int)])
+        self.assertTrue(isinstance(test, np.recarray))
+        assert_equal(test, control)
+        #
+        data = TextIO('A,B\n0,1\n2,3')
+        dtype = [('a', np.int), ('b', np.float)]
+        test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
+        control = np.array([(0, 1), (2, 3)],
+                           dtype=dtype)
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 

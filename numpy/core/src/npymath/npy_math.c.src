@@ -299,7 +299,35 @@ double npy_exp2(double x)
 #ifndef HAVE_LOG2
 double npy_log2(double x)
 {
-    return NPY_LOG2E*npy_log(x);
+#ifdef HAVE_FREXP
+    if (!npy_isfinite(x) || x <= 0.) {
+        /* special value result */
+        return npy_log(x);
+    }
+    else {
+        /*
+         * fallback implementation copied from python3.4 math.log2
+         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
+         *
+         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
+         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
+         * and we get significant cancellation error from the addition of
+         * log(m) / log(2) to e.  The slight rewrite of the expression below
+         * avoids this problem.
+         */
+        int e;
+        double m = frexp(x, &e);
+        if (x >= 1.0) {
+            return log(2.0 * m) / log(2.0) + (e - 1);
+        }
+        else {
+            return log(m) / log(2.0) + e;
+        }
+    }
+#else
+    /* does not provide int(log(2**i)) == i */
+    return NPY_LOG2E * npy_log(x);
+#endif
 }
 #endif
 
@@ -315,6 +343,7 @@ double npy_log2(double x)
  * asinh, acosh, atanh
  *
  * hypot, atan2, pow, fmod, modf
+ * ldexp, frexp
  *
  * We assume the above are always available in their double versions.
  *
@@ -377,6 +406,26 @@ double npy_log2(double x)
 }
 #endif
 
+#ifdef ldexp@c@
+#undef ldexp@c@
+#endif
+#ifndef HAVE_LDEXP@C@
+@type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return (@type@) npy_ldexp((double)x, exp);
+}
+#endif
+
+#ifdef frexp@c@
+#undef frexp@c@
+#endif
+#ifndef HAVE_FREXP@C@
+@type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return (@type@) npy_frexp(x, exp);
+}
+#endif
+
 /**end repeat**/
 
 
@@ -423,6 +472,43 @@ double npy_log2(double x)
 }
 #endif
 
+#ifdef HAVE_LDEXP@C@
+@type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return ldexp@c@(x, exp);
+}
+#endif
+
+#ifdef HAVE_FREXP@C@
+@type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return frexp@c@(x, exp);
+}
+#endif
+
+/* C99 but not mandatory */
+
+#ifndef HAVE_CBRT@C@
+@type@ npy_cbrt@c@(@type@ x)
+{
+    /* don't set invalid flag */
+    if (npy_isnan(x)) {
+        return NPY_NAN;
+    }
+    else if (x < 0) {
+        return -npy_pow@c@(-x, 1. / 3.);
+    }
+    else {
+        return npy_pow@c@(x, 1. / 3.);
+    }
+}
+#else
+@type@ npy_cbrt@c@(@type@ x)
+{
+    return cbrt@c@(x);
+}
+#endif
+
 /**end repeat**/
 
 
@@ -463,31 +549,43 @@ double npy_log2(double x)
 
 @type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log1p@c@(npy_exp@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log1p@c@(npy_exp@c@(tmp));
+    if (x == y) {
+        /* Handles infinities of the same sign without warnings */
+        return x + LOGE2;
     }
     else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log1p@c@(npy_exp@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log1p@c@(npy_exp@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return tmp;
+        }
     }
 }
 
 @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+    if (x == y) {
+        /* Handles infinities of the same sign without warnings */
+        return x + 1;
     }
     else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return tmp;
+        }
     }
 }
 

@@ -86,14 +86,14 @@ code.  In NumPy
   c = a * b
 
 does what the earlier examples do, at near-C speeds, but with the code
-simplicity we expect from something based on Python (indeed, the NumPy
-idiom is even simpler!).  This last example illustrates two of NumPy's
+simplicity we expect from something based on Python. Indeed, the NumPy
+idiom is even simpler!  This last example illustrates two of NumPy's
 features which are the basis of much of its power: vectorization and
 broadcasting.
 
 Vectorization describes the absence of any explicit looping, indexing,
 etc., in the code - these things are taking place, of course, just
-"behind the scenes" (in optimized, pre-compiled C code).  Vectorized
+"behind the scenes" in optimized, pre-compiled C code.  Vectorized
 code has many advantages, among which are:
 
 - vectorized code is more concise and easier to read
@@ -104,25 +104,25 @@ code has many advantages, among which are:
   (making it easier, typically, to correctly code mathematical
   constructs)
 
-- vectorization results in more "Pythonic" code (without
-  vectorization, our code would still be littered with inefficient and
+- vectorization results in more "Pythonic" code. Without
+  vectorization, our code would be littered with inefficient and
   difficult to read ``for`` loops.
 
 Broadcasting is the term used to describe the implicit
 element-by-element behavior of operations; generally speaking, in
-NumPy all operations (i.e., not just arithmetic operations, but
-logical, bit-wise, functional, etc.) behave in this implicit
+NumPy all operations, not just arithmetic operations, but
+logical, bit-wise, functional, etc., behave in this implicit
 element-by-element fashion, i.e., they broadcast.  Moreover, in the
 example above, ``a`` and ``b`` could be multidimensional arrays of the
 same shape, or a scalar and an array, or even two arrays of with
-different shapes.  Provided that the smaller array is "expandable" to
+different shapes, provided that the smaller array is "expandable" to
 the shape of the larger in such a way that the resulting broadcast is
-unambiguous (for detailed "rules" of broadcasting see
-`numpy.doc.broadcasting`).
+unambiguous. For detailed "rules" of broadcasting see
+`numpy.doc.broadcasting`.
 
 NumPy fully supports an object-oriented approach, starting, once
 again, with `ndarray`.  For example, `ndarray` is a class, possessing
-numerous methods and attributes.  Many, of it's methods mirror
-functions in the outer-most NumPy namespace, giving the programmer has
+numerous methods and attributes.  Many of its methods mirror
+functions in the outer-most NumPy namespace, giving the programmer
 complete freedom to code in whichever paradigm she prefers and/or
 which seems most appropriate to the task at hand.

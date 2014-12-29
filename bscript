@@ -61,6 +61,16 @@ def _register_metadata(context):
     context.register_metadata("is_released", _SETUP_PY.ISRELEASED)
     context.register_metadata("full_version", full_version)
 
+def _generate_cython():
+    print("Cythonizing sources")
+    cwd = os.path.abspath(os.path.dirname(__file__))
+    p = subprocess.call([sys.executable,
+                          os.path.join(cwd, 'tools', 'cythonize.py'),
+                          'numpy'],
+                         cwd=cwd)
+    if p != 0:
+        raise RuntimeError("Running cythonize failed!")
+
 @hooks.post_configure
 def post_configure(context):
     conf = context.waf_context
@@ -75,6 +85,8 @@ def post_configure(context):
         conf.env.ARCH = archs
 
     blas_lapack.check_blas_lapack(context)
+
+    _generate_cython()
 
 @hooks.pre_build
 def pre_build(context):

@@ -45,12 +45,11 @@ def configuration(parent_package='',top_path=None):
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
                                    'distributions.c']]+[generate_libraries],
                          libraries=libs,
-                         depends = [join('mtrand', '*.h'),
-                                    join('mtrand', '*.pyx'),
-                                    join('mtrand', '*.pxi'),
-                                    ],
-                         define_macros = defs,
-                        )
+                         depends=[join('mtrand', '*.h'),
+                                  join('mtrand', '*.pyx'),
+                                  join('mtrand', '*.pxi'),],
+                         define_macros=defs,
+                         )
 
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
     config.add_data_dir('tests')

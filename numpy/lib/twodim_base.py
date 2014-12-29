@@ -3,16 +3,33 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri',
-           'triu', 'tril', 'vander', 'histogram2d', 'mask_indices',
-           'tril_indices', 'tril_indices_from', 'triu_indices',
-           'triu_indices_from',
-           ]
-
 from numpy.core.numeric import (
-    asanyarray, subtract, arange, zeros, greater_equal, multiply, ones,
-    asarray, where,
+    asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
+    where, int8, int16, int32, int64, empty, promote_types
     )
+from numpy.core import iinfo
+
+
+__all__ = [
+    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+    'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
+    'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+
+
+i1 = iinfo(int8)
+i2 = iinfo(int16)
+i4 = iinfo(int32)
+
+
+def _min_int(low, high):
+    """ get small int that fits the range """
+    if high <= i1.max and low >= i1.min:
+        return int8
+    if high <= i2.max and low >= i2.min:
+        return int16
+    if high <= i4.max and low >= i4.min:
+        return int32
+    return int64
 
 
 def fliplr(m):
@@ -278,7 +295,7 @@ def diag(v, k=0):
            [0, 0, 8]])
 
     """
-    v = asarray(v)
+    v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
         n = s[0]+abs(k)
@@ -393,8 +410,14 @@ def tri(N, M=None, k=0, dtype=float):
     """
     if M is None:
         M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)), -k)
-    return m.astype(dtype)
+
+    m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
+                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+
+    # Avoid making a copy if the requested type is already bool
+    m = m.astype(dtype, copy=False)
+
+    return m
 
 
 def tril(m, k=0):
@@ -430,8 +453,9 @@ def tril(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply(tri(m.shape[-2], m.shape[-1], k=k, dtype=m.dtype), m)
-    return out
+    mask = tri(*m.shape[-2:], k=k, dtype=bool)
+
+    return where(mask, m, zeros(1, m.dtype))
 
 
 def triu(m, k=0):
@@ -457,22 +481,22 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply((1 - tri(m.shape[-2], m.shape[-1], k - 1, dtype=m.dtype)), m)
-    return out
+    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+
+    return where(mask, zeros(1, m.dtype), m)
 
 
 # Originally borrowed from John Hunter and matplotlib
-def vander(x, N=None, order='decreasing'):
+def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
 
-    The columns of the output matrix are powers of the input vector.  The
-    order of the powers is determined by the `order` argument, either
-    "decreasing" (the default) or "increasing".  Specifically, when
-    `order` is "decreasing", the `i`-th output column is the input vector
-    raised element-wise to the power of ``N - i - 1``.  Such a matrix with
-    a geometric progression in each row is named for Alexandre-Theophile
-    Vandermonde.
+    The columns of the output matrix are powers of the input vector. The
+    order of the powers is determined by the `increasing` boolean argument.
+    Specifically, when `increasing` is False, the `i`-th output column is
+    the input vector raised element-wise to the power of ``N - i - 1``. Such
+    a matrix with a geometric progression in each row is named for Alexandre-
+    Theophile Vandermonde.
 
     Parameters
     ----------
@@ -481,16 +505,18 @@ def vander(x, N=None, order='decreasing'):
     N : int, optional
         Number of columns in the output.  If `N` is not specified, a square
         array is returned (``N = len(x)``).
-    order : str, optional
-        Order of the powers of the columns.  Must be either 'decreasing'
-        (the default) or 'increasing'.
+    increasing : bool, optional
+        Order of the powers of the columns.  If True, the powers increase
+        from left to right, if False (the default) they are reversed.
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
     out : ndarray
-        Vandermonde matrix.  If `order` is "decreasing", the first column is
-        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `order` is
-        "increasing", the columns are ``x^0, x^1, ..., x^(N-1)``.
+        Vandermonde matrix.  If `increasing` is False, the first column is
+        ``x^(N-1)``, the second ``x^(N-2)`` and so forth. If `increasing` is
+        True, the columns are ``x^0, x^1, ..., x^(N-1)``.
 
     See Also
     --------
@@ -518,7 +544,7 @@ def vander(x, N=None, order='decreasing'):
            [  8,   4,   2,   1],
            [ 27,   9,   3,   1],
            [125,  25,   5,   1]])
-    >>> np.vander(x, order='increasing')
+    >>> np.vander(x, increasing=True)
     array([[  1,   1,   1,   1],
            [  1,   2,   4,   8],
            [  1,   3,   9,  27],
@@ -533,22 +559,22 @@ def vander(x, N=None, order='decreasing'):
     48
 
     """
-    if order not in ['decreasing', 'increasing']:
-        raise ValueError("Invalid order %r; order must be either "
-                         "'decreasing' or 'increasing'." % (order,))
     x = asarray(x)
     if x.ndim != 1:
         raise ValueError("x must be a one-dimensional array or sequence.")
     if N is None:
         N = len(x)
-    if order == "decreasing":
-        powers = arange(N - 1, -1, -1)
-    else:
-        powers = arange(N)
 
-    V = x.reshape(-1, 1) ** powers
+    v = empty((len(x), N), dtype=promote_types(x.dtype, int))
+    tmp = v[:, ::-1] if not increasing else v
 
-    return V
+    if N > 0:
+        tmp[:, 0] = 1
+    if N > 1:
+        tmp[:, 1:] = x[:, None]
+        multiply.accumulate(tmp[:, 1:], out=tmp[:, 1:], axis=1)
+
+    return v
 
 
 def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
@@ -757,17 +783,24 @@ def mask_indices(n, mask_func, k=0):
     return where(a != 0)
 
 
-def tril_indices(n, k=0):
+def tril_indices(n, k=0, m=None):
     """
-    Return the indices for the lower-triangle of an (n, n) array.
+    Return the indices for the lower-triangle of an (n, m) array.
 
     Parameters
     ----------
     n : int
-        The row dimension of the square arrays for which the returned
+        The row dimension of the arrays for which the returned
         indices will be valid.
     k : int, optional
         Diagonal offset (see `tril` for details).
+    m : int, optional
+        .. versionadded:: 1.9.0
+
+        The column dimension of the arrays for which the returned
+        arrays will be valid.
+        By default `m` is taken equal to `n`.
+
 
     Returns
     -------
@@ -827,7 +860,7 @@ def tril_indices(n, k=0):
            [-10, -10, -10, -10]])
 
     """
-    return mask_indices(n, tril, k)
+    return where(tri(n, m, k=k, dtype=bool))
 
 
 def tril_indices_from(arr, k=0):
@@ -853,14 +886,14 @@ def tril_indices_from(arr, k=0):
     .. versionadded:: 1.4.0
 
     """
-    if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
-        raise ValueError("input array must be 2-d and square")
-    return tril_indices(arr.shape[0], k)
+    if arr.ndim != 2:
+        raise ValueError("input array must be 2-d")
+    return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
-def triu_indices(n, k=0):
+def triu_indices(n, k=0, m=None):
     """
-    Return the indices for the upper-triangle of an (n, n) array.
+    Return the indices for the upper-triangle of an (n, m) array.
 
     Parameters
     ----------
@@ -869,6 +902,13 @@ def triu_indices(n, k=0):
         be valid.
     k : int, optional
         Diagonal offset (see `triu` for details).
+    m : int, optional
+        .. versionadded:: 1.9.0
+
+        The column dimension of the arrays for which the returned
+        arrays will be valid.
+        By default `m` is taken equal to `n`.
+
 
     Returns
     -------
@@ -930,12 +970,12 @@ def triu_indices(n, k=0):
            [ 12,  13,  14,  -1]])
 
     """
-    return mask_indices(n, triu, k)
+    return where(~tri(n, m, k=k-1, dtype=bool))
 
 
 def triu_indices_from(arr, k=0):
     """
-    Return the indices for the upper-triangle of a (N, N) array.
+    Return the indices for the upper-triangle of arr.
 
     See `triu_indices` for full details.
 
@@ -960,6 +1000,6 @@ def triu_indices_from(arr, k=0):
     .. versionadded:: 1.4.0
 
     """
-    if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
-        raise ValueError("input array must be 2-d and square")
-    return triu_indices(arr.shape[0], k)
+    if arr.ndim != 2:
+        raise ValueError("input array must be 2-d")
+    return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])

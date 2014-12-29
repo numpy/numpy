@@ -1,59 +1,69 @@
 """
-Utililty objects for the polynomial modules.
+Utililty classes and functions for the polynomial modules.
 
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
 Error objects
 -------------
-- `PolyError` -- base class for this sub-package's errors.
-- `PolyDomainError` -- raised when domains are "mismatched."
+
+.. autosummary::
+   :toctree: generated/
+
+   PolyError            base class for this sub-package's errors.
+   PolyDomainError      raised when domains are mismatched.
 
 Warning objects
 ---------------
-- `RankWarning` -- raised by a least-squares fit when a rank-deficient
-  matrix is encountered.
+
+.. autosummary::
+   :toctree: generated/
+
+   RankWarning  raised in least-squares fit for rank-deficient matrix.
 
 Base class
 ----------
-- `PolyBase` -- The base class for the `Polynomial` and `Chebyshev`
-  classes.
+
+.. autosummary::
+   :toctree: generated/
+
+   PolyBase Obsolete base class for the polynomial classes. Do not use.
 
 Functions
 ---------
-- `as_series` -- turns a list of array_likes into 1-D arrays of common
-  type.
-- `trimseq` -- removes trailing zeros.
-- `trimcoef` -- removes trailing coefficients that are less than a given
-  magnitude (thereby removing the corresponding terms).
-- `getdomain` -- returns a domain appropriate for a given set of abscissae.
-- `mapdomain` -- maps points between domains.
-- `mapparms` -- parameters of the linear map between domains.
+
+.. autosummary::
+   :toctree: generated/
+
+   as_series    convert list of array_likes into 1-D arrays of common type.
+   trimseq      remove trailing zeros.
+   trimcoef     remove small trailing coefficients.
+   getdomain    return the domain appropriate for a given set of abscissae.
+   mapdomain    maps points between domains.
+   mapparms     parameters of the linear map between domains.
 
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['RankWarning', 'PolyError', 'PolyDomainError', 'PolyBase',
-           'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain',
-           'mapparms']
-
-import warnings
 import numpy as np
-import sys
+
+__all__ = [
+    'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
+    'trimcoef', 'getdomain', 'mapdomain', 'mapparms', 'PolyBase']
 
 #
 # Warnings and Exceptions
 #
 
-class RankWarning(UserWarning) :
+class RankWarning(UserWarning):
     """Issued by chebfit when the design matrix is rank deficient."""
     pass
 
-class PolyError(Exception) :
+class PolyError(Exception):
     """Base class for errors in this module."""
     pass
 
-class PolyDomainError(PolyError) :
+class PolyDomainError(PolyError):
     """Issued by the generic Poly class when two domains don't match.
 
     This is raised when an binary operation is passed Poly objects with
@@ -66,13 +76,22 @@ class PolyDomainError(PolyError) :
 # Base class for all polynomial types
 #
 
-class PolyBase(object) :
+class PolyBase(object):
+    """
+    Base class for all polynomial types.
+
+    Deprecated in numpy 1.9.0, use the abstract
+    ABCPolyBase class instead. Note that the latter
+    reguires a number of virtual functions to be
+    implemented.
+
+    """
     pass
 
 #
 # Helper functions to convert inputs to 1-D arrays
 #
-def trimseq(seq) :
+def trimseq(seq):
     """Remove small Poly series coefficients.
 
     Parameters
@@ -93,16 +112,16 @@ def trimseq(seq) :
     Do not lose the type info if the sequence contains unknown objects.
 
     """
-    if len(seq) == 0 :
+    if len(seq) == 0:
         return seq
-    else :
-        for i in range(len(seq) - 1, -1, -1) :
-            if seq[i] != 0 :
+    else:
+        for i in range(len(seq) - 1, -1, -1):
+            if seq[i] != 0:
                 break
         return seq[:i+1]
 
 
-def as_series(alist, trim=True) :
+def as_series(alist, trim=True):
     """
     Return argument as a list of 1-d arrays.
 
@@ -144,32 +163,32 @@ def as_series(alist, trim=True) :
 
     """
     arrays = [np.array(a, ndmin=1, copy=0) for a in alist]
-    if min([a.size for a in arrays]) == 0 :
+    if min([a.size for a in arrays]) == 0:
         raise ValueError("Coefficient array is empty")
-    if any([a.ndim != 1 for a in arrays]) :
+    if any([a.ndim != 1 for a in arrays]):
         raise ValueError("Coefficient array is not 1-d")
-    if trim :
+    if trim:
         arrays = [trimseq(a) for a in arrays]
 
-    if any([a.dtype == np.dtype(object) for a in arrays]) :
+    if any([a.dtype == np.dtype(object) for a in arrays]):
         ret = []
-        for a in arrays :
-            if a.dtype != np.dtype(object) :
+        for a in arrays:
+            if a.dtype != np.dtype(object):
                 tmp = np.empty(len(a), dtype=np.dtype(object))
                 tmp[:] = a[:]
                 ret.append(tmp)
-            else :
+            else:
                 ret.append(a.copy())
-    else :
-        try :
+    else:
+        try:
             dtype = np.common_type(*arrays)
-        except :
+        except:
             raise ValueError("Coefficient arrays have no common type")
         ret = [np.array(a, copy=1, dtype=dtype) for a in arrays]
     return ret
 
 
-def trimcoef(c, tol=0) :
+def trimcoef(c, tol=0):
     """
     Remove "small" "trailing" coefficients from a polynomial.
 
@@ -213,17 +232,17 @@ def trimcoef(c, tol=0) :
     array([ 0.0003+0.j   ,  0.0010-0.001j])
 
     """
-    if tol < 0 :
+    if tol < 0:
         raise ValueError("tol must be non-negative")
 
     [c] = as_series([c])
     [ind] = np.where(np.abs(c) > tol)
-    if len(ind) == 0 :
+    if len(ind) == 0:
         return c[:1]*0
-    else :
+    else:
         return c[:ind[-1] + 1].copy()
 
-def getdomain(x) :
+def getdomain(x):
     """
     Return a domain suitable for given abscissae.
 
@@ -262,14 +281,14 @@ def getdomain(x) :
 
     """
     [x] = as_series([x], trim=False)
-    if x.dtype.char in np.typecodes['Complex'] :
+    if x.dtype.char in np.typecodes['Complex']:
         rmin, rmax = x.real.min(), x.real.max()
         imin, imax = x.imag.min(), x.imag.max()
         return np.array((complex(rmin, imin), complex(rmax, imax)))
-    else :
+    else:
         return np.array((x.min(), x.max()))
 
-def mapparms(old, new) :
+def mapparms(old, new):
     """
     Linear map parameters between domains.
 
@@ -316,7 +335,7 @@ def mapparms(old, new) :
     scl = newlen/oldlen
     return off, scl
 
-def mapdomain(x, old, new) :
+def mapdomain(x, old, new):
     """
     Apply linear map to input points.
 

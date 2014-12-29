@@ -61,6 +61,15 @@ Returning to our ``big_end_arr`` - in this case our underlying data is
 big-endian (data endianness) and we've set the dtype to match (the dtype
 is also big-endian).  However, sometimes you need to flip these around.
 
+.. warning::
+
+    Scalars currently do not include byte order information, so extracting
+    a scalar from an array will return an integer in native byte order.
+    Hence:
+
+    >>> big_end_arr[0].dtype.byteorder == little_end_u4[0].dtype.byteorder
+    True
+
 Changing byte ordering
 ======================
 

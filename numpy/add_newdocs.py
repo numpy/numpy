@@ -2174,43 +2174,6 @@ add_newdoc('numpy.core', 'einsum',
 
     """)
 
-add_newdoc('numpy.core', 'alterdot',
-    """
-    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
-
-    Typically, as a user of Numpy, you do not explicitly call this function. If
-    Numpy is built with an accelerated BLAS, this function is automatically
-    called when Numpy is imported.
-
-    When Numpy is built with an accelerated BLAS like ATLAS, these functions
-    are replaced to make use of the faster implementations.  The faster
-    implementations only affect float32, float64, complex64, and complex128
-    arrays. Furthermore, the BLAS API only includes matrix-matrix,
-    matrix-vector, and vector-vector products. Products of arrays with larger
-    dimensionalities use the built in functions and are not accelerated.
-
-    See Also
-    --------
-    restoredot : `restoredot` undoes the effects of `alterdot`.
-
-    """)
-
-add_newdoc('numpy.core', 'restoredot',
-    """
-    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
-    implementations.
-
-    Typically, the user will only need to call this when troubleshooting and
-    installation problem, reproducing the conditions of a build without an
-    accelerated BLAS, or when being very careful about benchmarking linear
-    algebra operations.
-
-    See Also
-    --------
-    alterdot : `restoredot` undoes the effects of `alterdot`.
-
-    """)
-
 add_newdoc('numpy.core', 'vdot',
     """
     vdot(a, b)
@@ -3834,7 +3797,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'copyto',
     """
-    copyto(dst, src, casting='same_kind', where=None, preservena=False)
+    copyto(dst, src, casting='same_kind', where=None)
 
     Copies values from one array to another, broadcasting as necessary.
 
@@ -3862,9 +3825,6 @@ add_newdoc('numpy.core.multiarray', 'copyto',
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
-    preservena : bool, optional
-        If set to True, leaves any NA values in `dst` untouched. This
-        is similar to the "hard mask" feature in numpy.ma.
 
     """)
 
@@ -3878,11 +3838,6 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     If `values` is not the same size as `a` and `mask` then it will repeat.
     This gives behavior different from ``a[mask] = values``.
-
-    .. note:: The `putmask` functionality is also provided by `copyto`, which
-              can be significantly faster and in addition is NA-aware
-              (`preservena` keyword).  Replacing `putmask` with
-              ``np.copyto(a, values, where=mask)`` is recommended.
 
     Parameters
     ----------
@@ -4459,12 +4414,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
 
 tobytesdoc = """
-    a.tostring(order='C')
+    a.{name}(order='C')
 
-    Construct a Python string containing the raw data bytes in the array.
+    Construct Python bytes containing the raw data bytes in the array.
 
-    Constructs a Python string showing a copy of the raw contents of
-    data memory. The string can be produced in either 'C' or 'Fortran',
+    Constructs Python bytes showing a copy of the raw contents of
+    data memory. The bytes object can be produced in either 'C' or 'Fortran',
     or 'Any' order (the default is 'C'-order). 'Any' order means C-order
     unless the F_CONTIGUOUS flag in the array is set, in which case it
     means 'Fortran' order.
@@ -4479,29 +4434,31 @@ tobytesdoc = """
 
     Returns
     -------
-    s : str
-        A Python string exhibiting a copy of `a`'s raw data.
+    s : bytes
+        Python bytes exhibiting a copy of `a`'s raw data.
 
     Examples
     --------
     >>> x = np.array([[0, 1], [2, 3]])
     >>> x.tobytes()
-    '\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
     >>> x.tobytes('C') == x.tobytes()
     True
     >>> x.tobytes('F')
-    '\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
 
     """
 
 add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tostring', tobytesdoc.format(deprecated=
+           ('tostring', tobytesdoc.format(name='tostring',
+                                          deprecated=
                                           'This function is a compatibility '
                                           'alias for tobytes. Despite its '
                                           'name it returns bytes not '
                                           'strings.')))
 add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tobytes', tobytesdoc.format(deprecated='.. versionadded:: 1.9.0')))
+           ('tobytes', tobytesdoc.format(name='tobytes',
+                                         deprecated='.. versionadded:: 1.9.0')))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
     """
@@ -4880,14 +4837,15 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     Parameters
     ----------
     x : array_like
-        Input array to be binned. It has to be 1-dimensional.
+        Input array to be binned. Prior to Numpy 1.10.0, this array had to
+        be 1-dimensional, but can now have any shape.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
     right : bool, optional
         Indicating whether the intervals include the right or the left bin
         edge. Default behavior is (right==False) indicating that the interval
-        does not include the right edge. The left bin and is open in this
-        case. Ie., bins[i-1] <= x < bins[i] is the default behavior for
+        does not include the right edge. The left bin end is open in this
+        case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
 
     Returns
@@ -4898,7 +4856,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     Raises
     ------
     ValueError
-        If the input is not 1-dimensional, or if `bins` is not monotonic.
+        If `bins` is not monotonic.
     TypeError
         If the type of the input is complex.
 
@@ -4911,6 +4869,13 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     If values in `x` are such that they fall outside the bin range,
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
+
+    .. versionadded:: 1.10.0
+
+    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
+    that a binary search is used to bin the values, which scales much better
+    for larger number of bins than the previous linear search. It also removes
+    the requirement for the input array to be 1-dimensional.
 
     Examples
     --------
@@ -4928,7 +4893,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     1.0 <= 1.6 < 2.5
 
     >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
-    >>> bins = np.array([0,5,10,15,20])
+    >>> bins = np.array([0, 5, 10, 15, 20])
     >>> np.digitize(x,bins,right=True)
     array([1, 2, 3, 4, 4])
     >>> np.digitize(x,bins,right=False)
@@ -5518,6 +5483,8 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -6118,7 +6085,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
     """
-    A character code (one of 'biufcSUV') identifying the general kind of data.
+    A character code (one of 'biufcOSUV') identifying the general kind of data.
+
+    =  ======================
+    b  boolean
+    i  signed integer
+    u  unsigned integer
+    f  floating-point
+    c  complex floating-point
+    O  object
+    S  (byte-)string
+    U  Unicode
+    V  void
+    =  ======================
 
     """))
 

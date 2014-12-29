@@ -357,11 +357,11 @@ cb_arg_rules=[
     'pyobjfrom': [{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                  {isintent_c: """\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_ARRAY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   l_not(isintent_c): """\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_ARRAY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   },
                  """
@@ -384,7 +384,7 @@ cb_arg_rules=[
 \t\t\tfprintf(stderr,\"rv_cb_arr is NULL\\n\");
 \t\t\tgoto capi_fail;
 \t\t}
-\t\tMEMCOPY(#varname_i#,rv_cb_arr->data,PyArray_NBYTES(rv_cb_arr));
+\t\tMEMCOPY(#varname_i#,PyArray_DATA(rv_cb_arr),PyArray_NBYTES(rv_cb_arr));
 \t\tif (capi_tmp != (PyObject *)rv_cb_arr) {
 \t\t\tPy_DECREF(rv_cb_arr);
 \t\t}

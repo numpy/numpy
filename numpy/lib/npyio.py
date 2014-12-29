@@ -33,7 +33,8 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    ]
 
 
 def seek_gzip_factory(f):
@@ -111,6 +112,7 @@ class BagObj(object):
     "Doesn't matter what you want, you're gonna get this"
 
     """
+
     def __init__(self, obj):
         # Use weakref to make NpzFile objects collectable by refcount
         self._obj = weakref.proxy(obj)
@@ -120,6 +122,14 @@ class BagObj(object):
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
             raise AttributeError(key)
+
+    def __dir__(self):
+        """
+        Enables dir(bagobj) to list the files in an NpzFile.
+
+        This also enables tab-completion in an interpreter or IPython.
+        """
+        return object.__getattribute__(self, '_obj').keys()
 
 
 def zipfile_factory(*args, **kwargs):
@@ -184,6 +194,7 @@ class NpzFile(object):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+
     def __init__(self, fid, own_fid=False):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
@@ -285,8 +296,7 @@ def load(file, mmap_mode=None):
     Parameters
     ----------
     file : file-like object or string
-        The file to read. Compressed files with the filename extension
-        ``.gz`` are acceptable. File-like objects must support the
+        The file to read. File-like objects must support the
         ``seek()`` and ``read()`` methods. Pickled files require that the
         file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
@@ -422,7 +432,8 @@ def save(file, arr):
 
     Notes
     -----
-    For a description of the ``.npy`` format, see `format`.
+    For a description of the ``.npy`` format, see the module docstring
+    of `numpy.lib.format`.
 
     Examples
     --------
@@ -845,6 +856,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 continue
             if usecols:
                 vals = [vals[i] for i in usecols]
+            if len(vals) != N:
+                line_num = i + skiprows + 1
+                raise ValueError("Wrong number of columns at line %d"
+                                 % line_num)
+
             # Convert each value according to its column and store
             items = [conv(val) for (conv, val) in zip(converters, vals)]
             # Then pack it according to the dtype's nesting
@@ -862,7 +878,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Verify that the array has at least dimensions `ndmin`.
     # Check correctness of the values of `ndmin`
-    if not ndmin in [0, 1, 2]:
+    if ndmin not in [0, 1, 2]:
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
     # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
@@ -911,8 +927,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 and imaginary part must have separate specifiers,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
-        Character separating columns.
+        String or character separating columns.
     newline : str, optional
+        String or character separating lines.
+
         .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
@@ -929,7 +947,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         .. versionadded:: 1.7.0
 
-        Character separating lines.
 
     See Also
     --------
@@ -1072,7 +1089,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 fh.write(asbytes(format % tuple(row2) + newline))
         else:
             for row in X:
-                fh.write(asbytes(format % tuple(row) + newline))
+                try:
+                    fh.write(asbytes(format % tuple(row) + newline))
+                except TypeError:
+                    raise TypeError("Mismatch between array dtype ('%s') and "
+                                    "format specifier ('%s')"
+                                    % (str(X.dtype), format))
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
             fh.write(asbytes(comments + footer + newline))
@@ -1199,14 +1221,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
         can also be provided as width(s) of each field.
+    skip_rows : int, optional
+        `skip_rows` was deprecated in numpy 1.5, and will be removed in
+        numpy 2.0. Please use `skip_header` instead.
     skip_header : int, optional
-        The numbers of lines to skip at the beginning of the file.
+        The number of lines to skip at the beginning of the file.
     skip_footer : int, optional
-        The numbers of lines to skip at the end of the file
+        The number of lines to skip at the end of the file.
     converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
+    missing : variable, optional
+        `missing` was deprecated in numpy 1.5, and will be removed in
+        numpy 2.0. Please use `missing_values` instead.
     missing_values : variable, optional
         The set of strings corresponding to missing data.
     filling_values : variable, optional
@@ -1244,6 +1272,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
+    loose : bool, optional
+        If True, do not raise errors for invalid values.
     invalid_raise : bool, optional
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
@@ -1377,7 +1407,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = next(fhd)
             if names is True:
                 if comments in first_line:
-                    first_line = asbytes('').join(first_line.split(comments)[1:])
+                    first_line = (
+                        asbytes('').join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
@@ -1501,7 +1532,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the filling_values ...............................
     # Rename the input for convenience
-    user_filling_values = filling_values or []
+    user_filling_values = filling_values
+    if user_filling_values is None:
+        user_filling_values = []
     # Define the default
     filling_values = [None] * nbcols
     # We have a dictionary : update each entry individually
@@ -1556,22 +1589,25 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                           for (miss, fill) in zipit]
     # Update the converters to use the user-defined ones
     uc_update = []
-    for (i, conv) in user_converters.items():
+    for (j, conv) in user_converters.items():
         # If the converter is specified by column names, use the index instead
-        if _is_string_like(i):
+        if _is_string_like(j):
             try:
-                i = names.index(i)
+                j = names.index(j)
+                i = j
             except ValueError:
                 continue
         elif usecols:
             try:
-                i = usecols.index(i)
+                i = usecols.index(j)
             except ValueError:
                 # Unused converter specified
                 continue
-        # Find the value to test:
+        else:
+            i = j
+        # Find the value to test - first_line is not filtered by usecols:
         if len(first_line):
-            testing_value = first_values[i]
+            testing_value = first_values[j]
         else:
             testing_value = None
         converters[i].update(conv, locked=True,
@@ -1582,7 +1618,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Make sure we have the corrected keys in user_converters...
     user_converters.update(uc_update)
 
-    miss_chars = [_.missing_values for _ in converters]
+    # Fixme: possible error as following variable never used.
+    #miss_chars = [_.missing_values for _ in converters]
 
     # Initialize the output lists ...
     # ... rows
@@ -1673,23 +1710,17 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if usemask:
             masks = masks[:-skip_footer]
 
-
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
-    #
-    #    if loose:
-    #        conversionfuncs = [conv._loose_call for conv in converters]
-    #    else:
-    #        conversionfuncs = [conv._strict_call for conv in converters]
-    #    for (i, vals) in enumerate(rows):
-    #        rows[i] = tuple([convert(val)
-    #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = list(zip(*[[converter._loose_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)]))
+        rows = list(
+            zip(*[[conv._loose_call(_r) for _r in map(itemgetter(i), rows)]
+                  for (i, conv) in enumerate(converters)]))
     else:
-        rows = list(zip(*[[converter._strict_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)]))
+        rows = list(
+            zip(*[[conv._strict_call(_r) for _r in map(itemgetter(i), rows)]
+                  for (i, conv) in enumerate(converters)]))
+
     # Reset the dtype
     data = rows
     if dtype is None:
@@ -1751,7 +1782,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if user_converters:
                 ishomogeneous = True
                 descr = []
-                for (i, ttype) in enumerate([conv.type for conv in converters]):
+                for i, ttype in enumerate([conv.type for conv in converters]):
                     # Keep the dtype of the current converter
                     if i in user_converters:
                         ishomogeneous &= (ttype == dtype.type)
@@ -1848,7 +1879,7 @@ def recfromtxt(fname, **kwargs):
     array will be determined from the data.
 
     """
-    kwargs.update(dtype=kwargs.get('dtype', None))
+    kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
     if usemask:
@@ -1875,17 +1906,20 @@ def recfromcsv(fname, **kwargs):
     --------
     numpy.genfromtxt : generic function to load ASCII data.
 
+    Notes
+    -----
+    By default, `dtype` is None, which means that the data-type of the output
+    array will be determined from the data.
+
     """
-    case_sensitive = kwargs.get('case_sensitive', "lower") or "lower"
-    names = kwargs.get('names', True)
-    if names is None:
-        names = True
-    kwargs.update(dtype=kwargs.get('update', None),
-                  delimiter=kwargs.get('delimiter', ",") or ",",
-                  names=names,
-                  case_sensitive=case_sensitive)
-    usemask = kwargs.get("usemask", False)
+    # Set default kwargs for genfromtxt as relevant to csv import.
+    kwargs.setdefault("case_sensitive", "lower")
+    kwargs.setdefault("names", True)
+    kwargs.setdefault("delimiter", ",")
+    kwargs.setdefault("dtype", None)
     output = genfromtxt(fname, **kwargs)
+
+    usemask = kwargs.get("usemask", False)
     if usemask:
         from numpy.ma.mrecords import MaskedRecords
         output = output.view(MaskedRecords)

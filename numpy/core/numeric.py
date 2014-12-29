@@ -1,13 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
+import os
 import sys
 import warnings
 import collections
-from . import multiarray
+from numpy.core import multiarray
 from . import umath
-from .umath import *
+from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
+                    ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
+                    ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
-from .numerictypes import *
+from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -130,7 +133,9 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
-    multiarray.copyto(res, 0, casting='unsafe')
+    # needed instead of a 0 to get same result as zeros for for string dtypes
+    z = zeros(1, dtype=res.dtype)
+    multiarray.copyto(res, z, casting='unsafe')
     return res
 
 def ones(shape, dtype=None, order='C'):
@@ -354,9 +359,6 @@ def extend_all(module):
     for a in mall:
         if a not in adict:
             __all__.append(a)
-
-extend_all(umath)
-extend_all(numerictypes)
 
 newaxis = None
 
@@ -766,7 +768,7 @@ def argwhere(a):
            [1, 2]])
 
     """
-    return transpose(asanyarray(a).nonzero())
+    return transpose(nonzero(a))
 
 def flatnonzero(a):
     """
@@ -941,6 +943,8 @@ def convolve(a,v,mode='full'):
     scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
                                Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
+    polymul : Polynomial multiplication. Same output as convolve, but also
+              accepts poly1d objects as input.
 
     Notes
     -----
@@ -981,7 +985,7 @@ def convolve(a,v,mode='full'):
     array([ 2.5])
 
     """
-    a, v = array(a, ndmin=1), array(v, ndmin=1)
+    a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
     if len(a) == 0 :
@@ -991,7 +995,7 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
-def outer(a, b):
+def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
@@ -1012,6 +1016,10 @@ def outer(a, b):
     b : (N,) array_like
         Second input vector.  Input is flattened if
         not already 1-dimensional.
+    out : (M, N) ndarray, optional
+          A location where the result is stored
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -1065,23 +1073,65 @@ def outer(a, b):
     """
     a = asarray(a)
     b = asarray(b)
-    return a.ravel()[:, newaxis]*b.ravel()[newaxis,:]
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 # try to import blas optimized dot if available
-try:
-    # importing this changes the dot function for basic 4 types
-    # to blas-optimized versions.
-    from ._dotblas import dot, vdot, inner, alterdot, restoredot
-except ImportError:
-    # docstrings are in add_newdocs.py
-    inner = multiarray.inner
-    dot = multiarray.dot
-    def vdot(a, b):
-        return dot(asarray(a).ravel().conj(), asarray(b).ravel())
-    def alterdot():
-        pass
-    def restoredot():
-        pass
+envbak = os.environ.copy()
+dot = multiarray.dot
+inner = multiarray.inner
+vdot = multiarray.vdot
+
+def alterdot():
+    """
+    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
+
+    Typically, as a user of Numpy, you do not explicitly call this
+    function. If Numpy is built with an accelerated BLAS, this function is
+    automatically called when Numpy is imported.
+
+    When Numpy is built with an accelerated BLAS like ATLAS, these
+    functions are replaced to make use of the faster implementations.  The
+    faster implementations only affect float32, float64, complex64, and
+    complex128 arrays. Furthermore, the BLAS API only includes
+    matrix-matrix, matrix-vector, and vector-vector products. Products of
+    arrays with larger dimensionalities use the built in functions and are
+    not accelerated.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and alterdot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    restoredot : `restoredot` undoes the effects of `alterdot`.
+
+    """
+    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
+
+
+def restoredot():
+    """
+    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
+    implementations.
+
+    Typically, the user will only need to call this when troubleshooting
+    and installation problem, reproducing the conditions of a build without
+    an accelerated BLAS, or when being very careful about benchmarking
+    linear algebra operations.
+
+    .. note:: Deprecated in Numpy 1.10
+              The cblas functions have been integrated into the multarray
+              module and restoredot now longer does anything. It will be
+              removed in Numpy 1.11.0.
+
+    See Also
+    --------
+    alterdot : `restoredot` undoes the effects of `alterdot`.
+
+    """
+    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
+
 
 def tensordot(a, b, axes=2):
     """
@@ -1100,12 +1150,14 @@ def tensordot(a, b, axes=2):
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-    axes : variable type
-        * integer_like scalar
-          Number of axes to sum over (applies to both arrays); or
-        * (2,) array_like, both elements array_like of the same length
-          List of axes to be summed over, first sequence applying to `a`,
-          second to `b`.
+
+    axes : int or (2,) array_like
+        * integer_like
+          If an int N, sum over the last N axes of `a` and the first N axes
+          of `b` in order. The sizes of the corresponding axes must match.
+        * (2,) array_like
+          Or, a list of axes to be summed over, first sequence applying to `a`,
+          second to `b`. Both elements array_like must be of the same length.
 
     See Also
     --------
@@ -1113,6 +1165,15 @@ def tensordot(a, b, axes=2):
 
     Notes
     -----
+    Three common use cases are:
+        ``axes = 0`` : tensor product $a\otimes b$
+        ``axes = 1`` : tensor dot product $a\cdot b$
+        ``axes = 2`` : (default) tensor double contraction $a:b$
+
+    When `axes` is integer_like, the sequence for evaluation will be: first
+    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
+    Nth axis in `b` last.
+
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
@@ -1161,7 +1222,7 @@ def tensordot(a, b, axes=2):
     array([[a, b],
            [c, d]], dtype=object)
 
-    >>> np.tensordot(a, A) # third argument default is 2
+    >>> np.tensordot(a, A) # third argument default is 2 for double-contraction
     array([abbcccdddd, aaaaabbbbbbcccccccdddddddd], dtype=object)
 
     >>> np.tensordot(a, A, 1)
@@ -1170,7 +1231,7 @@ def tensordot(a, b, axes=2):
            [[aaaaacccccc, bbbbbdddddd],
             [aaaaaaacccccccc, bbbbbbbdddddddd]]], dtype=object)
 
-    >>> np.tensordot(a, A, 0) # "Left for reader" (result too long to incl.)
+    >>> np.tensordot(a, A, 0) # tensor product (result too long to incl.)
     array([[[[[a, b],
               [c, d]],
               ...
@@ -1503,7 +1564,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     b = rollaxis(b, axisb, b.ndim)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
-    if a.shape[-1] not in [2, 3] or b.shape[-1] not in [2, 3]:
+    if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
         raise ValueError(msg)
 
         # Create the output array
@@ -1513,45 +1574,62 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
+    # create local aliases for readability
+    a0 = a[..., 0]
+    a1 = a[..., 1]
+    if a.shape[-1] == 3:
+        a2 = a[..., 2]
+    b0 = b[..., 0]
+    b1 = b[..., 1]
+    if b.shape[-1] == 3:
+        b2 = b[..., 2]
+    if cp.ndim != 0 and cp.shape[-1] == 3:
+        cp0 = cp[..., 0]
+        cp1 = cp[..., 1]
+        cp2 = cp[..., 2]
+
     if a.shape[-1] == 2:
         if b.shape[-1] == 2:
-            # cp = a[..., 0]*b[..., 1] - a[..., 1]*b[..., 0]
-            multiply(a[..., 0], b[..., 1], out=cp)
-            cp -= a[..., 1]*b[..., 0]
+            # a0 * b1 - a1 * b0
+            multiply(a0, b1, out=cp)
+            cp -= a1 * b0
             if cp.ndim == 0:
                 return cp
             else:
                 # This works because we are moving the last axis
                 return rollaxis(cp, -1, axisc)
         else:
-            # cp[..., 0] = a[..., 1]*b[..., 2]
-            multiply(a[..., 1], b[..., 2], out=cp[..., 0])
-            # cp[..., 1] = -a[..., 0]*b[..., 2]
-            multiply(a[..., 0], b[..., 2], out=cp[..., 1])
-            cp[..., 1] *= - 1
-            # cp[..., 2] = a[..., 0]*b[..., 1] - a[..., 1]*b[..., 0]
-            multiply(a[..., 0], b[..., 1], out=cp[..., 2])
-            cp[..., 2] -= a[..., 1]*b[..., 0]
+            # cp0 = a1 * b2 - 0  (a2 = 0)
+            # cp1 = 0 - a0 * b2  (a2 = 0)
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a1, b2, out=cp0)
+            multiply(a0, b2, out=cp1)
+            negative(cp1, out=cp1)
+            multiply(a0, b1, out=cp2)
+            cp2 -= a1 * b0
     elif a.shape[-1] == 3:
         if b.shape[-1] == 3:
-            # cp[..., 0] = a[..., 1]*b[..., 2] - a[..., 2]*b[..., 1]
-            multiply(a[..., 1], b[..., 2], out=cp[..., 0])
-            cp[..., 0] -= a[..., 2]*b[..., 1]
-            # cp[..., 1] = a[..., 2]*b[..., 0] - a[..., 0]*b[..., 2]
-            multiply(a[..., 2], b[..., 0], out=cp[..., 1])
-            cp[..., 1] -= a[..., 0]*b[..., 2]
-            # cp[..., 2] = a[..., 0]*b[..., 1] - a[..., 1]*b[..., 0]
-            multiply(a[..., 0], b[..., 1], out=cp[..., 2])
-            cp[..., 2] -= a[..., 1]*b[..., 0]
+            # cp0 = a1 * b2 - a2 * b1
+            # cp1 = a2 * b0 - a0 * b2
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a1, b2, out=cp0)
+            tmp = array(a2 * b1)
+            cp0 -= tmp
+            multiply(a2, b0, out=cp1)
+            multiply(a0, b2, out=tmp)
+            cp1 -= tmp
+            multiply(a0, b1, out=cp2)
+            multiply(a1, b0, out=tmp)
+            cp2 -= tmp
         else:
-            # cp[..., 0] = -a[..., 2]*b[..., 1]
-            multiply(a[..., 2], b[..., 1], out=cp[..., 0])
-            cp[..., 0] *= - 1
-            # cp[..., 1] = a[..., 2]*b[..., 0]
-            multiply(a[..., 2], b[..., 0], out=cp[..., 1])
-            # cp[..., 2] = a[..., 0]*b[..., 1] - a[..., 1]*b[..., 0]
-            multiply(a[..., 0], b[..., 1], out=cp[..., 2])
-            cp[..., 2] -= a[..., 1]*b[..., 0]
+            # cp0 = 0 - a2 * b1  (b2 = 0)
+            # cp1 = a2 * b0 - 0  (b2 = 0)
+            # cp2 = a0 * b1 - a1 * b0
+            multiply(a2, b1, out=cp0)
+            negative(cp0, out=cp0)
+            multiply(a2, b0, out=cp1)
+            multiply(a0, b1, out=cp2)
+            cp2 -= a1 * b0
 
     if cp.ndim == 1:
         return cp
@@ -2116,6 +2194,41 @@ def identity(n, dtype=None):
     from numpy import eye
     return eye(n, dtype=dtype)
 
+def _allclose_points(a, b, rtol=1.e-5, atol=1.e-8):
+    """
+    This is the point-wise inner calculation of 'allclose', which is subtly
+    different from 'isclose'.  Provided as a comparison routine for use in
+    testing.assert_allclose.
+    See those routines for further details.
+
+    """
+    x = array(a, copy=False, ndmin=1)
+    y = array(b, copy=False, ndmin=1)
+
+    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
+    # casting of x later.
+    dtype = multiarray.result_type(y, 1.)
+    y = array(y, dtype=dtype, copy=False)
+
+    xinf = isinf(x)
+    yinf = isinf(y)
+    if any(xinf) or any(yinf):
+        # Check that x and y have inf's only in the same positions
+        if not all(xinf == yinf):
+            return False
+        # Check that sign of inf's in x and y is the same
+        if not all(x[xinf] == y[xinf]):
+            return False
+
+        x = x[~xinf]
+        y = y[~xinf]
+
+    # ignore invalid fpe's
+    with errstate(invalid='ignore'):
+        r = less_equal(abs(x - y), atol + rtol * abs(y))
+
+    return r
+
 def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
@@ -2171,32 +2284,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     False
 
     """
-    x = array(a, copy=False, ndmin=1)
-    y = array(b, copy=False, ndmin=1)
-
-    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
-    # casting of x later.
-    dtype = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dtype, copy=False)
-
-    xinf = isinf(x)
-    yinf = isinf(y)
-    if any(xinf) or any(yinf):
-        # Check that x and y have inf's only in the same positions
-        if not all(xinf == yinf):
-            return False
-        # Check that sign of inf's in x and y is the same
-        if not all(x[xinf] == y[xinf]):
-            return False
-
-        x = x[~xinf]
-        y = y[~xinf]
-
-    # ignore invalid fpe's
-    with errstate(invalid='ignore'):
-        r = all(less_equal(abs(x - y), atol + rtol * abs(y)))
-
-    return r
+    return all(_allclose_points(a, b, rtol=rtol, atol=atol))
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2369,9 +2457,11 @@ def array_equiv(a1, a2):
     except:
         return False
     try:
-        return bool(asarray(a1 == a2).all())
-    except ValueError:
+        multiarray.broadcast(a1, a2)
+    except:
         return False
+
+    return bool(asarray(a1 == a2).all())
 
 
 _errdict = {"ignore":ERR_IGNORE,
@@ -2794,6 +2884,10 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
+from .umath import *
+from .numerictypes import *
 from . import fromnumeric
 from .fromnumeric import *
 extend_all(fromnumeric)
+extend_all(umath)
+extend_all(numerictypes)

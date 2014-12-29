@@ -78,8 +78,11 @@ poly1d([ 2.])
 (poly1d([ 1., -1.]), poly1d([ 0.]))
 
 '''
-from numpy.testing import *
 import numpy as np
+from numpy.testing import (
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    assert_almost_equal, rundocs
+    )
 
 
 class TestDocs(TestCase):
@@ -118,10 +121,10 @@ class TestDocs(TestCase):
         assert_almost_equal(val0, cov, decimal=4)
 
         m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
-        assert_almost_equal([4.8927, -1.0177,  1.7768], m2, decimal=4)
-        val = [[8.7929, -10.0103,   0.9756],
-               [-10.0103,  13.6134,  -1.8178],
-               [0.9756,  -1.8178,   0.6674]]
+        assert_almost_equal([4.8927, -1.0177, 1.7768], m2, decimal=4)
+        val = [[8.7929, -10.0103, 0.9756],
+               [-10.0103, 13.6134, -1.8178],
+               [0.9756, -1.8178, 0.6674]]
         assert_almost_equal(val, cov2, decimal=4)
 
         # check 2D (n,1) case
@@ -150,6 +153,9 @@ class TestDocs(TestCase):
         assert_(p2[3] == Decimal("1.333333333333333333333333333"))
         assert_(p2[2] == Decimal('1.5'))
         assert_(np.issubdtype(p2.coeffs.dtype, np.object_))
+        p = np.poly([Decimal(1), Decimal(2)])
+        assert_equal(np.poly([Decimal(1), Decimal(2)]),
+                     [1, Decimal(-3), Decimal(2)])
 
     def test_complex(self):
         p = np.poly1d([3j, 2j, 1j])
@@ -169,6 +175,14 @@ class TestDocs(TestCase):
             np.poly(np.zeros((0, 0)))
         except ValueError:
             pass
+
+    def test_poly_int_overflow(self):
+        """
+        Regression test for gh-5096.
+        """
+        v = np.arange(1, 21)
+        assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
+
 
 if __name__ == "__main__":
     run_module_suite()

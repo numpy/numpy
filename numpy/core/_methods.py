@@ -12,29 +12,33 @@ from numpy.core import umath as um
 from numpy.core.numeric import asanyarray
 from numpy.core import numerictypes as nt
 
+# save those O(100) nanoseconds!
+umr_maximum = um.maximum.reduce
+umr_minimum = um.minimum.reduce
+umr_sum = um.add.reduce
+umr_prod = um.multiply.reduce
+umr_any = um.logical_or.reduce
+umr_all = um.logical_and.reduce
+
+# avoid keyword arguments to speed up parsing, saves about 15%-20% for very
+# small reductions
 def _amax(a, axis=None, out=None, keepdims=False):
-    return um.maximum.reduce(a, axis=axis,
-                            out=out, keepdims=keepdims)
+    return umr_maximum(a, axis, None, out, keepdims)
 
 def _amin(a, axis=None, out=None, keepdims=False):
-    return um.minimum.reduce(a, axis=axis,
-                            out=out, keepdims=keepdims)
+    return umr_minimum(a, axis, None, out, keepdims)
 
 def _sum(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.add.reduce(a, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
+    return umr_sum(a, axis, dtype, out, keepdims)
 
 def _prod(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.multiply.reduce(a, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
+    return umr_prod(a, axis, dtype, out, keepdims)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.logical_or.reduce(a, axis=axis, dtype=dtype, out=out,
-                                keepdims=keepdims)
+    return umr_any(a, axis, dtype, out, keepdims)
 
 def _all(a, axis=None, dtype=None, out=None, keepdims=False):
-    return um.logical_and.reduce(a, axis=axis, dtype=dtype, out=out,
-                                 keepdims=keepdims)
+    return umr_all(a, axis, dtype, out, keepdims)
 
 def _count_reduce_items(arr, axis):
     if axis is None:
@@ -59,7 +63,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
         dtype = mu.dtype('f8')
 
-    ret = um.add.reduce(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    ret = umr_sum(arr, axis, dtype, out, keepdims)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
@@ -85,7 +89,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     # Compute the mean.
     # Note that if dtype is not of inexact type then arraymean will
     # not be either.
-    arrmean = um.add.reduce(arr, axis=axis, dtype=dtype, keepdims=True)
+    arrmean = umr_sum(arr, axis, dtype, keepdims=True)
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(
                 arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
@@ -100,7 +104,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
-    ret = um.add.reduce(x, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    ret = umr_sum(x, axis, dtype, out, keepdims)
 
     # Compute degrees of freedom and make sure it is not negative.
     rcount = max([rcount - ddof, 0])

@@ -11,9 +11,9 @@ installable binary package for your operating system.
 Windows
 -------
 
-Good solutions for Windows are, The Enthought Python Distribution `(EPD)
-<http://www.enthought.com/products/epd.php>`_ (which provides binary
-installers for Windows, OS X and Redhat) and `Python (x, y)
+Good solutions for Windows are, `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_ (which provides binary
+installers for Windows, OS X and Linux) and `Python (x, y)
 <http://www.pythonxy.com>`_. Both of these packages include Python, NumPy and
 many additional packages.
 
@@ -37,15 +37,16 @@ Most of the major distributions provide packages for NumPy, but these can lag
 behind the most recent NumPy release. Pre-built binary packages for Ubuntu are
 available on the `scipy ppa
 <https://edge.launchpad.net/~scipy/+archive/ppa>`_. Redhat binaries are
-available in the `EPD <http://www.enthought.com/products/epd.php>`_.
+available in the `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_.
 
 Mac OS X
 --------
 
 A universal binary installer for NumPy is available from the `download site
 <http://sourceforge.net/project/showfiles.php?group_id=1369&
-package_id=175103>`_. The `EPD <http://www.enthought.com/products/epd.php>`_
-provides NumPy binaries.
+package_id=175103>`_. The `Enthought Canopy
+<https://www.enthought.com/products/canopy/>`_ provides NumPy binaries.
 
 Building from source
 ====================
@@ -58,18 +59,19 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 2.4.x, 2.5.x or 2.6.x
+1) Python 2.6.x, 2.7.x, 3.2.x or newer
 
-   On Debian and derivative (Ubuntu): python, python-dev
+   On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
    On Windows: the official python installer at
    `www.python.org <http://www.python.org>`_ is enough
 
    Make sure that the Python package distutils is installed before
-   continuing. For example, in Debian GNU/Linux, distutils is included
-   in the python-dev package.
+   continuing. For example, in Debian GNU/Linux, installing python-dev
+   also installs distutils.
 
-   Python must also be compiled with the zlib module enabled.
+   Python must also be compiled with the zlib module enabled. This is
+   practically always the case with pre-packaged Pythons.
 
 2) Compilers
 

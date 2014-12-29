@@ -189,9 +189,10 @@ static void
  * specialized copy and swap for source stride 0,
  * interestingly unrolling here is like above is only marginally profitable for
  * small types and detrimental for >= 8byte moves on x86
+ * but it profits from vectorization enabled with -O3
  */
 #if (@src_contig@ == 0) && @is_aligned@
-static void
+static NPY_GCC_OPT_3 void
 @prefix@_@oper@_size@elsize@_srcstride0(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
@@ -792,7 +793,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 
 #endif
 
-static void
+static NPY_GCC_OPT_3 void
 @prefix@_cast_@name1@_to_@name2@(
                         char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
@@ -1373,17 +1374,17 @@ NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
                        PyArrayObject *result)
 {
-    char *base_ptr, *self_ptr, *ind_ptr, *result_ptr;
+    char *base_ptr, *ind_ptr, *result_ptr;
     npy_intp self_stride, ind_stride, result_stride;
     npy_intp fancy_dim = PyArray_DIM(self, 0);
 
     npy_intp itersize;
-    npy_intp indval;
 
     int is_aligned = PyArray_ISALIGNED(self) && PyArray_ISALIGNED(result);
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
 
     PyArray_CopySwapFunc *copyswap = PyArray_DESCR(self)->f->copyswap;
+    NPY_BEGIN_THREADS_DEF;
 
     base_ptr = PyArray_BYTES(self);
     self_stride = PyArray_STRIDE(self, 0);
@@ -1392,11 +1393,14 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
                                            ind_ptr, result_ptr,
                                            ind_stride, result_stride)
 
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(PyArray_SIZE(ind));
+    }
 #if !@isget@
     /* Check the indices beforehand */
     while (itersize--) {
-        indval = *((npy_intp*)ind_ptr);
-        if (check_and_adjust_index(&indval, fancy_dim, 1) < 0 ) {
+        npy_intp indval = *((npy_intp*)ind_ptr);
+        if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
             return -1;
         }
         ind_ptr += ind_stride;
@@ -1424,9 +1428,11 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
     default:
 #endif
         while (itersize--) {
-            indval = *((npy_intp*)ind_ptr);
+            char * self_ptr;
+            npy_intp indval = *((npy_intp*)ind_ptr);
+            assert(npy_is_aligned(ind_ptr, _ALIGN(npy_intp)));
 #if @isget@
-            if (check_and_adjust_index(&indval, fancy_dim, 1) < 0 ) {
+            if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
                 return -1;
             }
 #else
@@ -1438,6 +1444,8 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
 #if @isget@
 #if @elsize@
+            assert(npy_is_aligned(result_ptr, _ALIGN(@copytype@)));
+            assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
             *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
 #else
             copyswap(result_ptr, self_ptr, 0, self);
@@ -1445,6 +1453,8 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
 #else /* !@isget@ */
 #if @elsize@
+            assert(npy_is_aligned(result_ptr, _ALIGN(@copytype@)));
+            assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
             *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
 #else
             copyswap(self_ptr, result_ptr, 0, self);
@@ -1459,6 +1469,8 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 /**end repeat1**/
     }
 
+    NPY_END_THREADS;
+
     return 0;
 }
 
@@ -1470,9 +1482,7 @@ NPY_NO_EXPORT int
 mapiter_@name@(PyArrayMapIterObject *mit)
 {
     npy_intp *counter, count;
-    npy_intp indval;
     int i, is_aligned;
-    char *self_ptr;
 
     /* Cached mit info */
     int numiter = mit->numiter;
@@ -1480,7 +1490,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     /* Constant information */
     npy_intp fancy_dims[NPY_MAXDIMS];
     npy_intp fancy_strides[NPY_MAXDIMS];
+#if @isget@
     int iteraxis;
+#endif
 
     char *baseoffset = mit->baseoffset;
     char **outer_ptrs = mit->outer_ptrs;
@@ -1488,7 +1500,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
     PyArrayObject *array= mit->array;
 
     /* Fill constant information */
+#if @isget@
     iteraxis = mit->iteraxes[0];
+#endif
     for (i = 0; i < numiter; i++) {
         fancy_dims[i] = mit->fancy_dims[i];
         fancy_strides[i] = mit->fancy_strides[i];
@@ -1527,6 +1541,10 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #else
         else {
 #endif
+            NPY_BEGIN_THREADS_DEF;
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
 
             /* Optimization for aligned types that do not need the api */
             switch ((is_aligned && !needs_api) ? PyArray_ITEMSIZE(array) : 0) {
@@ -1554,13 +1572,15 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #endif
                     count = *counter;
                     while (count--) {
-                        self_ptr = baseoffset;
+                        char * self_ptr = baseoffset;
                         for (i=0; i < @numiter@; i++) {
-                            indval = *((npy_intp*)outer_ptrs[i]);
+                            npy_intp indval = *((npy_intp*)outer_ptrs[i]);
+                            assert(npy_is_aligned(outer_ptrs[i],
+                                                  _ALIGN(npy_intp)));
 
 #if @isget@ && @one_iter@
                             if (check_and_adjust_index(&indval, fancy_dims[i],
-                                                       iteraxis) < 0 ) {
+                                                       iteraxis, _save) < 0 ) {
                                 return -1;
                             }
 #else
@@ -1576,12 +1596,16 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
 #if @isget@
 #if @elsize@
+                        assert(npy_is_aligned(outer_ptrs[i], _ALIGN(@copytype@)));
+                        assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
                         *(@copytype@ *)(outer_ptrs[i]) = *(@copytype@ *)self_ptr;
 #else
                         copyswap(outer_ptrs[i], self_ptr, 0, array);
 #endif
 #else /* !@isget@ */
 #if @elsize@
+                        assert(npy_is_aligned(outer_ptrs[i], _ALIGN(@copytype@)));
+                        assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
                         *(@copytype@ *)self_ptr = *(@copytype@ *)(outer_ptrs[i]);
 #else
                         copyswap(self_ptr, outer_ptrs[i], 0, array);
@@ -1596,6 +1620,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
 /**end repeat2**/
             }
+            NPY_END_THREADS;
         }
 /**end repeat1**/
     }
@@ -1653,16 +1678,20 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #else
         else {
 #endif
+            NPY_BEGIN_THREADS_DEF;
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
 
             /* Outer iteration (safe because mit->size != 0) */
             do {
-                self_ptr = baseoffset;
+                char * self_ptr = baseoffset;
                 for (i=0; i < @numiter@; i++) {
-                    indval = *((npy_intp*)outer_ptrs[i]);
+                    npy_intp indval = *((npy_intp*)outer_ptrs[i]);
 
 #if @isget@ && @one_iter@
                     if (check_and_adjust_index(&indval, fancy_dims[i],
-                                               iteraxis) < 0 ) {
+                                               iteraxis, _save) < 0 ) {
                         NPY_AUXDATA_FREE(transferdata);
                         return -1;
                     }
@@ -1680,12 +1709,16 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                  * only a single inner loop.
                  */
                 if (!skip) {
+                    char * errmsg = NULL;
                     subspace_baseptrs[0] = self_ptr;
                     subspace_baseptrs[1] = mit->extra_op_ptrs[0];
 
                     /* (can't really fail, since no buffering necessary) */
                     if (!NpyIter_ResetBasePointers(mit->subspace_iter,
-                                                   subspace_baseptrs, NULL)) {
+                                                   subspace_baseptrs,
+                                                   &errmsg)) {
+                        NPY_END_THREADS;
+                        PyErr_SetString(PyExc_ValueError, errmsg);
                         NPY_AUXDATA_FREE(transferdata);
                         return -1;
                     }
@@ -1722,6 +1755,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
                 mit->extra_op_next(mit->extra_op_iter);
             } while (mit->outer_next(mit->outer));
+            NPY_END_THREADS;
         }
 /**end repeat1**/
 

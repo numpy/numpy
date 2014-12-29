@@ -220,16 +220,20 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
 
    The first character specifies the kind of data and the remaining
-   characters specify how many bytes of data. The supported kinds are
+   characters specify the number of bytes per item.  The item size may
+   be ignored for some kinds (i.e., boolean, object), rounded to the
+   next supported size (float, complex), or interpreted as the number
+   of characters (Unicode).  The supported kinds are
 
    ================   ========================
-   ``'b'``            Boolean
+   ``'b'``            boolean
    ``'i'``            (signed) integer
    ``'u'``            unsigned integer
    ``'f'``            floating-point
    ``'c'``            complex-floating point
-   ``'S'``, ``'a'``   string
-   ``'U'``            unicode
+   ``'O'``            (Python) objects
+   ``'S'``, ``'a'``   (byte-)string
+   ``'U'``            Unicode
    ``'V'``            raw data (:class:`void`)
    ================   ========================
 

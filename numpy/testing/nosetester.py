@@ -90,7 +90,7 @@ def run_module_suite(file_to_run=None, argv=None):
     argv: list of strings
         Arguments to be passed to the nose test runner. ``argv[0]`` is
         ignored. All command line arguments accepted by ``nosetests``
-        will work.
+        will work. If it is the default value None, sys.argv is used.
 
         .. versionadded:: 1.9.0
 
@@ -117,7 +117,7 @@ def run_module_suite(file_to_run=None, argv=None):
             raise AssertionError
 
     if argv is None:
-        argv = ['', file_to_run]
+        argv = sys.argv + [file_to_run]
     else:
         argv = argv + [file_to_run]
 
@@ -246,6 +246,8 @@ class NoseTester(object):
 
         import numpy
         print("NumPy version %s" % numpy.__version__)
+        relaxed_strides = numpy.ones((10, 1), order="C").flags.f_contiguous
+        print("NumPy relaxed strides checking option:", relaxed_strides)
         npdir = os.path.dirname(numpy.__file__)
         print("NumPy is installed in %s" % npdir)
 
@@ -419,6 +421,10 @@ class NoseTester(object):
             warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
             warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
             warnings.filterwarnings("ignore", category=FutureWarning)
+            # Filter out boolean '-' deprecation messages. This allows
+            # older versions of scipy to test without a flood of messages.
+            warnings.filterwarnings("ignore", message=".*boolean negative.*")
+            warnings.filterwarnings("ignore", message=".*boolean subtract.*")
 
             from .noseclasses import NumpyTestProgram
 

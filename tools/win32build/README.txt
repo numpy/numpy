@@ -48,6 +48,8 @@ cpuid. To build it, you have two options:
         - with scons: if you have scons, just do scons install. It will build
           and put the CpuCaps.dll  in the plugins directory of nsis (if you
           install nsis in the default path).
+        - run build-cpucaps.py with a windows python, e.g.
+          wine "C:\Python27\python" build-cpucaps.py
 
 build.py:
 ---------

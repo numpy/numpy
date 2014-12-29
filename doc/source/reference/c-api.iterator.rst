@@ -18,8 +18,6 @@ preservation of memory layouts, and buffering of data with the wrong
 alignment or type, without requiring difficult coding.
 
 This page documents the API for the iterator.
-The C-API naming convention chosen is based on the one in the numpy-refactor
-branch, so will integrate naturally into the refactored code base.
 The iterator is named ``NpyIter`` and functions are
 named ``NpyIter_*``.
 
@@ -27,51 +25,6 @@ There is an :ref:`introductory guide to array iteration <arrays.nditer>`
 which may be of interest for those using this C API. In many instances,
 testing out ideas by creating the iterator in Python is a good idea
 before writing the C iteration code.
-
-Converting from Previous NumPy Iterators
-----------------------------------------
-
-The existing iterator API includes functions like PyArrayIter_Check,
-PyArray_Iter* and PyArray_ITER_*.  The multi-iterator array includes
-PyArray_MultiIter*, PyArray_Broadcast, and PyArray_RemoveSmallest.  The
-new iterator design replaces all of this functionality with a single object
-and associated API.  One goal of the new API is that all uses of the
-existing iterator should be replaceable with the new iterator without
-significant effort. In 1.6, the major exception to this is the neighborhood
-iterator, which does not have corresponding features in this iterator.
-
-Here is a conversion table for which functions to use with the new iterator:
-
-=====================================  =============================================
-*Iterator Functions*
-:cfunc:`PyArray_IterNew`               :cfunc:`NpyIter_New`
-:cfunc:`PyArray_IterAllButAxis`        :cfunc:`NpyIter_New` + ``axes`` parameter **or**
-                                       Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
-:cfunc:`PyArray_BroadcastToShape`      **NOT SUPPORTED** (Use the support for
-                                       multiple operands instead.)
-:cfunc:`PyArrayIter_Check`             Will need to add this in Python exposure
-:cfunc:`PyArray_ITER_RESET`            :cfunc:`NpyIter_Reset`
-:cfunc:`PyArray_ITER_NEXT`             Function pointer from :cfunc:`NpyIter_GetIterNext`
-:cfunc:`PyArray_ITER_DATA`             :cfunc:`NpyIter_GetDataPtrArray`
-:cfunc:`PyArray_ITER_GOTO`             :cfunc:`NpyIter_GotoMultiIndex`
-:cfunc:`PyArray_ITER_GOTO1D`           :cfunc:`NpyIter_GotoIndex` or
-                                       :cfunc:`NpyIter_GotoIterIndex`
-:cfunc:`PyArray_ITER_NOTDONE`          Return value of ``iternext`` function pointer
-*Multi-iterator Functions*
-:cfunc:`PyArray_MultiIterNew`          :cfunc:`NpyIter_MultiNew`
-:cfunc:`PyArray_MultiIter_RESET`       :cfunc:`NpyIter_Reset`
-:cfunc:`PyArray_MultiIter_NEXT`        Function pointer from :cfunc:`NpyIter_GetIterNext`
-:cfunc:`PyArray_MultiIter_DATA`        :cfunc:`NpyIter_GetDataPtrArray`
-:cfunc:`PyArray_MultiIter_NEXTi`       **NOT SUPPORTED** (always lock-step iteration)
-:cfunc:`PyArray_MultiIter_GOTO`        :cfunc:`NpyIter_GotoMultiIndex`
-:cfunc:`PyArray_MultiIter_GOTO1D`      :cfunc:`NpyIter_GotoIndex` or
-                                       :cfunc:`NpyIter_GotoIterIndex`
-:cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
-:cfunc:`PyArray_Broadcast`             Handled by :cfunc:`NpyIter_MultiNew`
-:cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
-*Other Functions*
-:cfunc:`PyArray_ConvertToCommonType`   Iterator flag :cdata:`NPY_ITER_COMMON_DTYPE`
-=====================================  =============================================
 
 Simple Iteration Example
 ------------------------
@@ -91,6 +44,7 @@ number of non-zero elements in an array.
         NpyIter* iter;
         NpyIter_IterNextFunc *iternext;
         char** dataptr;
+        npy_intp nonzero_count;
         npy_intp* strideptr,* innersizeptr;
 
         /* Handle zero-sized arrays specially */
@@ -138,7 +92,7 @@ number of non-zero elements in an array.
         /* The location of the inner loop size which the iterator may update */
         innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        /* The iteration loop */
+        nonzero_count = 0;
         do {
             /* Get the inner loop data/stride/count values */
             char* data = *dataptr;
@@ -369,7 +323,14 @@ Construction and Destruction
 
             Causes the iterator to track a multi-index.
             This prevents the iterator from coalescing axes to
-            produce bigger inner loops.
+            produce bigger inner loops. If the loop is also not buffered
+            and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+            then the iterator size can be ``-1`` to indicate that the iterator
+            is too large. This can happen due to complex broadcasting and
+            will result in errors being created when the setting the iterator
+            range, removing the multi index, or getting the next function.
+            However, it is possible to remove axes again and use the iterator
+            normally if the size is small enough after removal.
 
         .. cvar:: NPY_ITER_EXTERNAL_LOOP
 
@@ -412,8 +373,9 @@ Construction and Destruction
 
             Indicates that arrays with a size of zero should be permitted.
             Since the typical iteration loop does not naturally work with
-            zero-sized arrays, you must check that the IterSize is non-zero
-            before entering the iteration loop.
+            zero-sized arrays, you must check that the IterSize is larger
+            than zero before entering the iteration loop.
+            Currently only the operands are checked, not a forced shape.
 
         .. cvar:: NPY_ITER_REDUCE_OK
 
@@ -721,7 +683,7 @@ Construction and Destruction
 
     **WARNING**: This function may change the internal memory layout of
     the iterator.  Any cached functions or pointers from the iterator
-    must be retrieved again!
+    must be retrieved again! The iterator range will be reset as well.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -887,7 +849,11 @@ Construction and Destruction
 .. cfunction:: npy_intp NpyIter_GetIterSize(NpyIter* iter)
 
     Returns the number of elements being iterated.  This is the product
-    of all the dimensions in the shape.
+    of all the dimensions in the shape.  When a multi index is being tracked
+    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    indicate an iterator is too large.  Such an iterator is invalid, but
+    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    necessary to check for this case.
 
 .. cfunction:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)
 
@@ -1284,3 +1250,48 @@ functions provide that information.
 
 .. index::
     pair: iterator; C-API
+
+Converting from Previous NumPy Iterators
+----------------------------------------
+
+The old iterator API includes functions like PyArrayIter_Check,
+PyArray_Iter* and PyArray_ITER_*.  The multi-iterator array includes
+PyArray_MultiIter*, PyArray_Broadcast, and PyArray_RemoveSmallest.  The
+new iterator design replaces all of this functionality with a single object
+and associated API.  One goal of the new API is that all uses of the
+existing iterator should be replaceable with the new iterator without
+significant effort. In 1.6, the major exception to this is the neighborhood
+iterator, which does not have corresponding features in this iterator.
+
+Here is a conversion table for which functions to use with the new iterator:
+
+=====================================  =============================================
+*Iterator Functions*
+:cfunc:`PyArray_IterNew`               :cfunc:`NpyIter_New`
+:cfunc:`PyArray_IterAllButAxis`        :cfunc:`NpyIter_New` + ``axes`` parameter **or**
+                                       Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
+:cfunc:`PyArray_BroadcastToShape`      **NOT SUPPORTED** (Use the support for
+                                       multiple operands instead.)
+:cfunc:`PyArrayIter_Check`             Will need to add this in Python exposure
+:cfunc:`PyArray_ITER_RESET`            :cfunc:`NpyIter_Reset`
+:cfunc:`PyArray_ITER_NEXT`             Function pointer from :cfunc:`NpyIter_GetIterNext`
+:cfunc:`PyArray_ITER_DATA`             :cfunc:`NpyIter_GetDataPtrArray`
+:cfunc:`PyArray_ITER_GOTO`             :cfunc:`NpyIter_GotoMultiIndex`
+:cfunc:`PyArray_ITER_GOTO1D`           :cfunc:`NpyIter_GotoIndex` or
+                                       :cfunc:`NpyIter_GotoIterIndex`
+:cfunc:`PyArray_ITER_NOTDONE`          Return value of ``iternext`` function pointer
+*Multi-iterator Functions*
+:cfunc:`PyArray_MultiIterNew`          :cfunc:`NpyIter_MultiNew`
+:cfunc:`PyArray_MultiIter_RESET`       :cfunc:`NpyIter_Reset`
+:cfunc:`PyArray_MultiIter_NEXT`        Function pointer from :cfunc:`NpyIter_GetIterNext`
+:cfunc:`PyArray_MultiIter_DATA`        :cfunc:`NpyIter_GetDataPtrArray`
+:cfunc:`PyArray_MultiIter_NEXTi`       **NOT SUPPORTED** (always lock-step iteration)
+:cfunc:`PyArray_MultiIter_GOTO`        :cfunc:`NpyIter_GotoMultiIndex`
+:cfunc:`PyArray_MultiIter_GOTO1D`      :cfunc:`NpyIter_GotoIndex` or
+                                       :cfunc:`NpyIter_GotoIterIndex`
+:cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
+:cfunc:`PyArray_Broadcast`             Handled by :cfunc:`NpyIter_MultiNew`
+:cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
+*Other Functions*
+:cfunc:`PyArray_ConvertToCommonType`   Iterator flag :cdata:`NPY_ITER_COMMON_DTYPE`
+=====================================  =============================================

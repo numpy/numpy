@@ -65,7 +65,7 @@ high-level language for scientific and engineering programming.
 Their are two basic approaches to calling compiled code: writing an
 extension module that is then imported to Python using the import
 command, or calling a shared-library subroutine directly from Python
-using the ctypes module (included in the standard distribution with
+using the ctypes module (included in the standard distribution since
 Python 2.5). The first method is the most common (but with the
 inclusion of ctypes into Python 2.5 this status may change).
 
@@ -249,8 +249,14 @@ necessary to tell f2py that the value of n depends on the input a (so
 that it won't try to create the variable n until the variable a is
 created).
 
+After modifying ``add.pyf``, the new python module file can be generated
+by compiling both ``add.f95`` and ``add.pyf``::
+
+    f2py -c add.pyf add.f95 
+
 The new interface has docstring:
 
+    >>> import add
     >>> print add.zadd.__doc__
     zadd - Function signature:
       c = zadd(a,b)
@@ -350,18 +356,15 @@ version of the input.
 Calling f2py from Python
 ------------------------
 
-The f2py program is written in Python and can be run from inside your
-module. This provides a facility that is somewhat similar to the use
-of weave.ext_tools described below. An example of the final interface
-executed using Python code is:
+The f2py program is written in Python and can be run from inside your code
+to compile Fortran code at runtime, as follows:
 
 .. code-block:: python
 
-    import numpy.f2py as f2py
-    fid = open('add.f')
-    source = fid.read()
-    fid.close()
-    f2py.compile(source, modulename='add')
+    from numpy import f2py
+    with open("add.f") as sourcefile:
+        sourcecode = sourcefile.read()
+    f2py.compile(sourcecode, modulename='add')
     import add
 
 The source string can be any valid Fortran code. If you want to save
@@ -432,478 +435,205 @@ written C-code.
    single: f2py
 
 
-weave
-=====
+Cython
+======
 
-Weave is a scipy package that can be used to automate the process of
-extending Python with C/C++ code. It can be used to speed up
-evaluation of an array expression that would otherwise create
-temporary variables, to directly "inline" C/C++ code into Python, or
-to create a fully-named extension module.  You must either install
-scipy or get the weave package separately and install it using the
-standard python setup.py install. You must also have a C/C++-compiler
-installed and useable by Python distutils in order to use weave.
+`Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
+(optional) static typing for speed, and allows mixing C or C++ code
+into your modules. It produces C or C++ extensions that can be compiled
+and imported in Python code.
 
-.. index::
-   single: weave
-
-Somewhat dated, but still useful documentation for weave can be found
-at the link http://www.scipy/Weave. There are also many examples found
-in the examples directory which is installed under the weave directory
-in the place where weave is installed on your system.
-
-
-Speed up code involving arrays (also see scipy.numexpr)
--------------------------------------------------------
-
-This is the easiest way to use weave and requires minimal changes to
-your Python code. It involves placing quotes around the expression of
-interest and calling weave.blitz. Weave will parse the code and
-generate C++ code using Blitz C++ arrays. It will then compile the
-code and catalog the shared library so that the next time this exact
-string is asked for (and the array types are the same), the already-
-compiled shared library will be loaded and used. Because Blitz makes
-extensive use of C++ templating, it can take a long time to compile
-the first time. After that, however, the code should evaluate more
-quickly than the equivalent NumPy expression. This is especially true
-if your array sizes are large and the expression would require NumPy
-to create several temporaries. Only expressions involving basic
-arithmetic operations and basic array slicing can be converted to
-Blitz C++ code.
-
-For example, consider the expression::
-
-    d = 4*a + 5*a*b + 6*b*c
-
-where a, b, and c are all arrays of the same type and shape. When the
-data-type is double-precision and the size is 1000x1000, this
-expression takes about 0.5 seconds to compute on an 1.1Ghz AMD Athlon
-machine. When this expression is executed instead using blitz:
-
-.. code-block:: python
-
-    d = empty(a.shape, 'd'); weave.blitz(expr)
-
-execution time is only about 0.20 seconds (about 0.14 seconds spent in
-weave and the rest in allocating space for d). Thus, we've sped up the
-code by a factor of 2 using only a simnple command (weave.blitz). Your
-mileage may vary, but factors of 2-8 speed-ups are possible with this
-very simple technique.
-
-If you are interested in using weave in this way, then you should also
-look at scipy.numexpr which is another similar way to speed up
-expressions by eliminating the need for temporary variables. Using
-numexpr does not require a C/C++ compiler.
-
-
-Inline C-code
--------------
-
-Probably the most widely-used method of employing weave is to
-"in-line" C/C++ code into Python in order to speed up a time-critical
-section of Python code. In this method of using weave, you define a
-string containing useful C-code and then pass it to the function
-**weave.inline** ( ``code_string``, ``variables`` ), where
-code_string is a string of valid C/C++ code and variables is a list of
-variables that should be passed in from Python. The C/C++ code should
-refer to the variables with the same names as they are defined with in
-Python. If weave.line should return anything the the special value
-return_val should be set to whatever object should be returned. The
-following example shows how to use weave on basic Python objects:
-
-.. code-block:: python
-
-    code = r"""
-    int i;
-    py::tuple results(2);
-    for (i=0; i<a.length(); i++) {
-         a[i] = i;
-    }
-    results[0] = 3.0;
-    results[1] = 4.0;
-    return_val = results;
-    """
-    a = [None]*10
-    res = weave.inline(code,['a'])
-
-The C++ code shown in the code string uses the name 'a' to refer to
-the Python list that is passed in. Because the Python List is a
-mutable type, the elements of the list itself are modified by the C++
-code. A set of C++ classes are used to access Python objects using
-simple syntax.
-
-The main advantage of using C-code, however, is to speed up processing
-on an array of data. Accessing a NumPy array in C++ code using weave,
-depends on what kind of type converter is chosen in going from NumPy
-arrays to C++ code. The default converter creates 5 variables for the
-C-code for every NumPy array passed in to weave.inline. The following
-table shows these variables which can all be used in the C++ code. The
-table assumes that ``myvar`` is the name of the array in Python with
-data-type {dtype} (i.e.  float64, float32, int8, etc.)
-
-===========  ==============  =========================================
-Variable     Type            Contents
-===========  ==============  =========================================
-myvar        {dtype}*        Pointer to the first element of the array
-Nmyvar       npy_intp*       A pointer to the dimensions array
-Smyvar       npy_intp*       A pointer to the strides array
-Dmyvar       int             The number of dimensions
-myvar_array  PyArrayObject*  The entire structure for the array
-===========  ==============  =========================================
-
-The in-lined code can contain references to any of these variables as
-well as to the standard macros MYVAR1(i), MYVAR2(i,j), MYVAR3(i,j,k),
-and MYVAR4(i,j,k,l). These name-based macros (they are the Python name
-capitalized followed by the number of dimensions needed) will de-
-reference the memory for the array at the given location with no error
-checking (be-sure to use the correct macro and ensure the array is
-aligned and in correct byte-swap order in order to get useful
-results). The following code shows how you might use these variables
-and macros to code a loop in C that computes a simple 2-d weighted
-averaging filter.
-
-.. code-block:: c++
-
-    int i,j;
-    for(i=1;i<Na[0]-1;i++) {
-       for(j=1;j<Na[1]-1;j++) {
-           B2(i,j) = A2(i,j) + (A2(i-1,j) +
-                     A2(i+1,j)+A2(i,j-1)
-                     + A2(i,j+1))*0.5
-                     + (A2(i-1,j-1)
-                     + A2(i-1,j+1)
-                     + A2(i+1,j-1)
-                     + A2(i+1,j+1))*0.25
-       }
-    }
-
-The above code doesn't have any error checking and so could fail with
-a Python crash if, ``a`` had the wrong number of dimensions, or ``b``
-did not have the same shape as ``a``. However, it could be placed
-inside a standard Python function with the necessary error checking to
-produce a robust but fast subroutine.
-
-One final note about weave.inline: if you have additional code you
-want to include in the final extension module such as supporting
-function calls, include statements, etc. you can pass this code in as a
-string using the keyword support_code: ``weave.inline(code, variables,
-support_code=support)``. If you need the extension module to link
-against an additional library then you can also pass in
-distutils-style keyword arguments such as library_dirs, libraries,
-and/or runtime_library_dirs which point to the appropriate libraries
-and directories.
-
-Simplify creation of an extension module
-----------------------------------------
-
-The inline function creates one extension module for each function to-
-be inlined. It also generates a lot of intermediate code that is
-duplicated for each extension module. If you have several related
-codes to execute in C, it would be better to make them all separate
-functions in a single extension module with multiple functions. You
-can also use the tools weave provides to produce this larger extension
-module. In fact, the weave.inline function just uses these more
-general tools to do its work.
-
-The approach is to:
-
-1. construct a extension module object using
-   ext_tools.ext_module(``module_name``);
-
-2. create function objects using ext_tools.ext_function(``func_name``,
-   ``code``, ``variables``);
-
-3. (optional) add support code to the function using the
-   .customize.add_support_code( ``support_code`` ) method of the
-   function object;
-
-4. add the functions to the extension module object using the
-   .add_function(``func``) method;
-
-5. when all the functions are added, compile the extension with its
-   .compile() method.
-
-Several examples are available in the examples directory where weave
-is installed on your system. Look particularly at ramp2.py,
-increment_example.py and fibonacii.py
-
-
-Conclusion
-----------
-
-Weave is a useful tool for quickly routines in C/C++ and linking them
-into Python. It's caching-mechanism allows for on-the-fly compilation
-which makes it particularly attractive for in-house code. Because of
-the requirement that the user have a C++-compiler, it can be difficult
-(but not impossible) to distribute a package that uses weave to other
-users who don't have a compiler installed. Of course, weave could be
-used to construct an extension module which is then distributed in the
-normal way *(* using a setup.py file). While you can use weave to
-build larger extension modules with many methods, creating methods
-with a variable- number of arguments is not possible. Thus, for a more
-sophisticated module, you will still probably want a Python-layer that
-calls the weave-produced extension.
+If you are writing an extension module that will include quite a bit of your
+own algorithmic code as well, then Cython is a good match. Among its
+features is the ability to easily and quickly
+work with multidimensional arrays.
 
 .. index::
-   single: weave
+   single: cython
 
-
-Pyrex
-=====
-
-Pyrex is a way to write C-extension modules using Python-like syntax.
-It is an interesting way to generate extension modules that is growing
-in popularity, particularly among people who have rusty or non-
-existent C-skills. It does require the user to write the "interface"
-code and so is more time-consuming than SWIG or f2py if you are trying
-to interface to a large library of code. However, if you are writing
-an extension module that will include quite a bit of your own
-algorithmic code, as well, then Pyrex is a good match. A big weakness
-perhaps is the inability to easily and quickly access the elements of
-a multidimensional array.
-
-.. index::
-   single: pyrex
-
-Notice that Pyrex is an extension-module generator only. Unlike weave
-or f2py, it includes no automatic facility for compiling and linking
+Notice that Cython is an extension-module generator only. Unlike f2py,
+it includes no automatic facility for compiling and linking
 the extension module (which must be done in the usual fashion). It
-does provide a modified distutils class called build_ext which lets
-you build an extension module from a .pyx source. Thus, you could
-write in a setup.py file:
+does provide a modified distutils class called ``build_ext`` which lets
+you build an extension module from a ``.pyx`` source. Thus, you could
+write in a ``setup.py`` file:
 
 .. code-block:: python
 
-    from Pyrex.Distutils import build_ext
+    from Cython.Distutils import build_ext
     from distutils.extension import Extension
     from distutils.core import setup
-
     import numpy
-    py_ext = Extension('mine', ['mine.pyx'],
-             include_dirs=[numpy.get_include()])
 
     setup(name='mine', description='Nothing',
-          ext_modules=[pyx_ext],
+          ext_modules=[Extension('filter', ['filter.pyx'],
+                                 include_dirs=[numpy.get_include()])],
           cmdclass = {'build_ext':build_ext})
 
 Adding the NumPy include directory is, of course, only necessary if
-you are using NumPy arrays in the extension module (which is what I
-assume you are using Pyrex for). The distutils extensions in NumPy
+you are using NumPy arrays in the extension module (which is what we
+assume you are using Cython for). The distutils extensions in NumPy
 also include support for automatically producing the extension-module
 and linking it from a ``.pyx`` file. It works so that if the user does
-not have Pyrex installed, then it looks for a file with the same
+not have Cython installed, then it looks for a file with the same
 file-name but a ``.c`` extension which it then uses instead of trying
 to produce the ``.c`` file again.
 
-Pyrex does not natively understand NumPy arrays. However, it is not
-difficult to include information that lets Pyrex deal with them
-usefully. In fact, the numpy.random.mtrand module was written using
-Pyrex so an example of Pyrex usage is already included in the NumPy
-source distribution. That experience led to the creation of a standard
-c_numpy.pxd file that you can use to simplify interacting with NumPy
-array objects in a Pyrex-written extension. The file may not be
-complete (it wasn't at the time of this writing). If you have
-additions you'd like to contribute, please send them. The file is
-located in the .../site-packages/numpy/doc/pyrex directory where you
-have Python installed. There is also an example in that directory of
-using Pyrex to construct a simple extension module. It shows that
-Pyrex looks a lot like Python but also contains some new syntax that
-is necessary in order to get C-like speed.
-
-If you just use Pyrex to compile a standard Python module, then you
-will get a C-extension module that runs either as fast or, possibly,
-more slowly than the equivalent Python module. Speed increases are
-possible only when you use cdef to statically define C variables and
-use a special construct to create for loops:
-
-.. code-block:: none
-
-    cdef int i
-    for i from start <= i < stop
+If you just use Cython to compile a standard Python module, then you
+will get a C extension module that typically runs a bit faster than the
+equivalent Python module. Further speed increases can be gained by using
+the ``cdef`` keyword to statically define C variables.
 
 Let's look at two examples we've seen before to see how they might be
-implemented using Pyrex. These examples were compiled into extension
-modules using Pyrex-0.9.3.1.
+implemented using Cython. These examples were compiled into extension
+modules using Cython 0.21.1.
 
 
-Pyrex-add
----------
+Complex addition in Cython
+--------------------------
 
-Here is part of a Pyrex-file I named add.pyx which implements the add
-functions we previously implemented using f2py:
-
-.. code-block:: none
-
-    cimport c_numpy
-    from c_numpy cimport import_array, ndarray, npy_intp, npy_cdouble, \
-         npy_cfloat, NPY_DOUBLE, NPY_CDOUBLE, NPY_FLOAT, \
-         NPY_CFLOAT
-
-    #We need to initialize NumPy
-    import_array()
-
-    def zadd(object ao, object bo):
-        cdef ndarray c, a, b
-        cdef npy_intp i
-        a = c_numpy.PyArray_ContiguousFromAny(ao,
-                      NPY_CDOUBLE, 1, 1)
-        b = c_numpy.PyArray_ContiguousFromAny(bo,
-                      NPY_CDOUBLE, 1, 1)
-        c = c_numpy.PyArray_SimpleNew(a.nd, a.dimensions,
-                     a.descr.type_num)
-        for i from 0 <= i < a.dimensions[0]:
-            (<npy_cdouble *>c.data)[i].real = \
-                 (<npy_cdouble *>a.data)[i].real + \
-                 (<npy_cdouble *>b.data)[i].real
-            (<npy_cdouble *>c.data)[i].imag = \
-                 (<npy_cdouble *>a.data)[i].imag + \
-                 (<npy_cdouble *>b.data)[i].imag
-        return c
-
-This module shows use of the ``cimport`` statement to load the
-definitions from the c_numpy.pxd file. As shown, both versions of the
-import statement are supported. It also shows use of the NumPy C-API
-to construct NumPy arrays from arbitrary input objects. The array c is
-created using PyArray_SimpleNew. Then the c-array is filled by
-addition. Casting to a particiular data-type is accomplished using
-<cast \*>. Pointers are de-referenced with bracket notation and
-members of structures are accessed using '.' notation even if the
-object is techinically a pointer to a structure. The use of the
-special for loop construct ensures that the underlying code will have
-a similar C-loop so the addition calculation will proceed quickly.
-Notice that we have not checked for NULL after calling to the C-API
---- a cardinal sin when writing C-code. For routines that return
-Python objects, Pyrex inserts the checks for NULL into the C-code for
-you and returns with failure if need be. There is also a way to get
-Pyrex to automatically check for exceptions when you call functions
-that don't return Python objects. See the documentation of Pyrex for
-details.
-
-
-Pyrex-filter
-------------
-
-The two-dimensional example we created using weave is a bit uglier to
-implement in Pyrex because two-dimensional indexing using Pyrex is not
-as simple. But, it is straightforward (and possibly faster because of
-pre-computed indices). Here is the Pyrex-file I named image.pyx.
+Here is part of a Cython module named ``add.pyx`` which implements the
+complex addition functions we previously implemented using f2py:
 
 .. code-block:: none
 
-    cimport c_numpy
-    from c_numpy cimport import_array, ndarray, npy_intp,\
-         NPY_DOUBLE, NPY_CDOUBLE, \
-         NPY_FLOAT, NPY_CFLOAT, NPY_ALIGNED \
+    cimport cython
+    cimport numpy as np
+    import numpy as np
 
-    #We need to initialize NumPy
-    import_array()
-    def filter(object ao):
-        cdef ndarray a, b
-        cdef npy_intp i, j, M, N, oS
-        cdef npy_intp r,rm1,rp1,c,cm1,cp1
-        cdef double value
-        # Require an ALIGNED array
-        # (but not necessarily contiguous)
-        #  We will use strides to access the elements.
-        a = c_numpy.PyArray_FROMANY(ao, NPY_DOUBLE, \
-                    2, 2, NPY_ALIGNED)
-        b = c_numpy.PyArray_SimpleNew(a.nd,a.dimensions, \
-                                      a.descr.type_num)
-        M = a.dimensions[0]
-        N = a.dimensions[1]
-        S0 = a.strides[0]
-        S1 = a.strides[1]
-        for i from 1 <= i < M-1:
-            r = i*S0
-            rm1 = r-S0
-            rp1 = r+S0
-            oS = i*N
-            for j from 1 <= j < N-1:
-                c = j*S1
-                cm1 = c-S1
-                cp1 = c+S1
-                (<double *>b.data)[oS+j] = \
-                   (<double *>(a.data+r+c))[0] + \
-                   ((<double *>(a.data+rm1+c))[0] + \
-                    (<double *>(a.data+rp1+c))[0] + \
-                    (<double *>(a.data+r+cm1))[0] + \
-                    (<double *>(a.data+r+cp1))[0])*0.5 + \
-                   ((<double *>(a.data+rm1+cm1))[0] + \
-                    (<double *>(a.data+rp1+cm1))[0] + \
-                    (<double *>(a.data+rp1+cp1))[0] + \
-                    (<double *>(a.data+rm1+cp1))[0])*0.25
-        return b
+    # We need to initialize NumPy.
+    np.import_array()
+
+    #@cython.boundscheck(False)
+    def zadd(in1, in2):
+        cdef double complex[:] a = in1.ravel()
+        cdef double complex[:] b = in2.ravel()
+
+        out = np.empty(a.shape[0], np.complex64)
+        cdef double complex[:] c = out.ravel()
+
+        for i in range(c.shape[0]):
+            c[i].real = a[i].real + b[i].real
+            c[i].imag = a[i].imag + b[i].imag
+
+        return out
+
+This module shows use of the ``cimport`` statement to load the definitions
+from the ``numpy.pxd`` header that ships with Cython. It looks like NumPy is
+imported twice; ``cimport`` only makes the NumPy C-API available, while the
+regular ``import`` causes a Python-style import at runtime and makes it
+possible to call into the familiar NumPy Python API.
+
+The example also demonstrates Cython's "typed memoryviews", which are like
+NumPy arrays at the C level, in the sense that they are shaped and strided
+arrays that know their own extent (unlike a C array addressed through a bare
+pointer). The syntax ``double complex[:]`` denotes a one-dimensional array
+(vector) of doubles, with arbitrary strides. A contiguous array of ints would
+be ``int[::1]``, while a matrix of floats would be ``float[:, :]``.
+
+Shown commented is the ``cython.boundscheck`` decorator, which turns
+bounds-checking for memory view accesses on or off on a per-function basis.
+We can use this to further speed up our code, at the expense of safety
+(or a manual check prior to entering the loop).
+
+Other than the view syntax, the function is immediately readable to a Python
+programmer. Static typing of the variable ``i`` is implicit. Instead of the
+view syntax, we could also have used Cython's special NumPy array syntax,
+but the view syntax is preferred.
+
+
+Image filter in Cython
+----------------------
+
+The two-dimensional example we created using Fortran is just as easy to write
+in Cython:
+
+.. code-block:: none
+
+    cimport numpy as np
+    import numpy as np
+
+    np.import_array()
+
+    def filter(img):
+        cdef double[:, :] a = np.asarray(img, dtype=np.double)
+        out = np.zeros(img.shape, dtype=np.double)
+        cdef double[:, ::1] b = out
+
+        cdef np.npy_intp i, j
+
+        for i in range(1, a.shape[0] - 1):
+            for j in range(1, a.shape[1] - 1):
+                b[i, j] = (a[i, j]
+                           + .5 * (  a[i-1, j] + a[i+1, j]
+                                   + a[i, j-1] + a[i, j+1])
+                           + .25 * (  a[i-1, j-1] + a[i-1, j+1]
+                                    + a[i+1, j-1] + a[i+1, j+1]))
+
+        return out
 
 This 2-d averaging filter runs quickly because the loop is in C and
-the pointer computations are done only as needed. However, it is not
-particularly easy to understand what is happening. A 2-d image, ``in``
-, can be filtered using this code very quickly using:
+the pointer computations are done only as needed. If the code above is
+compiled as a module ``image``, then a 2-d image, ``img``, can be filtered
+using this code very quickly using:
 
 .. code-block:: python
 
     import image
-    out = image.filter(in)
+    out = image.filter(img)
+
+Regarding the code, two things are of note: firstly, it is impossible to
+return a memory view to Python. Instead, a NumPy array ``out`` is first
+created, and then a view ``b`` onto this array is used for the computation.
+Secondly, the view ``b`` is typed ``double[:, ::1]``. This means 2-d array
+with contiguous rows, i.e., C matrix order. Specifying the order explicitly
+can speed up some algorithms since they can skip stride computations.
 
 
 Conclusion
 ----------
 
-There are several disadvantages of using Pyrex:
+Cython is the extension mechanism of choice for several scientific Python
+libraries, including Pandas, SAGE, scikit-image and scikit-learn,
+as well as the XML processing library LXML.
+The language and compiler are well-maintained.
 
-1. The syntax for Pyrex can get a bit bulky, and it can be confusing at
-   first to understand what kind of objects you are getting and how to
-   interface them with C-like constructs.
+There are several disadvantages of using Cython:
 
-2. Inappropriate Pyrex syntax or incorrect calls to C-code or type-
-   mismatches can result in failures such as
+1. When coding custom algorithms, and sometimes when wrapping existing C
+   libraries, some familiarity with C is required. In particular, when using
+   C memory management (``malloc`` and friends), it's easy to introduce
+   memory leaks. However, just compiling a Python module renamed to ``.pyx``
+   can already speed it up, and adding a few type declarations can give
+   dramatic speedups in some code.
 
-    1. Pyrex failing to generate the extension module source code,
-
-    2. Compiler failure while generating the extension module binary due to
-       incorrect C syntax,
-
-    3. Python failure when trying to use the module.
-
-
-3. It is easy to lose a clean separation between Python and C which makes
+2. It is easy to lose a clean separation between Python and C which makes
    re-using your C-code for other non-Python-related projects more
    difficult.
 
-4. Multi-dimensional arrays are "bulky" to index (appropriate macros
-   may be able to fix this).
-
-5. The C-code generated by Pyrex is hard to read and modify (and typically
+3. The C-code generated by Cython is hard to read and modify (and typically
    compiles with annoying but harmless warnings).
 
-Writing a good Pyrex extension module still takes a bit of effort
-because not only does it require (a little) familiarity with C, but
-also with Pyrex's brand of Python-mixed-with C. One big advantage of
-Pyrex-generated extension modules is that they are easy to distribute
-using distutils. In summary, Pyrex is a very capable tool for either
-gluing C-code or generating an extension module quickly and should not
-be over-looked. It is especially useful for people that can't or won't
-write C-code or Fortran code. But, if you are already able to write
-simple subroutines in C or Fortran, then I would use one of the other
-approaches such as f2py (for Fortran), ctypes (for C shared-
-libraries), or weave (for inline C-code).
+One big advantage of Cython-generated extension modules is that they are
+easy to distribute. In summary, Cython is a very capable tool for either
+gluing C code or generating an extension module quickly and should not be
+over-looked. It is especially useful for people that can't or won't write
+C or Fortran code.
 
 .. index::
-   single: pyrex
-
-
+   single: cython
 
 
 ctypes
 ======
 
-Ctypes is a python extension module (downloaded separately for Python
-<2.5 and included with Python 2.5) that allows you to call an
-arbitrary function in a shared library directly from Python. This
-approach allows you to interface with C-code directly from Python.
-This opens up an enormous number of libraries for use from Python. The
-drawback, however, is that coding mistakes can lead to ugly program
-crashes very easily (just as can happen in C) because there is little
-type or bounds checking done on the parameters. This is especially
+Ctypes is a Python extension module, included in the stdlib, that
+allows you to call an arbitrary function in a shared library directly
+from Python. This approach allows you to interface with C-code directly
+from Python. This opens up an enormous number of libraries for use from
+Python. The drawback, however, is that coding mistakes can lead to ugly
+program crashes very easily (just as can happen in C) because there is
+little type or bounds checking done on the parameters. This is especially
 true when array data is passed in as a pointer to a raw memory
 location. The responsibility is then on you that the subroutine will
 not access memory outside the actual array area. But, if you don't
@@ -1362,10 +1092,10 @@ Additional tools you may find useful
 ====================================
 
 These tools have been found useful by others using Python and so are
-included here. They are discussed separately because I see them as
-either older ways to do things more modernly handled by f2py, weave,
-Pyrex, or ctypes (SWIG, PyFort, PyInline) or because I don't know much
-about them (SIP, Boost, Instant). I have not added links to these
+included here. They are discussed separately because they are
+either older ways to do things now handled by f2py, Cython, or ctypes
+(SWIG, PyFort) or because I don't know much about them (SIP, Boost).
+I have not added links to these
 methods because my experience is that you can find the most relevant
 link faster using Google or some other search engine, and any links
 provided here would be quickly dated. Do not assume that just because
@@ -1385,7 +1115,7 @@ Simplified Wrapper and Interface Generator (SWIG) is an old and fairly
 stable method for wrapping C/C++-libraries to a large variety of other
 languages. It does not specifically understand NumPy arrays but can be
 made useable with NumPy through the use of typemaps. There are some
-sample typemaps in the numpy/doc/swig directory under numpy.i along
+sample typemaps in the numpy/tools/swig directory under numpy.i together
 with an example module that makes use of them. SWIG excels at wrapping
 large C/C++ libraries because it can (almost) parse their headers and
 auto-produce an interface. Technically, you need to generate a ``.i``
@@ -1445,70 +1175,6 @@ using Boost to wrap simple C-subroutines is usually over-kill. It's
 primary purpose is to make C++ classes available in Python. So, if you
 have a set of C++ classes that need to be integrated cleanly into
 Python, consider learning about and using Boost.Python.
-
-
-Instant
--------
-
-.. index::
-   single: Instant
-
-This is a relatively new package (called pyinstant at sourceforge)
-that builds on top of SWIG to make it easy to inline C and C++ code in
-Python very much like weave. However, Instant builds extension modules
-on the fly with specific module names and specific method names. In
-this repsect it is more more like f2py in its behavior. The extension
-modules are built on-the fly (as long as the SWIG is installed). They
-can then be imported. Here is an example of using Instant with NumPy
-arrays (adapted from the test2 included in the Instant distribution):
-
-.. code-block:: python
-
-    code="""
-    PyObject* add(PyObject* a_, PyObject* b_){
-      /*
-      various checks
-      */
-      PyArrayObject* a=(PyArrayObject*) a_;
-      PyArrayObject* b=(PyArrayObject*) b_;
-      int n = a->dimensions[0];
-      int dims[1];
-      dims[0] = n;
-      PyArrayObject* ret;
-      ret = (PyArrayObject*) PyArray_FromDims(1, dims, NPY_DOUBLE);
-      int i;
-      char *aj=a->data;
-      char *bj=b->data;
-      double *retj = (double *)ret->data;
-      for (i=0; i < n; i++) {
-        *retj++ = *((double *)aj) + *((double *)bj);
-        aj += a->strides[0];
-        bj += b->strides[0];
-      }
-    return (PyObject *)ret;
-    }
-    """
-    import Instant, numpy
-    ext = Instant.Instant()
-    ext.create_extension(code=s, headers=["numpy/arrayobject.h"],
-                         include_dirs=[numpy.get_include()],
-                         init_code='import_array();', module="test2b_ext")
-    import test2b_ext
-    a = numpy.arange(1000)
-    b = numpy.arange(1000)
-    d = test2b_ext.add(a,b)
-
-Except perhaps for the dependence on SWIG, Instant is a
-straightforward utility for writing extension modules.
-
-
-PyInline
---------
-
-This is a much older module that allows automatic building of
-extension modules so that C-code can be included with Python code.
-It's latest release (version 0.03) was in 2001, and it appears that it
-is not being updated.
 
 
 PyFort

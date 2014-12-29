@@ -16,7 +16,11 @@ from distutils.ccompiler import CompileError, LinkError
 import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
-from numpy.distutils.command.autodist import check_inline, check_compiler_gcc4
+from numpy.distutils.command.autodist import (check_gcc_function_attribute,
+                                              check_gcc_variable_attribute,
+                                              check_inline,
+                                              check_restrict,
+                                              check_compiler_gcc4)
 from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
@@ -59,16 +63,27 @@ class config(old_config):
                     e = get_exception()
                     msg = """\
 Could not initialize compiler instance: do you have Visual Studio
-installed ? If you are trying to build with mingw, please use python setup.py
-build -c mingw32 instead ). If you have Visual Studio installed, check it is
-correctly installed, and the right version (VS 2008 for python 2.6, VS 2003 for
-2.5, etc...). Original exception was: %s, and the Compiler
-class was %s
+installed?  If you are trying to build with MinGW, please use "python setup.py
+build -c mingw32" instead.  If you have Visual Studio installed, check it is
+correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
+VS 2010 for >= 3.3).
+
+Original exception was: %s, and the Compiler class was %s
 ============================================================================""" \
                         % (e, self.compiler.__class__.__name__)
                     print ("""\
 ============================================================================""")
                     raise distutils.errors.DistutilsPlatformError(msg)
+
+            # After MSVC is initialized, add an explicit /MANIFEST to linker
+            # flags.  See issues gh-4245 and gh-4101 for details.  Also
+            # relevant are issues 4431 and 16296 on the Python bug tracker.
+            from distutils import msvc9compiler
+            if msvc9compiler.get_build_version() >= 10:
+                for ldflags in [self.compiler.ldflags_shared,
+                                self.compiler.ldflags_shared_debug]:
+                    if '/MANIFEST' not in ldflags:
+                        ldflags.append('/MANIFEST')
 
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
@@ -159,7 +174,7 @@ class was %s
                    headers=None, include_dirs=None):
         self._check_compiler()
         body = """
-int main()
+int main(void)
 {
 #ifndef %s
     (void) %s;
@@ -174,7 +189,7 @@ int main()
                          headers=None, include_dirs=None):
         self._check_compiler()
         body = """
-int main()
+int main(void)
 {
 #if %s
 #else
@@ -194,7 +209,7 @@ int main()
 
         # First check the type can be compiled
         body = r"""
-int main() {
+int main(void) {
   if ((%(name)s *) 0)
     return 0;
   if (sizeof (%(name)s))
@@ -222,7 +237,7 @@ int main() {
         # First check the type can be compiled
         body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
     test_array [0] = 0
@@ -238,7 +253,7 @@ int main ()
         if expected:
             body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
     test_array [0] = 0
@@ -259,7 +274,7 @@ int main ()
         # this fails to *compile* if size > sizeof(type)
         body = r"""
 typedef %(type)s npy_check_sizeof_type;
-int main ()
+int main (void)
 {
     static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
     test_array [0] = 0
@@ -307,7 +322,10 @@ int main ()
         self._check_compiler()
         body = []
         if decl:
-            body.append("int %s (void);" % func)
+            if type(decl) == str:
+                body.append(decl)
+            else:
+                body.append("int %s (void);" % func)
         # Handle MSVC intrinsics: force MS compiler to make a function call.
         # Useful to test for some functions when built with optimization on, to
         # avoid build error because the intrinsic and our 'fake' test
@@ -395,13 +413,24 @@ int main ()
         otherwise."""
         return check_inline(self)
 
+    def check_restrict(self):
+        """Return the restrict keyword recognized by the compiler, empty string
+        otherwise."""
+        return check_restrict(self)
+
     def check_compiler_gcc4(self):
         """Return True if the C compiler is gcc >= 4."""
         return check_compiler_gcc4(self)
 
+    def check_gcc_function_attribute(self, attribute, name):
+        return check_gcc_function_attribute(self, attribute, name)
+
+    def check_gcc_variable_attribute(self, attribute):
+        return check_gcc_variable_attribute(self, attribute)
+
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
-                   lang="c"):
+                   lang="c", use_tee=None):
         """Try to compile, link to an executable, and run a program
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
@@ -426,7 +455,8 @@ int main ()
                 grabber.restore()
                 raise
             exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.')
+            exitstatus, output = exec_command(exe, execute_in='.',
+                                              use_tee=use_tee)
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)
                 if os.WIFSIGNALED(exitstatus):

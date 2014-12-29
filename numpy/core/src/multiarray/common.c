@@ -84,7 +84,7 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
 
 
 
-NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND;
+NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
 
 NPY_NO_EXPORT PyArray_Descr *
@@ -205,6 +205,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
     Py_buffer buffer_view;
+    /* types for sequence handling */
+    PyObject ** objects;
+    PyObject * seq;
+    PyTypeObject * common_type;
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -514,30 +518,56 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case */
+    /*
+     * fails if convertable to list but no len is defined which some libraries
+     * require to get object arrays
+     */
     size = PySequence_Size(obj);
     if (size < 0) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
+    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    if (seq == NULL) {
+        goto fail;
+    }
+    objects = PySequence_Fast_ITEMS(seq);
+    common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
+    for (i = 1; i < size; ++i) {
+        if (Py_TYPE(objects[i]) != common_type) {
+            common_type = NULL;
+            break;
+        }
+    }
+
+    /* all types are the same and scalar, one recursive call is enough */
+    if (common_type != NULL && !string_type &&
+            (common_type == &PyFloat_Type ||
+/* TODO: we could add longs if we add a range check */
+#if !defined(NPY_PY3K)
+             common_type == &PyInt_Type ||
+#endif
+             common_type == &PyBool_Type ||
+             common_type == &PyComplex_Type)) {
+        size = 1;
+    }
+
     /* Recursive call for each sequence item */
     for (i = 0; i < size; ++i) {
-        int res;
-        ip = PySequence_GetItem(obj, i);
-        if (ip == NULL) {
-            goto fail;
-        }
-        res = PyArray_DTypeFromObjectHelper(ip, maxdims - 1,
-                                            out_dtype, string_type);
+        int res = PyArray_DTypeFromObjectHelper(objects[i], maxdims - 1,
+                                                out_dtype, string_type);
         if (res < 0) {
-            Py_DECREF(ip);
+            Py_DECREF(seq);
             goto fail;
         }
         else if (res > 0) {
-            Py_DECREF(ip);
+            Py_DECREF(seq);
             return res;
         }
-        Py_DECREF(ip);
     }
+
+    Py_DECREF(seq);
 
     return 0;
 
@@ -618,7 +648,7 @@ index2ptr(PyArrayObject *mp, npy_intp i)
         return NULL;
     }
     dim0 = PyArray_DIMS(mp)[0];
-    if (check_and_adjust_index(&i, dim0, 0) < 0)
+    if (check_and_adjust_index(&i, dim0, 0, NULL) < 0)
         return NULL;
     if (i == 0) {
         return PyArray_DATA(mp);
@@ -650,14 +680,12 @@ _IsAligned(PyArrayObject *ap)
 {
     unsigned int i;
     npy_uintp aligned;
-    const unsigned int alignment = PyArray_DESCR(ap)->alignment;
+    npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 
-    /* The special casing for STRING and VOID types was removed
-     * in accordance with http://projects.scipy.org/numpy/ticket/1227
-     * It used to be that IsAligned always returned True for these
-     * types, which is indeed the case when they are created using
-     * PyArray_DescrConverter(), but not necessarily when using
-     * PyArray_DescrAlignConverter(). */
+    /* alignment 1 types should have a efficient alignment for copy loops */
+    if (PyArray_ISFLEXIBLE(ap) || PyArray_ISSTRING(ap)) {
+        alignment = NPY_MAX_COPY_ALIGNMENT;
+    }
 
     if (alignment == 1) {
         return 1;
@@ -761,36 +789,13 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 }
 
 
-NPY_NO_EXPORT int
-_is_basic_python_type(PyObject * obj)
-{
-    if (obj == Py_None ||
-            /* Basic number types */
-#if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-#endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            PyComplex_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj) ||
-            PyDict_CheckExact(obj) ||
-            PyAnySet_CheckExact(obj)) {
-        return 1;
-    }
-
-    return 0;
-}
-
-
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
  * @param Dimensionality of the shape
  * @param npy_intp pointer to shape array
  * @param String to append after the shape `(1, 2)%s`.
- * 
+ *
  * @return Python unicode string
  */
 NPY_NO_EXPORT PyObject *
@@ -839,7 +844,59 @@ convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
     }
     else {
         tmp = PyUString_FromFormat(")%s", ending);
-        }
+    }
     PyUString_ConcatAndDel(&ret, tmp);
     return ret;
+}
+
+
+NPY_NO_EXPORT void
+dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
+{
+    PyObject *errmsg = NULL, *format = NULL, *fmt_args = NULL,
+             *i_obj = NULL, *j_obj = NULL,
+             *shape1 = NULL, *shape2 = NULL,
+             *shape1_i = NULL, *shape2_j = NULL;
+
+    format = PyUString_FromString("shapes %s and %s not aligned:"
+                                  " %d (dim %d) != %d (dim %d)");
+
+    shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
+    shape2 = convert_shape_to_string(PyArray_NDIM(b), PyArray_DIMS(b), "");
+
+    i_obj = PyLong_FromLong(i);
+    j_obj = PyLong_FromLong(j);
+
+    shape1_i = PyLong_FromSsize_t(PyArray_DIM(a, i));
+    shape2_j = PyLong_FromSsize_t(PyArray_DIM(b, j));
+
+    if (!format || !shape1 || !shape2 || !i_obj || !j_obj ||
+            !shape1_i || !shape2_j) {
+        goto end;
+    }
+
+    fmt_args = PyTuple_Pack(6, shape1, shape2,
+                            shape1_i, i_obj, shape2_j, j_obj);
+    if (fmt_args == NULL) {
+        goto end;
+    }
+
+    errmsg = PyUString_Format(format, fmt_args);
+    if (errmsg != NULL) {
+        PyErr_SetObject(PyExc_ValueError, errmsg);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "shapes are not aligned");
+    }
+
+end:
+    Py_XDECREF(errmsg);
+    Py_XDECREF(fmt_args);
+    Py_XDECREF(format);
+    Py_XDECREF(i_obj);
+    Py_XDECREF(j_obj);
+    Py_XDECREF(shape1);
+    Py_XDECREF(shape2);
+    Py_XDECREF(shape1_i);
+    Py_XDECREF(shape2_j);
 }

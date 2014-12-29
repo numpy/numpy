@@ -331,6 +331,12 @@ class TestSubarray(TestCase):
         assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
+    def test_alignment(self):
+        #Check that subarrays are aligned
+        t1 = np.dtype('1i4', align=True)
+        t2 = np.dtype('2i4', align=True)
+        assert_equal(t1.alignment, t2.alignment)
+
 
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
@@ -490,6 +496,10 @@ class TestString(TestCase):
         # Issue gh-2798
         a = np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
 
+    def test_empty_string_to_object(self):
+        # Pull request #4722
+        np.array(["", ""]).astype(object)
+
 class TestDtypeAttributeDeletion(object):
 
     def test_dtype_non_writable_attributes_deletion(self):
@@ -498,13 +508,8 @@ class TestDtypeAttributeDeletion(object):
                 "isbuiltin", "isnative", "isalignedstruct", "fields",
                 "metadata", "hasobject"]
 
-        if sys.version[:3] == '2.4':
-            error = TypeError
-        else:
-            error = AttributeError
-
         for s in attr:
-            assert_raises(error, delattr, dt, s)
+            assert_raises(AttributeError, delattr, dt, s)
 
 
     def test_dtype_writable_attributes_deletion(self):
@@ -512,6 +517,20 @@ class TestDtypeAttributeDeletion(object):
         attr = ["names"]
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
+
+class TestDtypeAttributes(TestCase):
+
+    def test_name_builtin(self):
+        for t in np.typeDict.values():
+            name = t.__name__
+            if name.endswith('_'):
+                name = name[:-1]
+            assert_equal(np.dtype(t).name, name)
+
+    def test_name_dtype_subclass(self):
+        # Ticket #4357
+        class user_def_subcls(np.void): pass
+        assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 
 if __name__ == "__main__":
