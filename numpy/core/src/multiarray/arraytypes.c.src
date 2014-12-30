@@ -3598,8 +3598,6 @@ static void
     npy_intp i;
     @type@ max_val, min_val;
 
-    min_val = *min;
-    max_val = *max;
     if (max != NULL) {
         max_val = *max;
     }
