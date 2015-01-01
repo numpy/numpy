@@ -1191,8 +1191,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     In NumPy 1.9 it returns a read-only view on the original array.
     Attempting to write to the resulting array will produce an error.
 
-    In NumPy 1.10, it will return a read/write view, Writing to the returned
-    array will alter your original array.
+    In NumPy 1.10, it will return a read/write view and writing to the
+    returned array will alter your original array.  The returned array
+    will have the same type as the input array.
 
     If you don't write to the array returned by this function, then you can
     just ignore all of the above.
@@ -1219,7 +1220,8 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D, a 1-D array containing the diagonal is returned.
+        If `a` is 2-D, a 1-D array of the same type as `a` containing the
+        diagonal is returned (or 2-D matrix for matrix input).
         If the dimension of `a` is larger, then an array of diagonals is
         returned, "packed" from left-most dimension to right-most (e.g.,
         if `a` is 3-D, then the diagonals are "packed" along rows).
