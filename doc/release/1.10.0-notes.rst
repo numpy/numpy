@@ -105,6 +105,11 @@ be present in input arrays; core dimensions with the same label must have
 the exact same size; and output core dimension's must be specified, either
 by a same label input core dimension or by a passed-in output array.
 
+views returned from *np.einsum* are writeable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Views returned by *np.einsum* will now be writeable whenever the input
+array is writeable.
+
 
 Deprecations
 ============

@@ -2063,6 +2063,14 @@ add_newdoc('numpy.core', 'einsum',
     ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
     below have corresponding `einsum` calls with the two parameter methods.
 
+    .. versionadded:: 1.10.0
+
+    Views returned from einsum are now writeable whenever the input array
+    is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
+    have the same effect as ``np.swapaxes(a, 0, 2)`` and
+    ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
+    of a 2D array.
+
     Examples
     --------
     >>> a = np.arange(25).reshape(5,5)
@@ -2171,6 +2179,14 @@ add_newdoc('numpy.core', 'einsum',
     >>> np.einsum('k...,jk', a, b)
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
+
+    >>> # since version 1.10.0
+    >>> a = np.zeros((3, 3))
+    >>> np.einsum('ii->i', a)[:] = 1
+    >>> a
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
 
     """)
 

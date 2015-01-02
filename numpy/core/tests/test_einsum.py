@@ -91,6 +91,13 @@ class TestEinSum(TestCase):
         b = np.einsum(a, [0, 1])
         assert_(b.base is a)
         assert_equal(b, a)
+        
+        # output is writeable whenever input is writeable
+        b = np.einsum("...", a)
+        assert_(b.flags['WRITEABLE'])
+        a.flags['WRITEABLE'] = False
+        b = np.einsum("...", a)
+        assert_(not b.flags['WRITEABLE'])
 
         # transpose
         a = np.arange(6)
