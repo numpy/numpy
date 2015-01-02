@@ -1342,6 +1342,10 @@ def ravel(a, order='C'):
     A 1-D array, containing the elements of the input, is returned.  A copy is
     made only if needed.
 
+    As of NumPy 1.10, the returned array will have the same type as the input
+    array. (for example, a masked array will be returned for a masked array
+    input)
+
     Parameters
     ----------
     a : array_like
@@ -1363,8 +1367,9 @@ def ravel(a, order='C'):
 
     Returns
     -------
-    1d_array : ndarray
-        Output of the same dtype as `a`, and of shape ``(a.size,)``.
+    y : array_like
+        Array of the same type as `a`, and of shape ``(a.size,)``
+        or ``(1, a.size)`` for matrices.
 
     See Also
     --------
@@ -1422,7 +1427,7 @@ def ravel(a, order='C'):
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
 
     """
-    return asarray(a).ravel(order)
+    return asanyarray(a).ravel(order)
 
 
 def nonzero(a):

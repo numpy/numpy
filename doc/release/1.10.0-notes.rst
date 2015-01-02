@@ -39,11 +39,14 @@ relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
-diag and diagonal
-~~~~~~~~~~~~~~~~~
-Both diag and diagonal now preserve subtypes. This will change the
-dimensions of the returned diagonal in the case of matrices and that
-may lead to problems in using the result.
+*np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as well
+as between *x.diagonal()* and *np.diagonal(x)*.  For example, if *x* was a
+matrix, then *x.ravel()* returned a matrix, while *np.ravel(x)* returned an
+ndarray.  In the case of matrices, the returned value will have different
+dimensions and that may lead to problems in using the result.
+
 
 New Features
 ============

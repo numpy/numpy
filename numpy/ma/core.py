@@ -4041,9 +4041,25 @@ class MaskedArray(ndarray):
     #............................................
     flatten = _arraymethod('flatten')
     #
-    def ravel(self):
+    def ravel(self, order='C'):
         """
         Returns a 1D version of self, as a view.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A', 'K'}, optional
+            The elements of `a` are read using this index order. 'C' means to
+            index the elements in C-like order, with the last axis index
+            changing fastest, back to the first axis index changing slowest.
+            'F' means to index the elements in Fortran-like index order, with
+            the first index changing fastest, and the last index changing
+            slowest. Note that the 'C' and 'F' options take no account of the
+            memory layout of the underlying array, and only refer to the order
+            of axis indexing.  'A' means to read the elements in Fortran-like
+            index order if `m` is Fortran *contiguous* in memory, C-like order
+            otherwise.  'K' means to read the elements in the order they occur
+            in memory, except for reversing the data when strides are negative.
+            By default, 'C' index order is used.
 
         Returns
         -------
@@ -4062,10 +4078,10 @@ class MaskedArray(ndarray):
         [1 -- 3 -- 5 -- 7 -- 9]
 
         """
-        r = ndarray.ravel(self._data).view(type(self))
+        r = ndarray.ravel(self._data, order=order).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
-            r._mask = ndarray.ravel(self._mask).reshape(r.shape)
+            r._mask = ndarray.ravel(self._mask, order=order).reshape(r.shape)
         else:
             r._mask = nomask
         return r
