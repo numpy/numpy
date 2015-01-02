@@ -837,10 +837,11 @@ class _TestNorm(object):
                   array(c, dtype=self.dt)):
             _test(v)
 
-    def test_matrix(self):
+    def test_matrix_2x2(self):
         A = matrix([[1, 3], [5, 7]], dtype=self.dt)
         assert_almost_equal(norm(A), 84**0.5)
         assert_almost_equal(norm(A, 'fro'), 84**0.5)
+        assert_almost_equal(norm(A, 'nuc'), 10.0)
         assert_almost_equal(norm(A, inf), 12.0)
         assert_almost_equal(norm(A, -inf), 4.0)
         assert_almost_equal(norm(A, 1), 10.0)
@@ -851,6 +852,22 @@ class _TestNorm(object):
         assert_raises(ValueError, norm, A, 'nofro')
         assert_raises(ValueError, norm, A, -3)
         assert_raises(ValueError, norm, A, 0)
+
+    def test_matrix_3x3(self):
+        # This test has been added because the 2x2 example
+        # happened to have equal nuclear norm and induced 1-norm.
+        # The 1/10 scaling factor accommodates the absolute tolerance
+        # used in assert_almost_equal.
+        A = (1/10) * np.array([[1, 2, 3], [6, 0, 5], [3, 2, 1]], dtype=self.dt)
+        assert_almost_equal(norm(A), (1/10) * 89**0.5)
+        assert_almost_equal(norm(A, 'fro'), (1/10) * 89**0.5)
+        assert_almost_equal(norm(A, 'nuc'), 1.3366836911774836)
+        assert_almost_equal(norm(A, inf), 1.1)
+        assert_almost_equal(norm(A, -inf), 0.6)
+        assert_almost_equal(norm(A, 1), 1.0)
+        assert_almost_equal(norm(A, -1), 0.4)
+        assert_almost_equal(norm(A, 2), 0.88722940323461277)
+        assert_almost_equal(norm(A, -2), 0.19456584790481812)
 
     def test_axis(self):
         # Vector norms.
@@ -866,7 +883,7 @@ class _TestNorm(object):
         # Matrix norms.
         B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
 
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
             assert_almost_equal(norm(A, ord=order), norm(A, ord=order,
                                                          axis=(0, 1)))
 
@@ -915,7 +932,7 @@ class _TestNorm(object):
                     shape_err.format(found.shape, expected_shape, order, k))
 
         # Matrix norms.
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
             for k in itertools.permutations(range(A.ndim), 2):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
@@ -935,10 +952,12 @@ class _TestNorm(object):
         B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
 
         # Using `axis=<integer>` or passing in a 1-D array implies vector
-        # norms are being computed, so also using `ord='fro'` raises a
-        # ValueError.
+        # norms are being computed, so also using `ord='fro'`
+        # or `ord='nuc'` raises a ValueError.
         assert_raises(ValueError, norm, A, 'fro', 0)
+        assert_raises(ValueError, norm, A, 'nuc', 0)
         assert_raises(ValueError, norm, [3, 4], 'fro', None)
+        assert_raises(ValueError, norm, [3, 4], 'nuc', None)
 
         # Similarly, norm should raise an exception when ord is any finite
         # number other than 1, 2, -1 or -2 when computing matrix norms.
