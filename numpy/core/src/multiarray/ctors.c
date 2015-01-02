@@ -1259,6 +1259,52 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
     return new;
 }
 
+int
+_copy_from_pil_style(char* dest, int ndim, char *buf, npy_intp *shape,
+                     npy_intp *strides, npy_intp *suboffsets, npy_intp itemsize)
+{
+    int ax, last_axis;
+    npy_intp indices[NPY_MAXDIMS];
+    void **pointers[NPY_MAXDIMS];
+    char *pointer = (char*)buf;
+    npy_intp blocksize;
+    /* Initialize indices and pointers. */
+    for (ax = 0; ax < ndim; ++ax) {
+        indices[ax] = 0;
+        pointers[ax] = (void **)pointer;
+        if (suboffsets[ax] >= 0) {
+            last_axis = ax;
+	        pointer = *((char**)pointer) + suboffsets[ax];
+	    }
+    }
+    /* compute blocksize */
+    blocksize = itemsize;
+    for (ax = last_axis + 1; ax < ndim; ++ax)
+        blocksize *= shape[ax];
+    /* main loop */
+    for (;;) {
+        memcpy(dest, pointer, blocksize);
+        dest += blocksize;
+        ax = last_axis;
+        /* Update indices and pointers for the next block. */
+        while (indices[ax] == shape[ax] - 1) {
+            if (ax == 0)
+                return 0;
+            indices[ax--] = 0;
+        }
+        ++indices[ax];
+        /* update pointers */
+        pointer = (char *)pointers[ax] + strides[ax];
+        for (; ax <= last_axis; ++ax) {
+            pointers[ax] = (void **)pointer;
+            if (suboffsets[ax] >=0 ) {
+                pointer = *((char**)pointer) + suboffsets[ax];
+            }
+        }
+    }
+    return -1;
+}
+
 
 NPY_NO_EXPORT int
 _array_from_buffer_3118(PyObject *obj, PyObject **out)
@@ -1344,18 +1390,41 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         }
     }
 
-    flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
-    r = PyArray_NewFromDescr(&PyArray_Type, descr,
-                             nd, shape, strides, view->buf,
-                             flags, NULL);
-    if (r == NULL ||
-            PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
-        Py_XDECREF(r);
-        Py_DECREF(memoryview);
-        return -1;
+    if (view->suboffsets == NULL) {
+         flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
+         r = PyArray_NewFromDescr(&PyArray_Type, descr,
+                                  nd, shape, strides, view->buf,
+                                  flags, NULL);
+         if (r == NULL ||
+             PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+              Py_XDECREF(r);
+              Py_DECREF(memoryview);
+              return -1;
+         }
+         PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
     }
-    PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
+    else {
+         /* Recompute strides */
+         npy_intp blocksize = view->itemsize;
+         for (k = nd - 1; k >= 0; --k) {
+             if (view->suboffsets[k] >= 0) {
+                strides[k] = blocksize;
+             }
+             blocksize *= shape[k];
+         }
+         r = PyArray_NewFromDescr(&PyArray_Type, descr,
+                                  nd, shape, strides, NULL, 0, NULL);
+         if (r == NULL)
+            goto fail;
+         if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+            Py_DECREF(r);
+            goto fail;
+         }
+         _copy_from_pil_style((char *)PyArray_DATA((PyArrayObject *)r), nd,
+                              (char *)view->buf, shape, view->strides,
+                              view->suboffsets, view->itemsize);
 
+    }
     *out = r;
     return 0;
 

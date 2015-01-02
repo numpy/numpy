@@ -5921,6 +5921,20 @@ class TestNewBufferProtocol(object):
             shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
 
+    def test_pil_style(self):
+        try:
+            import _testbuffer
+        except ImportError:
+            raise SkipTest("_testbuffer is not available")
+
+        for shape in [(2, 3), (2, 3, 4)]:
+            data = list(range(np.prod(shape)))
+            buffer = _testbuffer.ndarray(data, shape, format='i',
+                                         flags=_testbuffer.ND_PIL)
+            a = np.array(buffer)
+            b = np.array(data, dtype='i').reshape(shape)
+            yield assert_equal, a, b
+
 
 class TestArrayAttributeDeletion(object):
 
