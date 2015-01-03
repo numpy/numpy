@@ -236,6 +236,11 @@ class TestNanFunctions_IntTypes(TestCase):
         for mat in self.integer_arrays():
             assert_equal(np.nansum(mat), tgt)
 
+    def test_nanprod(self):
+        tgt = np.prod(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nanprod(mat), tgt)
+
     def test_nanmean(self):
         tgt = np.mean(self.mat)
         for mat in self.integer_arrays():
@@ -260,136 +265,13 @@ class TestNanFunctions_IntTypes(TestCase):
             assert_equal(np.nanstd(mat, ddof=1), tgt)
 
 
-class TestNanFunctions_Sum(TestCase):
-
-    def test_mutation(self):
-        # Check that passed array is not modified.
-        ndat = _ndat.copy()
-        np.nansum(ndat)
-        assert_equal(ndat, _ndat)
-
-    def test_keepdims(self):
-        mat = np.eye(3)
-        for axis in [None, 0, 1]:
-            tgt = np.sum(mat, axis=axis, keepdims=True)
-            res = np.nansum(mat, axis=axis, keepdims=True)
-            assert_(res.ndim == tgt.ndim)
-
-    def test_out(self):
-        mat = np.eye(3)
-        resout = np.zeros(3)
-        tgt = np.sum(mat, axis=1)
-        res = np.nansum(mat, axis=1, out=resout)
-        assert_almost_equal(res, resout)
-        assert_almost_equal(res, tgt)
-
-    def test_dtype_from_dtype(self):
-        mat = np.eye(3)
-        codes = 'efdgFDG'
-        for c in codes:
-            tgt = np.sum(mat, dtype=np.dtype(c), axis=1).dtype.type
-            res = np.nansum(mat, dtype=np.dtype(c), axis=1).dtype.type
-            assert_(res is tgt)
-            # scalar case
-            tgt = np.sum(mat, dtype=np.dtype(c), axis=None).dtype.type
-            res = np.nansum(mat, dtype=np.dtype(c), axis=None).dtype.type
-            assert_(res is tgt)
-
-    def test_dtype_from_char(self):
-        mat = np.eye(3)
-        codes = 'efdgFDG'
-        for c in codes:
-            tgt = np.sum(mat, dtype=c, axis=1).dtype.type
-            res = np.nansum(mat, dtype=c, axis=1).dtype.type
-            assert_(res is tgt)
-            # scalar case
-            tgt = np.sum(mat, dtype=c, axis=None).dtype.type
-            res = np.nansum(mat, dtype=c, axis=None).dtype.type
-            assert_(res is tgt)
-
-    def test_dtype_from_input(self):
-        codes = 'efdgFDG'
-        for c in codes:
-            mat = np.eye(3, dtype=c)
-            tgt = np.sum(mat, axis=1).dtype.type
-            res = np.nansum(mat, axis=1).dtype.type
-            assert_(res is tgt)
-            # scalar case
-            tgt = np.sum(mat, axis=None).dtype.type
-            res = np.nansum(mat, axis=None).dtype.type
-            assert_(res is tgt)
-
-    def test_result_values(self):
-            tgt = [np.sum(d) for d in _rdat]
-            res = np.nansum(_ndat, axis=1)
-            assert_almost_equal(res, tgt)
-
-    def test_allnans(self):
-        # Check for FutureWarning
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            res = np.nansum([np.nan]*3, axis=None)
-            assert_(res == 0, 'result is not 0')
-            assert_(len(w) == 0, 'warning raised')
-            # Check scalar
-            res = np.nansum(np.nan)
-            assert_(res == 0, 'result is not 0')
-            assert_(len(w) == 0, 'warning raised')
-            # Check there is no warning for not all-nan
-            np.nansum([0]*3, axis=None)
-            assert_(len(w) == 0, 'unwanted warning raised')
-
-    def test_empty(self):
-        mat = np.zeros((0, 3))
-        tgt = [0]*3
-        res = np.nansum(mat, axis=0)
-        assert_equal(res, tgt)
-        tgt = []
-        res = np.nansum(mat, axis=1)
-        assert_equal(res, tgt)
-        tgt = 0
-        res = np.nansum(mat, axis=None)
-        assert_equal(res, tgt)
-
-    def test_scalar(self):
-        assert_(np.nansum(0.) == 0.)
-
-    def test_matrices(self):
-        # Check that it works and that type and
-        # shape are preserved
-        mat = np.matrix(np.eye(3))
-        res = np.nansum(mat, axis=0)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3))
-        res = np.nansum(mat, axis=1)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (3, 1))
-        res = np.nansum(mat)
-        assert_(np.isscalar(res))
-
-
-class TestNanFunctions_MeanVarStd(TestCase):
-
-    nanfuncs = [np.nanmean, np.nanvar, np.nanstd]
-    stdfuncs = [np.mean, np.var, np.std]
-
+class SharedNanFunctionsTestsMixin(object):
     def test_mutation(self):
         # Check that passed array is not modified.
         ndat = _ndat.copy()
         for f in self.nanfuncs:
             f(ndat)
             assert_equal(ndat, _ndat)
-
-    def test_dtype_error(self):
-        for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object]:
-                assert_raises(TypeError, f, _ndat, axis=1, dtype=np.int)
-
-    def test_out_dtype_error(self):
-        for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object]:
-                out = np.empty(_ndat.shape[0], dtype=dtype)
-                assert_raises(TypeError, f, _ndat, axis=1, out=out)
 
     def test_keepdims(self):
         mat = np.eye(3)
@@ -447,6 +329,81 @@ class TestNanFunctions_MeanVarStd(TestCase):
                 res = nf(mat, axis=None).dtype.type
                 assert_(res is tgt)
 
+    def test_result_values(self):
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            tgt = [rf(d) for d in _rdat]
+            res = nf(_ndat, axis=1)
+            assert_almost_equal(res, tgt)
+
+    def test_scalar(self):
+        for f in self.nanfuncs:
+            assert_(f(0.) == 0.)
+
+    def test_matrices(self):
+        # Check that it works and that type and
+        # shape are preserved
+        mat = np.matrix(np.eye(3))
+        for f in self.nanfuncs:
+            res = f(mat, axis=0)
+            assert_(isinstance(res, np.matrix))
+            assert_(res.shape == (1, 3))
+            res = f(mat, axis=1)
+            assert_(isinstance(res, np.matrix))
+            assert_(res.shape == (3, 1))
+            res = f(mat)
+            assert_(np.isscalar(res))
+
+
+class TestNanFunctions_SumProd(TestCase, SharedNanFunctionsTestsMixin):
+
+    nanfuncs = [np.nansum, np.nanprod]
+    stdfuncs = [np.sum, np.prod]
+
+    def test_allnans(self):
+        # Check for FutureWarning
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            res = np.nansum([np.nan]*3, axis=None)
+            assert_(res == 0, 'result is not 0')
+            assert_(len(w) == 0, 'warning raised')
+            # Check scalar
+            res = np.nansum(np.nan)
+            assert_(res == 0, 'result is not 0')
+            assert_(len(w) == 0, 'warning raised')
+            # Check there is no warning for not all-nan
+            np.nansum([0]*3, axis=None)
+            assert_(len(w) == 0, 'unwanted warning raised')
+
+    def test_empty(self):
+        for f, tgt_value in zip([np.nansum, np.nanprod], [0, 1]):
+            mat = np.zeros((0, 3))
+            tgt = [tgt_value]*3
+            res = f(mat, axis=0)
+            assert_equal(res, tgt)
+            tgt = []
+            res = f(mat, axis=1)
+            assert_equal(res, tgt)
+            tgt = tgt_value
+            res = f(mat, axis=None)
+            assert_equal(res, tgt)
+
+
+class TestNanFunctions_MeanVarStd(TestCase, SharedNanFunctionsTestsMixin):
+
+    nanfuncs = [np.nanmean, np.nanvar, np.nanstd]
+    stdfuncs = [np.mean, np.var, np.std]
+
+    def test_dtype_error(self):
+        for f in self.nanfuncs:
+            for dtype in [np.bool_, np.int_, np.object]:
+                assert_raises(TypeError, f, _ndat, axis=1, dtype=np.int)
+
+    def test_out_dtype_error(self):
+        for f in self.nanfuncs:
+            for dtype in [np.bool_, np.int_, np.object]:
+                out = np.empty(_ndat.shape[0], dtype=dtype)
+                assert_raises(TypeError, f, _ndat, axis=1, out=out)
+
     def test_ddof(self):
         nanfuncs = [np.nanvar, np.nanstd]
         stdfuncs = [np.var, np.std]
@@ -472,12 +429,6 @@ class TestNanFunctions_MeanVarStd(TestCase):
                         assert_(issubclass(w[0].category, RuntimeWarning))
                     else:
                         assert_(len(w) == 0)
-
-    def test_result_values(self):
-        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
-            tgt = [rf(d) for d in _rdat]
-            res = nf(_ndat, axis=1)
-            assert_almost_equal(res, tgt)
 
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
@@ -507,24 +458,6 @@ class TestNanFunctions_MeanVarStd(TestCase):
                     warnings.simplefilter('always')
                     assert_equal(f(mat, axis=axis), np.zeros([]))
                     assert_(len(w) == 0)
-
-    def test_scalar(self):
-        for f in self.nanfuncs:
-            assert_(f(0.) == 0.)
-
-    def test_matrices(self):
-        # Check that it works and that type and
-        # shape are preserved
-        mat = np.matrix(np.eye(3))
-        for f in self.nanfuncs:
-            res = f(mat, axis=0)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (1, 3))
-            res = f(mat, axis=1)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (3, 1))
-            res = f(mat)
-            assert_(np.isscalar(res))
 
 
 class TestNanFunctions_Median(TestCase):

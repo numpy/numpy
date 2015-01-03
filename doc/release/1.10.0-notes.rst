@@ -11,6 +11,7 @@ Highlights
 * Addition of *np.linalg.multi_dot*: compute the dot product of two or more
   arrays in a single function call, while automatically selecting the fastest
   evaluation order.
+* Addition of `nanprod` to the set of nanfunctions.
 
 
 Dropped Support
