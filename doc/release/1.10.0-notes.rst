@@ -41,11 +41,13 @@ NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
 *np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as well
-as between *x.diagonal()* and *np.diagonal(x)*.  For example, if *x* was a
-matrix, then *x.ravel()* returned a matrix, while *np.ravel(x)* returned an
-ndarray.  In the case of matrices, the returned value will have different
-dimensions and that may lead to problems in using the result.
+There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as
+well as between *x.diagonal()* and *np.diagonal(x)*, with the methods
+preserving subtypes while the functions did not. This has been fixed and
+the functions now behave like the methods, preserving subtypes except in
+the case of matrices.  Matrices are special cased for backward
+compatibility and still return 1-D arrays as before. If you need to
+preserve the matrix subtype, use the methods instead of the functions.
 
 
 New Features
