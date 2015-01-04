@@ -128,6 +128,19 @@ Consumers can figure out the number of bytes by multiplying the number
 of elements given by the shape (noting that ``shape=()`` means there is
 1 element) by ``dtype.itemsize``.
 
+Format Version 2.0
+------------------
+
+The version 1.0 format only allowed the array header to have a total size of
+65535 bytes.  This can be exceeded by structured arrays with a large number of
+columns.  The version 2.0 format extends the header size to 4 GiB.
+`numpy.save` will automatically save in 2.0 format if the data requires it,
+else it will always use the more compatible 1.0 format.
+
+The description of the fourth element of the header therefore has become:
+"The next 4 bytes form a little-endian unsigned int: the length of the header
+data HEADER_LEN."
+
 Notes
 -----
 The ``.npy`` format, including reasons for creating it and a comparison of
