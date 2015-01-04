@@ -1376,8 +1376,10 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        Array of the same type as `a`, and of shape ``(a.size,)``
-        or ``(1, a.size)`` for matrices.
+        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
+        the same subtype as `a`. The shape of the returned array is
+        ``(a.size,)``. Matrices are special cased for backward
+        compatibility.
 
     See Also
     --------
@@ -1435,7 +1437,10 @@ def ravel(a, order='C'):
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
 
     """
-    return asanyarray(a).ravel(order)
+    if isinstance(a, np.matrix):
+        return asarray(a).ravel(order)
+    else:
+        return asanyarray(a).ravel(order)
 
 
 def nonzero(a):
