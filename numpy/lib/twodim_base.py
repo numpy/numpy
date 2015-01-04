@@ -5,7 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
-    where, int8, int16, int32, int64, empty, promote_types
+    where, int8, int16, int32, int64, empty, promote_types, diagonal,
     )
 from numpy.core import iinfo
 
@@ -307,7 +307,7 @@ def diag(v, k=0):
         res[:n-k].flat[i::n+1] = v
         return res
     elif len(s) == 2:
-        return v.diagonal(k)
+        return diagonal(v, k)
     else:
         raise ValueError("Input must be 1- or 2-d.")
 
