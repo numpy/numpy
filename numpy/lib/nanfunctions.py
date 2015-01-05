@@ -223,7 +223,7 @@ def nanmin(a, axis=None, out=None, keepdims=False):
     if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
         # Fast, but not safe for subclasses of ndarray
         res = np.fmin.reduce(a, axis=axis, out=out, keepdims=keepdims)
-        if np.isnan(res).any():
+        if np.isnan(res).all():
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -234,7 +234,7 @@ def nanmin(a, axis=None, out=None, keepdims=False):
 
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
-        if np.any(mask):
+        if np.all(mask):
             res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
@@ -322,7 +322,7 @@ def nanmax(a, axis=None, out=None, keepdims=False):
     if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
         # Fast, but not safe for subclasses of ndarray
         res = np.fmax.reduce(a, axis=axis, out=out, keepdims=keepdims)
-        if np.isnan(res).any():
+        if np.isnan(res).all():
             warnings.warn("All-NaN slice encountered", RuntimeWarning)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -333,7 +333,7 @@ def nanmax(a, axis=None, out=None, keepdims=False):
 
         # Check for all-NaN axis
         mask = np.all(mask, axis=axis, keepdims=keepdims)
-        if np.any(mask):
+        if np.all(mask):
             res = _copyto(res, np.nan, mask)
             warnings.warn("All-NaN axis encountered", RuntimeWarning)
     return res
@@ -378,7 +378,7 @@ def nanargmin(a, axis=None):
     res = np.argmin(a, axis=axis)
     if mask is not None:
         mask = np.all(mask, axis=axis)
-        if np.any(mask):
+        if np.all(mask):
             raise ValueError("All-NaN slice encountered")
     return res
 
@@ -423,7 +423,7 @@ def nanargmax(a, axis=None):
     res = np.argmax(a, axis=axis)
     if mask is not None:
         mask = np.all(mask, axis=axis)
-        if np.any(mask):
+        if np.all(mask):
             raise ValueError("All-NaN slice encountered")
     return res
 
