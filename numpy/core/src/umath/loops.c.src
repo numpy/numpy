@@ -892,6 +892,18 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 NPY_NO_EXPORT void
+@TYPE@_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ in2 = *(@type@ *)ip2;
+        in1 = (in1 >= 0) ? in1 : -in1;
+        in2 = (in2 >= 0) ? in2 : -in2;
+        *((@type@ *)op1) = (in1 > in2) ? in1 : in2;
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@_true_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1617,6 +1629,30 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void* NPY_UNUSED(func))
+{
+    if (IS_BINARY_REDUCE) {
+        if (!run_unary_reduce_simd_max_abs_@TYPE@(args, dimensions, steps)) {
+            BINARY_REDUCE_LOOP(@type@) {
+                const @type@ in2 = *(@type@ *)ip2;
+                const @type@ ain2 = (in2 >= 0) ? in2 : -in2;
+                io1 = (io1 >= in2 || npy_isnan(io1)) ? io1 : in2;
+            }
+            *((@type@ *)iop1) = io1;
+        }
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            const @type@ ain1 = (in1 >= 0) ? in1 : -in1;
+            const @type@ ain2 = (in2 >= 0) ? in2 : -in2;
+            *((@type@ *)op1) = (ain1 >= ain2 || npy_isnan(ain1)) ? ain1 : ain2;
+         }
+    }
+}
+
 /**begin repeat1
  * #kind = fmax, fmin#
  * #OP =  >=, <=#
@@ -1947,6 +1983,16 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
     }
 }
 /**end repeat**/
+
+NPY_NO_EXPORT void
+HALF_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_half in1 = (*(npy_half *)ip1) & 0x7fffu;
+        const npy_half in2 = (*(npy_half *)ip2) & 0x7fffu;
+        *((npy_half *)op1) = (npy_half_ge(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+     }
+}
 
 /**begin repeat
  * #kind = fmax, fmin#
@@ -2495,6 +2541,20 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void* NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
+        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
+        const @ftype@ in1 = npy_hypot@c@(in1r, in1i);
+        const @ftype@ in2 = npy_hypot@c@(in2r, in2i);
+        *((@ftype@ *)op1) = (in1 >= in2 || npy_isnan(in1)) ? in1 : in2;
+    }
+}
 
 /**begin repeat1
  * #kind = fmax, fmin#

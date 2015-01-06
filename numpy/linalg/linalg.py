@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray
+    broadcast, atleast_2d, intp, asanyarray, max_abs
     )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -2085,7 +2085,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if len(axis) == 1:
         if ord == Inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
+            return max_abs.reduce(x, axis=axis, keepdims=keepdims)
+            #return abs(x).max(axis=axis, keepdims=keepdims)
         elif ord == -Inf:
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:

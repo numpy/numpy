@@ -464,6 +464,14 @@ defdict = {
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
+'max_abs':
+    Ufunc(2, 1, Zero,
+          'needs a docstring...',
+          'PyUFunc_MaxAbsTypeResolver',
+          TD(ints+flts),
+          TD(cmplx, out=('f', 'd', 'g')),
+          TD(O, f='npy_ObjectMaxAbs')
+          ),
 'fmax':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
