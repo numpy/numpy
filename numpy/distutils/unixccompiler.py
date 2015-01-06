@@ -30,6 +30,18 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         # add flags for (almost) sane C++ handling
         ccomp += ['-AA']
         self.compiler_so = ccomp
+    # ensure OPT environment variable is read
+    if 'OPT' in os.environ:
+        from distutils.sysconfig import get_config_vars
+        opt = " ".join(os.environ['OPT'].split())
+        gcv_opt = " ".join(get_config_vars('OPT')[0].split())
+        ccomp_s = " ".join(self.compiler_so)
+        if opt not in ccomp_s:
+            ccomp_s = ccomp_s.replace(gcv_opt, opt)
+            self.compiler_so = ccomp_s.split()
+        llink_s = " ".join(self.linker_so)
+        if opt not in llink_s:
+            self.linker_so = llink_s.split() + opt.split()
 
     display = '%s: %s' % (os.path.basename(self.compiler_so[0]), src)
     try:
