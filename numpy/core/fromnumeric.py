@@ -6,12 +6,14 @@ from __future__ import division, absolute_import, print_function
 import types
 import warnings
 
+import numpy as np
 from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import umath as um
 from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
 from . import _methods
+
 
 _dt_ = nt.sctype2char
 
@@ -1199,9 +1201,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     just ignore all of the above.
 
     If you depend on the current behavior, then we suggest copying the
-    returned array explicitly, i.e., use ``np.diagonal(a).copy()`` instead of
-    just ``np.diagonal(a)``. This will work with both past and future versions
-    of NumPy.
+    returned array explicitly, i.e., use ``np.diagonal(a).copy()`` instead
+    of just ``np.diagonal(a)``. This will work with both past and future
+    versions of NumPy.
 
     Parameters
     ----------
@@ -1220,11 +1222,13 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D, a 1-D array of the same type as `a` containing the
-        diagonal is returned (or 2-D matrix for matrix input).
-        If the dimension of `a` is larger, then an array of diagonals is
-        returned, "packed" from left-most dimension to right-most (e.g.,
-        if `a` is 3-D, then the diagonals are "packed" along rows).
+        If `a` is 2-D and not a matrix, a 1-D array of the same type as `a`
+        containing the diagonal is returned. If `a` is a matrix, a 1-D
+        array containing the diagonal is returned in order to maintain
+        backward compatibility.  If the dimension of `a` is greater than
+        two, then an array of diagonals is returned, "packed" from
+        left-most dimension to right-most (e.g., if `a` is 3-D, then the
+        diagonals are "packed" along rows).
 
     Raises
     ------
@@ -1273,7 +1277,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
            [5, 7]])
 
     """
-    return asanyarray(a).diagonal(offset, axis1, axis2)
+    if isinstance(a, np.matrix):
+        # Make diagonal of matrix 1-D to preserve backward compatibility.
+        return asarray(a).diagonal(offset, axis1, axis2)
+    else:
+        return asanyarray(a).diagonal(offset, axis1, axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
@@ -1368,8 +1376,10 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        Array of the same type as `a`, and of shape ``(a.size,)``
-        or ``(1, a.size)`` for matrices.
+        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
+        the same subtype as `a`. The shape of the returned array is
+        ``(a.size,)``. Matrices are special cased for backward
+        compatibility.
 
     See Also
     --------
@@ -1427,7 +1437,10 @@ def ravel(a, order='C'):
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
 
     """
-    return asanyarray(a).ravel(order)
+    if isinstance(a, np.matrix):
+        return asarray(a).ravel(order)
+    else:
+        return asanyarray(a).ravel(order)
 
 
 def nonzero(a):
