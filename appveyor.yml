@@ -1,0 +1,75 @@
+environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\appveyor\\run_with_env.cmd"
+    DOWNLOAD_FOLDER: "C:\\Downloads"
+    OPENBLAS_HOME: "C:\\OpenBLAS"
+    MINGW_HOME: "C:\\mingw-static"
+
+  matrix:
+    # Minimalistic build matrix that should capture most platform related bugs
+    # The free account of AppVeyor has restricted resources making it not
+    # realistic to test all the possible version and archictecture
+    # combinations.
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.9"
+      PYTHON_ARCH: "32"
+
+#    - PYTHON: "C:\\Python34"
+#      PYTHON_VERSION: "3.4.2"
+#      PYTHON_ARCH: "32"
+
+#    - PYTHON: "C:\\Python27-x64"
+#      PYTHON_VERSION: "2.7.9"
+#      PYTHON_ARCH: "64"
+
+#    - PYTHON: "C:\\Python34-x64"
+#      PYTHON_VERSION: "3.4.2"
+#      PYTHON_ARCH: "64"
+
+install:
+  # Install Python (from the official .msi of http://python.org) and pip when
+  # not already installed.
+  - "powershell ./tools/appveyor/install.ps1"
+
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%MINGW_HOME%\\mingw%PYTHON_ARCH%static\\bin;%PATH%"
+
+  # Configure numpy to build against OpenBLAS
+  - "copy .\\tools\\appveyor\\openblas-site.cfg site.cfg"
+  - ps: "cp C:\\OpenBLAS\\*\\bin\\libopenblas.dll numpy\\core"
+  - "gendef numpy\\core\\libopenblas.dll"
+  - "C:\\\"Program Files (x86)\"\\\"Microsoft Visual Studio 9.0\"\\VC\\bin\\lib.exe /def:libopenblas.def"
+  - "copy libopenblas.lib numpy\\core\\libopenblas.lib"
+  - ps: "mkdir numpy\\core\\openblas"
+  - ps: "cp C:\\OpenBLAS\\*\\include\\*.h numpy\\core\\openblas"
+
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Install build dependencies: speed up install by not compiling Cython
+  - "%CMD_IN_ENV% pip install --install-option=\"--no-cython-compile\" Cython"
+
+  # Test dependencies
+  - "pip install nose"
+
+  # Build and install numpy
+  - "%CMD_IN_ENV% pip install ."
+
+build: false  # Not a C# project, build stuff at the test step instead.
+
+test_script:
+  - "mkdir empty"
+  - "cd empty"
+  - "python ..\\tools\\test-installed-numpy.py"
+  - "cd .."
+
+cache:
+  - C:\Downloads
+  - C:\pip-cache
