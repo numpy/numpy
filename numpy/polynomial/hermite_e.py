@@ -1796,7 +1796,7 @@ class HermiteE(ABCPolyBase):
     Parameters
     ----------
     coef : array_like
-        Laguerre coefficients in order of increasing degree, i.e,
+        HermiteE coefficients in order of increasing degree, i.e,
         ``(1, 2, 3)`` gives ``1*He_0(x) + 2*He_1(X) + 3*He_2(x)``.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
