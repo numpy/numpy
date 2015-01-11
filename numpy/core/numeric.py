@@ -2675,12 +2675,13 @@ def seterrcall(func):
         Function to call upon floating-point errors ('call'-mode) or
         object whose 'write' method is used to log such message ('log'-mode).
 
-        The call function takes two arguments. The first is the
-        type of error (one of "divide", "over", "under", or "invalid"),
-        and the second is the status flag.  The flag is a byte, whose
-        least-significant bits indicate the status::
+        The call function takes two arguments. The first is a string describing the
+        type of error (such as "divide by zero", "overflow", "underflow", or "invalid value"),
+        and the second is the status flag.  The flag is a byte, whose four
+        least-significant bits indicate the type of error, one of "divide", "over",
+        "under", "invalid"::
 
-          [0 0 0 0 invalid over under invalid]
+          [0 0 0 0 divide over under invalid]
 
         In other words, ``flags = divide + 2*over + 4*under + 8*invalid``.
 
