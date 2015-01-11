@@ -249,16 +249,15 @@ The sections of the docstring are:
 6. **Yields**
 
    Explanation of the yielded values and their types. This is relevant to
-   generators only. Similar to the **Parameters** section, except the name
-   of each return value is optional. The type of each return value is
-   always required::
+   generators only. Similar to the **Returns** section in that the name of
+   each value is optional, but the type of each value is always required::
 
      Yields
      ------
      int
          Description of the anonymous integer return value.
 
-   If both the name and type are specified, the **Returns** section takes the
+   If both the name and type are specified, the **Yields** section takes the
    same form as the **Parameters** section::
 
      Yields
