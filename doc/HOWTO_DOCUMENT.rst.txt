@@ -163,14 +163,14 @@ The sections of the docstring are:
                `ndobj_old` will be removed in Numpy 2.0, it is replaced by
                `ndobj_new` because the latter works also with array subclasses.
 
-3. **Extended summary**
+3. **Extended Summary**
 
    A few sentences giving an extended description.  This section
    should be used to clarify *functionality*, not to discuss
    implementation detail or background theory, which should rather be
-   explored in the **notes** section below.  You may refer to the
+   explored in the **Notes** section below.  You may refer to the
    parameters and the function name, but parameter descriptions still
-   belong in the **parameters** section.
+   belong in the **Parameters** section.
 
 4. **Parameters**
 
@@ -228,7 +228,7 @@ The sections of the docstring are:
 5. **Returns**
 
    Explanation of the returned values and their types. Similar to the
-   **parameters** section, except the name of each return value is optional.
+   **Parameters** section, except the name of each return value is optional.
    The type of each return value is always required::
 
      Returns
@@ -236,8 +236,8 @@ The sections of the docstring are:
      int
          Description of anonymous integer return value.
 
-   If both the name and type are specified, the **returns** section takes the
-   same form as the **parameters** section::
+   If both the name and type are specified, the **Returns** section takes the
+   same form as the **Parameters** section::
 
      Returns
      -------
@@ -246,13 +246,35 @@ The sections of the docstring are:
      err_msg : str or None
          Human readable error message, or None on success.
 
-6. **Other parameters**
+6. **Yields**
+
+   Explanation of the yielded values and their types. This is relevant to
+   generators only. Similar to the **Parameters** section, except the name
+   of each return value is optional. The type of each return value is
+   always required::
+
+     Yields
+     ------
+     int
+         Description of the anonymous integer return value.
+
+   If both the name and type are specified, the **Returns** section takes the
+   same form as the **Parameters** section::
+
+     Yields
+     ------
+     err_code : int
+         Non-zero value indicates error code, or zero on success.
+     err_msg : str or None
+         Human readable error message, or None on success.
+
+7. **Other Parameters**
 
    An optional section used to describe infrequently used parameters.
    It should only be used if a function has a large number of keyword
-   parameters, to prevent cluttering the **parameters** section.
+   parameters, to prevent cluttering the **Parameters** section.
 
-7. **Raises**
+8. **Raises**
 
    An optional section detailing which errors get raised and under
    what conditions::
@@ -265,7 +287,7 @@ The sections of the docstring are:
    This section should be used judiciously, i.e., only for errors
    that are non-obvious or have a large chance of getting raised.
 
-8. **See Also**
+9. **See Also**
 
    An optional section used to refer to related code.  This section
    can be very useful, but should be used judiciously.  The goal is to
@@ -304,7 +326,7 @@ The sections of the docstring are:
      func_b, func_c_, func_d
      func_e
 
-9. **Notes**
+10. **Notes**
 
    An optional section that provides additional information about the
    code, possibly including a discussion of the algorithm. This
@@ -349,7 +371,7 @@ The sections of the docstring are:
    where filename is a path relative to the reference guide source
    directory.
 
-10. **References**
+11. **References**
 
    References cited in the **notes** section may be listed here,
    e.g. if you cited the article below using the text ``[1]_``,
@@ -374,7 +396,7 @@ The sections of the docstring are:
    should not be required to understand it.  References are numbered, starting
    from one, in the order in which they are cited.
 
-11. **Examples**
+12. **Examples**
 
    An optional section for examples, using the `doctest
    <http://docs.python.org/library/doctest.html>`_ format.
@@ -437,10 +459,10 @@ Class docstring
 ```````````````
 Use the same sections as outlined above (all except ``Returns`` are
 applicable).  The constructor (``__init__``) should also be documented
-here, the **parameters** section of the docstring details the constructors
+here, the **Parameters** section of the docstring details the constructors
 parameters.
 
-An **Attributes** section, located below the **parameters** section,
+An **Attributes** section, located below the **Parameters** section,
 may be used to describe class variables::
 
   Attributes
@@ -466,7 +488,7 @@ In general, it is not necessary to list class methods.  Those that are
 not part of the public API have names that start with an underscore.
 In some cases, however, a class may have a great many methods, of
 which only a few are relevant (e.g., subclasses of ndarray).  Then, it
-becomes useful to have an additional **methods** section::
+becomes useful to have an additional **Methods** section::
 
   class Photo(ndarray):
       """
@@ -489,8 +511,8 @@ becomes useful to have an additional **methods** section::
       """
 
 If it is necessary to explain a private method (use with care!), it can
-be referred to in the **extended summary** or the **notes**. Do not
-list private methods in the **methods** section.
+be referred to in the **Extended Summary** or the **Notes** section.
+Do not list private methods in the **methods** section.
 
 Note that `self` is *not* listed as the first parameter of methods.
 
@@ -501,7 +523,8 @@ Document these as you would any other function.  Do not include
 (which is the case for many ndarray methods for example), the function
 docstring should contain the detailed documentation, and the method docstring
 should refer to it.  Only put brief summary and **See Also** sections in the
-method docstring.
+method docstring. The method should use a **Returns** or **Yields** section,
+as appropriate.
 
 
 Documenting class instances
@@ -518,6 +541,13 @@ instances a useful docstring, we do the following:
   ``__doc__`` attributes at run time. The class is documented as usual, and
   the exposed instances can be mentioned in the **Notes** and **See Also**
   sections.
+
+
+Documenting generators
+----------------------
+Generators should be documented just as functions are documented. The
+only difference is that one should use the **Yields** section instead
+of the **Returns** section.
 
 
 Documenting constants
