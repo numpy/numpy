@@ -24,6 +24,11 @@ additional parts required for building the documentation::
     git submodule init
     git submodule update
 
+In addition, building the documentation requires the Sphinx extension
+`plot_directive`, which is shipped with Matplotlib_. This Sphinx extension can
+be installed with or without completely installing Matplotlib: see the
+Matplotlib documentation for more information.
+
 Since large parts of the main documentation are stored in
 docstrings, you will need to first build Numpy, and install it so
 that the correct version is imported by
@@ -39,7 +44,7 @@ After Numpy is installed, write::
 
     make html
 
-in this ``doc/`` directory. If all goes well, this will generate a
+in the ``doc/`` directory. If all goes well, this will generate a
 ``build/html`` subdirectory containing the built documentation. Note
 that building the documentation on Windows is currently not actively
 supported, though it should be possible. (See Sphinx_ documentation
@@ -60,6 +65,7 @@ which will rebuild Numpy, install it to a temporary location, and
 build the documentation in all formats. This will most likely again
 only work on Unix platforms.
 
+.. _Matplotlib: http://matplotlib.org/
 
 Sphinx extensions
 -----------------
