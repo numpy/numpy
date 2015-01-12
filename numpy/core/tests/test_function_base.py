@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
-from numpy import logspace, linspace, dtype, array
+from numpy import logspace, linspace, dtype, array, finfo, typecodes
 
 class TestLogspace(TestCase):
 
@@ -76,39 +76,46 @@ class TestLinspace(TestCase):
         t2 = array([  0.0+1.j  ,   2.5+0.75j,   5.0+0.5j ,   7.5+0.25j,  10.0+0.j])
         assert_equal(lim1, t1)
         assert_equal(lim2, t2)
-        
+
     def test_physical_quantities(self):
         class PhysicalQuantity(float):
             def __new__(cls, value):
                 return float.__new__(cls, value)
-                
+
             def __add__(self, x):
                 assert_(isinstance(x, PhysicalQuantity))
                 return PhysicalQuantity(float(x) + float(self))
             __radd__ = __add__
-                
+
             def __sub__(self, x):
                 assert_(isinstance(x, PhysicalQuantity))
                 return PhysicalQuantity(float(self) - float(x))
-                
+
             def __rsub__(self, x):
                 assert_(isinstance(x, PhysicalQuantity))
                 return PhysicalQuantity(float(x) - float(self))
-                
+
             def __mul__(self, x):
                 return PhysicalQuantity(float(x) * float(self))
             __rmul__ = __mul__
-                
+
             def __div__(self, x):
                 return PhysicalQuantity(float(self) / float(x))
-                
+
             def __rdiv__(self, x):
                 return PhysicalQuantity(float(x) / float(self))
 
-        
+
         a = PhysicalQuantity(0.0)
         b = PhysicalQuantity(1.0)
         assert_equal(linspace(a, b), linspace(0.0, 1.0))
+
+    def test_denormal_numbers(self):
+        # Regression test for gh-5437. Will probably fail when compiled
+        # with ICC, which flushes denormals to zero
+        for dt in (dtype(f) for f in typecodes['Float']):
+            stop = finfo(dt).tiny * finfo(dt).resolution
+            assert_(any(linspace(0, stop, 10, endpoint=False, dtype=dt)))
 
 
 if __name__ == "__main__":

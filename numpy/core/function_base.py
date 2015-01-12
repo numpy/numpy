@@ -11,7 +11,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     Return evenly spaced numbers over a specified interval.
 
     Returns `num` evenly spaced samples, calculated over the
-    interval [`start`, `stop` ].
+    interval [`start`, `stop`].
 
     The endpoint of the interval can optionally be excluded.
 
@@ -83,28 +83,45 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     """
     num = int(num)
 
-    # Convert float/complex array scalars to float, gh-3504 
+    # Convert float/complex array scalars to float, gh-3504
     start = start * 1.
     stop = stop * 1.
 
+    dt = result_type(start, stop, float(num))
     if dtype is None:
-        dtype = result_type(start, stop, float(num))
+        dtype = dt
 
     if num <= 0:
         return array([], dtype)
+    if num == 1:
+        return array([start], dtype=dtype)
+    y = _nx.arange(0, num, dtype=dt)
     if endpoint:
-        if num == 1:
-            return array([start], dtype=dtype)
-        step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num, dtype=dtype) * step + start
+        num -= 1
+    y /= num
+    y *= stop - start
+    y += start
+    if endpoint:
         y[-1] = stop
-    else:
-        step = (stop-start)/float(num)
-        y = _nx.arange(0, num, dtype=dtype) * step + start
+
     if retstep:
-        return y.astype(dtype), step
+        return y.astype(dtype, copy=False), (stop - start) / num
     else:
-        return y.astype(dtype)
+        return y.astype(dtype, copy=False)
+
+    # if endpoint:
+        # if num == 1:
+            # return array([start], dtype=dtype)
+        # step = (stop-start)/float((num-1))
+        # y = _nx.arange(0, num, dtype=dtype) * step + start
+        # y[-1] = stop
+    # else:
+        # step = (stop-start)/float(num)
+        # y = _nx.arange(0, num, dtype=dtype) * step + start
+    # if retstep:
+        # return y.astype(dtype), step
+    # else:
+        # return y.astype(dtype)
 
 
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
