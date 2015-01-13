@@ -41,7 +41,7 @@ import warnings
 from . import core as ma
 from .core import MaskedArray, MAError, add, array, asarray, concatenate, count, \
     filled, getmask, getmaskarray, make_mask_descr, masked, masked_array, \
-    mask_or, nomask, ones, sort, zeros
+    mask_or, nomask, ones, sort, zeros, getdata
 #from core import *
 
 import numpy as np
@@ -671,7 +671,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     """
     if not hasattr(a, 'mask') or np.count_nonzero(a.mask) == 0:
-        return masked_array(np.median(getattr(a, 'data', a), axis=axis,
+        return masked_array(np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input), copy=False)
     if overwrite_input:
         if axis is None:
