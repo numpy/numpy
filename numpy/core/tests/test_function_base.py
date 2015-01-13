@@ -1,7 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
-from numpy import logspace, linspace, dtype, array, finfo, typecodes
+from numpy import (logspace, linspace, dtype, array, finfo, typecodes, arange,
+                   isnan)
 
 class TestLogspace(TestCase):
 
@@ -116,6 +117,21 @@ class TestLinspace(TestCase):
         for dt in (dtype(f) for f in typecodes['Float']):
             stop = finfo(dt).tiny * finfo(dt).resolution
             assert_(any(linspace(0, stop, 10, endpoint=False, dtype=dt)))
+
+    def test_equivalent_to_arange(self):
+        for j in range(1000):
+            assert_equal(linspace(0, j, j+1, dtype=int),
+                         arange(j+1, dtype=int))
+
+    def test_retstep(self):
+        y = linspace(0, 1, 2, retstep=True)
+        assert_(isinstance(y, tuple) and len(y) == 2)
+        for num in (0, 1):
+            for ept in (False, True):
+                y = linspace(0, 1, num, endpoint=ept, retstep=True)
+                assert_(isinstance(y, tuple) and len(y) == 2 and
+                        len(y[0]) == num and isnan(y[1]),
+                        'num={0}, endpoint={1}'.format(num, ept))
 
 
 if __name__ == "__main__":

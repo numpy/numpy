@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['logspace', 'linspace']
 
 from . import numeric as _nx
-from .numeric import array, result_type
+from .numeric import array, result_type, NaN
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
@@ -82,6 +82,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
 
     """
     num = int(num)
+    div = (num - 1) if endpoint else num
 
     # Convert float/complex array scalars to float, gh-3504
     start = start * 1.
@@ -91,37 +92,30 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     if dtype is None:
         dtype = dt
 
-    if num <= 0:
-        return array([], dtype)
-    if num == 1:
-        return array([start], dtype=dtype)
     y = _nx.arange(0, num, dtype=dt)
-    if endpoint:
-        num -= 1
-    y /= num
-    y *= stop - start
+
+    if num > 1:
+        delta = stop - start
+        step = delta / div
+        if step == 0:
+            # Special handling for denormal numbers, gh-5437
+            y /= div
+            y *= delta
+        else:
+            y *= step
+    else:
+        # 0 and 1 item long sequences have an undefined step
+        step = NaN
+
     y += start
-    if endpoint:
+
+    if endpoint and num > 1:
         y[-1] = stop
 
     if retstep:
-        return y.astype(dtype, copy=False), (stop - start) / num
+        return y.astype(dtype, copy=False), step
     else:
         return y.astype(dtype, copy=False)
-
-    # if endpoint:
-        # if num == 1:
-            # return array([start], dtype=dtype)
-        # step = (stop-start)/float((num-1))
-        # y = _nx.arange(0, num, dtype=dtype) * step + start
-        # y[-1] = stop
-    # else:
-        # step = (stop-start)/float(num)
-        # y = _nx.arange(0, num, dtype=dtype) * step + start
-    # if retstep:
-        # return y.astype(dtype), step
-    # else:
-        # return y.astype(dtype)
 
 
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
