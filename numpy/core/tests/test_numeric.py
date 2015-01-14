@@ -2148,5 +2148,79 @@ def test_outer_out_param():
     assert_equal(res1, out1)
     assert_equal(np.outer(arr2, arr3, out2), out2)
 
+class TestRequire(object):
+    flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
+                  'F', 'F_CONTIGUOUS', 'FORTRAN',
+                  'A', 'ALIGNED',
+                  'W', 'WRITEABLE',
+                  'O', 'OWNDATA']
+
+    def generate_all_false(self, dtype):
+        arr = np.zeros((2, 2), [('junk', 'i1'), ('a', dtype)])
+        arr.setflags(write=False)
+        a = arr['a']
+        assert_(not a.flags['C'])
+        assert_(not a.flags['F'])
+        assert_(not a.flags['O'])
+        assert_(not a.flags['W'])
+        assert_(not a.flags['A'])
+        return a
+
+    def set_and_check_flag(self, flag, dtype, arr):
+        if dtype is None:
+            dtype = arr.dtype
+        b = np.require(arr, dtype, [flag])
+        assert_(b.flags[flag])
+        assert_(b.dtype == dtype)
+
+        # a further call to np.require ought to return the same array
+        # unless OWNDATA is specified.
+        c = np.require(b, None, [flag])
+        if flag[0] != 'O':
+            assert_(c is b)
+        else:
+            assert_(c.flags[flag])
+
+    def test_require_each(self):
+
+        id = ['f8', 'i4']
+        fd = [None, 'f8', 'c16']
+        for idtype, fdtype, flag in itertools.product(id, fd, self.flag_names):
+            a = self.generate_all_false(idtype)
+            yield self.set_and_check_flag, flag, fdtype,  a
+
+    def test_unknown_requirement(self):
+        a = self.generate_all_false('f8')
+        assert_raises(KeyError, np.require, a, None, 'Q')
+
+    def test_non_array_input(self):
+        a = np.require([1, 2, 3, 4], 'i4', ['C', 'A', 'O'])
+        assert_(a.flags['O'])
+        assert_(a.flags['C'])
+        assert_(a.flags['A'])
+        assert_(a.dtype == 'i4')
+        assert_equal(a, [1, 2, 3, 4])
+
+    def test_C_and_F_simul(self):
+        a = self.generate_all_false('f8')
+        assert_raises(ValueError, np.require, a, None, ['C', 'F'])
+
+    def test_ensure_array(self):
+        class ArraySubclass(ndarray):
+            pass
+
+        a = ArraySubclass((2,2))
+        b = np.require(a, None, ['E'])
+        assert_(type(b) is np.ndarray)
+
+    def test_preserve_subtype(self):
+        class ArraySubclass(ndarray):
+            pass
+
+        for flag in self.flag_names:
+            a = ArraySubclass((2,2))
+            yield self.set_and_check_flag, flag, None, a
+
+
 if __name__ == "__main__":
     run_module_suite()

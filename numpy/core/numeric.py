@@ -597,7 +597,9 @@ def require(a, dtype=None, requirements=None):
     a : array_like
        The object to be converted to a type-and-requirement-satisfying array.
     dtype : data-type
-       The required data-type, the default data-type is float64).
+       The required data-type. If None preserve the current dtype. If your
+       application requires the data to be in native byteorder, include
+       a byteorder specification as a part of the dtype specification.
     requirements : str or list of str
        The requirements list can be any of the following
 
@@ -606,6 +608,7 @@ def require(a, dtype=None, requirements=None):
        * 'ALIGNED' ('A')      - ensure a data-type aligned array
        * 'WRITEABLE' ('W')    - ensure a writable array
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
+       * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
 
     See Also
     --------
@@ -642,34 +645,38 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
-    if requirements is None:
-        requirements = []
-    else:
-        requirements = [x.upper() for x in requirements]
-
+    possible_flags = {'C':'C', 'C_CONTIGUOUS':'C', 'CONTIGUOUS':'C',
+                      'F':'F', 'F_CONTIGUOUS':'F', 'FORTRAN':'F',
+                      'A':'A', 'ALIGNED':'A',
+                      'W':'W', 'WRITEABLE':'W',
+                      'O':'O', 'OWNDATA':'O',
+                      'E':'E', 'ENSUREARRAY':'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
+    else:
+        requirements = set(possible_flags[x.upper()] for x in requirements)
 
-    if 'ENSUREARRAY' in requirements or 'E' in requirements:
+    if 'E' in requirements:
+        requirements.remove('E')
         subok = False
     else:
         subok = True
 
-    arr = array(a, dtype=dtype, copy=False, subok=subok)
+    order = 'A'
+    if requirements >= set(['C', 'F']):
+        raise ValueError('Cannot specify both "C" and "F" order')
+    elif 'F' in requirements:
+        order = 'F'
+        requirements.remove('F')
+    elif 'C' in requirements:
+        order = 'C'
+        requirements.remove('C')
 
-    copychar = 'A'
-    if 'FORTRAN' in requirements or \
-       'F_CONTIGUOUS' in requirements or \
-       'F' in requirements:
-        copychar = 'F'
-    elif 'CONTIGUOUS' in requirements or \
-         'C_CONTIGUOUS' in requirements or \
-         'C' in requirements:
-        copychar = 'C'
+    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
 
     for prop in requirements:
         if not arr.flags[prop]:
-            arr = arr.copy(copychar)
+            arr = arr.copy(order)
             break
     return arr
 
