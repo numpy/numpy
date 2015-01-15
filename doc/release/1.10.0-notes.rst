@@ -94,6 +94,12 @@ number of rows read in a single call. Using this functionality, it is
 possible to read in multiple arrays stored in a single file by making
 repeated calls to the function.
 
+New function *np.broadcast_to* for invoking array broadcasting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.broadcast_to* manually broadcasts an array to a given shape according to
+numpy's broadcasting rules. The functionality is similar to broadcast_arrays,
+which in fact has been rewritten to use broadcast_to internally, but only a
+single array is necessary.
 
 Improvements
 ============
