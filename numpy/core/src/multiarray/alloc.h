@@ -19,4 +19,11 @@ npy_alloc_cache_dim(npy_uintp sz);
 NPY_NO_EXPORT void
 npy_free_cache_dim(void * p, npy_uintp sd);
 
+NPY_NO_EXPORT size_t
+npy_datamem_get_align(void);
+
+NPY_NO_EXPORT int
+npy_datamem_set_align(size_t);
+
+
 #endif

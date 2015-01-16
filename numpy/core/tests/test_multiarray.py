@@ -4873,5 +4873,32 @@ class TestHashing(TestCase):
         self.assertFalse(isinstance(x, collections.Hashable))
 
 
+class TestAlignment(TestCase):
+
+    def check_alignment(self, align):
+        for size in (0, 1, 7, 12, 135, 777):
+            e = np.empty(size, dtype='int8')
+            z = np.zeros(size, dtype='int8')
+            self.assertEqual(e.ctypes.data & (align - 1), 0, (size, align))
+            self.assertEqual(z.ctypes.data & (align - 1), 0, (size, align))
+
+    def test_get_alignment(self):
+        a = get_data_alignment()
+        # Default alignment should probably be one of those.
+        self.assertIn(a, (4, 8, 16, 32))
+
+    def test_set_alignment(self):
+        old_align = get_data_alignment()
+        self.check_alignment(old_align)
+        try:
+            aligns = [16, 32, 64, 512]
+            for a in aligns:
+                set_data_alignment(a)
+                self.assertEqual(get_data_alignment(), a)
+                self.check_alignment(a)
+        finally:
+            set_data_alignment(old_align)
+
+
 if __name__ == "__main__":
     run_module_suite()

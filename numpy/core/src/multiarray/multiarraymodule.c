@@ -58,6 +58,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "multiarraymodule.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
+#include "alloc.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 
 /* Only here for API compatibility */
@@ -3881,6 +3882,25 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args)
     }
 }
 
+static PyObject *
+get_alignment(PyObject *NPY_UNUSED(ignored), PyObject *NPY_UNUSED(args))
+{
+    return PyLong_FromSsize_t(npy_datamem_get_align());
+}
+
+static PyObject *
+set_alignment(PyObject *NPY_UNUSED(ignored), PyObject *args)
+{
+    int align;
+    if (!PyArg_ParseTuple(args, "i", &align)) {
+        return NULL;
+    }
+    if (npy_datamem_set_align(align)) {
+        PyErr_SetString(PyExc_ValueError, "invalid value for alignment");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
 
 
 static struct PyMethodDef array_module_methods[] = {
@@ -4029,6 +4049,12 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
+    {"_set_alignment",
+        (PyCFunction)set_alignment,
+        METH_VARARGS, NULL},
+    {"_get_alignment",
+        (PyCFunction)get_alignment,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

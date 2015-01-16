@@ -43,7 +43,8 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory', 'full', 'full_like']
+           'ComplexWarning', 'may_share_memory', 'full', 'full_like',
+           'get_data_alignment', 'set_data_alignment']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2462,6 +2463,43 @@ def array_equiv(a1, a2):
         return False
 
     return bool(asarray(a1 == a2).all())
+
+
+def get_data_alignment():
+    """
+    Get the guaranteed alignment of array data allocated by Numpy.
+
+    Returns
+    -------
+    res : int
+        A power of two representing the current alignment, in bytes, enforced
+        when an array's data is allocated.
+
+    See Also
+    --------
+    set_data_alignment()
+
+    """
+    return multiarray._get_alignment()
+
+
+def set_data_alignment(align):
+    """
+    Set the guaranteed alignment of array data allocated by Numpy.
+
+    Parameters
+    ----------
+    align : int
+        A power of two representing the alignment, in bytes, to enforce
+        in future data allocations.
+
+    Notes
+    -----
+    ValueError is raised if the alignment is invalid (too small, or not
+    a power of two).
+
+    """
+    multiarray._set_alignment(align)
 
 
 _errdict = {"ignore":ERR_IGNORE,
