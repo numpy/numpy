@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include <numpy/npy_common.h>
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 
 #include <assert.h>
 
@@ -247,9 +248,8 @@ NPY_NO_EXPORT void *
 PyDataMem_NEW(size_t size)
 {
     void *result;
-    size_t aligned_size = get_aligned_size(size);
 
-    result = malloc(aligned_size);
+    result = malloc(get_aligned_size(size));
     if (result != NULL)
         result = align_pointer(result);
 
@@ -269,21 +269,24 @@ PyDataMem_NEW(size_t size)
  * Allocates zeroed memory for array data.
  */
 NPY_NO_EXPORT void *
-PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
+PyDataMem_NEW_ZEROED(size_t nelems, size_t elsize)
 {
     void *result;
-    /* XXX this doesn't overflow-check */
-    size_t aligned_size = get_aligned_size(size * elsize);
+    size_t size;
 
-    result = calloc(aligned_size, 1);
-    if (result != NULL)
-        result = align_pointer(result);
+    if (npy_mul_with_overflow_intp(&size, nelems, elsize))
+        result = NULL;
+    else {
+        result = calloc(get_aligned_size(size), 1);
+        if (result != NULL)
+            result = align_pointer(result);
+    }
 
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size * elsize,
+            (*_PyDataMem_eventhook)(NULL, result, nelems * elsize,
                                     _PyDataMem_eventhook_user_data);
         }
         NPY_DISABLE_C_API
@@ -317,10 +320,9 @@ NPY_NO_EXPORT void *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
     void *result;
-    size_t aligned_size = get_aligned_size(size);
     void *original_ptr = (ptr != NULL) ? get_original_pointer(ptr) : ptr;
 
-    result = realloc(original_ptr, aligned_size);
+    result = realloc(original_ptr, get_aligned_size(size));
     if (result != NULL)
         result = align_pointer(result);
     if (_PyDataMem_eventhook != NULL) {
