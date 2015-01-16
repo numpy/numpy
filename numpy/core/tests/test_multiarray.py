@@ -4885,7 +4885,7 @@ class TestAlignment(TestCase):
     def test_get_alignment(self):
         a = get_data_alignment()
         # Default alignment should probably be one of those.
-        self.assertIn(a, (4, 8, 16, 32))
+        self.assertTrue(a in (8, 16, 32), a)
 
     def test_set_alignment(self):
         old_align = get_data_alignment()
