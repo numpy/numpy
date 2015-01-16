@@ -319,12 +319,26 @@ PyDataMem_FREE(void *ptr)
 NPY_NO_EXPORT void *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
-    void *result;
-    void *original_ptr = (ptr != NULL) ? get_original_pointer(ptr) : ptr;
+    void *base_result, *result;
+    void *original_ptr = get_original_pointer(ptr);
 
-    result = realloc(original_ptr, get_aligned_size(size));
-    if (result != NULL)
-        result = align_pointer(result);
+    base_result = realloc(original_ptr, get_aligned_size(size));
+    if (base_result == NULL)
+        result = NULL;
+    else {
+        if (base_result == original_ptr)
+            result = ptr;
+        else {
+            size_t offset = (npy_intp) ptr - (npy_intp) original_ptr;
+            size_t new_offset;
+            result = align_pointer(base_result);
+            /* If the offset from base pointer changed, we must move
+               the data area ourselves */
+            new_offset = (npy_intp) result - (npy_intp) base_result;
+            if (new_offset != offset)
+                memmove(result, (const char *) base_result + offset, size);
+        }
+    }
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
