@@ -186,7 +186,7 @@ static size_t datamem_align_mask = MIN_ALIGN - 1;
 static NPY_INLINE size_t
 get_aligned_size(size_t size)
 {
-    return size + datamem_align;
+    return size + sizeof(void *) + datamem_align_mask;
 }
 
 /*
@@ -199,7 +199,6 @@ align_pointer(void *ptr)
     /* Ensure a pointer can fit in the space before */
     npy_intp aligned_ptr = ((npy_intp) ptr + sizeof(void *) + datamem_align_mask)
                            & ~datamem_align_mask;
-    assert(aligned_ptr - (npy_intp) ptr >= sizeof(void *));
     ((void **) aligned_ptr)[-1] = ptr;
     return (void *) aligned_ptr;
 }
@@ -273,10 +272,10 @@ NPY_NO_EXPORT void *
 PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
 {
     void *result;
-    size_t aligned_size = get_aligned_size(size);
-    assert(elsize == 1); /* XXX */
+    /* XXX this doesn't overflow-check */
+    size_t aligned_size = get_aligned_size(size * elsize);
 
-    result = calloc(aligned_size, elsize);
+    result = calloc(aligned_size, 1);
     if (result != NULL)
         result = align_pointer(result);
 
@@ -319,7 +318,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
 {
     void *result;
     size_t aligned_size = get_aligned_size(size);
-    void *original_ptr = get_original_pointer(ptr);
+    void *original_ptr = (ptr != NULL) ? get_original_pointer(ptr) : ptr;
 
     result = realloc(original_ptr, aligned_size);
     if (result != NULL)
