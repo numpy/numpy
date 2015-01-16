@@ -222,9 +222,11 @@ npy_datamem_get_align(void)
 NPY_NO_EXPORT int
 npy_datamem_set_align(size_t align)
 {
-    if (align < MIN_ALIGN)
-        return -1;
     size_t align_mask = align - 1;
+    if (align < MIN_ALIGN) {
+        /* Too small */
+        return -1;
+    }
     if ((align ^ align_mask) != (align | align_mask)) {
         /* Not a power of two */
         return -1;
