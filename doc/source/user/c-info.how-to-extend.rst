@@ -10,7 +10,7 @@ How to extend NumPy
 |    --- *Alan Turing*
 
 
-.. _`sec:Writing-an-extension`:
+.. _writing-an-extension:
 
 Writing an extension module
 ===========================
