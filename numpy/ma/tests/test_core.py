@@ -1489,6 +1489,21 @@ class TestFillingValues(TestCase):
         control = np.array((0, 0, 0), dtype="int, float, float").astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
 
+    def test_fillvalue_datetime_timedelta(self):
+        # Test default fillvalue for datetime64 and timedelta64 types.
+        # See issue #4476, this would return '?' which would cause errors
+        # elsewhere
+
+        for timecode in ("as", "fs", "ps", "ns", "us", "ms", "s", "m",
+                         "h", "D", "W", "M", "Y"):
+            control = numpy.datetime64("NaT", timecode)
+            test = default_fill_value(numpy.dtype("<M8[" + timecode + "]"))
+            assert_equal(test, control)
+
+            control = numpy.timedelta64("NaT", timecode)
+            test = default_fill_value(numpy.dtype("<m8[" + timecode + "]"))
+            assert_equal(test, control)
+
     def test_extremum_fill_value(self):
         # Tests extremum fill values for flexible type.
         a = array([(1, (2, 3)), (4, (5, 6))],
