@@ -1,7 +1,7 @@
 .. _structured_arrays:
 
-***************************************
-Structured arrays (aka "Record arrays")
-***************************************
+*****************
+Structured arrays 
+*****************
 
 .. automodule:: numpy.doc.structured_arrays

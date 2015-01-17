@@ -4629,7 +4629,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> print x
     [(1, 20) (3, 4)]
 
-    Using a view to convert an array to a record array:
+    Using a view to convert an array to a recarray:
 
     >>> z = x.view(np.recarray)
     >>> z.a
@@ -5875,17 +5875,18 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     >>> np.dtype(np.int16)
     dtype('int16')
 
-    Record, one field name 'f1', containing int16:
+    Structured type, one field name 'f1', containing int16:
 
     >>> np.dtype([('f1', np.int16)])
     dtype([('f1', '<i2')])
 
-    Record, one field named 'f1', in itself containing a record with one field:
+    Structured type, one field named 'f1', in itself containing a structured
+    type with one field:
 
     >>> np.dtype([('f1', [('f1', np.int16)])])
     dtype([('f1', [('f1', '<i2')])])
 
-    Record, two fields: the first field contains an unsigned int, the
+    Structured type, two fields: the first field contains an unsigned int, the
     second an int32:
 
     >>> np.dtype([('f1', np.uint), ('f2', np.int32)])

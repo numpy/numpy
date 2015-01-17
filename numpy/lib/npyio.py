@@ -656,7 +656,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         generators should return byte strings for Python 3k.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
-        record data-type, the resulting array will be 1-dimensional, and
+        structured data-type, the resulting array will be 1-dimensional, and
         each row will be interpreted as an element of the array.  In this
         case, the number of columns used must match the number of fields in
         the data-type.
@@ -680,7 +680,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The default, None, results in all columns being read.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.

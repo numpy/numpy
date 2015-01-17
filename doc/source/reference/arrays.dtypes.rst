@@ -14,12 +14,12 @@ following aspects of the data:
 1. Type of the data (integer, float, Python object, etc.)
 2. Size of the data (how many bytes is in *e.g.* the integer)
 3. Byte order of the data (:term:`little-endian` or :term:`big-endian`)
-4. If the data type is a :term:`record`, an aggregate of other
+4. If the data type is :term:`structured`, an aggregate of other
    data types, (*e.g.*, describing an array item consisting of
    an integer and a float),
 
-   1. what are the names of the ":term:`fields <field>`" of the record,
-      by which they can be :ref:`accessed <arrays.indexing.rec>`,
+   1. what are the names of the ":term:`fields <field>`" of the structure,
+      by which they can be :ref:`accessed <arrays.indexing.fields>`,
    2. what is the data-type of each :term:`field`, and
    3. which part of the memory block each field takes.
 
@@ -40,15 +40,14 @@ needed in Numpy.
 
 .. index::
    pair: dtype; field
-   pair: dtype; record
 
-Struct data types are formed by creating a data type whose
+Structured data types are formed by creating a data type whose
 :term:`fields` contain other data types. Each field has a name by
-which it can be :ref:`accessed <arrays.indexing.rec>`. The parent data
+which it can be :ref:`accessed <arrays.indexing.fields>`. The parent data
 type should be of sufficient size to contain all its fields; the
 parent is nearly always based on the :class:`void` type which allows
-an arbitrary item size. Struct data types may also contain nested struct
-sub-array data types in their fields.
+an arbitrary item size. Structured data types may also contain nested 
+structured sub-array data types in their fields.
 
 .. index::
    pair: dtype; sub-array
@@ -60,7 +59,7 @@ fixed size.
 If an array is created using a data-type describing a sub-array,
 the dimensions of the sub-array are appended to the shape
 of the array when the array is created. Sub-arrays in a field of a
-record behave differently, see :ref:`arrays.indexing.rec`.
+structured type behave differently, see :ref:`arrays.indexing.fields`.
 
 Sub-arrays always have a C-contiguous memory layout.
 
@@ -83,7 +82,7 @@ Sub-arrays always have a C-contiguous memory layout.
 
 .. admonition:: Example
 
-   A record data type containing a 16-character string (in field 'name')
+   A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
@@ -246,8 +245,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
 String with comma-separated fields
 
-   Numarray introduced a short-hand notation for specifying the format
-   of a record as a comma-separated string of basic formats.
+   A short-hand notation for specifying the format of a structured data type is
+   a comma-separated string of basic formats.
 
    A basic format in this context is an optional shape specifier
    followed by an array-protocol type string. Parenthesis are required
@@ -315,7 +314,7 @@ Type strings
 
        >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
        >>> dt = np.dtype(('S10', 1))                 # 10-character string
-       >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 record sub-array
+       >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
    triple: dtype; construction; from list
@@ -432,7 +431,8 @@ Type strings
     Both arguments must be convertible to data-type objects in this
     case. The *base_dtype* is the data-type object that the new
     data-type builds on. This is how you could assign named fields to
-    any built-in data-type object.
+    any built-in data-type object, as done in 
+    :ref:`record arrays <arrays.classes.rec>`.
 
     .. admonition:: Example
 
@@ -486,7 +486,7 @@ Endianness of this data:
 
    dtype.byteorder
 
-Information about sub-data-types in a :term:`record`:
+Information about sub-data-types in a :term:`structured` data type:
 
 .. autosummary::
    :toctree: generated/
