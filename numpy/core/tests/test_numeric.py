@@ -2065,6 +2065,69 @@ class TestRoll(TestCase):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
 
+
+class TestRollaxis(TestCase):
+
+    # expected shape indexed by (axis, start) for array of
+    # shape (1, 2, 3, 4)
+    tgtshape = {(0, 0): (1, 2, 3, 4), (0, 1): (1, 2, 3, 4),
+                (0, 2): (2, 1, 3, 4), (0, 3): (2, 3, 1, 4),
+                (0, 4): (2, 3, 4, 1),
+                (1, 0): (2, 1, 3, 4), (1, 1): (1, 2, 3, 4),
+                (1, 2): (1, 2, 3, 4), (1, 3): (1, 3, 2, 4),
+                (1, 4): (1, 3, 4, 2),
+                (2, 0): (3, 1, 2, 4), (2, 1): (1, 3, 2, 4),
+                (2, 2): (1, 2, 3, 4), (2, 3): (1, 2, 3, 4),
+                (2, 4): (1, 2, 4, 3),
+                (3, 0): (4, 1, 2, 3), (3, 1): (1, 4, 2, 3),
+                (3, 2): (1, 2, 4, 3), (3, 3): (1, 2, 3, 4),
+                (3, 4): (1, 2, 3, 4)}
+
+    def test_exceptions(self):
+        a = arange(1*2*3*4).reshape(1, 2, 3, 4)
+        assert_raises(ValueError, rollaxis, a, -5, 0)
+        assert_raises(ValueError, rollaxis, a, 0, -5)
+        assert_raises(ValueError, rollaxis, a, 4, 0)
+        assert_raises(ValueError, rollaxis, a, 0, 5)
+
+    def test_results(self):
+        a = arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
+        aind = np.indices(a.shape)
+        assert_(a.flags['OWNDATA'])
+        for (i, j) in self.tgtshape:
+            # positive axis, positive start
+            res = rollaxis(a, axis=i, start=j)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(i, j)], str((i,j)))
+            assert_(not res.flags['OWNDATA'])
+
+            # negative axis, positive start
+            ip = i + 1
+            res = rollaxis(a, axis=-ip, start=j)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(4 - ip, j)])
+            assert_(not res.flags['OWNDATA'])
+
+            # positive axis, negative start
+            jp = j + 1 if j < 4 else j
+            res = rollaxis(a, axis=i, start=-jp)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(i, 4 - jp)])
+            assert_(not res.flags['OWNDATA'])
+
+            # negative axis, negative start
+            ip = i + 1
+            jp = j + 1 if j < 4 else j
+            res = rollaxis(a, axis=-ip, start=-jp)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(4 - ip, 4 - jp)])
+            assert_(not res.flags['OWNDATA'])
+
+
 class TestCross(TestCase):
     def test_2x2(self):
         u = [1, 2]

@@ -1392,6 +1392,7 @@ def roll(a, shift, axis=None):
         res = res.reshape(a.shape)
     return res
 
+
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
@@ -1410,7 +1411,9 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        Output array.
+        For Numpy >= 1.10 a view of `a` is always returned. For earlier
+        Numpy versions a view of `a` is returned only if the order of the
+        axes is changed, otherwise the input array is returned.
 
     See Also
     --------
@@ -1436,16 +1439,18 @@ def rollaxis(a, axis, start=0):
     msg = 'rollaxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < n):
         raise ValueError(msg % ('axis', axis, n))
-    if not (0 <= start < n+1):
-        raise ValueError(msg % ('start', start, n+1))
-    if (axis < start): # it's been removed
+    if not (0 <= start < n + 1):
+        raise ValueError(msg % ('start', start, n + 1))
+    if (axis < start):
+        # it's been removed
         start -= 1
-    if axis==start:
-        return a
+    if axis == start:
+        return a[...]
     axes = list(range(0, n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
+
 
 # fix hack in scipy which imports this function
 def _move_axis_to_0(a, axis):
