@@ -289,10 +289,7 @@ PyDataMem_NEW_ZEROED(size_t nelems, size_t elsize)
     void *base_result, *result = NULL;
     size_t size;
 
-    if (npy_mul_with_overflow_intp(&size, nelems, elsize)) {
-        result = NULL;
-    }
-    else {
+    if (!npy_mul_with_overflow_intp(&size, nelems, elsize)) {
         base_result = calloc(get_aligned_size(size), 1);
         if (base_result != NULL) {
             result = get_aligned_pointer(base_result);
@@ -338,14 +335,11 @@ PyDataMem_FREE(void *ptr)
 NPY_NO_EXPORT void *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
-    void *base_result, *result;
+    void *base_result, *result = NULL;
     void *base_ptr = get_base_pointer(ptr);
 
     base_result = realloc(base_ptr, get_aligned_size(size));
-    if (base_result == NULL) {
-        result = NULL;
-    }
-    else {
+    if (base_result != NULL) {
         if (base_result == base_ptr) {
             result = ptr;
         }
