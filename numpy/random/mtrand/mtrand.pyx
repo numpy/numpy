@@ -2551,12 +2551,12 @@ cdef class RandomState:
 
         The Lomax or Pareto II distribution is a shifted Pareto distribution. The
         classical Pareto distribution can be obtained from the Lomax distribution
-        by adding the location parameter m, see below. The smallest value of the
-        Lomax distribution is zero while for the classical Pareto distribution it
-        is m, where the standard Pareto distribution has location m=1.
-        Lomax can also be considered as a simplified version of the Generalized
-        Pareto distribution (available in SciPy), with the scale set to one and
-        the location set to zero.
+        by adding 1 and multiplying by the scale parameter ``m`` (see Notes).
+        The smallest value of the Lomax distribution is zero while for the
+        classical Pareto distribution it is ``mu``, where the standard Pareto
+        distribution has location ``mu = 1``.  Lomax can also be considered as a
+        simplified version of the Generalized Pareto distribution (available in
+        SciPy), with the scale set to one and the location set to zero.
 
         The Pareto distribution must be greater than zero, and is unbounded above.
         It is also known as the "80-20 rule".  In this distribution, 80 percent of
@@ -2585,7 +2585,7 @@ cdef class RandomState:
 
         .. math:: p(x) = \\frac{am^a}{x^{a+1}}
 
-        where :math:`a` is the shape and :math:`m` the location
+        where :math:`a` is the shape and :math:`m` the scale.
 
         The Pareto distribution, named after the Italian economist Vilfredo Pareto,
         is a power law probability distribution useful in many real world problems.
@@ -2593,7 +2593,7 @@ cdef class RandomState:
         distribution. Pareto developed the distribution to describe the
         distribution of wealth in an economy.  It has also found use in insurance,
         web page access statistics, oil field sizes, and many other problems,
-        including the download frequency for projects in Sourceforge [1].  It is
+        including the download frequency for projects in Sourceforge [1]_.  It is
         one of the so-called "fat-tailed" distributions.
 
 
@@ -2611,16 +2611,16 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a, m = 3., 1. # shape and mode
-        >>> s = np.random.pareto(a, 1000) + m
+        >>> a, m = 3., 2.  # shape and mode
+        >>> s = (np.random.pareto(a, 1000) + 1) * m
 
-        Display the histogram of the samples, along with
-        the probability density function:
+        Display the histogram of the samples, along with the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='center')
-        >>> fit = a*m**a/bins**(a+1)
-        >>> plt.plot(bins, max(count)*fit/max(fit),linewidth=2, color='r')
+        >>> count, bins, _ = plt.hist(s, 100, normed=True)
+        >>> fit = a*m**a / bins**(a+1)
+        >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
 
         """

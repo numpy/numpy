@@ -35,15 +35,6 @@ libraries from Python and the purpose of this Chapter is not to make
 you an expert. The main goal is to make you aware of some of the
 possibilities so that you will know what to "Google" in order to learn more.
 
-The http://www.scipy.org website also contains a great deal of useful
-information about many of these tools. For example, there is a nice
-description of using several of the tools explained in this chapter at
-http://www.scipy.org/PerformancePython. This link provides several
-ways to solve the same problem showing how to use and connect with
-compiled code to get the best performance. In the process you can get
-a taste for several of the approaches that will be discussed in this
-chapter.
-
 
 Calling other compiled libraries from Python
 ============================================
@@ -54,7 +45,7 @@ raw computations inside of for loops) to be up 10-100 times slower
 than equivalent code written in a static compiled language. In
 addition, it can cause memory usage to be larger than necessary as
 temporary arrays are created and destroyed during computation. For
-many types of computing needs the extra slow-down and memory
+many types of computing needs, the extra slow-down and memory
 consumption can often not be spared (at least for time- or memory-
 critical portions of your code). Therefore one of the most common
 needs is to call out from Python code to a fast, machine-code routine
@@ -65,9 +56,8 @@ high-level language for scientific and engineering programming.
 Their are two basic approaches to calling compiled code: writing an
 extension module that is then imported to Python using the import
 command, or calling a shared-library subroutine directly from Python
-using the ctypes module (included in the standard distribution since
-Python 2.5). The first method is the most common (but with the
-inclusion of ctypes into Python 2.5 this status may change).
+using the `ctypes <https://docs.python.org/3/library/ctypes.html>`_
+module.  Writing an extension module is the most common method.
 
 .. warning::
 
@@ -80,14 +70,14 @@ inclusion of ctypes into Python 2.5 this status may change).
 Hand-generated wrappers
 =======================
 
-Extension modules were discussed in Chapter `1
-<#sec-writing-an-extension>`__ . The most basic way to interface with
-compiled code is to write an extension module and construct a module
-method that calls the compiled code. For improved readability, your
-method should take advantage of the PyArg_ParseTuple call to convert
-between Python objects and C data-types. For standard C data-types
-there is probably already a built-in converter. For others you may
-need to write your own converter and use the "O&" format string which
+Extension modules were discussed in :ref:`writing-an-extension`.
+The most basic way to interface with compiled code is to write
+an extension module and construct a module method that calls
+the compiled code. For improved readability, your method should
+take advantage of the ``PyArg_ParseTuple`` call to convert between
+Python objects and C data-types. For standard C data-types there
+is probably already a built-in converter. For others you may need 
+to write your own converter and use the ``"O&"`` format string which
 allows you to specify a function that will be used to perform the
 conversion from the Python object to whatever C-structures are needed.
 
@@ -110,10 +100,10 @@ it can be adapted using the time-honored technique of
 "cutting-pasting-and-modifying" from other extension modules. Because,
 the procedure of calling out to additional C-code is fairly
 regimented, code-generation procedures have been developed to make
-this process easier. One of these code- generation techniques is
+this process easier. One of these code-generation techniques is
 distributed with NumPy and allows easy integration with Fortran and
 (simple) C code. This package, f2py, will be covered briefly in the
-next session.
+next section.
 
 
 f2py
@@ -123,7 +113,8 @@ F2py allows you to automatically construct an extension module that
 interfaces to routines in Fortran 77/90/95 code. It has the ability to
 parse Fortran 77/90/95 code and automatically generate Python
 signatures for the subroutines it encounters, or you can guide how the
-subroutine interfaces with Python by constructing an interface-definition-file (or modifying the f2py-produced one).
+subroutine interfaces with Python by constructing an interface-definition-file
+(or modifying the f2py-produced one).
 
 .. index::
    single: f2py
@@ -176,7 +167,7 @@ This command leaves a file named add.{ext} in the current directory
 module on your platform --- so, pyd, *etc.* ). This module may then be
 imported from Python. It will contain a method for each subroutine in
 add (zadd, cadd, dadd, sadd). The docstring of each method contains
-information about how the module method may be called:
+information about how the module method may be called::
 
     >>> import add
     >>> print add.zadd.__doc__
@@ -199,9 +190,9 @@ attempt to convert all arguments to their required types (and shapes)
 and issue an error if unsuccessful. However, because it knows nothing
 about the semantics of the arguments (such that C is an output and n
 should really match the array sizes), it is possible to abuse this
-function in ways that can cause Python to crash. For example:
+function in ways that can cause Python to crash. For example::
 
-    >>> add.zadd([1,2,3],[1,2],[3,4],1000)
+    >>> add.zadd([1,2,3], [1,2], [3,4], 1000)
 
 will cause a program crash on most systems. Under the covers, the
 lists are being converted to proper arrays but then the underlying add
@@ -254,7 +245,7 @@ by compiling both ``add.f95`` and ``add.pyf``::
 
     f2py -c add.pyf add.f95 
 
-The new interface has docstring:
+The new interface has docstring::
 
     >>> import add
     >>> print add.zadd.__doc__
@@ -266,7 +257,7 @@ The new interface has docstring:
     Return objects:
       c : rank-1 array('D') with bounds (n)
 
-Now, the function can be called in a much more robust way:
+Now, the function can be called in a much more robust way::
 
     >>> add.zadd([1,2,3],[4,5,6])
     array([ 5.+0.j,  7.+0.j,  9.+0.j])
@@ -306,11 +297,11 @@ Then, I can compile the extension module using::
 
 The resulting signature for the function add.zadd is exactly the same
 one that was created previously. If the original source code had
-contained A(N) instead of A(\*) and so forth with B and C, then I
-could obtain (nearly) the same interface simply by placing the
-INTENT(OUT) :: C comment line in the source code. The only difference
-is that N would be an optional input that would default to the length
-of A.
+contained ``A(N)`` instead of ``A(*)`` and so forth with ``B`` and ``C``,
+then I could obtain (nearly) the same interface simply by placing the
+``INTENT(OUT) :: C`` comment line in the source code. The only difference
+is that ``N`` would be an optional input that would default to the length
+of ``A``.
 
 
 A filtering example
@@ -369,7 +360,7 @@ to compile Fortran code at runtime, as follows:
 
 The source string can be any valid Fortran code. If you want to save
 the extension-module source code then a suitable file-name can be
-provided by the source_fn keyword to the compile function.
+provided by the ``source_fn`` keyword to the compile function.
 
 
 Automatic extension module generation
@@ -378,9 +369,9 @@ Automatic extension module generation
 If you want to distribute your f2py extension module, then you only
 need to include the .pyf file and the Fortran code. The distutils
 extensions in NumPy allow you to define an extension module entirely
-in terms of this interface file. A valid setup.py file allowing
-distribution of the add.f module (as part of the package f2py_examples
-so that it would be loaded as f2py_examples.add) is:
+in terms of this interface file. A valid ``setup.py`` file allowing
+distribution of the ``add.f`` module (as part of the package
+``f2py_examples`` so that it would be loaded as ``f2py_examples.add``) is:
 
 .. code-block:: python
 
@@ -400,10 +391,10 @@ Installation of the new package is easy using::
 
 assuming you have the proper permissions to write to the main site-
 packages directory for the version of Python you are using. For the
-resulting package to work, you need to create a file named __init__.py
-(in the same directory as add.pyf). Notice the extension module is
-defined entirely in terms of the "add.pyf" and "add.f" files. The
-conversion of the .pyf file to a .c file is handled by numpy.disutils.
+resulting package to work, you need to create a file named ``__init__.py``
+(in the same directory as ``add.pyf``). Notice the extension module is
+defined entirely in terms of the ``add.pyf`` and ``add.f`` files. The
+conversion of the .pyf file to a .c file is handled by `numpy.disutils`.
 
 
 Conclusion
@@ -594,7 +585,7 @@ Conclusion
 ----------
 
 Cython is the extension mechanism of choice for several scientific Python
-libraries, including Pandas, SAGE, scikit-image and scikit-learn,
+libraries, including Scipy, Pandas, SAGE, scikit-image and scikit-learn,
 as well as the XML processing library LXML.
 The language and compiler are well-maintained.
 
@@ -627,7 +618,8 @@ C or Fortran code.
 ctypes
 ======
 
-Ctypes is a Python extension module, included in the stdlib, that
+`Ctypes <https://docs.python.org/3/library/ctypes.html>`_
+is a Python extension module, included in the stdlib, that
 allows you to call an arbitrary function in a shared library directly
 from Python. This approach allows you to interface with C-code directly
 from Python. This opens up an enormous number of libraries for use from
@@ -653,11 +645,11 @@ mention the conversion from ctypes objects to C-data-types that ctypes
 itself performs), will make the interface slower than a hand-written
 extension-module interface. However, this overhead should be neglible
 if the C-routine being called is doing any significant amount of work.
-If you are a great Python programmer with weak C-skills, ctypes is an
+If you are a great Python programmer with weak C skills, ctypes is an
 easy way to write a useful interface to a (shared) library of compiled
 code.
 
-To use c-types you must
+To use ctypes you must
 
 1. Have a shared library.
 
@@ -672,18 +664,16 @@ Having a shared library
 -----------------------
 
 There are several requirements for a shared library that can be used
-with c-types that are platform specific. This guide assumes you have
+with ctypes that are platform specific. This guide assumes you have
 some familiarity with making a shared library on your system (or
 simply have a shared library available to you). Items to remember are:
 
 - A shared library must be compiled in a special way ( *e.g.* using
-  the -shared flag with gcc).
+  the ``-shared`` flag with gcc).
 
 - On some platforms (*e.g.* Windows) , a shared library requires a
   .def file that specifies the functions to be exported. For example a
-  mylib.def file might contain.
-
-  ::
+  mylib.def file might contain::
 
       LIBRARY mylib.dll
       EXPORTS
@@ -691,15 +681,15 @@ simply have a shared library available to you). Items to remember are:
       cool_function2
 
   Alternatively, you may be able to use the storage-class specifier
-  __declspec(dllexport) in the C-definition of the function to avoid the
-  need for this .def file.
+  ``__declspec(dllexport)`` in the C-definition of the function to avoid
+  the need for this ``.def`` file.
 
 There is no standard way in Python distutils to create a standard
 shared library (an extension module is a "special" shared library
 Python understands) in a cross-platform manner. Thus, a big
 disadvantage of ctypes at the time of writing this book is that it is
 difficult to distribute in a cross-platform manner a Python extension
-that uses c-types and includes your own code which should be compiled
+that uses ctypes and includes your own code which should be compiled
 as a shared library on the users system.
 
 
@@ -707,13 +697,13 @@ Loading the shared library
 --------------------------
 
 A simple, but robust way to load the shared library is to get the
-absolute path name and load it using the cdll object of ctypes.:
+absolute path name and load it using the cdll object of ctypes:
 
 .. code-block:: python
 
     lib = ctypes.cdll[<full_path_name>]
 
-However, on Windows accessing an attribute of the cdll method will
+However, on Windows accessing an attribute of the ``cdll`` method will
 load the first DLL by that name found in the current directory or on
 the PATH. Loading the absolute path name requires a little finesse for
 cross-platform work since the extension of shared libraries varies.
@@ -722,22 +712,22 @@ simplify the process of finding the library to load but it is not
 foolproof. Complicating matters, different platforms have different
 default extensions used by shared libraries (e.g. .dll -- Windows, .so
 -- Linux, .dylib -- Mac OS X). This must also be taken into account if
-you are using c-types to wrap code that needs to work on several
+you are using ctypes to wrap code that needs to work on several
 platforms.
 
 NumPy provides a convenience function called
-:func:`ctypeslib.load_library` (name, path). This function takes the name
+``ctypeslib.load_library`` (name, path). This function takes the name
 of the shared library (including any prefix like 'lib' but excluding
 the extension) and a path where the shared library can be located. It
-returns a ctypes library object or raises an OSError if the library
-cannot be found or raises an ImportError if the ctypes module is not
+returns a ctypes library object or raises an ``OSError`` if the library
+cannot be found or raises an ``ImportError`` if the ctypes module is not
 available. (Windows users: the ctypes library object loaded using
-:func:`load_library` is always loaded assuming cdecl calling convention.
-See the ctypes documentation under ctypes.windll and/or ctypes.oledll
+``load_library`` is always loaded assuming cdecl calling convention.
+See the ctypes documentation under ``ctypes.windll`` and/or ``ctypes.oledll``
 for ways to load libraries under other calling conventions).
 
 The functions in the shared library are available as attributes of the
-ctypes library object (returned from :func:`ctypeslib.load_library`) or
+ctypes library object (returned from ``ctypeslib.load_library``) or
 as items using ``lib['func_name']`` syntax. The latter method for
 retrieving a function name is particularly useful if the function name
 contains characters that are not allowable in Python variable names.
@@ -747,10 +737,10 @@ Converting arguments
 --------------------
 
 Python ints/longs, strings, and unicode objects are automatically
-converted as needed to equivalent c-types arguments The None object is
+converted as needed to equivalent ctypes arguments The None object is
 also converted automatically to a NULL pointer. All other Python
 objects must be converted to ctypes-specific types. There are two ways
-around this restriction that allow c-types to integrate with other
+around this restriction that allow ctypes to integrate with other
 objects.
 
 1. Don't set the argtypes attribute of the function object and define an
@@ -765,7 +755,7 @@ objects.
 
 NumPy uses both methods with a preference for the second method
 because it can be safer. The ctypes attribute of the ndarray returns
-an object that has an _as_parameter\_ attribute which returns an
+an object that has an ``_as_parameter_`` attribute which returns an
 integer representing the address of the ndarray to which it is
 associated. As a result, one can pass this ctypes attribute object
 directly to a function expecting a pointer to the data in your
@@ -784,26 +774,26 @@ the ndarray that were specified by the user in the call to :func:`ndpointer`.
 Aspects of the ndarray that can be checked include the data-type, the
 number-of-dimensions, the shape, and/or the state of the flags on any
 array passed. The return value of the from_param method is the ctypes
-attribute of the array which (because it contains the _as_parameter\_
+attribute of the array which (because it contains the ``_as_parameter_``
 attribute pointing to the array data area) can be used by ctypes
 directly.
 
 The ctypes attribute of an ndarray is also endowed with additional
 attributes that may be convenient when passing additional information
 about the array into a ctypes function. The attributes **data**,
-**shape**, and **strides** can provide c-types compatible types
+**shape**, and **strides** can provide ctypes compatible types
 corresponding to the data-area, the shape, and the strides of the
 array. The data attribute reutrns a ``c_void_p`` representing a
 pointer to the data area. The shape and strides attributes each return
 an array of ctypes integers (or None representing a NULL pointer, if a
 0-d array). The base ctype of the array is a ctype integer of the same
 size as a pointer on the platform. There are also methods
-data_as({ctype}), shape_as(<base ctype>), and strides_as(<base
-ctype>). These return the data as a ctype object of your choice and
+``data_as({ctype})``, ``shape_as(<base ctype>)``, and ``strides_as(<base
+ctype>)``. These return the data as a ctype object of your choice and
 the shape/strides arrays using an underlying base type of your choice.
-For convenience, the **ctypeslib** module also contains **c_intp** as
+For convenience, the ``ctypeslib`` module also contains ``c_intp`` as
 a ctypes integer data-type whose size is the same as the size of
-``c_void_p`` on the platform (it's value is None if ctypes is not
+``c_void_p`` on the platform (its value is None if ctypes is not
 installed).
 
 
@@ -811,13 +801,13 @@ Calling the function
 --------------------
 
 The function is accessed as an attribute of or an item from the loaded
-shared-library. Thus, if "./mylib.so" has a function named
-"cool_function1" , I could access this function either as:
+shared-library. Thus, if ``./mylib.so`` has a function named
+``cool_function1`` , I could access this function either as:
 
 .. code-block:: python
 
     lib = numpy.ctypeslib.load_library('mylib','.')
-    func1 = lib.cool_function1 # or equivalently
+    func1 = lib.cool_function1  # or equivalently
     func1 = lib['cool_function1']
 
 In ctypes, the return-value of a function is set to be 'int' by
@@ -851,11 +841,11 @@ signature
     necessary requirements.
 
 Using an ndpointer class in the argtypes method can make it
-significantly safer to call a C-function using ctypes and the data-
+significantly safer to call a C function using ctypes and the data-
 area of an ndarray. You may still want to wrap the function in an
 additional Python wrapper to make it user-friendly (hiding some
 obvious arguments and making some arguments output arguments). In this
-process, the **requires** function in NumPy may be useful to return the right
+process, the ``requires`` function in NumPy may be useful to return the right
 kind of array from a given input.
 
 
@@ -864,9 +854,9 @@ Complete example
 
 In this example, I will show how the addition function and the filter
 function implemented previously using the other approaches can be
-implemented using ctypes. First, the C-code which implements the
-algorithms contains the functions zadd, dadd, sadd, cadd, and
-dfilter2d. The zadd function is:
+implemented using ctypes. First, the C code which implements the
+algorithms contains the functions ``zadd``, ``dadd``, ``sadd``, ``cadd``,
+and ``dfilter2d``. The ``zadd`` function is:
 
 .. code-block:: c
 
@@ -882,8 +872,8 @@ dfilter2d. The zadd function is:
         }
     }
 
-with similar code for cadd, dadd, and sadd that handles complex float,
-double, and float data-types, respectively:
+with similar code for ``cadd``, ``dadd``, and ``sadd`` that handles complex
+float, double, and float data-types, respectively:
 
 .. code-block:: c
 
@@ -908,7 +898,7 @@ double, and float data-types, respectively:
             }
     }
 
-The code.c file also contains the function dfilter2d:
+The ``code.c`` file also contains the function ``dfilter2d``:
 
 .. code-block:: c
 
@@ -941,14 +931,14 @@ A possible advantage this code has over the Fortran-equivalent code is
 that it takes arbitrarily strided (i.e. non-contiguous arrays) and may
 also run faster depending on the optimization capability of your
 compiler. But, it is a obviously more complicated than the simple code
-in filter.f. This code must be compiled into a shared library. On my
+in ``filter.f``. This code must be compiled into a shared library. On my
 Linux system this is accomplished using::
 
     gcc -o code.so -shared code.c
 
 Which creates a shared_library named code.so in the current directory.
-On Windows don't forget to either add __declspec(dllexport) in front
-of void on the line preceeding each function definition, or write a
+On Windows don't forget to either add ``__declspec(dllexport)`` in front
+of void on the line preceding each function definition, or write a
 code.def file that lists the names of the functions to be exported.
 
 A suitable Python interface to this shared library should be
@@ -979,7 +969,7 @@ following lines at the top:
                                 'writeable'),
                         N.ctypeslib.c_intp]
 
-This code loads the shared library named code.{ext} located in the
+This code loads the shared library named ``code.{ext}`` located in the
 same path as this file. It then adds a return type of void to the
 functions contained in the library. It also adds argument checking to
 the functions in the library so that ndarrays can be passed as the
@@ -1051,13 +1041,13 @@ Conclusion
    single: ctypes
 
 Using ctypes is a powerful way to connect Python with arbitrary
-C-code. It's advantages for extending Python include
+C-code. Its advantages for extending Python include
 
-- clean separation of C-code from Python code
+- clean separation of C code from Python code
 
     - no need to learn a new syntax except Python and C
 
-    - allows re-use of C-code
+    - allows re-use of C code
 
     - functionality in shared libraries written for other purposes can be
       obtained with a simple Python wrapper and search for the library.
@@ -1067,7 +1057,7 @@ C-code. It's advantages for extending Python include
 
 - full argument checking with the ndpointer class factory
 
-It's disadvantages include
+Its disadvantages include
 
 - It is difficult to distribute an extension module made using ctypes
   because of a lack of support for building shared libraries in
@@ -1075,15 +1065,14 @@ It's disadvantages include
 
 - You must have shared-libraries of your code (no static libraries).
 
-- Very little support for C++ code and it's different library-calling
-  conventions. You will probably need a C-wrapper around C++ code to use
+- Very little support for C++ code and its different library-calling
+  conventions. You will probably need a C wrapper around C++ code to use
   with ctypes (or just use Boost.Python instead).
 
 Because of the difficulty in distributing an extension module made
-using ctypes, f2py is still the easiest way to extend Python for
-package creation. However, ctypes is a close second and will probably
-be growing in popularity now that it is part of the Python
-distribution. This should bring more features to ctypes that should
+using ctypes, f2py and Cython are still the easiest ways to extend Python
+for package creation. However, ctypes is in some cases a useful alternative.
+This should bring more features to ctypes that should
 eliminate the difficulty in extending Python and distributing the
 extension using ctypes.
 
