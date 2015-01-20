@@ -3538,6 +3538,7 @@ static void
         /* NaNs result in no clipping, so optimize the case away */
         if (@isnan@(max_val)) {
             if (min == NULL) {
+                memmove(out, in, ni * sizeof(@type@));
                 return;
             }
             max = NULL;
@@ -3549,6 +3550,7 @@ static void
 #if @isfloat@
         if (@isnan@(min_val)) {
             if (max == NULL) {
+                memmove(out, in, ni * sizeof(@type@));
                 return;
             }
             min = NULL;
@@ -3560,12 +3562,18 @@ static void
             if (@lt@(in[i], min_val)) {
                 out[i] = min_val;
             }
+            else {
+                out[i] = in[i];
+            }
         }
     }
     else if (min == NULL) {
         for (i = 0; i < ni; i++) {
             if (@gt@(in[i], max_val)) {
                 out[i] = max_val;
+            }
+            else {
+                out[i] = in[i];
             }
         }
     }
@@ -3576,6 +3584,9 @@ static void
             }
             else if (@gt@(in[i], max_val)) {
                 out[i]   = max_val;
+            }
+            else {
+                out[i] = in[i];
             }
         }
     }
@@ -3609,12 +3620,18 @@ static void
             if (PyArray_CLT(in[i],min_val)) {
                 out[i] = min_val;
             }
+            else {
+                out[i] = in[i];
+            }
         }
     }
     else if (min == NULL) {
         for (i = 0; i < ni; i++) {
             if (PyArray_CGT(in[i], max_val)) {
                 out[i] = max_val;
+            }
+            else {
+                out[i] = in[i];
             }
         }
     }
@@ -3625,6 +3642,9 @@ static void
             }
             else if (PyArray_CGT(in[i], max_val)) {
                 out[i] = max_val;
+            }
+            else {
+                out[i] = in[i];
             }
         }
     }
