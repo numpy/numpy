@@ -48,6 +48,8 @@ at python.org Python, Homebrew and MacPorts::
   pip install numpy
 
 
+.. _building-from-source:
+
 Building from source
 ====================
 
@@ -107,6 +109,11 @@ To perform an in-place build that can be run from the source folder run::
 The NumPy build system uses ``distutils`` and ``numpy.distutils``.
 ``setuptools`` is only used when building via ``pip`` or with ``python
 setupegg.py``.  Using ``virtualenv`` should work as expected.
+
+*Note: for build instructions to do development work on NumPy itself, see
+:ref:`development-environment`*.
+
+.. _parallel-builds:
 
 Parallel builds
 ~~~~~~~~~~~~~~~
