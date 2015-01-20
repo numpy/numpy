@@ -344,6 +344,8 @@ multiarray_funcs_api = {
     # End 1.9 API
     'PyArray_CheckAnyScalarExact':          (300, NonNull(1)),
     # End 1.10 API
+    'PyDataMem_GetAllocator':               (301,),
+    'PyDataMem_SetAllocator':               (302,),
 }
 
 ufunc_types_api = {

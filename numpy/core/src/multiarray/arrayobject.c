@@ -420,7 +420,7 @@ array_dealloc(PyArrayObject *self)
              * self already...
              */
         }
-        npy_free_cache(fa->data, PyArray_NBYTES(self));
+        npy_free_cache(fa->allocator, fa->data, PyArray_NBYTES(self));
     }
 
     /* must match allocation in PyArray_NewFromDescr */

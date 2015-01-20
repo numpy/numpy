@@ -5,13 +5,13 @@
 #include <numpy/ndarraytypes.h>
 
 NPY_NO_EXPORT void *
-npy_alloc_cache(npy_uintp sz);
+npy_alloc_cache(const PyDataMem_Allocator **, npy_uintp sz);
 
 NPY_NO_EXPORT void *
-npy_alloc_cache_zero(npy_uintp sz);
+npy_alloc_cache_zero(const PyDataMem_Allocator **, npy_uintp sz);
 
 NPY_NO_EXPORT void
-npy_free_cache(void * p, npy_uintp sd);
+npy_free_cache(const PyDataMem_Allocator *, void * p, npy_uintp sd);
 
 NPY_NO_EXPORT void *
 npy_alloc_cache_dim(npy_uintp sz);

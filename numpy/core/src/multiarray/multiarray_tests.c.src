@@ -949,6 +949,81 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
     return NULL;
 }
 
+/*
+ * Test allocator to exercise setting the default PyDataMem_Allocator.
+ */
+
+static int alloc_counter = 0;
+static int realloc_counter = 0;
+static int free_counter = 0;
+
+static void *
+testalloc_alloc(size_t size)
+{
+    alloc_counter += 1;
+    return malloc(size);
+}
+
+static void *
+testalloc_zeroed_alloc(size_t nelems, size_t elsize)
+{
+    alloc_counter += 1;
+    return calloc(nelems, elsize);
+}
+
+static void
+testalloc_free(void *ptr)
+{
+    free_counter += 1;
+    free(ptr);
+}
+
+static void *
+testalloc_realloc(void *ptr, size_t size)
+{
+    realloc_counter += 1;
+    return realloc(ptr, size);
+}
+
+static PyDataMem_Allocator test_allocator = {
+    testalloc_alloc,
+    testalloc_zeroed_alloc,
+    testalloc_free,
+    testalloc_realloc,
+};
+
+static PyObject *
+enable_test_allocator(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    alloc_counter = 0;
+    realloc_counter = 0;
+    free_counter = 0;
+    PyDataMem_SetAllocator(&test_allocator);
+    if (PyDataMem_GetAllocator() != &test_allocator) {
+        PyDataMem_SetAllocator(NULL);
+        PyErr_SetString(PyExc_AssertionError,
+                        "wrong PyDataMem_GetAllocator() result after "
+                        "calling PyDataMem_SetAllocator()");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+disable_test_allocator(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    PyDataMem_SetAllocator(NULL);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+get_allocator_counts(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    return Py_BuildValue("{sisisi}",
+                         "allocs", alloc_counter,
+                         "reallocs", realloc_counter,
+                         "frees", free_counter);
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
@@ -992,6 +1067,15 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_nditer_too_large",
         test_nditer_too_large,
         METH_VARARGS, NULL},
+    {"enable_test_allocator",
+        enable_test_allocator,
+        METH_NOARGS, NULL},
+    {"disable_test_allocator",
+        disable_test_allocator,
+        METH_NOARGS, NULL},
+    {"get_allocator_counts",
+        get_allocator_counts,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

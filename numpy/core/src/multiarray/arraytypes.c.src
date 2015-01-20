@@ -2692,6 +2692,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     PyObject *tup;
     char *nip1, *nip2;
     int i, res = 0, swap=0;
+    const PyDataMem_Allocator *allocator = NULL;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
@@ -2721,7 +2722,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if ((swap) || (new->alignment > 1)) {
             if ((swap) || (!npy_is_aligned(nip1, new->alignment))) {
                 /* create buffer and copy */
-                nip1 = npy_alloc_cache(new->elsize);
+                nip1 = npy_alloc_cache(&allocator, new->elsize);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -2731,10 +2732,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             }
             if ((swap) || (!npy_is_aligned(nip2, new->alignment))) {
                 /* copy data to a buffer */
-                nip2 = npy_alloc_cache(new->elsize);
+                nip2 = npy_alloc_cache(&allocator, new->elsize);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
-                        npy_free_cache(nip1, new->elsize);
+                        npy_free_cache(allocator, nip1, new->elsize);
                     }
                     goto finish;
                 }
@@ -2746,10 +2747,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, ap);
         if ((swap) || (new->alignment > 1)) {
             if (nip1 != ip1 + offset) {
-                npy_free_cache(nip1, new->elsize);
+                npy_free_cache(allocator, nip1, new->elsize);
             }
             if (nip2 != ip2 + offset) {
-                npy_free_cache(nip2, new->elsize);
+                npy_free_cache(allocator, nip2, new->elsize);
             }
         }
         if (res != 0) {

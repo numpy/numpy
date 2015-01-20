@@ -23,7 +23,8 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-        test_inplace_increment, get_buffer_info, test_as_c_array
+        test_inplace_increment, get_buffer_info, test_as_c_array,
+        enable_test_allocator, disable_test_allocator, get_allocator_counts
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -4871,6 +4872,31 @@ class TestHashing(TestCase):
     def test_collections_hashable(self):
         x = np.array([])
         self.assertFalse(isinstance(x, collections.Hashable))
+
+
+class TestDataMemAllocator(TestCase):
+    """
+    Test setting the array data allocator.
+    """
+
+    def test_set_allocator(self):
+        x = np.empty(10)
+        enable_test_allocator()
+        try:
+            np.empty(10).resize((101,))
+            np.zeros(11).resize((102,))
+            a = np.empty(12)
+            b = np.zeros(13)
+            del x
+        finally:
+            disable_test_allocator()
+        a.resize((103,))
+        b.resize((104,))
+        del a, b
+        counts = get_allocator_counts()
+        self.assertEqual(counts['allocs'], 4)
+        self.assertEqual(counts['frees'], 4)
+        self.assertEqual(counts['reallocs'], 4)
 
 
 if __name__ == "__main__":

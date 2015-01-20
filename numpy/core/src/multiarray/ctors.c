@@ -991,6 +991,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
+    fa->allocator = NULL;
 
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
@@ -1033,17 +1034,16 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            data = npy_alloc_cache_zero(sd);
+            data = npy_alloc_cache_zero(&fa->allocator, sd);
         }
         else {
-            data = npy_alloc_cache(sd);
+            data = npy_alloc_cache(&fa->allocator, sd);
         }
         if (data == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
-
     }
     else {
         /*
@@ -3226,7 +3226,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
             totalbytes += bytes;
-            tmp = PyDataMem_RENEW(PyArray_DATA(r), totalbytes);
+            tmp = PyArray_ALLOCATOR(r)->realloc(PyArray_DATA(r), totalbytes);
             if (tmp == NULL) {
                 err = 1;
                 break;
@@ -3240,7 +3240,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
     }
     if (num < 0) {
-        tmp = PyDataMem_RENEW(PyArray_DATA(r), PyArray_MAX(*nread,1)*dtype->elsize);
+        tmp = PyArray_ALLOCATOR(r)->realloc(PyArray_DATA(r),
+                                            PyArray_MAX(*nread,1)*dtype->elsize);
         if (tmp == NULL) {
             err = 1;
         }
@@ -3322,9 +3323,9 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     if (((npy_intp) nread) < num) {
         /* Realloc memory for smaller number of elements */
         const size_t nsize = PyArray_MAX(nread,1)*PyArray_DESCR(ret)->elsize;
-        char *tmp;
+        char *tmp = PyArray_ALLOCATOR(ret)->realloc(PyArray_DATA(ret), nsize);
 
-        if((tmp = PyDataMem_RENEW(PyArray_DATA(ret), nsize)) == NULL) {
+        if(tmp == NULL) {
             Py_DECREF(ret);
             return PyErr_NoMemory();
         }
@@ -3604,7 +3605,8 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
             if (elcount <= NPY_MAX_INTP/elsize) {
-                new_data = PyDataMem_RENEW(PyArray_DATA(ret), elcount * elsize);
+                new_data = PyArray_ALLOCATOR(ret)->realloc(PyArray_DATA(ret),
+                                                           elcount * elsize);
             }
             else {
                 new_data = NULL;
@@ -3642,10 +3644,10 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * (assuming realloc is reasonably good about reusing space...)
      */
     if (i == 0) {
-        /* The size cannot be zero for PyDataMem_RENEW. */
+        /* The size cannot be zero for ->realloc(). */
         i = 1;
     }
-    new_data = PyDataMem_RENEW(PyArray_DATA(ret), i * elsize);
+    new_data = PyArray_ALLOCATOR(ret)->realloc(PyArray_DATA(ret), i * elsize);
     if (new_data == NULL) {
         PyErr_SetString(PyExc_MemoryError,
                 "cannot allocate array memory");
