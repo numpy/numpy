@@ -951,38 +951,71 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
 
 /*
  * Test allocator to exercise setting the default PyDataMem_Allocator.
+ * It pads allocations and sets a canary to make sure another allocator
+ * can't be used on the same pointers.
  */
 
 static int alloc_counter = 0;
 static int realloc_counter = 0;
 static int free_counter = 0;
 
+#define ALLOC_PAD 16
+
+static void
+store_canary(void *ptr)
+{
+    *(npy_intp *) ptr = (npy_intp) ptr;
+}
+
+static void
+check_canary(void *ptr)
+{
+    if (*(npy_intp *) ptr != (npy_intp) ptr) {
+        char msg[300];
+        sprintf(msg, "Canary check fail at %p: expected %p, got %p",
+                ptr, *(npy_intp *) ptr, (npy_intp) ptr);
+        Py_FatalError(msg);
+    }
+}
+
 static void *
 testalloc_alloc(size_t size)
 {
+    void *base;
     alloc_counter += 1;
-    return malloc(size);
+    base = malloc(size + ALLOC_PAD);
+    store_canary(base);
+    return (void *) ((npy_intp) base + ALLOC_PAD);
 }
 
 static void *
 testalloc_zeroed_alloc(size_t nelems, size_t elsize)
 {
+    void *base;
     alloc_counter += 1;
-    return calloc(nelems, elsize);
+    base = calloc(nelems * elsize + ALLOC_PAD, 1);
+    store_canary(base);
+    return (void *) ((npy_intp) base + ALLOC_PAD);
 }
 
 static void
 testalloc_free(void *ptr)
 {
+    void *base = (void *) ((npy_intp) ptr - ALLOC_PAD);
     free_counter += 1;
-    free(ptr);
+    check_canary(base);
+    free(base);
 }
 
 static void *
 testalloc_realloc(void *ptr, size_t size)
 {
+    void *base = (void *) ((npy_intp) ptr - ALLOC_PAD);
     realloc_counter += 1;
-    return realloc(ptr, size);
+    check_canary(base);
+    base = realloc(base, size + ALLOC_PAD);
+    store_canary(base);
+    return (void *) ((npy_intp) base + ALLOC_PAD);
 }
 
 static PyDataMem_Allocator test_allocator = {
@@ -1017,7 +1050,7 @@ disable_test_allocator(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 }
 
 static PyObject *
-get_allocator_counts(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+get_test_allocator_counts(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
     return Py_BuildValue("{sisisi}",
                          "allocs", alloc_counter,
@@ -1073,8 +1106,8 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"disable_test_allocator",
         disable_test_allocator,
         METH_NOARGS, NULL},
-    {"get_allocator_counts",
-        get_allocator_counts,
+    {"get_test_allocator_counts",
+        get_test_allocator_counts,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

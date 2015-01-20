@@ -287,6 +287,9 @@ npy_free_cache_dim(void * p, npy_uintp sz)
                     &PyArray_free);
 }
 
+/* NOTE: the PyDataMem_ functions use the default allocator, as they are
+ * called for other things than just array data.
+ */
 
 /*NUMPY_API
  * Allocates memory for array data.

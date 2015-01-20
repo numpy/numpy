@@ -1701,7 +1701,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        PyArray_ALLOCATOR(self)->free(PyArray_DATA(self));
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));

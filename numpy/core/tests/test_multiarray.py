@@ -8,6 +8,7 @@ import shutil
 import warnings
 import operator
 import io
+import pickle
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -24,7 +25,7 @@ from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
         test_inplace_increment, get_buffer_info, test_as_c_array,
-        enable_test_allocator, disable_test_allocator, get_allocator_counts
+        enable_test_allocator, disable_test_allocator, get_test_allocator_counts
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -4887,15 +4888,16 @@ class TestDataMemAllocator(TestCase):
             np.zeros(11).resize((102,))
             a = np.empty(12)
             b = np.zeros(13)
+            c = pickle.loads(pickle.dumps(b, protocol=-1))
             del x
         finally:
             disable_test_allocator()
         a.resize((103,))
         b.resize((104,))
-        del a, b
-        counts = get_allocator_counts()
-        self.assertEqual(counts['allocs'], 4)
-        self.assertEqual(counts['frees'], 4)
+        del a, b, c
+        counts = get_test_allocator_counts()
+        self.assertEqual(counts['allocs'], 6)
+        self.assertEqual(counts['frees'], 6)
         self.assertEqual(counts['reallocs'], 4)
 
 
