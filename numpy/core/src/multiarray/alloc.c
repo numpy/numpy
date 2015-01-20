@@ -235,8 +235,8 @@ NPY_NO_EXPORT void *
 npy_alloc_cache_zero(const PyDataMem_Allocator **a, npy_uintp sz)
 {
     void * p;
-    *a = current_allocator;
     NPY_BEGIN_THREADS_DEF;
+    *a = current_allocator;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &current_allocator_new);
         if (p) {
