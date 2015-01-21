@@ -50,11 +50,16 @@ the case of matrices.  Matrices are special cased for backward
 compatibility and still return 1-D arrays as before. If you need to
 preserve the matrix subtype, use the methods instead of the functions.
 
-*rollaxis* always returns a view
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*rollaxis* and *swapaxes* always return a view
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Previously, a view was returned except when no change was made in the order
 of the axes, in which case the input array was returned.  A view is now
 returned in all cases.
+
+C API
+~~~~~
+The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
+which now returns a view in all cases.
 
 
 New Features
