@@ -1959,11 +1959,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 &PyArrayDescr_Type, &typecode, &obj)) {
         return NULL;
     }
-    if (typecode->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "itemsize cannot be zero");
-        return NULL;
-    }
 
     if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
         if (obj == NULL) {
@@ -1973,6 +1968,9 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     }
     else {
         if (obj == NULL) {
+            if (typecode->elsize == 0) {
+                typecode->elsize = 1;
+            }
             dptr = PyArray_malloc(typecode->elsize);
             if (dptr == NULL) {
                 return PyErr_NoMemory();
