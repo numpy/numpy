@@ -43,12 +43,13 @@ def prepare_numpy_sources(bootstrap = 'bootstrap'):
         fid = open(newname, 'wb')
         fid.write(cnt)
 
-def prepare_nsis_script(bootstrap, pyver, numver):
+def prepare_nsis_script(bootstrap, pyver, use_msi, numver):
     tpl = os.path.join('nsis_scripts', 'numpy-superinstaller.nsi.in')
     source = open(tpl, 'r')
     target = open(pjoin(bootstrap, 'numpy-superinstaller.nsi'), 'w')
 
-    installer_name = 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+    extension = "exe" if not use_msi else "msi"
+    installer_name = 'numpy-%s-win32-superpack-python%s.%s' % (numver, pyver, extension)
     cnt = "".join(source.readlines())
     cnt = cnt.replace('@NUMPY_INSTALLER_NAME@', installer_name)
     for arch in ['nosse', 'sse2', 'sse3']:
@@ -57,7 +58,7 @@ def prepare_nsis_script(bootstrap, pyver, numver):
 
     target.write(cnt)
 
-def prepare_bootstrap(pyver):
+def prepare_bootstrap(pyver, use_msi):
     bootstrap = "bootstrap-%s" % pyver
     if os.path.exists(bootstrap):
         shutil.rmtree(bootstrap)
@@ -67,7 +68,7 @@ def prepare_bootstrap(pyver):
     prepare_numpy_sources(bootstrap)
 
     shutil.copy('build.py', bootstrap)
-    prepare_nsis_script(bootstrap, pyver, get_numpy_version())
+    prepare_nsis_script(bootstrap, pyver, use_msi, get_numpy_version())
 
 def get_binary_name(arch):
     return "numpy-%s-%s.exe" % (get_numpy_version(), arch)
@@ -101,11 +102,14 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-p", "--pyver", dest="pyver",
                       help = "Python version (2.4, 2.5, etc...)")
-
+    parser.add_option("-m", "--build-msi", dest="msi",
+                      help = "0 or 1. If 1, use msi intallers instead of exe's.")
+    
     opts, args = parser.parse_args()
     pyver = opts.pyver
+    use_msi = opts.msi
 
     if not pyver:
         pyver = "2.5"
 
-    prepare_bootstrap(pyver)
+    prepare_bootstrap(pyver, use_msi)

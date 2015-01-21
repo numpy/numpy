@@ -50,12 +50,12 @@ def write_site_cfg(arch):
     f.writelines(SITECFG[arch])
     f.close()
 
-def build(arch, pyver):
+def build(arch, pyver, build_msi):
     print("Building numpy binary for python %s, arch is %s" % (get_python_exec(pyver), arch))
     get_clean()
     write_site_cfg(arch)
 
-    if BUILD_MSI:
+    if build_msi:
         cmd = "%s setup.py build -c mingw32 bdist_msi" % get_python_exec(pyver)
     else:
         cmd = "%s setup.py build -c mingw32 bdist_wininst" % get_python_exec(pyver)
@@ -78,14 +78,14 @@ Error was : %s
 Look at the build log (%s).""" % (cmd, str(e), build_log)
         raise Exception(msg)
 
-    move_binary(arch, pyver)
+    move_binary(arch, pyver, build_msi)
 
-def move_binary(arch, pyver):
+def move_binary(arch, pyver, build_msi):
     if not os.path.exists("binaries"):
         os.makedirs("binaries")
 
-    shutil.move(os.path.join('dist', get_windist_exec(pyver)),
-            os.path.join("binaries", get_binary_name(arch)))
+    shutil.move(os.path.join('dist', get_windist_exec(pyver, build_msi)),
+            os.path.join("binaries", get_binary_name(arch, build_msi)))
 
 def get_numpy_version():
     if sys.version_info[0] >= 3:
@@ -97,18 +97,18 @@ def get_numpy_version():
     from numpy.version import version
     return version
 
-def get_binary_name(arch):
-    if BUILD_MSI:
+def get_binary_name(arch, build_msi):
+    if build_msi:
         ext = '.msi'
     else:
         ext = '.exe'
     return "numpy-%s-%s%s" % (get_numpy_version(), arch, ext)
 
-def get_windist_exec(pyver):
+def get_windist_exec(pyver, build_msi):
     """Return the name of the installer built by wininst command."""
     # Yeah, the name logic is harcoded in distutils. We have to reproduce it
     # here
-    if BUILD_MSI:
+    if build_msi:
         ext = '.msi'
     else:
         ext = '.exe'
@@ -132,13 +132,9 @@ if __name__ == '__main__':
 
     if not pyver:
         pyver = "2.5"
-    if not msi:
-        BUILD_MSI = False
-    else:
-        BUILD_MSI = True
 
     if not arch:
         for arch in SITECFG.keys():
-            build(arch, pyver)
+            build(arch, pyver, msi)
     else:
-        build(arch, pyver)
+        build(arch, pyver, msi)

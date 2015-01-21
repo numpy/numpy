@@ -189,22 +189,22 @@ def superpack_name(pyver, numver):
     """Return the filename of the superpack installer."""
     return 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
 
-def internal_wininst_name(arch):
+def internal_wininst_name(arch, msi=True):
     """Return the name of the wininst as it will be inside the superpack (i.e.
     with the arch encoded."""
-    ext = '.exe'
+    ext = '.msi' if msi else '.exe'
     return "numpy-%s-%s%s" % (FULLVERSION, arch, ext)
 
-def wininst_name(pyver):
+def wininst_name(pyver, msi=True):
     """Return the name of the installer built by wininst command."""
-    ext = '.exe'
+    ext = '.msi' if msi else '.exe'
     return "numpy-%s.win32-py%s%s" % (FULLVERSION, pyver, ext)
 
-def prepare_nsis_script(pyver, numver):
+def prepare_nsis_script(pyver, numver, msi=True):
     if not os.path.exists(SUPERPACK_BUILD):
         os.makedirs(SUPERPACK_BUILD)
 
-    tpl = os.path.join('tools/win32build/nsis_scripts', 'numpy-superinstaller.nsi.in')
+    tpl = os.path.join('tools/win32build/nsis_scripts', 'numpy-superinstaller-%s.nsi.in' % ('msi' if msi else 'exe',))
     source = open(tpl, 'r')
     target = open(os.path.join(SUPERPACK_BUILD, 'numpy-superinstaller.nsi'), 'w')
 
@@ -213,26 +213,30 @@ def prepare_nsis_script(pyver, numver):
     cnt = cnt.replace('@NUMPY_INSTALLER_NAME@', installer_name)
     for arch in ['nosse', 'sse2', 'sse3']:
         cnt = cnt.replace('@%s_BINARY@' % arch.upper(),
-                          internal_wininst_name(arch))
+                          internal_wininst_name(arch, msi=msi))
 
     target.write(cnt)
 
-def bdist_wininst_arch(pyver, arch):
+def bdist_wininst_arch(pyver, msi, arch):
     """Arch specific wininst build."""
     if os.path.exists("build"):
         shutil.rmtree("build")
 
-    _bdist_wininst(pyver, SITECFG[arch])
+    _bdist_wininst(pyver, msi, SITECFG[arch])
 
 @task
-@cmdopts([("python-version=", "p", "python version")])
+@cmdopts([
+    ("python-version=", "p", "python version"),
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
+])
 def bdist_superpack(options):
     """Build all arch specific wininst installers."""
     pyver = options.python_version
+    msi = (options.make_msi == "1")
     def copy_bdist(arch):
         # Copy the wininst in dist into the release directory
-        source = os.path.join('dist', wininst_name(pyver))
-        target = os.path.join(SUPERPACK_BINDIR, internal_wininst_name(arch))
+        source = os.path.join('dist', wininst_name(pyver, msi=msi))
+        target = os.path.join(SUPERPACK_BINDIR, internal_wininst_name(arch, msi=msi))
         if os.path.exists(target):
             os.remove(target)
         if not os.path.exists(os.path.dirname(target)):
@@ -247,11 +251,11 @@ def bdist_superpack(options):
             gitrev = source[revidx:revidx+7]
             os.rename(source.replace(gitrev, "Unknown"), target)
 
-    bdist_wininst_arch(pyver, 'nosse')
+    bdist_wininst_arch(pyver, msi, 'nosse')
     copy_bdist("nosse")
-    bdist_wininst_arch(pyver, 'sse2')
+    bdist_wininst_arch(pyver, msi, 'sse2')
     copy_bdist("sse2")
-    bdist_wininst_arch(pyver, 'sse3')
+    bdist_wininst_arch(pyver, msi, 'sse3')
     copy_bdist("sse3")
 
     idirs = options.installers.installersdir
@@ -269,32 +273,45 @@ def bdist_superpack(options):
     shutil.copy(source, target)
 
 @task
-@cmdopts([("python-version=", "p", "python version")])
+@cmdopts([
+    ("python-version=", "p", "python version"),
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
+])
 def bdist_wininst_nosse(options):
     """Build the nosse wininst installer."""
-    bdist_wininst_arch(options.python_version, 'nosse')
+    bdist_wininst_arch(options.python_version, option.msi=="1", 'nosse')
 
 @task
-@cmdopts([("python-version=", "p", "python version")])
+@cmdopts([
+    ("python-version=", "p", "python version"),
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
+])
 def bdist_wininst_sse2(options):
     """Build the sse2 wininst installer."""
-    bdist_wininst_arch(options.python_version, 'sse2')
+    bdist_wininst_arch(options.python_version, option.msi=="1", 'sse2')
 
 @task
-@cmdopts([("python-version=", "p", "python version")])
+@cmdopts([
+    ("python-version=", "p", "python version"),
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
+])
 def bdist_wininst_sse3(options):
     """Build the sse3 wininst installer."""
-    bdist_wininst_arch(options.python_version, 'sse3')
+    bdist_wininst_arch(options.python_version, option.msi=="1", 'sse3')
 
 @task
-@cmdopts([("python-version=", "p", "python version")])
+@cmdopts([
+    ("python-version=", "p", "python version"),
+    ("make_msi=", "m", "0 or 1. If 1, build a msi instead of an exe.")
+])
 def bdist_wininst_simple():
     """Simple wininst-based installer."""
     pyver = options.bdist_wininst_simple.python_version
-    _bdist_wininst(pyver)
+    msi = (options.bdist_wininst_simple.make_msi == "1")
+    _bdist_wininst(pyver, msi)
 
-def _bdist_wininst(pyver, cfg_env=None):
-    cmd = WINDOWS_PYTHON[pyver] + ['setup.py', 'build', '-c', 'mingw32', 'bdist_wininst']
+def _bdist_wininst(pyver, msi=True, cfg_env=None):
+    cmd = WINDOWS_PYTHON[pyver] + ['setup.py', 'build', '-c', 'mingw32', 'bdist_msi' if msi else 'bdist_wininst']
     if cfg_env:
         for k, v in WINDOWS_ENV.items():
             cfg_env[k] = v
