@@ -4832,11 +4832,11 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
 ##############################################################################
 #
-# lib._compiled_base functions
+# compiled_base functions
 #
 ##############################################################################
 
-add_newdoc('numpy.lib._compiled_base', 'digitize',
+add_newdoc('numpy.core.multiarray', 'digitize',
     """
     digitize(x, bins, right=False)
 
@@ -4916,7 +4916,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     array([1, 3, 3, 4, 5])
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'bincount',
+add_newdoc('numpy.core.multiarray', 'bincount',
     """
     bincount(x, weights=None, minlength=None)
 
@@ -4989,7 +4989,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
+add_newdoc('numpy.core.multiarray', 'ravel_multi_index',
     """
     ravel_multi_index(multi_index, dims, mode='raise', order='C')
 
@@ -5046,7 +5046,7 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
     1621
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'unravel_index',
+add_newdoc('numpy.core.multiarray', 'unravel_index',
     """
     unravel_index(indices, dims, order='C')
 
@@ -5089,7 +5089,7 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'add_docstring',
+add_newdoc('numpy.core.multiarray', 'add_docstring',
     """
     add_docstring(obj, docstring)
 
@@ -5099,7 +5099,7 @@ add_newdoc('numpy.lib._compiled_base', 'add_docstring',
     raise a TypeError
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'add_newdoc_ufunc',
+add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     """
     add_ufunc_docstring(ufunc, new_docstring)
 
@@ -5125,7 +5125,7 @@ add_newdoc('numpy.lib._compiled_base', 'add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'packbits',
+add_newdoc('numpy.core.multiarray', 'packbits',
     """
     packbits(myarray, axis=None)
 
@@ -5169,7 +5169,7 @@ add_newdoc('numpy.lib._compiled_base', 'packbits',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'unpackbits',
+add_newdoc('numpy.core.multiarray', 'unpackbits',
     """
     unpackbits(myarray, axis=None)
 

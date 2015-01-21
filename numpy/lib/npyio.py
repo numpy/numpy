@@ -11,7 +11,7 @@ from operator import itemgetter
 import numpy as np
 from . import format
 from ._datasource import DataSource
-from ._compiled_base import packbits, unpackbits
+from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like, has_nested_fields,
