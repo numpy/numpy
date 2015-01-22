@@ -215,6 +215,12 @@ class format_parser:
 class record(nt.void):
     """A data-type scalar that allows field access as attribute lookup.
     """
+
+    # manually set name and module so that this class's type shows up
+    # as numpy.record when printed
+    __name__ = 'record'
+    __module__ = 'numpy'
+
     def __repr__(self):
         return self.__str__()
 
@@ -388,6 +394,12 @@ class recarray(ndarray):
           dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
+
+    # manually set name and module so that this class's type shows
+    # up as "numpy.recarray" when printed
+    __name__ = 'recarray'
+    __module__ = 'numpy'
+
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False, order='C'):

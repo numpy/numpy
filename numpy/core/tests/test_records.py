@@ -74,7 +74,7 @@ class TestFromrecords(TestCase):
 
     def test_recarray_from_repr(self):
         x = np.rec.array([ (1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
-        y = eval("np." + repr(x))
+        y = eval("numpy." + repr(x), {'numpy': np})
         assert_(isinstance(y, np.recarray))
         assert_equal(y, x)
 

@@ -3159,6 +3159,8 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype, int includealignedflag)
 static PyObject *
 arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
 {
+    PyObject *sub;
+
     /*
      * The list str representation can't include the 'align=' flag,
      * so if it is requested and the struct has the aligned flag set,
@@ -3166,10 +3168,52 @@ arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
      */
     if (!(includealignflag && (dtype->flags&NPY_ALIGNED_STRUCT)) &&
                         is_dtype_struct_simple_unaligned_layout(dtype)) {
-        return arraydescr_struct_list_str(dtype);
+        sub = arraydescr_struct_list_str(dtype);
     }
     else {
-        return arraydescr_struct_dict_str(dtype, includealignflag);
+        sub = arraydescr_struct_dict_str(dtype, includealignflag);
+    }
+
+    /* If the data type has a non-void (subclassed) type, show it */
+    if (dtype->type_num == NPY_VOID && dtype->typeobj != &PyVoidArrType_Type) {
+        /*
+         * Note: We cannot get the type name from dtype->typeobj->tp_name
+         * because its value depends on whether the type is dynamically or
+         * statically allocated.  Instead use __name__ and __module__.
+         * See https://docs.python.org/2/c-api/typeobj.html.
+         */
+
+        PyObject *str_name, *namestr, *str_module, *modulestr, *ret;
+
+        str_name = PyUString_FromString("__name__");
+        namestr = PyObject_GetAttr((PyObject*)(dtype->typeobj), str_name);
+        Py_DECREF(str_name);
+
+        if (namestr == NULL) {
+            /* this should never happen since types always have __name__ */
+            PyErr_Format(PyExc_RuntimeError,
+                         "dtype does not have a __name__ attribute");
+            return NULL;
+        }
+
+        str_module = PyUString_FromString("__module__");
+        modulestr = PyObject_GetAttr((PyObject*)(dtype->typeobj), str_module);
+        Py_DECREF(str_module);
+
+        ret = PyUString_FromString("(");
+        if (modulestr != NULL) {
+            /* Note: if modulestr == NULL, the type is unpicklable */
+            PyUString_ConcatAndDel(&ret, modulestr);
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("."));
+        }
+        PyUString_ConcatAndDel(&ret, namestr);
+        PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
+        PyUString_ConcatAndDel(&ret, sub);
+        PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
+        return ret;
+    }
+    else {
+        return sub;
     }
 }
 
