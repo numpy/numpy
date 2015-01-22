@@ -3,9 +3,9 @@ Record Arrays
 =============
 Record arrays expose the fields of structured arrays as properties.
 
-Most commonly, ndarrays contain elements of a single type, e.g. floats, integers,
-bools etc.  However, it is possible for elements to be combinations of these,
-such as::
+Most commonly, ndarrays contain elements of a single type, e.g. floats,
+integers, bools etc.  However, it is possible for elements to be combinations
+of these using structured types, such as::
 
   >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
   >>> a
@@ -25,7 +25,7 @@ one would a dictionary::
 
 Record arrays allow us to access fields as properties::
 
-  >>> ar = a.view(np.recarray)
+  >>> ar = np.rec.array(a)
 
   >>> ar.x
   array([1, 1])

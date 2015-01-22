@@ -74,9 +74,9 @@ optimizations that by-pass this mechanism, but the point of the data-
 type abstraction is to allow new data-types to be added.
 
 One of the built-in data-types, the void data-type allows for
-arbitrary records containing 1 or more fields as elements of the
+arbitrary structured types containing 1 or more fields as elements of the
 array. A field is simply another data-type object along with an offset
-into the current record. In order to support arbitrarily nested
+into the current structured type. In order to support arbitrarily nested
 fields, several recursive implementations of data-type access are
 implemented for the void type. A common idiom is to cycle through the
 elements of the dictionary and perform a specific operation based on
@@ -184,7 +184,7 @@ The array scalars also offer the same methods and attributes as arrays
 with the intent that the same code can be used to support arbitrary
 dimensions (including 0-dimensions). The array scalars are read-only
 (immutable) with the exception of the void scalar which can also be
-written to so that record-array field setting works more naturally
+written to so that structured array field setting works more naturally
 (a[0]['f1'] = ``value`` ).
 
 

@@ -103,19 +103,19 @@ This approach to the interface consists of the object having an
        not a requirement.  The only requirement is that the number of
        bytes represented in the *typestr* key is the same as the total
        number of bytes represented here.  The idea is to support
-       descriptions of C-like structs (records) that make up array
+       descriptions of C-like structs that make up array
        elements.  The elements of each tuple in the list are
 
        1.  A string providing a name associated with this portion of
-           the record.  This could also be a tuple of ``('full name',
+           the datatype.  This could also be a tuple of ``('full name',
 	   'basic_name')`` where basic name would be a valid Python
            variable name representing the full name of the field.
 
        2. Either a basic-type description string as in *typestr* or
-          another list (for nested records)
+          another list (for nested structured types)
 
        3. An optional shape tuple providing how many times this part
-          of the record should be repeated.  No repeats are assumed
+          of the structure should be repeated.  No repeats are assumed
           if this is not given.  Very complicated structures can be
           described using this generic interface.  Notice, however,
           that each element of the array is still of the same
@@ -301,7 +301,8 @@ more information which may be important for various applications::
          typestr == '|V16'
          descr == [('ival','>i4'),('','|V4'),('dval','>f8')]
 
-It should be clear that any record type could be described using this interface.
+It should be clear that any structured type could be described using this
+interface.
 
 Differences with Array interface (Version 2)
 ============================================

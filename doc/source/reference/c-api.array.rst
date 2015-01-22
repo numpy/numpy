@@ -1240,9 +1240,9 @@ Special functions for NPY_OBJECT
 
     A function to INCREF all the objects at the location *ptr*
     according to the data-type *dtype*. If *ptr* is the start of a
-    record with an object at any offset, then this will (recursively)
+    structured type with an object at any offset, then this will (recursively)
     increment the reference count of all object-like items in the
-    record.
+    structured type.
 
 .. cfunction:: int PyArray_XDECREF(PyArrayObject* op)
 
@@ -1253,7 +1253,7 @@ Special functions for NPY_OBJECT
 
 .. cfunction:: void PyArray_Item_XDECREF(char* ptr, PyArray_Descr* dtype)
 
-    A function to XDECREF all the object-like items at the loacation
+    A function to XDECREF all the object-like items at the location
     *ptr* as recorded in the data-type, *dtype*. This works
     recursively so that if ``dtype`` itself has fields with data-types
     that contain object-like items, all the object-like fields will be
@@ -1540,7 +1540,7 @@ Conversion
     itemsize of the new array type must be less than *self*
     ->descr->elsize or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
-    effect of returning a field from a record array. But, it can also
+    effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
     type.
 
@@ -1786,7 +1786,7 @@ Item selection and manipulation
     ->descr is a data-type with fields defined, then
     self->descr->names is used to determine the sort order. A
     comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a record array, create
+    field and so on. To alter the sort order of a structured array, create
     a new data-type with a different order of names and construct a
     view of the array with that new data-type.
 
@@ -1805,7 +1805,7 @@ Item selection and manipulation
     to understand the order the *sort_keys* must be in (reversed from
     the order you would use when comparing two elements).
 
-    If these arrays are all collected in a record array, then
+    If these arrays are all collected in a structured array, then
     :cfunc:`PyArray_Sort` (...) can also be used to sort the array
     directly.
 
@@ -1838,7 +1838,7 @@ Item selection and manipulation
     If *self*->descr is a data-type with fields defined, then
     self->descr->names is used to determine the sort order. A comparison where
     the first field is equal will use the second field and so on. To alter the
-    sort order of a record array, create a new data-type with a different
+    sort order of a structured array, create a new data-type with a different
     order of names and construct a view of the array with that new data-type.
     Returns zero on success and -1 on failure.
 
