@@ -1417,6 +1417,29 @@ class TestMethods(TestCase):
         b = a.searchsorted(a, 'r', s)
         assert_equal(b, out + 1)
 
+    def test_argpartition_out_of_range(self):
+        # Test out of range values in kth raise an error, gh-5469
+        d = np.arange(10)
+        assert_raises(ValueError, d.argpartition, 10)
+        assert_raises(ValueError, d.argpartition, -11)
+        # Test also for generic type argpartition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(ValueError, d_obj.argpartition, 10)
+        assert_raises(ValueError, d_obj.argpartition, -11)
+
+    @dec.knownfailureif(True, "Ticket #5469 fixed for argpartition only")
+    def test_partition_out_of_range(self):
+        # Test out of range values in kth raise an error, gh-5469
+        d = np.arange(10)
+        assert_raises(ValueError, d.partition, 10)
+        assert_raises(ValueError, d.partition, -11)
+        # Test also for generic type partition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(ValueError, d_obj.partition, 10)
+        assert_raises(ValueError, d_obj.partition, -11)
+
     def test_partition(self):
         d = np.arange(10)
         assert_raises(TypeError, np.partition, d, 2, kind=1)

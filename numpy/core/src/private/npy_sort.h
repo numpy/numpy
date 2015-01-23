@@ -190,5 +190,8 @@ int amergesort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *
 int npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp);
 int npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp);
 int npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp);
+int npy_aquicksort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+int npy_aheapsort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+int npy_amergesort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 
 #endif

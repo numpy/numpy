@@ -343,3 +343,55 @@ npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
     free(tmp);
     return 0;
 }
+
+
+int
+npy_aheapsort(char *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
+{
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    npy_intp *a, i, j, l, tmp;
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n >> 1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && cmp(v + a[j]*elsize, v + a[j+1]*elsize, arr) < 0) {
+                ++j;
+            }
+            if (cmp(v + tmp*elsize, v + a[j]*elsize, arr) < 0) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && cmp(v + a[j]*elsize, v + a[j+1]*elsize, arr) < 0) {
+                ++j;
+            }
+            if (cmp(v + tmp*elsize, v + a[j]*elsize, arr) < 0) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
