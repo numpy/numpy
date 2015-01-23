@@ -1204,7 +1204,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                usecols=None, names=None,
                excludelist=None, deletechars=None, replace_space='_',
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
-               unpack=None, usemask=False, loose=True, invalid_raise=True):
+               unpack=None, usemask=False, loose=True, invalid_raise=True,
+               max_rows=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1285,6 +1286,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
         If False, a warning is emitted and the offending lines are skipped.
+    max_rows : int,  optional
+        The maximum number of rows to read. Must not be used with skip_footer
+        at the same time.  If given, the value must be at least 1. Default is
+        to read the entire file.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -1353,6 +1360,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
 
     """
+    if max_rows is not None:
+        if skip_footer:
+            raise ValueError(
+                    "The keywords 'skip_footer' and 'max_rows' can not be "
+                    "specified at the same time.")
+        if max_rows < 1:
+            raise ValueError("'max_rows' must be at least 1.")
+
     # Py3 data conversions to bytes, for convenience
     if comments is not None:
         comments = asbytes(comments)
@@ -1647,8 +1662,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # Skip an empty line
         if nbvalues == 0:
             continue
-        # Select only the columns we need
         if usecols:
+            # Select only the columns we need
             try:
                 values = [values[_] for _ in usecols]
             except IndexError:
@@ -1661,7 +1676,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         append_to_rows(tuple(values))
         if usemask:
             append_to_masks(tuple([v.strip() in m
-                                   for (v, m) in zip(values, missing_values)]))
+                                   for (v, m) in zip(values,
+                                                     missing_values)]))
+        if len(rows) == max_rows:
+            break
 
     if own_fhd:
         fhd.close()
