@@ -1514,6 +1514,30 @@ M   33  21.99
         ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
         assert_equal(test, ctrl)
 
+    def test_replace_space_known_dtype(self):
+        "Test the 'replace_space' (and related) options when dtype != None"
+        txt = "A.A, B (B), C:C\n1, 2, 3"
+        # Test default: replace ' ' by '_' and delete non-alphanum chars
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int)
+        ctrl_dtype = [("AA", int), ("B_B", int), ("CC", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no replace, no delete
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             replace_space='', deletechars='')
+        ctrl_dtype = [("A.A", int), ("B (B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no delete (spaces are replaced by _)
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             deletechars='')
+        ctrl_dtype = [("A.A", int), ("B_(B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+
     def test_incomplete_names(self):
         "Test w/ incomplete names"
         data = "A,,C\n0,1,2\n3,4,5"
