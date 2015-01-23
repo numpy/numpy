@@ -7,7 +7,8 @@ from datetime import date
 import numpy as np
 from numpy.compat import asbytes, asbytes_nested
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_allclose
+    run_module_suite, TestCase, assert_, assert_equal, assert_allclose,
+    assert_raises
     )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
@@ -92,6 +93,9 @@ class TestNameValidator(TestCase):
         assert_equal(test, ['A', 'A_1', 'B', 'C'])
         test = NameValidator(case_sensitive='lower').validate(names)
         assert_equal(test, ['a', 'a_1', 'b', 'c'])
+
+        # check exceptions
+        assert_raises(ValueError, NameValidator, case_sensitive='foobar')
 
     def test_excludelist(self):
         "Test excludelist"
