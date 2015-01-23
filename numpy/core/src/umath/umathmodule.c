@@ -197,6 +197,49 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     return (PyObject *)self;
 }
 
+/* docstring in numpy.add_newdocs.py */
+static PyObject *
+add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    PyObject *str;
+    char *docstr, *newdocstr;
+
+#if defined(NPY_PY3K)
+    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+                                        &PyUnicode_Type, &str)) {
+        return NULL;
+    }
+    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+#else
+    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+                                         &PyString_Type, &str)) {
+         return NULL;
+    }
+    docstr = PyString_AS_STRING(str);
+#endif
+
+    if (NULL != ufunc->doc) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot change docstring of ufunc with non-NULL docstring");
+        return NULL;
+    }
+
+    /*
+     * This introduces a memory leak, as the memory allocated for the doc
+     * will not be freed even if the ufunc itself is deleted. In practice
+     * this should not be a problem since the user would have to
+     * repeatedly create, document, and throw away ufuncs.
+     */
+    newdocstr = malloc(strlen(docstr) + 1);
+    strcpy(newdocstr, docstr);
+    ufunc->doc = newdocstr;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
 /*
  *****************************************************************************
  **                            SETUP UFUNCS                                 **
@@ -240,6 +283,8 @@ static struct PyMethodDef methods[] = {
         METH_VARARGS, NULL},
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
+    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };

@@ -59,6 +59,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "cblasfuncs.h"
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "compiled_base.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -3864,8 +3865,6 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args)
     }
 }
 
-
-
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -4012,6 +4011,26 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
+    {"_insert", (PyCFunction)arr_insert,
+        METH_VARARGS | METH_KEYWORDS,
+        "Insert vals sequentially into equivalent 1-d positions "
+        "indicated by mask."},
+    {"bincount", (PyCFunction)arr_bincount,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"digitize", (PyCFunction)arr_digitize,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"interp", (PyCFunction)arr_interp,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"ravel_multi_index", (PyCFunction)arr_ravel_multi_index,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"unravel_index", (PyCFunction)arr_unravel_index,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"add_docstring", (PyCFunction)arr_add_docstring,
+        METH_VARARGS, NULL},
+    {"packbits", (PyCFunction)io_pack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"unpackbits", (PyCFunction)io_unpack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
