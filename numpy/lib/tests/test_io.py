@@ -786,6 +786,14 @@ class TestLoadTxt(TestCase):
         # Check for exception and that exception contains line number
         assert_raises_regex(ValueError, "3", np.loadtxt, c)
 
+    def test_none_as_string(self):
+        # gh-5155, None should work as string when format demands it
+        c = TextIO()
+        c.write('100,foo,200\n300,None,400')
+        c.seek(0)
+        dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
+        data = np.loadtxt(c, delimiter=',', dtype=dt, comments=None)
+
 
 class Testfromregex(TestCase):
     # np.fromregex expects files opened in binary mode.
