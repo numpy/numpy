@@ -196,6 +196,12 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
         aux = ar
     flag = np.concatenate(([True], aux[1:] != aux[:-1]))
 
+    # gh-2111: NaNs never compare equal, so they need special handling,
+    # but they always sort to the end
+    if issubclass(ar.dtype.type, np.inexact) and np.isnan(aux[-1]):
+        nanidx = np.searchsorted(aux, np.nan)
+        flag[nanidx+1:] = False
+
     if not optional_returns:
         ret = aux[flag]
     else:

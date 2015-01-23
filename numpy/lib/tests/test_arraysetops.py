@@ -115,6 +115,18 @@ class TestSetOps(TestCase):
         a2, a2_inv = np.unique(a, return_inverse=True)
         assert_array_equal(a2_inv, np.zeros(5))
 
+        # test for arrays with nans, gh-2111
+        a = [5, np.nan, 1, 2, 1, 5, np.nan]*10
+        b = [1, 2, 5, np.nan]
+        i1 = [2, 3, 0, 1]
+        i2 = [2, 3, 0, 1, 0, 2, 3]*10
+        c = np.multiply([2, 1, 2, 2], 10)
+        for dt in np.typecodes['Float']:
+            aa = np.array(a, dt)
+            bb = np.array(b, dt)
+            check_all(aa, bb, i1, i2, c, dt)
+
+
     def test_intersect1d(self):
         # unique inputs
         a = np.array([5, 7, 1, 2])
