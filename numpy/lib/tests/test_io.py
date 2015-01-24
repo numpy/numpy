@@ -1641,6 +1641,60 @@ M   33  21.99
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 
+    def test_max_rows(self):
+        # Test the `max_rows` keyword argument.
+        data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
+        txt = TextIO(data)
+        a1 = np.genfromtxt(txt, max_rows=3)
+        a2 = np.genfromtxt(txt)
+        assert_equal(a1, [[1, 2], [3, 4], [5, 6]])
+        assert_equal(a2, [[7, 8], [9, 10]])
+
+        # max_rows must be at least 1.
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=0)
+
+        # An input with several invalid rows.
+        data = '1 1\n2 2\n0 \n3 3\n4 4\n5  \n6  \n7  \n'
+
+        test = np.genfromtxt(TextIO(data), max_rows=2)
+        control = np.array([[1., 1.], [2., 2.]])
+        assert_equal(test, control)
+
+        # Test keywords conflict
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), skip_footer=1,
+                      max_rows=4)
+
+        # Test with invalid value
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
+
+        # Test with invalid not raise
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
+            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
+            assert_equal(test, control)
+
+            test = np.genfromtxt(TextIO(data), max_rows=5, invalid_raise=False)
+            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
+            assert_equal(test, control)
+
+        # Structured array with field names.
+        data = 'a b\n#c d\n1 1\n2 2\n#0 \n3 3\n4 4\n5  5\n'
+
+        # Test with header, names and comments
+        txt = TextIO(data)
+        test = np.genfromtxt(txt, skip_header=1, max_rows=3, names=True)
+        control = np.array([(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)],
+                      dtype=[('c', '<f8'), ('d', '<f8')])
+        assert_equal(test, control)
+        # To continue reading the same "file", don't use skip_header or
+        # names, and use the previously determined dtype.
+        test = np.genfromtxt(txt, max_rows=None, dtype=test.dtype)
+        control = np.array([(4.0, 4.0), (5.0, 5.0)],
+                      dtype=[('c', '<f8'), ('d', '<f8')])
+        assert_equal(test, control)
+
     def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
         wanted = np.arange(6).reshape((2, 3))
