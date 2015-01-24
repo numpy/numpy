@@ -1107,13 +1107,13 @@ M   33  21.99
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
-        dtyp = [('E1','i4'),('E2','i4'),('E3','i2'),('N', 'i1')]
+        dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              names=None, converters=conv)
         control = np.rec.array([[1,5,-1,0], [2,8,-1,1], [3,3,-2,3]], dtype=dtyp)
         assert_equal(test, control)
-        dtyp = [('E1','i4'),('E2','i4'),('N', 'i1')]
+        dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              usecols=(0,1,3), names=None, converters=conv)
         control = np.rec.array([[1,5,0], [2,8,1], [3,3,3]], dtype=dtyp)
@@ -1512,6 +1512,30 @@ M   33  21.99
                              deletechars='')
         ctrl_dtype = [("A.A", int), ("B_(B)", int), ("C:C", float)]
         ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+
+    def test_replace_space_known_dtype(self):
+        "Test the 'replace_space' (and related) options when dtype != None"
+        txt = "A.A, B (B), C:C\n1, 2, 3"
+        # Test default: replace ' ' by '_' and delete non-alphanum chars
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int)
+        ctrl_dtype = [("AA", int), ("B_B", int), ("CC", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no replace, no delete
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             replace_space='', deletechars='')
+        ctrl_dtype = [("A.A", int), ("B (B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no delete (spaces are replaced by _)
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             deletechars='')
+        ctrl_dtype = [("A.A", int), ("B_(B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
         assert_equal(test, ctrl)
 
     def test_incomplete_names(self):

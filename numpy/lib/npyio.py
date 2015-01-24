@@ -1466,7 +1466,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         names = validate_names(names)
     # Get the dtype
     if dtype is not None:
-        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
+        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names,
+                           excludelist=excludelist,
+                           deletechars=deletechars,
+                           case_sensitive=case_sensitive,
+                           replace_space=replace_space)
     # Make sure the names is a list (for 2.5)
     if names is not None:
         names = list(names)
