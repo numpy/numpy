@@ -45,9 +45,11 @@ For development, you can set up an in-place build so that changes made to
 
     $ python setup.py build_ext -i
 
-Then you need to point your PYTHONPATH environment variable to this directory.
-Some IDEs (Spyder for example) have utilities to manage PYTHONPATH.  On Linux
-and OSX, you can run the command::
+This allows you to import the in-place built NumPy *from the repo base
+directory only*.  If you want the in-place build to be visible outside that
+base dir, you need to point your ``PYTHONPATH`` environment variable to this
+directory.  Some IDEs (Spyder for example) have utilities to manage
+``PYTHONPATH``.  On Linux and OSX, you can run the command::
 
     $ export PYTHONPATH=$PWD
 
@@ -59,6 +61,11 @@ Now editing a Python source file in NumPy allows you to immediately
 test and use your changes (in ``.py`` files), by simply restarting the
 interpreter.
 
+Note that another way to do an inplace build visible outside the repo base dir
+is with ``python setup.py develop``.  This doesn't work for NumPy, because
+NumPy builds don't use ``setuptools`` by default.  ``python setupegg.py
+develop`` will work though.
+
 
 Other build options
 -------------------
@@ -66,12 +73,21 @@ Other build options
 It's possible to do a parallel build with ``numpy.distutils`` with the ``-j`` option;
 see :ref:`parallel-builds` for more details.
 
-Besides ``numpy.distutils``, NumPy supports building with `Bento <http://cournape.github.io/Bento/>`__.
+In order to install the development version of NumPy in ``site-packages``, use
+``python setup.py install --user``.
+
+A similar approach to in-place builds and use of ``PYTHONPATH`` but outside the
+source tree is to use::
+
+    $ python setup.py install --prefix /some/owned/folder
+    $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
+
+Besides ``numpy.distutils``, NumPy supports building with `Bento`_.
 This provides (among other things) faster builds and a build log that's much
 more readable than the ``distutils`` one.  Note that support is still fairly
-experimental, partly due to Bento relying on `Waf <https://code.google.com/p/waf/>`_ which tends to
-have non-backwards-compatible API changes.  Working versions of Bento and Waf
-are run on TravisCI, see ``tools/travis-test.sh``.
+experimental, partly due to Bento relying on `Waf`_ which tends to have
+non-backwards-compatible API changes.  Working versions of Bento and Waf are
+run on TravisCI, see ``tools/travis-test.sh``.
 
 
 Using virtualenvs
@@ -111,12 +127,40 @@ Tests can also be run with ``nosetests numpy``, however then the NumPy-specific
 ``nose`` plugin is not found which causes tests marked as ``KnownFailure`` to
 be reported as errors.
 
-Analogous to running tests, benchmarks (there aren't many) can be run with::
+Running individual test files can be useful; it's much faster than running the
+whole test suite or that of a whole module (example: ``np.random.test()``).
+This can be done with::
 
-    >>> np.bench()
+    $ python path_to_testfile/test_file.py
+
+That also takes extra arguments, like ``--pdb`` which drops you into the Python
+debugger when a test fails or an exception is raised.
+
+Running tests with `tox`_ is also supported.  For example, to build NumPy and
+run the test suite with Python 3.4, use::
+
+    $ tox -e py34
 
 For more extensive info on running and writing tests, see
 https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt .
+
+
+Rebuilding & cleaning the workspace
+-----------------------------------
+
+Rebuilding NumPy after making changes to compiled code can be done with the
+same build command as you used previously - only the changed files will be
+re-built.  Doing a full build, which sometimes is necessary, requires cleaning
+the workspace first.  The standard way of doing this is (*note: deletes any
+uncommitted files!*)::
+
+    $ git clean -xdf
+
+When you want to discard all changes and go back to the last commit in the
+repo, use one of::
+
+    $ git checkout .
+    $ git reset --hard
 
 
 Debugging
@@ -132,21 +176,36 @@ code whose execution you want to debug. For instance ``mytest.py``::
 
 Now, you can run::
 
-    gdb --args python runtests.py -g --python mytest.py
+    $ gdb --args python runtests.py -g --python mytest.py
 
-If you didn't compile with debug symbols enabled before, remove the build
-directory first.  While in the debugger::
+And then in the debugger::
 
     (gdb) break array_empty_like
     (gdb) run
 
 The execution will now stop at the corresponding C function and you can step
-through it as usual.  Instead of plain gdb you can of course use your favourite
+through it as usual.  With the Python extensions for gdb installed (often the
+default on Linux), a number of useful Python-specific commands are available.
+For example to see where in the Python code you are, use ``py-list``.  For more
+details, see `DebuggingWithGdb`_.
+
+Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments 
 ``runtests.py -g --python mytest.py``.
 
+Building NumPy with a Python built with debug support (on Linux distributions
+typically packaged as ``python-dbg``) is highly recommended.  
 
+
+
+.. _Bento: http://cournape.github.io/Bento/
+
+.. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
+
+.. _tox: http://tox.testrun.org
 
 .. _virtualenv: http://www.virtualenv.org/
 
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
+
+.. _Waf: https://code.google.com/p/waf/
