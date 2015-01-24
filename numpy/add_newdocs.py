@@ -885,7 +885,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=numpy.int)
+    >>> np.zeros((5,), dtype=np.int)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
