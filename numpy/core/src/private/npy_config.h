@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "numpy/numpyconfig.h"
+#include "numpy/npy_cpu.h"
 
 /* Disable broken MS math functions */
 #if defined(_MSC_VER) || defined(__MINGW32_VERSION)
@@ -19,7 +20,11 @@
  * amd64 is not harmed much by the bloat as the system provides 16 byte
  * alignment by default.
  */
-#define NPY_MAX_COPY_ALIGNMENT 16
+#if (defined NPY_CPU_X86 || defined _WIN32)
+#define NPY_MAX_COPY_ALIGNMENT 8
+#else
+ #define NPY_MAX_COPY_ALIGNMENT 16
+#endif
 
 /* Safe to use ldexp and frexp for long double for MSVC builds */
 #if (NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE) || defined(_MSC_VER)

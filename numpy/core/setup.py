@@ -773,6 +773,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
+            join('src', 'private', 'npy_config.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
