@@ -935,8 +935,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=os.linesep,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
         String or character separating columns.
-    newline : str, optional
-        String or character separating lines.
+    newline : {os.linesep, str}, optional
+        String or character separating lines. Because output files are
+        opened in mode='wb', this must be the complete line ending; ``\n``
+        will not be converted to ``\r\n`` on Windows. The default is
+        ``os.linesep``.
 
         .. versionadded:: 1.5.0
     header : str, optional

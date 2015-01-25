@@ -216,7 +216,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
-    
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
@@ -489,15 +489,20 @@ class TestSaveTxt(TestCase):
         a = np.array([(1, 2, 3)], dtype=np.int)
         a = a.reshape((3, 1))
         for newline in ['\n', '\r\n', '\r']:
-            filename = mktemp()
+            # we need a real file to test the correct path. The temporary
+            # file created needs to be closed before it can be reopened on
+            # windows.
+            output = NamedTemporaryFile(delete=False)
+            output.close()
+            filename = output.name
             np.savetxt(filename, a, fmt='%i', newline=newline)
             b = np.loadtxt(filename)
             assert_array_equal(a.flat, b)
             f = open(filename, 'rb')
             d = f.read()
             f.close()
-            os.unlink(filename)
-            assert_equal(d, newline.join(['1', '2', '3', '']))
+            os.remove(filename)
+            assert_equal(d, asbytes(newline.join(['1', '2', '3', ''])))
 
 
 class TestLoadTxt(TestCase):
