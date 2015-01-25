@@ -392,12 +392,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     else:
         bool_ar = (sar[1:] == sar[:-1])
     flag = np.concatenate((bool_ar, [invert]))
-    indx = order.argsort(kind='mergesort')[:len(ar1)]
+    ret = np.empty(ar.shape, dtype=bool)
+    ret[order] = flag
 
     if assume_unique:
-        return flag[indx]
+        return ret[:len(ar1)]
     else:
-        return flag[indx][rev_idx]
+        return ret[rev_idx]
 
 def union1d(ar1, ar2):
     """
