@@ -268,6 +268,10 @@ array if the field has a structured type but as a plain ndarray otherwise. ::
  >>> type(recordarr.bar)
  <class 'numpy.core.records.recarray'>
 
+Note that if a field has the same name as an ndarray attribute, the ndarray
+attribute takes precedence. Such fields will be inaccessible by attribute but
+may still be accessed by index.
+
 Partial Attribute Access
 ------------------------
 

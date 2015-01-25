@@ -124,6 +124,28 @@ class TestFromrecords(TestCase):
         assert_equal(a.b, ['a', 'bbb'])
         assert_equal(a[-1].b, 'bbb')
 
+    def test_recarray_stringtypes(self):
+        # Issue #3993
+        a = np.array([('abc ', 1), ('abc', 2)],
+                     dtype=[('foo', 'S4'), ('bar', int)])
+        a = a.view(np.recarray)
+        assert_equal(a.foo[0] == a.foo[1], False)
+
+    def test_recarray_returntypes(self):
+        a = np.rec.array([('abc ', (1,1), 1), ('abc', (2,3), 1)],
+                         dtype=[('foo', 'S4'),
+                                ('bar', [('A', int), ('B', int)]),
+                                ('baz', int)])
+        assert_equal(type(a.foo), np.ndarray)
+        assert_equal(type(a['foo']), np.ndarray)
+        assert_equal(type(a.bar), np.recarray)
+        assert_equal(type(a['bar']), np.recarray)
+        assert_equal(a.bar.dtype.type, np.record)
+        assert_equal(type(a.baz), np.ndarray)
+        assert_equal(type(a['baz']), np.ndarray)
+        assert_equal(type(a[0].bar), np.record)
+        assert_equal(a[0].bar.A, 1)
+
 
 class TestRecord(TestCase):
     def setUp(self):
