@@ -140,6 +140,15 @@ views returned from *np.einsum* are writeable
 Views returned by *np.einsum* will now be writeable whenever the input
 array is writeable.
 
+*savetxt* always opens output files in mode='wb'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This was already the case in Python3, but in Python2 the files were opened
+as text files. This change may affect line separators on Windows and Mac if
+linesep='\n' was explicitly used in the call in the expectation that it
+would be automatically converted to the os appropriate value. The default
+value is now os.linesep instead of '\n', which will affect the results
+for Python3 on Windows and Mac, as those files were already opened as 'wb'.
+
 
 Deprecations
 ============
