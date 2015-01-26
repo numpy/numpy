@@ -806,15 +806,28 @@ General check of Python Type
     sub-type of :cdata:`PyGenericArr_Type` ), or an instance of (a
     sub-class of) :cdata:`PyArray_Type` whose dimensionality is 0.
 
+.. cfunction:: PyArray_IsPythonNumber(op)
+
+    Evaluates true if *op* is an instance of a builtin numeric type (int,
+    float, complex, long, bool)
+
 .. cfunction:: PyArray_IsPythonScalar(op)
 
-    Evaluates true if *op* is a builtin Python "scalar" object (int,
+    Evaluates true if *op* is a builtin Python scalar object (int,
     float, complex, str, unicode, long, bool).
 
 .. cfunction:: PyArray_IsAnyScalar(op)
 
-    Evaluates true if *op* is either a Python scalar or an array
-    scalar (an instance of a sub- type of :cdata:`PyGenericArr_Type` ).
+    Evaluates true if *op* is either a Python scalar object (see
+    :cfunc:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
+    type of :cdata:`PyGenericArr_Type` ).
+
+.. cfunction:: PyArray_CheckAnyScalar(op)
+
+    Evaluates true if *op* is a Python scalar object (see
+    :cfunc:`PyArray_IsPythonScalar`), an array scalar (an instance of a
+    sub-type of :cdata:`PyGenericArr_Type`) or an instance of a sub-type of
+    :cdata:`PyArray_Type` whose dimensionality is 0.
 
 
 Data-type checking
@@ -2518,6 +2531,8 @@ Array Scalars
 -------------
 
 .. cfunction:: PyObject* PyArray_Return(PyArrayObject* arr)
+
+    This function steals a reference to *arr*.
 
     This function checks to see if *arr* is a 0-dimensional array and,
     if so, returns the appropriate array scalar. It should be used
