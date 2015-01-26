@@ -6,6 +6,7 @@
 #include <string.h>
 #include "numpy/ufuncobject.h"
 
+/* Normalize different ufunc methods */
 static void
 normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds,
@@ -153,6 +154,64 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 /*
+ * Check args for a object with a `__numpy_ufunc__` attribute.
+ */
+static int
+check_tuple_for_numpy_ufunc(PyObject *args, int *noa,
+                            int *i, PyObject *with_override[NPY_MAXARGS],
+                            int with_override_pos[NPY_MAXARGS]) {
+    int og_i = *i; /* original i */
+    int og_noa = *noa; /* original number of overriding args */
+    int nargs = PyTuple_GET_SIZE(args);
+    PyObject *obj;
+
+    for (; *i < (og_i + nargs); ++*i) {
+
+        obj = PyTuple_GET_ITEM(args, *i);
+
+        /* short circuit optimization for common cases. */
+        if (PyArray_CheckExact(obj) || PyArray_IsScalar(obj, Generic) ||
+            _is_basic_python_type(obj)) {
+            continue;
+        }
+
+        if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {
+            with_override[*noa] = obj;
+            with_override_pos[*noa] = *i;
+            ++*noa;
+        }
+    }
+    if ((noa - og_noa) > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+static int
+check_kwds_for_numpy_ufunc(PyObject *kwds, int *noa, int *i,
+                           PyObject **with_override,
+                           int with_override_pos[NPY_MAXARGS]) {
+    PyObject *obj;
+    if ((kwds)&& (PyDict_CheckExact(kwds))) {
+        obj = PyDict_GetItemString(kwds, "out");
+        if (obj != NULL) {
+            if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {
+                with_override[*noa] = obj;
+                with_override_pos[*noa] = *i;
+                ++*noa;
+                return 1;
+            }
+            if PyTuple_CheckExact(obj) {
+                return check_tuple_for_numpy_ufunc(obj, noa, i,
+                                                          with_override,
+                                                          with_override_pos);
+            }
+        }
+    }
+    return 0;
+}
+
+/*
  * Check a set of args for the `__numpy_ufunc__` method.  If more than one of
  * the input arguments implements `__numpy_ufunc__`, they are tried in the
  * order: subclasses before superclasses, otherwise left to right. The first
@@ -169,11 +228,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       PyObject **result,
                       int nin)
 {
-    int i;
-    int override_pos; /* Position of override in args.*/
+    int i = 0;
+    int override_pos; /* Position of winning override in args.*/
     int j;
 
-    int nargs = PyTuple_GET_SIZE(args);
     int noa = 0; /* Number of overriding args.*/
 
     PyObject *obj;
@@ -205,22 +263,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    for (i = 0; i < nargs; ++i) {
-        obj = PyTuple_GET_ITEM(args, i);
-        /*
-         * TODO: could use PyArray_GetAttrString_SuppressException if it
-         * weren't private to multiarray.so
-         */
-        if (PyArray_CheckExact(obj) || PyArray_IsScalar(obj, Generic) ||
-            _is_basic_python_type(obj)) {
-            continue;
-        }
-        if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {
-            with_override[noa] = obj;
-            with_override_pos[noa] = i;
-            ++noa;
-        }
-    }
+    check_tuple_for_numpy_ufunc(args, &noa, &i, with_override, with_override_pos);
+    check_kwds_for_numpy_ufunc(kwds, &noa, &i, with_override, with_override_pos);
 
     /* No overrides, bail out.*/
     if (noa == 0) {
