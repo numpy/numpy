@@ -37,7 +37,9 @@
 #undef LONGDOUBLE
 
 #define TESTFUNC_INT(func, suffix) \
-    static PyObject * CONCAT3(_test_, func, suffix)(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) \
+    static PyObject * \
+    CONCAT3(_test_, func, suffix)(PyObject *NPY_UNUSED(self), \
+                                  PyObject *NPY_UNUSED(args)) \
     { \
         PyObject *errs; \
         errs = CONCAT3(test_, func, suffix)(); \
@@ -61,7 +63,9 @@
     TESTFUNC_INT(func, l)
 
 #define TESTMETHODDEF_INT(func, suffix) \
-    {STRINGIZE(CONCAT3(test_, func, suffix)), CONCAT3(_test_, func, suffix), METH_VARARGS, ""}
+    {STRINGIZE(CONCAT3(test_, func, suffix)), \
+        CONCAT3(_test_, func, suffix), \
+        METH_VARARGS, ""}
 
 #define TESTMETHODDEF(func) \
     TESTMETHODDEF_INT(func, f), \
@@ -132,4 +136,3 @@ initnpymath_tests(void)
     Py_InitModule("npymath_tests", methods);
 #endif
 }
-
