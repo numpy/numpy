@@ -423,17 +423,16 @@ array_nbytes_get(PyArrayObject *self)
  * If the type is changed.
  * Also needing change: strides, itemsize
  *
- * Either itemsize is exactly the same or the array is single-segment
- * (contiguous or fortran) with compatibile dimensions The shape and strides
- * will be adjusted in that case as well.
+ * Either itemsize is exactly the same or the smallest stride is equal to
+ * itemsize, with compatible dimensions The shape and strides will be
+ * adjusted in that case as well.
  */
 static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-    npy_intp newdim;
-    int i;
-    char *msg = "new type not compatible with array.";
+    npy_intp old_elsize = PyArray_DESCR(self)->elsize;
+    npy_intp new_elsize;
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
@@ -448,8 +447,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    if (!(PyArray_DescrConverter(arg, &newtype)) ||
-        newtype == NULL) {
+    if (!(PyArray_DescrConverter(arg, &newtype)) || newtype == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "invalid data-type for array");
         return -1;
@@ -462,15 +460,16 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
     Py_DECREF(safe);
+    new_elsize = newtype->elsize;
 
-    if (newtype->elsize == 0) {
+    if (new_elsize == 0) {
         /* Allow a void view */
         if (newtype->type_num == NPY_VOID) {
             PyArray_DESCR_REPLACE(newtype);
             if (newtype == NULL) {
                 return -1;
             }
-            newtype->elsize = PyArray_DESCR(self)->elsize;
+            newtype->elsize = old_elsize;
         }
         /* But no other flexible types */
         else {
@@ -481,41 +480,99 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         }
     }
 
+    if (new_elsize != old_elsize) {
+        /*
+         * One can get creative as to when a view of an array with a
+         * dtype of different item size is possible. The following
+         * rules are pretty flexible, and still guarantee that the view
+         * can be undone, i.e. that viewing the new view with the
+         * original dtype returns the original array:
+         *
+         *  1. The array must be contiguous along the dimension with
+         *     the smallest absolute value stride, i.e. the stride's
+         *     absolute value must be equal to the item size.
+         *  2. There should be only one dimension having this
+         *     minimal stride.
+         *  3. The new item size must evenly divide the total size of
+         *     the minimal stride dimension.
+         *
+         * Conditions 1 and 3 could be relaxed, e.g. to allow
+         * overlapping arrays, i.e. with a stride smaller than the item
+         * size, of to discard extra bytes from the view, but this
+         * would not allow the view to be undone.
+         * Condition 2 is required to avoid indexing beyond the limits
+         * of the array's allocated memory.
+         */
+        npy_intp stride, axis_size;
+        int j, axis;
+        int nd = PyArray_NDIM(self);
 
-    if ((newtype->elsize != PyArray_DESCR(self)->elsize) &&
-        (PyArray_NDIM(self) == 0 || !PyArray_ISONESEGMENT(self) ||
-         PyDataType_HASSUBARRAY(newtype))) {
-        goto fail;
-    }
-    if (PyArray_ISCONTIGUOUS(self)) {
-        i = PyArray_NDIM(self) - 1;
-    }
-    else {
-        i = 0;
-    }
-    if (newtype->elsize < PyArray_DESCR(self)->elsize) {
-        /*
-         * if it is compatible increase the size of the
-         * dimension at end (or at the front for NPY_ARRAY_F_CONTIGUOUS)
-         */
-        if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+        if (nd == 0 || PyDataType_HASSUBARRAY(newtype)) {
             goto fail;
         }
-        newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
-        PyArray_DIMS(self)[i] *= newdim;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
-    }
-    else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
+
         /*
-         * Determine if last (or first if NPY_ARRAY_F_CONTIGUOUS) dimension
-         * is compatible
+         * If the arrays is C or Fortran contiguous we already know
+         * axis, skip the calculation. This also handles arrays with
+         * zero-sized dimensions properly (they are C contiguous).
          */
-        newdim = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
-        if ((newdim % newtype->elsize) != 0) {
+        if (PyArray_IS_C_CONTIGUOUS(self)) {
+            axis = nd - 1;
+        }
+        else if (PyArray_IS_F_CONTIGUOUS(self)) {
+            axis = 0;
+        }
+        else {
+            for (axis = -1, j = 0; j < nd; ++j) {
+                /* Size 1 dimensions are contiguous regardless of the stride */
+                stride = old_elsize;
+                if (PyArray_DIM(self, j) > 1) {
+                    stride = PyArray_STRIDE(self, j);
+                    if (stride < 0) {
+                        stride = -stride;
+                    }
+                }
+                if (stride == old_elsize) {
+                    /* It has the right size: store it and check it is unique */
+                    if (axis == -1) {
+                        axis = j;
+                    }
+                    else {
+                        goto fail;
+                    }
+                }
+                else if (stride != 0 && stride < old_elsize) {
+                    /* old_elsize must be the minimal non-zero stride */
+                    goto fail;
+                }
+            }
+            if (axis == -1) {
+                /* The array wasn't contiguous after all */
+                goto fail;
+            }
+        }
+        stride = PyArray_STRIDE(self, axis);
+
+        /*
+         * If the minimum stride is negative we will also need to change
+         * the data pointer, which we can only do if self does not own its
+         * memory.
+         */
+        if (stride < 0 && PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
             goto fail;
         }
-        PyArray_DIMS(self)[i] = newdim / newtype->elsize;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
+
+        axis_size = PyArray_DIM(self, axis) * old_elsize;
+        if (axis_size % new_elsize != 0) {
+            goto fail;
+        }
+
+        /* We have finished all the checks, so do the modifications */
+        PyArray_DIMS(self)[axis] = axis_size / new_elsize;
+        PyArray_STRIDES(self)[axis] = stride < 0 ? -new_elsize : new_elsize;
+        if (stride < 0) {
+            ((PyArrayObject_fields *)self)->data += old_elsize - new_elsize;
+        }
     }
 
     /* fall through -- adjust type*/
@@ -533,7 +590,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         temp = (PyArrayObject *)
             PyArray_NewFromDescr(&PyArray_Type, newtype, PyArray_NDIM(self),
                                  PyArray_DIMS(self), PyArray_STRIDES(self),
-                                 PyArray_DATA(self), PyArray_FLAGS(self), NULL);
+                                 PyArray_DATA(self), PyArray_FLAGS(self),
+                                 NULL);
         if (temp == NULL) {
             return -1;
         }
@@ -554,7 +612,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     return 0;
 
  fail:
-    PyErr_SetString(PyExc_ValueError, msg);
+    PyErr_SetString(PyExc_ValueError, "new type not compatible with array.");
     Py_DECREF(newtype);
     return -1;
 }
