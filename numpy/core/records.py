@@ -40,7 +40,6 @@ import sys
 import os
 
 from . import numeric as sb
-from .defchararray import chararray
 from . import numerictypes as nt
 from numpy.compat import isfileobj, bytes, long
 
@@ -238,17 +237,15 @@ class record(nt.void):
         res = fielddict.get(attr, None)
         if res:
             obj = self.getfield(*res[:2])
-            # if it has fields return a recarray,
-            # if it's a string ('SU') return a chararray
+            # if it has fields return a record,
             # otherwise return the object
             try:
                 dt = obj.dtype
             except AttributeError:
+                #happens if field is Object type
                 return obj
             if dt.fields:
-                return obj.view(obj.__class__)
-            if dt.char in 'SU':
-                return obj.view(chararray)
+                return obj.view((record, obj.dtype.descr))
             return obj
         else:
             raise AttributeError("'record' object has no "
@@ -418,29 +415,37 @@ class recarray(ndarray):
         return self
 
     def __getattribute__(self, attr):
+        # See if ndarray has this attr, and return it if so. (note that this
+        # means a field with the same name as an ndarray attr cannot be
+        # accessed by attribute).
         try:
             return object.__getattribute__(self, attr)
         except AttributeError: # attr must be a fieldname
             pass
+
+        # look for a field with this name
         fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+            raise AttributeError("recarray has no attribute %s" % attr)
         obj = self.getfield(*res)
-        # if it has fields return a recarray, otherwise return
-        # normal array
+
+        # At this point obj will always be a recarray, since (see
+        # PyArray_GetField) the type of obj is inherited. Next, if obj.dtype is
+        # non-structured, convert it to an ndarray. If obj is structured leave
+        # it as a recarray, but make sure to convert to the same dtype.type (eg
+        # to preserve numpy.record type if present), since nested structured
+        # fields do not inherit type.
         if obj.dtype.fields:
-            return obj
-        if obj.dtype.char in 'SU':
-            return obj.view(chararray)
-        return obj.view(ndarray)
+            return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+        else:
+            return obj.view(ndarray)
 
-# Save the dictionary
-#  If the attr is a field name and not in the saved dictionary
-#  Undo any "setting" of the attribute and do a setfield
-# Thus, you can't create attributes on-the-fly that are field names.
-
+    # Save the dictionary.
+    # If the attr is a field name and not in the saved dictionary
+    # Undo any "setting" of the attribute and do a setfield
+    # Thus, you can't create attributes on-the-fly that are field names.
     def __setattr__(self, attr, val):
         newattr = attr not in self.__dict__
         try:
@@ -468,9 +473,17 @@ class recarray(ndarray):
 
     def __getitem__(self, indx):
         obj = ndarray.__getitem__(self, indx)
-        if (isinstance(obj, ndarray) and obj.dtype.isbuiltin):
-            return obj.view(ndarray)
-        return obj
+
+        # copy behavior of getattr, except that here
+        # we might also be returning a single element
+        if isinstance(obj, ndarray):
+            if obj.dtype.fields:
+                return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+            else:
+                return obj.view(type=ndarray)
+        else:
+            # return a single element
+            return obj
 
     def __repr__(self) :
         ret = ndarray.__repr__(self)
@@ -489,8 +502,6 @@ class recarray(ndarray):
             obj = self.getfield(*res)
             if obj.dtype.fields:
                 return obj
-            if obj.dtype.char in 'SU':
-                return obj.view(chararray)
             return obj.view(ndarray)
         else:
             return self.setfield(val, *res)
@@ -601,7 +612,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    chararray(['dbe', 'de'],
+    array(['dbe', 'de'],
           dtype='|S3')
     >>> import pickle
     >>> print pickle.loads(pickle.dumps(r))

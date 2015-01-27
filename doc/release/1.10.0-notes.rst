@@ -61,6 +61,15 @@ C API
 The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
 which now returns a view in all cases.
 
+recarray field return types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously the returned types for recarray fields accessed by attribute and by
+index were inconsistent, and fields of string type were returned as chararrays.
+Now, fields accessed by either attribute or indexing will return an ndarray for
+fields of non-structured type, and a recarray for fields of structured type.
+Notably, this affect recarrays containing strings with whitespace, as trailing
+whitespace is trimmed from chararrays but kept in ndarrays of string type.
+Also, the dtype.type of nested structured fields is now inherited.
 
 New Features
 ============
