@@ -6,9 +6,9 @@ Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber (Version 4, 
 
 /* isign is +1 for backward and -1 for forward transforms */
 
+#include <Python.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <numpy/ndarraytypes.h>
 
 #define DOUBLE
