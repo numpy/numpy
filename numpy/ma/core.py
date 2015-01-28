@@ -2294,7 +2294,8 @@ def _recursive_printoption(result, mask, printopt):
     """
     names = result.dtype.names
     for name in names:
-        (curdata, curmask) = (result[name], mask[name])
+        curdata = result[name]
+        curmask = mask if mask.dtype.fields is None else mask[name]
         if curdata.dtype.names:
             _recursive_printoption(curdata, curmask, printopt)
         else:
@@ -3070,7 +3071,12 @@ class MaskedArray(ndarray):
                 dout._isfield = True
             # Update the mask if needed
             if _mask is not nomask:
-                dout._mask = _mask[indx]
+                if (_mask.dtype.fields is None
+                        and self.dtype.fields is not None
+                        and isinstance(indx, str)):
+                    dout._mask = _mask
+                else:
+                    dout._mask = _mask[indx]
                 dout._sharedmask = True
 #               Note: Don't try to check for m.any(), that'll take too long...
         return dout
