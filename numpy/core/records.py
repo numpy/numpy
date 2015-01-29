@@ -485,9 +485,28 @@ class recarray(ndarray):
             # return a single element
             return obj
 
-    def __repr__(self) :
-        ret = ndarray.__repr__(self)
-        return ret.replace("recarray", "rec.array", 1)
+    def __repr__(self):
+        # get data/shape string. logic taken from numeric.array_repr
+        if self.size > 0 or self.shape==(0,):
+            lst = sb.array2string(self, separator=', ')
+        else:
+            # show zero-length shape unless it is (0,)
+            lst = "[], shape=%s" % (repr(self.shape),)
+
+        if self.dtype.type is record:
+            # If this is a full record array (has numpy.record dtype),
+            # represent it using the rec.array function. Since rec.array
+            # converts dtype to a numpy.record for us, use only dtype.descr,
+            # not repr(dtype).
+            lf = '\n'+' '*len("rec.array(")
+            return ('rec.array(%s, %sdtype=%s)' %
+                          (lst, lf, repr(self.dtype.descr)))
+        else:
+            # otherwise represent it using np.array plus a view
+            # (There is currently (v1.10) no other easy way to create it)
+            lf = '\n'+' '*len("array(")
+            return ('array(%s, %sdtype=%s).view(numpy.recarray)' %
+                          (lst, lf, str(self.dtype)))
 
     def field(self, attr, val=None):
         if isinstance(attr, int):

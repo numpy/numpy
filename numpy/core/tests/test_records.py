@@ -73,10 +73,27 @@ class TestFromrecords(TestCase):
             assert_((mine.data2[i] == 0.0))
 
     def test_recarray_from_repr(self):
-        x = np.rec.array([ (1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
-        y = eval("numpy." + repr(x), {'numpy': np})
-        assert_(isinstance(y, np.recarray))
-        assert_equal(y, x)
+        a = np.array([(1,'ABC'), (2, "DEF")],
+                     dtype=[('foo', int), ('bar', 'S4')])
+        recordarr = np.rec.array(a)
+        recarr = a.view(np.recarray)
+        recordview = a.view(np.dtype((np.record, a.dtype)))
+
+        recordarr_r = eval("numpy." + repr(recordarr), {'numpy': np})
+        recarr_r = eval("numpy." + repr(recarr), {'numpy': np})
+        recordview_r = eval("numpy." + repr(recordview), {'numpy': np})
+
+        assert_equal(type(recordarr_r), np.recarray)
+        assert_equal(recordarr_r.dtype.type, np.record)
+        assert_equal(recordarr, recordarr_r)
+
+        assert_equal(type(recarr_r), np.recarray)
+        assert_equal(recarr_r.dtype.type, np.void)
+        assert_equal(recarr, recarr_r)
+
+        assert_equal(type(recordview_r), np.ndarray)
+        assert_equal(recordview.dtype.type, np.record)
+        assert_equal(recordview, recordview_r)
 
     def test_recarray_from_names(self):
         ra = np.rec.array([

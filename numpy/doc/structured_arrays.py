@@ -292,7 +292,7 @@ such a view do not have field attributes::
 To use the np.record dtype only, convert the dtype using the (base_class,
 dtype) form described in numpy.dtype.  This type of view is rarely used. ::
 
- >>> arr_records = arr.view(dtype(np.record, arr.dtype))
+ >>> arr_records = arr.view(dtype((np.record, arr.dtype)))
 
 In documentation, the term 'structured array' will refer to objects of type
 np.ndarray with structured dtype, 'record array' will refer to structured
