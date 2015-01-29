@@ -46,9 +46,11 @@ def as_strided(x, shape=None, strides=None, subok=False):
     if strides is not None:
         interface['strides'] = tuple(strides)
     array = np.asarray(DummyArray(interface, base=x))
-    # Make sure dtype is correct in case of custom dtype
-    if array.dtype.kind == 'V':
+
+    if array.dtype.fields is None and x.dtype.fields is not None:
+        # This should only happen if x.dtype is [('', 'Vx')]
         array.dtype = x.dtype
+
     return _maybe_view_as_subclass(x, array)
 
 
