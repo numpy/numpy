@@ -1363,45 +1363,53 @@ class TestComplexFunctions(object):
 
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
-        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1
-        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1
-        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1
-        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1
-        yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
-
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1
-        yield _check_branch_cut, np.arctan, [-2j, 2j],  [1,  -1 ], -1, 1
-
-        yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1
-        yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1
-        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, -1j], 1, -1
-
-        # check against bogus branch cuts: assert continuity between quadrants
-        yield _check_branch_cut, np.arcsin, [-2j, 2j], [ 1,  1], 1, 1
-        yield _check_branch_cut, np.arccos, [-2j, 2j], [ 1,  1], 1, 1
-        yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1
-
-        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1
-        yield _check_branch_cut, np.arccosh, [-2j, 2j, 2], [1,  1,  1j], 1, 1
-        yield _check_branch_cut, np.arctanh, [-2j, 2j, 0], [1,  1,  1j], 1, 1
-
-    @dec.knownfailureif(True, "These branch cuts are known to fail")
-    def test_branch_cuts_failing(self):
-        # XXX: signed zero not OK with ICC on 64-bit platform for log, see
-        # http://permalink.gmane.org/gmane.comp.python.numeric.general/25335
         yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
-        # XXX: signed zeros are not OK for sqrt or for the arc* functions
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1, True
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1, True
-        yield _check_branch_cut, np.arctan, [-2j, 2j],  [1,  -1 ], -1, 1, True
-        yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1, True
+
+        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True
+        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True
+
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
-        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, -1j], 1, -1, True
+        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True
+
+        # check against bogus branch cuts: assert continuity between quadrants
+        yield _check_branch_cut, np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1
+        yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1
+        yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1
+
+        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1
+        yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1
+        yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1
+
+    def test_branch_cuts_complex64(self):
+        # check branch cuts and continuity on them
+        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True, np.complex64
+        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1, True, np.complex64
+        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True, np.complex64
+        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True, np.complex64
+        yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True, np.complex64
+
+        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
+        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True, np.complex64
+
+        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True, np.complex64
+        yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True, np.complex64
+        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True, np.complex64
+
+        # check against bogus branch cuts: assert continuity between quadrants
+        yield _check_branch_cut, np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64
+        yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64
+        yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1, False, np.complex64
+
+        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1, False, np.complex64
+        yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1, False, np.complex64
+        yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1, False, np.complex64
 
     def test_against_cmath(self):
         import cmath, sys
@@ -1466,7 +1474,7 @@ class TestComplexFunctions(object):
             # So, give more leeway for long complex tests here:
             check(x_series, 50*eps)
         else:
-            check(x_series, 2*eps)
+            check(x_series, 2.1*eps)
         check(x_basic, 2*eps/1e-3)
 
         # Check a few points
@@ -1565,8 +1573,12 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
     x0 = np.atleast_1d(x0).astype(dtype)
     dx = np.atleast_1d(dx).astype(dtype)
 
-    scale = np.finfo(dtype).eps * 1e3
-    atol  = 1e-4
+    if np.dtype(dtype).char == 'F':
+        scale = np.finfo(dtype).eps * 1e2
+        atol = np.float32(1e-2)
+    else:
+        scale = np.finfo(dtype).eps * 1e3
+        atol  = 1e-4
 
     y0 = f(x0)
     yp = f(x0 + dx*scale*np.absolute(x0)/np.absolute(dx))
@@ -1581,16 +1593,20 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
         # check that signed zeros also work as a displacement
         jr = (x0.real == 0) & (dx.real != 0)
         ji = (x0.imag == 0) & (dx.imag != 0)
+        if np.any(jr):
+            x = x0[jr]
+            x.real = np.NZERO
+            ym = f(x)
+            assert_(np.all(np.absolute(y0[jr].real - ym.real*re_sign) < atol), (y0[jr], ym))
+            assert_(np.all(np.absolute(y0[jr].imag - ym.imag*im_sign) < atol), (y0[jr], ym))
 
-        x = -x0
-        x.real[jr] = 0.*dx.real
-        x.imag[ji] = 0.*dx.imag
-        x = -x
-        ym = f(x)
-        ym = ym[jr | ji]
-        y0 = y0[jr | ji]
-        assert_(np.all(np.absolute(y0.real - ym.real*re_sign) < atol), (y0, ym))
-        assert_(np.all(np.absolute(y0.imag - ym.imag*im_sign) < atol), (y0, ym))
+
+        if np.any(ji):
+            x = x0[ji]
+            x.imag = np.NZERO
+            ym = f(x)
+            assert_(np.all(np.absolute(y0[ji].real - ym.real*re_sign) < atol), (y0[ji], ym))
+            assert_(np.all(np.absolute(y0[ji].imag - ym.imag*im_sign) < atol), (y0[ji], ym))
 
 def test_copysign():
     assert_(np.copysign(1, -1) == -1)
