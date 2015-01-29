@@ -34,6 +34,7 @@
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
+
 #define raise_inexact() do { volatile npy_float junk = 1 + tiny; } while(0)
 
 
@@ -431,7 +432,27 @@ npy_csqrt@c@(@ctype@ z)
 #undef THRESH
 #endif
 
-#ifndef HAVE_CPOW@C@
+/*
+ * Always use this function because of the multiplication for small
+ * integer powers, but in the body use cpow if it is available.
+ */
+
+/* private function for use in npy_pow{f, ,l} */
+#ifdef HAVE_CPOW@C@
+static @ctype@
+sys_cpow@c@(@ctype@ x, @ctype@ y)
+{
+    __@ctype@_to_c99_cast xcast;
+    __@ctype@_to_c99_cast ycast;
+    __@ctype@_to_c99_cast ret;
+    xcast.npy_z = x;
+    ycast.npy_z = y;
+    ret.c99_z = cpow@c@(xcast.c99_z, ycast.c99_z);
+    return ret.npy_z;
+}
+#endif
+
+
 @ctype@
 npy_cpow@c@ (@ctype@ a, @ctype@ b)
 {
@@ -440,7 +461,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     @type@ br = npy_creal@c@(b);
     @type@ ai = npy_cimag@c@(a);
     @type@ bi = npy_cimag@c@(b);
-    @ctype@ loga, r;
+    @ctype@ r;
 
     if (br == 0. && bi == 0.) {
         return npy_cpack@c@(1., 0.);
@@ -505,13 +526,21 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
         }
     }
 
-    loga = npy_clog@c@(a);
-    ar = npy_creal@c@(loga);
-    ai = npy_cimag@c@(loga);
+#ifdef HAVE_CPOW@C@
+    return sys_cpow@c@(a, b);
 
-    return npy_cexp@c@(npy_cpack@c@(ar * br - ai * bi, ar * bi + ai * br));
-}
+#else
+    {
+        @ctype@ loga = npy_clog@c@(a);
+
+        ar = npy_creal@c@(loga);
+        ai = npy_cimag@c@(loga);
+        return npy_cexp@c@(npy_cpack@c@(ar*br - ai*bi, ar*bi + ai*br));
+    }
+
 #endif
+}
+
 
 #ifndef HAVE_CCOS@C@
 @ctype@
@@ -1753,23 +1782,5 @@ npy_@kind@@c@(@ctype@ z)
 #endif
 /**end repeat1**/
 
-/**begin repeat1
- * #kind = cpow#
- * #KIND = CPOW#
- */
-#ifdef HAVE_@KIND@@C@
-@ctype@
-npy_@kind@@c@(@ctype@ x, @ctype@ y)
-{
-    __@ctype@_to_c99_cast xcast;
-    __@ctype@_to_c99_cast ycast;
-    __@ctype@_to_c99_cast ret;
-    xcast.npy_z = x;
-    ycast.npy_z = y;
-    ret.c99_z = @kind@@c@(xcast.c99_z, ycast.c99_z);
-    return ret.npy_z;
-}
-#endif
-/**end repeat1**/
 
 /**end repeat**/
