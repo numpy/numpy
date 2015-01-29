@@ -593,18 +593,16 @@ From other objects
 .. cfunction:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_struct__`` method and follows the array interface
-    protocol. If the object does not contain this method then a
+    :obj:`__array_struct__` attribute and follows the array interface
+    protocol. If the object does not contain this attribute then a
     borrowed reference to :cdata:`Py_NotImplemented` is returned.
 
 .. cfunction:: PyObject* PyArray_FromInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_shape__` and :obj:`__array_typestr__`
-    methods following
-    the array interface protocol. If the object does not contain one
-    of these method then a borrowed reference to :cdata:`Py_NotImplemented`
-    is returned.
+    :obj:`__array_interface__` attribute following the array interface
+    protocol. If the object does not contain this attribute then a
+    borrowed reference to :cdata:`Py_NotImplemented` is returned.
 
 .. cfunction:: PyObject* PyArray_FromArrayAttr(PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
