@@ -1818,7 +1818,8 @@ def masked_where(condition, a, copy=True):
     else:
         cls = MaskedArray
     result = a.view(cls)
-    result._mask = cond
+    # Assign to *.mask so that structured masks are handled correctly.
+    result.mask = cond
     return result
 
 
