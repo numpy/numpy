@@ -4,12 +4,6 @@
 #include "config.h"
 #include "numpy/numpyconfig.h"
 
-/* Disable broken MS math functions */
-#if defined(_MSC_VER) || defined(__MINGW32_VERSION)
-#undef HAVE_ATAN2
-#undef HAVE_HYPOT
-#endif
-
 /*
  * largest alignment the copy loops might require
  * required as string, void and complex types might get copied using larger
@@ -21,9 +15,56 @@
  */
 #define NPY_MAX_COPY_ALIGNMENT 16
 
+/* blacklist */
+
 /* Disable broken Sun Workshop Pro math functions */
 #ifdef __SUNPRO_C
+
 #undef HAVE_ATAN2
+#undef HAVE_ATAN2F
+#undef HAVE_ATAN2L
+
 #endif
+
+/* Disable broken MS math functions */
+#if defined(_MSC_VER) || defined(__MINGW32_VERSION)
+
+#undef HAVE_ATAN2
+#undef HAVE_ATAN2F
+#undef HAVE_ATAN2L
+
+#undef HAVE_HYPOT
+#undef HAVE_HYPOTF
+#undef HAVE_HYPOTL
+
+#endif
+
+/* Disable broken gnu trig functions on linux */
+#if defined(__linux__) && defined(__GNUC__)
+
+#if defined(HAVE_FEATURES_H)
+#include <features.h>
+#define TRIG_OK __GLIBC_PREREQ(2, 16)
+#else
+#define TRIG_OK 0
+#endif
+
+#if !TRIG_OK
+#undef HAVE_CASIN
+#undef HAVE_CASINF
+#undef HAVE_CASINL
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+#undef HAVE_CASINHL
+#undef HAVE_CATAN
+#undef HAVE_CATANF
+#undef HAVE_CATANL
+#undef HAVE_CATANH
+#undef HAVE_CATANHF
+#undef HAVE_CATANHL
+#endif
+#undef TRIG_OK
+
+#endif /* defined(__linux__) && defined(__GNUC__) */
 
 #endif

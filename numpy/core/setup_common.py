@@ -107,6 +107,7 @@ OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h", # SSE
                 "emmintrin.h", # SSE2
+                "features.h",  # for glibc version linux
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
