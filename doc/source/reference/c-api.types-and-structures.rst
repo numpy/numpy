@@ -407,7 +407,10 @@ PyArrayDescr_Type
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
            int *cancastto;
-           int listpickle
+           PyArray_FastClipFunc *fastclip;
+           PyArray_FastPutmaskFunc *fastputmask;
+           PyArray_FastTakeFunc *fasttake;
+           PyArray_ArgFunc *argmin;
        } PyArray_ArrFuncs;
 
     The concept of a behaved segment is used in the description of the
@@ -417,8 +420,7 @@ PyArrayDescr_Type
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
 
-    .. cmember:: void cast(void *from, void *to, npy_intp n, void *fromarr,
-       void *toarr)
+    .. cmember:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
 
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
@@ -444,8 +446,7 @@ PyArrayDescr_Type
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
 
-    .. cmember:: void copyswapn(void *dest, npy_intp dstride, void *src,
-       npy_intp sstride, npy_intp n, int swap, void *arr)
+    .. cmember:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
 
     .. cmember:: void copyswap(void *dest, void *src, int swap, void *arr)
 
@@ -471,8 +472,7 @@ PyArrayDescr_Type
         ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
         used to retrieve itemsize and field information for flexible arrays.
 
-    .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind,
-       void* arr)
+    .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
@@ -481,8 +481,7 @@ PyArrayDescr_Type
         always 0. The index of the largest element is returned in
         ``max_ind``.
 
-    .. cmember:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2,
-       void* op, npy_intp n, void* arr)
+    .. cmember:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
 
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
@@ -532,8 +531,7 @@ PyArrayDescr_Type
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
 
-    .. cmember:: void fillwithscalar(void* buffer, npy_intp length,
-       void* value, void* arr)
+    .. cmember:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
 
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
@@ -548,14 +546,13 @@ PyArrayDescr_Type
         :cdata:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
-    .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length,
-       void \*arr)
+    .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length, void *arr)
 
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
         available. The indices producing the sort are returned in
-        result (which must be initialized with indices 0 to length-1
-        inclusive).
+        ``result`` (which must be initialized with indices 0 to
+        ``length-1`` inclusive).
 
     .. cmember:: PyObject *castdict
 
@@ -587,9 +584,48 @@ PyArrayDescr_Type
         can be cast to safely (this usually means without losing
         precision).
 
-    .. cmember:: int listpickle
+    .. cmember:: void fastclip(void *in, npy_intp n_in, void *min, void *max, void *out)
 
-        Unused.
+        A function that reads ``n_in`` items from ``in``, and writes to
+        ``out`` the read value if it is within the limits pointed to by
+        ``min`` and ``max``, or the corresponding limit if outside. The
+        memory segments must be contiguous and behaved, and either
+        ``min`` or ``max`` may be ``NULL``, but not both.
+
+    .. cmember:: void fastputmask(void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
+
+        A function that takes a pointer ``in`` to an array of ``n_in``
+        items, a pointer ``mask`` to an array of ``n_in`` boolean
+        values, and a pointer ``vals`` to an array of ``nv`` items.
+        Items from ``vals`` are copied into ``in`` wherever the value
+        in ``mask`` is non-zero, tiling ``vals`` as needed if
+        ``nv < n_in``. All arrays must be contiguous and behaved.
+
+    .. cmember:: void fasttake(void *dest, void *src, npy_intp *indarray, npy_intp nindarray, npy_intp n_outer, npy_intp m_middle, npy_intp nelem, NPY_CLIPMODE clipmode)
+
+        A function that takes a pointer ``src`` to a C contiguous,
+        behaved segment, interpreted as a 3-dimensional array of shape
+        ``(n_outer, nindarray, nelem)``, a pointer ``indarray`` to a
+        contiguous, behaved segment of ``m_middle`` integer indices,
+        and a pointer ``dest`` to a C contiguous, behaved segment,
+        interpreted as a 3-dimensional array of shape
+        ``(n_outer, m_middle, nelem)``. The indices in ``indarray`` are
+        used to index ``src`` along the second dimension, and copy the
+        corresponding chunks of ``nelem`` items into ``dest``.
+        ``clipmode`` (which can take on the values :cdata:`NPY_RAISE`,
+        :cdata:`NPY_WRAP` or :cdata:`NPY_CLIP`) determines how will
+        indices smaller than 0 or larger than ``nindarray`` will be
+        handled.
+
+    .. cmember:: int argmin(void* data, npy_intp n, npy_intp* min_ind, void* arr)
+
+        A pointer to a function that retrieves the index of the
+        smallest of ``n`` elements in ``arr`` beginning at the element
+        pointed to by ``data``. This function requires that the
+        memory segment be contiguous and behaved. The return value is
+        always 0. The index of the smallest element is returned in
+        ``min_ind``.
+
 
 The :cdata:`PyArray_Type` typeobject implements many of the features of
 Python objects including the tp_as_number, tp_as_sequence,
