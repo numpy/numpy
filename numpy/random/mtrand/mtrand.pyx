@@ -3324,10 +3324,10 @@ cdef class RandomState:
 
         .. math:: P(x;scale) = \\frac{x}{scale^2}e^{\\frac{-x^2}{2 \\cdotp scale^2}}
 
-        The Rayleigh distribution arises if the wind speed and wind direction are
-        both gaussian variables, then the vector wind velocity forms a Rayleigh
-        distribution. The Rayleigh distribution is used to model the expected
-        output from wind turbines.
+        The Rayleigh distribution would arise, for example, if the East
+        and North components of the wind velocity had identical zero-mean
+        Gaussian distributions.  Then the wind speed would have a Rayleigh
+        distribution.
 
         References
         ----------
