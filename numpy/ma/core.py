@@ -145,10 +145,15 @@ default_filler = {'b': True,
                   'S' : 'N/A',
                   'u' : 999999,
                   'V' : '???',
-                  'U' : 'N/A',
-                  'M8[D]' : np.datetime64('NaT', 'D'),
-                  'M8[us]' : np.datetime64('NaT', 'us')
+                  'U' : 'N/A'
                   }
+
+# Add datetime64 and timedelta64 types
+for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
+          "fs", "as"]:
+    default_filler["M8[" + v + "]"] = np.datetime64("NaT", v)
+    default_filler["m8[" + v + "]"] = np.timedelta64("NaT", v)
+
 max_filler = ntypes._minvals
 max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
 min_filler = ntypes._maxvals
@@ -194,7 +199,7 @@ def default_fill_value(obj):
     999999
     >>> np.ma.default_fill_value(np.array([1.1, 2., np.pi]))
     1e+20
-    >>>  np.ma.default_fill_value(np.dtype(complex))
+    >>> np.ma.default_fill_value(np.dtype(complex))
     (1e+20+0j)
 
     """
@@ -203,7 +208,7 @@ def default_fill_value(obj):
     elif isinstance(obj, np.dtype):
         if obj.subdtype:
             defval = default_filler.get(obj.subdtype[0].kind, '?')
-        elif obj.kind == 'M':
+        elif obj.kind in 'Mm':
             defval = default_filler.get(obj.str[1:], '?')
         else:
             defval = default_filler.get(obj.kind, '?')

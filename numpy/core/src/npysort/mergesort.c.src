@@ -28,9 +28,9 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include <stdlib.h>
 #include "npy_sort.h"
 #include "npysort_common.h"
+#include <stdlib.h>
 
 #define NOT_USED NPY_UNUSED(unused)
 #define PYA_QS_STACK 100
