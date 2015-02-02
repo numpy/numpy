@@ -3,7 +3,7 @@ A Mechanism for Overriding Ufuncs
 =================================
 
 :Author: Blake Griffith
-:Contact: blake.g@utexa.edu 
+:Contact: blake.g@utexas.edu 
 :Date: 2013-07-10
 
 :Author: Pauli Virtanen
