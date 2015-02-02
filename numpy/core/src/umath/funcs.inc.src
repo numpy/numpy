@@ -642,42 +642,59 @@ nc_sinh@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_tan@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ sr,cr,shi,chi;
-    @ftype@ rs,is,rc,ic;
-    @ftype@ d;
+    /**
+     * tan(x)=(sin(2xr)+isinh(2xi))/(2*(cos(xr)^2+sinh(xi)^2))
+     * For |xi| > 1, formula is corrected to improve accuracy
+     */
+    @ftype@ shi,d,u,c,crc2;
     @ftype@ xr=x->real, xi=x->imag;
-    sr = npy_sin@c@(xr);
-    cr = npy_cos@c@(xr);
-    shi = npy_sinh@c@(xi);
-    chi = npy_cosh@c@(xi);
-    rs = sr*chi;
-    is = cr*shi;
-    rc = cr*chi;
-    ic = -sr*shi;
-    d = rc*rc + ic*ic;
-    r->real = (rs*rc+is*ic)/d;
-    r->imag = (is*rc-rs*ic)/d;
+    @ftype@ cr = npy_cos@c@(xr);
+
+    if (fabs(xi) <= 1)
+    {
+        shi = npy_sinh@c@(xi);
+        d = 2 * (cr * cr + shi * shi);
+
+        r->real = npy_sin@c@(2 * xr) / d;
+        r->imag = npy_sinh@c@(2 * xi) / d;
+    }
+    else
+    {
+        u = npy_exp@c@(-xi);
+        c = 2 * u / (1 - u * u);
+        crc2 = cr * c * c;
+        d = 1 + cr * crc2;
+
+        r->real = npy_sin@c@(xr) * crc2 / d;
+        r->imag = 1 / (npy_tanh@c@(xi) * d);
+    }
     return;
 }
 
 static void
 nc_tanh@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ si,ci,shr,chr;
-    @ftype@ rs,is,rc,ic;
-    @ftype@ d;
+    /**
+     * tanh(x)=(sinh(2xr)+isin(2xi))/(2*(cos(xr)^2+sinh(xi)^2))
+     * For |xr| > 1, formula is changed to improve accuracy
+     */
+    @ftype@ u;
     @ftype@ xr=x->real, xi=x->imag;
-    si = npy_sin@c@(xi);
-    ci = npy_cos@c@(xi);
-    shr = npy_sinh@c@(xr);
-    chr = npy_cosh@c@(xr);
-    rs = ci*shr;
-    is = si*chr;
-    rc = ci*chr;
-    ic = si*shr;
-    d = rc*rc + ic*ic;
-    r->real = (rs*rc+is*ic)/d;
-    r->imag = (is*rc-rs*ic)/d;
+    @ftype@ ci = npy_cos@c@(xi);
+    @ftype@ shr = npy_sinh@c@(xr);
+    @ftype@ d = ci * ci + shr * shr;
+
+    r->imag = 0.5 * npy_sin@c@(2 * xi) / d;
+
+    if (fabs(xr) <= 1)
+    {
+        r->real = shr * npy_cosh@c@(xr) / d;
+    }
+    else
+    {
+        u = ci / shr;
+        r->real = 1 / (npy_tanh@c@(xr) * (1 + u * u));
+    }
     return;
 }
 
