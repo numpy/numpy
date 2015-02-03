@@ -145,10 +145,15 @@ default_filler = {'b': True,
                   'S' : 'N/A',
                   'u' : 999999,
                   'V' : '???',
-                  'U' : 'N/A',
-                  'M8[D]' : np.datetime64('NaT', 'D'),
-                  'M8[us]' : np.datetime64('NaT', 'us')
+                  'U' : 'N/A'
                   }
+
+# Add datetime64 and timedelta64 types
+for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
+          "fs", "as"]:
+    default_filler["M8[" + v + "]"] = np.datetime64("NaT", v)
+    default_filler["m8[" + v + "]"] = np.timedelta64("NaT", v)
+
 max_filler = ntypes._minvals
 max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
 min_filler = ntypes._maxvals
@@ -194,7 +199,7 @@ def default_fill_value(obj):
     999999
     >>> np.ma.default_fill_value(np.array([1.1, 2., np.pi]))
     1e+20
-    >>>  np.ma.default_fill_value(np.dtype(complex))
+    >>> np.ma.default_fill_value(np.dtype(complex))
     (1e+20+0j)
 
     """
@@ -203,7 +208,7 @@ def default_fill_value(obj):
     elif isinstance(obj, np.dtype):
         if obj.subdtype:
             defval = default_filler.get(obj.subdtype[0].kind, '?')
-        elif obj.kind == 'M':
+        elif obj.kind in 'Mm':
             defval = default_filler.get(obj.str[1:], '?')
         else:
             defval = default_filler.get(obj.kind, '?')
@@ -4041,9 +4046,25 @@ class MaskedArray(ndarray):
     #............................................
     flatten = _arraymethod('flatten')
     #
-    def ravel(self):
+    def ravel(self, order='C'):
         """
         Returns a 1D version of self, as a view.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A', 'K'}, optional
+            The elements of `a` are read using this index order. 'C' means to
+            index the elements in C-like order, with the last axis index
+            changing fastest, back to the first axis index changing slowest.
+            'F' means to index the elements in Fortran-like index order, with
+            the first index changing fastest, and the last index changing
+            slowest. Note that the 'C' and 'F' options take no account of the
+            memory layout of the underlying array, and only refer to the order
+            of axis indexing.  'A' means to read the elements in Fortran-like
+            index order if `m` is Fortran *contiguous* in memory, C-like order
+            otherwise.  'K' means to read the elements in the order they occur
+            in memory, except for reversing the data when strides are negative.
+            By default, 'C' index order is used.
 
         Returns
         -------
@@ -4062,10 +4083,10 @@ class MaskedArray(ndarray):
         [1 -- 3 -- 5 -- 7 -- 9]
 
         """
-        r = ndarray.ravel(self._data).view(type(self))
+        r = ndarray.ravel(self._data, order=order).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
-            r._mask = ndarray.ravel(self._mask).reshape(r.shape)
+            r._mask = ndarray.ravel(self._mask, order=order).reshape(r.shape)
         else:
             r._mask = nomask
         return r

@@ -3,8 +3,8 @@ Input and output
 
 .. currentmodule:: numpy
 
-NPZ files
----------
+Numpy binary files (NPY, NPZ)
+-----------------------------
 .. autosummary::
    :toctree: generated/
 
@@ -12,6 +12,9 @@ NPZ files
    save
    savez
    savez_compressed
+
+The format of these binary file types is documented in
+http://docs.scipy.org/doc/numpy/neps/npy-format.html  
 
 Text files
 ----------

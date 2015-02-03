@@ -17,7 +17,7 @@ There are 5 general mechanisms for creating arrays:
 
 This section will not cover means of replicating, joining, or otherwise
 expanding or mutating existing arrays. Nor will it cover creating object
-arrays or record arrays. Both of those are covered in their own sections.
+arrays or structured arrays. Both of those are covered in their own sections.
 
 Converting Python array_like Objects to Numpy Arrays
 ====================================================

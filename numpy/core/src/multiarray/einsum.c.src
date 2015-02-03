@@ -2158,7 +2158,8 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
                                 PyArray_DESCR(op),
                                 ndim_output, new_dims, new_strides,
                                 PyArray_DATA(op),
-                                0, (PyObject *)op);
+                                PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
+                                (PyObject *)op);
 
         if (*ret == NULL) {
             return 0;

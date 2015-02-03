@@ -597,7 +597,9 @@ def require(a, dtype=None, requirements=None):
     a : array_like
        The object to be converted to a type-and-requirement-satisfying array.
     dtype : data-type
-       The required data-type, the default data-type is float64).
+       The required data-type. If None preserve the current dtype. If your
+       application requires the data to be in native byteorder, include
+       a byteorder specification as a part of the dtype specification.
     requirements : str or list of str
        The requirements list can be any of the following
 
@@ -606,6 +608,7 @@ def require(a, dtype=None, requirements=None):
        * 'ALIGNED' ('A')      - ensure a data-type aligned array
        * 'WRITEABLE' ('W')    - ensure a writable array
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
+       * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
 
     See Also
     --------
@@ -642,34 +645,38 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
-    if requirements is None:
-        requirements = []
-    else:
-        requirements = [x.upper() for x in requirements]
-
+    possible_flags = {'C':'C', 'C_CONTIGUOUS':'C', 'CONTIGUOUS':'C',
+                      'F':'F', 'F_CONTIGUOUS':'F', 'FORTRAN':'F',
+                      'A':'A', 'ALIGNED':'A',
+                      'W':'W', 'WRITEABLE':'W',
+                      'O':'O', 'OWNDATA':'O',
+                      'E':'E', 'ENSUREARRAY':'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
+    else:
+        requirements = set(possible_flags[x.upper()] for x in requirements)
 
-    if 'ENSUREARRAY' in requirements or 'E' in requirements:
+    if 'E' in requirements:
+        requirements.remove('E')
         subok = False
     else:
         subok = True
 
-    arr = array(a, dtype=dtype, copy=False, subok=subok)
+    order = 'A'
+    if requirements >= set(['C', 'F']):
+        raise ValueError('Cannot specify both "C" and "F" order')
+    elif 'F' in requirements:
+        order = 'F'
+        requirements.remove('F')
+    elif 'C' in requirements:
+        order = 'C'
+        requirements.remove('C')
 
-    copychar = 'A'
-    if 'FORTRAN' in requirements or \
-       'F_CONTIGUOUS' in requirements or \
-       'F' in requirements:
-        copychar = 'F'
-    elif 'CONTIGUOUS' in requirements or \
-         'C_CONTIGUOUS' in requirements or \
-         'C' in requirements:
-        copychar = 'C'
+    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
 
     for prop in requirements:
         if not arr.flags[prop]:
-            arr = arr.copy(copychar)
+            arr = arr.copy(order)
             break
     return arr
 
@@ -1385,6 +1392,7 @@ def roll(a, shift, axis=None):
         res = res.reshape(a.shape)
     return res
 
+
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
@@ -1403,7 +1411,9 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        Output array.
+        For Numpy >= 1.10 a view of `a` is always returned. For earlier
+        Numpy versions a view of `a` is returned only if the order of the
+        axes is changed, otherwise the input array is returned.
 
     See Also
     --------
@@ -1429,16 +1439,18 @@ def rollaxis(a, axis, start=0):
     msg = 'rollaxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < n):
         raise ValueError(msg % ('axis', axis, n))
-    if not (0 <= start < n+1):
-        raise ValueError(msg % ('start', start, n+1))
-    if (axis < start): # it's been removed
+    if not (0 <= start < n + 1):
+        raise ValueError(msg % ('start', start, n + 1))
+    if (axis < start):
+        # it's been removed
         start -= 1
-    if axis==start:
-        return a
+    if axis == start:
+        return a[...]
     axes = list(range(0, n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
+
 
 # fix hack in scipy which imports this function
 def _move_axis_to_0(a, axis):
@@ -2675,12 +2687,13 @@ def seterrcall(func):
         Function to call upon floating-point errors ('call'-mode) or
         object whose 'write' method is used to log such message ('log'-mode).
 
-        The call function takes two arguments. The first is the
-        type of error (one of "divide", "over", "under", or "invalid"),
-        and the second is the status flag.  The flag is a byte, whose
-        least-significant bits indicate the status::
+        The call function takes two arguments. The first is a string describing the
+        type of error (such as "divide by zero", "overflow", "underflow", or "invalid value"),
+        and the second is the status flag.  The flag is a byte, whose four
+        least-significant bits indicate the type of error, one of "divide", "over",
+        "under", "invalid"::
 
-          [0 0 0 0 invalid over under invalid]
+          [0 0 0 0 divide over under invalid]
 
         In other words, ``flags = divide + 2*over + 4*under + 8*invalid``.
 

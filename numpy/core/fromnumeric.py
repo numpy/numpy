@@ -6,12 +6,14 @@ from __future__ import division, absolute_import, print_function
 import types
 import warnings
 
+import numpy as np
 from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import umath as um
 from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
 from . import _methods
+
 
 _dt_ = nt.sctype2char
 
@@ -462,8 +464,10 @@ def swapaxes(a, axis1, axis2):
     Returns
     -------
     a_swapped : ndarray
-        If `a` is an ndarray, then a view of `a` is returned; otherwise
-        a new array is created.
+        For Numpy >= 1.10, if `a` is an ndarray, then a view of `a` is
+        returned; otherwise a new array is created. For earlier Numpy
+        versions a view of `a` is returned only if the order of the
+        axes is changed, otherwise the input array is returned.
 
     Examples
     --------
@@ -1191,16 +1195,17 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     In NumPy 1.9 it returns a read-only view on the original array.
     Attempting to write to the resulting array will produce an error.
 
-    In NumPy 1.10, it will return a read/write view, Writing to the returned
-    array will alter your original array.
+    In NumPy 1.10, it will return a read/write view and writing to the
+    returned array will alter your original array.  The returned array
+    will have the same type as the input array.
 
     If you don't write to the array returned by this function, then you can
     just ignore all of the above.
 
     If you depend on the current behavior, then we suggest copying the
-    returned array explicitly, i.e., use ``np.diagonal(a).copy()`` instead of
-    just ``np.diagonal(a)``. This will work with both past and future versions
-    of NumPy.
+    returned array explicitly, i.e., use ``np.diagonal(a).copy()`` instead
+    of just ``np.diagonal(a)``. This will work with both past and future
+    versions of NumPy.
 
     Parameters
     ----------
@@ -1219,10 +1224,13 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D, a 1-D array containing the diagonal is returned.
-        If the dimension of `a` is larger, then an array of diagonals is
-        returned, "packed" from left-most dimension to right-most (e.g.,
-        if `a` is 3-D, then the diagonals are "packed" along rows).
+        If `a` is 2-D and not a matrix, a 1-D array of the same type as `a`
+        containing the diagonal is returned. If `a` is a matrix, a 1-D
+        array containing the diagonal is returned in order to maintain
+        backward compatibility.  If the dimension of `a` is greater than
+        two, then an array of diagonals is returned, "packed" from
+        left-most dimension to right-most (e.g., if `a` is 3-D, then the
+        diagonals are "packed" along rows).
 
     Raises
     ------
@@ -1271,7 +1279,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
            [5, 7]])
 
     """
-    return asanyarray(a).diagonal(offset, axis1, axis2)
+    if isinstance(a, np.matrix):
+        # Make diagonal of matrix 1-D to preserve backward compatibility.
+        return asarray(a).diagonal(offset, axis1, axis2)
+    else:
+        return asanyarray(a).diagonal(offset, axis1, axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
@@ -1340,6 +1352,10 @@ def ravel(a, order='C'):
     A 1-D array, containing the elements of the input, is returned.  A copy is
     made only if needed.
 
+    As of NumPy 1.10, the returned array will have the same type as the input
+    array. (for example, a masked array will be returned for a masked array
+    input)
+
     Parameters
     ----------
     a : array_like
@@ -1361,8 +1377,11 @@ def ravel(a, order='C'):
 
     Returns
     -------
-    1d_array : ndarray
-        Output of the same dtype as `a`, and of shape ``(a.size,)``.
+    y : array_like
+        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
+        the same subtype as `a`. The shape of the returned array is
+        ``(a.size,)``. Matrices are special cased for backward
+        compatibility.
 
     See Also
     --------
@@ -1420,7 +1439,10 @@ def ravel(a, order='C'):
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
 
     """
-    return asarray(a).ravel(order)
+    if isinstance(a, np.matrix):
+        return asarray(a).ravel(order)
+    else:
+        return asanyarray(a).ravel(order)
 
 
 def nonzero(a):

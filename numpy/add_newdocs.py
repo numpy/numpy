@@ -664,13 +664,13 @@ add_newdoc('numpy.core.multiarray', 'array',
         nested sequence, or if a copy is needed to satisfy any of the other
         requirements (`dtype`, `order`, etc.).
     order : {'C', 'F', 'A'}, optional
-        Specify the order of the array.  If order is 'C' (default), then the
-        array will be in C-contiguous order (last-index varies the
-        fastest).  If order is 'F', then the returned array
-        will be in Fortran-contiguous order (first-index varies the
-        fastest).  If order is 'A', then the returned array may
-        be in any order (either C-, Fortran-contiguous, or even
-        discontiguous).
+        Specify the order of the array.  If order is 'C', then the array
+        will be in C-contiguous order (last-index varies the fastest).
+        If order is 'F', then the returned array will be in
+        Fortran-contiguous order (first-index varies the fastest).
+        If order is 'A' (default), then the returned array may be
+        in any order (either C-, Fortran-contiguous, or even discontiguous),
+        unless a copy is required, in which case it will be C-contiguous.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
         the returned array will be forced to be a base-class array (default).
@@ -885,7 +885,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=numpy.int)
+    >>> np.zeros((5,), dtype=np.int)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
@@ -2063,6 +2063,14 @@ add_newdoc('numpy.core', 'einsum',
     ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
     below have corresponding `einsum` calls with the two parameter methods.
 
+    .. versionadded:: 1.10.0
+
+    Views returned from einsum are now writeable whenever the input array
+    is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
+    have the same effect as ``np.swapaxes(a, 0, 2)`` and
+    ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
+    of a 2D array.
+
     Examples
     --------
     >>> a = np.arange(25).reshape(5,5)
@@ -2171,6 +2179,14 @@ add_newdoc('numpy.core', 'einsum',
     >>> np.einsum('k...,jk', a, b)
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
+
+    >>> # since version 1.10.0
+    >>> a = np.zeros((3, 3))
+    >>> np.einsum('ii->i', a)[:] = 1
+    >>> a
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
 
     """)
 
@@ -4613,7 +4629,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> print x
     [(1, 20) (3, 4)]
 
-    Using a view to convert an array to a record array:
+    Using a view to convert an array to a recarray:
 
     >>> z = x.view(np.recarray)
     >>> z.a
@@ -4816,11 +4832,11 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
 ##############################################################################
 #
-# lib._compiled_base functions
+# compiled_base functions
 #
 ##############################################################################
 
-add_newdoc('numpy.lib._compiled_base', 'digitize',
+add_newdoc('numpy.core.multiarray', 'digitize',
     """
     digitize(x, bins, right=False)
 
@@ -4900,7 +4916,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     array([1, 3, 3, 4, 5])
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'bincount',
+add_newdoc('numpy.core.multiarray', 'bincount',
     """
     bincount(x, weights=None, minlength=None)
 
@@ -4973,7 +4989,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
+add_newdoc('numpy.core.multiarray', 'ravel_multi_index',
     """
     ravel_multi_index(multi_index, dims, mode='raise', order='C')
 
@@ -5030,7 +5046,7 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
     1621
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'unravel_index',
+add_newdoc('numpy.core.multiarray', 'unravel_index',
     """
     unravel_index(indices, dims, order='C')
 
@@ -5073,7 +5089,7 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'add_docstring',
+add_newdoc('numpy.core.multiarray', 'add_docstring',
     """
     add_docstring(obj, docstring)
 
@@ -5083,7 +5099,7 @@ add_newdoc('numpy.lib._compiled_base', 'add_docstring',
     raise a TypeError
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'add_newdoc_ufunc',
+add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     """
     add_ufunc_docstring(ufunc, new_docstring)
 
@@ -5109,7 +5125,7 @@ add_newdoc('numpy.lib._compiled_base', 'add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'packbits',
+add_newdoc('numpy.core.multiarray', 'packbits',
     """
     packbits(myarray, axis=None)
 
@@ -5153,7 +5169,7 @@ add_newdoc('numpy.lib._compiled_base', 'packbits',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'unpackbits',
+add_newdoc('numpy.core.multiarray', 'unpackbits',
     """
     unpackbits(myarray, axis=None)
 
@@ -5859,17 +5875,18 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     >>> np.dtype(np.int16)
     dtype('int16')
 
-    Record, one field name 'f1', containing int16:
+    Structured type, one field name 'f1', containing int16:
 
     >>> np.dtype([('f1', np.int16)])
     dtype([('f1', '<i2')])
 
-    Record, one field named 'f1', in itself containing a record with one field:
+    Structured type, one field named 'f1', in itself containing a structured
+    type with one field:
 
     >>> np.dtype([('f1', [('f1', np.int16)])])
     dtype([('f1', [('f1', '<i2')])])
 
-    Record, two fields: the first field contains an unsigned int, the
+    Structured type, two fields: the first field contains an unsigned int, the
     second an int32:
 
     >>> np.dtype([('f1', np.uint), ('f2', np.int32)])

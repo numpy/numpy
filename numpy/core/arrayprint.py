@@ -21,6 +21,7 @@ from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import format_longfloat, datetime_as_string, datetime_data
 from .fromnumeric import ravel
+from .numeric import asarray
 
 if sys.version_info[0] >= 3:
     _MAXINT = sys.maxsize
@@ -250,7 +251,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         data = _leading_trailing(a)
     else:
         summary_insert = ""
-        data = ravel(a)
+        data = ravel(asarray(a))
 
     formatdict = {'bool' : _boolFormatter,
                   'int' : IntegerFormat(data),

@@ -1176,6 +1176,18 @@ class TestClip(TestCase):
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
+    def test_clip_complex(self):
+        # Address Issue gh-5354 for clipping complex arrays
+        # Test native complex input without explicit min/max
+        # ie, either min=None or max=None
+        a = np.ones(10, dtype=np.complex)
+        m = a.min()
+        M = a.max()
+        am = self.fastclip(a, m, None)
+        aM = self.fastclip(a, None, M)
+        assert_array_strict_equal(am, a)
+        assert_array_strict_equal(aM, a)
+
     def test_clip_non_contig(self):
         #Test clip for non contiguous native input and native scalar min/max.
         a   = self._generate_data(self.nr * 2, self.nc * 3)
@@ -1480,6 +1492,14 @@ class TestClip(TestCase):
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a2, ac)
         self.assertTrue(a2 is a)
+
+    def test_clip_nan(self):
+        d = np.arange(7.)
+        assert_equal(d.clip(min=np.nan), d)
+        assert_equal(d.clip(max=np.nan), d)
+        assert_equal(d.clip(min=np.nan, max=np.nan), d)
+        assert_equal(d.clip(min=-2, max=np.nan), d)
+        assert_equal(d.clip(min=np.nan, max=10), d)
 
 
 class TestAllclose(object):
@@ -2053,6 +2073,69 @@ class TestRoll(TestCase):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
 
+
+class TestRollaxis(TestCase):
+
+    # expected shape indexed by (axis, start) for array of
+    # shape (1, 2, 3, 4)
+    tgtshape = {(0, 0): (1, 2, 3, 4), (0, 1): (1, 2, 3, 4),
+                (0, 2): (2, 1, 3, 4), (0, 3): (2, 3, 1, 4),
+                (0, 4): (2, 3, 4, 1),
+                (1, 0): (2, 1, 3, 4), (1, 1): (1, 2, 3, 4),
+                (1, 2): (1, 2, 3, 4), (1, 3): (1, 3, 2, 4),
+                (1, 4): (1, 3, 4, 2),
+                (2, 0): (3, 1, 2, 4), (2, 1): (1, 3, 2, 4),
+                (2, 2): (1, 2, 3, 4), (2, 3): (1, 2, 3, 4),
+                (2, 4): (1, 2, 4, 3),
+                (3, 0): (4, 1, 2, 3), (3, 1): (1, 4, 2, 3),
+                (3, 2): (1, 2, 4, 3), (3, 3): (1, 2, 3, 4),
+                (3, 4): (1, 2, 3, 4)}
+
+    def test_exceptions(self):
+        a = arange(1*2*3*4).reshape(1, 2, 3, 4)
+        assert_raises(ValueError, rollaxis, a, -5, 0)
+        assert_raises(ValueError, rollaxis, a, 0, -5)
+        assert_raises(ValueError, rollaxis, a, 4, 0)
+        assert_raises(ValueError, rollaxis, a, 0, 5)
+
+    def test_results(self):
+        a = arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
+        aind = np.indices(a.shape)
+        assert_(a.flags['OWNDATA'])
+        for (i, j) in self.tgtshape:
+            # positive axis, positive start
+            res = rollaxis(a, axis=i, start=j)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(i, j)], str((i,j)))
+            assert_(not res.flags['OWNDATA'])
+
+            # negative axis, positive start
+            ip = i + 1
+            res = rollaxis(a, axis=-ip, start=j)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(4 - ip, j)])
+            assert_(not res.flags['OWNDATA'])
+
+            # positive axis, negative start
+            jp = j + 1 if j < 4 else j
+            res = rollaxis(a, axis=i, start=-jp)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(i, 4 - jp)])
+            assert_(not res.flags['OWNDATA'])
+
+            # negative axis, negative start
+            ip = i + 1
+            jp = j + 1 if j < 4 else j
+            res = rollaxis(a, axis=-ip, start=-jp)
+            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(res.shape == self.tgtshape[(4 - ip, 4 - jp)])
+            assert_(not res.flags['OWNDATA'])
+
+
 class TestCross(TestCase):
     def test_2x2(self):
         u = [1, 2]
@@ -2135,6 +2218,80 @@ def test_outer_out_param():
     res1 = np.outer(arr1, arr3, out1)
     assert_equal(res1, out1)
     assert_equal(np.outer(arr2, arr3, out2), out2)
+
+class TestRequire(object):
+    flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
+                  'F', 'F_CONTIGUOUS', 'FORTRAN',
+                  'A', 'ALIGNED',
+                  'W', 'WRITEABLE',
+                  'O', 'OWNDATA']
+
+    def generate_all_false(self, dtype):
+        arr = np.zeros((2, 2), [('junk', 'i1'), ('a', dtype)])
+        arr.setflags(write=False)
+        a = arr['a']
+        assert_(not a.flags['C'])
+        assert_(not a.flags['F'])
+        assert_(not a.flags['O'])
+        assert_(not a.flags['W'])
+        assert_(not a.flags['A'])
+        return a
+
+    def set_and_check_flag(self, flag, dtype, arr):
+        if dtype is None:
+            dtype = arr.dtype
+        b = np.require(arr, dtype, [flag])
+        assert_(b.flags[flag])
+        assert_(b.dtype == dtype)
+
+        # a further call to np.require ought to return the same array
+        # unless OWNDATA is specified.
+        c = np.require(b, None, [flag])
+        if flag[0] != 'O':
+            assert_(c is b)
+        else:
+            assert_(c.flags[flag])
+
+    def test_require_each(self):
+
+        id = ['f8', 'i4']
+        fd = [None, 'f8', 'c16']
+        for idtype, fdtype, flag in itertools.product(id, fd, self.flag_names):
+            a = self.generate_all_false(idtype)
+            yield self.set_and_check_flag, flag, fdtype,  a
+
+    def test_unknown_requirement(self):
+        a = self.generate_all_false('f8')
+        assert_raises(KeyError, np.require, a, None, 'Q')
+
+    def test_non_array_input(self):
+        a = np.require([1, 2, 3, 4], 'i4', ['C', 'A', 'O'])
+        assert_(a.flags['O'])
+        assert_(a.flags['C'])
+        assert_(a.flags['A'])
+        assert_(a.dtype == 'i4')
+        assert_equal(a, [1, 2, 3, 4])
+
+    def test_C_and_F_simul(self):
+        a = self.generate_all_false('f8')
+        assert_raises(ValueError, np.require, a, None, ['C', 'F'])
+
+    def test_ensure_array(self):
+        class ArraySubclass(ndarray):
+            pass
+
+        a = ArraySubclass((2,2))
+        b = np.require(a, None, ['E'])
+        assert_(type(b) is np.ndarray)
+
+    def test_preserve_subtype(self):
+        class ArraySubclass(ndarray):
+            pass
+
+        for flag in self.flag_names:
+            a = ArraySubclass((2,2))
+            yield self.set_and_check_flag, flag, None, a
+
 
 if __name__ == "__main__":
     run_module_suite()

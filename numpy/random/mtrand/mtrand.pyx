@@ -2551,12 +2551,12 @@ cdef class RandomState:
 
         The Lomax or Pareto II distribution is a shifted Pareto distribution. The
         classical Pareto distribution can be obtained from the Lomax distribution
-        by adding the location parameter m, see below. The smallest value of the
-        Lomax distribution is zero while for the classical Pareto distribution it
-        is m, where the standard Pareto distribution has location m=1.
-        Lomax can also be considered as a simplified version of the Generalized
-        Pareto distribution (available in SciPy), with the scale set to one and
-        the location set to zero.
+        by adding 1 and multiplying by the scale parameter ``m`` (see Notes).
+        The smallest value of the Lomax distribution is zero while for the
+        classical Pareto distribution it is ``mu``, where the standard Pareto
+        distribution has location ``mu = 1``.  Lomax can also be considered as a
+        simplified version of the Generalized Pareto distribution (available in
+        SciPy), with the scale set to one and the location set to zero.
 
         The Pareto distribution must be greater than zero, and is unbounded above.
         It is also known as the "80-20 rule".  In this distribution, 80 percent of
@@ -2585,7 +2585,7 @@ cdef class RandomState:
 
         .. math:: p(x) = \\frac{am^a}{x^{a+1}}
 
-        where :math:`a` is the shape and :math:`m` the location
+        where :math:`a` is the shape and :math:`m` the scale.
 
         The Pareto distribution, named after the Italian economist Vilfredo Pareto,
         is a power law probability distribution useful in many real world problems.
@@ -2593,7 +2593,7 @@ cdef class RandomState:
         distribution. Pareto developed the distribution to describe the
         distribution of wealth in an economy.  It has also found use in insurance,
         web page access statistics, oil field sizes, and many other problems,
-        including the download frequency for projects in Sourceforge [1].  It is
+        including the download frequency for projects in Sourceforge [1]_.  It is
         one of the so-called "fat-tailed" distributions.
 
 
@@ -2611,16 +2611,16 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a, m = 3., 1. # shape and mode
-        >>> s = np.random.pareto(a, 1000) + m
+        >>> a, m = 3., 2.  # shape and mode
+        >>> s = (np.random.pareto(a, 1000) + 1) * m
 
-        Display the histogram of the samples, along with
-        the probability density function:
+        Display the histogram of the samples, along with the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='center')
-        >>> fit = a*m**a/bins**(a+1)
-        >>> plt.plot(bins, max(count)*fit/max(fit),linewidth=2, color='r')
+        >>> count, bins, _ = plt.hist(s, 100, normed=True)
+        >>> fit = a*m**a / bins**(a+1)
+        >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
 
         """
@@ -3324,10 +3324,10 @@ cdef class RandomState:
 
         .. math:: P(x;scale) = \\frac{x}{scale^2}e^{\\frac{-x^2}{2 \\cdotp scale^2}}
 
-        The Rayleigh distribution arises if the wind speed and wind direction are
-        both gaussian variables, then the vector wind velocity forms a Rayleigh
-        distribution. The Rayleigh distribution is used to model the expected
-        output from wind turbines.
+        The Rayleigh distribution would arise, for example, if the East
+        and North components of the wind velocity had identical zero-mean
+        Gaussian distributions.  Then the wind speed would have a Rayleigh
+        distribution.
 
         References
         ----------
@@ -4269,12 +4269,16 @@ cdef class RandomState:
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
 
-        >>> mean = [0,0]
-        >>> cov = [[1,0],[0,100]] # diagonal covariance, points lie on x or y-axis
+        >>> mean = [0, 0]
+        >>> cov = [[1, 0], [0, 100]]  # diagonal covariance
+
+        Diagonal covariance means that points are oriented along x or y-axis:
 
         >>> import matplotlib.pyplot as plt
-        >>> x,y = np.random.multivariate_normal(mean,cov,5000).T
-        >>> plt.plot(x,y,'x'); plt.axis('equal'); plt.show()
+        >>> x, y = np.random.multivariate_normal(mean, cov, 5000).T
+        >>> plt.plot(x, y, 'x')
+        >>> plt.axis('equal')
+        >>> plt.show()
 
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
@@ -4290,16 +4294,16 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> mean = (1,2)
-        >>> cov = [[1,0],[1,0]]
-        >>> x = np.random.multivariate_normal(mean,cov,(3,3))
+        >>> mean = (1, 2)
+        >>> cov = [[1, 0], [1, 0]]
+        >>> x = np.random.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
         standard deviation:
 
-        >>> print list( (x[0,0,:] - mean) < 0.6 )
+        >>> list((x[0,0,:] - mean) < 0.6)
         [True, True]
 
         """

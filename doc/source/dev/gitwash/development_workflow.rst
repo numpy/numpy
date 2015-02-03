@@ -16,93 +16,63 @@ Basic workflow
 
 In short:
 
-1. Update your ``master`` branch if it's not up to date.
-   Then start a new *feature branch* for each set of edits that you do.
+1. Start a new *feature branch* for each set of edits that you do.
    See :ref:`below <making-a-new-feature-branch>`.
-
-   Avoid putting new commits in your ``master`` branch.
 
 2. Hack away! See :ref:`below <editing-workflow>`
 
-3. Avoid merging other branches into your feature branch while you are
-   working.
-
-   You can optionally rebase if really needed,
-   see :ref:`below <rebasing-on-master>`.
-
-4. When finished:
+3. When finished:
 
    - *Contributors*: push your feature branch to your own Github repo, and
-     :ref:`ask for code review or make a pull request <asking-for-merging>`.
+     :ref:`create a pull request <asking-for-merging>`.
 
-   - *Core developers* (if you want to push changes without
-     further review)::
-
-         # First, either (i) rebase on upstream -- if you have only few commits
-         git fetch upstream
-         git rebase upstream/master
-
-         # or, (ii) merge to upstream -- if you have many related commits
-         git fetch upstream
-	 git merge --no-ff upstream/master
-
-         # Recheck that what is there is sensible
-         git log --oneline --graph
-         git log -p upstream/master..
-
-         # Finally, push branch to upstream master
-	 git push upstream my-new-feature:master
-
-     See :ref:`below <pushing-to-main>`.
-
-.. note:: It's usually a good idea to use the ``-n`` flag to ``git push``
-          to check first that you're about to push the changes you want to
-          the place you want.
-
+   - *Core developers* If you want to push changes without
+     further review, see the notes :ref:`below <pushing-to-main>`.
+     
 This way of working helps to keep work well organized and the history
 as clear as possible.
 
-.. note::
-
-   Do not use ``git pull`` --- this avoids common mistakes if you are
-   new to Git. Instead, always do ``git fetch`` followed by ``git
-   rebase``, ``git merge --ff-only`` or ``git merge --no-ff``,
-   depending on what you intend.
-
 .. seealso::
 
-   See discussions on `linux git workflow`_,
-   and `ipython git workflow <http://mail.scipy.org/pipermail/ipython-dev/2010-October/006746.html>`__.
+   There are many online tutorials to help you `learn git`_. For discussions
+   of specific git workflows, see these discussions on `linux git workflow`_,
+   and `ipython git workflow`_.
 
 .. _making-a-new-feature-branch:
 
 Making a new feature branch
 ===========================
 
-To update your master branch, use::
+First, update your master branch with changes that have been made in the main
+Numpy repository. In this case, the ``--ff-only`` flag ensures that a new
+commit is not created when you merge the upstream and master branches. It is
+very important to avoid merging adding new commits to ``master``.
 
+::
+
+   # go to the master branch
+   git checkout master
+   # download changes from github
    git fetch upstream
+   # update the master branch
    git merge upstream/master --ff-only
+   # Push new commits to your Github repo
+   git push
 
-To create a new branch and check it out, use::
+.. note::
 
-   git checkout -b my-new-feature upstream/master
+   You could also use ``pull``, which combines ``fetch`` and ``merge``, as
+   follows::
+   
+        git pull --ff-only upstream master
 
-Generally, you will want to keep this branch also on your public github_ fork
-of NumPy_.  To do this, you `git push`_ this new branch up to your github_
-repo.  Generally (if you followed the instructions in these pages, and
-by default), git will have a link to your github_ repo, called
-``origin``.  You push up to your own repo on github_ with::
+   However, never use ``git pull`` without explicity indicating the source
+   branch (as above); the inherent ambiguity can cause problems. This avoids a
+   common mistake if you are new to Git. 
 
-   git push origin my-new-feature
+Finally create a new branch for your work and check it out::
 
-In git >= 1.7 you can ensure that the link is correctly set by using the
-``--set-upstream`` option::
-
-   git push --set-upstream origin my-new-feature
-
-From now on git_ will know that ``my-new-feature`` is related to the
-``my-new-feature`` branch in your own github_ repo.
+   git checkout -b my-new-feature master
 
 
 .. _editing-workflow:
@@ -116,18 +86,21 @@ Overview
 ::
 
    # hack hack
-   git add my_new_file
-   git commit -am 'ENH: some message'
-
+   git status # Optional
+   git diff # Optional
+   git add modified_file
+   git commit 
    # push the branch to your own Github repo
    git push
 
 In more detail
 --------------
 
-#. Make some changes
-#. See which files have changed with ``git status`` (see `git status`_).
-   You'll see a listing like this one::
+#. Make some changes. When you feel that you've made a complete, working set
+   of related changes, move on to the next steps.
+
+#. Optional: Check which files have changed with ``git status`` (see `git
+   status`_).  You'll see a listing like this one::
 
      # On branch my-new-feature
      # Changed but not updated:
@@ -142,21 +115,60 @@ In more detail
      #	INSTALL
      no changes added to commit (use "git add" and/or "git commit -a")
 
-#. Check what the actual changes are with ``git diff`` (`git diff`_).
-#. Add any new files to version control ``git add new_file_name`` (see
-   `git add`_).
-#. To commit all modified files into the local copy of your repo,, do
-   ``git commit -am 'A commit message'``.  Note the ``-am`` options to
-   ``commit``. The ``m`` flag just signals that you're going to type a
-   message on the command line.   If you leave it out, an editor will open in
-   which you can compose your commit message.  For non-trivial commits this is
-   often the better choice.  The ``a`` flag - you can just take on faith - or
-   see `why the -a flag?`_ - and the helpful use-case description in the
-   `tangled working copy problem`_. The section on
-   :ref:`commit messages <writing-the-commit-message>` below might also be useful.
-#. To push the changes up to your forked repo on github_, do a ``git
-   push`` (see `git push`).
+#. Optional: Compare the changes with the previous version using with ``git
+   diff`` (`git diff`_). This brings up a simple text browser interface that
+   highlights the difference between your files and the previous verison.
 
+#. Add any relevant modified or new files using  ``git add modified_file``
+   (see `git add`_). This puts the files into a staging area, which is a queue
+   of files that will be added to your next commit. Only add files that have
+   related, complete changes. Leave files with unfinished changes for later
+   commits.
+
+#. To commit the staged files into the local copy of your repo, do ``git
+   commit``. At this point, a text editor will open up to allow you to write a
+   commit message. Read the :ref:`commit message
+   section<writing-the-commit-message>` to be sure that you are writing a
+   properly formatted and sufficiently detailed commit message. After saving
+   your message and closing the editor, your commit will be saved. For trivial
+   commits, a short commit message can be passed in through the command line
+   using the ``-m`` flag. For example, ``git commit -am "ENH: Some message"``. 
+   
+   In some cases, you will see this form of the commit command: ``git commit
+   -a``. The extra ``-a`` flag automatically commits all modified files and
+   removes all deleted files. This can save you some typing of numerous ``git
+   add`` commands; however, it can add unwanted changes to a commit if you're
+   not careful. For more information, see `why the -a flag?`_ - and the
+   helpful use-case description in the `tangled working copy problem`_.  
+
+#. Push the changes to your forked repo on github_::
+
+      git push origin my-new-feature
+
+   For more information, see `git push`_.
+    
+.. note::
+    
+   Assuming you have followed the instructions in these pages, git will create
+   a default link to your github_ repo called ``origin``.  In git >= 1.7 you
+   can ensure that the link to origin is permanently set by using the
+   ``--set-upstream`` option::
+   
+      git push --set-upstream origin my-new-feature
+   
+   From now on git_ will know that ``my-new-feature`` is related to the
+   ``my-new-feature`` branch in your own github_ repo. Subsequent push calls
+   are then simplified to the following::
+
+      git push
+   
+   You have to use ``--set-upstream`` for each new branch that you create.
+    
+
+It may be the case that while you were working on your edits, new commits have
+been added to ``upstream`` that affect your work. In this case, follow the
+:ref:`rebasing-on-master` section of this document to apply those changes to
+your branch.
 
 .. _writing-the-commit-message:
 
@@ -195,27 +207,71 @@ Standard acronyms to start the commit message with are::
    REL: related to releasing numpy
 
 
+.. _asking-for-merging:
+
+Asking for your changes to be merged with the main repo
+=======================================================
+
+When you feel your work is finished, you can create a pull request (PR). Github
+has a nice help page that outlines the process for `filing pull requests`_. 
+
+If your changes involve modifications to the API or addition/modification of a
+function, you should initiate a code review. This involves sending an email to
+the `NumPy mailing list`_ with a link to your PR along with a description of
+and a motivation for your changes.
+
+.. _pushing-to-main:
+
+Pushing changes to the main repo
+================================
+
+*This is only relevant if you have commit rights to the main Numpy repo.*
+
+When you have a set of "ready" changes in a feature branch ready for
+Numpy's ``master`` or ``maintenance`` branches, you can push
+them to ``upstream`` as follows:
+
+1. First, merge or rebase on the target branch.
+
+   a) Only a few, unrelated commits then prefer rebasing::
+
+        git fetch upstream
+        git rebase upstream/master
+
+      See :ref:`rebasing-on-master`.
+
+   b) If all of the commits are related, create a merge commit::
+
+        git fetch upstream
+        git merge --no-ff upstream/master
+
+2. Check that what you are going to push looks sensible::
+
+        git log -p upstream/master..
+        git log --oneline --graph
+
+3. Push to upstream::
+
+        git push upstream my-feature-branch:master
+
+.. note:: 
+
+    It's usually a good idea to use the ``-n`` flag to ``git push`` to check
+    first that you're about to push the changes you want to the place you
+    want.
+
+
 .. _rebasing-on-master:
 
 Rebasing on master
 ==================
 
 This updates your feature branch with changes from the upstream `NumPy
-github`_ repo. If you do not absolutely need to do this, try to avoid
-doing it, except perhaps when you are finished.
-
-First, it can be useful to update your master branch::
-
-   # go to the master branch
-   git checkout master
-   # pull changes from github
-   git fetch upstream
-   # update the master branch
-   git rebase upstream/master
-   # push it to your Github repo
-   git push
-
-Then, the feature branch::
+github`_ repo. If you do not absolutely need to do this, try to avoid doing
+it, except perhaps when you are finished. The first step will be to update
+your master branch with new commits from upstream. This is done in the same
+manner as described at the beginning of :ref:`making-a-new-feature-branch`.
+Next, you need to update the feature branch::
 
    # go to the feature branch
    git checkout my-new-feature
@@ -225,15 +281,17 @@ Then, the feature branch::
    git rebase master
 
 If you have made changes to files that have changed also upstream,
-this may generate merge conflicts that you need to resolve.
-Finally, remove the backup branch once the rebase succeeded::
+this may generate merge conflicts that you need to resolve. See
+:ref:`below<recovering-from-mess-up>` for help in this case.
+
+Finally, remove the backup branch upon a successful rebase::
 
    git branch -D tmp
 
 .. _recovering-from-mess-up:
 
 Recovering from mess-ups
-------------------------
+========================
 
 Sometimes, you mess up merges or rebases. Luckily, in Git it is
 relatively straightforward to recover from such mistakes.
@@ -262,100 +320,8 @@ If you forgot to make a backup branch::
 
 If you didn't actually mess up but there are merge conflicts, you need to
 resolve those.  This can be one of the trickier things to get right.  For a
-good description of how to do this, see
-http://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts
+good description of how to do this, see `this article on merging conflicts`_.
 
-
-.. _asking-for-merging:
-
-Asking for your changes to be merged with the main repo
-=======================================================
-
-When you feel your work is finished, you can ask for code review, or
-directly file a pull request.
-
-Asking for code review
-----------------------
-
-#. Go to your repo URL - e.g. ``http://github.com/your-user-name/numpy``.
-#. Click on the *Branch list* button:
-
-   .. image:: branch_list.png
-
-#. Click on the *Compare* button for your feature branch - here ``my-new-feature``:
-
-   .. image:: branch_list_compare.png
-
-#. If asked, select the *base* and *comparison* branch names you want to
-   compare.  Usually these will be ``master`` and ``my-new-feature``
-   (where that is your feature branch name).
-#. At this point you should get a nice summary of the changes.  Copy the
-   URL for this, and post it to the `NumPy mailing list`_, asking for
-   review.  The URL will look something like:
-   ``http://github.com/your-user-name/numpy/compare/master...my-new-feature``.
-   There's an example at
-   http://github.com/matthew-brett/nipy/compare/master...find-install-data
-   See: http://github.com/blog/612-introducing-github-compare-view for
-   more detail.
-
-The generated comparison, is between your feature branch
-``my-new-feature``, and the place in ``master`` from which you branched
-``my-new-feature``.  In other words, you can keep updating ``master``
-without interfering with the output from the comparison.  More detail?
-Note the three dots in the URL above (``master...my-new-feature``) and
-see :ref:`dot2-dot3`.
-
-Filing a pull request
----------------------
-
-When you are ready to ask for the merge of your code:
-
-#. Go to the URL of your forked repo, say
-   ``http://github.com/your-user-name/numpy.git``.
-#. Click on the 'Pull request' button:
-
-   .. image:: pull_button.png
-
-   Enter a message; we suggest you select only ``NumPy`` as the
-   recipient.  The message will go to the NumPy core developers.  Please
-   feel free to add others from the list as you like.
-
-
-.. _pushing-to-main:
-
-Pushing changes to the main repo
-================================
-
-When you have a set of "ready" changes in a feature branch ready for
-Numpy's ``master`` or ``maintenance/1.5.x`` branches, you can push
-them to ``upstream`` as follows:
-
-1. First, merge or rebase on the target branch.
-
-   a) Only a few commits: prefer rebasing::
-
-          git fetch upstream
-	  git rebase upstream/master
-
-      See :ref:`above <rebasing-on-master>`.
-
-   b) Many related commits: consider creating a merge commit::
-
-          git fetch upstream
-	  git merge --no-ff upstream/master
-
-2. Check that what you are going to push looks sensible::
-
-       git log -p upstream/master..
-       git log --oneline --graph
-
-3. Push to upstream::
-
-       git push upstream my-feature-branch:master
-
-.. note::
-
-   Avoid using ``git pull`` here.
 
 Additional things you might want to do
 ######################################

@@ -1,7 +1,7 @@
 .. _using-git:
 
 Working with *NumPy* source code
-======================================
+================================
 
 Contents:
 

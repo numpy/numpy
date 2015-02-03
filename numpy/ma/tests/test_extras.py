@@ -508,6 +508,10 @@ class TestMedian(TestCase):
         r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
         assert_equal(r, np.inf)
 
+    def test_non_masked(self):
+        assert_equal(np.ma.median(np.arange(9)), 4.)
+        assert_equal(np.ma.median(range(9)), 4)
+
     def test_2d(self):
         # Tests median w/ 2D
         (n, p) = (101, 30)

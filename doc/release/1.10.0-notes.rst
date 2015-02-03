@@ -11,6 +11,7 @@ Highlights
 * Addition of *np.linalg.multi_dot*: compute the dot product of two or more
   arrays in a single function call, while automatically selecting the fastest
   evaluation order.
+* Addition of `nanprod` to the set of nanfunctions.
 
 
 Dropped Support
@@ -39,11 +40,36 @@ relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
-diag and diagonal
-~~~~~~~~~~~~~~~~~
-Both diag and diagonal now preserve subtypes. This will change the
-dimensions of the returned diagonal in the case of matrices and that
-may lead to problems in using the result.
+*np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as
+well as between *x.diagonal()* and *np.diagonal(x)*, with the methods
+preserving subtypes while the functions did not. This has been fixed and
+the functions now behave like the methods, preserving subtypes except in
+the case of matrices.  Matrices are special cased for backward
+compatibility and still return 1-D arrays as before. If you need to
+preserve the matrix subtype, use the methods instead of the functions.
+
+*rollaxis* and *swapaxes* always return a view
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, a view was returned except when no change was made in the order
+of the axes, in which case the input array was returned.  A view is now
+returned in all cases.
+
+C API
+~~~~~
+The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
+which now returns a view in all cases.
+
+recarray field return types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously the returned types for recarray fields accessed by attribute and by
+index were inconsistent, and fields of string type were returned as chararrays.
+Now, fields accessed by either attribute or indexing will return an ndarray for
+fields of non-structured type, and a recarray for fields of structured type.
+Notably, this affect recarrays containing strings with whitespace, as trailing
+whitespace is trimmed from chararrays but kept in ndarrays of string type.
+Also, the dtype.type of nested structured fields is now inherited.
 
 New Features
 ============
@@ -60,6 +86,13 @@ By passing *--jobs=n* or *-j n* to *setup.py build* the compilation of
 extensions is now performed in *n* parallel processes.
 The parallelization is limited to files within one extension so projects using
 Cython will not profit because it builds extensions from single files.
+
+*genfromtxt* has an new ``max_rows`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A ``max_rows`` argument has been added to *genfromtxt* to limit the
+number of rows read in a single call. Using this functionality, it is
+possible to read in multiple arrays stored in a single file by making
+repeated calls to the function.
 
 
 Improvements
@@ -87,6 +120,12 @@ given period and one end point is added to each extremity of *xp* in order to
 close the previous and the next period cycles, resulting in the correct
 interpolation behavior.
 
+*np.pad* supports more input types for ``pad_width`` and ``constant_values``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``constant_values`` parameters now accepts NumPy arrays and float values.
+NumPy arrays are supported as input for ``pad_width``, and an exception is
+raised if its values are not of integral type.
+
 
 Changes
 =======
@@ -104,6 +143,11 @@ against the function's signature: all core dimensions are now required to
 be present in input arrays; core dimensions with the same label must have
 the exact same size; and output core dimension's must be specified, either
 by a same label input core dimension or by a passed-in output array.
+
+views returned from *np.einsum* are writeable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Views returned by *np.einsum* will now be writeable whenever the input
+array is writeable.
 
 
 Deprecations

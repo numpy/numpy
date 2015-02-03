@@ -3,10 +3,11 @@
 #include <structmember.h>
 #include <string.h>
 
+#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "numpy/npy_math.h"
 #include "npy_config.h"
-#include "numpy/ufuncobject.h"
 
 
 /*
@@ -88,7 +89,7 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
  * The third argument, if present, is a minimum length desired for the
  * output array.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *type;
@@ -202,7 +203,7 @@ fail:
  * i = 0 or i = len(bins) as appropriate. If right == True the comparison
  * is bins [i - 1] < x <= bins[i] or bins [i - 1] >= x > bins[i]
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj_x = NULL;
@@ -300,8 +301,6 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         return ret;
 }
 
-static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
-
 /*
  * Insert values from an input array into an output array, at positions
  * indicated by a mask. If the arrays are of dtype object (indicated by
@@ -355,7 +354,7 @@ arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
  * Returns input array with values inserted sequentially into places
  * indicated by the mask
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     PyObject *mask = NULL, *vals = NULL;
@@ -513,7 +512,7 @@ binary_search(double key, double arr [], npy_intp len)
     return imin - 1;
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
 
@@ -783,7 +782,7 @@ end_while:
 }
 
 /* ravel_multi_index implementation - see add_newdocs.py */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 {
     int i, s;
@@ -987,7 +986,7 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
 }
 
 /* unravel_index implementation - see add_newdocs.py */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *indices0 = NULL, *ret_tuple = NULL;
@@ -1181,24 +1180,47 @@ fail:
 }
 
 
-static PyTypeObject *PyMemberDescr_TypePtr = NULL;
-static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
-static PyTypeObject *PyMethodDescr_TypePtr = NULL;
-
 /* Can only be called if doc is currently NULL */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
     char *docstr;
     static char *msg = "already has a docstring";
+    PyObject *tp_dict;
+    PyObject *myobj;
+    static PyTypeObject *PyMemberDescr_TypePtr = NULL;
+    static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
+    static PyTypeObject *PyMethodDescr_TypePtr = NULL;
 
     /* Don't add docstrings */
     if (Py_OptimizeFlag > 1) {
         Py_INCREF(Py_None);
         return Py_None;
     }
+
+    if (PyGetSetDescr_TypePtr == NULL) {
+        tp_dict = PyArrayDescr_Type.tp_dict;
+        /* Get "subdescr" */
+        myobj = PyDict_GetItemString(tp_dict, "fields");
+        if (myobj != NULL) {
+            PyGetSetDescr_TypePtr = Py_TYPE(myobj);
+        }
+    }
+    if (PyMemberDescr_TypePtr == NULL) {
+        myobj = PyDict_GetItemString(tp_dict, "alignment");
+        if (myobj != NULL) {
+            PyMemberDescr_TypePtr = Py_TYPE(myobj);
+        }
+    }
+    if (PyMethodDescr_TypePtr == NULL) {
+        myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
+        if (myobj != NULL) {
+            PyMethodDescr_TypePtr = Py_TYPE(myobj);
+        }
+    }
+
 #if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "OO!", &obj, &PyUnicode_Type, &str)) {
         return NULL;
@@ -1269,48 +1291,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return Py_None;
 }
 
-
-/* docstring in numpy.add_newdocs.py */
-static PyObject *
-add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    PyUFuncObject *ufunc;
-    PyObject *str;
-    char *docstr, *newdocstr;
-
-#if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
-                                        &PyUnicode_Type, &str)) {
-        return NULL;
-    }
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
-#else
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
-                                         &PyString_Type, &str)) {
-         return NULL;
-    }
-    docstr = PyString_AS_STRING(str);
-#endif
-
-    if (NULL != ufunc->doc) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot change docstring of ufunc with non-NULL docstring");
-        return NULL;
-    }
-
-    /*
-     * This introduces a memory leak, as the memory allocated for the doc
-     * will not be freed even if the ufunc itself is deleted. In practice
-     * this should not be a problem since the user would have to
-     * repeatedly create, document, and throw away ufuncs.
-     */
-    newdocstr = malloc(strlen(docstr) + 1);
-    strcpy(newdocstr, docstr);
-    ufunc->doc = newdocstr;
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
 
 /*
  * This function packs boolean values in the input array into the bits of a
@@ -1576,7 +1556,7 @@ fail:
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
@@ -1590,7 +1570,7 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return pack_bits(obj, axis);
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
@@ -1602,110 +1582,4 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         return NULL;
     }
     return unpack_bits(obj, axis);
-}
-
-/* The docstrings for many of these methods are in add_newdocs.py. */
-static struct PyMethodDef methods[] = {
-    {"_insert", (PyCFunction)arr_insert,
-        METH_VARARGS | METH_KEYWORDS, arr_insert__doc__},
-    {"bincount", (PyCFunction)arr_bincount,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"digitize", (PyCFunction)arr_digitize,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"interp", (PyCFunction)arr_interp,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"ravel_multi_index", (PyCFunction)arr_ravel_multi_index,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"unravel_index", (PyCFunction)arr_unravel_index,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"add_docstring", (PyCFunction)arr_add_docstring,
-        METH_VARARGS, NULL},
-    {"add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
-    {"packbits", (PyCFunction)io_pack,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"unpackbits", (PyCFunction)io_unpack,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {NULL, NULL, 0, NULL}    /* sentinel */
-};
-
-static void
-define_types(void)
-{
-    PyObject *tp_dict;
-    PyObject *myobj;
-
-    tp_dict = PyArrayDescr_Type.tp_dict;
-    /* Get "subdescr" */
-    myobj = PyDict_GetItemString(tp_dict, "fields");
-    if (myobj == NULL) {
-        return;
-    }
-    PyGetSetDescr_TypePtr = Py_TYPE(myobj);
-    myobj = PyDict_GetItemString(tp_dict, "alignment");
-    if (myobj == NULL) {
-        return;
-    }
-    PyMemberDescr_TypePtr = Py_TYPE(myobj);
-    myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
-    if (myobj == NULL) {
-        return;
-    }
-    PyMethodDescr_TypePtr = Py_TYPE(myobj);
-    return;
-}
-
-#if defined(NPY_PY3K)
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_compiled_base",
-        NULL,
-        -1,
-        methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-#endif
-
-#if defined(NPY_PY3K)
-#define RETVAL m
-PyMODINIT_FUNC PyInit__compiled_base(void)
-#else
-#define RETVAL
-PyMODINIT_FUNC
-init_compiled_base(void)
-#endif
-{
-    PyObject *m, *d;
-
-#if defined(NPY_PY3K)
-    m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_compiled_base", methods);
-#endif
-    if (!m) {
-        return RETVAL;
-    }
-
-    /* Import the array objects */
-    import_array();
-    import_umath();
-
-    /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
-
-    /*
-     * PyExc_Exception should catch all the standard errors that are
-     * now raised instead of the string exception "numpy.lib.error".
-     * This is for backward compatibility with existing code.
-     */
-    PyDict_SetItemString(d, "error", PyExc_Exception);
-
-
-    /* define PyGetSetDescr_Type and PyMemberDescr_Type */
-    define_types();
-
-    return RETVAL;
 }

@@ -75,11 +75,18 @@
 .. _tangled working copy problem: http://tomayko.com/writings/the-thing-about-git 
 .. _git management: http://kerneltrap.org/Linux/Git_Management
 .. _linux git workflow: http://www.mail-archive.com/dri-devel@lists.sourceforge.net/msg39091.html
+.. _ipython git workflow: http://mail.scipy.org/pipermail/ipython-dev/2010-October/006746.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
 .. _git foundation: http://matthew-brett.github.com/pydagogue/foundation.html
 .. _numpy/master: https://github.com/numpy/numpy
 .. _git cherry-pick: https://www.kernel.org/pub/software/scm/git/docs/git-cherry-pick.html
 .. _git blame: https://www.kernel.org/pub/software/scm/git/docs/git-blame.html
+.. _this blog post: http://github.com/blog/612-introducing-github-compare-view 
+.. _this article on merging conflicts:  http://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts 
+.. _learn git: https://www.atlassian.com/git/tutorials/
+.. _filing pull requests: https://help.github.com/articles/using-pull-requests/#initiating-the-pull-request
+.. _pull request review: https://help.github.com/articles/using-pull-requests/#reviewing-the-pull-request
+
 
 .. other stuff
 .. _python: http://www.python.org

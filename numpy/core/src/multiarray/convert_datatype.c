@@ -624,6 +624,52 @@ type_num_unsigned_to_signed(int type_num)
     }
 }
 
+/*
+ * Compare two field dictionaries for castability.
+ *
+ * Return 1 if 'field1' can be cast to 'field2' according to the rule
+ * 'casting', 0 if not.
+ *
+ * Castabiliy of field dictionaries is defined recursively: 'field1' and
+ * 'field2' must have the same field names (possibly in different
+ * orders), and the corresponding field types must be castable according
+ * to the given casting rule.
+ */
+static int
+can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
+{
+    Py_ssize_t ppos;
+    PyObject *key;
+    PyObject *tuple1, *tuple2;
+
+    if (field1 == field2) {
+        return 1;
+    }
+    if (field1 == NULL || field2 == NULL) {
+        return 0;
+    }
+    if (PyDict_Size(field1) != PyDict_Size(field2)) {
+        return 0;
+    }
+
+    /* Iterate over all the fields and compare for castability */
+    ppos = 0;
+    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
+        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
+            return 0;
+        }
+        /* Compare the dtype of the field for castability */
+        if (!PyArray_CanCastTypeTo(
+                        (PyArray_Descr *)PyTuple_GET_ITEM(tuple1, 0),
+                        (PyArray_Descr *)PyTuple_GET_ITEM(tuple2, 0),
+                        casting)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 /*NUMPY_API
  * Returns true if data of type 'from' may be cast to data of type
  * 'to' according to the rule 'casting'.
@@ -643,7 +689,6 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
     else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* For complicated case, use EquivTypes (for now) */
         if (PyTypeNum_ISUSERDEF(from->type_num) ||
-                        PyDataType_HASFIELDS(from) ||
                         from->subarray != NULL) {
             int ret;
 
@@ -669,6 +714,23 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 ret = PyArray_EquivTypes(from, to);
             }
             return ret;
+        }
+
+        if (PyDataType_HASFIELDS(from)) {
+            switch (casting) {
+                case NPY_EQUIV_CASTING:
+                case NPY_SAFE_CASTING:
+                case NPY_SAME_KIND_CASTING:
+                    /*
+                     * `from' and `to' must have the same fields, and
+                     * corresponding fields must be (recursively) castable.
+                     */
+                    return can_cast_fields(from->fields, to->fields, casting);
+
+                case NPY_NO_CASTING:
+                default:
+                    return PyArray_EquivTypes(from, to);
+            }
         }
 
         switch (from->type_num) {
