@@ -246,6 +246,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
+
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
@@ -369,6 +370,11 @@ PyMODINIT_FUNC initumath(void)
     Py_DECREF(s);
     PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
     Py_DECREF(s);
+
+#if defined(NPY_PY3K)
+    s = PyDict_GetItemString(d, "true_divide");
+    PyDict_SetItemString(d, "divide", s);
+#endif
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
