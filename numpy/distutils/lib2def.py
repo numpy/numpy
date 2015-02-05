@@ -69,7 +69,7 @@ nm_output = getnam(nm_cmd = 'nm -Cs py_lib')"""
     f = subprocess.Popen(nm_cmd, shell=True, stdout=subprocess.PIPE)
     nm_output = f.stdout.read()
     f.stdout.close()
-    return nm_output
+    return nm_output.decode('ascii')
 
 def parse_nm(nm_output):
     """Returns a tuple of lists: dlist for the list of data
