@@ -94,12 +94,12 @@ This behavior can be overwritten by setting the optional argument
 
    >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
-   >>> np.genfromtxt(StringIO(data), dtype="|S5")
+   >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|S5")
    array([['1', ' abc ', ' 2'],
           ['3', ' xxx', ' 4']],
          dtype='|S5')
    >>> # With autostrip
-   >>> np.genfromtxt(StringIO(data), dtype="|S5", autostrip=True)
+   >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|S5", autostrip=True)
    array([['1', 'abc', '2'],
           ['3', 'xxx', '4']],
          dtype='|S5')
