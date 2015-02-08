@@ -38,8 +38,6 @@ ExtraSourceFiles:
     setup.py,
     numpy/core/include/numpy/*.h,
     numpy/core/include/numpy/*.in,
-    numpy/core/include/numpy/fenv/*.h,
-    numpy/core/include/numpy/fenv/*.c,
     numpy/core/*.ini.in,
     numpy/core/src/npymath/*.h,
     numpy/core/src/multiarray/*.c,
@@ -73,8 +71,7 @@ DataFiles: f2py-data
 DataFiles: numpy-includes
     TargetDir: $sitedir
     Files:
-        numpy/core/include/numpy/*.h,
-        numpy/core/include/numpy/fenv/*.h
+        numpy/core/include/numpy/*.h
 
 HookFile: bscript
 MetaTemplateFiles: numpy/version.py.in, numpy/__config__.py.in
