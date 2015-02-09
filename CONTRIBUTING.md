@@ -4,7 +4,11 @@
 
 When reporting issues please include as much detail as possible about your
 operating system, numpy version and python version. Whenever possible, please
-also include a brief code example that demonstrates the problem.
+also include a brief, self-contained code example that demonstrates the problem.
+
+If you are reporting a segfault please include a GDB traceback, which you can
+generate by following
+[these instructions.](https://github.com/numpy/numpy/blob/master/doc/source/dev/development_environment.rst#debugging)
 
 ## Contributing code
 
