@@ -10,8 +10,8 @@ data types are supported, each with 74 different argument signatures,
 for a total of 888 typemaps supported "out of the box".  Each of these
 typemaps, in turn, might require several unit tests in order to verify
 expected behavior for both proper and improper inputs.  Currently,
-this results in 1,427 individual unit tests that are performed when
-``make test`` is run in the ``numpy/docs/swig`` subdirectory.
+this results in more than 1,000 individual unit tests executed when
+``make test`` is run in the ``numpy/tools/swig`` subdirectory.
 
 To facilitate this many similar unit tests, some high-level
 programming techniques are employed, including C and `SWIG`_ macros,

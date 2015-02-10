@@ -786,6 +786,14 @@ class TestLoadTxt(TestCase):
         # Check for exception and that exception contains line number
         assert_raises_regex(ValueError, "3", np.loadtxt, c)
 
+    def test_none_as_string(self):
+        # gh-5155, None should work as string when format demands it
+        c = TextIO()
+        c.write('100,foo,200\n300,None,400')
+        c.seek(0)
+        dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
+        data = np.loadtxt(c, delimiter=',', dtype=dt, comments=None)
+
 
 class Testfromregex(TestCase):
     # np.fromregex expects files opened in binary mode.
@@ -1099,13 +1107,13 @@ M   33  21.99
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
-        dtyp = [('E1','i4'),('E2','i4'),('E3','i2'),('N', 'i1')]
+        dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              names=None, converters=conv)
         control = np.rec.array([[1,5,-1,0], [2,8,-1,1], [3,3,-2,3]], dtype=dtyp)
         assert_equal(test, control)
-        dtyp = [('E1','i4'),('E2','i4'),('N', 'i1')]
+        dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              usecols=(0,1,3), names=None, converters=conv)
         control = np.rec.array([[1,5,0], [2,8,1], [3,3,3]], dtype=dtyp)
@@ -1506,6 +1514,30 @@ M   33  21.99
         ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
         assert_equal(test, ctrl)
 
+    def test_replace_space_known_dtype(self):
+        "Test the 'replace_space' (and related) options when dtype != None"
+        txt = "A.A, B (B), C:C\n1, 2, 3"
+        # Test default: replace ' ' by '_' and delete non-alphanum chars
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int)
+        ctrl_dtype = [("AA", int), ("B_B", int), ("CC", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no replace, no delete
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             replace_space='', deletechars='')
+        ctrl_dtype = [("A.A", int), ("B (B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no delete (spaces are replaced by _)
+        test = np.genfromtxt(TextIO(txt),
+                             delimiter=",", names=True, dtype=int,
+                             deletechars='')
+        ctrl_dtype = [("A.A", int), ("B_(B)", int), ("C:C", int)]
+        ctrl = np.array((1, 2, 3), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+
     def test_incomplete_names(self):
         "Test w/ incomplete names"
         data = "A,,C\n0,1,2\n3,4,5"
@@ -1631,6 +1663,60 @@ M   33  21.99
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
         self.assertTrue(isinstance(test, np.recarray))
+        assert_equal(test, control)
+
+    def test_max_rows(self):
+        # Test the `max_rows` keyword argument.
+        data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
+        txt = TextIO(data)
+        a1 = np.genfromtxt(txt, max_rows=3)
+        a2 = np.genfromtxt(txt)
+        assert_equal(a1, [[1, 2], [3, 4], [5, 6]])
+        assert_equal(a2, [[7, 8], [9, 10]])
+
+        # max_rows must be at least 1.
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=0)
+
+        # An input with several invalid rows.
+        data = '1 1\n2 2\n0 \n3 3\n4 4\n5  \n6  \n7  \n'
+
+        test = np.genfromtxt(TextIO(data), max_rows=2)
+        control = np.array([[1., 1.], [2., 2.]])
+        assert_equal(test, control)
+
+        # Test keywords conflict
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), skip_footer=1,
+                      max_rows=4)
+
+        # Test with invalid value
+        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
+
+        # Test with invalid not raise
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
+            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
+            assert_equal(test, control)
+
+            test = np.genfromtxt(TextIO(data), max_rows=5, invalid_raise=False)
+            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
+            assert_equal(test, control)
+
+        # Structured array with field names.
+        data = 'a b\n#c d\n1 1\n2 2\n#0 \n3 3\n4 4\n5  5\n'
+
+        # Test with header, names and comments
+        txt = TextIO(data)
+        test = np.genfromtxt(txt, skip_header=1, max_rows=3, names=True)
+        control = np.array([(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)],
+                      dtype=[('c', '<f8'), ('d', '<f8')])
+        assert_equal(test, control)
+        # To continue reading the same "file", don't use skip_header or
+        # names, and use the previously determined dtype.
+        test = np.genfromtxt(txt, max_rows=None, dtype=test.dtype)
+        control = np.array([(4.0, 4.0), (5.0, 5.0)],
+                      dtype=[('c', '<f8'), ('d', '<f8')])
         assert_equal(test, control)
 
     def test_gft_using_filename(self):

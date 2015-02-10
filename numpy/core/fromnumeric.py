@@ -464,8 +464,10 @@ def swapaxes(a, axis1, axis2):
     Returns
     -------
     a_swapped : ndarray
-        If `a` is an ndarray, then a view of `a` is returned; otherwise
-        a new array is created.
+        For Numpy >= 1.10, if `a` is an ndarray, then a view of `a` is
+        returned; otherwise a new array is created. For earlier Numpy
+        versions a view of `a` is returned only if the order of the
+        axes is changed, otherwise the input array is returned.
 
     Examples
     --------

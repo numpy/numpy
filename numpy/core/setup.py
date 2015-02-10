@@ -630,14 +630,8 @@ def configuration(parent_package='',top_path=None):
 
     deps = [join('src', 'npymath', '_signbit.c'),
             join('include', 'numpy', '*object.h'),
-            'include/numpy/fenv/fenv.c',
-            'include/numpy/fenv/fenv.h',
             join(codegen_dir, 'genapi.py'),
             ]
-
-    # Don't install fenv unless we need them.
-    if sys.platform == 'cygwin':
-        config.add_data_dir('include/numpy/fenv')
 
     #######################################################################
     #                            dummy module                             #
@@ -797,6 +791,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
+            join('src', 'multiarray', 'compiled_base.c'),
             join('src', 'multiarray', 'common.c'),
             join('src', 'multiarray', 'convert.c'),
             join('src', 'multiarray', 'convert_datatype.c'),

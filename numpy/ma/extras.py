@@ -497,8 +497,9 @@ def average(a, axis=None, weights=None, returned=False):
         The average along the specified axis. When returned is `True`,
         return a tuple with the average as the first element and the sum
         of the weights as the second element. The return type is `np.float64`
-        if `a` is of integer type, otherwise it is of the same type as `a`.
-        If returned, `sum_of_weights` is of the same type as `average`.
+        if `a` is of integer type and floats smaller than `float64`, or the
+        input data-type, otherwise. If returned, `sum_of_weights` is always
+        `float64`.
 
     Examples
     --------

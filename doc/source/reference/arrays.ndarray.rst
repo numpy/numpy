@@ -82,7 +82,7 @@ Indexing arrays
 
 Arrays can be indexed using an extended Python slicing syntax,
 ``array[selection]``.  Similar syntax is also used for accessing
-fields in a :ref:`record array <arrays.dtypes>`.
+fields in a :ref:`structured array <arrays.dtypes.field>`.
 
 .. seealso:: :ref:`Array Indexing <arrays.indexing>`.
 

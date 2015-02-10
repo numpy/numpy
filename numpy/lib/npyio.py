@@ -11,7 +11,7 @@ from operator import itemgetter
 import numpy as np
 from . import format
 from ._datasource import DataSource
-from ._compiled_base import packbits, unpackbits
+from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like, has_nested_fields,
@@ -656,7 +656,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         generators should return byte strings for Python 3k.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
-        record data-type, the resulting array will be 1-dimensional, and
+        structured data-type, the resulting array will be 1-dimensional, and
         each row will be interpreted as an element of the array.  In this
         case, the number of columns used must match the number of fields in
         the data-type.
@@ -680,7 +680,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The default, None, results in all columns being read.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
@@ -729,7 +729,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     """
     # Type conversions for Py3 convenience
-    comments = asbytes(comments)
+    if comments is not None:
+        comments = asbytes(comments)
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
@@ -802,7 +803,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter."""
-        line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
+        if comments is None:
+            line = asbytes(line).strip(asbytes('\r\n'))
+        else:
+            line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
         if line:
             return line.split(delimiter)
         else:
@@ -1200,7 +1204,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                usecols=None, names=None,
                excludelist=None, deletechars=None, replace_space='_',
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
-               unpack=None, usemask=False, loose=True, invalid_raise=True):
+               unpack=None, usemask=False, loose=True, invalid_raise=True,
+               max_rows=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1281,6 +1286,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
         If False, a warning is emitted and the offending lines are skipped.
+    max_rows : int,  optional
+        The maximum number of rows to read. Must not be used with skip_footer
+        at the same time.  If given, the value must be at least 1. Default is
+        to read the entire file.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -1349,6 +1360,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
 
     """
+    if max_rows is not None:
+        if skip_footer:
+            raise ValueError(
+                    "The keywords 'skip_footer' and 'max_rows' can not be "
+                    "specified at the same time.")
+        if max_rows < 1:
+            raise ValueError("'max_rows' must be at least 1.")
+
     # Py3 data conversions to bytes, for convenience
     if comments is not None:
         comments = asbytes(comments)
@@ -1447,7 +1466,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         names = validate_names(names)
     # Get the dtype
     if dtype is not None:
-        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
+        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names,
+                           excludelist=excludelist,
+                           deletechars=deletechars,
+                           case_sensitive=case_sensitive,
+                           replace_space=replace_space)
     # Make sure the names is a list (for 2.5)
     if names is not None:
         names = list(names)
@@ -1643,8 +1666,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # Skip an empty line
         if nbvalues == 0:
             continue
-        # Select only the columns we need
         if usecols:
+            # Select only the columns we need
             try:
                 values = [values[_] for _ in usecols]
             except IndexError:
@@ -1657,7 +1680,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         append_to_rows(tuple(values))
         if usemask:
             append_to_masks(tuple([v.strip() in m
-                                   for (v, m) in zip(values, missing_values)]))
+                                   for (v, m) in zip(values,
+                                                     missing_values)]))
+        if len(rows) == max_rows:
+            break
 
     if own_fhd:
         fhd.close()

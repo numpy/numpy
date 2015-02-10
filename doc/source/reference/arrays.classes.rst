@@ -337,7 +337,7 @@ Record arrays (:mod:`numpy.rec`)
              :ref:`arrays.dtypes`.
 
 Numpy provides the :class:`recarray` class which allows accessing the
-fields of a record/structured array as attributes, and a corresponding
+fields of a structured array as attributes, and a corresponding
 scalar data type object :class:`record`.
 
 .. currentmodule:: numpy

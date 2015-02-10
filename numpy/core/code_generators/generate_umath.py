@@ -33,9 +33,9 @@ class TypeDescription(object):
     ----------
     type : str
         Character representing the nominal type.
-    func_data : str or None or FullTypeDescr, optional
-        The string representing the expression to insert into the data array, if
-        any.
+    func_data : str or None or FullTypeDescr or FuncNameSuffix, optional
+        The string representing the expression to insert into the data
+        array, if any.
     in_ : str or None, optional
         The typecode(s) of the inputs.
     out : str or None, optional
@@ -127,10 +127,11 @@ class Ufunc(object):
 
 import string
 if sys.version_info[0] < 3:
-    UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+    UPPER_TABLE = string.maketrans(string.ascii_lowercase,
+                                   string.ascii_uppercase)
 else:
     UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
-            bytes(string.ascii_uppercase, "ascii"))
+                                  bytes(string.ascii_uppercase, "ascii"))
 
 def english_upper(s):
     """ Apply English case rules to convert ASCII strings to all upper case.
@@ -151,7 +152,8 @@ def english_upper(s):
     Examples
     --------
     >>> from numpy.lib.utils import english_upper
-    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
+    >>> s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
+    >>> english_upper(s)
     'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
     >>> english_upper('')
     ''
@@ -870,9 +872,9 @@ chartotype2 = {'e': 'ee_e',
 # 3) add function.
 
 def make_arrays(funcdict):
-    # functions array contains an entry for every type implemented
-    #   NULL should be placed where PyUfunc_ style function will be filled in later
-    #
+    # functions array contains an entry for every type implemented NULL
+    # should be placed where PyUfunc_ style function will be filled in
+    # later
     code1list = []
     code2list = []
     names = sorted(funcdict.keys())
@@ -891,24 +893,25 @@ def make_arrays(funcdict):
             thedict = chartotype1  # one input and one output
 
         for t in uf.type_descriptions:
-            if t.func_data not in (None, FullTypeDescr) and not isinstance(t.func_data, FuncNameSuffix):
+            if (t.func_data not in (None, FullTypeDescr) and
+                    not isinstance(t.func_data, FuncNameSuffix)):
                 funclist.append('NULL')
                 astype = ''
                 if not t.astype is None:
                     astype = '_As_%s' % thedict[t.astype]
-                astr = '%s_functions[%d] = PyUFunc_%s%s;' % \
-                       (name, k, thedict[t.type], astype)
+                astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
+                           (name, k, thedict[t.type], astype))
                 code2list.append(astr)
                 if t.type == 'O':
-                    astr = '%s_data[%d] = (void *) %s;' % \
-                           (name, k, t.func_data)
+                    astr = ('%s_data[%d] = (void *) %s;' %
+                               (name, k, t.func_data))
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                 elif t.type == 'P':
                     datalist.append('(void *)"%s"' % t.func_data)
                 else:
-                    astr = '%s_data[%d] = (void *) %s;' % \
-                           (name, k, t.func_data)
+                    astr = ('%s_data[%d] = (void *) %s;' %
+                               (name, k, t.func_data))
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
@@ -916,11 +919,13 @@ def make_arrays(funcdict):
             elif t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
-                funclist.append('%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+                funclist.append(
+                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
             elif isinstance(t.func_data, FuncNameSuffix):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
-                funclist.append('%s_%s_%s' % (tname, name, t.func_data.suffix))
+                funclist.append(
+                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
             else:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
@@ -934,11 +939,11 @@ def make_arrays(funcdict):
         funcnames = ', '.join(funclist)
         signames = ', '.join(siglist)
         datanames = ', '.join(datalist)
-        code1list.append("static PyUFuncGenericFunction %s_functions[] = { %s };" \
+        code1list.append("static PyUFuncGenericFunction %s_functions[] = {%s};"
                          % (name, funcnames))
-        code1list.append("static void * %s_data[] = { %s };" \
+        code1list.append("static void * %s_data[] = {%s};"
                          % (name, datanames))
-        code1list.append("static char %s_signatures[] = { %s };" \
+        code1list.append("static char %s_signatures[] = {%s};"
                          % (name, signames))
     return "\n".join(code1list), "\n".join(code2list)
 
@@ -972,8 +977,7 @@ r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
                                                 name, docstring))
         if uf.typereso != None:
             mlist.append(
-                r"((PyUFuncObject *)f)->type_resolver = &%s;" %
-                                                                uf.typereso)
+                r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))

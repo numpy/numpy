@@ -593,18 +593,16 @@ From other objects
 .. cfunction:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_struct__`` method and follows the array interface
-    protocol. If the object does not contain this method then a
+    :obj:`__array_struct__` attribute and follows the array interface
+    protocol. If the object does not contain this attribute then a
     borrowed reference to :cdata:`Py_NotImplemented` is returned.
 
 .. cfunction:: PyObject* PyArray_FromInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_shape__` and :obj:`__array_typestr__`
-    methods following
-    the array interface protocol. If the object does not contain one
-    of these method then a borrowed reference to :cdata:`Py_NotImplemented`
-    is returned.
+    :obj:`__array_interface__` attribute following the array interface
+    protocol. If the object does not contain this attribute then a
+    borrowed reference to :cdata:`Py_NotImplemented` is returned.
 
 .. cfunction:: PyObject* PyArray_FromArrayAttr(PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
@@ -806,15 +804,28 @@ General check of Python Type
     sub-type of :cdata:`PyGenericArr_Type` ), or an instance of (a
     sub-class of) :cdata:`PyArray_Type` whose dimensionality is 0.
 
+.. cfunction:: PyArray_IsPythonNumber(op)
+
+    Evaluates true if *op* is an instance of a builtin numeric type (int,
+    float, complex, long, bool)
+
 .. cfunction:: PyArray_IsPythonScalar(op)
 
-    Evaluates true if *op* is a builtin Python "scalar" object (int,
+    Evaluates true if *op* is a builtin Python scalar object (int,
     float, complex, str, unicode, long, bool).
 
 .. cfunction:: PyArray_IsAnyScalar(op)
 
-    Evaluates true if *op* is either a Python scalar or an array
-    scalar (an instance of a sub- type of :cdata:`PyGenericArr_Type` ).
+    Evaluates true if *op* is either a Python scalar object (see
+    :cfunc:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
+    type of :cdata:`PyGenericArr_Type` ).
+
+.. cfunction:: PyArray_CheckAnyScalar(op)
+
+    Evaluates true if *op* is a Python scalar object (see
+    :cfunc:`PyArray_IsPythonScalar`), an array scalar (an instance of a
+    sub-type of :cdata:`PyGenericArr_Type`) or an instance of a sub-type of
+    :cdata:`PyArray_Type` whose dimensionality is 0.
 
 
 Data-type checking
@@ -1240,9 +1251,9 @@ Special functions for NPY_OBJECT
 
     A function to INCREF all the objects at the location *ptr*
     according to the data-type *dtype*. If *ptr* is the start of a
-    record with an object at any offset, then this will (recursively)
+    structured type with an object at any offset, then this will (recursively)
     increment the reference count of all object-like items in the
-    record.
+    structured type.
 
 .. cfunction:: int PyArray_XDECREF(PyArrayObject* op)
 
@@ -1253,7 +1264,7 @@ Special functions for NPY_OBJECT
 
 .. cfunction:: void PyArray_Item_XDECREF(char* ptr, PyArray_Descr* dtype)
 
-    A function to XDECREF all the object-like items at the loacation
+    A function to XDECREF all the object-like items at the location
     *ptr* as recorded in the data-type, *dtype*. This works
     recursively so that if ``dtype`` itself has fields with data-types
     that contain object-like items, all the object-like fields will be
@@ -1540,7 +1551,7 @@ Conversion
     itemsize of the new array type must be less than *self*
     ->descr->elsize or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
-    effect of returning a field from a record array. But, it can also
+    effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
     type.
 
@@ -1786,7 +1797,7 @@ Item selection and manipulation
     ->descr is a data-type with fields defined, then
     self->descr->names is used to determine the sort order. A
     comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a record array, create
+    field and so on. To alter the sort order of a structured array, create
     a new data-type with a different order of names and construct a
     view of the array with that new data-type.
 
@@ -1805,7 +1816,7 @@ Item selection and manipulation
     to understand the order the *sort_keys* must be in (reversed from
     the order you would use when comparing two elements).
 
-    If these arrays are all collected in a record array, then
+    If these arrays are all collected in a structured array, then
     :cfunc:`PyArray_Sort` (...) can also be used to sort the array
     directly.
 
@@ -1838,7 +1849,7 @@ Item selection and manipulation
     If *self*->descr is a data-type with fields defined, then
     self->descr->names is used to determine the sort order. A comparison where
     the first field is equal will use the second field and so on. To alter the
-    sort order of a record array, create a new data-type with a different
+    sort order of a structured array, create a new data-type with a different
     order of names and construct a view of the array with that new data-type.
     Returns zero on success and -1 on failure.
 
@@ -2518,6 +2529,8 @@ Array Scalars
 -------------
 
 .. cfunction:: PyObject* PyArray_Return(PyArrayObject* arr)
+
+    This function steals a reference to *arr*.
 
     This function checks to see if *arr* is a 0-dimensional array and,
     if so, returns the appropriate array scalar. It should be used

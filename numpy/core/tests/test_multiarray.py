@@ -327,6 +327,10 @@ class TestDtypedescr(TestCase):
         d2 = dtype('f8')
         assert_equal(d2, dtype(float64))
 
+    def test_byteorders(self):
+        self.assertNotEqual(dtype('<i4'), dtype('>i4'))
+        self.assertNotEqual(dtype([('a', '<i4')]), dtype([('a', '>i4')]))
+
 class TestZeroRank(TestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
@@ -726,6 +730,65 @@ class TestStructured(TestCase):
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
 
+    def test_casting(self):
+        # Check that casting a structured array to change its byte order
+        # works
+        a = np.array([(1,)], dtype=[('a', '<i4')])
+        assert_(np.can_cast(a.dtype, [('a', '>i4')], casting='unsafe'))
+        b = a.astype([('a', '>i4')])
+        assert_equal(b, a.byteswap().newbyteorder())
+        assert_equal(a['a'][0], b['a'][0])
+
+        # Check that equality comparison works on structured arrays if
+        # they are 'equiv'-castable
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
+        b = np.array([(42, 5), (1, 10)], dtype=[('b', '>f8'), ('a', '<i4')])
+        assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
+        assert_equal(a == b, [True, True])
+
+        # Check that 'equiv' casting can reorder fields and change byte
+        # order
+        assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
+        c = a.astype(b.dtype, casting='equiv')
+        assert_equal(a == c, [True, True])
+
+        # Check that 'safe' casting can change byte order and up-cast
+        # fields
+        t = [('a', '<i8'), ('b', '>f8')]
+        assert_(np.can_cast(a.dtype, t, casting='safe'))
+        c = a.astype(t, casting='safe')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        # Check that 'same_kind' casting can change byte order and
+        # change field widths within a "kind"
+        t = [('a', '<i4'), ('b', '>f4')]
+        assert_(np.can_cast(a.dtype, t, casting='same_kind'))
+        c = a.astype(t, casting='same_kind')
+        assert_equal((c == np.array([(5, 42), (10, 1)], dtype=t)),
+                     [True, True])
+
+        # Check that casting fails if the casting rule should fail on
+        # any of the fields
+        t = [('a', '>i8'), ('b', '<f4')]
+        assert_(not np.can_cast(a.dtype, t, casting='safe'))
+        assert_raises(TypeError, a.astype, t, casting='safe')
+        t = [('a', '>i2'), ('b', '<f8')]
+        assert_(not np.can_cast(a.dtype, t, casting='equiv'))
+        assert_raises(TypeError, a.astype, t, casting='equiv')
+        t = [('a', '>i8'), ('b', '<i2')]
+        assert_(not np.can_cast(a.dtype, t, casting='same_kind'))
+        assert_raises(TypeError, a.astype, t, casting='same_kind')
+        assert_(not np.can_cast(a.dtype, b.dtype, casting='no'))
+        assert_raises(TypeError, a.astype, b.dtype, casting='no')
+
+        # Check that non-'unsafe' casting can't change the set of field names
+        for casting in ['no', 'safe', 'equiv', 'same_kind']:
+            t = [('a', '>i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
+            t = [('a', '>i4'), ('b', '<f8'), ('c', 'i4')]
+            assert_(not np.can_cast(a.dtype, t, casting=casting))
+
 
 class TestBool(TestCase):
     def test_test_interning(self):
@@ -835,7 +898,7 @@ class TestMethods(TestCase):
             assert_equal(c, a, msg)
 
         # test complex sorts. These use the same code as the scalars
-        # but the compare fuction differs.
+        # but the compare function differs.
         ai = a*1j + 1
         bi = b*1j + 1
         for kind in ['q', 'm', 'h'] :
@@ -856,6 +919,16 @@ class TestMethods(TestCase):
             c = bi.copy();
             c.sort(kind=kind)
             assert_equal(c, ai, msg)
+
+        # test sorting of complex arrays requiring byte-swapping, gh-5441
+        for endianess in '<>':
+            for dt in np.typecodes['Complex']:
+                dtype = '{0}{1}'.format(endianess, dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=dt)
+                c = arr.copy()
+                c.sort()
+                msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
+                assert_equal(c, arr, msg)
 
         # test string sorts.
         s = 'aaaaaaaa'
@@ -1034,6 +1107,15 @@ class TestMethods(TestCase):
             msg = "complex argsort, kind=%s" % kind
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
+
+        # test argsort of complex arrays requiring byte-swapping, gh-5441
+        for endianess in '<>':
+            for dt in np.typecodes['Complex']:
+                dtype = '{0}{1}'.format(endianess, dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=dt)
+                msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
+                assert_equal(arr.argsort(),
+                             np.arange(len(arr), dtype=np.intp), msg)
 
         # test string argsorts.
         s = 'aaaaaaaa'
@@ -1886,6 +1968,38 @@ class TestMethods(TestCase):
         assert_equal(a.ravel('C'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('A'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('F'), [0, 8, 4, 12, 2, 10, 6, 14])
+
+    def test_swapaxes(self):
+        a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
+        idx = np.indices(a.shape)
+        assert_(a.flags['OWNDATA'])
+        b = a.copy()
+        # check exceptions
+        assert_raises(ValueError, a.swapaxes, -5, 0)
+        assert_raises(ValueError, a.swapaxes, 4, 0)
+        assert_raises(ValueError, a.swapaxes, 0, -5)
+        assert_raises(ValueError, a.swapaxes, 0, 4)
+
+        for i in range(-4, 4):
+            for j in range(-4, 4):
+                for k, src in enumerate((a, b)):
+                    c = src.swapaxes(i, j)
+                    # check shape
+                    shape = list(src.shape)
+                    shape[i] = src.shape[j]
+                    shape[j] = src.shape[i]
+                    assert_equal(c.shape, shape, str((i, j, k)))
+                    # check array contents
+                    i0, i1, i2, i3 = [dim-1 for dim in c.shape]
+                    j0, j1, j2, j3 = [dim-1 for dim in src.shape]
+                    assert_equal(src[idx[j0], idx[j1], idx[j2], idx[j3]],
+                                 c[idx[i0], idx[i1], idx[i2], idx[i3]],
+                                 str((i, j, k)))
+                    # check a view is always returned, gh-5260
+                    assert_(not c.flags['OWNDATA'], str((i, j, k)))
+                    # check on non-contiguous input array
+                    if k == 1:
+                        b = c
 
     def test_conjugate(self):
         a = np.array([1-1j, 1+1j, 23+23.0j])

@@ -126,8 +126,8 @@ numpy/core/src/npysort/selection.c
 numpy/core/src/npysort/sort.c
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
-numpy/core/src/private/scalarmathmodule.h
-numpy/core/src/scalarmathmodule.c
+numpy/core/src/private/templ_common.h
+numpy/core/src/umath/scalarmath.c
 numpy/core/src/umath/funcs.inc
 numpy/core/src/umath/loops.[ch]
 numpy/core/src/umath/operand_flag_tests.c

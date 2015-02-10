@@ -2103,6 +2103,13 @@ class TestRegression(TestCase):
         assert_equal(np.int32(10) == x, "OK")
         assert_equal(np.array([10]) == x, "OK")
 
+    def test_pickle_empty_string(self):
+        # gh-3926
+
+        import pickle
+        test_string = np.string_('')
+        assert_equal(pickle.loads(pickle.dumps(test_string)), test_string)
+
 
 if __name__ == "__main__":
     run_module_suite()

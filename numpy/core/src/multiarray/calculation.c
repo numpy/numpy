@@ -921,7 +921,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     func = PyArray_DESCR(self)->f->fastclip;
     if (func == NULL
         || (min != NULL && !PyArray_CheckAnyScalar(min))
-        || (max != NULL && !PyArray_CheckAnyScalar(max))) {
+        || (max != NULL && !PyArray_CheckAnyScalar(max))
+        || PyArray_ISBYTESWAPPED(self)
+        || (out && PyArray_ISBYTESWAPPED(out))) {
         return _slow_array_clip(self, min, max, out);
     }
     /* Use the fast scalar clip function */
@@ -1032,7 +1034,6 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         }
     }
 
-
     /*
      * Check to see if input is single-segment, aligned,
      * and in native byteorder
@@ -1137,12 +1138,6 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
                         "same shape as the input.");
         goto fail;
-    }
-    if (PyArray_DATA(newout) != PyArray_DATA(newin)) {
-        if (PyArray_AssignArray(newout, newin,
-                    NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {
-            goto fail;
-        }
     }
 
     /* Now we can call the fast-clip function */
