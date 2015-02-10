@@ -59,6 +59,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "cblasfuncs.h"
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "compiled_base.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1444,9 +1445,7 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 static int
 _equivalent_fields(PyObject *field1, PyObject *field2) {
 
-    Py_ssize_t ppos;
-    PyObject *key;
-    PyObject *tuple1, *tuple2;
+    int same, val;
 
     if (field1 == field2) {
         return 1;
@@ -1454,33 +1453,20 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     if (field1 == NULL || field2 == NULL) {
         return 0;
     }
-
-    if (PyDict_Size(field1) != PyDict_Size(field2)) {
-        return 0;
+#if defined(NPY_PY3K)
+    val = PyObject_RichCompareBool(field1, field2, Py_EQ);
+    if (val != 1 || PyErr_Occurred()) {
+#else
+    val = PyObject_Compare(field1, field2);
+    if (val != 0 || PyErr_Occurred()) {
+#endif
+        same = 0;
     }
-
-    /* Iterate over all the fields and compare for equivalency */
-    ppos = 0;
-    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
-        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
-            return 0;
-        }
-        /* Compare the dtype of the field for equivalency */
-        if (!PyArray_CanCastTypeTo((PyArray_Descr *)PyTuple_GET_ITEM(tuple1, 0),
-                                   (PyArray_Descr *)PyTuple_GET_ITEM(tuple2, 0),
-                                   NPY_EQUIV_CASTING)) {
-            return 0;
-        }
-        /* Compare the byte position of the field */
-        if (PyObject_RichCompareBool(PyTuple_GET_ITEM(tuple1, 1),
-                                     PyTuple_GET_ITEM(tuple2, 1),
-                                     Py_EQ) != 1) {
-            PyErr_Clear();
-            return 0;
-        }
+    else {
+        same = 1;
     }
-
-    return 1;
+    PyErr_Clear();
+    return same;
 }
 
 /*
@@ -1959,11 +1945,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 &PyArrayDescr_Type, &typecode, &obj)) {
         return NULL;
     }
-    if (typecode->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "itemsize cannot be zero");
-        return NULL;
-    }
 
     if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
         if (obj == NULL) {
@@ -1973,6 +1954,9 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     }
     else {
         if (obj == NULL) {
+            if (typecode->elsize == 0) {
+                typecode->elsize = 1;
+            }
             dptr = PyArray_malloc(typecode->elsize);
             if (dptr == NULL) {
                 return PyErr_NoMemory();
@@ -3881,8 +3865,6 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args)
     }
 }
 
-
-
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -4029,6 +4011,26 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
+    {"_insert", (PyCFunction)arr_insert,
+        METH_VARARGS | METH_KEYWORDS,
+        "Insert vals sequentially into equivalent 1-d positions "
+        "indicated by mask."},
+    {"bincount", (PyCFunction)arr_bincount,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"digitize", (PyCFunction)arr_digitize,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"interp", (PyCFunction)arr_interp,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"ravel_multi_index", (PyCFunction)arr_ravel_multi_index,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"unravel_index", (PyCFunction)arr_unravel_index,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"add_docstring", (PyCFunction)arr_add_docstring,
+        METH_VARARGS, NULL},
+    {"packbits", (PyCFunction)io_pack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"unpackbits", (PyCFunction)io_unpack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

@@ -3,9 +3,9 @@ Record Arrays
 =============
 Record arrays expose the fields of structured arrays as properties.
 
-Most commonly, ndarrays contain elements of a single type, e.g. floats, integers,
-bools etc.  However, it is possible for elements to be combinations of these,
-such as::
+Most commonly, ndarrays contain elements of a single type, e.g. floats,
+integers, bools etc.  However, it is possible for elements to be combinations
+of these using structured types, such as::
 
   >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
   >>> a
@@ -25,7 +25,7 @@ one would a dictionary::
 
 Record arrays allow us to access fields as properties::
 
-  >>> ar = a.view(np.recarray)
+  >>> ar = np.rec.array(a)
 
   >>> ar.x
   array([1, 1])
@@ -40,7 +40,6 @@ import sys
 import os
 
 from . import numeric as sb
-from .defchararray import chararray
 from . import numerictypes as nt
 from numpy.compat import isfileobj, bytes, long
 
@@ -215,6 +214,12 @@ class format_parser:
 class record(nt.void):
     """A data-type scalar that allows field access as attribute lookup.
     """
+
+    # manually set name and module so that this class's type shows up
+    # as numpy.record when printed
+    __name__ = 'record'
+    __module__ = 'numpy'
+
     def __repr__(self):
         return self.__str__()
 
@@ -232,17 +237,15 @@ class record(nt.void):
         res = fielddict.get(attr, None)
         if res:
             obj = self.getfield(*res[:2])
-            # if it has fields return a recarray,
-            # if it's a string ('SU') return a chararray
+            # if it has fields return a record,
             # otherwise return the object
             try:
                 dt = obj.dtype
             except AttributeError:
+                #happens if field is Object type
                 return obj
             if dt.fields:
-                return obj.view(obj.__class__)
-            if dt.char in 'SU':
-                return obj.view(chararray)
+                return obj.view((record, obj.dtype.descr))
             return obj
         else:
             raise AttributeError("'record' object has no "
@@ -388,6 +391,12 @@ class recarray(ndarray):
           dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
+
+    # manually set name and module so that this class's type shows
+    # up as "numpy.recarray" when printed
+    __name__ = 'recarray'
+    __module__ = 'numpy'
+
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False, order='C'):
@@ -406,29 +415,37 @@ class recarray(ndarray):
         return self
 
     def __getattribute__(self, attr):
+        # See if ndarray has this attr, and return it if so. (note that this
+        # means a field with the same name as an ndarray attr cannot be
+        # accessed by attribute).
         try:
             return object.__getattribute__(self, attr)
         except AttributeError: # attr must be a fieldname
             pass
+
+        # look for a field with this name
         fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+            raise AttributeError("recarray has no attribute %s" % attr)
         obj = self.getfield(*res)
-        # if it has fields return a recarray, otherwise return
-        # normal array
+
+        # At this point obj will always be a recarray, since (see
+        # PyArray_GetField) the type of obj is inherited. Next, if obj.dtype is
+        # non-structured, convert it to an ndarray. If obj is structured leave
+        # it as a recarray, but make sure to convert to the same dtype.type (eg
+        # to preserve numpy.record type if present), since nested structured
+        # fields do not inherit type.
         if obj.dtype.fields:
-            return obj
-        if obj.dtype.char in 'SU':
-            return obj.view(chararray)
-        return obj.view(ndarray)
+            return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+        else:
+            return obj.view(ndarray)
 
-# Save the dictionary
-#  If the attr is a field name and not in the saved dictionary
-#  Undo any "setting" of the attribute and do a setfield
-# Thus, you can't create attributes on-the-fly that are field names.
-
+    # Save the dictionary.
+    # If the attr is a field name and not in the saved dictionary
+    # Undo any "setting" of the attribute and do a setfield
+    # Thus, you can't create attributes on-the-fly that are field names.
     def __setattr__(self, attr, val):
         newattr = attr not in self.__dict__
         try:
@@ -456,13 +473,40 @@ class recarray(ndarray):
 
     def __getitem__(self, indx):
         obj = ndarray.__getitem__(self, indx)
-        if (isinstance(obj, ndarray) and obj.dtype.isbuiltin):
-            return obj.view(ndarray)
-        return obj
 
-    def __repr__(self) :
-        ret = ndarray.__repr__(self)
-        return ret.replace("recarray", "rec.array", 1)
+        # copy behavior of getattr, except that here
+        # we might also be returning a single element
+        if isinstance(obj, ndarray):
+            if obj.dtype.fields:
+                return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+            else:
+                return obj.view(type=ndarray)
+        else:
+            # return a single element
+            return obj
+
+    def __repr__(self):
+        # get data/shape string. logic taken from numeric.array_repr
+        if self.size > 0 or self.shape==(0,):
+            lst = sb.array2string(self, separator=', ')
+        else:
+            # show zero-length shape unless it is (0,)
+            lst = "[], shape=%s" % (repr(self.shape),)
+
+        if self.dtype.type is record:
+            # If this is a full record array (has numpy.record dtype),
+            # represent it using the rec.array function. Since rec.array
+            # converts dtype to a numpy.record for us, use only dtype.descr,
+            # not repr(dtype).
+            lf = '\n'+' '*len("rec.array(")
+            return ('rec.array(%s, %sdtype=%s)' %
+                          (lst, lf, repr(self.dtype.descr)))
+        else:
+            # otherwise represent it using np.array plus a view
+            # (There is currently (v1.10) no other easy way to create it)
+            lf = '\n'+' '*len("array(")
+            return ('array(%s, %sdtype=%s).view(numpy.recarray)' %
+                          (lst, lf, str(self.dtype)))
 
     def field(self, attr, val=None):
         if isinstance(attr, int):
@@ -477,8 +521,6 @@ class recarray(ndarray):
             obj = self.getfield(*res)
             if obj.dtype.fields:
                 return obj
-            if obj.dtype.char in 'SU':
-                return obj.view(chararray)
             return obj.view(ndarray)
         else:
             return self.setfield(val, *res)
@@ -589,7 +631,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    chararray(['dbe', 'de'],
+    array(['dbe', 'de'],
           dtype='|S3')
     >>> import pickle
     >>> print pickle.loads(pickle.dumps(r))

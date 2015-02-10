@@ -284,7 +284,12 @@ Glossary
 
    ndarray
        See *array*.
-
+    
+   record array
+       An `ndarray`_ with `structured data type`_ which has been subclassed as
+       np.recarray and whose dtype is of type np.record, making the
+       fields of its data type to be accessible by attribute.
+       
    reference
        If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
        ``a`` and ``b`` are different names for the same Python object.
@@ -345,7 +350,10 @@ Glossary
 
          >>> x[:, 1]
          array([2, 4])
-
+   
+   structured data type
+       A data type composed of other datatypes
+   
    tuple
        A sequence that may contain a variable number of types of any
        kind.  A tuple is immutable, i.e., once constructed it cannot be

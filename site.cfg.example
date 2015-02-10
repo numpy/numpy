@@ -9,7 +9,7 @@
 
 # The format of the file is that of the standard library's ConfigParser module.
 #
-#   http://www.python.org/doc/current/lib/module-ConfigParser.html
+#   http://docs.python.org/3/library/configparser.html
 #
 # Each section defines settings that apply to one particular dependency. Some of
 # the settings are general and apply to nearly any section and are defined here.
@@ -118,6 +118,15 @@
 # library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
 # lapack_libs = mkl_lapack
 # mkl_libs = mkl, guide
+#
+# On win-64, the following options compiles numpy with the MKL library
+# dynamically linked.
+# [mkl]
+# include_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\include
+# library_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\lib\intel64
+# mkl_libs = mkl_core_dll, mkl_intel_lp64_dll, mkl_intel_thread_dll
+# lapack_libs = mkl_lapack95_lp64
+
 
 # UMFPACK
 # -------

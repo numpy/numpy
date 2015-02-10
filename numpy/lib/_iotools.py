@@ -320,12 +320,13 @@ class NameValidator(object):
         # Process the case option .....
         if (case_sensitive is None) or (case_sensitive is True):
             self.case_converter = lambda x: x
-        elif (case_sensitive is False) or ('u' in case_sensitive):
+        elif (case_sensitive is False) or case_sensitive.startswith('u'):
             self.case_converter = lambda x: x.upper()
-        elif 'l' in case_sensitive:
+        elif case_sensitive.startswith('l'):
             self.case_converter = lambda x: x.lower()
         else:
-            self.case_converter = lambda x: x
+            msg = 'unrecognized case_sensitive value %s.' % case_sensitive
+            raise ValueError(msg)
         #
         self.replace_space = replace_space
 

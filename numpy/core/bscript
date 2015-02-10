@@ -440,6 +440,7 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),
+                pjoin('src', 'multiarray', 'compiled_base.c'),
                 pjoin('src', 'multiarray', 'conversion_utils.c'),
                 pjoin('src', 'multiarray', 'convert.c'),
                 pjoin('src', 'multiarray', 'convert_datatype.c'),

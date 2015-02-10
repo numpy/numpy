@@ -12,15 +12,15 @@ Windows
 -------
 
 Good solutions for Windows are, `Enthought Canopy
-<https://www.enthought.com/products/canopy/>`_ (which provides binary
-installers for Windows, OS X and Linux) and `Python (x, y)
-<http://www.pythonxy.com>`_. Both of these packages include Python, NumPy and
-many additional packages.
+<https://www.enthought.com/products/canopy/>`_, `Anaconda
+<http://continuum.io/downloads.html>`_ (which both provide binary installers
+for Windows, OS X and Linux) and `Python (x, y) <http://www.pythonxy.com>`_.
+Both of these packages include Python, NumPy and many additional packages.
 
 A lightweight alternative is to download the Python
 installer from `www.python.org <http://www.python.org>`_ and the NumPy
-installer for your Python version from the Sourceforge `download site <http://
-sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
+installer for your Python version from the Sourceforge `download site 
+<http://sourceforge.net/projects/numpy/files/NumPy`_.
 
 The NumPy installer includes binaries for different CPU's (without SSE
 instructions, with SSE2 or with SSE3) and installs the correct one
@@ -28,25 +28,27 @@ automatically. If needed, this can be bypassed from the command line with ::
 
   numpy-<1.y.z>-superpack-win32.exe /arch nosse
 
-or 'sse2' or 'sse3' instead of 'nosse'.
+or ``sse2`` or ``sse3`` instead of ``nosse``.
 
 Linux
 -----
 
-Most of the major distributions provide packages for NumPy, but these can lag
-behind the most recent NumPy release. Pre-built binary packages for Ubuntu are
-available on the `scipy ppa
-<https://edge.launchpad.net/~scipy/+archive/ppa>`_. Redhat binaries are
-available in the `Enthought Canopy
-<https://www.enthought.com/products/canopy/>`_.
+All major distributions provide packages for NumPy.  These are usually
+reasonably up-to-date, but sometimes lag behind the most recent NumPy release.
 
 Mac OS X
 --------
 
-A universal binary installer for NumPy is available from the `download site
-<http://sourceforge.net/project/showfiles.php?group_id=1369&
-package_id=175103>`_. The `Enthought Canopy
-<https://www.enthought.com/products/canopy/>`_ provides NumPy binaries.
+Universal binary installers for NumPy are available from the `download site
+<http://sourceforge.net/projects/numpy/files/NumPy`_, and wheel packages
+from PyPi.  With a recent version of `pip`<https://pip.pypa.io/en/latest/>`_
+this will give you a binary install (from the wheel packages) compatible with
+at python.org Python, Homebrew and MacPorts::
+
+  pip install numpy
+
+
+.. _building-from-source:
 
 Building from source
 ====================
@@ -82,7 +84,7 @@ Building NumPy requires the following software installed:
    Note that NumPy is developed mainly using GNU compilers. Compilers from
    other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland,
    Lahey, HP, IBM, Microsoft are only supported in the form of community
-   feedback, and may not work out of the box. GCC 3.x (and later) compilers
+   feedback, and may not work out of the box. GCC 4.x (and later) compilers
    are recommended.
 
 3) Linear Algebra libraries
@@ -92,6 +94,42 @@ Building NumPy requires the following software installed:
    them and use them for building. A number of different LAPACK library setups
    can be used, including optimized LAPACK libraries such as ATLAS, MKL or the
    Accelerate/vecLib framework on OS X.
+
+Basic Installation
+------------------
+
+To install NumPy run::
+
+    python setup.py install
+
+To perform an in-place build that can be run from the source folder run::
+
+    python setup.py build_ext --inplace
+
+The NumPy build system uses ``distutils`` and ``numpy.distutils``.
+``setuptools`` is only used when building via ``pip`` or with ``python
+setupegg.py``.  Using ``virtualenv`` should work as expected.
+
+*Note: for build instructions to do development work on NumPy itself, see
+:ref:`development-environment`*.
+
+.. _parallel-builds:
+
+Parallel builds
+~~~~~~~~~~~~~~~
+
+From NumPy 1.10.0 on it's also possible to do a parallel build with::
+
+    python setup.py build -j 4 install --prefix $HOME/.local
+
+This will compile numpy on 4 CPUs and install it into the specified prefix.
+to perform a parallel in-place build, run::
+
+    python setup.py build_ext --inplace -j 4
+
+The number of build jobs can also be specified via the environment variable
+``NPY_NUM_BUILD_JOBS``.
+
 
 FORTRAN ABI mismatch
 --------------------
@@ -147,35 +185,10 @@ Additional compiler flags can be supplied by setting the ``OPT``,
 Building with ATLAS support
 ---------------------------
 
-Ubuntu 8.10 (Intrepid) and 9.04 (Jaunty)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ubuntu 
+~~~~~~
 
-You can install the necessary packages for optimized ATLAS with this command::
+You can install the necessary package for optimized ATLAS with this command::
 
     sudo apt-get install libatlas-base-dev
 
-If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performances. For example,
-for SSE2::
-
-    sudo apt-get install libatlas3gf-sse2
-
-This package is not available on amd64 platforms.
-
-*NOTE*: Ubuntu changed its default fortran compiler from g77 in Hardy to
-gfortran in Intrepid. If you are building ATLAS from source and are upgrading
-from Hardy to Intrepid or later versions, you should rebuild everything from
-scratch, including lapack.
-
-Ubuntu 8.04 and lower
-~~~~~~~~~~~~~~~~~~~~~
-
-You can install the necessary packages for optimized ATLAS with this command::
-
-    sudo apt-get install atlas3-base-dev
-
-If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performances. For example,
-for SSE2::
-
-    sudo apt-get install atlas3-sse2

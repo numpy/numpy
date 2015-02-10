@@ -23,9 +23,9 @@ from numpy.core.fromnumeric import (
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
-from ._compiled_base import _insert, add_docstring
-from ._compiled_base import digitize, bincount, interp as compiled_interp
-from ._compiled_base import add_newdoc_ufunc
+from numpy.core.multiarray import _insert, add_docstring
+from numpy.core.multiarray import digitize, bincount, interp as compiled_interp
+from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 
 # Force range to be a generator, for np.delete's usage.

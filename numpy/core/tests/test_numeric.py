@@ -1493,6 +1493,14 @@ class TestClip(TestCase):
         assert_array_strict_equal(a2, ac)
         self.assertTrue(a2 is a)
 
+    def test_clip_nan(self):
+        d = np.arange(7.)
+        assert_equal(d.clip(min=np.nan), d)
+        assert_equal(d.clip(max=np.nan), d)
+        assert_equal(d.clip(min=np.nan, max=np.nan), d)
+        assert_equal(d.clip(min=-2, max=np.nan), d)
+        assert_equal(d.clip(min=np.nan, max=10), d)
+
 
 class TestAllclose(object):
     rtol = 1e-5

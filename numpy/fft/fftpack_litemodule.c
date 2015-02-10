@@ -149,7 +149,7 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *op1, *op2;
     PyArrayObject *data, *ret;
     PyArray_Descr *descr;
-    double *wsave, *dptr, *rptr;
+    double *wsave = NULL, *dptr, *rptr;
     npy_intp nsave;
     int npts, nrepeats, i, rstep;
 
@@ -166,6 +166,9 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     PyArray_DIMS(data)[PyArray_NDIM(data) - 1] = npts/2 + 1;
     ret = (PyArrayObject *)PyArray_Zeros(PyArray_NDIM(data),
             PyArray_DIMS(data), PyArray_DescrFromType(NPY_CDOUBLE), 0);
+    if (ret == NULL) {
+        goto fail;
+    }
     PyArray_DIMS(data)[PyArray_NDIM(data) - 1] = npts;
     rstep = PyArray_DIM(ret, PyArray_NDIM(ret) - 1)*2;
 

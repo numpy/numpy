@@ -11,7 +11,7 @@ Indexing
 
 :class:`ndarrays <ndarray>` can be indexed using the standard Python
 ``x[obj]`` syntax, where *x* is the array and *obj* the selection.
-There are three kinds of indexing available: record access, basic
+There are three kinds of indexing available: field access, basic
 slicing, advanced indexing. Which one occurs depends on *obj*.
 
 .. note::
@@ -489,25 +489,25 @@ indexing (in no particular order):
   view on the data. This *must* be done if the subclasses ``__getitem__`` does
   not return views.
 
-.. _arrays.indexing.rec:
+.. _arrays.indexing.fields:
 
 
-Record Access
+Field Access
 -------------
 
 .. seealso:: :ref:`arrays.dtypes`, :ref:`arrays.scalars`
 
-If the :class:`ndarray` object is a record array, *i.e.* its data type
-is a :term:`record` data type, the :term:`fields <field>` of the array
-can be accessed by indexing the array with strings, dictionary-like.
+If the :class:`ndarray` object is a structured array the :term:`fields <field>`
+of the array can be accessed by indexing the array with strings,
+dictionary-like.
 
 Indexing ``x['field-name']`` returns a new :term:`view` to the array,
 which is of the same shape as *x* (except when the field is a
 sub-array) but of data type ``x.dtype['field-name']`` and contains
-only the part of the data in the specified field. Also record array
-scalars can be "indexed" this way.
+only the part of the data in the specified field. Also 
+:ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
 
-Indexing into a record array can also be done with a list of field names,
+Indexing into a structured array can also be done with a list of field names,
 *e.g.* ``x[['field-name1','field-name2']]``. Currently this returns a new
 array containing a copy of the values in the fields specified in the list.
 As of NumPy 1.7, returning a copy is being deprecated in favor of returning

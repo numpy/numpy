@@ -54,6 +54,7 @@
 #include "arrayobject.c"
 #include "numpymemoryview.c"
 #include "multiarraymodule.c"
+#include "compiled_base.c"
 
 #if defined(HAVE_CBLAS)
 #include "python_xerbla.c"

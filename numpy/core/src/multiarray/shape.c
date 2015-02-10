@@ -653,19 +653,8 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 {
     PyArray_Dims new_axes;
     npy_intp dims[NPY_MAXDIMS];
-    int n, i, val;
-    PyObject *ret;
-
-    if (a1 == a2) {
-        Py_INCREF(ap);
-        return (PyObject *)ap;
-    }
-
-    n = PyArray_NDIM(ap);
-    if (n <= 1) {
-        Py_INCREF(ap);
-        return (PyObject *)ap;
-    }
+    int n = PyArray_NDIM(ap);
+    int i;
 
     if (a1 < 0) {
         a1 += n;
@@ -683,24 +672,19 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
                         "bad axis2 argument to swapaxes");
         return NULL;
     }
+
+    for (i = 0; i < n; ++i) {
+        dims[i] = i;
+    }
+    dims[a1] = a2;
+    dims[a2] = a1;
+
     new_axes.ptr = dims;
     new_axes.len = n;
 
-    for (i = 0; i < n; i++) {
-        if (i == a1) {
-            val = a2;
-        }
-        else if (i == a2) {
-            val = a1;
-        }
-        else {
-            val = i;
-        }
-        new_axes.ptr[i] = val;
-    }
-    ret = PyArray_Transpose(ap, &new_axes);
-    return ret;
+    return PyArray_Transpose(ap, &new_axes);
 }
+
 
 /*NUMPY_API
  * Return Transpose.
@@ -969,7 +953,7 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
 
         PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
                                 PyArray_STRIDES(arr), strideperm);
-        
+
         for (i = ndim-1; i >= 0; --i) {
             if (PyArray_DIM(arr, strideperm[i].perm) == 1) {
                 /* A size one dimension does not matter */

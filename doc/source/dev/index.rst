@@ -6,5 +6,6 @@ Contributing to Numpy
    :maxdepth: 3
 
    gitwash/index
+   development_environment
 
 For core developers: see :ref:`development-workflow`.
