@@ -2428,15 +2428,15 @@ class TestBinop(object):
                     return "ufunc"
                 else:
                     inputs = list(inputs)
-                    inputs[i] = np.asarray(self)
+                    if i < len(inputs):
+                        inputs[i] = np.asarray(self)
                     func = getattr(ufunc, method)
+                    if ('out' in kw) and (kw['out'] is not None):
+                        kw['out'] = np.asarray(kw['out'])
                     r = func(*inputs, **kw)
-                    if 'out' in kw:
-                        return r
-                    else:
-                        x = self.__class__(r.shape, dtype=r.dtype)
-                        x[...] = r
-                        return x
+                    x = self.__class__(r.shape, dtype=r.dtype)
+                    x[...] = r
+                    return x
 
         class SomeClass3(SomeClass2):
             def __rsub__(self, other):
@@ -2519,6 +2519,64 @@ class TestBinop(object):
         kw = np.add(a, [1], signature='ii->i')
         assert_('sig' not in kw and 'signature' in kw)
         assert_equal(kw['signature'], 'ii->i')
+
+    def test_numpy_ufunc_index(self):
+        # Check that index is set appropriately, also if only an output
+        # is passed on (latter is another regression tests for github bug 4753)
+        class CheckIndex(object):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                return i
+
+        a = CheckIndex()
+        dummy = np.arange(2.)
+        # 1 input, 1 output
+        assert_equal(np.sin(a), 0)
+        assert_equal(np.sin(dummy, a), 1)
+        assert_equal(np.sin(dummy, out=a), 1)
+        assert_equal(np.sin(dummy, out=(a,)), 1)
+        assert_equal(np.sin(a, a), 0)
+        assert_equal(np.sin(a, out=a), 0)
+        assert_equal(np.sin(a, out=(a,)), 0)
+        # 1 input, 2 outputs
+        assert_equal(np.modf(dummy, a), 1)
+        assert_equal(np.modf(dummy, None, a), 2)
+        assert_equal(np.modf(dummy, dummy, a), 2)
+        assert_equal(np.modf(dummy, out=a), 1)
+        assert_equal(np.modf(dummy, out=(a,)), 1)
+        assert_equal(np.modf(dummy, out=(a, None)), 1)
+        assert_equal(np.modf(dummy, out=(a, dummy)), 1)
+        assert_equal(np.modf(dummy, out=(None, a)), 2)
+        assert_equal(np.modf(dummy, out=(dummy, a)), 2)
+        assert_equal(np.modf(a, out=(dummy, a)), 0)
+        # 2 inputs, 1 output
+        assert_equal(np.add(a, dummy), 0)
+        assert_equal(np.add(dummy, a), 1)
+        assert_equal(np.add(dummy, dummy, a), 2)
+        assert_equal(np.add(dummy, a, a), 1)
+        assert_equal(np.add(dummy, dummy, out=a), 2)
+        assert_equal(np.add(dummy, dummy, out=(a,)), 2)
+        assert_equal(np.add(a, dummy, out=a), 0)
+
+    def test_out_override(self):
+        # regression test for github bug 4753
+        class OutClass(ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                if 'out' in kw:
+                    tmp_kw = kw.copy()
+                    tmp_kw.pop('out')
+                    func = getattr(ufunc, method)
+                    kw['out'][...] = func(*inputs, **tmp_kw)
+
+        A = np.array([0]).view(OutClass)
+        B = np.array([5])
+        C = np.array([6])
+        np.multiply(C, B, A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
+        A[0] = 0
+        np.multiply(C, B, out=A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
 
 
 class TestCAPI(TestCase):
