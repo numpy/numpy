@@ -107,6 +107,7 @@ OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h", # SSE
                 "emmintrin.h", # SSE2
+                "features.h",  # for glibc version linux
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
@@ -138,23 +139,29 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
-        "copysign", "ftello", "fseeko"]
+OPTIONAL_STDFUNCS_MAYBE = [
+    "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
+    "ftello", "fseeko"
+    ]
 
 # C99 functions: float and long double versions
-C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
-        "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
-        "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
-        "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-        "exp2", "log2", "copysign", "nextafter", "cbrt"]
-
+C99_FUNCS = [
+    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
+    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
+    "asin", "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2",
+    "pow", "fmod", "modf", 'frexp', 'ldexp', "exp2", "log2", "copysign",
+    "nextafter", "cbrt"
+    ]
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
-
-C99_COMPLEX_TYPES = ['complex double', 'complex float', 'complex long double']
-
-C99_COMPLEX_FUNCS = ['creal', 'cimag', 'cabs', 'carg', 'cexp', 'csqrt', 'clog',
-                  'ccos', 'csin', 'cpow']
+C99_COMPLEX_TYPES = [
+    'complex double', 'complex float', 'complex long double'
+    ]
+C99_COMPLEX_FUNCS = [
+    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
+    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
+    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
+    ]
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()

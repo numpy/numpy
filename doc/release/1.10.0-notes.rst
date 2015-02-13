@@ -126,6 +126,19 @@ interpolation behavior.
 NumPy arrays are supported as input for ``pad_width``, and an exception is
 raised if its values are not of integral type.
 
+More system C99 complex functions detected and used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All of the functions ``in complex.h`` are now detected. There are new
+fallback implementations of the following functions.
+
+* npy_ctan,
+* npy_cacos, npy_casin, npy_catan
+* npy_ccosh, npy_csinh, npy_ctanh,
+* npy_cacosh, npy_casinh, npy_catanh
+
+As a result of these improvements, there will be some small changes in
+returned values, especially for corner cases.
+
 
 Changes
 =======

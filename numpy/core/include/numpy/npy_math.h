@@ -259,7 +259,7 @@ float npy_nextafterf(float x, float y);
 float npy_spacingf(float x);
 
 /*
- * float C99 math functions
+ * long double C99 math functions
  */
 
 npy_longdouble npy_sinl(npy_longdouble x);
@@ -425,6 +425,19 @@ npy_cdouble npy_csqrt(npy_cdouble z);
 
 npy_cdouble npy_ccos(npy_cdouble z);
 npy_cdouble npy_csin(npy_cdouble z);
+npy_cdouble npy_ctan(npy_cdouble z);
+
+npy_cdouble npy_ccosh(npy_cdouble z);
+npy_cdouble npy_csinh(npy_cdouble z);
+npy_cdouble npy_ctanh(npy_cdouble z);
+
+npy_cdouble npy_cacos(npy_cdouble z);
+npy_cdouble npy_casin(npy_cdouble z);
+npy_cdouble npy_catan(npy_cdouble z);
+
+npy_cdouble npy_cacosh(npy_cdouble z);
+npy_cdouble npy_casinh(npy_cdouble z);
+npy_cdouble npy_catanh(npy_cdouble z);
 
 /*
  * Single precision complex functions
@@ -440,6 +453,20 @@ npy_cfloat npy_csqrtf(npy_cfloat z);
 
 npy_cfloat npy_ccosf(npy_cfloat z);
 npy_cfloat npy_csinf(npy_cfloat z);
+npy_cfloat npy_ctanf(npy_cfloat z);
+
+npy_cfloat npy_ccoshf(npy_cfloat z);
+npy_cfloat npy_csinhf(npy_cfloat z);
+npy_cfloat npy_ctanhf(npy_cfloat z);
+
+npy_cfloat npy_cacosf(npy_cfloat z);
+npy_cfloat npy_casinf(npy_cfloat z);
+npy_cfloat npy_catanf(npy_cfloat z);
+
+npy_cfloat npy_cacoshf(npy_cfloat z);
+npy_cfloat npy_casinhf(npy_cfloat z);
+npy_cfloat npy_catanhf(npy_cfloat z);
+
 
 /*
  * Extended precision complex functions
@@ -455,6 +482,20 @@ npy_clongdouble npy_csqrtl(npy_clongdouble z);
 
 npy_clongdouble npy_ccosl(npy_clongdouble z);
 npy_clongdouble npy_csinl(npy_clongdouble z);
+npy_clongdouble npy_ctanl(npy_clongdouble z);
+
+npy_clongdouble npy_ccoshl(npy_clongdouble z);
+npy_clongdouble npy_csinhl(npy_clongdouble z);
+npy_clongdouble npy_ctanhl(npy_clongdouble z);
+
+npy_clongdouble npy_cacosl(npy_clongdouble z);
+npy_clongdouble npy_casinl(npy_clongdouble z);
+npy_clongdouble npy_catanl(npy_clongdouble z);
+
+npy_clongdouble npy_cacoshl(npy_clongdouble z);
+npy_clongdouble npy_casinhl(npy_clongdouble z);
+npy_clongdouble npy_catanhl(npy_clongdouble z);
+
 
 /*
  * Functions that set the floating point error
