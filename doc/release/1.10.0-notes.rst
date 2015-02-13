@@ -139,6 +139,11 @@ fallback implementations of the following functions.
 As a result of these improvements, there will be some small changes in
 returned values, especially for corner cases.
 
+*np.loadtxt* support for the strings produced by the ``float.hex`` method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The strings produced by ``float.hex`` look like ``0x1.921fb54442d18p+1``,
+so this is not the hex used to represent unsigned integer types.
+
 
 Changes
 =======

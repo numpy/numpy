@@ -694,6 +694,19 @@ class TestLoadTxt(TestCase):
         res = np.loadtxt(c, dtype=np.int64)
         assert_equal(res, tgt)
 
+    def test_from_float_hex(self):
+        # IEEE doubles and floats only, otherwise the float32
+        # conversion may fail.
+        tgt = np.logspace(-10, 10, 5).astype(np.float32)
+        tgt = np.hstack((tgt, -tgt)).astype(np.float)
+        inp = '\n'.join(map(float.hex, tgt))
+        c = TextIO()
+        c.write(inp)
+        for dt in [np.float, np.float32]:
+            c.seek(0)
+            res = np.loadtxt(c, dtype=dt)
+            assert_equal(res, tgt, err_msg="%s" % dt)
+
     def test_universal_newline(self):
         f, name = mkstemp()
         os.write(f, b'1 21\r3 42\r')

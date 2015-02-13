@@ -621,6 +621,13 @@ def _savez(file, args, kwds, compress):
 
 def _getconv(dtype):
     """ Find the correct dtype converter. Adapted from matplotlib """
+
+    def floatconv(x):
+        x.lower()
+        if b'0x' in x:
+            return float.fromhex(asstr(x))
+        return float(x)
+
     typ = dtype.type
     if issubclass(typ, np.bool_):
         return lambda x: bool(int(x))
@@ -631,7 +638,7 @@ def _getconv(dtype):
     if issubclass(typ, np.integer):
         return lambda x: int(float(x))
     elif issubclass(typ, np.floating):
-        return float
+        return floatconv
     elif issubclass(typ, np.complex):
         return complex
     elif issubclass(typ, np.bytes_):
@@ -705,6 +712,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This function aims to be a fast reader for simply formatted files.  The
     `genfromtxt` function provides more sophisticated handling of, e.g.,
     lines with missing values.
+
+    .. versionadded:: 1.10.0
+    The strings produced by the Python float.hex method can be used as
+    input for floats.
 
     Examples
     --------
