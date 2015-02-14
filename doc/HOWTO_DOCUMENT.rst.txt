@@ -258,7 +258,7 @@ The sections of the docstring are:
          Description of the anonymous integer return value.
 
    If both the name and type are specified, the **Yields** section takes the
-   same form as the **Parameters** section::
+   same form as the **Returns** section::
 
      Yields
      ------
