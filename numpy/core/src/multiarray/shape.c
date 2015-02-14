@@ -948,7 +948,7 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
     /* For KEEPORDER, check if we can make a flattened view */
     else {
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
-        npy_intp stride, base_stride = NPY_MIN_INTP;
+        npy_intp stride = 0, base_stride = NPY_MIN_INTP;
         int i, ndim = PyArray_NDIM(arr);
 
         PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
