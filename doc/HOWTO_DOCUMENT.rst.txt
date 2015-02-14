@@ -13,10 +13,14 @@ A Guide to NumPy/SciPy Documentation
    numpy conventions, you should use the ``numpydoc`` extension so that your
    docstrings will be handled correctly. For example, Sphinx will extract the
    ``Parameters`` section from your docstring and convert it into a field
-   list.  Using numpydoc will also avoid the reStructuredText errors produced
+   list.  Using ``numpydoc`` will also avoid the reStructuredText errors produced
    by plain Sphinx when it encounters numpy docstring conventions like
    section headers (e.g. ``-------------``) that sphinx does not expect to
    find in docstrings.
+
+   Some features described in this document require a recent version of
+   ``numpydoc``. For example, the **Yields** section was added in
+   ``numpydoc`` 0.6.
 
    It is available from:
 
@@ -266,6 +270,9 @@ The sections of the docstring are:
          Non-zero value indicates error code, or zero on success.
      err_msg : str or None
          Human readable error message, or None on success.
+
+   Support for the **Yields** section was added in `numpydoc
+   <https://github.com/numpy/numpydoc>`_ version 0.6.
 
 7. **Other Parameters**
 
@@ -546,7 +553,8 @@ Documenting generators
 ----------------------
 Generators should be documented just as functions are documented. The
 only difference is that one should use the **Yields** section instead
-of the **Returns** section.
+of the **Returns** section. Support for the **Yields** section was added in
+`numpydoc <https://github.com/numpy/numpydoc>`_ version 0.6.
 
 
 Documenting constants
