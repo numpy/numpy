@@ -1,10 +1,8 @@
 /*
-fftpack.c : A set of FFT routines in C.
-Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber (Version 4, 1985).
-
+ * fftpack.c : A set of FFT routines in C.
+ * Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber (Version 4, 1985).
 */
-
-/* isign is +1 for backward and -1 for forward transforms */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include <Python.h>
 #include <math.h>
@@ -12,7 +10,6 @@ Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber (Version 4, 
 #include <numpy/ndarraytypes.h>
 
 #define DOUBLE
-
 #ifdef DOUBLE
 #define Treal double
 #else
