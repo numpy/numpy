@@ -202,12 +202,11 @@ static void
     INIT_OUTER_LOOP_2
     npy_intp len_n = *dimensions++;
     npy_intp len_d = *dimensions++;
-    npy_intp len_p = *dimensions;
     npy_intp stride_n = *steps++;
     npy_intp stride_d = *steps++;
     npy_intp stride_p = *steps;
 
-    assert(len_n * (len_n - 1) / 2 == len_p);
+    assert(len_n * (len_n - 1) / 2 == *dimensions);
 
     BEGIN_OUTER_LOOP_2
         const char *data_this = (const char *)args[0];
