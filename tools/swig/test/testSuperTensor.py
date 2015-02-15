@@ -385,4 +385,4 @@ if __name__ == "__main__":
     print "NumPy version", np.__version__
     print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
-    sys.exit(len(result.errors) + len(result.failures))
+    sys.exit(bool(result.errors + result.failures))
