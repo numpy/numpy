@@ -1751,6 +1751,13 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(xm, y + a)
         assert_equal(xm.mask, mask_or(m, a.mask))
 
+    def test_inplace_addition_dtype(self):
+        # Ensure inplace addition respects dtype
+        x = arange(5, dtype=np.uint16)
+        x[0] = masked
+        x += np.uint16(1)
+        assert_equal(x.dtype, np.uint16)
+
     def test_inplace_subtraction_scalar(self):
         # Test of inplace subtractions
         (x, y, xm) = self.intdata
