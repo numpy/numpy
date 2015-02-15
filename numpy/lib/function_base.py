@@ -514,7 +514,8 @@ def average(a, axis=None, weights=None, returned=False):
         avg = a.mean(axis)
         scl = avg.dtype.type(a.size/avg.size)
     else:
-        if not np.issubclass_(a.dtype.type, np.inexact):
+        # Cast bool, unsigned int, and int to float64 by default
+        if issubclass(a.dtype.type, (integer, bool)):
             a = a.astype('float64')
 
         wgt = np.asarray(weights)
