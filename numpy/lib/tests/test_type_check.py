@@ -90,6 +90,13 @@ class TestIsscalar(TestCase):
         assert_(np.isscalar(4.0))
 
 
+class TestAsscalar(TestCase):
+
+    def test_basic(self):
+        assert_(np.asscalar(4))
+        assert_(np.asscalar(np.array([3])))
+       
+
 class TestReal(TestCase):
 
     def test_real(self):
