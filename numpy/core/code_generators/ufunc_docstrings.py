@@ -2310,7 +2310,7 @@ add_newdoc('numpy.core.umath', 'fmax',
     Returns
     -------
     y : ndarray or scalar
-        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
+        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
     See Also
