@@ -2,7 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_almost_equal
+    run_module_suite, TestCase, assert_, assert_almost_equal,
+    assert_allclose
     )
 
 
@@ -13,40 +14,37 @@ class TestFinancial(TestCase):
 
     def test_irr(self):
         v = [-150000, 15000, 25000, 35000, 45000, 60000]
-        assert_almost_equal(np.irr(v),
-                            0.0524, 2)
+        assert_almost_equal(np.irr(v), 0.0524, 2)
         v = [-100, 0, 0, 74]
-        assert_almost_equal(np.irr(v),
-                            -0.0955, 2)
+        assert_almost_equal(np.irr(v), -0.0955, 2)
         v = [-100, 39, 59, 55, 20]
-        assert_almost_equal(np.irr(v),
-                            0.28095, 2)
+        assert_almost_equal(np.irr(v), 0.28095, 2)
         v = [-100, 100, 0, -7]
-        assert_almost_equal(np.irr(v),
-                            -0.0833, 2)
+        assert_almost_equal(np.irr(v), -0.0833, 2)
         v = [-100, 100, 0, 7]
-        assert_almost_equal(np.irr(v),
-                            0.06206, 2)
+        assert_almost_equal(np.irr(v), 0.06206, 2)
         v = [-5, 10.5, 1, -8, 1]
-        assert_almost_equal(np.irr(v),
-                            0.0886, 2)
+        assert_almost_equal(np.irr(v), 0.0886, 2)
 
     def test_pv(self):
-        assert_almost_equal(np.pv(0.07, 20, 12000, 0),
-                            -127128.17, 2)
+        assert_almost_equal(np.pv(0.07, 20, 12000, 0), -127128.17, 2)
 
     def test_fv(self):
-        assert_almost_equal(np.fv(0.075, 20, -2000, 0, 0),
-                            86609.36, 2)
+        assert_almost_equal(np.fv(0.075, 20, -2000, 0, 0), 86609.36, 2)
 
     def test_pmt(self):
-        assert_almost_equal(np.pmt(0.08/12, 5*12, 15000),
-                            -304.146, 3)
-        # This is to test the edge case where rate == 0.0
-        # it would fail on this case if the fix for checking rate == 0.0 was not there
-        assert_almost_equal(np.pmt(0.0, 5*12, 15000), -250.0, 3)
-        # This one tests the case where we use broadcast and arguments passed in are arrays.
-        assert_almost_equal(np.pmt([[0.0, 0.8],[0.3, 0.8]],[12, 3],[2000, 20000]), np.array([[-166.666, -19311.258],[-626.908, -19311.258]]), 3)
+        res = np.pmt(0.08/12, 5*12, 15000)
+        tgt = -304.145914
+        assert_allclose(res, tgt)
+        # Test the edge case where rate == 0.0
+        res = np.pmt(0.0, 5*12, 15000)
+        tgt = -250.0
+        assert_allclose(res, tgt)
+        # Test the case where we use broadcast and
+        # the arguments passed in are arrays.
+        res = np.pmt([[0.0, 0.8],[0.3, 0.8]],[12, 3],[2000, 20000])
+        tgt = np.array([[-166.66667, -19311.258],[-626.90814, -19311.258]])
+        assert_allclose(res, tgt)
 
     def test_ppmt(self):
         np.round(np.ppmt(0.1/12, 1, 60, 55000), 2) == 710.25
