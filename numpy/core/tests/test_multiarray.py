@@ -4818,7 +4818,12 @@ class TestWhere(TestCase):
 
     def test_exotic(self):
         # object
-        assert_array_equal(np.where(True, None, None), np.array(None))
+        assert_array_equal(np.where(True), (np.array([0]),))
+        assert_array_equal(np.where(True, None, None), (np.array([0]),))
+        assert_array_equal(
+            np.where(True, np.array(None), np.array(None)),
+            np.array(None)
+        )
         # zero sized
         m = np.array([], dtype=bool).reshape(0, 3)
         b = np.array([], dtype=np.float64).reshape(0, 3)
