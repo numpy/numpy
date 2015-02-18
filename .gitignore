@@ -6,6 +6,10 @@
 *$
 *.bak
 *.diff
+.idea/
+*.iml
+*.ipr
+*.iws
 *.org
 .project
 *.rej
