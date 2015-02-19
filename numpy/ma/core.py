@@ -6708,7 +6708,7 @@ size.__doc__ = np.size.__doc__
 #####--------------------------------------------------------------------------
 #---- --- Extra functions ---
 #####--------------------------------------------------------------------------
-def where (condition, x=None, y=None):
+def where(condition, *args, **kwargs):
     """
     Return a masked array with elements from x or y, depending on condition.
 
@@ -6755,10 +6755,36 @@ def where (condition, x=None, y=None):
      [6.0 -- 8.0]]
 
     """
-    if x is None and y is None:
+
+    if ((len(args) == 0) or (len(args) == 2)) and (len(kwargs) == 0):
+        pass
+    elif (len(args) == 1) and (len(kwargs) == 1):
+        if ("x" not in kwargs):
+            raise ValueError(
+                "Cannot provide `x` as an argument and a keyword argument."
+            )
+        if ("y" not in kwargs):
+            raise ValueError(
+                "Must provide `y` as a keyword argument if not as an argument."
+            )
+        args += (kwargs["y"],)
+    elif (len(args) == 0) and ((len(kwargs) == 0) or (len(kwargs) == 2)):
+        if (("x" not in kwargs) and ("y" not in kwargs) or
+            ("x" in kwargs) and ("y" in kwargs)):
+            raise ValueError(
+                "Must provide both `x` and `y` as keyword arguments or neither."
+            )
+        args += (kwargs["x"], kwargs["y"],)
+    else:
+        raise ValueError(
+            "Only takes 3 arguments was provided %i arguments." %
+            len(args) + len(kwargs)
+        )
+
+
+    if len(args) == 0:
         return filled(condition, 0).nonzero()
-    elif x is None or y is None:
-        raise ValueError("Either both or neither x and y should be given.")
+    x, y = args
     # Get the condition ...............
     fc = filled(condition, 0).astype(MaskType)
     notfc = np.logical_not(fc)
