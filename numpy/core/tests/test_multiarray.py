@@ -1748,6 +1748,12 @@ class TestMethods(TestCase):
                assert_array_equal(np.partition(d, kth)[kth], tgt,
                                   err_msg="data: %r\n kth: %r" % (d, kth))
 
+    def test_argpartition_gh5524(self):
+        #  A test for functionality of argpartition on lists.
+        d = [6,7,3,2,9,0]
+        p = np.argpartition(d,1)
+        self.assert_partitioned(np.array(d)[p],[1])
+
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
         x1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int32)
