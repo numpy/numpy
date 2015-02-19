@@ -3802,7 +3802,10 @@ class MaskedArray(ndarray):
         else:
             if m is not nomask:
                 self._mask += m
-        ndarray.__iadd__(self._data, np.where(self._mask, 0, getdata(other)))
+        ndarray.__iadd__(
+            self._data,
+            np.where(self._mask, self.dtype.type(0), getdata(other))
+        )
         return self
     #....
     def __isub__(self, other):
@@ -3814,7 +3817,10 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        ndarray.__isub__(self._data, np.where(self._mask, 0, getdata(other)))
+        ndarray.__isub__(
+            self._data,
+            np.where(self._mask, self.dtype.type(0), getdata(other))
+        )
         return self
     #....
     def __imul__(self, other):
@@ -3826,7 +3832,10 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        ndarray.__imul__(self._data, np.where(self._mask, 1, getdata(other)))
+        ndarray.__imul__(
+            self._data,
+            np.where(self._mask, self.dtype.type(1), getdata(other))
+        )
         return self
     #....
     def __idiv__(self, other):
@@ -3841,7 +3850,10 @@ class MaskedArray(ndarray):
             other_data = np.where(dom_mask, fval, other_data)
 #        self._mask = mask_or(self._mask, new_mask)
         self._mask |= new_mask
-        ndarray.__idiv__(self._data, np.where(self._mask, 1, other_data))
+        ndarray.__idiv__(
+            self._data,
+            np.where(self._mask, self.dtype.type(1), other_data)
+        )
         return self
     #....
     def __ifloordiv__(self, other):
@@ -3856,7 +3868,10 @@ class MaskedArray(ndarray):
             other_data = np.where(dom_mask, fval, other_data)
 #        self._mask = mask_or(self._mask, new_mask)
         self._mask |= new_mask
-        ndarray.__ifloordiv__(self._data, np.where(self._mask, 1, other_data))
+        ndarray.__ifloordiv__(
+            self._data,
+            np.where(self._mask, self.dtype.type(1), other_data)
+        )
         return self
     #....
     def __itruediv__(self, other):
@@ -3871,7 +3886,10 @@ class MaskedArray(ndarray):
             other_data = np.where(dom_mask, fval, other_data)
 #        self._mask = mask_or(self._mask, new_mask)
         self._mask |= new_mask
-        ndarray.__itruediv__(self._data, np.where(self._mask, 1, other_data))
+        ndarray.__itruediv__(
+            self._data,
+            np.where(self._mask, self.dtype.type(1), other_data)
+        )
         return self
     #...
     def __ipow__(self, other):
@@ -3879,7 +3897,10 @@ class MaskedArray(ndarray):
         other_data = getdata(other)
         other_mask = getmask(other)
         with np.errstate(divide='ignore', invalid='ignore'):
-            ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
+            ndarray.__ipow__(
+                self._data,
+                np.where(self._mask, self.dtype.type(1), other_data)
+            )
         invalid = np.logical_not(np.isfinite(self._data))
         if invalid.any():
             if self._mask is not nomask:

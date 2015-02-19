@@ -1723,6 +1723,13 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         xm[2] = masked
         self.intdata = (x, y, xm)
         self.floatdata = (x.astype(float), y.astype(float), xm.astype(float))
+        self.othertypes = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        self.othertypes = [np.dtype(_).type for _ in self.othertypes]
+        self.uint8data = (
+            x.astype(np.uint8),
+            y.astype(np.uint8),
+            xm.astype(np.uint8)
+        )
 
     def test_inplace_addition_scalar(self):
         # Test of inplace additions
@@ -1989,6 +1996,226 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         a *= b
         assert_equal(a, [[1, 1], [3, 3]])
         assert_equal(a.mask, [[0, 1], [0, 1]])
+
+    def test_inplace_addition_scalar_type(self):
+        # Test of inplace additions
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                xm[2] = masked
+                x += t(1)
+                assert_equal(x, y + t(1))
+                xm += t(1)
+                assert_equal(xm, y + t(1))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_addition_array_type(self):
+        # Test of inplace additions
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                m = xm.mask
+                a = arange(10, dtype=t)
+                a[-1] = masked
+                x += a
+                xm += a
+                assert_equal(x, y + a)
+                assert_equal(xm, y + a)
+                assert_equal(xm.mask, mask_or(m, a.mask))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_subtraction_scalar_type(self):
+        # Test of inplace subtractions
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                x -= t(1)
+                assert_equal(x, y - t(1))
+                xm -= t(1)
+                assert_equal(xm, y - t(1))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+
+    def test_inplace_subtraction_array_type(self):
+        # Test of inplace subtractions
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                m = xm.mask
+                a = arange(10, dtype=t)
+                a[-1] = masked
+                x -= a
+                xm -= a
+                assert_equal(x, y - a)
+                assert_equal(xm, y - a)
+                assert_equal(xm.mask, mask_or(m, a.mask))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_multiplication_scalar_type(self):
+        # Test of inplace multiplication
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                x *= t(2)
+                assert_equal(x, y * t(2))
+                xm *= t(2)
+                assert_equal(xm, y * t(2))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_multiplication_array_type(self):
+        # Test of inplace multiplication
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                m = xm.mask
+                a = arange(10, dtype=t)
+                a[-1] = masked
+                x *= a
+                xm *= a
+                assert_equal(x, y * a)
+                assert_equal(xm, y * a)
+                assert_equal(xm.mask, mask_or(m, a.mask))
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_floor_division_scalar_type(self):
+        # Test of inplace division
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                x = arange(10, dtype=t) * t(2)
+                xm = arange(10, dtype=t) * t(2)
+                xm[2] = masked
+                x //= t(2)
+                xm //= t(2)
+                assert_equal(x, y)
+                assert_equal(xm, y)
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_floor_division_array_type(self):
+        # Test of inplace division
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                m = xm.mask
+                a = arange(10, dtype=t)
+                a[-1] = masked
+                x //= a
+                xm //= a
+                assert_equal(x, y // a)
+                assert_equal(xm, y // a)
+                assert_equal(
+                    xm.mask,
+                    mask_or(mask_or(m, a.mask), (a == t(0)))
+                )
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_division_scalar_type(self):
+        # Test of inplace division
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                x = arange(10, dtype=t) * t(2)
+                xm = arange(10, dtype=t) * t(2)
+                xm[2] = masked
+
+                # May get a DeprecationWarning or a TypeError.
+                #
+                # This is a consequence of the fact that this is true divide
+                # and will require casting to float for calculation and
+                # casting back to the original type. This will only be raised
+                # with integers. Whether it is an error or warning is only
+                # dependent on how stringent the casting rules are.
+                #
+                # Will handle the same way.
+                try:
+                    x /= t(2)
+                    assert_equal(x, y)
+                except (DeprecationWarning, TypeError) as e:
+                    warnings.warn(str(e))
+                try:
+                    xm /= t(2)
+                    assert_equal(xm, y)
+                except (DeprecationWarning, TypeError) as e:
+                    warnings.warn(str(e))
+
+                if issubclass(t, np.integer):
+                    assert_equal(len(w), 2, "Failed on type=%s." % t)
+                else:
+                    assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_division_array_type(self):
+        # Test of inplace division
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                (x, y, xm) = (_.astype(t) for _ in self.uint8data)
+                m = xm.mask
+                a = arange(10, dtype=t)
+                a[-1] = masked
+
+                # May get a DeprecationWarning or a TypeError.
+                #
+                # This is a consequence of the fact that this is true divide
+                # and will require casting to float for calculation and
+                # casting back to the original type. This will only be raised
+                # with integers. Whether it is an error or warning is only
+                # dependent on how stringent the casting rules are.
+                #
+                # Will handle the same way.
+                try:
+                    x /= a
+                    assert_equal(x, y / a)
+                except (DeprecationWarning, TypeError) as e:
+                    warnings.warn(str(e))
+                try:
+                    xm /= a
+                    assert_equal(xm, y / a)
+                    assert_equal(
+                        xm.mask,
+                        mask_or(mask_or(m, a.mask), (a == t(0)))
+                    )
+                except (DeprecationWarning, TypeError) as e:
+                    warnings.warn(str(e))
+
+                if issubclass(t, np.integer):
+                    assert_equal(len(w), 2, "Failed on type=%s." % t)
+                else:
+                    assert_equal(len(w), 0, "Failed on type=%s." % t)
+
+    def test_inplace_pow_type(self):
+        # Test keeping data w/ (inplace) power
+        for t in self.othertypes:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings("always")
+                # Test pow on scalar
+                x = array([1, 2, 3], mask=[0, 0, 1], dtype=t)
+                xx = x ** t(2)
+                xx_r = array([1, 2 ** 2, 3], mask=[0, 0, 1], dtype=t)
+                assert_equal(xx.data, xx_r.data)
+                assert_equal(xx.mask, xx_r.mask)
+                # Test ipow on scalar
+                x **= t(2)
+                assert_equal(x.data, xx_r.data)
+                assert_equal(x.mask, xx_r.mask)
+
+                assert_equal(len(w), 0, "Failed on type=%s." % t)
 
 
 #------------------------------------------------------------------------------
