@@ -1244,7 +1244,7 @@ def _assert_valid_refcount(op):
 
     assert_(sys.getrefcount(i) >= rc)
 
-def assert_allclose(actual, desired, rtol=1e-7, atol=0,
+def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=False,
                     err_msg='', verbose=True):
     """
     Raises an AssertionError if two objects are not equal up to desired
@@ -1266,6 +1266,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
         Relative tolerance.
     atol : float, optional
         Absolute tolerance.
+    equal_nan : bool, optional.
+        If True, NaNs will compare equal.
     err_msg : str, optional
         The error message to be printed in case of failure.
     verbose : bool, optional
@@ -1289,7 +1291,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     """
     import numpy as np
     def compare(x, y):
-        return np.core.numeric._allclose_points(x, y, rtol=rtol, atol=atol)
+        return np.core.numeric.isclose(x, y, rtol=rtol, atol=atol,
+                                             equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = 'Not equal to tolerance rtol=%g, atol=%g' % (rtol, atol)
