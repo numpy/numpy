@@ -1921,12 +1921,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         m = mask_or(m, getmask(w))
 
     if m is not nomask:
+        not_m = ~m
         if w is not None:
-            w = ~m*w
-        else:
-            w = ~m
-
-    return np.polyfit(x, y, deg, rcond, full, w, cov)
+            w = w[not_m]
+        return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
+    else:
+        return np.polyfit(x, y, deg, rcond, full, w, cov)
 
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)
 
