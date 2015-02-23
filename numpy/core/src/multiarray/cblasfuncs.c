@@ -685,7 +685,7 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
     int j, l, lda, ldb;
     int nd;
     double prior1, prior2;
-    PyArrayObject *ret;
+    PyArrayObject *ret = NULL;
     npy_intp dimensions[NPY_MAXDIMS];
     PyTypeObject *subtype;
 
