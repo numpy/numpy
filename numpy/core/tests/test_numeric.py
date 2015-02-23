@@ -1574,6 +1574,11 @@ class TestAllclose(object):
         assert_(allclose(a, a))
 
 
+    def test_equalnan(self):
+        x = np.array([1.0, np.nan])
+        assert_(allclose(x, x, equal_nan=True))
+
+
 class TestIsclose(object):
     rtol = 1e-5
     atol = 1e-8
@@ -1664,14 +1669,22 @@ class TestIsclose(object):
         assert_array_equal(isclose(arr, arr, equal_nan=True), [True, True])
 
     def test_masked_arrays(self):
+        # Make sure to test the output type when arguments are interchanged.
+
         x = np.ma.masked_where([True, True, False], np.arange(3))
         assert_(type(x) is type(isclose(2, x)))
+        assert_(type(x) is type(isclose(x, 2)))
 
         x = np.ma.masked_where([True, True, False], [nan, inf, nan])
         assert_(type(x) is type(isclose(inf, x)))
+        assert_(type(x) is type(isclose(x, inf)))
 
         x = np.ma.masked_where([True, True, False], [nan, nan, nan])
         y = isclose(nan, x, equal_nan=True)
+        assert_(type(x) is type(y))
+        # Ensure that the mask isn't modified...
+        assert_array_equal([True, True, False], y.mask)
+        y = isclose(x, nan, equal_nan=True)
         assert_(type(x) is type(y))
         # Ensure that the mask isn't modified...
         assert_array_equal([True, True, False], y.mask)

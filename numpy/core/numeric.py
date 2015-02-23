@@ -1024,9 +1024,8 @@ def outer(a, b, out=None):
         Second input vector.  Input is flattened if
         not already 1-dimensional.
     out : (M, N) ndarray, optional
-          A location where the result is stored
-
         .. versionadded:: 1.9.0
+        A location where the result is stored
 
     Returns
     -------
@@ -2206,42 +2205,7 @@ def identity(n, dtype=None):
     from numpy import eye
     return eye(n, dtype=dtype)
 
-def _allclose_points(a, b, rtol=1.e-5, atol=1.e-8):
-    """
-    This is the point-wise inner calculation of 'allclose', which is subtly
-    different from 'isclose'.  Provided as a comparison routine for use in
-    testing.assert_allclose.
-    See those routines for further details.
-
-    """
-    x = array(a, copy=False, ndmin=1)
-    y = array(b, copy=False, ndmin=1)
-
-    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
-    # casting of x later.
-    dtype = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dtype, copy=False)
-
-    xinf = isinf(x)
-    yinf = isinf(y)
-    if any(xinf) or any(yinf):
-        # Check that x and y have inf's only in the same positions
-        if not all(xinf == yinf):
-            return False
-        # Check that sign of inf's in x and y is the same
-        if not all(x[xinf] == y[xinf]):
-            return False
-
-        x = x[~xinf]
-        y = y[~xinf]
-
-    # ignore invalid fpe's
-    with errstate(invalid='ignore'):
-        r = less_equal(abs(x - y), atol + rtol * abs(y))
-
-    return r
-
-def allclose(a, b, rtol=1.e-5, atol=1.e-8):
+def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -2262,6 +2226,10 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
         The relative tolerance parameter (see Notes).
     atol : float
         The absolute tolerance parameter (see Notes).
+    equal_nan : bool
+        .. versionadded:: 1.10.0
+        Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+        considered equal to NaN's in `b` in the output array.
 
     Returns
     -------
@@ -2294,9 +2262,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     False
     >>> np.allclose([1.0, np.nan], [1.0, np.nan])
     False
+    >>> np.allclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+    True
 
     """
-    return all(_allclose_points(a, b, rtol=rtol, atol=atol))
+    return all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2366,6 +2336,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     x = array(a, copy=False, subok=True, ndmin=1)
     y = array(b, copy=False, subok=True, ndmin=1)
+
+    # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+    # This will cause casting of x later. Also, make sure to allow subclasses
+    # (e.g., for numpy.ma).
+    dt = multiarray.result_type(y, 1.)
+    y = array(y, dtype=dt, copy=False, subok=True)
+
     xfin = isfinite(x)
     yfin = isfinite(y)
     if all(xfin) and all(yfin):

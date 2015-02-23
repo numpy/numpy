@@ -144,6 +144,18 @@ returned values, especially for corner cases.
 The strings produced by ``float.hex`` look like ``0x1.921fb54442d18p+1``,
 so this is not the hex used to represent unsigned integer types.
 
+*np.isclose* properly handles minimal values of integer dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to properly handle minimal values of integer types, *np.isclose* will
+now cast to the float dtype during comparisons. This aligns its behavior with
+what was provided by *np.allclose*.
+
+*np.allclose* uses *np.isclose* internally.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.allcose* now uses *np.isclose* internally and inherits the ability to
+compare NaNs as equal by setting ``equal_nan=True``. Subclasses, such as
+*np.ma.MaskedArray*, are also preserved now.
+
 
 Changes
 =======
