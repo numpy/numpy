@@ -1024,9 +1024,8 @@ def outer(a, b, out=None):
         Second input vector.  Input is flattened if
         not already 1-dimensional.
     out : (M, N) ndarray, optional
-          A location where the result is stored
-
         .. versionadded:: 1.9.0
+        A location where the result is stored
 
     Returns
     -------
@@ -2228,6 +2227,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     atol : float
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
+        .. versionadded:: 1.10.0
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
 
