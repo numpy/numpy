@@ -2337,10 +2337,11 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     x = array(a, copy=False, subok=True, ndmin=1)
     y = array(b, copy=False, subok=True, ndmin=1)
 
-    # make sure y is an inexact type to avoid abs(MIN_INT); will cause
-    # casting of x later. Make sure to allow subclasses (e.g., for numpy.ma).
-    dtype = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dtype, copy=False, subok=True)
+    # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+    # This will cause casting of x later. Also, make sure to allow subclasses
+    # (e.g., for numpy.ma).
+    dt = multiarray.result_type(y, 1.)
+    y = array(y, dtype=dt, copy=False, subok=True)
 
     xfin = isfinite(x)
     yfin = isfinite(y)
