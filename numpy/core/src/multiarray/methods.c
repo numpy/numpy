@@ -311,15 +311,284 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_Return((PyArrayObject *)PyArray_ArgMin(self, axis, out));
 }
 
+PyObject * _String_Min_Or_Max(PyArrayObject *self, npy_bool axis_flags[], 
+				PyArrayObject* out, int keepdims, 
+				PyObject *PyArray_ArgMax_ArgMin(PyArrayObject*, int, PyArrayObject*)){
+	PyArrayObject *ap = NULL, *rp = NULL, *op = self;
+	PyObject* argmax = NULL;
+	PyArray_ArgFunc* arg_func;
+	npy_intp i, n, m, *rptr, k, iter=0;
+	int once=0, elsize, all=1, axis,  argmax_size;
+	char *ip, *data, * it;
+	for(i=0; i < PyArray_NDIM(self); ++i){
+		if(axis_flags[i]==0){
+			all=0;
+			break;
+		}
+	}
+	if(all==1){
+		once=1;
+	}
+
+	if(out != NULL){
+		int i, target_ndim=0;
+		npy_intp target_dims[NPY_MAXDIMS];
+		if(once==1 && keepdims==1){
+			target_ndim = PyArray_NDIM(op);
+			for(i=0; i<target_ndim; ++i){
+				target_dims[i] = 1;
+			}
+		}
+		else if (once==1 && keepdims==0){
+			target_ndim = 0; 
+		}
+		else{
+			for(i=0; i<PyArray_NDIM(op); ++i){
+				if(axis_flags[i]==1 && keepdims == 1){
+					target_dims[target_ndim++] = 1;	
+				}
+				else if(axis_flags[i]==0){
+					target_dims[target_ndim++] = PyArray_DIMS(op)[i];
+				}
+			}
+		}
+		if ((PyArray_NDIM(out) != target_ndim) ||
+			!PyArray_CompareLists(PyArray_DIMS(out), target_dims,
+									PyArray_NDIM(out))) {
+			PyErr_SetString(PyExc_ValueError,
+					"output array size does not match result size.");
+			return NULL;
+		}
+		rp = (PyArrayObject *)PyArray_FromArray(out,
+							PyArray_DescrNew(PyArray_DESCR(op)),
+							NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+		if (rp == NULL) {
+			return NULL;
+		}
+	}
+	if(PyArray_IsZeroDim(op)){
+		argmax = PyArray_ArgMax_ArgMin(self, NPY_MAXDIMS, NULL);
+		ap = PyArray_TakeFrom(self, argmax,
+				NPY_MAXDIMS, rp, NPY_RAISE);
+		Py_DECREF(argmax);
+		if (out!=NULL && out != rp) {
+			Py_DECREF(rp);
+			rp = out;
+			Py_INCREF(rp);
+			return PyArray_Return((PyArrayObject *)rp);	
+		}
+		return PyArray_Return(ap);
+	}
+
+	for(k=0; k<PyArray_NDIM(self); ++k){
+		if(once==0){
+			while(k<PyArray_NDIM(self) && !axis_flags[k]) ++k;
+			if(k==PyArray_NDIM(self)){
+				break;
+			}
+			if(keepdims==1){
+				axis=k;
+			}
+			else{
+				axis=k-iter;
+				++iter;
+			}
+		}
+		else{
+			/*finish after one iteration*/
+			axis = NPY_MAXDIMS;
+			k=NPY_MAXDIMS;
+		}
+
+		if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
+			return NULL;
+		}
+		/*copied from PyArray_ArgMin with small change. Transposition is required for
+		 * correct index calculus*/
+		if (axis != PyArray_NDIM(ap)-1 && axis != NPY_MAXDIMS) {
+			int j;
+			PyArray_Dims newaxes;
+			npy_intp dims[NPY_MAXDIMS];
+			newaxes.ptr = dims;
+			newaxes.len = PyArray_NDIM(ap);
+			for (j = 0; j < axis; j++) {
+				dims[j] = j;
+			}
+			for (j = axis; j < PyArray_NDIM(ap) - 1; j++) {
+				dims[j] = j + 1;
+			}
+			dims[PyArray_NDIM(ap) - 1] = axis;
+			op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
+			Py_DECREF(ap);
+			if (op == NULL) {
+				return NULL;
+			}
+		}
+		else{
+			op = ap;
+		}
+		
+		/*in ap is c-contigous copy of primary array in argmax we have indices
+		that will be used to get correct subarray*/		
+		
+		ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
+								  PyArray_DESCR(op)->type_num, 1, 0);		  
+		Py_DECREF(op);
+		argmax = PyArray_ArgMax_ArgMin(ap, PyArray_NDIM(ap)-1, NULL);
+		
+		data  = PyArray_DATA(argmax);
+		it = data;
+		argmax_size = PyArray_SIZE(argmax);
+		m = PyArray_SIZE(ap)/argmax_size;
+		if(PyArray_IsZeroDim(argmax)){
+			op = PyArray_TakeFrom(ap, argmax,
+				NPY_MAXDIMS, NULL, NPY_RAISE);
+		}
+		else{
+			elsize = PyArray_ITEMSIZE(argmax);
+			for(i=0; i<argmax_size; ++i, it+=elsize){
+				 npy_intp c_type = *(npy_intp*)it;
+				 PyObject* obj;
+				 c_type = i*m+c_type;
+				 obj = PyArray_ToScalar(&c_type, argmax);
+				 PyArray_SETITEM(argmax, it, obj);
+				 Py_DECREF(obj);
+			}
+			op = PyArray_TakeFrom(ap, argmax,
+				NPY_MAXDIMS, NULL, NPY_RAISE);
+		}	
+		Py_DECREF(argmax);
+		Py_DECREF(ap);
+		if(keepdims==1 && once==0){
+			int j;
+			PyArray_Dims newshape;
+			npy_intp dims[NPY_MAXDIMS];
+			npy_intp* old_dims = PyArray_DIMS(ap);
+			ap = op;
+			newshape.ptr = dims;
+			newshape.len = PyArray_NDIM(ap)+1;
+			for(j=0; j<axis; ++j){
+				dims[j] = old_dims[j];
+			}
+			for(j=axis+1; j<newshape.len; ++j){
+				dims[j]=old_dims[j-1];
+			}
+			dims[axis] = 1;
+			op = (PyArrayObject *)PyArray_Newshape(ap, &newshape, NPY_CORDER);
+			if(op!=ap){
+				Py_DECREF(ap);
+			} 
+			if (op == NULL) {
+				return NULL;
+			}
+		}
+		else if(keepdims==1 && once==1){
+			int j;
+			PyArray_Dims newshape;
+			npy_intp dims[NPY_MAXDIMS];
+			ap = op;
+			newshape.ptr = dims;
+			newshape.len = PyArray_NDIM(self);
+			npy_intp* old_dims = PyArray_DIMS(ap);
+			if(!PyArray_IsZeroDim(ap)){	
+				dims[0] = old_dims[0];
+			}
+			else{
+				dims[0] = 1;
+			}
+			for(j=1; j<newshape.len; ++j){
+				dims[j]=1;
+			}
+			op = (PyArrayObject *)PyArray_Newshape(ap, &newshape, NPY_CORDER);
+			
+			if(op!=ap){
+				Py_DECREF(ap);
+			} 
+			
+			if (op == NULL) {
+				return NULL;
+			}
+		}
+	}
+	if(out != NULL){
+		PyArray_AssignArray(rp, op , NULL ,
+			                  NPY_DEFAULT_ASSIGN_CASTING);
+        if (out != rp) {
+			Py_DECREF(rp);
+			rp = out;
+			Py_INCREF(rp);
+		}
+		Py_DECREF(op);
+		return PyArray_Return((PyArrayObject *)rp);	
+	}
+	return PyArray_Return((PyArrayObject *)op);	  
+		
+	
+}
+
 static PyObject *
 array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
+	if(PyTypeNum_ISSTRING(PyArray_TYPE(self))){
+		npy_bool axis_flags[NPY_MAXDIMS];
+		PyArrayObject *out = NULL;
+		PyObject *axis_in = NULL;
+		int keepdims, i;
+		static char *kwlist[] = {"axis", "out", "keepdims", NULL};
+		
+		keepdims=0;
+		
+		if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&", kwlist, 
+					&axis_in, PyArray_OutputConverter, &out,
+					PyArray_BoolConverter, &keepdims))
+			return NULL;
+		if(axis_in==NULL || axis_in==Py_None){
+			for(i=0; i < PyArray_NDIM(self); ++i){
+				axis_flags[i]=1;
+			}
+		}
+		else{
+			if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(self),
+										axis_flags) != NPY_SUCCEED) {
+				return NULL;
+			}
+		}
+		return _String_Min_Or_Max(self, axis_flags, out, keepdims, 
+				PyArray_ArgMax);
+	}
     NPY_FORWARD_NDARRAY_METHOD("_amax");
 }
 
 static PyObject *
 array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
+	if(PyTypeNum_ISSTRING(PyArray_TYPE(self))){
+		npy_bool axis_flags[NPY_MAXDIMS];
+		PyArrayObject *out = NULL;
+		PyObject *axis_in = NULL;
+		int keepdims, i;
+		static char *kwlist[] = {"axis", "out", "keepdims", NULL};
+		
+		keepdims=0;
+		
+		if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&", kwlist, 
+					&axis_in, PyArray_OutputConverter, &out,
+					PyArray_BoolConverter, &keepdims))
+			return NULL;
+		if(axis_in==NULL || axis_in==Py_None){
+			for(i=0; i < PyArray_NDIM(self); ++i){
+				axis_flags[i]=1;
+			}
+		}
+		else{
+			if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(self),
+										axis_flags) != NPY_SUCCEED) {
+				return NULL;
+			}
+		}
+		return _String_Min_Or_Max(self, axis_flags, out, keepdims, 
+				PyArray_ArgMin);
+	}
     NPY_FORWARD_NDARRAY_METHOD("_amin");
 }
 

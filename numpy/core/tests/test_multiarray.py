@@ -2448,6 +2448,193 @@ class TestStringCompare(TestCase):
         assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0, 1, 2]])
         assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0, 1, 2]])
 
+class TestMax(TestCase):
+	def test_string_max(self):
+		a = array("za")
+		b = a.max()
+		result  = array("za", dtype='<U2');
+		assert_array_equal(b, result)
+		
+		a = array("za");
+		b = a.max(keepdims=True)
+		result  = array("za", dtype='<U2')
+		assert_array_equal(b, result)
+
+		a = array(["aaa", "za"]);
+		b = a.max()
+		result  = array("za", dtype='<U2')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0)
+		result  = array("za", dtype='<U2')
+		assert_array_equal(b, result)
+		
+		b = a.max(keepdims=True)
+		result  = array(["za"], dtype='<U3')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0, keepdims=True)
+		result  = array(["za"], dtype='<U3')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0, keepdims=True)
+		result  = array(["za"], dtype='<U3')
+		assert_array_equal(b, result)
+
+		a = array([["aaa", "za", "eska"],["z", "brot", "ted"]]);
+		b = a.max()
+		result  = array("za", dtype='<U4')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0)
+		result  = array(["z", "za", "ted"], dtype='<U4');
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=1)
+		result  = array(["za", "z"], dtype='<U4')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(0,1))
+		result  = array("za", dtype='<U2')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(0,1), keepdims=True)
+		result  = array([["za"]], dtype='<U2')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0, keepdims=True)
+		result  = array([["z", "za", "ted"]], dtype='<U4')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=1, keepdims=True)
+		result  = array([["za"], ["z"]], dtype='<U4')
+		assert_array_equal(b, result)
+		
+		b = a.max(keepdims=True)
+		result  = array([["za"]], dtype='<U4')
+		assert_array_equal(b, result)
+		
+		a = array([[['v','u'],
+				['j','k'],
+				['s', 'b']],
+
+				[['x', 'd'],
+				['c', 'e'],
+				['f', 'h']],
+
+				[['w', 'i'],
+				['o', 'n'],
+				['g', 'm']],
+
+				[['t', 'y'],
+				['alicja', 'p'],
+				['l', 'r']]])
+		b = a.max()
+		result  = array("y", dtype='<U1')
+		assert_array_equal(b, result)
+		
+		b = a.max(keepdims=True)
+		result  = array([[["y"]]], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(2,0,1),keepdims=True)
+		result  = array([[["y"]]], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(0,2,1))
+		result  = array("y", dtype='<U1')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=0,keepdims=False)
+		result  = array([['x', 'y'],
+							['o', 'p'],
+							['s', 'r']], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=1,keepdims=False)
+		result  = array([['v', 'u'],
+							['x', 'h'],
+							['w', 'n'],
+							['t', 'y']], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=2,keepdims=True)
+		result  = array([[['v'],
+							['k'],
+							['s']],
+
+							[['x'],
+							['e'],
+							['h']],
+
+							[['w'],
+							['o'],
+							['m']],
+
+							[['y'],
+							['p'],
+							['r']]], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(1,0))
+		result  = array(['x', 'y'], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(2,0), keepdims=True)
+		result  = array([[['y'],
+							 ['p'],
+							 ['s']]]
+		, dtype='<U6')
+		assert_array_equal(b, result)
+		
+		b = a.max(axis=(2,1))
+		result  = array(['v', 'x', 'w', 'y'], dtype='<U6')
+		assert_array_equal(b, result)
+		
+		a = array([[["al", "ma"], ["er", "error"]],
+			[["zab", "tru"],["love","mango"]],
+			[["uma", "uncy"],["big", "cya"]]])
+		b = np.empty((), dtype = "<U5")
+		result = array("zab")
+		a.max(out=b)
+		assert_array_equal(b, result)
+
+
+		b = np.empty((3), dtype = "<U5")
+		a.max(axis=(1,2), out=b)
+		result = array(['ma', 'zab', 'uncy'])
+		assert_array_equal(b, result)
+
+		b = np.empty((3,1,2), dtype = "<U5")
+		a.max(axis=1, out=b, keepdims=True)
+		result = array([[['er', 'ma']],
+						[['zab', 'tru']],
+						[['uma', 'uncy']]])
+		assert_array_equal(b, result)
+
+		b = np.empty((3,2), dtype = "<U5")
+		a.max(axis=1, out=b)
+		result = array([['er', 'ma'],
+						['zab', 'tru'],
+						['uma', 'uncy']])
+		assert_array_equal(b, result)
+
+		a = array([["z","ala"],["ala", "z"]])
+		b = np.empty((1,1), dtype = "<U2")
+		a.max(keepdims=True, out=b)
+		result = array([["z"]])
+		assert_array_equal(b, result)
+	def test_string_max(self):
+		a = array([[["al", "ma"], ["er", "error"]],
+			[["zab", "tru"],["love","mango"]],
+			[["uma", "uncy"],["big", "cya"]]], dtype="<S5")
+		b = np.empty((3,2), dtype = "<S5")
+		a.max(axis=1, out=b)
+		result = array([['er', 'ma'],
+						['zab', 'tru'],
+						['uma', 'uncy']], "<S5")
+		assert_array_equal(b, result)		
+
 
 class TestArgmax(TestCase):
 
