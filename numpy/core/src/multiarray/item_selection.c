@@ -427,10 +427,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
     PyArray_FastPutmaskFunc *func;
-    PyArrayObject  *mask, *values;
+    PyArrayObject *mask, *values;
     PyArray_Descr *dtype;
-    npy_intp i, chunk, ni, max_item, nv, tmp;
+    npy_intp i, j, chunk, ni, max_item, nv;
     char *src, *dest;
+    npy_bool *mask_data;
     int copied = 0;
 
     mask = NULL;
@@ -469,6 +470,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         "the same size");
         goto fail;
     }
+    mask_data = PyArray_DATA(mask);
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
     values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
@@ -483,14 +485,20 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         Py_INCREF(Py_None);
         return Py_None;
     }
+    src = PyArray_DATA(values);
+
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        for (i = 0; i < ni; i++) {
-            tmp = ((npy_bool *)(PyArray_DATA(mask)))[i];
-            if (tmp) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
-                PyArray_Item_INCREF(src, PyArray_DESCR(self));
-                PyArray_Item_XDECREF(dest+i*chunk, PyArray_DESCR(self));
-                memmove(dest + i * chunk, src, chunk);
+        for (i = 0, j = 0; i < ni; i++, j++) {
+            if (j >= nv) {
+                j = 0;
+            }
+            if (mask_data[i]) {
+                char *src_ptr = src + j*chunk;
+                char *dest_ptr = dest + i*chunk;
+
+                PyArray_Item_INCREF(src_ptr, PyArray_DESCR(self));
+                PyArray_Item_XDECREF(dest_ptr, PyArray_DESCR(self));
+                memmove(dest_ptr, src_ptr, chunk);
             }
         }
     }
@@ -499,16 +507,17 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
         func = PyArray_DESCR(self)->f->fastputmask;
         if (func == NULL) {
-            for (i = 0; i < ni; i++) {
-                tmp = ((npy_bool *)(PyArray_DATA(mask)))[i];
-                if (tmp) {
-                    src = PyArray_BYTES(values) + chunk*(i % nv);
-                    memmove(dest + i*chunk, src, chunk);
+            for (i = 0, j = 0; i < ni; i++, j++) {
+                if (j >= nv) {
+                    j = 0;
+                }
+                if (mask_data[i]) {
+                    memmove(dest + i*chunk, src + j*chunk, chunk);
                 }
             }
         }
         else {
-            func(dest, PyArray_DATA(mask), ni, PyArray_DATA(values), nv);
+            func(dest, mask_data, ni, src, nv);
         }
         NPY_END_THREADS;
     }
