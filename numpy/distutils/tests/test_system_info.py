@@ -7,7 +7,30 @@ import distutils
 from numpy.testing import *
 from numpy.distutils.system_info import *
 
-simple_site = """\
+def get_class(name, notfound_action=1):
+    """
+    notfound_action:
+      0 - do nothing
+      1 - display warning message
+      2 - raise error
+    """
+    cl = {'temp1': test_temp1,
+          'temp2': test_temp2
+          }.get(name.lower(), test_system_info)
+    return cl()
+
+def get_standard_file(fname):
+    """
+    Overrides the get_standard_file from system_info
+    """
+    tmpdir = mkdtemp()
+    filename = tmpdir + '/' + fname 
+    with open(filename,'w') as fd:
+        fd.write(site_cfg.encode('ascii'))
+    filenames = [filename]
+    return filenames
+
+simple_site = """
 [ALL]
 library_dirs = {dir1:s}:{dir2:s}
 libraries = {lib1:s},{lib2:s}
@@ -26,7 +49,7 @@ extra_link_args = -Wl,-rpath={lib2:s}
 """
 site_cfg = simple_site
 
-fakelib_c_text = r'''
+fakelib_c_text = """
 /* This file is generated from numpy/distutils/testing/test_system_info.py */
 #include<stdio.h>
 void foo(void) {
@@ -35,7 +58,7 @@ void foo(void) {
 void bar(void) {
    printf("Hello bar");
 }
-'''
+"""
 
 class test_system_info(system_info):
     def __init__(self,
@@ -73,29 +96,6 @@ class test_temp1(test_system_info):
 class test_temp2(test_system_info):
     section = 'temp2'
 
-def get_class(name, notfound_action=1):
-    """
-    notfound_action:
-      0 - do nothing
-      1 - display warning message
-      2 - raise error
-    """
-    cl = {'temp1': test_temp1,
-          'temp2': test_temp2
-          }.get(name.lower(), test_system_info)
-    return cl()
-
-def get_standard_file(fname):
-    """
-    Overrides the get_standard_file from system_info
-    """
-    tmpdir = mkdtemp()
-    filename = tmpdir + '/' + fname 
-    with open(filename,'w') as fd:
-        fd.write(site_cfg.encode('ascii'))
-    filenames = [filename]
-    return filenames
-
 class TestSystemInfoReading(TestCase):
 
     def setUp(self):
@@ -117,9 +117,9 @@ class TestSystemInfoReading(TestCase):
                 })
         # Write the sources
         with open(self._src1,'w') as fd:
-            fd.write(fakelib_c_text.encode('ascii'))
+            fd.write(fakelib_c_text)
         with open(self._src2,'w') as fd:
-            fd.write(fakelib_c_text.encode('ascii'))
+            fd.write(fakelib_c_text)
 
     def tearDown(self):
         try: 
@@ -177,7 +177,10 @@ class TestSystemInfoReading(TestCase):
         tsi = get_class('temp1')
         c = distutils.ccompiler.new_compiler()
         # Change directory to not screw up directories
-        previousDir = os.getcwd()
+        try:
+            previousDir = os.getcwd()
+        except OSError:
+            return
         os.chdir(self._dir1)
         c.compile([os.path.basename(self._src1)], output_dir=self._dir1,
                   include_dirs=tsi.get_include_dirs())
@@ -190,7 +193,10 @@ class TestSystemInfoReading(TestCase):
         tsi = get_class('temp2')
         c = distutils.ccompiler.new_compiler()
         # Change directory to not screw up directories
-        previousDir = os.getcwd()
+        try:
+            previousDir = os.getcwd()
+        except OSError:
+            return
         os.chdir(self._dir2)
         c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
                   include_dirs=tsi.get_include_dirs(),
