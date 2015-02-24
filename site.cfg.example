@@ -52,6 +52,26 @@
 #       True) to tell numpy.distutils to prefer static libraries (.a) over
 #       shared libraries (.so). It is turned off by default.
 #           search_static_first = false
+#
+#   runtime_library_dirs
+#       List of directories that contains the libraries that should be 
+#       used at runtime, thereby disregarding the LD_LIBRARY_PATH variable.
+#       See 'library_dirs' for formatting on different platforms.
+#           runtime_library_dirs = /opt/blas/lib:/opt/lapack/lib
+#
+#   extra_compile_args
+#       Add additional arguments to the compilation of sources.
+#       Simple variable with no parsing done. 
+#       Provide a single line with all complete flags.
+#           extra_compile_args = -g -ftree-vectorize
+#
+#   extra_link_args
+#       Add additional arguments to when libraries/executables
+#       are linked.
+#       Simple variable with no parsing done. 
+#       Provide a single line with all complete flags.
+#           extra_link_args = -lgfortran
+#
 
 # Defaults
 # ========
@@ -59,9 +79,10 @@
 # This is a good place to add general library and include directories like
 # /usr/local/{lib,include}
 #
-#[DEFAULT]
+#[ALL]
 #library_dirs = /usr/local/lib
 #include_dirs = /usr/local/include
+#
 
 # Atlas
 # -----
@@ -82,6 +103,9 @@
 # instead of Atlas, use this section instead of the above, adjusting as needed
 # for your configuration (in the following example we installed OpenBLAS with
 # ``make install PREFIX=/opt/OpenBLAS``.
+# OpenBLAS is generically installed as a shared library, to force the OpenBLAS
+# library linked to also be used at runtime you can utilize the 
+# runtime_library_dirs variable.
 #
 # **Warning**: OpenBLAS, by default, is built in multithreaded mode. Due to the
 # way Python's multiprocessing is implemented, a multithreaded OpenBLAS can
@@ -102,6 +126,7 @@
 # libraries = openblas
 # library_dirs = /opt/OpenBLAS/lib
 # include_dirs = /opt/OpenBLAS/include
+# runtime_library_dirs = /opt/OpenBLAS/lib
 
 # MKL
 #----

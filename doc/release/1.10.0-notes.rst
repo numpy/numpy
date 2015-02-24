@@ -8,6 +8,9 @@ Highlights
 ==========
 * numpy.distutils now supports parallel compilation via the --jobs/-j argument
   passed to setup.py build
+* numpy.distutils now supports additional customization via site.cfg to
+  control compilation parameters, i.e. runtime libraries, extra
+  linking/compilation flags.
 * Addition of *np.linalg.multi_dot*: compute the dot product of two or more
   arrays in a single function call, while automatically selecting the fastest
   evaluation order.
@@ -73,6 +76,18 @@ Also, the dtype.type of nested structured fields is now inherited.
 
 New Features
 ============
+
+Reading extra flags from site.cfg
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously customization of compilation of dependency libraries and numpy 
+itself was only accomblishable via code changes in the distutils package.
+Now numpy.distutils reads in the following extra flags from each group of the
+site.cfg:
+  runtime_library_dirs (sets the runtime library directories to override
+    LD_LIBRARY_PATH)
+  extra_compile_args (add extra flags to the compilation of sources)
+  extra_link_args (add extra flags when linking libraries)
+This should, at least partially, complete user customization.
 
 *np.cbrt* to compute cube root for real floats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
