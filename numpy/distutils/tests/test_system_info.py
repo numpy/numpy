@@ -26,7 +26,7 @@ def get_standard_file(fname):
     tmpdir = mkdtemp()
     filename = tmpdir + '/' + fname 
     with open(filename,'w') as fd:
-        fd.write(site_cfg.encode('ascii'))
+        fd.write(site_cfg)
     filenames = [filename]
     return filenames
 
@@ -182,8 +182,7 @@ class TestSystemInfoReading(TestCase):
         except OSError:
             return
         os.chdir(self._dir1)
-        c.compile([os.path.basename(self._src1)], output_dir=self._dir1,
-                  include_dirs=tsi.get_include_dirs())
+        c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
         # Ensure that the object exists
         self.assertTrue(os.path.isfile(self._src1.replace('.c','.o')))
         os.chdir(previousDir)
@@ -192,6 +191,7 @@ class TestSystemInfoReading(TestCase):
         """ Compile source and link the second source """
         tsi = get_class('temp2')
         c = distutils.ccompiler.new_compiler()
+        extra_link_args = tsi.calc_extra_info()['extra_link_args']
         # Change directory to not screw up directories
         try:
             previousDir = os.getcwd()
@@ -199,8 +199,7 @@ class TestSystemInfoReading(TestCase):
             return
         os.chdir(self._dir2)
         c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
-                  include_dirs=tsi.get_include_dirs(),
-                  extra_postargs=tsi.calc_extra_info()['extra_link_args'])
+                  extra_postargs=extra_link_args)
         # Ensure that the object exists
         self.assertTrue(os.path.isfile(self._src2.replace('.c','.o')))
         os.chdir(previousDir)
