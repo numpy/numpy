@@ -691,8 +691,16 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> x[np.argpartition(x, (1, 3))]
     array([1, 2, 3, 4])
 
+    >>> x = [3, 4, 2, 1]
+    >>> np.array(x)[np.argpartition(x, 3)]
+    array([2, 1, 3, 4])
+
     """
-    return a.argpartition(kth, axis, kind=kind, order=order)
+    try:
+        argpartition = a.argpartition
+    except AttributeError:
+        return _wrapit(a, 'argpartition',kth, axis, kind, order)
+    return argpartition(kth, axis, kind=kind, order=order)
 
 
 def sort(a, axis=-1, kind='quicksort', order=None):
