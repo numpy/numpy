@@ -537,12 +537,12 @@ class system_info(object):
           extra_link_args
         """
         info = {}
-        for key in ['extra_compile_args','extra_link_args']:
+        for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
             opt = self.cp.get(self.section, key)
             if opt:
-                tmp = { key : [opt] }
-                dict_append(info,**tmp)
+                tmp = {key : [opt]}
+                dict_append(info, **tmp)
         return info
 
     def get_info(self, notfound_action=0):
