@@ -3706,7 +3706,7 @@ def insert(arr, obj, values, axis=None):
     See Also
     --------
     append : Append elements at the end of an array.
-    concatenate : Join a sequence of arrays together.
+    concatenate : Join a sequence of arrays along an existing axis.
     delete : Delete elements from an array.
 
     Notes

@@ -64,8 +64,9 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   column_stack
    concatenate
+   stack
+   column_stack
    dstack
    hstack
    vstack
@@ -75,10 +76,10 @@ Splitting arrays
 .. autosummary::
    :toctree: generated/
 
+   split
    array_split
    dsplit
    hsplit
-   split
    vsplit
 
 Tiling arrays
