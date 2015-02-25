@@ -107,15 +107,16 @@ class TestSystemInfoReading(TestCase):
                 })
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
-        os.write(fd,site_cfg)
         os.close(fd)
+        with open(self._sitecfg, 'w') as fd:
+            fd.write(site_cfg)
         # Write the sources
-        with open(self._src1,'w') as fd:
+        with open(self._src1, 'w') as fd:
             fd.write(fakelib_c_text)
-        with open(self._src2,'w') as fd:
+        with open(self._src2, 'w') as fd:
             fd.write(fakelib_c_text)
         # We create all class-instances 
-        def site_and_parse(c,site_cfg):
+        def site_and_parse(c, site_cfg):
             c.files = [site_cfg]
             c.parse_config_files()
             return c
