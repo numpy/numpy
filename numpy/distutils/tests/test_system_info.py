@@ -1,11 +1,12 @@
-from __future__ import division, absolute_import, print_function
+from __future__ import division, print_function
 
 import os
-from tempfile import mkstemp, mkdtemp
+from tempfile import mkdtemp
 
-import distutils
-from numpy.testing import *
-from numpy.distutils.system_info import *
+from numpy.distutils import ccompiler
+from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
+from numpy.distutils.system_info import system_info, ConfigParser
+from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
 def get_class(name, notfound_action=1):
     """
@@ -24,7 +25,7 @@ def get_standard_file(fname):
     Overrides the get_standard_file from system_info
     """
     tmpdir = mkdtemp()
-    filename = tmpdir + '/' + fname 
+    filename = os.path.join(tmpdir,fname)
     with open(filename,'w') as fd:
         fd.write(site_cfg)
     filenames = [filename]
@@ -81,10 +82,11 @@ class test_system_info(system_info):
         self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
         if self.section is not None:
+            # Have to by-pass a boolean conversion for non-existing variable
             try:
                 self.search_static_first = self.cp.getboolean(self.section, 'search_static_first')
             except: pass
-        assert isinstance(self.search_static_first, int)
+        assert_(isinstance(self.search_static_first, int))
 
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
         """Override _check_libs to return with all dirs """
@@ -131,51 +133,31 @@ class TestSystemInfoReading(TestCase):
     def test_all(self):
         """ Read in all information in the ALL block """
         tsi = get_class('default')
-        a = [self._dir1,self._dir2]
-        self.assertTrue(tsi.get_lib_dirs() == a,
-                        (tsi.get_lib_dirs(),a))
-        a = [self._lib1,self._lib2]
-        self.assertTrue(tsi.get_libraries() == a,
-                        (tsi.get_libraries(),a))
-        a = [self._dir1]
-        self.assertTrue(tsi.get_runtime_lib_dirs() == a,
-                        (tsi.get_runtime_lib_dirs(),a))
+        assert_equal(tsi.get_lib_dirs(),[self._dir1,self._dir2])
+        assert_equal(tsi.get_libraries(),[self._lib1,self._lib2])
+        assert_equal(tsi.get_runtime_lib_dirs(),[self._dir1])
         extra = tsi.calc_extra_info()
-        a = ['-I/fake/directory']
-        self.assertTrue(extra['extra_compile_args'] == a,
-                        (extra['extra_compile_args'],a))
+        assert_equal(extra['extra_compile_args'],['-I/fake/directory'])
 
     def test_temp1(self):
         """ Read in all information in the temp1 block """
         tsi = get_class('temp1')
-        a = [self._dir1]
-        self.assertTrue(tsi.get_lib_dirs() == a,
-                        (tsi.get_lib_dirs(),a))
-        a = [self._lib1]
-        self.assertTrue(tsi.get_libraries() == a,
-                        (tsi.get_libraries(),a))
-        a = [self._dir1]
-        self.assertTrue(tsi.get_runtime_lib_dirs() == a,
-                        (tsi.get_runtime_lib_dirs(),a))
+        assert_equal(tsi.get_lib_dirs(),[self._dir1])
+        assert_equal(tsi.get_libraries(),[self._lib1])
+        assert_equal(tsi.get_runtime_lib_dirs(),[self._dir1])
 
     def test_temp2(self):
         """ Read in all information in the temp2 block """
         tsi = get_class('temp2')
-        a = [self._dir2]
-        self.assertTrue(tsi.get_lib_dirs() == a,
-                        (tsi.get_lib_dirs(),a))
-        a = [self._lib2]
-        self.assertTrue(tsi.get_libraries() == a,
-                        (tsi.get_libraries(),a))
+        assert_equal(tsi.get_lib_dirs(),[self._dir2])
+        assert_equal(tsi.get_libraries(),[self._lib2])
         extra = tsi.calc_extra_info()
-        a = ['-Wl,-rpath='+self._lib2]
-        self.assertTrue(extra['extra_link_args'] == a,
-                        (extra['extra_link_args'],a))
+        assert_equal(extra['extra_link_args'],['-Wl,-rpath='+self._lib2])
 
     def test_compile1(self):
         """ Compile source and link the first source """
         tsi = get_class('temp1')
-        c = distutils.ccompiler.new_compiler()
+        c = ccompiler.new_compiler()
         # Change directory to not screw up directories
         try:
             previousDir = os.getcwd()
@@ -184,13 +166,13 @@ class TestSystemInfoReading(TestCase):
         os.chdir(self._dir1)
         c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
         # Ensure that the object exists
-        self.assertTrue(os.path.isfile(self._src1.replace('.c','.o')))
+        assert_(os.path.isfile(self._src1.replace('.c','.o')))
         os.chdir(previousDir)
 
     def test_compile2(self):
         """ Compile source and link the second source """
         tsi = get_class('temp2')
-        c = distutils.ccompiler.new_compiler()
+        c = ccompiler.new_compiler()
         extra_link_args = tsi.calc_extra_info()['extra_link_args']
         # Change directory to not screw up directories
         try:
@@ -201,7 +183,7 @@ class TestSystemInfoReading(TestCase):
         c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
                   extra_postargs=extra_link_args)
         # Ensure that the object exists
-        self.assertTrue(os.path.isfile(self._src2.replace('.c','.o')))
+        assert_(os.path.isfile(self._src2.replace('.c','.o')))
         os.chdir(previousDir)
 
 if __name__ == '__main__':

@@ -495,8 +495,8 @@ class system_info(object):
                 self.cp.add_section(self.section)
 
     def calc_libraries_info(self):
-        libs   = self.get_libraries()
-        dirs   = self.get_lib_dirs()
+        libs = self.get_libraries()
+        dirs = self.get_lib_dirs()
         r_dirs = self.get_runtime_lib_dirs()
         info = {}
         for lib in libs:
