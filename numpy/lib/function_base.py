@@ -1965,11 +1965,11 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     ----------
     x : array_like
         A 1-D or 2-D array containing multiple variables and observations.
-        Each row of `m` represents a variable, and each column a single
+        Each row of `x` represents a variable, and each column a single
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        shape as `m`.
+        shape as `x`.
     rowvar : int, optional
         If `rowvar` is non-zero (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
