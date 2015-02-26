@@ -1472,9 +1472,9 @@ cdef class RandomState:
         """
         return cont0_array(self.internal_state, rk_gauss, size, self.lock)
 
-    def normal(self, loc=0.0, scale=1.0, size=None):
+    def normal(self, mean=0.0, sigma=1.0, size=None):
         """
-        normal(loc=0.0, scale=1.0, size=None)
+        normal(mean=0.0, sigma=1.0, size=None)
 
         Draw random samples from a normal (Gaussian) distribution.
 
@@ -1490,9 +1490,9 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
+        mean : float
             Mean ("centre") of the distribution.
-        scale : float
+        sigma : float
             Standard deviation (spread or "width") of the distribution.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
