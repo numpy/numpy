@@ -53,11 +53,13 @@
 #       shared libraries (.so). It is turned off by default.
 #           search_static_first = false
 #
-#   runtime_library_dirs
+#   runtime_library_dirs/rpath
 #       List of directories that contains the libraries that should be 
 #       used at runtime, thereby disregarding the LD_LIBRARY_PATH variable.
 #       See 'library_dirs' for formatting on different platforms.
 #           runtime_library_dirs = /opt/blas/lib:/opt/lapack/lib
+#       or equivalently
+#           rpath = /opt/blas/lib:/opt/lapack/lib
 #
 #   extra_compile_args
 #       Add additional arguments to the compilation of sources.

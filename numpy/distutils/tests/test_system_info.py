@@ -37,6 +37,7 @@ runtime_library_dirs = {dir1:s}
 library_dirs = {dir2:s}
 libraries = {lib2:s}
 extra_link_args = -Wl,-rpath={lib2:s}
+rpath = {dir2:s}
 """
 site_cfg = simple_site
 
@@ -64,8 +65,9 @@ class test_system_info(system_info):
         defaults['library_dirs'] = []
         defaults['include_dirs'] = []
         defaults['runtime_library_dirs'] = []
+        defaults['rpath'] = []
         defaults['src_dirs'] = []
-        defaults['search_static_first'] = []
+        defaults['search_static_first'] = "0"
         defaults['extra_compile_args'] = []
         defaults['extra_link_args'] = []
         self.cp = ConfigParser(defaults)
@@ -160,6 +162,8 @@ class TestSystemInfoReading(TestCase):
         tsi = self.c_temp2
         assert_equal(tsi.get_lib_dirs(), [self._dir2])
         assert_equal(tsi.get_libraries(), [self._lib2])
+        # Now from rpath and not runtime_library_dirs
+        assert_equal(tsi.get_runtime_lib_dirs(key='rpath'), [self._dir2])
         extra = tsi.calc_extra_info()
         assert_equal(extra['extra_link_args'], ['-Wl,-rpath='+self._lib2])
 

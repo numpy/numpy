@@ -474,6 +474,7 @@ class system_info(object):
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['runtime_library_dirs'] = os.pathsep.join(default_runtime_dirs)
+        defaults['rpath'] = []
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         defaults['extra_compile_args'] = []
@@ -497,7 +498,11 @@ class system_info(object):
     def calc_libraries_info(self):
         libs = self.get_libraries()
         dirs = self.get_lib_dirs()
-        r_dirs = self.get_runtime_lib_dirs()
+        # The extensions use runtime_library_dirs
+        r_dirs = self.get_runtime_lib_dirs() 
+        # Intrinsic distutils use rpath, we simply append both entries
+        # as though they were one entry
+        r_dirs.extend(self.get_runtime_lib_dirs(key='rpath'))
         info = {}
         for lib in libs:
             i = self.check_libs(dirs, [lib])
