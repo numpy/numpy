@@ -40,6 +40,7 @@ Changing number of dimensions
    atleast_2d
    atleast_3d
    broadcast
+   broadcast_to
    broadcast_arrays
    expand_dims
    squeeze
