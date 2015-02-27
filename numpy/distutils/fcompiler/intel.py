@@ -14,11 +14,16 @@ def intel_version_match(type):
     # Match against the important stuff in the version string
     return simple_version_match(start=r'Intel.*?Fortran.*?(?:%s).*?Version' % (type,))
 
+
 class BaseIntelFCompiler(FCompiler):
     def update_executables(self):
         f = dummy_fortran_file()
         self.executables['version_cmd'] = ['<F77>', '-FI', '-V', '-c',
                                            f + '.f', '-o', f + '.o']
+
+    def runtime_library_dir_option(self, dir):
+        return '-Wl,-rpath="%s"' % dir
+
 
 class IntelFCompiler(BaseIntelFCompiler):
 
@@ -71,6 +76,7 @@ class IntelFCompiler(BaseIntelFCompiler):
             opt[idx:idx] = ['-dynamiclib', '-Wl,-undefined,dynamic_lookup']
         return opt
 
+
 class IntelItaniumFCompiler(IntelFCompiler):
     compiler_type = 'intele'
     compiler_aliases = ()
@@ -89,6 +95,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+
 
 class IntelEM64TFCompiler(IntelFCompiler):
     compiler_type = 'intelem'
@@ -121,6 +128,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
 
 # Is there no difference in the version string between the above compilers
 # and the Visual compilers?
+
 
 class IntelVisualFCompiler(BaseIntelFCompiler):
     compiler_type = 'intelv'
@@ -167,6 +175,10 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
     def get_flags_arch(self):
         return ["/arch:IA-32", "/QaxSSE3"]
 
+    def runtime_library_dir_option(self, dir):
+        raise NotImplementedError
+
+
 class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
     compiler_type = 'intelev'
     description = 'Intel Visual Fortran Compiler for Itanium apps'
@@ -185,6 +197,7 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None
         }
+
 
 class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     compiler_type = 'intelvem'
