@@ -193,6 +193,14 @@ class TestAttributes(TestCase):
             y[...] = 1
             assert_equal(x, y)
 
+    def test_fill_max_uint64(self):
+        x = empty((3, 2, 1), dtype=uint64)
+        y = empty((3, 2, 1), dtype=uint64)
+        value = 2**64 - 1
+        y[...] = value
+        x.fill(value)
+        assert_array_equal(x, y)
+
     def test_fill_struct_array(self):
         # Filling from a scalar
         x = array([(0, 0.0), (1, 1.0)], dtype='i4,f8')
