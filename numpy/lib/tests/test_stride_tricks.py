@@ -364,5 +364,15 @@ def test_writeable():
     assert_equal(result.flags.writeable, False)
 
 
+def test_reference_types():
+    input_array = np.array('a', dtype=object)
+    expected = np.array(['a'] * 3, dtype=object)
+    actual = broadcast_to(input_array, (3,))
+    assert_array_equal(expected, actual)
+
+    actual, _ = broadcast_arrays(input_array, np.ones(3))
+    assert_array_equal(expected, actual)
+
+
 if __name__ == "__main__":
     run_module_suite()
