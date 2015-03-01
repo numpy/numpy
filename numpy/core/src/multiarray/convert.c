@@ -350,16 +350,33 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     }
     /* Python integer */
     else if (PyLong_Check(obj) || PyInt_Check(obj)) {
-        npy_longlong v = PyLong_AsLongLong(obj);
-        if (v == -1 && PyErr_Occurred()) {
-            return -1;
-        }
-        value = (char *)value_buffer;
-        *(npy_longlong *)value = v;
+        /* Try long long before unsigned long long */
+        npy_longlong ll_v = PyLong_AsLongLong(obj);
+        if (ll_v == -1 && PyErr_Occurred()) {
+            /* Long long failed, try unsigned long long */
+            npy_ulonglong ull_v;
+            PyErr_Clear();
+            ull_v = PyLong_AsUnsignedLongLong(obj);
+            if (ull_v == (unsigned long long)-1 && PyErr_Occurred()) {
+                return -1;
+            }
+            value = (char *)value_buffer;
+            *(npy_ulonglong *)value = ull_v;
 
-        dtype = PyArray_DescrFromType(NPY_LONGLONG);
-        if (dtype == NULL) {
-            return -1;
+            dtype = PyArray_DescrFromType(NPY_ULONGLONG);
+            if (dtype == NULL) {
+                return -1;
+            }
+        }
+        else {
+            /* Long long succeeded */
+            value = (char *)value_buffer;
+            *(npy_longlong *)value = ll_v;
+
+            dtype = PyArray_DescrFromType(NPY_LONGLONG);
+            if (dtype == NULL) {
+                return -1;
+            }
         }
     }
     /* Python float */
