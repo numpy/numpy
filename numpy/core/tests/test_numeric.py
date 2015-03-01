@@ -1176,6 +1176,18 @@ class TestClip(TestCase):
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
+    def test_clip_complex(self):
+        # Address Issue gh-5354 for clipping complex arrays
+        # Test native complex input without explicit min/max
+        # ie, either min=None or max=None
+        a = np.ones(10, dtype=np.complex)
+        m = a.min()
+        M = a.max()
+        am = self.fastclip(a, m, None)
+        aM = self.fastclip(a, None, M)
+        assert_array_strict_equal(am, a)
+        assert_array_strict_equal(aM, a)
+
     def test_clip_non_contig(self):
         #Test clip for non contiguous native input and native scalar min/max.
         a   = self._generate_data(self.nr * 2, self.nc * 3)
