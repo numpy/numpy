@@ -1123,7 +1123,7 @@ def eigh(a, UPLO='L'):
 
     Parameters
     ----------
-    A : (..., M, M) array
+    a : (..., M, M) array
         Hermitian/Symmetric matrices whose eigenvalues and
         eigenvectors are to be computed.
     UPLO : {'L', 'U'}, optional

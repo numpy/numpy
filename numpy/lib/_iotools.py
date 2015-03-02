@@ -160,7 +160,7 @@ class LineSplitter(object):
     delimiter : str, int, or sequence of ints, optional
         If a string, character used to delimit consecutive fields.
         If an integer or a sequence of integers, width(s) of each field.
-    comment : str, optional
+    comments : str, optional
         Character used to mark the beginning of a comment. Default is '#'.
     autostrip : bool, optional
         Whether to strip each individual field. Default is True.
@@ -271,7 +271,7 @@ class NameValidator(object):
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
-    casesensitive : {True, False, 'upper', 'lower'}, optional
+    case_sensitive : {True, False, 'upper', 'lower'}, optional
         * If True, field names are case-sensitive.
         * If False or 'upper', field names are converted to upper case.
         * If 'lower', field names are converted to lower case.
@@ -341,7 +341,7 @@ class NameValidator(object):
         defaultfmt : str, optional
             Default format string, used if validating a given string
             reduces its length to zero.
-        nboutput : integer, optional
+        nbfields : integer, optional
             Final number of validated names, used to expand or shrink the
             initial list of names.
 

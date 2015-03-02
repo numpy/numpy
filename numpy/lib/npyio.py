@@ -1240,8 +1240,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
         can also be provided as width(s) of each field.
-    skip_rows : int, optional
-        `skip_rows` was deprecated in numpy 1.5, and will be removed in
+    skiprows : int, optional
+        `skiprows` was deprecated in numpy 1.5, and will be removed in
         numpy 2.0. Please use `skip_header` instead.
     skip_header : int, optional
         The number of lines to skip at the beginning of the file.
