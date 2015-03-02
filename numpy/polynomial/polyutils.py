@@ -134,7 +134,7 @@ def as_series(alist, trim=True):
 
     Parameters
     ----------
-    a : array_like
+    alist : array_like
         A 1- or 2-d array_like
     trim : boolean, optional
         When True, trailing zeros are removed from the inputs.

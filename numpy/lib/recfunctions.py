@@ -268,7 +268,7 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
 
     Parameters
     ----------
-    seqarray : sequence of arrays
+    seqarrays : sequence of arrays
         Sequence of arrays.
     fill_value : {None, integer}
         Value used to pad shorter iterables.
@@ -683,7 +683,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
 
     Parameters
     ----------
-    seqarrays : array or sequence
+    arrays : array or sequence
         Sequence of input arrays.
     defaults : dictionary, optional
         Dictionary mapping field names to the corresponding default values.

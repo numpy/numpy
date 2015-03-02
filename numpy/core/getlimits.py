@@ -206,7 +206,7 @@ class iinfo(object):
 
     Parameters
     ----------
-    type : integer type, dtype, or instance
+    int_type : integer type, dtype, or instance
         The kind of integer data type to get information about.
 
     See Also

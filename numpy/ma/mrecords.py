@@ -639,7 +639,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
 
     Parameters
     ----------
-    filename : {file name/handle}
+    fname : {file name/handle}
         Handle of an opened file.
     delimitor : {None, string}, optional
         Alphanumeric character used to separate columns in the file.
