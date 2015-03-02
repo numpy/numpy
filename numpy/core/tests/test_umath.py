@@ -36,35 +36,137 @@ class TestConstants(TestCase):
     def test_euler_gamma(self):
         assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
 
+
 class TestOut(TestCase):
     def test_out_subok(self):
-        for b in (True, False):
-            aout = np.array(0.5)
+        for subok in (True, False):
+            a = np.array(0.5)
+            o = np.empty(())
 
-            r = np.add(aout, 2, out=aout)
-            assert_(r is aout)
-            assert_array_equal(r, aout)
+            r = np.add(a, 2, o, subok=subok)
+            assert_(r is o)
+            r = np.add(a, 2, out=o, subok=subok)
+            assert_(r is o)
+            r = np.add(a, 2, out=(o,), subok=subok)
+            assert_(r is o)
 
-            r = np.add(aout, 2, out=aout, subok=b)
-            assert_(r is aout)
-            assert_array_equal(r, aout)
+            d = np.array(5.7)
+            o1 = np.empty(())
+            o2 = np.empty((), dtype=np.int32)
 
-            r = np.add(aout, 2, aout, subok=False)
-            assert_(r is aout)
-            assert_array_equal(r, aout)
-
-            d = np.ones(5)
-            o1 = np.zeros(5)
-            o2 = np.zeros(5, dtype=np.int32)
-            r1, r2 = np.frexp(d, o1, o2, subok=b)
+            r1, r2 = np.frexp(d, o1, None, subok=subok)
             assert_(r1 is o1)
-            assert_array_equal(r1, o1)
+            r1, r2 = np.frexp(d, None, o2, subok=subok)
             assert_(r2 is o2)
-            assert_array_equal(r2, o2)
-
-            r1, r2 = np.frexp(d, out=o1, subok=b)
+            r1, r2 = np.frexp(d, o1, o2, subok=subok)
             assert_(r1 is o1)
-            assert_array_equal(r1, o1)
+            assert_(r2 is o2)
+
+            r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
+            assert_(r1 is o1)
+            r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
+            assert_(r2 is o2)
+            r1, r2 = np.frexp(d, out=(o1, o2), subok=subok)
+            assert_(r1 is o1)
+            assert_(r2 is o2)
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings('always', '', DeprecationWarning)
+                r1, r2 = np.frexp(d, out=o1, subok=subok)
+                assert_(r1 is o1)
+                assert_(w[0].category is DeprecationWarning)
+
+            assert_raises(ValueError, np.add, a, 2, o, o, subok=subok)
+            assert_raises(ValueError, np.add, a, 2, o, out=o, subok=subok)
+            assert_raises(ValueError, np.add, a, 2, None, out=o, subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=(), subok=subok)
+            assert_raises(TypeError, np.add, a, 2, [], subok=subok)
+            assert_raises(TypeError, np.add, a, 2, out=[], subok=subok)
+            assert_raises(TypeError, np.add, a, 2, out=([],), subok=subok)
+            o.flags.writeable = False
+            assert_raises(ValueError, np.add, a, 2, o, subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=o, subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=(o,), subok=subok)
+
+
+    def test_out_wrap_subok(self):
+        class ArrayWrap(np.ndarray):
+            __array_priority__ = 10
+            def __new__(cls, arr):
+                return np.asarray(arr).view(cls).copy()
+            def __array_wrap__(self, arr, context):
+                return arr.view(type(self))
+
+        for subok in (True, False):
+            a = ArrayWrap([0.5])
+
+            r = np.add(a, 2, subok=subok)
+            if subok:
+                assert_(isinstance(r, ArrayWrap))
+            else:
+                assert_(type(r) == np.ndarray)
+
+            r = np.add(a, 2, None, subok=subok)
+            if subok:
+                assert_(isinstance(r, ArrayWrap))
+            else:
+                assert_(type(r) == np.ndarray)
+
+            r = np.add(a, 2, out=None, subok=subok)
+            if subok:
+                assert_(isinstance(r, ArrayWrap))
+            else:
+                assert_(type(r) == np.ndarray)
+
+            r = np.add(a, 2, out=(None,), subok=subok)
+            if subok:
+                assert_(isinstance(r, ArrayWrap))
+            else:
+                assert_(type(r) == np.ndarray)
+
+            d = ArrayWrap([5.7])
+            o1 = np.empty((1,))
+            o2 = np.empty((1,), dtype=np.int32)
+
+            r1, r2 = np.frexp(d, o1, subok=subok)
+            if subok:
+                assert_(isinstance(r2, ArrayWrap))
+            else:
+                assert_(type(r2) == np.ndarray)
+
+            r1, r2 = np.frexp(d, o1, None, subok=subok)
+            if subok:
+                assert_(isinstance(r2, ArrayWrap))
+            else:
+                assert_(type(r2) == np.ndarray)
+
+            r1, r2 = np.frexp(d, None, o2, subok=subok)
+            if subok:
+                assert_(isinstance(r1, ArrayWrap))
+            else:
+                assert_(type(r1) == np.ndarray)
+
+            r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
+            if subok:
+                assert_(isinstance(r2, ArrayWrap))
+            else:
+                assert_(type(r2) == np.ndarray)
+
+            r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
+            if subok:
+                assert_(isinstance(r1, ArrayWrap))
+            else:
+                assert_(type(r1) == np.ndarray)
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings('always', '', DeprecationWarning)
+                r1, r2 = np.frexp(d, out=o1, subok=subok)
+                if subok:
+                    assert_(isinstance(r2, ArrayWrap))
+                else:
+                    assert_(type(r2) == np.ndarray)
+                assert_(w[0].category is DeprecationWarning)
 
 
 class TestDivision(TestCase):

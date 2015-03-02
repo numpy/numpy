@@ -750,6 +750,35 @@ fail:
     return -1;
 }
 
+/*
+ * Checks if 'obj' is a valid output array for a ufunc, i.e. it is
+ * either None or a writeable array, increments its reference count
+ * and stores a pointer to it in 'store'. Returns 0 on success, sets
+ * an exception and returns -1 on failure.
+ */
+static int
+_set_out_array(PyObject *obj, PyArrayObject **store)
+{
+    if (obj == Py_None) {
+        /* Translate None to NULL */
+        return 0;
+    }
+    if PyArray_Check(obj) {
+        /* If it's an array, store it */
+        if (PyArray_FailUnlessWriteable((PyArrayObject *)obj,
+                                        "output array") < 0) {
+            return -1;
+        }
+        Py_INCREF(obj);
+        *store = (PyArrayObject *)obj;
+
+        return 0;
+    }
+    PyErr_SetString(PyExc_TypeError, "return arrays must be of ArrayType");
+
+    return -1;
+}
+
 /********* GENERIC UFUNC USING ITERATOR *********/
 
 /*
@@ -759,17 +788,20 @@ fail:
  * non-zero references in out_op.  This
  * function does not do its own clean-up.
  */
-static int get_ufunc_arguments(PyUFuncObject *ufunc,
-                PyObject *args, PyObject *kwds,
-                PyArrayObject **out_op,
-                NPY_ORDER *out_order,
-                NPY_CASTING *out_casting,
-                PyObject **out_extobj,
-                PyObject **out_typetup,
-                int *out_subok,
-                PyArrayObject **out_wheremask)
+static int
+get_ufunc_arguments(PyUFuncObject *ufunc,
+                    PyObject *args, PyObject *kwds,
+                    PyArrayObject **out_op,
+                    NPY_ORDER *out_order,
+                    NPY_CASTING *out_casting,
+                    PyObject **out_extobj,
+                    PyObject **out_typetup,
+                    int *out_subok,
+                    PyArrayObject **out_wheremask)
 {
-    int i, nargs, nin = ufunc->nin;
+    int i, nargs;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     const char *ufunc_name;
@@ -878,23 +910,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     /* Get positional output arguments */
     for (i = nin; i < nargs; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
-        /* Translate None to NULL */
-        if (obj == Py_None) {
-            continue;
-        }
-        /* If it's an array, can use it */
-        if (PyArray_Check(obj)) {
-            if (PyArray_FailUnlessWriteable((PyArrayObject *)obj,
-                                            "output array") < 0) {
-                return -1;
-            }
-            Py_INCREF(obj);
-            out_op[i] = (PyArrayObject *)obj;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "return arrays must be "
-                            "of ArrayType");
+        if (_set_out_array(obj, out_op + i) < 0) {
             return -1;
         }
     }
@@ -929,7 +945,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
             switch (str[0]) {
                 case 'c':
                     /* Provides a policy for allowed casting */
-                    if (strncmp(str,"casting",7) == 0) {
+                    if (strncmp(str, "casting", 7) == 0) {
                         if (!PyArray_CastingConverter(value, out_casting)) {
                             goto fail;
                         }
@@ -938,7 +954,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
                     break;
                 case 'd':
                     /* Another way to specify 'sig' */
-                    if (strncmp(str,"dtype",5) == 0) {
+                    if (strncmp(str, "dtype", 5) == 0) {
                         /* Allow this parameter to be None */
                         PyArray_Descr *dtype;
                         if (!PyArray_DescrConverter2(value, &dtype)) {
@@ -960,35 +976,74 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
                      * Overrides the global parameters buffer size,
                      * error mask, and error object
                      */
-                    if (strncmp(str,"extobj",6) == 0) {
+                    if (strncmp(str, "extobj", 6) == 0) {
                         *out_extobj = value;
                         bad_arg = 0;
                     }
                     break;
                 case 'o':
-                    /* First output may be specified as a keyword parameter */
-                    if (strncmp(str,"out",3) == 0) {
-                        if (out_op[nin] != NULL) {
+                    /*
+                     * Output arrays may be specified as a keyword argument,
+                     * either as a single array or None for single output
+                     * ufuncs, or as a tuple of arrays and Nones.
+                     */
+                    if (strncmp(str, "out", 3) == 0) {
+                        if (nargs > nin) {
                             PyErr_SetString(PyExc_ValueError,
                                     "cannot specify 'out' as both a "
                                     "positional and keyword argument");
                             goto fail;
                         }
-
-                        if (PyArray_Check(value)) {
-                            const char *name = "output array";
-                            PyArrayObject *value_arr = (PyArrayObject *)value;
-                            if (PyArray_FailUnlessWriteable(value_arr, name) < 0) {
+                        if (PyTuple_Check(value)) {
+                            if (PyTuple_GET_SIZE(value) != nout) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "The 'out' tuple must have exactly "
+                                        "one entry per ufunc output");
                                 goto fail;
                             }
-                            Py_INCREF(value);
-                            out_op[nin] = (PyArrayObject *)value;
+                            /* 'out' must be a tuple of arrays and Nones */
+                            for(i = 0; i < nout; ++i) {
+                                PyObject *val = PyTuple_GET_ITEM(value, i);
+                                if (_set_out_array(val, out_op+nin+i) < 0) {
+                                    goto fail;
+                                }
+                            }
+                        }
+                        else if (nout == 1) {
+                            /* Can be an array if it only has one output */
+                            if (_set_out_array(value, out_op + nin) < 0) {
+                                goto fail;
+                            }
                         }
                         else {
-                            PyErr_SetString(PyExc_TypeError,
-                                            "return arrays must be "
-                                            "of ArrayType");
-                            goto fail;
+                            /*
+                             * If the deprecated behavior is ever removed,
+                             * keep only the else branch of this if-else
+                             */
+                            if (PyArray_Check(value) || value == Py_None) {
+                                if (DEPRECATE("passing a single array to the "
+                                              "'out' keyword argument of a "
+                                              "ufunc with\n"
+                                              "more than one output will "
+                                              "result in an error in the "
+                                              "future") < 0) {
+                                    /* The future error message */
+                                    PyErr_SetString(PyExc_TypeError,
+                                        "'out' must be a tuple of arrays");
+                                    goto fail;
+                                }
+                                if (_set_out_array(value, out_op+nin) < 0) {
+                                    goto fail;
+                                }
+                            }
+                            else {
+                                PyErr_SetString(PyExc_TypeError,
+                                    nout > 1 ? "'out' must be a tuple "
+                                               "of arrays" :
+                                               "'out' must be an array or a "
+                                               "tuple of a single array");
+                                goto fail;
+                            }
                         }
                         bad_arg = 0;
                     }
@@ -3946,6 +4001,38 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
 }
 
 /*
+ * Returns an incref'ed pointer to the proper wrapping object for a
+ * ufunc output argument, given the output argument 'out', and the
+ * input's wrapping function, 'wrap'.
+ */
+static PyObject*
+_get_out_wrap(PyObject *out, PyObject *wrap) {
+    PyObject *owrap;
+
+    if (out == Py_None) {
+        /* Iterator allocated outputs get the input's wrapping */
+        Py_XINCREF(wrap);
+        return wrap;
+    }
+    if (PyArray_CheckExact(out)) {
+        /* None signals to not call any wrapping */
+        Py_RETURN_NONE;
+    }
+    /*
+     * For array subclasses use their __array_wrap__ method, or the
+     * input's wrapping if not available
+     */
+    owrap = PyObject_GetAttr(out, npy_um_str_array_wrap);
+    if (owrap == NULL || !PyCallable_Check(owrap)) {
+        Py_XDECREF(owrap);
+        owrap = wrap;
+        Py_XINCREF(wrap);
+        PyErr_Clear();
+    }
+    return owrap;
+}
+
+/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_wrap__ function to call
  * for the outputs.
@@ -3966,7 +4053,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
                 PyObject **output_wrap, int nin, int nout)
 {
     Py_ssize_t nargs;
-    int i;
+    int i, idx_offset, start_idx;
     int np = 0;
     PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
     PyObject *obj, *wrap = NULL;
@@ -4043,45 +4130,45 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
      */
 handle_out:
     nargs = PyTuple_GET_SIZE(args);
-    for (i = 0; i < nout; i++) {
-        int j = nin + i;
-        int incref = 1;
-        output_wrap[i] = wrap;
-        obj = NULL;
-        if (j < nargs) {
-            obj = PyTuple_GET_ITEM(args, j);
-            /* Output argument one may also be in a keyword argument */
-            if (i == 0 && obj == Py_None && kwds != NULL) {
-                obj = PyDict_GetItem(kwds, npy_um_str_out);
-            }
+    /* Default is using positional arguments */
+    obj = args;
+    idx_offset = nin;
+    start_idx = 0;
+    if (nin == nargs && kwds != NULL) {
+        /* There may be a keyword argument we can use instead */
+        obj = PyDict_GetItem(kwds, npy_um_str_out);
+        if (obj == NULL) {
+            /* No, go back to positional (even though there aren't any) */
+            obj = args;
         }
-        /* Output argument one may also be in a keyword argument */
-        else if (i == 0 && kwds != NULL) {
-            obj = PyDict_GetItem(kwds, npy_um_str_out);
-        }
-
-        if (obj != Py_None && obj != NULL) {
-            if (PyArray_CheckExact(obj)) {
-                /* None signals to not call any wrapping */
-                output_wrap[i] = Py_None;
+        else {
+            idx_offset = 0;
+            if (PyTuple_Check(obj)) {
+                /* If a tuple, must have all nout items */
+                nargs = nout;
             }
             else {
-                PyObject *owrap = PyObject_GetAttr(obj, npy_um_str_array_wrap);
-                incref = 0;
-                if (!(owrap) || !(PyCallable_Check(owrap))) {
-                    Py_XDECREF(owrap);
-                    owrap = wrap;
-                    incref = 1;
-                    PyErr_Clear();
-                }
-                output_wrap[i] = owrap;
+                /* If the kwarg is not a tuple then it is an array (or None) */
+                output_wrap[0] = _get_out_wrap(obj, wrap);
+                start_idx = 1;
+                nargs = 1;
             }
         }
+    }
 
-        if (incref) {
-            Py_XINCREF(output_wrap[i]);
+    for (i = start_idx; i < nout; ++i) {
+        int j = idx_offset + i;
+
+        if (j < nargs) {
+            output_wrap[i] = _get_out_wrap(PyTuple_GET_ITEM(obj, j),
+                                           wrap);
+        }
+        else {
+            output_wrap[i] = wrap;
+            Py_XINCREF(wrap);
         }
     }
+
     Py_XDECREF(wrap);
     return;
 }
