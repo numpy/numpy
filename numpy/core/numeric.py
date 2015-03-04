@@ -391,7 +391,8 @@ compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
 einsum = multiarray.einsum
 
-def asarray(a, dtype=None, order=None):
+
+def asarray(a, dtype=None, order=None, precision=None):
     """
     Convert the input to an array.
 
@@ -401,11 +402,17 @@ def asarray(a, dtype=None, order=None):
         Input data, in any form that can be converted to an array.  This
         includes lists, lists of tuples, tuples, tuples of tuples, tuples
         of lists and ndarrays.
-    dtype : data-type, optional
+    dtype : {None, data-type}, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F' for FORTRAN)
-        memory representation.  Defaults to 'C'.
+    order : {'C', 'F', 'A'}, optional
+        Whether to use row-major ('C'), column-major ('F'), or any ('A')
+        memory representation.  Defaults to 'A'.
+    precision: {None, dtype, ndarray, scalar}, optional
+        .. versionadded:: 1.10.0
+        If not None, the dtype of the return will be the the least dtype
+        compatible with both the specified precision and the default dtype
+        of the input, see `result_type` for details. It is an error to
+        specify both `precision` and `dtype`. The default value is None.
 
     Returns
     -------
@@ -458,10 +465,31 @@ def asarray(a, dtype=None, order=None):
     >>> np.asanyarray(a) is a
     True
 
-    """
-    return array(a, dtype, copy=False, order=order)
+    Make sure the result is compatible with a specified dtype
 
-def asanyarray(a, dtype=None, order=None):
+    >>> a = np.ones(2, dtype=np.int16)
+    >>> np.asarray(a, precision=np.float32)
+    array([ 1.,  1.], dtype=float32)
+    >>> a = np.ones(2, dtype=np.complex128)
+    >>> np.asarray(a, precision=np.float32)
+    array([ 1.+0.j,  1.+0.j])
+    >>> a = np.ones(2, dtype=np.complex64)
+    >>> np.asarray(a, precision=0.0)
+    array([ 1.+0.j,  1.+0.j], dtype=complex64)
+
+    """
+    if precision is not None and dtype is not None:
+        raise ValueError('cannot specify both dtype and precision')
+
+    ret = array(a, dtype, copy=False, order=order)
+    if precision is None:
+        return ret
+    else:
+        resdt = result_type(ret.dtype, precision)
+        return ret.astype(resdt, order=order, copy=False)
+
+
+def asanyarray(a, dtype=None, order=None, precision=None):
     """
     Convert the input to an ndarray, but pass ndarray subclasses through.
 
@@ -473,9 +501,15 @@ def asanyarray(a, dtype=None, order=None):
         tuples of lists, and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('F') memory
-        representation.  Defaults to 'C'.
+    order : {'C', 'F', 'A'}, optional
+        Whether to use row-major ('C'), column-major ('F'), or any ('A')
+        memory representation.  Defaults to 'A'.
+    precision: {None, dtype, ndarray, scalar}, optional
+        .. versionadded:: 1.10.0
+        If not None, the dtype of the return will be the the least dtype
+        compatible with both the specified precision and the default dtype
+        of the input, see `result_type` for details. It is an error to
+        specify both `precision` and `dtype`. The default value is None.
 
     Returns
     -------
@@ -510,8 +544,30 @@ def asanyarray(a, dtype=None, order=None):
     >>> np.asanyarray(a) is a
     True
 
+    Make sure the result is compatible with a specified dtype
+
+    >>> a = np.matrix(np.ones(2, dtype=np.int16))
+    >>> np.asanyarray(a, precision=np.float32)
+    matrix([[ 1.,  1.]], dtype=float32)
+    >>> a = np.matrix(np.ones(2, dtype=np.complex64))
+    >>> np.asanyarray(a, precision=np.float64)
+    matrix([[ 1.+0.j,  1.+0.j]])
+    >>> a = np.matrix(np.ones(2, dtype=np.complex64))
+    >>> np.asanyarray(a, precision=0.0)
+    matrix([[ 1.+0.j,  1.+0.j]], dtype=complex64)
+    
+
     """
-    return array(a, dtype, copy=False, order=order, subok=True)
+    if precision is not None and dtype is not None:
+        raise ValueError('cannot specify both dtype and precision')
+
+    ret = array(a, dtype, copy=False, order=order, subok=True)
+    if precision is None:
+        return ret
+    else:
+        resdt = result_type(ret.dtype, precision)
+        return ret.astype(resdt, order=order, copy=False, subok=True)
+
 
 def ascontiguousarray(a, dtype=None):
     """
