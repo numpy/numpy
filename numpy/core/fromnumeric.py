@@ -525,6 +525,10 @@ def transpose(a, axes=None):
     -----
     Use `transpose(a, argsort(axes))` to invert the transposition of tensors
     when using the `axes` keyword argument.
+    
+    Notes
+    -----
+    Transpose of 1-dimensional array is the same array.
 
     Examples
     --------
