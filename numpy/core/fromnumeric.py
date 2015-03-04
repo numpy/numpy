@@ -526,6 +526,8 @@ def transpose(a, axes=None):
     Use `transpose(a, argsort(axes))` to invert the transposition of tensors
     when using the `axes` keyword argument.
 
+    Transposing a 1-D array returns an unchanged view of the original array.
+
     Examples
     --------
     >>> x = np.arange(4).reshape((2,2))
