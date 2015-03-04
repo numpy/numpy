@@ -809,6 +809,14 @@ class TestStructured(TestCase):
             t = [('a', '>i4'), ('b', '<f8'), ('c', 'i4')]
             assert_(not np.can_cast(a.dtype, t, casting=casting))
 
+    def test_objview(self):
+        # https://github.com/numpy/numpy/issues/3286
+        a = np.array([], dtype=[('a', 'f'), ('b', 'f'), ('c', 'O')])
+        a[['a', 'b']] # TypeError?
+
+        # https://github.com/numpy/numpy/issues/3253
+        dat2 = np.zeros(3, [('A', 'i'), ('B', '|O')])
+        new2 = dat2[['B', 'A']] # TypeError?
 
 class TestBool(TestCase):
     def test_test_interning(self):
@@ -3577,8 +3585,9 @@ class TestRecord(TestCase):
 
 class TestView(TestCase):
     def test_basic(self):
-        x = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype=[('r', np.int8), ('g', np.int8),
-                                                  ('b', np.int8), ('a', np.int8)])
+        x = np.array([(1, 2, 3, 4), (5, 6, 7, 8)],
+                      dtype=[('r', np.int8), ('g', np.int8),
+                             ('b', np.int8), ('a', np.int8)])
         # We must be specific about the endianness here:
         y = x.view(dtype='<i4')
         # ... and again without the keyword.
@@ -5522,6 +5531,89 @@ class TestHashing(TestCase):
     def test_collections_hashable(self):
         x = np.array([])
         self.assertFalse(isinstance(x, collections.Hashable))
+
+from numpy.core._internal import _view_is_safe
+
+class TestObjViewSafetyFuncs:
+    def test_view_safety(self):
+        psize = dtype('p').itemsize
+
+        # creates dtype but with extra character code - for missing 'p' fields
+        def mtype(s):
+            n, offset, fields = 0, 0, []
+            for c in s.split(','): #subarrays won't work
+                if c != '-':
+                    fields.append(('f{0}'.format(n), c, offset))
+                    n += 1
+                offset += dtype(c).itemsize if c != '-' else psize
+
+            names, formats, offsets = zip(*fields)
+            return dtype({'names': names, 'formats': formats,
+                          'offsets': offsets, 'itemsize': offset})
+
+        # test nonequal itemsizes with objects:
+        # these should succeed:
+        _view_is_safe(dtype('O,p,O,p'), dtype('O,p,O,p,O,p'))
+        _view_is_safe(dtype('O,O'), dtype('O,O,O'))
+        # these should fail:
+        assert_raises(TypeError, _view_is_safe, dtype('O,O,p'), dtype('O,O'))
+        assert_raises(TypeError, _view_is_safe, dtype('O,O,p'), dtype('O,p'))
+        assert_raises(TypeError, _view_is_safe, dtype('O,O,p'), dtype('p,O'))
+
+        # test nonequal itemsizes with missing fields:
+        # these should succeed:
+        _view_is_safe(mtype('-,p,-,p'), mtype('-,p,-,p,-,p'))
+        _view_is_safe(dtype('p,p'), dtype('p,p,p'))
+        # these should fail:
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,p'))
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,-'))
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('-,p'))
+
+        # scans through positions at which we can view a type
+        def scanView(d1, otype):
+            goodpos = []
+            for shift in range(d1.itemsize - dtype(otype).itemsize+1):
+                d2 = dtype({'names': ['f0'], 'formats': [otype],
+                            'offsets': [shift], 'itemsize': d1.itemsize})
+                try:
+                    _view_is_safe(d1, d2)
+                except TypeError:
+                    pass
+                else:
+                    goodpos.append(shift)
+            return goodpos
+
+        # test partial overlap with object field
+        assert_equal(scanView(dtype('p,O,p,p,O,O'), 'p'),
+                     [0] + list(range(2*psize, 3*psize+1)))
+        assert_equal(scanView(dtype('p,O,p,p,O,O'), 'O'),
+                     [psize, 4*psize, 5*psize])
+
+        # test partial overlap with missing field
+        assert_equal(scanView(mtype('p,-,p,p,-,-'), 'p'),
+                     [0] + list(range(2*psize, 3*psize+1)))
+
+        # test nested structures with objects:
+        nestedO = dtype([('f0', 'p'), ('f1', 'p,O,p')])
+        assert_equal(scanView(nestedO, 'p'), list(range(psize+1)) + [3*psize])
+        assert_equal(scanView(nestedO, 'O'), [2*psize])
+
+        # test nested structures with missing fields:
+        nestedM = dtype([('f0', 'p'), ('f1', mtype('p,-,p'))])
+        assert_equal(scanView(nestedM, 'p'), list(range(psize+1)) + [3*psize])
+
+        # test subarrays with objects
+        subarrayO = dtype('p,(2,3)O,p')
+        assert_equal(scanView(subarrayO, 'p'), [0, 7*psize])
+        assert_equal(scanView(subarrayO, 'O'), 
+                     list(range(psize, 6*psize+1, psize)))
+
+        #test dtype with overlapping fields
+        overlapped = dtype({'names': ['f0', 'f1', 'f2', 'f3'],
+                            'formats': ['p', 'p', 'p', 'p'],
+                            'offsets': [0, 1, 3*psize-1, 3*psize],
+                            'itemsize': 4*psize})
+        assert_equal(scanView(overlapped, 'p'), [0, 1, 3*psize-1, 3*psize])
 
 
 if __name__ == "__main__":

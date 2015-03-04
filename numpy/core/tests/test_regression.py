@@ -1739,10 +1739,9 @@ class TestRegression(TestCase):
         assert_equal(np.add.accumulate(x[:-1, 0]), [])
 
     def test_objectarray_setfield(self):
-        # Setfield directly manipulates the raw array data,
-        # so is invalid for object arrays.
+        # Setfield should not overwrite Object fields with non-Object data
         x = np.array([1, 2, 3], dtype=object)
-        assert_raises(RuntimeError, x.setfield, 4, np.int32, 0)
+        assert_raises(TypeError, x.setfield, 4, np.int32, 0)
 
     def test_setting_rank0_string(self):
         "Ticket #1736"

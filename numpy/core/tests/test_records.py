@@ -219,6 +219,15 @@ class TestRecord(TestCase):
         assert_equal(a, pickle.loads(pickle.dumps(a)))
         assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
 
+    def test_objview_record(self):
+        # https://github.com/numpy/numpy/issues/2599
+        dt = np.dtype([('foo', 'i8'), ('bar', 'O')])
+        r = np.zeros((1,3), dtype=dt).view(np.recarray)
+        r.foo = np.array([1, 2, 3]) # TypeError?
+
+        # https://github.com/numpy/numpy/issues/3256
+        ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
+        ra[['x','y']] #TypeError?
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]

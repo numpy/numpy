@@ -10,6 +10,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "npy_import.h"
 #include "ufunc_override.h"
 #include "common.h"
 #include "ctors.h"
@@ -358,15 +359,23 @@ NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
     PyObject *ret = NULL;
+    PyObject *safe;
+    static PyObject *checkfunc = NULL;
 
-    if (offset < 0 || (offset + typed->elsize) > PyArray_DESCR(self)->elsize) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "
-                     "but received offset = %d",
-                     PyArray_DESCR(self)->elsize-typed->elsize, offset);
-        Py_DECREF(typed);
+    npy_cache_pyfunc("numpy.core._internal", "_getfield_is_safe", &checkfunc);
+    if (checkfunc == NULL) {
         return NULL;
     }
+
+    /* check that we are not reinterpreting memory containing Objects */
+    /* only returns True or raises */
+    safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
+                                 typed, offset);
+    if (safe == NULL) {
+        return NULL;
+    }
+    Py_DECREF(safe);
+
     ret = PyArray_NewFromDescr(Py_TYPE(self),
                                typed,
                                PyArray_NDIM(self), PyArray_DIMS(self),
@@ -417,23 +426,12 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     PyObject *ret = NULL;
     int retval = 0;
 
-    if (offset < 0 || (offset + dtype->elsize) > PyArray_DESCR(self)->elsize) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "
-                     "but received offset = %d",
-                     PyArray_DESCR(self)->elsize-dtype->elsize, offset);
-        Py_DECREF(dtype);
-        return -1;
-    }
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                           dtype, PyArray_NDIM(self), PyArray_DIMS(self),
-                           PyArray_STRIDES(self), PyArray_BYTES(self) + offset,
-                           PyArray_FLAGS(self), (PyObject *)self);
+    /* getfield returns a view we can write to */
+    ret = PyArray_GetField(self, dtype, offset);
     if (ret == NULL) {
         return -1;
     }
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
     retval = PyArray_CopyObject((PyArrayObject *)ret, val);
     Py_DECREF(ret);
     return retval;
@@ -452,13 +450,6 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_DescrConverter, &dtype,
                                      &offset)) {
         Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        PyErr_SetString(PyExc_RuntimeError,
-                    "cannot call setfield on an object array");
-        Py_DECREF(dtype);
         return NULL;
     }
 
