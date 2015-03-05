@@ -518,12 +518,18 @@ class StringConverter(object):
     """
     #
     _mapper = [(nx.bool_, str2bool, False),
-               (nx.integer, int, -1),
-               (nx.floating, float, nx.nan),
-               (complex, _bytes_to_complex, nx.nan + 0j),
-               (nx.string_, bytes, asbytes('???'))]
+               (nx.integer, int, -1)]
+
+    # On 32-bit systems, we need to make sure that we explicitly include
+    # nx.int64 since ns.integer is nx.int32.
+    if nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize:
+        _mapper.append((nx.int64, int, -1))
+
+    _mapper.extend([(nx.floating, float, nx.nan),
+                    (complex, _bytes_to_complex, nx.nan + 0j),
+                    (nx.string_, bytes, asbytes('???'))])
+
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
-    #
 
     @classmethod
     def _getdtype(cls, val):
@@ -677,7 +683,22 @@ class StringConverter(object):
 
     def _strict_call(self, value):
         try:
-            return self.func(value)
+
+            # We check if we can convert the value using the current function
+            new_value = self.func(value)
+
+            # In addition to having to check whether func can convert the
+            # value, we also have to make sure that we don't get overflow
+            # errors for integers.
+            if self.func is int:
+                try:
+                    np.array(value, dtype=self.type)
+                except OverflowError:
+                    raise ValueError
+
+            # We're still here so we can now return the new value
+            return new_value
+
         except ValueError:
             if value.strip() in self.missing_values:
                 if not self._status:
