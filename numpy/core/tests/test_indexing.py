@@ -409,6 +409,10 @@ class TestIndexing(TestCase):
         arr = np.arange(10)
         assert_array_equal(arr[SequenceLike()], arr[SequenceLike(),])
 
+        # also test that field indexing does not segfault
+        # for a similar reason, by indexing a structured array
+        arr = np.zeros((1,), dtype=[('f1', 'i8'), ('f2', 'i8')])
+        assert_array_equal(arr[SequenceLike()], arr[SequenceLike(),])
 
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):

@@ -235,6 +235,11 @@ class TestRecord(TestCase):
         rec[0].x = 1
         assert_equal(rec[0].x, np.ones(5))
 
+    def test_missing_field(self):
+        # https://github.com/numpy/numpy/issues/4806
+        arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
+        assert_raises(ValueError, lambda: arr[['nofield']])
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
