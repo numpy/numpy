@@ -142,6 +142,87 @@ class TestDot(TestCase):
         assert_equal(zeros[1].array, zeros_test[1].array)
 
 
+class _CommonAsarrayAsanyarray(TestCase):
+    """Base class for testing asarray and asanyarray"""
+
+    def test_exceptions(self):
+        assert_raises(ValueError, self.func, np.int8, None, np.int8)
+
+    def test_dtype(self):
+        # Note that np.long may be interchangeable with either np.int or
+        # np.long, so use type names for comparisons.
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        for dt1, dt2 in itertools.product(types, types):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', np.ComplexWarning)
+                a = np.ones(2, dtype=dt1)
+                res = self.func(a, dtype=dt2).dtype.name
+                tgt = np.dtype(dt2).name
+                assert_(res == tgt, "types '%s', '%s'" % (dt1, dt2))
+
+    def test_order(self):
+        # non-contiguous array
+        a = np.eye(3)[1:, 1:]
+        res = self.func(a, order='C').flags
+        tgt = res['C_CONTIGUOUS']
+        assert_(tgt, "order 'C'")
+        res = self.func(a, order='F').flags
+        tgt = res['F_CONTIGUOUS']
+        assert_(tgt, "order 'F'")
+        res = self.func(a, order='A').flags
+        tgt = not (res['C_CONTIGUOUS'] or res['F_CONTIGUOUS'])
+        assert_(tgt, "order 'A'")
+
+        # default is 'A'
+        res = self.func(a).flags
+        tgt = not (res['C_CONTIGUOUS'] or res['F_CONTIGUOUS'])
+        assert_(tgt, "order is default")
+
+    def test_precision(self):
+        # Check that precision acts like result_type(a, b)
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        for dt1, dt2 in itertools.product(types, types):
+            a = np.ones(2, dtype=dt1)
+            res = self.func(a, precision=dt2).dtype.name
+            tgt = np.result_type(dt1, dt2).name
+            assert_(res == tgt, "types '%s', '%s'" % (dt1, dt2))
+
+        for dt1, dt2 in itertools.product(types, types):
+            a = np.ones(2, dtype=dt1)
+            res = self.func(a, precision=np.ones(1, dtype=dt2)).dtype.name
+            tgt = np.result_type(dt1, np.ones(1, dtype=dt2)).name
+            assert_(res == tgt, "types '%s', '%s'" % (dt1, dt2))
+
+        for dt1 in types:
+            a = np.ones(2, dtype=dt1)
+            res = self.func(a, precision=0.0).dtype.name
+            tgt = np.result_type(dt1, 0.0).name
+            assert_(res == tgt, "types '%s', '%s'" % (dt1, 0.0))
+
+        for dt2 in types:
+            a = np.ones(2, dtype=object)
+            res = self.func(a, precision=dt2).dtype.type
+            tgt = np.object_
+            assert_(res is tgt, "type '%s'" % (dt2,))
+
+    def test_not_new_array(self):
+        a = np.ones(2)
+        b = self.func(a)
+        assert_(a is b)
+
+class TestAsarray(_CommonAsarrayAsanyarray):
+    func = staticmethod(np.asarray)
+
+
+class TestAsanyarray(_CommonAsarrayAsanyarray):
+    func = staticmethod(np.asanyarray)
+
+    def test_subok(self):
+        a = np.matrix(np.eye(3))
+        res = self.func(a)
+        assert_(type(res) is np.matrix)
+
+
 class TestResize(TestCase):
     def test_copies(self):
         A = array([[1, 2], [3, 4]])
