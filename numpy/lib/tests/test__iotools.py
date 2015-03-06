@@ -152,17 +152,31 @@ class TestStringConverter(TestCase):
 
     def test_upgrade(self):
         "Tests the upgrade method."
+
         converter = StringConverter()
         assert_equal(converter._status, 0)
+
         # test int
         assert_equal(converter.upgrade(asbytes('0')), 0)
         assert_equal(converter._status, 1)
+
+        # On systems where integer defaults to 32-bit, the statuses will be
+        # offset by one, so we check for this here.
+        import numpy.core.numeric as nx
+        status_offset = int(nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize)
+
+        # test int > 2**32
+        assert_equal(converter.upgrade(asbytes('17179869184')), 17179869184)
+        assert_equal(converter._status, 1 + status_offset)
+
         # test float
         assert_allclose(converter.upgrade(asbytes('0.')), 0.0)
-        assert_equal(converter._status, 2)
+        assert_equal(converter._status, 2 + status_offset)
+
         # test complex
         assert_equal(converter.upgrade(asbytes('0j')), complex('0j'))
-        assert_equal(converter._status, 3)
+        assert_equal(converter._status, 3 + status_offset)
+
         # test str
         assert_equal(converter.upgrade(asbytes('a')), asbytes('a'))
         assert_equal(converter._status, len(converter._mapper) - 1)
