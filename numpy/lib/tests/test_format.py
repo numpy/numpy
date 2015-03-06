@@ -284,7 +284,7 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec
@@ -532,6 +532,71 @@ def test_python2_python3_interoperability():
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
     data = np.load(path)
     assert_array_equal(data, np.ones(2))
+
+
+def test_pickle_python2_python3():
+    # Test that loading object arrays saved on Python 2 works both on
+    # Python 2 and Python 3 and vice versa
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+
+    if sys.version_info[0] >= 3:
+        xrange = range
+    else:
+        import __builtin__
+        xrange = __builtin__.xrange
+
+    expected = np.array([None, xrange, sixu('\u512a\u826f'),
+                         asbytes('\xe4\xb8\x8d\xe8\x89\xaf')],
+                        dtype=object)
+
+    for fname in ['py2-objarr.npy', 'py2-objarr.npz',
+                  'py3-objarr.npy', 'py3-objarr.npz']:
+        path = os.path.join(data_dir, fname)
+
+        if (fname.endswith('.npz') and sys.version_info[0] == 2 and
+                sys.version_info[1] < 7):
+            # Reading object arrays directly from zipfile appears to fail
+            # on Py2.6, see cfae0143b4
+            continue
+
+        for encoding in ['bytes', 'latin1']:
+            if (sys.version_info[0] >= 3 and sys.version_info[1] < 4 and
+                    encoding == 'bytes'):
+                # The bytes encoding is available starting from Python 3.4
+                continue
+
+            data_f = np.load(path, encoding=encoding)
+            if fname.endswith('.npz'):
+                data = data_f['x']
+                data_f.close()
+            else:
+                data = data_f
+
+            if sys.version_info[0] >= 3:
+                if encoding == 'latin1' and fname.startswith('py2'):
+                    assert_(isinstance(data[3], str))
+                    assert_array_equal(data[:-1], expected[:-1])
+                    # mojibake occurs
+                    assert_array_equal(data[-1].encode(encoding), expected[-1])
+                else:
+                    assert_(isinstance(data[3], bytes))
+                    assert_array_equal(data, expected)
+            else:
+                assert_array_equal(data, expected)
+
+        if sys.version_info[0] >= 3:
+            if fname.startswith('py2'):
+                if fname.endswith('.npz'):
+                    data = np.load(path)
+                    assert_raises(UnicodeError, data.__getitem__, 'x')
+                    data.close()
+                    data = np.load(path, fix_imports=False, encoding='latin1')
+                    assert_raises(ImportError, data.__getitem__, 'x')
+                    data.close()
+                else:
+                    assert_raises(UnicodeError, np.load, path)
+                    assert_raises(ImportError, np.load, path, encoding='latin1',
+                                  fix_imports=False)
 
 
 def test_version_2_0():
