@@ -161,6 +161,11 @@ if sys.version_info[0] >= 3:
 else:
     import cPickle as pickle
 
+
+class PickleWarning(UserWarning):
+    pass
+
+
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
@@ -571,6 +576,11 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         if not allow_pickle:
             raise ValueError("Object arrays cannot be saved when "
                              "allow_pickle=False")
+        else:
+            warnings.warn("Serializing an object array as a Python pickle. "
+                          "Note that the resulting file may not be portable "
+                          "between Python 2 and 3 environments.",
+                          PickleWarning, stacklevel=2)
         if pickle_kwargs is None:
             pickle_kwargs = {}
         pickle.dump(array, fp, protocol=2, **pickle_kwargs)

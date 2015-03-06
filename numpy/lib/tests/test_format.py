@@ -287,7 +287,7 @@ import numpy as np
 from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec, SkipTest
+    dec, SkipTest, assert_warns, suppress_warnings
     )
 from numpy.lib import format
 
@@ -453,9 +453,12 @@ def assert_equal_(o1, o2):
 
 
 def test_roundtrip():
-    for arr in basic_arrays + record_arrays:
-        arr2 = roundtrip(arr)
-        yield assert_array_equal, arr, arr2
+    with suppress_warnings() as sup:
+        sup.filter(np.PickleWarning)
+
+        for arr in basic_arrays + record_arrays:
+            arr2 = roundtrip(arr)
+            yield assert_array_equal, arr, arr2
 
 
 def test_roundtrip_randsize():
@@ -602,6 +605,16 @@ def test_pickle_disallow():
     path = os.path.join(tempdir, 'pickle-disabled.npy')
     assert_raises(ValueError, np.save, path, np.array([None], dtype=object),
                   allow_pickle=False)
+
+
+def test_pickle_warning():
+    fd, tmpfile = tempfile.mkstemp(dir=tempdir)
+    os.close(fd)
+
+    data = np.array([1, 'a'], dtype=object)
+
+    assert_warns(np.PickleWarning, np.save, tmpfile, data,
+                 allow_pickle=True)
 
 
 def test_version_2_0():
