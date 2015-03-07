@@ -35,6 +35,10 @@ class GnuFCompiler(FCompiler):
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
+        # Strip warning(s) that may be emitted by gfortran
+        while version_string.startswith('gfortran: warning'):
+            version_string = version_string[version_string.find('\n')+1:]
+
         # Try to find a valid version string
         m = re.search(r'([0-9.]+)', version_string)
         if m:

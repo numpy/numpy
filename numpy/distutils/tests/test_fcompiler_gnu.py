@@ -16,6 +16,11 @@ g77_version_strings = [
 gfortran_version_strings = [
     ('4.8.0', '4.8.0'),
     ('4.0.3-7', '4.0.3'),
+    ("gfortran: warning: couldn't understand kern.osversion '14.1.0\n4.9.1",
+     '4.9.1'),
+    ("gfortran: warning: couldn't understand kern.osversion '14.1.0\n"
+     "gfortran: warning: yet another warning\n4.9.1",
+     '4.9.1')
 ]
 
 class TestG77Versions(TestCase):
@@ -31,7 +36,7 @@ class TestG77Versions(TestCase):
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))
 
-class TestGortranVersions(TestCase):
+class TestGFortranVersions(TestCase):
     def test_gfortran_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, version in gfortran_version_strings:
