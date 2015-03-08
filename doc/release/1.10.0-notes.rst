@@ -178,6 +178,14 @@ compare NaNs as equal by setting ``equal_nan=True``. Subclasses, such as
 crashed with an ``OverflowError`` in these cases). Integers larger than
 ``2**63-1`` are converted to floating-point values.
 
+*np.load*, *np.save* have pickle backward compatibility flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The functions *np.load* and *np.save* have additional keyword
+arguments for controlling backward compatibility of pickled Python
+objects. This enables Numpy on Python 3 to load npy files containing
+object arrays that were generated on Python 2.
+
 Changes
 =======
 
