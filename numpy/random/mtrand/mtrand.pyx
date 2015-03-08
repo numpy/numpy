@@ -3489,7 +3489,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The returned samples all lie in the interval [left, right].
+            The drawn samples, of shape ``(m, n, k)`` with all returned samples
+            lie in the interval [left, right].
 
         Notes
         -----
@@ -3557,7 +3558,7 @@ cdef class RandomState:
 
         Draw samples from a binomial distribution.
 
-        Samples are drawn from a Binomial distribution with specified
+        Samples are drawn from a binomial distribution with specified
         parameters, n trials and p probability of success where
         n an integer >= 0 and p is in the interval [0,1]. (n may be
         input as a float, but it is truncated to an integer in use)
@@ -3576,8 +3577,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
-
+            The drawn samples, of shape ``(m, n, k)``.
+ 
         See Also
         --------
         scipy.stats.distributions.binom : probability density function,
@@ -3585,7 +3586,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Binomial distribution is
+        The probability density for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3668,9 +3669,9 @@ cdef class RandomState:
         """
         negative_binomial(n, p, size=None)
 
-        Draw samples from a negative_binomial distribution.
+        Draw samples from a negative binomial distribution.
 
-        Samples are drawn from a negative_Binomial distribution with specified
+        Samples are drawn from a negative binomial distribution with specified
         parameters, `n` trials and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
@@ -3687,12 +3688,12 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : int or ndarray of ints
-            Drawn samples.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Notes
         -----
-        The probability density for the Negative Binomial distribution is
+        The probability density for the negative binomial distribution is
 
         .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
 
