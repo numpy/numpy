@@ -374,3 +374,13 @@ at the end of the test run.  Skipped tests are marked as ``'S'`` in
 the test results (or ``'SKIPPED'`` for ``verbose > 1``), and known
 failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbose >
 1``).
+
+Tests on random data
+--------------------
+
+Tests on random data are good, but since test failures are meant to
+expose new bugs or regressions, a test that passes most of the time
+but fails occasionally with no code changes is not helpful.
+Make the random data deterministic by setting the random number seed
+before generating it.  Either Python's ``random.seed()`` or Numpy's
+``numpy.random.seed()``, depending on the source of random numbers.
