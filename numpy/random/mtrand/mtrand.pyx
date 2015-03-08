@@ -3766,18 +3766,23 @@ cdef class RandomState:
 
         Draw samples from a Poisson distribution.
 
-        The Poisson distribution is the limit of the Binomial
-        distribution for large N.
+        The Poisson distribution is the limit of the binomial
+        distribution for large sample sizes.
 
         Parameters
         ----------
-        lam : float or sequence of float
+        lam : float or sequence of float, optional
             Expectation of interval, should be >= 0. A sequence of expectation
             intervals must be broadcastable over the requested size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Notes
         -----
@@ -3863,8 +3868,8 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : scalar or ndarray
-            The returned samples are greater than or equal to one.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -3954,9 +3959,8 @@ cdef class RandomState:
 
         Returns
         -------
-        out : ndarray
-            Samples from the geometric distribution, shaped according to
-            `size`.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Examples
         --------
