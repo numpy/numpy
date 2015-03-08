@@ -261,7 +261,8 @@ class NpzFile(object):
             bytes.close()
             if magic == format.MAGIC_PREFIX:
                 bytes = self.zip.open(key)
-                return format.read_array(bytes, pickle_kwargs=self.pickle_kwargs)
+                return format.read_array(bytes,
+                                         pickle_kwargs=self.pickle_kwargs)
             else:
                 return self.zip.read(key)
         else:
@@ -460,10 +461,10 @@ def save(file, arr, fix_imports=True):
         extension will be appended to the file name if it does not already
         have one.
     fix_imports : bool, optional
-        Only useful in forcing objects in object arrays on Python 3 to be pickled
-        in a Python 2 compatible way. If `fix_imports` is True, pickle will try to
-        map the new Python 3 names to the old module names used in Python 2, so that
-        the pickle data stream is readable with Python 2.
+        Only useful in forcing objects in object arrays on Python 3 to be
+        pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
+        will try to map the new Python 3 names to the old module names used in
+        Python 2, so that the pickle data stream is readable with Python 2.
     arr : array_like
         Array data to be saved.
 
@@ -654,7 +655,8 @@ def _savez(file, args, kwds, compress, pickle_kwargs=None):
             fname = key + '.npy'
             fid = open(tmpfile, 'wb')
             try:
-                format.write_array(fid, np.asanyarray(val), pickle_kwargs=pickle_kwargs)
+                format.write_array(fid, np.asanyarray(val),
+                                   pickle_kwargs=pickle_kwargs)
                 fid.close()
                 fid = None
                 zipf.write(tmpfile, arcname=fname)

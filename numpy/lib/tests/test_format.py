@@ -595,8 +595,8 @@ def test_pickle_python2_python3():
                     data.close()
                 else:
                     assert_raises(UnicodeError, np.load, path)
-                    assert_raises(ImportError, np.load, path, encoding='latin1',
-                                  fix_imports=False)
+                    assert_raises(ImportError, np.load, path,
+                                  encoding='latin1', fix_imports=False)
 
 
 def test_version_2_0():

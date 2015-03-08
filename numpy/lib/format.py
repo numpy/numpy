@@ -597,7 +597,8 @@ def read_array(fp, pickle_kwargs=None):
         and time.
     pickle_kwargs : dict
         Additional keyword arguments to pass to pickle.load. These are only
-        useful when loading object arrays saved on Python 2 when using Python 3.
+        useful when loading object arrays saved on Python 2 when using
+        Python 3.
 
     Returns
     -------
@@ -629,7 +630,8 @@ def read_array(fp, pickle_kwargs=None):
             if sys.version_info[0] >= 3:
                 # Friendlier error message
                 raise UnicodeError("Unpickling a python object failed: %r\n"
-                                   "You may need to pass the encoding= option to numpy.load" % (err,))
+                                   "You may need to pass the encoding= option "
+                                   "to numpy.load" % (err,))
             raise
     else:
         if isfileobj(fp):
