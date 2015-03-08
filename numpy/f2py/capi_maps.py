@@ -178,14 +178,14 @@ if os.path.isfile('.f2py_f2cmap'):
         f = open('.f2py_f2cmap', 'r')
         d = eval(f.read(), {}, {})
         f.close()
-        for k, d1 in d.items():
-            for k1 in d1.keys():
+        for k, d1 in list(d.items()):
+            for k1 in list(d1.keys()):
                 d1[k1.lower()] = d1[k1]
             d[k.lower()] = d[k]
-        for k in d.keys():
+        for k in list(d.keys()):
             if k not in f2cmap_all:
                 f2cmap_all[k]={}
-            for k1 in d[k].keys():
+            for k1 in list(d[k].keys()):
                 if d[k][k1] in c2py_map:
                     if k1 in f2cmap_all[k]:
                         outmess("\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"%(k, k1, f2cmap_all[k][k1], d[k][k1]))

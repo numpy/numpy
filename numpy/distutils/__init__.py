@@ -13,7 +13,7 @@ if sys.version_info[0] < 3:
     from .npy_pkg_config import *
 
     try:
-        import __config__
+        from . import __config__
         _INSTALLED = True
     except ImportError:
         _INSTALLED = False
