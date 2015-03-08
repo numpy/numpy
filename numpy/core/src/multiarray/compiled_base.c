@@ -497,37 +497,44 @@ fail:
  * @return index
  */
 static npy_intp
-binary_search_with_guess(double key, double arr [], npy_intp len, npy_intp guess)
+binary_search_with_guess(double key, double arr [], npy_intp len,
+			 npy_intp guess)
 {
     npy_intp imin = 0;
     npy_intp imax = len;
 
     if (key > arr[len - 1]) {
         return len;
-    } else if (key < arr[0]) {
+    }
+    else if (key < arr[0]) {
         return -1;
     }
 
     if (guess < 0)  {
         guess = 0;
-    } else if (guess >= len-1) {
-        guess = len-2;
+    }
+    else if (guess >= len - 1) {
+        guess = len - 2;
     }
 
-    /* check most likely values: guess, guess+1, guess-1 */
-    if (key > arr[guess] && key <= arr[guess+1]) {
+    /* check most likely values: guess, guess + 1, guess - 1 */
+    if ((key > arr[guess]) && (key <= arr[guess + 1])) {
         return guess;
-    } else if ((guess < len-2) && (key > arr[guess+1]) && (key <= arr[guess+2])) {
-        return guess+1;
-    } else if ((guess > 1)     && (key > arr[guess-1]) && (key <= arr[guess])) {
-        return guess-1;
     }
-    /* may be able to restrict bounds to close vicinity (ie, likely in memory) */
-    if ((guess > 8)     && key >  arr[guess-8]) {
-        imin = guess-8;
+    else if ((guess < len - 2) && (key > arr[guess + 1]) &&
+	     (key <= arr[guess + 2])) {
+        return guess + 1;
     }
-    if ((guess < len-9) && key <= arr[guess+8]) {
-        imax = guess+8;
+    else if ((guess > 1) && (key > arr[guess - 1]) &&
+	     (key <= arr[guess])) {
+        return guess - 1;
+    }
+    /* may be able to restrict bounds to range likely to be in memory */
+    if ((guess > 8) && (key >  arr[guess - 8])) {
+        imin = guess - 8;
+    }
+    if ((guess < len - 9) && (key <= arr[guess + 8])) {
+        imax = guess + 8;
     }
     /* finally, find index by bisection */
     while (imin < imax) {
