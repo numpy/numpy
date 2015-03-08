@@ -18,7 +18,7 @@ from numpy.lib._iotools import (ConverterError, ConverterLockError,
 from numpy.compat import asbytes, asbytes_nested, bytes, asstr
 from nose import SkipTest
 from numpy.ma.testutils import (
-    TestCase, assert_equal, assert_array_equal,
+    TestCase, assert_equal, assert_array_equal, assert_allclose,
     assert_raises, assert_raises_regex, run_module_suite
 )
 from numpy.testing import assert_warns, assert_, build_err_msg
@@ -216,7 +216,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
-    
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
@@ -1762,6 +1762,31 @@ M   33  21.99
         res = np.genfromtxt(count())
         assert_array_equal(res, np.arange(10))
 
+    def test_auto_dtype_largeint(self):
+        """
+        Regression test for numpy/numpy#5635 whereby large integers could
+        cause OverflowErrors.
+        """
+        "Test the automatic definition of the output dtype"
+
+        # 2**66 = 73786976294838206464 => should convert to float
+        # 2**34 = 17179869184 => should convert to int64
+        # 2**10 = 1024 => should convert to int (int32 on 32-bit systems,
+        #                 int64 on 64-bit systems)
+
+        data = TextIO('73786976294838206464 17179869184 1024')
+
+        test = np.ndfromtxt(data, dtype=None)
+
+        assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
+
+        assert test.dtype['f0'] == np.float
+        assert test.dtype['f1'] == np.int64
+        assert test.dtype['f2'] == np.integer
+
+        assert_allclose(test['f0'], 73786976294838206464.)
+        assert_equal(test['f1'], 17179869184)
+        assert_equal(test['f2'], 1024)
 
 def test_gzip_load():
     a = np.random.random((5, 5))

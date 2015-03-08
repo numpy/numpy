@@ -361,3 +361,81 @@ npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp)
     qsort(base, num, size, cmp);
     return 0;
 }
+
+
+int
+npy_aquicksort(char *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
+{
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    char *vp;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr = stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
+
+    for (;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (cmp(v + (*pm)*elsize, v + (*pl)*elsize, arr) < 0) {
+                INTP_SWAP(*pm, *pl);
+            }
+            if (cmp(v + (*pr)*elsize, v + (*pm)*elsize, arr) < 0) {
+                INTP_SWAP(*pr, *pm);
+            }
+            if (cmp(v + (*pm)*elsize, v + (*pl)*elsize, arr) < 0) {
+                INTP_SWAP(*pm, *pl);
+            }
+            vp = v + (*pm)*elsize;
+            pi = pl;
+            pj = pr - 1;
+            INTP_SWAP(*pm,*pj);
+            for (;;) {
+                do {
+                    ++pi;
+                } while (cmp(v + (*pi)*elsize, vp, arr) < 0);
+                do {
+                    --pj;
+                } while (cmp(vp, v + (*pj)*elsize, arr) < 0);
+                if (pi >= pj) {
+                    break;
+                }
+                INTP_SWAP(*pi,*pj);
+            }
+            pk = pr - 1;
+            INTP_SWAP(*pi,*pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v + vi*elsize;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && cmp(vp, v + (*pk)*elsize, arr) < 0) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
+}

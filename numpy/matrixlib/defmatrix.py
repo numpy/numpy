@@ -74,6 +74,8 @@ def asmatrix(data, dtype=None):
     ----------
     data : array_like
         Input data.
+    dtype : data-type
+       Data-type of the output matrix.
 
     Returns
     -------

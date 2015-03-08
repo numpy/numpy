@@ -3680,11 +3680,10 @@ static void
 @name@_fastputmask(@type@ *in, npy_bool *mask, npy_intp ni, @type@ *vals,
         npy_intp nv)
 {
-    npy_intp i;
-    @type@ s_val;
+    npy_intp i, j;
 
     if (nv == 1) {
-        s_val = *vals;
+        @type@ s_val = *vals;
         for (i = 0; i < ni; i++) {
             if (mask[i]) {
                 in[i] = s_val;
@@ -3692,9 +3691,12 @@ static void
         }
     }
     else {
-        for (i = 0; i < ni; i++) {
+        for (i = 0, j = 0; i < ni; i++, j++) {
+            if (j >= nv) {
+                j = 0;
+            }
             if (mask[i]) {
-                in[i] = vals[i%nv];
+                in[i] = vals[j];
             }
         }
     }

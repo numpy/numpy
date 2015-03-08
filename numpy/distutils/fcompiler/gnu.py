@@ -8,7 +8,6 @@ import platform
 import tempfile
 from subprocess import Popen, PIPE, STDOUT
 
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import msvc_runtime_library
@@ -21,6 +20,8 @@ TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
 # XXX: handle cross compilation
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
+def is_win32():
+    return sys.platform == "win32" and platform.architecture()[0] == "32bit"
 
 if is_win64():
     #_EXTRAFLAGS = ["-fno-leading-underscore"]
@@ -59,19 +60,11 @@ class GnuFCompiler(FCompiler):
             return None
         return v[1]
 
-    # 'g77 --version' results
-    # SunOS: GNU Fortran (GCC 3.2) 3.2 20020814 (release)
-    # Debian: GNU Fortran (GCC) 3.3.3 20040110 (prerelease) (Debian)
-    #         GNU Fortran (GCC) 3.3.3 (Debian 20040401)
-    #         GNU Fortran 0.5.25 20010319 (prerelease)
-    # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
-    # GNU Fortran (GCC) 3.4.2 (mingw-special)
-
     possible_executables = ['g77', 'f77']
     executables = {
         'version_cmd'  : [None, "-dumpversion"],
         'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
-        'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
+        'compiler_f90' : None,  # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
         'linker_so'    : [None, "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
@@ -92,19 +85,11 @@ class GnuFCompiler(FCompiler):
             executables[key].append('-mno-cygwin')
 
     g2c = 'g2c'
-
     suggested_f90_compiler = 'gnu95'
-
-    #def get_linker_so(self):
-    #    # win32 linking should be handled by standard linker
-    #    # Darwin g77 cannot be used as a linker.
-    #    #if re.match(r'(darwin)', sys.platform):
-    #    #    return
-    #    return FCompiler.get_linker_so(self)
 
     def get_flags_linker_so(self):
         opt = self.linker_so[1:]
-        if sys.platform=='darwin':
+        if sys.platform == 'darwin':
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
             # If MACOSX_DEPLOYMENT_TARGET is set, we simply trust the value
             # and leave it alone.  But, distutils will complain if the
@@ -130,7 +115,7 @@ class GnuFCompiler(FCompiler):
 
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
-            opt.append("-shared")
+            opt.append("-shared -Wl,-gc-sections -Wl,-s")
         if sys.platform.startswith('sunos'):
             # SunOS often has dynamically loaded symbols defined in the
             # static library libg2c.a  The linker doesn't like this.  To
@@ -157,10 +142,12 @@ class GnuFCompiler(FCompiler):
                 # if windows and not cygwin, libg2c lies in a different folder
                 if sys.platform == 'win32' and not d.startswith('/usr/lib'):
                     d = os.path.normpath(d)
-                    if not os.path.exists(os.path.join(d, "lib%s.a" % self.g2c)):
-                        d2 = os.path.abspath(os.path.join(d,
-                                                          '../../../../lib'))
-                        if os.path.exists(os.path.join(d2, "lib%s.a" % self.g2c)):
+                    path = os.path.join(d, "lib%s.a" % self.g2c)
+                    if not os.path.exists(path):
+                        root = os.path.join(d, *((os.pardir,)*4))
+                        d2 = os.path.abspath(os.path.join(root, 'lib'))
+                        path = os.path.join(d2, "lib%s.a" % self.g2c)
+                        if os.path.exists(path):
                             opt.append(d2)
                 opt.append(d)
         return opt
@@ -180,7 +167,7 @@ class GnuFCompiler(FCompiler):
             opt.append(g2c)
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
-               c_compiler.compiler_type=='msvc':
+               c_compiler.compiler_type == 'msvc':
             # the following code is not needed (read: breaks) when using MinGW
             # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
@@ -196,13 +183,22 @@ class GnuFCompiler(FCompiler):
 
     def get_flags_opt(self):
         v = self.get_version()
-        if v and v<='3.3.3':
+        if v and v <= '3.3.3':
             # With this compiler version building Fortran BLAS/LAPACK
             # with -O3 caused failures in lib.lapack heevr,syevr tests.
             opt = ['-O2']
+        elif v and v >= '4.6.0':
+            if is_win32():
+                # use -mincoming-stack-boundary=2
+                # due to the change to 16 byte stack alignment since GCC 4.6
+                # but 32 bit Windows ABI defines 4 bytes stack alignment
+                opt = ['-O2 -march=core2 -mtune=generic -mfpmath=sse -msse2'
+                       '-mincoming-stack-boundary=2']
+            else:
+                opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2']
         else:
-            opt = ['-O3']
-        opt.append('-funroll-loops')
+            opt = ['-O2']
+
         return opt
 
     def _c_arch_flags(self):
@@ -234,24 +230,17 @@ class Gnu95FCompiler(GnuFCompiler):
         if not v or v[0] != 'gfortran':
             return None
         v = v[1]
-        if v>='4.':
+        if v >= '4.':
             # gcc-4 series releases do not support -mno-cygwin option
             pass
         else:
-            # use -mno-cygwin flag for gfortran when Python is not Cygwin-Python
+            # use -mno-cygwin flag for gfortran when Python is not
+            # Cygwin-Python
             if sys.platform == 'win32':
                 for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
                             'compiler_fix', 'linker_so', 'linker_exe']:
                     self.executables[key].append('-mno-cygwin')
         return v
-
-    # 'gfortran --version' results:
-    # XXX is the below right?
-    # Debian: GNU Fortran 95 (GCC 4.0.3 20051023 (prerelease) (Debian 4.0.2-3))
-    #         GNU Fortran 95 (GCC) 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
-    # OS X: GNU Fortran 95 (GCC) 4.1.0
-    #       GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)
-    #       GNU Fortran (GCC) 4.3.0 20070316 (experimental)
 
     possible_executables = ['gfortran', 'f95']
     executables = {
@@ -311,10 +300,10 @@ class Gnu95FCompiler(GnuFCompiler):
                 target = self.get_target()
                 if target:
                     d = os.path.normpath(self.get_libgcc_dir())
-                    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
-                    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
-                    full = os.path.join(mingwdir, "libmingwex.a")
-                    if os.path.exists(full):
+                    root = os.path.join(d, *((os.pardir,)*4))
+                    path = os.path.join(root, target, "lib")
+                    mingwdir = os.path.normpath(path)
+                    if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
                         opt.append(mingwdir)
         return opt
 
@@ -349,14 +338,10 @@ class Gnu95FCompiler(GnuFCompiler):
         return ""
 
     def get_flags_opt(self):
-        if is_win64():
-            return ['-O0']
-        else:
-            return GnuFCompiler.get_flags_opt(self)
+        return GnuFCompiler.get_flags_opt(self)
 
 def _can_target(cmd, arch):
-    """Return true is the command supports the -arch flag for the given
-    architecture."""
+    """Return true if the architecture supports the -arch flag"""
     newcmd = cmd[:]
     fid, filename = tempfile.mkstemp(suffix=".f")
     try:
@@ -378,9 +363,13 @@ if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
 
-    compiler = GnuFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    try:
+        compiler = GnuFCompiler()
+        compiler.customize()
+        print(compiler.get_version())
+    except Exception:
+        msg = get_exception()
+        print(msg)
 
     try:
         compiler = Gnu95FCompiler()

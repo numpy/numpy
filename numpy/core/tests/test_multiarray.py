@@ -194,6 +194,14 @@ class TestAttributes(TestCase):
             y[...] = 1
             assert_equal(x, y)
 
+    def test_fill_max_uint64(self):
+        x = empty((3, 2, 1), dtype=uint64)
+        y = empty((3, 2, 1), dtype=uint64)
+        value = 2**64 - 1
+        y[...] = value
+        x.fill(value)
+        assert_array_equal(x, y)
+
     def test_fill_struct_array(self):
         # Filling from a scalar
         x = array([(0, 0.0), (1, 1.0)], dtype='i4,f8')
@@ -1417,6 +1425,29 @@ class TestMethods(TestCase):
         b = a.searchsorted(a, 'r', s)
         assert_equal(b, out + 1)
 
+    def test_argpartition_out_of_range(self):
+        # Test out of range values in kth raise an error, gh-5469
+        d = np.arange(10)
+        assert_raises(ValueError, d.argpartition, 10)
+        assert_raises(ValueError, d.argpartition, -11)
+        # Test also for generic type argpartition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(ValueError, d_obj.argpartition, 10)
+        assert_raises(ValueError, d_obj.argpartition, -11)
+
+    @dec.knownfailureif(True, "Ticket #5469 fixed for argpartition only")
+    def test_partition_out_of_range(self):
+        # Test out of range values in kth raise an error, gh-5469
+        d = np.arange(10)
+        assert_raises(ValueError, d.partition, 10)
+        assert_raises(ValueError, d.partition, -11)
+        # Test also for generic type partition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(ValueError, d_obj.partition, 10)
+        assert_raises(ValueError, d_obj.partition, -11)
+
     def test_partition(self):
         d = np.arange(10)
         assert_raises(TypeError, np.partition, d, 2, kind=1)
@@ -1747,6 +1778,12 @@ class TestMethods(TestCase):
                tgt = np.sort(d)[kth]
                assert_array_equal(np.partition(d, kth)[kth], tgt,
                                   err_msg="data: %r\n kth: %r" % (d, kth))
+
+    def test_argpartition_gh5524(self):
+        #  A test for functionality of argpartition on lists.
+        d = [6,7,3,2,9,0]
+        p = np.argpartition(d,1)
+        self.assert_partitioned(np.array(d)[p],[1])
 
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)

@@ -480,7 +480,7 @@ class ndenumerate(object):
 
     Parameters
     ----------
-    a : ndarray
+    arr : ndarray
       Input array.
 
     See Also

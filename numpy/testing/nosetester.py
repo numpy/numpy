@@ -84,10 +84,10 @@ def run_module_suite(file_to_run=None, argv=None):
 
     Parameters
     ----------
-    file_to_run: str, optional
+    file_to_run : str, optional
         Path to test module, or None.
         By default, run the module from which this function is called.
-    argv: list of strings
+    argv : list of strings
         Arguments to be passed to the nose test runner. ``argv[0]`` is
         ignored. All command line arguments accepted by ``nosetests``
         will work. If it is the default value None, sys.argv is used.

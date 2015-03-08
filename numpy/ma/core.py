@@ -681,6 +681,9 @@ def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     ----------
     a : array_like
         Input array, a (subclass of) ndarray.
+    mask : sequence, optional
+        Mask. Must be convertible to an array of booleans with the same
+        shape as `data`. True indicates a masked (i.e. invalid) data.
     copy : bool, optional
         Whether to use a copy of `a` (True) or to fix `a` in place (False).
         Default is True.
@@ -7378,21 +7381,21 @@ def append(a, b, axis=None):
 
     Parameters
     ----------
-    arr : array_like
+    a : array_like
         Values are appended to a copy of this array.
-    values : array_like
-        These values are appended to a copy of `arr`.  It must be of the
-        correct shape (the same shape as `arr`, excluding `axis`).  If `axis`
-        is not specified, `values` can be any shape and will be flattened
+    b : array_like
+        These values are appended to a copy of `a`.  It must be of the
+        correct shape (the same shape as `a`, excluding `axis`).  If `axis`
+        is not specified, `b` can be any shape and will be flattened
         before use.
     axis : int, optional
-        The axis along which `values` are appended.  If `axis` is not given,
-        both `arr` and `values` are flattened before use.
+        The axis along which `v` are appended.  If `axis` is not given,
+        both `a` and `b` are flattened before use.
 
     Returns
     -------
     append : MaskedArray
-        A copy of `arr` with `values` appended to `axis`.  Note that `append`
+        A copy of `a` with `b` appended to `axis`.  Note that `append`
         does not occur in-place: a new array is allocated and filled.  If
         `axis` is None, the result is a flattened array.
 

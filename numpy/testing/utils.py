@@ -1413,6 +1413,8 @@ def nulp_diff(x, y, dtype=None):
         first input array
     y : array_like
         second input array
+    dtype : dtype, optional
+        Data-type to convert `x` and `y` to if given. Default is None.
 
     Returns
     -------

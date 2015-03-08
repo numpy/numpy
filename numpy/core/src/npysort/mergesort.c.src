@@ -426,3 +426,69 @@ fail_1:
 fail_0:
     return err;
 }
+
+
+static void
+npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
+                npy_intp elsize, PyArray_CompareFunc *cmp, PyArrayObject *arr)
+{
+    char *vp;
+    npy_intp vi, *pi, *pj, *pk, *pm;
+
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl) >> 1);
+        npy_amergesort0(pl, pm, v, pw, elsize, cmp, arr);
+        npy_amergesort0(pm, pr, v, pw, elsize, cmp, arr);
+        for (pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
+        }
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+        while (pj < pi && pm < pr) {
+            if (cmp(v + (*pm)*elsize, v + (*pj)*elsize, arr) < 0) {
+                *pk++ = *pm++;
+            }
+            else {
+                *pk++ = *pj++;
+            }
+        }
+        while (pj < pi) {
+            *pk++ = *pj++;
+        }
+    }
+    else {
+        /* insertion sort */
+        for (pi = pl + 1; pi < pr; ++pi) {
+            vi = *pi;
+            vp = v + vi*elsize;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && cmp(vp, v + (*pk)*elsize, arr) < 0) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+    }
+}
+
+
+int
+npy_amergesort(char *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
+{
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    npy_intp *pl, *pr, *pw;
+
+    pl = tosort;
+    pr = pl + num;
+    pw = malloc((num >> 1) * sizeof(npy_intp));
+    if (pw == NULL) {
+        return -NPY_ENOMEM;
+    }
+    npy_amergesort0(pl, pr, v, pw, elsize, cmp, arr);
+    free(pw);
+
+    return 0;
+}

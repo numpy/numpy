@@ -30,11 +30,12 @@ else:
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
 from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
-from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
-
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from numpy.distutils.misc_util import msvc_runtime_library, get_build_architecture
+from distutils.errors import (DistutilsExecError, CompileError,
+                              UnknownFileError)
+from numpy.distutils.misc_util import (msvc_runtime_library,
+                                       get_build_architecture)
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
@@ -53,8 +54,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                   dry_run=0,
                   force=0):
 
-        distutils.cygwinccompiler.CygwinCCompiler.__init__ (self,
-                                                       verbose, dry_run, force)
+        distutils.cygwinccompiler.CygwinCCompiler.__init__ (self, verbose,
+                                                            dry_run, force)
 
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
@@ -80,79 +81,99 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             #   g++.exe: g++: No such file or directory
             # error (mingw 1.0 in Enthon24 tree, gcc-3.4.5).
             # If the --driver-name part is required for some environment
-            # then make the inclusion of this part specific to that environment.
+            # then make the inclusion of this part specific to that
+            # environment.
             self.linker = 'dllwrap' #  --driver-name g++'
         elif self.linker_dll == 'gcc':
             self.linker = 'g++'
 
-        # **changes: eric jones 4/11/01
-        # 1. Check for import library on Windows.  Build if it doesn't exist.
+        p = subprocess.Popen(['gcc', '--version'], shell=True,
+                             stdout=subprocess.PIPE)
+        out_string = p.stdout.read()
+        p.stdout.close()
 
-        build_import_library()
+        # Before build with MinGW-W64 generate the python import library
+        # with gendef and dlltool according to the MingW-W64 FAQ.
+        # Use the MinGW-W64 provided msvc runtime import libraries.
+        # Don't call build_import_library() and build_msvcr_library.
 
-        # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
-        msvcr_success = build_msvcr_library()
-        msvcr_dbg_success = build_msvcr_library(debug=True)
-        if msvcr_success or msvcr_dbg_success:
-            # add preprocessor statement for using customized msvcr lib
-            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
+        if 'MinGW-W64' not in str(out_string):
+
+            # **changes: eric jones 4/11/01
+            # 1. Check for import library on Windows.  Build if it doesn't
+            # exist.
+            build_import_library()
+
+            # Check for custom msvc runtime library on Windows. Build if it
+            # doesn't exist.
+            msvcr_success = build_msvcr_library()
+            msvcr_dbg_success = build_msvcr_library(debug=True)
+            if msvcr_success or msvcr_dbg_success:
+                # add preprocessor statement for using customized msvcr lib
+                self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
         msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
         self.define_macro('__MSVCRT_VERSION__', msvcr_version)
 
-        # **changes: eric jones 4/11/01
-        # 2. increased optimization and turned off all warnings
-        # 3. also added --driver-name g++
-        #self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-        #                     compiler_so='gcc -mno-cygwin -mdll -O2 -w',
-        #                     linker_exe='gcc -mno-cygwin',
-        #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s'
-        #                                % (self.linker, entry_point))
-
-        # MS_WIN64 should be defined when building for amd64 on windows, but
-        # python headers define it only for MS compilers, which has all kind of
-        # bad consequences, like using Py_ModuleInit4 instead of
+        # MS_WIN64 should be defined when building for amd64 on windows,
+        # but python headers define it only for MS compilers, which has all
+        # kind of bad consequences, like using Py_ModuleInit4 instead of
         # Py_ModuleInit4_64, etc... So we add it here
         if get_build_architecture() == 'AMD64':
             if self.gcc_version < "4.0":
                 self.set_executables(
                     compiler='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall',
-                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall -Wstrict-prototypes',
+                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0'
+                                ' -Wall -Wstrict-prototypes',
                     linker_exe='gcc -g -mno-cygwin',
                     linker_so='gcc -g -mno-cygwin -shared')
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(
-                    compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
-                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
-                    linker_exe='gcc -g',
-                    linker_so='gcc -g -shared')
+                    compiler='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
+                             ' -O2 -msse2 -Wall',
+                    compiler_so='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
+                                ' -O2 -msse2 -Wall -Wstrict-prototypes',
+                    linker_exe='gcc',
+                    linker_so='gcc -shared -Wl,-gc-sections -Wl,-s')
         else:
             if self.gcc_version <= "3.0.0":
-                self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-                                     compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
-                                     linker_exe='g++ -mno-cygwin',
-                                     linker_so='%s -mno-cygwin -mdll -static %s'
-                                     % (self.linker, entry_point))
+                self.set_executables(
+                    compiler='gcc -mno-cygwin -O2 -w',
+                    compiler_so='gcc -mno-cygwin -mdll -O2 -w'
+                                ' -Wstrict-prototypes',
+                    linker_exe='g++ -mno-cygwin',
+                    linker_so='%s -mno-cygwin -mdll -static %s' %
+                              (self.linker, entry_point))
             elif self.gcc_version < "4.0":
-                self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
-                                     compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
-                                     linker_exe='g++ -mno-cygwin',
-                                     linker_so='g++ -mno-cygwin -shared')
+                self.set_executables(
+                    compiler='gcc -mno-cygwin -O2 -Wall',
+                    compiler_so='gcc -mno-cygwin -O2 -Wall'
+                                ' -Wstrict-prototypes',
+                    linker_exe='g++ -mno-cygwin',
+                    linker_so='g++ -mno-cygwin -shared')
             else:
-                # gcc-4 series releases do not support -mno-cygwin option
-                self.set_executables(compiler='gcc -O2 -Wall',
-                                     compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
-                                     linker_exe='g++ ',
-                                     linker_so='g++ -shared')
-        # added for python2.3 support
-        # we can't pass it through set_executables because pre 2.2 would fail
+                # gcc-4 series releases do not support -mno-cygwin option i686
+                # build needs '-mincoming-stack-boundary=2' due to ABI
+                # incompatibility to Win32 ABI
+                self.set_executables(
+                    compiler='gcc -O2 -march=core2 -mtune=generic'
+                             ' -mfpmath=sse -msse2'
+                             ' -mincoming-stack-boundary=2 -Wall',
+                    compiler_so='gcc -O2 -march=core2 -mtune=generic'
+                                ' -mfpmath=sse -msse2'
+                                ' -mincoming-stack-boundary=2 -Wall'
+                                ' -Wstrict-prototypes',
+                    linker_exe='g++ ',
+                    linker_so='g++ -shared -Wl,-gc-sections -Wl,-s')
+        # added for python2.3 support we can't pass it through set_executables
+        # because pre 2.2 would fail
         self.compiler_cxx = ['g++']
 
-        # Maybe we should also append -mthreads, but then the finished
-        # dlls need another dll (mingwm10.dll see Mingw32 docs)
-        # (-mthreads: Support thread-safe exception handling on `Mingw32')
+        # Maybe we should also append -mthreads, but then the finished dlls
+        # need another dll (mingwm10.dll see Mingw32 docs) (-mthreads: Support
+        # thread-safe exception handling on `Mingw32')
 
         # no additional libraries needed
         #self.dll_libraries=[]
@@ -331,7 +352,8 @@ def build_msvcr_library(debug=False):
 
     # Skip using a custom library for versions < MSVC 8.0
     if int(msvcr_name.lstrip('msvcr')) < 80:
-        log.debug('Skip building msvcr library: custom functionality not present')
+        log.debug('Skip building msvcr library:'
+                  ' custom functionality not present')
         return False
 
     if debug:
@@ -341,14 +363,16 @@ def build_msvcr_library(debug=False):
     out_name = "lib%s.a" % msvcr_name
     out_file = os.path.join(sys.prefix, 'libs', out_name)
     if os.path.isfile(out_file):
-        log.debug('Skip building msvcr library: "%s" exists' % (out_file))
+        log.debug('Skip building msvcr library: "%s" exists' %
+                  (out_file,))
         return True
 
     # Find the msvcr dll
     msvcr_dll_name = msvcr_name + '.dll'
     dll_file = find_dll(msvcr_dll_name)
     if not dll_file:
-        log.warn('Cannot build msvcr library: "%s" not found' % msvcr_dll_name)
+        log.warn('Cannot build msvcr library: "%s" not found' %
+                 msvcr_dll_name)
         return False
 
     def_name = "lib%s.def" % msvcr_name
@@ -387,14 +411,15 @@ def _build_import_library_amd64():
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
     if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists' % (out_file))
+        log.debug('Skip building import library: "%s" exists' %
+                  (out_file))
         return
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
 
-    log.info('Building import library (arch=AMD64): "%s" (from %s)' \
-             % (out_file, dll_file))
+    log.info('Building import library (arch=AMD64): "%s" (from %s)' %
+             (out_file, dll_file))
 
     generate_def(dll_file, def_file)
 
@@ -432,9 +457,6 @@ def _build_import_library_x86():
     # for now, fail silently
     if status:
         log.warn('Failed to build import library for gcc. Linking will fail.')
-    #if not success:
-    #    msg = "Couldn't find import library, and failed to build it."
-    #    raise DistutilsPlatformError(msg)
     return
 
 #=====================================
@@ -462,16 +484,17 @@ if sys.platform == 'win32':
         # one, and we can't retrieve it from python
         _MSVCRVER_TO_FULLVER['80'] = "8.0.50727.42"
         _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
-        # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0 on Windows XP:
+        # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0
+        # on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
         if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
             major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
             _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
             del major, minor, rest
     except ImportError:
-        # If we are here, means python was not built with MSVC. Not sure what to do
-        # in that case: manifest building will fail, but it should not be used in
-        # that case anyway
+        # If we are here, means python was not built with MSVC. Not sure what
+        # to do in that case: manifest building will fail, but it should not be
+        # used in that case anyway
         log.warn('Cannot import msvcrt: using manifest will not be possible')
 
 def msvc_manifest_xml(maj, min):
@@ -480,8 +503,8 @@ def msvc_manifest_xml(maj, min):
     try:
         fullver = _MSVCRVER_TO_FULLVER[str(maj * 10 + min)]
     except KeyError:
-        raise ValueError("Version %d,%d of MSVCRT not supported yet" \
-                         % (maj, min))
+        raise ValueError("Version %d,%d of MSVCRT not supported yet" %
+                         (maj, min))
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
     # divisible by 4, most likely for alignement constraints when the xml is
@@ -557,7 +580,7 @@ def manifest_name(config):
     return root + exext + ".manifest"
 
 def rc_name(config):
-    # Get configest name (including suffix)
+    # Get configtest name (including suffix)
     root = configtest_name(config)
     return root + ".rc"
 
@@ -574,9 +597,3 @@ def generate_manifest(config):
             config.temp_files.append(manifest_name(config))
             man.write(manxml)
             man.close()
-            # # Write the rc file
-            # manrc = manifest_rc(manifest_name(self), "exe")
-            # rc = open(rc_name(self), "w")
-            # self.temp_files.append(manrc)
-            # rc.write(manrc)
-            # rc.close()

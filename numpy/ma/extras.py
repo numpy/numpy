@@ -730,6 +730,10 @@ def compress_rowcols(x, axis=None):
 
     Parameters
     ----------
+    x : array_like, MaskedArray
+        The array to operate on.  If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
     axis : int, optional
         Axis along which to perform the operation. Default is None.
 
@@ -1561,7 +1565,7 @@ def flatnotmasked_edges(a):
 
     Parameters
     ----------
-    arr : array_like
+    a : array_like
         Input 1-D `MaskedArray`
 
     Returns
