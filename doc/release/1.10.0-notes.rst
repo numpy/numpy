@@ -71,6 +71,15 @@ Notably, this affect recarrays containing strings with whitespace, as trailing
 whitespace is trimmed from chararrays but kept in ndarrays of string type.
 Also, the dtype.type of nested structured fields is now inherited.
 
+'out' keyword argument of ufuncs now accepts tuples of arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When using the 'out' keyword argument of a ufunc, a tuple of arrays, one per
+ufunc output, can be provided. For ufuncs with a single output a single array
+is also a valid 'out' keyword argument. Previously a single array could be
+provided in the 'out' keyword argument, and it would be used as the first
+output for ufuncs with multiple outputs, is deprecated, and will result in a
+`DeprecationWarning` now and an error in the future.
+
 New Features
 ============
 

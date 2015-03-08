@@ -299,7 +299,20 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    The first output can provided as either a positional or a keyword parameter.
+    The first output can be provided as either a positional or a keyword
+    parameter. Keyword 'out' arguments are incompatible with positional
+    ones.
+
+    ..versionadded:: 1.10
+
+    The 'out' keyword argument is expected to be a tuple with one entry per
+    output (which can be `None` for arrays to be allocated by the ufunc).
+    For ufuncs with a single output, passing a single array (instead of a
+    tuple holding a single array) is also valid.
+
+    Passing a single array in the 'out' keyword argument to a ufunc with
+    multiple outputs is deprecated, and will raise a warning in numpy 1.10,
+    and an error in a future release.
 
 *where*
 
