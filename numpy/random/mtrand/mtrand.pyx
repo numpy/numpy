@@ -3490,7 +3490,7 @@ cdef class RandomState:
         -------
         samples : ndarray or scalar
             The drawn samples, of shape ``(m, n, k)`` with all returned samples
-            lie in the interval [left, right].
+            in the interval [left, right].
 
         Notes
         -----
