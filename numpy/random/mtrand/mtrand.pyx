@@ -4369,9 +4369,9 @@ cdef class RandomState:
         binomial distribution.  Take an experiment with one of ``p``
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
-        distribution represents `n` such experiments.  Its values,
-        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the outcome
-        was ``i``.
+        distribution represents ``n`` such experiments.  Its values,
+        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the
+        outcome was ``i``.
 
         Parameters
         ----------
@@ -4382,10 +4382,15 @@ cdef class RandomState:
             should sum to 1 (however, the last element is always assumed to
             account for the remaining probability, as long as
             ``sum(pvals[:-1]) <= 1)``.
-        size : tuple of ints
-            Given a `size` of ``(M, N, K)``, then ``M*N*K`` samples are drawn,
-            and the output shape becomes ``(M, N, K, p)``, since each sample
-            has shape ``(p,)``.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+
+        Returns
+        -------
+        samples : ndarray,
+            The drawn samples, of shape ``(M, N, K, p)``
 
         Examples
         --------
@@ -4455,7 +4460,7 @@ cdef class RandomState:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw `size` samples of dimension ``k`` from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. Dirichlet pdf is the conjugate
         prior of a multinomial in Bayesian inference.
@@ -4463,15 +4468,17 @@ cdef class RandomState:
         Parameters
         ----------
         alpha : array
-            Parameter of the distribution (k dimension for sample of
-            dimension k).
-        size : array
-            Number of samples to draw.
+            Parameter of the distribution (``k`` dimension for sample of
+            dimension ``k``).
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape (alpha.ndim, size).
+            The drawn samples, of shape (size, alpha.ndim).
 
         Notes
         -----
@@ -4537,7 +4544,8 @@ cdef class RandomState:
         cdef double     acc, invacc
 
         k           = len(alpha)
-        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE,
+                                                            1, 1)
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
         shape = _shape_from_size(size, k)
