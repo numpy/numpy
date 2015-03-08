@@ -4117,17 +4117,15 @@ cdef class RandomState:
         """
         logseries(p, size=None)
 
-        Draw samples from a Logarithmic Series distribution.
+        Draw samples from a logarithmic series distribution.
 
-        Samples are drawn from a Log Series distribution with specified
-        parameter, p (probability, 0 < p < 1).
+        Samples are drawn from a log series distribution with specified
+        shape parameter, 0 < ``p`` < 1.
 
         Parameters
         ----------
-        loc : float
-
-        scale : float > 0.
-
+        p : float
+            Shape parameter
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -4136,7 +4134,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+            The drawn samples, of shape ``(m, n, k)``
 
         See Also
         --------
@@ -4145,13 +4143,13 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Log Series distribution is
+        The probability density for the log series distribution is
 
         .. math:: P(k) = \\frac{-p^k}{k \\ln(1-p)},
 
         where p = probability.
 
-        The Log Series distribution is frequently used to represent species
+        The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
         Williams in 1943 [2].  It may also be used to model the numbers of
         occupants seen in cars [3].
@@ -4168,8 +4166,6 @@ cdef class RandomState:
                Journal of Animal Ecology, 12:42-58.
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
-        .. [4] Wikipedia, "Logarithmic-distribution",
-               http://en.wikipedia.org/wiki/Logarithmic-distribution
 
         Examples
         --------
@@ -4214,7 +4210,7 @@ cdef class RandomState:
         """
         multivariate_normal(mean, cov[, size])
 
-        Draw random samples from a multivariate normal distribution.
+        Draw samples from a multivariate normal distribution.
 
         The multivariate normal, multinormal or Gaussian distribution is a
         generalization of the one-dimensional normal distribution to higher
@@ -4231,19 +4227,14 @@ cdef class RandomState:
             Covariance matrix of the distribution. It must be symmetric and
             positive-semidefinite for proper sampling.
         size : int or tuple of ints, optional
-            Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
-            generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
-            each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
-            If no shape is specified, a single (`N`-D) sample is returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
-        out : ndarray
-            The drawn samples, of shape *size*, if that was provided.  If not,
-            the shape is ``(N,)``.
-
-            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
-            value drawn from the distribution.
+        samples : ndarray
+            The drawn samples, of shape ``(m, n, k, N)``
 
         Notes
         -----
@@ -4390,7 +4381,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape ``(M, N, K, p)``
+            The drawn samples, of shape ``(m, n, k, p)``
 
         Examples
         --------
@@ -4478,7 +4469,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape (size, alpha.ndim).
+            The drawn samples, of shape ``(m, n, k, alpha.ndim)``.
 
         Notes
         -----
