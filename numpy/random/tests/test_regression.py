@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import sys
 from numpy.testing import (TestCase, run_module_suite, assert_,
                            assert_array_equal)
 from numpy import random
@@ -20,6 +21,16 @@ class TestRegression(TestCase):
         # Test for ticket #921
         assert_(np.all(np.random.hypergeometric(3, 18, 11, size=10) < 4))
         assert_(np.all(np.random.hypergeometric(18, 3, 11, size=10) > 0))
+
+        # Test for ticket #5623
+        args = [
+            (2**20 - 2, 2**20 - 2, 2**20 - 2),  # Check for 32-bit systems
+        ]
+        is_64bits = sys.maxsize > 2**32
+        if is_64bits:
+            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2)) # Check for 64-bit systems
+        for arg in args:
+            assert_(np.random.hypergeometric(*arg) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923

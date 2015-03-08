@@ -788,9 +788,9 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     d4 = ((double)mingoodbad) / popsize;
     d5 = 1.0 - d4;
     d6 = m*d4 + 0.5;
-    d7 = sqrt((popsize - m) * sample * d4 *d5 / (popsize-1) + 0.5);
+    d7 = sqrt((double)(popsize - m) * sample * d4 * d5 / (popsize - 1) + 0.5);
     d8 = D1*d7 + D2;
-    d9 = (long)floor((double)((m+1)*(mingoodbad+1))/(popsize+2));
+    d9 = (long)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
     d10 = (loggam(d9+1) + loggam(mingoodbad-d9+1) + loggam(m-d9+1) +
            loggam(maxgoodbad-m+d9+1));
     d11 = min(min(m, mingoodbad)+1.0, floor(d6+16*d7));
