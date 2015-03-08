@@ -498,7 +498,7 @@ fail:
  */
 static npy_intp
 binary_search_with_guess(double key, double arr [], npy_intp len,
-			 npy_intp guess)
+                         npy_intp guess)
 {
     npy_intp imin = 0;
     npy_intp imax = len;
@@ -522,11 +522,11 @@ binary_search_with_guess(double key, double arr [], npy_intp len,
         return guess;
     }
     else if ((guess < len - 2) && (key > arr[guess + 1]) &&
-	     (key <= arr[guess + 2])) {
+             (key <= arr[guess + 2])) {
         return guess + 1;
     }
     else if ((guess > 1) && (key > arr[guess - 1]) &&
-	     (key <= arr[guess])) {
+             (key <= arr[guess])) {
         return guess - 1;
     }
     /* may be able to restrict bounds to range likely to be in memory */
@@ -542,7 +542,7 @@ binary_search_with_guess(double key, double arr [], npy_intp len,
         if (key >= arr[imid]) {
             imin = imid + 1;
         }
-	else {
+        else {
             imax = imid;
         }
     }
