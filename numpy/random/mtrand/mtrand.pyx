@@ -3997,12 +3997,10 @@ cdef class RandomState:
         """
         hypergeometric(ngood, nbad, nsample, size=None)
 
-        Draw samples from a Hypergeometric distribution.
+        Draw samples from a hypergeometric distribution.
 
-        Samples are drawn from a Hypergeometric distribution with specified
-        parameters, ngood (ways to make a good selection), nbad (ways to make
-        a bad selection), and nsample = number of items sampled, which is less
-        than or equal to the sum ngood + nbad.
+        Samples are drawn from a hypergeometric distribution with specified
+        parameters.
 
         Parameters
         ----------
@@ -4021,7 +4019,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The values are all integers in  [0, n].
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -4030,7 +4028,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability density for the hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{m}{n}\\binom{N-m}{n-x}}{\\binom{N}{n}},
 
@@ -4044,11 +4042,11 @@ cdef class RandomState:
         replacement, then the Hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
-        Note that this distribution is very similar to the Binomial
+        Note that this distribution is very similar to the binomial
         distribution, except that in this case, samples are drawn without
-        replacement, whereas in the Binomial case samples are drawn with
+        replacement, whereas in the binomial case samples are drawn with
         replacement (or the sample space is infinite). As the sample space
-        becomes large, this distribution approaches the Binomial.
+        becomes large, this distribution approaches the binomial.
 
         References
         ----------
@@ -4058,7 +4056,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric-distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric-distribution
+               http://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -4134,7 +4132,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The drawn samples, of shape ``(m, n, k)``
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -4166,6 +4164,8 @@ cdef class RandomState:
                Journal of Animal Ecology, 12:42-58.
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
+        .. [4] Wikipedia, "Logarithmic-distribution",
+               http://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
