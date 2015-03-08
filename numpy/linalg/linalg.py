@@ -319,6 +319,8 @@ def solve(a, b):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -476,6 +478,8 @@ def inv(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -553,6 +557,8 @@ def cholesky(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -849,6 +855,8 @@ def eigvals(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -937,6 +945,8 @@ def eigvalsh(a, UPLO='L'):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1017,6 +1027,8 @@ def eig(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1152,6 +1164,8 @@ def eigh(a, UPLO='L'):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1259,6 +1273,8 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1628,6 +1644,8 @@ def slogdet(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1697,6 +1715,8 @@ def det(a):
 
     Notes
     -----
+
+    .. versionadded:: 1.8.0
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
