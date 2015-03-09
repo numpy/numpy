@@ -477,10 +477,14 @@ fail:
     return NULL;
 }
 
-/** @brief Use bisection on a sorted array to find first entry > key.
+/** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
- * Use bisection to find an index i s.t. arr[i] <= key < arr[i + 1]. If there is
- * no such i the error returns are:
+ * If an starting index guess is in-range, the array values around this
+ * index are first checked.  This allows for repeated calls for well-ordered
+ * keys (a very common case) to use the previous index as a very good guess.
+ *
+ * If the guess value is not useful, bisection of the array is used to
+ * find the index.  If there is no such index, the return values are:
  *     key < arr[0] -- -1
  *     key == arr[len - 1] -- len - 1
  *     key > arr[len - 1] -- len
@@ -489,10 +493,12 @@ fail:
  * @param key key value.
  * @param arr contiguous sorted array to be searched.
  * @param len length of the array.
+ * @param guess initial guess of index
  * @return index
  */
 static npy_intp
-binary_search(double key, double arr [], npy_intp len)
+binary_search_with_guess(double key, double arr [], npy_intp len,
+                         npy_intp guess)
 {
     npy_intp imin = 0;
     npy_intp imax = len;
@@ -500,6 +506,37 @@ binary_search(double key, double arr [], npy_intp len)
     if (key > arr[len - 1]) {
         return len;
     }
+    else if (key < arr[0]) {
+        return -1;
+    }
+
+    if (guess < 0)  {
+        guess = 0;
+    }
+    else if (guess >= len - 1) {
+        guess = len - 2;
+    }
+
+    /* check most likely values: guess, guess + 1, guess - 1 */
+    if ((key > arr[guess]) && (key <= arr[guess + 1])) {
+        return guess;
+    }
+    else if ((guess < len - 2) && (key > arr[guess + 1]) &&
+             (key <= arr[guess + 2])) {
+        return guess + 1;
+    }
+    else if ((guess > 1) && (key > arr[guess - 1]) &&
+             (key <= arr[guess])) {
+        return guess - 1;
+    }
+    /* may be able to restrict bounds to range likely to be in memory */
+    if ((guess > 8) && (key >  arr[guess - 8])) {
+        imin = guess - 8;
+    }
+    if ((guess < len - 9) && (key <= arr[guess + 8])) {
+        imax = guess + 8;
+    }
+    /* finally, find index by bisection */
     while (imin < imax) {
         npy_intp imid = imin + ((imax - imin) >> 1);
         if (key >= arr[imid]) {
@@ -519,7 +556,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     PyObject *fp, *xp, *x;
     PyObject *left = NULL, *right = NULL;
     PyArrayObject *afp = NULL, *axp = NULL, *ax = NULL, *af = NULL;
-    npy_intp i, lenx, lenxp;
+    npy_intp i, lenx, lenxp, j, jprev;
     double lval, rval;
     double *dy, *dx, *dz, *dres, *slopes;
 
@@ -565,7 +602,6 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     dx = (double *)PyArray_DATA(axp);
     dz = (double *)PyArray_DATA(ax);
     dres = (double *)PyArray_DATA(af);
-
     /* Get left and right fill values. */
     if ((left == NULL) || (left == Py_None)) {
         lval = dy[0];
@@ -587,6 +623,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     /* only pre-calculate slopes if there are relatively few of them. */
+    j = jprev = 0;
     if (lenxp <= lenx) {
         slopes = (double *) PyArray_malloc((lenxp - 1)*sizeof(double));
         if (! slopes) {
@@ -598,14 +635,14 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
         for (i = 0; i < lenx; i++) {
             const double x = dz[i];
-            npy_intp j;
 
             if (npy_isnan(x)) {
                 dres[i] = x;
                 continue;
             }
 
-            j = binary_search(x, dx, lenxp);
+            j = binary_search_with_guess(x, dx, lenxp, jprev);
+            jprev = j;
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -626,14 +663,14 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < lenx; i++) {
             const double x = dz[i];
-            npy_intp j;
 
             if (npy_isnan(x)) {
                 dres[i] = x;
                 continue;
             }
 
-            j = binary_search(x, dx, lenxp);
+            j = binary_search_with_guess(x, dx, lenxp, jprev);
+            jprev = j;
             if (j == -1) {
                 dres[i] = lval;
             }
