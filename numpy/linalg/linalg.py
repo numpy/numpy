@@ -1020,10 +1020,13 @@ def eig(a):
 
     See Also
     --------
+    eigvals : eigenvalues of a non-symmetric array.
+
+    eigh : eigenvalues and eigenvectors of a symmetric or Hermitian 
+       (conjugate symmetric) array.
+
     eigvalsh : eigenvalues of a symmetric or Hermitian (conjugate symmetric)
        array.
-
-    eigvals : eigenvalues of a non-symmetric array.
 
     Notes
     -----
