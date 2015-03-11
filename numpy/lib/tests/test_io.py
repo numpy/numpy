@@ -707,6 +707,14 @@ class TestLoadTxt(TestCase):
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
 
+    def test_from_complex(self):
+        tgt = (complex(1, 1), complex(1, -1))
+        c = TextIO()
+        c.write("%s %s" % tgt)
+        c.seek(0)
+        res = np.loadtxt(c, dtype=np.complex)
+        assert_equal(res, tgt)
+
     def test_universal_newline(self):
         f, name = mkstemp()
         os.write(f, b'1 21\r3 42\r')

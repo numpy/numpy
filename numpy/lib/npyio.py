@@ -690,7 +690,7 @@ def _getconv(dtype):
     elif issubclass(typ, np.floating):
         return floatconv
     elif issubclass(typ, np.complex):
-        return complex
+        return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
         return bytes
     else:
@@ -863,7 +863,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return tuple(ret)
 
     def split_line(line):
-        """Chop off comments, strip, and split at delimiter."""
+        """Chop off comments, strip, and split at delimiter.
+
+        Note that although the file is opened as text, this function
+        returns bytes.
+
+        """
         if comments is None:
             line = asbytes(line).strip(asbytes('\r\n'))
         else:
