@@ -850,10 +850,10 @@ def tile(A, reps):
     except TypeError:
         tup = (reps,)
     d = len(tup)
-    if all((x == 1 for x in tup)) and isinstance(A, _nx.ndarray):
+    if all(x == 1 for x in tup) and isinstance(A, _nx.ndarray):
         # Fixes the problem that the function does not make a copy if A is a
         # numpy array and the repetitions are 1 in all dimensions
-        c = _nx.array(A, copy=True, subok=True, ndmin=d)
+        return _nx.array(A, copy=True, subok=True, ndmin=d)
     else:
         c = _nx.array(A, copy=False, subok=True, ndmin=d)
     shape = list(c.shape)
