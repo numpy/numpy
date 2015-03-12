@@ -2069,6 +2069,51 @@ PyArray_FromStructInterface(PyObject *input)
     return NULL;
 }
 
+/*
+ * Checks if the object in descr is the default 'descr' member for the
+ * __array_interface__ dictionary with 'typestr' member typestr.
+ */
+NPY_NO_EXPORT int
+_is_default_descr(PyObject *descr, PyObject *typestr) {
+    PyObject *tuple, *name, *typestr2;
+#if defined(NPY_PY3K)
+    PyObject *tmp = NULL;
+#endif
+    int ret = 0;
+
+    if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
+        return 0;
+    }
+    tuple = PyList_GET_ITEM(descr, 0);
+    if (!(PyTuple_Check(tuple) && PyTuple_GET_SIZE(tuple) == 2)) {
+        return 0;
+    }
+    name = PyTuple_GET_ITEM(tuple, 0);
+    if (!(PyUString_Check(name) && PyUString_GET_SIZE(name) == 0)) {
+        return 0;
+    }
+    typestr2 = PyTuple_GET_ITEM(tuple, 1);
+#if defined(NPY_PY3K)
+    /* Allow unicode type strings */
+    if (PyUnicode_Check(typestr2)) {
+        tmp = PyUnicode_AsASCIIString(typestr2);
+        if (tmp == NULL) {
+            return 0;
+        }
+        typestr2 = tmp;
+    }
+#endif
+    if (PyBytes_Check(typestr2) &&
+            PyObject_RichCompareBool(typestr, typestr2, Py_EQ)) {
+        ret = 1;
+    }
+#if defined(NPY_PY3K)
+    Py_XDECREF(tmp);
+#endif
+
+    return ret;
+}
+
 #define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
 
 /*NUMPY_API*/
@@ -2086,11 +2131,6 @@ PyArray_FromInterface(PyObject *origin)
     int res, i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
-
-    /* Get the typestring -- ignore array_descr */
-    /* Get the shape */
-    /* Get the memory from __array_data__ and __array_offset__ */
-    /* Get the strides */
 
     iface = PyArray_GetAttrString_SuppressException(origin,
                                                     "__array_interface__");
@@ -2133,6 +2173,22 @@ PyArray_FromInterface(PyObject *origin)
 #endif
     if (dtype == NULL) {
         goto fail;
+    }
+
+    /*
+     * If the dtype is NPY_VOID, see if there is extra information in
+     * the 'descr' attribute.
+     */
+    if (dtype->type_num == NPY_VOID) {
+        PyObject *descr = PyDict_GetItemString(iface, "descr");
+        PyArray_Descr *new_dtype = NULL;
+
+        if (descr != NULL && !_is_default_descr(descr, attr) &&
+                PyArray_DescrConverter2(descr, &new_dtype) == NPY_SUCCEED &&
+                new_dtype != NULL) {
+            Py_DECREF(dtype);
+            dtype = new_dtype;
+        }
     }
 
     /* Get shape tuple from interface specification */
