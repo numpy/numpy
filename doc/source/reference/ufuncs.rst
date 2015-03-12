@@ -359,7 +359,7 @@ advanced usage and will not typically be used.
     Defaults to true. If set to false, the output will always be a strict
     array, not a subtype.
 
-*sig*
+*sig* or *signature*
 
     Either a data-type, a tuple of data-types, or a special signature
     string indicating the input and output types of a ufunc. This argument

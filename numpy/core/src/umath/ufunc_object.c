@@ -808,6 +808,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
+    int has_sig = 0;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -945,7 +946,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
             switch (str[0]) {
                 case 'c':
                     /* Provides a policy for allowed casting */
-                    if (strncmp(str, "casting", 7) == 0) {
+                    if (strcmp(str, "casting") == 0) {
                         if (!PyArray_CastingConverter(value, out_casting)) {
                             goto fail;
                         }
@@ -954,7 +955,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     break;
                 case 'd':
                     /* Another way to specify 'sig' */
-                    if (strncmp(str, "dtype", 5) == 0) {
+                    if (strcmp(str, "dtype") == 0) {
                         /* Allow this parameter to be None */
                         PyArray_Descr *dtype;
                         if (!PyArray_DescrConverter2(value, &dtype)) {
@@ -976,7 +977,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                      * Overrides the global parameters buffer size,
                      * error mask, and error object
                      */
-                    if (strncmp(str, "extobj", 6) == 0) {
+                    if (strcmp(str, "extobj") == 0) {
                         *out_extobj = value;
                         bad_arg = 0;
                     }
@@ -987,7 +988,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                      * either as a single array or None for single output
                      * ufuncs, or as a tuple of arrays and Nones.
                      */
-                    if (strncmp(str, "out", 3) == 0) {
+                    if (strcmp(str, "out") == 0) {
                         if (nargs > nin) {
                             PyErr_SetString(PyExc_ValueError,
                                     "cannot specify 'out' as both a "
@@ -1048,7 +1049,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         bad_arg = 0;
                     }
                     /* Allows the default output layout to be overridden */
-                    else if (strncmp(str,"order",5) == 0) {
+                    else if (strcmp(str, "order") == 0) {
                         if (!PyArray_OrderConverter(value, out_order)) {
                             goto fail;
                         }
@@ -1057,7 +1058,13 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     break;
                 case 's':
                     /* Allows a specific function inner loop to be selected */
-                    if (strncmp(str,"sig",3) == 0) {
+                    if (strcmp(str, "sig") == 0 ||
+                            strcmp(str, "signature") == 0) {
+                        if (has_sig == 1) {
+                            PyErr_SetString(PyExc_ValueError,
+                                "cannot specify both 'sig' and 'signature'");
+                            goto fail;
+                        }
                         if (*out_typetup != NULL) {
                             PyErr_SetString(PyExc_RuntimeError,
                                     "cannot specify both 'sig' and 'dtype'");
@@ -1066,8 +1073,9 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         *out_typetup = value;
                         Py_INCREF(value);
                         bad_arg = 0;
+                        has_sig = 1;
                     }
-                    else if (strncmp(str,"subok",5) == 0) {
+                    else if (strcmp(str, "subok") == 0) {
                         if (!PyBool_Check(value)) {
                             PyErr_SetString(PyExc_TypeError,
                                         "'subok' must be a boolean");
@@ -1082,8 +1090,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                      * Provides a boolean array 'where=' mask if
                      * out_wheremask is supplied.
                      */
-                    if (out_wheremask != NULL &&
-                            strncmp(str,"where",5) == 0) {
+                    if (out_wheremask != NULL && strcmp(str, "where") == 0) {
                         PyArray_Descr *dtype;
                         dtype = PyArray_DescrFromType(NPY_BOOL);
                         if (dtype == NULL) {
