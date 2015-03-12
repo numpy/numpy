@@ -103,6 +103,13 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
         PyErr_SetString(PyExc_TypeError, "function must be callable");
         return NULL;
     }
+    if (nin + nout > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                     "Cannot construct a ufunc with more than %d operands "
+                     "(requested number were: inputs = %d and outputs = %d)",
+                     NPY_MAXARGS, nin, nout);
+        return NULL;
+    }
     self = PyArray_malloc(sizeof(PyUFuncObject));
     if (self == NULL) {
         return NULL;
