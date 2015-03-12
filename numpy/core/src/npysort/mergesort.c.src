@@ -350,80 +350,70 @@ amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 
 
 static void
-npy_mergesort0(char *pl, char *pr, char *pw, char *vp, size_t size, npy_comparator cmp)
+npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
+               PyArray_CompareFunc *cmp, PyArrayObject *arr)
 {
     char *pi, *pj, *pk, *pm;
 
-    if ((size_t)(pr - pl) > SMALL_MERGESORT*size) {
+    if (pr - pl > SMALL_MERGESORT*elsize) {
         /* merge sort */
-        pm = pl + (((pr - pl)/size) >> 1)*size;
-        npy_mergesort0(pl, pm, pw, vp, size, cmp);
-        npy_mergesort0(pm, pr, pw, vp, size, cmp);
+        pm = pl + (((pr - pl)/elsize) >> 1)*elsize;
+        npy_mergesort0(pl, pm, pw, vp, elsize, cmp, arr);
+        npy_mergesort0(pm, pr, pw, vp, elsize, cmp, arr);
         GENERIC_COPY(pw, pl, pm - pl);
         pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (GENERIC_LT(pm, pj, cmp)) {
-                GENERIC_COPY(pk, pm, size);
-                pm += size;
-                pk += size;
+            if (cmp(pm, pj, arr) < 0) {
+                GENERIC_COPY(pk, pm, elsize);
+                pm += elsize;
+                pk += elsize;
             }
             else {
-                GENERIC_COPY(pk, pj, size);
-                pj += size;
-                pk += size;
+                GENERIC_COPY(pk, pj, elsize);
+                pj += elsize;
+                pk += elsize;
             }
         }
         GENERIC_COPY(pk, pj, pi - pj);
     }
     else {
         /* insertion sort */
-        for (pi = pl + size; pi < pr; pi += size) {
-            GENERIC_COPY(vp, pi, size);
+        for (pi = pl + elsize; pi < pr; pi += elsize) {
+            GENERIC_COPY(vp, pi, elsize);
             pj = pi;
-            pk = pi - size;
-            while (pj > pl && GENERIC_LT(vp, pk, cmp)) {
-                GENERIC_COPY(pj, pk, size);
-                pj -= size;
-                pk -= size;
+            pk = pi - elsize;
+            while (pj > pl && cmp(vp, pk, arr) < 0) {
+                GENERIC_COPY(pj, pk, elsize);
+                pj -= elsize;
+                pk -= elsize;
             }
-            GENERIC_COPY(pj, vp, size);
+            GENERIC_COPY(pj, vp, elsize);
         }
     }
 }
 
 
-/*
- * This sort has almost the same signature as libc qsort and is intended to
- * provide a mergesort for array types that don't have type specific sorts.
- * The difference in the signature is an error return, as it might be the
- * case that a memory allocation fails.
- */
 int
-npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp)
+npy_mergesort(char *start, npy_intp num, PyArrayObject *arr)
 {
-    char *pl, *pr, *pw, *vp;
-    int err = 0;
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    char *pl = start;
+    char *pr = pl + num*elsize;
+    char *pw = malloc((num >> 1) *elsize);
+    char *vp = malloc(elsize);
+    int err = -NPY_ENOMEM;
 
-    pl = base;
-    pr = pl + num*size;
-    pw = malloc((num/2) * size);
-    if (pw == NULL) {
-        err = -NPY_ENOMEM;
-        goto fail_0;
+    if (pw != NULL && vp != NULL) {
+        npy_mergesort0(pl, pr, pw, vp, elsize, cmp, arr);
+        err = 0;
     }
-    vp = malloc(size);
-    if (vp == NULL) {
-        err = -NPY_ENOMEM;
-        goto fail_1;
-    }
-    npy_mergesort0(pl, pr, pw, vp, size, cmp);
 
     free(vp);
-fail_1:
     free(pw);
-fail_0:
+
     return err;
 }
 
