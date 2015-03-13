@@ -357,11 +357,4 @@ GENERIC_SWAP(char *a, char *b, size_t len)
     }
 }
 
-
-NPY_INLINE static int
-GENERIC_LT(char *a, char *b, int (*cmp)(const void *, const void *))
-{
-    return cmp(a, b) < 0;
-}
-
 #endif

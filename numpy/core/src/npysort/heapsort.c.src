@@ -287,30 +287,27 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
  */
 
 
-/*
- * This sort has almost the same signature as libc qsort and is intended to
- * provide a heapsort for array types that don't have type specific sorts.
- * The difference in the signature is an error return, as it might be the
- * case that a memory allocation fails.
- */
 int
-npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
+npy_heapsort(char *start, npy_intp num, PyArrayObject *arr)
 {
-    char *tmp = malloc(size);
-    char *a = (char *) base - size;
-    size_t i, j, l;
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    char *tmp = malloc(elsize);
+    char *a = start - elsize;
+    npy_intp i, j, l;
 
     if (tmp == NULL) {
         return -NPY_ENOMEM;
     }
 
     for (l = num >> 1; l > 0; --l) {
-        GENERIC_COPY(tmp, a + l*size, size);
+        GENERIC_COPY(tmp, a + l*elsize, elsize);
         for (i = l, j = l << 1; j <= num;) {
-            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
-                j += 1;
-            if (GENERIC_LT(tmp, a + j*size, cmp)) {
-                GENERIC_COPY(a + i*size, a + j*size, size);
+            if (j < num && cmp(a + j*elsize, a + (j+1)*elsize, arr) < 0) {
+                ++j;
+            }
+            if (cmp(tmp, a + j*elsize, arr) < 0) {
+                GENERIC_COPY(a + i*elsize, a + j*elsize, elsize);
                 i = j;
                 j += j;
             }
@@ -318,18 +315,19 @@ npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
                 break;
             }
         }
-        GENERIC_COPY(a + i*size, tmp, size);
+        GENERIC_COPY(a + i*elsize, tmp, elsize);
     }
 
     for (; num > 1;) {
-        GENERIC_COPY(tmp, a + num*size, size);
-        GENERIC_COPY(a + num*size, a + size, size);
+        GENERIC_COPY(tmp, a + num*elsize, elsize);
+        GENERIC_COPY(a + num*elsize, a + elsize, elsize);
         num -= 1;
         for (i = 1, j = 2; j <= num;) {
-            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
-                j++;
-            if (GENERIC_LT(tmp, a + j*size, cmp)) {
-                GENERIC_COPY(a + i*size, a + j*size, size);
+            if (j < num && cmp(a + j*elsize, a + (j+1)*elsize, arr) < 0) {
+                ++j;
+            }
+            if (cmp(tmp, a + j*elsize, arr) < 0) {
+                GENERIC_COPY(a + i*elsize, a + j*elsize, elsize);
                 i = j;
                 j += j;
             }
@@ -337,7 +335,7 @@ npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
                 break;
             }
         }
-        GENERIC_COPY(a + i*size, tmp, size);
+        GENERIC_COPY(a + i*elsize, tmp, elsize);
     }
 
     free(tmp);

@@ -216,6 +216,10 @@ quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
     @type@ *pr = start + (num - 1)*len;
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
 
+    if (vp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
     for (;;) {
         while ((size_t)(pr - pl) > SMALL_QUICKSORT*len) {
             /* quicksort partition */
@@ -350,15 +354,86 @@ aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
  */
 
 
-/*
- * This sort has almost the same signature as libc qsort and is intended to
- * supply an error return for compatibility with the other generic sort
- * kinds.
- */
 int
-npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp)
+npy_quicksort(char *start, npy_intp num, PyArrayObject *arr)
 {
-    qsort(base, num, size, cmp);
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    char *vp = malloc(elsize);
+    char *pl = start;
+    char *pr = start + (num - 1)*elsize;
+    char *stack[PYA_QS_STACK];
+    char **sptr = stack;
+    char *pm, *pi, *pj, *pk;
+
+    if (vp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    for (;;) {
+        while(pr - pl > SMALL_QUICKSORT*elsize) {
+            /* quicksort partition */
+            pm = pl + (((pr - pl) / elsize) >> 1) * elsize;
+            if (cmp(pm, pl, arr) < 0) {
+                GENERIC_SWAP(pm, pl, elsize);
+            }
+            if (cmp(pr, pm, arr) < 0) {
+                GENERIC_SWAP(pr, pm, elsize);
+            }
+            if (cmp(pm, pl, arr) < 0) {
+                GENERIC_SWAP(pm, pl, elsize);
+            }
+            GENERIC_COPY(vp, pm, elsize);
+            pi = pl;
+            pj = pr - elsize;
+            GENERIC_SWAP(pm, pj, elsize);
+            for (;;) {
+                do {
+                    pi += elsize;
+                } while (cmp(pi, vp, arr) < 0);
+                do {
+                    pj -= elsize;
+                } while (cmp(vp, pj, arr) < 0);
+                if (pi >= pj) {
+                    break;
+                }
+                GENERIC_SWAP(pi, pj, elsize);
+            }
+            pk = pr - elsize;
+            GENERIC_SWAP(pi, pk, elsize);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + elsize;
+                *sptr++ = pr;
+                pr = pi - elsize;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - elsize;
+                pl = pi + elsize;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + elsize; pi <= pr; pi += elsize) {
+            GENERIC_COPY(vp, pi, elsize);
+            pj = pi;
+            pk = pi - elsize;
+            while (pj > pl && cmp(vp, pk, arr) < 0) {
+                GENERIC_COPY(pj, pk, elsize);
+                pj -= elsize;
+                pk -= elsize;
+            }
+            GENERIC_COPY(pj, vp, elsize);
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    free(vp);
     return 0;
 }
 

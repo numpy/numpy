@@ -9,7 +9,6 @@
 #define NPY_ENOMEM 1
 #define NPY_ECOMP 2
 
-typedef int (*npy_comparator)(const void *, const void *);
 
 int quicksort_bool(npy_bool *vec, npy_intp cnt, void *null);
 int heapsort_bool(npy_bool *vec, npy_intp cnt, void *null);
@@ -187,9 +186,9 @@ int aheapsort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *n
 int amergesort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp);
-int npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp);
-int npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp);
+int npy_quicksort(char *vec, npy_intp cnt, PyArrayObject *arr);
+int npy_heapsort(char *vec, npy_intp cnt, PyArrayObject *arr);
+int npy_mergesort(char *vec, npy_intp cnt, PyArrayObject *arr);
 int npy_aquicksort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 int npy_aheapsort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 int npy_amergesort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);

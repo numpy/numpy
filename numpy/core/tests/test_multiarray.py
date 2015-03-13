@@ -1436,7 +1436,6 @@ class TestMethods(TestCase):
         assert_raises(ValueError, d_obj.argpartition, 10)
         assert_raises(ValueError, d_obj.argpartition, -11)
 
-    @dec.knownfailureif(True, "Ticket #5469 fixed for argpartition only")
     def test_partition_out_of_range(self):
         # Test out of range values in kth raise an error, gh-5469
         d = np.arange(10)
