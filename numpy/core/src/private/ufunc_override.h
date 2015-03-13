@@ -13,7 +13,14 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 {
     /* ufunc.__call__(*args, **kwds) */
     int nargs = PyTuple_GET_SIZE(args);
-    PyObject *obj;
+    PyObject *obj = PyDict_GetItemString(*normal_kwds, "sig");
+
+    /* ufuncs accept 'sig' or 'signature' normalize to 'signature' */
+    if (obj != NULL) {
+        Py_INCREF(obj);
+        PyDict_SetItemString(*normal_kwds, "signature", obj);
+        PyDict_DelItemString(*normal_kwds, "sig");
+    }
 
     *normal_args = PyTuple_GetSlice(args, 0, nin);
 

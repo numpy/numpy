@@ -2313,6 +2313,22 @@ class TestBinop(object):
         assert_equal(obj2.sum(), 42)
         assert_(isinstance(obj2, SomeClass2))
 
+    def test_ufunc_override_normalize_signature(self):
+        # gh-5674
+        class SomeClass(object):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                return kw
+
+        a = SomeClass()
+        kw = np.add(a, [1])
+        assert_('sig' not in kw and 'signature' not in kw)
+        kw = np.add(a, [1], sig='ii->i')
+        assert_('sig' not in kw and 'signature' in kw)
+        assert_equal(kw['signature'], 'ii->i')
+        kw = np.add(a, [1], signature='ii->i')
+        assert_('sig' not in kw and 'signature' in kw)
+        assert_equal(kw['signature'], 'ii->i')
+
 
 class TestCAPI(TestCase):
     def test_IsPythonScalar(self):
