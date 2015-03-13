@@ -2001,10 +2001,18 @@ def corrcoef(x, y=None, rowvar=1, *args, **kwargs):
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
     """
-    if len(args) or kwargs.pop('bias', _DefaultArg) is not _DefaultArg:
+    nargs = len(args)
+    if nargs > 2:
+        raise TypeError(
+            'corrcoef takes at most 5 arguments ({0} given)'.format(nargs))
+    if nargs or kwargs.pop('bias', _DefaultArg) is not _DefaultArg:
         warnings.warn(_CORRCOEF_MSG_FMT.format('bias'), DeprecationWarning)
-    if len(args) > 1 or kwargs.pop('ddof', _DefaultArg) is not _DefaultArg:
+    if nargs > 1 or kwargs.pop('ddof', _DefaultArg) is not _DefaultArg:
         warnings.warn(_CORRCOEF_MSG_FMT.format('ddof'), DeprecationWarning)
+    if len(kwargs):
+        raise TypeError(
+            "corrcoef got an unexpected keyword argument '{0}'".format(
+                list(kwargs)[0]))
     c = cov(x, y, rowvar)
     try:
         d = diag(c)

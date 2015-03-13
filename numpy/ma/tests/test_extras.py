@@ -17,7 +17,8 @@ __date__ = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 import warnings
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_warns
+from numpy.testing import (TestCase, run_module_suite, assert_warns,
+                           assert_raises)
 from numpy.testing.warnutils import catch_warn_reset
 from numpy.ma.testutils import (rand, assert_, assert_array_equal,
                                 assert_equal, assert_almost_equal)
@@ -742,7 +743,7 @@ class TestCorrcoef(TestCase):
     def test_allow_masked_positional(self):
         # Test allow masked deprecated when positional
         x, y = self.data, self.data2
-        with catch_warn_reset(record=True) as w:
+        with catch_warn_reset(record=True, modules=[mae]) as w:
             warnings.simplefilter("always")
             # Raise warning for bias
             corrcoef(x, y, True, False)
@@ -752,6 +753,14 @@ class TestCorrcoef(TestCase):
             corrcoef(x, y, True, False, True)
             assert_equal(len(w), 3)
             assert_("keyword-only" in str(w[-1].message))
+
+
+    def test_args_kwargs(self):
+        # Check for errors for too many args, wrong kwargs
+        x, y = self.data, self.data2
+        with catch_warn_reset(modules=[mae]):
+            assert_raises(TypeError, corrcoef, x, y, True, False, True, 0, True)
+            assert_raises(TypeError, corrcoef, x, y, something=True)
 
 
 class TestPolynomial(TestCase):

@@ -1419,10 +1419,17 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     safely ignored in this and previous versions of numpy.
     """
     nargs = len(args)
+    if nargs > 3:
+        raise TypeError(
+            'corrcoef takes at most 6 arguments ({0} given)'.format(nargs))
     # Results other than _DefaultArg for bias, ddof result in warnings.
     bias = args[0] if nargs else kwargs.pop('bias', _DefaultArg)
     allow_masked = args[1] if nargs > 1 else kwargs.pop('allow_masked', True)
     ddof = args[2] if nargs > 2 else kwargs.pop('ddof', _DefaultArg)
+    if len(kwargs):
+        raise TypeError(
+            "corrcoef got an unexpected keyword argument '{0}'".format(
+                list(kwargs)[0]))
     # Bias as only extra positional argument also raises warning
     if nargs == 1 or bias is not _DefaultArg:
         warnings.warn(_CORRCOEF_MSG_FMT.format('bias'), DeprecationWarning)

@@ -1376,6 +1376,13 @@ class TestCorrCoef(TestCase):
             assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
                                np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
+    def test_args_kwargs(self):
+        # Check for errors for too many args, wrong kwargs
+        x, y = self.A, self.B
+        with catch_warn_reset(modules=[nfb]):
+            assert_raises(TypeError, corrcoef, x, y, True, False, 0, True)
+            assert_raises(TypeError, corrcoef, x, y, something=True)
+
 
 class TestCov(TestCase):
     def test_basic(self):
