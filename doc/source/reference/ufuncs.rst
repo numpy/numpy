@@ -350,7 +350,8 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    Overrides the dtype of the calculation and output arrays. Similar to *sig*.
+    Overrides the dtype of the calculation and output arrays. Similar to
+    *signature*.
 
 *subok*
 
@@ -359,7 +360,7 @@ advanced usage and will not typically be used.
     Defaults to true. If set to false, the output will always be a strict
     array, not a subtype.
 
-*sig* or *signature*
+*signature*
 
     Either a data-type, a tuple of data-types, or a special signature
     string indicating the input and output types of a ufunc. This argument
@@ -370,7 +371,9 @@ advanced usage and will not typically be used.
     available and searching for a loop with data-types to which all inputs
     can be cast safely. This keyword argument lets you bypass that
     search and choose a particular loop. A list of available signatures is
-    provided by the **types** attribute of the ufunc object.
+    provided by the **types** attribute of the ufunc object. For backwards
+    compatibility this argument can also be provided as *sig*, although
+    the long form is preferred.
 
 *extobj*
 
