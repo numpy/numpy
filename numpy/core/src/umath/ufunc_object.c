@@ -4457,6 +4457,14 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 {
     PyUFuncObject *ufunc;
 
+    if (nin + nout > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                     "Cannot construct a ufunc with more than %d operands "
+                     "(requested number were: inputs = %d and outputs = %d)",
+                     NPY_MAXARGS, nin, nout);
+        return NULL;
+    }
+
     ufunc = PyArray_malloc(sizeof(PyUFuncObject));
     if (ufunc == NULL) {
         return NULL;
