@@ -1428,7 +1428,10 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
         warnings.warn(_CORRCOEF_MSG_FMT.format('bias'), DeprecationWarning)
     if ddof is not _DefaultArg:
         warnings.warn(_CORRCOEF_MSG_FMT.format('ddof'), DeprecationWarning)
-
+    # allow_masked will be keyword only soon
+    if nargs > 1:
+        warnings.warn('allow_masked argument will be keyword-only in '
+                      'a future version of numpy')
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix

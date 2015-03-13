@@ -739,6 +739,20 @@ class TestCorrcoef(TestCase):
             assert_almost_equal(corrcoef(x, bias=1)[:-1, :-1],
                                 control[:-1, :-1])
 
+    def test_allow_masked_positional(self):
+        # Test allow masked deprecated when positional
+        x, y = self.data, self.data2
+        with catch_warn_reset(record=True) as w:
+            warnings.simplefilter("always")
+            # Raise warning for bias
+            corrcoef(x, y, True, False)
+            assert_equal(len(w), 1)
+            assert_("bias" in str(w[-1].message))
+            # Test warning for allow_masked as positional
+            corrcoef(x, y, True, False, True)
+            assert_equal(len(w), 3)
+            assert_("keyword-only" in str(w[-1].message))
+
 
 class TestPolynomial(TestCase):
     #
