@@ -1095,6 +1095,9 @@ class TestUfunc(TestCase):
         self.assertRaises(TypeError, np.add.at, values, [0, 1], 1)
         assert_array_equal(values, np.array(['a', 1], dtype=np.object))
 
+        # Test multiple output ufuncs raise error, gh-5665
+        assert_raises(ValueError, np.modf.at, np.arange(10), [1])
+
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5,2), dtype=int)
