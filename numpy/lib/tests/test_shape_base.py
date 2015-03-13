@@ -324,6 +324,12 @@ class TestTile(TestCase):
         assert_equal(tile(b, (2, 2)), [[1, 2, 1, 2], [3, 4, 3, 4],
                                        [1, 2, 1, 2], [3, 4, 3, 4]])
 
+    def test_tile_one_repetition_on_array_gh4679(self):
+        a = np.arange(5)
+        b = tile(a, 1)
+        b += 2
+        assert_equal(a, np.arange(5))
+
     def test_empty(self):
         a = np.array([[[]]])
         d = tile(a, (3, 2, 5)).shape
