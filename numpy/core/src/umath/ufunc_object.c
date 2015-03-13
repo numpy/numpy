@@ -5109,6 +5109,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
+    if (ufunc->nout != 1) {
+        PyErr_SetString(PyExc_ValueError,
+            "Only single output ufuncs supported at this time");
+        return NULL;
+    }
+
     if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
         return NULL;
     }
