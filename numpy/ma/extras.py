@@ -1422,12 +1422,11 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     if nargs > 3:
         raise TypeError(
             'corrcoef takes at most 6 arguments ({0} given)'.format(nargs))
-    arg_msg_fmt = ("The {0} argument has no effect on the result of "
-                   "ma.corrcoef\nand will be removed in a future version "
-                   "of numpy")
+    fmt = ("The {0} argument has no effect on the result of ma.corrcoef\n"
+           "and will be removed in a future version of numpy")
     if nargs or 'bias' in kwargs:
         kwargs.pop('bias', None)
-        warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
+        warnings.warn(fmt.format('bias'), DeprecationWarning)
     if nargs > 1:
         warnings.warn('allow_masked argument will be keyword-only in '
                       'a future version of numpy',
@@ -1437,7 +1436,7 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
         allow_masked = kwargs.pop('allow_masked', True)
     if nargs > 2 or 'ddof' in kwargs:
         kwargs.pop('ddof', None)
-        warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
+        warnings.warn(fmt.format('ddof'), DeprecationWarning)
     if len(kwargs):
         raise TypeError(
             "corrcoef got an unexpected keyword argument '{0}'".format(
