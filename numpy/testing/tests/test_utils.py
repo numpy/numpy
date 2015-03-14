@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
-from warnings import warn, simplefilter
 import sys
 
 import numpy as np
@@ -723,24 +722,24 @@ def test_catch_and_clear_warnings():
     my_mod = _get_fresh_mod()
     assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
     with catch_and_clear_warnings(modules=[my_mod]):
-        simplefilter('ignore')
-        warn('Some warning')
+        warnings.simplefilter('ignore')
+        warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
     # Without specified modules, don't clear warnings during context
     with catch_and_clear_warnings():
-        simplefilter('ignore')
-        warn('Some warning')
+        warnings.simplefilter('ignore')
+        warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 1)
     # Confirm that specifying module keeps old warning, does not add new
     with catch_and_clear_warnings(modules=[my_mod]):
-        simplefilter('ignore')
-        warn('Another warning')
+        warnings.simplefilter('ignore')
+        warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 1)
     # Another warning, no module spec does add to warnings dict, except on
     # Python 3.4 (see comments in `assert_warn_len_equal`)
     with catch_and_clear_warnings():
-        simplefilter('ignore')
-        warn('Another warning')
+        warnings.simplefilter('ignore')
+        warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 2)
 
 
@@ -752,8 +751,8 @@ def test_catch_and_clear_warnings_inherit():
     # Test can subclass and add default modules
     my_mod = _get_fresh_mod()
     with my_cacw():
-        simplefilter('ignore')
-        warn('Some warning')
+        warnings.simplefilter('ignore')
+        warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
 
 
