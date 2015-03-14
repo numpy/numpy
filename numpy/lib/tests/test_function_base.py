@@ -1307,6 +1307,12 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
+class catch_warn_nfb(catch_warn_reset):
+    """ Context manager to catch, reset warnings in function_base module
+    """
+    class_modules = (nfb,)
+
+
 class TestCorrCoef(TestCase):
     A = np.array(
         [[0.15391142, 0.18045767, 0.14197213],
@@ -1338,7 +1344,7 @@ class TestCorrCoef(TestCase):
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
-        with catch_warn_reset(modules=[nfb]):
+        with catch_warn_nfb():
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
             warnings.simplefilter("ignore")
@@ -1350,7 +1356,7 @@ class TestCorrCoef(TestCase):
 
     def test_bias(self):
         # bias raises DeprecationWarning
-        with catch_warn_reset(modules=[nfb]):
+        with catch_warn_nfb():
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
             assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
@@ -1379,7 +1385,7 @@ class TestCorrCoef(TestCase):
     def test_args_kwargs(self):
         # Check for errors for too many args, wrong kwargs
         x, y = self.A, self.B
-        with catch_warn_reset(modules=[nfb]):
+        with catch_warn_nfb():
             assert_raises(TypeError, corrcoef, x, y, True, False, 0, True)
             assert_raises(TypeError, corrcoef, x, y, something=True)
 

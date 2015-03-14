@@ -634,6 +634,12 @@ class TestCov(TestCase):
                              x.shape[0] / frac))
 
 
+class catch_warn_mae(catch_warn_reset):
+    """ Context manager to catch, reset warnings in ma.extras module
+    """
+    class_modules = (mae,)
+
+
 class TestCorrcoef(TestCase):
 
     def setUp(self):
@@ -645,7 +651,7 @@ class TestCorrcoef(TestCase):
         x, y = self.data, self.data2
         expected = np.corrcoef(x)
         expected2 = np.corrcoef(x, y)
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, x, ddof=-1)
             warnings.simplefilter("ignore")
@@ -660,7 +666,7 @@ class TestCorrcoef(TestCase):
         x, y = self.data, self.data2
         expected = np.corrcoef(x)
         # bias raises DeprecationWarning
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, x, y, True, False)
             assert_warns(DeprecationWarning, corrcoef, x, y, True, True)
@@ -675,7 +681,7 @@ class TestCorrcoef(TestCase):
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("ignore")
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
@@ -686,7 +692,7 @@ class TestCorrcoef(TestCase):
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("ignore")
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
@@ -700,7 +706,7 @@ class TestCorrcoef(TestCase):
         assert_almost_equal(np.corrcoef(nx), corrcoef(x))
         assert_almost_equal(np.corrcoef(nx, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("ignore")
             assert_almost_equal(np.corrcoef(nx, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
@@ -713,7 +719,7 @@ class TestCorrcoef(TestCase):
         assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
         assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False),
                             corrcoef(x, x[::-1], rowvar=False))
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("ignore")
             # ddof and bias have no or negligible effect on the function
             assert_almost_equal(np.corrcoef(nx, nx[::-1]),
@@ -730,7 +736,7 @@ class TestCorrcoef(TestCase):
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             warnings.simplefilter("ignore")
             # ddof and bias have no or negligible effect on the function
             assert_almost_equal(corrcoef(x, ddof=-2)[:-1, :-1],
@@ -743,7 +749,7 @@ class TestCorrcoef(TestCase):
     def test_allow_masked_positional(self):
         # Test allow masked deprecated when positional
         x, y = self.data, self.data2
-        with catch_warn_reset(record=True, modules=[mae]) as w:
+        with catch_warn_mae(record=True) as w:
             warnings.simplefilter("always")
             # Raise warning for bias
             corrcoef(x, y, True, False)
@@ -758,7 +764,7 @@ class TestCorrcoef(TestCase):
     def test_args_kwargs(self):
         # Check for errors for too many args, wrong kwargs
         x, y = self.data, self.data2
-        with catch_warn_reset(modules=[mae]):
+        with catch_warn_mae():
             assert_raises(TypeError, corrcoef, x, y, True, False, True, 0, True)
             assert_raises(TypeError, corrcoef, x, y, something=True)
 
