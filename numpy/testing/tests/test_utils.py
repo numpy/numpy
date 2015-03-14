@@ -5,13 +5,12 @@ from warnings import warn, simplefilter
 import sys
 
 import numpy as np
-from numpy.testing import (assert_equal, assert_array_equal,
-                           assert_almost_equal,
-                           assert_array_almost_equal,
-                           build_err_msg, raises, assert_raises,
-                           assert_warns, assert_no_warnings, assert_allclose,
-                           assert_approx_equal, assert_array_almost_equal_nulp,
-                           assert_array_max_ulp, catch_and_clear_warnings, run_module_suite)
+from numpy.testing import (
+    assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, build_err_msg, raises, assert_raises,
+    assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
+    assert_array_almost_equal_nulp, assert_array_max_ulp,
+    catch_and_clear_warnings, run_module_suite)
 import unittest
 
 class _GenericTest(object):
