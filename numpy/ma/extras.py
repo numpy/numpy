@@ -1387,7 +1387,7 @@ class _DefaultArg(object):
 
 def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     """
-    Return correlation coefficients of the input array.
+    Return Pearson product-moment correlation coefficients.
 
     Except for the handling of missing data this function does the same as
     `numpy.corrcoef`. For more details and examples, see `numpy.corrcoef`.
@@ -1412,7 +1412,8 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
-        If False, raises an exception.
+        If False, raises an exception.  Note: this will become a keyword-only
+        argument in future versions of numpy.
 
     See Also
     --------
