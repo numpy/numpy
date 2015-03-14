@@ -48,7 +48,6 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
-from numpy.lib.function_base import _CORRCOEF_MSG_FMT, _DefaultArg
 
 
 #...............................................................................
@@ -1375,6 +1374,15 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
         result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
     return result
+
+
+_CORRCOEF_MSG_FMT = (
+    "The {0} argument has no effect on the result of corrcoef "
+    "and will be removed in a future version of numpy")
+
+
+class _DefaultArg(object):
+    """ Class to signal a default argument passed """
 
 
 def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
