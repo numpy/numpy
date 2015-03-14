@@ -1438,9 +1438,8 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
         kwargs.pop('ddof', None)
         warnings.warn(fmt.format('ddof'), DeprecationWarning)
     if len(kwargs):
-        raise TypeError(
-            "corrcoef got an unexpected keyword argument '{0}'".format(
-                list(kwargs)[0]))
+        raise TypeError("corrcoef got an unexpected keyword "
+                        "argument '{0}'".format(list(kwargs)[0]))
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix
