@@ -1376,10 +1376,6 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-class _DefaultArg(object):
-    """ Class to signal a default argument passed """
-
-
 def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     """
     Return Pearson product-moment correlation coefficients.
@@ -1426,26 +1422,26 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
     if nargs > 3:
         raise TypeError(
             'corrcoef takes at most 6 arguments ({0} given)'.format(nargs))
-    # Results other than _DefaultArg for bias, ddof result in warnings.
-    bias = args[0] if nargs else kwargs.pop('bias', _DefaultArg)
-    allow_masked = args[1] if nargs > 1 else kwargs.pop('allow_masked', True)
-    ddof = args[2] if nargs > 2 else kwargs.pop('ddof', _DefaultArg)
+    arg_msg_fmt = ("The {0} argument has no effect on the result of "
+                   "ma.corrcoef and will be removed in a future version "
+                   "of numpy")
+    if nargs or 'bias' in kwargs:
+        kwargs.pop('bias', None)
+        warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
+    if nargs > 1:
+        warnings.warn('allow_masked argument will be keyword-only in '
+                      'a future version of numpy',
+                      DeprecationWarning)
+        allow_masked = args[1]
+    else:
+        allow_masked = kwargs.pop('allow_masked', True)
+    if nargs > 2 or 'ddof' in kwargs:
+        kwargs.pop('ddof', None)
+        warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
     if len(kwargs):
         raise TypeError(
             "corrcoef got an unexpected keyword argument '{0}'".format(
                 list(kwargs)[0]))
-    arg_msg_fmt = ("The {0} argument has no effect on the result of "
-                   "ma.corrcoef and will be removed in a future version "
-                   "of numpy")
-    # Bias as only extra positional argument also raises warning
-    if nargs == 1 or bias is not _DefaultArg:
-        warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
-    if ddof is not _DefaultArg:
-        warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
-    # allow_masked will be keyword only soon
-    if nargs > 1:
-        warnings.warn('allow_masked argument will be keyword-only in '
-                      'a future version of numpy')
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix

@@ -1949,10 +1949,6 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         return (dot(X, X.T.conj()) / fact).squeeze()
 
 
-class _DefaultArg(object):
-    """ Class to signal a default argument passed """
-
-
 def corrcoef(x, y=None, rowvar=1, *args, **kwargs):
     """
     Return Pearson product-moment correlation coefficients.
@@ -2002,9 +1998,11 @@ def corrcoef(x, y=None, rowvar=1, *args, **kwargs):
             'corrcoef takes at most 5 arguments ({0} given)'.format(nargs))
     arg_msg_fmt = ("The {0} argument has no effect on the result of corrcoef "
                    "and will be removed in a future version of numpy")
-    if nargs or kwargs.pop('bias', _DefaultArg) is not _DefaultArg:
+    if nargs or 'bias' in kwargs:
+        kwargs.pop('bias', None)
         warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
-    if nargs > 1 or kwargs.pop('ddof', _DefaultArg) is not _DefaultArg:
+    if nargs > 1 or 'ddof' in kwargs:
+        kwargs.pop('ddof', None)
         warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
     if len(kwargs):
         raise TypeError(
