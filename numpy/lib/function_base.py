@@ -1949,11 +1949,6 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         return (dot(X, X.T.conj()) / fact).squeeze()
 
 
-_CORRCOEF_MSG_FMT = (
-    "The {0} argument has no effect on the result of corrcoef "
-    "and will be removed in a future version of numpy")
-
-
 class _DefaultArg(object):
     """ Class to signal a default argument passed """
 
@@ -2005,10 +2000,12 @@ def corrcoef(x, y=None, rowvar=1, *args, **kwargs):
     if nargs > 2:
         raise TypeError(
             'corrcoef takes at most 5 arguments ({0} given)'.format(nargs))
+    arg_msg_fmt = ("The {0} argument has no effect on the result of corrcoef "
+                   "and will be removed in a future version of numpy")
     if nargs or kwargs.pop('bias', _DefaultArg) is not _DefaultArg:
-        warnings.warn(_CORRCOEF_MSG_FMT.format('bias'), DeprecationWarning)
+        warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
     if nargs > 1 or kwargs.pop('ddof', _DefaultArg) is not _DefaultArg:
-        warnings.warn(_CORRCOEF_MSG_FMT.format('ddof'), DeprecationWarning)
+        warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
     if len(kwargs):
         raise TypeError(
             "corrcoef got an unexpected keyword argument '{0}'".format(

@@ -1376,11 +1376,6 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-_CORRCOEF_MSG_FMT = (
-    "The {0} argument has no effect on the result of corrcoef "
-    "and will be removed in a future version of numpy")
-
-
 class _DefaultArg(object):
     """ Class to signal a default argument passed """
 
@@ -1439,11 +1434,14 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
         raise TypeError(
             "corrcoef got an unexpected keyword argument '{0}'".format(
                 list(kwargs)[0]))
+    arg_msg_fmt = ("The {0} argument has no effect on the result of "
+                   "ma.corrcoef and will be removed in a future version "
+                   "of numpy")
     # Bias as only extra positional argument also raises warning
     if nargs == 1 or bias is not _DefaultArg:
-        warnings.warn(_CORRCOEF_MSG_FMT.format('bias'), DeprecationWarning)
+        warnings.warn(arg_msg_fmt.format('bias'), DeprecationWarning)
     if ddof is not _DefaultArg:
-        warnings.warn(_CORRCOEF_MSG_FMT.format('ddof'), DeprecationWarning)
+        warnings.warn(arg_msg_fmt.format('ddof'), DeprecationWarning)
     # allow_masked will be keyword only soon
     if nargs > 1:
         warnings.warn('allow_masked argument will be keyword-only in '
