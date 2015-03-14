@@ -1726,8 +1726,8 @@ class catch_and_clear_warnings(warnings.catch_warnings):
     Warnings can be slippery, because, whenever a warning is triggered, Python
     adds a ``__warningregistry__`` member to the *calling* module.  This makes
     it impossible to retrigger the warning in this module, whatever you put in
-    the warnings filters.  The ``catch_clear_warnings`` context manager accepts
-    a sequence of `modules` as a keyword argument to its constructor and:
+    the warnings filters.  This context manager accepts a sequence of `modules`
+    as a keyword argument to its constructor and:
 
     * stores and removes any ``__warningregistry__`` entries in given `modules`
       on entry;
