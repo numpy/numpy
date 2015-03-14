@@ -22,9 +22,19 @@ def assert_warn_len_equal(mod, n_in_context):
         assert_equal(len(mod_warns), n_in_context)
 
 
+def _get_fresh_mod():
+    # Get this module, with warning registry empty
+    my_mod = sys.modules[__name__]
+    try:
+        my_mod.__warningregistry__.clear()
+    except AttributeError:
+        pass
+    return my_mod
+
+
 def test_catch_warn_reset():
     # Initial state of module, no warnings
-    my_mod = sys.modules[__name__]
+    my_mod = _get_fresh_mod()
     assert_equal(getattr(my_mod, '__warningregistry__', None), None)
     with catch_warn_reset(modules=[my_mod]):
         simplefilter('ignore')
@@ -46,3 +56,16 @@ def test_catch_warn_reset():
         simplefilter('ignore')
         warn('Another warning')
     assert_warn_len_equal(my_mod, 2)
+
+
+class my_cwr(catch_warn_reset):
+    class_modules = (sys.modules[__name__],)
+
+
+def test_catch_warn_reset_inherit():
+    # Test can subclass and add default modules
+    my_mod = _get_fresh_mod()
+    with my_cwr():
+        simplefilter('ignore')
+        warn('Some warning')
+    assert_equal(my_mod.__warningregistry__, {})

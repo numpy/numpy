@@ -14,8 +14,11 @@ class catch_warn_reset(catch_warnings):
     ``__warningregistry__`` member as the context manager exits, making it
     possible to retrigger the warning.
     """
+    class_modules = ()
+
     def __init__(self, *args, **kwargs):
-        self.modules = kwargs.pop('modules', [])
+        modules = kwargs.pop('modules', set())
+        self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
         super(catch_warn_reset, self).__init__(*args, **kwargs)
 
