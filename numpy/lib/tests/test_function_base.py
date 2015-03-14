@@ -10,7 +10,7 @@ from numpy.testing import (
     assert_allclose, assert_array_max_ulp, assert_warns,
     assert_raises_regex, dec
     )
-from numpy.testing.warnutils import catch_warn_reset
+from numpy.testing.warnutils import catch_clear_warnings
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import *
@@ -1307,7 +1307,7 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
-class catch_warn_nfb(catch_warn_reset):
+class catch_warn_nfb(catch_clear_warnings):
     """ Context manager to catch, reset warnings in function_base module
     """
     class_modules = (nfb,)
