@@ -1738,11 +1738,39 @@ class catch_and_clear_warnings(warnings.catch_warnings):
     """
     class_modules = ()
 
-    def __init__(self, *args, **kwargs):
-        modules = kwargs.pop('modules', set())
+    def __init__(self, record=False, module=None, modules=()):
+        """ Specify whether to record warnings, and modules to reset
+
+        For compatibility with Python 3.0, please consider all arguments to be
+        keyword-only.
+
+        Parameters
+        ----------
+        record : bool, optional
+            Specifies whether warnings should be captured by a custom
+            implementation of ``warnings.showwarning()`` and be appended to a
+            list returned by the context manager. Otherwise None is returned by
+            the context manager. The objects appended to the list are arguments
+            whose attributes mirror the arguments to ``showwarning()``.
+        module : None or module instance, optional
+            Specify an alternative module to the module named 'warnings' and
+            imported under that name. This argument is only useful when testing
+            the warnings module itself.
+        modules : sequence, optional
+            Sequence of modules for which to reset warnings registry on entry
+            and restore on exit
+
+        Examples
+        --------
+        >>> import warnings
+        >>> with catch_and_clear_warnings(modules=[np.core.fromnumeric]):
+        ...     warnings.simplefilter('always')
+        ...     # do something that raises a warning in np.core.fromnumeric
+        """
         self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
-        super(catch_and_clear_warnings, self).__init__(*args, **kwargs)
+        super(catch_and_clear_warnings, self).__init__(record=record,
+                                                       module=module)
 
     def __enter__(self):
         for mod in self.modules:
