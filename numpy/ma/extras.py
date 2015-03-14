@@ -1423,7 +1423,7 @@ def corrcoef(x, y=None, rowvar=True, *args, **kwargs):
         raise TypeError(
             'corrcoef takes at most 6 arguments ({0} given)'.format(nargs))
     arg_msg_fmt = ("The {0} argument has no effect on the result of "
-                   "ma.corrcoef and will be removed in a future version "
+                   "ma.corrcoef\nand will be removed in a future version "
                    "of numpy")
     if nargs or 'bias' in kwargs:
         kwargs.pop('bias', None)

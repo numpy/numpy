@@ -1996,7 +1996,7 @@ def corrcoef(x, y=None, rowvar=1, *args, **kwargs):
     if nargs > 2:
         raise TypeError(
             'corrcoef takes at most 5 arguments ({0} given)'.format(nargs))
-    arg_msg_fmt = ("The {0} argument has no effect on the result of corrcoef "
+    arg_msg_fmt = ("The {0} argument has no effect on the result of corrcoef\n"
                    "and will be removed in a future version of numpy")
     if nargs or 'bias' in kwargs:
         kwargs.pop('bias', None)
