@@ -28,7 +28,7 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-           'assert_allclose', 'IgnoreException']
+           'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings']
 
 
 verbose = 0
@@ -1718,3 +1718,65 @@ def tempdir(*args, **kwargs):
     tmpdir = mkdtemp(*args, **kwargs)
     yield tmpdir
     shutil.rmtree(tmpdir)
+
+
+class clear_and_catch_warnings(warnings.catch_warnings):
+    """ Context manager that resets warning registry for catching warnings
+
+    Warnings can be slippery, because, whenever a warning is triggered, Python
+    adds a ``__warningregistry__`` member to the *calling* module.  This makes
+    it impossible to retrigger the warning in this module, whatever you put in
+    the warnings filters.  This context manager accepts a sequence of `modules`
+    as a keyword argument to its constructor and:
+
+    * stores and removes any ``__warningregistry__`` entries in given `modules`
+      on entry;
+    * resets ``__warningregistry__`` to its previous state on exit.
+
+    This makes it possible to trigger any warning afresh inside the context
+    manager without disturbing the state of warnings outside.
+
+    For compatibility with Python 3.0, please consider all arguments to be
+    keyword-only.
+
+    Parameters
+    ----------
+    record : bool, optional
+        Specifies whether warnings should be captured by a custom
+        implementation of ``warnings.showwarning()`` and be appended to a list
+        returned by the context manager. Otherwise None is returned by the
+        context manager. The objects appended to the list are arguments whose
+        attributes mirror the arguments to ``showwarning()``.
+    modules : sequence, optional
+        Sequence of modules for which to reset warnings registry on entry and
+        restore on exit
+
+    Examples
+    --------
+    >>> import warnings
+    >>> with clear_and_catch_warnings(modules=[np.core.fromnumeric]):
+    ...     warnings.simplefilter('always')
+    ...     # do something that raises a warning in np.core.fromnumeric
+    """
+    class_modules = ()
+
+    def __init__(self, record=False, modules=()):
+        self.modules = set(modules).union(self.class_modules)
+        self._warnreg_copies = {}
+        super(clear_and_catch_warnings, self).__init__(record=record)
+
+    def __enter__(self):
+        for mod in self.modules:
+            if hasattr(mod, '__warningregistry__'):
+                mod_reg = mod.__warningregistry__
+                self._warnreg_copies[mod] = mod_reg.copy()
+                mod_reg.clear()
+        return super(clear_and_catch_warnings, self).__enter__()
+
+    def __exit__(self, *exc_info):
+        super(clear_and_catch_warnings, self).__exit__(*exc_info)
+        for mod in self.modules:
+            if hasattr(mod, '__warningregistry__'):
+                mod.__warningregistry__.clear()
+            if mod in self._warnreg_copies:
+                mod.__warningregistry__.update(self._warnreg_copies[mod])
