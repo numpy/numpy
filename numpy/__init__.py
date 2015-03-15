@@ -132,6 +132,16 @@ class VisibleDeprecationWarning(UserWarning):
     pass
 
 
+class _NoValue:
+    """Special keyword value.
+
+    This class may be used as the default value assigned to a
+    deprecated keyword in order to check if it has been given a user
+    defined value.
+    """
+    pass
+
+
 # oldnumeric and numarray were removed in 1.9. In case some packages import
 # but do not use them, we define them here for backward compatibility.
 oldnumeric = 'removed'
