@@ -48,7 +48,6 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
-from numpy.linalg import lstsq
 
 
 #...............................................................................
@@ -1377,9 +1376,10 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
+             ddof=np._NoValue):
     """
-    Return correlation coefficients of the input array.
+    Return Pearson product-moment correlation coefficients.
 
     Except for the handling of missing data this function does the same as
     `numpy.corrcoef`. For more details and examples, see `numpy.corrcoef`.
@@ -1398,45 +1398,41 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : bool, optional
-        Default normalization (False) is by ``(N-1)``, where ``N`` is the
-        number of observations given (unbiased estimate). If `bias` is 1,
-        then normalization is by ``N``. This keyword can be overridden by
-        the keyword ``ddof`` in numpy versions >= 1.5.
+    bias : _NoValue, optional
+        .. deprecated:: 1.10.0
+        Has no affect, do not use.
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
-        If False, raises an exception.
-    ddof : {None, int}, optional
-        .. versionadded:: 1.5
-        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
-        the number of observations; this overrides the value implied by
-        ``bias``. The default value is ``None``.
+        If False, raises an exception.  Because `bias` is deprecated, this
+        argument needs to be treated as keyword only to avoid a warning.
+    ddof : _NoValue, optional
+        .. deprecated:: 1.10.0
+        Has no affect, do not use.
 
     See Also
     --------
     numpy.corrcoef : Equivalent function in top-level NumPy module.
     cov : Estimate the covariance matrix.
 
+    Notes
+    -----
+    This function accepts but discards arguments `bias` and `ddof`.  This is
+    for backwards compatibility with previous versions of this function.  These
+    arguments had no effect on the return values of the function and can be
+    safely ignored in this and previous versions of numpy.
     """
-    # Check inputs
-    if ddof is not None and ddof != int(ddof):
-        raise ValueError("ddof must be an integer")
-    # Set up ddof
-    if ddof is None:
-        if bias:
-            ddof = 0
-        else:
-            ddof = 1
-
+    msg = 'bias and ddof have no affect and are deprecated'
+    if bias is not np._NoValue or ddof is not np._NoValue:
+        warnings.warn(msg, DeprecationWarning)
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1. - ddof
+        fact = np.dot(xnotmask.T, xnotmask) * 1.
         c = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
+        fact = np.dot(xnotmask, xnotmask.T) * 1.
         c = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
     # Check whether we have a scalar
     try:
@@ -1452,13 +1448,13 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         if rowvar:
             for i in range(n - 1):
                 for j in range(i + 1, n):
-                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1, ddof=ddof)
+                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
         else:
             for i in range(n - 1):
                 for j in range(i + 1, n):
                     _x = mask_cols(
-                            vstack((x[:, i], x[:, j]))).var(axis=1, ddof=ddof)
+                            vstack((x[:, i], x[:, j]))).var(axis=1)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
     return c / _denom
 

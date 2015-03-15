@@ -1949,17 +1949,17 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         return (dot(X, X.T.conj()) / fact).squeeze()
 
 
-def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
+def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     """
-    Return correlation coefficients.
+    Return Pearson product-moment correlation coefficients.
 
     Please refer to the documentation for `cov` for more detail.  The
-    relationship between the correlation coefficient matrix, `P`, and the
+    relationship between the correlation coefficient matrix, `R`, and the
     covariance matrix, `C`, is
 
-    .. math:: P_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
+    .. math:: R_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
 
-    The values of `P` are between -1 and 1, inclusive.
+    The values of `R` are between -1 and 1, inclusive.
 
     Parameters
     ----------
@@ -1975,28 +1975,33 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : int, optional
-        Default normalization is by ``(N - 1)``, where ``N`` is the number of
-        observations (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``. These values can be overridden by using
-        the keyword ``ddof`` in numpy versions >= 1.5.
-    ddof : int, optional
-        .. versionadded:: 1.5
-        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
-        the number of observations; this overrides the value implied by
-        ``bias``. The default value is ``None``.
+    bias : _NoValue, optional
+        .. deprecated:: 1.10.0
+        Has no affect, do not use.
+    ddof : _NoValue, optional
+        .. deprecated:: 1.10.0
+        Has no affect, do not use.
 
     Returns
     -------
-    out : ndarray
+    R : ndarray
         The correlation coefficient matrix of the variables.
 
     See Also
     --------
     cov : Covariance matrix
 
+    Notes
+    -----
+    This function accepts but discards arguments `bias` and `ddof`.  This is
+    for backwards compatibility with previous versions of this function.  These
+    arguments had no effect on the return values of the function and can be
+    safely ignored in this and previous versions of numpy.
     """
-    c = cov(x, y, rowvar, bias, ddof)
+    if bias is not np._NoValue or ddof is not np._NoValue:
+        warnings.warn('bias and ddof have no affect and are deprecated',
+                      DeprecationWarning)
+    c = cov(x, y, rowvar)
     try:
         d = diag(c)
     except ValueError:  # scalar covariance
