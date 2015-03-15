@@ -110,6 +110,18 @@ numpy's broadcasting rules. The functionality is similar to broadcast_arrays,
 which in fact has been rewritten to use broadcast_to internally, but only a
 single array is necessary.
 
+New context manager *clear_and_catch_warnings* for testing warnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When Python emits a warning, it records that this warning has been emitted in
+the module that caused the warning, in a module attribute
+``__warningregistry__``.  Once this has happened, it is not possible to emit
+the warning again, unless you clear the relevant entry in
+``__warningregistry__``.  This makes is hard and fragile to test warnings,
+because if your test comes after another that has already caused the warning,
+you will not be able to emit the warning or test it. The context manager
+``clear_and_catch_warnings`` clears warnings from the module registry on entry
+and resets them on exit, meaning that warnings can be re-raised.
+
 Improvements
 ============
 
