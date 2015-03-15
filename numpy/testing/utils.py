@@ -28,7 +28,7 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-           'assert_allclose', 'IgnoreException', 'catch_and_clear_warnings']
+           'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings']
 
 
 verbose = 0
@@ -1720,7 +1720,7 @@ def tempdir(*args, **kwargs):
     shutil.rmtree(tmpdir)
 
 
-class catch_and_clear_warnings(warnings.catch_warnings):
+class clear_and_catch_warnings(warnings.catch_warnings):
     """ ``catch_warnings`` context manager that resets warning registry
 
     Warnings can be slippery, because, whenever a warning is triggered, Python
@@ -1763,13 +1763,13 @@ class catch_and_clear_warnings(warnings.catch_warnings):
         Examples
         --------
         >>> import warnings
-        >>> with catch_and_clear_warnings(modules=[np.core.fromnumeric]):
+        >>> with clear_and_catch_warnings(modules=[np.core.fromnumeric]):
         ...     warnings.simplefilter('always')
         ...     # do something that raises a warning in np.core.fromnumeric
         """
         self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
-        super(catch_and_clear_warnings, self).__init__(record=record,
+        super(clear_and_catch_warnings, self).__init__(record=record,
                                                        module=module)
 
     def __enter__(self):
@@ -1778,10 +1778,10 @@ class catch_and_clear_warnings(warnings.catch_warnings):
                 mod_reg = mod.__warningregistry__
                 self._warnreg_copies[mod] = mod_reg.copy()
                 mod_reg.clear()
-        return super(catch_and_clear_warnings, self).__enter__()
+        return super(clear_and_catch_warnings, self).__enter__()
 
     def __exit__(self, *exc_info):
-        super(catch_and_clear_warnings, self).__exit__(*exc_info)
+        super(clear_and_catch_warnings, self).__exit__(*exc_info)
         for mod in self.modules:
             if hasattr(mod, '__warningregistry__'):
                 mod.__warningregistry__.clear()

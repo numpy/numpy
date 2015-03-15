@@ -9,7 +9,7 @@ from numpy.testing import (
     assert_array_almost_equal, build_err_msg, raises, assert_raises,
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
-    catch_and_clear_warnings, run_module_suite)
+    clear_and_catch_warnings, run_module_suite)
 import unittest
 
 class _GenericTest(object):
@@ -717,37 +717,37 @@ def _get_fresh_mod():
     return my_mod
 
 
-def test_catch_and_clear_warnings():
+def test_clear_and_catch_warnings():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
     assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
-    with catch_and_clear_warnings(modules=[my_mod]):
+    with clear_and_catch_warnings(modules=[my_mod]):
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
     # Without specified modules, don't clear warnings during context
-    with catch_and_clear_warnings():
+    with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 1)
     # Confirm that specifying module keeps old warning, does not add new
-    with catch_and_clear_warnings(modules=[my_mod]):
+    with clear_and_catch_warnings(modules=[my_mod]):
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 1)
     # Another warning, no module spec does add to warnings dict, except on
     # Python 3.4 (see comments in `assert_warn_len_equal`)
-    with catch_and_clear_warnings():
+    with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 2)
 
 
-class my_cacw(catch_and_clear_warnings):
+class my_cacw(clear_and_catch_warnings):
     class_modules = (sys.modules[__name__],)
 
 
-def test_catch_and_clear_warnings_inherit():
+def test_clear_and_catch_warnings_inherit():
     # Test can subclass and add default modules
     my_mod = _get_fresh_mod()
     with my_cacw():

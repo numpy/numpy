@@ -8,7 +8,7 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns,
-    assert_raises_regex, dec, catch_and_clear_warnings
+    assert_raises_regex, dec, clear_and_catch_warnings
     )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
@@ -1306,7 +1306,7 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
-class catch_warn_nfb(catch_and_clear_warnings):
+class catch_warn_nfb(clear_and_catch_warnings):
     """ Context manager to catch, reset warnings in function_base module
     """
     class_modules = (nfb,)

@@ -18,7 +18,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import (TestCase, run_module_suite, assert_warns,
-                           assert_raises, catch_and_clear_warnings)
+                           assert_raises, clear_and_catch_warnings)
 from numpy.ma.testutils import (rand, assert_, assert_array_equal,
                                 assert_equal, assert_almost_equal)
 from numpy.ma.core import (array, arange, masked, MaskedArray, masked_array,
@@ -633,7 +633,7 @@ class TestCov(TestCase):
                              x.shape[0] / frac))
 
 
-class catch_warn_mae(catch_and_clear_warnings):
+class catch_warn_mae(clear_and_catch_warnings):
     """ Context manager to catch, reset warnings in ma.extras module
     """
     class_modules = (mae,)
