@@ -2955,11 +2955,11 @@ cdef class RandomState:
         """
         gumbel(loc=0.0, scale=1.0, size=None)
 
-        Gumbel distribution.
+        Draw samples from a Gumbel distribution.
 
-        Draw samples from a Gumbel distribution with specified location and scale.
-        For more information on the Gumbel distribution, see Notes and References
-        below.
+        Draw samples from a Gumbel distribution with specified location and
+        scale.  For more information on the Gumbel distribution, see
+        Notes and References below.
 
         Parameters
         ----------
@@ -2975,7 +2975,7 @@ cdef class RandomState:
         Returns
         -------
         out : ndarray
-            The samples
+            Drawn samples
 
         See Also
         --------
@@ -2988,45 +2988,44 @@ cdef class RandomState:
 
         Notes
         -----
-        The Gumbel (or Smallest Extreme Value (SEV) or the Smallest Extreme Value
-        Type I) distribution is one of a class of Generalized Extreme Value (GEV)
-        distributions used in modeling extreme value problems.  The Gumbel is a
-        special case of the Extreme Value Type I distribution for maximums from
-        distributions with "exponential-like" tails.
+        The Gumbel (or Smallest Extreme Value (SEV) or the Smallest Extreme
+        Value Type I) distribution is one of a class of Generalized Extreme
+        Value (GEV) distributions used in modeling extreme value problems.
+        The Gumbel is a special case of the Extreme Value Type I distribution
+        for maximums from distributions with "exponential-like" tails.
 
         The probability density for the Gumbel distribution is
 
         .. math:: p(x) = \\frac{e^{-(x - \\mu)/ \\beta}}{\\beta} e^{ -e^{-(x - \\mu)/
                   \\beta}},
 
-        where :math:`\\mu` is the mode, a location parameter, and :math:`\\beta` is
-        the scale parameter.
+        where :math:`\\mu` is the mode, a location parameter, and
+        :math:`\\beta` is the scale parameter.
 
         The Gumbel (named for German mathematician Emil Julius Gumbel) was used
         very early in the hydrology literature, for modeling the occurrence of
-        flood events. It is also used for modeling maximum wind speed and rainfall
-        rates.  It is a "fat-tailed" distribution - the probability of an event in
-        the tail of the distribution is larger than if one used a Gaussian, hence
-        the surprisingly frequent occurrence of 100-year floods. Floods were
-        initially modeled as a Gaussian process, which underestimated the frequency
-        of extreme events.
-
+        flood events. It is also used for modeling maximum wind speed and
+        rainfall rates.  It is a "fat-tailed" distribution - the probability of
+        an event in the tail of the distribution is larger than if one used a
+        Gaussian, hence the surprisingly frequent occurrence of 100-year
+        floods. Floods were initially modeled as a Gaussian process, which
+        underestimated the frequency of extreme events.
 
         It is one of a class of extreme value distributions, the Generalized
         Extreme Value (GEV) distributions, which also includes the Weibull and
         Frechet.
 
-        The function has a mean of :math:`\\mu + 0.57721\\beta` and a variance of
-        :math:`\\frac{\\pi^2}{6}\\beta^2`.
+        The function has a mean of :math:`\\mu + 0.57721\\beta` and a variance
+        of :math:`\\frac{\\pi^2}{6}\\beta^2`.
 
         References
         ----------
-        Gumbel, E. J., *Statistics of Extremes*, New York: Columbia University
-        Press, 1958.
+        .. [1] Gumbel, E. J., "Statistics of Extremes,"
+               New York: Columbia University Press, 1958.
 
-        Reiss, R.-D. and Thomas, M., *Statistical Analysis of Extreme Values from
-        Insurance, Finance, Hydrology and Other Fields*, Basel: Birkhauser Verlag,
-        2001.
+        .. [2] Reiss, R.-D. and Thomas, M., "Statistical Analysis of Extreme
+               Values from Insurance, Finance, Hydrology and Other Fields,"
+               Basel: Birkhauser Verlag, 2001.
 
         Examples
         --------
@@ -3089,9 +3088,9 @@ cdef class RandomState:
         """
         logistic(loc=0.0, scale=1.0, size=None)
 
-        Draw samples from a Logistic distribution.
+        Draw samples from a logistic distribution.
 
-        Samples are drawn from a Logistic distribution with specified
+        Samples are drawn from a logistic distribution with specified
         parameters, loc (location or mean, also median), and scale (>0).
 
         Parameters
@@ -3131,14 +3130,14 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] Reiss, R.-D. and Thomas M. (2001), Statistical Analysis of Extreme
-               Values, from Insurance, Finance, Hydrology and Other Fields,
-               Birkhauser Verlag, Basel, pp 132-133.
+        .. [1] Reiss, R.-D. and Thomas M. (2001), "Statistical Analysis of
+               Extreme Values, from Insurance, Finance, Hydrology and Other
+               Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
-               http://en.wikipedia.org/wiki/Logistic-distribution
+               http://en.wikipedia.org/wiki/Logistic_distribution
 
         Examples
         --------
@@ -3228,12 +3227,13 @@ cdef class RandomState:
 
         References
         ----------
-        Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal Distributions
-        across the Sciences: Keys and Clues," *BioScience*, Vol. 51, No. 5,
-        May, 2001.  http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
+        .. [1] Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal
+               Distributions across the Sciences: Keys and Clues,"
+               BioScience, Vol. 51, No. 5, May, 2001.
+               http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
 
-        Reiss, R.D. and Thomas, M., *Statistical Analysis of Extreme Values*,
-        Basel: Birkhauser Verlag, 2001, pp. 31-32.
+        .. [2] Reiss, R.D. and Thomas, M., "Statistical Analysis of Extreme
+               Values," Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
         Examples
         --------
@@ -3257,7 +3257,8 @@ cdef class RandomState:
         >>> plt.show()
 
         Demonstrate that taking the products of random samples from a uniform
-        distribution can be fit well by a log-normal probability density function.
+        distribution can be fit well by a log-normal probability density
+        function.
 
         >>> # Generate a thousand samples: each is the product of 100 random
         >>> # values, drawn from a normal distribution.
@@ -3331,10 +3332,10 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] Brighton Webs Ltd., Rayleigh Distribution,
-              http://www.brighton-webs.co.uk/distributions/rayleigh.asp
+        .. [1] Brighton Webs Ltd., "Rayleigh Distribution,"
+               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
         .. [2] Wikipedia, "Rayleigh distribution"
-              http://en.wikipedia.org/wiki/Rayleigh_distribution
+               http://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
         --------
@@ -3379,18 +3380,16 @@ cdef class RandomState:
         """
         wald(mean, scale, size=None)
 
-        Draw samples from a Wald, or Inverse Gaussian, distribution.
+        Draw samples from a Wald, or inverse Gaussian, distribution.
 
         As the scale approaches infinity, the distribution becomes more like a
-        Gaussian.
+        Gaussian. Some references claim that the Wald is an inverse Gaussian
+        with mean equal to 1, but this is by no means universal.
 
-        Some references claim that the Wald is an Inverse Gaussian with mean=1, but
-        this is by no means universal.
-
-        The Inverse Gaussian distribution was first studied in relationship to
-        Brownian motion. In 1956 M.C.K. Tweedie used the name Inverse Gaussian
-        because there is an inverse relationship between the time to cover a unit
-        distance and distance covered in unit time.
+        The inverse Gaussian distribution was first studied in relationship to
+        Brownian motion. In 1956 M.C.K. Tweedie used the name inverse Gaussian
+        because there is an inverse relationship between the time to cover a
+        unit distance and distance covered in unit time.
 
         Parameters
         ----------
@@ -3415,20 +3414,20 @@ cdef class RandomState:
         .. math:: P(x;mean,scale) = \\sqrt{\\frac{scale}{2\\pi x^3}}e^
                                     \\frac{-scale(x-mean)^2}{2\\cdotp mean^2x}
 
-        As noted above the Inverse Gaussian distribution first arise from attempts
-        to model Brownian Motion. It is also a competitor to the Weibull for use in
-        reliability modeling and modeling stock returns and interest rate
-        processes.
+        As noted above the inverse Gaussian distribution first arise
+        from attempts to model Brownian motion. It is also a
+        competitor to the Weibull for use in reliability modeling and
+        modeling stock returns and interest rate processes.
 
         References
         ----------
         .. [1] Brighton Webs Ltd., Wald Distribution,
-              http://www.brighton-webs.co.uk/distributions/wald.asp
+               http://www.brighton-webs.co.uk/distributions/wald.asp
         .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
-              Distribution: Theory : Methodology, and Applications", CRC Press,
-              1988.
+               Distribution: Theory : Methodology, and Applications", CRC Press,
+               1988.
         .. [3] Wikipedia, "Wald distribution"
-              http://en.wikipedia.org/wiki/Wald_distribution
+               http://en.wikipedia.org/wiki/Wald_distribution
 
         Examples
         --------
@@ -3468,9 +3467,10 @@ cdef class RandomState:
 
         Draw samples from the triangular distribution.
 
-        The triangular distribution is a continuous probability distribution with
-        lower limit left, peak at mode, and upper limit right. Unlike the other
-        distributions, these parameters directly define the shape of the pdf.
+        The triangular distribution is a continuous probability
+        distribution with lower limit left, peak at mode, and upper
+        limit right. Unlike the other distributions, these parameters
+        directly define the shape of the pdf.
 
         Parameters
         ----------
@@ -3493,7 +3493,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density function for the Triangular distribution is
+        The probability density function for the triangular distribution is
 
         .. math:: P(x;l, m, r) = \\begin{cases}
                   \\frac{2(x-l)}{(r-l)(m-l)}& \\text{for $l \\leq x \\leq m$},\\\\
@@ -3501,14 +3501,15 @@ cdef class RandomState:
                   0& \\text{otherwise}.
                   \\end{cases}
 
-        The triangular distribution is often used in ill-defined problems where the
-        underlying distribution is not known, but some knowledge of the limits and
-        mode exists. Often it is used in simulations.
+        The triangular distribution is often used in ill-defined
+        problems where the underlying distribution is not known, but
+        some knowledge of the limits and mode exists. Often it is used
+        in simulations.
 
         References
         ----------
         .. [1] Wikipedia, "Triangular distribution"
-              http://en.wikipedia.org/wiki/Triangular_distribution
+               http://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples
         --------
@@ -3533,8 +3534,8 @@ cdef class RandomState:
                 raise ValueError("mode > right")
             if fleft == fright:
                 raise ValueError("left == right")
-            return cont3_array_sc(self.internal_state, rk_triangular, size, fleft,
-                                  fmode, fright, self.lock)
+            return cont3_array_sc(self.internal_state, rk_triangular, size,
+                                  fleft, fmode, fright, self.lock)
 
         PyErr_Clear()
         oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
@@ -3557,7 +3558,7 @@ cdef class RandomState:
 
         Draw samples from a binomial distribution.
 
-        Samples are drawn from a Binomial distribution with specified
+        Samples are drawn from a binomial distribution with specified
         parameters, n trials and p probability of success where
         n an integer >= 0 and p is in the interval [0,1]. (n may be
         input as a float, but it is truncated to an integer in use)
@@ -3585,7 +3586,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Binomial distribution is
+        The probability density for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3668,9 +3669,9 @@ cdef class RandomState:
         """
         negative_binomial(n, p, size=None)
 
-        Draw samples from a negative_binomial distribution.
+        Draw samples from a negative binomial distribution.
 
-        Samples are drawn from a negative_Binomial distribution with specified
+        Samples are drawn from a negative binomial distribution with specified
         parameters, `n` trials and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
@@ -3692,19 +3693,19 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Negative Binomial distribution is
+        The probability density for the negative binomial distribution is
 
         .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
 
-        where :math:`n-1` is the number of successes, :math:`p` is the probability
-        of success, and :math:`N+n-1` is the number of trials.
+        where :math:`n-1` is the number of successes, :math:`p` is the
+        probability of success, and :math:`N+n-1` is the number of trials.
+        The negative binomial distribution gives the probability of n-1
+        successes and N failures in N+n-1 trials, and success on the (N+n)th
+        trial.
 
-        The negative binomial distribution gives the probability of n-1 successes
-        and N failures in N+n-1 trials, and success on the (N+n)th trial.
-
-        If one throws a die repeatedly until the third time a "1" appears, then the
-        probability distribution of the number of non-"1"s that appear before the
-        third "1" is a negative binomial distribution.
+        If one throws a die repeatedly until the third time a "1" appears,
+        then the probability distribution of the number of non-"1"s that
+        appear before the third "1" is a negative binomial distribution.
 
         References
         ----------
@@ -3718,11 +3719,11 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        A real world example. A company drills wild-cat oil exploration wells, each
-        with an estimated probability of success of 0.1.  What is the probability
-        of having one success for each successive well, that is what is the
-        probability of a single success after drilling 5 wells, after 6 wells,
-        etc.?
+        A real world example. A company drills wild-cat oil
+        exploration wells, each with an estimated probability of
+        success of 0.1.  What is the probability of having one success
+        for each successive well, that is what is the probability of a
+        single success after drilling 5 wells, after 6 wells, etc.?
 
         >>> s = np.random.negative_binomial(1, 0.1, 100000)
         >>> for i in range(1, 11):
@@ -3766,8 +3767,8 @@ cdef class RandomState:
 
         Draw samples from a Poisson distribution.
 
-        The Poisson distribution is the limit of the Binomial
-        distribution for large N.
+        The Poisson distribution is the limit of the binomial distribution
+        for large N.
 
         Parameters
         ----------
@@ -3779,6 +3780,11 @@ cdef class RandomState:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
 
+        Returns
+        -------
+        samples : ndarray or scalar
+            The drawn samples, of shape *size*, if it was provided.
+
         Notes
         -----
         The Poisson distribution
@@ -3787,7 +3793,8 @@ cdef class RandomState:
 
         For events with an expected separation :math:`\\lambda` the Poisson
         distribution :math:`f(k; \\lambda)` describes the probability of
-        :math:`k` events occurring within the observed interval :math:`\\lambda`.
+        :math:`k` events occurring within the observed
+        interval :math:`\\lambda`.
 
         Because the output is limited to the range of the C long type, a
         ValueError is raised when `lam` is within 10 sigma of the maximum
@@ -3795,10 +3802,11 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] Weisstein, Eric W. "Poisson Distribution." From MathWorld--A Wolfram
-               Web Resource. http://mathworld.wolfram.com/PoissonDistribution.html
+        .. [1] Weisstein, Eric W. "Poisson Distribution."
+               From MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
-           http://en.wikipedia.org/wiki/Poisson_distribution
+               http://en.wikipedia.org/wiki/Poisson_distribution
 
         Examples
         --------
@@ -3836,7 +3844,8 @@ cdef class RandomState:
             raise ValueError("lam < 0")
         if np.any(np.greater(olam, self.poisson_lam_max)):
             raise ValueError("lam value too large.")
-        return discd_array(self.internal_state, rk_poisson, size, olam, self.lock)
+        return discd_array(self.internal_state, rk_poisson, size, olam,
+                           self.lock)
 
     def zipf(self, a, size=None):
         """
@@ -3885,8 +3894,9 @@ cdef class RandomState:
 
         References
         ----------
-        Zipf, G. K., *Selected Studies of the Principle of Relative Frequency
-        in Language*, Cambridge, MA: Harvard Univ. Press, 1932.
+        .. [1 ]Zipf, G. K., "Selected Studies of the Principle of Relative
+               Frequency in Language," Cambridge, MA: Harvard Univ. Press,
+               1932.
 
         Examples
         --------
@@ -3991,7 +4001,8 @@ cdef class RandomState:
             raise ValueError("p < 0.0")
         if np.any(np.greater(op, 1.0)):
             raise ValueError("p > 1.0")
-        return discd_array(self.internal_state, rk_geometric, size, op, self.lock)
+        return discd_array(self.internal_state, rk_geometric, size, op,
+                           self.lock)
 
     def hypergeometric(self, ngood, nbad, nsample, size=None):
         """
@@ -3999,7 +4010,7 @@ cdef class RandomState:
 
         Draw samples from a Hypergeometric distribution.
 
-        Samples are drawn from a Hypergeometric distribution with specified
+        Samples are drawn from a hypergeometric distribution with specified
         parameters, ngood (ways to make a good selection), nbad (ways to make
         a bad selection), and nsample = number of items sampled, which is less
         than or equal to the sum ngood + nbad.
@@ -4041,14 +4052,14 @@ cdef class RandomState:
 
         Consider an urn with black and white marbles in it, ngood of them
         black and nbad are white. If you draw nsample balls without
-        replacement, then the Hypergeometric distribution describes the
+        replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
-        Note that this distribution is very similar to the Binomial
+        Note that this distribution is very similar to the binomial
         distribution, except that in this case, samples are drawn without
         replacement, whereas in the Binomial case samples are drawn with
         replacement (or the sample space is infinite). As the sample space
-        becomes large, this distribution approaches the Binomial.
+        becomes large, this distribution approaches the binomial.
 
         References
         ----------
@@ -4058,7 +4069,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric-distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric-distribution
+               http://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -4101,7 +4112,8 @@ cdef class RandomState:
 
         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
         onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
-        onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
+        onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG,
+                                             NPY_ARRAY_ALIGNED)
         if np.any(np.less(ongood, 0)):
             raise ValueError("ngood < 0")
         if np.any(np.less(onbad, 0)):
@@ -4117,10 +4129,10 @@ cdef class RandomState:
         """
         logseries(p, size=None)
 
-        Draw samples from a Logarithmic Series distribution.
+        Draw samples from a logarithmic series distribution.
 
-        Samples are drawn from a Log Series distribution with specified
-        parameter, p (probability, 0 < p < 1).
+        Samples are drawn from a log series distribution with specified
+        shape parameter, 0 < ``p`` < 1.
 
         Parameters
         ----------
@@ -4151,7 +4163,7 @@ cdef class RandomState:
 
         where p = probability.
 
-        The Log Series distribution is frequently used to represent species
+        The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
         Williams in 1943 [2].  It may also be used to model the numbers of
         occupants seen in cars [3].
@@ -4207,7 +4219,8 @@ cdef class RandomState:
             raise ValueError("p <= 0.0")
         if np.any(np.greater_equal(op, 1.0)):
             raise ValueError("p >= 1.0")
-        return discd_array(self.internal_state, rk_logseries, size, op, self.lock)
+        return discd_array(self.internal_state, rk_logseries, size, op,
+                           self.lock)
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None):
@@ -4286,11 +4299,10 @@ cdef class RandomState:
 
         References
         ----------
-        Papoulis, A., *Probability, Random Variables, and Stochastic Processes*,
-        3rd ed., New York: McGraw-Hill, 1991.
-
-        Duda, R. O., Hart, P. E., and Stork, D. G., *Pattern Classification*,
-        2nd ed., New York: Wiley, 2001.
+        .. [1] Papoulis, A., "Probability, Random Variables, and Stochastic
+               Processes," 3rd ed., New York: McGraw-Hill, 1991.
+        .. [2] Duda, R. O., Hart, P. E., and Stork, D. G., "Pattern
+               Classification," 2nd ed., New York: Wiley, 2001.
 
         Examples
         --------
@@ -4370,8 +4382,8 @@ cdef class RandomState:
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
         distribution represents `n` such experiments.  Its values,
-        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the outcome
-        was ``i``.
+        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the
+        outcome was ``i``.
 
         Parameters
         ----------
@@ -4382,10 +4394,19 @@ cdef class RandomState:
             should sum to 1 (however, the last element is always assumed to
             account for the remaining probability, as long as
             ``sum(pvals[:-1]) <= 1)``.
-        size : tuple of ints
-            Given a `size` of ``(M, N, K)``, then ``M*N*K`` samples are drawn,
-            and the output shape becomes ``(M, N, K, p)``, since each sample
-            has shape ``(p,)``.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+
+        Returns
+        -------
+        out : ndarray
+            The drawn samples, of shape *size*, if that was provided.  If not,
+            the shape is ``(N,)``.
+
+            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
+            value drawn from the distribution.
 
         Examples
         --------
@@ -4465,13 +4486,15 @@ cdef class RandomState:
         alpha : array
             Parameter of the distribution (k dimension for sample of
             dimension k).
-        size : array
-            Number of samples to draw.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape (alpha.ndim, size).
+            The drawn samples, of shape (size, alpha.ndim).
 
         Notes
         -----
@@ -4496,8 +4519,8 @@ cdef class RandomState:
         Taking an example cited in Wikipedia, this distribution can be used if
         one wanted to cut strings (each of initial length 1.0) into K pieces
         with different lengths, where each piece had, on average, a designated
-        average length, but allowing some variation in the relative sizes of the
-        pieces.
+        average length, but allowing some variation in the relative sizes of
+        the pieces.
 
         >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
 
