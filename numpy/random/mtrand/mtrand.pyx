@@ -1443,7 +1443,7 @@ cdef class RandomState:
         """
         standard_normal(size=None)
 
-        Returns samples from a Standard Normal distribution (mean=0, stdev=1).
+        Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
         Parameters
         ----------
@@ -1511,22 +1511,22 @@ cdef class RandomState:
         .. math:: p(x) = \\frac{1}{\\sqrt{ 2 \\pi \\sigma^2 }}
                          e^{ - \\frac{ (x - \\mu)^2 } {2 \\sigma^2} },
 
-        where :math:`\\mu` is the mean and :math:`\\sigma` the standard deviation.
-        The square of the standard deviation, :math:`\\sigma^2`, is called the
-        variance.
+        where :math:`\\mu` is the mean and :math:`\\sigma` the standard
+        deviation. The square of the standard deviation, :math:`\\sigma^2`,
+        is called the variance.
 
         The function has its peak at the mean, and its "spread" increases with
         the standard deviation (the function reaches 0.607 times its maximum at
         :math:`x + \\sigma` and :math:`x - \\sigma` [2]_).  This implies that
-        `numpy.random.normal` is more likely to return samples lying close to the
-        mean, rather than those far away.
+        `numpy.random.normal` is more likely to return samples lying close to
+        the mean, rather than those far away.
 
         References
         ----------
         .. [1] Wikipedia, "Normal distribution",
                http://en.wikipedia.org/wiki/Normal_distribution
-        .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability, Random
-               Variables and Random Signal Principles", 4th ed., 2001,
+        .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability,
+               Random Variables and Random Signal Principles", 4th ed., 2001,
                pp. 51, 51, 125.
 
         Examples
@@ -1579,7 +1579,7 @@ cdef class RandomState:
         """
         beta(a, b, size=None)
 
-        The Beta distribution over ``[0, 1]``.
+        Draw samples from a Beta distribution.
 
         The Beta distribution is a special case of the Dirichlet distribution,
         and is related to the Gamma distribution.  It has the probability
@@ -1641,7 +1641,7 @@ cdef class RandomState:
         """
         exponential(scale=1.0, size=None)
 
-        Exponential distribution.
+        Draw samples from an exponential distribution.
 
         Its probability density function is
 
@@ -1688,7 +1688,8 @@ cdef class RandomState:
 
         PyErr_Clear()
 
-        oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE,
+                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0")
         return cont1_array(self.internal_state, rk_exponential, size, oscale,
@@ -1729,7 +1730,7 @@ cdef class RandomState:
         """
         standard_gamma(shape, size=None)
 
-        Draw samples from a Standard Gamma distribution.
+        Draw samples from a standard Gamma distribution.
 
         Samples are drawn from a Gamma distribution with specified parameters,
         shape (sometimes designated "k") and scale=1.
@@ -1800,10 +1801,12 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if fshape <= 0:
                 raise ValueError("shape <= 0")
-            return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape, self.lock)
+            return cont1_array_sc(self.internal_state, rk_standard_gamma,
+                                  size, fshape, self.lock)
 
         PyErr_Clear()
-        oshape = <ndarray> PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oshape = <ndarray> PyArray_FROM_OTF(shape, NPY_DOUBLE,
+                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oshape, 0.0)):
             raise ValueError("shape <= 0")
         return cont1_array(self.internal_state, rk_standard_gamma, size,
@@ -1907,11 +1910,12 @@ cdef class RandomState:
         """
         f(dfnum, dfden, size=None)
 
-        Draw samples from a F distribution.
+        Draw samples from an F distribution.
 
         Samples are drawn from an F distribution with specified parameters,
-        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of freedom
-        in denominator), where both parameters should be greater than zero.
+        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        freedom in denominator), where both parameters should be greater than
+        zero.
 
         The random variate of the F distribution (also known as the
         Fisher distribution) is a continuous probability distribution
@@ -1958,7 +1962,8 @@ cdef class RandomState:
 
         Examples
         --------
-        An example from Glantz[1], pp 47-40.
+        An example from Glantz[1], pp 47-40:
+
         Two groups, children of diabetics (25 people) and children from people
         without diabetes (25 controls). Fasting blood glucose was measured,
         case group had a mean value of 86.1, controls had a mean value of
@@ -2046,11 +2051,12 @@ cdef class RandomState:
 
         References
         ----------
-        Weisstein, Eric W. "Noncentral F-Distribution." From MathWorld--A Wolfram
-        Web Resource.  http://mathworld.wolfram.com/NoncentralF-Distribution.html
+        .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
+               From MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/NoncentralF-Distribution.html
 
-        Wikipedia, "Noncentral F distribution",
-        http://en.wikipedia.org/wiki/Noncentral_F-distribution
+        .. [2] Wikipedia, "Noncentral F distribution",
+               http://en.wikipedia.org/wiki/Noncentral_F-distribution
 
         Examples
         --------
@@ -2157,8 +2163,8 @@ cdef class RandomState:
 
         References
         ----------
-        `NIST/SEMATECH e-Handbook of Statistical Methods
-        <http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm>`_
+        .. [1] NIST "Engineering Statistics Handbook"
+               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
 
         Examples
         --------
@@ -2206,23 +2212,25 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density function for the noncentral Chi-square distribution
-        is
+        The probability density function for the noncentral Chi-square
+        distribution is
 
         .. math:: P(x;df,nonc) = \\sum^{\\infty}_{i=0}
-                               \\frac{e^{-nonc/2}(nonc/2)^{i}}{i!}P_{Y_{df+2i}}(x),
+                               \\frac{e^{-nonc/2}(nonc/2)^{i}}{i!}
+                               \\P_{Y_{df+2i}}(x),
 
         where :math:`Y_{q}` is the Chi-square with q degrees of freedom.
 
-        In Delhi (2007), it is noted that the noncentral chi-square is useful in
-        bombing and coverage problems, the probability of killing the point target
-        given by the noncentral chi-squared distribution.
+        In Delhi (2007), it is noted that the noncentral chi-square is
+        useful in bombing and coverage problems, the probability of
+        killing the point target given by the noncentral chi-squared
+        distribution.
 
         References
         ----------
-        .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in the
-               analysis of weapon systems effectiveness", Metrika, Volume 15,
-               Number 1 / December, 1970.
+        .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in
+               the analysis of weapon systems effectiveness", Metrika,
+               Volume 15, Number 1 / December, 1970.
         .. [2] Wikipedia, "Noncentral chi-square distribution"
                http://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
 
@@ -2282,7 +2290,7 @@ cdef class RandomState:
         """
         standard_cauchy(size=None)
 
-        Standard Cauchy distribution with mode = 0.
+        Draw samples from a standard Cauchy distribution with mode = 0.
 
         Also known as the Lorentz distribution.
 
@@ -2346,10 +2354,11 @@ cdef class RandomState:
         """
         standard_t(df, size=None)
 
-        Standard Student's t distribution with df degrees of freedom.
+        Draw samples from a standard Student's t distribution with `df` degrees
+        of freedom.
 
-        A special case of the hyperbolic distribution.
-        As `df` gets large, the result resembles that of the standard normal
+        A special case of the hyperbolic distribution.  As `df` gets
+        large, the result resembles that of the standard normal
         distribution (`standard_normal`).
 
         Parameters
@@ -2373,15 +2382,15 @@ cdef class RandomState:
         .. math:: P(x, df) = \\frac{\\Gamma(\\frac{df+1}{2})}{\\sqrt{\\pi df}
                   \\Gamma(\\frac{df}{2})}\\Bigl( 1+\\frac{x^2}{df} \\Bigr)^{-(df+1)/2}
 
-        The t test is based on an assumption that the data come from a Normal
-        distribution. The t test provides a way to test whether the sample mean
-        (that is the mean calculated from the data) is a good estimate of the true
-        mean.
+        The t test is based on an assumption that the data come from a
+        Normal distribution. The t test provides a way to test whether
+        the sample mean (that is the mean calculated from the data) is
+        a good estimate of the true mean.
 
-        The derivation of the t-distribution was forst published in 1908 by William
-        Gisset while working for the Guinness Brewery in Dublin. Due to proprietary
-        issues, he had to publish under a pseudonym, and so he used the name
-        Student.
+        The derivation of the t-distribution was forst published in
+        1908 by William Gisset while working for the Guinness Brewery
+        in Dublin. Due to proprietary issues, he had to publish under
+        a pseudonym, and so he used the name Student.
 
         References
         ----------
@@ -2498,11 +2507,11 @@ cdef class RandomState:
 
         References
         ----------
-        Abramowitz, M. and Stegun, I. A. (ed.), *Handbook of Mathematical
-        Functions*, New York: Dover, 1965.
-
-        von Mises, R., *Mathematical Theory of Probability and Statistics*,
-        New York: Academic Press, 1964.
+        .. [1] Abramowitz, M. and Stegun, I. A. (Eds.). "Handbook of
+               Mathematical Functions with Formulas, Graphs, and Mathematical
+               Tables, 9th printing," New York: Dover, 1972.
+        .. [2] von Mises, R., "Mathematical Theory of Probability
+               and Statistics", New York: Academic Press, 1964.
 
         Examples
         --------
@@ -2537,7 +2546,8 @@ cdef class RandomState:
         PyErr_Clear()
 
         omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE,
+                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less(okappa, 0.0)):
             raise ValueError("kappa < 0")
         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa,
@@ -2547,21 +2557,25 @@ cdef class RandomState:
         """
         pareto(a, size=None)
 
-        Draw samples from a Pareto II or Lomax distribution with specified shape.
+        Draw samples from a Pareto II or Lomax distribution with
+        specified shape.
 
-        The Lomax or Pareto II distribution is a shifted Pareto distribution. The
-        classical Pareto distribution can be obtained from the Lomax distribution
-        by adding 1 and multiplying by the scale parameter ``m`` (see Notes).
-        The smallest value of the Lomax distribution is zero while for the
-        classical Pareto distribution it is ``mu``, where the standard Pareto
-        distribution has location ``mu = 1``.  Lomax can also be considered as a
-        simplified version of the Generalized Pareto distribution (available in
-        SciPy), with the scale set to one and the location set to zero.
+        The Lomax or Pareto II distribution is a shifted Pareto
+        distribution. The classical Pareto distribution can be
+        obtained from the Lomax distribution by adding 1 and
+        multiplying by the scale parameter ``m`` (see Notes).  The
+        smallest value of the Lomax distribution is zero while for the
+        classical Pareto distribution it is ``mu``, where the standard
+        Pareto distribution has location ``mu = 1``.  Lomax can also
+        be considered as a simplified version of the Generalized
+        Pareto distribution (available in SciPy), with the scale set
+        to one and the location set to zero.
 
-        The Pareto distribution must be greater than zero, and is unbounded above.
-        It is also known as the "80-20 rule".  In this distribution, 80 percent of
-        the weights are in the lowest 20 percent of the range, while the other 20
-        percent fill the remaining 80 percent of the range.
+        The Pareto distribution must be greater than zero, and is
+        unbounded above.  It is also known as the "80-20 rule".  In
+        this distribution, 80 percent of the weights are in the lowest
+        20 percent of the range, while the other 20 percent fill the
+        remaining 80 percent of the range.
 
         Parameters
         ----------
@@ -2587,14 +2601,16 @@ cdef class RandomState:
 
         where :math:`a` is the shape and :math:`m` the scale.
 
-        The Pareto distribution, named after the Italian economist Vilfredo Pareto,
-        is a power law probability distribution useful in many real world problems.
-        Outside the field of economics it is generally referred to as the Bradford
-        distribution. Pareto developed the distribution to describe the
-        distribution of wealth in an economy.  It has also found use in insurance,
-        web page access statistics, oil field sizes, and many other problems,
-        including the download frequency for projects in Sourceforge [1]_.  It is
-        one of the so-called "fat-tailed" distributions.
+        The Pareto distribution, named after the Italian economist
+        Vilfredo Pareto, is a power law probability distribution
+        useful in many real world problems.  Outside the field of
+        economics it is generally referred to as the Bradford
+        distribution. Pareto developed the distribution to describe
+        the distribution of wealth in an economy.  It has also found
+        use in insurance, web page access statistics, oil field sizes,
+        and many other problems, including the download frequency for
+        projects in Sourceforge [1]_.  It is one of the so-called
+        "fat-tailed" distributions.
 
 
         References
@@ -2645,7 +2661,7 @@ cdef class RandomState:
         """
         weibull(a, size=None)
 
-        Weibull distribution.
+        Draw samples from a Weibull distribution.
 
         Draw samples from a 1-parameter Weibull distribution with the given
         shape parameter `a`.
@@ -2666,6 +2682,10 @@ cdef class RandomState:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
 
+        Returns
+        -------
+        samples : ndarray
+
         See Also
         --------
         scipy.stats.distributions.weibull_max
@@ -2675,10 +2695,11 @@ cdef class RandomState:
 
         Notes
         -----
-        The Weibull (or Type III asymptotic extreme value distribution for smallest
-        values, SEV Type III, or Rosin-Rammler distribution) is one of a class of
-        Generalized Extreme Value (GEV) distributions used in modeling extreme
-        value problems.  This class includes the Gumbel and Frechet distributions.
+        The Weibull (or Type III asymptotic extreme value distribution
+        for smallest values, SEV Type III, or Rosin-Rammler
+        distribution) is one of a class of Generalized Extreme Value
+        (GEV) distributions used in modeling extreme value problems.
+        This class includes the Gumbel and Frechet distributions.
 
         The probability density for the Weibull distribution is
 
@@ -2695,12 +2716,13 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] Waloddi Weibull, Professor, Royal Technical University, Stockholm,
+        .. [1] Waloddi Weibull, Royal Technical University, Stockholm,
                1939 "A Statistical Theory Of The Strength Of Materials",
                Ingeniorsvetenskapsakademiens Handlingar Nr 151, 1939,
                Generalstabens Litografiska Anstalts Forlag, Stockholm.
-        .. [2] Waloddi Weibull, 1951 "A Statistical Distribution Function of Wide
-               Applicability",  Journal Of Applied Mechanics ASME Paper.
+        .. [2] Waloddi Weibull, "A Statistical Distribution Function of
+               Wide Applicability", Journal Of Applied Mechanics ASME Paper
+               1951.
         .. [3] Wikipedia, "Weibull distribution",
                http://en.wikipedia.org/wiki/Weibull_distribution
 
@@ -2770,7 +2792,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If a<1.
+            If a < 1.
 
         Notes
         -----
@@ -2789,10 +2811,10 @@ cdef class RandomState:
         ----------
         .. [1] Christian Kleiber, Samuel Kotz, "Statistical size distributions
                in economics and actuarial sciences", Wiley, 2003.
-        .. [2] Heckert, N. A. and Filliben, James J. (2003). NIST Handbook 148:
+        .. [2] Heckert, N. A. and Filliben, James J. "NIST Handbook 148:
                Dataplot Reference Manual, Volume 2: Let Subcommands and Library
-               Functions", National Institute of Standards and Technology Handbook
-               Series, June 2003.
+               Functions", National Institute of Standards and Technology
+               Handbook Series, June 2003.
                http://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/powpdf.pdf
 
         Examples
@@ -2869,14 +2891,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
+        loc : float, optional
             The position, :math:`\\mu`, of the distribution peak.
-        scale : float
+        scale : float, optional
             :math:`\\lambda`, the exponential decay.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+
+        Returns
+        -------
+        samples : ndarray or float
 
         Notes
         -----
@@ -2885,28 +2911,27 @@ cdef class RandomState:
         .. math:: f(x; \\mu, \\lambda) = \\frac{1}{2\\lambda}
                                        \\exp\\left(-\\frac{|x - \\mu|}{\\lambda}\\right).
 
-        The first law of Laplace, from 1774, states that the frequency of an error
-        can be expressed as an exponential function of the absolute magnitude of
-        the error, which leads to the Laplace distribution. For many problems in
-        Economics and Health sciences, this distribution seems to model the data
-        better than the standard Gaussian distribution
-
+        The first law of Laplace, from 1774, states that the frequency
+        of an error can be expressed as an exponential function of the
+        absolute magnitude of the error, which leads to the Laplace
+        distribution. For many problems in economics and health
+        sciences, this distribution seems to model the data better
+        than the standard Gaussian distribution.
 
         References
         ----------
-        .. [1] Abramowitz, M. and Stegun, I. A. (Eds.). Handbook of Mathematical
-               Functions with Formulas, Graphs, and Mathematical Tables, 9th
-               printing.  New York: Dover, 1972.
+        .. [1] Abramowitz, M. and Stegun, I. A. (Eds.). "Handbook of
+               Mathematical Functions with Formulas, Graphs, and Mathematical
+               Tables, 9th printing," New York: Dover, 1972.
 
-        .. [2] The Laplace distribution and generalizations
-               By Samuel Kotz, Tomasz J. Kozubowski, Krzysztof Podgorski,
-               Birkhauser, 2001.
+        .. [2] Kotz, Samuel, et. al. "The Laplace Distribution and
+               Generalizations, " Birkhauser, 2001.
 
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
 
-        .. [4] Wikipedia, "Laplace distribution",
+        .. [4] Wikipedia, "Laplace Distribution",
                http://en.wikipedia.org/wiki/Laplace_distribution
 
         Examples
@@ -2974,16 +2999,13 @@ cdef class RandomState:
 
         Returns
         -------
-        out : ndarray
-            Drawn samples
+        samples : ndarray or scalar
 
         See Also
         --------
         scipy.stats.gumbel_l
         scipy.stats.gumbel_r
         scipy.stats.genextreme
-            probability density function, distribution, or cumulative density
-            function, etc. for each of the above
         weibull
 
         Notes
@@ -3179,7 +3201,7 @@ cdef class RandomState:
         """
         lognormal(mean=0.0, sigma=1.0, size=None)
 
-        Return samples drawn from a log-normal distribution.
+        Draw samples from a log-normal distribution.
 
         Draw samples from a log-normal distribution with specified mean,
         standard deviation, and array shape.  Note that the mean and standard
