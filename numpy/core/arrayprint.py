@@ -417,6 +417,10 @@ def array2string(a, max_line_width=None, precision=None,
     If a formatter is specified for a certain type, the `precision` keyword is
     ignored for that type.
 
+    This is a very flexible function; `array_repr` and `array_str` are using
+    `array2string` internally so keywords with the same name should work
+    identically in all three functions.
+
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
