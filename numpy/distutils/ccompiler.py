@@ -509,7 +509,9 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type=='msvc': return self
+    if self.compiler_type in ('msvc', 'intelw', 'intelemw'):
+        return self
+
     cxx = copy(self)
     cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
     if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
@@ -525,15 +527,21 @@ replace_method(CCompiler, 'cxx_compiler', CCompiler_cxx_compiler)
 compiler_class['intel'] = ('intelccompiler', 'IntelCCompiler',
                            "Intel C Compiler for 32-bit applications")
 compiler_class['intele'] = ('intelccompiler', 'IntelItaniumCCompiler',
-                           "Intel C Itanium Compiler for Itanium-based applications")
+                            "Intel C Itanium Compiler for Itanium-based applications")
 compiler_class['intelem'] = ('intelccompiler', 'IntelEM64TCCompiler',
                              "Intel C Compiler for 64-bit applications")
+compiler_class['intelw'] = ('intelccompiler', 'IntelCCompilerW',
+                            "Intel C Compiler for 32-bit applications on Windows")
+compiler_class['intelemw'] = ('intelem64tccompiler', 'IntelEM64TCCompilerW',
+                              "Intel C Compiler for 64-bit applications on Windows")
 compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intele'),
                                  ('linux.*', 'intelem'),
-                                 ('linux.*', 'pathcc'))
+                                 ('linux.*', 'pathcc'),
+                                 ('nt', 'intelw'),
+                                 ('nt', 'intelemw'))
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
