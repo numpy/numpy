@@ -3489,7 +3489,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The returned samples all lie in the interval [left, right].
+            The drawn samples, of shape ``(m, n, k)`` with all returned samples
+            in the interval [left, right].
 
         Notes
         -----
@@ -3557,7 +3558,7 @@ cdef class RandomState:
 
         Draw samples from a binomial distribution.
 
-        Samples are drawn from a Binomial distribution with specified
+        Samples are drawn from a binomial distribution with specified
         parameters, n trials and p probability of success where
         n an integer >= 0 and p is in the interval [0,1]. (n may be
         input as a float, but it is truncated to an integer in use)
@@ -3576,8 +3577,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
-
+            The drawn samples, of shape ``(m, n, k)``.
+ 
         See Also
         --------
         scipy.stats.distributions.binom : probability density function,
@@ -3585,7 +3586,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Binomial distribution is
+        The probability density for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3668,9 +3669,9 @@ cdef class RandomState:
         """
         negative_binomial(n, p, size=None)
 
-        Draw samples from a negative_binomial distribution.
+        Draw samples from a negative binomial distribution.
 
-        Samples are drawn from a negative_Binomial distribution with specified
+        Samples are drawn from a negative binomial distribution with specified
         parameters, `n` trials and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
@@ -3687,12 +3688,12 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : int or ndarray of ints
-            Drawn samples.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Notes
         -----
-        The probability density for the Negative Binomial distribution is
+        The probability density for the negative binomial distribution is
 
         .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
 
@@ -3766,18 +3767,23 @@ cdef class RandomState:
 
         Draw samples from a Poisson distribution.
 
-        The Poisson distribution is the limit of the Binomial
-        distribution for large N.
+        The Poisson distribution is the limit of the binomial
+        distribution for large sample sizes.
 
         Parameters
         ----------
-        lam : float or sequence of float
+        lam : float or sequence of float, optional
             Expectation of interval, should be >= 0. A sequence of expectation
             intervals must be broadcastable over the requested size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Notes
         -----
@@ -3863,8 +3869,8 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : scalar or ndarray
-            The returned samples are greater than or equal to one.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -3954,9 +3960,8 @@ cdef class RandomState:
 
         Returns
         -------
-        out : ndarray
-            Samples from the geometric distribution, shaped according to
-            `size`.
+        samples : ndarray or scalar
+            The drawn samples, of shape ``(m, n, k)``.
 
         Examples
         --------
@@ -3997,12 +4002,10 @@ cdef class RandomState:
         """
         hypergeometric(ngood, nbad, nsample, size=None)
 
-        Draw samples from a Hypergeometric distribution.
+        Draw samples from a hypergeometric distribution.
 
-        Samples are drawn from a Hypergeometric distribution with specified
-        parameters, ngood (ways to make a good selection), nbad (ways to make
-        a bad selection), and nsample = number of items sampled, which is less
-        than or equal to the sum ngood + nbad.
+        Samples are drawn from a hypergeometric distribution with specified
+        parameters.
 
         Parameters
         ----------
@@ -4021,7 +4024,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The values are all integers in  [0, n].
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -4030,7 +4033,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability density for the hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{m}{n}\\binom{N-m}{n-x}}{\\binom{N}{n}},
 
@@ -4044,11 +4047,11 @@ cdef class RandomState:
         replacement, then the Hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
-        Note that this distribution is very similar to the Binomial
+        Note that this distribution is very similar to the binomial
         distribution, except that in this case, samples are drawn without
-        replacement, whereas in the Binomial case samples are drawn with
+        replacement, whereas in the binomial case samples are drawn with
         replacement (or the sample space is infinite). As the sample space
-        becomes large, this distribution approaches the Binomial.
+        becomes large, this distribution approaches the binomial.
 
         References
         ----------
@@ -4058,7 +4061,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric-distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric-distribution
+               http://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -4117,17 +4120,15 @@ cdef class RandomState:
         """
         logseries(p, size=None)
 
-        Draw samples from a Logarithmic Series distribution.
+        Draw samples from a logarithmic series distribution.
 
-        Samples are drawn from a Log Series distribution with specified
-        parameter, p (probability, 0 < p < 1).
+        Samples are drawn from a log series distribution with specified
+        shape parameter, 0 < ``p`` < 1.
 
         Parameters
         ----------
-        loc : float
-
-        scale : float > 0.
-
+        p : float
+            Shape parameter
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -4136,7 +4137,7 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+            The drawn samples, of shape ``(m, n, k)``.
 
         See Also
         --------
@@ -4145,13 +4146,13 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Log Series distribution is
+        The probability density for the log series distribution is
 
         .. math:: P(k) = \\frac{-p^k}{k \\ln(1-p)},
 
         where p = probability.
 
-        The Log Series distribution is frequently used to represent species
+        The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
         Williams in 1943 [2].  It may also be used to model the numbers of
         occupants seen in cars [3].
@@ -4169,7 +4170,7 @@ cdef class RandomState:
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
         .. [4] Wikipedia, "Logarithmic-distribution",
-               http://en.wikipedia.org/wiki/Logarithmic-distribution
+               http://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
@@ -4214,7 +4215,7 @@ cdef class RandomState:
         """
         multivariate_normal(mean, cov[, size])
 
-        Draw random samples from a multivariate normal distribution.
+        Draw samples from a multivariate normal distribution.
 
         The multivariate normal, multinormal or Gaussian distribution is a
         generalization of the one-dimensional normal distribution to higher
@@ -4231,19 +4232,14 @@ cdef class RandomState:
             Covariance matrix of the distribution. It must be symmetric and
             positive-semidefinite for proper sampling.
         size : int or tuple of ints, optional
-            Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
-            generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
-            each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
-            If no shape is specified, a single (`N`-D) sample is returned.
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
-        out : ndarray
-            The drawn samples, of shape *size*, if that was provided.  If not,
-            the shape is ``(N,)``.
-
-            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
-            value drawn from the distribution.
+        samples : ndarray
+            The drawn samples, of shape ``(m, n, k, N)``
 
         Notes
         -----
@@ -4369,9 +4365,9 @@ cdef class RandomState:
         binomial distribution.  Take an experiment with one of ``p``
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
-        distribution represents `n` such experiments.  Its values,
-        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the outcome
-        was ``i``.
+        distribution represents ``n`` such experiments.  Its values,
+        ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the
+        outcome was ``i``.
 
         Parameters
         ----------
@@ -4382,10 +4378,15 @@ cdef class RandomState:
             should sum to 1 (however, the last element is always assumed to
             account for the remaining probability, as long as
             ``sum(pvals[:-1]) <= 1)``.
-        size : tuple of ints
-            Given a `size` of ``(M, N, K)``, then ``M*N*K`` samples are drawn,
-            and the output shape becomes ``(M, N, K, p)``, since each sample
-            has shape ``(p,)``.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+
+        Returns
+        -------
+        samples : ndarray,
+            The drawn samples, of shape ``(m, n, k, p)``
 
         Examples
         --------
@@ -4455,7 +4456,7 @@ cdef class RandomState:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw `size` samples of dimension ``k`` from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. Dirichlet pdf is the conjugate
         prior of a multinomial in Bayesian inference.
@@ -4463,15 +4464,17 @@ cdef class RandomState:
         Parameters
         ----------
         alpha : array
-            Parameter of the distribution (k dimension for sample of
-            dimension k).
-        size : array
-            Number of samples to draw.
+            Parameter of the distribution (``k`` dimension for sample of
+            dimension ``k``).
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
 
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape (alpha.ndim, size).
+            The drawn samples, of shape ``(m, n, k, alpha.ndim)``.
 
         Notes
         -----
@@ -4537,7 +4540,8 @@ cdef class RandomState:
         cdef double     acc, invacc
 
         k           = len(alpha)
-        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE,
+                                                            1, 1)
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
         shape = _shape_from_size(size, k)
