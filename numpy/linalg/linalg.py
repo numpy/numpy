@@ -2082,18 +2082,22 @@ def norm(x, ord=None, axis=None, keepdims=False):
     """
     x = asarray(x)
 
-    # Check the default case first and handle it immediately.
-    if ord is None and axis is None:
+    # Immediately handle some default, simple, fast, and common cases.
+    if axis is None:
         ndim = x.ndim
-        x = x.ravel(order='K')
-        if isComplexType(x.dtype.type):
-            sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
-        else:
-            sqnorm = dot(x, x)
-        ret = sqrt(sqnorm)
-        if keepdims:
-            ret = ret.reshape(ndim*[1])
-        return ret
+        if ((ord is None) or
+            (ord in ('f', 'fro') and ndim == 2) or
+            (ord == 2 and ndim == 1)):
+
+            x = x.ravel(order='K')
+            if isComplexType(x.dtype.type):
+                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+            else:
+                sqnorm = dot(x, x)
+            ret = sqrt(sqnorm)
+            if keepdims:
+                ret = ret.reshape(ndim*[1])
+            return ret
 
     # Normalize the `axis` argument to a tuple.
     nd = x.ndim
