@@ -237,3 +237,18 @@ deprecated.
 pkgload, PackageLoader
 ~~~~~~~~~~~~~~~~~~~~~~
 These ways of loading packages are now deprecated.
+
+bias, ddof arguments to corrcoef
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The values for the ``bias`` and ``ddof`` arguments to the ``corrcoef``
+function canceled in the division implied by the correlation coefficient and
+so had no effect on the returned values.
+
+We now deprecate these arguments to ``corrcoef`` and the masked array version
+``ma.corrcoef``.
+
+Because we are deprecating the ``bias`` argument to ``ma.corrcoef``, we also
+deprecate the use of the ``allow_masked`` argument as a positional argument,
+as its position will change with the removal of ``bias``.  ``allow_masked``
+will in due course become a keyword-only argument.

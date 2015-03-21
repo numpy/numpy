@@ -8,8 +8,9 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns,
-    assert_raises_regex, dec
+    assert_raises_regex, dec, clear_and_catch_warnings
     )
+import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import *
 from numpy.compat import long
@@ -1305,6 +1306,12 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
+class catch_warn_nfb(clear_and_catch_warnings):
+    """ Context manager to catch, reset warnings in function_base module
+    """
+    class_modules = (nfb,)
+
+
 class TestCorrCoef(TestCase):
     A = np.array(
         [[0.15391142, 0.18045767, 0.14197213],
@@ -1335,8 +1342,26 @@ class TestCorrCoef(TestCase):
         assert_almost_equal(corrcoef(self.A, self.B), self.res2)
 
     def test_ddof(self):
-        assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
-        assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
+        # ddof raises DeprecationWarning
+        with catch_warn_nfb():
+            warnings.simplefilter("always")
+            assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
+            warnings.simplefilter("ignore")
+            # ddof has no or negligible effect on the function
+            assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
+            assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
+            assert_almost_equal(corrcoef(self.A, ddof=3), self.res1)
+            assert_almost_equal(corrcoef(self.A, self.B, ddof=3), self.res2)
+
+    def test_bias(self):
+        # bias raises DeprecationWarning
+        with catch_warn_nfb():
+            warnings.simplefilter("always")
+            assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
+            assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
+            warnings.simplefilter("ignore")
+            # bias has no or negligible effect on the function
+            assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
@@ -1354,13 +1379,6 @@ class TestCorrCoef(TestCase):
             assert_array_equal(corrcoef(np.array([]).reshape(0, 2)),
                                np.array([]).reshape(0, 0))
             assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
-                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
-
-    def test_wrong_ddof(self):
-        x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter('always', RuntimeWarning)
-            assert_array_equal(corrcoef(x, ddof=5),
                                np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
 
