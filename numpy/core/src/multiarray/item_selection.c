@@ -817,7 +817,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     NPY_BEGIN_THREADS_DEF;
 
     /* Check if there is any sorting to do */
-    if (N <= 1) {
+    if (N <= 1 || PyArray_SIZE(op) == 0) {
         return 0;
     }
 
@@ -964,7 +964,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     needidxbuffer = rstride != sizeof(npy_intp);
 
     /* Check if there is any argsorting to do */
-    if (N <= 1) {
+    if (N <= 1 || PyArray_SIZE(op) == 0) {
         memset(PyArray_DATA(rop), 0, PyArray_NBYTES(rop));
         return (PyObject *)rop;
     }
