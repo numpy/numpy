@@ -1033,10 +1033,10 @@ class TestMethods(TestCase):
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            assert_equal(np.sort(a, axis=axis), a,
-                         'test empty array sort with axis={}'.format(axis))
-        assert_equal(np.sort(a, axis=None), a.ravel(),
-                     'test empty array sort with axis=None')
+            msg = 'test empty array sort with axis={0}'.format(axis)
+            assert_equal(np.sort(a, axis=axis), a, msg)
+        msg = 'test empty array sort with axis=None'
+        assert_equal(np.sort(a, axis=None), a.ravel(), msg)
 
     def test_copy(self):
         def assert_fortran(arr):
@@ -1213,12 +1213,13 @@ class TestMethods(TestCase):
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
+            msg = 'test empty array argsort with axis={0}'.format(axis)
             assert_equal(np.argsort(a, axis=axis),
-                         np.zeros_like(a, dtype=np.intp),
-                         'test empty array argsort with axis={}'.format(axis))
+                         np.zeros_like(a, dtype=np.intp), msg)
+        msg = 'test empty array argsort with axis=None'
         assert_equal(np.argsort(a, axis=None),
-                     np.zeros_like(a.ravel(), dtype=np.intp),
-                     'test empty array argsort with axis=None')
+                     np.zeros_like(a.ravel(), dtype=np.intp), msg)
+
 
         # check that stable argsorts are stable
         r = np.arange(100)
@@ -1471,22 +1472,22 @@ class TestMethods(TestCase):
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array partition with axis={}'.format(axis)
+            msg = 'test empty array partition with axis={0}'.format(axis)
             assert_equal(np.partition(a, 0, axis=axis), a, msg)
-        assert_equal(np.partition(a, 0, axis=None), a.ravel(),
-                     'test empty array partition with axis=None')
+        msg = 'test empty array partition with axis=None'
+        assert_equal(np.partition(a, 0, axis=None), a.ravel(), msg)
 
     def test_argpartition_empty_array(self):
         # check axis handling for multidimensional empty arrays
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array argpartition with axis={}'.format(axis)
+            msg = 'test empty array argpartition with axis={0}'.format(axis)
             assert_equal(np.partition(a, 0, axis=axis),
                          np.zeros_like(a, dtype=np.intp), msg)
+        msg = 'test empty array argpartition with axis=None'
         assert_equal(np.partition(a, 0, axis=None),
-                     np.zeros_like(a.ravel(), dtype=np.intp),
-                     'test empty array argpartition with axis=None')
+                     np.zeros_like(a.ravel(), dtype=np.intp), msg)
 
     def test_partition(self):
         d = np.arange(10)
