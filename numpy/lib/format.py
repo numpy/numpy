@@ -314,21 +314,19 @@ def _write_array_header(fp, d, version=None):
     header = header + ' '*topad + '\n'
     header = asbytes(_filter_header(header))
 
-    if len(header) >= (256*256) and version == (1, 0):
-        raise ValueError("header does not fit inside %s bytes required by the"
-                         " 1.0 format" % (256*256))
-    if len(header) < (256*256):
-        header_len_str = struct.pack('<H', len(header))
+    hlen = len(header)
+    if hlen < 256*256 and version in (None, (1, 0)):
         version = (1, 0)
-    elif len(header) < (2**32):
-        header_len_str = struct.pack('<I', len(header))
+        header_prefix = magic(1, 0) + struct.pack('<H', hlen)
+    elif hlen < 2**32 and version in (None, (2, 0)):
         version = (2, 0)
+        header_prefix = magic(2, 0) + struct.pack('<I', hlen)
     else:
-        raise ValueError("header does not fit inside 4 GiB required by "
-                         "the 2.0 format")
+        msg = "Header length %s too big for version=%s"
+        msg %= (hlen, version)
+        raise ValueError(msg)
 
-    fp.write(magic(*version))
-    fp.write(header_len_str)
+    fp.write(header_prefix)
     fp.write(header)
     return version
 
