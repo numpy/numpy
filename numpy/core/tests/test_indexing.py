@@ -444,7 +444,7 @@ class TestBroadcastedAssignments(TestCase):
 
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
-        
+
         with warnings.catch_warnings():
             # Will be a ValueError as well.
             warnings.simplefilter("error", DeprecationWarning)
@@ -547,6 +547,23 @@ class TestFancyIndexingEquivalence(TestCase):
         b[[0], :3] = [[1, (1,2), 3]]
         assert_array_equal(a, b[0])
 
+        # Check that swapping of axes works.
+        # There was a bug that made the later assignment throw a ValueError
+        # do to an incorrectly transposed temporary right hand side (gh-5714)
+        b = b.T
+        b[:3, [0]] = [[1], [(1,2)], [3]]
+        assert_array_equal(a, b[:, 0])
+
+        # Another test for the memory order of the subspace
+        arr = np.ones((3, 4, 5), dtype=object)
+        # Equivalent slicing assignment for comparison
+        cmp_arr = arr.copy()
+        cmp_arr[:1, ...] = [[[1], [2], [3], [4]]]
+        arr[[0], ...] = [[[1], [2], [3], [4]]]
+        assert_array_equal(arr, cmp_arr)
+        arr = arr.copy('F')
+        arr[[0], ...] = [[[1], [2], [3], [4]]]
+        assert_array_equal(arr, cmp_arr)
 
     def test_cast_equivalence(self):
         # Yes, normal slicing uses unsafe casting.
