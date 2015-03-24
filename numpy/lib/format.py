@@ -389,7 +389,7 @@ def read_array_header_1_0(fp):
         If the data is invalid.
 
     """
-    _read_array_header(fp, version=(1, 0))
+    return _read_array_header(fp, version=(1, 0))
 
 def read_array_header_2_0(fp):
     """
@@ -422,7 +422,7 @@ def read_array_header_2_0(fp):
         If the data is invalid.
 
     """
-    _read_array_header(fp, version=(2, 0))
+    return _read_array_header(fp, version=(2, 0))
 
 
 def _filter_header(s):
