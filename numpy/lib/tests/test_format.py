@@ -694,6 +694,26 @@ malformed_magic = asbytes_nested([
     '',
 ])
 
+def test_read_magic():
+    s1 = BytesIO()
+    s2 = BytesIO()
+
+    arr = np.ones((3, 6), dtype=float)
+
+    format.write_array(s1, arr, version=(1, 0))
+    format.write_array(s2, arr, version=(2, 0))
+
+    s1.seek(0)
+    s2.seek(0)
+
+    version1 = format.read_magic(s1)
+    version2 = format.read_magic(s2)
+
+    assert_(version1 == (1, 0))
+    assert_(version2 == (2, 0))
+
+    assert_(s1.tell() == format.MAGIC_LEN)
+    assert_(s2.tell() == format.MAGIC_LEN)
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
@@ -722,6 +742,30 @@ def test_large_header():
     s = BytesIO()
     d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
+
+
+def test_read_array_header_1_0():
+    s = BytesIO()
+
+    arr = np.ones((3, 6), dtype=float)
+    format.write_array(s, arr, version=(1, 0))
+
+    s.seek(format.MAGIC_LEN)
+    shape, fortran, dtype = format.read_array_header_1_0(s)
+
+    assert_((shape, fortran, dtype) == ((3, 6), False, float))
+
+
+def test_read_array_header_2_0():
+    s = BytesIO()
+
+    arr = np.ones((3, 6), dtype=float)
+    format.write_array(s, arr, version=(2, 0))
+
+    s.seek(format.MAGIC_LEN)
+    shape, fortran, dtype = format.read_array_header_2_0(s)
+
+    assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
 def test_bad_header():
