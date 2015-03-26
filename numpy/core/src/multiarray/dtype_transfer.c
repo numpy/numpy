@@ -1362,6 +1362,13 @@ get_nbo_cast_transfer_function(int aligned,
             break;
     }
 
+    if (PyDataType_FLAGCHK(src_dtype, NPY_NEEDS_PYAPI) ||
+            PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_PYAPI)) {
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
+    }
+
     /* Get the cast function */
     castfunc = PyArray_GetCastFunc(src_dtype, dst_dtype->type_num);
     if (!castfunc) {
