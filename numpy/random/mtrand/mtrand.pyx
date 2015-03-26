@@ -4295,7 +4295,7 @@ cdef class RandomState:
         Examples
         --------
         >>> mean = (1, 2)
-        >>> cov = [[1, 0], [1, 0]]
+        >>> cov = [[1, 0], [0, 1]]
         >>> x = np.random.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
