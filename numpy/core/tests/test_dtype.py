@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import numpy as np
 from numpy.testing import *
+from numpy.core.test_rational import rational
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -531,6 +532,12 @@ class TestDtypeAttributes(TestCase):
         # Ticket #4357
         class user_def_subcls(np.void): pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
+
+
+def test_rational_dtype():
+    # test for bug gh-5719
+    a = np.array([1111], dtype=rational).astype
+    assert_raises(OverflowError, a, 'int8')
 
 
 if __name__ == "__main__":
