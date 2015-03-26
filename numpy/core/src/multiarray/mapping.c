@@ -1981,21 +1981,28 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     if (tmp_arr == NULL) {
-        /* Fill extra op */
-
-        if (PyArray_CopyObject(mit->extra_op, op) < 0) {
-            /*
-             * This is a deprecated special case to allow non-matching shapes
-             * for the index and value arrays.
-             */
-             if (index_type != HAS_FANCY || index_num != 1) {
-                /* This is not a "flat like" 1-d special case */
+        /* Fill extra op, need to swap first */
+        tmp_arr = mit->extra_op;
+        Py_INCREF(tmp_arr);
+        if (mit->consec) {
+            PyArray_MapIterSwapAxes(mit, &tmp_arr, 1);
+            if (tmp_arr == NULL) {
                 goto fail;
             }
-            if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
-                goto fail;
-            }
-            goto success;
+        }
+        if (PyArray_CopyObject(tmp_arr, op) < 0) {
+             /*
+              * This is a deprecated special case to allow non-matching shapes
+              * for the index and value arrays.
+              */
+              if (index_type != HAS_FANCY || index_num != 1) {
+                 /* This is not a "flat like" 1-d special case */
+                 goto fail;
+             }
+             if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
+                 goto fail;
+             }
+             goto success;
         }
     }
 
@@ -2557,8 +2564,10 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
  *        0 if an extra operand should be used, otherwise it must be 0.
  *        Should be at least READONLY, WRITEONLY or READWRITE.
  * @param Extra operand. For getmap, this would be the result, for setmap
- *        this would be the arrays to get from. Can be NULL, and will be
- *        allocated in that case.
+ *        this would be the arrays to get from.
+ *        Can be NULL, and will be allocated in that case. However,
+ *        it matches the mapiter iteration, so you have to call
+ *        MapIterSwapAxes(mit, &extra_op, 1) on it.
  *        The operand has no effect on the shape.
  * @param Dtype for the extra operand, borrows the reference and must not
  *        be NULL (if extra_op_flags is not 0).
