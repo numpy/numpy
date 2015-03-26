@@ -7,7 +7,7 @@ from numpy.testing import *
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
 from numpy.compat import asbytes
-from numpy.core.test_rational import *
+from numpy.core.test_rational import rational, test_add, test_add_rationals
 
 
 class TestUfuncKwargs(TestCase):
