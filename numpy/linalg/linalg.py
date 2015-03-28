@@ -2146,10 +2146,14 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
-        if not (-nd <= row_axis < nd and -nd <= col_axis < nd):
+        if row_axis < 0:
+            row_axis += nd
+        if col_axis < 0:
+            col_axis += nd
+        if not (0 <= row_axis < nd and 0 <= col_axis < nd):
             raise ValueError('Invalid axis %r for an array with shape %r' %
                              (axis, x.shape))
-        if row_axis % nd == col_axis % nd:
+        if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
             ret =  _multi_svd_norm(x, row_axis, col_axis, amax)
