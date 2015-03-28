@@ -634,7 +634,7 @@ cdef class RandomState:
         ----------
         seed : int or array_like, optional
             Seed for `RandomState`.
-            Must be convertable to 32 bit unsigned integers.
+            Must be convertible to 32 bit unsigned integers.
 
         See Also
         --------
@@ -1252,8 +1252,8 @@ cdef class RandomState:
         olow = <ndarray>PyArray_FROM_OTF(low, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         ohigh = <ndarray>PyArray_FROM_OTF(high, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         temp = np.subtract(ohigh, olow)
-        Py_INCREF(temp) # needed to get around Pyrex's automatic reference-counting
-                        #  rules because EnsureArray steals a reference
+        Py_INCREF(temp)  # needed to get around Pyrex's automatic reference-counting
+                         # rules because EnsureArray steals a reference
         odiff = <ndarray>PyArray_EnsureArray(temp)
         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff,
                            self.lock)
@@ -2054,7 +2054,6 @@ cdef class RandomState:
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NoncentralF-Distribution.html
-
         .. [2] Wikipedia, "Noncentral F distribution",
                http://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -2387,7 +2386,7 @@ cdef class RandomState:
         the sample mean (that is the mean calculated from the data) is
         a good estimate of the true mean.
 
-        The derivation of the t-distribution was forst published in
+        The derivation of the t-distribution was first published in
         1908 by William Gisset while working for the Guinness Brewery
         in Dublin. Due to proprietary issues, he had to publish under
         a pseudonym, and so he used the name Student.
@@ -2923,14 +2922,11 @@ cdef class RandomState:
         .. [1] Abramowitz, M. and Stegun, I. A. (Eds.). "Handbook of
                Mathematical Functions with Formulas, Graphs, and Mathematical
                Tables, 9th printing," New York: Dover, 1972.
-
         .. [2] Kotz, Samuel, et. al. "The Laplace Distribution and
                Generalizations, " Birkhauser, 2001.
-
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
-
         .. [4] Wikipedia, "Laplace Distribution",
                http://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -3044,7 +3040,6 @@ cdef class RandomState:
         ----------
         .. [1] Gumbel, E. J., "Statistics of Extremes,"
                New York: Columbia University Press, 1958.
-
         .. [2] Reiss, R.-D. and Thomas, M., "Statistical Analysis of Extreme
                Values from Insurance, Finance, Hydrology and Other Fields,"
                Basel: Birkhauser Verlag, 2001.
@@ -3253,7 +3248,6 @@ cdef class RandomState:
                Distributions across the Sciences: Keys and Clues,"
                BioScience, Vol. 51, No. 5, May, 2001.
                http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
-
         .. [2] Reiss, R.D. and Thomas, M., "Statistical Analysis of Extreme
                Values," Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
@@ -3641,7 +3635,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> n, p = 10, .5 # number of trials, probability of each trial
+        >>> n, p = 10, .5  # number of trials, probability of each trial
         >>> s = np.random.binomial(n, p, 1000)
         # result of flipping a coin 10 times, tested 1000 times.
 
@@ -3652,8 +3646,8 @@ cdef class RandomState:
         Let's do 20,000 trials of the model, and count the number that
         generate zero positive results.
 
-        >>> sum(np.random.binomial(9,0.1,20000)==0)/20000.
-        answer = 0.38885, or 38%.
+        >>> sum(np.random.binomial(9, 0.1, 20000) == 0)/20000.
+        # answer = 0.38885, or 38%.
 
         """
         cdef ndarray on, op
@@ -3916,7 +3910,7 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1 ]Zipf, G. K., "Selected Studies of the Principle of Relative
+        .. [1] Zipf, G. K., "Selected Studies of the Principle of Relative
                Frequency in Language," Cambridge, MA: Harvard Univ. Press,
                1932.
 
