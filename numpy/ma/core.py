@@ -4529,7 +4529,7 @@ class MaskedArray(ndarray):
             d = np.dot(filled(self, 0), filled(other, 0))
             m = ~np.dot(am, bm)
             return masked_array(d, mask=m)
-        d = self.filled(0).dot(other.filled(0), out)
+        d = self.filled(0).dot(other.filled(0), out._data)
         if out.mask.shape != d.shape:
             out._mask = numpy.empty(d.shape, MaskType)
         np.dot(am, bm, out._mask)

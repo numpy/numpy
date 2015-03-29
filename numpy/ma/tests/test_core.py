@@ -2982,6 +2982,30 @@ class TestMaskedArrayMathMethods(TestCase):
                             X.trace() - sum(mXdiag.mask * X.diagonal(),
                                             axis=0))
 
+    def test_dot(self):
+        # Tests dot on MaskedArrays.
+        (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
+        fx = mx.filled(0)
+        r = mx.dot(mx)
+        assert_almost_equal(r.filled(0), fx.dot(fx))
+        self.assertIs(r.mask, nomask)
+
+        fX = mX.filled(0)
+        r = mX.dot(mX)
+        assert_almost_equal(r.filled(0), fX.dot(fX))
+        self.assertTrue(r.mask[1,3])
+        r1 = empty_like(r)
+        mX.dot(mX, r1)
+        assert_almost_equal(r, r1)
+
+        mYY = mXX.swapaxes(-1, -2)
+        fXX, fYY = mXX.filled(0), mYY.filled(0)
+        r = mXX.dot(mYY)
+        assert_almost_equal(r.filled(0), fXX.dot(fYY))
+        r1 = empty_like(r)
+        mXX.dot(mYY, r1)
+        assert_almost_equal(r, r1)
+
     def test_varstd(self):
         # Tests var & std on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
