@@ -2638,6 +2638,22 @@ class TestArgmax(TestCase):
         d[5942] = "as"
         assert_equal(d.argmax(), 5942)
 
+    def test_np_vs_ndarray(self):
+        # make sure both ndarray.argmax and numpy.argmax support out/axis args
+        a = np.random.normal(size=(2,3))
+
+        #check positional args
+        out1 = zeros(2, dtype=int)
+        out2 = zeros(2, dtype=int)
+        assert_equal(a.argmax(1, out1), np.argmax(a, 1, out2))
+        assert_equal(out1, out2)
+
+        #check keyword args
+        out1 = zeros(3, dtype=int)
+        out2 = zeros(3, dtype=int)
+        assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
+        assert_equal(out1, out2)
+
 
 class TestArgmin(TestCase):
 
@@ -2747,6 +2763,22 @@ class TestArgmin(TestCase):
         d = np.ones(6031, dtype='<U9')
         d[6001] = "0"
         assert_equal(d.argmin(), 6001)
+
+    def test_np_vs_ndarray(self):
+        # make sure both ndarray.argmin and numpy.argmin support out/axis args
+        a = np.random.normal(size=(2,3))
+
+        #check positional args
+        out1 = zeros(2, dtype=int)
+        out2 = ones(2, dtype=int)
+        assert_equal(a.argmin(1, out1), np.argmin(a, 1, out2))
+        assert_equal(out1, out2)
+
+        #check keyword args
+        out1 = zeros(3, dtype=int)
+        out2 = ones(3, dtype=int)
+        assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
+        assert_equal(out1, out2)
 
 
 class TestMinMax(TestCase):
