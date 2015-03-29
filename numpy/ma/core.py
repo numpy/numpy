@@ -4528,7 +4528,11 @@ class MaskedArray(ndarray):
         if out is None:
             d = np.dot(filled(self, 0), filled(other, 0))
             m = ~np.dot(am, bm)
-            return masked_array(d, mask=m)
+            if d.ndim == 0:
+                d = np.asarray(d)
+            r = d.view(get_masked_subclass(self, other))
+            r.__setmask__(m)
+            return r
         d = self.filled(0).dot(other.filled(0), out._data)
         if out.mask.shape != d.shape:
             out._mask = numpy.empty(d.shape, MaskType)
