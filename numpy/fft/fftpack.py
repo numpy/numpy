@@ -35,7 +35,8 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
-from numpy.core import array, asarray, zeros, swapaxes, shape, conjugate, take
+from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
+                        take, sqrt)
 from . import fftpack_lite as fftpack
 
 _fft_cache = {}
@@ -50,7 +51,8 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         n = a.shape[axis]
 
     if n < 1:
-        raise ValueError("Invalid number of FFT data points (%d) specified." % n)
+        raise ValueError("Invalid number of FFT data points (%d) specified."
+                         % n)
 
     try:
         # Thread-safety note: We rely on list.pop() here to atomically
@@ -88,7 +90,14 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     return r
 
 
-def fft(a, n=None, axis=-1):
+def _unitary(norm):
+    if norm not in (None, "ortho"):
+        raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
+                         % norm)
+    return norm is not None
+
+
+def fft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
 
@@ -108,6 +117,9 @@ def fft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -171,10 +183,16 @@ def fft(a, n=None, axis=-1):
 
     """
 
-    return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
+    a = asarray(a).astype(complex)
+    if n is None:
+        n = a.shape[axis]
+    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
+    if _unitary(norm):
+        output *= 1 / sqrt(n)
+    return output
 
 
-def ifft(a, n=None, axis=-1):
+def ifft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
 
@@ -203,6 +221,9 @@ def ifft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
         axis is used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -251,11 +272,13 @@ def ifft(a, n=None, axis=-1):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=complex)
     if n is None:
-        n = shape(a)[axis]
-    return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
+        n = a.shape[axis]
+    unitary = _unitary(norm)
+    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache)
+    return output * (1 / (sqrt(n) if unitary else n))
 
 
-def rfft(a, n=None, axis=-1):
+def rfft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
 
@@ -275,6 +298,9 @@ def rfft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -331,10 +357,14 @@ def rfft(a, n=None, axis=-1):
     """
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=float)
-    return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf, _real_fft_cache)
+    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf,
+                      _real_fft_cache)
+    if _unitary(norm):
+        output *= 1 / sqrt(a.shape[axis])
+    return output
 
 
-def irfft(a, n=None, axis=-1):
+def irfft(a, n=None, axis=-1, norm=None):
     """
     Compute the inverse of the n-point DFT for real input.
 
@@ -362,6 +392,9 @@ def irfft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -413,12 +446,14 @@ def irfft(a, n=None, axis=-1):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=complex)
     if n is None:
-        n = (shape(a)[axis] - 1) * 2
-    return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
-                    _real_fft_cache) / n
+        n = (a.shape[axis] - 1) * 2
+    unitary = _unitary(norm)
+    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
+                      _real_fft_cache)
+    return output * (1 / (sqrt(n) if unitary else n))
 
 
-def hfft(a, n=None, axis=-1):
+def hfft(a, n=None, axis=-1, norm=None):
     """
     Compute the FFT of a signal which has Hermitian symmetry (real spectrum).
 
@@ -435,6 +470,9 @@ def hfft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -487,11 +525,12 @@ def hfft(a, n=None, axis=-1):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=complex)
     if n is None:
-        n = (shape(a)[axis] - 1) * 2
-    return irfft(conjugate(a), n, axis) * n
+        n = (a.shape[axis] - 1) * 2
+    unitary = _unitary(norm)
+    return irfft(conjugate(a), n, axis) * (sqrt(n) if unitary else n)
 
 
-def ihfft(a, n=None, axis=-1):
+def ihfft(a, n=None, axis=-1, norm=None):
     """
     Compute the inverse FFT of a signal which has Hermitian symmetry.
 
@@ -508,6 +547,9 @@ def ihfft(a, n=None, axis=-1):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -541,8 +583,10 @@ def ihfft(a, n=None, axis=-1):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=float)
     if n is None:
-        n = shape(a)[axis]
-    return conjugate(rfft(a, n, axis))/n
+        n = a.shape[axis]
+    unitary = _unitary(norm)
+    output = conjugate(rfft(a, n, axis))
+    return output * (1 / (sqrt(n) if unitary else n))
 
 
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
@@ -564,17 +608,17 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _raw_fftnd(a, s=None, axes=None, function=fft):
+def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     itl = list(range(len(axes)))
     itl.reverse()
     for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii])
+        a = function(a, n=s[ii], axis=axes[ii], norm=norm)
     return a
 
 
-def fftn(a, s=None, axes=None):
+def fftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
 
@@ -599,6 +643,9 @@ def fftn(a, s=None, axes=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the transform over that axis is
         performed multiple times.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -664,9 +711,10 @@ def fftn(a, s=None, axes=None):
 
     """
 
-    return _raw_fftnd(a, s, axes, fft)
+    return _raw_fftnd(a, s, axes, fft, norm)
 
-def ifftn(a, s=None, axes=None):
+
+def ifftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
 
@@ -700,6 +748,9 @@ def ifftn(a, s=None, axes=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -756,10 +807,10 @@ def ifftn(a, s=None, axes=None):
 
     """
 
-    return _raw_fftnd(a, s, axes, ifft)
+    return _raw_fftnd(a, s, axes, ifft, norm)
 
 
-def fft2(a, s=None, axes=(-2, -1)):
+def fft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional discrete Fourier Transform
 
@@ -785,6 +836,9 @@ def fft2(a, s=None, axes=(-2, -1)):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -842,10 +896,10 @@ def fft2(a, s=None, axes=(-2, -1)):
 
     """
 
-    return _raw_fftnd(a, s, axes, fft)
+    return _raw_fftnd(a, s, axes, fft, norm)
 
 
-def ifft2(a, s=None, axes=(-2, -1)):
+def ifft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
 
@@ -878,6 +932,9 @@ def ifft2(a, s=None, axes=(-2, -1)):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -925,10 +982,10 @@ def ifft2(a, s=None, axes=(-2, -1)):
 
     """
 
-    return _raw_fftnd(a, s, axes, ifft)
+    return _raw_fftnd(a, s, axes, ifft, norm)
 
 
-def rfftn(a, s=None, axes=None):
+def rfftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
 
@@ -954,6 +1011,9 @@ def rfftn(a, s=None, axes=None):
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -1010,12 +1070,13 @@ def rfftn(a, s=None, axes=None):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=float)
     s, axes = _cook_nd_args(a, s, axes)
-    a = rfft(a, s[-1], axes[-1])
+    a = rfft(a, s[-1], axes[-1], norm)
     for ii in range(len(axes)-1):
-        a = fft(a, s[ii], axes[ii])
+        a = fft(a, s[ii], axes[ii], norm)
     return a
 
-def rfft2(a, s=None, axes=(-2, -1)):
+
+def rfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional FFT of a real array.
 
@@ -1027,6 +1088,9 @@ def rfft2(a, s=None, axes=(-2, -1)):
         Shape of the FFT.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -1045,9 +1109,10 @@ def rfft2(a, s=None, axes=(-2, -1)):
 
     """
 
-    return rfftn(a, s, axes)
+    return rfftn(a, s, axes, norm)
 
-def irfftn(a, s=None, axes=None):
+
+def irfftn(a, s=None, axes=None, norm=None):
     """
     Compute the inverse of the N-dimensional FFT of real input.
 
@@ -1080,6 +1145,9 @@ def irfftn(a, s=None, axes=None):
         `len(s)` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -1132,11 +1200,12 @@ def irfftn(a, s=None, axes=None):
     a = array(a, copy=True, dtype=complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
-        a = ifft(a, s[ii], axes[ii])
-    a = irfft(a, s[-1], axes[-1])
+        a = ifft(a, s[ii], axes[ii], norm)
+    a = irfft(a, s[-1], axes[-1], norm)
     return a
 
-def irfft2(a, s=None, axes=(-2, -1)):
+
+def irfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse FFT of a real array.
 
@@ -1149,6 +1218,9 @@ def irfft2(a, s=None, axes=(-2, -1)):
     axes : sequence of ints, optional
         The axes over which to compute the inverse fft.
         Default is the last two axes.
+    norm : {None, "ortho"}, optional
+        .. versionadded:: 1.10.0
+        Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
     -------
@@ -1166,4 +1238,4 @@ def irfft2(a, s=None, axes=(-2, -1)):
 
     """
 
-    return irfftn(a, s, axes)
+    return irfftn(a, s, axes, norm)
