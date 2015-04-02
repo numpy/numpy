@@ -900,7 +900,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     return argsort(axis, kind, order)
 
 
-def argmax(a, axis=None):
+def argmax(a, axis=None, out=None):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -911,6 +911,11 @@ def argmax(a, axis=None):
     axis : int, optional
         By default, the index is into the flattened array, otherwise
         along the specified axis.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary. See `doc.ufuncs`
+        (Section "Output arguments") for more details.
 
     Returns
     -------
@@ -953,11 +958,15 @@ def argmax(a, axis=None):
     try:
         argmax = a.argmax
     except AttributeError:
-        return _wrapit(a, 'argmax', axis)
-    return argmax(axis)
+        return _wrapit(a, 'argmax', axis, out)
+    try:
+        return argmax(axis, out)
+    except TypeError:
+        # for backwards compatibility
+        return argmax(axis)
 
 
-def argmin(a, axis=None):
+def argmin(a, axis=None, out=None):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -1010,8 +1019,12 @@ def argmin(a, axis=None):
     try:
         argmin = a.argmin
     except AttributeError:
-        return _wrapit(a, 'argmin', axis)
-    return argmin(axis)
+        return _wrapit(a, 'argmin', axis, out)
+    try:
+        return argmin(axis, out)
+    except TypeError:
+        # for backwards compatibility
+        return argmin(axis)
 
 
 def searchsorted(a, v, side='left', sorter=None):
