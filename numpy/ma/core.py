@@ -4522,6 +4522,26 @@ class MaskedArray(ndarray):
             return D.astype(dtype).filled(0).sum(axis=None, out=out)
     trace.__doc__ = ndarray.trace.__doc__
 
+    def dot(self, other, out=None):
+        am = ~getmaskarray(self)
+        bm = ~getmaskarray(other)
+        if out is None:
+            d = np.dot(filled(self, 0), filled(other, 0))
+            m = ~np.dot(am, bm)
+            if d.ndim == 0:
+                d = np.asarray(d)
+            r = d.view(get_masked_subclass(self, other))
+            r.__setmask__(m)
+            return r
+        d = self.filled(0).dot(other.filled(0), out._data)
+        if out.mask.shape != d.shape:
+            out._mask = numpy.empty(d.shape, MaskType)
+        np.dot(am, bm, out._mask)
+        np.logical_not(out._mask, out._mask)
+        return out
+    dot.__doc__ = ndarray.dot.__doc__
+
+
     def sum(self, axis=None, dtype=None, out=None):
         """
         Return the sum of the array elements over the given axis.

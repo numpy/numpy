@@ -1047,13 +1047,7 @@ def dot(a, b, strict=False):
     if strict and (a.ndim == 2) and (b.ndim == 2):
         a = mask_rows(a)
         b = mask_cols(b)
-    #
-    d = np.dot(filled(a, 0), filled(b, 0))
-    #
-    am = (~getmaskarray(a))
-    bm = (~getmaskarray(b))
-    m = ~np.dot(am, bm)
-    return masked_array(d, mask=m)
+    return a.dot(b)
 
 #####--------------------------------------------------------------------------
 #---- --- arraysetops ---
