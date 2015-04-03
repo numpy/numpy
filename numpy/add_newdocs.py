@@ -2638,7 +2638,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
     CARRAY (CA)
         BEHAVED and C_CONTIGUOUS.
     FARRAY (FA)
-        BEHAVED and F_CONTIGUOUS and not C_CONTIGUOUS.
+        BEHAVED and F_CONTIGUOUS.
 
     Notes
     -----

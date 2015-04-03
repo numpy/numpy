@@ -15,6 +15,7 @@
 
 #include "common.h"
 
+
 static void
 _UpdateContiguousFlags(PyArrayObject *ap);
 
@@ -28,20 +29,19 @@ PyArray_NewFlagsObject(PyObject *obj)
     PyObject *flagobj;
     int flags;
 
-    if (obj == NULL) {
-        flags = NPY_ARRAY_C_CONTIGUOUS |
-                NPY_ARRAY_OWNDATA |
-                NPY_ARRAY_F_CONTIGUOUS |
-                NPY_ARRAY_ALIGNED;
+
+    if (obj != NULL && PyArray_Check(obj)) {
+        flags = PyArray_FLAGS((PyArrayObject *)obj);
+    }
+    else if (obj != NULL && PyObject_TypeCheck(obj, &PyGenericArrType_Type)) {
+        flags = NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_OWNDATA |
+                NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_ALIGNED;
+        obj = NULL;
     }
     else {
-        if (!PyArray_Check(obj)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Need a NumPy array to create a flags object");
-            return NULL;
-        }
-
-        flags = PyArray_FLAGS((PyArrayObject *)obj);
+        PyErr_SetString(PyExc_ValueError,
+                "Need a NumPy array or scalar to create a flags object");
+        return NULL;
     }
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
     if (flagobj == NULL) {
@@ -196,77 +196,85 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
 }
 
 
-#define _define_get(UPPER, lower) \
-    static PyObject * \
-    arrayflags_ ## lower ## _get(PyArrayFlagsObject *self) \
+#define GET_FLAGS(self) \
+    (self)->arr == NULL ? (self)->flags : \
+                          PyArray_FLAGS((PyArrayObject *)(self)->arr)
+
+#define CHECK_FOR_FLAG(FLAG) \
+    (flags & (FLAG)) == (FLAG)
+
+#define CHECK_FOR_FLAG_OR_FLAG(FLAG1, FLAG2) \
+    (flags & (FLAG1)) == (FLAG1) || (flags & (FLAG2)) == (FLAG2)
+
+#define CHECK_FOR_FLAG_AND_NOT_FLAG(FLAG1, FLAG2) \
+    (flags & (FLAG1)) == (FLAG1) && (flags & (FLAG2)) != (FLAG2)
+
+#define GETTER_FROM_FLAG(name, COND) \
+    static PyObject* \
+    arrayflags_##name##_get(PyArrayFlagsObject *self) \
     { \
-        PyObject *item; \
-        item = ((self->flags & (UPPER)) == (UPPER)) ? Py_True : Py_False; \
-        Py_INCREF(item); \
-        return item; \
+        int flags = GET_FLAGS(self); \
+        if (COND) { \
+            Py_RETURN_TRUE; \
+        } \
+        Py_RETURN_FALSE; \
     }
 
-_define_get(NPY_ARRAY_C_CONTIGUOUS, contiguous)
-_define_get(NPY_ARRAY_F_CONTIGUOUS, fortran)
-_define_get(NPY_ARRAY_UPDATEIFCOPY, updateifcopy)
-_define_get(NPY_ARRAY_OWNDATA, owndata)
-_define_get(NPY_ARRAY_ALIGNED, aligned)
-_define_get(NPY_ARRAY_WRITEABLE, writeable)
+#define GETTER_FROM_FUNC_OR_FLAG(name, CFUNC, COND) \
+    static PyObject* \
+    arrayflags_##name##_get(PyArrayFlagsObject *self) \
+    { \
+        PyObject *arr = self->arr; \
+        if (arr != NULL) { \
+            if (CFUNC((PyArrayObject *)arr)) { \
+                Py_RETURN_TRUE; \
+            } \
+        } \
+        else { \
+            int flags = self->flags; \
+            if (COND) { \
+                Py_RETURN_TRUE; \
+            } \
+        } \
+        Py_RETURN_FALSE; \
+    }
 
-_define_get(NPY_ARRAY_ALIGNED|
-            NPY_ARRAY_WRITEABLE, behaved)
-_define_get(NPY_ARRAY_ALIGNED|
-            NPY_ARRAY_WRITEABLE|
-            NPY_ARRAY_C_CONTIGUOUS, carray)
+GETTER_FROM_FUNC_OR_FLAG(c_contiguous, PyArray_IS_C_CONTIGUOUS,
+                         CHECK_FOR_FLAG(NPY_ARRAY_C_CONTIGUOUS));
+GETTER_FROM_FUNC_OR_FLAG(f_contiguous, PyArray_IS_F_CONTIGUOUS,
+                         CHECK_FOR_FLAG(NPY_ARRAY_F_CONTIGUOUS));
+GETTER_FROM_FLAG(updateifcopy, CHECK_FOR_FLAG(NPY_ARRAY_UPDATEIFCOPY));
+GETTER_FROM_FLAG(owndata, CHECK_FOR_FLAG(NPY_ARRAY_OWNDATA));
+GETTER_FROM_FUNC_OR_FLAG(aligned, PyArray_ISALIGNED,
+                         CHECK_FOR_FLAG(NPY_ARRAY_ALIGNED));
+GETTER_FROM_FUNC_OR_FLAG(writeable, PyArray_ISWRITEABLE,
+                         CHECK_FOR_FLAG(NPY_ARRAY_WRITEABLE));
+GETTER_FROM_FUNC_OR_FLAG(behaved, PyArray_ISBEHAVED,
+                         CHECK_FOR_FLAG(NPY_ARRAY_BEHAVED));
+GETTER_FROM_FUNC_OR_FLAG(carray, PyArray_ISCARRAY,
+                         CHECK_FOR_FLAG(NPY_ARRAY_CARRAY));
+GETTER_FROM_FUNC_OR_FLAG(farray, PyArray_ISFARRAY,
+                         CHECK_FOR_FLAG(NPY_ARRAY_FARRAY));
+GETTER_FROM_FUNC_OR_FLAG(forc, PyArray_ISONESEGMENT,
+                         CHECK_FOR_FLAG_OR_FLAG(NPY_ARRAY_F_CONTIGUOUS,
+                                                NPY_ARRAY_C_CONTIGUOUS));
+GETTER_FROM_FUNC_OR_FLAG(fnc, PyArray_ISFORTRAN,
+                         CHECK_FOR_FLAG_AND_NOT_FLAG(NPY_ARRAY_F_CONTIGUOUS,
+                                                     NPY_ARRAY_C_CONTIGUOUS));
 
-static PyObject *
-arrayflags_forc_get(PyArrayFlagsObject *self)
+static PyObject*
+arrayflags_fortran_get(PyArrayFlagsObject *self)
 {
-    PyObject *item;
-
-    if (((self->flags & NPY_ARRAY_F_CONTIGUOUS) == NPY_ARRAY_F_CONTIGUOUS) ||
-        ((self->flags & NPY_ARRAY_C_CONTIGUOUS) == NPY_ARRAY_C_CONTIGUOUS)) {
-        item = Py_True;
+    /*
+     * The definitions of flags.fortran and PyArray_ISFORTRAN do not
+     * match, which makes it confusing to have both around.
+     */
+    if (DEPRECATE("the 'fortran' attribute is deprecated and "
+                  "will be removed in a future release, use "
+                  "'f_contiguous' instead") < 0) {
+        return NULL;
     }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
-static PyObject *
-arrayflags_fnc_get(PyArrayFlagsObject *self)
-{
-    PyObject *item;
-
-    if (((self->flags & NPY_ARRAY_F_CONTIGUOUS) == NPY_ARRAY_F_CONTIGUOUS) &&
-        !((self->flags & NPY_ARRAY_C_CONTIGUOUS) == NPY_ARRAY_C_CONTIGUOUS)) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
-static PyObject *
-arrayflags_farray_get(PyArrayFlagsObject *self)
-{
-    PyObject *item;
-
-    if (((self->flags & (NPY_ARRAY_ALIGNED|
-                         NPY_ARRAY_WRITEABLE|
-                         NPY_ARRAY_F_CONTIGUOUS)) != 0) &&
-        !((self->flags & NPY_ARRAY_C_CONTIGUOUS) != 0)) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
+    return arrayflags_f_contiguous_get(self);
 }
 
 static PyObject *
@@ -275,93 +283,49 @@ arrayflags_num_get(PyArrayFlagsObject *self)
     return PyInt_FromLong(self->flags);
 }
 
+#define TRUE_OR_FALSE_OBJ PyObject_IsTrue(obj) ? Py_True : Py_False
+
+#define SETTER_FUNC(name, WRITE, ALIGN, UIC) \
+static int \
+arrayflags_##name##_set(PyArrayFlagsObject *self, PyObject *obj) \
+{ \
+    PyObject *res; \
+    if (obj == NULL) { \
+        PyErr_SetString(PyExc_AttributeError, \
+                        "Cannot delete flags " #name " attribute"); \
+        return -1; \
+    } \
+    if (self->arr == NULL) { \
+        PyErr_SetString(PyExc_ValueError, \
+                "Cannot set flags on array scalars."); \
+        return -1; \
+    } \
+    res = PyObject_CallMethod(self->arr, "setflags", "OOO", \
+                              WRITE, ALIGN, UIC); \
+    if (res == NULL) { \
+        return -1; \
+    } \
+    Py_DECREF(res); \
+    return 0; \
+}
+
 /* relies on setflags order being write, align, uic */
-static int
-arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
-{
-    PyObject *res;
-
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags updateifcopy attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-    res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False));
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
-}
-
-static int
-arrayflags_aligned_set(PyArrayFlagsObject *self, PyObject *obj)
-{
-    PyObject *res;
-
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags aligned attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-    res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False),
-                              Py_None);
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
-}
-
-static int
-arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
-{
-    PyObject *res;
-
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags writeable attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-    res = PyObject_CallMethod(self->arr, "setflags", "OOO",
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False),
-                              Py_None, Py_None);
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
-}
+SETTER_FUNC(writeable, TRUE_OR_FALSE_OBJ, Py_None, Py_None);
+SETTER_FUNC(aligned, Py_None, TRUE_OR_FALSE_OBJ, Py_None);
+SETTER_FUNC(updateifcopy, Py_None, Py_None, TRUE_OR_FALSE_OBJ);
 
 
 static PyGetSetDef arrayflags_getsets[] = {
     {"contiguous",
-        (getter)arrayflags_contiguous_get,
+        (getter)arrayflags_c_contiguous_get,
         NULL,
         NULL, NULL},
     {"c_contiguous",
-        (getter)arrayflags_contiguous_get,
+        (getter)arrayflags_c_contiguous_get,
         NULL,
         NULL, NULL},
     {"f_contiguous",
-        (getter)arrayflags_fortran_get,
+        (getter)arrayflags_f_contiguous_get,
         NULL,
         NULL, NULL},
     {"fortran",
@@ -444,9 +408,9 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
     case 1:
         switch(key[0]) {
         case 'C':
-            return arrayflags_contiguous_get(self);
+            return arrayflags_c_contiguous_get(self);
         case 'F':
-            return arrayflags_fortran_get(self);
+            return arrayflags_f_contiguous_get(self);
         case 'W':
             return arrayflags_writeable_get(self);
         case 'B':
@@ -488,27 +452,27 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         }
         break;
     case 7:
-        if (strncmp(key,"FORTRAN",n) == 0) {
+        if (strncmp(key, "FORTRAN", n) == 0) {
             return arrayflags_fortran_get(self);
         }
-        if (strncmp(key,"BEHAVED",n) == 0) {
+        if (strncmp(key, "BEHAVED", n) == 0) {
             return arrayflags_behaved_get(self);
         }
-        if (strncmp(key,"OWNDATA",n) == 0) {
+        if (strncmp(key, "OWNDATA", n) == 0) {
             return arrayflags_owndata_get(self);
         }
-        if (strncmp(key,"ALIGNED",n) == 0) {
+        if (strncmp(key, "ALIGNED", n) == 0) {
             return arrayflags_aligned_get(self);
         }
         break;
     case 9:
-        if (strncmp(key,"WRITEABLE",n) == 0) {
+        if (strncmp(key, "WRITEABLE", n) == 0) {
             return arrayflags_writeable_get(self);
         }
         break;
     case 10:
-        if (strncmp(key,"CONTIGUOUS",n) == 0) {
-            return arrayflags_contiguous_get(self);
+        if (strncmp(key, "CONTIGUOUS", n) == 0) {
+            return arrayflags_c_contiguous_get(self);
         }
         break;
     case 12:
@@ -516,10 +480,10 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_updateifcopy_get(self);
         }
         if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
-            return arrayflags_contiguous_get(self);
+            return arrayflags_c_contiguous_get(self);
         }
         if (strncmp(key, "F_CONTIGUOUS", n) == 0) {
-            return arrayflags_fortran_get(self);
+            return arrayflags_f_contiguous_get(self);
         }
         break;
     }
@@ -656,12 +620,7 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
     if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg)) {
         return NULL;
     }
-    if ((arg != NULL) && PyArray_Check(arg)) {
-        return PyArray_NewFlagsObject(arg);
-    }
-    else {
-        return PyArray_NewFlagsObject(NULL);
-    }
+    return PyArray_NewFlagsObject(NULL);
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
