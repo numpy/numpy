@@ -2982,7 +2982,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None)
+    a.all(axis=None, out=None, keepdims=False)
 
     Returns True if all elements evaluate to True.
 
@@ -2997,7 +2997,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None)
+    a.any(axis=None, out=None, keepdims=False)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -3198,9 +3198,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     """
-    a.clip(a_min, a_max, out=None)
+    a.clip(min=None, max=None, out=None)
 
-    Return an array whose values are limited to ``[a_min, a_max]``.
+    Return an array whose values are limited to ``[min, max]``.
+    One of max or min must be given.
 
     Refer to `numpy.clip` for full documentation.
 
@@ -3656,7 +3657,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False)
 
     Returns the average of the array elements along given axis.
 
@@ -3671,7 +3672,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """
-    a.min(axis=None, out=None)
+    a.min(axis=None, out=None, keepdims=False)
 
     Return the minimum along a given axis.
 
@@ -3769,7 +3770,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
     """
-    a.prod(axis=None, dtype=None, out=None)
+    a.prod(axis=None, dtype=None, out=None, keepdims=False)
 
     Return the product of the array elements over the given axis
 
@@ -4300,7 +4301,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4315,7 +4316,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     """
-    a.sum(axis=None, dtype=None, out=None)
+    a.sum(axis=None, dtype=None, out=None, keepdims=False)
 
     Return the sum of the array elements over the given axis.
 
@@ -4547,7 +4548,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
 
     Returns the variance of the array elements, along given axis.
 

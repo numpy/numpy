@@ -900,7 +900,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     return argsort(axis, kind, order)
 
 
-def argmax(a, axis=None):
+def argmax(a, axis=None, out=None):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -911,6 +911,9 @@ def argmax(a, axis=None):
     axis : int, optional
         By default, the index is into the flattened array, otherwise
         along the specified axis.
+    out : array, optional
+        If provided, the result will be inserted into this array. It should
+        be of the appropriate shape and dtype.
 
     Returns
     -------
@@ -953,11 +956,11 @@ def argmax(a, axis=None):
     try:
         argmax = a.argmax
     except AttributeError:
-        return _wrapit(a, 'argmax', axis)
-    return argmax(axis)
+        return _wrapit(a, 'argmax', axis, out)
+    return argmax(axis, out)
 
 
-def argmin(a, axis=None):
+def argmin(a, axis=None, out=None):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -968,6 +971,9 @@ def argmin(a, axis=None):
     axis : int, optional
         By default, the index is into the flattened array, otherwise
         along the specified axis.
+    out : array, optional
+        If provided, the result will be inserted into this array. It should
+        be of the appropriate shape and dtype.
 
     Returns
     -------
@@ -1010,8 +1016,8 @@ def argmin(a, axis=None):
     try:
         argmin = a.argmin
     except AttributeError:
-        return _wrapit(a, 'argmin', axis)
-    return argmin(axis)
+        return _wrapit(a, 'argmin', axis, out)
+    return argmin(axis, out)
 
 
 def searchsorted(a, v, side='left', sorter=None):
