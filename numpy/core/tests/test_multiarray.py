@@ -60,7 +60,7 @@ class TestFlags(TestCase):
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
-        assert_equal(self.a.flags.farray, False)
+        assert_equal(self.a.flags.farray, True)
         assert_equal(self.a.flags.behaved, True)
         assert_equal(self.a.flags.fnc, False)
         assert_equal(self.a.flags.forc, True)
@@ -1040,12 +1040,10 @@ class TestMethods(TestCase):
 
     def test_copy(self):
         def assert_fortran(arr):
-            assert_(arr.flags.fortran)
             assert_(arr.flags.f_contiguous)
             assert_(not arr.flags.c_contiguous)
 
         def assert_c(arr):
-            assert_(not arr.flags.fortran)
             assert_(not arr.flags.f_contiguous)
             assert_(arr.flags.c_contiguous)
 

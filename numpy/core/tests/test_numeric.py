@@ -2234,7 +2234,7 @@ def test_outer_out_param():
 
 class TestRequire(object):
     flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
-                  'F', 'F_CONTIGUOUS', 'FORTRAN',
+                  'F', 'F_CONTIGUOUS',
                   'A', 'ALIGNED',
                   'W', 'WRITEABLE',
                   'O', 'OWNDATA']

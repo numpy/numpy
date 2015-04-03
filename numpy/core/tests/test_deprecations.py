@@ -508,5 +508,21 @@ class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
         self.assert_deprecated(np.restoredot)
 
 
+class TestFortranFlagDeprecation(_DeprecationTestCase):
+    """The definition of ndarray.flags.fortran was inconsistent with the
+    C macro PyArray_ISFORTRAN, so it has been deprecated in favor of
+    ndarray.flags.f_contiguous.
+
+    """
+    message = ("the 'fortran' attribute is deprecated and "
+               "will be removed in a future release, use "
+               "'f_contiguous' instead")
+
+    def test_fortran_flag_deprecation(self):
+        a = np.arange(10)
+        self.assert_deprecated(getattr, args=(a.flags, 'fortran'))
+        self.assert_deprecated(a.flags.__getitem__, args=('FORTRAN',))
+
+
 if __name__ == "__main__":
     run_module_suite()

@@ -2027,9 +2027,7 @@ class TestRegression(TestCase):
         a = np.empty((2, 2), order='F')
         b = copy.copy(a)
         c = copy.deepcopy(a)
-        assert_(b.flags.fortran)
         assert_(b.flags.f_contiguous)
-        assert_(c.flags.fortran)
         assert_(c.flags.f_contiguous)
 
     def test_fortran_order_buffer(self):

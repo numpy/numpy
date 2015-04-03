@@ -278,7 +278,7 @@ class matrix(N.ndarray):
             shape = (1, shape[0])
 
         order = False
-        if (ndim == 2) and arr.flags.fortran:
+        if (ndim == 2) and arr.flags.f_contiguous:
             order = True
 
         if not (order or arr.flags.contiguous):
