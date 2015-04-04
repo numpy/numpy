@@ -10,6 +10,7 @@ import warnings
 import tempfile
 from os import path
 from io import BytesIO
+from itertools import chain
 
 import numpy as np
 from numpy.testing import (
@@ -2117,6 +2118,12 @@ class TestRegression(TestCase):
             pass
 
         assert_raises(ValueError, np.frompyfunc, passer, 32, 1)
+
+    def test_repeat_broadcasting(self):
+        # gh-5743
+        a = np.arange(60).reshape(3, 4, 5)
+        for axis in chain(range(-a.ndim, a.ndim), [None]):
+            assert_equal(a.repeat(2, axis=axis), a.repeat([2], axis=axis))
 
 
 if __name__ == "__main__":

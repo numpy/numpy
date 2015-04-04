@@ -546,9 +546,9 @@ NPY_NO_EXPORT PyObject *
 PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 {
     npy_intp *counts;
-    npy_intp n, n_outer, i, j, k, chunk, total;
-    npy_intp tmp;
-    int nd;
+    npy_intp n, n_outer, i, j, k, chunk;
+    npy_intp total = 0;
+    npy_bool broadcast = NPY_FALSE;
     PyArrayObject *repeats = NULL;
     PyObject *ap = NULL;
     PyArrayObject *ret = NULL;
@@ -558,34 +558,35 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     if (repeats == NULL) {
         return NULL;
     }
-    nd = PyArray_NDIM(repeats);
+
+    /*
+     * Scalar and size 1 'repeat' arrays broadcast to any shape, for all
+     * other inputs the dimension must match exactly.
+     */
+    if (PyArray_NDIM(repeats) == 0 || PyArray_SIZE(repeats) == 1) {
+        broadcast = NPY_TRUE;
+    }
+
     counts = (npy_intp *)PyArray_DATA(repeats);
 
-    if ((ap=PyArray_CheckAxis(aop, &axis, NPY_ARRAY_CARRAY))==NULL) {
+    if ((ap = PyArray_CheckAxis(aop, &axis, NPY_ARRAY_CARRAY)) == NULL) {
         Py_DECREF(repeats);
         return NULL;
     }
 
     aop = (PyArrayObject *)ap;
-    if (nd == 1) {
-        n = PyArray_DIMS(repeats)[0];
-    }
-    else {
-        /* nd == 0 */
-        n = PyArray_DIMS(aop)[axis];
-    }
-    if (PyArray_DIMS(aop)[axis] != n) {
-        PyErr_SetString(PyExc_ValueError,
-                        "a.shape[axis] != len(repeats)");
+    n = PyArray_DIM(aop, axis);
+
+    if (!broadcast && PyArray_SIZE(repeats) != n) {
+        PyErr_Format(PyExc_ValueError,
+                     "operands could not be broadcast together "
+                     "with shape (%zd,) (%zd,)", n, PyArray_DIM(repeats, 0));
         goto fail;
     }
-
-    if (nd == 0) {
-        total = counts[0]*n;
+    if (broadcast) {
+        total = counts[0] * n;
     }
     else {
-
-        total = 0;
         for (j = 0; j < n; j++) {
             if (counts[j] < 0) {
                 PyErr_SetString(PyExc_ValueError, "count < 0");
@@ -594,7 +595,6 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
             total += counts[j];
         }
     }
-
 
     /* Construct new array */
     PyArray_DIMS(aop)[axis] = total;
@@ -623,7 +623,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     }
     for (i = 0; i < n_outer; i++) {
         for (j = 0; j < n; j++) {
-            tmp = nd ? counts[j] : counts[0];
+            npy_intp tmp = broadcast ? counts[0] : counts[j];
             for (k = 0; k < tmp; k++) {
                 memcpy(new_data, old_data, chunk);
                 new_data += chunk;
