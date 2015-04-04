@@ -1591,6 +1591,7 @@ PyArray_DescrNew(PyArray_Descr *base)
     }
     Py_XINCREF(newdescr->typeobj);
     Py_XINCREF(newdescr->metadata);
+    newdescr->hash = -1;
 
     return newdescr;
 }
@@ -1994,6 +1995,8 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
             return -1;
         }
     }
+    /* Invalidate cached hash value */
+    self->hash = -1;
     /* Update dictionary keys in fields */
     new_names = PySequence_Tuple(val);
     new_fields = PyDict_New();
@@ -2443,6 +2446,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                      version);
         return NULL;
     }
+    /* Invalidate cached hash value */
+    self->hash = -1;
 
     if (version == 1 || version == 0) {
         if (fields != Py_None) {

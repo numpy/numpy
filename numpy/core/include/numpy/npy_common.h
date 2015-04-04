@@ -317,6 +317,19 @@ typedef float npy_float;
 typedef double npy_double;
 
 /*
+ * Hash value compatibility.
+ * As of Python 3.2 hash values are of type Py_hash_t.
+ * Previous versions use C long.
+ */
+#if PY_VERSION_HEX < 0x03020000
+typedef long npy_hash_t;
+#define NPY_SIZEOF_HASH_T NPY_SIZEOF_LONG
+#else
+typedef Py_hash_t npy_hash_t;
+#define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
+#endif
+
+/*
  * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
  * able to do .real/.imag. Will have to convert code first.
  */
