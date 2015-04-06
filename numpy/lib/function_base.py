@@ -918,6 +918,10 @@ def gradient(f, *varargs, **kwargs):
     >>> np.gradient(x, 2)
     array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
 
+    For two dimensional arrays, the return will be two arrays ordered by 
+    axis. In this example the first array stands for the gradient in 
+    rows and the second one in columns direction:
+    
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
