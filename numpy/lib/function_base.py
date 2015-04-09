@@ -906,9 +906,9 @@ def gradient(f, *varargs, **kwargs):
 
     Returns
     -------
-    gradient : ndarray
-        N arrays of the same shape as `f` giving the derivative of `f` with
-        respect to each dimension.
+    gradient : list of ndarray
+        Each element of `list` has the same shape as `f` giving the derivative 
+        of `f` with respect to each dimension.
 
     Examples
     --------
