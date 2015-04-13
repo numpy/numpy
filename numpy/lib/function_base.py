@@ -3739,6 +3739,7 @@ def insert(arr, obj, values, axis=None):
            [3, 5, 3]])
 
     Difference between sequence and scalars:
+
     >>> np.insert(a, [1], [[1],[2],[3]], axis=1)
     array([[1, 1, 1],
            [2, 2, 2],
