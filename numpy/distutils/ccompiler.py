@@ -617,8 +617,8 @@ ccompiler.gen_lib_options = gen_lib_options
 # Also fix up the various compiler modules, which do
 # from distutils.ccompiler import gen_lib_options
 # Don't bother with mwerks, as we don't support Classic Mac.
-for _cc in ['msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
-    _m = sys.modules.get('distutils.'+_cc+'compiler')
+for _cc in ['msvc9', 'msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
+    _m = sys.modules.get('distutils.' + _cc + 'compiler')
     if _m is not None:
         setattr(_m, 'gen_lib_options', gen_lib_options)
 
