@@ -424,7 +424,7 @@ def array_split(ary, indices_or_sections, axis=0):
     # This "kludge" was introduced here to replace arrays shaped (0, 10)
     # or similar with an array shaped (0,).
     # There seems no need for this, so give a FutureWarning to remove later.
-    if sub_arys[-1].size == 0 and sub_arys[-1].ndim != 1:
+    if any(arr.size == 0 and arr.ndim != 1 for arr in sub_arys):
         warnings.warn("in the future np.array_split will retain the shape of "
                       "arrays with a zero size, instead of replacing them by "
                       "`array([])`, which always has a shape of (0,).",
