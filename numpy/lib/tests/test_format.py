@@ -599,6 +599,22 @@ def test_pickle_python2_python3():
                                   encoding='latin1', fix_imports=False)
 
 
+def test_pickle_disallow():
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+
+    path = os.path.join(data_dir, 'py2-objarr.npy')
+    assert_raises(ValueError, np.load, path,
+                  allow_pickle=False, encoding='latin1')
+
+    path = os.path.join(data_dir, 'py2-objarr.npz')
+    f = np.load(path, allow_pickle=False, encoding='latin1')
+    assert_raises(ValueError, f.__getitem__, 'x')
+
+    path = os.path.join(tempdir, 'pickle-disabled.npy')
+    assert_raises(ValueError, np.save, path, np.array([None], dtype=object),
+                  allow_pickle=False)
+
+
 def test_version_2_0():
     f = BytesIO()
     # requires more than 2 byte for header

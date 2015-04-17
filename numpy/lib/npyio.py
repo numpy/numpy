@@ -164,6 +164,8 @@ class NpzFile(object):
     f : BagObj instance
         An object on which attribute can be performed as an alternative
         to getitem access on the `NpzFile` instance itself.
+    allow_pickle : bool, optional
+        Allow loading pickled data. Default: True
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
@@ -199,12 +201,14 @@ class NpzFile(object):
 
     """
 
-    def __init__(self, fid, own_fid=False, pickle_kwargs=None):
+    def __init__(self, fid, own_fid=False, allow_pickle=True,
+                 pickle_kwargs=None):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
+        self.allow_pickle = allow_pickle
         self.pickle_kwargs = pickle_kwargs
         for x in self._files:
             if x.endswith('.npy'):
@@ -262,6 +266,7 @@ class NpzFile(object):
             if magic == format.MAGIC_PREFIX:
                 bytes = self.zip.open(key)
                 return format.read_array(bytes,
+                                         allow_pickle=self.allow_pickle,
                                          pickle_kwargs=self.pickle_kwargs)
             else:
                 return self.zip.read(key)
@@ -295,7 +300,8 @@ class NpzFile(object):
         return self.files.__contains__(key)
 
 
-def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
+def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
+         encoding='ASCII'):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
@@ -312,6 +318,12 @@ def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
         and sliced like any ndarray.  Memory mapping is especially useful
         for accessing small fragments of large files without reading the
         entire file into memory.
+    allow_pickle : bool, optional
+        Allow loading pickled object arrays stored in npy files. Reasons for
+        disallowing pickles include security, as loading pickled data can
+        execute arbitrary code. If pickles are disallowed, loading object
+        arrays will fail.
+        Default: True
     fix_imports : bool, optional
         Only useful when loading Python 2 generated pickled files on Python 3,
         which includes npy/npz files containing object arrays. If `fix_imports`
@@ -324,7 +336,6 @@ def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
 
-
     Returns
     -------
     result : array, tuple, dict, etc.
@@ -335,6 +346,8 @@ def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
     ------
     IOError
         If the input file does not exist or cannot be read.
+    ValueError
+        The file contains an object array, but allow_pickle=False given.
 
     See Also
     --------
@@ -430,15 +443,20 @@ def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
             # Transfer file ownership to NpzFile
             tmp = own_fid
             own_fid = False
-            return NpzFile(fid, own_fid=tmp, pickle_kwargs=pickle_kwargs)
+            return NpzFile(fid, own_fid=tmp, allow_pickle=allow_pickle,
+                           pickle_kwargs=pickle_kwargs)
         elif magic == format.MAGIC_PREFIX:
             # .npy file
             if mmap_mode:
                 return format.open_memmap(file, mode=mmap_mode)
             else:
-                return format.read_array(fid, pickle_kwargs=pickle_kwargs)
+                return format.read_array(fid, allow_pickle=allow_pickle,
+                                         pickle_kwargs=pickle_kwargs)
         else:
             # Try a pickle
+            if not allow_pickle:
+                raise ValueError("allow_pickle=False, but file does not contain "
+                                 "non-pickled data")
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except:
@@ -449,7 +467,7 @@ def load(file, mmap_mode=None, fix_imports=True, encoding='ASCII'):
             fid.close()
 
 
-def save(file, arr, fix_imports=True):
+def save(file, arr, allow_pickle=True, fix_imports=True):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -460,6 +478,14 @@ def save(file, arr, fix_imports=True):
         then the filename is unchanged.  If file is a string, a ``.npy``
         extension will be appended to the file name if it does not already
         have one.
+    allow_pickle : bool, optional
+        Allow saving object arrays using Python pickles. Reasons for disallowing
+        pickles include security (loading pickled data can execute arbitrary
+        code) and portability (pickled objects may not be loadable on different
+        Python installations, for example if the stored objects require libraries
+        that are not available, and not all pickled data is compatible between
+        Python 2 and Python 3).
+        Default: True
     fix_imports : bool, optional
         Only useful in forcing objects in object arrays on Python 3 to be
         pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
@@ -509,7 +535,8 @@ def save(file, arr, fix_imports=True):
 
     try:
         arr = np.asanyarray(arr)
-        format.write_array(fid, arr, pickle_kwargs=pickle_kwargs)
+        format.write_array(fid, arr, allow_pickle=allow_pickle,
+                           pickle_kwargs=pickle_kwargs)
     finally:
         if own_fid:
             fid.close()
@@ -621,7 +648,7 @@ def savez_compressed(file, *args, **kwds):
     _savez(file, args, kwds, True)
 
 
-def _savez(file, args, kwds, compress, pickle_kwargs=None):
+def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
@@ -656,6 +683,7 @@ def _savez(file, args, kwds, compress, pickle_kwargs=None):
             fid = open(tmpfile, 'wb')
             try:
                 format.write_array(fid, np.asanyarray(val),
+                                   allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
                 fid.close()
                 fid = None
