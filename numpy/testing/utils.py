@@ -275,6 +275,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
      DESIRED: 6
 
     """
+    __tracebackhide__ = True
     if isinstance(desired, dict):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
@@ -381,6 +382,7 @@ def print_assert_equal(test_string, actual, desired):
     [0, 2]
 
     """
+    __tracebackhide__ = True
     import pprint
 
     if not (actual == desired):
@@ -454,6 +456,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
      y: array([ 1.        ,  2.33333334])
 
     """
+    __tracebackhide__ = True
     from numpy.core import ndarray
     from numpy.lib import iscomplexobj, real, imag
 
@@ -567,6 +570,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     True
 
     """
+    __tracebackhide__ = True
     import numpy as np
 
     (actual, desired) = map(float, (actual, desired))
@@ -608,6 +612,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6):
+    __tracebackhide__ = True
     from numpy.core import array, isnan, isinf, any, all, inf
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -851,6 +856,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33333,  5.     ])
 
     """
+    __tracebackhide__ = True
     from numpy.core import around, number, float_, result_type, array
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
@@ -952,6 +958,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
      y: array([4])
 
     """
+    __tracebackhide__ = True
     assert_array_compare(operator.__lt__, x, y, err_msg=err_msg,
                          verbose=verbose,
                          header='Arrays are not less-ordered')
@@ -986,6 +993,7 @@ def assert_string_equal(actual, desired):
 
     """
     # delay import of difflib to reduce startup time
+    __tracebackhide__ = True
     import difflib
 
     if not isinstance(actual, str):
@@ -1095,6 +1103,7 @@ def assert_raises(*args,**kwargs):
     unexpected exception.
 
     """
+    __tracebackhide__ = True
     nose = import_nose()
     return nose.tools.assert_raises(*args,**kwargs)
 
@@ -1113,6 +1122,7 @@ def assert_raises_regex(exception_class, expected_regexp,
     all versions down to 2.6.
 
     """
+    __tracebackhide__ = True
     nose = import_nose()
 
     global assert_raises_regex_impl
@@ -1335,6 +1345,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=False,
     >>> assert_allclose(x, y, rtol=1e-5, atol=0)
 
     """
+    __tracebackhide__ = True
     import numpy as np
 
     def compare(x, y):
@@ -1395,6 +1406,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     AssertionError: X and Y are not equal to 1 ULP (max is 2)
 
     """
+    __tracebackhide__ = True
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
@@ -1443,6 +1455,7 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     >>> res = np.testing.assert_array_max_ulp(a, np.arcsin(np.sin(a)))
 
     """
+    __tracebackhide__ = True
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
@@ -1646,6 +1659,7 @@ def assert_warns(warning_class, func, *args, **kw):
     The value returned by `func`.
 
     """
+    __tracebackhide__ = True
     with warnings.catch_warnings(record=True) as l:
         warnings.simplefilter('always')
         result = func(*args, **kw)
@@ -1677,6 +1691,7 @@ def assert_no_warnings(func, *args, **kw):
     The value returned by `func`.
 
     """
+    __tracebackhide__ = True
     with warnings.catch_warnings(record=True) as l:
         warnings.simplefilter('always')
         result = func(*args, **kw)
