@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
+#include "frameobject.h"
 
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -337,23 +338,104 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 }
 
 static PyObject *
+array_inplace_add(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_subtract(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_multiply(PyArrayObject *m1, PyObject *m2);
+#if !defined(NPY_PY3K)
+static PyObject *
+array_inplace_divide(PyArrayObject *m1, PyObject *m2);
+#endif
+static PyObject *
+array_inplace_true_divide(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_and(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_or(PyArrayObject *m1, PyObject *m2);
+static PyObject *
+array_inplace_bitwise_xor(PyArrayObject *m1, PyObject *m2);
+
+PyFrameObject * last_frame = NULL;
+int lasti = -1;
+PyArrayObject * last_array = NULL;
+/*
+ * check if m1 is a temporary (refcnt == 1) so we can do inplace operations
+ * instead of creating a new temporary
+ */
+static int can_elide_temp(PyArrayObject * m1, PyObject * m2)
+{
+    PyFrameObject * f = PyEval_GetFrame();
+    int can = lasti != f->f_lasti && last_frame == f;
+    lasti = f->f_lasti;
+    last_frame = f;
+    if (!can)
+        return 0;
+    if (Py_REFCNT(m1) == 1 && /* TODO: use m2 == 1 too */
+        PyArray_CheckExact(m1) && PyArray_CheckExact(m2) &&
+        PyArray_DESCR(m1)->type_num != NPY_VOID &&
+        PyArray_DESCR(m1)->type_num == PyArray_DESCR(m2)->type_num &&
+        PyArray_NDIM(m1) == PyArray_NDIM(m2) &&
+        (PyArray_FLAGS(m1) & NPY_ARRAY_OWNDATA)) {
+        PyObject ** stack = f->f_valuestack;
+        npy_intp nstack = f->f_code->co_stacksize;
+        npy_intp i;
+        for (i = 0; i < nstack; i++) {
+            if (stack[i] == m1) {
+                break;
+            }
+        }
+        if (i == nstack) {
+            return 0;
+        }
+        for (i = 0; i < PyArray_NDIM(m2); i++) {
+            if (PyArray_DIM(m1, i) != PyArray_DIM(m2, i) ||
+                PyArray_STRIDE(m1, i) != PyArray_STRIDE(m2, i)) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__add__", "__radd__", 0);
-    return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_add(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_add(m2, m1);
+    }
+    else {
+        return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
+    }
 }
 
 static PyObject *
 array_subtract(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__sub__", "__rsub__", 0);
-    return PyArray_GenericBinaryFunction(m1, m2, n_ops.subtract);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_subtract(m1, m2);
+    }
+    else {
+        return PyArray_GenericBinaryFunction(m1, m2, n_ops.subtract);
+    }
 }
 
 static PyObject *
 array_multiply(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__mul__", "__rmul__", 0);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_multiply(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_multiply(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
 
@@ -362,6 +444,10 @@ static PyObject *
 array_divide(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__div__", "__rdiv__", 0);
+    /* TODO mm->d type change */
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_divide(m1, m2);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -578,6 +664,12 @@ static PyObject *
 array_bitwise_and(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__and__", "__rand__", 0);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_bitwise_and(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_and(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
@@ -585,6 +677,12 @@ static PyObject *
 array_bitwise_or(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__or__", "__ror__", 0);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_bitwise_or(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_or(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
@@ -592,6 +690,12 @@ static PyObject *
 array_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__xor__", "__rxor__", 0);
+    if (can_elide_temp(m1, m2)) {
+        return array_inplace_bitwise_xor(m1, m2);
+    }
+    else if (can_elide_temp(m2, m1)) {
+        return array_inplace_bitwise_xor(m2, m1);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
 
@@ -691,6 +795,10 @@ static PyObject *
 array_true_divide(PyArrayObject *m1, PyObject *m2)
 {
     GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__truediv__", "__rtruediv__", 0);
+    /* TODO how to check for inexact type? */
+    if (0 && can_elide_temp(m1, m2)) {
+        return array_inplace_true_divide(m1, m2);
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
 }
 
