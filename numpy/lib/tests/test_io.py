@@ -15,7 +15,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import (ConverterError, ConverterLockError,
                                 ConversionWarning)
-from numpy.compat import asbytes, asbytes_nested, bytes, asstr
+from numpy.compat import asbytes, bytes, unicode
 from nose import SkipTest
 from numpy.ma.testutils import (
     TestCase, assert_equal, assert_array_equal, assert_allclose,
@@ -553,14 +553,48 @@ class TestLoadTxt(TestCase):
         a = np.array([[2, -999], [7, 9]], int)
         assert_array_equal(x, a)
 
-    def test_comments(self):
+    def test_comments_unicode(self):
         c = TextIO()
         c.write('# comment\n1,2,3,5\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',',
-                       comments='#')
+                       comments=unicode('#'))
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
+
+    def test_comments_byte(self):
+        c = TextIO()
+        c.write('# comment\n1,2,3,5\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       comments=b'#')
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+    def test_comments_multiple(self):
+        c = TextIO()
+        c.write('# comment\n1,2,3\n@ comment2\n4,5,6 // comment3')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       comments=['#', '@', '//'])
+        a = np.array([[1, 2, 3], [4, 5, 6]], int)
+        assert_array_equal(x, a)
+
+    def test_comments_multi_chars(self):
+        c = TextIO()
+        c.write('/* comment\n1,2,3,5\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       comments='/*')
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+        # Check that '/*' is not transformed to ['/', '*']
+        c = TextIO()
+        c.write('*/ comment\n1,2,3,5\n')
+        c.seek(0)
+        assert_raises(ValueError, np.loadtxt, c, dtype=int, delimiter=',',
+                      comments='/*')
 
     def test_skiprows(self):
         c = TextIO()

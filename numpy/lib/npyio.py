@@ -717,8 +717,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         each row will be interpreted as an element of the array.  In this
         case, the number of columns used must match the number of fields in
         the data-type.
-    comments : str, optional
-        The character used to indicate the start of a comment;
+    comments : str or sequence, optional
+        The characters or list of characters used to indicate the start of a
+        comment;
         default: '#'.
     delimiter : str, optional
         The string used to separate values.  By default, this is any
@@ -791,7 +792,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     """
     # Type conversions for Py3 convenience
     if comments is not None:
-        comments = asbytes(comments)
+        if isinstance(comments, (basestring, bytes)):
+            comments = [asbytes(comments)]
+        else:
+            comments = [asbytes(comment) for comment in comments]
+
+        # Compile regex for comments beforehand
+        comments = (re.escape(comment) for comment in comments)
+        regex_comments = re.compile(asbytes('|').join(comments))
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
@@ -869,10 +877,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         returns bytes.
 
         """
-        if comments is None:
-            line = asbytes(line).strip(asbytes('\r\n'))
-        else:
-            line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
+        line = asbytes(line)
+        if comments is not None:
+            line = regex_comments.split(asbytes(line), maxsplit=1)[0]
+        line = line.strip(asbytes('\r\n'))
         if line:
             return line.split(delimiter)
         else:
