@@ -684,7 +684,16 @@ _IsAligned(PyArrayObject *ap)
 
     /* alignment 1 types should have a efficient alignment for copy loops */
     if (PyArray_ISFLEXIBLE(ap) || PyArray_ISSTRING(ap)) {
-        alignment = NPY_MAX_COPY_ALIGNMENT;
+        npy_intp itemsize = PyArray_ITEMSIZE(ap);
+        /* power of two sizes may be loaded in larger moves */
+        if (((itemsize & (itemsize - 1)) == 0)) {
+            alignment = itemsize > NPY_MAX_COPY_ALIGNMENT ?
+                NPY_MAX_COPY_ALIGNMENT : itemsize;
+        }
+        else {
+            /* if not power of two it will be accessed bytewise */
+            alignment = 1;
+        }
     }
 
     if (alignment == 1) {

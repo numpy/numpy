@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "numpy/numpyconfig.h"
+#include "numpy/npy_cpu.h"
 
 /*
  * largest alignment the copy loops might require
@@ -13,7 +14,11 @@
  * amd64 is not harmed much by the bloat as the system provides 16 byte
  * alignment by default.
  */
+#if (defined NPY_CPU_X86 || defined _WIN32)
+#define NPY_MAX_COPY_ALIGNMENT 8
+#else
 #define NPY_MAX_COPY_ALIGNMENT 16
+#endif
 
 /* blacklist */
 

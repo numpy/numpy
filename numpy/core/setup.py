@@ -758,6 +758,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
+            join('src', 'private', 'npy_config.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
