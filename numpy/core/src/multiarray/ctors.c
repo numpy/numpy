@@ -568,7 +568,8 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
 static int
 discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
 {
-    int n, r, i;
+    int r;
+    npy_intp n, i;
 
     if (PyArray_Check(s)) {
         *itemsize = PyArray_MAX(*itemsize, PyArray_ITEMSIZE((PyArrayObject *)s));
@@ -645,7 +646,8 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int *out_is_object)
 {
     PyObject *e;
-    int r, n, i;
+    int r;
+    npy_intp n, i;
     Py_buffer buffer_view;
     PyObject * seq;
 
