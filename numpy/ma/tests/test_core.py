@@ -2953,6 +2953,12 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(mX.ptp(0), cols)
         assert_equal(mX.ptp(1), rows)
 
+    def test_add_object(self):
+        x = masked_array(['a', 'b'], mask = [1, 0], dtype=object)
+        y = x + 'x'
+        assert_equal(y[1], 'bx')
+        assert_(y.mask[0])
+
     def test_sum_object(self):
         # Test sum on object dtype
         a = masked_array([1, 2, 3], mask=[1, 0, 0], dtype=np.object)
