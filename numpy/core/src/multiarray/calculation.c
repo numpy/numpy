@@ -618,7 +618,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         }
 
         /* arr.real = a.real.round(decimals) */
-        part = PyObject_GetAttrString(arr, "real");
+        part = PyObject_GetAttrString(a, "real");
         if (part == NULL) {
             Py_DECREF(arr);
             return NULL;
@@ -639,7 +639,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         }
 
         /* arr.imag = a.imag.round(decimals) */
-        part = PyObject_GetAttrString(arr, "imag");
+        part = PyObject_GetAttrString(a, "imag");
         if (part == NULL) {
             Py_DECREF(arr);
             return NULL;
