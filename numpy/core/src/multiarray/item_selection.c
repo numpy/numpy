@@ -1230,7 +1230,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
 
     if (which < 0 || which >= NPY_NSELECTS) {
         PyErr_SetString(PyExc_ValueError, "not a valid partition kind");
-        return NULL;
+        return -1;
     }
     part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
@@ -1241,7 +1241,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         else {
             PyErr_SetString(PyExc_TypeError,
                             "type does not have compare function");
-            return NULL;
+            return -1;
         }
     }
 
