@@ -11,6 +11,9 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
 
+floating_types = np.floating.__subclasses__()
+
+
 # This compares scalarmath against ufuncs.
 
 class TestTypes(TestCase):
@@ -282,6 +285,27 @@ class TestSizeOf(TestCase):
     def test_error(self):
         d = np.float32()
         assert_raises(TypeError, d.__sizeof__, "a")
+
+
+class TestAbs(TestCase):
+
+    def _test_abs_func(self, absfunc):
+        for tp in floating_types:
+            x = tp(-1.5)
+            assert_equal(absfunc(x), 1.5)
+            x = tp(0.0)
+            res = absfunc(x)
+            # assert_equal() checks zero signedness
+            assert_equal(res, 0.0)
+            x = tp(-0.0)
+            res = absfunc(x)
+            assert_equal(res, 0.0)
+
+    def test_builtin_abs(self):
+        self._test_abs_func(abs)
+
+    def test_numpy_abs(self):
+        self._test_abs_func(np.abs)
 
 
 if __name__ == "__main__":

@@ -485,15 +485,25 @@ static void
 
 
 /**begin repeat
- * #name = byte, short, int, long, longlong,
- *         float, double, longdouble#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_float, npy_double, npy_longdouble#
+ * #name = byte, short, int, long, longlong#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
 static void
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = (a < 0 ? -a : a);
+}
+/**end repeat**/
+
+/**begin repeat
+ * #name = float, double, longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f,,l#
+ */
+static void
+@name@_ctype_absolute(@type@ a, @type@ *out)
+{
+    *out = npy_fabs@c@(a);
 }
 /**end repeat**/
 
