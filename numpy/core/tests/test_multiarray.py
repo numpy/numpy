@@ -868,11 +868,22 @@ class TestBool(TestCase):
             self.assertEqual(np.count_nonzero(a), builtins.sum(a.tolist()))
 
 class TestMethods(TestCase):
-    def test_test_round(self):
-        assert_equal(array([1.2, 1.5]).round(), [1, 2])
-        assert_equal(array(1.5).round(), 2)
-        assert_equal(array([12.2, 15.5]).round(-1), [10, 20])
-        assert_equal(array([12.15, 15.51]).round(1), [12.2, 15.5])
+    def test_round(self):
+        def check_round(arr, expected, *round_args):
+            assert_equal(arr.round(*round_args), expected)
+            # With output array
+            out = np.zeros_like(arr)
+            res = arr.round(*round_args, out=out)
+            assert_equal(out, expected)
+            assert_equal(out, res)
+
+        check_round(array([1.2, 1.5]), [1, 2])
+        check_round(array(1.5), 2)
+        check_round(array([12.2, 15.5]), [10, 20], -1)
+        check_round(array([12.15, 15.51]), [12.2, 15.5], 1)
+        # Complex rounding
+        check_round(array([4.5 + 1.5j]), [4 + 2j])
+        check_round(array([12.5 + 15.5j]), [10 + 20j], -1)
 
     def test_transpose(self):
         a = array([[1, 2], [3, 4]])
