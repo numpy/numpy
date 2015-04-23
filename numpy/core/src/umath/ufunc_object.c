@@ -5547,7 +5547,7 @@ ufunc_get_identity(PyUFuncObject *ufunc)
     case PyUFunc_Zero:
         return PyInt_FromLong(0);
     }
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
