@@ -257,8 +257,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
  */
 static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 {
-    PyObject *l, *tl, *item;
-    Py_ssize_t i;
+    PyObject *l, *tl;
     int st;
 
     l = PyList_New(0);
