@@ -155,7 +155,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b, i);
-        if (bounds == NULL) {
+        if (bound == NULL) {
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
@@ -314,7 +314,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b1, i);
-        if (bounds == NULL) {
+        if (bound == NULL) {
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
@@ -338,7 +338,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b2, i);
-        if (bounds == NULL) {
+        if (bound == NULL) {
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
@@ -762,7 +762,7 @@ array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
     if (mode == 1) {
         if (PySequence_SetItem(arr, i, op) < 0) {
             return NULL;
-        }        
+        }
         Py_RETURN_NONE;
     }
 
