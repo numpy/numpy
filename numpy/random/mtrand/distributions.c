@@ -42,6 +42,7 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 #include "distributions.h"
 #include <stdio.h>
 
@@ -315,7 +316,7 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     v = v*(u-p3)*lamr;
 
   Step50:
-    k = fabs(y - m);
+    k = labs(y - m);
     if ((k > 20) && (k < ((nrq)/2.0 - 1))) goto Step52;
 
     s = r/q;
