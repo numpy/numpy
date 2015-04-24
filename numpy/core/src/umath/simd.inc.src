@@ -27,6 +27,19 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
+/* Figure out the right abs function for pointer addresses */
+static NPY_INLINE npy_intp
+abs_intp(npy_intp x)
+{
+#if (NPY_SIZEOF_INTP <= NPY_SIZEOF_INT)
+    return abs(x);
+#elif (NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG)
+    return labs(x);
+#else
+    return llabs(x);
+#endif
+}
+
 /*
  * stride is equal to element size and input and destination are equal or
  * don't overlap within one register
@@ -34,10 +47,11 @@
 #define IS_BLOCKABLE_UNARY(esize, vsize) \
     (steps[0] == (esize) && steps[0] == steps[1] && \
      (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
-     ((abs(args[1] - args[0]) >= (vsize)) || ((abs(args[1] - args[0]) == 0))))
+     ((abs_intp(args[1] - args[0]) >= (vsize)) || \
+      ((abs_intp(args[1] - args[0]) == 0))))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
-    (steps[1] == (esize) && abs(args[1] - args[0]) >= (vsize) && \
+    (steps[1] == (esize) && abs_intp(args[1] - args[0]) >= (vsize) && \
      npy_is_aligned(args[1], (esize)) && \
      npy_is_aligned(args[0], (esize)))
 
@@ -45,20 +59,26 @@
     (steps[0] == steps[1] && steps[1] == steps[2] && steps[2] == (esize) && \
      npy_is_aligned(args[2], (esize)) && npy_is_aligned(args[1], (esize)) && \
      npy_is_aligned(args[0], (esize)) && \
-     (abs(args[2] - args[0]) >= (vsize) || abs(args[2] - args[0]) == 0) && \
-     (abs(args[2] - args[1]) >= (vsize) || abs(args[2] - args[1]) >= 0))
+     (abs_intp(args[2] - args[0]) >= (vsize) || \
+      abs_intp(args[2] - args[0]) == 0) && \
+     (abs_intp(args[2] - args[1]) >= (vsize) || \
+      abs_intp(args[2] - args[1]) >= 0))
 
 #define IS_BLOCKABLE_BINARY_SCALAR1(esize, vsize) \
     (steps[0] == 0 && steps[1] == steps[2] && steps[2] == (esize) && \
      npy_is_aligned(args[2], (esize)) && npy_is_aligned(args[1], (esize)) && \
-     ((abs(args[2] - args[1]) >= (vsize)) || (abs(args[2] - args[1]) == 0)) && \
-     abs(args[2] - args[0]) >= (esize))
+     ((abs_intp(args[2] - args[1]) >= (vsize)) || \
+      (abs_intp(args[2] - args[1]) == 0)) && \
+     abs_intp(args[2] - args[0]) >= (esize))
 
 #define IS_BLOCKABLE_BINARY_SCALAR2(esize, vsize) \
     (steps[1] == 0 && steps[0] == steps[2] && steps[2] == (esize) && \
      npy_is_aligned(args[2], (esize)) && npy_is_aligned(args[0], (esize)) && \
-     ((abs(args[2] - args[0]) >= (vsize)) || (abs(args[2] - args[0]) == 0)) && \
-     abs(args[2] - args[1]) >= (esize))
+     ((abs_intp(args[2] - args[0]) >= (vsize)) || \
+      (abs_intp(args[2] - args[0]) == 0)) && \
+     abs_intp(args[2] - args[1]) >= (esize))
+
+#undef abs_intp
 
 #define IS_BLOCKABLE_BINARY_BOOL(esize, vsize) \
     (steps[0] == (esize) && steps[0] == steps[1] && steps[2] == (1) && \
