@@ -206,6 +206,11 @@ class TestRecord(TestCase):
         assert_equal(a, pickle.loads(pickle.dumps(a)))
         assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
 
+    def test_record_scalar_setitem(self):
+        # https://github.com/numpy/numpy/issues/3561
+        rec = np.recarray(1, dtype=[('x', float, 5)])
+        rec[0].x = 1
+        assert_equal(rec[0].x, np.ones(5))
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
