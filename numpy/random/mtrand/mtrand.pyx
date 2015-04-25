@@ -2201,7 +2201,8 @@ cdef class RandomState:
         Parameters
         ----------
         df : int
-            Degrees of freedom, should be >= 1.
+            Degrees of freedom, should be > 0 as of Numpy 1.10,
+            should be > 1 for earlier versions.
         nonc : float
             Non-centrality, should be > 0.
         size : int or tuple of ints, optional
@@ -2267,7 +2268,7 @@ cdef class RandomState:
         fdf = PyFloat_AsDouble(df)
         fnonc = PyFloat_AsDouble(nonc)
         if not PyErr_Occurred():
-            if fdf <= 1:
+            if fdf <= 0:
                 raise ValueError("df <= 0")
             if fnonc <= 0:
                 raise ValueError("nonc <= 0")
@@ -2279,7 +2280,7 @@ cdef class RandomState:
         odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
-            raise ValueError("df <= 1")
+            raise ValueError("df <= 0")
         if np.any(np.less_equal(ononc, 0.0)):
             raise ValueError("nonc < 0")
         return cont2_array(self.internal_state, rk_noncentral_chisquare, size,
