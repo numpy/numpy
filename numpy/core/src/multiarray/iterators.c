@@ -1760,8 +1760,7 @@ arraymultiter_reset(PyArrayMultiIterObject *self, PyObject *args)
         return NULL;
     }
     PyArray_MultiIter_RESET(self);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef arraymultiter_methods[] = {

@@ -4401,8 +4401,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 #endif
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

@@ -412,8 +412,7 @@ test_pydatamem_seteventhook_start(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUS
 {
     malloc_free_counts[0] = malloc_free_counts[1] = 0;
     old_hook = PyDataMem_SetEventHook(test_hook, (void *) malloc_free_counts, &old_data);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject*
@@ -440,8 +439,7 @@ test_pydatamem_seteventhook_end(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -563,8 +561,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
 
     Py_DECREF(mit);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
 fail:
     Py_XDECREF(mit);

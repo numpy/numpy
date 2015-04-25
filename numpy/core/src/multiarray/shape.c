@@ -154,8 +154,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
     memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
     memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /*

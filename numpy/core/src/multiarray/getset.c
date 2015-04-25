@@ -223,8 +223,7 @@ static PyObject *
 array_protocol_strides_get(PyArrayObject *self)
 {
     if (PyArray_ISCONTIGUOUS(self)) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return PyArray_IntTupleFromIntp(PyArray_NDIM(self), PyArray_STRIDES(self));
 }
@@ -618,8 +617,7 @@ static PyObject *
 array_base_get(PyArrayObject *self)
 {
     if (PyArray_BASE(self) == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         Py_INCREF(PyArray_BASE(self));
@@ -897,8 +895,7 @@ array_transpose_get(PyArrayObject *self)
 static PyObject *
 array_finalize_get(PyArrayObject *NPY_UNUSED(self))
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {

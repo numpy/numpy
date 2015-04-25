@@ -143,8 +143,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
     typeDict = dict;
     /* Create an internal reference to it */
     Py_INCREF(dict);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \
@@ -1655,8 +1654,7 @@ static PyObject *
 arraydescr_subdescr_get(PyArray_Descr *self)
 {
     if (!PyDataType_HASSUBARRAY(self)) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return Py_BuildValue("OO",
             (PyObject *)self->subarray->base, self->subarray->shape);
@@ -1905,8 +1903,7 @@ static PyObject *
 arraydescr_fields_get(PyArray_Descr *self)
 {
     if (!PyDataType_HASFIELDS(self)) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return PyDictProxy_New(self->fields);
 }
@@ -1915,8 +1912,7 @@ static PyObject *
 arraydescr_metadata_get(PyArray_Descr *self)
 {
     if (self->metadata == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return PyDictProxy_New(self->metadata);
 }
@@ -1936,8 +1932,7 @@ static PyObject *
 arraydescr_names_get(PyArray_Descr *self)
 {
     if (!PyDataType_HASFIELDS(self)) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     Py_INCREF(self->names);
     return self->names;
@@ -2380,8 +2375,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     char dtypeflags;
 
     if (self->fields == Py_None) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     if (PyTuple_GET_SIZE(args) != 1
             || !(PyTuple_Check(PyTuple_GET_ITEM(args, 0)))) {
@@ -2725,8 +2719,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         Py_XDECREF(old_metadata);
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /*NUMPY_API

@@ -279,8 +279,7 @@ fortran_getattr(PyFortranObject *fp, char *name) {
                 /* Py_INCREF(v); */
                 return v;
             } else {                                    /* array is not allocated */
-                Py_INCREF(Py_None);
-                return Py_None;
+                Py_RETURN_NONE;
             }
         }
     if (strcmp(name,"__dict__")==0) {

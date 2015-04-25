@@ -440,8 +440,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         Py_DECREF(avals);
         PyDataMem_FREE(zero);
         Py_DECREF(ainput);
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     totmask = (int) PyArray_SIZE(amask);
@@ -466,8 +465,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     Py_DECREF(avals);
     PyDataMem_FREE(zero);
     Py_DECREF(ainput);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
 fail:
     PyDataMem_FREE(zero);
@@ -1233,8 +1231,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     /* Don't add docstrings */
     if (Py_OptimizeFlag > 1) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     if (PyGetSetDescr_TypePtr == NULL) {
@@ -1315,8 +1312,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
                             "Cannot set a docstring for that object");
             return NULL;
         }
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
 #undef _TESTDOC1
@@ -1324,8 +1320,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #undef _ADDDOC
 
     Py_INCREF(str);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

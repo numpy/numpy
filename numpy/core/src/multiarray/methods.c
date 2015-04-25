@@ -149,8 +149,7 @@ array_fill(PyArrayObject *self, PyObject *args)
     if (PyArray_FillWithScalar(self, obj) < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -466,8 +465,7 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (PyArray_SetField(self, dtype, offset, value) < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* This doesn't change the descriptor just the actual data...
@@ -605,8 +603,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
     Py_DECREF(file);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
 fail:
     Py_DECREF(file);
@@ -757,8 +754,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     else {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 }
 
@@ -1055,14 +1051,12 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (size == 0) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else if (size == 1) {
         obj = PyTuple_GET_ITEM(args, 0);
         if (obj == Py_None) {
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         args = obj;
     }
@@ -1079,8 +1073,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     Py_DECREF(ret);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1177,8 +1170,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (val < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1246,8 +1238,7 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (val < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1806,8 +1797,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /*NUMPY_API*/
@@ -1884,8 +1874,7 @@ array_dump(PyArrayObject *self, PyObject *args)
     if (ret < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -2305,8 +2294,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
