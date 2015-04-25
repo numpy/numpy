@@ -2808,8 +2808,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
      * into None.
      */
     if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     /* If the type's precision is greater than microseconds, return an int */
@@ -2862,8 +2861,7 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
      * Convert NaT (not-a-time) into None.
      */
     if (td == NPY_DATETIME_NAT) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     /*

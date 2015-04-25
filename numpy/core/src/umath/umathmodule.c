@@ -242,8 +242,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     strcpy(newdocstr, docstr);
     ufunc->doc = newdocstr;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

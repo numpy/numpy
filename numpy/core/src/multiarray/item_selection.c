@@ -408,8 +408,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     if (copied) {
         Py_DECREF(self);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
  fail:
     Py_XDECREF(indices);
@@ -482,8 +481,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     if (nv <= 0) {
         Py_XDECREF(values);
         Py_XDECREF(mask);
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     src = PyArray_DATA(values);
 
@@ -527,8 +525,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     if (copied) {
         Py_DECREF(self);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
  fail:
     Py_XDECREF(mask);

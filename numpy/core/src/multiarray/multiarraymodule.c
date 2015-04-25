@@ -1842,8 +1842,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     Py_XDECREF(src);
     Py_XDECREF(wheremask);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
  fail:
     Py_XDECREF(src);
@@ -2892,8 +2891,7 @@ array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
         return NULL;
     }
     PyArray_SetStringFunction(op, repr);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *

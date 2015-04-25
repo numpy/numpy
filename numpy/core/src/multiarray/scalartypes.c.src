@@ -1308,8 +1308,7 @@ gentype_typedescr_get(PyObject *self)
 static PyObject *
 gentype_base_get(PyObject *NPY_UNUSED(self))
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1741,8 +1740,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
                 src);
         Py_DECREF(src);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1836,8 +1834,7 @@ fail:
 static PyObject *
 gentype_setstate(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
-    Py_INCREF(Py_None);
-    return (Py_None);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1853,8 +1850,7 @@ gentype_dump(PyObject *self, PyObject *args)
     if (ret < 0) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1872,8 +1868,7 @@ static PyObject *
 gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
         PyObject *NPY_UNUSED(kwds))
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /*
@@ -2575,7 +2570,7 @@ static PyObject *
     PyArrayObject *arr;
     PyArray_Descr *typecode = NULL;
 #if (@work@ != 0) || (@default@ == 1)
-    void *thisfunc = (void *)@name@_arrtype_new; 
+    void *thisfunc = (void *)@name@_arrtype_new;
 #endif
 #if !(@default@ == 2)
     int itemsize;

@@ -297,8 +297,7 @@ lapack_lite_xerbla(PyObject *NPY_UNUSED(self), PyObject *args)
     if (PyErr_Occurred()) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

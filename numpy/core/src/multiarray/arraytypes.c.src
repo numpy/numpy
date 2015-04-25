@@ -529,8 +529,7 @@ OBJECT_getitem(char *ip, PyArrayObject *ap)
     PyObject *obj;
     NPY_COPY_PYOBJECT_PTR(&obj, ip);
     if (obj == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         Py_INCREF(obj);
