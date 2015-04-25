@@ -198,6 +198,7 @@ if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
                         os.path.join(distutils.sysconfig.EXEC_PREFIX,
                                      'libs')]
+    default_runtime_dirs = []
     default_include_dirs = []
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
@@ -205,6 +206,7 @@ if sys.platform == 'win32':
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
+    default_runtime_dirs = []
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
                             # path of umfpack under macports
@@ -254,6 +256,7 @@ if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_src_dirs.append(os.path.join(sys.prefix, 'src'))
 
 default_lib_dirs = [_m for _m in default_lib_dirs if os.path.isdir(_m)]
+default_runtime_dirs = [_m for _m in default_runtime_dirs if os.path.isdir(_m)]
 default_include_dirs = [_m for _m in default_include_dirs if os.path.isdir(_m)]
 default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 
@@ -470,8 +473,12 @@ class system_info(object):
         defaults = {}
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
+        defaults['runtime_library_dirs'] = os.pathsep.join(default_runtime_dirs)
+        defaults['rpath'] = ''
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
+        defaults['extra_compile_args'] = ''
+        defaults['extra_link_args'] = ''
         self.cp = ConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
@@ -491,6 +498,11 @@ class system_info(object):
     def calc_libraries_info(self):
         libs = self.get_libraries()
         dirs = self.get_lib_dirs()
+        # The extensions use runtime_library_dirs
+        r_dirs = self.get_runtime_lib_dirs() 
+        # Intrinsic distutils use rpath, we simply append both entries
+        # as though they were one entry
+        r_dirs.extend(self.get_runtime_lib_dirs(key='rpath'))
         info = {}
         for lib in libs:
             i = self.check_libs(dirs, [lib])
@@ -498,16 +510,45 @@ class system_info(object):
                 dict_append(info, **i)
             else:
                 log.info('Library %s was not found. Ignoring' % (lib))
+            i = self.check_libs(r_dirs, [lib])
+            if i is not None:
+                # Swap library keywords found to runtime_library_dirs
+                # the libraries are insisting on the user having defined
+                # them using the library_dirs, and not necessarily by
+                # runtime_library_dirs
+                del i['libraries']
+                i['runtime_library_dirs'] = i.pop('library_dirs')
+                dict_append(info, **i)
+            else:
+                log.info('Runtime library %s was not found. Ignoring' % (lib))
         return info
 
     def set_info(self, **info):
         if info:
             lib_info = self.calc_libraries_info()
             dict_append(info, **lib_info)
+            # Update extra information
+            extra_info = self.calc_extra_info()
+            dict_append(info, **extra_info)
         self.saved_results[self.__class__.__name__] = info
 
     def has_info(self):
         return self.__class__.__name__ in self.saved_results
+
+    def calc_extra_info(self):
+        """ Updates the information in the current information with
+        respect to these flags:
+          extra_compile_args
+          extra_link_args
+        """
+        info = {}
+        for key in ['extra_compile_args', 'extra_link_args']:
+            # Get values
+            opt = self.cp.get(self.section, key)
+            if opt:
+                tmp = {key : [opt]}
+                dict_append(info, **tmp)
+        return info
 
     def get_info(self, notfound_action=0):
         """ Return a dictonary with items that are compatible
@@ -601,6 +642,9 @@ class system_info(object):
         return ret
 
     def get_lib_dirs(self, key='library_dirs'):
+        return self.get_paths(self.section, key)
+
+    def get_runtime_lib_dirs(self, key='runtime_library_dirs'):
         return self.get_paths(self.section, key)
 
     def get_include_dirs(self, key='include_dirs'):
@@ -2307,7 +2351,9 @@ def dict_append(d, **kws):
             languages.append(v)
             continue
         if k in d:
-            if k in ['library_dirs', 'include_dirs', 'define_macros']:
+            if k in ['library_dirs', 'include_dirs', 
+                     'extra_compile_args', 'extra_link_args',
+                     'runtime_library_dirs', 'define_macros']:
                 [d[k].append(vv) for vv in v if vv not in d[k]]
             else:
                 d[k].extend(v)
