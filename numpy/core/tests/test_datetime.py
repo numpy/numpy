@@ -50,11 +50,11 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'm8[badunit]')
         assert_raises(TypeError, np.dtype, 'M8[YY]')
         assert_raises(TypeError, np.dtype, 'm8[YY]')
-        assert_warns(DeprecationWarning, np.dtype, 'm4')
-        assert_warns(DeprecationWarning, np.dtype, 'M7')
-        assert_warns(DeprecationWarning, np.dtype, 'm7')
-        assert_warns(DeprecationWarning, np.dtype, 'M16')
-        assert_warns(DeprecationWarning, np.dtype, 'm16')
+        assert_raises(TypeError, np.dtype, 'm4')
+        assert_raises(TypeError, np.dtype, 'M7')
+        assert_raises(TypeError, np.dtype, 'm7')
+        assert_raises(TypeError, np.dtype, 'M16')
+        assert_raises(TypeError, np.dtype, 'm16')
 
     def test_datetime_casting_rules(self):
         # Cannot cast safely/same_kind between timedelta and datetime

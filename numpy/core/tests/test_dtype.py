@@ -50,38 +50,35 @@ class TestBuiltin(TestCase):
         self.assertTrue(hash(left) == hash(right))
 
     def test_invalid_types(self):
-        # Make sure invalid type strings raise a warning.
-        # For now, display a deprecation warning for invalid
-        # type sizes. In the future this should be changed
-        # to an exception.
+        # Make sure invalid type strings raise an error
 
-        assert_warns(DeprecationWarning, np.dtype, 'O3')
-        assert_warns(DeprecationWarning, np.dtype, 'O5')
-        assert_warns(DeprecationWarning, np.dtype, 'O7')
-        assert_warns(DeprecationWarning, np.dtype, 'b3')
-        assert_warns(DeprecationWarning, np.dtype, 'h4')
-        assert_warns(DeprecationWarning, np.dtype, 'I5')
-        assert_warns(DeprecationWarning, np.dtype, 'e3')
-        assert_warns(DeprecationWarning, np.dtype, 'f5')
+        assert_raises(TypeError, np.dtype, 'O3')
+        assert_raises(TypeError, np.dtype, 'O5')
+        assert_raises(TypeError, np.dtype, 'O7')
+        assert_raises(TypeError, np.dtype, 'b3')
+        assert_raises(TypeError, np.dtype, 'h4')
+        assert_raises(TypeError, np.dtype, 'I5')
+        assert_raises(TypeError, np.dtype, 'e3')
+        assert_raises(TypeError, np.dtype, 'f5')
 
         if np.dtype('g').itemsize == 8 or np.dtype('g').itemsize == 16:
-            assert_warns(DeprecationWarning, np.dtype, 'g12')
+            assert_raises(TypeError, np.dtype, 'g12')
         elif np.dtype('g').itemsize == 12:
-            assert_warns(DeprecationWarning, np.dtype, 'g16')
+            assert_raises(TypeError, np.dtype, 'g16')
 
         if np.dtype('l').itemsize == 8:
-            assert_warns(DeprecationWarning, np.dtype, 'l4')
-            assert_warns(DeprecationWarning, np.dtype, 'L4')
+            assert_raises(TypeError, np.dtype, 'l4')
+            assert_raises(TypeError, np.dtype, 'L4')
         else:
-            assert_warns(DeprecationWarning, np.dtype, 'l8')
-            assert_warns(DeprecationWarning, np.dtype, 'L8')
+            assert_raises(TypeError, np.dtype, 'l8')
+            assert_raises(TypeError, np.dtype, 'L8')
 
         if np.dtype('q').itemsize == 8:
-            assert_warns(DeprecationWarning, np.dtype, 'q4')
-            assert_warns(DeprecationWarning, np.dtype, 'Q4')
+            assert_raises(TypeError, np.dtype, 'q4')
+            assert_raises(TypeError, np.dtype, 'Q4')
         else:
-            assert_warns(DeprecationWarning, np.dtype, 'q8')
-            assert_warns(DeprecationWarning, np.dtype, 'Q8')
+            assert_raises(TypeError, np.dtype, 'q8')
+            assert_raises(TypeError, np.dtype, 'Q8')
 
     def test_bad_param(self):
         # Can't give a size that's too small
@@ -319,7 +316,7 @@ class TestSubarray(TestCase):
         # List gets converted
         dt = np.dtype([('a', 'f4', l)])
         assert_(isinstance(dt['a'].shape, tuple))
-        # 
+        #
         class IntLike(object):
             def __index__(self):
                 return 3
