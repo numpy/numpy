@@ -218,11 +218,17 @@ double rk_chisquare(rk_state *state, double df)
 
 double rk_noncentral_chisquare(rk_state *state, double df, double nonc)
 {
-    double Chi2, N;
-
-    Chi2 = rk_chisquare(state, df-1);
-    N = rk_gauss(state) + sqrt(nonc);
-    return Chi2 + N*N;
+    if(1 < df)
+    {
+        const double Chi2 = rk_chisquare(state, df - 1);
+        const double N = rk_gauss(state) + sqrt(nonc);
+        return Chi2 + N*N;
+    }
+    else
+    {
+        const long i = rk_poisson(state, nonc / 2.0);
+        return rk_chisquare(state, df + 2 * i);
+    }
 }
 
 double rk_f(rk_state *state, double dfnum, double dfden)
