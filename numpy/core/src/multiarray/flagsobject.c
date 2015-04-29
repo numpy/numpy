@@ -30,13 +30,14 @@ PyArray_NewFlagsObject(PyObject *obj)
     int flags;
 
 
-    if (obj != NULL && PyArray_Check(obj)) {
-        flags = PyArray_FLAGS((PyArrayObject *)obj);
-    }
-    else if (obj != NULL && PyObject_TypeCheck(obj, &PyGenericArrType_Type)) {
+    /* Creating flags from NULL is kept for backwards compatibility */
+    if (obj == NULL || PyObject_TypeCheck(obj, &PyGenericArrType_Type)) {
         flags = NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_OWNDATA |
                 NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_ALIGNED;
         obj = NULL;
+    }
+    else if (PyArray_Check(obj)) {
+        flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -195,10 +196,12 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-
-#define GET_FLAGS(self) \
-    (self)->arr == NULL ? (self)->flags : \
-                          PyArray_FLAGS((PyArrayObject *)(self)->arr)
+static NPY_INLINE int
+_get_flags(PyArrayFlagsObject* self)
+{
+    return self->arr == NULL ? self->flags : \
+                          PyArray_FLAGS((PyArrayObject *)self->arr);
+}
 
 #define CHECK_FOR_FLAG(FLAG) \
     (flags & (FLAG)) == (FLAG)
@@ -213,7 +216,7 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
     static PyObject* \
     arrayflags_##name##_get(PyArrayFlagsObject *self) \
     { \
-        int flags = GET_FLAGS(self); \
+        int flags = _get_flags(self); \
         if (COND) { \
             Py_RETURN_TRUE; \
         } \
@@ -269,9 +272,8 @@ arrayflags_fortran_get(PyArrayFlagsObject *self)
      * The definitions of flags.fortran and PyArray_ISFORTRAN do not
      * match, which makes it confusing to have both around.
      */
-    if (DEPRECATE("the 'fortran' attribute is deprecated and "
-                  "will be removed in a future release, use "
-                  "'f_contiguous' instead") < 0) {
+    if (DEPRECATE("the 'fortran' attribute is deprecated and will be\n"
+            "removed in a future release, use 'f_contiguous' instead") < 0) {
         return NULL;
     }
     return arrayflags_f_contiguous_get(self);

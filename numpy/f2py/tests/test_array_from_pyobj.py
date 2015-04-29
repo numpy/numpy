@@ -46,7 +46,7 @@ def flags_info(arr):
 
 def flags2names(flags):
     info = []
-    for flagname in ['CONTIGUOUS', 'F_CONTIGUOUS', 'OWNDATA', 'ENSURECOPY',
+    for flagname in ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'OWNDATA', 'ENSURECOPY',
                      'ENSUREARRAY', 'ALIGNED', 'NOTSWAPPED', 'WRITEABLE',
                      'UPDATEIFCOPY', 'BEHAVED', 'BEHAVED_RO',
                      'CARRAY', 'FARRAY'
@@ -199,12 +199,12 @@ class Array(object):
                 assert_(intent.flags & wrap.F2PY_INTENT_C)
                 assert_(not self.arr.flags['F_CONTIGUOUS'],
                         repr((self.arr.flags, getattr(obj, 'flags', None))))
-                assert_(self.arr.flags['CONTIGUOUS'])
+                assert_(self.arr.flags['C_CONTIGUOUS'])
                 assert_(not self.arr_attr[6] & wrap.FORTRAN)
             else:
                 assert_(not intent.flags & wrap.F2PY_INTENT_C)
                 assert_(self.arr.flags['F_CONTIGUOUS'])
-                assert_(not self.arr.flags['CONTIGUOUS'])
+                assert_(not self.arr.flags['C_CONTIGUOUS'])
                 assert_(self.arr_attr[6] & wrap.FORTRAN)
 
         if obj is None:
@@ -227,11 +227,11 @@ class Array(object):
         if len(dims)>1:
             if self.intent.is_intent('c'):
                 assert_(not self.pyarr.flags['F_CONTIGUOUS'])
-                assert_(self.pyarr.flags['CONTIGUOUS'])
+                assert_(self.pyarr.flags['C_CONTIGUOUS'])
                 assert_(not self.pyarr_attr[6] & wrap.FORTRAN)
             else:
                 assert_(self.pyarr.flags['F_CONTIGUOUS'])
-                assert_(not self.pyarr.flags['CONTIGUOUS'])
+                assert_(not self.pyarr.flags['C_CONTIGUOUS'])
                 assert_(self.pyarr_attr[6] & wrap.FORTRAN)
 
 
@@ -460,13 +460,15 @@ class _test_shared_memory:
         a = self.array(shape, intent.hide, None)
         assert_(a.arr.shape==shape)
         assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
-        assert_(a.arr.flags['F_CONTIGUOUS'] and not a.arr.flags['CONTIGUOUS'])
+        assert_(a.arr.flags['F_CONTIGUOUS'] and
+                not a.arr.flags['C_CONTIGUOUS'])
 
         shape = (2, 3)
         a = self.array(shape, intent.c.hide, None)
         assert_(a.arr.shape==shape)
         assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
-        assert_(not a.arr.flags['F_CONTIGUOUS'] and a.arr.flags['CONTIGUOUS'])
+        assert_(not a.arr.flags['F_CONTIGUOUS'] and
+                a.arr.flags['C_CONTIGUOUS'])
 
         shape = (-1, 3)
         try:
@@ -487,13 +489,15 @@ class _test_shared_memory:
         a = self.array(shape, intent.optional, None)
         assert_(a.arr.shape==shape)
         assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
-        assert_(a.arr.flags['F_CONTIGUOUS'] and not a.arr.flags['CONTIGUOUS'])
+        assert_(a.arr.flags['F_CONTIGUOUS'] and
+                not a.arr.flags['C_CONTIGUOUS'])
 
         shape = (2, 3)
         a = self.array(shape, intent.c.optional, None)
         assert_(a.arr.shape==shape)
         assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
-        assert_(not a.arr.flags['F_CONTIGUOUS'] and a.arr.flags['CONTIGUOUS'])
+        assert_(not a.arr.flags['F_CONTIGUOUS'] and
+                a.arr.flags['C_CONTIGUOUS'])
 
     def test_optional_from_2seq(self):
         obj = self.num2seq
@@ -515,7 +519,7 @@ class _test_shared_memory:
 
     def test_inplace(self):
         obj = array(self.num23seq, dtype=self.type.dtype)
-        assert_(not obj.flags['F_CONTIGUOUS'] and obj.flags['CONTIGUOUS'])
+        assert_(not obj.flags['F_CONTIGUOUS'] and obj.flags['C_CONTIGUOUS'])
         shape = obj.shape
         a = self.array(shape, intent.inplace, obj)
         assert_(obj[1][2]==a.arr[1][2], repr((obj, a.arr)))
@@ -523,7 +527,7 @@ class _test_shared_memory:
         assert_(obj[1][2]==a.arr[1][2]==array(54, dtype=self.type.dtype), repr((obj, a.arr)))
         assert_(a.arr is obj)
         assert_(obj.flags['F_CONTIGUOUS']) # obj attributes are changed inplace!
-        assert_(not obj.flags['CONTIGUOUS'])
+        assert_(not obj.flags['C_CONTIGUOUS'])
 
     def test_inplace_from_casttype(self):
         for t in self.type.cast_types():
@@ -532,7 +536,7 @@ class _test_shared_memory:
             obj = array(self.num23seq, dtype=t.dtype)
             assert_(obj.dtype.type==t.dtype)
             assert_(obj.dtype.type is not self.type.dtype)
-            assert_(not obj.flags['F_CONTIGUOUS'] and obj.flags['CONTIGUOUS'])
+            assert_(not obj.flags['F_CONTIGUOUS'] and obj.flags['C_CONTIGUOUS'])
             shape = obj.shape
             a = self.array(shape, intent.inplace, obj)
             assert_(obj[1][2]==a.arr[1][2], repr((obj, a.arr)))
@@ -540,7 +544,7 @@ class _test_shared_memory:
             assert_(obj[1][2]==a.arr[1][2]==array(54, dtype=self.type.dtype), repr((obj, a.arr)))
             assert_(a.arr is obj)
             assert_(obj.flags['F_CONTIGUOUS']) # obj attributes are changed inplace!
-            assert_(not obj.flags['CONTIGUOUS'])
+            assert_(not obj.flags['C_CONTIGUOUS'])
             assert_(obj.dtype.type is self.type.dtype) # obj type is changed inplace!
 
 

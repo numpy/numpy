@@ -514,9 +514,8 @@ class TestFortranFlagDeprecation(_DeprecationTestCase):
     ndarray.flags.f_contiguous.
 
     """
-    message = ("the 'fortran' attribute is deprecated and "
-               "will be removed in a future release, use "
-               "'f_contiguous' instead")
+    message = ("the 'fortran' attribute is deprecated and will be\n"
+               "removed in a future release, use 'f_contiguous' instead")
 
     def test_fortran_flag_deprecation(self):
         a = np.arange(10)
