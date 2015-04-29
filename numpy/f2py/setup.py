@@ -33,11 +33,12 @@ from __version__ import version
 def _get_f2py_shebang():
     """ Return shebang line for f2py script
 
-    If we are building an egg or a wheel binary package, then the shebang line
+    If we are building a binary distribution format, then the shebang line
     should be ``#!python`` rather than ``#!`` followed by the contents of
     ``sys.executable``.
     """
-    if set(('bdist_wheel', 'bdist_egg')).intersection(sys.argv):
+    if set(('bdist_wheel', 'bdist_egg', 'bdist_mpkg', 'bdist_wininst',
+            'bdist_rpm')).intersection(sys.argv):
         return '#!python'
     return '#!' + sys.executable
 
