@@ -171,17 +171,21 @@ class TestIndexExpression(TestCase):
 
 class TestIx_(TestCase):
     def test_regression_1(self):
-        # Empty inputs create ouputs of indexing type, gh-5804
-        a, = np.ix_(range(0, 0))
-        assert_equal(a.dtype, np.intp)
+        # Test empty inputs create ouputs of indexing type, gh-5804
+        # Test both lists and arrays
+        for func in (range, np.arange):
+            a, = np.ix_(func(0))
+            assert_equal(a.dtype, np.intp)
 
     def test_shape_and_dtype(self):
         sizes = (4, 5, 3, 2)
-        arrays = np.ix_(*[range(sz) for sz in sizes])
-        for k, (a, sz) in enumerate(zip(arrays, sizes)):
-            assert_equal(a.shape[k], sz)
-            assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
-            assert_(np.issubdtype(a.dtype, int))
+        # Test both lists and arrays
+        for func in (range, np.arange):
+            arrays = np.ix_(*[func(sz) for sz in sizes])
+            for k, (a, sz) in enumerate(zip(arrays, sizes)):
+                assert_equal(a.shape[k], sz)
+                assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
+                assert_(np.issubdtype(a.dtype, int))
 
     def test_bool(self):
         bool_a = [True, False, True, True]
