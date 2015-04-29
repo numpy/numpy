@@ -28,6 +28,10 @@ before_install:
   - ulimit -a
   - mkdir builds
   - pushd builds
+  # Build into own virtualenv
+  # We therefore control our own environment, avoid travis' numpy
+  - virtualenv --python=python venv
+  - source venv/bin/activate
   - pip install nose
   # pip install coverage
   - python -V
