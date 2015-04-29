@@ -51,7 +51,7 @@ dereference a data- type-specific pointer to an element. Only if the
 some platforms it will work but on others, like Solaris, it will cause
 a bus error). The :cdata:`NPY_ARRAY_WRITEABLE` should also be ensured
 if you plan on writing to the memory area of the array. It is also
-possible to obtain a pointer to an unwriteable memory area. Sometimes,
+possible to obtain a pointer to an unwritable memory area. Sometimes,
 writing to the memory area when the :cdata:`NPY_ARRAY_WRITEABLE` flag is not
 set will just be rude. Other times it can cause program crashes ( *e.g.*
 a data-area that is a read-only memory-mapped file).
@@ -139,17 +139,17 @@ been abstracted so that it can be performed in multiple places.
 Broadcasting is handled by the function :cfunc:`PyArray_Broadcast`. This
 function requires a :ctype:`PyArrayMultiIterObject` (or something that is a
 binary equivalent) to be passed in. The :ctype:`PyArrayMultiIterObject` keeps
-track of the broadcasted number of dimensions and size in each
-dimension along with the total size of the broadcasted result. It also
+track of the broadcast number of dimensions and size in each
+dimension along with the total size of the broadcast result. It also
 keeps track of the number of arrays being broadcast and a pointer to
-an iterator for each of the arrays being broadcasted.
+an iterator for each of the arrays being broadcast.
 
 The :cfunc:`PyArray_Broadcast` function takes the iterators that have already
 been defined and uses them to determine the broadcast shape in each
 dimension (to create the iterators at the same time that broadcasting
 occurs then use the :cfunc:`PyMultiIter_New` function). Then, the iterators are
 adjusted so that each iterator thinks it is iterating over an array
-with the broadcasted size. This is done by adjusting the iterators
+with the broadcast size. This is done by adjusting the iterators
 number of dimensions, and the shape in each dimension. This works
 because the iterator strides are also adjusted. Broadcasting only
 adjusts (or adds) length-1 dimensions. For these dimensions, the
@@ -161,7 +161,7 @@ Broadcasting was always implemented in Numeric using 0-valued strides
 for the extended dimensions. It is done in exactly the same way in
 NumPy. The big difference is that now the array of strides is kept
 track of in a :ctype:`PyArrayIterObject`, the iterators involved in a
-broadcasted result are kept track of in a :ctype:`PyArrayMultiIterObject`,
+broadcast result are kept track of in a :ctype:`PyArrayMultiIterObject`,
 and the :cfunc:`PyArray_BroadCast` call implements the broad-casting rules.
 
 
@@ -188,139 +188,87 @@ written to so that structured array field setting works more naturally
 (a[0]['f1'] = ``value`` ).
 
 
-Advanced ("Fancy") Indexing
-=============================
+Indexing
+========
 
 .. index::
    single: indexing
 
-The implementation of advanced indexing represents some of the most
-difficult code to write and explain. In fact, there are two
-implementations of advanced indexing. The first works only with 1-D
-arrays and is implemented to handle expressions involving a.flat[obj].
-The second is general-purpose that works for arrays of "arbitrary
-dimension" (up to a fixed maximum). The one-dimensional indexing
-approaches were implemented in a rather straightforward fashion, and
-so it is the general-purpose indexing code that will be the focus of
-this section.
+All python indexing operations ``arr[index]`` are organized by first preparing
+the index and finding the index type. The supported index types are:
+* integer
+* newaxis
+* slice
+* ellipsis
+* integer arrays/array-likes (fancy)
+* boolean (single boolean array); if there is more than one boolean array as
+  index or the shape does not match exactly, the boolean array will be
+  converted to an integer array instead.
+* 0-d boolean (and also integer); 0-d boolean arrays are a special
+  case which has to be handled in the advanced indexing code. They signal
+  that a 0-d boolean array had to be interpreted as an integer array.
 
-There is a multi-layer approach to indexing because the indexing code
-can at times return an array scalar and at other times return an
-array. The functions with "_nice" appended to their name do this
-special handling while the function without the _nice appendage always
-return an array (perhaps a 0-dimensional array). Some special-case
-optimizations (the index being an integer scalar, and the index being
-a tuple with as many dimensions as the array) are handled in
-array_subscript_nice function which is what Python calls when
-presented with the code "a[obj]." These optimizations allow fast
-single-integer indexing, and also ensure that a 0-dimensional array is
-not created only to be discarded as the array scalar is returned
-instead. This provides significant speed-up for code that is selecting
-many scalars out of an array (such as in a loop). However, it is still
-not faster than simply using a list to store standard Python scalars,
-because that is optimized by the Python interpreter itself.
+As well as the scalar array special case signaling that an integer array
+was interpreted as an integer index, which is important because an integer
+array index forces a copy but is ignored if a scalar is returned (full integer
+index). The prepared index is guaranteed to be valid with the exception of
+out of bound values and broadcasting errors for advanced indexing. This
+includes that an ellipsis is added for incomplete indices for example when
+a two dimensional array is indexed with a single integer.
 
-After these optimizations, the array_subscript function itself is
-called. This function first checks for field selection which occurs
-when a string is passed as the indexing object. Then, 0-D arrays are
-given special-case consideration. Finally, the code determines whether
-or not advanced, or fancy, indexing needs to be performed. If fancy
-indexing is not needed, then standard view-based indexing is performed
-using code borrowed from Numeric which parses the indexing object and
-returns the offset into the data-buffer and the dimensions necessary
-to create a new view of the array. The strides are also changed by
-multiplying each stride by the step-size requested along the
-corresponding dimension.
+The next step depends on the type of index which was found. If all
+dimensions are indexed with an integer a scalar is returned or set. A
+single boolean indexing array will call specialized boolean functions.
+Indices containing an ellipsis or slice but no advanced indexing will
+always create a view into the old array by calculating the new strides and
+memory offset.  This view can then either be returned or, for assignments,
+filled using :cfunc:`PyArray_CopyObject`. Note that `PyArray_CopyObject`
+may also be called on temporary arrays in other branches to support
+complicated assignments when the array is of object dtype.
 
+Advanced indexing
+-----------------
 
-Fancy-indexing check
---------------------
+By far the most complex case is advanced indexing, which may or may not be
+combined with typical view based indexing. Here integer indices are
+interpreted as view based. Before trying to understand this, you may want
+to make yourself familiar with its subtleties. The advanced indexing code
+has three different branches and one special case:
+* There is one indexing array and it, as well as the assignment array, can
+  be iterated trivially. For example they may be contiguous. Also the
+  indexing array must be of `intp` type and the value array in assignments
+  should be of the correct type. This is purely a fast path.
+* There are only integer array indices so that no subarray exists.
+* View based and advanced indexing is mixed. In this case the view based
+  indexing defines a collection of subarrays that are combined by the
+  advanced indexing. For example, ``arr[[1, 2, 3], :]`` is created by
+  vertically stacking the subarrays ``arr[1, :]``, ``arr[2,:]``, and
+  ``arr[3, :]``.
+* There is a subarray but it has exactly one element. This case can be handled
+  as if there is no subarray, but needs some care during setup.
 
-The fancy_indexing_check routine determines whether or not to use
-standard view-based indexing or new copy-based indexing. If the
-indexing object is a tuple, then view-based indexing is assumed by
-default. Only if the tuple contains an array object or a sequence
-object is fancy-indexing assumed. If the indexing object is an array,
-then fancy indexing is automatically assumed. If the indexing object
-is any other kind of sequence, then fancy-indexing is assumed by
-default. This is over-ridden to simple indexing if the sequence
-contains any slice, newaxis, or Ellipsis objects, and no arrays or
-additional sequences are also contained in the sequence. The purpose
-of this is to allow the construction of "slicing" sequences which is a
-common technique for building up code that works in arbitrary numbers
-of dimensions.
+Deciding what case applies, checking broadcasting, and determining the kind
+of transposition needed are all done in `PyArray_MapIterNew`. After setting
+up, there are two cases. If there is no subarray or it only has one
+element, no subarray iteration is necessary and an iterator is prepared
+which iterates all indexing arrays *as well as* the result or value array.
+If there is a subarray, there are three iterators prepared. One for the
+indexing arrays, one for the result or value array (minus its subarray),
+and one for the subarrays of the original and the result/assignment array.
+The first two iterators give (or allow calculation) of the pointers into
+the start of the subarray, which then allows to restart the subarray
+iteration.
 
+When advanced indices are next to each other transposing may be necessary.
+All necessary transposing is handled by :cfunc:`PyArray_MapIterSwapAxes` and
+has to be handled by the caller unless `PyArray_MapIterNew` is asked to
+allocate the result.
 
-Fancy-indexing implementation
------------------------------
-
-The concept of indexing was also abstracted using the idea of an
-iterator. If fancy indexing is performed, then a :ctype:`PyArrayMapIterObject`
-is created. This internal object is not exposed to Python. It is
-created in order to handle the fancy-indexing at a high-level. Both
-get and set fancy-indexing operations are implemented using this
-object. Fancy indexing is abstracted into three separate operations:
-(1) creating the :ctype:`PyArrayMapIterObject` from the indexing object, (2)
-binding the :ctype:`PyArrayMapIterObject` to the array being indexed, and (3)
-getting (or setting) the items determined by the indexing object.
-There is an optimization implemented so that the :ctype:`PyArrayIterObject`
-(which has it's own less complicated fancy-indexing) is used for
-indexing when possible.
-
-
-Creating the mapping object
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first step is to convert the indexing objects into a standard form
-where iterators are created for all of the index array inputs and all
-Boolean arrays are converted to equivalent integer index arrays (as if
-nonzero(arr) had been called). Finally, all integer arrays are
-replaced with the integer 0 in the indexing object and all of the
-index-array iterators are "broadcast" to the same shape.
-
-
-Binding the mapping object
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When the mapping object is created it does not know which array it
-will be used with so once the index iterators are constructed during
-mapping-object creation, the next step is to associate these iterators
-with a particular ndarray. This process interprets any ellipsis and
-slice objects so that the index arrays are associated with the
-appropriate axis (the axis indicated by the iteraxis entry
-corresponding to the iterator for the integer index array). This
-information is then used to check the indices to be sure they are
-within range of the shape of the array being indexed. The presence of
-ellipsis and/or slice objects implies a sub-space iteration that is
-accomplished by extracting a sub-space view of the array (using the
-index object resulting from replacing all the integer index arrays
-with 0) and storing the information about where this sub-space starts
-in the mapping object. This is used later during mapping-object
-iteration to select the correct elements from the underlying array.
-
-
-Getting (or Setting)
-^^^^^^^^^^^^^^^^^^^^
-
-After the mapping object is successfully bound to a particular array,
-the mapping object contains the shape of the resulting item as well as
-iterator objects that will walk through the currently-bound array and
-either get or set its elements as needed. The walk is implemented
-using the :cfunc:`PyArray_MapIterNext` function. This function sets the
-coordinates of an iterator object into the current array to be the
-next coordinate location indicated by all of the indexing-object
-iterators while adjusting, if necessary, for the presence of a sub-
-space. The result of this function is that the dataptr member of the
-mapping object structure is pointed to the next position in the array
-that needs to be copied out or set to some value.
-
-When advanced indexing is used to extract an array, an iterator for
-the new array is constructed and advanced in phase with the mapping
-object iterator. When advanced indexing is used to place values in an
-array, a special "broadcasted" iterator is constructed from the object
-being placed into the array so that it will only work if the values
-used for setting have a shape that is "broadcastable" to the shape
-implied by the indexing object.
+After preparation, getting and setting is relatively straight forward,
+although the different modes of iteration need to be considered. Unless
+there is only a single indexing array during item getting, the validity of
+the indices is checked beforehand. Otherwise it is handled in the inner
+loop itself for optimization.
 
 
 Universal Functions
@@ -338,7 +286,7 @@ in C, although there is a mechanism for creating ufuncs from Python
 functions (:func:`frompyfunc`). The user must supply a 1-D loop that
 implements the basic function taking the input scalar values and
 placing the resulting scalars into the appropriate output slots as
-explaine n implementation.
+explained in implementation.
 
 
 Setup
@@ -351,7 +299,7 @@ be able to write array and type-specific code that will work faster
 for small arrays than the ufunc. In particular, using ufuncs to
 perform many calculations on 0-D arrays will be slower than other
 Python-based solutions (the silently-imported scalarmath module exists
-precisely to give array scalars the look-and-feel of ufunc-based
+precisely to give array scalars the look-and-feel of ufunc based
 calculations with significantly reduced overhead).
 
 When a ufunc is called, many things must be done. The information
@@ -365,12 +313,12 @@ other sections of code.
 The first thing done is to look-up in the thread-specific global
 dictionary the current values for the buffer-size, the error mask, and
 the associated error object. The state of the error mask controls what
-happens when an error-condiction is found. It should be noted that
+happens when an error condition is found. It should be noted that
 checking of the hardware error flags is only performed after each 1-D
 loop is executed. This means that if the input and output arrays are
 contiguous and of the correct type so that a single 1-D loop is
 performed, then the flags may not be checked until all elements of the
-array have been calcluated. Looking up these values in a thread-
+array have been calculated. Looking up these values in a thread-
 specific dictionary takes time which is easily ignored for all but
 very small arrays.
 
@@ -410,7 +358,7 @@ the multiplication operator 1-D loop.
 
 For input arrays that are smaller than the specified buffer size,
 copies are made of all non-contiguous, mis-aligned, or out-of-
-byteorder arrays to ensure that for small arrays, a single-loop is
+byteorder arrays to ensure that for small arrays, a single loop is
 used. Then, array iterators are created for all the input arrays and
 the resulting collection of iterators is broadcast to a single shape.
 
@@ -425,9 +373,9 @@ Iterators for the output arguments are then processed.
 Finally, the decision is made about how to execute the looping
 mechanism to ensure that all elements of the input arrays are combined
 to produce the output arrays of the correct type. The options for loop
-execution are one-loop (for contiguous, aligned, and correct data-
+execution are one-loop (for contiguous, aligned, and correct data
 type), strided-loop (for non-contiguous but still aligned and correct
-data-type), and a buffered loop (for mis-aligned or incorrect data-
+data type), and a buffered loop (for mis-aligned or incorrect data
 type situations). Depending on which execution method is called for,
 the loop is then setup and computed.
 
@@ -435,14 +383,13 @@ the loop is then setup and computed.
 Function call
 -------------
 
-This section describes how the basic universal function computation
-loop is setup and executed for each of the three different kinds of
-execution possibilities. If :cdata:`NPY_ALLOW_THREADS` is defined during
-compilation, then the Python Global Interpreter Lock (GIL) is released
-prior to calling all of these loops (as long as they don't involve
-object arrays). It is re-acquired if necessary to handle error
-conditions. The hardware error flags are checked only after the 1-D
-loop is calcluated.
+This section describes how the basic universal function computation loop is
+setup and executed for each of the three different kinds of execution. If
+:cdata:`NPY_ALLOW_THREADS` is defined during compilation, then as long as
+no object arrays are involved, the Python Global Interpreter Lock (GIL) is
+released prior to calling the loops.  It is re-acquired if necessary to
+handle error conditions. The hardware error flags are checked only after
+the 1-D loop is completed.
 
 
 One Loop
@@ -478,7 +425,7 @@ This is the code that handles the situation whenever the input and/or
 output arrays are either misaligned or of the wrong data-type
 (including being byte-swapped) from what the underlying 1-D loop
 expects. The arrays are also assumed to be non-contiguous. The code
-works very much like the strided loop except for the inner 1-D loop is
+works very much like the strided-loop except for the inner 1-D loop is
 modified so that pre-processing is performed on the inputs and post-
 processing is performed on the outputs in bufsize chunks (where
 bufsize is a user-settable parameter). The underlying 1-D
