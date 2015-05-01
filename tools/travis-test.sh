@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -ex
 
 # travis boxes give you 1.5 cpus
@@ -120,10 +120,17 @@ fi
 export PYTHON
 export PIP
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
-  $PIP install --upgrade pip
+  # Build wheel
   $PIP install wheel
   $PYTHON setup.py bdist_wheel
-  $PIP install --pre --upgrade --find-links dist numpy
+  # Make another virtualenv to install into
+  virtualenv --python=python venv-for-wheel
+  . venv-for-wheel/bin/activate
+  # Move out of source directory to avoid finding local numpy
+  pushd dist
+  $PIP install --pre --upgrade --find-links . numpy
+  $PIP install nose
+  popd
   run_test
 elif [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
   setup_base
