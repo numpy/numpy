@@ -3838,6 +3838,18 @@ class TestMaskedFields(TestCase):
         for rec in self.data['base']:
             assert_equal(len(rec), len(self.data['ddtype']))
 
+    def test_fieldless_mask(self):
+        # check that item-getting and representation do not fail when the
+        # mask is not structured.  See issue #2072.
+        ndtype = [('a', float), ('b', float)]
+        a = array(list(zip(np.arange(3), np.arange(3))), dtype=ndtype)
+        a._mask = numpy.zeros(shape=a.shape, dtype="?")
+        assert_equal(a["a"].data, a.data["a"])
+        assert_equal(a.__repr__(), "masked_array(data = [(0.0, 0.0) (1.0, 1.0) (2.0, 2.0)],\n"
+                    "             mask = [False False False],\n"
+                    "       fill_value = (1e+20, 1e+20),\n"
+                    "            dtype = [('a', '<f8'), ('b', '<f8')])\n")
+
 
 #------------------------------------------------------------------------------
 class TestMaskedView(TestCase):
