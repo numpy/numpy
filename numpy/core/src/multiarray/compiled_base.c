@@ -344,6 +344,7 @@ arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
             /* If we move past value data.  Reset */
             if (copied >= numvals) {
                 vptr = avals_data;
+                copied = 0;
             }
         }
         mptr += melsize;
@@ -427,6 +428,21 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     objarray = (PyArray_DESCR(ainput)->type_num == NPY_OBJECT);
 
+    if (!numvals) {
+        /* nothing to insert! fail unless none of mask is true */
+        const char *iter = mptr;
+        const char *const last = iter + PyArray_NBYTES(amask);
+        while (iter != last && !memcmp(iter, zero, melsize)) {
+            iter += melsize;
+        }
+        if (iter != last) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot insert from an empty array!");
+            goto fail;
+        }
+        goto finish;
+    }
+
     /* Handle zero-dimensional case separately */
     if (nd == 0) {
         if (memcmp(mptr,zero,melsize) != 0) {
@@ -461,6 +477,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         NPY_END_ALLOW_THREADS;
     }
 
+finish:
     Py_DECREF(amask);
     Py_DECREF(avals);
     PyDataMem_FREE(zero);
