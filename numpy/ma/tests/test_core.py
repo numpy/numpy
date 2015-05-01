@@ -3242,6 +3242,15 @@ class TestMaskedArrayFunctions(TestCase):
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
+    def test_masked_where_structured(self):
+        # test that masked_where on a structured array sets a structured
+        # mask (see issue #2972)
+        a = np.zeros(10, dtype=[("A", "<f2"), ("B", "<f4")])
+        am = np.ma.masked_where(a["A"]<5, a)
+        assert_equal(am.mask.dtype.names, am.dtype.names)
+        assert_equal(am["A"],
+                    np.ma.masked_array(np.zeros(10), np.ones(10)))
+
     def test_masked_otherfunctions(self):
         assert_equal(masked_inside(list(range(5)), 1, 3),
                      [0, 199, 199, 199, 4])
