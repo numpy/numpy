@@ -3396,6 +3396,13 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)
 
+    def test_where_object(self):
+        a = np.array(None)
+        b = masked_array(None)
+        r = b.copy()
+        assert_equal(np.ma.where(True, a, a), r)
+        assert_equal(np.ma.where(True, b, b), r)
+
     def test_where_with_masked_choice(self):
         x = arange(10)
         x[3] = masked
