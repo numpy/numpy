@@ -29,7 +29,7 @@ from functools import reduce
 import numpy as np
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
-from numpy import ndarray, amax, amin, iscomplexobj, bool_
+from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
 from numpy.compat import getargspec, formatargspec, long, basestring
@@ -6708,7 +6708,7 @@ size.__doc__ = np.size.__doc__
 #####--------------------------------------------------------------------------
 #---- --- Extra functions ---
 #####--------------------------------------------------------------------------
-def where (condition, x=None, y=None):
+def where(condition, x=_NoValue, y=_NoValue):
     """
     Return a masked array with elements from x or y, depending on condition.
 
@@ -6755,14 +6755,20 @@ def where (condition, x=None, y=None):
      [6.0 -- 8.0]]
 
     """
-    if x is None and y is None:
+    missing = (x is _NoValue, y is _NoValue).count(True)
+
+    if missing == 1:
+        raise ValueError("Must provide both 'x' and 'y' or neither.")
+    if missing == 2:
         return filled(condition, 0).nonzero()
-    elif x is None or y is None:
-        raise ValueError("Either both or neither x and y should be given.")
-    # Get the condition ...............
+
+    # Both x and y are provided
+
+    # Get the condition
     fc = filled(condition, 0).astype(MaskType)
     notfc = np.logical_not(fc)
-    # Get the data ......................................
+
+    # Get the data
     xv = getdata(x)
     yv = getdata(y)
     if x is masked:
@@ -6771,19 +6777,23 @@ def where (condition, x=None, y=None):
         ndtype = xv.dtype
     else:
         ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
+
     # Construct an empty array and fill it
     d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    _data = d._data
-    np.copyto(_data, xv.astype(ndtype), where=fc)
-    np.copyto(_data, yv.astype(ndtype), where=notfc)
+    np.copyto(d._data, xv.astype(ndtype), where=fc)
+    np.copyto(d._data, yv.astype(ndtype), where=notfc)
+
     # Create an empty mask and fill it
-    _mask = d._mask = np.zeros(fc.shape, dtype=MaskType)
-    np.copyto(_mask, getmask(x), where=fc)
-    np.copyto(_mask, getmask(y), where=notfc)
-    _mask |= getmaskarray(condition)
-    if not _mask.any():
-        d._mask = nomask
+    mask = np.zeros(fc.shape, dtype=MaskType)
+    np.copyto(mask, getmask(x), where=fc)
+    np.copyto(mask, getmask(y), where=notfc)
+    mask |= getmaskarray(condition)
+
+    # Use d._mask instead of d.mask to avoid copies
+    d._mask = mask if mask.any() else nomask
+
     return d
+
 
 def choose (indices, choices, out=None, mode='raise'):
     """
