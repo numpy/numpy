@@ -1903,12 +1903,12 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_normal, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale,
                            self.lock)
@@ -2027,12 +2027,12 @@ cdef class RandomState:
 
         if oscale.shape == ():
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont1_array_sc(self.internal_state, rk_exponential, size,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont1_array(self.internal_state, rk_exponential, size, oscale,
                            self.lock)
@@ -2144,12 +2144,12 @@ cdef class RandomState:
 
         if oshape.shape == ():
             fshape = PyFloat_AsDouble(shape)
-            if fshape < 0:
+            if np.signbit(fshape):
                 raise ValueError("shape < 0")
             return cont1_array_sc(self.internal_state, rk_standard_gamma,
                                   size, fshape, self.lock)
 
-        if np.any(np.less(oshape, 0.0)):
+        if np.any(np.signbit(oshape)):
             raise ValueError("shape < 0")
         return cont1_array(self.internal_state, rk_standard_gamma, size,
                            oshape, self.lock)
@@ -2236,16 +2236,16 @@ cdef class RandomState:
         if oshape.shape == oscale.shape == ():
             fshape = PyFloat_AsDouble(shape)
             fscale = PyFloat_AsDouble(scale)
-            if fshape < 0:
+            if np.signbit(fshape):
                 raise ValueError("shape < 0")
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape,
                                   fscale, self.lock)
 
-        if np.any(np.less(oshape, 0.0)):
+        if np.any(np.signbit(oshape)):
             raise ValueError("shape < 0")
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale,
                            self.lock)
@@ -3117,12 +3117,12 @@ cdef class RandomState:
 
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
-            if fa < 0:
+            if np.signbit(fa):
                 raise ValueError("a < 0")
             return cont1_array_sc(self.internal_state, rk_weibull, size, fa,
                                   self.lock)
 
-        if np.any(np.less(oa, 0.0)):
+        if np.any(np.signbit(oa)):
             raise ValueError("a < 0")
         return cont1_array(self.internal_state, rk_weibull, size, oa,
                            self.lock)
@@ -3229,12 +3229,12 @@ cdef class RandomState:
 
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
-            if fa < 0:
+            if np.signbit(fa):
                 raise ValueError("a < 0")
             return cont1_array_sc(self.internal_state, rk_power, size, fa,
                                   self.lock)
 
-        if np.any(np.less(oa, 0.0)):
+        if np.any(np.signbit(oa)):
             raise ValueError("a < 0")
         return cont1_array(self.internal_state, rk_power, size, oa, self.lock)
 
@@ -3326,12 +3326,12 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_laplace, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale,
                            self.lock)
@@ -3457,12 +3457,12 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale,
                            self.lock)
@@ -3550,12 +3550,12 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_logistic, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_logistic, size, oloc,
                            oscale, self.lock)
@@ -3674,12 +3674,12 @@ cdef class RandomState:
         if omean.shape == osigma.shape == ():
             fmean = PyFloat_AsDouble(mean)
             fsigma = PyFloat_AsDouble(sigma)
-            if fsigma < 0:
+            if np.signbit(fsigma):
                 raise ValueError("sigma < 0")
             return cont2_array_sc(self.internal_state, rk_lognormal, size,
                                   fmean, fsigma, self.lock)
 
-        if np.any(np.less(osigma, 0.0)):
+        if np.any(np.signbit(osigma)):
             raise ValueError("sigma < 0.0")
         return cont2_array(self.internal_state, rk_lognormal, size, omean,
                            osigma, self.lock)
@@ -3753,12 +3753,12 @@ cdef class RandomState:
 
         if oscale.shape == ():
             fscale = PyFloat_AsDouble(scale)
-            if fscale < 0:
+            if np.signbit(fscale):
                 raise ValueError("scale < 0")
             return cont1_array_sc(self.internal_state, rk_rayleigh, size,
                                   fscale, self.lock)
 
-        if np.any(np.less(oscale, 0.0)):
+        if np.any(np.signbit(oscale)):
             raise ValueError("scale < 0.0")
         return cont1_array(self.internal_state, rk_rayleigh, size, oscale,
                            self.lock)
