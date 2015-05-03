@@ -2125,6 +2125,17 @@ class TestRegression(TestCase):
         for axis in chain(range(-a.ndim, a.ndim), [None]):
             assert_equal(a.repeat(2, axis=axis), a.repeat([2], axis=axis))
 
+    def test_frompyfunc_nout_0(self):
+        # gh-2014
+
+        def f(x):
+            x[0], x[-1] = x[-1], x[0]
+
+        uf = np.frompyfunc(f, 1, 0)
+        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]])
+        assert_equal(uf(a), ())
+        assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
+
 
 if __name__ == "__main__":
     run_module_suite()
