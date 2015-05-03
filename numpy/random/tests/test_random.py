@@ -483,6 +483,7 @@ class TestRandomDist(TestCase):
 
     def test_exponential_0(self):
         assert_equal(np.random.exponential(scale=0), 0)
+        assert_raises(ValueError, np.random.exponential, scale=-0.)
 
     def test_f(self):
         np.random.seed(self.seed)
@@ -502,6 +503,7 @@ class TestRandomDist(TestCase):
 
     def test_gamma_0(self):
         assert_equal(np.random.gamma(shape=0, scale=0), 0)
+        assert_raises(ValueError, np.random.gamma, shape=-0., scale=-0.)
 
     def test_geometric(self):
         np.random.seed(self.seed)
@@ -521,6 +523,7 @@ class TestRandomDist(TestCase):
 
     def test_gumbel_0(self):
         assert_equal(np.random.gumbel(scale=0), 0)
+        assert_raises(ValueError, np.random.gumbel, scale=-0.)
 
     def test_hypergeometric(self):
         np.random.seed(self.seed)
@@ -558,6 +561,7 @@ class TestRandomDist(TestCase):
 
     def test_laplace_0(self):
         assert_equal(np.random.laplace(scale=0), 0)
+        assert_raises(ValueError, np.random.laplace, scale=-0.)
 
     def test_logistic(self):
         np.random.seed(self.seed)
@@ -569,6 +573,7 @@ class TestRandomDist(TestCase):
 
     def test_laplace_0(self):
         assert_(np.random.laplace(scale=0) in [0, 1])
+        assert_raises(ValueError, np.random.laplace, scale=-0.)
 
     def test_lognormal(self):
         np.random.seed(self.seed)
@@ -580,6 +585,7 @@ class TestRandomDist(TestCase):
 
     def test_lognormal_0(self):
         assert_equal(np.random.lognormal(sigma=0), 1)
+        assert_raises(ValueError, np.random.lognormal, sigma=-0.)
 
     def test_logseries(self):
         np.random.seed(self.seed)
@@ -673,6 +679,7 @@ class TestRandomDist(TestCase):
 
     def test_normal_0(self):
         assert_equal(np.random.normal(scale=0), 0)
+        assert_raises(ValueError, np.random.normal, scale=-0.)
 
     def test_pareto(self):
         np.random.seed(self.seed)
@@ -723,6 +730,7 @@ class TestRandomDist(TestCase):
 
     def test_rayleigh_0(self):
         assert_equal(np.random.rayleigh(scale=0), 0)
+        assert_raises(ValueError, np.random.rayleigh, scale=-0.)
 
     def test_standard_cauchy(self):
         np.random.seed(self.seed)
@@ -750,6 +758,7 @@ class TestRandomDist(TestCase):
 
     def test_standard_gamma_0(self):
         assert_equal(np.random.standard_gamma(shape=0), 0)
+        assert_raises(ValueError, np.random.standard_gamma, shape=-0.)
 
     def test_standard_normal(self):
         np.random.seed(self.seed)
@@ -828,6 +837,7 @@ class TestRandomDist(TestCase):
 
     def test_weibull_0(self):
         assert_equal(np.random.weibull(a=0), 0)
+        assert_raises(ValueError, np.random.weibull, a=-0.)
 
     def test_zipf(self):
         np.random.seed(self.seed)
