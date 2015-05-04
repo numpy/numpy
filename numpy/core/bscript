@@ -15,6 +15,10 @@ waflib.Logs.verbose = 1
 # context.
 import numpy.build_utils.waf
 
+from numpy.build_utils.apple_accelerate \
+    import \
+        get_sgemv_fix
+
 from code_generators.numpy_api \
     import \
         multiarray_api, ufunc_api
@@ -26,6 +30,9 @@ from setup_common \
         OPTIONAL_STDFUNCS_MAYBE, OPTIONAL_STDFUNCS, C99_FUNCS_EXTENDED, \
         C99_FUNCS_SINGLE, C99_COMPLEX_TYPES, C99_COMPLEX_FUNCS, \
         MANDATORY_FUNCS, C_ABI_VERSION, C_API_VERSION
+
+def make_relpath(f):
+    return os.path.relpath(f, os.path.abspath(os.path.dirname(__file__)))
 
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
@@ -483,6 +490,8 @@ def pre_build(context):
                 sources.extend([pjoin('src', 'multiarray', 'cblasfuncs.c'),
                                 pjoin('src', 'multiarray', 'python_xerbla.c'),
                                ])
+            if "Accelerate" in bld.env.FRAMEWORK_CBLAS:
+                sources.extend([make_relpath(get_sgemv_fix()[0])])
         else:
             sources = extension.sources
 
