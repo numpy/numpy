@@ -37,7 +37,7 @@ def _get_f2py_shebang():
     should be ``#!python`` rather than ``#!`` followed by the contents of
     ``sys.executable``.
     """
-    if set(('bdist_wheel', 'bdist_egg', 'bdist_mpkg', 'bdist_wininst',
+    if set(('bdist_wheel', 'bdist_egg', 'bdist_wininst',
             'bdist_rpm')).intersection(sys.argv):
         return '#!python'
     return '#!' + sys.executable
