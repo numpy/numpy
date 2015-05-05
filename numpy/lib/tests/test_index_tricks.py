@@ -7,7 +7,7 @@ from numpy.testing import (
     )
 from numpy.lib.index_tricks import (
     mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, r_, s_
+    index_exp, ndindex, r_, s_, ix_
     )
 
 
@@ -167,6 +167,34 @@ class TestIndexExpression(TestCase):
 
         assert_equal(a[:, :3, [1, 2]], a[index_exp[:, :3, [1, 2]]])
         assert_equal(a[:, :3, [1, 2]], a[s_[:, :3, [1, 2]]])
+
+
+class TestIx_(TestCase):
+    def test_regression_1(self):
+        # Test empty inputs create ouputs of indexing type, gh-5804
+        # Test both lists and arrays
+        for func in (range, np.arange):
+            a, = np.ix_(func(0))
+            assert_equal(a.dtype, np.intp)
+
+    def test_shape_and_dtype(self):
+        sizes = (4, 5, 3, 2)
+        # Test both lists and arrays
+        for func in (range, np.arange):
+            arrays = np.ix_(*[func(sz) for sz in sizes])
+            for k, (a, sz) in enumerate(zip(arrays, sizes)):
+                assert_equal(a.shape[k], sz)
+                assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
+                assert_(np.issubdtype(a.dtype, int))
+
+    def test_bool(self):
+        bool_a = [True, False, True, True]
+        int_a, = np.nonzero(bool_a)
+        assert_equal(np.ix_(bool_a)[0], int_a)
+
+    def test_1d_only(self):
+        idx2d = [[1, 2, 3], [4, 5, 6]]
+        assert_raises(ValueError, np.ix_, idx2d)
 
 
 def test_c_():
