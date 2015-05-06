@@ -1023,9 +1023,6 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
     int newtype = NPY_NOTYPE;
-    PyArray_Descr *temp;
-    const char *msg = "Specified size is invalid for this data type.\n"
-        "Size will be ignored in NumPy 1.7 but may throw an exception in future versions.";
 
     switch (gentype) {
         case NPY_GENBOOLLTR:
@@ -1177,31 +1174,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 newtype = NPY_TIMEDELTA;
             }
             break;
-    }
-
-    /*
-     * Raise deprecate warning if new type hasn't been
-     * set yet and size char is invalid.
-     * This should eventually be changed to an error in
-     * future NumPy versions.
-     */
-    if (newtype == NPY_NOTYPE) {
-        temp = PyArray_DescrFromType(gentype);
-        if (temp != NULL) {
-            if (temp->elsize != itemsize) {
-                if (DEPRECATE(msg) < 0) {
-                    Py_DECREF(temp);
-                    return -1;
-                }
-
-                newtype = gentype;
-            }
-            else {
-                newtype = gentype;
-            }
-
-            Py_DECREF(temp);
-        }
     }
 
     return newtype;
