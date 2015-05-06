@@ -5,7 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_array_equal
+    run_module_suite, TestCase, assert_array_equal, assert_equal
     )
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
@@ -286,6 +286,8 @@ class TestSetOps(TestCase):
         assert_array_equal(c, ec)
 
         assert_array_equal([], setdiff1d([], []))
+        a = np.array((), np.uint32)
+        assert_equal(setdiff1d(a, []).dtype, np.uint32)
 
     def test_setdiff1d_char_array(self):
         a = np.array(['a', 'b', 'c'])
