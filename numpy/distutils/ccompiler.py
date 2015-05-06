@@ -532,7 +532,7 @@ compiler_class['intelem'] = ('intelccompiler', 'IntelEM64TCCompiler',
                              "Intel C Compiler for 64-bit applications")
 compiler_class['intelw'] = ('intelccompiler', 'IntelCCompilerW',
                             "Intel C Compiler for 32-bit applications on Windows")
-compiler_class['intelemw'] = ('intelem64tccompiler', 'IntelEM64TCCompilerW',
+compiler_class['intelemw'] = ('intelccompiler', 'IntelEM64TCCompilerW',
                               "Intel C Compiler for 64-bit applications on Windows")
 compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
