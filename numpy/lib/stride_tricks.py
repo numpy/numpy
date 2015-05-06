@@ -97,6 +97,10 @@ def broadcast_to(array, shape, subok=False):
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    Notes
+    -----
+    .. versionadded:: 1.10.0
+
     Examples
     --------
     >>> x = np.array([1, 2, 3])
