@@ -62,7 +62,7 @@ setup_bento()
   cd ..
 
   # Waf
-  wget https://raw.githubusercontent.com/rgommers/numpy-vendor/master/waf-1.7.16.tar.bz2
+  wget https://raw.githubusercontent.com/numpy/numpy-vendor/master/waf-1.7.16.tar.bz2
   tar xjvf waf-1.7.16.tar.bz2
   cd waf-1.7.16
   python waf-light
