@@ -1278,14 +1278,12 @@ def setdiff1d(ar1, ar2, assume_unique=False):
            fill_value = 999999)
 
     """
-    if not assume_unique:
+    if assume_unique:
+        ar1 = ma.asarray(ar1).ravel()
+    else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    aux = in1d(ar1, ar2, assume_unique=True)
-    if aux.size == 0:
-        return aux
-    else:
-        return ma.asarray(ar1)[aux == 0]
+    return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
 
 #####--------------------------------------------------------------------------
