@@ -46,7 +46,7 @@ Structured data types are formed by creating a data type whose
 which it can be :ref:`accessed <arrays.indexing.fields>`. The parent data
 type should be of sufficient size to contain all its fields; the
 parent is nearly always based on the :class:`void` type which allows
-an arbitrary item size. Structured data types may also contain nested 
+an arbitrary item size. Structured data types may also contain nested
 structured sub-array data types in their fields.
 
 .. index::
@@ -219,10 +219,10 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
 
    The first character specifies the kind of data and the remaining
-   characters specify the number of bytes per item.  The item size may
-   be ignored for some kinds (i.e., boolean, object), rounded to the
-   next supported size (float, complex), or interpreted as the number
-   of characters (Unicode).  The supported kinds are
+   characters specify the number of bytes per item, except for Unicode,
+   where it is interpreted as the number of characters.  The item size
+   must correspond to an existing type, or an error will be raised.  The
+   supported kinds are
 
    ================   ========================
    ``'b'``            boolean
@@ -431,7 +431,7 @@ Type strings
     Both arguments must be convertible to data-type objects in this
     case. The *base_dtype* is the data-type object that the new
     data-type builds on. This is how you could assign named fields to
-    any built-in data-type object, as done in 
+    any built-in data-type object, as done in
     :ref:`record arrays <arrays.classes.rec>`.
 
     .. admonition:: Example

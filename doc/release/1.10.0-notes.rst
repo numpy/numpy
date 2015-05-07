@@ -91,7 +91,7 @@ New Features
 
 Reading extra flags from site.cfg
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Previously customization of compilation of dependency libraries and numpy 
+Previously customization of compilation of dependency libraries and numpy
 itself was only accomblishable via code changes in the distutils package.
 Now numpy.distutils reads in the following extra flags from each group of the
 *site.cfg*:
@@ -278,3 +278,19 @@ Because we are deprecating the ``bias`` argument to ``ma.corrcoef``, we also
 deprecate the use of the ``allow_masked`` argument as a positional argument,
 as its position will change with the removal of ``bias``.  ``allow_masked``
 will in due course become a keyword-only argument.
+
+dtype string representation changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Since 1.6, creating a dtype object from its string representation, e.g.
+``'f4'``, would issue a deprecation warning if the size did not correspond
+to an existing type, and default to creating a dtype of the default size
+for the type. Starting with this release, this will now raise a ``TypeError``.
+
+The only exception is object dtypes, where both ``'O4'`` and ``'O8'`` will
+still issue a deprecation warning. This platform-dependent representation
+will raise an error in the next release.
+
+In preparation for this upcoming change, the string representation of an
+object dtype, i.e. ``np.dtype(object).str``, no longer includes the item
+size, i.e. will return ``'|O'`` instead of ``'|O4'`` or ``'|O8'`` as
+before.

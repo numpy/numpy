@@ -1677,8 +1677,12 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
     if (self->type_num == NPY_UNICODE) {
         size >>= 2;
     }
-
-    ret = PyUString_FromFormat("%c%c%d", endian, basic_, size);
+    if (self->type_num == NPY_OBJECT) {
+        ret = PyUString_FromFormat("%c%c", endian, basic_);
+    }
+    else {
+        ret = PyUString_FromFormat("%c%c%d", endian, basic_, size);
+    }
     if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData *meta;
 
