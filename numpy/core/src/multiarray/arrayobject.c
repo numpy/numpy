@@ -1343,16 +1343,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             Py_INCREF(Py_False);
             return Py_False;
         }
-        if (needs_right_binop_forward(obj_self, other, "__eq__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
-        if (result && result != Py_NotImplemented)
-          break;
 
         /*
          * The ufunc does not support void/structured types, so these
@@ -1370,6 +1360,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              */
             if (array_other == NULL) {
                 PyErr_Clear();
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
@@ -1378,18 +1374,31 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
-                Py_DECREF(result);
                 Py_DECREF(array_other);
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_False);
                 return Py_False;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
             }
             Py_DECREF(array_other);
             return result;
         }
+
+        if (needs_right_binop_forward(obj_self, other, "__eq__", 0) &&
+                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        result = PyArray_GenericBinaryFunction(self,
+                (PyObject *)other,
+                n_ops.equal);
         /*
          * If the comparison results in NULL, then the
          * two array objects can not be compared together;
@@ -1402,7 +1411,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              */
             PyErr_Clear();
             if (DEPRECATE("elementwise comparison failed; "
-                          "this will raise the error in the future.") < 0) {
+                          "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
@@ -1419,15 +1428,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             Py_INCREF(Py_True);
             return Py_True;
         }
-        if (needs_right_binop_forward(obj_self, other, "__ne__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
-        if (result && result != Py_NotImplemented)
-          break;
 
         /*
          * The ufunc does not support void/structured types, so these
@@ -1445,6 +1445,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             */
             if (array_other == NULL) {
                 PyErr_Clear();
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
@@ -1453,19 +1459,30 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
-                Py_DECREF(result);
                 Py_DECREF(array_other);
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_True);
                 return Py_True;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
                 Py_DECREF(array_other);
             }
             return result;
         }
 
+        if (needs_right_binop_forward(obj_self, other, "__ne__", 0) &&
+                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
+                n_ops.not_equal);
         if (result == NULL) {
             /*
              * Comparisons should raise errors when element-wise comparison
@@ -1473,7 +1490,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              */
             PyErr_Clear();
             if (DEPRECATE("elementwise comparison failed; "
-                          "this will raise the error in the future.") < 0) {
+                          "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
