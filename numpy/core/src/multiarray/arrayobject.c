@@ -1295,6 +1295,25 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;
 
+    /* Special case for string arrays (which don't and currently can't have
+     * ufunc loops defined, so there's no point in trying).
+     */
+    if (PyArray_ISSTRING(self)) {
+        array_other = (PyArrayObject *)PyArray_FromObject(other,
+                                                          NPY_NOTYPE, 0, 0);
+        if (array_other == NULL) {
+            PyErr_Clear();
+            /* Never mind, carry on, see what happens */
+        }
+        else if (!PyArray_ISSTRING(array_other)) {
+            Py_DECREF(array_other);
+            /* Never mind, carry on, see what happens */
+        }
+        else {
+            return _strings_richcompare(self, array_other, cmp_op, 0);
+        }
+    }
+
     switch (cmp_op) {
     case Py_LT:
         if (needs_right_binop_forward(obj_self, other, "__gt__", 0) &&
@@ -1483,24 +1502,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     default:
         result = Py_NotImplemented;
         Py_INCREF(result);
-    }
-    if (result == Py_NotImplemented) {
-        /* Try to handle string comparisons */
-        if (PyArray_TYPE(self) == NPY_OBJECT) {
-            return result;
-        }
-        array_other = (PyArrayObject *)PyArray_FromObject(other,
-                                                          NPY_NOTYPE, 0, 0);
-        if (array_other == NULL) {
-            PyErr_Clear();
-            return result;
-        }
-        if (PyArray_ISSTRING(self) && PyArray_ISSTRING(array_other)) {
-            Py_DECREF(result);
-            result = _strings_richcompare(self, (PyArrayObject *)
-                                          array_other, cmp_op, 0);
-        }
-        Py_DECREF(array_other);
     }
     return result;
 }
