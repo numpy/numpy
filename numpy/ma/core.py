@@ -3679,6 +3679,16 @@ class MaskedArray(ndarray):
             return _print_templates['short_std'] % parameters
         return _print_templates['long_std'] % parameters
 
+    def _delegate_binop(self, other):
+        # This emulates the logic in
+        #     multiarray/number.c:PyArray_GenericBinaryFunction
+        if (not isinstance(other, np.ndarray)
+            and not hasattr(other, "__numpy_ufunc__")):
+            other_priority = getattr(other, "__array_priority__", -1000000)
+            if self.__array_priority__ < other_priority:
+                return True
+        return False
+
     def __eq__(self, other):
         "Check whether other equals self elementwise"
         if self is masked:
@@ -3747,6 +3757,8 @@ class MaskedArray(ndarray):
     #
     def __add__(self, other):
         "Add other to self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return add(self, other)
     #
     def __radd__(self, other):
@@ -3755,6 +3767,8 @@ class MaskedArray(ndarray):
     #
     def __sub__(self, other):
         "Subtract other to self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return subtract(self, other)
     #
     def __rsub__(self, other):
@@ -3763,6 +3777,8 @@ class MaskedArray(ndarray):
     #
     def __mul__(self, other):
         "Multiply other by self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return multiply(self, other)
     #
     def __rmul__(self, other):
@@ -3771,10 +3787,14 @@ class MaskedArray(ndarray):
     #
     def __div__(self, other):
         "Divide other into self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return divide(self, other)
     #
     def __truediv__(self, other):
         "Divide other into self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return true_divide(self, other)
     #
     def __rtruediv__(self, other):
@@ -3783,6 +3803,8 @@ class MaskedArray(ndarray):
     #
     def __floordiv__(self, other):
         "Divide other into self, and return a new masked array."
+        if self._delegate_binop(other):
+            return NotImplemented
         return floor_divide(self, other)
     #
     def __rfloordiv__(self, other):
@@ -3791,6 +3813,8 @@ class MaskedArray(ndarray):
     #
     def __pow__(self, other):
         "Raise self to the power other, masking the potential NaNs/Infs"
+        if self._delegate_binop(other):
+            return NotImplemented
         return power(self, other)
     #
     def __rpow__(self, other):
