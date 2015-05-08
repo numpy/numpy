@@ -738,11 +738,21 @@ class TestStructured(TestCase):
         # Check that incompatible sub-array shapes don't result to broadcasting
         x = np.zeros((1,), dtype=[('a', ('f4', (1, 2))), ('b', 'i1')])
         y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
-        assert_equal(x == y, False)
+        # This comparison invokes deprecated behaviour, and will probably
+        # start raising an error eventually. What we really care about in this
+        # test is just that it doesn't return True.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            assert_equal(x == y, False)
 
         x = np.zeros((1,), dtype=[('a', ('f4', (2, 1))), ('b', 'i1')])
         y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
-        assert_equal(x == y, False)
+        # This comparison invokes deprecated behaviour, and will probably
+        # start raising an error eventually. What we really care about in this
+        # test is just that it doesn't return True.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            assert_equal(x == y, False)
 
         # Check that structured arrays that are different only in
         # byte-order work

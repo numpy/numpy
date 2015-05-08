@@ -383,7 +383,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
     """
 
     message = "elementwise comparison failed; " \
-              "this will raise the error in the future."
+              "this will raise an error in the future."
 
     def test_normal_types(self):
         for op in (operator.eq, operator.ne):
