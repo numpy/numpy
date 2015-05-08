@@ -523,38 +523,6 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
     return _extract_pyvals(ref, name, bufsize, errmask, errobj);
 }
 
-#define GETATTR(str, rstr) do {if (strcmp(name, #str) == 0)     \
-        return PyObject_HasAttrString(op, "__" #rstr "__");} while (0);
-
-static int
-_has_reflected_op(PyObject *op, const char *name)
-{
-    GETATTR(add, radd);
-    GETATTR(subtract, rsub);
-    GETATTR(multiply, rmul);
-    GETATTR(divide, rdiv);
-    GETATTR(true_divide, rtruediv);
-    GETATTR(floor_divide, rfloordiv);
-    GETATTR(remainder, rmod);
-    GETATTR(power, rpow);
-    GETATTR(left_shift, rlshift);
-    GETATTR(right_shift, rrshift);
-    GETATTR(bitwise_and, rand);
-    GETATTR(bitwise_xor, rxor);
-    GETATTR(bitwise_or, ror);
-    /* Comparisons */
-    GETATTR(equal, eq);
-    GETATTR(not_equal, ne);
-    GETATTR(greater, lt);
-    GETATTR(less, gt);
-    GETATTR(greater_equal, le);
-    GETATTR(less_equal, ge);
-    return 0;
-}
-
-#undef GETATTR
-
-
 /* Return the position of next non-white-space char in the string */
 static int
 _next_non_white_space(const char* str, int offset)
@@ -896,16 +864,122 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         }
     }
 
-    /*
-     * Indicate not implemented if there are flexible objects (structured
-     * type or string) but no object types and no registered struct
-     * dtype ufuncs.
-     *
-     * Not sure - adding this increased to 246 errors, 150 failures.
-     */
     if (any_flexible && !any_flexible_userloops && !any_object) {
-        return -2;
-
+        /* Traditionally, we return -2 here (meaning "NotImplemented") anytime
+         * we hit the above condition.
+         *
+         * This condition basically means "we are doomed", b/c the "flexible"
+         * dtypes -- strings and void -- cannot have their own ufunc loops
+         * registered (except via the special "flexible userloops" mechanism),
+         * and they can't be cast to anything except object (and we only cast
+         * to object if any_object is true). So really we should do nothing
+         * here and continue and let the proper error be raised. But, we can't
+         * quite yet, b/c of backcompat.
+         *
+         * Most of the time, this NotImplemented either got returned directly
+         * to the user (who can't do anything useful with it), or got passed
+         * back out of a special function like __mul__. And fortunately, for
+         * almost all special functions, the end result of this was a
+         * TypeError. Which is also what we get if we just continue without
+         * this special case, so this special case is unnecessary.
+         *
+         * The only thing that actually depended on the NotImplemented is
+         * array_richcompare, which did two things with it. First, it needed
+         * to see this NotImplemented in order to implement the special-case
+         * comparisons for
+         *
+         *    string < <= == != >= > string
+         *    void == != void
+         *
+         * Now it checks for those cases first, before trying to call the
+         * ufunc, so that's no problem. What it doesn't handle, though, is
+         * cases like
+         *
+         *    float < string
+         *
+         * or
+         *
+         *    float == void
+         *
+         * For those, it just let the NotImplemented bubble out, and accepted
+         * Python's default handling. And unfortunately, for comparisons,
+         * Python's default is *not* to raise an error. Instead, it returns
+         * something that depends on the operator:
+         *
+         *    ==         return False
+         *    !=         return True
+         *    < <= >= >  Python 2: use "fallback" (= weird and broken) ordering
+         *               Python 3: raise TypeError (hallelujah)
+         *
+         * In most cases this is straightforwardly broken, because comparison
+         * of two arrays should always return an array, and here we end up
+         * returning a scalar. However, there is an exception: if we are
+         * comparing two scalars for equality, then it actually is correct to
+         * return a scalar bool instead of raising an error. If we just
+         * removed this special check entirely, then "np.float64(1) == 'foo'"
+         * would raise an error instead of returning False, which is genuinely
+         * wrong.
+         *
+         * The proper end goal here is:
+         *   1) == and != should be implemented in a proper vectorized way for
+         *      all types. The short-term hack for this is just to add a
+         *      special case to PyUFunc_DefaultLegacyInnerLoopSelector where
+         *      if it can't find a comparison loop for the given types, and
+         *      the ufunc is np.equal or np.not_equal, then it returns a loop
+         *      that just fills the output array with False (resp. True). Then
+         *      array_richcompare could trust that whenever its special cases
+         *      don't apply, simply calling the ufunc will do the right thing,
+         *      even without this special check.
+         *   2) < <= >= > should raise an error if no comparison function can
+         *      be found. array_richcompare already handles all string <>
+         *      string cases, and void dtypes don't have ordering, so again
+         *      this would mean that array_richcompare could simply call the
+         *      ufunc and it would do the right thing (i.e., raise an error),
+         *      again without needing this special check.
+         *
+         * So this means that for the transition period, our goal is:
+         *   == and != on scalars should simply return NotImplemented like
+         *     they always did, since everything ends up working out correctly
+         *     in this case only
+         *   == and != on arrays should issue a FutureWarning and then return
+         *     NotImplemented
+         *   < <= >= > on all flexible dtypes on py2 should raise a
+         *     DeprecationWarning, and then return NotImplemented. On py3 we
+         *     skip the warning, though, b/c it would just be immediately be
+         *     followed by an exception anyway.
+         *
+         * And for all other operations, we let things continue as normal.
+         */
+        /* strcmp() is a hack but I think we can get away with it for this
+         * temporary measure.
+         */
+        if (!strcmp(ufunc_name, "equal")
+            || !strcmp(ufunc_name, "not_equal")) {
+            /* Warn on non-scalar, return NotImplemented regardless */
+            assert(nin == 2);
+            if (PyArray_NDIM(out_op[0]) != 0
+                || PyArray_NDIM(out_op[1]) != 0) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise comparison failed; returning scalar "
+                        "but in the future will perform elementwise "
+                        "comparison") < 0) {
+                    return -1;
+                }
+            }
+            return -2;
+        }
+        else if (!strcmp(ufunc_name, "less")
+                 || !strcmp(ufunc_name, "less_equal")
+                 || !strcmp(ufunc_name, "greater")
+                 || !strcmp(ufunc_name, "greater_equal")) {
+#if !defined(NPY_PY3K)
+            if (DEPRECATE("unorderable dtypes; returning scalar but in "
+                          "the future this will be an error") < 0) {
+                return -1;
+            }
+#endif
+            return -2;
+        }
     }
 
     /* Get positional output arguments */
@@ -2142,26 +2216,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /*
-     * FAIL with NotImplemented if the other object has
-     * the __r<op>__ method and has a higher priority than
-     * the current op (signalling it can handle ndarray's).
-    */
-    if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
-        PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_CheckExact(_obj)) {
-            double self_prio, other_prio;
-            self_prio = PyArray_GetPriority(PyTuple_GET_ITEM(args, 0),
-                                                        NPY_SCALAR_PRIORITY);
-            other_prio = PyArray_GetPriority(_obj, NPY_SCALAR_PRIORITY);
-            if (self_prio < other_prio &&
-                            _has_reflected_op(_obj, ufunc_name)) {
-                retval = -2;
-                goto fail;
-            }
-        }
-    }
-
 #if NPY_UF_DBG_TRACING
     printf("input types:\n");
     for (i = 0; i < nin; ++i) {
@@ -2518,27 +2572,6 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         trivial_loop_ok = check_for_trivial_loop(ufunc, op, dtypes, buffersize);
         if (trivial_loop_ok < 0) {
             goto fail;
-        }
-    }
-
-    /*
-     * FAIL with NotImplemented if the other object has
-     * the __r<op>__ method and has __array_priority__ as
-     * an attribute (signalling it can handle ndarray's)
-     * and is not already an ndarray or a subtype of the same type.
-    */
-    if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
-        PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_Check(_obj)) {
-            double self_prio, other_prio;
-            self_prio = PyArray_GetPriority(PyTuple_GET_ITEM(args, 0),
-                                                        NPY_SCALAR_PRIORITY);
-            other_prio = PyArray_GetPriority(_obj, NPY_SCALAR_PRIORITY);
-            if (self_prio < other_prio &&
-                            _has_reflected_op(_obj, ufunc_name)) {
-                retval = -2;
-                goto fail;
-            }
         }
     }
 
@@ -4222,13 +4255,15 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             return NULL;
         }
         else if (ufunc->nin == 2 && ufunc->nout == 1) {
-            /* To allow the other argument to be given a chance */
+            /* For array_richcompare's benefit -- see the long comment in
+             * get_ufunc_arguments.
+             */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
-                                        "Not implemented for this type");
+                            "XX can't happen, please report a bug XX");
             return NULL;
         }
     }

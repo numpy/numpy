@@ -1312,6 +1312,15 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         else {
             return _strings_richcompare(self, array_other, cmp_op, 0);
         }
+        /* If we reach this point, it means that we are not comparing
+         * string-to-string. It's possible that this will still work out,
+         * e.g. if the other array is an object array, then both will be cast
+         * to object or something? I don't know how that works actually, but
+         * it does, b/c this works:
+         *   l = ["a", "b"]
+         *   assert np.array(l, dtype="S1") == np.array(l, dtype="O")
+         * So we fall through and see what happens.
+         */
     }
 
     switch (cmp_op) {
@@ -1360,10 +1369,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              */
             if (array_other == NULL) {
                 PyErr_Clear();
-                if (DEPRECATE_FUTUREWARNING(
+                if (DEPRECATE(
                         "elementwise comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
+                        "instead; this will raise an error in the future.") < 0) {
                     return NULL;
                 }
                 Py_INCREF(Py_NotImplemented);
@@ -1445,10 +1453,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             */
             if (array_other == NULL) {
                 PyErr_Clear();
-                if (DEPRECATE_FUTUREWARNING(
+                if (DEPRECATE(
                         "elementwise comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
+                        "instead; this will raise an error in the future.") < 0) {
                     return NULL;
                 }
                 Py_INCREF(Py_NotImplemented);

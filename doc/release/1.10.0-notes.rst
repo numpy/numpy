@@ -20,19 +20,23 @@ Highlights
 * Addition of `nanprod` to the set of nanfunctions.
 * Support for the '@' operator in Python 3.5.
 
+Dropped Support:
 
-Dropped Support
-===============
 * The polytemplate.py file has been removed.
 * The _dotblas module is no longer available.
 * The testcalcs.py file has been removed.
 
+Future Changes:
 
-Future Changes
-==============
+* In array comparisons like ``arr1 == arr2``, many corner cases
+  involving strings or structured dtypes that used to return scalars
+  now issue ``FutureWarning`` or ``DeprecationWarning``, and in the
+  future will be change to either perform elementwise comparisons or
+  raise an error.
 * The SafeEval class will be removed.
 * The alterdot and restoredot functions will be removed.
 
+See below for more details on these changes.
 
 Compatibility notes
 ===================
@@ -276,6 +280,41 @@ array is writeable.
 
 Deprecations
 ============
+
+Array comparisons involving strings or structured dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Normally, comparison operations on arrays perform elementwise
+comparisons and return arrays of booleans. But in some corner cases,
+especially involving strings are structured dtypes, NumPy has
+historically returned a scalar instead. For example::
+
+  ### Current behaviour
+
+  np.arange(2) == "foo"
+  # -> False
+
+  np.arange(2) < "foo"
+  # -> True on Python 2, error on Python 3
+
+  np.ones(2, dtype="i4,i4") == np.ones(2, dtype="i4,i4,i4")
+  # -> False
+
+Continuing work started in 1.9, in 1.10 these comparisons will now
+raise ``FutureWarning`` or ``DeprecationWarning``, and in the future
+they will be modified to behave more consistently with other
+comparison operations, e.g.::
+
+  ### Future behaviour
+
+  np.arange(2) == "foo"
+  # -> array([False, False])
+
+  np.arange(2) < "foo"
+  # -> error, strings and numbers are not orderable
+
+  np.ones(2, dtype="i4,i4") == np.ones(2, dtype="i4,i4,i4")
+  # -> [False, False]
 
 SafeEval
 ~~~~~~~~
