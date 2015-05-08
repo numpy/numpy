@@ -5,6 +5,7 @@ to document how deprecations should eventually be turned into errors.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
 import operator
 import warnings
 
@@ -382,8 +383,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
     Also test FutureWarning for the None comparison.
     """
 
-    message = "elementwise comparison failed; " \
-              "this will raise an error in the future."
+    message = "elementwise.* comparison failed; .*"
 
     def test_normal_types(self):
         for op in (operator.eq, operator.ne):
@@ -442,6 +442,52 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # it has to be considered when the deprecations is done.
         assert_(np.equal(np.datetime64('NaT'), None))
 
+    def test_void_dtype_equality_failures(self):
+        class NotArray(object):
+            def __array__(self):
+                raise TypeError
+
+        self.assert_deprecated(lambda: np.arange(2) == NotArray())
+        self.assert_deprecated(lambda: np.arange(2) != NotArray())
+
+        struct1 = np.zeros(2, dtype="i4,i4")
+        struct2 = np.zeros(2, dtype="i4,i4,i4")
+
+        assert_warns(FutureWarning, lambda: struct1 == 1)
+        assert_warns(FutureWarning, lambda: struct1 == struct2)
+        assert_warns(FutureWarning, lambda: struct1 != 1)
+        assert_warns(FutureWarning, lambda: struct1 != struct2)
+
+    def test_array_richcompare_legacy_weirdness(self):
+        # It doesn't really work to use assert_deprecated here, b/c part of
+        # the point of assert_deprecated is to check that when warnings are
+        # set to "error" mode then the error is propagated -- which is good!
+        # But here we are testing a bunch of code that is deprecated *because*
+        # it has the habit of swallowing up errors and converting them into
+        # different warnings. So assert_warns will have to be sufficient.
+        assert_warns(FutureWarning, lambda: np.arange(2) == "a")
+        assert_warns(FutureWarning, lambda: np.arange(2) != "a")
+        # No warning for scalar comparisons
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+            assert_(not (np.array(0) == "a"))
+            assert_(np.array(0) != "a")
+            assert_(not (np.int16(0) == "a"))
+            assert_(np.int16(0) != "a")
+
+        for arg1 in [np.asarray(0), np.int16(0)]:
+            struct = np.zeros(2, dtype="i4,i4")
+            for arg2 in [struct, "a"]:
+                for f in [operator.lt, operator.le, operator.gt, operator.ge]:
+                    if sys.version_info[0] >= 3:
+                        # py3
+                        with warnings.catch_warnings() as l:
+                            warnings.filterwarnings("always")
+                            assert_raises(TypeError, f, arg1, arg2)
+                            assert not l
+                    else:
+                        # py2
+                        assert_warns(DeprecationWarning, f, arg1, arg2)
 
 class TestIdentityComparisonDeprecations(_DeprecationTestCase):
     """This tests the equal and not_equal object ufuncs identity check
