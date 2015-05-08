@@ -17,9 +17,11 @@ from __future__ import division, absolute_import, print_function
 import sys
 from setuptools import setup
 
-if sys.version_info[0] >= 3:
+if sys.version_info[:2] >= (3, 4):
+    from importlib.machinery import SourceFileLoader
+    setupfile = SourceFileLoader('setupfile', 'setup.py').load_module()
+    setupfile.setup_package()
+else:
     import imp
     setupfile = imp.load_source('setupfile', 'setup.py')
     setupfile.setup_package()
-else:
-    exec(compile(open('setup.py').read(), 'setup.py', 'exec'))

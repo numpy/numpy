@@ -56,8 +56,9 @@ sys.path.pop(0)
 import shutil
 import subprocess
 import time
-import imp
+import types
 from argparse import ArgumentParser, REMAINDER
+
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
@@ -132,7 +133,7 @@ def main(argv):
             sys.argv = extra_argv
             with open(extra_argv[0], 'r') as f:
                 script = f.read()
-            sys.modules['__main__'] = imp.new_module('__main__')
+            sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
                       __file__=extra_argv[0])
             exec_(script, ns)
