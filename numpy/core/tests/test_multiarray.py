@@ -13,6 +13,7 @@ if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
+    range = xrange
 from decimal import Decimal
 
 
@@ -304,6 +305,17 @@ class TestArrayConstruction(TestCase):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
+    def test_array_iter(self):
+        assert_array_equal(np.array(x for x in range(3)), [0, 1, 2])
+
+        arr = np.array(map(np.sqrt, [0, 1, 4]), dtype='float')
+        assert_array_equal(arr, [0, 1, 2])
+
+        arr = np.array((x for x in [0, 'abc', 2.7]), dtype='object')
+        assert_array_equal(arr, np.array([0, 'abc', 2.7], dtype='object'))
+
+        arr = np.array(x for x in [range(2), range(2, 4)])
+        assert_array_equal(arr, [[0, 1], [2, 3]])
 
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):

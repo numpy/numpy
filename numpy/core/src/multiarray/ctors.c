@@ -1639,6 +1639,34 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 
     /* Anything can be viewed as an object, unless it needs to be writeable */
     if (!writeable) {
+        /*
+         * PyIter_Check returns false positive for python 2 old-style
+         * instances;
+         */
+#if defined(NPY_PY3K)
+        if (PyIter_Check(op)) {
+#else
+        if (PyIter_Check(op) && !PyInstance_Check(op)) {
+#endif
+            /* PyArray_FromIter needs type & does not like 'object' type */
+            if (requested_dtype != NULL &&
+                    !PyDataType_REFCHK(requested_dtype)) {
+                Py_INCREF(requested_dtype);
+                *out_arr = (PyArrayObject *)
+                    PyArray_FromIter(op, requested_dtype, -1);
+            }
+            else {
+                PyObject *list = PySequence_List(op);
+                if (list == NULL) {
+                    return -1;
+                }
+                Py_XINCREF(requested_dtype);
+                *out_arr = (PyArrayObject *) PyArray_FromAny(list,
+                        requested_dtype, 0, 0, NPY_ARRAY_DEFAULT, context);
+                Py_DECREF(list);
+            }
+            return (*out_arr) == NULL ? -1 : 0;
+        }
         *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
         if (*out_dtype == NULL) {
             return -1;
