@@ -46,10 +46,22 @@ class build_ext (old_build_ext):
         self.fcompiler = None
 
     def finalize_options(self):
-        incl_dirs = self.include_dirs
+        # Ensure that self.include_dirs and self.distribution.include_dirs
+        # refer to the same list object. finalize_options will modify
+        # self.include_dirs, but self.distribution.include_dirs is used
+        # during the actual build.
+        # self.include_dirs is None unless paths are specified with
+        # --include-dirs.
+        # The include paths will be passed to the compiler in the order:
+        # numpy paths, --include-dirs paths, Python include path.
+        if isinstance(self.include_dirs, str):
+            self.include_dirs = self.include_dirs.split(os.pathsep)
+        incl_dirs = self.include_dirs or []
+        if self.distribution.include_dirs is None:
+            self.distribution.include_dirs = []
+        self.include_dirs = self.distribution.include_dirs
+        self.include_dirs.extend(incl_dirs)
         old_build_ext.finalize_options(self)
-        if incl_dirs is not None:
-            self.include_dirs.extend(self.distribution.include_dirs or [])
 
     def run(self):
         if not self.extensions:
