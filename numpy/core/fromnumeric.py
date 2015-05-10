@@ -1770,6 +1770,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
 
+    The sum of an empty array is the neutral element 0:
+
+    >>> np.sum([])
+    0.0
+
     Examples
     --------
     >>> np.sum([0.5, 1.5])
@@ -2412,6 +2417,11 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
     >>> x = np.array([536870910, 536870910, 536870910, 536870910])
     >>> np.prod(x) #random
     16
+
+    The product of an empty array is the neutral element 1:
+
+    >>> np.prod([])
+    1.0
 
     Examples
     --------
