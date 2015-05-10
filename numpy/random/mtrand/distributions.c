@@ -199,7 +199,20 @@ double rk_beta(rk_state *state, double a, double b)
 
             if ((X + Y) <= 1.0)
             {
-                return X / (X + Y);
+                if (X +Y > 0)
+                {
+                    return X / (X + Y);
+                }
+                else
+                {
+                    double logX = log(U) / a;
+                    double logY = log(V) / b;
+                    double logM = logX > logY ? logX : logY;
+                    logX -= logM;
+                    logY -= logM;
+
+                    return exp(logX - log(exp(logX) + exp(logY)));
+                }
             }
         }
     }

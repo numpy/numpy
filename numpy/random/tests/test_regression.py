@@ -93,5 +93,13 @@ class TestRegression(TestCase):
         np.random.multivariate_normal([0], [[0]], size=np.int_(1))
         np.random.multivariate_normal([0], [[0]], size=np.int64(1))
 
+    def test_beta_small_parameters(self):
+        # Test that beta with small a and b parameters does not produce
+        # NaNs due to roundoff errors causing 0 / 0, gh-5851
+        np.random.seed(1234567890)
+        x = np.random.beta(0.0001, 0.0001, size=100)
+        assert_(not np.any(np.isnan(x)), 'Nans in np.random.beta')
+
+
 if __name__ == "__main__":
     run_module_suite()
