@@ -59,10 +59,21 @@ Previously, a view was returned except when no change was made in the order
 of the axes, in which case the input array was returned.  A view is now
 returned in all cases.
 
+*nonzero* now returns base ndarrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, an inconsistency existed between 1-D inputs (returning a
+base ndarray) and higher dimensional ones (which preserved subclasses).
+Behavior has been unified, and the return will now be a base ndarray.
+Subclasses can still override this behavior by providing their own
+*nonzero* method.
+
 C API
 ~~~~~
 The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
 which now returns a view in all cases.
+
+The changes to *nonzero* also apply to the *PyArray_Nonzero* C function,
+which now returns a base ndarray in all cases.
 
 The dtype structure (PyArray_Descr) has a new member at the end to cache
 its hash value.  This shouldn't affect any well-written applications.

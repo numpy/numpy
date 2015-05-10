@@ -2331,36 +2331,27 @@ finish:
     }
 
     /* Create views into ret, one for each dimension */
-    if (ndim == 1) {
-        /* Directly switch to one dimensions (dimension 1 is 1 anyway) */
-        ((PyArrayObject_fields *)ret)->nd = 1;
-        PyTuple_SET_ITEM(ret_tuple, 0, (PyObject *)ret);
-    }
-    else {
-        for (i = 0; i < ndim; ++i) {
-            PyArrayObject *view;
-            npy_intp stride = ndim * NPY_SIZEOF_INTP;
+    for (i = 0; i < ndim; ++i) {
+        npy_intp stride = ndim * NPY_SIZEOF_INTP;
 
-            view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,
-                                &nonzero_count,
-                                NPY_INTP, &stride,
-                                PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
-                                0, 0, (PyObject *)self);
-            if (view == NULL) {
-                Py_DECREF(ret);
-                Py_DECREF(ret_tuple);
-                return NULL;
-            }
-            Py_INCREF(ret);
-            if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
-                Py_DECREF(ret);
-                Py_DECREF(ret_tuple);
-            }
-            PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)view);
+        PyArrayObject *view = (PyArrayObject *)PyArray_New(Py_TYPE(ret), 1,
+                                    &nonzero_count, NPY_INTP, &stride,
+                                    PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
+                                    0, PyArray_FLAGS(ret), (PyObject *)ret);
+        if (view == NULL) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_tuple);
+            return NULL;
         }
-
-        Py_DECREF(ret);
+        Py_INCREF(ret);
+        if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_tuple);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)view);
     }
+    Py_DECREF(ret);
 
     return ret_tuple;
 }

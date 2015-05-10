@@ -17,8 +17,8 @@ class TestRegression(TestCase):
         assert_(type(a.real) is np.matrix)
         assert_(type(a.imag) is np.matrix)
         c, d = np.matrix([0.0]).nonzero()
-        assert_(type(c) is np.matrix)
-        assert_(type(d) is np.matrix)
+        assert_(type(c) is np.ndarray)
+        assert_(type(d) is np.ndarray)
 
     def test_matrix_multiply_by_1d_vector(self, level=rlevel) :
         """Ticket #473"""
