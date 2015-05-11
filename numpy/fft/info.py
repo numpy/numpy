@@ -116,7 +116,15 @@ The inverse DFT is defined as
    \\qquad m = 0,\\ldots,n-1.
 
 It differs from the forward transform by the sign of the exponential
-argument and the normalization by :math:`1/n`.
+argument and the default normalization by :math:`1/n`.
+
+Normalization
+-------------
+The default normalization has the direct transforms unscaled and the inverse
+transforms are scaled by :math:`1/n`. It is possible to obtain unitary
+transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is
+`None`) so that both direct and inverse transforms will be scaled by
+:math:`1/\\sqrt{n}`.
 
 Real and Hermitian transforms
 -----------------------------
