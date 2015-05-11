@@ -5569,7 +5569,7 @@ class MaskedArray(ndarray):
             When `tofile` is called.
 
         """
-        raise NotImplementedError("Not implemented yet, sorry...")
+        raise NotImplementedError("MaskedArray.tofile() not implemented yet.")
 
     def toflex(self):
         """
@@ -7277,7 +7277,7 @@ def loads(strg):
 
 ################################################################################
 def fromfile(file, dtype=float, count= -1, sep=''):
-    raise NotImplementedError("Not yet implemented. Sorry")
+    raise NotImplementedError("fromfile() not yet implemented for a MaskedArray.")
 
 
 def fromflex(fxarray):
