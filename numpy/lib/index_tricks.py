@@ -404,7 +404,7 @@ class RClass(AxisConcatenator):
 
     See Also
     --------
-    concatenate : Join a sequence of arrays together.
+    concatenate : Join a sequence of arrays along an existing axis.
     c_ : Translates slice objects to concatenation along the second axis.
 
     Examples

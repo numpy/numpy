@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
+           'stack']
 
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
@@ -196,9 +197,10 @@ def vstack(tup):
 
     See Also
     --------
+    stack : Join a sequence of arrays along a new axis.
     hstack : Stack arrays in sequence horizontally (column wise).
     dstack : Stack arrays in sequence depth wise (along third dimension).
-    concatenate : Join a sequence of arrays together.
+    concatenate : Join a sequence of arrays along an existing axis.
     vsplit : Split array into a list of multiple sub-arrays vertically.
 
     Notes
@@ -246,9 +248,10 @@ def hstack(tup):
 
     See Also
     --------
+    stack : Join a sequence of arrays along a new axis.
     vstack : Stack arrays in sequence vertically (row wise).
     dstack : Stack arrays in sequence depth wise (along third axis).
-    concatenate : Join a sequence of arrays together.
+    concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
 
     Notes
@@ -275,3 +278,73 @@ def hstack(tup):
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
+
+def stack(arrays, axis=0):
+    """
+    Join a sequence of arrays along a new axis.
+
+    The `axis` parameter specifies the index of the new axis in the dimensions
+    of the result. For example, if ``axis=0`` it will be the first dimension
+    and if ``axis=-1`` it will be the last dimension.
+
+    .. versionadded:: 1.10.0
+
+    Parameters
+    ----------
+    arrays : sequence of array_like
+        Each array must have the same shape.
+    axis : int, optional
+        The axis in the result array along which the input arrays are stacked.
+
+    Returns
+    -------
+    stacked : ndarray
+        The stacked array has one more dimension than the input arrays.
+
+    See Also
+    --------
+    concatenate : Join a sequence of arrays along an existing axis.
+    split : Split array into a list of multiple sub-arrays of equal size.
+
+    Examples
+    --------
+    >>> arrays = [np.random.randn(3, 4) for _ in range(10)]
+    >>> np.stack(arrays, axis=0).shape
+    (10, 3, 4)
+
+    >>> np.stack(arrays, axis=1).shape
+    (3, 10, 4)
+
+    >>> np.stack(arrays, axis=2).shape
+    (3, 4, 10)
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([2, 3, 4])
+    >>> np.stack((a, b))
+    array([[1, 2, 3],
+           [2, 3, 4]])
+
+    >>> np.stack((a, b), axis=-1)
+    array([[1, 2],
+           [2, 3],
+           [3, 4]])
+
+    """
+    arrays = [asanyarray(arr) for arr in arrays]
+    if not arrays:
+        raise ValueError('need at least one array to stack')
+
+    shapes = set(arr.shape for arr in arrays)
+    if len(shapes) != 1:
+        raise ValueError('all input arrays must have the same shape')
+
+    result_ndim = arrays[0].ndim + 1
+    if not -result_ndim <= axis < result_ndim:
+        msg = 'axis {0} out of bounds [-{1}, {1})'.format(axis, result_ndim)
+        raise IndexError(msg)
+    if axis < 0:
+        axis += result_ndim
+
+    sl = (slice(None),) * axis + (_nx.newaxis,)
+    expanded_arrays = [arr[sl] for arr in arrays]
+    return _nx.concatenate(expanded_arrays, axis=axis)

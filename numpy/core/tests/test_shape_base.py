@@ -3,9 +3,9 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
-                           assert_equal, run_module_suite)
+                           assert_equal, run_module_suite, assert_raises_regex)
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
-                        vstack, hstack, newaxis, concatenate)
+                        vstack, hstack, newaxis, concatenate, stack)
 from numpy.compat import long
 
 class TestAtleast1d(TestCase):
@@ -244,6 +244,57 @@ def test_concatenate_sloppy0():
         # Confirm DeprecationWarning raised
         warnings.simplefilter('error', DeprecationWarning)
         assert_raises(DeprecationWarning, concatenate, (r4, r3), 10)
+
+
+def test_stack():
+    # 0d input
+    for input_ in [(1, 2, 3),
+                   [np.int32(1), np.int32(2), np.int32(3)],
+                   [np.array(1), np.array(2), np.array(3)]]:
+        assert_array_equal(stack(input_), [1, 2, 3])
+    # 1d input examples
+    a = np.array([1, 2, 3])
+    b = np.array([4, 5, 6])
+    r1 = array([[1, 2, 3], [4, 5, 6]])
+    assert_array_equal(np.stack((a, b)), r1)
+    assert_array_equal(np.stack((a, b), axis=1), r1.T)
+    # all input types
+    assert_array_equal(np.stack(list([a, b])), r1)
+    assert_array_equal(np.stack(array([a, b])), r1)
+    # all shapes for 1d input
+    arrays = [np.random.randn(3) for _ in range(10)]
+    axes = [0, 1, -1, -2]
+    expected_shapes = [(10, 3), (3, 10), (3, 10), (10, 3)]
+    for axis, expected_shape in zip(axes, expected_shapes):
+        assert_equal(np.stack(arrays, axis).shape, expected_shape)
+    assert_raises_regex(IndexError, 'out of bounds', stack, arrays, axis=2)
+    assert_raises_regex(IndexError, 'out of bounds', stack, arrays, axis=-3)
+    # all shapes for 2d input
+    arrays = [np.random.randn(3, 4) for _ in range(10)]
+    axes = [0, 1, 2, -1, -2, -3]
+    expected_shapes = [(10, 3, 4), (3, 10, 4), (3, 4, 10),
+                        (3, 4, 10), (3, 10, 4), (10, 3, 4)]
+    for axis, expected_shape in zip(axes, expected_shapes):
+        assert_equal(np.stack(arrays, axis).shape, expected_shape)
+    # empty arrays
+    assert stack([[], [], []]).shape == (3, 0)
+    assert stack([[], [], []], axis=1).shape == (0, 3)
+    # edge cases
+    assert_raises_regex(ValueError, 'need at least one array', stack, [])
+    assert_raises_regex(ValueError, 'must have the same shape',
+                        stack, [1, np.arange(3)])
+    assert_raises_regex(ValueError, 'must have the same shape',
+                        stack, [np.arange(3), 1])
+    assert_raises_regex(ValueError, 'must have the same shape',
+                        stack, [np.arange(3), 1], axis=1)
+    assert_raises_regex(ValueError, 'must have the same shape',
+                        stack, [np.zeros((3, 3)), np.zeros(3)], axis=1)
+    assert_raises_regex(ValueError, 'must have the same shape',
+                        stack, [np.arange(2), np.arange(3)])
+    # np.matrix
+    m = np.matrix([[1, 2], [3, 4]])
+    assert_raises_regex(ValueError, 'shape too large to be a matrix',
+                        stack, [m, m])
 
 
 if __name__ == "__main__":

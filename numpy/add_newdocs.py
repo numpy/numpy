@@ -1142,7 +1142,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     """
     concatenate((a1, a2, ...), axis=0)
 
-    Join a sequence of arrays together.
+    Join a sequence of arrays along an existing axis.
 
     Parameters
     ----------
@@ -1166,6 +1166,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     hsplit : Split array into multiple sub-arrays horizontally (column wise)
     vsplit : Split array into multiple sub-arrays vertically (row wise)
     dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
+    stack : Stack a sequence of arrays along a new axis.
     hstack : Stack arrays in sequence horizontally (column wise)
     vstack : Stack arrays in sequence vertically (row wise)
     dstack : Stack arrays in sequence depth wise (along third dimension)
