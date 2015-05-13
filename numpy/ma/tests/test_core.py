@@ -30,6 +30,11 @@ pi = np.pi
 class TestMaskedArray(TestCase):
     # Base test class for MaskedArrays.
 
+    # Python 2.6 compatibility
+    if not hasattr(TestCase, 'assertIsInstance'):
+        def assertIsInstance(self, obj, cls):
+            self.assertTrue(isinstance(obj, cls)
+
     def setUp(self):
         # Base data definition.
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
@@ -725,6 +730,16 @@ class TestMaskedArrayArithmetic(TestCase):
         ma = array([1])
         self.assertTrue(isinstance(na + ma, MaskedArray))
         self.assertTrue(isinstance(ma + na, MaskedArray))
+
+        class X(int):
+            __array_priority__ = 20
+            def __radd__(self, other):
+                return X()
+            __rsub__ = __rmul__ = __radd__
+            
+        self.assertIsInstance(ma + X(), X)
+        self.assertIsInstance(ma - X(), X)
+        self.assertIsInstance(ma * X(), X)
 
     def test_limits_arithmetic(self):
         tiny = np.finfo(float).tiny

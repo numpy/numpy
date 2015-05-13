@@ -24,7 +24,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings
-from functools import reduce
+from functools import reduce, partial
 
 import numpy as np
 import numpy.core.umath as umath
@@ -894,7 +894,7 @@ class _MaskedUnaryOperation:
 
 
 
-class _MaskedBinaryOperation:
+class _MaskedBinaryOperation(object):
     """
     Define masked version of binary operations, where invalid
     values are pre-masked.
@@ -911,22 +911,32 @@ class _MaskedBinaryOperation:
         Filling value for the first argument, default is 0.
     filly : scalar, optional
         Filling value for the second argument, default is 0.
-
+    op    : bool, optional
+        Set to true when used in (non-reversed) binary operators.
     """
-    def __init__ (self, mbfunc, fillx=0, filly=0):
+    def __init__ (self, mbfunc, fillx=0, filly=0, op=False):
         """abfunc(fillx, filly) must be defined.
            abfunc(x, filly) = x for all x to enable reduce.
         """
         self.f = mbfunc
         self.fillx = fillx
         self.filly = filly
+        self.op = op
         self.__doc__ = getattr(mbfunc, "__doc__", str(mbfunc))
         self.__name__ = getattr(mbfunc, "__name__", str(mbfunc))
         ufunc_domain[mbfunc] = None
         ufunc_fills[mbfunc] = (fillx, filly)
 
+    def __get__(self, obj, type=None):
+        return partial(self, obj)
+
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
+        # Check array priority
+        if self.op:
+            pb = getattr(b, '__array_priority__', None)
+            if pb is not None and pb > a.__array_priority__:
+                return NotImplemented
         # Get the data, as ndarray
         (da, db) = (getdata(a, subok=False), getdata(b, subok=False))
         # Get the mask
@@ -3744,35 +3754,32 @@ class MaskedArray(ndarray):
                 check._mask = mask
         return check
     #
-    def __add__(self, other):
-        "Add other to self, and return a new masked array."
-        return add(self, other)
+    __add__ = _MaskedBinaryOperation(umath.add, op=True)
+    __add__.__doc__ = "Add other to self, and return a new masked array."
     #
     def __radd__(self, other):
         "Add other to self, and return a new masked array."
         return add(self, other)
     #
-    def __sub__(self, other):
-        "Subtract other to self, and return a new masked array."
-        return subtract(self, other)
+    __sub__ = _MaskedBinaryOperation(umath.subtract, op=True)
+    __sub__.__doc__ = "Subtract other to self, and return a new masked array."
     #
     def __rsub__(self, other):
         "Subtract other to self, and return a new masked array."
         return subtract(other, self)
     #
-    def __mul__(self, other):
-        "Multiply other by self, and return a new masked array."
-        return multiply(self, other)
+    __mul__ = _MaskedBinaryOperation(umath.multiply, op=True)
+    __mul__.__doc__ = "Multiply other to self, and return a new masked array."
     #
     def __rmul__(self, other):
         "Multiply other by self, and return a new masked array."
         return multiply(self, other)
     #
-    def __div__(self, other):
+    def __div__(self, other, op=True):
         "Divide other into self, and return a new masked array."
         return divide(self, other)
     #
-    def __truediv__(self, other):
+    def __truediv__(self, other, op=True):
         "Divide other into self, and return a new masked array."
         return true_divide(self, other)
     #
@@ -3780,7 +3787,7 @@ class MaskedArray(ndarray):
         "Divide other into self, and return a new masked array."
         return true_divide(other, self)
     #
-    def __floordiv__(self, other):
+    def __floordiv__(self, other, op=True):
         "Divide other into self, and return a new masked array."
         return floor_divide(self, other)
     #
@@ -3788,7 +3795,7 @@ class MaskedArray(ndarray):
         "Divide other into self, and return a new masked array."
         return floor_divide(other, self)
     #
-    def __pow__(self, other):
+    def __pow__(self, other, op=True):
         "Raise self to the power other, masking the potential NaNs/Infs"
         return power(self, other)
     #
