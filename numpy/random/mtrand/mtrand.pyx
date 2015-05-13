@@ -4602,6 +4602,141 @@ cdef class RandomState:
 
         return diric
 
+    def dirichlet2(self, object alpha, size=None):
+        """
+        dirichlet2(alpha, size=None)
+
+        Draw samples from the Dirichlet distribution.
+
+        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Dirichlet-distributed random variable can be seen as a multivariate
+        generalization of a Beta distribution. Dirichlet pdf is the conjugate
+        prior of a multinomial in Bayesian inference.
+
+        Parameters
+        ----------
+        alpha : array
+            Parameter of the distribution (k dimension for sample of
+            dimension k).
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+
+        Returns
+        -------
+        samples : ndarray,
+            The drawn samples, of shape (size, alpha.ndim).
+
+        Notes
+        -----
+        .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
+
+        Uses the following property for computation: for each dimension,
+        draw a random sample y_i from a standard gamma generator of shape
+        `alpha_i`, then
+        :math:`X = \\frac{1}{\\sum_{i=1}^k{y_i}} (y_1, \\ldots, y_n)` is
+        Dirichlet distributed.
+
+        References
+        ----------
+        .. [1] David McKay, "Information Theory, Inference and Learning
+               Algorithms," chapter 23,
+               http://www.inference.phy.cam.ac.uk/mackay/
+        .. [2] Wikipedia, "Dirichlet distribution",
+               http://en.wikipedia.org/wiki/Dirichlet_distribution
+
+        Examples
+        --------
+        Taking an example cited in Wikipedia, this distribution can be used if
+        one wanted to cut strings (each of initial length 1.0) into K pieces
+        with different lengths, where each piece had, on average, a designated
+        average length, but allowing some variation in the relative sizes of
+        the pieces.
+
+        >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
+
+        >>> plt.barh(range(20), s[0])
+        >>> plt.barh(range(20), s[1], left=s[0], color='g')
+        >>> plt.barh(range(20), s[2], left=s[0]+s[1], color='r')
+        >>> plt.title("Lengths of Strings")
+
+        """
+
+        #=================
+        # Pure python algo
+        #=================
+        #alpha   = N.atleast_1d(alpha)
+        #k       = alpha.size
+
+        #if n == 1:
+        #    val = N.zeros(k)
+        #    for i in range(k):
+        #        val[i]   = sgamma(alpha[i], n)
+        #    val /= N.sum(val)
+        #else:
+        #    val = N.zeros((k, n))
+        #    for i in range(k):
+        #        val[i]   = sgamma(alpha[i], n)
+        #    val /= N.sum(val, axis = 0)
+        #    val = val.T
+
+        #return val
+
+        cdef npy_intp   k
+        cdef npy_intp   totsize
+        cdef ndarray    alpha_arr, val_arr
+        cdef double     *alpha_data
+        cdef double     *val_data
+        cdef npy_intp   i, j
+        cdef double     acc, invacc
+
+        cdef double alpha_max
+        cdef double alpha_sum
+
+        k           = len(alpha)
+        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        alpha_data  = <double*>PyArray_DATA(alpha_arr)
+
+        shape = _shape_from_size(size, k)
+
+        diric   = np.zeros(shape, np.float64)
+        val_arr = <ndarray>diric
+        val_data= <double*>PyArray_DATA(val_arr)        
+
+        i = 0
+        totsize = PyArray_SIZE(val_arr)
+        alpha_max = alpha_arr.max()
+
+        if alpha_max < 1.0:
+            alpha_sum = alpha_arr.sum()
+            """Generation via beta-RVs"""            
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 1.0
+                    invacc = alpha_sum
+                    for j from 0<= j < k-1:
+                        invacc -= alpha_data[j]
+                        val_data[i+j] = acc * rk_beta(self.internal_state, alpha_data[j], invacc)
+                        acc = acc - val_data[i+j]
+                    val_data[i+(k-1)] = acc
+                    i = i+k
+
+        else:                       
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 0.0
+                    for j from 0 <= j < k:
+                        val_data[i+j]   = rk_standard_gamma(self.internal_state,
+                                                            alpha_data[j])
+                        acc             = acc + val_data[i+j]
+                    invacc  = 1/acc
+                    for j from 0 <= j < k:
+                        val_data[i+j]   = val_data[i+j] * invacc
+                    i = i + k
+
+        return diric
+
     # Shuffling and permutations:
     def shuffle(self, object x):
         """
@@ -4755,6 +4890,7 @@ logseries = _rand.logseries
 multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
 dirichlet = _rand.dirichlet
+dirichlet2 = _rand.dirichlet2
 
 shuffle = _rand.shuffle
 permutation = _rand.permutation
