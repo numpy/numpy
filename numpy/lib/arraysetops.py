@@ -31,7 +31,7 @@ import numpy as np
 
 __all__ = [
     'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
-    'in1d'
+    'in1d', 'cartesian'
     ]
 
 
@@ -476,3 +476,55 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+
+
+def cartesian(arrays, out=None):
+    """
+    Generate a cartesian product of the input arrays.
+
+    Parameters
+    ----------
+    arrays : list of array-like
+        1-D arrays to form the cartesian product of.
+    out : ndarray
+        Array to place the cartesian product in.
+
+    Returns
+    -------
+    out : ndarray
+        2-D array of shape (M, len(arrays)) containing the cartesian products
+        formed of the input arrays.
+
+    Examples
+    --------
+    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
+    array([[1, 4, 6],
+           [1, 4, 7],
+           [1, 5, 6],
+           [1, 5, 7],
+           [2, 4, 6],
+           [2, 4, 7],
+           [2, 5, 6],
+           [2, 5, 7],
+           [3, 4, 6],
+           [3, 4, 7],
+           [3, 5, 6],
+           [3, 5, 7]])
+
+    """
+    arrays = [np.asarray(x).ravel() for x in arrays]
+    dtype = np.result_type(*arrays)
+
+    n = np.prod([arr.size for arr in arrays])
+    if out is None:
+        out = np.empty((len(arrays), n), dtype=dtype)
+    else:
+        out = out.T
+
+    for j, arr in enumerate(arrays):
+        n /= arr.size
+        out.shape = (len(arrays), -1, arr.size, n)
+        out[j] = arr[np.newaxis, :, np.newaxis]
+    out.shape = (len(arrays), -1)
+
+    return out.T

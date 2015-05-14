@@ -6,10 +6,11 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_array_equal, assert_equal
-    )
+)
 from numpy.lib.arraysetops import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
-    )
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d,
+    cartesian,
+)
 
 
 class TestSetOps(TestCase):
@@ -303,6 +304,39 @@ class TestSetOps(TestCase):
         aux2 = union1d(a, b)
         c2 = setdiff1d(aux2, aux1)
         assert_array_equal(c1, c2)
+
+
+class TestCartesian(TestCase):
+    def test_one_array(self):
+        x = np.array([0, 1])
+        assert_array_equal(cartesian([x]), x)
+
+    def test_two_arrays(self):
+        x = np.array([0, 1])
+        assert_array_equal(cartesian([x, x]),
+                           np.array([[0,  0],
+                                     [0,  1],
+                                     [1,  0],
+                                     [1,  1]]))
+
+    def test_three_arrays(self):
+        x = np.array([0, 1])
+        assert_array_equal(cartesian([x, x, x]),
+                           np.array([[0,  0,  0],
+                                     [0,  0,  1],
+                                     [0,  1,  0],
+                                     [0,  1,  1],
+                                     [1,  0,  0],
+                                     [1,  0,  1],
+                                     [1,  1,  0],
+                                     [1,  1,  1]]))
+
+    def test_valid_out_parameter(self):
+        x = np.array([0, 1])
+        out = np.empty((4, 2))
+        cartesian([x, x], out=out)
+        expected = np.array([[0,  0], [0,  1], [1,  0], [1,  1]])
+        assert_array_equal(out, expected)
 
 
 if __name__ == "__main__":
