@@ -2006,13 +2006,12 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
     # Determine the normalization
     if w is None:
         fact = float(X.shape[1] - ddof)
+    elif ddof == 0:
+        fact = w_sum
+    elif aweights is None:
+        fact = w_sum - ddof
     else:
-        if ddof == 0:
-            fact = w_sum
-        elif aweights is None:
-            fact = w_sum - ddof
-        else:
-            fact = w_sum - ddof*sum(w*aweights)/w_sum
+        fact = w_sum - ddof*sum(w*aweights)/w_sum
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
