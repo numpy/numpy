@@ -522,7 +522,7 @@ def cartesian(arrays, out=None):
         out = out.T
 
     for j, arr in enumerate(arrays):
-        n /= arr.size
+        n //= arr.size
         out.shape = (len(arrays), -1, arr.size, n)
         out[j] = arr[np.newaxis, :, np.newaxis]
     out.shape = (len(arrays), -1)
