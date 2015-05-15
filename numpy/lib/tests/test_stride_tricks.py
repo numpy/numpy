@@ -273,6 +273,11 @@ def test_broadcast_shape():
     assert_equal(_broadcast_shape(*([np.ones((1, 2))] * 32)), (1, 2))
     assert_equal(_broadcast_shape(*([np.ones((1, 2))] * 100)), (1, 2))
 
+    # regression tests for gh-5862
+    assert_equal(_broadcast_shape(*([np.ones(2)] * 32 + [1])), (2,))
+    bad_args = [np.ones(2)] * 32 + [np.ones(3)] * 32
+    assert_raises(ValueError, lambda: _broadcast_shape(*bad_args))
+
 
 def test_as_strided():
     a = np.array([None])
