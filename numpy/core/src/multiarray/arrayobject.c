@@ -1370,7 +1370,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (array_other == NULL) {
                 PyErr_Clear();
                 if (DEPRECATE(
-                        "elementwise comparison failed and returning scalar "
+                        "elementwise == comparison failed and returning scalar "
                         "instead; this will raise an error in the future.") < 0) {
                     return NULL;
                 }
@@ -1384,7 +1384,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (_res == 0) {
                 Py_DECREF(array_other);
                 if (DEPRECATE_FUTUREWARNING(
-                        "elementwise comparison failed and returning scalar "
+                        "elementwise == comparison failed and returning scalar "
                         "instead; this will raise an error or perform "
                         "elementwise comparison in the future.") < 0) {
                     return NULL;
@@ -1418,7 +1418,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * is not possible.
              */
             PyErr_Clear();
-            if (DEPRECATE("elementwise comparison failed; "
+            if (DEPRECATE("elementwise == comparison failed; "
                           "this will raise an error in the future.") < 0) {
                 return NULL;
             }
@@ -1454,7 +1454,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (array_other == NULL) {
                 PyErr_Clear();
                 if (DEPRECATE(
-                        "elementwise comparison failed and returning scalar "
+                        "elementwise != comparison failed and returning scalar "
                         "instead; this will raise an error in the future.") < 0) {
                     return NULL;
                 }
@@ -1468,7 +1468,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (_res == 0) {
                 Py_DECREF(array_other);
                 if (DEPRECATE_FUTUREWARNING(
-                        "elementwise comparison failed and returning scalar "
+                        "elementwise != comparison failed and returning scalar "
                         "instead; this will raise an error or perform "
                         "elementwise comparison in the future.") < 0) {
                     return NULL;
@@ -1496,7 +1496,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * is not possible.
              */
             PyErr_Clear();
-            if (DEPRECATE("elementwise comparison failed; "
+            if (DEPRECATE("elementwise != comparison failed; "
                           "this will raise an error in the future.") < 0) {
                 return NULL;
             }
