@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include <numpy/npy_common.h>
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 
 #include <assert.h>
 
@@ -59,6 +60,20 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
     dealloc(p);
 }
 
+/*
+ * clear all cache data in the given cache
+ */
+static void
+_npy_clear_cache(npy_uint msz, cache_bucket * cache, void (*dealloc)(void *))
+{
+    npy_intp i, nelem;
+    for (nelem = 0; nelem < msz; nelem++) {
+        for (i = 0; i < cache[nelem].available; i++) {
+            dealloc(cache[nelem].ptrs[i]);
+        }
+        cache[nelem].available = 0;
+    }
+}
 
 /*
  * array data cache, sz is number of bytes to allocate
@@ -162,15 +177,97 @@ PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
     return temp;
 }
 
+
+/* A minimum valid alignment for common data types */
+#define MIN_ALIGN 16
+
+static size_t datamem_align = MIN_ALIGN;
+static size_t datamem_align_mask = MIN_ALIGN - 1;
+
+/*
+ * Get a safe size for an aligned allocation, taking into account the
+ * overhead of storing the base pointer.
+ */
+static NPY_INLINE size_t
+get_aligned_size(size_t size)
+{
+    return size + sizeof(void *) + datamem_align_mask;
+}
+
+/*
+ * Align the given pointer to the guaranteed alignment.
+ */
+static NPY_INLINE void *
+get_aligned_pointer(void *ptr)
+{
+    /* Ensure a pointer can fit in the space before */
+    npy_intp aligned_ptr = ((npy_intp) ptr + sizeof(void *) + datamem_align_mask)
+                           & ~datamem_align_mask;
+    return (void *) aligned_ptr;
+}
+
+/*
+ * Remember the base allocation start ahead of the aligned memory area.
+ */
+static NPY_INLINE void *
+store_base_pointer(void *aligned_ptr, void *ptr)
+{
+    ((void **) aligned_ptr)[-1] = ptr;
+}
+
+/*
+ * Given an aligned pointer, get the start of the base allocation.
+ */
+static NPY_INLINE void *
+get_base_pointer(void *aligned_ptr)
+{
+    return ((void **) aligned_ptr)[-1];
+}
+
+/* Internal API for querying and changing the current alignement */
+
+NPY_NO_EXPORT size_t
+npy_datamem_get_align(void)
+{
+    return datamem_align;
+}
+
+NPY_NO_EXPORT int
+npy_datamem_set_align(size_t align)
+{
+    size_t align_mask = align - 1;
+    if (align < MIN_ALIGN) {
+        /* Too small */
+        return -1;
+    }
+    if ((align ^ align_mask) != (align | align_mask)) {
+        /* Not a power of two */
+        return -1;
+    }
+    if (align > datamem_align) {
+        /* Alignment has increased, free all cached data areas as they may
+           not be aligned anymore. */
+        _npy_clear_cache(NBUCKETS, datacache, &PyDataMem_FREE);
+    }
+    datamem_align = align;
+    datamem_align_mask = align_mask;
+    return 0;
+}
+
 /*NUMPY_API
  * Allocates memory for array data.
  */
 NPY_NO_EXPORT void *
 PyDataMem_NEW(size_t size)
 {
-    void *result;
+    void *base_result, *result = NULL;
 
-    result = malloc(size);
+    base_result = malloc(get_aligned_size(size));
+    if (base_result != NULL) {
+        result = get_aligned_pointer(base_result);
+        store_base_pointer(result, base_result);
+    }
+
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -187,16 +284,24 @@ PyDataMem_NEW(size_t size)
  * Allocates zeroed memory for array data.
  */
 NPY_NO_EXPORT void *
-PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
+PyDataMem_NEW_ZEROED(size_t nelems, size_t elsize)
 {
-    void *result;
+    void *base_result, *result = NULL;
+    size_t size;
 
-    result = calloc(size, elsize);
+    if (!npy_mul_with_overflow_intp(&size, nelems, elsize)) {
+        base_result = calloc(get_aligned_size(size), 1);
+        if (base_result != NULL) {
+            result = get_aligned_pointer(base_result);
+            store_base_pointer(result, base_result);
+        }
+    }
+
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size * elsize,
+            (*_PyDataMem_eventhook)(NULL, result, nelems * elsize,
                                     _PyDataMem_eventhook_user_data);
         }
         NPY_DISABLE_C_API
@@ -210,7 +315,9 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
 NPY_NO_EXPORT void
 PyDataMem_FREE(void *ptr)
 {
-    free(ptr);
+    if (ptr != NULL) {
+        free(get_base_pointer(ptr));
+    }
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -228,9 +335,27 @@ PyDataMem_FREE(void *ptr)
 NPY_NO_EXPORT void *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
-    void *result;
+    void *base_result, *result = NULL;
+    void *base_ptr = get_base_pointer(ptr);
 
-    result = realloc(ptr, size);
+    base_result = realloc(base_ptr, get_aligned_size(size));
+    if (base_result != NULL) {
+        if (base_result == base_ptr) {
+            result = ptr;
+        }
+        else {
+            size_t offset = (npy_intp) ptr - (npy_intp) base_ptr;
+            size_t new_offset;
+            result = get_aligned_pointer(base_result);
+            /* If the offset from base pointer changed, we must move
+               the data area ourselves */
+            new_offset = (npy_intp) result - (npy_intp) base_result;
+            if (new_offset != offset) {
+                memmove(result, (const char *) base_result + offset, size);
+            }
+            store_base_pointer(result, base_result);
+        }
+    }
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
