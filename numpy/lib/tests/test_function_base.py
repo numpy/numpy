@@ -816,8 +816,15 @@ class TestVectorize(TestCase):
 
     def test_zero_size_array(self):
         # gh-5868
-        y = np.vectorize(lambda x: x+1)(np.zeros([5, 0]))
-        assert_equal(y.shape, (5, 0))
+        f = np.vectorize(lambda x: x+1)
+        for shape in (5, 0), (5, 1), (5,), ():
+            x0 = np.ones(shape)
+            if not x0.size:
+                y = assert_warns(RuntimeWarning, f, x0)
+            else:
+                y = f(x0)
+                assert_equal(y, x0 + 1)
+            assert_equal(y.shape, shape)
 
 
 class TestDigitize(TestCase):
