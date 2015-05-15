@@ -77,15 +77,25 @@ class _DeprecationTestCase(object):
             pass
         # just in case, clear the registry
         num_found = 0
+        # the warning log has weird WarningMessage objects in it, with no
+        # useful repr
+        def repr_warning_message(obj):
+            return warnings.formatwarning(message=obj.message,
+                                          category=obj.category,
+                                          filename=obj.filename,
+                                          lineno=obj.lineno,
+                                          line=obj.line)
         for warning in self.log:
             if warning.category is DeprecationWarning:
                 num_found += 1
             elif not ignore_others:
-                raise AssertionError("expected DeprecationWarning but %s given"
-                                                            % warning.category)
+                raise AssertionError("expected DeprecationWarning but got: %s"
+                                     % repr_warning_message(warning))
         if num is not None and num_found != num:
-            raise AssertionError("%i warnings found but %i expected"
-                                                        % (len(self.log), num))
+            raise AssertionError("%i warnings found but %i expected:\n"
+                                 % (len(self.log), num)
+                                 + "\n".join([repr_warning_message(w)
+                                              for w in self.log]))
 
         with warnings.catch_warnings():
             warnings.filterwarnings("error", message=self.message,
