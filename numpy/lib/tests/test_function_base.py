@@ -814,6 +814,11 @@ class TestVectorize(TestCase):
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
+    def test_zero_size_array(self):
+        # gh-5868
+        y = np.vectorize(lambda x: x+1)(np.zeros([5, 0]))
+        assert_equal(y.shape, (5, 0))
+
 
 class TestDigitize(TestCase):
     def test_forward(self):

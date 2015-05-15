@@ -1773,7 +1773,12 @@ class vectorize(object):
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            inputs = [asarray(_a).flat[0] for _a in args]
+            #
+            # If there are empty arrays, we instead use a default-constructed
+            # element of the input empty input type.
+            arrinputs = [asarray(_a) for _a in args]
+            inputs = [_a.flat[0] if _a.size else _a.dtype.type()
+                      for _a in arrinputs]
             outputs = func(*inputs)
 
             # Performance note: profiling indicates that -- for simple
