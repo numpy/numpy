@@ -478,25 +478,52 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
 
-def cartesian(arrays, out=None):
+def cartesian(arrays, out=None, unique=False):
     """
-    Generate a cartesian product of the input arrays.
+    Generate the cartesian product [1]_ of the input arrays.
+
+    `cartesian` is the numpy version of Python's `itertools.product` [2]_.
+
+    .. versionadded:: 1.10.0
 
     Parameters
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray
+    out : ndarray, optional
         Array to place the cartesian product in.
+    unique : bool, optional
+        If True only the unique elements of each input array are used. This
+        corresponds to the definition of the cartesian product on sets. If
+        False (default) the arrays are used as supplied.
 
     Returns
     -------
     out : ndarray
-        2-D array of shape (M, len(arrays)) containing the cartesian products
-        formed of the input arrays.
+        2-D array of shape (n, len(arrays)) containing the cartesian products
+        formed of the input arrays where
+        `n = prod(a.shape[0] for a in arrays)`.
+
+    Raises
+    ------
+    ValueError
+        If input is the wrong shape (the input must be a list of 1-D arrays.
+    ValueError
+        If input contains less than two arrays.
+
+    References
+    ----------
+    .. [1] http://en.wikipedia.org/wiki/Cartesian_product
+    .. [2] https://docs.python.org/3.4/library/itertools.html#itertools.product
 
     Examples
     --------
+    >>> cartesian([[1, 2], [3, 4]])
+    array([[1, 3],
+           [1, 4],
+           [2, 3],
+           [2, 4]])
+
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -511,15 +538,27 @@ def cartesian(arrays, out=None):
            [3, 5, 6],
            [3, 5, 7]])
 
-    """
-    arrays = [np.asarray(x).ravel() for x in arrays]
-    dtype = np.result_type(*arrays)
+    >>> cartesian([[1, 1], [2]], unique=True)
+    array([[1, 2]])
 
+    """
+    if len(arrays) < 2:
+        msg = "need at least two array to calculate the cartesian product"
+        raise ValueError(msg)
+
+    arrays = [np.asarray(a) for a in arrays]
+
+    for a in arrays:
+        if a.ndim != 1:
+            raise ValueError("accepting only 1-D arrays")
+
+    if unique:
+        arrays = [np.unique(a) for a in arrays]
+
+    dtype = np.result_type(*arrays)
     n = np.prod([arr.size for arr in arrays])
-    if out is None:
-        out = np.empty((len(arrays), n), dtype=dtype)
-    else:
-        out = out.T
+
+    out = np.empty((len(arrays), n), dtype=dtype) if out is None else out.T
 
     for j, arr in enumerate(arrays):
         n //= arr.size
