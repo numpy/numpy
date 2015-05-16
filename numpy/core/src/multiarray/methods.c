@@ -1692,7 +1692,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        PyArray_ALLOCATOR(self)->free(PyArray_DATA(self));
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -1735,7 +1735,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!_IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
-            fa->data = PyDataMem_NEW(num);
+            fa->data = npy_alloc_cache(&fa->allocator, num);
             if (PyArray_DATA(self) == NULL) {
                 fa->nd = 0;
                 PyDimMem_FREE(PyArray_DIMS(self));
@@ -1778,10 +1778,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        fa->data = PyDataMem_NEW(PyArray_NBYTES(self));
+        fa->data = npy_alloc_cache(&fa->allocator, PyArray_NBYTES(self));
         if (PyArray_DATA(self) == NULL) {
             fa->nd = 0;
-            fa->data = PyDataMem_NEW(PyArray_DESCR(self)->elsize);
+            fa->data = npy_alloc_cache(&fa->allocator, PyArray_DESCR(self)->elsize);
             PyDimMem_FREE(PyArray_DIMS(self));
             return PyErr_NoMemory();
         }

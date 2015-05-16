@@ -631,6 +631,26 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
+ * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
+ * See the documentation for PyDataMem_SetEventHook.
+ */
+typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
+                                       void *user_data);
+
+/* Allocator structure for array data */
+typedef void *(PyDataMem_AllocFunc)(size_t size);
+typedef void *(PyDataMem_ZeroedAllocFunc)(size_t nelems, size_t elsize);
+typedef void (PyDataMem_FreeFunc)(void *ptr);
+typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
+
+typedef struct {
+    PyDataMem_AllocFunc *alloc;
+    PyDataMem_ZeroedAllocFunc *zeroed_alloc;
+    PyDataMem_FreeFunc *free;
+    PyDataMem_ReallocFunc *realloc;
+} PyDataMem_Allocator;
+
+/*
  * The main array object structure.
  *
  * It has been recommended to use the inline functions defined below
@@ -679,6 +699,8 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+    /* For resizes and deallocation */
+    const PyDataMem_Allocator *allocator;
 } PyArrayObject_fields;
 
 /*
@@ -1540,6 +1562,12 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                                         v, itemptr, arr);
 }
 
+static NPY_INLINE const PyDataMem_Allocator *
+PyArray_ALLOCATOR(const PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->allocator;
+}
+
 #else
 
 /* These macros are deprecated as of NumPy 1.7. */
@@ -1781,13 +1809,6 @@ typedef struct {
                            * does not have ARR_HAS_DESCR flag set)
                            */
 } PyArrayInterface;
-
-/*
- * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
- * See the documentation for PyDataMem_SetEventHook.
- */
-typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
-                                       void *user_data);
 
 /*
  * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files
