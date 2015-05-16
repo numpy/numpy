@@ -8,6 +8,7 @@ import shutil
 import warnings
 import operator
 import io
+import itertools
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -3927,7 +3928,6 @@ class TestDot(TestCase):
         assert_raises(TypeError, c.dot, b)
 
     def test_accelerate_framework_sgemv_fix(self):
-        from itertools import product
         if sys.platform != 'darwin':
             return
 
@@ -3954,7 +3954,7 @@ class TestDot(TestCase):
         s = aligned_array((100, 100), 15, np.float32)
         np.dot(s, m) # this will always segfault if the bug is present
 
-        testdata = product((15,32), (10000,), (200,89), ('C','F'))
+        testdata = itertools.product((15,32), (10000,), (200,89), ('C','F'))
         for align, m, n, a_order in testdata:
             # Calculation in double precision
             A_d = np.random.rand(m, n)
@@ -3992,6 +3992,287 @@ class TestDot(TestCase):
             assert_dot_close(A_f_12, X_f_2c, desired)
             # Strides in A cols and X
             assert_dot_close(A_f_12, X_f_2, desired)
+
+
+class MatmulCommon():
+    """Common tests for '@' operator and numpy.matmul.
+
+    Do not derive from TestCase to avoid nose running it.
+
+    """
+    # Should work with these types. Will want to add
+    # "O" at some point
+    types = "?bhilqBHILQefdgFDG"
+
+    def test_exceptions(self):
+        dims = [
+            ((1,), (2,)),            # mismatched vector vector
+            ((2, 1,), (2,)),         # mismatched matrix vector
+            ((2,), (1, 2)),          # mismatched vector matrix
+            ((1, 2), (3, 1)),        # mismatched matrix matrix
+            ((1,), ()),              # vector scalar
+            ((), (1)),               # scalar vector
+            ((1, 1), ()),            # matrix scalar
+            ((), (1, 1)),            # scalar matrix
+            ((2, 2, 1), (3, 1, 2)),  # cannot broadcast
+            ]
+
+        for dt, (dm1, dm2) in itertools.product(self.types, dims):
+            a = np.ones(dm1, dtype=dt)
+            b = np.ones(dm2, dtype=dt)
+            assert_raises(ValueError, self.matmul, a, b)
+
+    def test_shapes(self):
+        dims = [
+            ((1, 1), (2, 1, 1)),     # broadcast first argument
+            ((2, 1, 1), (1, 1)),     # broadcast second argument
+            ((2, 1, 1), (2, 1, 1)),  # matrix stack sizes match
+            ]
+
+        for dt, (dm1, dm2) in itertools.product(self.types, dims):
+            a = np.ones(dm1, dtype=dt)
+            b = np.ones(dm2, dtype=dt)
+            res = self.matmul(a, b)
+            assert_(res.shape == (2, 1, 1))
+
+        # vector vector returns scalars.
+        for dt in self.types:
+            a = np.ones((2,), dtype=dt)
+            b = np.ones((2,), dtype=dt)
+            c = self.matmul(a, b)
+            assert_(np.array(c).shape == ())
+
+    def test_result_types(self):
+        mat = np.ones((1,1))
+        vec = np.ones((1,))
+        for dt in self.types:
+            m = mat.astype(dt)
+            v = vec.astype(dt)
+            for arg in [(m, v), (v, m), (m, m)]:
+                res = matmul(*arg)
+                assert_(res.dtype == dt)
+
+            # vector vector returns scalars
+            res = matmul(v, v)
+            assert_(type(res) is dtype(dt).type)
+
+    def test_vector_vector_values(self):
+        vec = np.array([1, 2])
+        tgt = 5
+        for dt in self.types[1:]:
+            v1 = vec.astype(dt)
+            res = matmul(v1, v1)
+            assert_equal(res, tgt)
+
+        # boolean type
+        vec = np.array([True, True], dtype='?')
+        res = matmul(vec, vec)
+        assert_equal(res, True)
+
+    def test_vector_matrix_values(self):
+        vec = np.array([1, 2])
+        mat1 = np.array([[1, 2], [3, 4]])
+        mat2 = np.stack([mat1]*2, axis=0)
+        tgt1 = np.array([7, 10])
+        tgt2 = np.stack([tgt1]*2, axis=0)
+        for dt in self.types[1:]:
+            v = vec.astype(dt)
+            m1 = mat1.astype(dt)
+            m2 = mat2.astype(dt)
+            res = matmul(v, m1)
+            assert_equal(res, tgt1)
+            res = matmul(v, m2)
+            assert_equal(res, tgt2)
+
+        # boolean type
+        vec = np.array([True, False])
+        mat1 = np.array([[True, False], [False, True]])
+        mat2 = np.stack([mat1]*2, axis=0)
+        tgt1 = np.array([True, False])
+        tgt2 = np.stack([tgt1]*2, axis=0)
+
+        res = matmul(vec, mat1)
+        assert_equal(res, tgt1)
+        res = matmul(vec, mat2)
+        assert_equal(res, tgt2)
+
+    def test_matrix_vector_values(self):
+        vec = np.array([1, 2])
+        mat1 = np.array([[1, 2], [3, 4]])
+        mat2 = np.stack([mat1]*2, axis=0)
+        tgt1 = np.array([5, 11])
+        tgt2 = np.stack([tgt1]*2, axis=0)
+        for dt in self.types[1:]:
+            v = vec.astype(dt)
+            m1 = mat1.astype(dt)
+            m2 = mat2.astype(dt)
+            res = matmul(m1, v)
+            assert_equal(res, tgt1)
+            res = matmul(m2, v)
+            assert_equal(res, tgt2)
+
+        # boolean type
+        vec = np.array([True, False])
+        mat1 = np.array([[True, False], [False, True]])
+        mat2 = np.stack([mat1]*2, axis=0)
+        tgt1 = np.array([True, False])
+        tgt2 = np.stack([tgt1]*2, axis=0)
+
+        res = matmul(vec, mat1)
+        assert_equal(res, tgt1)
+        res = matmul(vec, mat2)
+        assert_equal(res, tgt2)
+
+    def test_matrix_matrix_values(self):
+        mat1 = np.array([[1, 2], [3, 4]])
+        mat2 = np.array([[1, 0], [1, 1]])
+        mat12 = np.stack([mat1, mat2], axis=0)
+        mat21 = np.stack([mat2, mat1], axis=0)
+        tgt11 = np.array([[7, 10], [15, 22]])
+        tgt12 = np.array([[3, 2], [7, 4]])
+        tgt21 = np.array([[1, 2], [4, 6]])
+        tgt22 = np.array([[1, 0], [2, 1]])
+        tgt12_21 = np.stack([tgt12, tgt21], axis=0)
+        tgt11_12 = np.stack((tgt11, tgt12), axis=0)
+        tgt11_21 = np.stack((tgt11, tgt21), axis=0)
+        for dt in self.types[1:]:
+            m1 = mat1.astype(dt)
+            m2 = mat2.astype(dt)
+            m12 = mat12.astype(dt)
+            m21 = mat21.astype(dt)
+
+            # matrix @ matrix
+            res = matmul(m1, m2)
+            assert_equal(res, tgt12)
+            res = matmul(m2, m1)
+            assert_equal(res, tgt21)
+
+            # stacked @ matrix
+            res = self.matmul(m12, m1)
+            assert_equal(res, tgt11_21)
+
+            # matrix @ stacked
+            res = self.matmul(m1, m12)
+            assert_equal(res, tgt11_12)
+
+            # stacked @ stacked
+            res = self.matmul(m12, m21)
+            assert_equal(res, tgt12_21)
+
+        # boolean type
+        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool_)
+        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool_)
+        m12 = np.stack([m1, m2], axis=0)
+        m21 = np.stack([m2, m1], axis=0)
+        tgt11 = m1
+        tgt12 = m1
+        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool_)
+        tgt22 = m2
+        tgt12_21 = np.stack([tgt12, tgt21], axis=0)
+        tgt11_12 = np.stack((tgt11, tgt12), axis=0)
+        tgt11_21 = np.stack((tgt11, tgt21), axis=0)
+
+        # matrix @ matrix
+        res = matmul(m1, m2)
+        assert_equal(res, tgt12)
+        res = matmul(m2, m1)
+        assert_equal(res, tgt21)
+
+        # stacked @ matrix
+        res = self.matmul(m12, m1)
+        assert_equal(res, tgt11_21)
+
+        # matrix @ stacked
+        res = self.matmul(m1, m12)
+        assert_equal(res, tgt11_12)
+
+        # stacked @ stacked
+        res = self.matmul(m12, m21)
+        assert_equal(res, tgt12_21)
+
+    def test_numpy_ufunc_override(self):
+
+        class A(np.ndarray):
+            def __new__(cls, *args, **kwargs):
+                return np.array(*args, **kwargs).view(cls)
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return "A"
+
+        class B(np.ndarray):
+            def __new__(cls, *args, **kwargs):
+                return np.array(*args, **kwargs).view(cls)
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return NotImplemented
+
+        a = A([1, 2])
+        b = B([1, 2])
+        c = ones(2)
+        assert_equal(self.matmul(a, b), "A")
+        assert_equal(self.matmul(b, a), "A")
+        assert_raises(TypeError, self.matmul, b, c)
+
+
+class TestMatmul(MatmulCommon, TestCase):
+    matmul = np.matmul
+
+    def test_out_arg(self):
+        a = np.ones((2, 2), dtype=np.float)
+        b = np.ones((2, 2), dtype=np.float)
+        tgt = np.full((2,2), 2, dtype=np.float)
+
+        # test as positional argument
+        msg = "out positional argument"
+        out = np.zeros((2, 2), dtype=np.float)
+        self.matmul(a, b, out)
+        assert_array_equal(out, tgt, err_msg=msg)
+
+        # test as keyword argument
+        msg = "out keyword argument"
+        out = np.zeros((2, 2), dtype=np.float)
+        self.matmul(a, b, out=out)
+        assert_array_equal(out, tgt, err_msg=msg)
+
+        # test out with not allowed type cast (safe casting)
+        # einsum and cblas raise different error types, so
+        # use Exception.
+        msg = "out argument with illegal cast"
+        out = np.zeros((2, 2), dtype=np.int32)
+        assert_raises(Exception, self.matmul, a, b, out=out)
+
+        # skip following tests for now, cblas does not allow non-contiguous
+        # outputs and consistency with dot would require same type,
+        # dimensions, subtype, and c_contiguous.
+
+        # test out with allowed type cast
+        # msg = "out argument with allowed cast"
+        # out = np.zeros((2, 2), dtype=np.complex128)
+        # self.matmul(a, b, out=out)
+        # assert_array_equal(out, tgt, err_msg=msg)
+
+        # test out non-contiguous
+        # msg = "out argument with non-contiguous layout"
+        # c = np.zeros((2, 2, 2), dtype=np.float)
+        # self.matmul(a, b, out=c[..., 0])
+        # assert_array_equal(c, tgt, err_msg=msg)
+
+
+if sys.version_info[:2] >= (3, 5):
+    class TestMatmulOperator(MatmulCommon, TestCase):
+        from operator import matmul
+
+        def test_array_priority_override(self):
+
+            class A(object):
+                __array_priority__ = 1000
+                def __matmul__(self, other):
+                    return "A"
+                def __rmatmul__(self, other):
+                    return "A"
+
+            a = A()
+            b = ones(2)
+            assert_equal(self.matmul(a, b), "A")
+            assert_equal(self.matmul(b, a), "A")
 
 
 class TestInner(TestCase):
