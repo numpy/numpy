@@ -2221,6 +2221,10 @@ class TestCross(TestCase):
         assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
         assert_raises(ValueError, np.cross, u, v, axisa=-5, axisb=2)
         assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=-4)
+        # gh-5885
+        u = np.ones((3, 4, 2))
+        for axisc in range(-2, 2):
+            assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
 
 def test_outer_out_param():
     arr1 = np.ones((5,))
