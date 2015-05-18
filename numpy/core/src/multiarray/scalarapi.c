@@ -413,17 +413,29 @@ PyArray_ScalarFromObject(PyObject *object)
         PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
     }
     else if (PyLong_Check(object)) {
-        npy_longlong val;
-        val = PyLong_AsLongLong(object);
-        if (val==-1 && PyErr_Occurred()) {
+/* Use long long only if it is larger than long */
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
+        npy_longlong val = PyLong_AsLongLong(object);
+#else
+        npy_long val = PyLong_AsLong(object);
+#endif
+        if (val == -1 && PyErr_Occurred()) {
             PyErr_Clear();
             return NULL;
         }
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
         ret = PyArrayScalar_New(LongLong);
+#else
+        ret = PyArrayScalar_New(Long);
+#endif
         if (ret == NULL) {
             return NULL;
         }
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
         PyArrayScalar_VAL(ret, LongLong) = val;
+#else
+        PyArrayScalar_VAL(ret, Long) = val;
+#endif
     }
     return ret;
 }

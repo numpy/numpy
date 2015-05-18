@@ -1264,7 +1264,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             check_num = NPY_LONG;
         }
         else if (obj == (PyObject *)(&PyLong_Type)) {
+/* Use long long only if it is larger than long */
+#   if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
             check_num = NPY_LONGLONG;
+#   else
+            check_num = NPY_LONG;
+#   endif
         }
 #else
         if (obj == (PyObject *)(&PyLong_Type)) {

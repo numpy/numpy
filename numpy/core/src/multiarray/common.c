@@ -106,21 +106,39 @@ _array_find_python_scalar_type(PyObject *op)
         }
     }
     else if (PyLong_Check(op)) {
-        /* check to see if integer can fit into a longlong or ulonglong
-           and return that --- otherwise return object */
+        /*
+         * check to see if integer can fit into the largest C int or
+         * uint (use long long only if it is larger than long) and
+         * return that --- otherwise return object
+         */
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
+#else
+        if ((PyLong_AsLong(op) == -1) && PyErr_Occurred()) {
+#endif
             PyErr_Clear();
         }
         else {
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
             return PyArray_DescrFromType(NPY_LONGLONG);
+#else
+            return PyArray_DescrFromType(NPY_LONG);
+#endif
         }
-
-        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1)
-            && PyErr_Occurred()){
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
+        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long)-1) &&
+#else
+        if ((PyLong_AsUnsignedLong(op) == (unsigned long)-1) &&
+#endif
+                    PyErr_Occurred()) {
             PyErr_Clear();
         }
         else {
+#if NPY_SIZEOF_LONGLONG > NPY_SIZEOF_LONG
             return PyArray_DescrFromType(NPY_ULONGLONG);
+#else
+            return PyArray_DescrFromType(NPY_ULONG);
+#endif
         }
 
         return PyArray_DescrFromType(NPY_OBJECT);
