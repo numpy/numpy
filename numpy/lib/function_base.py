@@ -2320,7 +2320,7 @@ def hanning(M):
     .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hanning was named for Julius van Hann, an Austrian meteorologist.
+    The Hanning was named for Julius von Hann, an Austrian meteorologist.
     It is also known as the Cosine Bell. Some authors prefer that it be
     called a Hann window, to help avoid confusion with the very similar
     Hamming window.
