@@ -540,6 +540,33 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
 }
 
 /*
+ * This function applies special type resolution rules for the max_abs
+ * ufunc. This ufunc converts complex -> float, so isn't covered
+ * by the simple binary type resolution. This is a binary version of 
+ * the AbsoluteTypeResolver above.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_MaxAbsTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    /* Use the default for complex types, to find the loop producing float */
+    if (PyTypeNum_ISCOMPLEX(PyArray_DESCR(operands[0])->type_num) ||
+        PyTypeNum_ISCOMPLEX(PyArray_DESCR(operands[1])->type_num)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
+    else {
+        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
+    }
+}
+
+/*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
  *

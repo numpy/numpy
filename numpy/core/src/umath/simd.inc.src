@@ -127,10 +127,10 @@ abs_intp(npy_intp x)
  */
 
 /**begin repeat1
- * #func = sqrt, absolute, negative, minimum, maximum#
- * #check = IS_BLOCKABLE_UNARY*3, IS_BLOCKABLE_REDUCE*2 #
- * #name = unary*3, unary_reduce*2#
- * #minmax = 0*3, 1*2#
+ * #func = sqrt, absolute, negative, minimum, maximum, max_abs#
+ * #check = IS_BLOCKABLE_UNARY*3, IS_BLOCKABLE_REDUCE*3 #
+ * #name = unary*3, unary_reduce*3#
+ * #minmax = 0*3, 1*3#
  */
 
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -756,6 +756,48 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
     }
 }
 /**end repeat1**/
+
+static void
+sse2_max_abs_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
+{
+    const size_t stride = 16 / sizeof(@type@);
+    @type@ in;
+    const @vtype@ mask = @vpre@_set1_@vsuf@(-0.@c@);
+
+    LOOP_BLOCK_ALIGN_VAR(ip, @type@, 16) {
+        in = (ip[i] >= 0) ? ip[i] : -ip[i];
+        *op = (*op >= in || npy_isnan(*op)) ? *op : in;
+    }
+    assert(n < (stride) || npy_is_aligned(&ip[i], 16));
+    if (i + 3 * stride <= n) {
+        /* load the first elements */
+        @vtype@ c1 = @vpre@_andnot_@vsuf@(mask, @vpre@_load_@vsuf@((@type@*)&ip[i]));
+        @vtype@ c2 = @vpre@_andnot_@vsuf@(mask, @vpre@_load_@vsuf@((@type@*)&ip[i + stride]));
+        i += 2 * stride;
+
+        /* minps/minpd will set invalid flag if nan is encountered */
+        npy_clear_floatstatus();
+        LOOP_BLOCKED(@type@, 32) {
+            @vtype@ v1 = @vpre@_andnot_@vsuf@(mask, @vpre@_load_@vsuf@((@type@*)&ip[i]));
+            @vtype@ v2 = @vpre@_andnot_@vsuf@(mask, @vpre@_load_@vsuf@((@type@*)&ip[i + stride]));
+            c1 = @vpre@_max_@vsuf@(c1, v1);
+            c2 = @vpre@_max_@vsuf@(c2, v2);
+        }
+        c1 = @vpre@_max_@vsuf@(c1, c2);
+
+        if (npy_get_floatstatus() & NPY_FPE_INVALID) {
+            *op = @nan@;
+        }
+        else {
+            @type@ tmp = sse2_horizontal_max_@vtype@(c1);
+            *op  = (*op >= tmp || npy_isnan(*op)) ? *op : tmp + 0;
+        }
+    }
+    LOOP_BLOCKED_END {
+        in = (ip[i] >= 0) ? ip[i] : -ip[i];
+        *op  = (*op >= in || npy_isnan(*op)) ? *op : in;
+    }
+}
 
 /**end repeat**/
 

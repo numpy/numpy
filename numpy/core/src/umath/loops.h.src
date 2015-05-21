@@ -111,6 +111,9 @@ NPY_NO_EXPORT void
 /**end repeat2**/
 
 NPY_NO_EXPORT void
+@S@@TYPE@_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 @S@@TYPE@_true_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
@@ -206,6 +209,9 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_max_abs(char **args, npy_intp *dimension, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
  * #kind = fmax, fmin#
@@ -359,6 +365,9 @@ C@TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSE
 NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+C@TYPE@_max_abs(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
  * #kind = fmax, fmin#

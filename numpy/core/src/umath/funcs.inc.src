@@ -80,6 +80,33 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
 }
 /**end repeat**/
 
+static PyObject *
+npy_ObjectMaxAbs(PyObject *i1, PyObject *i2)
+{
+    PyObject *absi1, *absi2, *result;
+    int cmp;
+
+    absi1 = PyNumber_Absolute(i1);
+    absi2 = PyNumber_Absolute(i2);
+
+   cmp = PyObject_RichCompareBool(absi1, absi2, Py_GE);
+   if (cmp < 0) {
+        Py_DECREF(absi1);
+        Py_DECREF(absi2);
+        return NULL;
+    }
+    if (cmp == 1) {
+        result = absi1;
+    }
+    else {
+        result = absi2;
+    }
+    Py_INCREF(result);
+    Py_DECREF(absi1);
+    Py_DECREF(absi2);
+    return result;
+}
+
 /* Emulates Python's 'a or b' behavior */
 static PyObject *
 npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
