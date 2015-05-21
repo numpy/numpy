@@ -2464,7 +2464,8 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     fortran_int min_m_n = m<n?m:n;
     size_t safe_min_m_n = min_m_n;
     size_t s_size = safe_min_m_n * sizeof(@ftyp@);
-    fortran_int  u_row_count, vt_column_count;
+    fortran_int u_row_count, vt_column_count;
+    size_t safe_u_row_count, safe_vt_column_count;
     size_t u_size, vt_size;
     fortran_int work_count;
     size_t work_size;
@@ -2473,8 +2474,11 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
         goto error;
 
-    u_size = ((size_t)u_row_count) * safe_m * sizeof(@ftyp@);
-    vt_size = safe_n * ((size_t)vt_column_count) * sizeof(@ftyp@);
+    safe_u_row_count = u_row_count;
+    safe_vt_column_count = vt_column_count;
+
+    u_size = safe_u_row_count * safe_m * sizeof(@ftyp@);
+    vt_size = safe_n * safe_vt_column_count * sizeof(@ftyp@);
 
     mem_buff = malloc(a_size + s_size + u_size + vt_size + iwork_size);
 
@@ -2572,6 +2576,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     npy_uint8 *mem_buff = NULL, *mem_buff2 = NULL;
     npy_uint8 *a,*s, *u, *vt, *work, *rwork, *iwork;
     size_t a_size, s_size, u_size, vt_size, work_size, rwork_size, iwork_size;
+    size_t safe_u_row_count, safe_vt_column_count;
     fortran_int u_row_count, vt_column_count, work_count;
     size_t safe_m = m;
     size_t safe_n = n;
@@ -2581,10 +2586,13 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
         goto error;
 
+    safe_u_row_count = u_row_count;
+    safe_vt_column_count = vt_column_count;
+
     a_size = safe_m * safe_n * sizeof(@ftyp@);
     s_size = safe_min_m_n * sizeof(@frealtyp@);
-    u_size = ((size_t)u_row_count) * safe_m * sizeof(@ftyp@);
-    vt_size = safe_n * ((size_t)vt_column_count) * sizeof(@ftyp@);
+    u_size = safe_u_row_count * safe_m * sizeof(@ftyp@);
+    vt_size = safe_n * safe_vt_column_count * sizeof(@ftyp@);
     rwork_size = 'N'==jobz?
         (7 * safe_min_m_n) :
         (5*safe_min_m_n * safe_min_m_n + 5*safe_min_m_n);
