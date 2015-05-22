@@ -1696,7 +1696,7 @@ def slogdet(a):
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
-    return sign.astype(result_t, copy=False), logdet.astype(real_t, copy=False)
+    return sign.astype(result_t), logdet.astype(real_t)
 
 def det(a):
     """
@@ -1751,8 +1751,7 @@ def det(a):
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
-    print(type(r))
-    return r.astype(result_t, copy=False)
+    return r.astype(result_t)
 
 # Linear Least Squares
 
