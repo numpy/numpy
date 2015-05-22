@@ -42,6 +42,11 @@ from . import fftpack_lite as fftpack
 _fft_cache = {}
 _real_fft_cache = {}
 
+
+def _asarray_copy(*args, **kwargs):
+    return asarray(*args, **kwargs).copy()
+
+
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache=_fft_cache):
     a = asarray(a)
@@ -248,8 +253,7 @@ def ifft(a, n=None, axis=-1):
     >>> plt.show()
 
     """
-
-    a = asarray(a).astype(complex)
+    a = _asarray_copy(a, dtype=complex)
     if n is None:
         n = shape(a)[axis]
     return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
@@ -329,8 +333,7 @@ def rfft(a, n=None, axis=-1):
     exploited to compute only the non-negative frequency terms.
 
     """
-
-    a = asarray(a).astype(float)
+    a = _asarray_copy(a, dtype=float)
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf, _real_fft_cache)
 
 
@@ -410,8 +413,7 @@ def irfft(a, n=None, axis=-1):
     specified, and the output array is purely real.
 
     """
-
-    a = asarray(a).astype(complex)
+    a = _asarray_copy(a, dtype=complex)
     if n is None:
         n = (shape(a)[axis] - 1) * 2
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
@@ -484,8 +486,7 @@ def hfft(a, n=None, axis=-1):
            [ 2., -2.]])
 
     """
-
-    a = asarray(a).astype(complex)
+    a = _asarray_copy(a, dtype=complex)
     if n is None:
         n = (shape(a)[axis] - 1) * 2
     return irfft(conjugate(a), n, axis) * n
@@ -538,8 +539,7 @@ def ihfft(a, n=None, axis=-1):
     array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
 
     """
-
-    a = asarray(a).astype(float)
+    a = _asarray_copy(a, dtype=float)
     if n is None:
         n = shape(a)[axis]
     return conjugate(rfft(a, n, axis))/n
@@ -1007,8 +1007,7 @@ def rfftn(a, s=None, axes=None):
             [ 0.+0.j,  0.+0.j]]])
 
     """
-
-    a = asarray(a).astype(float)
+    a = _asarray_copy(a, dtype=float)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1])
     for ii in range(len(axes)-1):
@@ -1128,8 +1127,7 @@ def irfftn(a, s=None, axes=None):
             [ 1.,  1.]]])
 
     """
-
-    a = asarray(a).astype(complex)
+    a = _asarray_copy(a, dtype=complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii])
