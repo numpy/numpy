@@ -382,7 +382,7 @@ def solve(a, b):
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     r = gufunc(a, b, signature=signature, extobj=extobj)
 
-    return wrap(r.astype(result_t))
+    return wrap(r.astype(result_t, copy=False))
 
 
 def tensorinv(a, ind=2):
@@ -522,7 +522,7 @@ def inv(a):
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
-    return wrap(ainv.astype(result_t))
+    return wrap(ainv.astype(result_t, copy=False))
 
 
 # Cholesky decomposition
@@ -606,7 +606,8 @@ def cholesky(a):
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
-    return wrap(gufunc(a, signature=signature, extobj=extobj).astype(result_t))
+    r = gufunc(a, signature=signature, extobj=extobj)
+    return wrap(r.astype(result_t, copy=False))
 
 # QR decompostion
 
@@ -908,7 +909,7 @@ def eigvals(a):
         else:
             result_t = _complexType(result_t)
 
-    return w.astype(result_t)
+    return w.astype(result_t, copy=False)
 
 def eigvalsh(a, UPLO='L'):
     """
@@ -978,7 +979,7 @@ def eigvalsh(a, UPLO='L'):
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
-    return w.astype(_realType(result_t))
+    return w.astype(_realType(result_t), copy=False)
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1124,8 +1125,8 @@ def eig(a):
     else:
         result_t = _complexType(result_t)
 
-    vt = vt.astype(result_t)
-    return w.astype(result_t), wrap(vt)
+    vt = vt.astype(result_t, copy=False)
+    return w.astype(result_t, copy=False), wrap(vt)
 
 
 def eigh(a, UPLO='L'):
@@ -1232,8 +1233,8 @@ def eigh(a, UPLO='L'):
 
     signature = 'D->dD' if isComplexType(t) else 'd->dd'
     w, vt = gufunc(a, signature=signature, extobj=extobj)
-    w = w.astype(_realType(result_t))
-    vt = vt.astype(result_t)
+    w = w.astype(_realType(result_t), copy=False)
+    vt = vt.astype(result_t, copy=False)
     return w, wrap(vt)
 
 
@@ -1344,9 +1345,9 @@ def svd(a, full_matrices=1, compute_uv=1):
 
         signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
         u, s, vt = gufunc(a, signature=signature, extobj=extobj)
-        u = u.astype(result_t)
-        s = s.astype(_realType(result_t))
-        vt = vt.astype(result_t)
+        u = u.astype(result_t, copy=False)
+        s = s.astype(_realType(result_t), copy=False)
+        vt = vt.astype(result_t, copy=False)
         return wrap(u), s, wrap(vt)
     else:
         if m < n:
@@ -1356,7 +1357,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
         signature = 'D->d' if isComplexType(t) else 'd->d'
         s = gufunc(a, signature=signature, extobj=extobj)
-        s = s.astype(_realType(result_t))
+        s = s.astype(_realType(result_t), copy=False)
         return s
 
 def cond(x, p=None):
@@ -1695,7 +1696,7 @@ def slogdet(a):
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
-    return sign.astype(result_t), logdet.astype(real_t)
+    return sign.astype(result_t, copy=False), logdet.astype(real_t, copy=False)
 
 def det(a):
     """
@@ -1749,7 +1750,9 @@ def det(a):
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
-    return _umath_linalg.det(a, signature=signature).astype(result_t)
+    r = _umath_linalg.det(a, signature=signature)
+    print(type(r))
+    return r.astype(result_t, copy=False)
 
 # Linear Least Squares
 
@@ -1905,12 +1908,12 @@ def lstsq(a, b, rcond=-1):
         if results['rank'] == n and m > n:
             if isComplexType(t):
                 resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
-                    result_real_t)
+                    result_real_t, copy=False)
             else:
                 resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(
-                    result_real_t)
+                    result_real_t, copy=False)
 
-    st = s[:min(n, m)].copy().astype(result_real_t)
+    st = s[:min(n, m)].astype(result_real_t, copy=True)
     return wrap(x), wrap(resids), results['rank'], st
 
 
