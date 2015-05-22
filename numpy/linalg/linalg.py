@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray
+    broadcast, atleast_2d, intp, asanyarray, isscalar
     )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -782,7 +782,7 @@ def qr(a, mode='reduced'):
 
     if mode == 'economic':
         if t != result_t :
-            a = a.astype(result_t)
+            a = a.astype(result_t, copy=False)
         return wrap(a.T)
 
     #  generate q from a
@@ -1696,7 +1696,15 @@ def slogdet(a):
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
-    return sign.astype(result_t), logdet.astype(real_t)
+    if isscalar(sign):
+        sign = sign.astype(result_t)
+    else:
+        sign = sign.astype(result_t, copy=False)
+    if isscalar(logdet):
+        logdet = logdet.astype(real_t)
+    else:
+        logdet = logdet.astype(real_t, copy=False)
+    return sign, logdet
 
 def det(a):
     """
@@ -1751,7 +1759,11 @@ def det(a):
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
-    return r.astype(result_t)
+    if isscalar(r):
+        r = r.astype(result_t)
+    else:
+        r = r.astype(result_t, copy=False)
+    return r
 
 # Linear Least Squares
 
