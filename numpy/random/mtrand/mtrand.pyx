@@ -572,12 +572,12 @@ def _shape_from_size(size, d):
     return shape
 
 
-cdef int LATEST_VERSION = 0
+cdef int HIGHEST_VERSION = 0
 
 
 cdef class RandomState:
     """
-    RandomState(seed=None)
+    RandomState(seed=None, *, version=None)
 
     Container for the Mersenne Twister pseudo-random number generator.
 
@@ -599,8 +599,8 @@ cdef class RandomState:
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
 
-    version : int between 0 and LATEST_VERSION, keyword-only, optional
-        The version of the RNG methods.  Defaults to `LATEST_VERSION`,
+    version : int between 0 and HIGHEST_VERSION, keyword-only, optional
+        The version of the RNG methods.  Defaults to `HIGHEST_VERSION`,
         except if `seed` is set in which case it defaults to `0` for backwards
         compatibility.
 
@@ -613,7 +613,7 @@ cdef class RandomState:
     of probability distributions to choose from.
 
     """
-    cdef int version
+    cdef readonly int version
     cdef rk_state *internal_state
     cdef object lock
     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
@@ -651,10 +651,10 @@ cdef class RandomState:
 
         """
         if version is None:
-            version = LATEST_VERSION if seed is None else 0
-        if version not in range(LATEST_VERSION + 1):
+            version = HIGHEST_VERSION if seed is None else 0
+        if version not in range(HIGHEST_VERSION + 1):
             raise ValueError("`version` must be an integer between 0 and {}".
-                             format(LATEST_VERSION))
+                             format(HIGHEST_VERSION))
         self.version = version
 
         cdef rk_error errcode
