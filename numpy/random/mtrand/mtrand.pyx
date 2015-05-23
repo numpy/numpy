@@ -690,14 +690,17 @@ cdef class RandomState:
 
         Returns
         -------
-        out : tuple(str, ndarray of 624 uints, int, int, float)
+        out : tuple(tuple(int, str), ndarray of 624 uints, int, int, float)
             The returned tuple has the following items:
 
-            1. the string 'MT19937'.
+            1. the version of RNG methods, and the string 'MT19937'.
             2. a 1-D array of 624 unsigned integer keys.
             3. an integer ``pos``.
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
+
+        For backwards compatibility, the first item is set to 'MT19937' if the
+        version is 0.
 
         See Also
         --------
@@ -711,14 +714,18 @@ cdef class RandomState:
 
         """
         cdef ndarray state "arrayObject_state"
+        impl_info = (
+            'MT19937' if self.version == 0 else (self.version, 'MT19937'))
         state = <ndarray>np.empty(624, np.uint)
         with self.lock:
-            memcpy(<void*>PyArray_DATA(state), <void*>(self.internal_state.key), 624*sizeof(long))
+            memcpy(<void*>PyArray_DATA(state),
+                   <void*>(self.internal_state.key),
+                   624 * sizeof(long))
             has_gauss = self.internal_state.has_gauss
             gauss = self.internal_state.gauss
             pos = self.internal_state.pos
         state = <ndarray>np.asarray(state, np.uint32)
-        return ('MT19937', state, pos, has_gauss, gauss)
+        return (impl_info, state, pos, has_gauss, gauss)
 
     def set_state(self, state):
         """
@@ -731,10 +738,11 @@ cdef class RandomState:
 
         Parameters
         ----------
-        state : tuple(str, ndarray of 624 uints, int, int, float)
+        state : tuple(tuple(int, str), ndarray of 624 uints, int, int, float)
             The `state` tuple has the following items:
 
-            1. the string 'MT19937', specifying the Mersenne Twister algorithm.
+            1. the version of the RNG methods, and the string 'MT19937',
+               specifying the Mersenne Twister algorithm.
             2. a 1-D array of 624 unsigned integers ``keys``.
             3. an integer ``pos``.
             4. an integer ``has_gauss``.
@@ -755,6 +763,9 @@ cdef class RandomState:
         random distributions in NumPy. If the internal state is manually altered,
         the user should know exactly what he/she is doing.
 
+        For backwards compatibility, the form (str, ...) is also accepted, and
+        interpreted as setting `version` to 0.
+
         For backwards compatibility, the form (str, array of 624 uints, int) is
         also accepted although it is missing some information about the cached
         Gaussian value: ``state = ('MT19937', keys, pos)``.
@@ -769,7 +780,9 @@ cdef class RandomState:
         """
         cdef ndarray obj "arrayObject_obj"
         cdef int pos
-        algorithm_name = state[0]
+        impl_info = state[0]
+        version, algorithm_name = (
+            (0, impl_info) if isinstance(impl_info, str) else impl_info)
         if algorithm_name != 'MT19937':
             raise ValueError("algorithm must be 'MT19937'")
         key, pos = state[1:3]
@@ -786,7 +799,10 @@ cdef class RandomState:
         if PyArray_DIM(obj, 0) != 624:
             raise ValueError("state must be 624 longs")
         with self.lock:
-            memcpy(<void*>(self.internal_state.key), <void*>PyArray_DATA(obj), 624*sizeof(long))
+            self.version = version
+            memcpy(<void*>(self.internal_state.key),
+                   <void*>PyArray_DATA(obj),
+                   624 * sizeof(long))
             self.internal_state.pos = pos
             self.internal_state.has_gauss = has_gauss
             self.internal_state.gauss = cached_gaussian
