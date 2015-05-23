@@ -153,7 +153,6 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size,
                 array_data[i] = func(state)
         return array
 
-
 cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a,
                            object lock):
     cdef double *array_data
@@ -223,7 +222,6 @@ cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a
             for i from 0 <= i < length:
                 array_data[i] = func(state, a, b)
         return array
-
 
 cdef object cont2_array(rk_state *state, rk_cont2 func, object size,
                         ndarray oa, ndarray ob, object lock):
@@ -573,6 +571,13 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
+
+cdef int LATEST_VERSION = 0
+cdef str LATEST_RNG = "mersennetwister"
+cdef str ORIGINAL_RNG = "mersennetwister"
+cdef RNGs = ["mersennetwister"]
+
+
 cdef class RandomState:
     """
     RandomState(seed=None)
@@ -597,6 +602,15 @@ cdef class RandomState:
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
 
+    version : int between 0 and LATEST_VERSION, keyword-only, optional
+        The version of the RNG methods.  Defaults to `LATEST_VERSION`,
+        except if `seed` is set in which case it defaults to `0` for backwards
+        compatibility.
+
+    rng : str, one of `RNGs`
+        The underlying RNG.  Defaults to `LATEST_RNG`, except if `seed` is set
+        in which case it defaults to `ORIGINAL_RNG` for backwards compatibility.
+
     Notes
     -----
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -606,22 +620,25 @@ cdef class RandomState:
     of probability distributions to choose from.
 
     """
+    cdef int version
+    cdef str rng
     cdef rk_state *internal_state
     cdef object lock
-    poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
+    poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
 
-    def __init__(self, seed=None):
-        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
-
+    def __init__(self, seed=None, *, version=None, rng=None):
         self.lock = Lock()
         self.seed(seed)
 
     def __dealloc__(self):
+        self._free_internal_state()
+
+    def _free_internal_state(self):
         if self.internal_state != NULL:
             PyMem_Free(self.internal_state)
             self.internal_state = NULL
 
-    def seed(self, seed=None):
+    def seed(self, seed=None, *, version=None, rng=None):
         """
         seed(seed=None)
 
@@ -641,8 +658,26 @@ cdef class RandomState:
         RandomState
 
         """
+        if version is None:
+            version = LATEST_VERSION if seed is None else 0
+        if version not in range(LATEST_VERSION + 1):
+            raise ValueError("`version` must be an integer between 0 and {}".
+                             format(LATEST_VERSION))
+        if rng is None:
+            rng = LATEST_RNG if seed is None else ORIGINAL_RNG
+        if rng not in RNGs:
+            raise ValueError("`rng` must be one of {}".
+                             format(", ".join(map(repr, RNGs))))
+        self.version = version
+        self.rng = rng
+        if rng == "mersennetwister":
+            self._seed_mersenne(seed)
+
+    def _seed_mersenne(self, seed=None):
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
+        self._free_internal_state()
+        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
         try:
             if seed is None:
                 with self.lock:
@@ -986,7 +1021,6 @@ cdef class RandomState:
             rk_fill(bytes, length, self.internal_state)
         return bytestring
 
-
     def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=None, replace=True, p=None)
@@ -1161,7 +1195,6 @@ cdef class RandomState:
             return res
 
         return a[idx]
-
 
     def uniform(self, low=0.0, high=1.0, size=None):
         """
