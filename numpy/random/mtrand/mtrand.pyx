@@ -572,7 +572,7 @@ def _shape_from_size(size, d):
     return shape
 
 
-cdef int HIGHEST_VERSION = 0
+cdef int HIGHEST_VERSION = 1
 
 
 cdef class RandomState:
@@ -1082,6 +1082,9 @@ cdef class RandomState:
 
         """
 
+        cdef npy_intp i, j, pop_size, output_size
+        cdef ndarray[npy_intp, ndim=1] tmp_idx_array
+
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -1118,6 +1121,7 @@ cdef class RandomState:
             size = np.prod(shape, dtype=np.intp)
         else:
             size = 1
+        output_size = size
 
         # Actual sampling
         if replace:
@@ -1155,7 +1159,20 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                idx = self.permutation(pop_size)[:size]
+                if self.version <= 0:
+                    idx = self.permutation(pop_size)[:size]
+                else:
+                    # perform a truncated Knuth shuffle.
+                    tmp_idx_array = np.arange(pop_size)
+                    i = 0
+                    while i < output_size:
+                        # rand int from [i, pop_size-1]
+                        j = rk_interval(pop_size - 1 - i, self.internal_state) + i
+                        tmp_idx_array[i], tmp_idx_array[j] = (
+                            tmp_idx_array[j], tmp_idx_array[i])
+                        i = i + 1
+                    idx = tmp_idx_array[:output_size]
+
                 if shape is not None:
                     idx.shape = shape
 
