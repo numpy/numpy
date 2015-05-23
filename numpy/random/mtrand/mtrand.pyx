@@ -573,9 +573,6 @@ def _shape_from_size(size, d):
 
 
 cdef int LATEST_VERSION = 0
-cdef str LATEST_RNG = "mersennetwister"
-cdef str ORIGINAL_RNG = "mersennetwister"
-cdef RNGs = ["mersennetwister"]
 
 
 cdef class RandomState:
@@ -607,10 +604,6 @@ cdef class RandomState:
         except if `seed` is set in which case it defaults to `0` for backwards
         compatibility.
 
-    rng : str, one of `RNGs`
-        The underlying RNG.  Defaults to `LATEST_RNG`, except if `seed` is set
-        in which case it defaults to `ORIGINAL_RNG` for backwards compatibility.
-
     Notes
     -----
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -621,12 +614,11 @@ cdef class RandomState:
 
     """
     cdef int version
-    cdef str rng
     cdef rk_state *internal_state
     cdef object lock
     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
 
-    def __init__(self, seed=None, *, version=None, rng=None):
+    def __init__(self, seed=None, *, version=None):
         self.lock = Lock()
         self.seed(seed)
 
@@ -638,7 +630,7 @@ cdef class RandomState:
             PyMem_Free(self.internal_state)
             self.internal_state = NULL
 
-    def seed(self, seed=None, *, version=None, rng=None):
+    def seed(self, seed=None, *, version=None):
         """
         seed(seed=None)
 
@@ -663,17 +655,8 @@ cdef class RandomState:
         if version not in range(LATEST_VERSION + 1):
             raise ValueError("`version` must be an integer between 0 and {}".
                              format(LATEST_VERSION))
-        if rng is None:
-            rng = LATEST_RNG if seed is None else ORIGINAL_RNG
-        if rng not in RNGs:
-            raise ValueError("`rng` must be one of {}".
-                             format(", ".join(map(repr, RNGs))))
         self.version = version
-        self.rng = rng
-        if rng == "mersennetwister":
-            self._seed_mersenne(seed)
 
-    def _seed_mersenne(self, seed=None):
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
         self._free_internal_state()
