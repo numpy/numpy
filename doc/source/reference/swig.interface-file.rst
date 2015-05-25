@@ -320,6 +320,17 @@ signatures are
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
 
+There is also a "flat" in-place array for situations in which
+you would like to modify or process each element, regardless of the
+number of dimensions. One example is a "quantization" function that
+quantizes each element of an array in-place, be it 1D, 2D or whatever.
+This form checks for continuity but allows either C or Fortran ordering.
+
+ND:
+
+ * ``(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)``
+
+
 Argout Arrays
 `````````````
 
