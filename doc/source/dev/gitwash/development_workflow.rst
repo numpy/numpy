@@ -181,7 +181,7 @@ Commit messages should be clear and follow a few basic rules.  Example::
 
    The first line of the commit message starts with a capitalized acronym
    (options listed below) indicating what type of commit this is.  Then a blank
-   line, then more text if needed.  Lines shouldn't be longer than 80
+   line, then more text if needed.  Lines shouldn't be longer than 72
    characters.  If the commit is related to a ticket, indicate that with
    "See #3456", "See ticket 3456", "Closes #3456" or similar.
 
