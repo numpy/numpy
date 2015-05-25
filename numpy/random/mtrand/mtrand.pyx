@@ -572,7 +572,9 @@ def _shape_from_size(size, d):
     return shape
 
 
-cdef int HIGHEST_VERSION = 1
+HIGHEST_VERSION = 1
+cdef int _HIGHEST_VERSION = HIGHEST_VERSION
+cdef long poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
 
 
 cdef class RandomState:
@@ -616,16 +618,13 @@ cdef class RandomState:
     cdef readonly int version
     cdef rk_state *internal_state
     cdef object lock
-    poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
 
     def __init__(self, seed=None, *, version=None):
         self.lock = Lock()
-        self.seed(seed)
+        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
+        self.seed(seed, version=version)
 
     def __dealloc__(self):
-        self._free_internal_state()
-
-    def _free_internal_state(self):
         if self.internal_state != NULL:
             PyMem_Free(self.internal_state)
             self.internal_state = NULL
@@ -651,16 +650,14 @@ cdef class RandomState:
 
         """
         if version is None:
-            version = HIGHEST_VERSION if seed is None else 0
-        if version not in range(HIGHEST_VERSION + 1):
+            version = _HIGHEST_VERSION if seed is None else 0
+        if version not in range(_HIGHEST_VERSION + 1):
             raise ValueError("`version` must be an integer between 0 and {}".
-                             format(HIGHEST_VERSION))
+                             format(_HIGHEST_VERSION))
         self.version = version
 
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
-        self._free_internal_state()
-        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
         try:
             if seed is None:
                 with self.lock:
@@ -3898,7 +3895,7 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if lam < 0:
                 raise ValueError("lam < 0")
-            if lam > self.poisson_lam_max:
+            if lam > poisson_lam_max:
                 raise ValueError("lam value too large")
             return discd_array_sc(self.internal_state, rk_poisson, size, flam,
                                   self.lock)
@@ -3908,7 +3905,7 @@ cdef class RandomState:
         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less(olam, 0)):
             raise ValueError("lam < 0")
-        if np.any(np.greater(olam, self.poisson_lam_max)):
+        if np.any(np.greater(olam, poisson_lam_max)):
             raise ValueError("lam value too large.")
         return discd_array(self.internal_state, rk_poisson, size, olam,
                            self.lock)
