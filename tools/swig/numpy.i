@@ -381,6 +381,22 @@
     return contiguous;
   }
 
+  /* Test whether a python object is (C_ or F_) contiguous.  If array is
+   * contiguous, return 1.  Otherwise, set the python error string and
+   * return 0.
+   */
+  int require_c_or_f_contiguous(PyArrayObject* ary)
+  {
+    int contiguous = 1;
+    if (!(array_is_contiguous(ary) || array_is_fortran(ary)))
+    {
+      PyErr_SetString(PyExc_TypeError,
+                      "Array must be contiguous (C_ or F_).  A non-contiguous array was given");
+      contiguous = 0;
+    }
+    return contiguous;
+  }
+
   /* Require that a numpy array is not byte-swapped.  If the array is
    * not byte-swapped, return 1.  Otherwise, set the python error string
    * and return 0.
@@ -543,7 +559,7 @@
 
 /* %numpy_typemaps() macro
  *
- * This macro defines a family of 74 typemaps that allow C arguments
+ * This macro defines a family of 75 typemaps that allow C arguments
  * of the form
  *
  *    1. (DATA_TYPE IN_ARRAY1[ANY])
@@ -639,6 +655,8 @@
  *   72. (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)
  *   73. (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  *   74. (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)
+ *
+ *   75. (DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)
  *
  * where "DATA_TYPE" is any type supported by the NumPy module, and
  * "DIM_TYPE" is any int-like type suitable for specifying dimensions.
@@ -3070,6 +3088,32 @@
 %#endif
 
   $result = SWIG_Python_AppendOutput($result,obj);
+}
+
+/**************************************/
+/* In-Place Array Typemap - flattened */
+/**************************************/
+
+/* Typemap suite for (DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)
+ */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
+           fragment="NumPy_Macros")
+  (DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)
+{
+  $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
+                                                 DATA_TYPECODE);
+}
+%typemap(in,
+         fragment="NumPy_Fragments")
+  (DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)
+  (PyArrayObject* array=NULL, int i=1)
+{
+  array = obj_to_array_no_conversion($input, DATA_TYPECODE);
+  if (!array || !require_c_or_f_contiguous(array)
+      || !require_native(array)) SWIG_fail;
+  $1 = (DATA_TYPE*) array_data(array);
+  $2 = 1;
+  for (i=0; i < array_numdims(array); ++i) $2 *= array_size(array,i);
 }
 
 %enddef    /* %numpy_typemaps() macro */

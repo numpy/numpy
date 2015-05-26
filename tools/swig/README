@@ -37,6 +37,11 @@ The files related to testing are are in the test subdirectory::
     SuperTensor.i
     testSuperTensor.py
 
+    Flat.h
+    Flat.cxx
+    Flat.i
+    testFlat.py
+
 The header files contain prototypes for functions that illustrate the
 wrapping issues we wish to address.  Right now, this consists of
 functions with argument signatures of the following forms.  Vector.h::
@@ -89,9 +94,12 @@ SuperTensor.h::
 
     (type ARGOUT_ARRAY4[ANY][ANY][ANY][ANY])
 
+Flat.h::
+    (type* INPLACE_ARRAY_FLAT, int DIM_FLAT)
+
 These function signatures take a pointer to an array of type "type",
 whose length is specified by the integer(s) DIM1 (and DIM2, and DIM3,
-and DIM4).
+and DIM4, or DIM_FLAT).
 
 The objective for the IN_ARRAY signatures is for SWIG to generate
 python wrappers that take a container that constitutes a valid
@@ -105,30 +113,32 @@ The objective for the INPLACE_ARRAY signatures is for SWIG to generate
 python wrappers that accept a numpy array of any of the above-listed
 types.
 
-The source files Vector.cxx, Matrix.cxx Tensor.cxx and SuperTensor.cxx
-contain the actual implementations of the functions described in
-Vector.h, Matrix.h Tensor.h and SuperTensor.h.  The python scripts
-testVector.py, testMatrix.py testTensor.py and testSuperTensor.py
-test the resulting python wrappers using the unittest module.
+The source files Vector.cxx, Matrix.cxx, Tensor.cxx, SuperTensor.cxx
+and Flat.cxx contain the actual implementations of the functions
+described in Vector.h, Matrix.h Tensor.h, SuperTensor.h and Flat.h.
+The python scripts testVector.py, testMatrix.py testTensor.py,
+testSuperTensor.py and testFlat.py test the resulting python wrappers
+using the unittest module.
 
-The SWIG interface files Vector.i, Matrix.i Tensor.i and SuperTensor.i
-are used to generate the wrapper code.  The SWIG_FILE_WITH_INIT macro
-allows numpy.i to be used with multiple python modules.  If it is
-specified, then the %init block found in Vector.i, Matrix.i Tensor.i
-and SuperTensor.i are required.  The other things done in Vector.i,
-Matrix.i Tensor.i and SuperTensor.i are the inclusion of the
-appropriate header file and numpy.i file, and the "%apply" directives
-to force the functions to use the typemaps.
+The SWIG interface files Vector.i, Matrix.i, Tensor.i, SuperTensor.i
+and Flat.i are used to generate the wrapper code.  The
+SWIG_FILE_WITH_INIT macro allows numpy.i to be used with multiple
+python modules.  If it is specified, then the %init block found in
+Vector.i, Matrix.i Tensor.i, SuperTensor.i and Flat.i are required.
+The other things done in Vector.i, Matrix.i, Tensor.i, SuperTensor.i
+and Flat.i are the inclusion of the appropriate header file and
+numpy.i file, and the "%apply" directives to force the functions to
+use the typemaps.
 
 The setup.py script is a standard python distutils script.  It defines
-_Vector, _Matrix _Tensor and _SuperTensor extension modules and Vector
-, Matrix, Tensor and SuperTensor python modules.  The Makefile
+_Vector, _Matrix, _Tensor, _SuperTensor, _Flat extension modules and Vector,
+Matrix, Tensor, SuperTensor and Flat python modules.  The Makefile
 automates everything, setting up the dependencies, calling swig to
 generate the wrappers, and calling setup.py to compile the wrapper
-code and generate the shared objects.
-Targets "all" (default), "test", "doc" and "clean" are supported.  The
-"doc" target creates HTML documentation (with make target "html"), and
-PDF documentation (with make targets "tex" and "pdf").
+code and generate the shared objects.  Targets "all" (default), "test",
+"doc" and "clean" are supported.  The "doc" target creates HTML
+documentation (with make target "html"), and PDF documentation
+(with make targets "tex" and "pdf").
 
 To build and run the test code, simply execute from the shell::
 
