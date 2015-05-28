@@ -50,7 +50,7 @@ than dimensions, one gets a subdimensional array. For example: ::
 
 That is, each index specified selects the array corresponding to the
 rest of the dimensions selected. In the above example, choosing 0
-means that remaining dimension of lenth 5 is being left unspecified,
+means that the remaining dimension of length 5 is being left unspecified,
 and that what is returned is an array of that dimensionality and size.
 It must be noted that the returned array is not a copy of the original,
 but points to the same values in memory as does the original array.
@@ -62,7 +62,7 @@ element being returned. That is: ::
     2
 
 So note that ``x[0,2] = x[0][2]`` though the second case is more
-inefficient a new temporary array is created after the first index
+inefficient as a new temporary array is created after the first index
 that is subsequently indexed by 2.
 
 Note to those used to IDL or Fortran memory order as it relates to
