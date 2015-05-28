@@ -2939,16 +2939,16 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     In single precision, std() can be inaccurate:
 
-    >>> a = np.zeros((2,512*512), dtype=np.float32)
-    >>> a[0,:] = 1.0
-    >>> a[1,:] = 0.1
+    >>> a = np.zeros((2, 512*512), dtype=np.float32)
+    >>> a[0, :] = 1.0
+    >>> a[1, :] = 0.1
     >>> np.std(a)
-    0.45172946707416706
+    0.45000005
 
     Computing the standard deviation in float64 is more accurate:
 
     >>> np.std(a, dtype=np.float64)
-    0.44999999925552653
+    0.44999999925494177
 
     """
     if type(a) is not mu.ndarray:
@@ -3035,7 +3035,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     Examples
     --------
-    >>> a = np.array([[1,2],[3,4]])
+    >>> a = np.array([[1, 2], [3, 4]])
     >>> np.var(a)
     1.25
     >>> np.var(a, axis=0)
@@ -3045,18 +3045,18 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     In single precision, var() can be inaccurate:
 
-    >>> a = np.zeros((2,512*512), dtype=np.float32)
-    >>> a[0,:] = 1.0
-    >>> a[1,:] = 0.1
+    >>> a = np.zeros((2, 512*512), dtype=np.float32)
+    >>> a[0, :] = 1.0
+    >>> a[1, :] = 0.1
     >>> np.var(a)
-    0.20405951142311096
+    0.20250003
 
     Computing the variance in float64 is more accurate:
 
     >>> np.var(a, dtype=np.float64)
-    0.20249999932997387
+    0.20249999932944759
     >>> ((1-0.55)**2 + (0.1-0.55)**2)/2
-    0.20250000000000001
+    0.2025
 
     """
     if type(a) is not mu.ndarray:
