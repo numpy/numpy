@@ -43,7 +43,8 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory', 'full', 'full_like']
+           'ComplexWarning', 'may_share_memory', 'full', 'full_like',
+           'matmul']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -390,6 +391,11 @@ lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
 einsum = multiarray.einsum
+dot = multiarray.dot
+inner = multiarray.inner
+vdot = multiarray.vdot
+matmul = multiarray.matmul
+
 
 def asarray(a, dtype=None, order=None):
     """
@@ -1081,11 +1087,6 @@ def outer(a, b, out=None):
     b = asarray(b)
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
-# try to import blas optimized dot if available
-envbak = os.environ.copy()
-dot = multiarray.dot
-inner = multiarray.inner
-vdot = multiarray.vdot
 
 def alterdot():
     """
