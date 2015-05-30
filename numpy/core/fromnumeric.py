@@ -579,10 +579,12 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
-    order : list, optional
-        When `a` is a structured array, this argument specifies which fields
-        to compare first, second, and so on.  This list does not need to
-        include all of the fields.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string.  Not all fields need be specified, but
+        unspecified fields will still be used, in the order in which they
+        come up in the dtype, to break ties.
 
     Returns
     -------
@@ -662,10 +664,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         the flattened array is used.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'
-    order : list, optional
+    order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  Not all fields need be
-        specified.
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
 
     Returns
     -------
@@ -718,10 +722,12 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm. Default is 'quicksort'.
-    order : list, optional
-        When `a` is a structured array, this argument specifies which fields
-        to compare first, second, and so on.  This list does not need to
-        include all of the fields.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
 
     Returns
     -------
@@ -831,10 +837,12 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
         the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm.
-    order : list, optional
+    order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  Not all fields need be
-        specified.
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
 
     Returns
     -------

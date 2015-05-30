@@ -4191,10 +4191,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm. Default is 'quicksort'.
-    order : list, optional
+    order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  Not all fields need be
-        specified.
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
 
     See Also
     --------
@@ -4258,10 +4260,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         last axis.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
-    order : list, optional
+    order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  Not all fields need be
-        specified.
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
 
     See Also
     --------
