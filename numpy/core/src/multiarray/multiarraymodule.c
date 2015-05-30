@@ -64,6 +64,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
+
 /*NUMPY_API
  * Get Priority from object
  */
@@ -239,7 +240,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     *op = (PyObject *)ap;
     return 0;
 
- fail:
+fail:
     PyErr_SetString(PyExc_MemoryError, "no memory");
     return -1;
 }
@@ -930,7 +931,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     Py_DECREF(ap2);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
@@ -1049,7 +1050,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         goto fail;
     }
 
-    op = PyArray_DATA(ret); os = PyArray_DESCR(ret)->elsize;
+    op = PyArray_DATA(ret);
+    os = PyArray_DESCR(ret)->elsize;
     axis = PyArray_NDIM(ap1)-1;
     it1 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap1, &axis);
@@ -1083,7 +1085,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(ap2);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
@@ -1844,7 +1846,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     Py_RETURN_NONE;
 
- fail:
+fail:
     Py_XDECREF(src);
     Py_XDECREF(wheremask);
     return NULL;
@@ -1887,7 +1889,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyDimMem_FREE(shape.ptr);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
     return NULL;
@@ -1918,7 +1920,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(prototype);
     Py_XDECREF(dtype);
     return NULL;
@@ -2041,7 +2043,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyDimMem_FREE(shape.ptr);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
     return (PyObject *)ret;
@@ -3026,7 +3028,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     return ret;
 
- fail:
+fail:
     evil_global_disable_warn_O4O8_flag = 0;
 
     Py_XDECREF(dtype);
@@ -3254,7 +3256,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return ret;
     }
 
- fail:
+fail:
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
