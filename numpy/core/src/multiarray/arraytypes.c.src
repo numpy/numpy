@@ -2689,8 +2689,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     PyArray_Descr *descr;
     PyObject *names, *key;
     PyObject *tup;
+    PyArrayObject_fields dummy_struct;
+    PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
     char *nip1, *nip2;
-    int i, res = 0, swap=0;
+    int i, res = 0, swap = 0;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
@@ -2702,34 +2704,29 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
      */
     names = descr->names;
     for (i = 0; i < PyTuple_GET_SIZE(names); i++) {
-        PyArray_Descr * new;
+        PyArray_Descr *new;
         npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(descr->fields, key);
         if (unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
-        /*
-         * TODO: temporarily modifying the array like this
-         *       is bad coding style, should be changed.
-         */
-        ((PyArrayObject_fields *)ap)->descr = new;
-        swap = PyArray_ISBYTESWAPPED(ap);
+        /* descr is the only field checked by compare or copyswap */
+        dummy_struct.descr = new;
+        swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
-        if ((swap) || (new->alignment > 1)) {
-            if ((swap) || (!npy_is_aligned(nip1, new->alignment))) {
+        if (swap || new->alignment > 1) {
+            if (swap || !npy_is_aligned(nip1, new->alignment)) {
                 /* create buffer and copy */
                 nip1 = npy_alloc_cache(new->elsize);
                 if (nip1 == NULL) {
                     goto finish;
                 }
-                memcpy(nip1, ip1+offset, new->elsize);
-                if (swap)
-                    new->f->copyswap(nip1, NULL, swap, ap);
+                new->f->copyswap(nip1, ip1 + offset, swap, dummy);
             }
-            if ((swap) || (!npy_is_aligned(nip2, new->alignment))) {
-                /* copy data to a buffer */
+            if (swap || !npy_is_aligned(nip2, new->alignment)) {
+                /* create buffer and copy */
                 nip2 = npy_alloc_cache(new->elsize);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
@@ -2737,13 +2734,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     }
                     goto finish;
                 }
-                memcpy(nip2, ip2 + offset, new->elsize);
-                if (swap)
-                    new->f->copyswap(nip2, NULL, swap, ap);
+                new->f->copyswap(nip2, ip2 + offset, swap, dummy);
             }
         }
-        res = new->f->compare(nip1, nip2, ap);
-        if ((swap) || (new->alignment > 1)) {
+        res = new->f->compare(nip1, nip2, dummy);
+        if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
                 npy_free_cache(nip1, new->elsize);
             }
@@ -2757,7 +2752,6 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     }
 
 finish:
-    ((PyArrayObject_fields *)ap)->descr = descr;
     return res;
 }
 
