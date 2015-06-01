@@ -2226,6 +2226,7 @@ class TestCross(TestCase):
         for axisc in range(-2, 2):
             assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
 
+
 def test_outer_out_param():
     arr1 = np.ones((5,))
     arr2 = np.ones((2,))
@@ -2235,6 +2236,7 @@ def test_outer_out_param():
     res1 = np.outer(arr1, arr3, out1)
     assert_equal(res1, out1)
     assert_equal(np.outer(arr2, arr3, out2), out2)
+
 
 class TestRequire(object):
     flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
@@ -2308,6 +2310,32 @@ class TestRequire(object):
         for flag in self.flag_names:
             a = ArraySubclass((2,2))
             yield self.set_and_check_flag, flag, None, a
+
+
+class TestBroadcast(TestCase):
+    def test_broadcast_in_args(self):
+        # gh-5881
+        arrs = [np.empty((6, 7)), np.empty((5, 6, 1)), np.empty((7,)),
+                np.empty((5, 1, 7))]
+        mits = [np.broadcast(*arrs),
+                np.broadcast(np.broadcast(*arrs[:2]), np.broadcast(*arrs[2:])),
+                np.broadcast(arrs[0], np.broadcast(*arrs[1:-1]), arrs[-1])]
+        for mit in mits:
+            assert_equal(mit.shape, (5, 6, 7))
+            assert_equal(mit.nd, 3)
+            assert_equal(mit.numiter, 4)
+            for a, ia in zip(arrs, mit.iters):
+                assert_(a is ia.base)
+
+    def test_number_of_arguments(self):
+        arr = np.empty((5,))
+        for j in range(35):
+            arrs = [arr] * j
+            if j < 2 or j > 32:
+                assert_raises(ValueError, np.broadcast, *arrs)
+            else:
+                mit = np.broadcast(*arrs)
+                assert_equal(mit.numiter, j)
 
 
 if __name__ == "__main__":
