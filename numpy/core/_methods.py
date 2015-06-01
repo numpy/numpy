@@ -79,10 +79,6 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False,
     from numpy.lib.function_base import _product_fweights_aweights
     arr = asanyarray(a)
 
-    if arr.ndim > 2:
-        raise ValueError(
-            "No. of dimensions of the array should be greater than 2.")
-
     rcount = _count_reduce_items(arr, axis)
     w, aweights = _product_fweights_aweights(fweights, aweights, rcount)
 

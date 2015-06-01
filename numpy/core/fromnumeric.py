@@ -3075,8 +3075,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     if type(a) is not mu.ndarray:
         try:
             var = a.var
-            return var(axis=axis, dtype=dtype, out=out, ddof=ddof,
-                       fweights=fweights, aweights=aweights)
+            return var(axis=axis, dtype=dtype, out=out, ddof=ddof)
         except AttributeError:
             pass
 
