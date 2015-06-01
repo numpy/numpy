@@ -29,6 +29,8 @@
 #define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
                 (((offset) + (alignment) - 1) & (-(alignment)))
 
+#define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
+
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
@@ -270,7 +272,7 @@ _convert_from_tuple(PyObject *obj)
             type->elsize = itemsize;
         }
     }
-    else if (PyDict_Check(val)) {
+    else if (PyDict_Check(val) || PyDictProxy_Check(val)) {
         /* Assume it's a metadata dictionary */
         if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);
@@ -944,15 +946,21 @@ _convert_from_dict(PyObject *obj, int align)
     if (fields == NULL) {
         return (PyArray_Descr *)PyErr_NoMemory();
     }
-    names = PyDict_GetItemString(obj, "names");
-    descrs = PyDict_GetItemString(obj, "formats");
+    /* Use PyMapping_GetItemString to support dictproxy objects as well */
+    names = PyMapping_GetItemString(obj, "names");
+    descrs = PyMapping_GetItemString(obj, "formats");
     if (!names || !descrs) {
         Py_DECREF(fields);
+        PyErr_Clear();
         return _use_fields_dict(obj, align);
     }
     n = PyObject_Length(names);
-    offsets = PyDict_GetItemString(obj, "offsets");
-    titles = PyDict_GetItemString(obj, "titles");
+    offsets = PyMapping_GetItemString(obj, "offsets");
+    titles = PyMapping_GetItemString(obj, "titles");
+    if (!offsets || !titles) {
+        PyErr_Clear();
+    }
+
     if ((n > PyObject_Length(descrs))
         || (offsets && (n > PyObject_Length(offsets)))
         || (titles && (n > PyObject_Length(titles)))) {
@@ -966,8 +974,10 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    tmp = PyDict_GetItemString(obj, "aligned");
-    if (tmp != NULL) {
+    tmp = PyMapping_GetItemString(obj, "aligned");
+    if (tmp == NULL) {
+        PyErr_Clear();
+    } else {
         if (tmp == Py_True) {
             align = 1;
         }
@@ -1138,8 +1148,10 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Override the itemsize if provided */
-    tmp = PyDict_GetItemString(obj, "itemsize");
-    if (tmp != NULL) {
+    tmp = PyMapping_GetItemString(obj, "itemsize");
+    if (tmp == NULL) {
+        PyErr_Clear();
+    } else {
         itemsize = (int)PyInt_AsLong(tmp);
         if (itemsize == -1 && PyErr_Occurred()) {
             Py_DECREF(new);
@@ -1168,17 +1180,18 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Add the metadata if provided */
-    metadata = PyDict_GetItemString(obj, "metadata");
+    metadata = PyMapping_GetItemString(obj, "metadata");
 
-    if (new->metadata == NULL) {
+    if (metadata == NULL) {
+        PyErr_Clear();
+    }
+    else if (new->metadata == NULL) {
         new->metadata = metadata;
         Py_XINCREF(new->metadata);
     }
-    else if (metadata != NULL) {
-        if (PyDict_Merge(new->metadata, metadata, 0) == -1) {
-            Py_DECREF(new);
-            return NULL;
-        }
+    else if (PyDict_Merge(new->metadata, metadata, 0) == -1) {
+        Py_DECREF(new);
+        return NULL;
     }
     return new;
 
@@ -1446,7 +1459,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         }
         return NPY_SUCCEED;
     }
-    else if (PyDict_Check(obj)) {
+    else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         /* or a dictionary */
         *at = _convert_from_dict(obj,0);
         if (*at == NULL) {
@@ -2741,7 +2754,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 NPY_NO_EXPORT int
 PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
 {
-    if (PyDict_Check(obj)) {
+    if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         *at =  _convert_from_dict(obj, 1);
     }
     else if (PyBytes_Check(obj)) {
@@ -2777,7 +2790,7 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
 NPY_NO_EXPORT int
 PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
 {
-    if (PyDict_Check(obj)) {
+    if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         *at =  _convert_from_dict(obj, 1);
     }
     else if (PyBytes_Check(obj)) {

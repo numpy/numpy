@@ -245,6 +245,14 @@ class TestRecord(TestCase):
                                    ('f1', 'datetime64[Y]'),
                                    ('f2', 'i8')]))
 
+    def test_from_dictproxy(self):
+        # Tests for PR #5920
+        dt = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'f4']})
+        assert_dtype_equal(dt, np.dtype(dt.fields))
+        dt2 = np.dtype((np.void, dt.fields))
+        assert_equal(dt2.fields, dt.fields)
+
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))
