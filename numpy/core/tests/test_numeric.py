@@ -208,6 +208,44 @@ class TestNonarrayArgs(TestCase):
             assert_(isnan(var([])))
             assert_(w[0].category is RuntimeWarning)
 
+    def test_var_fweights_aweights(self):
+        x = [0, 1, 2]
+        x_repeat = [0, 1, 1, 1, 1, 2]
+        weights = [1, 4, 1]
+        x_concat = np.asarray([x, x])
+
+        x_var = var(x, ddof=1, fweights=weights)
+        assert_almost_equal(x_var, 0.4)
+        assert_almost_equal(
+            var(x, ddof=1, fweights=weights, aweights=[1, 1, 1]), 0.4)
+        assert_almost_equal(var(x_repeat, ddof=1), x_var)
+        assert_almost_equal(var(x, fweights=weights), 0.3333333)
+
+        # Test for 2D arrays.
+        assert_array_equal(
+            var(x_concat, ddof=1, axis=1, fweights=weights), [0.4, 0.4])
+        assert_array_equal(
+            var(x_concat.T, ddof=1, axis=0, fweights=weights), [0.4, 0.4])
+
+        # Test that appropriate errors are raised.
+        self.assertRaises(ValueError, var, x, fweights=[-1, 1, 1])
+        self.assertRaises(TypeError, var, x, fweights=[-1.2, 1, 1])
+        self.assertRaises(RuntimeError, var, x, fweights=[-1, 1])
+        self.assertRaises(RuntimeError, var, x, fweights=[[-1], [1]])
+
+        # Test for aweights.
+        aweights = 3 * np.array([weights])
+        x_var = var(x, ddof=1, aweights=weights)
+        assert_almost_equal(x_var, 0.667, 3)
+        assert_almost_equal(x_var,
+            var(x, ddof=1, aweights=weights, fweights=[1, 1, 1]))
+        assert_almost_equal(var(x, ddof=1, aweights=weights), 0.667, 3)
+        assert_almost_equal(var(x, aweights=[1, 1, 1]), var(x))
+
+        self.assertRaises(ValueError, var, x, aweights=[-1, 1, 1])
+        self.assertRaises(RuntimeError, var, x, aweights=[-1, 1])
+        self.assertRaises(RuntimeError, var, x, aweights=[[-1], [1]])
+
 
 class TestBoolScalar(TestCase):
     def test_logical(self):

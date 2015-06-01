@@ -74,49 +74,76 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
 
     return ret
 
-def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False,
+         fweights=None, aweights=None):
+    from numpy.lib.function_base import _product_fweights_aweights
     arr = asanyarray(a)
 
+    if arr.ndim > 2:
+        raise ValueError(
+            "No. of dimensions of the array should be greater than 2.")
+
     rcount = _count_reduce_items(arr, axis)
-    # Make this warning show up on top.
-    if ddof >= rcount:
+    w, aweights = _product_fweights_aweights(fweights, aweights, rcount)
+
+    if w is None:
+        n_items = rcount
+    else:
+        n_items = umr_sum(w)
+
+    # Compute normalization factor and make if it is negative, floor to 0
+    if aweights is not None:
+        waweights = umr_sum(um.multiply(w, aweights))
+        nf = (n_items ** 2- ddof * waweights) / float(n_items)
+    else:
+        nf = n_items - ddof
+    if nf <= 0:
+        nf = 0
         warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
         dtype = mu.dtype('f8')
 
+    if w is not None and axis == 0:
+        w = w[:, None]
+
     # Compute the mean.
     # Note that if dtype is not of inexact type then arraymean will
     # not be either.
-    arrmean = umr_sum(arr, axis, dtype, keepdims=True)
+    if w is None:
+        arrmean = umr_sum(arr, axis, dtype, keepdims=True)
+    else:
+        arrmean = umr_sum(w * arr, axis, dtype, keepdims=True)
+
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(
-                arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
+                arrmean, n_items, out=arrmean, casting='unsafe', subok=False)
     else:
-        arrmean = arrmean.dtype.type(arrmean / rcount)
+        arrmean = arrmean.dtype.type(arrmean / n_items)
 
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
     x = asanyarray(arr - arrmean)
+
     if issubclass(arr.dtype.type, nt.complexfloating):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
-    ret = umr_sum(x, axis, dtype, out, keepdims)
 
-    # Compute degrees of freedom and make sure it is not negative.
-    rcount = max([rcount - ddof, 0])
+    if w is not None:
+        x = um.multiply(w, x, out=x)
+    ret = umr_sum(x, axis, dtype, out, keepdims)
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
+                ret, nf, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(ret / rcount)
+        ret = ret.dtype.type(ret / nf)
     else:
-        ret = ret / rcount
+        ret = ret / nf
 
     return ret
 

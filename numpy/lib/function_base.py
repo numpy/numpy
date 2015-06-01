@@ -44,6 +44,45 @@ __all__ = [
     ]
 
 
+def _product_fweights_aweights(fweights, aweights, shape):
+    """Get the product and validate fweights and aweights.
+    Used in weighted variance and cobariance calculation.
+    """
+    w = None
+    if fweights is not None:
+        fweights = np.asarray(fweights, dtype=np.float)
+        if not np.all(fweights == np.around(fweights)):
+            raise TypeError(
+                "fweights must be integer")
+        if fweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional fweights")
+        if fweights.shape[0] != shape:
+            raise RuntimeError(
+                "incompatible numbers of samples and fweights")
+        if any(fweights < 0):
+            raise ValueError(
+                "fweights cannot be negative")
+        w = fweights
+    if aweights is not None:
+        aweights = np.asarray(aweights, dtype=np.float)
+        if aweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional aweights")
+        if aweights.shape[0] != shape:
+            raise RuntimeError(
+                "incompatible numbers of samples and aweights")
+        if any(aweights < 0):
+            raise ValueError(
+                "aweights cannot be negative")
+        if w is None:
+            w = aweights
+        else:
+            w *= aweights
+
+    return w, aweights
+
+
 def iterable(y):
     """
     Check whether or not an object can be iterated over.
@@ -1968,38 +2007,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
             ddof = 0
 
     # Get the product of frequencies and weights
-    w = None
-    if fweights is not None:
-        fweights = np.asarray(fweights, dtype=np.float)
-        if not np.all(fweights == np.around(fweights)):
-            raise TypeError(
-                "fweights must be integer")
-        if fweights.ndim > 1:
-            raise RuntimeError(
-                "cannot handle multidimensional fweights")
-        if fweights.shape[0] != X.shape[1]:
-            raise RuntimeError(
-                "incompatible numbers of samples and fweights")
-        if any(fweights < 0):
-            raise ValueError(
-                "fweights cannot be negative")
-        w = fweights
-    if aweights is not None:
-        aweights = np.asarray(aweights, dtype=np.float)
-        if aweights.ndim > 1:
-            raise RuntimeError(
-                "cannot handle multidimensional aweights")
-        if aweights.shape[0] != X.shape[1]:
-            raise RuntimeError(
-                "incompatible numbers of samples and aweights")
-        if any(aweights < 0):
-            raise ValueError(
-                "aweights cannot be negative")
-        if w is None:
-            w = aweights
-        else:
-            w *= aweights
-
+    w, aweights = _product_fweights_aweights(fweights, aweights, X.shape[1])
     avg, w_sum = average(X, axis=1, weights=w, returned=True)
     w_sum = w_sum[0]
 
