@@ -1099,27 +1099,6 @@ struct PyArrayIterObject_tag {
         } \
 } while (0)
 
-#define _PyArray_ITER_NEXT3(it) do { \
-        if ((it)->coordinates[2] < (it)->dims_m1[2]) { \
-                (it)->coordinates[2]++; \
-                (it)->dataptr += (it)->strides[2]; \
-        } \
-        else { \
-                (it)->coordinates[2] = 0; \
-                (it)->dataptr -= (it)->backstrides[2]; \
-                if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
-                        (it)->coordinates[1]++; \
-                        (it)->dataptr += (it)->strides[1]; \
-                } \
-                else { \
-                        (it)->coordinates[1] = 0; \
-                        (it)->coordinates[0]++; \
-                        (it)->dataptr += (it)->strides[0] \
-                                (it)->backstrides[1]; \
-                } \
-        } \
-} while (0)
-
 #define PyArray_ITER_NEXT(it) do { \
         _PyAIT(it)->index++; \
         if (_PyAIT(it)->nd_m1 == 0) { \
