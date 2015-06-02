@@ -245,12 +245,11 @@ class record(nt.void):
                 #happens if field is Object type
                 return obj
             if dt.fields:
-                return obj.view((record, obj.dtype.descr))
+                return obj.view((self.__class__, obj.dtype.fields))
             return obj
         else:
             raise AttributeError("'record' object has no "
                     "attribute '%s'" % attr)
-
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
@@ -265,6 +264,16 @@ class record(nt.void):
             else:
                 raise AttributeError("'record' object has no "
                         "attribute '%s'" % attr)
+
+    def __getitem__(self, indx):
+        obj = nt.void.__getitem__(self, indx)
+
+        # copy behavior of record.__getattribute__,
+        if isinstance(obj, nt.void) and obj.dtype.fields:
+            return obj.view((self.__class__, obj.dtype.fields))
+        else:
+            # return a single element
+            return obj
 
     def pprint(self):
         """Pretty-print all fields."""
@@ -438,7 +447,7 @@ class recarray(ndarray):
         # to preserve numpy.record type if present), since nested structured
         # fields do not inherit type.
         if obj.dtype.fields:
-            return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+            return obj.view(dtype=(self.dtype.type, obj.dtype.fields))
         else:
             return obj.view(ndarray)
 
@@ -478,7 +487,7 @@ class recarray(ndarray):
         # we might also be returning a single element
         if isinstance(obj, ndarray):
             if obj.dtype.fields:
-                return obj.view(dtype=(self.dtype.type, obj.dtype.descr))
+                return obj.view(dtype=(self.dtype.type, obj.dtype.fields))
             else:
                 return obj.view(type=ndarray)
         else:

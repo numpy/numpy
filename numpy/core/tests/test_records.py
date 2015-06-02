@@ -149,19 +149,32 @@ class TestFromrecords(TestCase):
         assert_equal(a.foo[0] == a.foo[1], False)
 
     def test_recarray_returntypes(self):
-        a = np.rec.array([('abc ', (1,1), 1), ('abc', (2,3), 1)],
+        qux_fields = {'C': (np.dtype('S5'), 0), 'D': (np.dtype('S5'), 6)}
+        a = np.rec.array([('abc ', (1,1), 1, ('abcde', 'fgehi')),
+                          ('abc', (2,3), 1, ('abcde', 'jklmn'))],
                          dtype=[('foo', 'S4'),
                                 ('bar', [('A', int), ('B', int)]),
-                                ('baz', int)])
+                                ('baz', int), ('qux', qux_fields)])
         assert_equal(type(a.foo), np.ndarray)
         assert_equal(type(a['foo']), np.ndarray)
         assert_equal(type(a.bar), np.recarray)
         assert_equal(type(a['bar']), np.recarray)
         assert_equal(a.bar.dtype.type, np.record)
+        assert_equal(type(a['qux']), np.recarray)
+        assert_equal(a.qux.dtype.type, np.record)
+        assert_equal(dict(a.qux.dtype.fields), qux_fields)
         assert_equal(type(a.baz), np.ndarray)
         assert_equal(type(a['baz']), np.ndarray)
         assert_equal(type(a[0].bar), np.record)
+        assert_equal(type(a[0]['bar']), np.record)
         assert_equal(a[0].bar.A, 1)
+        assert_equal(a[0].bar['A'], 1)
+        assert_equal(a[0]['bar'].A, 1)
+        assert_equal(a[0]['bar']['A'], 1)
+        assert_equal(a[0].qux.D, asbytes('fgehi'))
+        assert_equal(a[0].qux['D'], asbytes('fgehi'))
+        assert_equal(a[0]['qux'].D, asbytes('fgehi'))
+        assert_equal(a[0]['qux']['D'], asbytes('fgehi'))
 
 
 class TestRecord(TestCase):
