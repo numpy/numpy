@@ -35,8 +35,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
-import numpy as np
-from numpy.core import asarray, zeros, swapaxes, shape, conjugate, take
+from numpy.core import array, asarray, zeros, swapaxes, shape, conjugate, take
 from . import fftpack_lite as fftpack
 
 _fft_cache = {}
@@ -250,7 +249,7 @@ def ifft(a, n=None, axis=-1):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=complex)
+    a = array(a, copy=True, dtype=complex)
     if n is None:
         n = shape(a)[axis]
     return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
@@ -331,7 +330,7 @@ def rfft(a, n=None, axis=-1):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=float)
+    a = array(a, copy=True, dtype=float)
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf, _real_fft_cache)
 
 
@@ -412,7 +411,7 @@ def irfft(a, n=None, axis=-1):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=complex)
+    a = array(a, copy=True, dtype=complex)
     if n is None:
         n = (shape(a)[axis] - 1) * 2
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
@@ -486,7 +485,7 @@ def hfft(a, n=None, axis=-1):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=complex)
+    a = array(a, copy=True, dtype=complex)
     if n is None:
         n = (shape(a)[axis] - 1) * 2
     return irfft(conjugate(a), n, axis) * n
@@ -540,7 +539,7 @@ def ihfft(a, n=None, axis=-1):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=float)
+    a = array(a, copy=True, dtype=float)
     if n is None:
         n = shape(a)[axis]
     return conjugate(rfft(a, n, axis))/n
@@ -1009,7 +1008,7 @@ def rfftn(a, s=None, axes=None):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=float)
+    a = array(a, copy=True, dtype=float)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1])
     for ii in range(len(axes)-1):
@@ -1130,7 +1129,7 @@ def irfftn(a, s=None, axes=None):
 
     """
     # The copy may be required for multithreading.
-    a = np.array(a, copy=True, dtype=complex)
+    a = array(a, copy=True, dtype=complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii])
