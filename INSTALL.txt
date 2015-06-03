@@ -8,6 +8,12 @@ Building and installing NumPy
 :Authors: Numpy Developers <numpy-discussion@scipy.org>
 :Discussions to: numpy-discussion@scipy.org
 
+**IMPORTANT**: the below notes are about building Numpy, which for most users
+is *not* the recommended way to install Numpy.  Instead, use either a complete
+scientific Python distribution or a binary installer - see
+http://scipy.org/install.html.
+
+
 .. Contents::
 
 PREREQUISITES
@@ -109,6 +115,22 @@ Or by preloading a specific BLAS library with
     LD_PRELOAD=/usr/lib/atlas-base/atlas/libblas.so.3 python ...
 
 
+Windows 32 bits notes
+=====================
+
+The MinGW compilers used to build the official Numpy binary installers for
+32-bit Python on Windows can be found in https://github.com/numpy/numpy-vendor.
+That repo also contains pre-built ATLAS binarues.  The command to build and
+install Numpy is:
+
+   $ python setup.py config --compiler=mingw32 build --compiler=mingw32 install
+
+Typically, one needs to use a site.cfg file that looks like:
+
+   [atlas]
+   library_dirs = C:\local\lib\atlas
+   include_dirs = C:\local\lib\atlas
+
 Windows 64 bits notes
 =====================
 
@@ -138,18 +160,18 @@ together toolchains for that option. The toolchains are available at
 https://bitbucket.org/carlkl/mingw-w64-for-python/downloads. The site.cfg
 should be configured like so:
 
-[openblas]
-libraries = openblaspy
-library_dirs = <openblaspath>/lib
-include_dirs = <openblaspath>/include
+   [openblas]
+   libraries = openblaspy
+   library_dirs = <openblaspath>/lib
+   include_dirs = <openblaspath>/include
 
 The libopenblaspy.dll from <openblaspath>/bin must be copied to numpy/core
 before the build. For this mingw-w64 toolchain manual creation of the python
 import libs is necessary, i.e.:
 
-gendef python2.7.dll
-dlltool -D python27.dll -d python27.def -l libpython27.dll.a
-move libpython27.dll.a libs\libpython27.dll.a
+   gendef python2.7.dll
+   dlltool -D python27.dll -d python27.def -l libpython27.dll.a
+   move libpython27.dll.a libs\libpython27.dll.a
 
 For python-2.6 up to python 3.2 use
 https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/mingwpy_win32_vc90.tar.xz
@@ -168,9 +190,8 @@ MS compilers
 If you are familiar with MS tools, that's obviously the easiest path, and
 the compilers are hopefully more mature (although in my experience, they
 are quite fragile, and often segfault on invalid C code). The main drawback
-is that no fortran compiler + MS compiler combination has been tested -
-mingw-w64 gfortran + MS compiler does not work at all (it is unclear
-whether it ever will).
+is that mingw-w64 gfortran + MSVC does not work at all (it is unclear
+whether it ever will).  MSVC + ifort + MKL does work.
 
 For python 2.6, you need VS 2008. The freely available version does not
 contains 64 bits compilers (you also need the PSDK, v6.1).
