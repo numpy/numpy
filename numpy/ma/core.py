@@ -3044,8 +3044,7 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError(msg)
-        _data = ndarray.view(self, ndarray)
-        dout = ndarray.__getitem__(_data, indx)
+        dout = self.data[indx]
         # We could directly use ndarray.__getitem__ on self...
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet...
@@ -3075,6 +3074,8 @@ class MaskedArray(ndarray):
             # Update the mask if needed
             if _mask is not nomask:
                 dout._mask = _mask[indx]
+                # set shape to match that of data; this is needed for matrices
+                dout._mask.shape = dout.shape
                 dout._sharedmask = True
 #               Note: Don't try to check for m.any(), that'll take too long...
         return dout
@@ -3092,16 +3093,16 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError(msg)
-        _data = ndarray.view(self, ndarray.__getattribute__(self, '_baseclass'))
-        _mask = ndarray.__getattribute__(self, '_mask')
+        _data = self._data
+        _mask = self._mask
         if isinstance(indx, basestring):
-            ndarray.__setitem__(_data, indx, value)
+            _data[indx] = value
             if _mask is nomask:
                 self._mask = _mask = make_mask_none(self.shape, self.dtype)
             _mask[indx] = getmask(value)
             return
         #........................................
-        _dtype = ndarray.__getattribute__(_data, 'dtype')
+        _dtype = _data.dtype
         nbfields = len(_dtype.names or ())
         #........................................
         if value is masked:
@@ -3125,21 +3126,21 @@ class MaskedArray(ndarray):
             mval = tuple([False] * nbfields)
         if _mask is nomask:
             # Set the data, then the mask
-            ndarray.__setitem__(_data, indx, dval)
+            _data[indx] = dval
             if mval is not nomask:
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
-                ndarray.__setitem__(_mask, indx, mval)
+                _mask[indx] = mval
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
             if not self._isfield:
                 self.unshare_mask()
-                _mask = ndarray.__getattribute__(self, '_mask')
+                _mask = self._mask
             # Set the data, then the mask
-            ndarray.__setitem__(_data, indx, dval)
-            ndarray.__setitem__(_mask, indx, mval)
+            _data[indx] = dval
+            _mask[indx] = mval
         elif hasattr(indx, 'dtype') and (indx.dtype == MaskType):
             indx = indx * umath.logical_not(_mask)
-            ndarray.__setitem__(_data, indx, dval)
+            _data[indx] = dval
         else:
             if nbfields:
                 err_msg = "Flexible 'hard' masks are not yet supported..."
@@ -3150,7 +3151,7 @@ class MaskedArray(ndarray):
                 np.copyto(dindx, dval, where=~mindx)
             elif mindx is nomask:
                 dindx = dval
-            ndarray.__setitem__(_data, indx, dindx)
+            _data[indx] = dindx
             _mask[indx] = mindx
         return
 

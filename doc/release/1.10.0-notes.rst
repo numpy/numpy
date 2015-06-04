@@ -235,6 +235,12 @@ arguments for controlling backward compatibility of pickled Python
 objects. This enables Numpy on Python 3 to load npy files containing
 object arrays that were generated on Python 2.
 
+MaskedArray support for more complicated base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Built-in assumptions that the baseclass behaved like a plain array are being
+removed. In particalur, setting and getting elements and ranges will respect
+baseclass overrides of ``__setitem__`` and ``__getitem__``.
+
 Changes
 =======
 
