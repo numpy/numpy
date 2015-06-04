@@ -2,7 +2,6 @@
 #define NPY_IMPORT_H
 
 #include <Python.h>
-#include <assert.h>
 
 /*! \brief Fetch and cache Python function.
  *
@@ -17,7 +16,7 @@
  * @param function Function name.
  * @param cache Storage location for imported function.
  */
-NPY_INLINE void
+NPY_INLINE static void
 npy_cache_pyfunc(const char *module, const char *function, PyObject **cache)
 {
     if (*cache == NULL) {
