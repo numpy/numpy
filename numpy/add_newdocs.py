@@ -1943,6 +1943,7 @@ add_newdoc('numpy.core', 'dot',
     vdot : Complex-conjugating dot product.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
+    matmul : '@' operator as method with out parameter.
 
     Examples
     --------
@@ -1954,7 +1955,7 @@ add_newdoc('numpy.core', 'dot',
     >>> np.dot([2j, 3j], [2j, 3j])
     (-13+0j)
 
-    For 2-D arrays it's the matrix product:
+    For 2-D arrays it is the matrix product:
 
     >>> a = [[1, 0], [0, 1]]
     >>> b = [[4, 1], [2, 2]]
@@ -1970,6 +1971,130 @@ add_newdoc('numpy.core', 'dot',
     499128
 
     """)
+
+add_newdoc('numpy.core', 'matmul',
+    """
+    matmul(a, b, out=None)
+
+    Matrix product of two arrays.
+
+    The behavior depends on the arguments in the following way.
+
+    - If both arguments are 2-D they are multiplied like conventional
+      matrices.
+    - If either argument is N-D, N > 2, it is treated as a stack of
+      matrices residing in the last two indexes and broadcast accordingly.
+    - If the first argument is 1-D, it is promoted to a matrix by
+      prepending a 1 to its dimensions. After matrix multiplication
+      the prepended 1 is removed.
+    - If the second argument is 1-D, it is promoted to a matrix by
+      appending a 1 to its dimensions. After matrix multiplication
+      the appended 1 is removed.
+
+    Multiplication by a scalar is not allowed, use ``*`` instead. Note that
+    multiplying a stack of matrices with a vector will result in a stack of
+    vectors, but matmul will not recognize it as such.
+
+    ``matmul`` differs from ``dot`` in two important ways.
+
+    - Multiplication by scalars is not allowed.
+    - Stacks of matrices are broadcast together as if the matrices
+      were elements.
+
+    .. warning::
+       This function is preliminary and included in Numpy 1.10 for testing
+       and documentation. Its semantics will not change, but the number and
+       order of the optional arguments will.
+
+    .. versionadded:: 1.10.0
+
+    Parameters
+    ----------
+    a : array_like
+        First argument.
+    b : array_like
+        Second argument.
+    out : ndarray, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a,b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
+
+    Returns
+    -------
+    output : ndarray
+        Returns the dot product of `a` and `b`.  If `a` and `b` are both
+        1-D arrays then a scalar is returned; otherwise an array is
+        returned.  If `out` is given, then it is returned.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `a` is not the same size as
+        the second-to-last dimension of `b`.
+
+        If scalar value is passed.
+
+    See Also
+    --------
+    vdot : Complex-conjugating dot product.
+    tensordot : Sum products over arbitrary axes.
+    einsum : Einstein summation convention.
+    dot : alternative matrix product with different broadcasting rules.
+
+    Notes
+    -----
+    The matmul function implements the semantics of the `@` operator introduced
+    in Python 3.5 following PEP465.
+
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = [[1, 0], [0, 1]]
+    >>> b = [[4, 1], [2, 2]]
+    >>> np.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = [[1, 0], [0, 1]]
+    >>> b = [1, 2]
+    >>> np.matmul(a, b)
+    array([1, 2])
+    >>> np.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2*2*4).reshape((2,2,4))
+    >>> b = np.arange(2*2*4).reshape((2,4,2))
+    >>> np.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.matmul(a,b)[0,1,1]
+    98
+    >>> sum(a[0,1,:] * b[0,:,1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: Scalar operands are not allowed, use '*' instead
+
+    """)
+
 
 add_newdoc('numpy.core', 'einsum',
     """

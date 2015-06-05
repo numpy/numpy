@@ -18,6 +18,7 @@ Highlights
   sequence of arrays along a new axis, complementing `np.concatenate` for
   joining along an existing axis.
 * Addition of `nanprod` to the set of nanfunctions.
+* Support for the '@' operator in Python 3.5.
 
 
 Dropped Support
@@ -152,6 +153,15 @@ covariance calculations by applying two types of weighting to observation
 vectors. An array of ``fweights`` indicates the number of repeats of each
 observation vector, and an array of ``aweights`` provides their relative
 importance or probability.
+
+Support for the '@' operator in Python 3.5+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Python 3.5 adds support for a matrix multiplication operator '@' proposed
+in PEP465. Preliminary support for that has been implemented, and an
+equivalent function ``matmul`` has also been added for testing purposes and
+use in earlier Python versions. The function is preliminary and the order
+and number of its optional arguments can be expected to change.
+
 
 Improvements
 ============

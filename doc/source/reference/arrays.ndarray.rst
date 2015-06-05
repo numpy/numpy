@@ -428,10 +428,10 @@ be performed.
    ndarray.all
    ndarray.any
 
-Arithmetic and comparison operations
-====================================
+Arithmetic, matrix multiplication, and comparison operations
+============================================================
 
-.. index:: comparison, arithmetic, operation, operator
+.. index:: comparison, arithmetic, matrix, operation, operator
 
 Arithmetic and comparison operations on :class:`ndarrays <ndarray>`
 are defined as element-wise operations, and generally yield
@@ -550,6 +550,20 @@ Arithmetic, in-place:
    3j``: while they both perform the same computation, ``a += 3``
    casts the result to fit back in ``a``, whereas ``a = a + 3j``
    re-binds the name ``a`` to the result.
+
+Matrix Multiplication:
+
+.. autosummary::
+   :toctree: generated/
+
+   ndarray.__matmul__
+
+.. note::
+
+   Matrix operators ``@`` and ``@=`` were introduced in Python 3.5
+   following PEP465. Numpy 1.10 has a preliminary implementation of ``@``
+   for testing purposes. Further documentation can be found in the
+   :func:`matmul` documentation.
 
 
 Special methods

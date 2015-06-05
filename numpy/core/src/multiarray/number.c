@@ -8,11 +8,10 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
-
-#include "number.h"
+#include "npy_import.h"
 #include "common.h"
+#include "number.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
@@ -386,6 +385,24 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
+
+#if PY_VERSION_HEX >= 0x03050000
+/* Need this to be version dependent on account of the slot check */
+static PyObject *
+array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
+{
+    static PyObject *matmul = NULL;
+
+    npy_cache_pyfunc("numpy.core.multiarray", "matmul", &matmul);
+    if (matmul == NULL) {
+        return NULL;
+    }
+    GIVE_UP_IF_HAS_RIGHT_BINOP(m1, m2, "__matmul__", "__rmatmul__",
+                               0, nb_matrix_multiply);
+    return PyArray_GenericBinaryFunction(m1, m2, matmul);
+}
+#endif
+
 /* Determine if object is a scalar and if so, convert the object
  *   to a double and place it in the out_exponent argument
  *   and return the "scalar kind" as a result.   If the object is
@@ -722,6 +739,7 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericInplaceBinaryFunction(m1, m2,
                                                 n_ops.true_divide);
 }
+
 
 static int
 _array_nonzero(PyArrayObject *mp)
@@ -1066,5 +1084,9 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_true_divide,              /*nb_true_divide*/
     (binaryfunc)array_inplace_floor_divide,     /*nb_inplace_floor_divide*/
     (binaryfunc)array_inplace_true_divide,      /*nb_inplace_true_divide*/
-    (unaryfunc)array_index,                     /* nb_index */
+    (unaryfunc)array_index,                     /*nb_index */
+#if PY_VERSION_HEX >= 0x03050000
+    (binaryfunc)array_matrix_multiply,          /*nb_matrix_multiply*/
+    (binaryfunc)NULL,                           /*nb_inplacematrix_multiply*/
+#endif
 };
