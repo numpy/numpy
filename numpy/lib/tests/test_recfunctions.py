@@ -700,6 +700,36 @@ class TestJoinBy2(TestCase):
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
+class TestAppendFieldsObj(TestCase):
+    """
+    Test append_fields with arrays containing objects
+    """
+    # https://github.com/numpy/numpy/issues/2346
+
+    def setUp(self):
+        from datetime import date
+        self.data = dict(obj=date(2000, 1, 1))
+
+    def test_append_to_objects(self):
+        "Test append_fields when the base array contains objects"
+        obj = self.data['obj']
+        x = np.array([(obj, 1.), (obj, 2.)],
+                      dtype=[('A', object), ('B', float)])
+        y = np.array([10, 20], dtype=int)
+        test = append_fields(x, 'C', data=y, usemask=False)
+        control = np.array([(obj, 1.0, 10), (obj, 2.0, 20)],
+                           dtype=[('A', object), ('B', float), ('C', int)])
+        assert_equal(test, control)
+
+    def test_append_with_objects(self):
+        "Test append_fields when the appended data contains objects"
+        obj = self.data['obj']
+        x = np.array([(10, 1.), (20, 2.)], dtype=[('A', int), ('B', float)])
+        y = np.array([obj, obj], dtype=object)
+        test = append_fields(x, 'C', data=y, dtypes=object, usemask=False)
+        control = np.array([(10, 1.0, obj), (20, 2.0, obj)],
+                           dtype=[('A', int), ('B', float), ('C', object)])
+        assert_equal(test, control)
 
 if __name__ == '__main__':
     run_module_suite()

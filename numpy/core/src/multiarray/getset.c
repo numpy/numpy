@@ -9,8 +9,8 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "scalartypes.h"
@@ -434,6 +434,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     npy_intp newdim;
     int i;
     char *msg = "new type not compatible with array.";
+    PyObject *safe;
+    static PyObject *checkfunc = NULL;
+
+    npy_cache_pyfunc("numpy.core._internal", "_view_is_safe", &checkfunc);
+    if (checkfunc == NULL) {
+        return -1;
+    }
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -448,15 +455,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    if (PyDataType_FLAGCHK(newtype, NPY_ITEM_HASOBJECT) ||
-        PyDataType_FLAGCHK(newtype, NPY_ITEM_IS_POINTER) ||
-        PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_HASOBJECT) ||
-        PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_TypeError,
-                "Cannot change data-type for object array.");
+    /* check that we are not reinterpreting memory containing Objects */
+    safe = PyObject_CallFunction(checkfunc, "OO", PyArray_DESCR(self), newtype);
+    if (safe == NULL) {
         Py_DECREF(newtype);
         return -1;
     }
+    Py_DECREF(safe);
 
     if (newtype->elsize == 0) {
         /* Allow a void view */
