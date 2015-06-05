@@ -1770,14 +1770,14 @@ get_sum_of_products_function(int nop, int type_num,
     }
 
     /* Check for all contiguous */
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < nop + 1; ++iop) {
         if (fixed_strides[iop] != itemsize) {
             break;
         }
     }
 
     /* Contiguous loop */
-    if (iop == nop) {
+    if (iop == nop + 1) {
         return _allcontig_specialized_table[type_num][nop <= 3 ? nop : 0];
     }
 
