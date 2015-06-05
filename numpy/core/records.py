@@ -423,6 +423,12 @@ class recarray(ndarray):
                                       strides=strides, order=order)
         return self
 
+    def __array_finalize__(self, obj):
+        if self.dtype.type is not record:
+            # if self.dtype is not np.record, invoke __setattr__ which will 
+            # convert it to a record if it is a void dtype.
+            self.dtype = self.dtype
+
     def __getattribute__(self, attr):
         # See if ndarray has this attr, and return it if so. (note that this
         # means a field with the same name as an ndarray attr cannot be
@@ -456,6 +462,11 @@ class recarray(ndarray):
     # Undo any "setting" of the attribute and do a setfield
     # Thus, you can't create attributes on-the-fly that are field names.
     def __setattr__(self, attr, val):
+
+        # Automatically convert (void) dtypes to records.
+        if attr == 'dtype' and issubclass(val.type, nt.void):
+            val = sb.dtype((record, val))
+
         newattr = attr not in self.__dict__
         try:
             ret = object.__setattr__(self, attr, val)
@@ -502,8 +513,10 @@ class recarray(ndarray):
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
 
-        if self.dtype.type is record:
+        if (self.dtype.type is record
+                or (not issubclass(self.dtype.type, nt.void)) ):
             # If this is a full record array (has numpy.record dtype),
+            # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
             # converts dtype to a numpy.record for us, use only dtype.descr,
             # not repr(dtype).
@@ -512,7 +525,8 @@ class recarray(ndarray):
                           (lst, lf, repr(self.dtype.descr)))
         else:
             # otherwise represent it using np.array plus a view
-            # (There is currently (v1.10) no other easy way to create it)
+            # This should only happen if the user is playing
+            # strange games with dtypes.
             lf = '\n'+' '*len("array(")
             return ('array(%s, %sdtype=%s).view(numpy.recarray)' %
                           (lst, lf, str(self.dtype)))
@@ -533,22 +547,6 @@ class recarray(ndarray):
             return obj.view(ndarray)
         else:
             return self.setfield(val, *res)
-
-    def view(self, dtype=None, type=None):
-        if dtype is None:
-            return ndarray.view(self, type)
-        elif type is None:
-            try:
-                if issubclass(dtype, ndarray):
-                    return ndarray.view(self, dtype)
-            except TypeError:
-                pass
-            dtype = sb.dtype(dtype)
-            if dtype.fields is None:
-                return self.__array__().view(dtype)
-            return ndarray.view(self, dtype)
-        else:
-            return ndarray.view(self, dtype, type)
 
 
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
@@ -837,10 +835,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = obj
         if copy:
             new = new.copy()
-        res = new.view(recarray)
-        if issubclass(res.dtype.type, nt.void):
-            res.dtype = sb.dtype((record, res.dtype))
-        return res
+        return new.view(recarray)
 
     else:
         interface = getattr(obj, "__array_interface__", None)
@@ -849,7 +844,4 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         obj = sb.array(obj)
         if dtype is not None and (obj.dtype != dtype):
             obj = obj.view(dtype)
-        res = obj.view(recarray)
-        if issubclass(res.dtype.type, nt.void):
-            res.dtype = sb.dtype((record, res.dtype))
-        return res
+        return obj.view(recarray)

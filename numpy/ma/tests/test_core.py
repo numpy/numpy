@@ -1401,6 +1401,32 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(b01.data, array([[1., 0.]]))
         assert_equal(b01.mask, array([[False, False]]))
 
+    def test_assign_dtype(self):
+        # check that the mask's dtype is updated when dtype is changed
+        a = np.zeros(4, dtype='f4,i4')
+
+        m = np.ma.array(a)
+        m.dtype = np.dtype('f4')
+        repr(m) # raises?
+        assert_equal(m.dtype, np.dtype('f4'))
+
+        # check that dtype changes that change shape of mask too much
+        # are not allowed
+        def assign():
+            m = np.ma.array(a)
+            m.dtype = np.dtype('f8')
+        assert_raises(ValueError, assign)
+
+        b = a.view(dtype='f4', type=np.ma.MaskedArray) # raises?
+        assert_equal(b.dtype, np.dtype('f4'))
+
+        # check that nomask is preserved
+        a = np.zeros(4, dtype='f4')
+        m = np.ma.array(a)
+        m.dtype = np.dtype('f4,i4')
+        assert_equal(m.dtype, np.dtype('f4,i4'))
+        assert_equal(m._mask, np.ma.nomask)
+
 
 #------------------------------------------------------------------------------
 class TestFillingValues(TestCase):

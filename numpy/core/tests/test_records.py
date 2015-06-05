@@ -88,12 +88,49 @@ class TestFromrecords(TestCase):
         assert_equal(recordarr, recordarr_r)
 
         assert_equal(type(recarr_r), np.recarray)
-        assert_equal(recarr_r.dtype.type, np.void)
+        assert_equal(recarr_r.dtype.type, np.record)
         assert_equal(recarr, recarr_r)
 
         assert_equal(type(recordview_r), np.ndarray)
         assert_equal(recordview.dtype.type, np.record)
         assert_equal(recordview, recordview_r)
+
+    def test_recarray_views(self):
+        a = np.array([(1,'ABC'), (2, "DEF")],
+                     dtype=[('foo', int), ('bar', 'S4')])
+        b = np.array([1,2,3,4,5], dtype=np.int64)
+
+        #check that np.rec.array gives right dtypes
+        assert_equal(np.rec.array(a).dtype.type, np.record)
+        assert_equal(type(np.rec.array(a)), np.recarray)
+        assert_equal(np.rec.array(b).dtype.type, np.int64)
+        assert_equal(type(np.rec.array(b)), np.recarray)
+
+        #check that viewing as recarray does the same
+        assert_equal(a.view(np.recarray).dtype.type, np.record)
+        assert_equal(type(a.view(np.recarray)), np.recarray)
+        assert_equal(b.view(np.recarray).dtype.type, np.int64)
+        assert_equal(type(b.view(np.recarray)), np.recarray)
+
+        #check that view to non-structured dtype preserves type=np.recarray
+        r = np.rec.array(np.ones(4, dtype="f4,i4"))
+        rv = r.view('f8').view('f4,i4')
+        assert_equal(type(rv), np.recarray)
+        assert_equal(rv.dtype.type, np.record)
+
+        #check that we can undo the view
+        arrs = [np.ones(4, dtype='f4,i4'), np.ones(4, dtype='f8')]
+        for arr in arrs:
+            rec = np.rec.array(arr)
+            # recommended way to view as an ndarray:
+            arr2 = rec.view(rec.dtype.fields or rec.dtype, np.ndarray)
+            assert_equal(arr2.dtype.type, arr.dtype.type)
+            assert_equal(type(arr2), type(arr))
+
+    def test_recarray_repr(self):
+        # make sure non-structured dtypes also show up as rec.array
+        a = np.array(np.ones(4, dtype='f8'))
+        assert_(repr(np.rec.array(a)).startswith('rec.array'))
 
     def test_recarray_from_names(self):
         ra = np.rec.array([
