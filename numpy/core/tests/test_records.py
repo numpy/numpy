@@ -229,6 +229,12 @@ class TestRecord(TestCase):
         ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
         ra[['x','y']] #TypeError?
 
+    def test_record_scalar_setitem(self):
+        # https://github.com/numpy/numpy/issues/3561
+        rec = np.recarray(1, dtype=[('x', float, 5)])
+        rec[0].x = 1
+        assert_equal(rec[0].x, np.ones(5))
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
