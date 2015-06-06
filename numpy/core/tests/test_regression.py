@@ -128,13 +128,17 @@ class TestRegression(TestCase):
         assert_almost_equal(x**(-1), [1/(1+2j)])
 
     def test_scalar_compare(self,level=rlevel):
-        """Ticket #72"""
+        # Trac Ticket #72
+        # https://github.com/numpy/numpy/issues/565
         a = np.array(['test', 'auto'])
         assert_array_equal(a == 'auto', np.array([False, True]))
         self.assertTrue(a[1] == 'auto')
         self.assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
-        self.assertTrue(b != 'auto')
+        # This should return true for now, but will eventually raise an error:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            self.assertTrue(b != 'auto')
         self.assertTrue(b[0] != 'auto')
 
     def test_unicode_swapping(self,level=rlevel):

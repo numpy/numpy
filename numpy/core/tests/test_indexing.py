@@ -959,12 +959,14 @@ class TestMultiIndexingAutomated(TestCase):
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
+            def isskip(idx):
+                return isinstance(idx, str) and idx == "skip"
             for simple_pos in [0, 2, 3]:
                 tocheck = [self.fill_indices, self.complex_indices,
                            self.fill_indices, self.fill_indices]
                 tocheck[simple_pos] = self.simple_indices
                 for index in product(*tocheck):
-                    index = tuple(i for i in index if i != 'skip')
+                    index = tuple(i for i in index if not isskip(i))
                     self._check_multi_index(self.a, index)
                     self._check_multi_index(self.b, index)
 

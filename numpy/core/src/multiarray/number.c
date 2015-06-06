@@ -303,6 +303,10 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
            * See also:
            * - https://github.com/numpy/numpy/issues/3502
            * - https://github.com/numpy/numpy/issues/3503
+           *
+           * NB: there's another copy of this code in
+           *    numpy.ma.core.MaskedArray._delegate_binop
+           * which should possibly be updated when this is.
            */
           double m1_prio = PyArray_GetPriority((PyObject *)m1,
                                                NPY_SCALAR_PRIORITY);
