@@ -312,12 +312,12 @@ def linkcode_resolve(domain, info):
         return None
 
     try:
-        source, lineno = inspect.findsource(obj)
+        source, lineno = inspect.getsourcelines(obj)
     except:
         lineno = None
 
     if lineno:
-        linespec = "#L%d" % (lineno + 1)
+        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
 
