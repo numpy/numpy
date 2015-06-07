@@ -19,7 +19,11 @@ typedef struct {
      * Object of index: slice, array, or NULL. Owns a reference.
      */
     PyObject *object;
-    /* Value of an integer index or number of slices an Ellipsis is worth */
+    /*
+     * Value of an integer index, number of slices an Ellipsis is worth,
+     * -1 if input was an integer array and the original size of the
+     * boolean array if it is a converted boolean array.
+     */
     npy_intp value;
     /* kind of index, see constants in mapping.c */
     int type;

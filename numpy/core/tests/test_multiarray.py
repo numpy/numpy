@@ -2548,29 +2548,29 @@ class TestFancyIndexing(TestCase):
 
     def test_mask(self):
         x = array([1, 2, 3, 4])
-        m = array([0, 1], bool)
+        m = array([0, 1, 0, 0], bool)
         assert_array_equal(x[m], array([2]))
 
     def test_mask2(self):
         x = array([[1, 2, 3, 4], [5, 6, 7, 8]])
         m = array([0, 1], bool)
-        m2 = array([[0, 1], [1, 0]], bool)
-        m3 = array([[0, 1]], bool)
+        m2 = array([[0, 1, 0, 0], [1, 0, 0, 0]], bool)
+        m3 = array([[0, 1, 0, 0], [0, 0, 0, 0]], bool)
         assert_array_equal(x[m], array([[5, 6, 7, 8]]))
         assert_array_equal(x[m2], array([2, 5]))
         assert_array_equal(x[m3], array([2]))
 
     def test_assign_mask(self):
         x = array([1, 2, 3, 4])
-        m = array([0, 1], bool)
+        m = array([0, 1, 0, 0], bool)
         x[m] = 5
         assert_array_equal(x, array([1, 5, 3, 4]))
 
     def test_assign_mask2(self):
         xorig = array([[1, 2, 3, 4], [5, 6, 7, 8]])
         m = array([0, 1], bool)
-        m2 = array([[0, 1], [1, 0]], bool)
-        m3 = array([[0, 1]], bool)
+        m2 = array([[0, 1, 0, 0], [1, 0, 0, 0]], bool)
+        m3 = array([[0, 1, 0, 0], [0, 0, 0, 0]], bool)
         x = xorig.copy()
         x[m] = 10
         assert_array_equal(x, array([[1, 2, 3, 4], [10, 10, 10, 10]]))

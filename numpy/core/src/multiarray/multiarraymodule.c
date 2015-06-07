@@ -4448,6 +4448,7 @@ intern_strings(void)
            npy_ma_str_ndmin;
 }
 
+
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,

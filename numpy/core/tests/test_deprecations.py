@@ -508,5 +508,32 @@ class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
         self.assert_deprecated(np.restoredot)
 
 
+class TestBooleanIndexShapeMismatchDeprecation():
+    """Tests deprecation for boolean indexing where the boolean array
+    does not match the input array along the given diemsions.
+    """
+    message = r"boolean index did not match indexed array"
+
+    def test_simple(self):
+        arr = np.ones((5, 4, 3))
+        index = np.array([True])
+        #self.assert_deprecated(arr.__getitem__, args=(index,))
+        assert_warns(np.VisibleDeprecationWarning,
+                     arr.__getitem__, index)
+
+        index = np.array([False] * 6)
+        #self.assert_deprecated(arr.__getitem__, args=(index,))
+        assert_warns(np.VisibleDeprecationWarning,
+             arr.__getitem__, index)
+
+        index = np.zeros((4, 4), dtype=bool)
+        #self.assert_deprecated(arr.__getitem__, args=(index,))
+        assert_warns(np.VisibleDeprecationWarning,
+             arr.__getitem__, index)
+        #self.assert_deprecated(arr.__getitem__, args=((slice(None), index),))
+        assert_warns(np.VisibleDeprecationWarning,
+             arr.__getitem__, (slice(None), index))
+
+
 if __name__ == "__main__":
     run_module_suite()

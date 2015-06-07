@@ -788,18 +788,22 @@ class TestRegression(TestCase):
             assert_equal(np.arange(0.5, dtype=dt).dtype, dt)
             assert_equal(np.arange(5, dtype=dt).dtype, dt)
 
-    def test_bool_indexing_invalid_nr_elements(self, level=rlevel):
+    def test_bool_flat_indexing_invalid_nr_elements(self, level=rlevel):
         s = np.ones(10, dtype=float)
         x = np.array((15,), dtype=float)
-        def ia(x, s, v): x[(s>0)]=v
+        def ia(x, s, v): x[(s>0)] = v
         # After removing deprecation, the following are ValueErrors.
         # This might seem odd as compared to the value error below. This
         # is due to the fact that the new code always uses "nonzero" logic
         # and the boolean special case is not taken.
-        self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
-        self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+            self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
+            self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
         # Old special case (different code path):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
+        self.assertRaises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))
 
     def test_mem_scalar_indexing(self, level=rlevel):
         """Ticket #603"""
