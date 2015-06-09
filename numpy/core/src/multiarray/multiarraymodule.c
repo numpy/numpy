@@ -1265,47 +1265,41 @@ clean_ret:
 static int
 _pyarray_revert(PyArrayObject *ret)
 {
-    npy_intp length;
-    npy_intp i;
-    PyArray_CopySwapFunc *copyswap;
-    char *tmp = NULL, *sw1, *sw2;
-    npy_intp os;
-    char *op;
+    npy_intp length = PyArray_DIM(ret, 0);
+    npy_intp os = PyArray_DESCR(ret)->elsize;
+    char *op = PyArray_DATA(ret);
+    char *sw1 = op;
+    char *sw2;
 
-    length = PyArray_DIMS(ret)[0];
-    copyswap = PyArray_DESCR(ret)->f->copyswap;
-
-    tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
-    if (tmp == NULL) {
-        return -1;
-    }
-
-    os = PyArray_DESCR(ret)->elsize;
-    op = PyArray_DATA(ret);
-    sw1 = op;
-    sw2 = op + (length - 1) * os;
-    if (PyArray_ISFLEXIBLE(ret) || PyArray_ISOBJECT(ret)) {
-        for(i = 0; i < length/2; ++i) {
-            memmove(tmp, sw1, os);
-            copyswap(tmp, NULL, 0, NULL);
-            memmove(sw1, sw2, os);
-            copyswap(sw1, NULL, 0, NULL);
-            memmove(sw2, tmp, os);
-            copyswap(sw2, NULL, 0, NULL);
-            sw1 += os;
-            sw2 -= os;
+    if (PyArray_ISNUMBER(ret) && !PyArray_ISCOMPLEX(ret)) {
+        /* Optimization for unstructured dtypes */
+        PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(ret)->f->copyswapn;
+        sw2 = op + length * os - 1;
+        /* First reverse the whole array byte by byte... */
+        while(sw1 < sw2) {
+            const char tmp = *sw1;
+            *sw1++ = *sw2;
+            *sw2-- = tmp;
         }
-    } else {
-        for(i = 0; i < length/2; ++i) {
+        /* ...then swap in place every item */
+        copyswapn(op, os, NULL, 0, length, 1, NULL);
+    }
+    else {
+        char *tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
+        if (tmp == NULL) {
+            return -1;
+        }
+        sw2 = op + (length - 1) * os;
+        while (sw1 < sw2) {
             memcpy(tmp, sw1, os);
             memcpy(sw1, sw2, os);
             memcpy(sw2, tmp, os);
             sw1 += os;
             sw2 -= os;
         }
+        PyArray_free(tmp);
     }
 
-    PyArray_free(tmp);
     return 0;
 }
 
