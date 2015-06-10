@@ -661,7 +661,7 @@ class ABCPolyBase(object):
         Parameters
         ----------
         m : non-negative int
-            The number of integrations to perform.
+            Find the derivative of order `m`.
 
         Returns
         -------
