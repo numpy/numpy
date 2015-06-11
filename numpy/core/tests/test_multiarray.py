@@ -818,6 +818,29 @@ class TestStructured(TestCase):
         dat2 = np.zeros(3, [('A', 'i'), ('B', '|O')])
         new2 = dat2[['B', 'A']] # TypeError?
 
+    def test_setfield(self):
+        # https://github.com/numpy/numpy/issues/3126
+        struct_dt = np.dtype([('elem', 'i4', 5),])
+        dt = np.dtype([('field', 'i4', 10),('struct', struct_dt)])
+        x = np.zeros(1, dt)
+        x[0]['field']  = np.ones(10, dtype='i4')
+        x[0]['struct'] = np.ones(1, dtype=struct_dt)
+        assert_equal(x[0]['field'], np.ones(10, dtype='i4'))
+
+    def test_setfield_object(self):
+        # make sure object field assignment with ndarray value
+        # on void scalar mimics setitem behavior
+        b = np.zeros(1, dtype=[('x', 'O')])
+        # next line should work identically to b['x'][0] = np.arange(3)
+        b[0]['x'] = np.arange(3)
+        assert_equal(b[0]['x'], np.arange(3))
+
+        #check that broadcasting check still works
+        c = np.zeros(1, dtype=[('x', 'O', 5)])
+        def testassign():
+            c[0]['x'] = np.arange(3)
+        assert_raises(ValueError, testassign)
+
 class TestBool(TestCase):
     def test_test_interning(self):
         a0 = bool_(0)
