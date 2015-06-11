@@ -1023,11 +1023,11 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a symmetric or Hermitian 
-       (conjugate symmetric) array.
+    eigh : eigenvalues and eigenvectors of a symmetric or Hermitian
+           (conjugate symmetric) array.
 
     eigvalsh : eigenvalues of a symmetric or Hermitian (conjugate symmetric)
-       array.
+               array.
 
     Notes
     -----
@@ -1747,7 +1747,7 @@ def det(a):
 
     >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
     >>> a.shape
-    (2, 2, 2
+    (3, 2, 2)
     >>> np.linalg.det(a)
     array([-2., -3., -8.])
 
