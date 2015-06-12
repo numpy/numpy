@@ -342,6 +342,16 @@ class TestUfunc(TestCase):
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
 
+    def test_true_divide(self):
+        # True_divide has a non uniform signature, see #3484.
+        # This also tests type_tuple_type_resolver.
+        a = np.full(5, 12.5)
+        b = np.full(5, 10.0)
+        tgt = np.full(5, 1.25)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float64), tgt)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float32), tgt)
+        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
+
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 4)
