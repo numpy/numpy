@@ -99,6 +99,11 @@ byte-array indices now raises an IndexError
 Indexing an ndarray using a byte-string in Python 3 now raises an IndexError
 instead of a ValueError.
 
+Masked arrays containing objects with arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For such (rare) masked arrays, getting a single masked item no longer returns a
+corrupted masked array, but a fully masked version of the item.
+
 New Features
 ============
 

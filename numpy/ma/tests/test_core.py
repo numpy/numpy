@@ -685,6 +685,18 @@ class TestMaskedArray(TestCase):
         finally:
             masked_print_option.set_display(ini_display)
 
+    def test_object_with_array(self):
+        mx1 = masked_array([1.], mask=[True])
+        mx2 = masked_array([1., 2.])
+        mx = masked_array([mx1, mx2], mask=[False, True])
+        assert mx[0] is mx1
+        assert mx[1] is not mx2
+        assert np.all(mx[1].data == mx2.data)
+        assert np.all(mx[1].mask)
+        # check that we return a view.
+        mx[1].data[0] = 0.
+        assert mx2[0] == 0.
+
 
 #------------------------------------------------------------------------------
 class TestMaskedArrayArithmetic(TestCase):
