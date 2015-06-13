@@ -82,23 +82,26 @@ class _DeprecationTestCase(object):
             if warning.category is DeprecationWarning:
                 num_found += 1
             elif not ignore_others:
-                raise AssertionError("expected DeprecationWarning but %s given"
-                                                            % warning.category)
+                raise AssertionError(
+                        "expected DeprecationWarning but got: %s" %
+                        (repr_warning_message(warning),))
         if num is not None and num_found != num:
-            raise AssertionError("%i warnings found but %i expected"
-                                                        % (len(self.log), num))
+            msg = "%i warnings found but %i expected." % (len(self.log), num)
+            lst = [repr_warning_message(w) for w in self.log]
+            raise AssertionError("\n".join([msg] + [lst]))
 
         with warnings.catch_warnings():
             warnings.filterwarnings("error", message=self.message,
-                                        category=DeprecationWarning)
-
+                                    category=DeprecationWarning)
             try:
                 function(*args, **kwargs)
                 if exceptions != tuple():
-                    raise AssertionError("No error raised during function call")
+                    raise AssertionError(
+                            "No error raised during function call")
             except exceptions:
                 if exceptions == tuple():
-                    raise AssertionError("Error raised during function call")
+                    raise AssertionError(
+                            "Error raised during function call")
 
     def assert_not_deprecated(self, function, args=(), kwargs={}):
         """Test if DeprecationWarnings are given and raised.
@@ -493,6 +496,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
                     else:
                         # py2
                         assert_warns(DeprecationWarning, f, arg1, arg2)
+
 
 class TestIdentityComparisonDeprecations(_DeprecationTestCase):
     """This tests the equal and not_equal object ufuncs identity check

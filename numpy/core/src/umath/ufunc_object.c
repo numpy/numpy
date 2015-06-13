@@ -953,25 +953,25 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         /* strcmp() is a hack but I think we can get away with it for this
          * temporary measure.
          */
-        if (!strcmp(ufunc_name, "equal")
-            || !strcmp(ufunc_name, "not_equal")) {
+        if (!strcmp(ufunc_name, "equal") ||
+                !strcmp(ufunc_name, "not_equal")) {
             /* Warn on non-scalar, return NotImplemented regardless */
             assert(nin == 2);
-            if (PyArray_NDIM(out_op[0]) != 0
-                || PyArray_NDIM(out_op[1]) != 0) {
+            if (PyArray_NDIM(out_op[0]) != 0 ||
+                    PyArray_NDIM(out_op[1]) != 0) {
                 if (DEPRECATE_FUTUREWARNING(
                         "elementwise comparison failed; returning scalar "
-                        "but in the future will perform elementwise "
+                        "instead, but in the future will perform elementwise "
                         "comparison") < 0) {
                     return -1;
                 }
             }
             return -2;
         }
-        else if (!strcmp(ufunc_name, "less")
-                 || !strcmp(ufunc_name, "less_equal")
-                 || !strcmp(ufunc_name, "greater")
-                 || !strcmp(ufunc_name, "greater_equal")) {
+        else if (!strcmp(ufunc_name, "less") ||
+                 !strcmp(ufunc_name, "less_equal") ||
+                 !strcmp(ufunc_name, "greater") ||
+                 !strcmp(ufunc_name, "greater_equal")) {
 #if !defined(NPY_PY3K)
             if (DEPRECATE("unorderable dtypes; returning scalar but in "
                           "the future this will be an error") < 0) {
@@ -4255,7 +4255,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             return NULL;
         }
         else if (ufunc->nin == 2 && ufunc->nout == 1) {
-            /* For array_richcompare's benefit -- see the long comment in
+            /*
+             * For array_richcompare's benefit -- see the long comment in
              * get_ufunc_arguments.
              */
             Py_INCREF(Py_NotImplemented);
