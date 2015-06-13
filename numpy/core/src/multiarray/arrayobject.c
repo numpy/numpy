@@ -1358,18 +1358,24 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
-            if (_res == 0) {
+
+            if (result == NULL) {
+                PyErr_Clear();
+            }
+            else {
                 Py_DECREF(result);
+            }
+
+            if (_res == 0) {
                 Py_DECREF(array_other);
                 Py_INCREF(Py_False);
                 return Py_False;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
+                Py_DECREF(array_other);
+                return result;
             }
-            Py_DECREF(array_other);
-            return result;
         }
         /*
          * If the comparison results in NULL, then the
@@ -1433,18 +1439,24 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
-            if (_res == 0) {
+
+            if (result == NULL) {
+                PyErr_Clear();
+            }
+            else {
                 Py_DECREF(result);
+            }
+
+            if (_res == 0) {
                 Py_DECREF(array_other);
                 Py_INCREF(Py_True);
                 return Py_True;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
                 Py_DECREF(array_other);
+                return result;
             }
-            return result;
         }
 
         if (result == NULL) {
