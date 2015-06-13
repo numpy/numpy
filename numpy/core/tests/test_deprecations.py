@@ -75,6 +75,7 @@ class _DeprecationTestCase(object):
             function(*args, **kwargs)
         except (Exception if function_fails else tuple()):
             pass
+
         # just in case, clear the registry
         num_found = 0
         for warning in self.log:
@@ -446,6 +447,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         class NotArray(object):
             def __array__(self):
                 raise TypeError
+
+            # Needed so Python 3 does not raise DeprecationWarning twice.
+            def __ne__(self, other):
+                return NotImplemented
 
         self.assert_deprecated(lambda: np.arange(2) == NotArray())
         self.assert_deprecated(lambda: np.arange(2) != NotArray())
