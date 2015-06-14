@@ -2298,6 +2298,10 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
     int i;
     npy_bool nonz = NPY_FALSE;
 
+    if ((len == 1) && (*ip == '\0')) {
+        return NPY_FALSE;
+    }
+
     for (i = 0; i < len; i++) {
         if (!Py_STRING_ISSPACE(*ip)) {
             nonz = NPY_TRUE;
@@ -2332,6 +2336,10 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
             byte_swap_vector(buffer, len, 4);
         }
         ip = (npy_ucs4 *)buffer;
+    }
+
+    if ((len == 1) && (*ip == '\0')) {
+        return NPY_FALSE;
     }
 
     for (i = 0; i < len; i++) {

@@ -5731,5 +5731,14 @@ class TestArrayPriority(TestCase):
             assert_(isinstance(f(b, a), self.Other), msg)
 
 
+class TestEmptyStringArray(TestCase):
+
+    def test_empty_bstring_array_is_falsey(self):
+        self.assertFalse(np.array([b'']))
+
+    def test_empty_ustring_array_is_falsey(self):
+        self.assertFalse(np.array([u'']))
+
+
 if __name__ == "__main__":
     run_module_suite()
