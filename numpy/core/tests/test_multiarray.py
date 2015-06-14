@@ -5734,10 +5734,10 @@ class TestArrayPriority(TestCase):
 class TestEmptyStringArray(TestCase):
 
     def test_empty_bstring_array_is_falsey(self):
-        self.assertFalse(np.array([b'']))
+        self.assertFalse(np.array([''], dtype=np.str))
 
     def test_empty_ustring_array_is_falsey(self):
-        self.assertFalse(np.array([u'']))
+        self.assertFalse(np.array([''], dtype=np.unicode))
 
 
 if __name__ == "__main__":
