@@ -608,5 +608,16 @@ class TestEinSum(TestCase):
         np.einsum('ij,jk->ik', x, x, out=out)
         assert_array_equal(out.base, correct_base)
 
+    def test_small_boolean_arrays(self):
+        # See gh-5946.
+        # Use array of True embedded in False.
+        a = np.zeros((16, 1, 1), dtype=np.bool_)[:2]
+        a[...] = True
+        out =  np.zeros((16, 1, 1), dtype=np.bool_)[:2]
+        tgt = np.ones((2,1,1), dtype=np.bool_)
+        res = np.einsum('...ij,...jk->...ik', a, a, out=out)
+        assert_equal(res, tgt)
+
+
 if __name__ == "__main__":
     run_module_suite()
