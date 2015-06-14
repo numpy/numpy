@@ -97,29 +97,27 @@ static void loadlib()
     veclib = dlopen(VECLIB_FILE, RTLD_LOCAL | RTLD_FIRST);
     if (!veclib) {
         veclib = NULL;
-        sprintf(errormsg,"Failed to open vecLib from location '%s'.", VECLIB_FILE);
+        snprintf(errormsg, sizeof(errormsg),
+                 "Failed to open vecLib from location '%s'.", VECLIB_FILE);
         Py_FatalError(errormsg); /* calls abort() and dumps core */
     }
     /* resolve Fortran SGEMV from Accelerate */
     accelerate_sgemv = (fortran_sgemv_t*) dlsym(veclib, "sgemv_");
     if (!accelerate_sgemv) {
         unloadlib();
-        sprintf(errormsg,"Failed to resolve symbol 'sgemv_'.");
-        Py_FatalError(errormsg);
+        Py_FatalError("Failed to resolve symbol 'sgemv_'.");
     }
     /* resolve cblas_sgemv from Accelerate */
     accelerate_cblas_sgemv = (cblas_sgemv_t*) dlsym(veclib, "cblas_sgemv");
     if (!accelerate_cblas_sgemv) {
         unloadlib();
-        sprintf(errormsg,"Failed to resolve symbol 'cblas_sgemv'.");
-        Py_FatalError(errormsg);
+        Py_FatalError("Failed to resolve symbol 'cblas_sgemv'.");
     }
     /* resolve cblas_sgemm from Accelerate */
     accelerate_cblas_sgemm = (cblas_sgemm_t*) dlsym(veclib, "cblas_sgemm");
     if (!accelerate_cblas_sgemm) {
         unloadlib();
-        sprintf(errormsg,"Failed to resolve symbol 'cblas_sgemm'.");
-        Py_FatalError(errormsg);
+        Py_FatalError("Failed to resolve symbol 'cblas_sgemm'.");
     }
 }
 
