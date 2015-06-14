@@ -1166,6 +1166,19 @@ class TestUfunc(TestCase):
         assert_raises(TypeError, f, d, axis=0, dtype=None,
                       out=None, invalid=0)
 
+    def test_structured_equal(self):
+        # https://github.com/numpy/numpy/issues/4855
+        class MyA(np.ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs):
+                return getattr(ufunc, method)(*(input.view(np.ndarray)
+                                              for input in inputs), **kwargs)
+        a = np.arange(12.).reshape(4,3)
+        ra = a.view(dtype=('f8,f8,f8')).squeeze()
+        mra = ra.view(MyA)
+
+        target = np.array([ True, False, False, False], dtype=bool)
+        assert_equal(np.all(target == (mra == ra[0])), True)
+
     def test_NotImplemented_not_returned(self):
         # See gh-5964 and gh-2091. Some of these functions are not operator
         # related and were fixed for other reasons in the past.
