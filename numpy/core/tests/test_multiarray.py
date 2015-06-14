@@ -5567,7 +5567,7 @@ class TestHashing(TestCase):
 
 from numpy.core._internal import _view_is_safe
 
-class TestObjViewSafetyFuncs:
+class TestObjViewSafetyFuncs(TestCase):
     def test_view_safety(self):
         psize = dtype('p').itemsize
 
@@ -5638,7 +5638,7 @@ class TestObjViewSafetyFuncs:
         # test subarrays with objects
         subarrayO = dtype('p,(2,3)O,p')
         assert_equal(scanView(subarrayO, 'p'), [0, 7*psize])
-        assert_equal(scanView(subarrayO, 'O'), 
+        assert_equal(scanView(subarrayO, 'O'),
                      list(range(psize, 6*psize+1, psize)))
 
         #test dtype with overlapping fields
@@ -5647,6 +5647,88 @@ class TestObjViewSafetyFuncs:
                             'offsets': [0, 1, 3*psize-1, 3*psize],
                             'itemsize': 4*psize})
         assert_equal(scanView(overlapped, 'p'), [0, 1, 3*psize-1, 3*psize])
+
+
+class TestArrayPriority(TestCase):
+    # This will go away when __array_priority__ is settled, meanwhile
+    # it serves to check unintended changes.
+    op = operator
+    binary_ops = [
+        op.pow, op.add, op.sub, op.mul, op.floordiv, op.truediv, op.mod,
+        op.and_, op.or_, op.xor, op.lshift, op.rshift, op.mod, op.gt,
+        op.ge, op.lt, op.le, op.ne, op.eq
+        ]
+
+    if sys.version_info[0] < 3:
+        binary_ops.append(op.div)
+
+    class Foo(np.ndarray):
+        __array_priority__ = 100.
+        def __new__(cls, *args, **kwargs):
+            return np.array(*args, **kwargs).view(cls)
+
+    class Bar(np.ndarray):
+        __array_priority__ = 101.
+        def __new__(cls, *args, **kwargs):
+            return np.array(*args, **kwargs).view(cls)
+
+    class Other(object):
+        __array_priority__ = 1000.
+
+        def _all(self, other):
+            return self.__class__()
+
+        __add__ = __radd__ = _all
+        __sub__ = __rsub__ = _all
+        __mul__ = __rmul__ = _all
+        __pow__ = __rpow__ = _all
+        __div__ = __rdiv__ = _all
+        __mod__ = __rmod__ = _all
+        __truediv__ = __rtruediv__ = _all
+        __floordiv__ = __rfloordiv__ = _all
+        __and__ = __rand__ = _all
+        __xor__ = __rxor__ = _all
+        __or__ = __ror__ = _all
+        __lshift__ = __rlshift__ = _all
+        __rshift__ = __rrshift__ = _all
+        __eq__ = _all
+        __ne__ = _all
+        __gt__ = _all
+        __ge__ = _all
+        __lt__ = _all
+        __le__ = _all
+
+    def test_ndarray_subclass(self):
+        a = np.array([1, 2])
+        b = self.Bar([1, 2])
+        for f in self.binary_ops:
+            msg = repr(f)
+            assert_(isinstance(f(a, b), self.Bar), msg)
+            assert_(isinstance(f(b, a), self.Bar), msg)
+
+    def test_ndarray_other(self):
+        a = np.array([1, 2])
+        b = self.Other()
+        for f in self.binary_ops:
+            msg = repr(f)
+            assert_(isinstance(f(a, b), self.Other), msg)
+            assert_(isinstance(f(b, a), self.Other), msg)
+
+    def test_subclass_subclass(self):
+        a = self.Foo([1, 2])
+        b = self.Bar([1, 2])
+        for f in self.binary_ops:
+            msg = repr(f)
+            assert_(isinstance(f(a, b), self.Bar), msg)
+            assert_(isinstance(f(b, a), self.Bar), msg)
+
+    def test_subclass_other(self):
+        a = self.Foo([1, 2])
+        b = self.Other()
+        for f in self.binary_ops:
+            msg = repr(f)
+            assert_(isinstance(f(a, b), self.Other), msg)
+            assert_(isinstance(f(b, a), self.Other), msg)
 
 
 if __name__ == "__main__":
