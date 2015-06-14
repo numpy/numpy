@@ -61,13 +61,13 @@
  */
 
 int
-heapsort_@suff@(@type@ *start, npy_intp n, void *NOT_USED)
+heapsort_@suff@(void *start, npy_intp n, void *NOT_USED)
 {
     @type@ tmp, *a;
     npy_intp i,j,l;
 
     /* The array needs to be offset by one for heapsort indexing */
-    a = start - 1;
+    a = (@type@ *)start - 1;
 
     for (l = n>>1; l > 0; --l) {
         tmp = a[l];
@@ -112,8 +112,9 @@ heapsort_@suff@(@type@ *start, npy_intp n, void *NOT_USED)
 
 
 int
-aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
+aheapsort_@suff@(void *vv, npy_intp *tosort, npy_intp n, void *NOT_USED)
 {
+    @type@ *v = vv;
     npy_intp *a, i,j,l, tmp;
     /* The arrays need to be offset by one for heapsort indexing */
     a = tosort - 1;
@@ -177,11 +178,12 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
  */
 
 int
-heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
+heapsort_@suff@(void *start, npy_intp n, void *varr)
 {
+    PyArrayObject *arr = varr;
     size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     @type@ *tmp = malloc(PyArray_ITEMSIZE(arr));
-    @type@ *a = start - len;
+    @type@ *a = (@type@ *)start - len;
     npy_intp i, j, l;
 
     if (tmp == NULL) {
@@ -230,8 +232,10 @@ heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
 
 
 int
-aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
+aheapsort_@suff@(void *vv, npy_intp *tosort, npy_intp n, void *varr)
 {
+    @type@ *v = vv;
+    PyArrayObject *arr = varr;
     size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     npy_intp *a, i,j,l, tmp;
 
@@ -288,12 +292,13 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 
 
 int
-npy_heapsort(char *start, npy_intp num, PyArrayObject *arr)
+npy_heapsort(void *start, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     char *tmp = malloc(elsize);
-    char *a = start - elsize;
+    char *a = (char *)start - elsize;
     npy_intp i, j, l;
 
     if (tmp == NULL) {
@@ -344,8 +349,10 @@ npy_heapsort(char *start, npy_intp num, PyArrayObject *arr)
 
 
 int
-npy_aheapsort(char *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
+npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
 {
+    char *v = vv;
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     npy_intp *a, i, j, l, tmp;

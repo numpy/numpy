@@ -61,11 +61,11 @@
  */
 
 int
-quicksort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
+quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
     @type@ vp;
     @type@ *pl = start;
-    @type@ *pr = start + num - 1;
+    @type@ *pr = pl + num - 1;
     @type@ *stack[PYA_QS_STACK];
     @type@ **sptr = stack;
     @type@ *pm, *pi, *pj, *pk;
@@ -126,8 +126,9 @@ quicksort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 
 
 int
-aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
+aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *NOT_USED)
 {
+    @type@ *v = vv;
     @type@ vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;
@@ -208,12 +209,13 @@ aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
  */
 
 int
-quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
+quicksort_@suff@(void *start, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     const size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     @type@ *vp = malloc(PyArray_ITEMSIZE(arr));
     @type@ *pl = start;
-    @type@ *pr = start + (num - 1)*len;
+    @type@ *pr = pl + (num - 1)*len;
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
 
     if (vp == NULL) {
@@ -279,8 +281,10 @@ quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 
 
 int
-aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
+aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *varr)
 {
+    @type@ *v = vv;
+    PyArrayObject *arr = varr;
     size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     @type@ *vp;
     npy_intp *pl = tosort;
@@ -355,13 +359,14 @@ aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
 
 
 int
-npy_quicksort(char *start, npy_intp num, PyArrayObject *arr)
+npy_quicksort(void *start, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     char *vp = malloc(elsize);
     char *pl = start;
-    char *pr = start + (num - 1)*elsize;
+    char *pr = pl + (num - 1)*elsize;
     char *stack[PYA_QS_STACK];
     char **sptr = stack;
     char *pm, *pi, *pj, *pk;
@@ -439,8 +444,10 @@ npy_quicksort(char *start, npy_intp num, PyArrayObject *arr)
 
 
 int
-npy_aquicksort(char *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
+npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
 {
+    char *v = vv;
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     char *vp;

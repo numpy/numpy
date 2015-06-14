@@ -3964,14 +3964,14 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_FillWithScalarFunc*)NULL,
 #if @sort@
     {
-        (PyArray_SortFunc *)quicksort_@suff@,
-        (PyArray_SortFunc *)heapsort_@suff@,
-        (PyArray_SortFunc *)mergesort_@suff@
+        quicksort_@suff@,
+        heapsort_@suff@,
+        mergesort_@suff@
     },
     {
-        (PyArray_ArgSortFunc *)aquicksort_@suff@,
-        (PyArray_ArgSortFunc *)aheapsort_@suff@,
-        (PyArray_ArgSortFunc *)amergesort_@suff@
+        aquicksort_@suff@,
+        aheapsort_@suff@,
+        amergesort_@suff@
     },
 #else
     {
@@ -4106,14 +4106,14 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
 #if @sort@
     {
-        (PyArray_SortFunc *)quicksort_@suff@,
-        (PyArray_SortFunc *)heapsort_@suff@,
-        (PyArray_SortFunc *)mergesort_@suff@
+        quicksort_@suff@,
+        heapsort_@suff@,
+        mergesort_@suff@
     },
     {
-        (PyArray_ArgSortFunc *)aquicksort_@suff@,
-        (PyArray_ArgSortFunc *)aheapsort_@suff@,
-        (PyArray_ArgSortFunc *)amergesort_@suff@
+        aquicksort_@suff@,
+        aheapsort_@suff@,
+        amergesort_@suff@
     },
 #else
     {
