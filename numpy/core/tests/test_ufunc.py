@@ -1157,14 +1157,35 @@ class TestUfunc(TestCase):
                      out=None)
 
         # invalid keyord
+        assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
+        assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",
                       out=None)
-        assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, axis=0, dtype=None, keepdims=True,
                       out=None, invalid=0)
         assert_raises(TypeError, f, d, axis=0, dtype=None,
                       out=None, invalid=0)
-        assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
+
+    def test_NotImplemented_not_returned(self):
+        # See gh-5964 and gh-2091. Some of these functions are not operator
+        # related and were fixed for other reasons in the past.
+        binary_funcs = [
+            np.power, np.add, np.subtract, np.multiply, np.divide,
+            np.true_divide, np.floor_divide, np.bitwise_and, np.bitwise_or,
+            np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
+            np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
+            np.logical_and, np.logical_or, np.logical_xor, np.maximum,
+            np.minimum, np.mod
+            ]
+
+        # These functions still return NotImplemented. Will be fixed in
+        # future.
+        # bad = [np.greater, np.greater_equal, np.less, np.less_equal, np.not_equal]
+
+        a = np.array('1')
+        b = 1
+        for f in binary_funcs:
+            assert_raises(TypeError, f, a, b)
 
 
 if __name__ == "__main__":

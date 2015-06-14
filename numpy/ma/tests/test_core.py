@@ -12,6 +12,7 @@ import warnings
 import sys
 import pickle
 from functools import reduce
+import operator
 
 from nose.tools import assert_raises
 
@@ -1734,16 +1735,15 @@ class TestUfuncs(TestCase):
         self.assertTrue(not isinstance(test.mask, MaskedArray))
 
     def test_treatment_of_NotImplemented(self):
-        # Check any NotImplemented returned by umath.<ufunc> is passed on
-        a = masked_array([1., 2.], mask=[1, 0])
-        # basic tests for _MaskedBinaryOperation
-        assert_(a.__mul__('abc') is NotImplemented)
-        assert_(multiply.outer(a, 'abc') is NotImplemented)
-        # and for _DomainedBinaryOperation
-        assert_(a.__div__('abc') is NotImplemented)
+        # Check that NotImplemented is returned at appropriate places
 
-        # also check explicitly that rmul of another class can be accessed
-        class MyClass(str):
+        a = masked_array([1., 2.], mask=[1, 0])
+        self.assertRaises(TypeError, operator.mul, a, "abc")
+        self.assertRaises(TypeError, operator.truediv, a, "abc")
+
+        class MyClass(object):
+            __array_priority__ = a.__array_priority__ + 1
+
             def __mul__(self, other):
                 return "My mul"
 
