@@ -1,25 +1,10 @@
 # After changing this file, check it on:
 #   http://lint.travis-ci.org/
 language: python
-python:
-  - 2.6
-  - 2.7
-  - 3.2
-  - 3.3
 matrix:
   include:
     - python: 3.3
       env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=3.4
-    - python: 3.2
-      env: USE_DEBUG=1
-    - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=0 PYTHON_OO=1
-    - python: 3.4
-      env: NPY_RELAXED_STRIDES_CHECKING=0
-    - python: 2.7
-      env: USE_BENTO=1
-    - python: 2.7
-      env: USE_WHEEL=1
 before_install:
   - uname -a
   - free -m
