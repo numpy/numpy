@@ -2339,10 +2339,6 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
         ip = (npy_ucs4 *)buffer;
     }
 
-    if ((len == 1) && (*ip == '\0')) {
-        return NPY_FALSE;
-    }
-
     for (i = 0; i < len; i++) {
         if (*ip == '\0') {
             seen_null = NPY_TRUE;
