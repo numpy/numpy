@@ -252,8 +252,9 @@ object arrays that were generated on Python 2.
 MaskedArray support for more complicated base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Built-in assumptions that the baseclass behaved like a plain array are being
-removed. In particalur, setting and getting elements and ranges will respect
-baseclass overrides of ``__setitem__`` and ``__getitem__``.
+removed. In particular, setting and getting elements and ranges will respect
+baseclass overrides of ``__setitem__`` and ``__getitem__``, and arithmetic
+will respect overrides of ``__add__``, ``__sub__``, etc.
 
 Changes
 =======
