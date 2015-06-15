@@ -2475,7 +2475,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     if (nd1 <= 2 && nd2 <= 2 &&
             (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
              NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        return cblas_matrixproduct(typenum, ap1, ap2, out);
+        return cblas_matrixproduct(typenum, ap1, ap2, (PyArrayObject *)out);
     }
 #endif
 
@@ -2518,7 +2518,8 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     }
     ops[0] = ap1;
     ops[1] = ap2;
-    ret = PyArray_EinsteinSum(subscripts, 2, ops, NULL, order, casting, out);
+    ret = PyArray_EinsteinSum(subscripts, 2, ops, NULL, order, casting,
+            (PyArrayObject *)out);
     Py_DECREF(ap1);
     Py_DECREF(ap2);
 
