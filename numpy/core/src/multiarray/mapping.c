@@ -772,8 +772,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 if (indices[i].value != PyArray_DIM(self, used_ndim)) {
                     static PyObject *warning;
 
-                    char *err_msg[174];
-                    sprintf(err_msg,
+                    char err_msg[174];
+                    PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
                         "dimension %d; dimension is %" NPY_INTP_FMT
                         " but corresponding boolean dimension is %" NPY_INTP_FMT,
