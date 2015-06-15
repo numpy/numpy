@@ -5731,13 +5731,46 @@ class TestArrayPriority(TestCase):
             assert_(isinstance(f(b, a), self.Other), msg)
 
 
-class TestEmptyStringArray(TestCase):
+class TestBytestringArrayNonzero(TestCase):
 
     def test_empty_bstring_array_is_falsey(self):
         self.assertFalse(np.array([''], dtype=np.str))
 
+    def test_whitespace_bstring_array_is_falsey(self):
+        a = np.array(['spam'], dtype=np.str)
+        a[0] = '  \0\0'
+        self.assertFalse(a)
+
+    def test_all_null_bstring_array_is_falsey(self):
+        a = np.array(['spam'], dtype=np.str)
+        a[0] = '\0\0\0\0'
+        self.assertFalse(a)
+
+    def test_null_inside_bstring_array_is_truthy(self):
+        a = np.array(['spam'], dtype=np.str)
+        a[0] = ' \0 \0'
+        self.assertTrue(a)
+
+
+class TestUnicodeArrayNonzero(TestCase):
+
     def test_empty_ustring_array_is_falsey(self):
         self.assertFalse(np.array([''], dtype=np.unicode))
+
+    def test_whitespace_ustring_array_is_falsey(self):
+        a = np.array(['eggs'], dtype=np.unicode)
+        a[0] = '  \0\0'
+        self.assertFalse(a)
+
+    def test_all_null_ustring_array_is_falsey(self):
+        a = np.array(['eggs'], dtype=np.unicode)
+        a[0] = '\0\0\0\0'
+        self.assertFalse(a)
+
+    def test_null_inside_ustring_array_is_truthy(self):
+        a = np.array(['eggs'], dtype=np.unicode)
+        a[0] = ' \0 \0'
+        self.assertTrue(a)
 
 
 if __name__ == "__main__":
