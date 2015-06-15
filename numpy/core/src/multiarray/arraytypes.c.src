@@ -170,7 +170,10 @@ npy_strtoull(const char *str, char **endptr, int base)
  *         LongLong, ULongLong, Half, Float, Double#
 */
 static PyObject *
-@TYPE@_getitem(char *ip, PyArrayObject *ap) {
+@TYPE@_getitem(void *input, void *vap)
+{
+    PyArrayObject *ap = vap;
+    char *ip = input;
     @type@ t1;
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
@@ -184,7 +187,9 @@ static PyObject *
 }
 
 static int
-@TYPE@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+@TYPE@_setitem(PyObject *op, void *ov, void *vap)
+{
+    PyArrayObject *ap = vap;
     @type@ temp;  /* ensures alignment */
 
     if (PyArray_IsScalar(op, @kind@)) {
@@ -225,7 +230,10 @@ static int
  * #type = npy_float, npy_double#
  */
 static PyObject *
-@TYPE@_getitem(char *ip, PyArrayObject *ap) {
+@TYPE@_getitem(void *input, void *vap)
+{
+    PyArrayObject *ap = vap;
+    char *ip = input;
     @type@ t1, t2;
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
@@ -254,8 +262,9 @@ static PyObject *
  * #kind = CFloat, CDouble, CLongDouble#
  */
 static int
-@NAME@_setitem(PyObject *op, char *ov, PyArrayObject *ap)
+@NAME@_setitem(PyObject *op, void *ov, void *vap)
 {
+    PyArrayObject *ap = vap;
     Py_complex oop;
     PyObject *op2;
     @type@ temp;
@@ -305,13 +314,15 @@ static int
  */
 
 static PyObject *
-LONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
+LONGDOUBLE_getitem(void *ip, void *ap)
 {
-    return PyArray_Scalar(ip, PyArray_DESCR(ap), NULL);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
 static int
-LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
+{
+    PyArrayObject *ap = vap;
     /* ensure alignment */
     npy_longdouble temp;
 
@@ -335,15 +346,16 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 }
 
 static PyObject *
-CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
+CLONGDOUBLE_getitem(void *ip, void *ap)
 {
-    return PyArray_Scalar(ip, PyArray_DESCR(ap), NULL);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
 /* UNICODE */
 static PyObject *
-UNICODE_getitem(char *ip, PyArrayObject *ap)
+UNICODE_getitem(void *ip, void *vap)
 {
+    PyArrayObject *ap = vap;
     Py_ssize_t size = PyArray_ITEMSIZE(ap);
     int swap = !PyArray_ISNOTSWAPPED(ap);
     int align = !PyArray_ISALIGNED(ap);
@@ -352,8 +364,9 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 }
 
 static int
-UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
+UNICODE_setitem(PyObject *op, void *ov, void *vap)
 {
+    PyArrayObject *ap = vap;
     PyObject *temp;
     Py_UNICODE *ptr;
     int datalen;
@@ -431,13 +444,14 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
  * will truncate all ending NULLs in returned string.
  */
 static PyObject *
-STRING_getitem(char *ip, PyArrayObject *ap)
+STRING_getitem(void *ip, void *vap)
 {
+    PyArrayObject *ap = vap;
     /* Will eliminate NULLs at the end */
     char *ptr;
     int size = PyArray_DESCR(ap)->elsize;
 
-    ptr = ip + size - 1;
+    ptr = (char *)ip + size - 1;
     while (size > 0 && *ptr-- == '\0') {
         size--;
     }
@@ -445,8 +459,9 @@ STRING_getitem(char *ip, PyArrayObject *ap)
 }
 
 static int
-STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
+STRING_setitem(PyObject *op, void *ov, void *vap)
 {
+    PyArrayObject *ap = vap;
     char *ptr;
     Py_ssize_t len;
     PyObject *temp = NULL;
@@ -513,7 +528,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
      * Then fill the rest of the element size with NULL
      */
     if (PyArray_DESCR(ap)->elsize > len) {
-        memset(ov + len, 0, (PyArray_DESCR(ap)->elsize - len));
+        memset((char *)ov + len, 0, (PyArray_DESCR(ap)->elsize - len));
     }
     Py_DECREF(temp);
     return 0;
@@ -524,7 +539,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 #define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 
 static PyObject *
-OBJECT_getitem(char *ip, PyArrayObject *ap)
+OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
 {
     PyObject *obj;
     NPY_COPY_PYOBJECT_PTR(&obj, ip);
@@ -539,7 +554,7 @@ OBJECT_getitem(char *ip, PyArrayObject *ap)
 
 
 static int
-OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
+OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
 {
     PyObject *obj;
 
@@ -581,8 +596,10 @@ unpack_field(PyObject * value, PyArray_Descr ** descr, npy_intp * offset)
 
 
 static PyObject *
-VOID_getitem(char *ip, PyArrayObject *ap)
+VOID_getitem(void *input, void *vap)
 {
+    PyArrayObject *ap = vap;
+    char *ip = input;
     PyArrayObject *u = NULL;
     PyArray_Descr* descr;
     int itemsize;
@@ -712,9 +729,11 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
 
 static int
-VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
+VOID_setitem(PyObject *op, void *input, void *vap)
 {
-    PyArray_Descr* descr;
+    char *ip = input;
+    PyArrayObject *ap = vap;
+    PyArray_Descr *descr;
     int itemsize=PyArray_DESCR(ap)->elsize;
     int res;
 
@@ -823,7 +842,9 @@ fail:
 }
 
 static PyObject *
-DATETIME_getitem(char *ip, PyArrayObject *ap) {
+DATETIME_getitem(void *ip, void *vap)
+{
+    PyArrayObject *ap = vap;
     npy_datetime dt;
     PyArray_DatetimeMetaData *meta = NULL;
 
@@ -845,7 +866,9 @@ DATETIME_getitem(char *ip, PyArrayObject *ap) {
 
 
 static PyObject *
-TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
+TIMEDELTA_getitem(void *ip, void *vap)
+{
+    PyArrayObject *ap = vap;
     npy_timedelta td;
     PyArray_DatetimeMetaData *meta = NULL;
 
@@ -866,7 +889,9 @@ TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
 }
 
 static int
-DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+DATETIME_setitem(PyObject *op, void *ov, void *vap)
+{
+    PyArrayObject *ap = vap;
     /* ensure alignment */
     npy_datetime temp = 0;
     PyArray_DatetimeMetaData *meta = NULL;
@@ -896,7 +921,9 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 }
 
 static int
-TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
+{
+    PyArrayObject *ap = vap;
     /* ensure alignment */
     npy_timedelta temp = 0;
     PyArray_DatetimeMetaData *meta = NULL;
@@ -957,9 +984,12 @@ TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
  *             npy_datetime, npy_timedelta#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    @totype@ *op = output;
+
     while (n--) {
         *op++ = (@totype@)*ip++;
     }
@@ -972,9 +1002,12 @@ static void
  * #fromtype = npy_float, npy_double, npy_longdouble#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    @totype@ *op = output;
+
     while (n--) {
         *op++ = (@totype@)*ip;
         ip += 2;
@@ -997,18 +1030,24 @@ static void
  */
 
 static void
-@TYPE@_to_HALF(@type@ *ip, npy_half *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@TYPE@_to_HALF(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @type@ *ip = input;
+    npy_half *op = output;
+
     while (n--) {
         *op++ = npy_float_to_half((float)(*ip++));
     }
 }
 
 static void
-HALF_to_@TYPE@(npy_half *ip, @type@ *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+HALF_to_@TYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_half *ip = input;
+    @type@ *op = output;
+
     while (n--) {
         *op++ = (@type@)npy_half_to_float(*ip++);
     }
@@ -1030,9 +1069,12 @@ HALF_to_@TYPE@(npy_half *ip, @type@ *op, npy_intp n,
  */
 
 static void
-@TYPE@_to_HALF(@itype@ *ip, npy_half *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@TYPE@_to_HALF(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @itype@ *ip = input;
+    npy_half *op = output;
+
     while (n--) {
         *op++ = npy_@name@bits_to_halfbits(*ip);
 #if @iscomplex@
@@ -1044,9 +1086,12 @@ static void
 }
 
 static void
-HALF_to_@TYPE@(npy_half *ip, @itype@ *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+HALF_to_@TYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_half *ip = input;
+    @itype@ *op = output;
+
     while (n--) {
         *op++ = npy_halfbits_to_@name@bits(*ip++);
 #if @iscomplex@
@@ -1058,9 +1103,12 @@ HALF_to_@TYPE@(npy_half *ip, @itype@ *op, npy_intp n,
 /**end repeat**/
 
 static void
-CLONGDOUBLE_to_HALF(npy_longdouble *ip, npy_half *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+CLONGDOUBLE_to_HALF(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_longdouble *ip = input;
+    npy_half *op = output;
+
     while (n--) {
         *op++ = npy_double_to_half((double) (*ip++));
         ip += 2;
@@ -1068,9 +1116,12 @@ CLONGDOUBLE_to_HALF(npy_longdouble *ip, npy_half *op, npy_intp n,
 }
 
 static void
-HALF_to_CLONGDOUBLE(npy_half *ip, npy_longdouble *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+HALF_to_CLONGDOUBLE(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_half *ip = input;
+    npy_longdouble *op = output;
+
     while (n--) {
         *op++ = npy_half_to_double(*ip++);
         *op++ = 0;
@@ -1091,9 +1142,12 @@ HALF_to_CLONGDOUBLE(npy_half *ip, npy_longdouble *op, npy_intp n,
  *             npy_datetime, npy_timedelta#
  */
 static void
-@FROMTYPE@_to_BOOL(@fromtype@ *ip, npy_bool *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    npy_bool *op = output;
+
     while (n--) {
         *op++ = (npy_bool)(*ip++ != NPY_FALSE);
     }
@@ -1101,9 +1155,12 @@ static void
 /**end repeat**/
 
 static void
-HALF_to_BOOL(npy_half *ip, npy_bool *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+HALF_to_BOOL(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_half *ip = input;
+    npy_bool *op = output;
+
     while (n--) {
         *op++ = (npy_bool)(!npy_half_iszero(*ip++));
     }
@@ -1113,14 +1170,17 @@ HALF_to_BOOL(npy_half *ip, npy_bool *op, npy_intp n,
  *
  * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #fromtype = npy_cfloat, npy_cdouble, npy_clongdouble#
-*/
+ */
 static void
-@FROMTYPE@_to_BOOL(@fromtype@ *ip, npy_bool *op, npy_intp n,
-        PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    npy_bool *op = output;
+
     while (n--) {
-        *op = (npy_bool)(((*ip).real != NPY_FALSE) ||
-                ((*ip).imag != NPY_FALSE));
+        *op = (npy_bool)((ip->real != NPY_FALSE) ||
+                (ip->imag != NPY_FALSE));
         op++;
         ip++;
     }
@@ -1140,9 +1200,12 @@ static void
  * #zero = 0*10, NPY_HALF_ZERO, 0*5#
  */
 static void
-BOOL_to_@TOTYPE@(npy_bool *ip, @totype@ *op, npy_intp n,
-             PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const npy_bool *ip = input;
+    @totype@ *op = output;
+
     while (n--) {
         *op++ = (@totype@)((*ip++ != NPY_FALSE) ? @one@ : @zero@);
     }
@@ -1168,9 +1231,12 @@ BOOL_to_@TOTYPE@(npy_bool *ip, @totype@ *op, npy_intp n,
  *             npy_datetime, npy_timedelta#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, npy_intp n,
-               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    @totype@ *op = output;
+
     while (n--) {
         *op++ = (@totype@)*ip++;
         *op++ = 0.0;
@@ -1191,9 +1257,12 @@ static void
  * #fromtype = npy_float, npy_double, npy_longdouble#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, npy_intp n,
-               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
+    const @fromtype@ *ip = input;
+    @totype@ *op = output;
+
     n <<= 1;
     while (n--) {
         *op++ = (@totype@)*ip++;
@@ -1222,15 +1291,19 @@ static void
  * #skip = 1*18, PyArray_DESCR(aip)->elsize*3, 1*3#
  */
 static void
-@FROMTYPE@_to_OBJECT(@fromtype@ *ip, PyObject **op, npy_intp n,
-        PyArrayObject *aip, PyArrayObject *NPY_UNUSED(aop))
+@FROMTYPE@_to_OBJECT(void *input, void *output, npy_intp n,
+        void *vaip, void *NPY_UNUSED(aop))
 {
+    @fromtype@ *ip = input;
+    PyObject **op = output;
+    PyArrayObject *aip = vaip;
+
     npy_intp i;
     int skip = @skip@;
     PyObject *tmp;
     for (i = 0; i < n; i++, ip +=skip, op++) {
         tmp = *op;
-        *op = @FROMTYPE@_getitem((char *)ip, aip);
+        *op = @FROMTYPE@_getitem(ip, aip);
         Py_XDECREF(tmp);
     }
 }
@@ -1280,18 +1353,21 @@ static void
  * #skip = 1*18, PyArray_DESCR(aop)->elsize*3, 1*2#
  */
 static void
-OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, npy_intp n,
-        PyArrayObject *_NPY_UNUSED@TOTYPE@(aip), PyArrayObject *aop)
+OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *aop)
 {
+    PyObject **ip = input;
+    @totype@ *op = output;
+
     npy_intp i;
     int skip = @skip@;
 
     for (i = 0; i < n; i++, ip++, op += skip) {
         if (*ip == NULL) {
-            @TOTYPE@_setitem(Py_False, (char *)op, aop);
+            @TOTYPE@_setitem(Py_False, op, aop);
         }
         else {
-            @TOTYPE@_setitem(*ip, (char *)op, aop);
+            @TOTYPE@_setitem(*ip, op, aop);
         }
     }
 }
@@ -1330,16 +1406,20 @@ OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, npy_intp n,
 #define IS_@from@
 
 static void
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, npy_intp n, PyArrayObject *aip,
-             PyArrayObject *aop)
+@from@_to_@to@(void *input, void *output, npy_intp n,
+        void *vaip, void *aop)
 {
+    @fromtyp@ *ip = input;
+    @totyp@ *op = output;
+    PyArrayObject *aip = vaip;
+
     npy_intp i;
     PyObject *temp = NULL, *new;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem((char *)ip, aip);
+        temp = @from@_getitem(ip, aip);
         if (temp == NULL) {
             return;
         }
@@ -1373,7 +1453,7 @@ static void
             }
         }
 
-        if (@to@_setitem(temp,(char *)op, aop)) {
+        if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
         }
@@ -1386,20 +1466,24 @@ static void
 #else
 
 static void
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, npy_intp n, PyArrayObject *aip,
-             PyArrayObject *aop)
+@from@_to_@to@(void *input, void *output, npy_intp n,
+        void *vaip, void *aop)
 {
+    @fromtyp@ *ip = input;
+    @totyp@ *op = output;
+    PyArrayObject *aip = vaip;
+
     npy_intp i;
     PyObject *temp = NULL;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem((char *)ip, aip);
+        temp = @from@_getitem(ip, aip);
         if (temp == NULL) {
             return;
         }
-        if (@to@_setitem(temp,(char *)op, aop)) {
+        if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
         }
@@ -1430,20 +1514,25 @@ static void
  *               npy_datetime, npy_timedelta)*3#
  */
 static void
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, npy_intp n, PyArrayObject *aip,
-             PyArrayObject *aop)
+@from@_to_@to@(void *input, void *output, npy_intp n,
+        void *vaip, void *vaop)
 {
+    @fromtyp@ *ip = input;
+    @totyp@ *op = output;
+    PyArrayObject *aip = vaip;
+    PyArrayObject *aop = vaop;
+
     npy_intp i;
     PyObject *temp = NULL;
     int skip = 1;
     int oskip = PyArray_DESCR(aop)->elsize;
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
-        temp = @from@_getitem((char *)ip, aip);
+        temp = @from@_getitem(ip, aip);
         if (temp == NULL) {
             Py_INCREF(Py_False);
             temp = Py_False;
         }
-        if (@to@_setitem(temp,(char *)op, aop)) {
+        if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
         }
@@ -1573,13 +1662,13 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  *          npy_longlong*2#
  */
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr,
+@fname@_fromstr(char *str, void *ip, char **endptr,
         PyArray_Descr *NPY_UNUSED(ignore))
 {
     @btype@ result;
 
     result = @func@(str, endptr, 10);
-    *ip = (@type@) result;
+    *(@type@ *)ip = result;
     return 0;
 }
 /**end repeat**/
@@ -1590,36 +1679,36 @@ static int
  * #type = npy_float, npy_double, npy_longdouble#
  */
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr,
+@fname@_fromstr(char *str, void *ip, char **endptr,
         PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    *ip = (@type@) result;
+    *(@type@ *)ip = result;
     return 0;
 }
 /**end repeat**/
 
 static int
-HALF_fromstr(char *str, npy_half *ip, char **endptr,
+HALF_fromstr(char *str, void *ip, char **endptr,
         PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    *ip = npy_double_to_half(result);
+    *(npy_half *)ip = npy_double_to_half(result);
     return 0;
 }
 
 static int
-BOOL_fromstr(char *str, npy_bool *ip, char **endptr,
+BOOL_fromstr(char *str, void *ip, char **endptr,
         PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    *ip = (npy_bool) (result != 0.0);
+    *(npy_bool *)ip = (result != 0.0);
     return 0;
 }
 
@@ -3928,37 +4017,37 @@ small_correlate(const char * d_, npy_intp dstride,
  */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        @from@_to_BOOL,
+        @from@_to_BYTE,
+        @from@_to_UBYTE,
+        @from@_to_SHORT,
+        @from@_to_USHORT,
+        @from@_to_INT,
+        @from@_to_UINT,
+        @from@_to_LONG,
+        @from@_to_ULONG,
+        @from@_to_LONGLONG,
+        @from@_to_ULONGLONG,
+        @from@_to_FLOAT,
+        @from@_to_DOUBLE,
+        @from@_to_LONGDOUBLE,
+        @from@_to_CFLOAT,
+        @from@_to_CDOUBLE,
+        @from@_to_CLONGDOUBLE,
+        @from@_to_OBJECT,
+        @from@_to_STRING,
+        @from@_to_UNICODE,
+        @from@_to_VOID
     },
-    (PyArray_GetItemFunc*)@from@_getitem,
-    (PyArray_SetItemFunc*)@from@_setitem,
+    @from@_getitem,
+    @from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
     (PyArray_CopySwapFunc*)@from@_copyswap,
     (PyArray_CompareFunc*)@from@_compare,
     (PyArray_ArgFunc*)@from@_argmax,
     (PyArray_DotFunc*)NULL,
     (PyArray_ScanFunc*)@from@_scan,
-    (PyArray_FromStrFunc*)@from@_fromstr,
+    @from@_fromstr,
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)NULL,
     (PyArray_FillWithScalarFunc*)NULL,
@@ -4070,37 +4159,37 @@ static PyArray_Descr @from@_Descr = {
 
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        @from@_to_BOOL,
+        @from@_to_BYTE,
+        @from@_to_UBYTE,
+        @from@_to_SHORT,
+        @from@_to_USHORT,
+        @from@_to_INT,
+        @from@_to_UINT,
+        @from@_to_LONG,
+        @from@_to_ULONG,
+        @from@_to_LONGLONG,
+        @from@_to_ULONGLONG,
+        @from@_to_FLOAT,
+        @from@_to_DOUBLE,
+        @from@_to_LONGDOUBLE,
+        @from@_to_CFLOAT,
+        @from@_to_CDOUBLE,
+        @from@_to_CLONGDOUBLE,
+        @from@_to_OBJECT,
+        @from@_to_STRING,
+        @from@_to_UNICODE,
+        @from@_to_VOID
     },
-    (PyArray_GetItemFunc*)@from@_getitem,
-    (PyArray_SetItemFunc*)@from@_setitem,
+    @from@_getitem,
+    @from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
     (PyArray_CopySwapFunc*)@from@_copyswap,
     (PyArray_CompareFunc*)@from@_compare,
     (PyArray_ArgFunc*)@from@_argmax,
     (PyArray_DotFunc*)@from@_dot,
     (PyArray_ScanFunc*)@from@_scan,
-    (PyArray_FromStrFunc*)@from@_fromstr,
+    @from@_fromstr,
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)@from@_fill,
     (PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
