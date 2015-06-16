@@ -2297,9 +2297,13 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
     int len = PyArray_DESCR(ap)->elsize;
     int i;
     npy_bool nonz = NPY_FALSE;
+    npy_bool seen_null = NPY_FALSE;
 
     for (i = 0; i < len; i++) {
-        if (!Py_STRING_ISSPACE(*ip)) {
+        if (*ip == '\0') {
+            seen_null = NPY_TRUE;
+        }
+        else if (seen_null || !Py_STRING_ISSPACE(*ip)) {
             nonz = NPY_TRUE;
             break;
         }
@@ -2320,6 +2324,7 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     int len = PyArray_DESCR(ap)->elsize >> 2;
     int i;
     npy_bool nonz = NPY_FALSE;
+    npy_bool seen_null = NPY_FALSE;
     char *buffer = NULL;
 
     if ((!PyArray_ISNOTSWAPPED(ap)) || (!PyArray_ISALIGNED(ap))) {
@@ -2335,7 +2340,10 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     }
 
     for (i = 0; i < len; i++) {
-        if (!PyArray_UCS4_ISSPACE(*ip)) {
+        if (*ip == '\0') {
+            seen_null = NPY_TRUE;
+        }
+        else if (seen_null || !PyArray_UCS4_ISSPACE(*ip)) {
             nonz = NPY_TRUE;
             break;
         }
