@@ -94,6 +94,14 @@ provided in the 'out' keyword argument, and it would be used as the first
 output for ufuncs with multiple outputs, is deprecated, and will result in a
 `DeprecationWarning` now and an error in the future.
 
+Median warns and returns nan when invalid values are encountered
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to mean, median now emits a Runtime warning and returns `NaN` in slices
+where a `NaN` is present.
+To compute the median while ignoring invalid values use the new `nanmedian`
+function.
+
+
 New Features
 ============
 
