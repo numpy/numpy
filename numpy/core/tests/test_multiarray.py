@@ -3484,7 +3484,7 @@ class TestRecord(TestCase):
             assert_raises(ValueError, dt.__getitem__, asbytes('a'))
 
             x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(ValueError, x.__getitem__, asbytes('a'))
+            assert_raises(IndexError, x.__getitem__, asbytes('a'))
 
             y = x[0]
             assert_raises(IndexError, y.__getitem__, asbytes('a'))
@@ -3517,8 +3517,8 @@ class TestRecord(TestCase):
         if is_py3:
             funcs = (str,)
             # byte string indexing fails gracefully
-            assert_raises(ValueError, a.__setitem__, asbytes('f1'), 1)
-            assert_raises(ValueError, a.__getitem__, asbytes('f1'))
+            assert_raises(IndexError, a.__setitem__, asbytes('f1'), 1)
+            assert_raises(IndexError, a.__getitem__, asbytes('f1'))
             assert_raises(IndexError, a['f1'].__setitem__, asbytes('sf1'), 1)
             assert_raises(IndexError, a['f1'].__getitem__, asbytes('sf1'))
         else:
@@ -3564,7 +3564,7 @@ class TestRecord(TestCase):
 
     def test_field_names_deprecation(self):
 
-        def collect_warning_types(f, *args, **kwargs):
+        def collect_warnings(f, *args, **kwargs):
             with warnings.catch_warnings(record=True) as log:
                 warnings.simplefilter("always")
                 f(*args, **kwargs)
@@ -3585,20 +3585,19 @@ class TestRecord(TestCase):
 
         # All the different functions raise a warning, but not an error, and
         # 'a' is not modified:
-        assert_equal(collect_warning_types(a[['f1', 'f2']].__setitem__, 0, (10, 20)),
+        assert_equal(collect_warnings(a[['f1', 'f2']].__setitem__, 0, (10, 20)),
                      [FutureWarning])
         assert_equal(a, b)
         # Views also warn
         subset = a[['f1', 'f2']]
         subset_view = subset.view()
-        assert_equal(collect_warning_types(subset_view['f1'].__setitem__, 0, 10),
+        assert_equal(collect_warnings(subset_view['f1'].__setitem__, 0, 10),
                      [FutureWarning])
         # But the write goes through:
         assert_equal(subset['f1'][0], 10)
-        # Only one warning per multiple field indexing, though (even if there are
-        # multiple views involved):
-        assert_equal(collect_warning_types(subset['f1'].__setitem__, 0, 10),
-                     [])
+        # Only one warning per multiple field indexing, though (even if there
+        # are multiple views involved):
+        assert_equal(collect_warnings(subset['f1'].__setitem__, 0, 10), [])
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')
@@ -3616,11 +3615,18 @@ class TestRecord(TestCase):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')
         self.assertRaises(TypeError, hash, a[0])
 
+    def test_empty_structure_creation(self):
+        # make sure these do not raise errors (gh-5631)
+        array([()], dtype={'names': [], 'formats': [],
+                           'offsets': [], 'itemsize': 12})
+        array([(), (), (), (), ()], dtype={'names': [], 'formats': [],
+                                           'offsets': [], 'itemsize': 12})
+
 class TestView(TestCase):
     def test_basic(self):
         x = np.array([(1, 2, 3, 4), (5, 6, 7, 8)],
-                      dtype=[('r', np.int8), ('g', np.int8),
-                             ('b', np.int8), ('a', np.int8)])
+                     dtype=[('r', np.int8), ('g', np.int8),
+                            ('b', np.int8), ('a', np.int8)])
         # We must be specific about the endianness here:
         y = x.view(dtype='<i4')
         # ... and again without the keyword.

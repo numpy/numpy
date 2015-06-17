@@ -215,6 +215,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
         for (i = 0; i < n; i++) {
             PyObject *tmp_obj = PySequence_GetItem(index, i);
+            /* if getitem fails (unusual) treat this as a single index */
             if (tmp_obj == NULL) {
                 PyErr_Clear();
                 make_tuple = 0;
@@ -1361,6 +1362,52 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
     return PyArray_EnsureAnyArray(array_subscript(self, op));
 }
 
+NPY_NO_EXPORT int
+obj_is_string_or_stringlist(PyObject *op)
+{
+#if defined(NPY_PY3K)
+    if (PyUnicode_Check(op)) {
+#else
+    if (PyString_Check(op) || PyUnicode_Check(op)) {
+#endif
+        return 1;
+    }
+    else if (PySequence_Check(op) && !PyTuple_Check(op)) {
+        int seqlen, i;
+        PyObject *obj = NULL;
+        seqlen = PySequence_Size(op);
+
+        /* quit if we come across a 0-d array (seqlen==-1) or a 0-len array */
+        if (seqlen == -1) {
+            PyErr_Clear();
+            return 0;
+        }
+        if (seqlen == 0) {
+            return 0;
+        }
+
+        for (i = 0; i < seqlen; i++) {
+            obj = PySequence_GetItem(op, i);
+            if (obj == NULL) {
+                /* only happens for strange sequence objects. Silently fail */
+                PyErr_Clear();
+                return 0;
+            }
+
+#if defined(NPY_PY3K)
+            if (!PyUnicode_Check(obj)) {
+#else
+            if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
+#endif
+                Py_DECREF(obj);
+                return 0;
+            }
+            Py_DECREF(obj);
+        }
+        return 1;
+    }
+    return 0;
+}
 
 /*
  * General function for indexing a NumPy array with a Python object.
@@ -1382,76 +1429,26 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
     PyArrayMapIterObject * mit = NULL;
 
-    /* Check for multiple field access */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
-        /* Check for single field access */
-        /*
-         * TODO: Moving this code block into the HASFIELDS, means that
-         *       string integers temporarily work as indices.
-         */
-        if (PyString_Check(op) || PyUnicode_Check(op)) {
-            PyObject *temp, *obj;
-
-            if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
-                obj = PyDict_GetItem(PyArray_DESCR(self)->fields, op);
-                if (obj != NULL) {
-                    PyArray_Descr *descr;
-                    int offset;
-                    PyObject *title;
-
-                    if (PyArg_ParseTuple(obj, "Oi|O", &descr, &offset, &title)) {
-                        Py_INCREF(descr);
-                        return PyArray_GetField(self, descr, offset);
-                    }
-                }
-            }
-
-            temp = op;
-            if (PyUnicode_Check(op)) {
-                temp = PyUnicode_AsUnicodeEscapeString(op);
-            }
-            PyErr_Format(PyExc_ValueError,
-                         "field named %s not found",
-                         PyBytes_AsString(temp));
-            if (temp != op) {
-                Py_DECREF(temp);
-            }
+    /* return fields if op is a string index */
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self)) &&
+            obj_is_string_or_stringlist(op)) {
+        PyObject *obj;
+        static PyObject *indexfunc = NULL;
+        npy_cache_pyfunc("numpy.core._internal", "_index_fields", &indexfunc);
+        if (indexfunc == NULL) {
             return NULL;
         }
 
-        else if (PySequence_Check(op) && !PyTuple_Check(op)) {
-            int seqlen, i;
-            PyObject *obj;
-            seqlen = PySequence_Size(op);
-            for (i = 0; i < seqlen; i++) {
-                obj = PySequence_GetItem(op, i);
-                if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
-                    Py_DECREF(obj);
-                    break;
-                }
-                Py_DECREF(obj);
-            }
-            /*
-             * Extract multiple fields if all elements in sequence
-             * are either string or unicode (i.e. no break occurred).
-             */
-            fancy = ((seqlen > 0) && (i == seqlen));
-            if (fancy) {
-                PyObject *_numpy_internal;
-                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-                if (_numpy_internal == NULL) {
-                    return NULL;
-                }
-                obj = PyObject_CallMethod(_numpy_internal,
-                        "_index_fields", "OO", self, op);
-                Py_DECREF(_numpy_internal);
-                if (obj == NULL) {
-                    return NULL;
-                }
-                PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
-                return obj;
-            }
+        obj = PyObject_CallFunction(indexfunc, "OO", self, op);
+        if (obj == NULL) {
+            return NULL;
         }
+
+        /* warn if writing to a copy. copies will have no base */
+        if (PyArray_BASE((PyArrayObject*)obj) == NULL) {
+            PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
+        }
+        return obj;
     }
 
     /* Prepare the indices */
@@ -1783,35 +1780,39 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         return -1;
     }
 
-    /* Single field access */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
-        if (PyString_Check(ind) || PyUnicode_Check(ind)) {
-            PyObject *obj;
+    /* field access */
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self)) &&
+            obj_is_string_or_stringlist(ind)) {
+        PyObject *obj;
+        static PyObject *indexfunc = NULL;
 
-            obj = PyDict_GetItem(PyArray_DESCR(self)->fields, ind);
-            if (obj != NULL) {
-                PyArray_Descr *descr;
-                int offset;
-                PyObject *title;
-
-                if (PyArg_ParseTuple(obj, "Oi|O", &descr, &offset, &title)) {
-                    Py_INCREF(descr);
-                    return PyArray_SetField(self, descr, offset, op);
-                }
-            }
 #if defined(NPY_PY3K)
-            PyErr_Format(PyExc_ValueError,
-                     "field named %S not found",
-                     ind);
+        if (!PyUnicode_Check(ind)) {
 #else
-            PyErr_Format(PyExc_ValueError,
-                     "field named %s not found",
-                     PyString_AsString(ind));
+        if (!PyString_Check(ind) && !PyUnicode_Check(ind)) {
 #endif
+            PyErr_SetString(PyExc_ValueError,
+                            "multi-field assignment is not supported");
+        }
+
+        npy_cache_pyfunc("numpy.core._internal", "_index_fields", &indexfunc);
+        if (indexfunc == NULL) {
             return -1;
         }
-    }
 
+        obj = PyObject_CallFunction(indexfunc, "OO", self, ind);
+        if (obj == NULL) {
+            return -1;
+        }
+
+        if (PyArray_CopyObject((PyArrayObject*)obj, op) < 0) {
+            Py_DECREF(obj);
+            return -1;
+        }
+        Py_DECREF(obj);
+
+        return 0;
+    }
 
     /* Prepare the indices */
     index_type = prepare_index(self, ind, indices, &index_num,

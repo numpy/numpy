@@ -726,7 +726,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         PyObject *tup;
         int savedflags;
 
-        res = -1;
+        res = 0;
         /* get the names from the fields dictionary*/
         names = descr->names;
         n = PyTuple_GET_SIZE(names);
