@@ -94,6 +94,11 @@ provided in the 'out' keyword argument, and it would be used as the first
 output for ufuncs with multiple outputs, is deprecated, and will result in a
 `DeprecationWarning` now and an error in the future.
 
+byte-array indices now raises an IndexError
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Indexing an ndarray using a byte-string in Python 3 now raises an IndexError
+instead of a ValueError.
+
 New Features
 ============
 
