@@ -975,7 +975,11 @@ def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     else:
         result = np.apply_along_axis(_nanpercentile1d, axis, a, q,
                                      overwrite_input, interpolation)
-
+        # apply_along_axis fills in collapsed axis with results.
+        # Move that axis to the beginning to match percentile's
+        # convention.
+        if q.ndim != 0:
+            result = np.swapaxes(result, 0, axis)
     if out is not None:
         out[...] = result
     return result
@@ -991,7 +995,10 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     s = np.where(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning)
-        return np.nan
+        if q.ndim == 0:
+            return np.nan
+        else:
+            return np.nan * np.ones((len(q),))
     elif s.size == 0:
         return np.percentile(arr1d, q, overwrite_input=overwrite_input,
                              interpolation=interpolation)

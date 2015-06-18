@@ -655,7 +655,8 @@ class TestNanFunctions_Percentile(TestCase):
         tgt = [np.percentile(d, 28) for d in _rdat]
         res = np.nanpercentile(_ndat, 28, axis=1)
         assert_almost_equal(res, tgt)
-        tgt = [np.percentile(d, (28, 98)) for d in _rdat]
+        # Transpose the array to fit the output convention of numpy.percentile
+        tgt = np.transpose([np.percentile(d, (28, 98)) for d in _rdat])
         res = np.nanpercentile(_ndat, (28, 98), axis=1)
         assert_almost_equal(res, tgt)
 
@@ -702,6 +703,29 @@ class TestNanFunctions_Percentile(TestCase):
         assert_raises(IndexError, np.nanpercentile, d, q=5, axis=4)
         assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, 4))
         assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
+
+    def test_multiple_percentiles(self):
+        perc = [50, 100]
+        mat = np.ones((4, 3))
+        nan_mat = np.nan * mat
+        # For checking consistency in higher dimensional case
+        large_mat = np.ones((3, 4, 5))
+        large_mat[:, 0:2:4, :] = 0
+        large_mat[:, :, 3:] = 2*large_mat[:, :, 3:]
+        for axis in [None, 0, 1]:
+            for keepdim in [False, True]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    val = np.percentile(mat, perc, axis=axis, keepdims=keepdim)
+                    nan_val = np.nanpercentile(nan_mat, perc, axis=axis,
+                                               keepdims=keepdim)
+                    assert_equal(nan_val.shape, val.shape)
+
+                    val = np.percentile(large_mat, perc, axis=axis,
+                                        keepdims=keepdim)
+                    nan_val = np.nanpercentile(large_mat, perc, axis=axis,
+                                               keepdims=keepdim)
+                    assert_equal(nan_val, val)
 
 
 if __name__ == "__main__":
