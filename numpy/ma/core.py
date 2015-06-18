@@ -3046,6 +3046,7 @@ class MaskedArray(ndarray):
         # mask of being reshaped if it hasn't been set up properly yet...
         # So it's easier to stick to the current version
         _mask = self._mask
+        # Did we extract a single item?
         if not getattr(dout, 'ndim', False):
             # A record ................
             if isinstance(dout, np.void):
@@ -3057,6 +3058,11 @@ class MaskedArray(ndarray):
             # Just a scalar............
             elif _mask is not nomask and _mask[indx]:
                 return masked
+        elif self.dtype.type is np.object_ and self.dtype is not dout.dtype:
+            # self contains an object array of arrays (yes, that happens).
+            # If masked, turn into a MaskedArray, with everything masked.
+            if _mask is not nomask and _mask[indx]:
+                return MaskedArray(dout, mask=True)
         else:
             # Force dout to MA ........
             dout = dout.view(type(self))
