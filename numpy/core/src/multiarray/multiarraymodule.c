@@ -479,7 +479,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     PyTypeObject *subtype = &PyArray_Type;
     double priority = NPY_PRIORITY;
     int iarrays;
-    npy_intp stride, sizes[NPY_MAXDIMS];
+    npy_intp stride;
     npy_intp shape = 0;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *ret = NULL;
@@ -496,7 +496,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
      * array's shape.
      */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        shape += sizes[iarrays] = PyArray_SIZE(arrays[iarrays]);
+        shape += PyArray_SIZE(arrays[iarrays]);
         /* Check for overflow */
         if (shape < 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -551,7 +551,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         /* Adjust the window dimensions for this array */
-        sliding_view->dimensions[0] = sizes[iarrays];
+        sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
 
         /* Copy the data for this array */
         if (PyArray_CopyAsFlat((PyArrayObject *)sliding_view, arrays[iarrays],
@@ -562,7 +562,8 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
 
         /* Slide to the start of the next window */
-        sliding_view->data += sliding_view->strides[0] * sizes[iarrays];
+        sliding_view->data +=
+            sliding_view->strides[0] * PyArray_SIZE(arrays[iarrays]);
     }
 
     Py_DECREF(sliding_view);
