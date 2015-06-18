@@ -172,6 +172,7 @@ class TestVstack(TestCase):
         desired = array([[1, 2], [1, 2]])
         assert_array_equal(res, desired)
 
+
 def test_concatenate_axis_None():
     a = np.arange(4, dtype=np.float64).reshape((2, 2))
     b = list(range(3))
@@ -186,6 +187,18 @@ def test_concatenate_axis_None():
     d = array(['0.0', '1.0', '2.0', '3.0',
                '0', '1', '2', 'x'])
     assert_array_equal(r, d)
+
+
+def test_large_concatenate_axis_None():
+    # When no axis is given, concatenate uses flattened versions.
+    # This also had a bug with many arrays (see gh-5979).
+    x = np.arange(1, 100)
+    r = np.concatenate(x, None)
+    assert_array_equal(x, r)
+
+    # This should probably be deprecated:
+    r = np.concatenate(x, 100)  # axis is >= MAXDIMS
+    assert_array_equal(x, r)
 
 
 def test_concatenate():
