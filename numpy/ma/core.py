@@ -2966,17 +2966,13 @@ class MaskedArray(ndarray):
                 output = ndarray.view(self, dtype)
         else:
             output = ndarray.view(self, dtype, type)
-        # Should we update the mask ?
+
+        # also make the mask be a view (so attr changes to the view's
+        # mask do no affect original object's mask)
+        # (especially important to avoid affecting np.masked singleton)
         if (getattr(output, '_mask', nomask) is not nomask):
-            if dtype is None:
-                dtype = output.dtype
-            mdtype = make_mask_descr(dtype)
-            output._mask = self._mask.view(mdtype, ndarray)
-            # Try to reset the shape of the mask (if we don't have a void)
-            try:
-                output._mask.shape = output.shape
-            except (AttributeError, TypeError):
-                pass
+            output._mask = output._mask.view()
+
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
             if fill_value is None:
@@ -3157,6 +3153,17 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
+    def __setattr__(self, attr, value):
+        super(MaskedArray, self).__setattr__(attr, value)
+        if attr == 'dtype' and self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(value), ndarray)
+
+            # Try to reset the shape of the mask (if we don't have a void)
+            # This raises a ValueError if the dtype change won't work
+            try:
+                self._mask.shape = self.shape
+            except (AttributeError, TypeError):
+                pass
 
     def __getslice__(self, i, j):
         """x.__getslice__(i, j) <==> x[i:j]
@@ -4906,6 +4913,9 @@ class MaskedArray(ndarray):
 
         """
         m = self.mean(axis, dtype)
+        if m is masked:
+            return m
+
         if not axis:
             return (self - m)
         else:
