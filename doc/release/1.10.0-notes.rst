@@ -52,6 +52,11 @@ relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
+Concatenation of 1d arrays along any but ``axis=0`` raises ``IndexError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using axis != 0 has raised a DeprecationWarning since NumPy 1.7, it now
+raises an error.
+
 *np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as
@@ -75,6 +80,9 @@ which now returns a view in all cases.
 
 The dtype structure (PyArray_Descr) has a new member at the end to cache
 its hash value.  This shouldn't affect any well-written applications.
+
+The change to the concatenation function DeprecationWarning also affects
+PyArray_ConcatenateArrays,
 
 recarray field return types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

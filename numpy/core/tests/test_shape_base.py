@@ -173,90 +173,96 @@ class TestVstack(TestCase):
         assert_array_equal(res, desired)
 
 
-def test_concatenate_axis_None():
-    a = np.arange(4, dtype=np.float64).reshape((2, 2))
-    b = list(range(3))
-    c = ['x']
-    r = np.concatenate((a, a), axis=None)
-    assert_equal(r.dtype, a.dtype)
-    assert_equal(r.ndim, 1)
-    r = np.concatenate((a, b), axis=None)
-    assert_equal(r.size, a.size + len(b))
-    assert_equal(r.dtype, a.dtype)
-    r = np.concatenate((a, b, c), axis=None)
-    d = array(['0.0', '1.0', '2.0', '3.0',
-               '0', '1', '2', 'x'])
-    assert_array_equal(r, d)
+class TestConcatenate(TestCase):
+    def test_exceptions(self):
+        # test axis must be in bounds
+        for ndim in [1, 2, 3]:
+            a = np.ones((1,)*ndim)
+            np.concatenate((a, a), axis=0) # OK
+            assert_raises(IndexError, np.concatenate, (a, a), axis=ndim)
+            assert_raises(IndexError, np.concatenate, (a, a), axis=-(ndim + 1))
 
+        # Scalars cannot be concatenated
+        assert_raises(ValueError, concatenate, (0,))
+        assert_raises(ValueError, concatenate, (np.array(0),))
 
-def test_large_concatenate_axis_None():
-    # When no axis is given, concatenate uses flattened versions.
-    # This also had a bug with many arrays (see gh-5979).
-    x = np.arange(1, 100)
-    r = np.concatenate(x, None)
-    assert_array_equal(x, r)
+        # test shapes must match except for concatenation axis
+        a = np.ones((1, 2, 3))
+        b = np.ones((2, 2, 3))
+        axis = list(range(3))
+        for i in range(3):
+            np.concatenate((a, b), axis=axis[0]) # OK
+            assert_raises(ValueError, np.concatenate, (a, b), axis=axis[1])
+            assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
+            a = np.rollaxis(a, -1)
+            b = np.rollaxis(b, -1)
+            axis.append(axis.pop(0))
 
-    # This should probably be deprecated:
-    r = np.concatenate(x, 100)  # axis is >= MAXDIMS
-    assert_array_equal(x, r)
+        # No arrays to concatenate raises ValueError
+        assert_raises(ValueError, concatenate, ())
 
+    def test_concatenate_axis_None(self):
+        a = np.arange(4, dtype=np.float64).reshape((2, 2))
+        b = list(range(3))
+        c = ['x']
+        r = np.concatenate((a, a), axis=None)
+        assert_equal(r.dtype, a.dtype)
+        assert_equal(r.ndim, 1)
+        r = np.concatenate((a, b), axis=None)
+        assert_equal(r.size, a.size + len(b))
+        assert_equal(r.dtype, a.dtype)
+        r = np.concatenate((a, b, c), axis=None)
+        d = array(['0.0', '1.0', '2.0', '3.0',
+                   '0', '1', '2', 'x'])
+        assert_array_equal(r, d)
 
-def test_concatenate():
-    # Test concatenate function
-    # No arrays raise ValueError
-    assert_raises(ValueError, concatenate, ())
-    # Scalars cannot be concatenated
-    assert_raises(ValueError, concatenate, (0,))
-    assert_raises(ValueError, concatenate, (array(0),))
-    # One sequence returns unmodified (but as array)
-    r4 = list(range(4))
-    assert_array_equal(concatenate((r4,)), r4)
-    # Any sequence
-    assert_array_equal(concatenate((tuple(r4),)), r4)
-    assert_array_equal(concatenate((array(r4),)), r4)
-    # 1D default concatenation
-    r3 = list(range(3))
-    assert_array_equal(concatenate((r4, r3)), r4 + r3)
-    # Mixed sequence types
-    assert_array_equal(concatenate((tuple(r4), r3)), r4 + r3)
-    assert_array_equal(concatenate((array(r4), r3)), r4 + r3)
-    # Explicit axis specification
-    assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
-    # Including negative
-    assert_array_equal(concatenate((r4, r3), -1), r4 + r3)
-    # 2D
-    a23 = array([[10, 11, 12], [13, 14, 15]])
-    a13 = array([[0, 1, 2]])
-    res = array([[10, 11, 12], [13, 14, 15], [0, 1, 2]])
-    assert_array_equal(concatenate((a23, a13)), res)
-    assert_array_equal(concatenate((a23, a13), 0), res)
-    assert_array_equal(concatenate((a23.T, a13.T), 1), res.T)
-    assert_array_equal(concatenate((a23.T, a13.T), -1), res.T)
-    # Arrays much match shape
-    assert_raises(ValueError, concatenate, (a23.T, a13.T), 0)
-    # 3D
-    res = arange(2 * 3 * 7).reshape((2, 3, 7))
-    a0 = res[..., :4]
-    a1 = res[..., 4:6]
-    a2 = res[..., 6:]
-    assert_array_equal(concatenate((a0, a1, a2), 2), res)
-    assert_array_equal(concatenate((a0, a1, a2), -1), res)
-    assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
+    def test_large_concatenate_axis_None(self):
+        # When no axis is given, concatenate uses flattened versions.
+        # This also had a bug with many arrays (see gh-5979).
+        x = np.arange(1, 100)
+        r = np.concatenate(x, None)
+        assert_array_equal(x, r)
 
+        # This should probably be deprecated:
+        r = np.concatenate(x, 100)  # axis is >= MAXDIMS
+        assert_array_equal(x, r)
 
-def test_concatenate_sloppy0():
-    # Versions of numpy < 1.7.0 ignored axis argument value for 1D arrays.  We
-    # allow this for now, but in due course we will raise an error
-    r4 = list(range(4))
-    r3 = list(range(3))
-    assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', DeprecationWarning)
-        assert_array_equal(concatenate((r4, r3), -10), r4 + r3)
-        assert_array_equal(concatenate((r4, r3), 10), r4 + r3)
-        # Confirm DeprecationWarning raised
-        warnings.simplefilter('error', DeprecationWarning)
-        assert_raises(DeprecationWarning, concatenate, (r4, r3), 10)
+    def test_concatenate(self):
+        # Test concatenate function
+        # One sequence returns unmodified (but as array)
+        r4 = list(range(4))
+        assert_array_equal(concatenate((r4,)), r4)
+        # Any sequence
+        assert_array_equal(concatenate((tuple(r4),)), r4)
+        assert_array_equal(concatenate((array(r4),)), r4)
+        # 1D default concatenation
+        r3 = list(range(3))
+        assert_array_equal(concatenate((r4, r3)), r4 + r3)
+        # Mixed sequence types
+        assert_array_equal(concatenate((tuple(r4), r3)), r4 + r3)
+        assert_array_equal(concatenate((array(r4), r3)), r4 + r3)
+        # Explicit axis specification
+        assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
+        # Including negative
+        assert_array_equal(concatenate((r4, r3), -1), r4 + r3)
+        # 2D
+        a23 = array([[10, 11, 12], [13, 14, 15]])
+        a13 = array([[0, 1, 2]])
+        res = array([[10, 11, 12], [13, 14, 15], [0, 1, 2]])
+        assert_array_equal(concatenate((a23, a13)), res)
+        assert_array_equal(concatenate((a23, a13), 0), res)
+        assert_array_equal(concatenate((a23.T, a13.T), 1), res.T)
+        assert_array_equal(concatenate((a23.T, a13.T), -1), res.T)
+        # Arrays much match shape
+        assert_raises(ValueError, concatenate, (a23.T, a13.T), 0)
+        # 3D
+        res = arange(2 * 3 * 7).reshape((2, 3, 7))
+        a0 = res[..., :4]
+        a1 = res[..., 4:6]
+        a2 = res[..., 6:]
+        assert_array_equal(concatenate((a0, a1, a2), 2), res)
+        assert_array_equal(concatenate((a0, a1, a2), -1), res)
+        assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
 
 
 def test_stack():
