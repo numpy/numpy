@@ -1418,29 +1418,34 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 /*
  * Compare the field dictionaries for two types.
  *
- * Return 1 if the contents are the same, 0 if not.
+ * Return 1 if the field types and field names of the two descrs are equal and
+ * in the same order, 0 if not.
  */
 static int
-_equivalent_fields(PyObject *field1, PyObject *field2) {
+_equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
 
-    int same, val;
+    int val;
 
-    if (field1 == field2) {
+    if (type1->fields == type2->fields && type1->names == type2->names) {
         return 1;
     }
-    if (field1 == NULL || field2 == NULL) {
+    if (type1->fields == NULL || type2->fields == NULL) {
         return 0;
     }
 
-    val = PyObject_RichCompareBool(field1, field2, Py_EQ);
+    val = PyObject_RichCompareBool(type1->fields, type2->fields, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
-        same = 0;
+        PyErr_Clear();
+        return 0;
     }
-    else {
-        same = 1;
+
+    val = PyObject_RichCompareBool(type1->names, type2->names, Py_EQ);
+    if (val != 1 || PyErr_Occurred()) {
+        PyErr_Clear();
+        return 0;
     }
-    PyErr_Clear();
-    return same;
+
+    return 1;
 }
 
 /*
@@ -1499,10 +1504,8 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return ((type_num1 == type_num2)
                 && _equivalent_subarrays(type1->subarray, type2->subarray));
     }
-    if (type_num1 == NPY_VOID
-        || type_num2 == NPY_VOID) {
-        return ((type_num1 == type_num2)
-                && _equivalent_fields(type1->fields, type2->fields));
+    if (type_num1 == NPY_VOID || type_num2 == NPY_VOID) {
+        return ((type_num1 == type_num2) && _equivalent_fields(type1, type2));
     }
     if (type_num1 == NPY_DATETIME
             || type_num1 == NPY_TIMEDELTA

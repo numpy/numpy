@@ -209,3 +209,40 @@ Integer scalars are now unaffected by ``np.set_string_function``
 Previously the str/repr of integer scalars could be controlled by
 ``np.set_string_function``, unlike most other numpy scalars. This is no longer
 the case.
+
+Multiple-field indexing/assignment of structured arrays
+-------------------------------------------------------
+The indexing and assignment of structured arrays with multiple fields has
+changed in a number of ways:
+
+First, indexing a structured array with multiple fields (eg,
+``arr[['f1', 'f3']]``) returns a view into the original array instead of a
+copy. The returned view will have extra padding bytes corresponding to
+intervening fields in the original array, unlike the copy in 1.13, which will
+affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
+
+Second, assignment between structured arrays will now occur "by position"
+instead of "by field name". The Nth field of the destination will be set to the
+Nth field of the source regardless of field name, unlike in numpy versions 1.6
+to 1.13 in which fields in the destination array were set to the
+identically-named field in the source array or to 0 if the source did not have
+a field.
+
+Correspondingly, the order of fields in a structured dtypes now matters when
+computing dtype equality. For example with the dtypes
+`x = dtype({'names': ['A', 'B'], 'formats': ['i4', 'f4'], 'offsets': [0, 4]})`
+`y = dtype({'names': ['B', 'A'], 'formats': ['f4', 'i4'], 'offsets': [4, 0]})`
+now `x == y` will return `False`, unlike before. This makes dictionary-based
+dtype specifications like `dtype({'a': ('i4', 0), 'b': ('f4', 4)})` dangerous
+in python < 3.6 since dict key-order is not preserved in those versions.
+
+Assignment from a structured array to a boolean array now raises a ValueError,
+unlike in 1.13 where it always set the destination elements to `True`.
+
+Assignment from structured array with more than one field to a non-structured
+array now raises a ValueError. In 1.13 this copied just the first field of the
+source to the destination.
+
+Using field "titles" in multiple-field indexing is now disallowed, as is
+repeating a field name in a multiple-field index.
+
