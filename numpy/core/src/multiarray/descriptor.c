@@ -3119,7 +3119,7 @@ static PyMethodDef arraydescr_methods[] = {
  *
  * Returns 1 if it has a simple layout, 0 otherwise.
  */
-static int
+NPY_NO_EXPORT int
 is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
 {
     PyObject *names, *fields, *key, *tup, *title;

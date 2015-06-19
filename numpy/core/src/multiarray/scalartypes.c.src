@@ -2179,35 +2179,31 @@ static PyObject *
 voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 {
     npy_intp n;
-    PyObject *ret, *args;
+    PyObject *ret, *res;
 
-    if (!(PyDataType_HASFIELDS(self->descr))) {
-        PyErr_SetString(PyExc_IndexError,
-                "can't index void scalar without fields");
-        return NULL;
+    /* structured voids will accept an integer index */
+    if (PyDataType_HASFIELDS(self->descr)) {
+        n = PyArray_PyIntAsIntp(ind);
+        if (!error_converting(n)) {
+            return voidtype_item(self, (Py_ssize_t)n);
+        }
+        PyErr_Clear();
     }
 
-#if defined(NPY_PY3K)
-    if (PyUString_Check(ind)) {
-#else
-    if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
-#endif
-        args = Py_BuildValue("(O)", ind);
-        ret = gentype_generic_method((PyObject *)self, args, NULL, "__getitem__");
-        Py_DECREF(args);
-        return ret;
+    res = PyArray_FromScalar((PyObject*)self, NULL);
+
+    /* ellipsis should return 0d array */
+    if(ind == Py_Ellipsis){
+        return res;
     }
 
-    /* try to convert it to a number */
-    n = PyArray_PyIntAsIntp(ind);
-    if (error_converting(n)) {
-        goto fail;
-    }
-    return voidtype_item(self, (Py_ssize_t)n);
-
-fail:
-    PyErr_SetString(PyExc_IndexError, "invalid index");
-    return NULL;
+    /*
+     * other cases (field names, empty tuple) will return either
+     * scalar or non-0d array. Compute this using ndarray subscript.
+     */
+    ret = array_subscript((PyArrayObject *)res, ind);
+    Py_DECREF(res);
+    return PyArray_Return((PyArrayObject*)ret);
 }
 
 static int
