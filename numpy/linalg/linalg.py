@@ -958,7 +958,7 @@ def eigvalsh(a, UPLO='L'):
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
-    array([ 0.17157288+0.j,  5.82842712+0.j])
+    array([ 0.17157288,  5.82842712])
 
     """
     UPLO = UPLO.upper()
