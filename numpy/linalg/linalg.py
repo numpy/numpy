@@ -929,7 +929,7 @@ def eigvalsh(a, UPLO='L'):
     Returns
     -------
     w : (..., M,) ndarray
-        The eigenvalues, not necessarily ordered, each repeated according to
+        The eigenvalues in ascending order, each repeated according to
         its multiplicity.
 
     Raises

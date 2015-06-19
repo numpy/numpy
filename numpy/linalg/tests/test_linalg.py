@@ -686,19 +686,15 @@ class TestBoolPower(object):
 
 class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b):
-        # note that eigenvalue arrays must be sorted since
+        # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev = linalg.eigvalsh(a, 'L')
         evalues, evectors = linalg.eig(a)
-        ev.sort(axis=-1)
         evalues.sort(axis=-1)
-        assert_allclose(ev, evalues,
-                        rtol=get_rtol(ev.dtype))
+        assert_allclose(ev, evalues, rtol=get_rtol(ev.dtype))
 
         ev2 = linalg.eigvalsh(a, 'U')
-        ev2.sort(axis=-1)
-        assert_allclose(ev2, evalues,
-                        rtol=get_rtol(ev.dtype))
+        assert_allclose(ev2, evalues, rtol=get_rtol(ev.dtype))
 
     def test_types(self):
         def check(dtype):
