@@ -781,7 +781,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
 
-                    npy_cache_pyfunc(
+                    npy_cache_import(
                         "numpy", "VisibleDeprecationWarning", &warning);
                     if (warning == NULL) {
                         goto failed_building_indices;
@@ -1434,7 +1434,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             obj_is_string_or_stringlist(op)) {
         PyObject *obj;
         static PyObject *indexfunc = NULL;
-        npy_cache_pyfunc("numpy.core._internal", "_index_fields", &indexfunc);
+        npy_cache_import("numpy.core._internal", "_index_fields", &indexfunc);
         if (indexfunc == NULL) {
             return NULL;
         }
@@ -1795,7 +1795,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                             "multi-field assignment is not supported");
         }
 
-        npy_cache_pyfunc("numpy.core._internal", "_index_fields", &indexfunc);
+        npy_cache_import("numpy.core._internal", "_index_fields", &indexfunc);
         if (indexfunc == NULL) {
             return -1;
         }

@@ -2403,7 +2403,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     char *subscripts;
     PyArrayObject *ops[2];
 
-    npy_cache_pyfunc("numpy.core.multiarray", "matmul", &matmul);
+    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
     if (matmul == NULL) {
         return NULL;
     }

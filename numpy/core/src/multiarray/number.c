@@ -397,7 +397,7 @@ array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
     static PyObject *matmul = NULL;
 
-    npy_cache_pyfunc("numpy.core.multiarray", "matmul", &matmul);
+    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
     if (matmul == NULL) {
         return NULL;
     }
