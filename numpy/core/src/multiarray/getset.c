@@ -437,7 +437,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
-    npy_cache_pyfunc("numpy.core._internal", "_view_is_safe", &checkfunc);
+    npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
     if (checkfunc == NULL) {
         return -1;
     }

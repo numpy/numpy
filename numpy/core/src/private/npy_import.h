@@ -13,17 +13,17 @@
  * exit,
  *
  * @param module Absolute module name.
- * @param function Function name.
+ * @param attr module attribute to cache.
  * @param cache Storage location for imported function.
  */
 NPY_INLINE static void
-npy_cache_pyfunc(const char *module, const char *function, PyObject **cache)
+npy_cache_import(const char *module, const char *attr, PyObject **cache)
 {
     if (*cache == NULL) {
         PyObject *mod = PyImport_ImportModule(module);
 
         if (mod != NULL) {
-            *cache = PyObject_GetAttrString(mod, function);
+            *cache = PyObject_GetAttrString(mod, attr);
             Py_DECREF(mod);
         }
     }

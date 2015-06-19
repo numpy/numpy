@@ -362,7 +362,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
-    npy_cache_pyfunc("numpy.core._internal", "_getfield_is_safe", &checkfunc);
+    npy_cache_import("numpy.core._internal", "_getfield_is_safe", &checkfunc);
     if (checkfunc == NULL) {
         return NULL;
     }
