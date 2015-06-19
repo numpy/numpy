@@ -601,9 +601,9 @@ cdef class RandomState:
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
 
-    version : int between 0 and HIGHEST_VERSION, keyword-only, optional
-        The version of the RNG methods.  Defaults to `HIGHEST_VERSION`,
-        except if `seed` is set in which case it defaults to `0` for backwards
+    version : int between 0 and ``HIGHEST_VERSION``, keyword-only, optional
+        The version of the RNG methods.  Defaults to ``HIGHEST_VERSION``,
+        except if ``seed`` is set in which case it defaults to 0 for backwards
         compatibility.
 
     Notes
