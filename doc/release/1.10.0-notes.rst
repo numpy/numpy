@@ -30,7 +30,7 @@ Dropped Support:
 * splitcmdline has been removed from numpy/distutils/exec_command.py.
 * try_run and get_output have been removed from
   numpy/distutils/command/config.py
-*
+* The a._format attribute is no longer supported for array printing.
 
 Future Changes:
 

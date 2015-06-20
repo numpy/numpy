@@ -286,39 +286,31 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             if key in fkeys:
                 formatdict[key] = formatter[key]
 
-    try:
-        format_function = a._format
-        msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
-              "will be removed in 2.1. Use the `formatter` kw instead."
-        import warnings
-        # 2011-04-03, RemoveMe
-        warnings.warn(msg, DeprecationWarning)
-    except AttributeError:
-        # find the right formatting function for the array
-        dtypeobj = a.dtype.type
-        if issubclass(dtypeobj, _nt.bool_):
-            format_function = formatdict['bool']
-        elif issubclass(dtypeobj, _nt.integer):
-            if issubclass(dtypeobj, _nt.timedelta64):
-                format_function = formatdict['timedelta']
-            else:
-                format_function = formatdict['int']
-        elif issubclass(dtypeobj, _nt.floating):
-            if issubclass(dtypeobj, _nt.longfloat):
-                format_function = formatdict['longfloat']
-            else:
-                format_function = formatdict['float']
-        elif issubclass(dtypeobj, _nt.complexfloating):
-            if issubclass(dtypeobj, _nt.clongfloat):
-                format_function = formatdict['longcomplexfloat']
-            else:
-                format_function = formatdict['complexfloat']
-        elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
-            format_function = formatdict['numpystr']
-        elif issubclass(dtypeobj, _nt.datetime64):
-            format_function = formatdict['datetime']
+    # find the right formatting function for the array
+    dtypeobj = a.dtype.type
+    if issubclass(dtypeobj, _nt.bool_):
+        format_function = formatdict['bool']
+    elif issubclass(dtypeobj, _nt.integer):
+        if issubclass(dtypeobj, _nt.timedelta64):
+            format_function = formatdict['timedelta']
         else:
-            format_function = formatdict['numpystr']
+            format_function = formatdict['int']
+    elif issubclass(dtypeobj, _nt.floating):
+        if issubclass(dtypeobj, _nt.longfloat):
+            format_function = formatdict['longfloat']
+        else:
+            format_function = formatdict['float']
+    elif issubclass(dtypeobj, _nt.complexfloating):
+        if issubclass(dtypeobj, _nt.clongfloat):
+            format_function = formatdict['longcomplexfloat']
+        else:
+            format_function = formatdict['complexfloat']
+    elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
+        format_function = formatdict['numpystr']
+    elif issubclass(dtypeobj, _nt.datetime64):
+        format_function = formatdict['datetime']
+    else:
+        format_function = formatdict['numpystr']
 
     # skip over "["
     next_line_prefix = " "
@@ -441,18 +433,9 @@ def array2string(a, max_line_width=None, precision=None,
 
     if a.shape == ():
         x = a.item()
-        try:
-            lst = a._format(x)
-            msg = "The `_format` attribute is deprecated in Numpy " \
-                  "2.0 and will be removed in 2.1. Use the " \
-                  "`formatter` kw instead."
-            import warnings
-            # 2012-05-11, RemoveMe
-            warnings.warn(msg, DeprecationWarning)
-        except AttributeError:
-            if isinstance(x, tuple):
-                x = _convert_arrays(x)
-            lst = style(x)
+        if isinstance(x, tuple):
+            x = _convert_arrays(x)
+        lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
