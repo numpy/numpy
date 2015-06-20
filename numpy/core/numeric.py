@@ -831,7 +831,7 @@ def _mode_from_name(mode):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
-def correlate(a, v, mode='valid', old_behavior=False):
+def correlate(a, v, mode='valid'):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -851,10 +851,8 @@ def correlate(a, v, mode='valid', old_behavior=False):
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
     old_behavior : bool
-        If True, uses the old behavior from Numeric,
-        (correlate(a,v) == correlate(v,a), and the conjugate is not taken
-        for complex arrays). If False, uses the conventional signal
-        processing definition.
+        `old_behavior` was removed in NumPy 1.10. If you need the old
+        behavior, use `multiarray.correlate`.
 
     Returns
     -------
@@ -864,6 +862,7 @@ def correlate(a, v, mode='valid', old_behavior=False):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
+    multiarray.correlate : Old, no conjugate, version of correlate.
 
     Notes
     -----
@@ -897,20 +896,7 @@ def correlate(a, v, mode='valid', old_behavior=False):
 
     """
     mode = _mode_from_name(mode)
-# the old behavior should be made available under a different name, see thread
-# http://thread.gmane.org/gmane.comp.python.numeric.general/12609/focus=12630
-    if old_behavior:
-        # 2009-07-18 Cannot remove without replacement function.
-        warnings.warn("""
-The old behavior of correlate was deprecated for 1.4.0, and will be completely removed
-for NumPy 2.0.
-
-The new behavior fits the conventional definition of correlation: inputs are
-never swapped, and the second argument is conjugated for complex arrays.""",
-            DeprecationWarning)
-        return multiarray.correlate(a, v, mode)
-    else:
-        return multiarray.correlate2(a, v, mode)
+    return multiarray.correlate2(a, v, mode)
 
 def convolve(a,v,mode='full'):
     """
