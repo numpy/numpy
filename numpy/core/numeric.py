@@ -900,7 +900,7 @@ def correlate(a, v, mode='valid', old_behavior=False):
 # the old behavior should be made available under a different name, see thread
 # http://thread.gmane.org/gmane.comp.python.numeric.general/12609/focus=12630
     if old_behavior:
-        # 2009-07-18 RemoveMe
+        # 2009-07-18 Cannot remove without replacement function.
         warnings.warn("""
 The old behavior of correlate was deprecated for 1.4.0, and will be completely removed
 for NumPy 2.0.

@@ -1515,7 +1515,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Get the first valid lines after the first skiprows ones ..
     if skiprows:
-        # 2011-03-06 RemoveMe
+        # 2011-03-06 Cannot remove is keyword.
         warnings.warn(
             "The use of `skiprows` is deprecated, it will be removed in "
             "numpy 2.0.\nPlease use `skip_header` instead.",
@@ -1651,7 +1651,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the deprecated `missing`
     if missing != asbytes(''):
-        # 2011-03-06 RemoveMe
+        # 2011-03-06 Cannot remove, is keyword.
         warnings.warn(
             "The use of `missing` is deprecated, it will be removed in "
             "Numpy 2.0.\nPlease use `missing_values` instead.",
