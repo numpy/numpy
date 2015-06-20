@@ -257,6 +257,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
     PyArray_Descr *descr;
     static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
+    /* 2008-07-14, 1.5 */
     if (DEPRECATE(msg) < 0) {
         return -1;
     }
@@ -278,6 +279,7 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
     PyArray_Descr *descr;
     static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
+    /* 2008-07-14, 1.5 */
     if (DEPRECATE(msg) < 0) {
         return -1;
     }

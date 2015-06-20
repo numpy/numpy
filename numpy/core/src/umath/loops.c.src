@@ -2574,6 +2574,7 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret_obj == NULL) {
 #if @identity@ != -1
             if (in1 == in2) {
+                /* 2014-01-26, 1.9 */
                 PyErr_Clear();
                 if (DEPRECATE("numpy @kind@ will not check object identity "
                               "in the future. The comparison error will "
@@ -2591,6 +2592,7 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret == -1) {
 #if @identity@ != -1
             if (in1 == in2) {
+                /* 2014-01-26, 1.9 */
                 PyErr_Clear();
                 if (DEPRECATE("numpy @kind@ will not check object identity "
                               "in the future. The error trying to get the "
@@ -2606,6 +2608,7 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         }
 #if @identity@ != -1
         if ((in1 == in2) && ((npy_bool)ret != @identity@)) {
+            /* 2014-01-26, 1.9 */
             if (DEPRECATE_FUTUREWARNING(
                         "numpy @kind@ will not check object identity "
                         "in the future. The comparison did not return the "

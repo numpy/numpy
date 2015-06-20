@@ -37,6 +37,7 @@ class config(old_config):
 
     def try_run(self, body, headers=None, include_dirs=None,
                 libraries=None, library_dirs=None, lang="c"):
+        # 2008-11-16, RemoveMe
         warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
                       "Usage of try_run is deprecated: please do not \n" \
                       "use it anymore, and avoid configuration checks \n" \
@@ -435,6 +436,7 @@ int main (void)
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
         """
+        # 2008-11-16, RemoveMe
         warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
                       "Usage of get_output is deprecated: please do not \n" \
                       "use it anymore, and avoid configuration checks \n" \

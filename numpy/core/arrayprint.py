@@ -291,6 +291,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
               "will be removed in 2.1. Use the `formatter` kw instead."
         import warnings
+        # 2011-04-03, RemoveMe
         warnings.warn(msg, DeprecationWarning)
     except AttributeError:
         # find the right formatting function for the array
@@ -446,6 +447,7 @@ def array2string(a, max_line_width=None, precision=None,
                   "2.0 and will be removed in 2.1. Use the " \
                   "`formatter` kw instead."
             import warnings
+            # 2012-05-11, RemoveMe
             warnings.warn(msg, DeprecationWarning)
         except AttributeError:
             if isinstance(x, tuple):

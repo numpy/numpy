@@ -2624,6 +2624,7 @@ def rank(a):
     0
 
     """
+    # 2014-04-12, 1.9
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",

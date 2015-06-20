@@ -784,6 +784,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 
     /* Be a bit stricter and not allow bools, np.bool_ is handled later */
     if (PyBool_Check(o)) {
+        /* 2013-04-13, 1.8 */
         if (DEPRECATE("using a boolean instead of an integer"
                       " will result in an error in the future") < 0) {
             return -1;
@@ -817,6 +818,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 
     /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
     if (PyArray_IsScalar(o, Bool)) {
+        /* 2013-06-09, 1.8 */
         if (DEPRECATE("using a boolean instead of an integer"
                       " will result in an error in the future") < 0) {
             return -1;
@@ -884,6 +886,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
     }
     /* Give a deprecation warning, unless there was already an error */
     if (!error_converting(long_value)) {
+        /* 2013-04-13, 1.8 */
         if (DEPRECATE("using a non-integer number instead of an integer"
                       " will result in an error in the future") < 0) {
             return -1;
@@ -1139,6 +1142,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             if (itemsize == 4 || itemsize == 8) {
                 int ret = 0;
                 if (evil_global_disable_warn_O4O8_flag) {
+                    /* 2012-02-04, 1.7, not sure when this can be removed */
                     ret = DEPRECATE("DType strings 'O4' and 'O8' are "
                             "deprecated because they are platform "
                             "specific. Use 'O' instead");

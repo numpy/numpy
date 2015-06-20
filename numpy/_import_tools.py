@@ -164,6 +164,7 @@ class PackageLoader(object):
              when True, don't load packages [default: False]
 
         """
+        # 2014-10-29, 1.10
         warnings.warn('pkgload and PackageLoader are obsolete '
                 'and will be removed in a future version of numpy',
                 DeprecationWarning)

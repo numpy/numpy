@@ -1975,6 +1975,8 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     }
 
     /*
+     * FIXME
+     *
      * This deprecation has been temporarily removed for the NumPy 1.7
      * release. It should be re-added after the 1.7 branch is done,
      * and a convenience API to replace the typical use-cases for

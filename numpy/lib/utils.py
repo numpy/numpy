@@ -1011,6 +1011,7 @@ class SafeEval(object):
 
     """
     def __init__(self):
+        # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
                       DeprecationWarning)
 

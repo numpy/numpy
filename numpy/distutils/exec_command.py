@@ -74,6 +74,7 @@ def get_pythonexe():
 
 def splitcmdline(line):
     import warnings
+    # 2007-12-26 RemoveMe
     warnings.warn('splitcmdline is deprecated; use shlex.split',
                   DeprecationWarning)
     return shlex.split(line)
