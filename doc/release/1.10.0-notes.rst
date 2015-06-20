@@ -32,6 +32,7 @@ Dropped Support:
 * try_run and get_output have been removed from
   numpy/distutils/command/config.py
 * The a._format attribute is no longer supported for array printing.
+* Keywords ``skiprows`` and ``missing`` removed from genfromtxt.
 
 Future Changes:
 
