@@ -25,9 +25,12 @@ Dropped Support:
 * The polytemplate.py file has been removed.
 * The _dotblas module is no longer available.
 * The testcalcs.py file has been removed.
-* npy_PyFile_Dup`` and npy_PyFile_DupClose have been removed from
+* npy_PyFile_Dup and npy_PyFile_DupClose have been removed from
   npy_3kcompat.h.
 * splitcmdline has been removed from numpy/distutils/exec_command.py.
+* try_run and get_output have been removed from
+  numpy/distutils/command/config.py
+*
 
 Future Changes:
 
