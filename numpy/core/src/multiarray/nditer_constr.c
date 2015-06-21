@@ -168,6 +168,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                      "deprecated. Use `oa_ndim == -1` or the MultiNew "
                      "iterator for NumPy <1.8 compatibility";
         if (DEPRECATE(mesg) < 0) {
+            /* 2013-02-23, 1.8 */
             return NULL;
         }
         oa_ndim = -1;

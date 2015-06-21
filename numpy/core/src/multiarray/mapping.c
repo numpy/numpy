@@ -292,6 +292,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * replaced with a slice.
              */
             if (index_type & HAS_ELLIPSIS) {
+                /* 2013-04-14, 1.8 */
                 if (DEPRECATE(
                         "an index can only have a single Ellipsis (`...`); "
                         "replace all but one with slices (`:`).") < 0) {
@@ -433,6 +434,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * later just like a normal array.
                  */
                 if (PyArray_ISBOOL(tmp_arr)) {
+                    /* 2013-04-14, 1.8 */
                     if (DEPRECATE_FUTUREWARNING(
                             "in the future, boolean array-likes will be "
                             "handled as a boolean array index") < 0) {
@@ -465,6 +467,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 else if (!PyArray_ISINTEGER(tmp_arr)) {
                     if (PyArray_NDIM(tmp_arr) == 0) {
                         /* match integer deprecation warning */
+                        /* 2013-09-25, 1.8 */
                         if (DEPRECATE(
                                     "using a non-integer number instead of an "
                                     "integer will result in an error in the "
@@ -480,6 +483,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                         }
                     }
                     else {
+                        /* 2013-09-25, 1.8 */
                         if (DEPRECATE(
                                     "non integer (and non boolean) array-likes "
                                     "will not be accepted as indices in the "
@@ -1727,10 +1731,11 @@ attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (iter_ass_subscript(self_iter, ind, op) < 0) {
         goto fail;
     }
-    
+
     Py_XDECREF((PyObject *)self_iter);
     Py_DECREF(err);
 
+    /* 2014-06-12, 1.9 */
     if (DEPRECATE(
             "assignment will raise an error in the future, most likely "
             "because your index result shape does not match the value array "
@@ -1744,6 +1749,7 @@ attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (!PyErr_ExceptionMatches(err)) {
         PyObject *err, *val, *tb;
         PyErr_Fetch(&err, &val, &tb);
+        /* 2014-06-12, 1.9 */
         DEPRECATE_FUTUREWARNING(
             "assignment exception type will change in the future");
         PyErr_Restore(err, val, tb);

@@ -776,6 +776,7 @@ def select(condlist, choicelist, default=0):
 
     # Now that the dtype is known, handle the deprecated select([], []) case
     if len(condlist) == 0:
+        # 2014-02-24, 1.9
         warnings.warn("select with an empty condition list is not possible"
                       "and will be deprecated",
                       DeprecationWarning)
@@ -809,6 +810,7 @@ def select(condlist, choicelist, default=0):
                     'invalid entry in choicelist: should be boolean ndarray')
 
     if deprecated_ints:
+        # 2014-02-24, 1.9
         msg = "select condlists containing integer ndarrays is deprecated " \
             "and will be removed in the future. Use `.astype(bool)` to " \
             "convert to bools."
@@ -2075,6 +2077,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     safely ignored in this and previous versions of numpy.
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
+        # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no affect and are deprecated',
                       DeprecationWarning)
     c = cov(x, y, rowvar)
@@ -3626,6 +3629,7 @@ def delete(arr, obj, axis=None):
         ndim = arr.ndim
         axis = ndim - 1
     if ndim == 0:
+        # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
             "from delete and raise an error", DeprecationWarning)
@@ -3720,6 +3724,7 @@ def delete(arr, obj, axis=None):
         if not np.can_cast(obj, intp, 'same_kind'):
             # obj.size = 1 special case always failed and would just
             # give superfluous warnings.
+            # 2013-09-24, 1.9
             warnings.warn(
                 "using a non-integer array as obj in delete will result in an "
                 "error in the future", DeprecationWarning)
@@ -3729,6 +3734,7 @@ def delete(arr, obj, axis=None):
         # Test if there are out of bound indices, this is deprecated
         inside_bounds = (obj < N) & (obj >= -N)
         if not inside_bounds.all():
+            # 2013-09-24, 1.9
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
@@ -3861,6 +3867,7 @@ def insert(arr, obj, values, axis=None):
         if (axis < 0):
             axis += ndim
     if (ndim == 0):
+        # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
             "from insert and raise an error", DeprecationWarning)
@@ -3932,6 +3939,7 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if not np.can_cast(indices, intp, 'same_kind'):
+        # 2013-09-24, 1.9
         warnings.warn(
             "using a non-integer array as obj in insert will result in an "
             "error in the future", DeprecationWarning)

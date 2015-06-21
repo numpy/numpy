@@ -384,9 +384,10 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
 
     /* The type resolver would have upcast already */
     if (out_dtypes[0]->type_num == NPY_BOOL) {
-        if (DEPRECATE("numpy boolean negative (the unary `-` operator) is "
-                      "deprecated, use the bitwise_xor (the `^` operator) "
-                      "or the logical_xor function instead.") < 0) {
+        /* 2013-12-05, 1.9 */
+        if (DEPRECATE("numpy boolean negative, the `-` operator, is "
+                      "deprecated, use the `~` operator or the logical_not "
+                      "function instead.") < 0) {
             return -1;
         }
     }
@@ -799,8 +800,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
         /* The type resolver would have upcast already */
         if (out_dtypes[0]->type_num == NPY_BOOL) {
-            if (DEPRECATE("numpy boolean subtract (the binary `-` operator) is "
-                          "deprecated, use the bitwise_xor (the `^` operator) "
+            /* 2013-12-05, 1.9 */
+            if (DEPRECATE("numpy boolean subtract, the `-` operator, is "
+                          "deprecated, use the bitwise_xor, the `^` operator, "
                           "or the logical_xor function instead.") < 0) {
                 return -1;
             }

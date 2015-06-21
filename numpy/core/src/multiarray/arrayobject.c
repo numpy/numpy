@@ -738,6 +738,7 @@ array_might_be_written(PyArrayObject *obj)
         "The quick fix is to make an explicit copy (e.g., do\n"
         "arr.diagonal().copy() or arr[['f0','f1']].copy()).";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
+        /* 2012-07-17, 1.7 */
         if (DEPRECATE_FUTUREWARNING(msg) < 0) {
             return -1;
         }
@@ -1345,6 +1346,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         break;
     case Py_EQ:
         if (other == Py_None) {
+            /* 2013-07-25, 1.7 */
             if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
                     "an elementwise object comparison in the future.") < 0) {
                 return NULL;
@@ -1368,6 +1370,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * this way.
              */
             if (array_other == NULL) {
+                /* 2015-05-07, 1.10 */
                 PyErr_Clear();
                 if (DEPRECATE(
                         "elementwise == comparison failed and returning scalar "
@@ -1382,6 +1385,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
+                /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);
                 if (DEPRECATE_FUTUREWARNING(
                         "elementwise == comparison failed and returning scalar "
@@ -1417,6 +1421,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * Comparisons should raise errors when element-wise comparison
              * is not possible.
              */
+            /* 2015-05-14, 1.10 */
             PyErr_Clear();
             if (DEPRECATE("elementwise == comparison failed; "
                           "this will raise an error in the future.") < 0) {
@@ -1429,6 +1434,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         break;
     case Py_NE:
         if (other == Py_None) {
+            /* 2013-07-25, 1.8 */
             if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
                     "an elementwise object comparison in the future.") < 0) {
                 return NULL;
@@ -1452,6 +1458,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * this way.
             */
             if (array_other == NULL) {
+                /* 2015-05-07, 1.10 */
                 PyErr_Clear();
                 if (DEPRECATE(
                         "elementwise != comparison failed and returning scalar "
@@ -1466,6 +1473,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
+                /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);
                 if (DEPRECATE_FUTUREWARNING(
                         "elementwise != comparison failed and returning scalar "
@@ -1495,6 +1503,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * Comparisons should raise errors when element-wise comparison
              * is not possible.
              */
+            /* 2015-05-14, 1.10 */
             PyErr_Clear();
             if (DEPRECATE("elementwise != comparison failed; "
                           "this will raise an error in the future.") < 0) {

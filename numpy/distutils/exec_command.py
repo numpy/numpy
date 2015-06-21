@@ -72,12 +72,6 @@ def get_pythonexe():
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
 
-def splitcmdline(line):
-    import warnings
-    warnings.warn('splitcmdline is deprecated; use shlex.split',
-                  DeprecationWarning)
-    return shlex.split(line)
-
 def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
 

@@ -2452,6 +2452,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
     char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
 
     if (DEPRECATE(msg) < 0) {
+        /* 2009-04-30, 1.5 */
         return NULL;
     }
     if (!PyArray_ISNBO(descr->byteorder))
@@ -2476,6 +2477,7 @@ PyArray_FromDims(int nd, int *d, int type)
     char msg[] = "PyArray_FromDims: use PyArray_SimpleNew.";
 
     if (DEPRECATE(msg) < 0) {
+        /* 2009-04-30, 1.5 */
         return NULL;
     }
     ret = (PyArrayObject *)PyArray_FromDimsAndDataAndDescr(nd, d,

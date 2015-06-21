@@ -22,9 +22,16 @@ Highlights
 
 Dropped Support:
 
-* The polytemplate.py file has been removed.
-* The _dotblas module is no longer available.
+* The _dotblas module has been removed. CBLAS Support is now in
+  Multiarray.
 * The testcalcs.py file has been removed.
+* The polytemplate.py file has been removed.
+* npy_PyFile_Dup and npy_PyFile_DupClose have been removed from
+  npy_3kcompat.h.
+* splitcmdline has been removed from numpy/distutils/exec_command.py.
+* try_run and get_output have been removed from
+  numpy/distutils/command/config.py
+* The a._format attribute is no longer supported for array printing.
 
 Future Changes:
 
@@ -51,6 +58,11 @@ relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
+Concatenation of 1d arrays along any but ``axis=0`` raises ``IndexError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using axis != 0 has raised a DeprecationWarning since NumPy 1.7, it now
+raises an error.
+
 *np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There was inconsistent behavior between *x.ravel()* and *np.ravel(x)*, as
@@ -74,6 +86,9 @@ which now returns a view in all cases.
 
 The dtype structure (PyArray_Descr) has a new member at the end to cache
 its hash value.  This shouldn't affect any well-written applications.
+
+The change to the concatenation function DeprecationWarning also affects
+PyArray_ConcatenateArrays,
 
 recarray field return types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

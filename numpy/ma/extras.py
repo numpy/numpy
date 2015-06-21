@@ -1455,6 +1455,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     """
     msg = 'bias and ddof have no affect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
+        # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning)
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)

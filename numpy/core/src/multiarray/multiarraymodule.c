@@ -257,6 +257,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
     PyArray_Descr *descr;
     static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
+    /* 2008-07-14, 1.5 */
     if (DEPRECATE(msg) < 0) {
         return -1;
     }
@@ -278,6 +279,7 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
     PyArray_Descr *descr;
     static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
+    /* 2008-07-14, 1.5 */
     if (DEPRECATE(msg) < 0) {
         return -1;
     }
@@ -345,16 +347,6 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     /* Handle standard Python negative indexing */
     if (axis < 0) {
         axis += ndim;
-    }
-
-    if (ndim == 1 && axis != 0) {
-        static const char msg[] = "axis != 0 for ndim == 1; "
-                                  "this will raise an error in "
-                                  "future versions of numpy";
-        if (DEPRECATE(msg) < 0) {
-            return NULL;
-        }
-        axis = 0;
     }
 
     if (axis < 0 || axis >= ndim) {

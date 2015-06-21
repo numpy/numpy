@@ -345,15 +345,32 @@ class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
             assert_raises(IndexError, a.__getitem__, ((Ellipsis, ) * 3,))
 
 
-class TestBooleanSubtractDeprecations(_DeprecationTestCase):
-    """Test deprecation of boolean `-`. While + and * are well
-    defined, - is not and even a corrected form seems to have
+class TestBooleanUnaryMinusDeprecation(_DeprecationTestCase):
+    """Test deprecation of unary boolean `-`. While + and * are well
+    defined, unary - is not and even a corrected form seems to have
     no real uses.
 
     The deprecation process was started in NumPy 1.9.
     """
-    message = r"numpy boolean .* \(the .* `-` operator\) is deprecated, " \
-              "use the bitwise"
+    message = r"numpy boolean negative, the `-` operator, .*"
+
+    def test_unary_minus_operator_deprecation(self):
+        array = np.array([True])
+        generic = np.bool_(True)
+
+        # Unary minus/negative ufunc:
+        self.assert_deprecated(operator.neg, args=(array,))
+        self.assert_deprecated(operator.neg, args=(generic,))
+
+
+class TestBooleanBinaryMinusDeprecation(_DeprecationTestCase):
+    """Test deprecation of binary boolean `-`. While + and * are well
+    defined, binary  - is not and even a corrected form seems to have
+    no real uses.
+
+    The deprecation process was started in NumPy 1.9.
+    """
+    message = r"numpy boolean subtract, the `-` operator, .*"
 
     def test_operator_deprecation(self):
         array = np.array([True])
@@ -363,9 +380,6 @@ class TestBooleanSubtractDeprecations(_DeprecationTestCase):
         self.assert_deprecated(operator.sub, args=(array, array))
         self.assert_deprecated(operator.sub, args=(generic, generic))
 
-        # Unary minus/negative ufunc:
-        self.assert_deprecated(operator.neg, args=(array,))
-        self.assert_deprecated(operator.neg, args=(generic,))
 
 
 class TestRankDeprecation(_DeprecationTestCase):

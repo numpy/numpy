@@ -1157,6 +1157,7 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp nkth, i;
 
     if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+        /* 2013-05-18, 1.8 */
         if (DEPRECATE("Calling partition with a non integer index"
                       " will result in an error in the future") < 0) {
             return NULL;
