@@ -126,6 +126,9 @@ def main(argv):
         extra_argv = extra_argv[1:]
 
     if args.python:
+        # Debugging issues with warnings is much easier if you can see them
+        print("Enabling display of all warnings")
+        import warnings; warnings.filterwarnings("always")
         if extra_argv:
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
@@ -143,8 +146,12 @@ def main(argv):
             sys.exit(0)
 
     if args.ipython:
+        # Debugging issues with warnings is much easier if you can see them
+        print("Enabling display of all warnings and pre-importing numpy as np")
+        import warnings; warnings.filterwarnings("always")
         import IPython
-        IPython.embed(user_ns={})
+        import numpy as np
+        IPython.embed(user_ns={"np": np})
         sys.exit(0)
 
     if args.shell:
