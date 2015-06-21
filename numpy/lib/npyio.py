@@ -1301,13 +1301,12 @@ def fromregex(file, regexp, dtype):
 
 
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
-               skiprows=0, skip_header=0, skip_footer=0, converters=None,
-               missing='', missing_values=None, filling_values=None,
-               usecols=None, names=None,
-               excludelist=None, deletechars=None, replace_space='_',
-               autostrip=False, case_sensitive=True, defaultfmt="f%i",
-               unpack=None, usemask=False, loose=True, invalid_raise=True,
-               max_rows=None):
+               skip_header=0, skip_footer=0, converters=None,
+               missing_values=None, filling_values=None, usecols=None,
+               names=None, excludelist=None, deletechars=None,
+               replace_space='_', autostrip=False, case_sensitive=True,
+               defaultfmt="f%i", unpack=None, usemask=False, loose=True,
+               invalid_raise=True, max_rows=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1332,8 +1331,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         whitespaces act as delimiter.  An integer or sequence of integers
         can also be provided as width(s) of each field.
     skiprows : int, optional
-        `skiprows` was deprecated in numpy 1.5, and will be removed in
-        numpy 2.0. Please use `skip_header` instead.
+        `skiprows` was removed in numpy 1.10. Please use `skip_header` instead.
     skip_header : int, optional
         The number of lines to skip at the beginning of the file.
     skip_footer : int, optional
@@ -1343,8 +1341,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
     missing : variable, optional
-        `missing` was deprecated in numpy 1.5, and will be removed in
-        numpy 2.0. Please use `missing_values` instead.
+        `missing` was removed in numpy 1.10. Please use `missing_values`
+        instead.
     missing_values : variable, optional
         The set of strings corresponding to missing data.
     filling_values : variable, optional
@@ -1475,8 +1473,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         comments = asbytes(comments)
     if isinstance(delimiter, unicode):
         delimiter = asbytes(delimiter)
-    if isinstance(missing, unicode):
-        missing = asbytes(missing)
     if isinstance(missing_values, (unicode, list, tuple)):
         missing_values = asbytes_nested(missing_values)
 
@@ -1513,14 +1509,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                    case_sensitive=case_sensitive,
                                    replace_space=replace_space)
 
-    # Get the first valid lines after the first skiprows ones ..
-    if skiprows:
-        # 2011-03-06 Cannot remove is keyword.
-        warnings.warn(
-            "The use of `skiprows` is deprecated, it will be removed in "
-            "numpy 2.0.\nPlease use `skip_header` instead.",
-            DeprecationWarning)
-        skip_header = skiprows
     # Skip the first `skip_header` rows
     for i in range(skip_header):
         next(fhd)
@@ -1648,17 +1636,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     else:
         for entry in missing_values:
             entry.extend([str(user_missing_values)])
-
-    # Process the deprecated `missing`
-    if missing != asbytes(''):
-        # 2011-03-06 Cannot remove, is keyword.
-        warnings.warn(
-            "The use of `missing` is deprecated, it will be removed in "
-            "Numpy 2.0.\nPlease use `missing_values` instead.",
-            DeprecationWarning)
-        values = [str(_) for _ in missing.split(asbytes(","))]
-        for entry in missing_values:
-            entry.extend(values)
 
     # Process the filling_values ...............................
     # Rename the input for convenience
