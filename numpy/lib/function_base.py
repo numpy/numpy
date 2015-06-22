@@ -3083,10 +3083,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
                     rout = out
                 else:
                     rout = a.dtype.type(np.nan)
-        else:
-            for i in range(np.count_nonzero(n.ravel())):
-                warnings.warn("Invalid value encountered in median",
-                              RuntimeWarning)
+        elif np.count_nonzero(n.ravel()) > 0:
+            warnings.warn("Invalid value encountered in median for" +
+                          " %d results" % np.count_nonzero(n.ravel()),
+                          RuntimeWarning)
             rout[n] = np.nan
         return rout
     else:
