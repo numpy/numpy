@@ -1151,7 +1151,8 @@ def eigh(a, UPLO='L'):
     Returns
     -------
     w : (..., M) ndarray
-        The eigenvalues, not necessarily ordered.
+        The eigenvalues in ascending order, each repeated according to
+        its multiplicity.
     v : {(..., M, M) ndarray, (..., M, M) matrix}
         The column ``v[:, i]`` is the normalized eigenvector corresponding
         to the eigenvalue ``w[i]``.  Will return a matrix object if `a` is
