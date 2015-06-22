@@ -953,7 +953,7 @@ def eigvalsh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues are computed using LAPACK routines _ssyevd, _heevd
+    The eigenvalues are computed using LAPACK routines _syevd, _heevd
 
     Examples
     --------
@@ -1151,7 +1151,8 @@ def eigh(a, UPLO='L'):
     Returns
     -------
     w : (..., M) ndarray
-        The eigenvalues, not necessarily ordered.
+        The eigenvalues in ascending order, each repeated according to
+        its multiplicity.
     v : {(..., M, M) ndarray, (..., M, M) matrix}
         The column ``v[:, i]`` is the normalized eigenvector corresponding
         to the eigenvalue ``w[i]``.  Will return a matrix object if `a` is
@@ -1175,7 +1176,7 @@ def eigh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues/eigenvectors are computed using LAPACK routines _ssyevd,
+    The eigenvalues/eigenvectors are computed using LAPACK routines _syevd,
     _heevd
 
     The eigenvalues of real symmetric or complex Hermitian matrices are

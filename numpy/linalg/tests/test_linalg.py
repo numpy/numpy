@@ -718,28 +718,27 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
         # Check default is 'L'
         w = np.linalg.eigvalsh(Klo)
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'L'
         w = np.linalg.eigvalsh(Klo, UPLO='L')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'l'
         w = np.linalg.eigvalsh(Klo, UPLO='l')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'U'
         w = np.linalg.eigvalsh(Kup, UPLO='U')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'u'
         w = np.linalg.eigvalsh(Kup, UPLO='u')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
 
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b):
-        # note that eigenvalue arrays must be sorted since
+        # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev, evc = linalg.eigh(a)
         evalues, evectors = linalg.eig(a)
-        ev.sort(axis=-1)
         evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
 
@@ -748,7 +747,6 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
                         rtol=get_rtol(ev.dtype))
 
         ev2, evc2 = linalg.eigh(a, 'U')
-        ev2.sort(axis=-1)
         assert_almost_equal(ev2, evalues)
 
         assert_allclose(dot_generalized(a, evc2),
@@ -778,19 +776,19 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
 
         # Check default is 'L'
         w, v = np.linalg.eigh(Klo)
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'L'
         w, v = np.linalg.eigh(Klo, UPLO='L')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'l'
         w, v = np.linalg.eigh(Klo, UPLO='l')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'U'
         w, v = np.linalg.eigh(Kup, UPLO='U')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
         # Check 'u'
         w, v = np.linalg.eigh(Kup, UPLO='u')
-        assert_allclose(np.sort(w), tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=rtol)
 
 
 class _TestNorm(object):
