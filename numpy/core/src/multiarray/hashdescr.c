@@ -299,6 +299,7 @@ PyArray_DescrHash(PyObject* odescr)
 {
     PyArray_Descr *descr;
     int st;
+    npy_hash_t hash;
 
     if (!PyArray_DescrCheck(odescr)) {
         PyErr_SetString(PyExc_ValueError,
@@ -307,12 +308,10 @@ PyArray_DescrHash(PyObject* odescr)
     }
     descr = (PyArray_Descr*)odescr;
 
-    if (descr->hash == -1) {
-        st = _PyArray_DescrHashImp(descr, &descr->hash);
-        if (st) {
-            return -1;
-        }
+    st = _PyArray_DescrHashImp(descr, &hash);
+    if (st) {
+        return -1;
     }
 
-    return descr->hash;
+    return hash;
 }
