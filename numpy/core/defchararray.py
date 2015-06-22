@@ -1849,12 +1849,14 @@ class chararray(ndarray):
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-        if issubclass(val.dtype.type, character) and not _len(val) == 0:
+
+        if isinstance(val, character):
             temp = val.rstrip()
             if _len(temp) == 0:
                 val = ''
             else:
                 val = temp
+
         return val
 
     # IMPLEMENTATION NOTE: Most of the methods of this class are

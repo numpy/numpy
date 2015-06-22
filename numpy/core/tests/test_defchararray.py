@@ -329,7 +329,7 @@ class TestMethods(TestCase):
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
-        assert_(T[2][0] == asbytes('123      345'))
+        assert_(T[2, 0] == asbytes('123      345 \0'))
 
     def test_join(self):
         if sys.version_info[0] >= 3:
@@ -628,6 +628,23 @@ class TestOperations(TestCase):
             else:
                 self.fail("chararray __rmod__ should fail with " \
                           "non-string objects")
+
+    def test_slice(self):
+        """Regression test for https://github.com/numpy/numpy/issues/5982"""
+
+        arr = np.array([['abc ', 'def '], ['geh ', 'ijk ']],
+                       dtype='S4').view(np.chararray)
+        sl1 = arr[:]
+        assert_array_equal(sl1, arr)
+        assert sl1.base is arr
+        assert sl1.base.base is arr.base
+
+        sl2 = arr[:, :]
+        assert_array_equal(sl2, arr)
+        assert sl2.base is arr
+        assert sl2.base.base is arr.base
+
+        assert arr[0, 0] == asbytes('abc')
 
 
 def test_empty_indexing():
