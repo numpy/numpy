@@ -27,6 +27,8 @@
 
 #include <stdlib.h>
 
+#include "binop_override.h"
+
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
@@ -194,6 +196,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
     return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
 }
 
@@ -207,6 +210,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
     return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
 }
 /**end repeat**/
@@ -241,6 +245,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
     }
     if (ret == NULL) {
         PyErr_Clear(); /* no effect if not set */
+        BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, gentype_multiply);
         ret = PyArray_Type.tp_as_number->nb_multiply(m1, m2);
     }
     return ret;

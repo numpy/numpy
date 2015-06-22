@@ -24,6 +24,8 @@
 #include "numpy/halffloat.h"
 #include "templ_common.h"
 
+#include "binop_override.h"
+
 /* Basic operations:
  *
  *  BINARY:
@@ -795,6 +797,8 @@ static PyObject *
     int first;
 #endif
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -929,6 +933,8 @@ static PyObject *
     int first;
     @type@ out = {@zero@, @zero@};
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -1002,6 +1008,8 @@ static PyObject *
     int first;
     @type@ out = @zero@;
     @otype@ out1 = @zero@;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
@@ -1088,6 +1096,9 @@ static PyObject *
     int first;
 
     @type@ out = @zero@;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -1484,6 +1495,8 @@ static PyObject*
 {
     npy_@name@ arg1, arg2;
     int out=0;
+
+    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
     switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
     case 0:
