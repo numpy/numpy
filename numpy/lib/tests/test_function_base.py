@@ -2335,7 +2335,7 @@ class TestMedian(TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a, 0), b)
-            assert_equal(len(w), 2)
+            assert_equal(len(w), 1)
 
         #axis1
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 1)
@@ -2343,7 +2343,7 @@ class TestMedian(TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a, 1), b)
-            assert_equal(len(w), 2)
+            assert_equal(len(w), 1)
 
        #axis02
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), (0, 2))
@@ -2351,7 +2351,7 @@ class TestMedian(TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a, (0, 2)), b)
-            assert_equal(len(w), 2)
+            assert_equal(len(w), 1)
 
     def test_object(self):
         o = np.arange(7.);
