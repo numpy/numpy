@@ -953,7 +953,7 @@ def eigvalsh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues are computed using LAPACK routines _ssyevd, _heevd
+    The eigenvalues are computed using LAPACK routines _syevd, _heevd
 
     Examples
     --------
@@ -1176,7 +1176,7 @@ def eigh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues/eigenvectors are computed using LAPACK routines _ssyevd,
+    The eigenvalues/eigenvectors are computed using LAPACK routines _syevd,
     _heevd
 
     The eigenvalues of real symmetric or complex Hermitian matrices are
