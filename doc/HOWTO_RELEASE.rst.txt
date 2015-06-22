@@ -310,6 +310,13 @@ Now, set ``release=True`` in setup.py, then
     git tag <version>
     git push origin <version>
 
+Apply patch to fix bogus strides
+--------------------------------
+NPY_RELAXED_STRIDE_CHECKING was made the default in Numpy 1.10 and bogus
+strides are used in the development branch to smoke out problems. The
+`patch <https://github.com/numpy/numpy/pull/5996>`_ should be updated if
+necessary and applied to the release branch to rationalize the strides.
+
 Update the version of the master branch
 ---------------------------------------
 Increment the release number in setup.py. Release candidates should have "rc1"
