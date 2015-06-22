@@ -1732,7 +1732,6 @@ def hermegauss(deg):
     c = np.array([0]*deg + [1])
     m = hermecompanion(c)
     x = la.eigvalsh(m)
-    x.sort()
 
     # improve roots by one application of Newton
     dy = _normed_hermite_e_n(x, ideg)
