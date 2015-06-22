@@ -532,14 +532,15 @@ def typename(char):
 #-----------------------------------------------------------------------------
 
 #determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.single, _nx.double, _nx.longdouble],
-              [_nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.single: 0,
-                   _nx.double: 1,
-                   _nx.longdouble: 2,
-                   _nx.csingle: 0,
-                   _nx.cdouble: 1,
-                   _nx.clongdouble: 2}
+array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
+              [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
+array_precision = {_nx.half: 0,
+                   _nx.single: 1,
+                   _nx.double: 2,
+                   _nx.longdouble: 3,
+                   _nx.csingle: 1,
+                   _nx.cdouble: 2,
+                   _nx.clongdouble: 3}
 def common_type(*arrays):
     """
     Return a scalar type which is common to the input arrays.
@@ -583,7 +584,7 @@ def common_type(*arrays):
         if iscomplexobj(a):
             is_complex = True
         if issubclass(t, _nx.integer):
-            p = 1
+            p = 2  # array_precision[_nx.double]
         else:
             p = array_precision.get(t, None)
             if p is None:
