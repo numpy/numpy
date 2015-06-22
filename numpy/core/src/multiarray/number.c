@@ -405,6 +405,15 @@ array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
                                0, nb_matrix_multiply);
     return PyArray_GenericBinaryFunction(m1, m2, matmul);
 }
+
+static PyObject *
+array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
+{
+    PyErr_SetString(PyExc_TypeError,
+                    "In-place matrix multiplication is not (yet) supported. "
+                    "Use 'a = a @ b' instead of 'a @= b'.");
+    return NULL;
+}
 #endif
 
 /* Determine if object is a scalar and if so, convert the object
@@ -1092,6 +1101,6 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (unaryfunc)array_index,                     /*nb_index */
 #if PY_VERSION_HEX >= 0x03050000
     (binaryfunc)array_matrix_multiply,          /*nb_matrix_multiply*/
-    (binaryfunc)NULL,                           /*nb_inplacematrix_multiply*/
+    (binaryfunc)array_inplace_matrix_multiply,  /*nb_inplace_matrix_multiply*/
 #endif
 };
