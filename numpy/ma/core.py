@@ -3933,12 +3933,15 @@ class MaskedArray(ndarray):
 
     def _delegate_binop(self, other):
         # This emulates the logic in
-        # multiarray/number.c:PyArray_GenericBinaryFunction
-        if (not isinstance(other, np.ndarray)
-                and not hasattr(other, "__array_ufunc__")):
+        #     private/binop_override.h:forward_binop_should_defer
+        if isinstance(other, type(self)):
+            return False
+        if not hasattr(other, "__array_ufunc__"):
             other_priority = getattr(other, "__array_priority__", -1000000)
             if self.__array_priority__ < other_priority:
                 return True
+        if other.__class__.__module__.startswith("scipy.sparse"):
+            return True
         return False
 
     def _comparison(self, other, compare):

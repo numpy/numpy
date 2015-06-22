@@ -65,8 +65,4 @@ NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out);
 
-NPY_NO_EXPORT int
-needs_right_binop_forward(PyObject *self, PyObject *other,
-                          const char *right_name, int is_inplace);
-
 #endif
