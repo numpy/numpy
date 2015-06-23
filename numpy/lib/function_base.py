@@ -3029,41 +3029,37 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
     a = np.asanyarray(a)
-    if axis is not None and axis >= a.ndim:
-        raise IndexError(
-            "axis %d out of bounds (%d)" % (axis, a.ndim))
+
+    # Set the partition indexes
+    if axis is None:
+        sz = a.size
+    else:
+        sz = a.shape[axis]
+    if sz % 2 == 0:
+        szh = sz // 2
+        kth = [szh - 1, szh]
+    else:
+        kth = [(sz - 1) // 2]
+    # Check if the array contains any nan's
+    if np.issubdtype(a.dtype, np.inexact):
+        kth.append(-1)
 
     if overwrite_input:
         if axis is None:
             part = a.ravel()
-            sz = part.size
-            if sz % 2 == 0:
-                szh = sz // 2
-                part.partition((szh - 1, szh))
-            else:
-                part.partition((sz - 1) // 2)
+            part.partition(kth)
         else:
-            sz = a.shape[axis]
-            if sz % 2 == 0:
-                szh = sz // 2
-                a.partition((szh - 1, szh), axis=axis)
-            else:
-                a.partition((sz - 1) // 2, axis=axis)
+            a.partition(kth, axis=axis)
             part = a
     else:
-        if axis is None:
-            sz = a.size
-        else:
-            sz = a.shape[axis]
-        if sz % 2 == 0:
-            part = partition(a, ((sz // 2) - 1, sz // 2), axis=axis)
-        else:
-            part = partition(a, (sz - 1) // 2, axis=axis)
+        part = partition(a, kth, axis=axis)
+
     if part.shape == ():
         # make 0-D arrays work
         return part.item()
     if axis is None:
         axis = 0
+
     indexer = [slice(None)] * part.ndim
     index = part.shape[axis] // 2
     if part.shape[axis] % 2 == 1:
@@ -3071,9 +3067,33 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
-    # Use mean in odd and even case to coerce data type
-    # and check, use out array.
-    return mean(part[indexer], axis=axis, out=out)
+
+    # Check if the array contains any nan's
+    if np.issubdtype(a.dtype, np.inexact):
+        # warn and return nans like mean would
+        rout = mean(part[indexer], axis=axis, out=out)
+        part = np.rollaxis(part, axis, part.ndim)
+        n = np.isnan(part[..., -1])
+        if rout.ndim == 0:
+            if n == True:
+                warnings.warn("Invalid value encountered in median",
+                              RuntimeWarning)
+                if out is not None:
+                    out[...] = a.dtype.type(np.nan)
+                    rout = out
+                else:
+                    rout = a.dtype.type(np.nan)
+        elif np.count_nonzero(n.ravel()) > 0:
+            warnings.warn("Invalid value encountered in median for" +
+                          " %d results" % np.count_nonzero(n.ravel()),
+                          RuntimeWarning)
+            rout[n] = np.nan
+        return rout
+    else:
+        # if there are no nans
+        # Use mean in odd and even case to coerce data type
+        # and check, use out array.
+        return mean(part[indexer], axis=axis, out=out)
 
 
 def percentile(a, q, axis=None, out=None,
@@ -3249,19 +3269,35 @@ def _percentile(a, q, axis=None, out=None,
             "interpolation can only be 'linear', 'lower' 'higher', "
             "'midpoint', or 'nearest'")
 
+    n = np.array(False, dtype=bool) # check for nan's flag
     if indices.dtype == intp:  # take the points along axis
+        # Check if the array contains any nan's
+        if np.issubdtype(a.dtype, np.inexact):
+            indices = concatenate((indices, [-1]))
+
         ap.partition(indices, axis=axis)
         # ensure axis with qth is first
         ap = np.rollaxis(ap, axis, 0)
         axis = 0
 
+        # Check if the array contains any nan's
+        if np.issubdtype(a.dtype, np.inexact):
+            indices = indices[:-1]
+            n = np.isnan(ap[-1:, ...])
+
         if zerod:
             indices = indices[0]
         r = take(ap, indices, axis=axis, out=out)
+
+
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
         indices_above = indices_below + 1
         indices_above[indices_above > Nx - 1] = Nx - 1
+
+        # Check if the array contains any nan's
+        if np.issubdtype(a.dtype, np.inexact):
+            indices_above = concatenate((indices_above, [-1]))
 
         weights_above = indices - indices_below
         weights_below = 1.0 - weights_above
@@ -3272,6 +3308,18 @@ def _percentile(a, q, axis=None, out=None,
         weights_above.shape = weights_shape
 
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
+
+        # ensure axis with qth is first
+        ap = np.rollaxis(ap, axis, 0)
+        weights_below = np.rollaxis(weights_below, axis, 0)
+        weights_above = np.rollaxis(weights_above, axis, 0)
+        axis = 0
+
+        # Check if the array contains any nan's
+        if np.issubdtype(a.dtype, np.inexact):
+            indices_above = indices_above[:-1]
+            n = np.isnan(ap[-1:, ...])
+
         x1 = take(ap, indices_below, axis=axis) * weights_below
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
@@ -3287,6 +3335,24 @@ def _percentile(a, q, axis=None, out=None,
             r = add(x1, x2, out=out)
         else:
             r = add(x1, x2)
+
+    if np.any(n):
+        warnings.warn("Invalid value encountered in median",
+                              RuntimeWarning)
+        if zerod:
+            if ap.ndim == 1:
+                if out is not None:
+                    out[...] = a.dtype.type(np.nan)
+                    r = out
+                else:
+                    r = a.dtype.type(np.nan)
+            else:
+                r[..., n.squeeze(0)] = a.dtype.type(np.nan)
+        else:
+            if r.ndim == 1:
+                r[:] = a.dtype.type(np.nan)
+            else:
+                r[..., n.repeat(q.size, 0)] = a.dtype.type(np.nan)
 
     return r
 
