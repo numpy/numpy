@@ -156,7 +156,7 @@ typedef enum {
 
 
 typedef enum {
-        NPY_INTROSELECT=0,
+        NPY_INTROSELECT=0
 } NPY_SELECTKIND;
 #define NPY_NSELECTS (NPY_INTROSELECT + 1)
 
@@ -202,7 +202,7 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4,
+        NPY_UNSAFE_CASTING=4
 } NPY_CASTING;
 
 typedef enum {
