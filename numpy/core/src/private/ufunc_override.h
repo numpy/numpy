@@ -6,6 +6,8 @@
 #include <string.h>
 #include "numpy/ufuncobject.h"
 
+#include "get_attr_string.h"
+
 static void
 normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds,
@@ -213,16 +215,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     for (i = 0; i < nargs; ++i) {
+        PyObject *tmp;
         obj = PyTuple_GET_ITEM(args, i);
-        /*
-         * TODO: could use PyArray_GetAttrString_SuppressException if it
-         * weren't private to multiarray.so
-         */
-        if (PyArray_CheckExact(obj) || PyArray_IsScalar(obj, Generic) ||
-            _is_basic_python_type(obj)) {
-            continue;
-        }
-        if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {
+        tmp = PyArray_GetAttrString_SuppressException(obj, "__numpy_ufunc__");
+        if (tmp) {
+            Py_DECREF(tmp);
             with_override[noa] = obj;
             with_override_pos[noa] = i;
             ++noa;
