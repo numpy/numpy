@@ -6,6 +6,8 @@
 #include <string.h>
 #include "numpy/ufuncobject.h"
 
+#include "get_attr_string.h"
+
 static void
 normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds,
@@ -184,6 +186,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     int out_kwd_is_tuple = 0;
     int noa = 0; /* Number of overriding args.*/
 
+    PyObject *tmp;
     PyObject *obj;
     PyObject *out_kwd_obj = NULL;
     PyObject *other_obj;
@@ -237,15 +240,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                 obj = out_kwd_obj;
             }
         }
-        /*
-         * TODO: could use PyArray_GetAttrString_SuppressException if it
-         * weren't private to multiarray.so
-         */
-        if (PyArray_CheckExact(obj) || PyArray_IsScalar(obj, Generic) ||
-            _is_basic_python_type(obj)) {
-            continue;
-        }
-        if (PyObject_HasAttrString(obj, "__array_ufunc__")) {
+        tmp = PyArray_GetAttrString_SuppressException(obj, "__array_ufunc__");
+        if (tmp) {
+            Py_DECREF(tmp);
             with_override[noa] = obj;
             ++noa;
         }
@@ -316,7 +313,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Call __array_ufunc__ functions in correct order
      */
     while (1) {
-        PyObject *numpy_ufunc;
+        PyObject *array_ufunc;
         PyObject *override_args;
         PyObject *override_obj;
 
@@ -360,21 +357,21 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         }
 
         /* Call the override */
-        numpy_ufunc = PyObject_GetAttrString(override_obj,
+        array_ufunc = PyObject_GetAttrString(override_obj,
                                              "__array_ufunc__");
-        if (numpy_ufunc == NULL) {
+        if (array_ufunc == NULL) {
             goto fail;
         }
 
         override_args = Py_BuildValue("OOO", ufunc, method_name, normal_args);
         if (override_args == NULL) {
-            Py_DECREF(numpy_ufunc);
+            Py_DECREF(array_ufunc);
             goto fail;
         }
 
-        *result = PyObject_Call(numpy_ufunc, override_args, normal_kwds);
+        *result = PyObject_Call(array_ufunc, override_args, normal_kwds);
 
-        Py_DECREF(numpy_ufunc);
+        Py_DECREF(array_ufunc);
         Py_DECREF(override_args);
 
         if (*result == NULL) {

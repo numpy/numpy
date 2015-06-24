@@ -40,9 +40,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_status);
 
-NPY_NO_EXPORT PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *v, char *name);
-
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
  * new dtype reference otherwise.
@@ -253,34 +250,6 @@ npy_memchr(char * haystack, char needle,
     *psubloopsize = subloopsize;
 
     return p;
-}
-
-static NPY_INLINE int
-_is_basic_python_type(PyObject * obj)
-{
-    if (obj == Py_None ||
-            PyBool_Check(obj) ||
-            /* Basic number types */
-#if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-            PyString_CheckExact(obj) ||
-#endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            PyComplex_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj) ||
-            PyDict_CheckExact(obj) ||
-            PyAnySet_CheckExact(obj) ||
-            PyUnicode_CheckExact(obj) ||
-            PyBytes_CheckExact(obj) ||
-            PySlice_Check(obj)) {
-
-        return 1;
-    }
-
-    return 0;
 }
 
 /*
