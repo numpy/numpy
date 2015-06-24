@@ -151,63 +151,14 @@ gentype_free(PyObject *v)
 static PyObject *
 gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
-    PyObject *arr, *ret, *arg2;
-    char *msg="unsupported operand type(s) for ** or pow()";
-
     if (modulo != Py_None) {
         /* modular exponentiation is not implemented (gh-8804) */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
 
-    if (!PyArray_IsScalar(m1, Generic)) {
-        if (PyArray_Check(m1)) {
-            ret = Py_TYPE(m1)->tp_as_number->nb_power(m1,m2, Py_None);
-        }
-        else {
-            if (!PyArray_IsScalar(m2, Generic)) {
-                PyErr_SetString(PyExc_TypeError, msg);
-                return NULL;
-            }
-            arr = PyArray_FromScalar(m2, NULL);
-            if (arr == NULL) {
-                return NULL;
-            }
-            ret = Py_TYPE(arr)->tp_as_number->nb_power(m1, arr, Py_None);
-            Py_DECREF(arr);
-        }
-        return ret;
-    }
-    if (!PyArray_IsScalar(m2, Generic)) {
-        if (PyArray_Check(m2)) {
-            ret = Py_TYPE(m2)->tp_as_number->nb_power(m1,m2, Py_None);
-        }
-        else {
-            if (!PyArray_IsScalar(m1, Generic)) {
-                PyErr_SetString(PyExc_TypeError, msg);
-                return NULL;
-            }
-            arr = PyArray_FromScalar(m1, NULL);
-            if (arr == NULL) {
-                return NULL;
-            }
-            ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, m2, Py_None);
-            Py_DECREF(arr);
-        }
-        return ret;
-    }
-    arr = arg2 = NULL;
-    arr = PyArray_FromScalar(m1, NULL);
-    arg2 = PyArray_FromScalar(m2, NULL);
-    if (arr == NULL || arg2 == NULL) {
-        Py_XDECREF(arr);
-        Py_XDECREF(arg2);
-        return NULL;
-    }
-    ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, arg2, Py_None);
-    Py_DECREF(arr);
-    Py_DECREF(arg2);
-    return ret;
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_power, gentype_power);
+    return PyArray_Type.tp_as_number->nb_power(m1, m2, Py_None);
 }
 
 static PyObject *
