@@ -37,52 +37,6 @@ __all__ = [
     ]
 
 
-def seek_gzip_factory(f):
-    """Use this factory to produce the class so that we can do a lazy
-    import on gzip.
-
-    """
-    import gzip
-
-    class GzipFile(gzip.GzipFile):
-
-        def seek(self, offset, whence=0):
-            # figure out new position (we can only seek forwards)
-            if whence == 1:
-                offset = self.offset + offset
-
-            if whence not in [0, 1]:
-                raise IOError("Illegal argument")
-
-            if offset < self.offset:
-                # for negative seek, rewind and do positive seek
-                self.rewind()
-                count = offset - self.offset
-                for i in range(count // 1024):
-                    self.read(1024)
-                self.read(count % 1024)
-
-        def tell(self):
-            return self.offset
-
-    if isinstance(f, str):
-        f = GzipFile(f)
-    elif isinstance(f, gzip.GzipFile):
-        # cast to our GzipFile if its already a gzip.GzipFile
-
-        try:
-            name = f.name
-        except AttributeError:
-            # Backward compatibility for <= 2.5
-            name = f.filename
-        mode = f.mode
-
-        f = GzipFile(fileobj=f.fileobj, filename=name)
-        f.mode = mode
-
-    return f
-
-
 class BagObj(object):
     """
     BagObj(obj)
@@ -407,8 +361,6 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     if isinstance(file, basestring):
         fid = open(file, "rb")
         own_fid = True
-    elif isinstance(file, gzip.GzipFile):
-        fid = seek_gzip_factory(file)
     else:
         fid = file
 
@@ -839,7 +791,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if _is_string_like(fname):
             fown = True
             if fname.endswith('.gz'):
-                fh = iter(seek_gzip_factory(fname))
+                import gzip
+                fh = iter(gzip.GzipFile(fname))
             elif fname.endswith('.bz2'):
                 import bz2
                 fh = iter(bz2.BZ2File(fname))
