@@ -144,9 +144,8 @@ class TestSetState(TestCase):
             if prng.version == 0:
                 assert_(isinstance(state[0], str))
             else:
-                assert_(isinstance(state[0], tuple))
-                assert_(isinstance(state[0][0], int))
-                assert_(isinstance(state[0][1], str))
+                assert_(isinstance(state[0], int))
+                assert_(isinstance(state[1], str))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point

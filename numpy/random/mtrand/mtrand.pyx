@@ -711,8 +711,8 @@ cdef class RandomState:
 
         """
         cdef ndarray state "arrayObject_state"
-        impl_info = (
-            'MT19937' if self.version == 0 else (self.version, 'MT19937'))
+        version_info = (self.version,) if self.version else ()
+        rng_info = "MT19937"
         state = <ndarray>np.empty(624, np.uint)
         with self.lock:
             memcpy(<void*>PyArray_DATA(state),
@@ -722,7 +722,7 @@ cdef class RandomState:
             gauss = self.internal_state.gauss
             pos = self.internal_state.pos
         state = <ndarray>np.asarray(state, np.uint32)
-        return (impl_info, state, pos, has_gauss, gauss)
+        return version_info + (rng_info, state, pos, has_gauss, gauss)
 
     def set_state(self, state):
         """
@@ -735,11 +735,11 @@ cdef class RandomState:
 
         Parameters
         ----------
-        state : tuple(tuple(int, str), ndarray of 624 uints, int, int, float)
+        state : tuple([int], str, ndarray of 624 uints, int, int, float)
             The `state` tuple has the following items:
 
-            1. the version of the RNG methods, and the string 'MT19937',
-               specifying the Mersenne Twister algorithm.
+            0. the version of the RNG methods if >0, not present for version 0.
+            1. the string 'MT19937', specifying the Mersenne Twister algorithm.
             2. a 1-D array of 624 unsigned integers ``keys``.
             3. an integer ``pos``.
             4. an integer ``has_gauss``.
@@ -777,17 +777,19 @@ cdef class RandomState:
         """
         cdef ndarray obj "arrayObject_obj"
         cdef int pos
-        impl_info = state[0]
-        version, algorithm_name = (
-            (0, impl_info) if isinstance(impl_info, str) else impl_info)
-        if algorithm_name != 'MT19937':
-            raise ValueError("algorithm must be 'MT19937'")
-        key, pos = state[1:3]
-        if len(state) == 3:
+        if isinstance(state[0], str):
+            version = 0
+            rng, *rest = state
+        else:
+            version, rng, *rest = state
+        if rng != 'MT19937':
+            raise ValueError("rng must be 'MT19937'")
+        key, pos, *rest = rest
+        if not rest:
             has_gauss = 0
             cached_gaussian = 0.0
         else:
-            has_gauss, cached_gaussian = state[3:5]
+            has_gauss, cached_gaussian = rest
         try:
             obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_ULONG, 1, 1)
         except TypeError:
