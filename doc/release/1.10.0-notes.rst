@@ -86,9 +86,6 @@ C API
 The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
 which now returns a view in all cases.
 
-The dtype structure (PyArray_Descr) has a new member at the end to cache
-its hash value.  This shouldn't affect any well-written applications.
-
 The change to the concatenation function DeprecationWarning also affects
 PyArray_ConcatenateArrays,
 
