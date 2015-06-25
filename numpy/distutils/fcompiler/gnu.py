@@ -267,7 +267,7 @@ class Gnu95FCompiler(GnuFCompiler):
 
     possible_executables = ['gfortran', 'f95']
     executables = {
-        'version_cmd'  : ["<F90>", "-dumpversion"],
+        'version_cmd'  : ["<F90>", "-dumpversion", "2>/dev/null"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
         'compiler_f90' : [None, "-Wall", "-g",

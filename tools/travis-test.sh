@@ -22,7 +22,7 @@ setup_base()
   # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
-if [ -z "$USE_DEBUG" ]; then
+if [ -z "no" ]; then
   $PIP install .
 else
   sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
@@ -44,16 +44,16 @@ setup_chroot()
   set -u
   sudo apt-get update
   sudo apt-get -qq -y --force-yes install debootstrap eatmydata
-  sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
+  sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign unstable $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
   sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
-  echo deb http://archive.ubuntu.com/ubuntu/ $DIST main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://archive.ubuntu.com/ubuntu/ $DIST-updates main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://security.ubuntu.com/ubuntu $DIST-security  main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://ftp.de.debian.org/debian/ unstable main | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://ftp.de.debian.org/debian/ experimental main | sudo tee -a $DIR/etc/apt/sources.list
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3.5-dev python3.5-dbg python3-nose python3-pip cython3 cython"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes gcc gfortran -t experimental"
 }
 
 setup_bento()
@@ -88,7 +88,7 @@ setup_bento()
 
 run_test()
 {
-  if [ -n "$USE_DEBUG" ]; then
+  if [ -n "no" ]; then
     export PYTHONPATH=$PWD
   fi
 
@@ -139,7 +139,7 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   DIR=/chroot
   setup_chroot $DIR
   # run again in chroot with this time testing
-  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3 PIP=pip3 $0 test"
+  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3.5-dbg PIP=pip3 $0 test"
 elif [ -n "$USE_BENTO" ] && [ $# -eq 0 ]; then
   setup_bento
   # run again this time testing
