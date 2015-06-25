@@ -425,6 +425,12 @@ class NoseTester(object):
             # older versions of scipy to test without a flood of messages.
             warnings.filterwarnings("ignore", message=".*boolean negative.*")
             warnings.filterwarnings("ignore", message=".*boolean subtract.*")
+            # Filter out some deprecation warnings inside nose 1.3.7 when run
+            # on python 3.5b2. See
+            #     https://github.com/nose-devs/nose/issues/929
+            warnings.filterwarnings("ignore", message=".*getargspec.*",
+                                    category=DeprecationWarning,
+                                    module="nose\.")
 
             from .noseclasses import NumpyTestProgram
 
