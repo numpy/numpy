@@ -182,7 +182,7 @@ class Arrayterator(object):
     def __iter__(self):
         # Skip arrays with degenerate dimensions
         if [dim for dim in self.shape if dim <= 0]:
-            raise StopIteration
+            return
 
         start = self.start[:]
         stop = self.stop[:]
@@ -223,4 +223,4 @@ class Arrayterator(object):
                     start[i] = self.start[i]
                     start[i-1] += self.step[i-1]
             if start[0] >= self.stop[0]:
-                raise StopIteration
+                return
