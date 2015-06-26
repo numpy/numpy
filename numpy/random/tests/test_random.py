@@ -154,15 +154,15 @@ class TestSetState(TestCase):
                 assert_(isinstance(state[1], str))
 
     def test_version_bounds(self):
-        version, *rest = RandomState(version=1).get_state()
+        state_without_version = RandomState(version=1).get_state()[1:]
         assert_raises(ValueError, RandomState().set_state,
-                      (random.HIGHEST_VERSION + 1,) + tuple(rest))
+                      (random.HIGHEST_VERSION + 1,) + state_without_version)
 
     def test_backwards_compatibility_pickle(self):
         # Pickled with numpy 1.9.2.
         with open(os.path.join(os.path.dirname(__file__), "randomstate.pkl"),
                   "rb") as f:
-            assert_(pickle.load(f).tomaxint() == 7272208372766828204)
+            assert_(pickle.load(f).randint(2 ** 31 - 1) == 103801538)
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point

@@ -652,7 +652,7 @@ cdef class RandomState:
         if version is None:
             version = _HIGHEST_VERSION if seed is None else 0
         if version not in range(_HIGHEST_VERSION + 1):
-            raise ValueError("`version` must be an integer between 0 and {}".
+            raise ValueError("`version` must be an integer between 0 and {0}".
                              format(_HIGHEST_VERSION))
         self.version = version
 
@@ -777,13 +777,13 @@ cdef class RandomState:
         """
         cdef ndarray obj "arrayObject_obj"
         cdef int pos
-        if isinstance(state[0], str):
+        if isinstance(state[0], basestring):
             version = 0
             rng, *rest = state
         else:
             version, rng, *rest = state
         if version not in range(_HIGHEST_VERSION + 1):
-            raise ValueError("`version` must be an integer between 0 and {}".
+            raise ValueError("`version` must be an integer between 0 and {0}".
                              format(_HIGHEST_VERSION))
         if rng != 'MT19937':
             raise ValueError("rng must be 'MT19937'")
