@@ -7,6 +7,8 @@ from numpy.testing import (
 from numpy import random
 from numpy.random import RandomState
 from numpy.compat import asbytes
+import os
+import pickle
 import sys
 
 
@@ -45,6 +47,10 @@ class TestSeed(TestCase):
         assert_equal(RandomState(version=1).version, 1)
         assert_equal(RandomState(0).version, 0)
         assert_equal(RandomState(0, version=1).version, 1)
+        assert_raises(
+            ValueError, RandomState, version=random.HIGHEST_VERSION + 1)
+        assert_raises(
+            ValueError, RandomState().seed, 0, version=random.HIGHEST_VERSION + 1)
 
 
 class TestBinomial(TestCase):
@@ -146,6 +152,17 @@ class TestSetState(TestCase):
             else:
                 assert_(isinstance(state[0], int))
                 assert_(isinstance(state[1], str))
+
+    def test_version_bounds(self):
+        version, *rest = RandomState(version=1).get_state()
+        assert_raises(ValueError, RandomState().set_state,
+                      (random.HIGHEST_VERSION + 1,) + tuple(rest))
+
+    def test_backwards_compatibility_pickle(self):
+        # Pickled with numpy 1.9.2.
+        with open(os.path.join(os.path.dirname(__file__), "randomstate.pkl"),
+                  "rb") as f:
+            assert_(pickle.load(f).tomaxint() == 7272208372766828204)
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point

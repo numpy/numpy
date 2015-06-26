@@ -782,6 +782,9 @@ cdef class RandomState:
             rng, *rest = state
         else:
             version, rng, *rest = state
+        if version not in range(_HIGHEST_VERSION + 1):
+            raise ValueError("`version` must be an integer between 0 and {}".
+                             format(_HIGHEST_VERSION))
         if rng != 'MT19937':
             raise ValueError("rng must be 'MT19937'")
         key, pos, *rest = rest
