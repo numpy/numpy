@@ -951,6 +951,19 @@ class TestNonzero(TestCase):
             assert_equal(np.nonzero(c)[0],
                          np.concatenate((np.arange(10 +i, 20 + i), [20 +i*2])))
 
+    def test_return_type(self):
+        class C(np.ndarray):
+            pass
+
+        for view in (C, np.ndarray):
+            for nd in range(1, 4):
+                shape = tuple(range(2, 2+nd))
+                x = np.arange(np.prod(shape)).reshape(shape).view(view)
+                for nzx in (np.nonzero(x), x.nonzero()):
+                    for nzx_i in nzx:
+                        assert_(type(nzx_i) is np.ndarray)
+                        assert_(nzx_i.flags.writeable)
+
 
 class TestIndex(TestCase):
     def test_boolean(self):

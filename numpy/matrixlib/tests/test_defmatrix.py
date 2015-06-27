@@ -306,8 +306,8 @@ class TestMatrixReturn(TestCase):
         assert_(type(a.real) is matrix)
         assert_(type(a.imag) is matrix)
         c, d = matrix([0.0]).nonzero()
-        assert_(type(c) is matrix)
-        assert_(type(d) is matrix)
+        assert_(type(c) is np.ndarray)
+        assert_(type(d) is np.ndarray)
 
 
 class TestIndexing(TestCase):

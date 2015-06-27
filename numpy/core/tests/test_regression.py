@@ -1130,8 +1130,6 @@ class TestRegression(TestCase):
         assert_(dat.mean(1).info == 'jubba')
         assert_(dat.min(1).info == 'jubba')
         assert_(dat.newbyteorder().info == 'jubba')
-        assert_(dat.nonzero()[0].info == 'jubba')
-        assert_(dat.nonzero()[1].info == 'jubba')
         assert_(dat.prod(1).info == 'jubba')
         assert_(dat.ptp(1).info == 'jubba')
         assert_(dat.ravel().info == 'jubba')
@@ -1148,6 +1146,9 @@ class TestRegression(TestCase):
         assert_(dat.T.info == 'jubba')
         assert_(dat.var(1).info == 'jubba')
         assert_(dat.view(TestArray).info == 'jubba')
+        # These methods do not preserve subclasses
+        assert_(type(dat.nonzero()[0]) is np.ndarray)
+        assert_(type(dat.nonzero()[1]) is np.ndarray)
 
     def test_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
