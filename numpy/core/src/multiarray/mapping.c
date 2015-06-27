@@ -1421,7 +1421,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 {
     int index_type;
     int index_num;
-    int i, ndim, fancy_ndim, fancy;
+    int i, ndim, fancy_ndim;
     /*
      * Index info array. We can have twice as many indices as dimensions
      * (because of None). The + 1 is to not need to check as much.

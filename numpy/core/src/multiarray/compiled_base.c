@@ -1271,7 +1271,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *str;
     char *docstr;
     static char *msg = "already has a docstring";
-    PyObject *tp_dict;
+    PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
     PyObject *myobj;
     static PyTypeObject *PyMemberDescr_TypePtr = NULL;
     static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
@@ -1283,7 +1283,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     if (PyGetSetDescr_TypePtr == NULL) {
-        tp_dict = PyArrayDescr_Type.tp_dict;
         /* Get "subdescr" */
         myobj = PyDict_GetItemString(tp_dict, "fields");
         if (myobj != NULL) {

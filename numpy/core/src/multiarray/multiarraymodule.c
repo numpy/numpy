@@ -2394,7 +2394,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
         return NULL;
     }
 
-    errval = PyUFunc_CheckOverride(matmul, "__call__",
+    errval = PyUFunc_CheckOverride((PyUFuncObject*)matmul, "__call__",
                                    args, kwds, &override, 2);
     if (errval) {
         return NULL;
@@ -2512,7 +2512,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
 
     /* If no output was supplied, possibly convert to a scalar */
     if (ret != NULL && out == NULL) {
-        ret = PyArray_Return((PyArrayObject *)ret);
+        return PyArray_Return((PyArrayObject *)ret);
     }
     return (PyObject *)ret;
 

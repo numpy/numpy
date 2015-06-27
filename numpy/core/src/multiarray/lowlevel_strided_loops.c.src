@@ -199,9 +199,11 @@ static NPY_GCC_OPT_3 void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
-#  if @elsize@ != 16
+#if @elsize@ != 16
+#  if !(@elsize@ == 1 && @dst_contig@)
     @type@ temp;
-#  else
+#  endif
+#else
     npy_uint64 temp0, temp1;
 #endif
 #if @is_aligned@ && @elsize@ != 16
