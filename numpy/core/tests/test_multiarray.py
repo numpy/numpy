@@ -4322,6 +4322,19 @@ if sys.version_info[:2] >= (3, 5):
             assert_equal(self.matmul(a, b), "A")
             assert_equal(self.matmul(b, a), "A")
 
+    def test_matmul_inplace():
+        # It would be nice to support in-place matmul eventually, but for now
+        # we don't have a working implementation, so better just to error out
+        # and nudge people to writing "a = a @ b".
+        a = np.eye(3)
+        b = np.eye(3)
+        assert_raises(TypeError, a.__imatmul__, b)
+        import operator
+        assert_raises(TypeError, operator.imatmul, a, b)
+        # we avoid writing the token `exec` so as not to crash python 2's
+        # parser
+        exec_ = getattr(builtins, "exec")
+        assert_raises(TypeError, exec_, "a @= b", globals(), locals())
 
 class TestInner(TestCase):
 
