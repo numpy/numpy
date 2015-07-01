@@ -19,7 +19,8 @@ import sys
 from functools import reduce
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from .multiarray import format_longfloat, datetime_as_string, datetime_data
+from .multiarray import (array, format_longfloat, datetime_as_string,
+                         datetime_data)
 from .fromnumeric import ravel
 from .numeric import asarray
 
@@ -733,10 +734,22 @@ class DatetimeFormat(object):
 class TimedeltaFormat(object):
     def __init__(self, data):
         if data.dtype.kind == 'm':
-            v = data.view('i8')
-            max_str_len = max(len(str(maximum.reduce(v))),
-                              len(str(minimum.reduce(v))))
+            nat_value = array(['NaT'], dtype=data.dtype)[0]
+            v = data[not_equal(data, nat_value)].view('i8')
+            if len(v) > 0:
+                # Max str length of non-NaT elements
+                max_str_len = max(len(str(maximum.reduce(v))),
+                                  len(str(minimum.reduce(v))))
+            else:
+                max_str_len = 0
+            if len(v) < len(data):
+                # data contains a NaT
+                max_str_len = max(max_str_len, 5)
             self.format = '%' + str(max_str_len) + 'd'
+            self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
-        return self.format % x.astype('i8')
+        if x + 1 == x:
+            return self._nat
+        else:
+            return self.format % x.astype('i8')

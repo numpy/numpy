@@ -530,6 +530,17 @@ class TestDateTime(TestCase):
         a = np.array(['2010', 'NaT', '2030']).astype('M')
         assert_equal(str(a), "['2010' 'NaT' '2030']")
 
+    def test_timedelta_array_str(self):
+        a = np.array([-1, 0, 100], dtype='m')
+        assert_equal(str(a), "[ -1   0 100]")
+        a = np.array(['NaT', 'NaT'], dtype='m')
+        assert_equal(str(a), "['NaT' 'NaT']")
+        # Check right-alignment with NaTs
+        a = np.array([-1, 'NaT', 0], dtype='m')
+        assert_equal(str(a), "[   -1 'NaT'     0]")
+        a = np.array([-1, 'NaT', 1234567], dtype='m')
+        assert_equal(str(a), "[     -1   'NaT' 1234567]")
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]')
