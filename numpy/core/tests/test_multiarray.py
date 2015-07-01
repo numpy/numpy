@@ -2681,6 +2681,13 @@ class TestArgmax(TestCase):
           np.datetime64('2015-11-20T12:20:59'),
           np.datetime64('1932-09-23T10:10:13'),
           np.datetime64('2014-10-10T03:50:30')], 3),
+        # Assorted tests with NaTs
+        ([np.datetime64('NaT'),
+          np.datetime64('NaT'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('NaT'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 4),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
@@ -2796,6 +2803,13 @@ class TestArgmin(TestCase):
           np.datetime64('1949-10-12T12:32:11'),
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('2014-11-20T12:20:59'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 5),
+        # Assorted tests with NaTs
+        ([np.datetime64('NaT'),
+          np.datetime64('NaT'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
           np.datetime64('1932-10-10T03:50:30')], 5),
         ([np.datetime64('2059-03-14T12:43:12'),
@@ -2917,6 +2931,9 @@ class TestMinMax(TestCase):
             a = np.arange(10).astype(dtype)
             a[3] = 'NaT'
             assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[9])
+            a[0] = 'NaT'
+            assert_equal(np.amin(a), a[1])
             assert_equal(np.amax(a), a[9])
             a.fill('NaT')
             assert_equal(np.amin(a), a[0])

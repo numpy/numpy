@@ -1141,26 +1141,17 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(@type@) {
-            const @type@ in2 = *(@type@ *)ip2;
-            io1 = (io1 @OP@ in2 || in2 == NPY_DATETIME_NAT) ? io1 : in2;
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in1 == NPY_DATETIME_NAT) {
+            *((@type@ *)op1) = in2;
         }
-        *((@type@ *)iop1) = io1;
-    }
-    else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            if (in1 == NPY_DATETIME_NAT) {
-                *((@type@ *)op1) = in2;
-            }
-            else if (in2 == NPY_DATETIME_NAT) {
-                *((@type@ *)op1) = in1;
-            }
-            else {
-                *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
-            }
+        else if (in2 == NPY_DATETIME_NAT) {
+            *((@type@ *)op1) = in1;
+        }
+        else {
+            *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
         }
     }
 }
