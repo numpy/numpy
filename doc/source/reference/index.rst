@@ -21,7 +21,6 @@ For learning how to use NumPy, see also :ref:`user`.
    arrays
    ufuncs
    routines
-   ctypeslib
    distutils
    c-api
    internals
