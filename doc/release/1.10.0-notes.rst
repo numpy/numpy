@@ -339,6 +339,12 @@ views returned from *np.einsum* are writeable
 Views returned by *np.einsum* will now be writeable whenever the input
 array is writeable.
 
+*np.argmin* skips NaT values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*np.argmin* now skips NaT values in datetime64 and timedelta64 arrays,
+making it consistent with *np.min*, *np.argmax* and *np.max*.
+
 
 Deprecations
 ============
