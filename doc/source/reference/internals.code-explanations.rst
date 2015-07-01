@@ -196,6 +196,7 @@ Indexing
 
 All python indexing operations ``arr[index]`` are organized by first preparing
 the index and finding the index type. The supported index types are:
+
 * integer
 * newaxis
 * slice
@@ -234,6 +235,7 @@ combined with typical view based indexing. Here integer indices are
 interpreted as view based. Before trying to understand this, you may want
 to make yourself familiar with its subtleties. The advanced indexing code
 has three different branches and one special case:
+
 * There is one indexing array and it, as well as the assignment array, can
   be iterated trivially. For example they may be contiguous. Also the
   indexing array must be of `intp` type and the value array in assignments
