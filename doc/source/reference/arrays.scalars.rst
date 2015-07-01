@@ -65,15 +65,15 @@ Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ====================
+====================  ================================
 Array scalar type     Related Python type
-====================  ====================
+====================  ================================
 :class:`int_`         :class:`IntType` (Python 2 only)
 :class:`float_`       :class:`FloatType`
 :class:`complex_`     :class:`ComplexType`
 :class:`str_`         :class:`StringType`
 :class:`unicode_`     :class:`UnicodeType`
-====================  ====================
+====================  ================================
 
 The :class:`bool_` data type is very similar to the Python
 :class:`BooleanType` but does not inherit from it because Python's
@@ -215,7 +215,7 @@ Attributes
 ==========
 
 The array scalar objects have an :obj:`array priority
-<__array_priority__>` of :cdata:`NPY_SCALAR_PRIORITY`
+<__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
 (-1,000,000.0). They also do not (yet) have a :attr:`ctypes <ndarray.ctypes>`
 attribute. Otherwise, they share the same attributes as arrays:
 
