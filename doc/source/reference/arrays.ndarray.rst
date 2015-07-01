@@ -239,7 +239,6 @@ Other attributes
    ndarray.imag
    ndarray.flat
    ndarray.ctypes
-   __array_priority__
 
 
 .. _arrays.ndarray.array-interface:
