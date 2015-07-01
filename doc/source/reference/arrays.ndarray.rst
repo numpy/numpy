@@ -292,7 +292,6 @@ Array conversion
    ndarray.item
    ndarray.tolist
    ndarray.itemset
-   ndarray.setasflat
    ndarray.tostring
    ndarray.tobytes
    ndarray.tofile

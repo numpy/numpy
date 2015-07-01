@@ -3736,37 +3736,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('setasflat',
-    """
-    a.setasflat(arr)
-
-    Equivalent to a.flat = arr.flat, but is generally more efficient.
-    This function does not check for overlap, so if ``arr`` and ``a``
-    are viewing the same data with different strides, the results will
-    be unpredictable.
-
-    Parameters
-    ----------
-    arr : array_like
-        The array to copy into a.
-
-    Examples
-    --------
-    >>> a = np.arange(2*4).reshape(2,4)[:,:-1]; a
-    array([[0, 1, 2],
-           [4, 5, 6]])
-    >>> b = np.arange(3*3, dtype='f4').reshape(3,3).T[::-1,:-1]; b
-    array([[ 2.,  5.],
-           [ 1.,  4.],
-           [ 0.,  3.]], dtype=float32)
-    >>> a.setasflat(b)
-    >>> a
-    array([[2, 5, 1],
-           [4, 0, 3]])
-
-    """))
-
-
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
     a.max(axis=None, out=None)
