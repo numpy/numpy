@@ -1049,9 +1049,10 @@ def searchsorted(a, v, side='left', sorter=None):
         If 'right', return the last such index.  If there is no suitable
         index, return either 0 or N (where N is the length of `a`).
     sorter : 1-D array_like, optional
-        .. versionadded:: 1.7.0
         Optional array of integer indices that sort array a into ascending
         order. They are typically the result of argsort.
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------

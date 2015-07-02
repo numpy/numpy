@@ -264,7 +264,6 @@ Glossary
        (matrix multiplication) and ``**`` (matrix power), defined::
 
          >>> x = np.mat([[1, 2], [3, 4]])
-
          >>> x
          matrix([[1, 2],
                  [3, 4]])
@@ -278,18 +277,17 @@ Glossary
        method called ``repeat``::
 
          >>> x = np.array([1, 2, 3])
-
          >>> x.repeat(2)
          array([1, 1, 2, 2, 3, 3])
 
    ndarray
        See *array*.
-    
+
    record array
        An `ndarray`_ with `structured data type`_ which has been subclassed as
        np.recarray and whose dtype is of type np.record, making the
        fields of its data type to be accessible by attribute.
-       
+
    reference
        If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
        ``a`` and ``b`` are different names for the same Python object.
@@ -360,7 +358,6 @@ Glossary
        changed.  Similar to a list, it can be indexed and sliced::
 
          >>> x = (1, 'one', [1, 2])
-
          >>> x
          (1, 'one', [1, 2])
 

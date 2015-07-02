@@ -790,14 +790,16 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
         The shape and data-type of `a` define these same attributes of the
         returned array.
     dtype : data-type, optional
-        .. versionadded:: 1.6.0
         Overrides the data type of the result.
-    order : {'C', 'F', 'A', or 'K'}, optional
+
         .. versionadded:: 1.6.0
+    order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of ``a`` as closely
         as possible.
+
+        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
@@ -1703,6 +1705,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     Notes
     -----
     .. versionadded:: 1.6.0
+
     Starting in NumPy 1.9, promote_types function now returns a valid string
     length when given an integer or float dtype as one argument and a string
     dtype as another argument. Previously it always returned the input string
@@ -5039,9 +5042,9 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     weights : array_like, optional
         Weights, array of the same shape as `x`.
     minlength : int, optional
-        .. versionadded:: 1.6.0
-
         A minimum number of bins for the output array.
+
+        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -5164,9 +5167,10 @@ add_newdoc('numpy.core.multiarray', 'unravel_index',
     dims : tuple of ints
         The shape of the array to use for unraveling ``indices``.
     order : {'C', 'F'}, optional
-        .. versionadded:: 1.6.0
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
+
+        .. versionadded:: 1.6.0
 
     Returns
     -------

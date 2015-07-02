@@ -1371,11 +1371,11 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         in `x`, the corresponding value is masked in `y`.
         If False, raises a `ValueError` exception when some values are missing.
     ddof : {None, int}, optional
-        .. versionadded:: 1.5
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by
         ``bias``. The default value is ``None``.
 
+        .. versionadded:: 1.5
 
     Raises
     ------
@@ -1430,16 +1430,18 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        .. deprecated:: 1.10.0
         Has no affect, do not use.
+
+        .. deprecated:: 1.10.0
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
     ddof : _NoValue, optional
-        .. deprecated:: 1.10.0
         Has no affect, do not use.
+
+        .. deprecated:: 1.10.0
 
     See Also
     --------

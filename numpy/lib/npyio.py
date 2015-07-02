@@ -745,6 +745,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     lines with missing values.
 
     .. versionadded:: 1.10.0
+
     The strings produced by the Python float.hex method can be used as
     input for floats.
 

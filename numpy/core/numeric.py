@@ -89,14 +89,16 @@ def zeros_like(a, dtype=None, order='K', subok=True):
         The shape and data-type of `a` define these same attributes of
         the returned array.
     dtype : data-type, optional
-        .. versionadded:: 1.6.0
         Overrides the data type of the result.
-    order : {'C', 'F', 'A', or 'K'}, optional
+
         .. versionadded:: 1.6.0
+    order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
+
+        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
@@ -195,14 +197,16 @@ def ones_like(a, dtype=None, order='K', subok=True):
         The shape and data-type of `a` define these same attributes of
         the returned array.
     dtype : data-type, optional
-        .. versionadded:: 1.6.0
         Overrides the data type of the result.
-    order : {'C', 'F', 'A', or 'K'}, optional
+
         .. versionadded:: 1.6.0
+    order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
+
+        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
@@ -1016,8 +1020,9 @@ def outer(a, b, out=None):
         Second input vector.  Input is flattened if
         not already 1-dimensional.
     out : (M, N) ndarray, optional
-        .. versionadded:: 1.9.0
         A location where the result is stored
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -1494,6 +1499,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     Notes
     -----
     .. versionadded:: 1.9.0
+
     Supports full broadcasting of the inputs.
 
     Examples
@@ -2222,9 +2228,10 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     atol : float
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
-        .. versionadded:: 1.10.0
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------

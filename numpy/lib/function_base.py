@@ -1146,10 +1146,11 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         Value to return for `x > xp[-1]`, default is `fp[-1]`.
 
     period : None or float, optional
-        .. versionadded:: 1.10.0
         A period for the x-coordinates. This parameter allows the proper
         interpolation of angular x-coordinates. Parameters `left` and `right`
         are ignored if `period` is specified.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -1863,22 +1864,25 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
         normalization is by ``N``. These values can be overridden by using the
         keyword ``ddof`` in numpy versions >= 1.5.
     ddof : int, optional
-        .. versionadded:: 1.5
         If not ``None`` the default value implied by `bias` is overridden.
         Note that ``ddof=1`` will return the unbiased estimate, even if both
         `fweights` and `aweights` are specified, and ``ddof=0`` will return
         the simple average. See the notes for the details. The default value
         is ``None``.
+
+        .. versionadded:: 1.5
     fweights : array_like, int, optional
-        .. versionadded:: 1.10
         1-D array of integer freguency weights; the number of times each
         observation vector should be repeated.
-    aweights : array_like, optional
+
         .. versionadded:: 1.10
+    aweights : array_like, optional
         1-D array of observation vector weights. These relative weights are
         typically large for observations considered "important" and smaller for
         observations considered less "important". If ``ddof=0`` the array of
         weights can be used to assign probabilities to observation vectors.
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -2054,11 +2058,13 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        .. deprecated:: 1.10.0
         Has no affect, do not use.
+
+        .. deprecated:: 1.10.0
     ddof : _NoValue, optional
-        .. deprecated:: 1.10.0
         Has no affect, do not use.
+
+        .. deprecated:: 1.10.0
 
     Returns
     -------

@@ -2430,7 +2430,7 @@ cdef class RandomState:
         For a one-sided t-test, how far out in the distribution does the t
         statistic appear?
 
-        >>> >>> np.sum(s<t) / float(len(s))
+        >>> np.sum(s<t) / float(len(s))
         0.0090699999999999999  #random
 
         So the p-value is about 0.009, which says the null hypothesis has a
@@ -3285,7 +3285,7 @@ cdef class RandomState:
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='center')
+        >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
