@@ -147,14 +147,14 @@ Numpy provides several hooks that classes can customize:
    The value of this attribute is used to determine what type of
    object to return in situations where there is more than one
    possibility for the Python type of the returned object. Subclasses
-   inherit a default value of 1.0 for this attribute.
+   inherit a default value of 0.0 for this attribute.
 
 .. function:: class.__array__([dtype])
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
    <ufuncs.output-type>`, results will be written to the object
-   returned by :func:`__array__`. Similar conversion is done on 
+   returned by :func:`__array__`. Similar conversion is done on
    input arrays.
 
 

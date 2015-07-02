@@ -2652,7 +2652,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `str.endswith`) and infix operators (e.g. +, *, %)
+         (e.g. `str.endswith`) and infix operators (e.g. ``+``, ``*``,``%``)
 
     Parameters
     ----------

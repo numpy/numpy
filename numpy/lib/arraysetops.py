@@ -114,9 +114,10 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
         If True, also return the indices of the unique array that can be used
         to reconstruct `ar`.
     return_counts : bool, optional
-        .. versionadded:: 1.9.0
         If True, also return the number of times each unique value comes up
         in `ar`.
+
+        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -129,9 +130,10 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
         The indices to reconstruct the (flattened) original array from the
         unique array. Only provided if `return_inverse` is True.
     unique_counts : ndarray, optional
-        .. versionadded:: 1.9.0
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
+
+        .. versionadded:: 1.9.0
 
     See Also
     --------

@@ -32,7 +32,7 @@ of an array.
 .. index::
    single: array iterator
 
-Basic usage is to call :cfunc:`PyArray_IterNew` ( ``array`` ) where array
+Basic usage is to call :c:func:`PyArray_IterNew` ( ``array`` ) where array
 is an ndarray object (or one of its sub-classes). The returned object
 is an array-iterator object (the same object returned by the .flat
 attribute of the ndarray). This object is usually cast to
@@ -46,13 +46,13 @@ ndarray object.
 
 After processing data at the current element of the array, the next
 element of the array can be obtained using the macro
-:cfunc:`PyArray_ITER_NEXT` ( ``iter`` ). The iteration always proceeds in a
+:c:func:`PyArray_ITER_NEXT` ( ``iter`` ). The iteration always proceeds in a
 C-style contiguous fashion (last index varying the fastest). The
-:cfunc:`PyArray_ITER_GOTO` ( ``iter``, ``destination`` ) can be used to
+:c:func:`PyArray_ITER_GOTO` ( ``iter``, ``destination`` ) can be used to
 jump to a particular point in the array, where ``destination`` is an
 array of npy_intp data-type with space to handle at least the number
 of dimensions in the underlying array. Occasionally it is useful to
-use :cfunc:`PyArray_ITER_GOTO1D` ( ``iter``, ``index`` ) which will jump
+use :c:func:`PyArray_ITER_GOTO1D` ( ``iter``, ``index`` ) which will jump
 to the 1-d index given by the value of ``index``. The most common
 usage, however, is given in the following example.
 
@@ -69,8 +69,8 @@ usage, however, is given in the following example.
     }
     ...
 
-You can also use :cfunc:`PyArrayIter_Check` ( ``obj`` ) to ensure you have
-an iterator object and :cfunc:`PyArray_ITER_RESET` ( ``iter`` ) to reset an
+You can also use :c:func:`PyArrayIter_Check` ( ``obj`` ) to ensure you have
+an iterator object and :c:func:`PyArray_ITER_RESET` ( ``iter`` ) to reset an
 iterator object back to the beginning of the array.
 
 It should be emphasized at this point that you may not need the array
@@ -112,10 +112,10 @@ perform the inner loop over the dimension with the highest number of
 elements to take advantage of speed enhancements available on micro-
 processors that use pipelining to enhance fundmental operations.
 
-The :cfunc:`PyArray_IterAllButAxis` ( ``array``, ``&dim`` ) constructs an
+The :c:func:`PyArray_IterAllButAxis` ( ``array``, ``&dim`` ) constructs an
 iterator object that is modified so that it will not iterate over the
 dimension indicated by dim. The only restriction on this iterator
-object, is that the :cfunc:`PyArray_Iter_GOTO1D` ( ``it``, ``ind`` ) macro
+object, is that the :c:func:`PyArray_Iter_GOTO1D` ( ``it``, ``ind`` ) macro
 cannot be used (thus flat indexing won't work either if you pass this
 object back to Python --- so you shouldn't do this). Note that the
 returned object from this routine is still usually cast to
@@ -161,21 +161,21 @@ Broadcasting over multiple arrays
 
 When multiple arrays are involved in an operation, you may want to use the
 same broadcasting rules that the math operations (*i.e.* the ufuncs) use.
-This can be done easily using the :ctype:`PyArrayMultiIterObject`.  This is
+This can be done easily using the :c:type:`PyArrayMultiIterObject`.  This is
 the object returned from the Python command numpy.broadcast and it is almost
 as easy to use from C. The function
-:cfunc:`PyArray_MultiIterNew` ( ``n``, ``...`` ) is used (with ``n`` input
+:c:func:`PyArray_MultiIterNew` ( ``n``, ``...`` ) is used (with ``n`` input
 objects in place of ``...`` ). The input objects can be arrays or anything
 that can be converted into an array. A pointer to a PyArrayMultiIterObject is
 returned.  Broadcasting has already been accomplished which adjusts the
 iterators so that all that needs to be done to advance to the next element in
 each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
-:cfunc:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
-multiterator ``obj`` as either a :ctype:`PyArrayMultiObject *` or a
-:ctype:`PyObject *`). The data from input number ``i`` is available using
-:cfunc:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
-size as :cfunc:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
+:c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
+multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
+:c:type:`PyObject *`). The data from input number ``i`` is available using
+:c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
+size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
 feature follows.
 
 .. code-block:: c
@@ -189,7 +189,7 @@ feature follows.
         PyArray_MultiIter_NEXT(mobj);
     }
 
-The function :cfunc:`PyArray_RemoveSmallest` ( ``multi`` ) can be used to
+The function :c:func:`PyArray_RemoveSmallest` ( ``multi`` ) can be used to
 take a multi-iterator object and adjust all the iterators so that
 iteration does not take place over the largest dimension (it makes
 that dimension of size 1). The code being looped over that makes use
@@ -254,23 +254,23 @@ type. For example, a suitable structure for the new Python type is:
     } PySomeDataTypeObject;
 
 After you have defined a new Python type object, you must then define
-a new :ctype:`PyArray_Descr` structure whose typeobject member will contain a
+a new :c:type:`PyArray_Descr` structure whose typeobject member will contain a
 pointer to the data-type you've just defined. In addition, the
 required functions in the ".f" member must be defined: nonzero,
 copyswap, copyswapn, setitem, getitem, and cast. The more functions in
 the ".f" member you define, however, the more useful the new data-type
 will be.  It is very important to intialize unused functions to NULL.
-This can be achieved using :cfunc:`PyArray_InitArrFuncs` (f).
+This can be achieved using :c:func:`PyArray_InitArrFuncs` (f).
 
-Once a new :ctype:`PyArray_Descr` structure is created and filled with the
+Once a new :c:type:`PyArray_Descr` structure is created and filled with the
 needed information and useful functions you call
-:cfunc:`PyArray_RegisterDataType` (new_descr). The return value from this
+:c:func:`PyArray_RegisterDataType` (new_descr). The return value from this
 call is an integer providing you with a unique type_number that
 specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
 your data-type (the other mechanism for finding a user-defined
 data-type number is to search based on the name of the type-object
-associated with the data-type using :cfunc:`PyArray_TypeNumFromName` ).
+associated with the data-type using :c:func:`PyArray_TypeNumFromName` ).
 
 
 Registering a casting function
@@ -284,7 +284,7 @@ functions for each conversion you want to support and then registering
 these functions with the data-type descriptor. A low-level casting
 function has the signature.
 
-.. cfunction:: void castfunc( void* from, void* to, npy_intp n, void* fromarr,
+.. c:function:: void castfunc( void* from, void* to, npy_intp n, void* fromarr,
    void* toarr)
 
     Cast ``n`` elements ``from`` one type ``to`` another. The data to
@@ -326,11 +326,11 @@ situation limits the ability of user-defined data-types to participate
 in the coercion system used by ufuncs and other times when automatic
 coercion takes place in NumPy. This can be changed by registering
 data-types as safely castable from a particlar data-type object. The
-function :cfunc:`PyArray_RegisterCanCast` (from_descr, totype_number,
+function :c:func:`PyArray_RegisterCanCast` (from_descr, totype_number,
 scalarkind) should be used to specify that the data-type object
 from_descr can be cast to the data-type with type number
 totype_number. If you are not trying to alter scalar coercion rules,
-then use :cdata:`NPY_NOSCALAR` for the scalarkind argument.
+then use :c:data:`NPY_NOSCALAR` for the scalarkind argument.
 
 If you want to allow your new data-type to also be able to share in
 the scalar coercion rules, then you need to specify the scalarkind
@@ -340,7 +340,7 @@ available to that function). Then, you can register data-types that
 can be cast to separately for each scalar kind that may be returned
 from your user-defined data-type. If you don't register scalar
 coercion handling, then all of your user-defined data-types will be
-seen as :cdata:`NPY_NOSCALAR`.
+seen as :c:data:`NPY_NOSCALAR`.
 
 
 Registering a ufunc loop
@@ -353,12 +353,12 @@ signature, silently replaces any previously registered loops for that
 data-type.
 
 Before you can register a 1-d loop for a ufunc, the ufunc must be
-previously created. Then you call :cfunc:`PyUFunc_RegisterLoopForType`
+previously created. Then you call :c:func:`PyUFunc_RegisterLoopForType`
 (...) with the information needed for the loop. The return value of
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. cfunction:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc,
+.. c:function:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc,
    int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
 
     *ufunc*
@@ -413,7 +413,7 @@ easier to sub-type from a single parent type.
    pair: ndarray; subtyping
 
 All C-structures corresponding to Python objects must begin with
-:cmacro:`PyObject_HEAD` (or :cmacro:`PyObject_VAR_HEAD`). In the same
+:c:macro:`PyObject_HEAD` (or :c:macro:`PyObject_VAR_HEAD`). In the same
 way, any sub-type must have a C-structure that begins with exactly the
 same memory layout as the parent type (or all of the parent types in
 the case of multiple-inheritance). The reason for this is that Python
@@ -424,17 +424,17 @@ members). If the memory layouts are not compatible, then this attempt
 will cause unpredictable behavior (eventually leading to a memory
 violation and program crash).
 
-One of the elements in :cmacro:`PyObject_HEAD` is a pointer to a
+One of the elements in :c:macro:`PyObject_HEAD` is a pointer to a
 type-object structure. A new Python type is created by creating a new
 type-object structure and populating it with functions and pointers to
 describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
-:cdata:`&PyArray_Type` is a pointer to the type-object table for the ndarray
-while a :ctype:`PyArrayObject *` variable is a pointer to a particular instance
+:c:data:`&PyArray_Type` is a pointer to the type-object table for the ndarray
+while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
-turn, a pointer to the type- object table :cdata:`&PyArray_Type`). Finally
-:cfunc:`PyType_Ready` (<pointer_to_type_object>) must be called for
+turn, a pointer to the type- object table :c:data:`&PyArray_Type`). Finally
+:c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
 every new Python type.
 
 
@@ -444,7 +444,7 @@ Creating sub-types
 To create a sub-type, a similar proceedure must be followed except
 only behaviors that are different require new entries in the type-
 object structure. All other entires can be NULL and will be filled in
-by :cfunc:`PyType_Ready` with appropriate functions from the parent
+by :c:func:`PyType_Ready` with appropriate functions from the parent
 type(s). In particular, to create a sub-type in C follow these steps:
 
 1. If needed create a new C-structure to handle each instance of your
@@ -473,7 +473,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
    Remember, all parent-types must have the same C-structure for multiple
    inheritance to work properly.
 
-4. Call :cfunc:`PyType_Ready` (<pointer_to_new_type>). If this function
+4. Call :c:func:`PyType_Ready` (<pointer_to_new_type>). If this function
    returns a negative number, a failure occurred and the type is not
    initialized. Otherwise, the type is ready to be used. It is
    generally important to place a reference to the new type into the
@@ -503,7 +503,7 @@ The __array_finalize\__ method
    members are filled in. Finally, the :obj:`__array_finalize__`
    attribute is looked-up in the object dictionary. If it is present
    and not None, then it can be either a CObject containing a pointer
-   to a :cfunc:`PyArray_FinalizeFunc` or it can be a method taking a
+   to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
    single argument (which could be None).
 
    If the :obj:`__array_finalize__` attribute is a CObject, then the pointer

@@ -238,8 +238,8 @@ def tensorsolve(a, b, axes=None):
         Coefficient tensor, of shape ``b.shape + Q``. `Q`, a tuple, equals
         the shape of that sub-tensor of `a` consisting of the appropriate
         number of its rightmost indices, and must be such that
-       ``prod(Q) == prod(b.shape)`` (in which sense `a` is said to be
-       'square').
+        ``prod(Q) == prod(b.shape)`` (in which sense `a` is said to be
+        'square').
     b : array_like
         Right-hand tensor, which can be of any shape.
     axes : tuple of ints, optional
@@ -321,6 +321,7 @@ def solve(a, b):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -480,6 +481,7 @@ def inv(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -559,6 +561,7 @@ def cholesky(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -860,6 +863,7 @@ def eigvals(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -950,6 +954,7 @@ def eigvalsh(a, UPLO='L'):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1035,6 +1040,7 @@ def eig(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1173,6 +1179,7 @@ def eigh(a, UPLO='L'):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1282,6 +1289,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1653,10 +1661,12 @@ def slogdet(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
     .. versionadded:: 1.6.0.
+
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
 
@@ -1732,6 +1742,7 @@ def det(a):
     -----
 
     .. versionadded:: 1.8.0
+
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1983,10 +1994,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
         are computed.  If `axis` is None then either a vector norm (when `x`
         is 1-D) or a matrix norm (when `x` is 2-D) is returned.
     keepdims : bool, optional
-        .. versionadded:: 1.10.0
         If this is set to True, the axes which are normed over are left in the
         result as dimensions with size one.  With this option the result will
         broadcast correctly against the original `x`.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------

@@ -74,6 +74,7 @@ vstack           Stack arrays vertically (row on row)
 hstack           Stack arrays horizontally (column on column)
 column_stack     Stack 1D arrays as columns into 2D array
 dstack           Stack arrays depthwise (along third dimension)
+stack            Stack arrays along a new axis
 split            Divide array into a list of sub-arrays
 hsplit           Split into columns
 vsplit           Split into rows

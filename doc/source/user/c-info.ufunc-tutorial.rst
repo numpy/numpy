@@ -1058,7 +1058,7 @@ What follows is the full specification of PyUFunc_FromFuncAndData, which
 automatically generates a ufunc from a C function with the correct signature.
 
 
-.. cfunction:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
    void** data, char* types, int ntypes, int nin, int nout, int identity,
    char* name, char* doc, int check_return)
 
@@ -1069,7 +1069,7 @@ automatically generates a ufunc from a C function with the correct signature.
         ``PyUFuncGenericFunction`` function. This function has the following
         signature. An example of a valid 1d loop function is also given.
 
-        .. cfunction:: void loop1d(char** args, npy_intp* dimensions,
+        .. c:function:: void loop1d(char** args, npy_intp* dimensions,
            npy_intp* steps, void* data)
 
         *args*
@@ -1120,7 +1120,7 @@ automatically generates a ufunc from a C function with the correct signature.
         every loop function defined for this ufunc. This data will be passed
         in to the 1-d loop. One common use of this data variable is to pass in
         an actual function to call to compute the result when a generic 1-d
-        loop (e.g. :cfunc:`PyUFunc_d_d`) is being used.
+        loop (e.g. :c:func:`PyUFunc_d_d`) is being used.
 
     *types*
 
@@ -1137,8 +1137,8 @@ automatically generates a ufunc from a C function with the correct signature.
 
             static char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
 
-        The bit-width names can also be used (e.g. :cdata:`NPY_INT32`,
-        :cdata:`NPY_COMPLEX128` ) if desired.
+        The bit-width names can also be used (e.g. :c:data:`NPY_INT32`,
+        :c:data:`NPY_COMPLEX128` ) if desired.
 
     *ntypes*
 
@@ -1155,8 +1155,8 @@ automatically generates a ufunc from a C function with the correct signature.
 
     *identity*
 
-        Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`,
-        :cdata:`PyUFunc_None`. This specifies what should be returned when
+        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
+        :c:data:`PyUFunc_None`. This specifies what should be returned when
         an empty array is passed to the reduce method of the ufunc.
 
     *name*

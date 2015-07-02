@@ -133,13 +133,14 @@ memory block can be accessed by some combination of the indices.
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
-  1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
-     This means that in the formula for the offset
-     :math:`n_k = 0` and thus :math:`s_k n_k = 0` and the value of
-     :math:`s_k` `= self.strides[k]` is arbitrary.
-  2. If an array has no elements (``self.size == 0``) there is no legal index
-     and the strides are never used. Any array with no elements may be
-     considered C-style and Fortran-style contiguous.
+
+    1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+       This means that in the formula for the offset :math:`n_k = 0` and thus
+       :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
+       arbitrary.
+    2. If an array has no elements (``self.size == 0``) there is no legal
+       index and the strides are never used. Any array with no elements may be
+       considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self``and ``self.squeeze()`` always have the same
 contiguity and :term:`aligned` flags value. This also means that even a high
@@ -238,7 +239,6 @@ Other attributes
    ndarray.imag
    ndarray.flat
    ndarray.ctypes
-   __array_priority__
 
 
 .. _arrays.ndarray.array-interface:
@@ -292,7 +292,6 @@ Array conversion
    ndarray.item
    ndarray.tolist
    ndarray.itemset
-   ndarray.setasflat
    ndarray.tostring
    ndarray.tobytes
    ndarray.tofile

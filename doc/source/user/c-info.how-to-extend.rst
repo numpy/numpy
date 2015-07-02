@@ -90,17 +90,17 @@ that do not require a separate extraction of the module dictionary.
 These are documented in the Python documentation, but repeated here
 for convenience:
 
-.. cfunction:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
+.. c:function:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
 
-.. cfunction:: int PyModule_AddIntConstant(PyObject* module, char* name, long value)
+.. c:function:: int PyModule_AddIntConstant(PyObject* module, char* name, long value)
 
-.. cfunction:: int PyModule_AddStringConstant(PyObject* module, char* name, char* value)
+.. c:function:: int PyModule_AddStringConstant(PyObject* module, char* name, char* value)
 
     All three of these functions require the *module* object (the
     return value of Py_InitModule). The *name* is a string that
     labels the value in the module. Depending on which function is
     called, the *value* argument is either a general object
-    (:cfunc:`PyModule_AddObject` steals a reference to it), an integer
+    (:c:func:`PyModule_AddObject` steals a reference to it), an integer
     constant, or a string constant.
 
 
@@ -125,7 +125,7 @@ subroutine) to:
         {NULL, NULL, 0, NULL} /* Sentinel */
     }
 
-Each entry in the mymethods array is a :ctype:`PyMethodDef` structure
+Each entry in the mymethods array is a :c:type:`PyMethodDef` structure
 containing 1) the Python name, 2) the C-function that implements the
 function, 3) flags indicating whether or not keywords are accepted for
 this function, and 4) The docstring for the function. Any number of
@@ -159,8 +159,8 @@ The dummy argument is not used in this context and can be safely
 ignored. The *args* argument contains all of the arguments passed in
 to the function as a tuple. You can do anything you want at this
 point, but usually the easiest way to manage the input arguments is to
-call :cfunc:`PyArg_ParseTuple` (args, format_string,
-addresses_to_C_variables...) or :cfunc:`PyArg_UnpackTuple` (tuple, "name" ,
+call :c:func:`PyArg_ParseTuple` (args, format_string,
+addresses_to_C_variables...) or :c:func:`PyArg_UnpackTuple` (tuple, "name" ,
 min, max, ...). A good description of how to use the first function is
 contained in the Python C-API reference manual under section 5.5
 (Parsing arguments and building values). You should pay particular
@@ -168,13 +168,13 @@ attention to the "O&" format which uses converter functions to go
 between the Python object and the C object. All of the other format
 functions can be (mostly) thought of as special cases of this general
 rule. There are several converter functions defined in the NumPy C-API
-that may be of use. In particular, the :cfunc:`PyArray_DescrConverter`
+that may be of use. In particular, the :c:func:`PyArray_DescrConverter`
 function is very useful to support arbitrary data-type specification.
 This function transforms any valid data-type Python object into a
-:ctype:`PyArray_Descr *` object. Remember to pass in the address of the
+:c:type:`PyArray_Descr *` object. Remember to pass in the address of the
 C-variables that should be filled in.
 
-There are lots of examples of how to use :cfunc:`PyArg_ParseTuple`
+There are lots of examples of how to use :c:func:`PyArg_ParseTuple`
 throughout the NumPy source code. The standard usage is like this:
 
 .. code-block:: c
@@ -189,13 +189,13 @@ It is important to keep in mind that you get a *borrowed* reference to
 the object when using the "O" format string. However, the converter
 functions usually require some form of memory handling. In this
 example, if the conversion is successful, *dtype* will hold a new
-reference to a :ctype:`PyArray_Descr *` object, while *input* will hold a
+reference to a :c:type:`PyArray_Descr *` object, while *input* will hold a
 borrowed reference. Therefore, if this conversion were mixed with
 another conversion (say to an integer) and the data-type conversion
 was successful but the integer conversion failed, then you would need
 to release the reference count to the data-type object before
 returning. A typical way to do this is to set *dtype* to ``NULL``
-before calling :cfunc:`PyArg_ParseTuple` and then use :cfunc:`Py_XDECREF`
+before calling :c:func:`PyArg_ParseTuple` and then use :c:func:`Py_XDECREF`
 on *dtype* before returning.
 
 After the input arguments are processed, the code that actually does
@@ -203,16 +203,16 @@ the work is written (likely calling other functions as needed). The
 final step of the C-function is to return something. If an error is
 encountered then ``NULL`` should be returned (making sure an error has
 actually been set). If nothing should be returned then increment
-:cdata:`Py_None` and return it. If a single object should be returned then
+:c:data:`Py_None` and return it. If a single object should be returned then
 it is returned (ensuring that you own a reference to it first). If
 multiple objects should be returned then you need to return a tuple.
-The :cfunc:`Py_BuildValue` (format_string, c_variables...) function makes
+The :c:func:`Py_BuildValue` (format_string, c_variables...) function makes
 it easy to build tuples of Python objects from C variables. Pay
 special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
-increments the reference count of the :ctype:`PyObject *` C-variable it
+increments the reference count of the :c:type:`PyObject *` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :ctype:`PyObject *` C-variable. You should use 'N' if you have
+corresponding :c:type:`PyObject *` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
@@ -237,8 +237,8 @@ The kwds argument holds a Python dictionary whose keys are the names
 of the keyword arguments and whose values are the corresponding
 keyword-argument values. This dictionary can be processed however you
 see fit. The easiest way to handle it, however, is to replace the
-:cfunc:`PyArg_ParseTuple` (args, format_string, addresses...) function with
-a call to :cfunc:`PyArg_ParseTupleAndKeywords` (args, kwds, format_string,
+:c:func:`PyArg_ParseTuple` (args, format_string, addresses...) function with
+a call to :c:func:`PyArg_ParseTupleAndKeywords` (args, kwds, format_string,
 char \*kwlist[], addresses...). The kwlist parameter to this function
 is a ``NULL`` -terminated array of strings providing the expected
 keyword arguments.  There should be one string for each entry in the
@@ -268,8 +268,8 @@ counting are quite straightforward with the most common difficulty
 being not using DECREF on objects before exiting early from a routine
 due to some error. In second place, is the common error of not owning
 the reference on an object that is passed to a function or macro that
-is going to steal the reference ( *e.g.* :cfunc:`PyTuple_SET_ITEM`, and
-most functions that take :ctype:`PyArray_Descr` objects).
+is going to steal the reference ( *e.g.* :c:func:`PyTuple_SET_ITEM`, and
+most functions that take :c:type:`PyArray_Descr` objects).
 
 .. index::
    single: reference counting
@@ -278,26 +278,26 @@ Typically you get a new reference to a variable when it is created or
 is the return value of some function (there are some prominent
 exceptions, however --- such as getting an item out of a tuple or a
 dictionary). When you own the reference, you are responsible to make
-sure that :cfunc:`Py_DECREF` (var) is called when the variable is no
+sure that :c:func:`Py_DECREF` (var) is called when the variable is no
 longer necessary (and no other function has "stolen" its
 reference). Also, if you are passing a Python object to a function
 that will "steal" the reference, then you need to make sure you own it
-(or use :cfunc:`Py_INCREF` to get your own reference). You will also
+(or use :c:func:`Py_INCREF` to get your own reference). You will also
 encounter the notion of borrowing a reference. A function that borrows
 a reference does not alter the reference count of the object and does
 not expect to "hold on "to the reference. It's just going to use the
-object temporarily.  When you use :cfunc:`PyArg_ParseTuple` or
-:cfunc:`PyArg_UnpackTuple` you receive a borrowed reference to the
+object temporarily.  When you use :c:func:`PyArg_ParseTuple` or
+:c:func:`PyArg_UnpackTuple` you receive a borrowed reference to the
 objects in the tuple and should not alter their reference count inside
 your function. With practice, you can learn to get reference counting
 right, but it can be frustrating at first.
 
-One common source of reference-count errors is the :cfunc:`Py_BuildValue`
+One common source of reference-count errors is the :c:func:`Py_BuildValue`
 function. Pay careful attention to the difference between the 'N'
 format character and the 'O' format character. If you create a new
 object in your subroutine (such as an output array), and you are
 passing it back in a tuple of return values, then you should most-
-likely use the 'N' format character in :cfunc:`Py_BuildValue`. The 'O'
+likely use the 'N' format character in :c:func:`Py_BuildValue`. The 'O'
 character will increase the reference count by one. This will leave
 the caller with two reference counts for a brand-new array.  When the
 variable is deleted and the reference count decremented by one, there
@@ -325,10 +325,10 @@ The method is to
    dimensions.
 
     1. By converting it from some Python object using
-       :cfunc:`PyArray_FromAny` or a macro built on it.
+       :c:func:`PyArray_FromAny` or a macro built on it.
 
     2. By constructing a new ndarray of your desired shape and type
-       using :cfunc:`PyArray_NewFromDescr` or a simpler macro or function
+       using :c:func:`PyArray_NewFromDescr` or a simpler macro or function
        based on it.
 
 
@@ -339,7 +339,7 @@ The method is to
 
 4. If you are writing the algorithm, then I recommend that you use the
    stride information contained in the array to access the elements of
-   the array (the :cfunc:`PyArray_GETPTR` macros make this painless). Then,
+   the array (the :c:func:`PyArray_GETPTR` macros make this painless). Then,
    you can relax your requirements so as not to force a single-segment
    array and the data-copying that might result.
 
@@ -350,16 +350,16 @@ Converting an arbitrary sequence object
 ---------------------------------------
 
 The main routine for obtaining an array from any Python object that
-can be converted to an array is :cfunc:`PyArray_FromAny`. This
+can be converted to an array is :c:func:`PyArray_FromAny`. This
 function is very flexible with many input arguments. Several macros
-make it easier to use the basic function. :cfunc:`PyArray_FROM_OTF` is
+make it easier to use the basic function. :c:func:`PyArray_FROM_OTF` is
 arguably the most useful of these macros for the most common uses.  It
 allows you to convert an arbitrary Python object to an array of a
 specific builtin data-type ( *e.g.* float), while specifying a
 particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
-.. cfunction:: PyObject *PyArray_FROM_OTF(PyObject* obj, int typenum, int requirements)
+.. c:function:: PyObject *PyArray_FROM_OTF(PyObject* obj, int typenum, int requirements)
 
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
@@ -385,37 +385,37 @@ writeable). The syntax is
         and 4) any scalar object (becomes a zero-dimensional
         array). Sub-classes of the ndarray that otherwise fit the
         requirements will be passed through. If you want to ensure
-        a base-class ndarray, then use :cdata:`NPY_ENSUREARRAY` in the
+        a base-class ndarray, then use :c:data:`NPY_ENSUREARRAY` in the
         requirements flag. A copy is made only if necessary. If you
-        want to guarantee a copy, then pass in :cdata:`NPY_ENSURECOPY`
+        want to guarantee a copy, then pass in :c:data:`NPY_ENSURECOPY`
         to the requirements flag.
 
     *typenum*
 
-        One of the enumerated types or :cdata:`NPY_NOTYPE` if the data-type
+        One of the enumerated types or :c:data:`NPY_NOTYPE` if the data-type
         should be determined from the object itself. The C-based names
         can be used:
 
-            :cdata:`NPY_BOOL`, :cdata:`NPY_BYTE`, :cdata:`NPY_UBYTE`,
-            :cdata:`NPY_SHORT`, :cdata:`NPY_USHORT`, :cdata:`NPY_INT`,
-            :cdata:`NPY_UINT`, :cdata:`NPY_LONG`, :cdata:`NPY_ULONG`,
-            :cdata:`NPY_LONGLONG`, :cdata:`NPY_ULONGLONG`, :cdata:`NPY_DOUBLE`,
-            :cdata:`NPY_LONGDOUBLE`, :cdata:`NPY_CFLOAT`, :cdata:`NPY_CDOUBLE`,
-            :cdata:`NPY_CLONGDOUBLE`, :cdata:`NPY_OBJECT`.
+            :c:data:`NPY_BOOL`, :c:data:`NPY_BYTE`, :c:data:`NPY_UBYTE`,
+            :c:data:`NPY_SHORT`, :c:data:`NPY_USHORT`, :c:data:`NPY_INT`,
+            :c:data:`NPY_UINT`, :c:data:`NPY_LONG`, :c:data:`NPY_ULONG`,
+            :c:data:`NPY_LONGLONG`, :c:data:`NPY_ULONGLONG`, :c:data:`NPY_DOUBLE`,
+            :c:data:`NPY_LONGDOUBLE`, :c:data:`NPY_CFLOAT`, :c:data:`NPY_CDOUBLE`,
+            :c:data:`NPY_CLONGDOUBLE`, :c:data:`NPY_OBJECT`.
 
         Alternatively, the bit-width names can be used as supported on the
         platform. For example:
 
-            :cdata:`NPY_INT8`, :cdata:`NPY_INT16`, :cdata:`NPY_INT32`,
-            :cdata:`NPY_INT64`, :cdata:`NPY_UINT8`,
-            :cdata:`NPY_UINT16`, :cdata:`NPY_UINT32`,
-            :cdata:`NPY_UINT64`, :cdata:`NPY_FLOAT32`,
-            :cdata:`NPY_FLOAT64`, :cdata:`NPY_COMPLEX64`,
-            :cdata:`NPY_COMPLEX128`.
+            :c:data:`NPY_INT8`, :c:data:`NPY_INT16`, :c:data:`NPY_INT32`,
+            :c:data:`NPY_INT64`, :c:data:`NPY_UINT8`,
+            :c:data:`NPY_UINT16`, :c:data:`NPY_UINT32`,
+            :c:data:`NPY_UINT64`, :c:data:`NPY_FLOAT32`,
+            :c:data:`NPY_FLOAT64`, :c:data:`NPY_COMPLEX64`,
+            :c:data:`NPY_COMPLEX128`.
 
         The object will be converted to the desired type only if it
         can be done without losing precision. Otherwise ``NULL`` will
-        be returned and an error raised. Use :cdata:`NPY_FORCECAST` in the
+        be returned and an error raised. Use :c:data:`NPY_FORCECAST` in the
         requirements flag to override this behavior.
 
     *requirements*
@@ -439,58 +439,58 @@ writeable). The syntax is
         very generic pointer to memory.  This flag allows specification
         of the desired properties of the returned array object. All
         of the flags are explained in the detailed API chapter. The
-        flags most commonly needed are :cdata:`NPY_ARRAY_IN_ARRAY`,
-        :cdata:`NPY_OUT_ARRAY`, and :cdata:`NPY_ARRAY_INOUT_ARRAY`:
+        flags most commonly needed are :c:data:`NPY_ARRAY_IN_ARRAY`,
+        :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
-        .. cvar:: NPY_ARRAY_IN_ARRAY
+        .. c:var:: NPY_ARRAY_IN_ARRAY
 
-            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :cdata:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
+            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :c:data:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
             for arrays that must be in C-contiguous order and aligned.
             These kinds of arrays are usually input arrays for some
             algorithm.
 
-        .. cvar:: NPY_ARRAY_OUT_ARRAY
+        .. c:var:: NPY_ARRAY_OUT_ARRAY
 
-            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE`. This
+            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`. This
             combination of flags is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
             scratch).
 
-        .. cvar:: NPY_ARRAY_INOUT_ARRAY
+        .. c:var:: NPY_ARRAY_INOUT_ARRAY
 
-            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
-            :cdata:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
+            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+            :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
             useful to specify an array that will be used for both
             input and output. If a copy is needed, then when the
-            temporary is deleted (by your use of :cfunc:`Py_DECREF` at
+            temporary is deleted (by your use of :c:func:`Py_DECREF` at
             the end of the interface routine), the temporary array
             will be copied back into the original array passed in. Use
-            of the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
+            of the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
-            occurs use :cfunc:`PyArray_DECREF_ERR` (obj) on an array
-            with the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
+            occurs use :c:func:`PyArray_DECREF_ERR` (obj) on an array
+            with the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
             delete the array without causing the contents to be copied
             back into the original array.
 
 
         Other useful flags that can be OR'd as additional requirements are:
 
-        .. cvar:: NPY_ARRAY_FORCECAST
+        .. c:var:: NPY_ARRAY_FORCECAST
 
             Cast to the desired type, even if it can't be done without losing
             information.
 
-        .. cvar:: NPY_ARRAY_ENSURECOPY
+        .. c:var:: NPY_ARRAY_ENSURECOPY
 
             Make sure the resulting array is a copy of the original.
 
-        .. cvar:: NPY_ARRAY_ENSUREARRAY
+        .. c:var:: NPY_ARRAY_ENSUREARRAY
 
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
@@ -499,8 +499,8 @@ writeable). The syntax is
 
     Whether or not an array is byte-swapped is determined by the
     data-type of the array. Native byte-order arrays are always
-    requested by :cfunc:`PyArray_FROM_OTF` and so there is no need for
-    a :cdata:`NPY_ARRAY_NOTSWAPPED` flag in the requirements argument. There
+    requested by :c:func:`PyArray_FROM_OTF` and so there is no need for
+    a :c:data:`NPY_ARRAY_NOTSWAPPED` flag in the requirements argument. There
     is also no way to get a byte-swapped array from this routine.
 
 
@@ -512,29 +512,29 @@ code. Perhaps an output array is needed and you don't want the caller
 to have to supply it. Perhaps only a temporary array is needed to hold
 an intermediate calculation. Whatever the need there are simple ways
 to get an ndarray object of whatever data-type is needed. The most
-general function for doing this is :cfunc:`PyArray_NewFromDescr`. All array
+general function for doing this is :c:func:`PyArray_NewFromDescr`. All array
 creation functions go through this heavily re-used code. Because of
 its flexibility, it can be somewhat confusing to use. As a result,
 simpler forms exist that are easier to use.
 
-.. cfunction:: PyObject *PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
+.. c:function:: PyObject *PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
 
     This function allocates new memory and places it in an ndarray
     with *nd* dimensions whose shape is determined by the array of
     at least *nd* items pointed to by *dims*. The memory for the
-    array is uninitialized (unless typenum is :cdata:`NPY_OBJECT` in
+    array is uninitialized (unless typenum is :c:data:`NPY_OBJECT` in
     which case each element in the array is set to NULL). The
     *typenum* argument allows specification of any of the builtin
-    data-types such as :cdata:`NPY_FLOAT` or :cdata:`NPY_LONG`. The
+    data-types such as :c:data:`NPY_FLOAT` or :c:data:`NPY_LONG`. The
     memory for the array can be set to zero if desired using
-    :cfunc:`PyArray_FILLWBYTE` (return_object, 0).
+    :c:func:`PyArray_FILLWBYTE` (return_object, 0).
 
-.. cfunction:: PyObject *PyArray_SimpleNewFromData( int nd, npy_intp* dims, int typenum, void* data)
+.. c:function:: PyObject *PyArray_SimpleNewFromData( int nd, npy_intp* dims, int typenum, void* data)
 
     Sometimes, you want to wrap memory allocated elsewhere into an
     ndarray object for downstream use. This routine makes it
     straightforward to do that. The first three arguments are the same
-    as in :cfunc:`PyArray_SimpleNew`, the final argument is a pointer to a
+    as in :c:func:`PyArray_SimpleNew`, the final argument is a pointer to a
     block of contiguous memory that the ndarray should use as it's
     data-buffer which will be interpreted in C-style contiguous
     fashion. A new reference to an ndarray is returned, but the
@@ -556,31 +556,31 @@ simpler forms exist that are easier to use.
 Getting at ndarray memory and accessing elements of the ndarray
 ---------------------------------------------------------------
 
-If obj is an ndarray (:ctype:`PyArrayObject *`), then the data-area of the
-ndarray is pointed to by the void* pointer :cfunc:`PyArray_DATA` (obj) or
-the char* pointer :cfunc:`PyArray_BYTES` (obj). Remember that (in general)
+If obj is an ndarray (:c:type:`PyArrayObject *`), then the data-area of the
+ndarray is pointed to by the void* pointer :c:func:`PyArray_DATA` (obj) or
+the char* pointer :c:func:`PyArray_BYTES` (obj). Remember that (in general)
 this data-area may not be aligned according to the data-type, it may
 represent byte-swapped data, and/or it may not be writeable. If the
 data area is aligned and in native byte-order, then how to get at a
 specific element of the array is determined only by the array of
-npy_intp variables, :cfunc:`PyArray_STRIDES` (obj). In particular, this
+npy_intp variables, :c:func:`PyArray_STRIDES` (obj). In particular, this
 c-array of integers shows how many **bytes** must be added to the
 current element pointer to get to the next element in each dimension.
-For arrays less than 4-dimensions there are :cfunc:`PyArray_GETPTR{k}`
+For arrays less than 4-dimensions there are :c:func:`PyArray_GETPTR{k}`
 (obj, ...) macros where {k} is the integer 1, 2, 3, or 4 that make
 using the array strides easier. The arguments .... represent {k} non-
 negative integer indices into the array. For example, suppose ``E`` is
 a 3-dimensional ndarray. A (void*) pointer to the element ``E[i,j,k]``
-is obtained as :cfunc:`PyArray_GETPTR3` (E, i, j, k).
+is obtained as :c:func:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
-(:cdata:`NPY_C_CONTIGUOUS` and :cdata`NPY_F_CONTIGUOUS`) indicate
+(:c:data:`NPY_C_CONTIGUOUS` and :cdata`NPY_F_CONTIGUOUS`) indicate
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
-tested Using :cfunc:`PyArray_ISCONTIGUOUS` (obj) and
-:cfunc:`PyArray_ISFORTRAN` (obj) respectively. Most third-party
+tested Using :c:func:`PyArray_ISCONTIGUOUS` (obj) and
+:c:func:`PyArray_ISFORTRAN` (obj) respectively. Most third-party
 libraries expect contiguous arrays.  But, often it is not difficult to
 support general-purpose striding. I encourage you to use the striding
 information in your own code whenever possible, and reserve
