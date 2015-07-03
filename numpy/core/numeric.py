@@ -834,7 +834,7 @@ def _mode_from_name(mode):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
-def correlate(a, v, mode='valid'):
+def correlate(a, v, mode='valid', unbias=False):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -853,6 +853,13 @@ def correlate(a, v, mode='valid'):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
+    unbias : bool
+        If the unbiased cross-correlation is computed:
+
+            c_{av}[k] = 1 / (N-k) * sum_n^{N-k} a[n+k] * conj(v[n])
+
+            N is the lenght of a
+
     old_behavior : bool
         `old_behavior` was removed in NumPy 1.10. If you need the old
         behavior, use `multiarray.correlate`.
@@ -899,7 +906,22 @@ def correlate(a, v, mode='valid'):
 
     """
     mode = _mode_from_name(mode)
-    return multiarray.correlate2(a, v, mode)
+    if unbias:
+        N = len(a)
+        d = N
+        if mode in ['full', 'same']:
+            d = arange(1, 2*N)
+            d[N:]= arange(N-1, 0, -1)
+            d = d
+        if mode == 'same':
+            if N%2==0:
+                d = d[N//2-1:N//2+N-1]
+            else:
+                d = d[N//2:N//2+N]
+        d /= N
+    else:
+        d = 1
+    return multiarray.correlate2(a, v, mode) / d
 
 def convolve(a,v,mode='full'):
     """
