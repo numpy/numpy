@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Delete resource &apos;Debug/TestMat.py&apos;" deleteContents="false" description="Delete resource &apos;Debug/TestMat.py&apos;" element1="/Debug/TestMat.py" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1421746655568"/>
-</session>

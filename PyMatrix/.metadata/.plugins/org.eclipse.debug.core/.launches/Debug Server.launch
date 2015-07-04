@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<launchConfiguration type="com.python.pydev.debug.pydevdServerLaunchConfigurationType">
-<booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
-<booleanAttribute key="org.eclipse.debug.ui.private" value="true"/>
-<stringAttribute key="org.python.pydev.debug.ATTR_PROJECT" value="PyDevd Debug Server"/>
-<intAttribute key="org.python.pydev.debug.ATTR_RESOURCE_TYPE" value="1"/>
-</launchConfiguration>

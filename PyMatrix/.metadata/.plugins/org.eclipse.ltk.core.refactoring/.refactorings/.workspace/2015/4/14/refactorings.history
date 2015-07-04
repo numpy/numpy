@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Delete resource &apos;Debug/src/core/framework/matrix_middleware&apos;" deleteContents="false" description="Delete resource &apos;Debug/src/core/framework/matrix_middleware&apos;" element1="/Debug/src/core/framework/matrix_middleware" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1427855924910"/>
-</session>
