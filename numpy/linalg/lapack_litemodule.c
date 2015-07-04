@@ -314,8 +314,6 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     { NULL,NULL,0, NULL}
 };
 
-static char lapack_lite_module_documentation[] = "";
-
 
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
@@ -346,8 +344,7 @@ initlapack_lite(void)
     m = PyModule_Create(&moduledef);
 #else
     m = Py_InitModule4("lapack_lite", lapack_lite_module_methods,
-		       lapack_lite_module_documentation,
-		       (PyObject*)NULL,PYTHON_API_VERSION);
+                       "", (PyObject*)NULL,PYTHON_API_VERSION);
 #endif
     if (m == NULL) {
         return RETVAL;

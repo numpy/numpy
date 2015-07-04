@@ -543,7 +543,7 @@ pyrational_str(PyObject* self) {
     }
 }
 
-static long
+static npy_hash_t
 pyrational_hash(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     /* Use a fairly weak hash as Python expects */

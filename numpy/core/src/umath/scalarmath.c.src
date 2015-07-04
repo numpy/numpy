@@ -1417,7 +1417,7 @@ static PyObject *
  * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
  *         PyLong_FromDouble*7, PyFloat_FromDouble*17#
  */
-static PyObject *
+static NPY_INLINE PyObject *
 @name@_@which@(PyObject *obj)
 {
 #if @cmplx@

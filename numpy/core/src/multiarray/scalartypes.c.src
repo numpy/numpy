@@ -1701,7 +1701,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* 1. Convert to 0-d array and use getfield */
-    arr = PyArray_FromScalar(self, NULL);
+    arr = PyArray_FromScalar((PyObject*)self, NULL);
     if (arr == NULL) {
         Py_DECREF(getfield_args);
         return NULL;

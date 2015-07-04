@@ -903,6 +903,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
         return -1;
     }
 
+    goto overflow_check; /* silence unused warning */
  overflow_check:
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
   #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)

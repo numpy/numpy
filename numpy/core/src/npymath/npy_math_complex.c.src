@@ -33,12 +33,13 @@
  */
 #include "npy_math_common.h"
 #include "npy_math_private.h"
+#include <numpy/utils.h>
 
 
 #define raise_inexact() do { volatile npy_float junk = 1 + tiny; } while(0)
 
 
-static npy_float tiny = 3.9443045e-31f;
+static __COMP_NPY_UNUSED npy_float tiny = 3.9443045e-31f;
 
 
 /**begin repeat
@@ -183,6 +184,8 @@ npy_carg@c@(@ctype@ z)
 #define SCALED_CEXP_LOWERL 11357.216553474703895L
 #define SCALED_CEXP_UPPERL 22756.021937783004509L
 
+#ifndef HAVE_CEXP@C@
+
 static
 @ctype@
 _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
@@ -209,7 +212,6 @@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
                          npy_ldexp@c@(mant * mantsin, expt + exsin));
 }
 
-#ifndef HAVE_CEXP@C@
 @ctype@
 npy_cexp@c@(@ctype@ z)
 {
