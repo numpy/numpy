@@ -834,7 +834,7 @@ def _mode_from_name(mode):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
-def correlate(a, v, mode='valid', unbias=False):
+def correlate(a, v, mode='valid', bias=True):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -853,8 +853,8 @@ def correlate(a, v, mode='valid', unbias=False):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
-    unbias : bool
-        If the unbiased cross-correlation is computed:
+    bias : bool, optional
+        if `bias` is False, then the unbiased cross-correlation is computed:
 
             c_{av}[k] = 1 / (N-k) * sum_n^{N-k} a[n+k] * conj(v[n])
 
@@ -906,7 +906,7 @@ def correlate(a, v, mode='valid', unbias=False):
 
     """
     mode = _mode_from_name(mode)
-    if unbias:
+    if not bias:
         N = len(a)
         d = N
         if mode in ['full', 'same']:
