@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.python.pydev.ui.wizards.files.TemplateSelectDialog">
+		<section name="DialogBoundsSettings">
+			<item value="269" key="DIALOG_WIDTH"/>
+			<item value="1|.Helvetica Neue DeskInterface|11.0|0|COCOA|1|.HelveticaNeueDeskInterface-Regular" key="DIALOG_FONT_NAME"/>
+			<item value="274" key="DIALOG_HEIGHT"/>
+			<item value="212" key="DIALOG_X_ORIGIN"/>
+			<item value="51" key="DIALOG_Y_ORIGIN"/>
+		</section>
+	</section>
+	<section name="pydev_completion_proposal_size">
+	</section>
+</section>
