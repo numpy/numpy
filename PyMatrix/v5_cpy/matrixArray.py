@@ -137,6 +137,7 @@ class Size(object):
 #===========================================================================
 # n-d matrix formatter discriptor
 #===========================================================================
+import traceback
 from math import floor
 class Formatter(object):
     
@@ -168,8 +169,7 @@ class Formatter(object):
                 # get width for the element in column b
                 try:
                     return -self.float if a == self.size.row - 1 and b == self.size.col - 1 else width[b]# len(c), len(c[a])
-                except Exception:
-                    #import traceback
+                except Exception as e:
                     #traceback.print_exc()
                     return -self.float
             if  name == 'float':
@@ -195,8 +195,11 @@ class Formatter(object):
             return self[1].format(element.__str__(), 
                                   width=self.width + self.float + 1)
         except TypeError:
-            return self[2].format(element.__str__(), 
-                                  width=self.width + self.float + 1)
+            try:
+                return self[2].format(element.__str__(), 
+                                      width=self.width + self.float + 1)
+            except Exception as e:
+                print(e)
     __call__ = fire    
     
 from copy import copy, deepcopy
@@ -217,8 +220,7 @@ def index_len(key, l):
         l = \
         copy(l)#deepcopy(l)
         return \
-          tuple([index_len(i, l.pop(0) if len(l) > 0 else 0)[0]
-                  for i in key]) 
+          tuple([index_len(i, l.pop(0) if len(l) > 0 else 0)[0] for i in key]) 
     else:
         return (1,)
 
@@ -240,8 +242,7 @@ def index_val(key, l):
         l = \
         copy(l)#deepcopy(l)        
         return \
-          tuple([index_val(i, l.pop(0) if len(l) > 0 else 0)[0]
-                  for i in key])
+          tuple([index_val(i, l.pop(0) if len(l) > 0 else 0)[0] for i in key])
     else:
         return ([key], )
 
@@ -382,14 +383,14 @@ class matrixArrayLists(list):
         # no inputting arguments
         if   numberOfargs == 0:
             if   hint == {}:
-                super(matrixArrayLists, self).__init__([])
+                super(matrixArrayLists, self).__init__()
                 # no hints              
             elif hint != {}:
                 # set up empty matrix
                 # To do:
                 
                 # initialization
-                super(matrixArrayLists, self).__init__([])
+                super(matrixArrayLists, self).__init__()
             self.append([])
             
         elif numberOfargs == 1:
@@ -641,18 +642,18 @@ class matrixArrayLists(list):
     
     def isIndexHeader(self, val):
 
-        result = \
-               self.isIndex(val)
+        result = self.isIndex(
+                            val)
         if result is not None: 
             return (result, 0)
         
-        result = \
-              self.isheader(val)
+        result = self.isheader(
+                            val)
         if result is not None:
             return (result, 1)
         
         else:
-            return (None , None)
+            return (None,None)
     
     @property
     def x_label_enabled(self):
@@ -1047,8 +1048,22 @@ class matrixArrayLists(list):
     def setitem_multi(self, ids, root, it, type="+"):
         # deduce user behavior
         # get all possible id for setting
-        def element_generator():      
-            yield next(it) if hasattr(it,'__next__') else it
+        # the following implementation has been deprecated
+##############################################################
+#         def element_generator():      
+#             yield next(it) if hasattr(it,'__next__') else it
+##############################################################
+        
+        def element_gen_1():
+            yield next(it)
+            
+        def element_gen_2():
+            yield it
+        
+        if  hasattr(it, '__next__'):
+            element_generator = element_gen_1
+        else:
+            element_generator = element_gen_2
         
         # no values return
         def routines(curr):
@@ -1281,17 +1296,17 @@ class matrixArrayLists(list):
         
         for a in range(lenc):
             
-            out.append( pre)
-            # get sub len for matrixarray
-            lena = len(c[a])                                     # out += pre # position 1 + self.col * (a + 1) 
+            out.append( pre); lena = len(c[a])                                   # out += pre # position 1 + self.col * (a + 1) 
             
             for b in range(lena):
+                print(1)
                 out.append(self._element2str(a, b, c, formatter))# out += self._element2str(a, b, c, formatter)
             
             if lena == 0:
                 b = -1
             
             for d in range(b + 1, b + size.col - len(c[a]) + 1):
+                print(2)
                 out.append(self._element2str(a, d, c, formatter))# out += self._element2str(a, d, t, formatter)                    
             # handling for special cases
             if  a < len(c) - 1:
@@ -1420,7 +1435,7 @@ class matrixArrayLists(list):
                     try:
                         if len(child[i]) > _max:
                             _max = len(child[i])
-                        queue.append((child[i], axis+1))
+                        queue.append(child[i], axis + 1)
                     except:
                         if  _max == 0:
                             _max = 1
@@ -1440,7 +1455,7 @@ class matrixArrayLists(list):
             except:
                 shape.append(_max)
     @property # 1 
-    #@loopprocess # 2          
+    @loopprocess # 2          
     def _shape_array(self):
         queue = []
         shape = []
@@ -1453,8 +1468,7 @@ class matrixArrayLists(list):
         # updating current axis
         shape.extend([len(root), max(map(lambda i:len(i), root))])
         # start processing
-        # queue.append((root,axis))
-        queue.extend([(item, axis) for item in root])
+        queue.append((root, axis))
         # compute next demensions  
         # do not use inner method definition 
 ################################################           
@@ -1499,7 +1513,7 @@ class matrixArrayLists(list):
         # updating curr axis
         shape.append(len(root))
         # start processing
-        queue.append((root,axis))
+        queue.append((root, axis))
         # compute next demensions   
            
         def routines(obj, shape, axis, queue):
@@ -1839,14 +1853,14 @@ class matrixArray(matrixArrayNum):
         return "matrixArray:"
 
 # for easy testing purpose            
-# a = _TEST_MATRIX_MULTI = matrixArrayNum([
-#                          [['000', '001', '002'], ['010', '011', '012'], ['020', '021', '022']],
-#                          [['100', '101', '102'], ['110', '111', '112'], ['120', '121', '122']],
-#                          [['200', '201', '202'], ['210', '211', '212'], ['220', '221', '222']],
-#                          [['300', '301', '302'], ['310', '311', '312'], ['320', '321', '322']]
-#                          ])
+a = _TEST_MATRIX_MULTI = matrixArrayNum([
+                         [['000', '001', '002'], ['010', '011', '012'], ['020', '021', '022']],
+                         [['100', '101', '102'], ['110', '111', '112'], ['120', '121', '122']],
+                         [['200', '201', '202'], ['210', '211', '212'], ['220', '221', '222']],
+                         [['300', '301', '302'], ['310', '311', '312'], ['320', '321', '322']]
+                         ])
 
-# b = _TEST_COMPUT = matrixArrayNum(5, 5)
+b = _TEST_COMPUT = matrixArrayNum(5, 5)
 ########################## 
 # from numpy import  array
 # e = _TEST_array  = array([
@@ -1893,8 +1907,7 @@ if __name__ == "__main__":
 #     print(matrixArrayNum([[1,2],[3,4],[5,6]]).ubds_vt())
     import  random
     import  time
-    b = matrixArrayLists([1,[[1]]])
-    b[1]
+     
     #print(b)
     d = b.inner_rep
      
