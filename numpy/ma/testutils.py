@@ -12,7 +12,10 @@ import operator
 import numpy as np
 from numpy import ndarray, float_
 import numpy.core.umath as umath
-from numpy.testing import assert_, build_err_msg
+from numpy.testing import (
+    TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
+    assert_raises, build_err_msg, run_module_suite,
+    )
 import numpy.testing.utils as utils
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
@@ -25,15 +28,15 @@ __all__masked = [
     ]
 
 # Include some normal test functions to avoid breaking other projects who
-# have mistakenly included them from this file. SciPy is one. That was a
-# bad idea, as some of these functions are not intended to work with masked
-# arrays, but there was no way to tell before.
-__all__from_testing = [
+# have mistakenly included them from this file. SciPy is one. That is
+# unfortunate, as some of these functions are not intended to work with
+# masked arrays. But there was no way to tell before.
+__some__from_testing = [
     'TestCase', 'assert_', 'assert_allclose',
-    'assert_array_almost_equal_nulp', 'assert_raises', 'run_modules_suite',
+    'assert_array_almost_equal_nulp', 'assert_raises', 'run_module_suite',
     ]
 
-__all__ = __all__masked
+__all__ = __all__masked + __some__from_testing
 
 
 def approx(a, b, fill_value=True, rtol=1e-5, atol=1e-8):

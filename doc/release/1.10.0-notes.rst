@@ -141,10 +141,19 @@ corrupted masked array, but a fully masked version of the item.
 
 Median warns and returns nan when invalid values are encountered
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Similar to mean, median and percentile now emits a Runtime warning and 
+Similar to mean, median and percentile now emits a Runtime warning and
 returns `NaN` in slices where a `NaN` is present.
-To compute the median or percentile while ignoring invalid values use the 
+To compute the median or percentile while ignoring invalid values use the
 new `nanmedian` or `nanpercentile` functions.
+
+Functions available from numpy.ma.testutils have changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All functions from numpy.testing were once available from
+numpy.ma.testutils but not all of them were redefined to work with masked
+arrays. Most of those functions have now been removed from
+numpy.ma.testutils with a small subset retained in order to preserve
+backward compatibility. In the long run this should help avoid mistaken use
+of the wrong functions, but it may cause import problems for some.
 
 
 New Features
