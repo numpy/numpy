@@ -3,9 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
-from numpy.ma.testutils import (
-    run_module_suite, TestCase, assert_, assert_equal
-    )
+from numpy.ma.testutils import assert_equal
+from numpy.testing import TestCase, run_module_suite, assert_
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
