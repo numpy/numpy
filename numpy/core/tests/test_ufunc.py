@@ -47,13 +47,13 @@ class TestUfunc(TestCase):
                 "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert pickle.loads(astring) is np.cos
 
-    def test_reduceat_shifting_sum(self) :
+    def test_reduceat_shifting_sum(self):
         L = 6
         x = np.arange(L)
         idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x, idx)[::2], [1, 3, 5, 7])
 
-    def test_generic_loops(self) :
+    def test_generic_loops(self):
         """Test generic loops.
 
         The loops to be tested are:
@@ -107,7 +107,7 @@ class TestUfunc(TestCase):
 
         """
         fone = np.exp
-        ftwo = lambda x, y : x**y
+        ftwo = lambda x, y: x**y
         fone_val = 1
         ftwo_val = 1
         # check unary PyUFunc_f_f.
@@ -162,9 +162,10 @@ class TestUfunc(TestCase):
 
         # class to use in testing object method loops
         class foo(object):
-            def conjugate(self) :
+            def conjugate(self):
                 return np.bool_(1)
-            def logical_xor(self, obj) :
+
+            def logical_xor(self, obj):
                 return np.bool_(1)
 
         # check unary PyUFunc_O_O
@@ -174,7 +175,7 @@ class TestUfunc(TestCase):
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.conjugate(x) == True), msg)
 
@@ -185,14 +186,14 @@ class TestUfunc(TestCase):
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.logical_xor(x, x)), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
-    def test_all_ufunc(self) :
+    def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
 
         The list of ufuncs comes from generate_umath.py and is as follows:
@@ -275,7 +276,6 @@ class TestUfunc(TestCase):
         """
         pass
 
-
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
@@ -286,30 +286,39 @@ class TestUfunc(TestCase):
 
         # in the following calls, a ValueError should be raised because
         # of error in core signature
+        # FIXME These should be using assert_raises
+
         # error: extra parenthesis
         msg = "core_sig: extra parenthesis"
         try:
             ret = umt.test_signature(2, 1, "((i)),(i)->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: parenthesis matching
         msg = "core_sig: parenthesis matching"
         try:
             ret = umt.test_signature(2, 1, "(i),)i(->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: incomplete signature. letters outside of parenthesis are ignored
         msg = "core_sig: incomplete signature"
         try:
             ret = umt.test_signature(2, 1, "(i),->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: incomplete signature. 2 output arguments are specified
         msg = "core_sig: incomplete signature"
         try:
             ret = umt.test_signature(2, 2, "(i),(i)->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
 
         # more complicated names for variables
         assert_equal(umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)"), 1)
@@ -386,7 +395,7 @@ class TestUfunc(TestCase):
         for dt in (np.complex64, np.complex128, np.clongdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v + 1) / 2) - dt((v * (v + 1) / 2) *1j)
+                tgt = dt(v * (v + 1) / 2) - dt((v * (v + 1) / 2) * 1j)
                 d = np.empty(v, dtype=dt)
                 d.real = np.arange(1, v + 1)
                 d.imag = -np.arange(1, v + 1)
@@ -570,15 +579,15 @@ class TestUfunc(TestCase):
                     for s2 in slice_3:
                         a1 = d1.transpose(p1)[s1]
                         a2 = d2.transpose(p2)[s2]
-                        ref = ref and a1.base != None
-                        ref = ref and a2.base != None
+                        ref = ref and a1.base is not None
+                        ref = ref and a2.base is not None
                         if (a1.shape[-1] == a2.shape[-2] and
                                 broadcastable(a1.shape[0], a2.shape[0])):
                             assert_array_almost_equal(
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
                                        a1[..., np.newaxis,:], axis=-1),
-                                err_msg = msg+' %s %s' % (str(a1.shape),
+                                err_msg=msg + ' %s %s' % (str(a1.shape),
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
@@ -827,10 +836,13 @@ class TestUfunc(TestCase):
         # make sure that error we get an error in exactly those cases where we
         # expect one, and assumes the calculations themselves are done
         # correctly.
+
         def ok(f, *args, **kwargs):
             f(*args, **kwargs)
+
         def err(f, *args, **kwargs):
             assert_raises(ValueError, f, *args, **kwargs)
+
         def t(expect, func, n, m):
             expect(func, np.zeros((n, m)), axis=1)
             expect(func, np.zeros((m, n)), axis=0)
@@ -839,7 +851,7 @@ class TestUfunc(TestCase):
             expect(func, np.zeros((n, m // 2, m // 2)), axis=(1, 2))
             expect(func, np.zeros((m // 2, n, m // 2)), axis=(0, 2))
             expect(func, np.zeros((m // 3, m // 3, m // 3,
-                                  n // 2, n //2)),
+                                  n // 2, n // 2)),
                                  axis=(0, 1, 2))
             # Check what happens if the inner (resp. outer) dimensions are a
             # mix of zero and non-zero:
@@ -848,6 +860,7 @@ class TestUfunc(TestCase):
             expect(func, np.zeros((m, 10, n)), axis=0)
             expect(func, np.zeros((10, m, n)), axis=1)
             expect(func, np.zeros((10, n, m)), axis=2)
+
         # np.maximum is just an arbitrary ufunc with no reduction identity
         assert_equal(np.maximum.identity, None)
         t(ok, np.maximum.reduce, 30, 30)
@@ -885,8 +898,10 @@ class TestUfunc(TestCase):
         assert_array_equal(assert_no_warnings(np.add, a, 1.1),
                            [2.1, 3.1, 4.1])
         assert_raises(TypeError, np.add, a, 1.1, out=a)
+
         def add_inplace(a, b):
             a += b
+
         assert_raises(TypeError, add_inplace, a, 1.1)
         # Make sure that explicitly overriding the exception is allowed:
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
@@ -931,16 +946,17 @@ class TestUfunc(TestCase):
 
     def test_custom_ufunc(self):
         a = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational);
+            dtype=rational)
         b = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational);
+            dtype=rational)
 
         result = test_add_rationals(a, b)
         expected = np.array([rational(1), rational(2, 3), rational(1, 2)],
-            dtype=rational);
-        assert_equal(result, expected);
+            dtype=rational)
+        assert_equal(result, expected)
 
     def test_custom_array_like(self):
+
         class MyThing(object):
             __array_priority__ = 1000
 
@@ -1011,15 +1027,15 @@ class TestUfunc(TestCase):
         b = np.array([100, 200, 300])
         np.add.at(a, (slice(None), [1, 2, 1], slice(None)), b)
         assert_equal(a,
-            [[[0,  1,  2  ],
+            [[[0,  1,  2],
               [203, 404, 605],
               [106, 207, 308]],
 
-             [[9,  10, 11 ],
+             [[9,  10, 11],
               [212, 413, 614],
               [115, 216, 317]],
 
-             [[18, 19, 20 ],
+             [[18, 19, 20],
               [221, 422, 623],
               [124, 225, 326]]])
 
@@ -1168,6 +1184,7 @@ class TestUfunc(TestCase):
 
     def test_structured_equal(self):
         # https://github.com/numpy/numpy/issues/4855
+
         class MyA(np.ndarray):
             def __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs):
                 return getattr(ufunc, method)(*(input.view(np.ndarray)

@@ -16,7 +16,7 @@ _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
 
 def check_float_type(tp):
-    for x in [0, 1, -1, 1e20] :
+    for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
 
@@ -36,7 +36,7 @@ def test_float_types():
         python float precision.
 
     """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type, t
 
 def check_nan_inf_float(tp):
@@ -52,11 +52,11 @@ def test_nan_inf_float():
         python float precision.
 
     """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_nan_inf_float, t
 
 def check_complex_type(tp):
-    for x in [0, 1, -1, 1e20] :
+    for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x*1j)), str(complex(x*1j)),
@@ -80,7 +80,7 @@ def test_complex_types():
         python float precision.
 
     """
-    for t in [np.complex64, np.cdouble, np.clongdouble] :
+    for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type, t
 
 def test_complex_inf_nan():
@@ -160,12 +160,12 @@ def check_complex_type_print(tp):
 
 def test_float_type_print():
     """Check formatting when using print """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type_print, t
 
 def test_complex_type_print():
     """Check formatting when using print """
-    for t in [np.complex64, np.cdouble, np.clongdouble] :
+    for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type_print, t
 
 def test_scalar_format():

@@ -242,6 +242,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         # Numpy scalar sequence multiply should not work with non-integers
         def mult(a, b):
             return a * b
+
         self.assert_deprecated(mult, args=([1], np.float_(3)))
         self.assert_not_deprecated(mult, args=([1], np.int_(3)))
 
@@ -381,7 +382,6 @@ class TestBooleanBinaryMinusDeprecation(_DeprecationTestCase):
         self.assert_deprecated(operator.sub, args=(generic, generic))
 
 
-
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.
@@ -442,6 +442,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
 
     def test_scalar_none_comparison(self):
         # Scalars should still just return false and not give a warnings.
+        # The comparisons are flagged by pep8, ignore that.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
             assert_(not np.float32(1) == None)

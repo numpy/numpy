@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-import os, pickle
+import os
+import pickle
 import numpy
 import numpy as np
 from numpy.testing import *
@@ -20,7 +21,7 @@ class TestDateTime(TestCase):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
                      'ns', 'ps', 'fs', 'as']:
-            dt1 = np.dtype('M8[750%s]'%unit)
+            dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
             dt2 = np.dtype('m8[%s]' % unit)
             assert_(dt2 == np.dtype('timedelta64[%s]' % unit))
@@ -522,7 +523,7 @@ class TestDateTime(TestCase):
 
         a = np.array(['2011-03-16T13:55Z', '1920-01-01T03:12Z'], dtype='M')
         assert_equal(np.array2string(a, separator=', ',
-                    formatter={'datetime': lambda x :
+                    formatter={'datetime': lambda x:
                             "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
                      "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
 
@@ -608,10 +609,10 @@ class TestDateTime(TestCase):
         def cast():
             numpy.datetime64("1971-01-01 00:00:00.000000000000000").astype("<M8[D]")
         assert_raises(OverflowError, cast)
+
         def cast2():
             numpy.datetime64("2014").astype("<M8[fs]")
         assert_raises(OverflowError, cast2)
-
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
@@ -1080,7 +1081,7 @@ class TestDateTime(TestCase):
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
         t[0] = 60*60*24 + 60*60*10
-        assert_(t[0].item().hour == 10 )
+        assert_(t[0].item().hour == 10)
 
     def test_divisor_conversion_year(self):
         assert_(np.dtype('M8[Y/4]') == np.dtype('M8[3M]'))
@@ -1116,10 +1117,10 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_fs(self):
         assert_(np.dtype('M8[fs/100]') == np.dtype('M8[10as]'))
-        self.assertRaises(ValueError, lambda : np.dtype('M8[3fs/10000]'))
+        self.assertRaises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
 
     def test_divisor_conversion_as(self):
-        self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
+        self.assertRaises(ValueError, lambda: np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
         # Allow space instead of 'T' between date and time
@@ -1140,7 +1141,6 @@ class TestDateTime(TestCase):
                  np.array(['1980-02-29 00:32:03.506-02'], np.dtype('M8[s]')))
         assert_equal(np.datetime64('1977-03-02T12:30-0230'),
                      np.datetime64('1977-03-02T15:00Z'))
-
 
     def test_string_parser_error_check(self):
         # Arbitrary bad string
@@ -1219,7 +1219,6 @@ class TestDateTime(TestCase):
                                                         np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-25:00'],
                                                         np.dtype('M8[us]'))
-
 
     def test_creation_overflow(self):
         date = '1980-03-23 20:00:00Z'
@@ -1312,39 +1311,31 @@ class TestDateTime(TestCase):
 
         # unit='auto' parameter
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T12:23:34.123456Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18T12:23:34.123456Z')
+                np.datetime64('2032-07-18T12:23:34.123456Z', 'us'), unit='auto'),
+                '2032-07-18T12:23:34.123456Z')
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T12:23:34.12Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18T12:23:34.120Z')
+                np.datetime64('2032-07-18T12:23:34.12Z', 'us'), unit='auto'),
+                '2032-07-18T12:23:34.120Z')
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T12:23:34Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18T12:23:34Z')
+                np.datetime64('2032-07-18T12:23:34Z', 'us'), unit='auto'),
+                '2032-07-18T12:23:34Z')
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T12:23:00Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18T12:23Z')
+                np.datetime64('2032-07-18T12:23:00Z', 'us'), unit='auto'),
+                '2032-07-18T12:23Z')
         # 'auto' doesn't split up hour and minute
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T12:00:00Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18T12:00Z')
+                np.datetime64('2032-07-18T12:00:00Z', 'us'), unit='auto'),
+                '2032-07-18T12:00Z')
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-18T00:00:00Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-18')
+                np.datetime64('2032-07-18T00:00:00Z', 'us'), unit='auto'),
+                '2032-07-18')
         # 'auto' doesn't split up the date
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-07-01T00:00:00Z', 'us'),
-                                            unit='auto'),
-                            '2032-07-01')
+                np.datetime64('2032-07-01T00:00:00Z', 'us'), unit='auto'),
+                '2032-07-01')
         assert_equal(np.datetime_as_string(
-                            np.datetime64('2032-01-01T00:00:00Z', 'us'),
-                                            unit='auto'),
-                            '2032-01-01')
+                np.datetime64('2032-01-01T00:00:00Z', 'us'), unit='auto'),
+                '2032-01-01')
 
     @dec.skipif(not _has_pytz, "The pytz module is not available.")
     def test_datetime_as_string_timezone(self):
@@ -1610,7 +1601,7 @@ class TestDateTime(TestCase):
             np.datetime64('2011-11-10'))
 
         # A bigger forward jump across more than one week/holiday
-        holidays=['2011-10-10', '2011-11-11', '2011-11-24',
+        holidays = ['2011-10-10', '2011-11-11', '2011-11-24',
                   '2011-12-25', '2011-05-30', '2011-02-21',
                   '2011-12-26', '2012-01-02']
         bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
@@ -1712,10 +1703,10 @@ class TestDateTime(TestCase):
             np.datetime64('2012-03-08'))
 
     def test_datetime_busday_holidays_count(self):
-        holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
-                  '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
-                  '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
-                  '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10']
+        holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
+                    '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
+                    '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
+                    '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10']
         bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
 
         # Validate against busday_offset broadcast against
@@ -1748,11 +1739,11 @@ class TestDateTime(TestCase):
         assert_equal(np.busday_count('2011-04', '2011-03', weekmask='Mon'), -4)
 
     def test_datetime_is_busday(self):
-        holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
-                  '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
-                  '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
-                  '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10',
-                  'NaT']
+        holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
+                    '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
+                    '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
+                    '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10',
+                    'NaT']
         bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
 
         # Weekend/weekday tests

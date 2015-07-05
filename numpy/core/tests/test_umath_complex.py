@@ -78,7 +78,7 @@ class TestCexp(object):
             with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(-np.inf, np.inf)))
                 if z.real != 0 or z.imag != 0:
-                    raise AssertionError(msgform %(z.real, z.imag))
+                    raise AssertionError(msgform % (z.real, z.imag))
 
         yield _check_ninf_inf, None
 
@@ -287,6 +287,7 @@ class TestCsqrt(object):
 
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(np.complex(1, 1)))
+
         def f(z):
             return np.sqrt(np.conj(z))
         yield check_complex_value, f, 1, 1, ref.real, ref.imag, False
@@ -443,6 +444,7 @@ class TestCabs(object):
         # cabs(conj(z)) == conj(cabs(z)) (= cabs(z))
         def f(a):
             return np.abs(np.conj(a))
+
         def g(a, b):
             return np.abs(np.complex(a, b))
 

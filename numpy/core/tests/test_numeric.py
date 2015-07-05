@@ -18,20 +18,24 @@ from numpy.core.multiarray import dot as dot_
 class Vec(object):
     def __init__(self,sequence=None):
         if sequence is None:
-            sequence=[]
-        self.array=array(sequence)
+            sequence = []
+        self.array = array(sequence)
+
     def __add__(self, other):
-        out=Vec()
-        out.array=self.array+other.array
+        out = Vec()
+        out.array = self.array+other.array
         return out
+
     def __sub__(self, other):
-        out=Vec()
-        out.array=self.array-other.array
+        out = Vec()
+        out.array = self.array-other.array
         return out
-    def __mul__(self, other): # with scalar
-        out=Vec(self.array.copy())
-        out.array*=other
+
+    def __mul__(self, other):  # with scalar
+        out = Vec(self.array.copy())
+        out.array *= other
         return out
+
     def __rmul__(self, other):
         return self*other
 
@@ -499,10 +503,10 @@ class TestFloatExceptions(TestCase):
         # the operation raises the floating point exception specified by
         #`fpeerr`. Tests all variants with 0-d array scalars as well.
 
-        self.assert_raises_fpe(fpeerr, flop, sc1, sc2);
-        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2);
-        self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
-        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()]);
+        self.assert_raises_fpe(fpeerr, flop, sc1, sc2)
+        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2)
+        self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
+        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
     @dec.knownfailureif(True, "See ticket #2350")
     def test_floating_exceptions(self):
@@ -652,6 +656,7 @@ class TestTypes(TestCase):
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
+
         self.check_promotion_cases(res_type)
 
         # Use-case: float/complex scalar * bool/int8 array
@@ -835,7 +840,8 @@ class TestTypes(TestCase):
 
 
 # Custom exception class to test exception propagation in fromiter
-class NIterError(Exception): pass
+class NIterError(Exception):
+    pass
 
 
 class TestFromiter(TestCase):
@@ -949,7 +955,7 @@ class TestNonzero(TestCase):
             c[10 + i:20 + i] = True
             c[20 + i*2] = True
             assert_equal(np.nonzero(c)[0],
-                         np.concatenate((np.arange(10 +i, 20 + i), [20 +i*2])))
+                         np.concatenate((np.arange(10 + i, 20 + i), [20 + i*2])))
 
     def test_return_type(self):
         class C(np.ndarray):
@@ -972,7 +978,7 @@ class TestIndex(TestCase):
         g1 = randint(0, 5, size=15)
         g2 = randint(0, 8, size=15)
         V[g1, g2] = -V[g1, g2]
-        assert_((array([a[0][V>0], a[1][V>0], a[2][V>0]]) == a[:, V>0]).all())
+        assert_((array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
 
     def test_boolean_edgecase(self):
         a = np.array([], dtype='int32')
@@ -1099,7 +1105,7 @@ class TestClip(TestCase):
         return randn(n, m)
 
     def _generate_data_complex(self, n, m):
-        return randn(n, m) + 1.j *rand(n, m)
+        return randn(n, m) + 1.j * rand(n, m)
 
     def _generate_flt_data(self, n, m):
         return (randn(n, m)).astype(float32)
@@ -1127,66 +1133,66 @@ class TestClip(TestCase):
     # Now the real test cases
     def test_simple_double(self):
         #Test native double input with scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = 0.1
-        M   = 0.6
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_data(self.nr, self.nc)
+        m = 0.1
+        M = 0.6
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_simple_int(self):
         #Test native int input with scalar min/max.
-        a   = self._generate_int_data(self.nr, self.nc)
-        a   = a.astype(int)
-        m   = -2
-        M   = 4
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_int_data(self.nr, self.nc)
+        a = a.astype(int)
+        m = -2
+        M = 4
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_array_double(self):
         #Test native double input with array min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = zeros(a.shape)
-        M   = m + 0.5
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_data(self.nr, self.nc)
+        m = zeros(a.shape)
+        M = m + 0.5
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_simple_nonnative(self):
         #Test non native double input with scalar min/max.
         #Test native double input with non native double scalar min/max.
-        a   = self._generate_non_native_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 0.6
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_non_native_data(self.nr, self.nc)
+        m = -0.5
+        M = 0.6
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_equal(ac, act)
 
         #Test native double input with non native double scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5
-        M   = self._neg_byteorder(0.6)
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5
+        M = self._neg_byteorder(0.6)
         assert_(not M.dtype.isnative)
-        ac  = self.fastclip(a, m, M)
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_equal(ac, act)
 
     def test_simple_complex(self):
         #Test native complex input with native double scalar min/max.
         #Test native input with complex double scalar min/max.
-        a   = 3 * self._generate_data_complex(self.nr, self.nc)
-        m   = -0.5
-        M   = 1.
-        ac  = self.fastclip(a, m, M)
+        a = 3 * self._generate_data_complex(self.nr, self.nc)
+        m = -0.5
+        M = 1.
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
         #Test native input with complex double scalar min/max.
-        a   = 3 * self._generate_data(self.nr, self.nc)
-        m   = -0.5 + 1.j
-        M   = 1. + 2.j
-        ac  = self.fastclip(a, m, M)
+        a = 3 * self._generate_data(self.nr, self.nc)
+        m = -0.5 + 1.j
+        M = 1. + 2.j
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
@@ -1204,20 +1210,20 @@ class TestClip(TestCase):
 
     def test_clip_non_contig(self):
         #Test clip for non contiguous native input and native scalar min/max.
-        a   = self._generate_data(self.nr * 2, self.nc * 3)
-        a   = a[::2, ::3]
+        a = self._generate_data(self.nr * 2, self.nc * 3)
+        a = a[::2, ::3]
         assert_(not a.flags['F_CONTIGUOUS'])
         assert_(not a.flags['C_CONTIGUOUS'])
-        ac  = self.fastclip(a, -1.6, 1.7)
+        ac = self.fastclip(a, -1.6, 1.7)
         act = self.clip(a, -1.6, 1.7)
         assert_array_strict_equal(ac, act)
 
     def test_simple_out(self):
         #Test native double input with scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 0.6
-        ac  = zeros(a.shape)
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5
+        M = 0.6
+        ac = zeros(a.shape)
         act = zeros(a.shape)
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1225,10 +1231,10 @@ class TestClip(TestCase):
 
     def test_simple_int32_inout(self):
         #Test native int32 input with double min/max and int32 out.
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = float64(0)
-        M   = float64(2)
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = float64(0)
+        M = float64(2)
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1236,10 +1242,10 @@ class TestClip(TestCase):
 
     def test_simple_int64_out(self):
         #Test native int32 input with int32 scalar min/max and int64 out.
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = int32(-1)
-        M   = int32(1)
-        ac  = zeros(a.shape, dtype = int64)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = int32(-1)
+        M = int32(1)
+        ac = zeros(a.shape, dtype=int64)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1247,10 +1253,10 @@ class TestClip(TestCase):
 
     def test_simple_int64_inout(self):
         #Test native int32 input with double array min/max and int32 out.
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = zeros(a.shape, float64)
-        M   = float64(1)
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = zeros(a.shape, float64)
+        M = float64(1)
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1258,10 +1264,10 @@ class TestClip(TestCase):
 
     def test_simple_int32_out(self):
         #Test native double input with scalar min/max and int out.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -1.0
-        M   = 2.0
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_data(self.nr, self.nc)
+        m = -1.0
+        M = 2.0
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1269,164 +1275,164 @@ class TestClip(TestCase):
 
     def test_simple_inplace_01(self):
         #Test native double input with array min/max in-place.
-        a   = self._generate_data(self.nr, self.nc)
-        ac  = a.copy()
-        m   = zeros(a.shape)
-        M   = 1.0
+        a = self._generate_data(self.nr, self.nc)
+        ac = a.copy()
+        m = zeros(a.shape)
+        M = 1.0
         self.fastclip(a, m, M, a)
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
     def test_simple_inplace_02(self):
         #Test native double input with scalar min/max in-place.
-        a   = self._generate_data(self.nr, self.nc)
-        ac  = a.copy()
-        m   = -0.5
-        M   = 0.6
+        a = self._generate_data(self.nr, self.nc)
+        ac = a.copy()
+        m = -0.5
+        M = 0.6
         self.fastclip(a, m, M, a)
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
     def test_noncontig_inplace(self):
         #Test non contiguous double input with double scalar min/max in-place.
-        a   = self._generate_data(self.nr * 2, self.nc * 3)
-        a   = a[::2, ::3]
+        a = self._generate_data(self.nr * 2, self.nc * 3)
+        a = a[::2, ::3]
         assert_(not a.flags['F_CONTIGUOUS'])
         assert_(not a.flags['C_CONTIGUOUS'])
-        ac  = a.copy()
-        m   = -0.5
-        M   = 0.6
+        ac = a.copy()
+        m = -0.5
+        M = 0.6
         self.fastclip(a, m, M, a)
         self.clip(a, m, M, ac)
         assert_array_equal(a, ac)
 
     def test_type_cast_01(self):
         #Test native double input with scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 0.6
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5
+        M = 0.6
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_02(self):
         #Test native int32 input with int32 scalar min/max.
-        a   = self._generate_int_data(self.nr, self.nc)
-        a   = a.astype(int32)
-        m   = -2
-        M   = 4
-        ac  = self.fastclip(a, m, M)
+        a = self._generate_int_data(self.nr, self.nc)
+        a = a.astype(int32)
+        m = -2
+        M = 4
+        ac = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_03(self):
         #Test native int32 input with float64 scalar min/max.
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = -2
-        M   = 4
-        ac  = self.fastclip(a, float64(m), float64(M))
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = -2
+        M = 4
+        ac = self.fastclip(a, float64(m), float64(M))
         act = self.clip(a, float64(m), float64(M))
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_04(self):
         #Test native int32 input with float32 scalar min/max.
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = float32(-2)
-        M   = float32(4)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = float32(-2)
+        M = float32(4)
         act = self.fastclip(a, m, M)
-        ac  = self.clip(a, m, M)
+        ac = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_05(self):
         #Test native int32 with double arrays min/max.
-        a   = self._generate_int_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 1.
-        ac  = self.fastclip(a, m * zeros(a.shape), M)
+        a = self._generate_int_data(self.nr, self.nc)
+        m = -0.5
+        M = 1.
+        ac = self.fastclip(a, m * zeros(a.shape), M)
         act = self.clip(a, m * zeros(a.shape), M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_06(self):
         #Test native with NON native scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = 0.5
+        a = self._generate_data(self.nr, self.nc)
+        m = 0.5
         m_s = self._neg_byteorder(m)
-        M   = 1.
+        M = 1.
         act = self.clip(a, m_s, M)
-        ac  = self.fastclip(a, m_s, M)
+        ac = self.fastclip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_07(self):
         #Test NON native with native array min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5 * ones(a.shape)
-        M   = 1.
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5 * ones(a.shape)
+        M = 1.
         a_s = self._neg_byteorder(a)
         assert_(not a_s.dtype.isnative)
         act = a_s.clip(m, M)
-        ac  = self.fastclip(a_s, m, M)
+        ac = self.fastclip(a_s, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_08(self):
         #Test NON native with native scalar min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 1.
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5
+        M = 1.
         a_s = self._neg_byteorder(a)
         assert_(not a_s.dtype.isnative)
-        ac  = self.fastclip(a_s, m, M)
+        ac = self.fastclip(a_s, m, M)
         act = a_s.clip(m, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_09(self):
         #Test native with NON native array min/max.
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5 * ones(a.shape)
-        M   = 1.
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5 * ones(a.shape)
+        M = 1.
         m_s = self._neg_byteorder(m)
         assert_(not m_s.dtype.isnative)
-        ac  = self.fastclip(a, m_s, M)
+        ac = self.fastclip(a, m_s, M)
         act = self.clip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_10(self):
         #Test native int32 with float min/max and float out for output argument.
-        a   = self._generate_int_data(self.nr, self.nc)
-        b   = zeros(a.shape, dtype = float32)
-        m   = float32(-0.5)
-        M   = float32(1)
-        act = self.clip(a, m, M, out = b)
-        ac  = self.fastclip(a, m, M, out = b)
+        a = self._generate_int_data(self.nr, self.nc)
+        b = zeros(a.shape, dtype=float32)
+        m = float32(-0.5)
+        M = float32(1)
+        act = self.clip(a, m, M, out=b)
+        ac = self.fastclip(a, m, M, out=b)
         assert_array_strict_equal(ac, act)
 
     def test_type_cast_11(self):
         #Test non native with native scalar, min/max, out non native
-        a   = self._generate_non_native_data(self.nr, self.nc)
-        b   = a.copy()
-        b   = b.astype(b.dtype.newbyteorder('>'))
-        bt  = b.copy()
-        m   = -0.5
-        M   = 1.
-        self.fastclip(a, m, M, out = b)
-        self.clip(a, m, M, out = bt)
+        a = self._generate_non_native_data(self.nr, self.nc)
+        b = a.copy()
+        b = b.astype(b.dtype.newbyteorder('>'))
+        bt = b.copy()
+        m = -0.5
+        M = 1.
+        self.fastclip(a, m, M, out=b)
+        self.clip(a, m, M, out=bt)
         assert_array_strict_equal(b, bt)
 
     def test_type_cast_12(self):
         #Test native int32 input and min/max and float out
-        a   = self._generate_int_data(self.nr, self.nc)
-        b   = zeros(a.shape, dtype = float32)
-        m   = int32(0)
-        M   = int32(1)
-        act = self.clip(a, m, M, out = b)
-        ac  = self.fastclip(a, m, M, out = b)
+        a = self._generate_int_data(self.nr, self.nc)
+        b = zeros(a.shape, dtype=float32)
+        m = int32(0)
+        M = int32(1)
+        act = self.clip(a, m, M, out=b)
+        ac = self.fastclip(a, m, M, out=b)
         assert_array_strict_equal(ac, act)
 
     def test_clip_with_out_simple(self):
         #Test native double input with scalar min/max
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -0.5
-        M   = 0.6
-        ac  = zeros(a.shape)
+        a = self._generate_data(self.nr, self.nc)
+        m = -0.5
+        M = 0.6
+        ac = zeros(a.shape)
         act = zeros(a.shape)
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1434,10 +1440,10 @@ class TestClip(TestCase):
 
     def test_clip_with_out_simple2(self):
         #Test native int32 input with double min/max and int32 out
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = float64(0)
-        M   = float64(2)
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = float64(0)
+        M = float64(2)
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1445,10 +1451,10 @@ class TestClip(TestCase):
 
     def test_clip_with_out_simple_int32(self):
         #Test native int32 input with int32 scalar min/max and int64 out
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = int32(-1)
-        M   = int32(1)
-        ac  = zeros(a.shape, dtype = int64)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = int32(-1)
+        M = int32(1)
+        ac = zeros(a.shape, dtype=int64)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1456,10 +1462,10 @@ class TestClip(TestCase):
 
     def test_clip_with_out_array_int32(self):
         #Test native int32 input with double array min/max and int32 out
-        a   = self._generate_int32_data(self.nr, self.nc)
-        m   = zeros(a.shape, float64)
-        M   = float64(1)
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_int32_data(self.nr, self.nc)
+        m = zeros(a.shape, float64)
+        M = float64(1)
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1467,10 +1473,10 @@ class TestClip(TestCase):
 
     def test_clip_with_out_array_outint32(self):
         #Test native double input with scalar min/max and int out
-        a   = self._generate_data(self.nr, self.nc)
-        m   = -1.0
-        M   = 2.0
-        ac  = zeros(a.shape, dtype = int32)
+        a = self._generate_data(self.nr, self.nc)
+        m = -1.0
+        M = 2.0
+        ac = zeros(a.shape, dtype=int32)
         act = ac.copy()
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
@@ -1478,20 +1484,20 @@ class TestClip(TestCase):
 
     def test_clip_inplace_array(self):
         #Test native double input with array min/max
-        a   = self._generate_data(self.nr, self.nc)
-        ac  = a.copy()
-        m   = zeros(a.shape)
-        M   = 1.0
+        a = self._generate_data(self.nr, self.nc)
+        ac = a.copy()
+        m = zeros(a.shape)
+        M = 1.0
         self.fastclip(a, m, M, a)
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
     def test_clip_inplace_simple(self):
         #Test native double input with scalar min/max
-        a   = self._generate_data(self.nr, self.nc)
-        ac  = a.copy()
-        m   = -0.5
-        M   = 0.6
+        a = self._generate_data(self.nr, self.nc)
+        ac = a.copy()
+        m = -0.5
+        M = 0.6
         self.fastclip(a, m, M, a)
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
@@ -1580,13 +1586,11 @@ class TestAllclose(object):
         assert_array_equal(x, array([inf, 1]))
         assert_array_equal(y, array([0, inf]))
 
-
     def test_min_int(self):
         # Could make problems because of abs(min_int) == min_int
         min_int = np.iinfo(np.int_).min
         a = np.array([min_int], dtype=np.int_)
         assert_(allclose(a, a))
-
 
     def test_equalnan(self):
         x = np.array([1.0, np.nan])
@@ -1795,7 +1799,7 @@ class TestCreationFuncs(TestCase):
                 shape = ndims * [size]
                 try:
                     dtype = np.dtype('{0}{1}'.format(type, bytes))
-                except TypeError: # dtype combination does not exist
+                except TypeError:  # dtype combination does not exist
                     continue
                 else:
                     # do not fill void type
@@ -1840,7 +1844,6 @@ class TestCreationFuncs(TestCase):
         assert_(sys.getrefcount(dim) == beg)
         np.full([dim]*10, 0)
         assert_(sys.getrefcount(dim) == beg)
-
 
 
 class TestLikeFuncs(TestCase):
@@ -2102,7 +2105,7 @@ class TestRollaxis(TestCase):
         for (i, j) in self.tgtshape:
             # positive axis, positive start
             res = rollaxis(a, axis=i, start=j)
-            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
             assert_(np.all(res[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(i, j)], str((i,j)))
             assert_(not res.flags['OWNDATA'])
@@ -2110,7 +2113,7 @@ class TestRollaxis(TestCase):
             # negative axis, positive start
             ip = i + 1
             res = rollaxis(a, axis=-ip, start=j)
-            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
             assert_(np.all(res[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(4 - ip, j)])
             assert_(not res.flags['OWNDATA'])
@@ -2118,7 +2121,7 @@ class TestRollaxis(TestCase):
             # positive axis, negative start
             jp = j + 1 if j < 4 else j
             res = rollaxis(a, axis=i, start=-jp)
-            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
             assert_(np.all(res[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(i, 4 - jp)])
             assert_(not res.flags['OWNDATA'])
@@ -2127,7 +2130,7 @@ class TestRollaxis(TestCase):
             ip = i + 1
             jp = j + 1 if j < 4 else j
             res = rollaxis(a, axis=-ip, start=-jp)
-            i0, i1, i2, i3  = aind[np.array(res.shape) - 1]
+            i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
             assert_(np.all(res[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(4 - ip, 4 - jp)])
             assert_(not res.flags['OWNDATA'])

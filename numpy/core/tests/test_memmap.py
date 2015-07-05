@@ -27,7 +27,7 @@ class TestMemmap(TestCase):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
-        del fp # Test __del__ machinery, which handles cleanup
+        del fp  # Test __del__ machinery, which handles cleanup
 
         # Read data back from file
         newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
@@ -73,7 +73,7 @@ class TestMemmap(TestCase):
                     shape=self.shape)
         self.assertEqual(fp.filename, self.tmpfp.name)
 
-    @dec.knownfailureif(sys.platform=='gnu0', "This test is known to fail on hurd")
+    @dec.knownfailureif(sys.platform == 'gnu0', "This test is known to fail on hurd")
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)

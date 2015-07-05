@@ -10,6 +10,7 @@ from numpy.compat import asbytes, sixu
 if sys.version_info[:2] >= (3, 3):
     # Python 3.3 uses a flexible string representation
     ucs4 = False
+
     def buffer_length(arr):
         if isinstance(arr, unicode):
             arr = str(arr)
@@ -22,6 +23,7 @@ if sys.version_info[:2] >= (3, 3):
 elif sys.version_info[0] >= 3:
     import array as _array
     ucs4 = (_array.array('u').itemsize == 4)
+
     def buffer_length(arr):
         if isinstance(arr, unicode):
             return _array.array('u').itemsize * len(arr)
@@ -35,6 +37,7 @@ else:
         ucs4 = True
     else:
         ucs4 = False
+
     def buffer_length(arr):
         if isinstance(arr, ndarray):
             return len(arr.data)
@@ -116,8 +119,8 @@ class create_values(object):
         # Small check that data in array element is ok
         self.assertTrue(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        self.assertTrue(ua_scalar.encode('utf-8') == \
-                     (self.ucs_value*self.ulen).encode('utf-8'))
+        self.assertTrue(ua_scalar.encode('utf-8') ==
+                        (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if ucs4:
             self.assertTrue(buffer_length(ua_scalar) == 4*self.ulen)
@@ -201,8 +204,8 @@ class assign_values(object):
         # Small check that data in array element is ok
         self.assertTrue(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        self.assertTrue(ua_scalar.encode('utf-8') == \
-                     (self.ucs_value*self.ulen).encode('utf-8'))
+        self.assertTrue(ua_scalar.encode('utf-8') ==
+                        (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if ucs4:
             self.assertTrue(buffer_length(ua_scalar) == 4*self.ulen)
@@ -273,7 +276,6 @@ class test_assign_values_1009_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
-
 
 
 ############################################################

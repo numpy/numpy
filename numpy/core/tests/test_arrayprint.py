@@ -81,6 +81,7 @@ class TestArray2String(TestCase):
                 return 'o'
             else:
                 return 'O'
+
         x = np.arange(3)
         if sys.version_info[0] >= 3:
             x_hex = "[0x0 0x1 0x2]"
@@ -88,30 +89,31 @@ class TestArray2String(TestCase):
         else:
             x_hex = "[0x0L 0x1L 0x2L]"
             x_oct = "[0L 01L 02L]"
-        assert_(np.array2string(x, formatter={'all':_format_function}) == \
+        assert_(np.array2string(x, formatter={'all':_format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==\
+        assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) == \
+        assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) ==
                 "[0.0000 1.0000 2.0000]")
-        assert_equal(np.array2string(x, formatter={'int':lambda x: hex(x)}), \
+        assert_equal(np.array2string(x, formatter={'int':lambda x: hex(x)}),
                 x_hex)
-        assert_equal(np.array2string(x, formatter={'int':lambda x: oct(x)}), \
+        assert_equal(np.array2string(x, formatter={'int':lambda x: oct(x)}),
                 x_oct)
 
         x = np.arange(3.)
-        assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) == \
+        assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
-        assert_(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) == \
+        assert_(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
-        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) == \
-            '[abcabc defdef]')
+        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
+                '[abcabc defdef]')
 
 
 class TestPrintOptions:
     """Test getting and setting global print options."""
+
     def setUp(self):
         self.oldopts = np.get_printoptions()
 
@@ -160,7 +162,6 @@ def test_unicode_object_array():
         expected = "array([u'\\xe9'], dtype=object)"
     x = np.array([sixu('\xe9')], dtype=object)
     assert_equal(repr(x), expected)
-
 
 
 if __name__ == "__main__":

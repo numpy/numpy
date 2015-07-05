@@ -331,12 +331,15 @@ class TestSubarray(TestCase):
         dt = np.dtype([('a', 'f4', l)])
         assert_(isinstance(dt['a'].shape, tuple))
         #
+
         class IntLike(object):
             def __index__(self):
                 return 3
+
             def __int__(self):
                 # (a PyNumber_Check fails without __int__)
                 return 3
+
         dt = np.dtype([('a', 'f4', IntLike())])
         assert_(isinstance(dt['a'].shape, tuple))
         assert_(isinstance(dt['a'].shape[0], int))
@@ -367,6 +370,7 @@ class TestSubarray(TestCase):
 
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
+
     def test1(self):
         simple1 = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
             'titles': ['Red pixel', 'Blue pixel']})
@@ -538,7 +542,6 @@ class TestDtypeAttributeDeletion(object):
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
 
-
     def test_dtype_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
         attr = ["names"]
@@ -556,7 +559,8 @@ class TestDtypeAttributes(TestCase):
 
     def test_name_dtype_subclass(self):
         # Ticket #4357
-        class user_def_subcls(np.void): pass
+        class user_def_subcls(np.void):
+            pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 

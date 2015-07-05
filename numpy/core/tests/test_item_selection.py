@@ -2,7 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import *
-import sys, warnings
+import sys
+import warnings
 
 
 class TestTake(TestCase):
@@ -44,7 +45,6 @@ class TestTake(TestCase):
                         else:
                             res = ta.take(index_array, mode=mode, axis=1)
                             assert_(res.shape == (2,) + index_array.shape)
-
 
     def test_refcounting(self):
         objects = [object() for i in range(10)]

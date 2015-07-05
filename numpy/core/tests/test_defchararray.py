@@ -8,7 +8,7 @@ from numpy.core.multiarray import _vec_string
 
 from numpy.compat import asbytes, asbytes_nested, sixu
 
-kw_unicode_true = {'unicode': True} # make 2to3 work properly
+kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
 class TestBasic(TestCase):
@@ -58,8 +58,10 @@ class TestBasic(TestCase):
         assert_array_equal(B, A)
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
+
         def fail():
             B = np.char.array(A, **kw_unicode_false)
+
         self.assertRaises(UnicodeEncodeError, fail)
 
     def test_unicode_upconvert(self):
@@ -82,38 +84,52 @@ class TestBasic(TestCase):
 
 class TestVecString(TestCase):
     def test_non_existent_method(self):
+
         def fail():
             _vec_string('a', np.string_, 'bogus')
+
         self.assertRaises(AttributeError, fail)
 
     def test_non_string_array(self):
+
         def fail():
             _vec_string(1, np.string_, 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_args_tuple(self):
+
         def fail():
             _vec_string(['a'], np.string_, 'strip', 1)
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_type_descr(self):
+
         def fail():
             _vec_string(['a'], 'BOGUS', 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_function_args(self):
+
         def fail():
             _vec_string(['a'], np.string_, 'strip', (1,))
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_result_type(self):
+
         def fail():
             _vec_string(['a'], np.integer, 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_broadcast_error(self):
+
         def fail():
             _vec_string([['abc', 'def']], np.integer, 'find', (['a', 'd', 'j'],))
+
         self.assertRaises(ValueError, fail)
 
 
@@ -210,8 +226,10 @@ class TestInformation(TestCase):
         assert_(issubclass(self.A.endswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.endswith(' '), [[1, 0], [0, 0], [1, 0]])
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
+
         def fail():
             self.A.endswith('3', 'fdjk')
+
         self.assertRaises(TypeError, fail)
 
     def test_find(self):
@@ -222,8 +240,10 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.find(['1', 'P']), [[-1, -1], [0, -1], [0, 1]])
 
     def test_index(self):
+
         def fail():
             self.A.index('a')
+
         self.assertRaises(ValueError, fail)
         assert_(np.char.index('abcba', 'b') == 1)
         assert_(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
@@ -264,8 +284,10 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.rfind(['1', 'P']), [[-1, -1], [0, -1], [0, 2]])
 
     def test_rindex(self):
+
         def fail():
             self.A.rindex('a')
+
         self.assertRaises(ValueError, fail)
         assert_(np.char.rindex('abcba', 'b') == 3)
         assert_(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
@@ -274,8 +296,10 @@ class TestInformation(TestCase):
         assert_(issubclass(self.A.startswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.startswith(' '), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
+
         def fail():
             self.A.startswith('3', 'fdjk')
+
         self.assertRaises(TypeError, fail)
 
 
@@ -536,16 +560,20 @@ class TestMethods(TestCase):
                 [sixu('123 \t 345 \0 '), sixu('UPPER')]])
 
     def test_isnumeric(self):
+
         def fail():
             self.A.isnumeric()
+
         self.assertRaises(TypeError, fail)
         assert_(issubclass(self.B.isnumeric().dtype.type, np.bool_))
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
 
     def test_isdecimal(self):
+
         def fail():
             self.A.isdecimal()
+
         self.assertRaises(TypeError, fail)
         assert_(issubclass(self.B.isdecimal().dtype.type, np.bool_))
         assert_array_equal(self.B.isdecimal(), [
@@ -626,7 +654,7 @@ class TestOperations(TestCase):
             except TypeError:
                 pass
             else:
-                self.fail("chararray __rmod__ should fail with " \
+                self.fail("chararray __rmod__ should fail with "
                           "non-string objects")
 
     def test_slice(self):
