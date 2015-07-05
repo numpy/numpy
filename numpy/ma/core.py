@@ -6816,18 +6816,37 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj):
-    "maskedarray version of the numpy function."
-    return np.rank(getdata(obj))
+def rank(obj): 
+    """
+    maskedarray version of the numpy function.
+
+    .. note::
+        Deprecated since 1.10.0
+
+    """
+    # 2015-04-12, 1.10.0
+    warnings.warn(
+        "`rank` is deprecated; use the `ndim` function instead. ",
+        np.VisibleDeprecationWarning)
+    return np.ndim(getdata(obj))
+
 rank.__doc__ = np.rank.__doc__
-#
+
+
+def ndim(obj): 
+    """
+    maskedarray version of the numpy function.
+
+    """
+    return np.ndim(getdata(obj))
+
+ndim.__doc__ = np.ndim.__doc__
 
 
 def shape(obj):
     "maskedarray version of the numpy function."
     return np.shape(getdata(obj))
 shape.__doc__ = np.shape.__doc__
-#
 
 
 def size(obj, axis=None):
