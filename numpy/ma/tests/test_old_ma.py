@@ -1,13 +1,25 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 from functools import reduce
 
 import numpy as np
-from numpy.ma import *
-from numpy.core.numerictypes import float32
-from numpy.ma.core import umath
-from numpy.testing import *
+import numpy.core.umath as umath
+import numpy.core.fromnumeric as fromnumeric
+from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.ma.testutils import assert_array_equal
+from numpy.ma import (
+    MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
+    arange, arccos, arcsin, arctan, arctan2, array, average, choose,
+    concatenate, conjugate, cos, cosh, count, divide, equal, exp, filled,
+    getmask, greater, greater_equal, inner, isMaskedArray, less,
+    less_equal, log, log10, make_mask, masked, masked_array, masked_equal,
+    masked_greater, masked_greater_equal, masked_inside, masked_less,
+    masked_less_equal, masked_not_equal, masked_outside,
+    masked_print_option, masked_values, masked_where, maximum, minimum,
+    multiply, nomask, nonzero, not_equal, ones, outer, product, put, ravel,
+    repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
+    take, tan, tanh, transpose, where, zeros,
+    )
 
 pi = np.pi
 
@@ -15,10 +27,7 @@ pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print("""Not eq:%s
-%s
-----
-%s""" % (msg, str(v), str(w)))
+        print("Not eq:%s\n%s\n----%s" % (msg, str(v), str(w)))
     return result
 
 
@@ -202,10 +211,11 @@ class TestMa(TestCase):
         x2 = array(x1, mask=[1, 0, 0, 0])
         x3 = array(x1, mask=[0, 1, 0, 1])
         x4 = array(x1)
-    # test conversion to strings
-        junk, garbage = str(x2), repr(x2)
+        # test conversion to strings
+        str(x2)  # raises?
+        repr(x2)  # raises?
         assert_(eq(np.sort(x1), sort(x2, fill_value=0)))
-    # tests of indexing
+        # tests of indexing
         assert_(type(x2[1]) is type(x1[1]))
         assert_(x1[1] == x2[1])
         assert_(x2[0] is masked)
@@ -387,7 +397,7 @@ class TestMa(TestCase):
                    [1, 0, 1, 0, 1]))
         assert_(eq(masked_where([1, 1, 0, 0, 0], [1, 2, 3, 4, 5]),
                    [99, 99, 3, 4, 5]))
-        atest = ones((10, 10, 10), dtype=float32)
+        atest = ones((10, 10, 10), dtype=np.float32)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest, atest)
         assert_(eq(atest, ctest))
@@ -489,7 +499,7 @@ class TestMa(TestCase):
         xm /= arange(10)
         assert_(eq(xm, ones((10,))))
 
-        x = arange(10).astype(float32)
+        x = arange(10).astype(np.float32)
         xm = arange(10)
         xm[2] = masked
         x += 1.

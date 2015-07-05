@@ -9,25 +9,43 @@ from __future__ import division, absolute_import, print_function
 __author__ = "Pierre GF Gerard-Marchant"
 
 import warnings
-import sys
 import pickle
-from functools import reduce
 import operator
-
-from nose.tools import assert_raises
+from functools import reduce
 
 import numpy as np
 import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
+import numpy.core.umath as umath
+from numpy.testing import TestCase, run_module_suite, assert_raises
 from numpy import ndarray
-from numpy.ma.testutils import *
-from numpy.ma.core import *
 from numpy.compat import asbytes, asbytes_nested
+from numpy.ma.testutils import (
+    assert_, assert_array_equal, assert_equal, assert_almost_equal,
+    assert_equal_records, fail_if_equal, assert_not_equal,
+    assert_mask_equal,
+    )
+from numpy.ma.core import (
+    MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
+    allclose, allequal, alltrue, angle, anom, arange, arccos, arctan2,
+    arcsin, arctan, argsort, array, asarray, choose, concatenate,
+    conjugate, cos, cosh, count, default_fill_value, diag, divide, empty,
+    empty_like, equal, exp, flatten_mask, filled, fix_invalid,
+    flatten_structured_array, fromflex, getmask, getmaskarray, greater,
+    greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
+    log10, make_mask, make_mask_descr, mask_or, masked, masked_array,
+    masked_equal, masked_greater, masked_greater_equal, masked_inside,
+    masked_less, masked_less_equal, masked_not_equal, masked_outside,
+    masked_print_option, masked_values, masked_where, max, maximum,
+    maximum_fill_value, min, minimum, minimum_fill_value, mod, multiply,
+    mvoid, nomask, not_equal, ones, outer, power, product, put, putmask,
+    ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
+    subtract, sum, take, tan, tanh, transpose, where, zeros,
+    )
 
 pi = np.pi
 
 
-#..............................................................................
 class TestMaskedArray(TestCase):
     # Base test class for MaskedArrays.
 
@@ -95,7 +113,7 @@ class TestMaskedArray(TestCase):
             xm.shape = s
             ym.shape = s
             xf.shape = s
-            #
+
             self.assertTrue(not isMaskedArray(x))
             self.assertTrue(isMaskedArray(xm))
             assert_equal(shape(xm), s)
@@ -126,7 +144,7 @@ class TestMaskedArray(TestCase):
         xmym = concatenate((xm, ym), 1)
         assert_equal(np.concatenate((x, y), 1), xmym)
         assert_equal(np.concatenate((xm.mask, ym.mask), 1), xmym._mask)
-        #
+
         x = zeros(2)
         y = array(ones(2), mask=[False, True])
         z = concatenate((x, y))
@@ -141,7 +159,7 @@ class TestMaskedArray(TestCase):
         data = masked_array(list(zip(np.random.rand(10),
                                      np.arange(10))),
                             dtype=[('a', float), ('b', int)])
-        #
+
         test = concatenate([data[:5], data[5:]])
         assert_equal_records(test, data)
 
@@ -177,7 +195,7 @@ class TestMaskedArray(TestCase):
         data = array((x, x[::-1]))
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
         assert_equal(data._mask, [[1, 0, 0, 0, 0], [0, 0, 0, 0, 1]])
-        #
+
         x.mask = nomask
         data = array((x, x[::-1]))
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
@@ -221,7 +239,7 @@ class TestMaskedArray(TestCase):
         a[0] = x
         assert_equal(a[0], x)
         self.assertTrue(a[0] is x)
-        #
+
         import datetime
         dt = datetime.datetime.now()
         a[0] = dt
@@ -234,7 +252,8 @@ class TestMaskedArray(TestCase):
         x3 = array(x1, mask=[0, 1, 0, 1])
         x4 = array(x1)
         # test conversion to strings
-        junk, garbage = str(x2), repr(x2)
+        str(x2)  # raises?
+        repr(x2)  # raises?
         assert_equal(np.sort(x1), sort(x2, endwith=False))
         # tests of indexing
         assert_(type(x2[1]) is type(x1[1]))
@@ -283,8 +302,8 @@ class TestMaskedArray(TestCase):
         x3 = array(x1, mask=[[0, 1, 0], [1, 0, 0]])
         x4 = array(x1)
         # test conversion to strings
-        junk, garbage = str(x2), repr(x2)
-        # assert_equal(np.sort(x1), sort(x2, endwith=False))
+        str(x2)  # raises?
+        repr(x2)  # raises?
         # tests of indexing
         assert_(type(x2[1, 0]) is type(x1[1, 0]))
         assert_(x1[1, 0] == x2[1, 0])
@@ -372,7 +391,7 @@ class TestMaskedArray(TestCase):
         y9 = x4.copy()
         assert_equal(y9._data, x4._data)
         assert_equal(y9._mask, x4._mask)
-        #
+
         x = masked_array([1, 2, 3], mask=[0, 1, 0])
         # Copy is False by default
         y = masked_array(x)
@@ -388,11 +407,11 @@ class TestMaskedArray(TestCase):
         copied = deepcopy(a)
         assert_equal(copied.mask, a.mask)
         assert_not_equal(id(a._mask), id(copied._mask))
-        #
+
         copied[1] = 1
         assert_equal(copied.mask, [0, 0, 0])
         assert_equal(a.mask, [0, 1, 0])
-        #
+
         copied = deepcopy(a)
         assert_equal(copied.mask, a.mask)
         copied.mask[1] = False
@@ -463,11 +482,11 @@ class TestMaskedArray(TestCase):
         assert_equal(1, int(array([[[1]]])))
         assert_equal(1.0, float(array([[1]])))
         self.assertRaises(TypeError, float, array([1, 1]))
-        #
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', UserWarning)
             assert_(np.isnan(float(array([1], mask=[1]))))
-        #
+
         a = array([1, 2, 3], mask=[1, 0, 0])
         self.assertRaises(TypeError, lambda:float(a))
         assert_equal(float(a[-1]), 3.)
@@ -487,14 +506,14 @@ class TestMaskedArray(TestCase):
         assert_equal(z.imag, 10 * x)
         assert_equal((z * conjugate(z)).real, 101 * x * x)
         z.imag[...] = 0.0
-        #
+
         x = arange(10)
         x[3] = masked
         assert_(str(x[3]) == str(masked))
         c = x >= 8
         assert_(count(where(c, masked, masked)) == 0)
         assert_(shape(where(c, masked, masked)) == c.shape)
-        #
+
         z = masked_where(c, x)
         assert_(z.dtype is x.dtype)
         assert_(z[3] is masked)
@@ -565,7 +584,7 @@ class TestMaskedArray(TestCase):
         test = a.filled(0)
         control = np.array([(1, (0, 1)), (2, (2, 0))], dtype=ndtype)
         assert_equal(test, control)
-        #
+
         test = a['B'].filled(0)
         control = np.array([(0, 1), (2, 0)], dtype=a['B'].dtype)
         assert_equal(test, control)
@@ -637,10 +656,10 @@ class TestMaskedArray(TestCase):
         a = np.array([(1, 2,)], dtype=ndtype)[0]
         f = mvoid(a)
         assert_(isinstance(f, mvoid))
-        #
+
         a = masked_array([(1, 2)], mask=[(1, 0)], dtype=ndtype)[0]
         assert_(isinstance(a, mvoid))
-        #
+
         a = masked_array([(1, 2), (1, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         f = mvoid(a._data[0], a._mask[0])
         assert_(isinstance(f, mvoid))
@@ -698,7 +717,6 @@ class TestMaskedArray(TestCase):
         assert mx2[0] == 0.
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayArithmetic(TestCase):
     # Base test class for MaskedArrays.
 
@@ -761,15 +779,15 @@ class TestMaskedArrayArithmetic(TestCase):
         x = arange(6, dtype=float)
         x.shape = (2, 3)
         y = arange(3, dtype=float)
-        #
+
         z = x / y
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
-        #
+
         z = x / y[None,:]
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
-        #
+
         y = arange(2, dtype=float)
         z = x / y[:, None]
         assert_equal(z, [[-1., -1., -1.], [3., 4., 5.]])
@@ -880,7 +898,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal([1, 2], res)
         assert_(getmask(res) is nomask)
 
-        ott= array([0., 1., 2., 3.])
+        ott = array([0., 1., 2., 3.])
         res = count(ott, 0)
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
@@ -896,7 +914,7 @@ class TestMaskedArrayArithmetic(TestCase):
         # following are true because of careful selection of data
         assert_equal(max(xr), maximum(xmr))
         assert_equal(min(xr), minimum(xmr))
-        #
+
         assert_equal(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3])
         assert_equal(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9])
         x = arange(5)
@@ -907,7 +925,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(maximum(x, y), where(greater(x, y), x, y))
         assert_(minimum(x) == 0)
         assert_(maximum(x) == 4)
-        #
+
         x = arange(4).reshape(2, 2)
         x[-1, -1] = masked
         assert_equal(maximum(x), 2)
@@ -917,15 +935,15 @@ class TestMaskedArrayArithmetic(TestCase):
         aminimum = minimum(a, a)
         self.assertTrue(isinstance(aminimum, MaskedArray))
         assert_equal(aminimum, np.minimum(a, a))
-        #
+
         aminimum = minimum.outer(a, a)
         self.assertTrue(isinstance(aminimum, MaskedArray))
         assert_equal(aminimum, np.minimum.outer(a, a))
-        #
+
         amaximum = maximum(a, a)
         self.assertTrue(isinstance(amaximum, MaskedArray))
         assert_equal(amaximum, np.maximum(a, a))
-        #
+
         amaximum = maximum.outer(a, a)
         self.assertTrue(isinstance(amaximum, MaskedArray))
         assert_equal(amaximum, np.maximum.outer(a, a))
@@ -975,7 +993,7 @@ class TestMaskedArrayArithmetic(TestCase):
         self.assertTrue(xm[0].ptp() is masked)
         self.assertTrue(xm[0].ptp(0) is masked)
         self.assertTrue(xm[0].ptp(-1) is masked)
-        #
+
         x = array([1, 2, 3], mask=True)
         self.assertTrue(x.min() is masked)
         self.assertTrue(x.max() is masked)
@@ -1006,21 +1024,21 @@ class TestMaskedArrayArithmetic(TestCase):
         # Test binary operations on 2D data
         a = array([[1.], [2.], [3.]], mask=[[False], [True], [True]])
         b = array([[2., 3.], [4., 5.], [6., 7.]])
-        #
+
         test = a * b
         control = array([[2., 3.], [2., 2.], [3., 3.]],
                         mask=[[0, 0], [1, 1], [1, 1]])
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         test = b * a
         control = array([[2., 3.], [4., 5.], [6., 7.]],
                         mask=[[0, 0], [1, 1], [1, 1]])
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         a = array([[1.], [2.], [3.]])
         b = array([[2., 3.], [4., 5.], [6., 7.]],
                   mask=[[0, 0], [0, 0], [0, 1]])
@@ -1030,7 +1048,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         test = b * a
         control = array([[2, 3], [8, 10], [18, 7]],
                         mask=[[0, 0], [0, 0], [0, 1]])
@@ -1042,21 +1060,21 @@ class TestMaskedArrayArithmetic(TestCase):
         # Test domained binary operations on 2D data
         a = array([[1.], [2.], [3.]], mask=[[False], [True], [True]])
         b = array([[2., 3.], [4., 5.], [6., 7.]])
-        #
+
         test = a / b
         control = array([[1. / 2., 1. / 3.], [2., 2.], [3., 3.]],
                         mask=[[0, 0], [1, 1], [1, 1]])
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         test = b / a
         control = array([[2. / 1., 3. / 1.], [4., 5.], [6., 7.]],
                         mask=[[0, 0], [1, 1], [1, 1]])
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         a = array([[1.], [2.], [3.]])
         b = array([[2., 3.], [4., 5.], [6., 7.]],
                   mask=[[0, 0], [0, 0], [0, 1]])
@@ -1066,7 +1084,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, control)
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
-        #
+
         test = b / a
         control = array([[2 / 1., 3 / 1.], [4 / 2., 5 / 2.], [6 / 3., 7]],
                         mask=[[0, 0], [0, 0], [0, 1]])
@@ -1135,9 +1153,9 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_methods_with_output(self):
         xm = array(np.random.uniform(0, 10, 12)).reshape(3, 4)
         xm[:, 0] = xm[0] = xm[-1, -1] = masked
-        #
+
         funclist = ('sum', 'prod', 'var', 'std', 'max', 'min', 'ptp', 'mean',)
-        #
+
         for funcname in funclist:
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
@@ -1148,7 +1166,7 @@ class TestMaskedArrayArithmetic(TestCase):
             # ... the result should be the given output
             assert_(result is output)
             assert_equal(result, xmmeth(axis=0, out=output))
-            #
+
             output = empty(4, dtype=int)
             result = xmmeth(axis=0, out=output)
             assert_(result is output)
@@ -1187,8 +1205,9 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test.mask, [False, False])
 
     def test_eq_w_None(self):
-        # Really, comparisons with None should not be done, but
-        # check them anyway
+        # Really, comparisons with None should not be done, but check them
+        # anyway. Note that pep8 will flag these tests.
+
         # With partial mask
         a = array([1, 2], mask=[0, 1])
         assert_equal(a == None, False)
@@ -1219,19 +1238,18 @@ class TestMaskedArrayArithmetic(TestCase):
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         control = masked_array([np.nan, np.nan, 0, np.log(2), -1],
                                mask=[1, 1, 0, 0, 1])
-        #
+
         test = log(a)
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
-        #
+
         test = np.log(a)
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayAttributes(TestCase):
 
     def test_keepmask(self):
@@ -1292,7 +1310,7 @@ class TestMaskedArrayAttributes(TestCase):
         xh[filled(xh > 1, False)] = 5
         assert_equal(xh._data, [0, 1, 2, 5, 5])
         assert_equal(xh._mask, [1, 1, 1, 0, 0])
-        #
+
         xh = array([[1, 2], [3, 4]], mask=[[1, 0], [0, 0]], hard_mask=True)
         xh[0] = 0
         assert_equal(xh._data, [[1, 0], [3, 4]])
@@ -1407,7 +1425,7 @@ class TestMaskedArrayAttributes(TestCase):
 
         m = np.ma.array(a)
         m.dtype = np.dtype('f4')
-        repr(m) # raises?
+        repr(m)  # raises?
         assert_equal(m.dtype, np.dtype('f4'))
 
         # check that dtype changes that change shape of mask too much
@@ -1417,7 +1435,7 @@ class TestMaskedArrayAttributes(TestCase):
             m.dtype = np.dtype('f8')
         assert_raises(ValueError, assign)
 
-        b = a.view(dtype='f4', type=np.ma.MaskedArray) # raises?
+        b = a.view(dtype='f4', type=np.ma.MaskedArray)  # raises?
         assert_equal(b.dtype, np.dtype('f4'))
 
         # check that nomask is preserved
@@ -1428,18 +1446,17 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(m._mask, np.ma.nomask)
 
 
-#------------------------------------------------------------------------------
 class TestFillingValues(TestCase):
 
     def test_check_on_scalar(self):
         # Test _check_fill_value set to valid and invalid values
         _check_fill_value = np.ma.core._check_fill_value
-        #
+
         fval = _check_fill_value(0, int)
         assert_equal(fval, 0)
         fval = _check_fill_value(None, int)
         assert_equal(fval, default_fill_value(0))
-        #
+
         fval = _check_fill_value(0, "|S3")
         assert_equal(fval, asbytes("0"))
         fval = _check_fill_value(None, "|S3")
@@ -1502,20 +1519,20 @@ class TestFillingValues(TestCase):
         # properly dealt with
         a = array(asbytes_nested(['3', '4', '5']))
         a._optinfo.update({'comment':"updated!"})
-        #
+
         b = array(a, dtype=int)
         assert_equal(b._data, [3, 4, 5])
         assert_equal(b.fill_value, default_fill_value(0))
-        #
+
         b = array(a, dtype=float)
         assert_equal(b._data, [3, 4, 5])
         assert_equal(b.fill_value, default_fill_value(0.))
-        #
+
         b = a.astype(int)
         assert_equal(b._data, [3, 4, 5])
         assert_equal(b.fill_value, default_fill_value(0))
         assert_equal(b._optinfo['comment'], "updated!")
-        #
+
         b = a.astype([('a', '|S3')])
         assert_equal(b['a']._data, a._data)
         assert_equal(b['a'].fill_value, a.fill_value)
@@ -1525,19 +1542,19 @@ class TestFillingValues(TestCase):
         data = masked_array([1, 2, 3], fill_value=-999)
         series = data[[0, 2, 1]]
         assert_equal(series._fill_value, data._fill_value)
-        #
+
         mtype = [('f', float), ('s', '|S3')]
         x = array([(1, 'a'), (2, 'b'), (pi, 'pi')], dtype=mtype)
         x.fill_value = 999
         assert_equal(x.fill_value.item(), [999., asbytes('999')])
         assert_equal(x['f'].fill_value, 999)
         assert_equal(x['s'].fill_value, asbytes('999'))
-        #
+
         x.fill_value = (9, '???')
         assert_equal(x.fill_value.item(), (9, asbytes('???')))
         assert_equal(x['f'].fill_value, 9)
         assert_equal(x['s'].fill_value, asbytes('???'))
-        #
+
         x = array([1, 2, 3.1])
         x.fill_value = 999
         assert_equal(np.asarray(x.fill_value).dtype, float)
@@ -1560,7 +1577,7 @@ class TestFillingValues(TestCase):
         assert_equal(_check_fill_value(None, ndtype), control)
         control = np.array((0,), dtype=[('f0', float)]).astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
-        #
+
         ndtype = np.dtype("int, (2,3)float, float")
         control = np.array((default_fill_value(0),
                             default_fill_value(0.),
@@ -1594,13 +1611,13 @@ class TestFillingValues(TestCase):
         assert_equal(test['A'], default_fill_value(a['A']))
         assert_equal(test['B']['BA'], default_fill_value(a['B']['BA']))
         assert_equal(test['B']['BB'], default_fill_value(a['B']['BB']))
-        #
+
         test = minimum_fill_value(a)
         assert_equal(test[0], minimum_fill_value(a['A']))
         assert_equal(test[1][0], minimum_fill_value(a['B']['BA']))
         assert_equal(test[1][1], minimum_fill_value(a['B']['BB']))
         assert_equal(test[1], minimum_fill_value(a['B']))
-        #
+
         test = maximum_fill_value(a)
         assert_equal(test[0], maximum_fill_value(a['A']))
         assert_equal(test[1][0], maximum_fill_value(a['B']['BA']))
@@ -1643,13 +1660,13 @@ class TestFillingValues(TestCase):
         # Test adding a fill_value parameter to empty/ones/zeros
         a = empty(3, fill_value=999.)
         assert_equal(a.fill_value, 999.)
-        #
+
         a = ones(3, fill_value=999., dtype=float)
         assert_equal(a.fill_value, 999.)
-        #
+
         a = zeros(3, fill_value=0., dtype=complex)
         assert_equal(a.fill_value, 0.)
-        #
+
         a = identity(3, fill_value=0., dtype=complex)
         assert_equal(a.fill_value, 0.)
 
@@ -1696,7 +1713,6 @@ class TestFillingValues(TestCase):
         assert_(y.fill_value == 999999)
 
 
-#------------------------------------------------------------------------------
 class TestUfuncs(TestCase):
     # Test class for the application of ufuncs on MaskedArrays.
 
@@ -1816,7 +1832,6 @@ class TestUfuncs(TestCase):
         assert_(a / me_too == "Me2rdiv")
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayInPlaceArithmetics(TestCase):
     # Test MaskedArray Arithmetics
 
@@ -1843,7 +1858,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(x, y + 1)
         xm += 1
         assert_equal(xm, y + 1)
-        #
+
         (x, _, xm) = self.floatdata
         id1 = x.data.ctypes._data
         x += 1.
@@ -1934,20 +1949,20 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(xm.mask, mask_or(mask_or(m, a.mask), (a == 0)))
 
     def test_inplace_division_misc(self):
-        #
+
         x = [1., 1., 1., -2., pi / 2., 4., 5., -10., 10., 1., 2., 3.]
         y = [5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.]
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
-        #
+
         z = xm / ym
         assert_equal(z._mask, [1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1])
         assert_equal(z._data,
                      [1., 1., 1., -1., -pi / 2., 4., 5., 1., 1., 1., 2., 3.])
         #assert_equal(z._data, [0.2,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
-        #
+
         xm = xm.copy()
         xm /= ym
         assert_equal(xm._mask, [1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1])
@@ -2066,7 +2081,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(a, [[2, 2], [4, 4]])
         if a.mask is not nomask:
             assert_equal(a.mask, [[0, 0], [0, 0]])
-        #
+
         a = array([[1, 1], [3, 3]])
         b = array([1, 1], mask=[0, 1])
         a += b
@@ -2080,7 +2095,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(a, [[0, 0], [2, 2]])
         if a.mask is not nomask:
             assert_equal(a.mask, [[0, 0], [0, 0]])
-        #
+
         a = array([[1, 1], [3, 3]])
         b = array([1, 1], mask=[0, 1])
         a -= b
@@ -2094,7 +2109,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(a, [[1, 1], [3, 3]])
         if a.mask is not nomask:
             assert_equal(a.mask, [[0, 0], [0, 0]])
-        #
+
         a = array([[1, 1], [3, 3]])
         b = array([1, 1], mask=[0, 1])
         a *= b
@@ -2144,7 +2159,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                 assert_equal(xm, y - t(1))
 
                 assert_equal(len(w), 0, "Failed on type=%s." % t)
-
 
     def test_inplace_subtraction_array_type(self):
         # Test of inplace subtractions
@@ -2322,7 +2336,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                 assert_equal(len(w), 0, "Failed on type=%s." % t)
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayMethods(TestCase):
     # Test class for miscellaneous MaskedArrays methods.
     def setUp(self):
@@ -2368,7 +2381,7 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(a.compress([1, 0, 1]), a._data.compress([1, 0, 1]))
         assert_equal(a.conj(), a._data.conj())
         assert_equal(a.conjugate(), a._data.conjugate())
-        #
+
         m = array([[1, 2], [3, 4]])
         assert_equal(m.diagonal(), m._data.diagonal())
         assert_equal(a.sum(), a._data.sum())
@@ -2410,14 +2423,14 @@ class TestMaskedArrayMethods(TestCase):
         mx = masked_array(x, mask=m)
         mxbig = (mx > 0.5)
         mxsmall = (mx < 0.5)
-        #
+
         self.assertFalse(mxbig.all())
         self.assertTrue(mxbig.any())
         assert_equal(mxbig.all(0), [False, False, True])
         assert_equal(mxbig.all(1), [False, False, True])
         assert_equal(mxbig.any(0), [False, False, True])
         assert_equal(mxbig.any(1), [True, True, True])
-        #
+
         self.assertFalse(mxsmall.all())
         self.assertTrue(mxsmall.any())
         assert_equal(mxsmall.all(0), [True, True, False])
@@ -2436,14 +2449,14 @@ class TestMaskedArrayMethods(TestCase):
         mX = masked_array(X, mask=m)
         mXbig = (mX > 0.5)
         mXsmall = (mX < 0.5)
-        #
+
         self.assertFalse(mXbig.all())
         self.assertTrue(mXbig.any())
         assert_equal(mXbig.all(0), np.matrix([False, False, True]))
         assert_equal(mXbig.all(1), np.matrix([False, False, True]).T)
         assert_equal(mXbig.any(0), np.matrix([False, False, True]))
         assert_equal(mXbig.any(1), np.matrix([True, True, True]).T)
-        #
+
         self.assertFalse(mXsmall.all())
         self.assertTrue(mXsmall.any())
         assert_equal(mXsmall.all(0), np.matrix([True, True, False]))
@@ -2455,13 +2468,13 @@ class TestMaskedArrayMethods(TestCase):
         # Some fun with all and any
         store = empty((), dtype=bool)
         full = array([1, 2, 3], mask=True)
-        #
+
         self.assertTrue(full.all() is masked)
         full.all(out=store)
         self.assertTrue(store)
         self.assertTrue(store._mask, True)
         self.assertTrue(store is not masked)
-        #
+
         store = empty((), dtype=bool)
         self.assertTrue(full.any() is masked)
         full.any(out=store)
@@ -2472,7 +2485,7 @@ class TestMaskedArrayMethods(TestCase):
     def test_argmax_argmin(self):
         # Tests argmin & argmax on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
-        #
+
         assert_equal(mx.argmin(), 35)
         assert_equal(mX.argmin(), 35)
         assert_equal(m2x.argmin(), 4)
@@ -2481,12 +2494,12 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(mX.argmax(), 28)
         assert_equal(m2x.argmax(), 31)
         assert_equal(m2X.argmax(), 31)
-        #
+
         assert_equal(mX.argmin(0), [2, 2, 2, 5, 0, 5])
         assert_equal(m2X.argmin(0), [2, 2, 4, 5, 0, 4])
         assert_equal(mX.argmax(0), [0, 5, 0, 5, 4, 0])
         assert_equal(m2X.argmax(0), [5, 5, 0, 5, 1, 0])
-        #
+
         assert_equal(mX.argmin(1), [4, 1, 0, 0, 5, 5, ])
         assert_equal(m2X.argmin(1), [4, 4, 0, 0, 5, 3])
         assert_equal(mX.argmax(1), [2, 4, 1, 1, 4, 1])
@@ -2514,27 +2527,27 @@ class TestMaskedArrayMethods(TestCase):
         a = masked_array([1., 2., 3., 4., 5.], fill_value=9999)
         condition = (a > 1.5) & (a < 3.5)
         assert_equal(a.compress(condition), [2., 3.])
-        #
+
         a[[2, 3]] = masked
         b = a.compress(condition)
         assert_equal(b._data, [2., 3.])
         assert_equal(b._mask, [0, 1])
         assert_equal(b.fill_value, 9999)
         assert_equal(b, a[condition])
-        #
+
         condition = (a < 4.)
         b = a.compress(condition)
         assert_equal(b._data, [1., 2., 3.])
         assert_equal(b._mask, [0, 0, 1])
         assert_equal(b.fill_value, 9999)
         assert_equal(b, a[condition])
-        #
+
         a = masked_array([[10, 20, 30], [40, 50, 60]],
                          mask=[[0, 0, 1], [1, 0, 0]])
         b = a.compress(a.ravel() >= 22)
         assert_equal(b._data, [30, 40, 50, 60])
         assert_equal(b._mask, [1, 1, 0, 0])
-        #
+
         x = np.array([3, 1, 2])
         b = a.compress(x >= 2, axis=1)
         assert_equal(b._data, [[10, 30], [40, 60]])
@@ -2548,7 +2561,7 @@ class TestMaskedArrayMethods(TestCase):
         a[0] = masked
         b = a.compressed()
         assert_equal(b, [2, 3, 4])
-        #
+
         a = array(np.matrix([1, 2, 3, 4]), mask=[0, 0, 0, 0])
         b = a.compressed()
         assert_equal(b, a)
@@ -2563,11 +2576,11 @@ class TestMaskedArrayMethods(TestCase):
         a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
                          dtype=datatype)
         assert_equal(len(a.fill_value.item()), len(datatype))
-        #
+
         b = empty_like(a)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        #
+
         b = empty(len(a), dtype=datatype)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
@@ -2592,7 +2605,7 @@ class TestMaskedArrayMethods(TestCase):
         self.assertTrue(x[3] is masked)
         self.assertTrue(x[4] is not masked)
         assert_equal(x, [0, 10, 2, -1, 40])
-        #
+
         x = masked_array(arange(10), mask=[1, 0, 0, 0, 0] * 2)
         i = [0, 2, 4, 6]
         x.put(i, [6, 4, 2, 0])
@@ -2601,7 +2614,7 @@ class TestMaskedArrayMethods(TestCase):
         x.put(i, masked_array([0, 2, 4, 6], [1, 0, 1, 0]))
         assert_array_equal(x, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ])
         assert_equal(x.mask, [1, 0, 0, 0, 1, 1, 0, 0, 0, 0])
-        #
+
         x = masked_array(arange(10), mask=[1, 0, 0, 0, 0] * 2)
         put(x, i, [6, 4, 2, 0])
         assert_equal(x, asarray([6, 1, 4, 3, 2, 5, 0, 7, 8, 9, ]))
@@ -2688,28 +2701,28 @@ class TestMaskedArrayMethods(TestCase):
     def test_sort(self):
         # Test sort
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
-        #
+
         sortedx = sort(x)
         assert_equal(sortedx._data, [1, 2, 3, 4])
         assert_equal(sortedx._mask, [0, 0, 0, 1])
-        #
+
         sortedx = sort(x, endwith=False)
         assert_equal(sortedx._data, [4, 1, 2, 3])
         assert_equal(sortedx._mask, [1, 0, 0, 0])
-        #
+
         x.sort()
         assert_equal(x._data, [1, 2, 3, 4])
         assert_equal(x._mask, [0, 0, 0, 1])
-        #
+
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
         x.sort(endwith=False)
         assert_equal(x._data, [4, 1, 2, 3])
         assert_equal(x._mask, [1, 0, 0, 0])
-        #
+
         x = [1, 4, 2, 3]
         sortedx = sort(x)
         self.assertTrue(not isinstance(sorted, MaskedArray))
-        #
+
         x = array([0, 1, -1, -2, 2], mask=nomask, dtype=np.int8)
         sortedx = sort(x, endwith=False)
         assert_equal(sortedx._data, [-2, -1, 0, 1, 2])
@@ -2764,7 +2777,7 @@ class TestMaskedArrayMethods(TestCase):
             data=[(3, 3), (3, 2), (2, 2), (2, 1), (1, 0), (1, 1), (1, 2)],
             mask=[(0, 0), (0, 1), (0, 0), (0, 0), (1, 0), (0, 0), (0, 0)],
             dtype=[('A', int), ('B', int)])
-        #
+
         test = sort(a)
         b = array(
             data=[(1, 1), (1, 2), (2, 1), (2, 2), (3, 3), (3, 2), (1, 0)],
@@ -2772,7 +2785,7 @@ class TestMaskedArrayMethods(TestCase):
             dtype=[('A', int), ('B', int)])
         assert_equal(test, b)
         assert_equal(test.mask, b.mask)
-        #
+
         test = sort(a, endwith=False)
         b = array(
             data=[(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3), ],
@@ -2812,7 +2825,7 @@ class TestMaskedArrayMethods(TestCase):
                       0, 0, 1, 0, 1, 0])
         mX = array(x, mask=m).reshape(6, 6)
         mXX = mX.reshape(3, 2, 2, 3)
-        #
+
         mXswapped = mX.swapaxes(0, 1)
         assert_equal(mXswapped[-1], mX[:, -1])
 
@@ -2826,7 +2839,7 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(x.take([0, 0, 3]), x[[0, 0, 3]])
         assert_equal(x.take([[0, 1], [0, 1]]),
                      masked_array([[10, 20], [10, 20]], [[0, 1], [0, 1]]))
-        #
+
         x = array([[10, 20, 30], [40, 50, 60]], mask=[[0, 0, 1], [1, 0, 0, ]])
         assert_equal(x.take([0, 2], axis=1),
                      array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
@@ -2919,12 +2932,12 @@ class TestMaskedArrayMethods(TestCase):
         record = data.toflex()
         assert_equal(record['_data'], data._data)
         assert_equal(record['_mask'], data._mask)
-        #
+
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
         assert_equal(record['_data'], data._data)
         assert_equal(record['_mask'], data._mask)
-        #
+
         ndtype = [('i', int), ('s', '|S3'), ('f', float)]
         data = array([(i, s, f) for (i, s, f) in zip(np.arange(10),
                                                      'ABCDEFGHIJKLM',
@@ -2934,7 +2947,7 @@ class TestMaskedArrayMethods(TestCase):
         record = data.toflex()
         assert_equal(record['_data'], data._data)
         assert_equal(record['_mask'], data._mask)
-        #
+
         ndtype = np.dtype("int, (2,3)float, float")
         data = array([(i, f, ff) for (i, f, ff) in zip(np.arange(10),
                                                        np.random.rand(10),
@@ -2951,12 +2964,12 @@ class TestMaskedArrayMethods(TestCase):
         test = fromflex(a.toflex())
         assert_equal(test, a)
         assert_equal(test.mask, a.mask)
-        #
+
         a = array([1, 2, 3], mask=[0, 0, 1])
         test = fromflex(a.toflex())
         assert_equal(test, a)
         assert_equal(test.mask, a.mask)
-        #
+
         a = array([(1, 1.), (2, 2.), (3, 3.)], mask=[(1, 0), (0, 0), (0, 1)],
                   dtype=[('A', int), ('B', float)])
         test = fromflex(a.toflex())
@@ -2970,11 +2983,10 @@ class TestMaskedArrayMethods(TestCase):
                                mask=[0, 0, 1, 0, 0])
         assert_equal(marray.T, control)
         assert_equal(marray.transpose(), control)
-        #
+
         assert_equal(MaskedArray.cumsum(marray.T, 0), control.cumsum(0))
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayMathMethods(TestCase):
 
     def setUp(self):
@@ -3016,7 +3028,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(mXcp._data, mX.filled(0).cumsum(0))
         mXcp = mX.cumsum(1)
         assert_equal(mXcp._data, mX.filled(0).cumsum(1))
-        #
+
         mXcp = mX.cumprod(0)
         assert_equal(mXcp._data, mX.filled(1).cumprod(0))
         mXcp = mX.cumprod(1)
@@ -3026,7 +3038,7 @@ class TestMaskedArrayMathMethods(TestCase):
         # Tests cumsum/cumprod w/ output
         xm = array(np.random.uniform(0, 10, 12)).reshape(3, 4)
         xm[:, 0] = xm[0] = xm[-1, -1] = masked
-        #
+
         for funcname in ('cumsum', 'cumprod'):
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
@@ -3038,7 +3050,7 @@ class TestMaskedArrayMathMethods(TestCase):
             # ... the result should be the given output
             self.assertTrue(result is output)
             assert_equal(result, xmmeth(axis=0, out=output))
-            #
+
             output = empty((3, 4), dtype=int)
             result = xmmeth(axis=0, out=output)
             self.assertTrue(result is output)
@@ -3058,7 +3070,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(mX.ptp(1), rows)
 
     def test_add_object(self):
-        x = masked_array(['a', 'b'], mask = [1, 0], dtype=object)
+        x = masked_array(['a', 'b'], mask=[1, 0], dtype=object)
         y = x + 'x'
         assert_equal(y[1], 'bx')
         assert_(y.mask[0])
@@ -3142,7 +3154,7 @@ class TestMaskedArrayMathMethods(TestCase):
         # Test a special case for var
         nout = np.array(-1, dtype=float)
         mout = array(-1, dtype=float)
-        #
+
         x = array(arange(10), mask=True)
         for methodname in ('var', 'std'):
             method = getattr(x, methodname)
@@ -3152,15 +3164,15 @@ class TestMaskedArrayMathMethods(TestCase):
             # Using a masked array as explicit output
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                _ = method(out=mout)
+                method(out=mout)
             self.assertTrue(mout is not masked)
             assert_equal(mout.mask, True)
             # Using a ndarray as explicit output
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                _ = method(out=nout)
+                method(out=nout)
             self.assertTrue(np.isnan(nout))
-        #
+
         x = array(arange(10), mask=True)
         x[-1] = 9
         for methodname in ('var', 'std'):
@@ -3205,25 +3217,24 @@ class TestMaskedArrayMathMethods(TestCase):
     def test_axis_methods_nomask(self):
         # Test the combination nomask & methods w/ axis
         a = array([[1, 2, 3], [4, 5, 6]])
-        #
+
         assert_equal(a.sum(0), [5, 7, 9])
         assert_equal(a.sum(-1), [6, 15])
         assert_equal(a.sum(1), [6, 15])
-        #
+
         assert_equal(a.prod(0), [4, 10, 18])
         assert_equal(a.prod(-1), [6, 120])
         assert_equal(a.prod(1), [6, 120])
-        #
+
         assert_equal(a.min(0), [1, 2, 3])
         assert_equal(a.min(-1), [1, 4])
         assert_equal(a.min(1), [1, 4])
-        #
+
         assert_equal(a.max(0), [4, 5, 6])
         assert_equal(a.max(-1), [3, 6])
         assert_equal(a.max(1), [3, 6])
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayMathMethodsComplex(TestCase):
     # Test class for miscellaneous MaskedArrays methods.
     def setUp(self):
@@ -3277,7 +3288,6 @@ class TestMaskedArrayMathMethodsComplex(TestCase):
                                 mX[:, k].compressed().std())
 
 
-#------------------------------------------------------------------------------
 class TestMaskedArrayFunctions(TestCase):
     # Test class for miscellaneous functions.
 
@@ -3350,7 +3360,7 @@ class TestMaskedArrayFunctions(TestCase):
         # test that masked_where on a structured array sets a structured
         # mask (see issue #2972)
         a = np.zeros(10, dtype=[("A", "<f2"), ("B", "<f4")])
-        am = np.ma.masked_where(a["A"]<5, a)
+        am = np.ma.masked_where(a["A"] < 5, a)
         assert_equal(am.mask.dtype.names, am.dtype.names)
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))
@@ -3407,7 +3417,7 @@ class TestMaskedArrayFunctions(TestCase):
         # ... the result should be the given output
         self.assertTrue(result is output)
         assert_equal(result, xm.round(decimals=2, out=output))
-        #
+
         output = empty((3, 4), dtype=float)
         result = xm.round(decimals=2, out=output)
         self.assertTrue(result is output)
@@ -3445,7 +3455,7 @@ class TestMaskedArrayFunctions(TestCase):
         b1 = np.array([2, 4, 3])
         b2 = np.array([b1, b1])
         b2m = array(b2, mask=[[0, 1, 0], [0, 1, 0]])
-        #
+
         ctrl = array([[1 ** 2, 2 ** 4, 3 ** 3], [4 ** 2, 5 ** 4, 6 ** 3]],
                      mask=[[1, 1, 0], [0, 1, 1]])
         # No broadcasting, base & exp w/ mask
@@ -3460,7 +3470,7 @@ class TestMaskedArrayFunctions(TestCase):
         test = a2 ** b2m
         assert_equal(test, ctrl)
         assert_equal(test.mask, b2m.mask)
-        #
+
         ctrl = array([[2 ** 2, 4 ** 4, 3 ** 3], [2 ** 2, 4 ** 4, 3 ** 3]],
                      mask=[[0, 1, 0], [0, 1, 0]])
         test = b1 ** b2m
@@ -3479,7 +3489,7 @@ class TestMaskedArrayFunctions(TestCase):
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         xm.set_fill_value(1e+20)
-        #
+
         d = where(xm > 2, xm, -9)
         assert_equal(d, [-9., -9., -9., -9., -9., 4.,
                          -9., -9., 10., -9., -9., 3.])
@@ -3494,7 +3504,7 @@ class TestMaskedArrayFunctions(TestCase):
         tmp = xm._mask.copy()
         tmp[(xm <= 2).filled(True)] = True
         assert_equal(d._mask, tmp)
-        #
+
         ixm = xm.astype(int)
         d = where(ixm > 2, ixm, masked)
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
@@ -3541,7 +3551,7 @@ class TestMaskedArrayFunctions(TestCase):
         assert_(z[0] is masked)
         assert_(z[1] is not masked)
         assert_(z[2] is masked)
-        #
+
         x = arange(1, 6)
         x[-1] = masked
         y = arange(1, 6) * 10
@@ -3630,7 +3640,7 @@ class TestMaskedArrayFunctions(TestCase):
         b = a.reshape(5, 2, order='F')
         assert_equal(b.shape, (5, 2))
         self.assertTrue(b.flags['F'])
-        #
+
         c = np.reshape(a, (2, 5))
         self.assertTrue(isinstance(c, MaskedArray))
         assert_equal(c.shape, (2, 5))
@@ -3778,32 +3788,39 @@ class TestMaskedArrayFunctions(TestCase):
         a = np.ma.array([1, 2])
         test = np.ma.compressed(a)
         assert_(type(test) is np.ndarray)
+
         # Test case when input data is ndarray subclass
         class A(np.ndarray):
             pass
+
         a = np.ma.array(A(shape=0))
         test = np.ma.compressed(a)
         assert_(type(test) is A)
+
         # Test that compress flattens
         test = np.ma.compressed([[1],[2]])
         assert_equal(test.ndim, 1)
         test = np.ma.compressed([[[[[1]]]]])
         assert_equal(test.ndim, 1)
+
         # Test case when input is MaskedArray subclass
         class M(MaskedArray):
             pass
+
         test = np.ma.compressed(M(shape=(0,1,2)))
         assert_equal(test.ndim, 1)
+
         # with .compessed() overriden
         class M(MaskedArray):
             def compressed(self):
                 return 42
+
         test = np.ma.compressed(M(shape=(0,1,2)))
         assert_equal(test, 42)
 
-#------------------------------------------------------------------------------
+
 class TestMaskedFields(TestCase):
-    #
+
     def setUp(self):
         ilist = [1, 2, 3, 4, 5]
         flist = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -3867,9 +3884,8 @@ class TestMaskedFields(TestCase):
     def test_mask_element(self):
         "Check record access"
         base = self.data['base']
-        (base_a, base_b, base_c) = (base['a'], base['b'], base['c'])
         base[0] = masked
-        #
+
         for n in ('a', 'b', 'c'):
             assert_equal(base[n].mask, [1, 1, 0, 0, 1])
             assert_equal(base[n]._data, base._data[n])
@@ -3901,7 +3917,7 @@ class TestMaskedFields(TestCase):
         test = a.view((float, 2))
         assert_equal(test, data)
         assert_equal(test.mask, controlmask.reshape(-1, 2))
-        #
+
         test = a.view((float, 2), np.matrix)
         assert_equal(test, data)
         self.assertTrue(isinstance(test, np.matrix))
@@ -3959,9 +3975,8 @@ class TestMaskedFields(TestCase):
             assert_equal(len(rec), len(self.data['ddtype']))
 
 
-#------------------------------------------------------------------------------
 class TestMaskedView(TestCase):
-    #
+
     def setUp(self):
         iterator = list(zip(np.arange(10), np.random.rand(10)))
         data = np.array(iterator)
@@ -3994,18 +4009,18 @@ class TestMaskedView(TestCase):
 
     def test_view_to_flexible_dtype(self):
         (data, a, controlmask) = self.data
-        #
+
         test = a.view([('A', float), ('B', float)])
         assert_equal(test.mask.dtype.names, ('A', 'B'))
         assert_equal(test['A'], a['a'])
         assert_equal(test['B'], a['b'])
-        #
+
         test = a[0].view([('A', float), ('B', float)])
         self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test.mask.dtype.names, ('A', 'B'))
         assert_equal(test['A'], a['a'][0])
         assert_equal(test['B'], a['b'][0])
-        #
+
         test = a[-1].view([('A', float), ('B', float)])
         self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test.dtype.names, ('A', 'B'))
@@ -4031,7 +4046,7 @@ class TestMaskedView(TestCase):
 
     def test_view_to_dtype_and_type(self):
         (data, a, controlmask) = self.data
-        #
+
         test = a.view((float, 2), np.matrix)
         assert_equal(test, data)
         self.assertTrue(isinstance(test, np.matrix))
@@ -4081,6 +4096,5 @@ def test_append_masked_array_along_axis():
     assert_array_equal(result.mask, expected.mask)
 
 
-###############################################################################
 if __name__ == "__main__":
     run_module_suite()

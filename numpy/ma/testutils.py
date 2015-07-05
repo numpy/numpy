@@ -16,13 +16,25 @@ from numpy.testing import assert_, build_err_msg
 import numpy.testing.utils as utils
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
-__all__ = [
+__all__masked = [
     'almost', 'approx', 'assert_almost_equal', 'assert_array_almost_equal',
     'assert_array_approx_equal', 'assert_array_compare',
     'assert_array_equal', 'assert_array_less', 'assert_close',
     'assert_equal', 'assert_equal_records', 'assert_mask_equal',
     'assert_not_equal', 'fail_if_array_equal',
     ]
+
+# Include some normal test functions to avoid breaking other projects who
+# have mistakenly included them from this file. SciPy is one. That was a
+# bad idea, as some of these functions are not intended to work with masked
+# arrays, but there was no way to tell before.
+__all__from_testing = [
+    'TestCase', 'assert_', 'assert_allclose',
+    'assert_array_almost_equal_nulp', 'assert_raises', 'run_modules_suite',
+    ]
+
+__all__ = __all__masked
+
 
 def approx(a, b, fill_value=True, rtol=1e-5, atol=1e-8):
     """
