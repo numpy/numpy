@@ -118,48 +118,6 @@ def rand(*args):
         f[i] = random.random()
     return results
 
-if sys.platform[:5] == 'linux':
-    def jiffies(_proc_pid_stat='/proc/%s/stat' % (os.getpid()),
-                _load_time=[]):
-        """ Return number of jiffies (1/100ths of a second) that this
-    process has been scheduled in user mode. See man 5 proc. """
-        import time
-        if not _load_time:
-            _load_time.append(time.time())
-        try:
-            f = open(_proc_pid_stat, 'r')
-            l = f.readline().split(' ')
-            f.close()
-            return int(l[13])
-        except:
-            return int(100*(time.time()-_load_time[0]))
-
-    def memusage(_proc_pid_stat='/proc/%s/stat' % (os.getpid())):
-        """ Return virtual memory size in bytes of the running python.
-        """
-        try:
-            f = open(_proc_pid_stat, 'r')
-            l = f.readline().split(' ')
-            f.close()
-            return int(l[22])
-        except:
-            return
-else:
-    # os.getpid is not in all platforms available.
-    # Using time is safe but inaccurate, especially when process
-    # was suspended or sleeping.
-    def jiffies(_load_time=[]):
-        """ Return number of jiffies (1/100ths of a second) that this
-    process has been scheduled in user mode. [Emulation with time.time]. """
-        import time
-        if not _load_time:
-            _load_time.append(time.time())
-        return int(100*(time.time()-_load_time[0]))
-
-    def memusage():
-        """ Return memory usage of running python. [Not implemented]"""
-        raise NotImplementedError
-
 if os.name == 'nt':
     # Code "stolen" from enthought/debug/memusage.py
     def GetPerformanceAttributes(object, counter, instance=None,
@@ -194,6 +152,63 @@ if os.name == 'nt':
         return GetPerformanceAttributes("Process", "Virtual Bytes",
                                         processName, instance,
                                         win32pdh.PDH_FMT_LONG, None)
+elif sys.platform[:5] == 'linux':
+    def jiffies(_proc_pid_stat='/proc/%s/stat' % (os.getpid()),
+                _load_time=[]):
+        """
+        Return number of jiffies elapsed.
+
+        Return number of jiffies (1/100ths of a second) that this
+        process has been scheduled in user mode. See man 5 proc.
+
+        """
+        import time
+        if not _load_time:
+            _load_time.append(time.time())
+        try:
+            f = open(_proc_pid_stat, 'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[13])
+        except:
+            return int(100*(time.time()-_load_time[0]))
+
+    def memusage(_proc_pid_stat='/proc/%s/stat' % (os.getpid())):
+        """
+        Return virtual memory size in bytes of the running python.
+
+        """
+        try:
+            f = open(_proc_pid_stat, 'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[22])
+        except:
+            return
+else:
+    # os.getpid is not in all platforms available.
+    # Using time is safe but inaccurate, especially when process
+    # was suspended or sleeping.
+    def jiffies(_load_time=[]):
+        """
+        Return number of jiffies elapsed.
+
+        Return number of jiffies (1/100ths of a second) that this
+        process has been scheduled in user mode. See man 5 proc.
+
+        """
+        import time
+        if not _load_time:
+            _load_time.append(time.time())
+        return int(100*(time.time()-_load_time[0]))
+
+    def memusage():
+        """
+        Return memory usage of running python. [Not implemented]
+
+        """
+        raise NotImplementedError
+
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
@@ -688,7 +703,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'), precision=precision)
             if not cond:
                 raise AssertionError(msg)
-    except ValueError as e:
+    except ValueError:
         import traceback
         efmt = traceback.format_exc()
         header = 'error during assertion:\n\n%s\n\n%s' % (efmt, header)
@@ -1253,23 +1268,24 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 
+
 def _assert_valid_refcount(op):
     """
     Check that ufuncs don't mishandle refcount of object `1`.
     Used in a few regression tests.
     """
     import numpy as np
-    a = np.arange(100 * 100)
+
     b = np.arange(100*100).reshape(100, 100)
     c = b
-
     i = 1
 
     rc = sys.getrefcount(i)
     for j in range(15):
         d = op(b, c)
-
     assert_(sys.getrefcount(i) >= rc)
+    del d  # for pyflakes
+
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=False,
                     err_msg='', verbose=True):
