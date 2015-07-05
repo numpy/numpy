@@ -2,12 +2,10 @@ from __future__ import division, absolute_import, print_function
 
 # Code common to build tools
 import sys
-from os.path import join
 import warnings
 import copy
 import binascii
 
-from distutils.ccompiler import CompileError
 
 #-------------------
 # Versioning support
@@ -54,11 +52,13 @@ def is_released(config):
     return True
 
 def get_api_versions(apiversion, codegen_dir):
-    """Return current C API checksum and the recorded checksum for the given
-    version of the C API version."""
-    api_files = [join(codegen_dir, 'numpy_api_order.txt'),
-                 join(codegen_dir, 'ufunc_api_order.txt')]
+    """
+    Return current C API checksum and the recorded checksum.
 
+    Return current C API checksum and the recorded checksum for the given
+    version of the C API version.
+
+    """
     # Compute the hash of the current API as defined in the .txt files in
     # code_generators
     sys.path.insert(0, codegen_dir)

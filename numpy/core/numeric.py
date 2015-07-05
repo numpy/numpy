@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import os
 import sys
 import warnings
 import collections
@@ -21,30 +20,28 @@ else:
 loads = pickle.loads
 
 
-__all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-           'arange', 'array', 'zeros', 'count_nonzero',
-           'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',
-           'frombuffer', 'int_asbuffer', 'where', 'argwhere', 'copyto',
-           'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
-           'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
-           'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
-           'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-           'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
-           'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
-           'array2string', 'get_printoptions', 'set_printoptions',
-           'array_repr', 'array_str', 'set_string_function',
-           'little_endian', 'require',
-           'fromiter', 'array_equal', 'array_equiv',
-           'indices', 'fromfunction', 'isclose',
-           'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
-           'ones', 'identity', 'allclose', 'compare_chararrays', 'putmask',
-           'seterr', 'geterr', 'setbufsize', 'getbufsize',
-           'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
-           'Inf', 'inf', 'infty', 'Infinity',
-           'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
-           'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory', 'full', 'full_like',
-           'matmul']
+__all__ = [
+    'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
+    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
+    'dtype', 'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer',
+    'where', 'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose',
+    'lexsort', 'set_numeric_ops', 'can_cast', 'promote_types',
+    'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
+    'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
+    'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
+    'einsum', 'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
+    'rollaxis', 'cross', 'tensordot', 'array2string', 'get_printoptions',
+    'set_printoptions', 'array_repr', 'array_str', 'set_string_function',
+    'little_endian', 'require', 'fromiter', 'array_equal', 'array_equiv',
+    'indices', 'fromfunction', 'isclose', 'load', 'loads', 'isscalar',
+    'binary_repr', 'base_repr', 'ones', 'identity', 'allclose',
+    'compare_chararrays', 'putmask', 'seterr', 'geterr', 'setbufsize',
+    'getbufsize', 'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
+    'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_', 'True_',
+    'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
+    'ALLOW_THREADS', 'ComplexWarning', 'may_share_memory', 'full',
+    'full_like', 'matmul',
+    ]
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -1281,7 +1278,7 @@ def tensordot(a, b, axes=2):
     bs = b.shape
     ndb = len(b.shape)
     equal = True
-    if (na != nb):
+    if na != nb:
         equal = False
     else:
         for k in range(na):

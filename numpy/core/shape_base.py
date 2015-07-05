@@ -4,7 +4,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
            'stack']
 
 from . import numeric as _nx
-from .numeric import array, asanyarray, newaxis
+from .numeric import asanyarray, newaxis
 
 def atleast_1d(*arys):
     """

@@ -1,13 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['memmap']
-
-import warnings
-import sys
-
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import long, basestring
+
+__all__ = ['memmap']
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]

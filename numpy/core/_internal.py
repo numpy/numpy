@@ -8,9 +8,8 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
-import warnings
 
-from numpy.compat import asbytes, bytes, basestring
+from numpy.compat import asbytes, basestring
 from .multiarray import dtype, array, ndarray
 import ctypes
 from .numerictypes import object_
@@ -561,7 +560,6 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
     this_explicit_name = False
     common_alignment = 1
     is_padding = False
-    last_offset = 0
 
     dummy_name_index = [0]
 
@@ -691,7 +689,6 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                 raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
                                    % name)
             fields[name] = (value, offset)
-            last_offset = offset
             if not this_explicit_name:
                 next_dummy_name()
 

@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['logspace', 'linspace']
 
 from . import numeric as _nx
-from .numeric import array, result_type, NaN
+from .numeric import result_type, NaN
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):

@@ -82,6 +82,18 @@ Exported symbols include:
 """
 from __future__ import division, absolute_import, print_function
 
+import types as _types
+import sys
+import numbers
+
+from numpy.compat import bytes, long
+from numpy.core.multiarray import (
+        typeinfo, ndarray, array, empty, dtype, datetime_data,
+        datetime_as_string, busday_offset, busday_count, is_busday,
+        busdaycalendar
+        )
+
+
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
@@ -90,15 +102,6 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
-from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
-        )
-import types as _types
-import sys
-from numpy.compat import bytes, long
-import numbers
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -328,15 +331,10 @@ def _add_aliases():
             sctypeNA[char] = na_name
 _add_aliases()
 
-# Integers handled so that
-# The int32, int64 types should agree exactly with
-#  PyArray_INT32, PyArray_INT64 in C
-# We need to enforce the same checking as is done
-#  in arrayobject.h where the order of getting a
-#  bit-width match is:
-#       long, longlong, int, short, char
-#   for int8, int16, int32, int64, int128
-
+# Integers are handled so that the int32 and int64 types should agree
+# exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
+# as is done in arrayobject.h where the order of getting a bit-width match
+# is long, longlong, int, short, char.
 def _add_integer_aliases():
     _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
     for ctype in _ctypes:
@@ -960,6 +958,7 @@ def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
+
 _register_types()
 
 def find_common_type(array_types, scalar_types):
