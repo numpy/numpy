@@ -200,6 +200,7 @@ class memmap(ndarray):
     """
 
     __array_priority__ = -100.0
+
     def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
         # Import here to minimize 'import numpy' overhead

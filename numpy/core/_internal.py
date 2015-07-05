@@ -73,10 +73,10 @@ def _usefields(adict, align):
             else:
                 titles.append(None)
 
-    return dtype({"names" : names,
-                  "formats" : formats,
-                  "offsets" : offsets,
-                  "titles" : titles}, align)
+    return dtype({"names": names,
+                  "formats": formats,
+                  "offsets": offsets,
+                  "titles": titles}, align)
 
 
 # construct an array_protocol descriptor list
@@ -100,7 +100,6 @@ def _array_descr(descriptor):
                     return descriptor.str
         else:
             return (_array_descr(subdtype[0]), subdtype[1])
-
 
     names = descriptor.names
     ordered_fields = [fields[x] + (x,) for x in names]
@@ -167,8 +166,8 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                            'format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+                        'format number %d of "%s" is not recognized' %
+                        (len(result)+1, astr))
                 startindex = mo.end()
 
         if order2 == asbytes(''):
@@ -179,7 +178,9 @@ def _commastring(astr):
             order1 = _convorder.get(order1, order1)
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
-                raise ValueError('inconsistent byte-order specification %s and %s' % (order1, order2))
+                raise ValueError(
+                    'inconsistent byte-order specification %s and %s' %
+                    (order1, order2))
             order = order1
 
         if order in [asbytes('|'), asbytes('='), _nbo]:
@@ -354,9 +355,9 @@ def _get_all_field_offsets(dtype, base_offset=0):
     fields = []
     if dtype.fields is not None:
         for name in dtype.names:
-           sub_dtype = dtype.fields[name][0]
-           sub_offset = dtype.fields[name][1] + base_offset
-           fields.extend(_get_all_field_offsets(sub_dtype, sub_offset))
+            sub_dtype = dtype.fields[name][0]
+            sub_offset = dtype.fields[name][1] + base_offset
+            fields.extend(_get_all_field_offsets(sub_dtype, sub_offset))
     else:
         if dtype.shape:
             sub_offsets = _get_all_field_offsets(dtype.base, base_offset)
@@ -484,7 +485,7 @@ def _view_is_safe(oldtype, newtype):
     # 'tiled positions' of the object match up. Here, we allow
     # for arbirary itemsizes (even those possibly disallowed
     # due to stride/data length issues).
-    if old_size ==  new_size:
+    if old_size == new_size:
         new_num = old_num = 1
     else:
         gcd_new_old = _gcd(new_size, old_size)
@@ -525,7 +526,7 @@ _pep3118_native_map = {
     's': 'S',
     'w': 'U',
     'O': 'O',
-    'x': 'V', # padding
+    'x': 'V',  # padding
 }
 _pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
 
@@ -549,7 +550,7 @@ _pep3118_standard_map = {
     's': 'S',
     'w': 'U',
     'O': 'O',
-    'x': 'V', # padding
+    'x': 'V',  # padding
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
@@ -563,8 +564,10 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
     last_offset = 0
 
     dummy_name_index = [0]
+
     def next_dummy_name():
         dummy_name_index[0] += 1
+
     def get_dummy_name():
         while True:
             name = 'f%d' % dummy_name_index[0]
@@ -698,8 +701,8 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         offset += extra_offset
 
     # Check if this was a simple 1-item type
-    if len(fields) == 1 and not explicit_name and fields['f0'][1] == 0 \
-           and not is_subdtype:
+    if (len(fields) == 1 and not explicit_name and
+            fields['f0'][1] == 0 and not is_subdtype):
         ret = fields['f0'][0]
     else:
         ret = dtype(fields)
@@ -724,8 +727,8 @@ def _add_trailing_padding(value, padding):
     else:
         vfields = dict(value.fields)
 
-    if value.names and value.names[-1] == '' and \
-           value[''].char == 'V':
+    if (value.names and value.names[-1] == '' and
+           value[''].char == 'V'):
         # A trailing padding field is already present
         vfields[''] = ('V%d' % (vfields[''][0].itemsize + padding),
                        vfields[''][1])
@@ -757,5 +760,5 @@ def _prod(a):
 def _gcd(a, b):
     """Calculate the greatest common divisor of a and b"""
     while b:
-        a, b = b, a%b
+        a, b = b, a % b
     return a

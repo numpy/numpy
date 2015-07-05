@@ -55,8 +55,8 @@ def _use_unicode(*args):
     result should be unicode.
     """
     for x in args:
-        if (isinstance(x, _unicode)
-            or issubclass(numpy.asarray(x).dtype.type, unicode_)):
+        if (isinstance(x, _unicode) or
+                issubclass(numpy.asarray(x).dtype.type, unicode_)):
             return unicode_
     return string_
 
@@ -1068,7 +1068,7 @@ def replace(a, old, new, count=None):
     """
     return _to_string_or_unicode_array(
         _vec_string(
-            a, object_, 'replace', [old, new] +_clean_args(count)))
+            a, object_, 'replace', [old, new] + _clean_args(count)))
 
 
 def rfind(a, sub, start=0, end=None):
@@ -2039,7 +2039,6 @@ class chararray(ndarray):
         """
         return count(self, sub, start, end)
 
-
     def decode(self, encoding=None, errors=None):
         """
         Calls `str.decode` element-wise.
@@ -2610,10 +2609,10 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
         if order is not None:
             obj = numpy.asarray(obj, order=order)
-        if (copy
-            or (itemsize != obj.itemsize)
-            or (not unicode and isinstance(obj, unicode_))
-            or (unicode and isinstance(obj, string_))):
+        if (copy or
+                (itemsize != obj.itemsize) or
+                (not unicode and isinstance(obj, unicode_)) or
+                (unicode and isinstance(obj, string_))):
             obj = obj.astype((dtype, long(itemsize)))
         return obj
 

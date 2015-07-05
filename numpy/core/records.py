@@ -139,6 +139,7 @@ class format_parser:
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', '|S5')])
 
     """
+
     def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)
         self._setfieldnames(names, titles)
@@ -434,7 +435,7 @@ class recarray(ndarray):
         # accessed by attribute).
         try:
             return object.__getattribute__(self, attr)
-        except AttributeError: # attr must be a fieldname
+        except AttributeError:  # attr must be a fieldname
             pass
 
         # look for a field with this name
@@ -478,9 +479,10 @@ class recarray(ndarray):
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
                 return ret
-            if newattr:         # We just added this one
-                try:            #  or this setattr worked on an internal
-                                #  attribute.
+            if newattr:
+                # We just added this one or this setattr worked on an
+                # internal attribute.
+                try:
                     object.__delattr__(self, attr)
                 except:
                     return ret
@@ -506,14 +508,14 @@ class recarray(ndarray):
 
     def __repr__(self):
         # get data/shape string. logic taken from numeric.array_repr
-        if self.size > 0 or self.shape==(0,):
+        if self.size > 0 or self.shape == (0,):
             lst = sb.array2string(self, separator=', ')
         else:
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
 
         if (self.dtype.type is record
-                or (not issubclass(self.dtype.type, nt.void)) ):
+                or (not issubclass(self.dtype.type, nt.void))):
             # If this is a full record array (has numpy.record dtype),
             # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
@@ -683,7 +685,6 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     """ create a (read-only) record array from binary data contained in
     a string"""
 
-
     if dtype is None and formats is None:
         raise ValueError("Must have dtype= or formats=")
 
@@ -756,7 +757,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     shapesize = shapeprod * itemsize
     if shapesize < 0:
         shape = list(shape)
-        shape[ shape.index(-1) ] = size / -shapesize
+        shape[shape.index(-1)] = size / -shapesize
         shape = tuple(shape)
         shapeprod = sb.array(shape).prod()
 
@@ -781,10 +782,9 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """Construct a record array from a wide-variety of objects.
     """
 
-    if (isinstance(obj, (type(None), str)) or isfileobj(obj)) \
-           and (formats is None) \
-           and (dtype is None):
-        raise ValueError("Must define formats (or dtype) if object is "\
+    if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
+           (formats is None) and (dtype is None)):
+        raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
 
     kwds = {}
@@ -795,10 +795,10 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
                               aligned, byteorder)._descr
     else:
         kwds = {'formats': formats,
-                'names' : names,
-                'titles' : titles,
-                'aligned' : aligned,
-                'byteorder' : byteorder
+                'names': names,
+                'titles': titles,
+                'aligned': aligned,
+                'byteorder': byteorder
                 }
 
     if obj is None:

@@ -83,11 +83,12 @@ def check_api_version(apiversion, codegen_dir):
     # To compute the checksum of the current API, use
     # code_generators/cversions.py script
     if not curapi_hash == api_hash:
-        msg = "API mismatch detected, the C API version " \
-              "numbers have to be updated. Current C api version is %d, " \
-              "with checksum %s, but recorded checksum for C API version %d in " \
-              "codegen_dir/cversions.txt is %s. If functions were added in the " \
-              "C API, you have to update C_API_VERSION  in %s."
+        msg = ("API mismatch detected, the C API version "
+               "numbers have to be updated. Current C api version is %d, "
+               "with checksum %s, but recorded checksum for C API version %d in "
+               "codegen_dir/cversions.txt is %s. If functions were added in the "
+               "C API, you have to update C_API_VERSION  in %s."
+               )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
                       MismatchCAPIWarning)
@@ -106,8 +107,8 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
 
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
-                "xmmintrin.h", # SSE
-                "emmintrin.h", # SSE2
+                "xmmintrin.h",  # SSE
+                "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
 ]
 
@@ -121,8 +122,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       ("_mm_load_ps", '(float*)0', "xmmintrin.h"), # SSE
-                       ("_mm_load_pd", '(double*)0', "emmintrin.h"), # SSE2
+                       ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
+                       ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
                        ]
 
 # function attributes
@@ -134,7 +135,7 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_optimize_opt_3'),
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
-                               ]
+                                ]
 
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
@@ -282,10 +283,10 @@ _MOTOROLA_EXTENDED_12B = ['300', '031', '000', '000', '353', '171',
 _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
                       '000', '000', '000', '000', '000', '000', '000', '000']
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
-_DOUBLE_DOUBLE_BE = ['301', '235', '157', '064', '124', '000', '000', '000'] + \
-                    ['000'] * 8
-_DOUBLE_DOUBLE_LE = ['000', '000', '000', '124', '064', '157', '235', '301'] + \
-                    ['000'] * 8
+_DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
+                     ['000'] * 8)
+_DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
+                     ['000'] * 8)
 
 def long_double_representation(lines):
     """Given a binary dump as given by GNU od -b, look for long double

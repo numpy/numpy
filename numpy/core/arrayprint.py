@@ -31,10 +31,11 @@ else:
     _MAXINT = sys.maxint
     _MININT = -sys.maxint - 1
 
-def product(x, y): return x*y
+def product(x, y):
+    return x*y
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
-_summaryThreshold = 1000 # total items > triggers array summarization
+_summaryThreshold = 1000  # total items > triggers array summarization
 
 _float_output_precision = 8
 _float_output_suppress_small = False
@@ -149,9 +150,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... suppress=False, threshold=1000, formatter=None)
     """
 
-    global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
-           _line_width, _float_output_suppress_small, _nan_str, _inf_str, \
-           _formatter
+    global _summaryThreshold, _summaryEdgeItems, _float_output_precision
+    global _line_width, _float_output_suppress_small, _nan_str, _inf_str
+    global _formatter
+
     if linewidth is not None:
         _line_width = linewidth
     if threshold is not None:
@@ -254,17 +256,17 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         summary_insert = ""
         data = ravel(asarray(a))
 
-    formatdict = {'bool' : _boolFormatter,
-                  'int' : IntegerFormat(data),
-                  'float' : FloatFormat(data, precision, suppress_small),
-                  'longfloat' : LongFloatFormat(precision),
-                  'complexfloat' : ComplexFormat(data, precision,
+    formatdict = {'bool': _boolFormatter,
+                  'int': IntegerFormat(data),
+                  'float': FloatFormat(data, precision, suppress_small),
+                  'longfloat': LongFloatFormat(precision),
+                  'complexfloat': ComplexFormat(data, precision,
                                                  suppress_small),
-                  'longcomplexfloat' : LongComplexFormat(precision),
-                  'datetime' : DatetimeFormat(data),
-                  'timedelta' : TimedeltaFormat(data),
-                  'numpystr' : repr_format,
-                  'str' : str}
+                  'longcomplexfloat': LongComplexFormat(precision),
+                  'datetime': DatetimeFormat(data),
+                  'timedelta': TimedeltaFormat(data),
+                  'numpystr': repr_format,
+                  'str': str}
 
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
@@ -469,10 +471,13 @@ def _formatArray(a, format_function, rank, max_line_len,
         return str(obj)
 
     if summary_insert and 2*edge_items < len(a):
-        leading_items, trailing_items, summary_insert1 = \
-                       edge_items, edge_items, summary_insert
+        leading_items = edge_items
+        trailing_items = edge_items
+        summary_insert1 = summary_insert
     else:
-        leading_items, trailing_items, summary_insert1 = 0, len(a), ""
+        leading_items = 0
+        trailing_items = len(a)
+        summary_insert1 = ""
 
     if rank == 1:
         s = ""
