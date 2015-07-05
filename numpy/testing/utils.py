@@ -34,7 +34,7 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
 verbose = 0
 
 
-def assert_(val, msg='') :
+def assert_(val, msg=''):
     """
     Assert that works in release mode.
     Accepts callable msg to allow deferring evaluation until failure.
@@ -45,7 +45,7 @@ def assert_(val, msg='') :
     For documentation on usage, refer to the Python documentation.
 
     """
-    if not val :
+    if not val:
         try:
             smsg = msg()
         except TypeError:
@@ -118,8 +118,8 @@ def rand(*args):
         f[i] = random.random()
     return results
 
-if sys.platform[:5]=='linux':
-    def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
+if sys.platform[:5] == 'linux':
+    def jiffies(_proc_pid_stat='/proc/%s/stat' % (os.getpid()),
                 _load_time=[]):
         """ Return number of jiffies (1/100ths of a second) that this
     process has been scheduled in user mode. See man 5 proc. """
@@ -127,18 +127,18 @@ if sys.platform[:5]=='linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            f=open(_proc_pid_stat, 'r')
+            f = open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[13])
         except:
             return int(100*(time.time()-_load_time[0]))
 
-    def memusage(_proc_pid_stat = '/proc/%s/stat'%(os.getpid())):
+    def memusage(_proc_pid_stat='/proc/%s/stat' % (os.getpid())):
         """ Return virtual memory size in bytes of the running python.
         """
         try:
-            f=open(_proc_pid_stat, 'r')
+            f = open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[22])
@@ -155,14 +155,15 @@ else:
         if not _load_time:
             _load_time.append(time.time())
         return int(100*(time.time()-_load_time[0]))
+
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
         raise NotImplementedError
 
-if os.name=='nt':
+if os.name == 'nt':
     # Code "stolen" from enthought/debug/memusage.py
-    def GetPerformanceAttributes(object, counter, instance = None,
-                                 inum=-1, format = None, machine=None):
+    def GetPerformanceAttributes(object, counter, instance=None,
+                                 inum=-1, format=None, machine=None):
         # NOTE: Many counters require 2 samples to give accurate results,
         # including "% Processor Time" (as by definition, at any instant, a
         # thread's CPU usage is either 0 or 100).  To read counters like this,
@@ -172,8 +173,9 @@ if os.name=='nt':
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
-        if format is None: format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine, object, instance, None, inum, counter) )
+        if format is None:
+            format = win32pdh.PDH_FMT_LONG
+        path = win32pdh.MakeCounterPath( (machine, object, instance, None, inum, counter))
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)
@@ -256,11 +258,11 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
 
     """
     if isinstance(desired, dict):
-        if not isinstance(actual, dict) :
+        if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual), len(desired), err_msg, verbose)
         for k, i in desired.items():
-            if k not in actual :
+            if k not in actual:
                 raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg), verbose)
         return
@@ -486,7 +488,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if round(abs(desired - actual), decimal) != 0 :
+    if round(abs(desired - actual), decimal) != 0:
         raise AssertionError(_build_err_msg())
 
 
@@ -550,7 +552,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     import numpy as np
 
     (actual, desired) = map(float, (actual, desired))
-    if desired==actual:
+    if desired == actual:
         return
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
@@ -583,7 +585,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
             return
     except (TypeError, NotImplementedError):
         pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)) :
+    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)):
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
@@ -625,13 +627,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             assert_array_equal(x_id, y_id)
         except AssertionError:
             msg = build_err_msg([x, y],
-                                err_msg + '\nx and y %s location mismatch:' \
+                                err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
     try:
-        cond = (x.shape==() or y.shape==()) or x.shape == y.shape
+        cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
             msg = build_err_msg([x, y],
                                 err_msg
@@ -639,7 +641,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                                                   y.shape),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond :
+            if not cond:
                 raise AssertionError(msg)
 
         if isnumber(x) and isnumber(y):
@@ -684,7 +686,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond :
+            if not cond:
                 raise AssertionError(msg)
     except ValueError as e:
         import traceback
@@ -834,6 +836,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     from numpy.core import around, number, float_, result_type, array
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
+
     def compare(x, y):
         try:
             if npany(gisinf(x)) or npany( gisinf(y)):
@@ -856,7 +859,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         z = abs(x-y)
 
         if not issubdtype(z.dtype, number):
-            z = z.astype(float_) # handle object arrays
+            z = z.astype(float_)  # handle object arrays
 
         return around(z, decimal) <= 10.0**(-decimal)
 
@@ -967,7 +970,7 @@ def assert_string_equal(actual, desired):
     # delay import of difflib to reduce startup time
     import difflib
 
-    if not isinstance(actual, str) :
+    if not isinstance(actual, str):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
@@ -986,7 +989,7 @@ def assert_string_equal(actual, desired):
             if d2.startswith('? '):
                 l.append(d2)
                 d2 = diff.pop(0)
-            if not d2.startswith('+ ') :
+            if not d2.startswith('+ '):
                 raise AssertionError(repr(d2))
             l.append(d2)
             d3 = diff.pop(0)
@@ -1002,7 +1005,7 @@ def assert_string_equal(actual, desired):
     if not diff_list:
         return
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
-    if actual != desired :
+    if actual != desired:
         raise AssertionError(msg)
 
 
@@ -1028,7 +1031,8 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True) #doctest: +SKIP
     """
-    import doctest, imp
+    import doctest
+    import imp
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
@@ -1313,6 +1317,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=False,
 
     """
     import numpy as np
+
     def compare(x, y):
         return np.core.numeric.isclose(x, y, rtol=rtol, atol=atol,
                                        equal_nan=equal_nan)
@@ -1422,7 +1427,7 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g ULP" % \
+        raise AssertionError("Arrays are not almost equal up to %g ULP" %
                              maxulp)
     return ret
 
@@ -1468,7 +1473,7 @@ def nulp_diff(x, y, dtype=None):
     y = np.array(y, dtype=t)
 
     if not x.shape == y.shape:
-        raise ValueError("x and y do not have the same shape: %s - %s" % \
+        raise ValueError("x and y do not have the same shape: %s - %s" %
                          (x.shape, y.shape))
 
     def _diff(rx, ry, vdt):
@@ -1486,7 +1491,7 @@ def _integer_repr(x, vdt, comp):
     # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
     rx = x.view(vdt)
     if not (rx.size == 1):
-        rx[rx < 0] = comp - rx[rx<0]
+        rx[rx < 0] = comp - rx[rx < 0]
     else:
         if rx < 0:
             rx = comp - rx
@@ -1562,6 +1567,7 @@ class WarningManager(object):
     It is copied so it can be used in NumPy with older Python versions.
 
     """
+
     def __init__(self, record=False, module=None):
         self._record = record
         if module is None:
@@ -1579,6 +1585,7 @@ class WarningManager(object):
         self._showwarning = self._module.showwarning
         if self._record:
             log = []
+
             def showwarning(*args, **kwargs):
                 log.append(WarningMessage(*args, **kwargs))
             self._module.showwarning = showwarning
@@ -1627,7 +1634,7 @@ def assert_warns(warning_class, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                     % func.__name__)
         if not l[0].category is warning_class:
-            raise AssertionError("First warning for %s is not a " \
+            raise AssertionError("First warning for %s is not a "
                     "%s( is %s)" % (func.__name__, warning_class, l[0]))
     return result
 
@@ -1690,7 +1697,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
     for o in range(3):
         for s in range(o + 2, max(o + 3, max_size)):
             if type == 'unary':
-                inp = lambda : arange(s, dtype=dtype)[o:]
+                inp = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp(), ufmt % (o, o, s, dtype, 'out of place')
                 yield inp(), inp(), ufmt % (o, o, s, dtype, 'in place')
@@ -1703,8 +1710,8 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 yield inp()[1:], inp()[:-1], ufmt % \
                     (o + 1, o, s - 1, dtype, 'aliased')
             if type == 'binary':
-                inp1 = lambda :arange(s, dtype=dtype)[o:]
-                inp2 = lambda :arange(s, dtype=dtype)[o:]
+                inp1 = lambda: arange(s, dtype=dtype)[o:]
+                inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp1(), inp2(),  bfmt % \
                     (o, o, o, s, dtype, 'out of place')

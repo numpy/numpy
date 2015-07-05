@@ -67,10 +67,9 @@ def import_nose():
             fine_nose = False
 
     if not fine_nose:
-        msg = 'Need nose >= %d.%d.%d for tests - see ' \
-              'http://somethingaboutorange.com/mrl/projects/nose' % \
-              minimum_nose_version
-
+        msg = ('Need nose >= %d.%d.%d for tests - see '
+               'http://somethingaboutorange.com/mrl/projects/nose' %
+               minimum_nose_version)
         raise ImportError(msg)
 
     return nose
@@ -293,7 +292,7 @@ class NoseTester(object):
             argv += ['--exclude', ename]
         # our way of doing coverage
         if coverage:
-            argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
+            argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
                    '--cover-tests', '--cover-erase']
         # construct list of plugins
         import nose.plugins.builtin
@@ -309,8 +308,8 @@ class NoseTester(object):
             # use standard doctesting
             if doctests and not doctest_argv:
                 argv += ['--with-doctest']
-        else: # custom doctesting
-            if doctest_argv: # in fact the unplugger would take care of this
+        else:  # custom doctesting
+            if doctest_argv:  # in fact the unplugger would take care of this
                 argv.remove('--with-doctest')
             plugins += [Unplugger('doctest'), plug]
             if doctests:

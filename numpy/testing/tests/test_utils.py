@@ -236,18 +236,18 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         ainf = np.array([np.inf])
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
 
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
         a[0, 0] = np.inf
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(a, b))
+                lambda: self._assert_func(a, b))
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -265,17 +265,17 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.nan, 1))
+                lambda: self._assert_func(np.nan, 1))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.nan, np.inf))
+                lambda: self._assert_func(np.nan, np.inf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.inf, np.nan))
+                lambda: self._assert_func(np.inf, np.nan))
 
     def test_inf_item(self):
         self._assert_func(np.inf, np.inf)
         self._assert_func(-np.inf, -np.inf)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.inf, 1))
+                lambda: self._assert_func(np.inf, 1))
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
@@ -350,11 +350,11 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
 
     def test_nan_items(self):
         anan = np.array(np.nan)
@@ -362,11 +362,11 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
 
 class TestRaises(unittest.TestCase):
     def setUp(self):
@@ -538,7 +538,6 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         y = x - x*epsneg*nulp*2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
-
 
     def test_complex128_pass(self):
         nulp = 5
