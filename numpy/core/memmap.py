@@ -1,13 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['memmap']
-
-import warnings
-import sys
-
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import long, basestring
+
+__all__ = ['memmap']
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
@@ -200,6 +197,7 @@ class memmap(ndarray):
     """
 
     __array_priority__ = -100.0
+
     def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
         # Import here to minimize 'import numpy' overhead

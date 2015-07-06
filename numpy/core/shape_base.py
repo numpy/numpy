@@ -4,7 +4,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
            'stack']
 
 from . import numeric as _nx
-from .numeric import array, asanyarray, newaxis
+from .numeric import asanyarray, newaxis
 
 def atleast_1d(*arys):
     """
@@ -48,9 +48,9 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0 :
+        if len(ary.shape) == 0:
             result = ary.reshape(1)
-        else :
+        else:
             result = ary
         res.append(result)
     if len(res) == 1:
@@ -98,11 +98,11 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0 :
+        if len(ary.shape) == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1 :
+        elif len(ary.shape) == 1:
             result = ary[newaxis,:]
-        else :
+        else:
             result = ary
         res.append(result)
     if len(res) == 1:

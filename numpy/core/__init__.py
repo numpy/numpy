@@ -18,7 +18,7 @@ del envbak
 del os
 
 from . import umath
-from . import _internal # for freeze programs
+from . import _internal  # for freeze programs
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
@@ -40,8 +40,7 @@ from . import shape_base
 from .shape_base import *
 del nt
 
-from .fromnumeric import amax as max, amin as min, \
-     round_ as round
+from .fromnumeric import amax as max, amin as min, round_ as round
 from .numeric import absolute as abs
 
 __all__ = ['char', 'rec', 'memmap']

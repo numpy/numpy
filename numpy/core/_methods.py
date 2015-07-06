@@ -58,7 +58,6 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     if rcount == 0:
         warnings.warn("Mean of empty slice.", RuntimeWarning)
 
-
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
         dtype = mu.dtype('f8')

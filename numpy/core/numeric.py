@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import os
 import sys
 import warnings
 import collections
@@ -21,30 +20,28 @@ else:
 loads = pickle.loads
 
 
-__all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-           'arange', 'array', 'zeros', 'count_nonzero',
-           'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',
-           'frombuffer', 'int_asbuffer', 'where', 'argwhere', 'copyto',
-           'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
-           'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
-           'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
-           'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-           'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
-           'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
-           'array2string', 'get_printoptions', 'set_printoptions',
-           'array_repr', 'array_str', 'set_string_function',
-           'little_endian', 'require',
-           'fromiter', 'array_equal', 'array_equiv',
-           'indices', 'fromfunction', 'isclose',
-           'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
-           'ones', 'identity', 'allclose', 'compare_chararrays', 'putmask',
-           'seterr', 'geterr', 'setbufsize', 'getbufsize',
-           'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
-           'Inf', 'inf', 'infty', 'Infinity',
-           'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
-           'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory', 'full', 'full_like',
-           'matmul']
+__all__ = [
+    'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
+    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
+    'dtype', 'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer',
+    'where', 'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose',
+    'lexsort', 'set_numeric_ops', 'can_cast', 'promote_types',
+    'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
+    'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
+    'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
+    'einsum', 'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
+    'rollaxis', 'cross', 'tensordot', 'array2string', 'get_printoptions',
+    'set_printoptions', 'array_repr', 'array_str', 'set_string_function',
+    'little_endian', 'require', 'fromiter', 'array_equal', 'array_equiv',
+    'indices', 'fromfunction', 'isclose', 'load', 'loads', 'isscalar',
+    'binary_repr', 'base_repr', 'ones', 'identity', 'allclose',
+    'compare_chararrays', 'putmask', 'seterr', 'geterr', 'setbufsize',
+    'getbufsize', 'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
+    'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_', 'True_',
+    'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
+    'ALLOW_THREADS', 'ComplexWarning', 'may_share_memory', 'full',
+    'full_like', 'matmul',
+    ]
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -826,8 +823,8 @@ def flatnonzero(a):
     return a.ravel().nonzero()[0]
 
 _mode_from_name_dict = {'v': 0,
-                        's' : 1,
-                        'f' : 2}
+                        's': 1,
+                        'f': 2}
 
 def _mode_from_name(mode):
     if isinstance(mode, basestring):
@@ -991,9 +988,9 @@ def convolve(a,v,mode='full'):
     a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
-    if len(a) == 0 :
+    if len(a) == 0:
         raise ValueError('a cannot be empty')
-    if len(v) == 0 :
+    if len(v) == 0:
         raise ValueError('v cannot be empty')
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
@@ -1281,7 +1278,8 @@ def tensordot(a, b, axes=2):
     bs = b.shape
     ndb = len(b.shape)
     equal = True
-    if (na != nb): equal = False
+    if na != nb:
+        equal = False
     else:
         for k in range(na):
             if as_[axes_a[k]] != bs[axes_b[k]]:
@@ -1701,14 +1699,14 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
-    if arr.size > 0 or arr.shape==(0,):
+    if arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
                            ', ', "array(")
-    else: # show zero-length shape unless it is (0,)
+    else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
 
     if arr.__class__ is not ndarray:
-        cName= arr.__class__.__name__
+        cName = arr.__class__.__name__
     else:
         cName = "array"
 
@@ -1900,7 +1898,7 @@ def indices(dimensions, dtype=int):
     for i, dim in enumerate(dimensions):
         tmp = arange(dim, dtype=dtype)
         tmp.shape = (1,)*i + (dim,)+(1,)*(N-i-1)
-        newdim = dimensions[:i] + (1,)+ dimensions[i+1:]
+        newdim = dimensions[:i] + (1,) + dimensions[i+1:]
         val = zeros(newdim, dtype)
         add(tmp, val, res[i])
     return res
@@ -2548,13 +2546,17 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     pyvals = umath.geterrobj()
     old = geterr()
 
-    if divide is None: divide = all or old['divide']
-    if over is None: over = all or old['over']
-    if under is None: under = all or old['under']
-    if invalid is None: invalid = all or old['invalid']
+    if divide is None:
+        divide = all or old['divide']
+    if over is None:
+        over = all or old['over']
+    if under is None:
+        under = all or old['under']
+    if invalid is None:
+        invalid = all or old['invalid']
 
     maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
-                 (_errdict[over] << SHIFT_OVERFLOW ) +
+                 (_errdict[over] << SHIFT_OVERFLOW) +
                  (_errdict[under] << SHIFT_UNDERFLOW) +
                  (_errdict[invalid] << SHIFT_INVALID))
 
@@ -2626,9 +2628,9 @@ def setbufsize(size):
     if size > 10e6:
         raise ValueError("Buffer size, %s, is too big." % size)
     if size < 5:
-        raise ValueError("Buffer size, %s, is too small." %size)
+        raise ValueError("Buffer size, %s, is too small." % size)
     if size % 16 != 0:
-        raise ValueError("Buffer size, %s, is not a multiple of 16." %size)
+        raise ValueError("Buffer size, %s, is not a multiple of 16." % size)
 
     pyvals = umath.geterrobj()
     old = getbufsize()
@@ -2849,6 +2851,7 @@ class errstate(object):
     """
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement
+
     def __init__(self, **kwargs):
         self.call = kwargs.pop('call', _Unspecified)
         self.kwargs = kwargs
