@@ -290,6 +290,6 @@ class build_clib(old_build_clib):
         clib_libraries = build_info.get('libraries', [])
         for lname, binfo in libraries:
             if lname in clib_libraries:
-                clib_libraries.extend(binfo[1].get('libraries', []))
+                clib_libraries.extend(binfo.get('libraries', []))
         if clib_libraries:
             build_info['libraries'] = clib_libraries
