@@ -25,7 +25,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
         evenly spaced samples, so that `stop` is excluded.  Note that the step
         size changes when `endpoint` is False.
     num : int, optional
-        Number of samples to generate. Default is 50.
+        Number of samples to generate. Default is 50. Must be non-negative.
     endpoint : bool, optional
         If True, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
@@ -82,6 +82,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
 
     """
     num = int(num)
+    if num < 0:
+        raise ValueError("Number of samples, %s, must be non-negative." % num)
     div = (num - 1) if endpoint else num
 
     # Convert float/complex array scalars to float, gh-3504

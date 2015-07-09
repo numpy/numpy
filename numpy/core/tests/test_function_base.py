@@ -34,6 +34,7 @@ class TestLinspace(TestCase):
         assert_(y[-1] == 10)
         y = linspace(2, 10, endpoint=0)
         assert_(y[-1] < 10)
+        assert_raises(ValueError, linspace, 0, 10, num=-1)
 
     def test_corner(self):
         y = list(linspace(0, 1, 1))
