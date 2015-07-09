@@ -35,7 +35,7 @@
 #           library_dirs = /usr/lib,/usr/local/lib
 #
 #   include_dirs
-#       List of directories to add to the header file earch path.
+#       List of directories to add to the header file search path.
 #           include_dirs = /usr/include:/usr/local/include
 #
 #   src_dirs 
