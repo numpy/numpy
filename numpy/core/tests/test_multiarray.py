@@ -2681,12 +2681,24 @@ class TestArgmax(TestCase):
           np.datetime64('2015-11-20T12:20:59'),
           np.datetime64('1932-09-23T10:10:13'),
           np.datetime64('2014-10-10T03:50:30')], 3),
+        # Assorted tests with NaTs
+        ([np.datetime64('NaT'),
+          np.datetime64('NaT'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('NaT'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 4),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
-          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
           np.datetime64('2013-05-08T18:15:23')], 0),
+        ([np.timedelta64(2, 's'),
+          np.timedelta64(1, 's'),
+          np.timedelta64('NaT', 's'),
+          np.timedelta64(3, 's')], 3),
+        ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
           timedelta(days=-1, seconds=23)], 0),
@@ -2793,12 +2805,24 @@ class TestArgmin(TestCase):
           np.datetime64('2014-11-20T12:20:59'),
           np.datetime64('2015-09-23T10:10:13'),
           np.datetime64('1932-10-10T03:50:30')], 5),
+        # Assorted tests with NaTs
+        ([np.datetime64('NaT'),
+          np.datetime64('NaT'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('NaT'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 5),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
-          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
           np.datetime64('2013-05-08T18:15:23')], 4),
+        ([np.timedelta64(2, 's'),
+          np.timedelta64(1, 's'),
+          np.timedelta64('NaT', 's'),
+          np.timedelta64(3, 's')], 1),
+        ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
           timedelta(days=-1, seconds=23)], 2),
@@ -2887,6 +2911,7 @@ class TestArgmin(TestCase):
 
 
 class TestMinMax(TestCase):
+
     def test_scalar(self):
         assert_raises(ValueError, np.amax, 1, 1)
         assert_raises(ValueError, np.amin, 1, 1)
@@ -2899,6 +2924,21 @@ class TestMinMax(TestCase):
     def test_axis(self):
         assert_raises(ValueError, np.amax, [1, 2, 3], 1000)
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
+
+    def test_datetime(self):
+        # NaTs are ignored
+        for dtype in ('m8[s]', 'm8[Y]'):
+            a = np.arange(10).astype(dtype)
+            a[3] = 'NaT'
+            assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[9])
+            a[0] = 'NaT'
+            assert_equal(np.amin(a), a[1])
+            assert_equal(np.amax(a), a[9])
+            a.fill('NaT')
+            assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[0])
+
 
 class TestNewaxis(TestCase):
     def test_basic(self):
