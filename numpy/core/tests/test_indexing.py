@@ -535,6 +535,27 @@ class TestSubclasses(TestCase):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
+class TestFancingIndexingCast(TestCase):
+    def test_boolean_index_cast_assign(self):
+        # Setup the boolean index and float arrays.
+        shape = (8, 63)
+        bool_index = np.zeros(shape).astype(bool)
+        bool_index[0, 1] = True
+        zero_array = np.zeros(shape)
+
+        # Assigning float is fine.
+        zero_array[bool_index] = np.array([1])
+        assert_equal(zero_array[0, 1], 1)
+
+        # Fancy indexing works, although we get a cast warning.
+        assert_warns(np.ComplexWarning,
+                     zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
+        assert_equal(zero_array[0, 1], 2)  # No complex part
+
+        # Cast complex to float, throwing away the imaginary portion.
+        assert_warns(np.ComplexWarning,
+                     zero_array.__setitem__, bool_index, np.array([1j]))
+        assert_equal(zero_array[0, 1], 0)
 
 class TestFancyIndexingEquivalence(TestCase):
     def test_object_assign(self):
