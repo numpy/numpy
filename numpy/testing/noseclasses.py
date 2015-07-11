@@ -59,7 +59,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
             return module.__name__ == object.__module__
         elif isinstance(object, property):
             #print '_fm C6'  # dbg
-            return True # [XX] no way not be sure.
+            return True  # [XX] no way not be sure.
         else:
             raise ValueError("object must be a class or function")
 
@@ -77,19 +77,19 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # doctests in extension modules.
 
         # Local shorthands
-        from inspect import isroutine, isclass, ismodule, isfunction, \
-                            ismethod
+        from inspect import (
+            isroutine, isclass, ismodule, isfunction, ismethod
+            )
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
                 valname1 = '%s.%s' % (name, valname)
                 if ( (isroutine(val) or isclass(val))
-                     and self._from_module(module, val) ):
+                     and self._from_module(module, val)):
 
                     self._find(tests, val, valname1, module, source_lines,
                                globs, seen)
-
 
         # Look for tests in a class's contained objects.
         if isclass(obj) and self._recurse:
@@ -128,12 +128,12 @@ class NumpyOutputChecker(doctest.OutputChecker):
             # actually some bigendian examples in the doctests). Let's try
             # making them all little endian
             got = got.replace("'>", "'<")
-            want= want.replace("'>", "'<")
+            want = want.replace("'>", "'<")
 
             # try to normalize out 32 and 64 bit default int sizes
             for sz in [4, 8]:
-                got = got.replace("'<i%d'"%sz, "int")
-                want= want.replace("'<i%d'"%sz, "int")
+                got = got.replace("'<i%d'" % sz, "int")
+                want = want.replace("'<i%d'" % sz, "int")
 
             ret = doctest.OutputChecker.check_output(self, want,
                     got, optionflags)
@@ -159,7 +159,7 @@ print_state = numpy.get_printoptions()
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
-    score = 1000 # load late, after doctest builtin
+    score = 1000  # load late, after doctest builtin
 
     # always use whitespace and ellipsis options for doctests
     doctest_optflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
@@ -283,8 +283,8 @@ class Unplugger(object):
     By default it removes the "doctest" plugin.
     """
     name = 'unplugger'
-    enabled = True # always enabled
-    score = 4000 # load late in order to be after builtins
+    enabled = True  # always enabled
+    score = 4000  # load late in order to be after builtins
 
     def __init__(self, to_unplug='doctest'):
         self.to_unplug = to_unplug

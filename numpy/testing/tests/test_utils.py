@@ -9,17 +9,19 @@ from numpy.testing import (
     assert_array_almost_equal, build_err_msg, raises, assert_raises,
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
-    clear_and_catch_warnings, run_module_suite)
+    clear_and_catch_warnings, run_module_suite
+    )
 import unittest
 
+
 class _GenericTest(object):
+
     def _test_equal(self, a, b):
         self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
         try:
             self._assert_func(a, b)
-            passed = True
         except AssertionError:
             pass
         else:
@@ -61,7 +63,9 @@ class _GenericTest(object):
     def test_array_likes(self):
         self._test_equal([1, 2, 3], (1, 2, 3))
 
+
 class TestArrayEqual(_GenericTest, unittest.TestCase):
+
     def setUp(self):
         self._assert_func = assert_array_equal
 
@@ -139,7 +143,9 @@ class TestArrayEqual(_GenericTest, unittest.TestCase):
 
         self._test_not_equal(c, b)
 
+
 class TestBuildErrorMessage(unittest.TestCase):
+
     def test_build_err_msg_defaults(self):
         x = np.array([1.00001, 2.00002, 3.00003])
         y = np.array([1.00002, 2.00003, 3.00004])
@@ -182,7 +188,9 @@ class TestBuildErrorMessage(unittest.TestCase):
              '1.000000002,  2.00003    ,  3.00004    ])')
         self.assertEqual(a, b)
 
+
 class TestEqual(TestArrayEqual):
+
     def setUp(self):
         self._assert_func = assert_equal
 
@@ -217,7 +225,9 @@ class TestEqual(TestArrayEqual):
         self._assert_func(x, x)
         self._test_not_equal(x, y)
 
+
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
+
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
@@ -236,18 +246,18 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         ainf = np.array([np.inf])
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
 
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
         a[0, 0] = np.inf
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(a, b))
+                lambda: self._assert_func(a, b))
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -259,23 +269,24 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
 
 
 class TestAlmostEqual(_GenericTest, unittest.TestCase):
+
     def setUp(self):
         self._assert_func = assert_almost_equal
 
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.nan, 1))
+                lambda: self._assert_func(np.nan, 1))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.nan, np.inf))
+                lambda: self._assert_func(np.nan, np.inf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.inf, np.nan))
+                lambda: self._assert_func(np.inf, np.nan))
 
     def test_inf_item(self):
         self._assert_func(np.inf, np.inf)
         self._assert_func(-np.inf, -np.inf)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(np.inf, 1))
+                lambda: self._assert_func(np.inf, 1))
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
@@ -321,7 +332,9 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
             # remove anything that's not the array string
             self.assertEqual(str(e).split('%)\n ')[1], b)
 
+
 class TestApproxEqual(unittest.TestCase):
+
     def setUp(self):
         self._assert_func = assert_approx_equal
 
@@ -350,11 +363,11 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
 
     def test_nan_items(self):
         anan = np.array(np.nan)
@@ -362,13 +375,15 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, aone))
+                lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(anan, ainf))
+                lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda : self._assert_func(ainf, anan))
+                lambda: self._assert_func(ainf, anan))
+
 
 class TestRaises(unittest.TestCase):
+
     def setUp(self):
         class MyException(Exception):
             pass
@@ -382,11 +397,11 @@ class TestRaises(unittest.TestCase):
         pass
 
     def test_correct_catch(self):
-        f = raises(self.e)(self.raises_exception)(self.e)
+        raises(self.e)(self.raises_exception)(self.e)  # raises?
 
     def test_wrong_exception(self):
         try:
-            f = raises(self.e)(self.raises_exception)(RuntimeError)
+            raises(self.e)(self.raises_exception)(RuntimeError)  # raises?
         except RuntimeError:
             return
         else:
@@ -394,13 +409,15 @@ class TestRaises(unittest.TestCase):
 
     def test_catch_no_raise(self):
         try:
-            f = raises(self.e)(self.does_not_raise_exception)()
+            raises(self.e)(self.does_not_raise_exception)()  # raises?
         except AssertionError:
             return
         else:
             raise AssertionError("should have raised an AssertionError")
 
+
 class TestWarns(unittest.TestCase):
+
     def test_warn(self):
         def f():
             warnings.warn("yo")
@@ -436,7 +453,9 @@ class TestWarns(unittest.TestCase):
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
 
+
 class TestAssertAllclose(unittest.TestCase):
+    
     def test_simple(self):
         x = 1e-3
         y = 1e-9
@@ -472,6 +491,7 @@ class TestAssertAllclose(unittest.TestCase):
         except AssertionError as exc:
             msg = exc.args[0]
         self.assertTrue("mismatch 25.0%" in msg)
+
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
 
@@ -538,7 +558,6 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         y = x - x*epsneg*nulp*2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
-
 
     def test_complex128_pass(self):
         nulp = 5
@@ -642,6 +661,7 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
 
 
 class TestULP(unittest.TestCase):
+
     def test_equal(self):
         x = np.random.randn(10)
         assert_array_max_ulp(x, x, maxulp=0)
@@ -744,6 +764,7 @@ def test_clear_and_catch_warnings():
 
 
 class my_cacw(clear_and_catch_warnings):
+
     class_modules = (sys.modules[__name__],)
 
 

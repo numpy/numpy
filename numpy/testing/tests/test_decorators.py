@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import *
+from numpy.testing import dec, assert_, assert_raises, run_module_suite
 from numpy.testing.noseclasses import KnownFailureTest
 import nose
 
@@ -99,7 +98,6 @@ def test_skip_generators_hardcoded():
     else:
         raise Exception('Failed to mark as known failure')
 
-
     @dec.knownfailureif(False, "This test is NOT known to fail")
     def g2(x):
         for i in range(x):
@@ -132,7 +130,6 @@ def test_skip_generators_callable():
         pass
     else:
         raise Exception('Failed to mark as known failure')
-
 
     @dec.knownfailureif(skip_tester, "This test is NOT known to fail")
     def g2(x):

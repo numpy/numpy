@@ -123,9 +123,9 @@ def skipif(skip_condition, msg=None):
 
         # Allow for both boolean or callable skip conditions.
         if isinstance(skip_condition, collections.Callable):
-            skip_val = lambda : skip_condition()
+            skip_val = lambda: skip_condition()
         else:
-            skip_val = lambda : skip_condition
+            skip_val = lambda: skip_condition
 
         def get_msg(func,msg=None):
             """Skip message with information about function being skipped."""
@@ -199,15 +199,16 @@ def knownfailureif(fail_condition, msg=None):
 
     # Allow for both boolean or callable known failure conditions.
     if isinstance(fail_condition, collections.Callable):
-        fail_val = lambda : fail_condition()
+        fail_val = lambda: fail_condition()
     else:
-        fail_val = lambda : fail_condition
+        fail_val = lambda: fail_condition
 
     def knownfail_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
         from .noseclasses import KnownFailureTest
+
         def knownfailer(*args, **kwargs):
             if fail_val():
                 raise KnownFailureTest(msg)
@@ -246,7 +247,6 @@ def deprecated(conditional=True):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        from .noseclasses import KnownFailureTest
 
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement
@@ -257,7 +257,7 @@ def deprecated(conditional=True):
                     raise AssertionError("No warning raised when calling %s"
                             % f.__name__)
                 if not l[0].category is DeprecationWarning:
-                    raise AssertionError("First warning for %s is not a " \
+                    raise AssertionError("First warning for %s is not a "
                             "DeprecationWarning( is %s)" % (f.__name__, l[0]))
 
         if isinstance(conditional, collections.Callable):
