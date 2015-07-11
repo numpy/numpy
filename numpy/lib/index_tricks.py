@@ -80,7 +80,7 @@ def ix_(*args):
             new = new.astype(_nx.intp)
         if issubdtype(new.dtype, _nx.bool_):
             new, = new.nonzero()
-        new.shape = (1,)*k + (new.size,) + (1,)*(nd-k-1)
+        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
         out.append(new)
     return tuple(out)
 

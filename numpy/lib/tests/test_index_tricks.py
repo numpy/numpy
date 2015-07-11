@@ -196,6 +196,15 @@ class TestIx_(TestCase):
         idx2d = [[1, 2, 3], [4, 5, 6]]
         assert_raises(ValueError, np.ix_, idx2d)
 
+    def test_repeated_input(self):
+        length_of_vector = 5
+        x = np.arange(length_of_vector)
+        out = ix_(x, x)
+        assert_equal(out[0].shape, (length_of_vector, 1))
+        assert_equal(out[1].shape, (1, length_of_vector))
+        # check that input shape is not modified
+        assert_equal(x.shape, (length_of_vector,))
+
 
 def test_c_():
     a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
