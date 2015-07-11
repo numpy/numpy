@@ -1226,8 +1226,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
             return -1;
         }
 
-        NPY_BEGIN_THREADS_NDITER(iter);
-
         innerstrides = NpyIter_GetInnerStrideArray(iter);
         dataptrs = NpyIter_GetDataPtrArray(iter);
 
@@ -1246,6 +1244,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        NPY_BEGIN_THREADS_NDITER(iter);
 
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
