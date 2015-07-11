@@ -1953,6 +1953,11 @@ class TestRegression(TestCase):
         x = np.arange(0, 4, dtype='datetime64[D]')
         assert_raises(TypeError, x.searchsorted, 1)
 
+    def test_search_sorted_unsafe_cast(self):
+        # Ticket #6061, should not allow safe casting from int to str.
+        x = np.arange(0, 10, dtype='int')
+        assert_raises(TypeError, x.searchsorted, '5')
+
     def test_string_truncation(self):
         # Ticket #1990 - Data can be truncated in creation of an array from a
         # mixed sequence of numeric values and strings

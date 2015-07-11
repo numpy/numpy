@@ -3858,8 +3858,8 @@ initialize_casting_tables(void)
 #define _FROM_BSIZE NPY_SIZEOF_@FROM_BASENAME@
 #define _FROM_NUM   (NPY_@FROM_NAME@)
 
-    _npy_can_cast_safely_table[_FROM_NUM][NPY_STRING] = 1;
-    _npy_can_cast_safely_table[_FROM_NUM][NPY_UNICODE] = 1;
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_STRING] = 0;
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_UNICODE] = 0;
 
     /* Allow casts from any integer to the TIMEDELTA type */
 #if @from_isint@ || @from_isuint@
