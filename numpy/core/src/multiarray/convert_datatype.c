@@ -510,54 +510,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             return can_cast_timedelta64_metadata(meta1, meta2,
                                                  NPY_SAFE_CASTING);
         }
-        /*
-         * If to_type_num is STRING or unicode
-         * see if the length is long enough to hold the
-         * stringified value of the object.
-         */
-        else if (to_type_num == NPY_STRING || to_type_num == NPY_UNICODE) {
-            /* 
-             * Boolean value cast to string type is 5 characters max
-             * for string 'False'.
-             */
-            int char_size = 1;
-            if (to_type_num == NPY_UNICODE) {
-                char_size = 4;
-            }
-
-            ret = 0;
-            if (to->elsize == 0) {
-                ret = 1;
-            }
-            /* 
-             * Need at least 5 characters to convert from boolean
-             * to 'True' or 'False'.
-             */
-            else if (from->kind == 'b' && to->elsize >= 5 * char_size) {
-                ret = 1;
-            }
-            else if (from->kind == 'u') {
-                /* Guard against unexpected integer size */
-                if (from->elsize > 8 || from->elsize < 0) {
-                    ret = 0;
-                }
-                else if (to->elsize >=
-                        REQUIRED_STR_LEN[from->elsize] * char_size) {
-                    ret = 1;
-                }
-            }
-            else if (from->kind == 'i') {
-                /* Guard against unexpected integer size */
-                if (from->elsize > 8 || from->elsize < 0) {
-                    ret = 0;
-                }
-                /* Extra character needed for sign */
-                else if (to->elsize >=
-                        (REQUIRED_STR_LEN[from->elsize] + 1) * char_size) {
-                    ret = 1;
-                }
-            }
-        }
     }
     return ret;
 }

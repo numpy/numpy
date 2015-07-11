@@ -3825,6 +3825,8 @@ initialize_casting_tables(void)
 
     _npy_can_cast_safely_table[NPY_STRING][NPY_UNICODE] = 1;
     _npy_can_cast_safely_table[NPY_BOOL][NPY_TIMEDELTA] = 1;
+    _npy_can_cast_safely_table[NPY_BOOL][NPY_STRING] = 0;
+    _npy_can_cast_safely_table[NPY_BOOL][NPY_UNICODE] = 0;
 
 #ifndef NPY_SIZEOF_BYTE
 #define NPY_SIZEOF_BYTE 1

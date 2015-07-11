@@ -783,6 +783,7 @@ class TestTypes(TestCase):
         assert_(np.can_cast('<i8', '>u4', 'unsafe'))
 
         assert_(np.can_cast('bool', 'S5', 'unsafe'))
+
         assert_(not np.can_cast('bool', 'S4'))
 
         assert_(np.can_cast('b', 'S4', 'unsafe'))
@@ -832,6 +833,12 @@ class TestTypes(TestCase):
 
         assert_raises(TypeError, np.can_cast, 'i4', None)
         assert_raises(TypeError, np.can_cast, None, 'i4')
+
+        # build a list of all integer types, add bool type to that list
+        # then assert that none of those should be safe to cast to string
+        int_types = np.typecodes['AllInteger'] + '?'
+        for t in int_types:
+            assert_(not np.can_cast(t, np.str_))
 
 
 # Custom exception class to test exception propagation in fromiter
