@@ -153,6 +153,29 @@ if os.name == 'nt':
                                         processName, instance,
                                         win32pdh.PDH_FMT_LONG, None)
 elif sys.platform[:5] == 'linux':
+
+    def memusage(_proc_pid_stat='/proc/%s/stat' % (os.getpid())):
+        """
+        Return virtual memory size in bytes of the running python.
+
+        """
+        try:
+            f = open(_proc_pid_stat, 'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[22])
+        except:
+            return
+else:
+    def memusage():
+        """
+        Return memory usage of running python. [Not implemented]
+
+        """
+        raise NotImplementedError
+
+
+if sys.platform[:5] == 'linux':
     def jiffies(_proc_pid_stat='/proc/%s/stat' % (os.getpid()),
                 _load_time=[]):
         """
@@ -172,19 +195,6 @@ elif sys.platform[:5] == 'linux':
             return int(l[13])
         except:
             return int(100*(time.time()-_load_time[0]))
-
-    def memusage(_proc_pid_stat='/proc/%s/stat' % (os.getpid())):
-        """
-        Return virtual memory size in bytes of the running python.
-
-        """
-        try:
-            f = open(_proc_pid_stat, 'r')
-            l = f.readline().split(' ')
-            f.close()
-            return int(l[22])
-        except:
-            return
 else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
@@ -201,13 +211,6 @@ else:
         if not _load_time:
             _load_time.append(time.time())
         return int(100*(time.time()-_load_time[0]))
-
-    def memusage():
-        """
-        Return memory usage of running python. [Not implemented]
-
-        """
-        raise NotImplementedError
 
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
