@@ -148,7 +148,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
         Number of compounding periods
     pv : array_like
         Present value
-    fv : array_like,  optional
+    fv : array_like (optional)
         Future value (default = 0)
     when : {{'begin', 1}, {'end', 0}}, {string, int}
         When payments are due ('begin' (1) or 'end' (0))
@@ -163,17 +163,24 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     Notes
     -----
-    The payment is computed by solving the equation::
+    When `rate != 0``: the payment is computed by solving the equation::
 
      fv +
      pv*(1 + rate)**nper +
      pmt*(1 + rate*when)/rate*((1 + rate)**nper - 1) == 0
 
-    or, when ``rate == 0``::
+    Solving for pmt yields::
+
+      pmt = -(fv + pv*(1 + rate)**nper) * rate / ( (1 + rate*when) * ((1 + rate)**nper -1) )
+
+    When ``rate == 0``:the payment is computed by instead solving the equation::
 
       fv + pv + pmt * nper == 0
 
-    for ``pmt``.
+    Solving for pmt yields::
+
+      pmt = -(fv + pv) / nper
+
 
     Note that computing a monthly mortgage payment is only
     one use for this function.  For example, pmt returns the
@@ -208,12 +215,15 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     """
     when = _convert_when(when)
     (rate, nper, pv, fv, when) = map(np.asarray, [rate, nper, pv, fv, when])
-    temp = (1 + rate)**nper
-    mask = (rate == 0.0)
-    np.copyto(rate, 1.0, where=mask)
-    z = np.zeros(np.broadcast(rate, nper, pv, fv, when).shape)
-    fact = np.where(mask != z, nper + z, (1 + rate*when)*(temp - 1)/rate + z)
-    return -(fv + pv*temp) / fact
+
+    # use different payment if rate == 0
+    zero_rate_mask = (rate == 0)
+    compounded_rate = (1 + rate)**nper
+    payment = np.asarray(np.divide(-(fv + pv*compounded_rate)*rate,
+                                   (1 + rate*when)*(compounded_rate - 1),
+                                   where=~zero_rate_mask))
+    np.copyto(payment, -(fv + pv)/nper, where=zero_rate_mask)
+    return payment
 
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
