@@ -219,10 +219,10 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     # use different payment if rate == 0
     zero_rate_mask = (rate == 0)
     compounded_rate = (1 + rate)**nper
-    payment = np.asarray(np.divide(-(fv + pv*compounded_rate)*rate,
-                                   (1 + rate*when)*(compounded_rate - 1),
+    payment = np.asarray(np.divide(-(fv + pv * compounded_rate) * rate,
+                                   (1 + rate * when) * (compounded_rate - 1),
                                    where=~zero_rate_mask))
-    np.copyto(payment, -(fv + pv)/nper, where=zero_rate_mask)
+    np.copyto(payment, -(fv + pv) / nper, where=zero_rate_mask)
     return payment
 
 def nper(rate, pmt, pv, fv=0, when='end'):
