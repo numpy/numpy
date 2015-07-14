@@ -105,7 +105,17 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
     PyObject *pyfunc, *ret, *args;
     char *name = PyBytes_AS_STRING(PyTuple_GET_ITEM(errobj,0));
     char msg[100];
-    NPY_ALLOW_C_API_DEF;
+
+    NPY_ALLOW_C_API_DEF
+
+    /* don't need C API for a simple print */
+    if (method == UFUNC_ERR_PRINT) {
+        if (*first) {
+            fprintf(stderr, "Warning: %s encountered in %s\n", errtype, name);
+            *first = 0;
+        }
+        return 0;
+    }
 
     NPY_ALLOW_C_API;
     switch(method) {
@@ -139,12 +149,6 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
             goto fail;
         }
         Py_DECREF(ret);
-        break;
-    case UFUNC_ERR_PRINT:
-        if (*first) {
-            fprintf(stderr, "Warning: %s encountered in %s\n", errtype, name);
-            *first = 0;
-        }
         break;
     case UFUNC_ERR_LOG:
         if (first) {
