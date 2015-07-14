@@ -4703,6 +4703,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
         goto err;
     }
+    if (PyType_Ready(&PyArrayAttributeIndexer_Type) < 0) {
+        return RETVAL;
+    }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
         goto err;
@@ -4781,6 +4784,9 @@ PyMODINIT_FUNC initmultiarray(void) {
 
     PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
+    Py_INCREF(&PyArrayMultiIter_Type);
+    PyDict_SetItemString(d, "_attributeindexer", (PyObject *)&PyArrayAttributeIndexer_Type);
+    Py_INCREF(&PyArrayAttributeIndexer_Type);
     PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);

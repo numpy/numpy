@@ -21,6 +21,8 @@
 #include "mem_overlap.h"
 #include "alloc.h"
 
+#include "mapping.h"
+
 /*******************  array attribute get and set routines ******************/
 
 static PyObject *
@@ -961,6 +963,24 @@ array_transpose_get(PyArrayObject *self)
     return PyArray_Transpose(self, NULL);
 }
 
+static PyObject *
+array_oindex_get(PyArrayObject *self)
+{
+    return PyArray_AttributeIndexerNew(self, OUTER_INDEXING);
+}
+
+static PyObject *
+array_vindex_get(PyArrayObject *self)
+{
+    return PyArray_AttributeIndexerNew(self, VECTOR_INDEXING);
+}
+
+static PyObject *
+array_lindex_get(PyArrayObject *self)
+{
+    return PyArray_AttributeIndexerNew(self, FANCY_INDEXING);
+}
+
 /* If this is None, no function call is made
    --- default sub-class behavior
 */
@@ -1029,6 +1049,18 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"T",
         (getter)array_transpose_get,
+        NULL,
+        NULL, NULL},
+    {"oindex",
+        (getter)array_oindex_get,
+        NULL,
+        NULL, NULL},
+    {"vindex",
+        (getter)array_vindex_get,
+        NULL,
+        NULL, NULL},
+    {"lindex",
+        (getter)array_lindex_get,
         NULL,
         NULL, NULL},
     {"__array_interface__",

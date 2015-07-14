@@ -3563,7 +3563,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 
     res = PyArray_FromScalar(self, NULL);
 
-    ret = array_subscript((PyArrayObject *)res, key);
+    ret = array_subscript((PyArrayObject *)res, key, FANCY_INDEXING);
     Py_DECREF(res);
     if (ret == NULL) {
         PyErr_SetString(PyExc_IndexError,

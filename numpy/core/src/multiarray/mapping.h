@@ -3,6 +3,15 @@
 
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
+/*
+ * Plain indexing is python code writing arr[...]. Fancy means explicitly
+ * the old behavious, legacy is mostly like fancy, but does not accept
+ * array-likes as tuples.
+ */
+#define PLAIN_INDEXING 1
+#define OUTER_INDEXING 2
+#define VECTOR_INDEXING 4
+#define FANCY_INDEXING 8
 
 /*
  * Struct into which indices are parsed.
@@ -23,6 +32,8 @@ typedef struct {
     npy_intp value;
     /* kind of index, see constants in mapping.c */
     int type;
+    /* original index number, mostly for boolean. -1 if implicit Ellipsis */
+    int orig_index;
 } npy_index_info;
 
 
@@ -42,7 +53,7 @@ NPY_NO_EXPORT PyObject *
 array_subscript_asarray(PyArrayObject *self, PyObject *op);
 
 NPY_NO_EXPORT PyObject *
-array_subscript(PyArrayObject *self, PyObject *op);
+array_subscript(PyArrayObject *self, PyObject *op, int indexing_method);
 
 NPY_NO_EXPORT int
 array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
@@ -69,5 +80,34 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    PyArrayObject *arr, PyArrayObject *subspace,
                    npy_uint32 subspace_iter_flags, npy_uint32 subspace_flags,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
-                   PyArray_Descr *extra_op_dtype);
+                   PyArray_Descr *extra_op_dtype, int outer_indexing);
+
+/*
+ * Prototypes for attribute indexing helper (arr.oindex, etc.)
+ */
+typedef struct {
+        PyObject_HEAD
+        /*
+         * Attribute information portion.
+         */
+        PyArrayObject *array;
+        int indexing_method;  /* See mapping.h */
+} PyArrayAttributeIndexer;
+
+
+NPY_NO_EXPORT PyObject *
+PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method);
+
+
+NPY_NO_EXPORT PyObject *
+arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
+                                 PyObject *op);
+
+NPY_NO_EXPORT int
+arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
+                                        PyObject *op, PyObject *vals);
+
+
+NPY_NO_EXPORT npy_intp
+arrayattributeindexer_length(PyArrayAttributeIndexer *attr_indexer);
 #endif
