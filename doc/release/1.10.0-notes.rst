@@ -6,8 +6,8 @@ This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
 
 Highlights
 ==========
-* numpy.distutils now supports parallel compilation via the --jobs/-j argument
-  passed to setup.py build
+* numpy.distutils now supports parallel compilation via the --parallel/-j
+  argument passed to setup.py build
 * numpy.distutils now supports additional customization via site.cfg to
   control compilation parameters, i.e. runtime libraries, extra
   linking/compilation flags.
@@ -172,7 +172,7 @@ and a bit faster.
 
 numpy.distutils now allows parallel compilation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By passing *--jobs=n* or *-j n* to *setup.py build* the compilation of
+By passing *--parallel=n* or *-j n* to *setup.py build* the compilation of
 extensions is now performed in *n* parallel processes.
 The parallelization is limited to files within one extension so projects using
 Cython will not profit because it builds extensions from single files.

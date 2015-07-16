@@ -68,8 +68,8 @@ class InstallableLib(object):
 
 def get_num_build_jobs():
     """
-    Get number of parallel build jobs set by the --jobs command line argument
-    of setup.py
+    Get number of parallel build jobs set by the --parallel command line
+    argument of setup.py
     If the command did not receive a setting the environment variable
     NPY_NUM_BUILD_JOBS checked and if that is unset it returns 1.
 
@@ -87,9 +87,9 @@ def get_num_build_jobs():
         return envjobs
 
     # any of these three may have the job set, take the largest
-    cmdattr = (getattr(dist.get_command_obj('build'), 'jobs', None),
-               getattr(dist.get_command_obj('build_ext'), 'jobs', None),
-               getattr(dist.get_command_obj('build_clib'), 'jobs', None))
+    cmdattr = (getattr(dist.get_command_obj('build'), 'parallel', None),
+               getattr(dist.get_command_obj('build_ext'), 'parallel', None),
+               getattr(dist.get_command_obj('build_clib'), 'parallel', None))
     if all(x is None for x in cmdattr):
         return envjobs
     else:
