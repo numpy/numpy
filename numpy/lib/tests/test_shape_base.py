@@ -332,7 +332,10 @@ class TestTile(TestCase):
 
     def test_empty(self):
         a = np.array([[[]]])
+        b = np.array([[], []])
+        c = tile(b, 2).shape
         d = tile(a, (3, 2, 5)).shape
+        assert_equal(c, (2, 0))
         assert_equal(d, (3, 2, 0))
 
     def test_kroncompare(self):
