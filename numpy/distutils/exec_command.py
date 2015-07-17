@@ -395,6 +395,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
 
+    encoded_environ = {}
+    for k, v in os.environ.items():
+        try:
+            encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
+                sys.getfilesystemencoding())
+        except UnicodeEncodeError:
+            log.debug("ignoring un-encodable env entry %s", k)
+
     argv0 = argv[0]
     if not using_command:
         argv[0] = quote_arg(argv0)
@@ -412,8 +420,8 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             os.dup2(fout.fileno(), se_fileno)
     try:
-        status = spawn_command(os.P_WAIT, argv0, argv, os.environ)
-    except OSError:
+        status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
+    except Exception:
         errmess = str(get_exception())
         status = 999
         sys.stderr.write('%s: %s'%(errmess, argv[0]))
