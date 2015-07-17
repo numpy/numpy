@@ -395,13 +395,24 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
 
-    encoded_environ = {}
-    for k, v in os.environ.items():
-        try:
-            encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
-                sys.getfilesystemencoding())
-        except UnicodeEncodeError:
-            log.debug("ignoring un-encodable env entry %s", k)
+    if sys.version_info[0] >= 3 and os.name == 'nt':
+        # Pre-encode os.environ, discarding un-encodable entries,
+        # to avoid it failing during encoding as part of spawn. Failure
+        # is possible if the environment contains entries that are not
+        # encoded using the system codepage as windows expects.
+        #
+        # This is not necessary on unix, where os.environ is encoded
+        # using the surrogateescape error handler and decoded using
+        # it as part of spawn.
+        encoded_environ = {}
+        for k, v in os.environ.items():
+            try:
+                encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
+                    sys.getfilesystemencoding())
+            except UnicodeEncodeError:
+                log.debug("ignoring un-encodable env entry %s", k)
+    else:
+        encoded_environ = os.environ
 
     argv0 = argv[0]
     if not using_command:
