@@ -704,6 +704,42 @@ class TestMaskedArray(TestCase):
         finally:
             masked_print_option.set_display(ini_display)
 
+    def test_mvoid_multidim_print(self):
+
+        # regression test for gh-6019
+        t_ma = masked_array(data = [([1, 2, 3],)],
+                            mask = [([False, True, False],)],
+                            fill_value = ([999999, 999999, 999999],),
+                            dtype = [('a', '<i8', (3,))])
+        assert str(t_ma[0]) == "([1, --, 3],)"
+        assert repr(t_ma[0]) == "([1, --, 3],)"
+
+        # additonal tests with structured arrays
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]],)],
+                            mask = [([[False, True], [True, False]],)],
+                            dtype = [('a', '<i8', (2,2))])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]],)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]],)"
+
+        t_0d = masked_array(data = [(1,2)],
+                            mask = [(True,False)],
+                            dtype = [('a', '<i8'), ('b', '<i8')])
+        assert str(t_0d[0]) == "(--, 2)"
+        assert repr(t_0d[0]) == "(--, 2)"
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
+                            mask = [([[False, True], [True, False]], False)],
+                            dtype = [('a', '<i8', (2,2)), ('b', float)])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+
+        t_ne = masked_array(data=[(1, (1, 1))],
+                            mask=[(True, (True, False))],
+                            dtype = [('a', '<i8'), ('b', 'i4,i4')])
+        assert str(t_ne[0]) == "(--, (--, 1))"
+        assert repr(t_ne[0]) == "(--, (--, 1))"
+
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
         mx2 = masked_array([1., 2.])

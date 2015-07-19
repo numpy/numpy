@@ -5860,33 +5860,15 @@ class mvoid(MaskedArray):
 
     def __str__(self):
         m = self._mask
-        if (m is nomask):
+        if m is nomask:
             return self._data.__str__()
-        m = tuple(m)
-        if (not any(m)):
-            return self._data.__str__()
-        r = self._data.tolist()
-        p = masked_print_option
-        if not p.enabled():
-            p = 'N/A'
-        else:
-            p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(r, m)]
-        return "(%s)" % ", ".join(r)
+        printopt = masked_print_option
+        rdtype = _recursive_make_descr(self._data.dtype, "O")
+        res = np.array([self._data]).astype(rdtype)
+        _recursive_printoption(res, self._mask, printopt)
+        return str(res[0])
 
-    def __repr__(self):
-        m = self._mask
-        if (m is nomask):
-            return self._data.__repr__()
-        m = tuple(m)
-        if not any(m):
-            return self._data.__repr__()
-        p = masked_print_option
-        if not p.enabled():
-            return self.filled(self.fill_value).__repr__()
-        p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(self._data.tolist(), m)]
-        return "(%s)" % ", ".join(r)
+    __repr__ = __str__
 
     def __iter__(self):
         "Defines an iterator for mvoid"
