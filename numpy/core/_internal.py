@@ -138,7 +138,7 @@ format_re = re.compile(asbytes(
                            r'(?P<order1>[<>|=]?)'
                            r'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
                            r'(?P<order2>[<>|=]?)'
-                           r'(?P<dtype>[A-Za-z0-9.]*(?:\[[a-zA-Z0-9,.]+\])?)'))
+                           r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)'))
 sep_re = re.compile(asbytes(r'\s*,\s*'))
 space_re = re.compile(asbytes(r'\s+$'))
 
