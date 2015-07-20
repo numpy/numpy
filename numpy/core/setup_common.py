@@ -181,6 +181,15 @@ def check_long_double_representation(cmd):
     cmd._check_compiler()
     body = LONG_DOUBLE_REPRESENTATION_SRC % {'type': 'long double'}
 
+    # Disable whole program optimization (the default on vs2015, with python 3.5+)
+    # which generates intermediary object files and prevents checking the
+    # float representation.
+    if sys.platform == "win32":
+        try:
+            cmd.compiler.compile_options.remove("/GL")
+        except ValueError:
+            pass
+
     # We need to use _compile because we need the object filename
     src, obj = cmd._compile(body, None, None, 'c')
     try:
