@@ -431,7 +431,7 @@ static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-    npy_intp newdim;
+    npy_intp nbytes;
     int i;
     char *msg = "new type not compatible with array.";
     PyObject *safe;
@@ -493,28 +493,17 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     else {
         i = 0;
     }
-    if (newtype->elsize < PyArray_DESCR(self)->elsize) {
-        /*
-         * if it is compatible increase the size of the
-         * dimension at end (or at the front for NPY_ARRAY_F_CONTIGUOUS)
-         */
-        if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
-            goto fail;
-        }
-        newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
-        PyArray_DIMS(self)[i] *= newdim;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
-    }
-    else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
+
+    if (newtype->elsize != PyArray_DESCR(self)->elsize) {
         /*
          * Determine if last (or first if NPY_ARRAY_F_CONTIGUOUS) dimension
          * is compatible
          */
-        newdim = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
-        if ((newdim % newtype->elsize) != 0) {
+        nbytes = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
+        if ((nbytes % newtype->elsize) != 0) {
             goto fail;
         }
-        PyArray_DIMS(self)[i] = newdim / newtype->elsize;
+        PyArray_DIMS(self)[i] = nbytes / newtype->elsize;
         PyArray_STRIDES(self)[i] = newtype->elsize;
     }
 

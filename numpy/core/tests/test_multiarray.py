@@ -5707,6 +5707,16 @@ class TestObjViewSafetyFuncs(TestCase):
                             'itemsize': 4*psize})
         assert_equal(scanView(overlapped, 'p'), [0, 1, 3*psize-1, 3*psize])
 
+    def test_coprime_itemsizes(self):
+        # test we can view using coprime itemsizes, as long as the array length
+        # is suitable
+
+        np.zeros(2, 'p,p,p').view('p,p')
+        assert_raises(ValueError, np.zeros(3, 'p,p,p').view, 'p,p')
+
+        np.zeros(3, 'p,p').view('p,p,p')
+        assert_raises(ValueError, np.zeros(2, 'p,p').view, 'p,p,p')
+
 
 class TestArrayPriority(TestCase):
     # This will go away when __array_priority__ is settled, meanwhile
