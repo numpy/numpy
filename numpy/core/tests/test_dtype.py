@@ -252,6 +252,12 @@ class TestRecord(TestCase):
         dt2 = np.dtype((np.void, dt.fields))
         assert_equal(dt2.fields, dt.fields)
 
+    def test_bool_commastring(self):
+        d = np.dtype('?,?,?') # raises?
+        assert_equal(len(d.names), 3)
+        for n in d.names:
+            assert_equal(d.fields[n][0], np.dtype('?'))
+
 
 class TestSubarray(TestCase):
     def test_single_subarray(self):
