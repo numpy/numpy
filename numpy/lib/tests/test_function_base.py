@@ -1149,6 +1149,37 @@ class TestHistogram(TestCase):
             weights=[2, 1, 1, 1, 1, 1, 1, 1, 1], density=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
 
+    def test_exotic_weights(self):
+
+        # Test the use of weights that are not integer or floats, but e.g.
+        # complex numbers or object types.
+
+        # Complex weights
+        values = np.array([1.3, 2.5, 2.3])
+        weights = np.array([1, -1, 2]) + 1j * np.array([2, 1, 2])
+
+        # Check with custom bins
+        wa, wb = histogram(values, bins=[0, 2, 3], weights=weights)
+        assert_array_almost_equal(wa, np.array([1, 1]) + 1j * np.array([2,3]))
+
+        # Check with even bins
+        wa, wb = histogram(values, bins=2, range=[1,3], weights=weights)
+        assert_array_almost_equal(wa, np.array([1, 1]) + 1j * np.array([2,3]))
+
+        # Decimal weights
+        from decimal import Decimal
+        values = np.array([1.3, 2.5, 2.3])
+        weights = np.array([Decimal(1), Decimal(2), Decimal(3)])
+
+        # Check with custom bins
+        wa, wb = histogram(values, bins=[0, 2, 3], weights=weights)
+        assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
+
+        # Check with even bins
+        wa, wb = histogram(values, bins=2, range=[1,3], weights=weights)
+        assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
+
+
     def test_empty(self):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
