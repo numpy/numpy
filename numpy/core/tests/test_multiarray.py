@@ -1938,6 +1938,9 @@ class TestMethods(TestCase):
         assert_equal(c, np.dot(a, b))
 
     def test_dot_override(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
@@ -2261,6 +2264,9 @@ class TestBinop(object):
         # Check that __rmul__ and other right-hand operations have
         # precedence over __numpy_ufunc__
 
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         ops = {
             '__add__':      ('__radd__', np.add, True),
             '__sub__':      ('__rsub__', np.subtract, True),
@@ -2376,6 +2382,9 @@ class TestBinop(object):
             yield check, op_name, False
 
     def test_ufunc_override_rop_simple(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5864
+        return
+
         # Check parts of the binary op overriding behavior in an
         # explicit test case that is easier to understand.
         class SomeClass(object):
@@ -2480,6 +2489,9 @@ class TestBinop(object):
         assert_(isinstance(res, SomeClass3))
 
     def test_ufunc_override_normalize_signature(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         # gh-5674
         class SomeClass(object):
             def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
@@ -4160,6 +4172,9 @@ class TestDot(TestCase):
         assert_equal(np.dot(3, arr), desired)
 
     def test_dot_override(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
@@ -4439,6 +4454,8 @@ class MatmulCommon():
         assert_equal(res, tgt12_21)
 
     def test_numpy_ufunc_override(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
 
         class A(np.ndarray):
             def __new__(cls, *args, **kwargs):
