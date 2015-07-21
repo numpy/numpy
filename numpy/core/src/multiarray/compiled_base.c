@@ -96,7 +96,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
     PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
     npy_intp *numbers, *ians, len , mx, mn, ans_size, minlength;
-    int i;
+    npy_intp i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
@@ -156,7 +156,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         ians = (npy_intp *)(PyArray_DATA(ans));
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++)
-            ians [numbers [i]] += 1;
+            ians[numbers[i]] += 1;
         NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
     }
