@@ -414,7 +414,9 @@ class NoseTester(object):
             warnings.filterwarnings('always', category=DeprecationWarning)
             # Force the requested warnings to raise
             for warningtype in raise_warnings:
-                warnings.filterwarnings('error', category=warningtype)
+                warnings.filterwarnings('error',
+                                        category=warningtype,
+                                        module=r"numpy.*")
             # Filter out annoying import messages.
             warnings.filterwarnings('ignore', message='Not importing directory')
             warnings.filterwarnings("ignore", message="numpy.dtype size changed")
