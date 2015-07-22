@@ -108,6 +108,9 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
+import metamodule
+metamodule.install(__name__)
+del metamodule
 
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
@@ -205,11 +208,35 @@ else:
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
+    #  and make them issue a DeprecationWarning when used
     if sys.version_info[0] >= 3:
-        from builtins import bool, int, float, complex, object, str
-        unicode = str
+        import builtins as _builtins
     else:
-        from __builtin__ import bool, int, float, complex, object, unicode, str
+        import __builtin__ as _builtins
+    for _name, _numpy_equiv in [
+            ("bool", "bool_"),
+            ("int", "int_"),
+            ("float", "float64"),
+            ("complex", "complex128"),
+            ("object", "object_"),
+            ("str", "string_"),
+            ("unicode", "unicode_"),
+            ]:
+        if sys.version_info[0] >= 3 and _name == "unicode":
+            _obj = str
+        else:
+            _obj = getattr(_builtins, _name)
+        __warn_on_access__[_name] = (
+            _obj,
+            DeprecationWarning(
+                "Writing 'np.{0}' is almost always a mistake. Historically "
+                "and currently it is identical to writing plain '{0}' "
+                "(i.e., it refers to the Python builtin), and at some point "
+                "in the future it will become an error. Replace with '{0}', "
+                "or if you want the numpy-specific type, use 'np.{1}'."
+                .format(_name, _numpy_equiv))
+        )
+    del _builtins, _name, _numpy_equiv, _obj
 
     from .core import round, abs, max, min
 
