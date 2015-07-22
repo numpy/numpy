@@ -1,13 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-
 import numpy as np
-from numpy.testing import *
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
 from numpy.compat import asbytes
 from numpy.core.test_rational import rational, test_add, test_add_rationals
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    assert_no_warnings
+)
 
 
 class TestUfuncKwargs(TestCase):
@@ -446,20 +448,23 @@ class TestUfunc(TestCase):
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
         msg = "type cast on one argument"
         a = np.arange(6).reshape((2, 3))
-        b = a+0.1
-        assert_array_almost_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
-            err_msg=msg)
+        b = a + 0.1
+        assert_array_almost_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1),
+                                  err_msg=msg)
 
     def test_endian(self):
         msg = "big endian"
         a = np.arange(6, dtype='>i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
         msg = "little endian"
         a = np.arange(6, dtype='<i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
 
         # Output should always be native-endian
         Ba = np.arange(1, dtype='>f8')
@@ -539,8 +544,8 @@ class TestUfunc(TestCase):
         self.compare_matrix_multiply_results(np.double)
 
     def compare_matrix_multiply_results(self, tp):
-        d1 = np.array(rand(2, 3, 4), dtype=tp)
-        d2 = np.array(rand(2, 3, 4), dtype=tp)
+        d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
+        d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         msg = "matrix multiply on type %s" % d1.dtype.name
 
         def permute_n(n):

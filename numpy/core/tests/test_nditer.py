@@ -6,8 +6,11 @@ import warnings
 import numpy as np
 from numpy import array, arange, nditer, all
 from numpy.compat import asbytes, sixu
-from numpy.testing import *
 from numpy.core.multiarray_tests import test_nditer_too_large
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_raises, dec
+    )
 
 
 def iter_multi_index(i):
@@ -69,6 +72,8 @@ def test_iter_refcount():
     it2 = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
+
+    del it2  # avoid pyflakes unused variable warning
 
 def test_iter_best_order():
     # The iterator should always find the iteration order
@@ -632,12 +637,12 @@ def test_iter_broadcasting_errors():
 
     # Verify that the error message mentions the right shapes
     try:
-        i = nditer([arange(2).reshape(1, 2, 1),
-                     arange(3).reshape(1, 3),
-                     arange(6).reshape(2, 3)],
-                    [],
-                    [['readonly'], ['readonly'], ['writeonly', 'no_broadcast']])
-        assert_(False, 'Should have raised a broadcast error')
+        nditer([arange(2).reshape(1, 2, 1),
+                arange(3).reshape(1, 3),
+                arange(6).reshape(2, 3)],
+               [],
+               [['readonly'], ['readonly'], ['writeonly', 'no_broadcast']])
+        raise AssertionError('Should have raised a broadcast error')
     except ValueError as e:
         msg = str(e)
         # The message should contain the shape of the 3rd operand
@@ -648,11 +653,12 @@ def test_iter_broadcasting_errors():
                 'Message "%s" doesn\'t contain broadcast shape (1,2,3)' % msg)
 
     try:
-        i = nditer([arange(6).reshape(2, 3), arange(2)], [],
-                    [['readonly'], ['readonly']],
-                    op_axes=[[0, 1], [0, np.newaxis]],
-                    itershape=(4, 3))
-        assert_(False, 'Should have raised a broadcast error')
+        nditer([arange(6).reshape(2, 3), arange(2)],
+               [],
+               [['readonly'], ['readonly']],
+               op_axes=[[0, 1], [0, np.newaxis]],
+               itershape=(4, 3))
+        raise AssertionError('Should have raised a broadcast error')
     except ValueError as e:
         msg = str(e)
         # The message should contain "shape->remappedshape" for each operand
@@ -666,10 +672,10 @@ def test_iter_broadcasting_errors():
                 'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
 
     try:
-        i = nditer([np.zeros((2, 1, 1)), np.zeros((2,))],
-                    [],
-                    [['writeonly', 'no_broadcast'], ['readonly']])
-        assert_(False, 'Should have raised a broadcast error')
+        nditer([np.zeros((2, 1, 1)), np.zeros((2,))],
+               [],
+               [['writeonly', 'no_broadcast'], ['readonly']])
+        raise AssertionError('Should have raised a broadcast error')
     except ValueError as e:
         msg = str(e)
         # The message should contain the shape of the bad operand
@@ -1001,7 +1007,7 @@ def test_iter_object_arrays_basic():
     assert_equal(sys.getrefcount(obj), rc)
 
     i = nditer(a, ['refs_ok'], ['readonly'])
-    vals = [x[()] for x in i]
+    vals = [x_[()] for x_ in i]
     assert_equal(np.array(vals, dtype='O'), a)
     vals, i, x = [None]*3
     assert_equal(sys.getrefcount(obj), rc)
@@ -1009,7 +1015,7 @@ def test_iter_object_arrays_basic():
     i = nditer(a.reshape(2, 2).T, ['refs_ok', 'buffered'],
                         ['readonly'], order='C')
     assert_(i.iterationneedsapi)
-    vals = [x[()] for x in i]
+    vals = [x_[()] for x_ in i]
     assert_equal(np.array(vals, dtype='O'), a.reshape(2, 2).ravel(order='F'))
     vals, i, x = [None]*3
     assert_equal(sys.getrefcount(obj), rc)
@@ -1721,7 +1727,7 @@ def test_iter_buffered_cast_structured_type():
     i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
                     casting='unsafe',
                     op_dtypes='i4')
-    assert_equal([x[()] for x in i], [5, 8])
+    assert_equal([x_[()] for x_ in i], [5, 8])
 
     # struct type -> struct type (field-wise copy)
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
@@ -1731,9 +1737,9 @@ def test_iter_buffered_cast_structured_type():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    assert_equal([np.array(x) for x in i],
-                    [np.array((3, 1, 2), dtype=sdt2),
-                     np.array((6, 4, 5), dtype=sdt2)])
+    assert_equal([np.array(x_) for x_ in i],
+                 [np.array((3, 1, 2), dtype=sdt2),
+                  np.array((6, 4, 5), dtype=sdt2)])
 
     # struct type -> struct type (field gets discarded)
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
@@ -1972,39 +1978,39 @@ def test_iter_buffering_badwriteback():
     a = np.arange(6).reshape(2, 3, 1)
     b = np.arange(12).reshape(2, 3, 2)
     assert_raises(ValueError, nditer, [a, b],
-                        ['buffered', 'external_loop'],
-                        [['readwrite'], ['writeonly']],
-                        order='C')
+                  ['buffered', 'external_loop'],
+                  [['readwrite'], ['writeonly']],
+                  order='C')
 
     # But if a is readonly, it's fine
-    i = nditer([a, b], ['buffered', 'external_loop'],
-                        [['readonly'], ['writeonly']],
-                        order='C')
+    nditer([a, b], ['buffered', 'external_loop'],
+           [['readonly'], ['writeonly']],
+           order='C')
 
     # If a has just one element, it's fine too (constant 0 stride, a reduction)
     a = np.arange(1).reshape(1, 1, 1)
-    i = nditer([a, b], ['buffered', 'external_loop', 'reduce_ok'],
-                        [['readwrite'], ['writeonly']],
-                        order='C')
+    nditer([a, b], ['buffered', 'external_loop', 'reduce_ok'],
+           [['readwrite'], ['writeonly']],
+           order='C')
 
     # check that it fails on other dimensions too
     a = np.arange(6).reshape(1, 3, 2)
     assert_raises(ValueError, nditer, [a, b],
-                        ['buffered', 'external_loop'],
-                        [['readwrite'], ['writeonly']],
-                        order='C')
+                  ['buffered', 'external_loop'],
+                  [['readwrite'], ['writeonly']],
+                  order='C')
     a = np.arange(4).reshape(2, 1, 2)
     assert_raises(ValueError, nditer, [a, b],
-                        ['buffered', 'external_loop'],
-                        [['readwrite'], ['writeonly']],
-                        order='C')
+                  ['buffered', 'external_loop'],
+                  [['readwrite'], ['writeonly']],
+                  order='C')
 
 def test_iter_buffering_string():
     # Safe casting disallows shrinking strings
     a = np.array(['abc', 'a', 'abcd'], dtype=np.bytes_)
     assert_equal(a.dtype, np.dtype('S4'))
     assert_raises(TypeError, nditer, a, ['buffered'], ['readonly'],
-                    op_dtypes='S2')
+                  op_dtypes='S2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='S6')
     assert_equal(i[0], asbytes('abc'))
     assert_equal(i[0].dtype, np.dtype('S6'))
@@ -2082,12 +2088,13 @@ def test_iter_no_broadcast():
     b = np.arange(6).reshape(2, 3, 1)
     c = np.arange(12).reshape(3, 4)
 
-    i = nditer([a, b, c], [],
-                    [['readonly', 'no_broadcast'], ['readonly'], ['readonly']])
+    nditer([a, b, c], [],
+           [['readonly', 'no_broadcast'],
+            ['readonly'], ['readonly']])
     assert_raises(ValueError, nditer, [a, b, c], [],
-                    [['readonly'], ['readonly', 'no_broadcast'], ['readonly']])
+                  [['readonly'], ['readonly', 'no_broadcast'], ['readonly']])
     assert_raises(ValueError, nditer, [a, b, c], [],
-                    [['readonly'], ['readonly'], ['readonly', 'no_broadcast']])
+                  [['readonly'], ['readonly'], ['readonly', 'no_broadcast']])
 
 def test_iter_nested_iters_basic():
     # Test nested iteration basic usage

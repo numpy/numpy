@@ -1,8 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 from numpy import (logspace, linspace, dtype, array, finfo, typecodes, arange,
                    isnan)
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal
+)
+
 
 class TestLogspace(TestCase):
 

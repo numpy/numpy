@@ -7,7 +7,10 @@ import functools
 import numpy as np
 from numpy.core.multiarray_tests import array_indexing
 from itertools import product
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_warns
+)
 
 
 try:
@@ -871,7 +874,7 @@ class TestMultiIndexingAutomated(TestCase):
         # Test item getting
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
-        except Exception as e:
+        except Exception:
             prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
@@ -893,7 +896,7 @@ class TestMultiIndexingAutomated(TestCase):
         """
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
-        except Exception as e:
+        except Exception:
             prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)

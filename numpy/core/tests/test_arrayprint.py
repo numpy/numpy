@@ -3,9 +3,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+
 import numpy as np
-from numpy.testing import *
 from numpy.compat import sixu
+from numpy.testing import (
+     TestCase, run_module_suite, assert_, assert_equal
+)
 
 class TestArrayRepr(object):
     def test_nan_inf(self):

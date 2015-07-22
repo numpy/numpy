@@ -4,10 +4,14 @@ import sys
 import platform
 import warnings
 
-from numpy.testing import *
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
 import numpy as np
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    dec, assert_allclose, assert_no_warnings
+)
 
 
 def on_powerpc():
@@ -293,8 +297,9 @@ class TestPower(TestCase):
         # ticket #1271
         zero = np.array([0j])
         one = np.array([1+0j])
-        cinf = np.array([complex(np.inf, 0)])
         cnan = np.array([complex(np.nan, np.nan)])
+        # FIXME cinf not tested.
+        #cinf = np.array([complex(np.inf, 0)])
 
         def assert_complex_equal(x, y):
             x, y = np.asarray(x), np.asarray(y)
@@ -371,11 +376,11 @@ class TestLogAddExp2(_FilterInvalids):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]):
+        for dt, dec_ in zip(['f', 'd', 'g'], [6, 15, 15]):
             xf = np.log2(np.array(x, dtype=dt))
             yf = np.log2(np.array(y, dtype=dt))
             zf = np.log2(np.array(z, dtype=dt))
-            assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec)
+            assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec_)
 
     def test_logaddexp2_range(self):
         x = [1000000, -1000000, 1000200, -1000200]
@@ -434,11 +439,11 @@ class TestLogAddExp(_FilterInvalids):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]):
+        for dt, dec_ in zip(['f', 'd', 'g'], [6, 15, 15]):
             xf = np.log(np.array(x, dtype=dt))
             yf = np.log(np.array(y, dtype=dt))
             zf = np.log(np.array(z, dtype=dt))
-            assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec)
+            assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec_)
 
     def test_logaddexp_range(self):
         x = [1000000, -1000000, 1000200, -1000200]
@@ -1201,9 +1206,7 @@ class TestSpecialMethods(TestCase):
                 return self, func, method, pos, inputs, kwargs
 
         a = A()
-
         b = np.matrix([1])
-        c = np.array([1])
         res0 = np.multiply(a, b)
         res1 = np.dot(a, b)
 
@@ -1550,7 +1553,6 @@ class TestComplexFunctions(object):
 
     def test_against_cmath(self):
         import cmath
-        import sys
 
         points = [-1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
@@ -1829,9 +1831,9 @@ def test_spacing_gfortran():
             6.10351563E-05,
             9.76562500E-04]
 
-    for dt, dec in zip([np.float32, np.float64], (10, 20)):
+    for dt, dec_ in zip([np.float32, np.float64], (10, 20)):
         x = np.array([1e-5, 1, 1000, 10500], dtype=dt)
-        assert_array_almost_equal(np.spacing(x), ref[dt], decimal=dec)
+        assert_array_almost_equal(np.spacing(x), ref[dt], decimal=dec_)
 
 def test_nextafter_vs_spacing():
     # XXX: spacing does not handle long double yet
@@ -1868,7 +1870,7 @@ def test_reduceat():
 
     # This is when the error occurs.
     # test no buffer
-    res = np.setbufsize(32)
+    np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
     np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)

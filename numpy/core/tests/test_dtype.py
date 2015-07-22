@@ -1,9 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+
 import numpy as np
-from numpy.testing import *
 from numpy.core.test_rational import rational
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    dec
+)
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -253,7 +257,7 @@ class TestRecord(TestCase):
         assert_equal(dt2.fields, dt.fields)
 
     def test_bool_commastring(self):
-        d = np.dtype('?,?,?') # raises?
+        d = np.dtype('?,?,?')  # raises?
         assert_equal(len(d.names), 3)
         for n in d.names:
             assert_equal(d.fields[n][0], np.dtype('?'))
@@ -520,12 +524,12 @@ class TestString(TestCase):
 
     @dec.skipif(sys.version_info[0] >= 3)
     def test_dtype_str_with_long_in_shape(self):
-        # Pull request #376
-        dt = np.dtype('(1L,)i4')
+        # Pull request #376, should not error
+        np.dtype('(1L,)i4')
 
     def test_base_dtype_with_object_type(self):
-        # Issue gh-2798
-        a = np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
+        # Issue gh-2798, should not error.
+        np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
 
     def test_empty_string_to_object(self):
         # Pull request #4722

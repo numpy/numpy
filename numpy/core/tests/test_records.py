@@ -1,14 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from os import path
-import numpy as np
-from numpy.testing import *
-from numpy.compat import asbytes, asunicode
-
-import warnings
 import collections
 import pickle
+from os import path
+
+import numpy as np
+from numpy.compat import asbytes
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
 
 
 class TestFromrecords(TestCase):
@@ -53,10 +55,11 @@ class TestFromrecords(TestCase):
         filename = path.join(data_dir, 'recarray_from_file.fits')
         fd = open(filename, 'rb')
         fd.seek(2880 * 2)
-        r = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        r1 = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.seek(2880 * 2)
-        r = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        r2 = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.close()
+        assert_equal(r1, r2)
 
     def test_recarray_from_obj(self):
         count = 10

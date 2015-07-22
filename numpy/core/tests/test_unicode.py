@@ -2,9 +2,9 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
-from numpy.testing import *
-from numpy.core import *
-from numpy.compat import asbytes, sixu
+import numpy as np
+from numpy.compat import asbytes, unicode, sixu
+from numpy.testing import TestCase, run_module_suite, assert_equal
 
 # Guess the UCS length for this python interpreter
 if sys.version_info[:2] >= (3, 3):
@@ -19,9 +19,10 @@ if sys.version_info[:2] >= (3, 3):
         if v.shape is None:
             return len(v) * v.itemsize
         else:
-            return prod(v.shape) * v.itemsize
+            return np.prod(v.shape) * v.itemsize
 elif sys.version_info[0] >= 3:
     import array as _array
+
     ucs4 = (_array.array('u').itemsize == 4)
 
     def buffer_length(arr):
@@ -31,7 +32,7 @@ elif sys.version_info[0] >= 3:
         if v.shape is None:
             return len(v) * v.itemsize
         else:
-            return prod(v.shape) * v.itemsize
+            return np.prod(v.shape) * v.itemsize
 else:
     if len(buffer(sixu('u'))) == 4:
         ucs4 = True
@@ -39,7 +40,7 @@ else:
         ucs4 = False
 
     def buffer_length(arr):
-        if isinstance(arr, ndarray):
+        if isinstance(arr, np.ndarray):
             return len(arr.data)
         return len(buffer(arr))
 
@@ -75,19 +76,19 @@ class create_zeros(object):
             self.assertTrue(buffer_length(ua_scalar) == 0)
 
     def test_zeros0D(self):
-        """Check creation of 0-dimensional objects"""
-        ua = zeros((), dtype='U%s' % self.ulen)
+        # Check creation of 0-dimensional objects
+        ua = np.zeros((), dtype='U%s' % self.ulen)
         self.content_check(ua, ua[()], 4*self.ulen)
 
     def test_zerosSD(self):
-        """Check creation of single-dimensional objects"""
-        ua = zeros((2,), dtype='U%s' % self.ulen)
+        # Check creation of single-dimensional objects
+        ua = np.zeros((2,), dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0], 4*self.ulen*2)
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
     def test_zerosMD(self):
-        """Check creation of multi-dimensional objects"""
-        ua = zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        # Check creation of multi-dimensional objects
+        ua = np.zeros((2, 3, 4), dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
         self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
@@ -135,19 +136,19 @@ class create_values(object):
                 self.assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
-        """Check creation of 0-dimensional objects with values"""
-        ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
+        # Check creation of 0-dimensional objects with values
+        ua = np.array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
         self.content_check(ua, ua[()], 4*self.ulen)
 
     def test_valuesSD(self):
-        """Check creation of single-dimensional objects with values"""
-        ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
+        # Check creation of single-dimensional objects with values
+        ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0], 4*self.ulen*2)
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
     def test_valuesMD(self):
-        """Check creation of multi-dimensional objects with values"""
-        ua = array([[[self.ucs_value*self.ulen]*2]*3]*4, dtype='U%s' % self.ulen)
+        # Check creation of multi-dimensional objects with values
+        ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4, dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
         self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
@@ -220,22 +221,22 @@ class assign_values(object):
                 self.assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
-        """Check assignment of 0-dimensional objects with values"""
-        ua = zeros((), dtype='U%s' % self.ulen)
+        # Check assignment of 0-dimensional objects with values
+        ua = np.zeros((), dtype='U%s' % self.ulen)
         ua[()] = self.ucs_value*self.ulen
         self.content_check(ua, ua[()], 4*self.ulen)
 
     def test_valuesSD(self):
-        """Check assignment of single-dimensional objects with values"""
-        ua = zeros((2,), dtype='U%s' % self.ulen)
+        # Check assignment of single-dimensional objects with values
+        ua = np.zeros((2,), dtype='U%s' % self.ulen)
         ua[0] = self.ucs_value*self.ulen
         self.content_check(ua, ua[0], 4*self.ulen*2)
         ua[1] = self.ucs_value*self.ulen
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
     def test_valuesMD(self):
-        """Check assignment of multi-dimensional objects with values"""
-        ua = zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        # Check assignment of multi-dimensional objects with values
+        ua = np.zeros((2, 3, 4), dtype='U%s' % self.ulen)
         ua[0, 0, 0] = self.ucs_value*self.ulen
         self.content_check(ua, ua[0, 0, 0], 4*self.ulen*2*3*4)
         ua[-1, -1, -1] = self.ucs_value*self.ulen
@@ -286,8 +287,8 @@ class byteorder_values:
     """Check the byteorder of unicode arrays in round-trip conversions"""
 
     def test_values0D(self):
-        """Check byteorder of 0-dimensional objects"""
-        ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
+        # Check byteorder of 0-dimensional objects
+        ua = np.array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
         # This changes the interpretation of the data region (but not the
         #  actual data), therefore the returned scalars are not
@@ -298,8 +299,8 @@ class byteorder_values:
         assert_equal(ua, ua3)
 
     def test_valuesSD(self):
-        """Check byteorder of single-dimensional objects"""
-        ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
+        # Check byteorder of single-dimensional objects
+        ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
         self.assertTrue(ua[0] != ua2[0])
         self.assertTrue(ua[-1] != ua2[-1])
@@ -308,8 +309,8 @@ class byteorder_values:
         assert_equal(ua, ua3)
 
     def test_valuesMD(self):
-        """Check byteorder of multi-dimensional objects"""
-        ua = array([[[self.ucs_value*self.ulen]*2]*3]*4,
+        # Check byteorder of multi-dimensional objects
+        ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4,
                    dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
         self.assertTrue(ua[0, 0, 0] != ua2[0, 0, 0])

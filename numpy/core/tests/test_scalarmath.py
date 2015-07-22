@@ -1,10 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import platform
-from numpy.testing import *
-from numpy.testing.utils import _gen_alignment_data
+
 import numpy as np
+from numpy.testing.utils import _gen_alignment_data
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_almost_equal
+)
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -179,11 +182,11 @@ class TestConversion(TestCase):
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
-        def Overflow_error_func(dtype):
-            res = np.typeDict[dtype](np.iinfo(dtype).max + 1)
+        def overflow_error_func(dtype):
+            np.typeDict[dtype](np.iinfo(dtype).max + 1)
 
         for code in 'lLqQ':
-            assert_raises(OverflowError, Overflow_error_func, code)
+            assert_raises(OverflowError, overflow_error_func, code)
 
     def test_longdouble_int(self):
         # gh-627

@@ -5,7 +5,6 @@ import pickle
 import sys
 import platform
 import gc
-import copy
 import warnings
 import tempfile
 from os import path
@@ -25,16 +24,16 @@ rlevel = 1
 
 class TestRegression(TestCase):
     def test_invalid_round(self,level=rlevel):
-        """Ticket #3"""
+        # Ticket #3
         v = 4.7599999999999998
         assert_array_equal(np.array([v]), np.array(v))
 
     def test_mem_empty(self,level=rlevel):
-        """Ticket #7"""
+        # Ticket #7
         np.empty((1,), dtype=[('x', np.int64)])
 
     def test_pickle_transposed(self,level=rlevel):
-        """Ticket #16"""
+        # Ticket #16
         a = np.transpose(np.array([[2, 9], [7, 0], [3, 8]]))
         f = BytesIO()
         pickle.dump(a, f)
@@ -44,43 +43,44 @@ class TestRegression(TestCase):
         assert_array_equal(a, b)
 
     def test_typeNA(self,level=rlevel):
-        """Ticket #31"""
+        # Ticket #31
         assert_equal(np.typeNA[np.int64], 'Int64')
         assert_equal(np.typeNA[np.uint64], 'UInt64')
 
     def test_dtype_names(self,level=rlevel):
-        """Ticket #35"""
-        dt = np.dtype([(('name', 'label'), np.int32, 3)])
+        # Ticket #35
+        # Should succeed
+        np.dtype([(('name', 'label'), np.int32, 3)])
 
     def test_reduce(self,level=rlevel):
-        """Ticket #40"""
+        # Ticket #40
         assert_almost_equal(np.add.reduce([1., .5], dtype=None), 1.5)
 
     def test_zeros_order(self,level=rlevel):
-        """Ticket #43"""
+        # Ticket #43
         np.zeros([3], int, 'C')
         np.zeros([3], order='C')
         np.zeros([3], int, order='C')
 
     def test_asarray_with_order(self,level=rlevel):
-        """Check that nothing is done when order='F' and array C/F-contiguous"""
+        # Check that nothing is done when order='F' and array C/F-contiguous
         a = np.ones(2)
         assert_(a is np.asarray(a, order='F'))
 
     def test_ravel_with_order(self,level=rlevel):
-        """Check that ravel works when order='F' and array C/F-contiguous"""
+        # Check that ravel works when order='F' and array C/F-contiguous
         a = np.ones(2)
         assert_(not a.ravel('F').flags.owndata)
 
     def test_sort_bigendian(self,level=rlevel):
-        """Ticket #47"""
+        # Ticket #47
         a = np.linspace(0, 10, 11)
         c = a.astype(np.dtype('<f8'))
         c.sort()
         assert_array_almost_equal(c, a)
 
     def test_negative_nd_indexing(self,level=rlevel):
-        """Ticket #49"""
+        # Ticket #49
         c = np.arange(125).reshape((5, 5, 5))
         origidx = np.array([-1, 0, 1])
         idx = np.array(origidx)
@@ -88,7 +88,7 @@ class TestRegression(TestCase):
         assert_array_equal(idx, origidx)
 
     def test_char_dump(self,level=rlevel):
-        """Ticket #50"""
+        # Ticket #50
         f = BytesIO()
         ca = np.char.array(np.arange(1000, 1010), itemsize=4)
         ca.dump(f)
@@ -97,7 +97,7 @@ class TestRegression(TestCase):
         f.close()
 
     def test_noncontiguous_fill(self,level=rlevel):
-        """Ticket #58."""
+        # Ticket #58.
         a = np.zeros((5, 3))
         b = a[:, :2,]
 
@@ -107,25 +107,25 @@ class TestRegression(TestCase):
         self.assertRaises(AttributeError, rs)
 
     def test_bool(self,level=rlevel):
-        """Ticket #60"""
-        x = np.bool_(1)
+        # Ticket #60
+        np.bool_(1)  # Should succeed
 
     def test_indexing1(self,level=rlevel):
-        """Ticket #64"""
+        # Ticket #64
         descr = [('x', [('y', [('z', 'c16', (2,)),]),]),]
         buffer = ((([6j, 4j],),),)
         h = np.array(buffer, dtype=descr)
         h['x']['y']['z']
 
     def test_indexing2(self,level=rlevel):
-        """Ticket #65"""
+        # Ticket #65
         descr = [('x', 'i4', (2,))]
         buffer = ([3, 2],)
         h = np.array(buffer, dtype=descr)
         h['x']
 
     def test_round(self,level=rlevel):
-        """Ticket #67"""
+        # Ticket #67
         x = np.array([1+2j])
         assert_almost_equal(x**(-1), [1/(1+2j)])
 
@@ -144,19 +144,19 @@ class TestRegression(TestCase):
         self.assertTrue(b[0] != 'auto')
 
     def test_unicode_swapping(self,level=rlevel):
-        """Ticket #79"""
+        # Ticket #79
         ulen = 1
         ucs_value = sixu('\U0010FFFF')
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
-        ua2 = ua.newbyteorder()
+        ua.newbyteorder()  # Should succeed.
 
     def test_object_array_fill(self,level=rlevel):
-        """Ticket #86"""
+        # Ticket #86
         x = np.zeros(1, 'O')
         x.fill([])
 
     def test_mem_dtype_align(self,level=rlevel):
-        """Ticket #93"""
+        # Ticket #93
         self.assertRaises(TypeError, np.dtype,
                               {'names':['a'],'formats':['foo']}, align=1)
 
@@ -166,7 +166,7 @@ class TestRegression(TestCase):
                         "numpy.intp('0xff', 16) not supported on Py3, "
                         "as it does not inherit from Python int")
     def test_intp(self,level=rlevel):
-        """Ticket #99"""
+        # Ticket #99
         i_width = np.int_(0).nbytes*2 - 1
         np.intp('0x' + 'f'*i_width, 16)
         self.assertRaises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
@@ -175,7 +175,7 @@ class TestRegression(TestCase):
         assert_equal(1024, np.intp(1024))
 
     def test_endian_bool_indexing(self,level=rlevel):
-        """Ticket #105"""
+        # Ticket #105
         a = np.arange(10., dtype='>f8')
         b = np.arange(10., dtype='<f8')
         xa = np.where((a > 2) & (a < 6))
@@ -188,7 +188,7 @@ class TestRegression(TestCase):
         assert_(np.all(b[yb] > 0.5))
 
     def test_endian_where(self,level=rlevel):
-        """GitHub issue #369"""
+        # GitHub issue #369
         net = np.zeros(3, dtype='>f4')
         net[1] = 0.00458849
         net[2] = 0.605202
@@ -198,7 +198,7 @@ class TestRegression(TestCase):
         assert_array_almost_equal(test, correct)
 
     def test_endian_recarray(self,level=rlevel):
-        """Ticket #2185"""
+        # Ticket #2185
         dt = np.dtype([
                ('head', '>u4'),
                ('data', '>u4', 2),
@@ -214,7 +214,7 @@ class TestRegression(TestCase):
         assert_(buf[0]['head'] == 1)
 
     def test_mem_dot(self,level=rlevel):
-        """Ticket #106"""
+        # Ticket #106
         x = np.random.randn(0, 1)
         y = np.random.randn(10, 1)
         # Dummy array to detect bad memory access:
@@ -228,47 +228,39 @@ class TestRegression(TestCase):
         assert_equal(_z, np.ones(10))
 
     def test_arange_endian(self,level=rlevel):
-        """Ticket #111"""
+        # Ticket #111
         ref = np.arange(10)
         x = np.arange(10, dtype='<f8')
         assert_array_equal(ref, x)
         x = np.arange(10, dtype='>f8')
         assert_array_equal(ref, x)
 
-#    Longfloat support is not consistent enough across
-#     platforms for this test to be meaningful.
-#    def test_longfloat_repr(self,level=rlevel):
-#        """Ticket #112"""
-#        if np.longfloat(0).itemsize > 8:
-#            a = np.exp(np.array([1000],dtype=np.longfloat))
-#            assert_(str(a)[1:9] == str(a[0])[:8])
-
     def test_argmax(self,level=rlevel):
-        """Ticket #119"""
+        # Ticket #119
         a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
         for i in range(a.ndim):
-            aargmax = a.argmax(i)
+            a.argmax(i)  # Should succeed
 
     def test_mem_divmod(self,level=rlevel):
-        """Ticket #126"""
+        # Ticket #126
         for i in range(10):
             divmod(np.array([i])[0], 10)
 
     def test_hstack_invalid_dims(self,level=rlevel):
-        """Ticket #128"""
+        # Ticket #128
         x = np.arange(9).reshape((3, 3))
         y = np.array([0, 0, 0])
         self.assertRaises(ValueError, np.hstack, (x, y))
 
     def test_squeeze_type(self,level=rlevel):
-        """Ticket #133"""
+        # Ticket #133
         a = np.array([3])
         b = np.array(3)
         assert_(type(a.squeeze()) is np.ndarray)
         assert_(type(b.squeeze()) is np.ndarray)
 
     def test_add_identity(self,level=rlevel):
-        """Ticket #143"""
+        # Ticket #143
         assert_equal(0, np.add.identity)
 
     def test_numpy_float_python_long_addition(self):
@@ -277,11 +269,11 @@ class TestRegression(TestCase):
         assert_equal(a, 23. + 2**135)
 
     def test_binary_repr_0(self,level=rlevel):
-        """Ticket #151"""
+        # Ticket #151
         assert_equal('0', np.binary_repr(0))
 
     def test_rec_iterate(self,level=rlevel):
-        """Ticket #160"""
+        # Ticket #160
         descr = np.dtype([('i', int), ('f', float), ('s', '|S3')])
         x = np.rec.array([(1, 1.1, '1.0'),
                          (2, 2.2, '2.0')], dtype=descr)
@@ -289,19 +281,19 @@ class TestRegression(TestCase):
         [i for i in x[0]]
 
     def test_unicode_string_comparison(self,level=rlevel):
-        """Ticket #190"""
+        # Ticket #190
         a = np.array('hello', np.unicode_)
         b = np.array('world')
         a == b
 
     def test_tobytes_FORTRANORDER_discontiguous(self,level=rlevel):
-        """Fix in r2836"""
+        # Fix in r2836
         # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
         assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
 
     def test_flat_assignment(self,level=rlevel):
-        """Correct behaviour of ticket #194"""
+        # Correct behaviour of ticket #194
         x = np.empty((3, 1))
         x.flat = np.arange(3)
         assert_array_almost_equal(x, [[0], [1], [2]])
@@ -309,7 +301,7 @@ class TestRegression(TestCase):
         assert_array_almost_equal(x, [[0], [1], [2]])
 
     def test_broadcast_flat_assignment(self,level=rlevel):
-        """Ticket #194"""
+        # Ticket #194
         x = np.empty((3, 1))
 
         def bfa():
@@ -337,7 +329,7 @@ class TestRegression(TestCase):
         a[r] = np.array(np.nan)
 
     def test_unpickle_dtype_with_object(self,level=rlevel):
-        """Implemented in r2840"""
+        # Implemented in r2840
         dt = np.dtype([('x', int), ('y', np.object_), ('z', 'O')])
         f = BytesIO()
         pickle.dump(dt, f)
@@ -347,7 +339,7 @@ class TestRegression(TestCase):
         assert_equal(dt, dt_)
 
     def test_mem_array_creation_invalid_specification(self,level=rlevel):
-        """Ticket #196"""
+        # Ticket #196
         dt = np.dtype([('x', int), ('y', np.object_)])
         # Wrong way
         self.assertRaises(ValueError, np.array, [1, 'object'], dt)
@@ -355,7 +347,7 @@ class TestRegression(TestCase):
         np.array([(1, 'object')], dt)
 
     def test_recarray_single_element(self,level=rlevel):
-        """Ticket #202"""
+        # Ticket #202
         a = np.array([1, 2, 3], dtype=np.int32)
         b = a.copy()
         r = np.rec.array(a, shape=1, formats=['3i4'], names=['d'])
@@ -363,7 +355,7 @@ class TestRegression(TestCase):
         assert_equal(a, r[0][0])
 
     def test_zero_sized_array_indexing(self,level=rlevel):
-        """Ticket #205"""
+        # Ticket #205
         tmp = np.array([])
 
         def index_tmp():
@@ -372,14 +364,14 @@ class TestRegression(TestCase):
         self.assertRaises(IndexError, index_tmp)
 
     def test_chararray_rstrip(self,level=rlevel):
-        """Ticket #222"""
+        # Ticket #222
         x = np.chararray((1,), 5)
         x[0] = asbytes('a   ')
         x = x.rstrip()
         assert_equal(x[0], asbytes('a'))
 
     def test_object_array_shape(self,level=rlevel):
-        """Ticket #239"""
+        # Ticket #239
         assert_equal(np.array([[1, 2], 3, 4], dtype=object).shape, (3,))
         assert_equal(np.array([[1, 2], [3, 4]], dtype=object).shape, (2, 2))
         assert_equal(np.array([(1, 2), (3, 4)], dtype=object).shape, (2, 2))
@@ -388,20 +380,20 @@ class TestRegression(TestCase):
         assert_equal(np.array([[3, 4], [5, 6], None], dtype=object).shape, (3,))
 
     def test_mem_around(self,level=rlevel):
-        """Ticket #243"""
+        # Ticket #243
         x = np.zeros((1,))
         y = [0]
         decimal = 6
         np.around(abs(x-y), decimal) <= 10.0**(-decimal)
 
     def test_character_array_strip(self,level=rlevel):
-        """Ticket #246"""
+        # Ticket #246
         x = np.char.array(("x", "x ", "x  "))
         for c in x:
             assert_equal(c, "x")
 
     def test_lexsort(self,level=rlevel):
-        """Lexsort memory error"""
+        # Lexsort memory error
         v = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         assert_equal(np.lexsort(v), 0)
 
@@ -453,22 +445,22 @@ class TestRegression(TestCase):
                         assert_(isinstance(name, str))
 
     def test_pickle_dtype(self,level=rlevel):
-        """Ticket #251"""
+        # Ticket #251
         pickle.dumps(np.float)
 
     def test_swap_real(self, level=rlevel):
-        """Ticket #265"""
+        # Ticket #265
         assert_equal(np.arange(4, dtype='>c8').imag.max(), 0.0)
         assert_equal(np.arange(4, dtype='<c8').imag.max(), 0.0)
         assert_equal(np.arange(4, dtype='>c8').real.max(), 3.0)
         assert_equal(np.arange(4, dtype='<c8').real.max(), 3.0)
 
     def test_object_array_from_list(self, level=rlevel):
-        """Ticket #270"""
-        a = np.array([1, 'A', None])
+        # Ticket #270
+        np.array([1, 'A', None])  # Should succeed
 
     def test_multiple_assign(self, level=rlevel):
-        """Ticket #273"""
+        # Ticket #273
         a = np.zeros((3, 1), int)
         a[[1, 2]] = 1
 
@@ -524,17 +516,17 @@ class TestRegression(TestCase):
             assert_(abs(res1-res2).max() < 1e-8, func)
 
     def test_mem_lexsort_strings(self, level=rlevel):
-        """Ticket #298"""
+        # Ticket #298
         lst = ['abc', 'cde', 'fgh']
         np.lexsort((lst,))
 
     def test_fancy_index(self, level=rlevel):
-        """Ticket #302"""
+        # Ticket #302
         x = np.array([1, 2])[np.array([0])]
         assert_equal(x.shape, (1,))
 
     def test_recarray_copy(self, level=rlevel):
-        """Ticket #312"""
+        # Ticket #312
         dt = [('x', np.int16), ('y', np.float64)]
         ra = np.array([(1, 2.3)], dtype=dt)
         rb = np.rec.array(ra, dtype=dt)
@@ -542,7 +534,7 @@ class TestRegression(TestCase):
         assert_(ra['x'] != rb['x'])
 
     def test_rec_fromarray(self, level=rlevel):
-        """Ticket #322"""
+        # Ticket #322
         x1 = np.array([[1, 2], [3, 4], [5, 6]])
         x2 = np.array(['a', 'dd', 'xyz'])
         x3 = np.array([1.1, 2, 3])
@@ -554,52 +546,52 @@ class TestRegression(TestCase):
         assert_equal(x.flat[2], (1, 2, 3))
 
     def test_ndmin_float64(self, level=rlevel):
-        """Ticket #324"""
+        # Ticket #324
         x = np.array([1, 2, 3], dtype=np.float64)
         assert_equal(np.array(x, dtype=np.float32, ndmin=2).ndim, 2)
         assert_equal(np.array(x, dtype=np.float64, ndmin=2).ndim, 2)
 
     def test_ndmin_order(self, level=rlevel):
-        """Issue #465 and related checks"""
+        # Issue #465 and related checks
         assert_(np.array([1, 2], order='C', ndmin=3).flags.c_contiguous)
         assert_(np.array([1, 2], order='F', ndmin=3).flags.f_contiguous)
         assert_(np.array(np.ones((2, 2), order='F'), ndmin=3).flags.f_contiguous)
         assert_(np.array(np.ones((2, 2), order='C'), ndmin=3).flags.c_contiguous)
 
     def test_mem_axis_minimization(self, level=rlevel):
-        """Ticket #327"""
+        # Ticket #327
         data = np.arange(5)
         data = np.add.outer(data, data)
 
     def test_mem_float_imag(self, level=rlevel):
-        """Ticket #330"""
+        # Ticket #330
         np.float64(1.0).imag
 
     def test_dtype_tuple(self, level=rlevel):
-        """Ticket #334"""
+        # Ticket #334
         assert_(np.dtype('i4') == np.dtype(('i4', ())))
 
     def test_dtype_posttuple(self, level=rlevel):
-        """Ticket #335"""
+        # Ticket #335
         np.dtype([('col1', '()i4')])
 
     def test_numeric_carray_compare(self, level=rlevel):
-        """Ticket #341"""
+        # Ticket #341
         assert_equal(np.array(['X'], 'c'), asbytes('X'))
 
     def test_string_array_size(self, level=rlevel):
-        """Ticket #342"""
+        # Ticket #342
         self.assertRaises(ValueError,
                               np.array, [['X'], ['X', 'X', 'X']], '|S1')
 
     def test_dtype_repr(self, level=rlevel):
-        """Ticket #344"""
+        # Ticket #344
         dt1 = np.dtype(('uint32', 2))
         dt2 = np.dtype(('uint32', (2,)))
         assert_equal(dt1.__repr__(), dt2.__repr__())
 
     def test_reshape_order(self, level=rlevel):
-        """Make sure reshape order works."""
+        # Make sure reshape order works.
         a = np.arange(6).reshape(2, 3, order='F')
         assert_equal(a, [[0, 2, 4], [1, 3, 5]])
         a = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
@@ -607,13 +599,13 @@ class TestRegression(TestCase):
         assert_equal(b.reshape(2, 2, order='F'), [[2, 6], [4, 8]])
 
     def test_reshape_zero_strides(self, level=rlevel):
-        """Issue #380, test reshaping of zero strided arrays"""
+        # Issue #380, test reshaping of zero strided arrays
         a = np.ones(1)
         a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
         assert_(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self, level=rlevel):
-        """GitHub Issue #2700, setting shape failed for 0-sized arrays"""
+        # GitHub Issue #2700, setting shape failed for 0-sized arrays
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
@@ -630,12 +622,12 @@ class TestRegression(TestCase):
         assert_equal(np.array(0, dtype=np.int32).reshape(1, 1).strides, (4, 4))
 
     def test_repeat_discont(self, level=rlevel):
-        """Ticket #352"""
+        # Ticket #352
         a = np.arange(12).reshape(4, 3)[:, 2]
         assert_equal(a.repeat(3), [2, 2, 2, 5, 5, 5, 8, 8, 8, 11, 11, 11])
 
     def test_array_index(self, level=rlevel):
-        """Make sure optimization is not called in this case."""
+        # Make sure optimization is not called in this case.
         a = np.array([1, 2, 3])
         a2 = np.array([[1, 2, 3]])
         assert_equal(a[np.where(a == 3)], a2[np.where(a2 == 3)])
@@ -645,7 +637,7 @@ class TestRegression(TestCase):
         assert_(a.argmax() == 2)
 
     def test_recarray_fields(self, level=rlevel):
-        """Ticket #372"""
+        # Ticket #372
         dt0 = np.dtype([('f0', 'i4'), ('f1', 'i4')])
         dt1 = np.dtype([('f0', 'i8'), ('f1', 'i8')])
         for a in [np.array([(1, 2), (3, 4)], "i4,i4"),
@@ -656,14 +648,14 @@ class TestRegression(TestCase):
             assert_(a.dtype in [dt0, dt1])
 
     def test_random_shuffle(self, level=rlevel):
-        """Ticket #374"""
+        # Ticket #374
         a = np.arange(5).reshape((5, 1))
         b = a.copy()
         np.random.shuffle(b)
         assert_equal(np.sort(b, axis=0), a)
 
     def test_refcount_vdot(self, level=rlevel):
-        """Changeset #3443"""
+        # Changeset #3443
         _assert_valid_refcount(np.vdot)
 
     def test_startswith(self, level=rlevel):
@@ -671,7 +663,7 @@ class TestRegression(TestCase):
         assert_equal(ca.startswith('H'), [True, False])
 
     def test_noncommutative_reduce_accumulate(self, level=rlevel):
-        """Ticket #413"""
+        # Ticket #413
         tosubtract = np.arange(5)
         todivide = np.array([2.0, 0.5, 0.25])
         assert_equal(np.subtract.reduce(tosubtract), -10)
@@ -682,28 +674,28 @@ class TestRegression(TestCase):
             np.array([2., 4., 16.]))
 
     def test_convolve_empty(self, level=rlevel):
-        """Convolve should raise an error for empty input array."""
+        # Convolve should raise an error for empty input array.
         self.assertRaises(ValueError, np.convolve, [], [1])
         self.assertRaises(ValueError, np.convolve, [1], [])
 
     def test_multidim_byteswap(self, level=rlevel):
-        """Ticket #449"""
+        # Ticket #449
         r = np.array([(1, (0, 1, 2))], dtype="i2,3i2")
         assert_array_equal(r.byteswap(),
                            np.array([(256, (0, 256, 512))], r.dtype))
 
     def test_string_NULL(self, level=rlevel):
-        """Changeset 3557"""
+        # Changeset 3557
         assert_equal(np.array("a\x00\x0b\x0c\x00").item(),
                      'a\x00\x0b\x0c')
 
     def test_junk_in_string_fields_of_recarray(self, level=rlevel):
-        """Ticket #483"""
+        # Ticket #483
         r = np.array([[asbytes('abc')]], dtype=[('var1', '|S20')])
         assert_(asbytes(r['var1'][0][0]) == asbytes('abc'))
 
     def test_take_output(self, level=rlevel):
-        """Ensure that 'take' honours output parameter."""
+        # Ensure that 'take' honours output parameter.
         x = np.arange(12).reshape((3, 4))
         a = np.take(x, [0, 2], axis=1)
         b = np.zeros_like(a)
@@ -722,13 +714,13 @@ class TestRegression(TestCase):
         assert_(ref_d == sys.getrefcount(d))
 
     def test_array_str_64bit(self, level=rlevel):
-        """Ticket #501"""
+        # Ticket #501
         s = np.array([1, np.nan], dtype=np.float64)
         with np.errstate(all='raise'):
-            sstr = np.array_str(s)
+            np.array_str(s)  # Should succeed
 
     def test_frompyfunc_endian(self, level=rlevel):
-        """Ticket #503"""
+        # Ticket #503
         from math import radians
         uradians = np.frompyfunc(radians, 1, 1)
         big_endian = np.array([83.4, 83.5], dtype='>f8')
@@ -737,33 +729,33 @@ class TestRegression(TestCase):
                             uradians(little_endian).astype(float))
 
     def test_mem_string_arr(self, level=rlevel):
-        """Ticket #514"""
+        # Ticket #514
         s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         t = []
         np.hstack((t, s))
 
     def test_arr_transpose(self, level=rlevel):
-        """Ticket #516"""
+        # Ticket #516
         x = np.random.rand(*(2,)*16)
-        y = x.transpose(list(range(16)))
+        x.transpose(list(range(16)))  # Should succeed
 
     def test_string_mergesort(self, level=rlevel):
-        """Ticket #540"""
+        # Ticket #540
         x = np.array(['a']*32)
         assert_array_equal(x.argsort(kind='m'), np.arange(32))
 
     def test_argmax_byteorder(self, level=rlevel):
-        """Ticket #546"""
+        # Ticket #546
         a = np.arange(3, dtype='>f')
         assert_(a[a.argmax()] == a.max())
 
     def test_rand_seed(self, level=rlevel):
-        """Ticket #555"""
+        # Ticket #555
         for l in np.arange(4):
             np.random.seed(l)
 
     def test_mem_deallocation_leak(self, level=rlevel):
-        """Ticket #562"""
+        # Ticket #562
         a = np.zeros(5, dtype=float)
         b = np.array(a, dtype=float)
         del a, b
@@ -773,7 +765,7 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, np.fromiter, [['12', ''], ['13', '']], str)
 
     def test_dot_negative_stride(self, level=rlevel):
-        """Ticket #588"""
+        # Ticket #588
         x = np.array([[1, 5, 25, 125., 625]])
         y = np.array([[20.], [160.], [640.], [1280.], [1024.]])
         z = y[::-1].copy()
@@ -792,14 +784,14 @@ class TestRegression(TestCase):
         self.assertRaises(TypeError, rs)
 
     def test_unicode_scalar(self, level=rlevel):
-        """Ticket #600"""
+        # Ticket #600
         x = np.array(["DROND", "DROND1"], dtype="U6")
         el = x[1]
         new = pickle.loads(pickle.dumps(el))
         assert_equal(new, el)
 
     def test_arange_non_native_dtype(self, level=rlevel):
-        """Ticket #616"""
+        # Ticket #616
         for T in ('>f4', '<f4'):
             dt = np.dtype(T)
             assert_equal(np.arange(0, dtype=dt).dtype, dt)
@@ -827,7 +819,7 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))
 
     def test_mem_scalar_indexing(self, level=rlevel):
-        """Ticket #603"""
+        # Ticket #603
         x = np.array([0], dtype=float)
         index = np.array(0, dtype=np.int32)
         x[index]
@@ -845,23 +837,23 @@ class TestRegression(TestCase):
         assert_equal(x.searchsorted(y), [3, 3])
 
     def test_string_argsort_with_zeros(self, level=rlevel):
-        """Check argsort for strings containing zeros."""
+        # Check argsort for strings containing zeros.
         x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
         assert_array_equal(x.argsort(kind='m'), np.array([1, 0]))
         assert_array_equal(x.argsort(kind='q'), np.array([1, 0]))
 
     def test_string_sort_with_zeros(self, level=rlevel):
-        """Check sort for strings containing zeros."""
+        # Check sort for strings containing zeros.
         x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
         y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
 
     def test_copy_detection_zero_dim(self, level=rlevel):
-        """Ticket #658"""
+        # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
 
     def test_flat_byteorder(self, level=rlevel):
-        """Ticket #657"""
+        # Ticket #657
         x = np.arange(10)
         assert_array_equal(x.astype('>i4'), x.astype('<i4').flat[:])
         assert_array_equal(x.astype('>i4').flat[:], x.astype('<i4'))
@@ -879,7 +871,7 @@ class TestRegression(TestCase):
             assert_equal(x.flat[0].dtype, x[0].dtype)
 
     def test_copy_detection_corner_case(self, level=rlevel):
-        """Ticket #658"""
+        # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
 
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
@@ -887,13 +879,13 @@ class TestRegression(TestCase):
     # 0-sized reshape itself is tested elsewhere.
     @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
     def test_copy_detection_corner_case2(self, level=rlevel):
-        """Ticket #771: strides are not set correctly when reshaping 0-sized
-        arrays"""
+        # Ticket #771: strides are not set correctly when reshaping 0-sized
+        # arrays
         b = np.indices((0, 3, 4)).T.reshape(-1, 3)
         assert_equal(b.strides, (3 * b.itemsize, b.itemsize))
 
     def test_object_array_refcounting(self, level=rlevel):
-        """Ticket #633"""
+        # Ticket #633
         if not hasattr(sys, 'getrefcount'):
             return
 
@@ -978,32 +970,34 @@ class TestRegression(TestCase):
         assert_(cnt(a) == cnt0_a + 5)
         assert_(cnt(b) == cnt0_b + 5)
 
-        arr3 = np.concatenate((arr1, arr2))
+        tmp = np.concatenate((arr1, arr2))
         assert_(cnt(a) == cnt0_a + 5 + 5)
         assert_(cnt(b) == cnt0_b + 5 + 5)
 
-        arr3 = arr1.repeat(3, axis=0)
+        tmp = arr1.repeat(3, axis=0)
         assert_(cnt(a) == cnt0_a + 5 + 3*5)
 
-        arr3 = arr1.take([1, 2, 3], axis=0)
+        tmp = arr1.take([1, 2, 3], axis=0)
         assert_(cnt(a) == cnt0_a + 5 + 3)
 
         x = np.array([[0], [1], [0], [1], [1]], int)
-        arr3 = x.choose(arr1, arr2)
+        tmp = x.choose(arr1, arr2)
         assert_(cnt(a) == cnt0_a + 5 + 2)
         assert_(cnt(b) == cnt0_b + 5 + 3)
 
+        del tmp  # Avoid pyflakes unused variable warning
+
     def test_mem_custom_float_to_array(self, level=rlevel):
-        """Ticket 702"""
+        # Ticket 702
         class MyFloat(object):
             def __float__(self):
                 return 1.0
 
         tmp = np.atleast_1d([MyFloat()])
-        tmp2 = tmp.astype(float)
+        tmp.astype(float)  # Should succeed
 
     def test_object_array_refcount_self_assign(self, level=rlevel):
-        """Ticket #711"""
+        # Ticket #711
         class VictimObject(object):
             deleted = False
 
@@ -1025,18 +1019,18 @@ class TestRegression(TestCase):
                               np.fromiter, [xi for xi in x], dtype='S')
 
     def test_reduce_big_object_array(self, level=rlevel):
-        """Ticket #713"""
+        # Ticket #713
         oldsize = np.setbufsize(10*16)
         a = np.array([None]*161, object)
         assert_(not np.any(a))
         np.setbufsize(oldsize)
 
     def test_mem_0d_array_index(self, level=rlevel):
-        """Ticket #714"""
+        # Ticket #714
         np.zeros(10)[np.array(0)]
 
     def test_floats_from_string(self, level=rlevel):
-        """Ticket #640, floats from string"""
+        # Ticket #640, floats from string
         fsingle = np.single('1.234')
         fdouble = np.double('1.234')
         flongdouble = np.longdouble('1.234')
@@ -1045,9 +1039,8 @@ class TestRegression(TestCase):
         assert_almost_equal(flongdouble, 1.234)
 
     def test_nonnative_endian_fill(self, level=rlevel):
-        """ Non-native endian arrays were incorrectly filled with scalars before
-        r5034.
-        """
+        # Non-native endian arrays were incorrectly filled with scalars
+        # before r5034.
         if sys.byteorder == 'little':
             dtype = np.dtype('>i4')
         else:
@@ -1057,7 +1050,7 @@ class TestRegression(TestCase):
         assert_equal(x, np.array([1], dtype=dtype))
 
     def test_dot_alignment_sse2(self, level=rlevel):
-        """Test for ticket #551, changeset r5140"""
+        # Test for ticket #551, changeset r5140
         x = np.zeros((30, 40))
         y = pickle.loads(pickle.dumps(x))
         # y is now typically not aligned on a 8-byte boundary
@@ -1066,7 +1059,7 @@ class TestRegression(TestCase):
         np.dot(z, y)
 
     def test_astype_copy(self, level=rlevel):
-        """Ticket #788, changeset r5155"""
+        # Ticket #788, changeset r5155
         # The test data file was generated by scipy.io.savemat.
         # The dtype is float64, but the isbuiltin attribute is 0.
         data_dir = path.join(path.dirname(__file__), 'data')
@@ -1084,8 +1077,7 @@ class TestRegression(TestCase):
                 xpd.__array_interface__['data'][0]))
 
     def test_compress_small_type(self, level=rlevel):
-        """Ticket #789, changeset 5217.
-        """
+        # Ticket #789, changeset 5217.
         # compress with out argument segfaulted if cannot cast safely
         import numpy as np
         a = np.array([[1, 2], [3, 4]])
@@ -1099,8 +1091,7 @@ class TestRegression(TestCase):
             pass
 
     def test_attributes(self, level=rlevel):
-        """Ticket #791
-        """
+        # Ticket #791
         class TestArray(np.ndarray):
             def __new__(cls, data, info):
                 result = np.array(data)
@@ -1172,8 +1163,7 @@ class TestRegression(TestCase):
         assert_(type(dat.nonzero()[1]) is np.ndarray)
 
     def test_recarray_tolist(self, level=rlevel):
-        """Ticket #793, changeset r5215
-        """
+        # Ticket #793, changeset r5215
         # Comparisons fail for NaN, so we can't use random memory
         # for the test.
         buf = np.zeros(40, dtype=np.int8)
@@ -1193,7 +1183,7 @@ class TestRegression(TestCase):
         assert_equal(a, b)
 
     def test_unaligned_unicode_access(self, level=rlevel):
-        """Ticket #825"""
+        # Ticket #825
         for i in range(1, 9):
             msg = 'unicode offset: %d chars' % i
             t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
@@ -1204,7 +1194,7 @@ class TestRegression(TestCase):
                 assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
 
     def test_sign_for_complex_nan(self, level=rlevel):
-        """Ticket 794."""
+        # Ticket 794.
         with np.errstate(invalid='ignore'):
             C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
             have = np.sign(C)
@@ -1212,7 +1202,7 @@ class TestRegression(TestCase):
             assert_equal(have, want)
 
     def test_for_equal_names(self, level=rlevel):
-        """Ticket #674"""
+        # Ticket #674
         dt = np.dtype([('foo', float), ('bar', float)])
         a = np.zeros(10, dt)
         b = list(a.dtype.names)
@@ -1222,7 +1212,7 @@ class TestRegression(TestCase):
         assert_(a.dtype.names[1] == "bar")
 
     def test_for_object_scalar_creation(self, level=rlevel):
-        """Ticket #816"""
+        # Ticket #816
         a = np.object_()
         b = np.object_(3)
         b2 = np.object_(3.0)
@@ -1236,7 +1226,7 @@ class TestRegression(TestCase):
         assert_(d.dtype == object)
 
     def test_array_resize_method_system_error(self):
-        """Ticket #840 - order should be an invalid keyword."""
+        # Ticket #840 - order should be an invalid keyword.
         x = np.array([[0, 1], [2, 3]])
         self.assertRaises(TypeError, x.resize, (2, 2), order='C')
 
@@ -1250,7 +1240,7 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, lambda: np.array([1], ndmin=33))
 
     def test_errobj_reference_leak(self, level=rlevel):
-        """Ticket #955"""
+        # Ticket #955
         with np.errstate(all="ignore"):
             z = int(0)
             p = np.int32(-1)
@@ -1263,7 +1253,7 @@ class TestRegression(TestCase):
             assert_(n_before >= n_after, (n_before, n_after))
 
     def test_void_scalar_with_titles(self, level=rlevel):
-        """No ticket"""
+        # No ticket
         data = [('john', 4), ('mary', 5)]
         dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
         arr = np.array(data, dtype=dtype1)
@@ -1294,7 +1284,7 @@ class TestRegression(TestCase):
         assert_(pickle.loads(pickle.dumps(test_record)) == test_record)
 
     def test_blasdot_uninitialized_memory(self):
-        """Ticket #950"""
+        # Ticket #950
         for m in [0, 1, 2]:
             for n in [0, 1, 2]:
                 for k in range(3):
@@ -1310,7 +1300,7 @@ class TestRegression(TestCase):
                     assert_(z.shape == (m, n))
 
     def test_zeros(self):
-        """Regression test for #1061."""
+        # Regression test for #1061.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
         good = 'Maximum allowed dimension exceeded'
@@ -1323,12 +1313,12 @@ class TestRegression(TestCase):
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_huge_arange(self):
-        """Regression test for #1062."""
+        # Regression test for #1062.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
         good = 'Maximum allowed size exceeded'
         try:
-            a = np.arange(sz)
+            np.arange(sz)
             self.assertTrue(np.size == sz)
         except ValueError as e:
             if not str(e) == good:
@@ -1337,15 +1327,15 @@ class TestRegression(TestCase):
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
-        """Ticket #1058"""
+        # Ticket #1058
         a = np.fromiter(list(range(10)), dtype='b')
         b = np.fromiter(list(range(10)), dtype='B')
         assert_(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
         assert_(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_array_from_sequence_scalar_array(self):
-        """Ticket #1078: segfaults when creating an array with a sequence of 0d
-        arrays."""
+        # Ticket #1078: segfaults when creating an array with a sequence of
+        # 0d arrays.
         a = np.array((np.ones(2), np.array(2)))
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
@@ -1359,32 +1349,32 @@ class TestRegression(TestCase):
         assert_equal(a[1], np.array(1))
 
     def test_array_from_sequence_scalar_array2(self):
-        """Ticket #1081: weird array with strange input..."""
+        # Ticket #1081: weird array with strange input...
         t = np.array([np.array([]), np.array(0, object)])
         assert_equal(t.shape, (2,))
         assert_equal(t.dtype, np.dtype(object))
 
     def test_array_too_big(self):
-        """Ticket #1080."""
+        # Ticket #1080.
         assert_raises(ValueError, np.zeros, [975]*7, np.int8)
         assert_raises(ValueError, np.zeros, [26244]*5, np.int8)
 
     def test_dtype_keyerrors_(self):
-        """Ticket #1106."""
+        # Ticket #1106.
         dt = np.dtype([('f1', np.uint)])
         assert_raises(KeyError, dt.__getitem__, "f2")
         assert_raises(IndexError, dt.__getitem__, 1)
         assert_raises(ValueError, dt.__getitem__, 0.0)
 
     def test_lexsort_buffer_length(self):
-        """Ticket #1217, don't segfault."""
+        # Ticket #1217, don't segfault.
         a = np.ones(100, dtype=np.int8)
         b = np.ones(100, dtype=np.int32)
         i = np.lexsort((a[::-1], b))
         assert_equal(i, np.arange(100, dtype=np.int))
 
     def test_object_array_to_fixed_string(self):
-        """Ticket #1235."""
+        # Ticket #1235.
         a = np.array(['abcdefgh', 'ijklmnop'], dtype=np.object_)
         b = np.array(a, dtype=(np.str_, 8))
         assert_equal(a, b)
@@ -1397,15 +1387,11 @@ class TestRegression(TestCase):
         assert_equal(a, e)
 
     def test_unicode_to_string_cast(self):
-        """Ticket #1240."""
+        # Ticket #1240.
         a = np.array([[sixu('abc'), sixu('\u03a3')],
                       [sixu('asdf'), sixu('erw')]],
                      dtype='U')
-
-        def fail():
-            b = np.array(a, 'S4')
-
-        self.assertRaises(UnicodeEncodeError, fail)
+        self.assertRaises(UnicodeEncodeError, np.array, a, 'S4')
 
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', sixu('123')])
@@ -1420,28 +1406,28 @@ class TestRegression(TestCase):
         assert_(a.itemsize == 16)
 
     def test_misaligned_objects_segfault(self):
-        """Ticket #1198 and #1267"""
+        # Ticket #1198 and #1267
         a1 = np.zeros((10,), dtype='O,c')
         a2 = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 'S10')
         a1['f0'] = a2
-        r = repr(a1)
+        repr(a1)
         np.argmax(a1['f0'])
         a1['f0'][1] = "FOO"
         a1['f0'] = "FOO"
-        a3 = np.array(a1['f0'], dtype='S')
+        np.array(a1['f0'], dtype='S')
         np.nonzero(a1['f0'])
         a1.sort()
-        a4 = copy.deepcopy(a1)
+        copy.deepcopy(a1)
 
     def test_misaligned_scalars_segfault(self):
-        """Ticket #1267"""
+        # Ticket #1267
         s1 = np.array(('a', 'Foo'), dtype='c,O')
         s2 = np.array(('b', 'Bar'), dtype='c,O')
         s1['f1'] = s2['f1']
         s1['f1'] = 'Baz'
 
     def test_misaligned_dot_product_objects(self):
-        """Ticket #1267"""
+        # Ticket #1267
         # This didn't require a fix, but it's worth testing anyway, because
         # it may fail if .dot stops enforcing the arrays to be BEHAVED
         a = np.array([[(1, 'a'), (0, 'a')], [(0, 'a'), (1, 'a')]], dtype='O,c')
@@ -1449,7 +1435,7 @@ class TestRegression(TestCase):
         np.dot(a['f0'], b['f0'])
 
     def test_byteswap_complex_scalar(self):
-        """Ticket #1259 and gh-441"""
+        # Ticket #1259 and gh-441
         for dtype in [np.dtype('<'+t) for t in np.typecodes['Complex']]:
             z = np.array([2.2-1.1j], dtype)
             x = z[0]  # always native-endian
@@ -1465,7 +1451,7 @@ class TestRegression(TestCase):
             assert_equal(x.imag, y.imag.byteswap())
 
     def test_structured_arrays_with_objects1(self):
-        """Ticket #1299"""
+        # Ticket #1299
         stra = 'aaaa'
         strb = 'bbbb'
         x = np.array([[(0, stra), (1, strb)]], 'i8,O')
@@ -1473,7 +1459,7 @@ class TestRegression(TestCase):
         assert_(x[0, 1] == x[0, 0])
 
     def test_structured_arrays_with_objects2(self):
-        """Ticket #1299 second test"""
+        # Ticket #1299 second test
         stra = 'aaaa'
         strb = 'bbbb'
         numb = sys.getrefcount(strb)
@@ -1484,14 +1470,12 @@ class TestRegression(TestCase):
         assert_(sys.getrefcount(stra) == numa + 2)
 
     def test_duplicate_title_and_name(self):
-        """Ticket #1254"""
-        def func():
-            x = np.dtype([(('a', 'a'), 'i'), ('b', 'i')])
-
-        self.assertRaises(ValueError, func)
+        # Ticket #1254
+        dtspec = [(('a', 'a'), 'i'), ('b', 'i')]
+        self.assertRaises(ValueError, np.dtype, dtspec)
 
     def test_signed_integer_division_overflow(self):
-        """Ticket #1317."""
+        # Ticket #1317.
         def test_type(t):
             min = np.array([np.iinfo(t).min])
             min //= -1
@@ -1542,7 +1526,7 @@ class TestRegression(TestCase):
                     c = a.astype(y)
                     try:
                         np.dot(b, c)
-                    except TypeError as e:
+                    except TypeError:
                         failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
@@ -1643,7 +1627,7 @@ class TestRegression(TestCase):
             assert_equal(complex(x), 1+2j)
 
     def test_complex_boolean_cast(self):
-        """Ticket #2218"""
+        # Ticket #2218
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = np.array([0, 0+0.5j, 0.5+0j], dtype=tp)
             assert_equal(x.astype(bool), np.array([0, 1, 1], dtype=bool))
@@ -1657,7 +1641,7 @@ class TestRegression(TestCase):
     def test_duplicate_field_names_assign(self):
         ra = np.fromiter(((i*3, i*2) for i in range(10)), dtype='i8,f8')
         ra.dtype.names = ('f1', 'f2')
-        rep = repr(ra)  # should not cause a segmentation fault
+        repr(ra)  # should not cause a segmentation fault
         assert_raises(ValueError, setattr, ra.dtype, 'names', ('f1', 'f1'))
 
     def test_eq_string_and_object_array(self):
@@ -1684,15 +1668,13 @@ class TestRegression(TestCase):
         assert_equal(a, [1.])
 
     def test_array_side_effect(self):
-        assert_equal(np.dtype('S10').itemsize, 10)
-
-        A = np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.string_)
-
-        # This was throwing an exception because in ctors.c,
-        # discover_itemsize was calling PyObject_Length without checking
-        # the return code.  This failed to get the length of the number 2,
-        # and the exception hung around until something checked
+        # The second use of itemsize was throwing an exception because in
+        # ctors.c, discover_itemsize was calling PyObject_Length without
+        # checking the return code.  This failed to get the length of the
+        # number 2, and the exception hung around until something checked
         # PyErr_Occurred() and returned an error.
+        assert_equal(np.dtype('S10').itemsize, 10)
+        np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.string_)
         assert_equal(np.dtype('S10').itemsize, 10)
 
     def test_any_float(self):
@@ -1720,7 +1702,7 @@ class TestRegression(TestCase):
         assert_(np.array(np.float32(1.0)).flags.f_contiguous)
 
     def test_squeeze_contiguous(self):
-        """Similar to GitHub issue #387"""
+        # Similar to GitHub issue #387
         a = np.zeros((1, 2)).squeeze()
         b = np.zeros((2, 2, 2), order='F')[:,:, ::2].squeeze()
         assert_(a.flags.c_contiguous)
@@ -1728,7 +1710,7 @@ class TestRegression(TestCase):
         assert_(b.flags.f_contiguous)
 
     def test_reduce_contiguous(self):
-        """GitHub issue #387"""
+        # GitHub issue #387
         a = np.add.reduce(np.zeros((2, 1, 2)), (0, 1))
         b = np.add.reduce(np.zeros((2, 1, 2)), 1)
         assert_(a.flags.c_contiguous)
@@ -1803,7 +1785,7 @@ class TestRegression(TestCase):
         assert_equal(b.dtype, np.dtype('S5'))
 
     def test_ticket_1756(self):
-        """Ticket #1756 """
+        # Ticket #1756
         s = asbytes('0123456789abcdef')
         a = np.array([s]*5)
         for i in range(1, 17):
@@ -1820,7 +1802,7 @@ class TestRegression(TestCase):
         assert_equal(r[0:3:2]['f1'][0].strides, r[0:3:2][0]['f1'].strides)
 
     def test_alignment_update(self):
-        """Check that alignment flag is updated on stride setting"""
+        # Check that alignment flag is updated on stride setting
         a = np.arange(10)
         assert_(a.flags.aligned)
         a.strides = 3
@@ -1841,7 +1823,7 @@ class TestRegression(TestCase):
     def test_ticket_1608(self):
         "x.flat shouldn't modify data"
         x = np.array([[1, 2], [3, 4]]).T
-        y = np.array(x.flat)
+        np.array(x.flat)
         assert_equal(x, [[1, 3], [2, 4]])
 
     def test_pickle_string_overwrite(self):
@@ -1969,7 +1951,7 @@ class TestRegression(TestCase):
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
-        res = np.add.reduce(a)
+        np.add.reduce(a)
         assert_equal(sys.getrefcount(a), acnt)
 
     def test_search_sorted_invalid_arguments(self):

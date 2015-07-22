@@ -84,10 +84,10 @@ class _DeprecationTestCase(object):
             elif not ignore_others:
                 raise AssertionError(
                         "expected DeprecationWarning but got: %s" %
-                        (repr_warning_message(warning),))
+                        (warning.category,))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [repr_warning_message(w) for w in self.log]
+            lst = [w.category for w in self.log]
             raise AssertionError("\n".join([msg] + [lst]))
 
         with warnings.catch_warnings():

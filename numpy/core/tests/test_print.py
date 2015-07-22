@@ -1,11 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import *
+import sys
+import locale
 import nose
 
-import locale
-import sys
+import numpy as np
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal
+)
+
 
 if sys.version_info[0] >= 3:
     from io import StringIO

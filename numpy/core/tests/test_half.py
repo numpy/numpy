@@ -28,9 +28,8 @@ class TestHalf(TestCase):
 
         # An array of all non-NaN float16 values, in sorted order
         self.nonan_f16 = np.concatenate(
-                                    (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
-                                     np.arange(0x0000, 0x7c01, 1, dtype=uint16))
-                                    )
+                                (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
+                                 np.arange(0x0000, 0x7c01, 1, dtype=uint16)))
         self.nonan_f16.dtype = float16
         self.nonan_f32 = np.array(self.nonan_f16, dtype=float32)
         self.nonan_f64 = np.array(self.nonan_f16, dtype=float64)
@@ -155,8 +154,7 @@ class TestHalf(TestCase):
            a manual conversion."""
 
         # Create an array of all finite float16s
-        a_f16 = self.finite_f16
-        a_bits = a_f16.view(dtype=uint16)
+        a_bits = self.finite_f16.view(dtype=uint16)
 
         # Convert to 64-bit float manually
         a_sgn = (-1.0)**((a_bits & 0x8000) >> 15)
@@ -174,7 +172,7 @@ class TestHalf(TestCase):
             bad_index = a32_fail[0]
             assert_equal(self.finite_f32, a_manual,
                  "First non-equal is half value %x -> %g != %g" %
-                            (a[bad_index],
+                            (self.finite_f16[bad_index],
                              self.finite_f32[bad_index],
                              a_manual[bad_index]))
 
@@ -183,7 +181,7 @@ class TestHalf(TestCase):
             bad_index = a64_fail[0]
             assert_equal(self.finite_f64, a_manual,
                  "First non-equal is half value %x -> %g != %g" %
-                            (a[bad_index],
+                            (self.finite_f16[bad_index],
                              self.finite_f64[bad_index],
                              a_manual[bad_index]))
 

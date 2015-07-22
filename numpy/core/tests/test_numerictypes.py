@@ -1,9 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from numpy.testing import *
-from numpy.compat import asbytes, asunicode
+
 import numpy as np
+from numpy.compat import asbytes, asunicode
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal
+)
 
 # This is the structure of the table used for plain objects:
 #

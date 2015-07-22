@@ -1,9 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import *
 import sys
-import warnings
+
+import numpy as np
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_raises,
+    assert_array_equal
+)
 
 
 class TestTake(TestCase):

@@ -1,12 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
-import os
 import pickle
+
 import numpy
 import numpy as np
-from numpy.testing import *
-from numpy.compat import asbytes
 import datetime
+from numpy.compat import asbytes
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    dec
+)
 
 # Use pytz to test out various time zones if available
 try:

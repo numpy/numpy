@@ -1,12 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
 import numpy as np
-from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
-                           assert_equal, run_module_suite, assert_raises_regex)
+from numpy.compat import long
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
                         vstack, hstack, newaxis, concatenate, stack)
-from numpy.compat import long
+from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
+                           assert_equal, run_module_suite, assert_raises_regex)
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):

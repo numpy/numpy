@@ -1,11 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import warnings
-from decimal import Decimal
 
 import numpy as np
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_raises
+    )
 
 class TestEinSum(TestCase):
     def test_einsum_errors(self):

@@ -1,13 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import os
 import shutil
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import memmap
 from numpy import arange, allclose, asarray
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    dec
+)
 
 class TestMemmap(TestCase):
     def setUp(self):
