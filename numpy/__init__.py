@@ -108,9 +108,9 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
-import metamodule
-metamodule.install(__name__)
-del metamodule
+from ._metamodule import install
+install(__name__)
+del install
 
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.

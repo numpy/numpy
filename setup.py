@@ -214,7 +214,6 @@ def setup_package():
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
         package_data={'numpy.core': ['libopenblaspy.dll']},
-        install_requires=["metamodule"],
     )
 
     # Run build
