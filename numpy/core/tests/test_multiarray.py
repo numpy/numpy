@@ -3948,6 +3948,139 @@ class TestVdot(TestCase):
 
 
 class TestDot(TestCase):
+    def setUp(self):
+        np.random.seed(128)
+        self.A = np.random.rand(4, 2)
+        self.b1 = np.random.rand(2, 1)
+        self.b2 = np.random.rand(2)
+        self.b3 = np.random.rand(1, 2)
+        self.b4 = np.random.rand(4)
+        self.N = 7
+
+    def test_dotmatmat(self):
+        A = self.A
+        res = np.dot(A.transpose(), A)
+        tgt = np.array([[1.45046013, 0.86323640],
+                        [0.86323640, 0.84934569]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotmatvec(self):
+        A, b1 = self.A, self.b1
+        res = np.dot(A, b1)
+        tgt = np.array([[0.32114320], [0.04889721],
+                        [0.15696029], [0.33612621]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotmatvec2(self):
+        A, b2 = self.A, self.b2
+        res = np.dot(A, b2)
+        tgt = np.array([0.29677940, 0.04518649, 0.14468333, 0.31039293])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecmat(self):
+        A, b4 = self.A, self.b4
+        res = np.dot(b4, A)
+        tgt = np.array([1.23495091, 1.12222648])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecmat2(self):
+        b3, A = self.b3, self.A
+        res = np.dot(b3, A.transpose())
+        tgt = np.array([[0.58793804, 0.08957460, 0.30605758, 0.62716383]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecmat3(self):
+        A, b4 = self.A, self.b4
+        res = np.dot(A.transpose(), b4)
+        tgt = np.array([1.23495091, 1.12222648])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecvecouter(self):
+        b1, b3 = self.b1, self.b3
+        res = np.dot(b1, b3)
+        tgt = np.array([[0.20128610, 0.08400440], [0.07190947, 0.03001058]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecvecinner(self):
+        b1, b3 = self.b1, self.b3
+        res = np.dot(b3, b1)
+        tgt = np.array([[ 0.23129668]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotcolumnvect1(self):
+        b1 = np.ones((3, 1))
+        b2 = [5.3]
+        res = np.dot(b1, b2)
+        tgt = np.array([5.3, 5.3, 5.3])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotcolumnvect2(self):
+        b1 = np.ones((3, 1)).transpose()
+        b2 = [6.2]
+        res = np.dot(b2, b1)
+        tgt = np.array([6.2, 6.2, 6.2])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecscalar(self):
+        np.random.seed(100)
+        b1 = np.random.rand(1, 1)
+        b2 = np.random.rand(1, 4)
+        res = np.dot(b1, b2)
+        tgt = np.array([[0.15126730, 0.23068496, 0.45905553, 0.00256425]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_dotvecscalar2(self):
+        np.random.seed(100)
+        b1 = np.random.rand(4, 1)
+        b2 = np.random.rand(1, 1)
+        res = np.dot(b1, b2)
+        tgt = np.array([[0.00256425],[0.00131359],[0.00200324],[ 0.00398638]])
+        assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_all(self):
+        dims = [(), (1,), (1, 1)]
+        dout = [(), (1,), (1, 1), (1,), (), (1,), (1, 1), (1,), (1, 1)]
+        for dim, (dim1, dim2) in zip(dout, itertools.product(dims, dims)):
+            b1 = np.zeros(dim1)
+            b2 = np.zeros(dim2)
+            res = np.dot(b1, b2)
+            tgt = np.zeros(dim)
+            assert_(res.shape == tgt.shape)
+            assert_almost_equal(res, tgt, decimal=self.N)
+
+    def test_vecobject(self):
+        class Vec(object):
+            def __init__(self, sequence=None):
+                if sequence is None:
+                    sequence = []
+                self.array = np.array(sequence)
+
+            def __add__(self, other):
+                out = Vec()
+                out.array = self.array + other.array
+                return out
+
+            def __sub__(self, other):
+                out = Vec()
+                out.array = self.array - other.array
+                return out
+
+            def __mul__(self, other):  # with scalar
+                out = Vec(self.array.copy())
+                out.array *= other
+                return out
+
+            def __rmul__(self, other):
+                return self*other
+
+        U_non_cont = np.transpose([[1., 1.], [1., 2.]])
+        U_cont = np.ascontiguousarray(U_non_cont)
+        x = np.array([Vec([1., 0.]), Vec([0., 1.])])
+        zeros = np.array([Vec([0., 0.]), Vec([0., 0.])])
+        zeros_test = np.dot(U_cont, x) - np.dot(U_non_cont, x)
+        assert_equal(zeros[0].array, zeros_test[0].array)
+        assert_equal(zeros[1].array, zeros_test[1].array)
+
     def test_dot_2args(self):
         from numpy.core.multiarray import dot
 

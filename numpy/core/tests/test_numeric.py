@@ -9,143 +9,10 @@ from decimal import Decimal
 import numpy as np
 from numpy.core import umath
 from numpy.random import rand, randint, randn
-from numpy.core import dot
-from numpy.core.multiarray import dot as dot_
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal, dec
 )
-
-
-class Vec(object):
-    def __init__(self,sequence=None):
-        if sequence is None:
-            sequence = []
-        self.array = np.array(sequence)
-
-    def __add__(self, other):
-        out = Vec()
-        out.array = self.array+other.array
-        return out
-
-    def __sub__(self, other):
-        out = Vec()
-        out.array = self.array-other.array
-        return out
-
-    def __mul__(self, other):  # with scalar
-        out = Vec(self.array.copy())
-        out.array *= other
-        return out
-
-    def __rmul__(self, other):
-        return self*other
-
-
-class TestDot(TestCase):
-    def setUp(self):
-        self.A = rand(10, 8)
-        self.b1 = rand(8, 1)
-        self.b2 = rand(8)
-        self.b3 = rand(1, 8)
-        self.b4 = rand(10)
-        self.N = 14
-
-    def test_matmat(self):
-        A = self.A
-        c1 = np.dot(A.transpose(), A)
-        c2 = dot_(A.transpose(), A)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_matvec(self):
-        A, b1 = self.A, self.b1
-        c1 = np.dot(A, b1)
-        c2 = dot_(A, b1)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_matvec2(self):
-        A, b2 = self.A, self.b2
-        c1 = dot(A, b2)
-        c2 = dot_(A, b2)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecmat(self):
-        A, b4 = self.A, self.b4
-        c1 = dot(b4, A)
-        c2 = dot_(b4, A)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecmat2(self):
-        b3, A = self.b3, self.A
-        c1 = dot(b3, A.transpose())
-        c2 = dot_(b3, A.transpose())
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecmat3(self):
-        A, b4 = self.A, self.b4
-        c1 = dot(A.transpose(), b4)
-        c2 = dot_(A.transpose(), b4)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecvecouter(self):
-        b1, b3 = self.b1, self.b3
-        c1 = dot(b1, b3)
-        c2 = dot_(b1, b3)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecvecinner(self):
-        b1, b3 = self.b1, self.b3
-        c1 = dot(b3, b1)
-        c2 = dot_(b3, b1)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_columnvect1(self):
-        b1 = np.ones((3, 1))
-        b2 = [5.3]
-        c1 = dot(b1, b2)
-        c2 = dot_(b1, b2)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_columnvect2(self):
-        b1 = np.ones((3, 1)).transpose()
-        b2 = [6.2]
-        c1 = dot(b2, b1)
-        c2 = dot_(b2, b1)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecscalar(self):
-        b1 = rand(1, 1)
-        b2 = rand(1, 8)
-        c1 = dot(b1, b2)
-        c2 = dot_(b1, b2)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecscalar2(self):
-        b1 = rand(8, 1)
-        b2 = rand(1, 1)
-        c1 = dot(b1, b2)
-        c2 = dot_(b1, b2)
-        assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_all(self):
-        dims = [(), (1,), (1, 1)]
-        for dim1 in dims:
-            for dim2 in dims:
-                arg1 = rand(*dim1)
-                arg2 = rand(*dim2)
-                c1 = dot(arg1, arg2)
-                c2 = dot_(arg1, arg2)
-                assert_(c1.shape == c2.shape)
-                assert_almost_equal(c1, c2, decimal=self.N)
-
-    def test_vecobject(self):
-        U_non_cont = np.transpose([[1., 1.], [1., 2.]])
-        U_cont = np.ascontiguousarray(U_non_cont)
-        x = np.array([Vec([1., 0.]), Vec([0., 1.])])
-        zeros = np.array([Vec([0., 0.]), Vec([0., 0.])])
-        zeros_test = dot(U_cont, x) - dot(U_non_cont, x)
-        assert_equal(zeros[0].array, zeros_test[0].array)
-        assert_equal(zeros[1].array, zeros_test[1].array)
 
 
 class TestResize(TestCase):
@@ -164,6 +31,7 @@ class TestResize(TestCase):
         A = np.array([[1, 2], [3, 4]])
         Ar = np.resize(A, (0,))
         assert_equal(Ar, np.array([]))
+
 
 class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays
