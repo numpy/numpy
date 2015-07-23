@@ -175,6 +175,16 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             raise AttributeError(
                 'max must be larger than min in range parameter.')
 
+    # Histogram is an integer or a float array depending on the weights.
+    if weights is None:
+        ntype = np.dtype(np.intp)
+    else:
+        ntype = weights.dtype
+
+    # We set a block size, as this allows us to iterate over chunks when
+    # computing histograms, to minimize memory usage.
+    BLOCK = 65536
+
     if not iterable(bins):
         if np.isscalar(bins) and bins < 1:
             raise ValueError(
@@ -189,6 +199,56 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         if mn == mx:
             mn -= 0.5
             mx += 0.5
+        # At this point, if the weights are not integer, floating point, or
+        # complex, we have to use the slow algorithm.
+        if weights is not None and not (np.can_cast(weights.dtype, np.double) or
+                                        np.can_cast(weights.dtype, np.complex)):
+            bins = linspace(mn, mx, bins + 1, endpoint=True)
+
+    if not iterable(bins):
+        # We now convert values of a to bin indices, under the assumption of
+        # equal bin widths (which is valid here).
+
+        # Initialize empty histogram
+        n = np.zeros(bins, ntype)
+        # Pre-compute histogram scaling factor
+        norm = bins / (mx - mn)
+
+        # We iterate over blocks here for two reasons: the first is that for
+        # large arrays, it is actually faster (for example for a 10^8 array it
+        # is 2x as fast) and it results in a memory footprint 3x lower in the
+        # limit of large arrays.
+        for i in arange(0, len(a), BLOCK):
+            tmp_a = a[i:i+BLOCK]
+            if weights is None:
+                tmp_w = None
+            else:
+                tmp_w = weights[i:i + BLOCK]
+
+            # Only include values in the right range
+            keep = (tmp_a >= mn)
+            keep &= (tmp_a <= mx)
+            if not np.logical_and.reduce(keep):
+                tmp_a = tmp_a[keep]
+                if tmp_w is not None:
+                    tmp_w = tmp_w[keep]
+            tmp_a = np.array(tmp_a, dtype=float, copy=False)
+            tmp_a -= mn
+            tmp_a *= norm
+
+            # Compute the bin indices, and for values that lie exactly on mx we
+            # need to subtract one
+            indices = tmp_a.astype(np.intp)
+            indices[indices == bins] -= 1
+
+            # We now compute the histogram using bincount
+            if ntype.kind == 'c':
+                n.real += np.bincount(indices, weights=tmp_w.real, minlength=bins)
+                n.imag += np.bincount(indices, weights=tmp_w.imag, minlength=bins)
+            else:
+                n += np.bincount(indices, weights=tmp_w, minlength=bins).astype(ntype)
+
+        # We now compute the bin edges since these are returned
         bins = linspace(mn, mx, bins + 1, endpoint=True)
     else:
         bins = asarray(bins)
@@ -196,33 +256,29 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             raise AttributeError(
                 'bins must increase monotonically.')
 
-    # Histogram is an integer or a float array depending on the weights.
-    if weights is None:
-        ntype = int
-    else:
-        ntype = weights.dtype
-    n = np.zeros(bins.shape, ntype)
+        # Initialize empty histogram
+        n = np.zeros(bins.shape, ntype)
 
-    block = 65536
-    if weights is None:
-        for i in arange(0, len(a), block):
-            sa = sort(a[i:i+block])
-            n += np.r_[sa.searchsorted(bins[:-1], 'left'),
-                       sa.searchsorted(bins[-1], 'right')]
-    else:
-        zero = array(0, dtype=ntype)
-        for i in arange(0, len(a), block):
-            tmp_a = a[i:i+block]
-            tmp_w = weights[i:i+block]
-            sorting_index = np.argsort(tmp_a)
-            sa = tmp_a[sorting_index]
-            sw = tmp_w[sorting_index]
-            cw = np.concatenate(([zero, ], sw.cumsum()))
-            bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'),
-                              sa.searchsorted(bins[-1], 'right')]
-            n += cw[bin_index]
+        if weights is None:
+            for i in arange(0, len(a), BLOCK):
+                sa = sort(a[i:i+BLOCK])
+                n += np.r_[sa.searchsorted(bins[:-1], 'left'),
+                           sa.searchsorted(bins[-1], 'right')]
+        else:
+            zero = array(0, dtype=ntype)
+            for i in arange(0, len(a), BLOCK):
+                tmp_a = a[i:i+BLOCK]
+                tmp_w = weights[i:i+BLOCK]
+                sorting_index = np.argsort(tmp_a)
+                sa = tmp_a[sorting_index]
+                sw = tmp_w[sorting_index]
+                cw = np.concatenate(([zero, ], sw.cumsum()))
+                bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'),
+                                  sa.searchsorted(bins[-1], 'right')]
+                n += cw[bin_index]
 
-    n = np.diff(n)
+
+        n = np.diff(n)
 
     if density is not None:
         if density:
