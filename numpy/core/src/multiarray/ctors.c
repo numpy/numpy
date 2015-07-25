@@ -30,6 +30,8 @@
 #include "alloc.h"
 #include <assert.h>
 
+#include "get_attr_string.h"
+
 /*
  * Reading from a file or a string.
  *
