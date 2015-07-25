@@ -4081,6 +4081,12 @@ def test_append_masked_array_along_axis():
     assert_array_equal(result.mask, expected.mask)
 
 
+def test_ctors_with_keyword_args():
+    x = np.ma.zeros(shape=2, dtype="f8")
+    y = np.zeros(2)
+    assert_array_equal(x.data, y)
+    assert_equal(x.dtype, y.dtype)
+
 ###############################################################################
 if __name__ == "__main__":
     run_module_suite()

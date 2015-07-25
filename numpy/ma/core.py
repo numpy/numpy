@@ -33,6 +33,7 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
 from numpy.compat import getargspec, formatargspec, long, basestring
+from inspect import getcallargs
 from numpy import expand_dims as n_expand_dims
 
 if sys.version_info[0] >= 3:
@@ -7401,7 +7402,7 @@ class _convert2ma:
             doc = sig + doc
         return doc
     #
-    def __call__(self, a, *args, **params):
+    def __call__(self, *args, **params):
         # Find the common parameters to the call and the definition
         _extras = self._extras
         common_params = set(params).intersection(_extras)
@@ -7409,7 +7410,13 @@ class _convert2ma:
         for p in common_params:
             _extras[p] = params.pop(p)
         # Get the result
-        result = self._func.__call__(a, *args, **params).view(MaskedArray)
+        try:
+            params = getcallargs(self._func, *args, **params)
+        except TypeError:
+            result = self._func.__call__(*args, **params)
+        else:
+            result = self._func(**params)
+        result = result.view(MaskedArray)
         if "fill_value" in common_params:
             result.fill_value = _extras.get("fill_value", None)
         if "hardmask" in common_params:
