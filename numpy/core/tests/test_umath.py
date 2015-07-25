@@ -1162,6 +1162,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, C()), 0)
 
     def test_ufunc_override(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         class A(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
                 return self, func, method, pos, inputs, kwargs
@@ -1188,6 +1191,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res1[5], {})
 
     def test_ufunc_override_mro(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5864
+        return
 
         # Some multi arg functions for testing.
         def tres_mul(a, b, c):
@@ -1281,6 +1286,9 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
     def test_ufunc_override_methods(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5864
+        return
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return self, ufunc, method, pos, inputs, kwargs
@@ -1384,6 +1392,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5844
+        return
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return kwargs
@@ -1418,6 +1429,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][1], 'out1')
 
     def test_ufunc_override_exception(self):
+        # Temporarily disable __numpy_ufunc__ for 1.10; see gh-5864
+        return
+
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):
                 raise ValueError("oops")
