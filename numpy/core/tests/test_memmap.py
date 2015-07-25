@@ -1,13 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import os
 import shutil
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import memmap
 from numpy import arange, allclose, asarray
-from numpy.testing import *
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    dec
+)
 
 class TestMemmap(TestCase):
     def setUp(self):
@@ -27,7 +30,7 @@ class TestMemmap(TestCase):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
-        del fp # Test __del__ machinery, which handles cleanup
+        del fp  # Test __del__ machinery, which handles cleanup
 
         # Read data back from file
         newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
@@ -73,7 +76,7 @@ class TestMemmap(TestCase):
                     shape=self.shape)
         self.assertEqual(fp.filename, self.tmpfp.name)
 
-    @dec.knownfailureif(sys.platform=='gnu0', "This test is known to fail on hurd")
+    @dec.knownfailureif(sys.platform == 'gnu0', "This test is known to fail on hurd")
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)

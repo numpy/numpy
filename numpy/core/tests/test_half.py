@@ -28,9 +28,8 @@ class TestHalf(TestCase):
 
         # An array of all non-NaN float16 values, in sorted order
         self.nonan_f16 = np.concatenate(
-                                    (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
-                                     np.arange(0x0000, 0x7c01, 1, dtype=uint16))
-                                    )
+                                (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
+                                 np.arange(0x0000, 0x7c01, 1, dtype=uint16)))
         self.nonan_f16.dtype = float16
         self.nonan_f32 = np.array(self.nonan_f16, dtype=float32)
         self.nonan_f64 = np.array(self.nonan_f16, dtype=float64)
@@ -104,10 +103,10 @@ class TestHalf(TestCase):
         """Confirms a small number of known half values"""
         a = np.array([1.0, -1.0,
                       2.0, -2.0,
-                      0.0999755859375, 0.333251953125, # 1/10, 1/3
+                      0.0999755859375, 0.333251953125,  # 1/10, 1/3
                       65504, -65504,           # Maximum magnitude
-                      2.0**(-14), -2.0**(-14), # Minimum normal
-                      2.0**(-24), -2.0**(-24), # Minimum subnormal
+                      2.0**(-14), -2.0**(-14),  # Minimum normal
+                      2.0**(-24), -2.0**(-24),  # Minimum subnormal
                       0, -1/1e1000,            # Signed zeros
                       np.inf, -np.inf])
         b = np.array([0x3c00, 0xbc00,
@@ -126,7 +125,7 @@ class TestHalf(TestCase):
         a = np.array([2.0**-25 + 2.0**-35,  # Rounds to minimum subnormal
                       2.0**-25,       # Underflows to zero (nearest even mode)
                       2.0**-26,       # Underflows to zero
-                      1.0+2.0**-11 + 2.0**-16, # rounds to 1.0+2**(-10)
+                      1.0+2.0**-11 + 2.0**-16,  # rounds to 1.0+2**(-10)
                       1.0+2.0**-11,   # rounds to 1.0 (nearest even mode)
                       1.0+2.0**-12,   # rounds to 1.0
                       65519,          # rounds to 65504
@@ -155,17 +154,16 @@ class TestHalf(TestCase):
            a manual conversion."""
 
         # Create an array of all finite float16s
-        a_f16 = self.finite_f16
-        a_bits = a_f16.view(dtype=uint16)
+        a_bits = self.finite_f16.view(dtype=uint16)
 
         # Convert to 64-bit float manually
-        a_sgn = (-1.0)**((a_bits&0x8000) >> 15)
-        a_exp = np.array((a_bits&0x7c00) >> 10, dtype=np.int32) - 15
-        a_man = (a_bits&0x03ff) * 2.0**(-10)
+        a_sgn = (-1.0)**((a_bits & 0x8000) >> 15)
+        a_exp = np.array((a_bits & 0x7c00) >> 10, dtype=np.int32) - 15
+        a_man = (a_bits & 0x03ff) * 2.0**(-10)
         # Implicit bit of normalized floats
-        a_man[a_exp!=-15] += 1
+        a_man[a_exp != -15] += 1
         # Denormalized exponent is -14
-        a_exp[a_exp==-15] = -14
+        a_exp[a_exp == -15] = -14
 
         a_manual = a_sgn * a_man * 2.0**a_exp
 
@@ -174,7 +172,7 @@ class TestHalf(TestCase):
             bad_index = a32_fail[0]
             assert_equal(self.finite_f32, a_manual,
                  "First non-equal is half value %x -> %g != %g" %
-                            (a[bad_index],
+                            (self.finite_f16[bad_index],
                              self.finite_f32[bad_index],
                              a_manual[bad_index]))
 
@@ -183,7 +181,7 @@ class TestHalf(TestCase):
             bad_index = a64_fail[0]
             assert_equal(self.finite_f64, a_manual,
                  "First non-equal is half value %x -> %g != %g" %
-                            (a[bad_index],
+                            (self.finite_f16[bad_index],
                              self.finite_f64[bad_index],
                              a_manual[bad_index]))
 
@@ -271,7 +269,6 @@ class TestHalf(TestCase):
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
         assert_equal(np.nextafter(a_f16[:-1], -hinf), a_f16[1:])
-
 
     def test_half_ufuncs(self):
         """Test the various ufuncs"""

@@ -1,8 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 from numpy import (logspace, linspace, dtype, array, finfo, typecodes, arange,
                    isnan)
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal
+)
+
 
 class TestLogspace(TestCase):
 
@@ -73,9 +77,9 @@ class TestLinspace(TestCase):
 
     def test_complex(self):
         lim1 = linspace(1 + 2j, 3 + 4j, 5)
-        t1 = array([ 1.0+2.j ,  1.5+2.5j,  2.0+3.j ,  2.5+3.5j,  3.0+4.j])
+        t1 = array([ 1.0+2.j,  1.5+2.5j,  2.0+3.j,  2.5+3.5j,  3.0+4.j])
         lim2 = linspace(1j, 10, 5)
-        t2 = array([  0.0+1.j  ,   2.5+0.75j,   5.0+0.5j ,   7.5+0.25j,  10.0+0.j])
+        t2 = array([  0.0+1.j,   2.5+0.75j,   5.0+0.5j,   7.5+0.25j,  10.0+0.j])
         assert_equal(lim1, t1)
         assert_equal(lim2, t2)
 
@@ -106,7 +110,6 @@ class TestLinspace(TestCase):
 
             def __rdiv__(self, x):
                 return PhysicalQuantity(float(x) / float(self))
-
 
         a = PhysicalQuantity(0.0)
         b = PhysicalQuantity(1.0)

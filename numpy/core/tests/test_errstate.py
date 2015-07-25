@@ -39,6 +39,7 @@ class TestErrstate(TestCase):
     def test_errcall(self):
         def foo(*args):
             print(args)
+
         olderrcall = np.geterrcall()
         with np.errstate(call=foo):
             assert_(np.geterrcall() is foo, 'call is not foo')

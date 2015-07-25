@@ -3,9 +3,12 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 
-from numpy.testing import *
-import numpy.core.umath as ncu
 import numpy as np
+import numpy.core.umath as ncu
+from numpy.testing import (
+    TestCase, run_module_suite, assert_equal, assert_array_equal,
+    assert_almost_equal, dec
+)
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -59,17 +62,11 @@ class TestCexp(object):
         yield check, f,  np.inf, 0, np.inf, 0
 
         # cexp(-inf + yi) is +0 * (cos(y) + i sin(y)) for finite y
-        ref = np.complex(np.cos(1.), np.sin(1.))
         yield check, f,  -np.inf, 1, np.PZERO, np.PZERO
-
-        ref = np.complex(np.cos(np.pi * 0.75), np.sin(np.pi * 0.75))
         yield check, f,  -np.inf, 0.75 * np.pi, np.NZERO, np.PZERO
 
         # cexp(inf + yi) is +inf * (cos(y) + i sin(y)) for finite y
-        ref = np.complex(np.cos(1.), np.sin(1.))
         yield check, f,  np.inf, 1, np.inf, np.inf
-
-        ref = np.complex(np.cos(np.pi * 0.75), np.sin(np.pi * 0.75))
         yield check, f,  np.inf, 0.75 * np.pi, -np.inf, np.inf
 
         # cexp(-inf + inf i) is +-0 +- 0i (signs unspecified)
@@ -78,7 +75,7 @@ class TestCexp(object):
             with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(-np.inf, np.inf)))
                 if z.real != 0 or z.imag != 0:
-                    raise AssertionError(msgform %(z.real, z.imag))
+                    raise AssertionError(msgform % (z.real, z.imag))
 
         yield _check_ninf_inf, None
 
@@ -127,6 +124,9 @@ class TestCexp(object):
     def test_special_values2(self):
         # XXX: most implementations get it wrong here (including glibc <= 2.10)
         # cexp(nan + 0i) is nan + 0i
+        check = check_complex_value
+        f = np.exp
+
         yield check, f, np.nan, 0, np.nan, 0
 
 class TestClog(TestCase):
@@ -271,7 +271,7 @@ class TestClog(TestCase):
         ya = np.array(yl, dtype=np.complex)
         with np.errstate(divide='ignore'):
             for i in range(len(xa)):
-                assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
+                assert_almost_equal(np.log(xa[i].conj()), ya[i].conj())
 
 class TestCsqrt(object):
 
@@ -287,6 +287,7 @@ class TestCsqrt(object):
 
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(np.complex(1, 1)))
+
         def f(z):
             return np.sqrt(np.conj(z))
         yield check_complex_value, f, 1, 1, ref.real, ref.imag, False
@@ -296,11 +297,10 @@ class TestCsqrt(object):
 
     @platform_skip
     def test_special_values(self):
+        # C99: Sec G 6.4.2
+
         check = check_complex_value
         f = np.sqrt
-
-        # C99: Sec G 6.4.2
-        x, y = [], []
 
         # csqrt(+-0 + 0i) is 0 + 0i
         yield check, f, np.PZERO, 0, 0, 0
@@ -443,6 +443,7 @@ class TestCabs(object):
         # cabs(conj(z)) == conj(cabs(z)) (= cabs(z))
         def f(a):
             return np.abs(np.conj(a))
+
         def g(a, b):
             return np.abs(np.complex(a, b))
 

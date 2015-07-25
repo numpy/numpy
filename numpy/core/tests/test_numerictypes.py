@@ -1,9 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from numpy.testing import *
-from numpy.compat import asbytes, asunicode
+
 import numpy as np
+from numpy.compat import asbytes, asunicode
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal
+)
 
 # This is the structure of the table used for plain objects:
 #
@@ -91,7 +94,7 @@ def normalize_descr(descr):
                 l.append(j)
             out.append((item[0], l))
         else:
-            raise ValueError("Expected a str or list and got %s" % \
+            raise ValueError("Expected a str or list and got %s" %
                              (type(item)))
     return out
 
@@ -238,7 +241,6 @@ class test_read_values_plain_multiple(read_values_plain, TestCase):
 class read_values_nested(object):
     """Check the reading of values in heterogeneous arrays (nested)"""
 
-
     def test_access_top_fields(self):
         """Check reading the top fields of a nested array"""
         h = np.array(self._buffer, dtype=self._descr)
@@ -255,7 +257,6 @@ class read_values_nested(object):
                                            self._buffer[1][4]], dtype='f8'))
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
-
 
     def test_nested1_acessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
@@ -346,26 +347,33 @@ class TestCommonType(TestCase):
     def test_scalar_loses1(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['f8'])
         assert_(res == 'f4')
+
     def test_scalar_loses2(self):
         res = np.find_common_type(['f4', 'f4'], ['i8'])
         assert_(res == 'f4')
+
     def test_scalar_wins(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['c8'])
         assert_(res == 'c8')
+
     def test_scalar_wins2(self):
         res = np.find_common_type(['u4', 'i4', 'i4'], ['f4'])
         assert_(res == 'f8')
-    def test_scalar_wins3(self): # doesn't go up to 'f16' on purpose
+
+    def test_scalar_wins3(self):  # doesn't go up to 'f16' on purpose
         res = np.find_common_type(['u8', 'i8', 'i8'], ['f8'])
         assert_(res == 'f8')
 
 class TestMultipleFields(TestCase):
     def setUp(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
+
     def _bad_call(self):
         return self.ary['f0', 'f1']
+
     def test_no_tuple(self):
         self.assertRaises(IndexError, self._bad_call)
+
     def test_return(self):
         res = self.ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])

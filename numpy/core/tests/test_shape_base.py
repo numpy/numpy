@@ -1,12 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
 import numpy as np
-from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
-                           assert_equal, run_module_suite, assert_raises_regex)
+from numpy.compat import long
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
                         vstack, hstack, newaxis, concatenate, stack)
-from numpy.compat import long
+from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
+                           assert_equal, run_module_suite, assert_raises_regex)
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
@@ -124,21 +123,21 @@ class TestHstack(TestCase):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
-        res=hstack([a, b])
+        res = hstack([a, b])
         desired = array([1, 2])
         assert_array_equal(res, desired)
 
     def test_1D_array(self):
         a = array([1])
         b = array([2])
-        res=hstack([a, b])
+        res = hstack([a, b])
         desired = array([1, 2])
         assert_array_equal(res, desired)
 
     def test_2D_array(self):
         a = array([[1], [2]])
         b = array([[1], [2]])
-        res=hstack([a, b])
+        res = hstack([a, b])
         desired = array([[1, 1], [2, 2]])
         assert_array_equal(res, desired)
 
@@ -147,28 +146,28 @@ class TestVstack(TestCase):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
-        res=vstack([a, b])
+        res = vstack([a, b])
         desired = array([[1], [2]])
         assert_array_equal(res, desired)
 
     def test_1D_array(self):
         a = array([1])
         b = array([2])
-        res=vstack([a, b])
+        res = vstack([a, b])
         desired = array([[1], [2]])
         assert_array_equal(res, desired)
 
     def test_2D_array(self):
         a = array([[1], [2]])
         b = array([[1], [2]])
-        res=vstack([a, b])
+        res = vstack([a, b])
         desired = array([[1], [2], [1], [2]])
         assert_array_equal(res, desired)
 
     def test_2D_array2(self):
         a = array([1, 2])
         b = array([1, 2])
-        res=vstack([a, b])
+        res = vstack([a, b])
         desired = array([[1, 2], [1, 2]])
         assert_array_equal(res, desired)
 
@@ -178,7 +177,7 @@ class TestConcatenate(TestCase):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
             a = np.ones((1,)*ndim)
-            np.concatenate((a, a), axis=0) # OK
+            np.concatenate((a, a), axis=0)  # OK
             assert_raises(IndexError, np.concatenate, (a, a), axis=ndim)
             assert_raises(IndexError, np.concatenate, (a, a), axis=-(ndim + 1))
 
@@ -191,7 +190,7 @@ class TestConcatenate(TestCase):
         b = np.ones((2, 2, 3))
         axis = list(range(3))
         for i in range(3):
-            np.concatenate((a, b), axis=axis[0]) # OK
+            np.concatenate((a, b), axis=axis[0])  # OK
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
             a = np.rollaxis(a, -1)

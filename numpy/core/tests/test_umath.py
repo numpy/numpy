@@ -4,10 +4,14 @@ import sys
 import platform
 import warnings
 
-from numpy.testing import *
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
 import numpy as np
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    dec, assert_allclose, assert_no_warnings
+)
 
 
 def on_powerpc():
@@ -28,10 +32,8 @@ class TestConstants(TestCase):
     def test_pi(self):
         assert_allclose(ncu.pi, 3.141592653589793, 1e-15)
 
-
     def test_e(self):
         assert_allclose(ncu.e, 2.718281828459045, 1e-15)
-
 
     def test_euler_gamma(self):
         assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
@@ -89,12 +91,13 @@ class TestOut(TestCase):
             assert_raises(ValueError, np.add, a, 2, out=o, subok=subok)
             assert_raises(ValueError, np.add, a, 2, out=(o,), subok=subok)
 
-
     def test_out_wrap_subok(self):
         class ArrayWrap(np.ndarray):
             __array_priority__ = 10
+
             def __new__(cls, arr):
                 return np.asarray(arr).view(cls).copy()
+
             def __array_wrap__(self, arr, context):
                 return arr.view(type(self))
 
@@ -260,7 +263,6 @@ class TestPower(TestCase):
             np.sqrt(inp, out=out)
             assert_equal(out, exp, err_msg=msg)
 
-
     def test_power_complex(self):
         x = np.array([1+2j, 2+3j, 3+4j])
         assert_equal(x**0, [1., 1., 1.])
@@ -277,7 +279,7 @@ class TestPower(TestCase):
         norm = 1./((x**14)[0])
         assert_almost_equal(x**14 * norm,
                 [i * norm for i in [-76443+16124j, 23161315+58317492j,
-                                    5583548873 +  2465133864j]])
+                                    5583548873 + 2465133864j]])
 
         # Ticket #836
         def assert_complex_equal(x, y):
@@ -295,8 +297,9 @@ class TestPower(TestCase):
         # ticket #1271
         zero = np.array([0j])
         one = np.array([1+0j])
-        cinf = np.array([complex(np.inf, 0)])
         cnan = np.array([complex(np.nan, np.nan)])
+        # FIXME cinf not tested.
+        #cinf = np.array([complex(np.inf, 0)])
 
         def assert_complex_equal(x, y):
             x, y = np.asarray(x), np.asarray(y)
@@ -327,10 +330,10 @@ class TestPower(TestCase):
 
 
 class TestLog2(TestCase):
-    def test_log2_values(self) :
+    def test_log2_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
@@ -358,10 +361,10 @@ class TestLog2(TestCase):
 
 
 class TestExp2(TestCase):
-    def test_exp2_values(self) :
+    def test_exp2_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.exp2(yf), xf)
@@ -369,33 +372,33 @@ class TestExp2(TestCase):
 
 class TestLogAddExp2(_FilterInvalids):
     # Need test for intermediate precisions
-    def test_logaddexp2_values(self) :
+    def test_logaddexp2_values(self):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]) :
+        for dt, dec_ in zip(['f', 'd', 'g'], [6, 15, 15]):
             xf = np.log2(np.array(x, dtype=dt))
             yf = np.log2(np.array(y, dtype=dt))
             zf = np.log2(np.array(z, dtype=dt))
-            assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec)
+            assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec_)
 
-    def test_logaddexp2_range(self) :
+    def test_logaddexp2_range(self):
         x = [1000000, -1000000, 1000200, -1000200]
         y = [1000200, -1000200, 1000000, -1000000]
         z = [1000200, -1000000, 1000200, -1000000]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
             assert_almost_equal(np.logaddexp2(logxf, logyf), logzf)
 
-    def test_inf(self) :
+    def test_inf(self):
         inf = np.inf
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='raise'):
-            for dt in ['f', 'd', 'g'] :
+            for dt in ['f', 'd', 'g']:
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
                 logzf = np.array(z, dtype=dt)
@@ -410,10 +413,10 @@ class TestLogAddExp2(_FilterInvalids):
 
 
 class TestLog(TestCase):
-    def test_log_values(self) :
+    def test_log_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             log2_ = 0.69314718055994530943
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)*log2_
@@ -421,10 +424,10 @@ class TestLog(TestCase):
 
 
 class TestExp(TestCase):
-    def test_exp_values(self) :
+    def test_exp_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             log2_ = 0.69314718055994530943
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)*log2_
@@ -432,33 +435,33 @@ class TestExp(TestCase):
 
 
 class TestLogAddExp(_FilterInvalids):
-    def test_logaddexp_values(self) :
+    def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         z = [6, 6, 6, 6, 6]
-        for dt, dec in zip(['f', 'd', 'g'], [6, 15, 15]) :
+        for dt, dec_ in zip(['f', 'd', 'g'], [6, 15, 15]):
             xf = np.log(np.array(x, dtype=dt))
             yf = np.log(np.array(y, dtype=dt))
             zf = np.log(np.array(z, dtype=dt))
-            assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec)
+            assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec_)
 
-    def test_logaddexp_range(self) :
+    def test_logaddexp_range(self):
         x = [1000000, -1000000, 1000200, -1000200]
         y = [1000200, -1000200, 1000000, -1000000]
         z = [1000200, -1000000, 1000200, -1000000]
-        for dt in ['f', 'd', 'g'] :
+        for dt in ['f', 'd', 'g']:
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
             assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
 
-    def test_inf(self) :
+    def test_inf(self):
         inf = np.inf
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='raise'):
-            for dt in ['f', 'd', 'g'] :
+            for dt in ['f', 'd', 'g']:
                 logxf = np.array(x, dtype=dt)
                 logyf = np.array(y, dtype=dt)
                 logzf = np.array(z, dtype=dt)
@@ -681,7 +684,7 @@ class TestMaximum(_FilterInvalids):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
-        out  = np.array([nan, nan, nan])
+        out = np.array([nan, nan, nan])
         assert_equal(np.maximum(arg1, arg2), out)
 
     def test_object_nans(self):
@@ -697,10 +700,10 @@ class TestMaximum(_FilterInvalids):
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
             arg1 = np.array([0, cnan, cnan], dtype=np.complex)
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([nan, nan, nan], dtype=np.complex)
+            out = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.maximum(arg1, arg2), out)
 
     def test_object_array(self):
@@ -739,7 +742,7 @@ class TestMinimum(_FilterInvalids):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
-        out  = np.array([nan, nan, nan])
+        out = np.array([nan, nan, nan])
         assert_equal(np.minimum(arg1, arg2), out)
 
     def test_object_nans(self):
@@ -755,10 +758,10 @@ class TestMinimum(_FilterInvalids):
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
             arg1 = np.array([0, cnan, cnan], dtype=np.complex)
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([nan, nan, nan], dtype=np.complex)
+            out = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.minimum(arg1, arg2), out)
 
     def test_object_array(self):
@@ -797,15 +800,15 @@ class TestFmax(_FilterInvalids):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
-        out  = np.array([0,   0,   nan])
+        out = np.array([0,   0,   nan])
         assert_equal(np.fmax(arg1, arg2), out)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
             arg1 = np.array([0, cnan, cnan], dtype=np.complex)
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([0,    0, nan], dtype=np.complex)
+            out = np.array([0,    0, nan], dtype=np.complex)
             assert_equal(np.fmax(arg1, arg2), out)
 
 
@@ -839,15 +842,15 @@ class TestFmin(_FilterInvalids):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
-        out  = np.array([0,   0,   nan])
+        out = np.array([0,   0,   nan])
         assert_equal(np.fmin(arg1, arg2), out)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
             arg1 = np.array([0, cnan, cnan], dtype=np.complex)
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([0,    0, nan], dtype=np.complex)
+            out = np.array([0,    0, nan], dtype=np.complex)
             assert_equal(np.fmin(arg1, arg2), out)
 
 
@@ -1005,14 +1008,17 @@ class TestAbsoluteNegative(TestCase):
 
 class TestSpecialMethods(TestCase):
     def test_wrap(self):
+
         class with_wrap(object):
             def __array__(self):
                 return np.zeros(1)
+
             def __array_wrap__(self, arr, context):
                 r = with_wrap()
                 r.arr = arr
                 r.context = context
                 return r
+
         a = with_wrap()
         x = ncu.minimum(a, a)
         assert_equal(x.arr, np.zeros(1))
@@ -1025,12 +1031,16 @@ class TestSpecialMethods(TestCase):
 
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
+
         class with_wrap(np.ndarray):
             __array_priority__ = 10
+
             def __new__(cls):
                 return np.asarray(1).view(cls).copy()
+
             def __array_wrap__(self, arr, context):
                 return arr.view(type(self))
+
         a = with_wrap()
         x = ncu.multiply(a, (1, 2, 3))
         self.assertTrue(isinstance(x, with_wrap))
@@ -1038,40 +1048,51 @@ class TestSpecialMethods(TestCase):
 
     def test_priority_with_scalar(self):
         # test fix for bug #826:
+
         class A(np.ndarray):
             __array_priority__ = 10
+
             def __new__(cls):
                 return np.asarray(1.0, 'float64').view(cls).copy()
+
         a = A()
         x = np.float64(1)*a
         self.assertTrue(isinstance(x, A))
         assert_array_equal(x, np.array(1))
 
     def test_old_wrap(self):
+
         class with_wrap(object):
             def __array__(self):
                 return np.zeros(1)
+
             def __array_wrap__(self, arr):
                 r = with_wrap()
                 r.arr = arr
                 return r
+
         a = with_wrap()
         x = ncu.minimum(a, a)
         assert_equal(x.arr, np.zeros(1))
 
     def test_priority(self):
+
         class A(object):
             def __array__(self):
                 return np.zeros(1)
+
             def __array_wrap__(self, arr, context):
                 r = type(self)()
                 r.arr = arr
                 r.context = context
                 return r
+
         class B(A):
             __array_priority__ = 20.
+
         class C(A):
             __array_priority__ = 40.
+
         x = np.zeros(1)
         a = A()
         b = B()
@@ -1098,47 +1119,61 @@ class TestSpecialMethods(TestCase):
         self.assertTrue(type(ncu.exp(c) is C))
 
     def test_failing_wrap(self):
+
         class A(object):
             def __array__(self):
                 return np.zeros(1)
+
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
+
         a = A()
         self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
     def test_default_prepare(self):
+
         class with_wrap(object):
             __array_priority__ = 10
+
             def __array__(self):
                 return np.zeros(1)
+
             def __array_wrap__(self, arr, context):
                 return arr
+
         a = with_wrap()
         x = ncu.minimum(a, a)
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
 
     def test_prepare(self):
+
         class with_prepare(np.ndarray):
             __array_priority__ = 10
+
             def __array_prepare__(self, arr, context):
                 # make sure we can return a new
                 return np.array(arr).view(type=with_prepare)
+
         a = np.array(1).view(type=with_prepare)
         x = np.add(a, a)
         assert_equal(x, np.array(2))
         assert_equal(type(x), with_prepare)
 
     def test_failing_prepare(self):
+
         class A(object):
             def __array__(self):
                 return np.zeros(1)
+
             def __array_prepare__(self, arr, context=None):
                 raise RuntimeError
+
         a = A()
         self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
     def test_array_with_context(self):
+
         class A(object):
             def __array__(self, dtype=None, context=None):
                 func, args, i = context
@@ -1146,12 +1181,15 @@ class TestSpecialMethods(TestCase):
                 self.args = args
                 self.i = i
                 return np.zeros(1)
+
         class B(object):
             def __array__(self, dtype=None):
                 return np.zeros(1, dtype)
+
         class C(object):
             def __array__(self):
                 return np.zeros(1)
+
         a = A()
         ncu.maximum(np.zeros(1), a)
         self.assertTrue(a.func is ncu.maximum)
@@ -1162,14 +1200,13 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, C()), 0)
 
     def test_ufunc_override(self):
+
         class A(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
                 return self, func, method, pos, inputs, kwargs
 
         a = A()
-
         b = np.matrix([1])
-        c = np.array([1])
         res0 = np.multiply(a, b)
         res1 = np.dot(a, b)
 
@@ -1220,8 +1257,6 @@ class TestSpecialMethods(TestCase):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
                 return NotImplemented
 
-
-
         a = A()
         a_sub = ASub()
         b = B()
@@ -1229,7 +1264,7 @@ class TestSpecialMethods(TestCase):
         c_sub = CSub()
 
         # Standard
-        res =  np.multiply(a, a_sub)
+        res = np.multiply(a, a_sub)
         assert_equal(res, "ASub")
         res = np.multiply(a_sub, b)
         assert_equal(res, "ASub")
@@ -1281,6 +1316,7 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
     def test_ufunc_override_methods(self):
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return self, ufunc, method, pos, inputs, kwargs
@@ -1384,10 +1420,10 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return kwargs
-
 
         class B(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1418,9 +1454,11 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][1], 'out1')
 
     def test_ufunc_override_exception(self):
+
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):
                 raise ValueError("oops")
+
         a = A()
         for func in [np.divide, np.dot]:
             assert_raises(ValueError, func, a, a)
@@ -1445,23 +1483,23 @@ class TestComplexFunctions(object):
 
     def test_it(self):
         for f in self.funcs:
-            if f is np.arccosh :
+            if f is np.arccosh:
                 x = 1.5
-            else :
+            else:
                 x = .5
             fr = f(x)
             fz = f(np.complex(x))
-            assert_almost_equal(fz.real, fr, err_msg='real part %s'%f)
-            assert_almost_equal(fz.imag, 0., err_msg='imag part %s'%f)
+            assert_almost_equal(fz.real, fr, err_msg='real part %s' % f)
+            assert_almost_equal(fz.imag, 0., err_msg='imag part %s' % f)
 
-    def test_precisions_consistent(self) :
+    def test_precisions_consistent(self):
         z = 1 + 1j
-        for f in self.funcs :
+        for f in self.funcs:
             fcf = f(np.csingle(z))
-            fcd  = f(np.cdouble(z))
+            fcd = f(np.cdouble(z))
             fcl = f(np.clongdouble(z))
-            assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s'%f)
-            assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s'%f)
+            assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
+            assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
@@ -1473,7 +1511,7 @@ class TestComplexFunctions(object):
 
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True
         yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True
-        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True
 
         yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
@@ -1484,7 +1522,7 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1
         yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1
 
-        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1
+        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1
         yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1
         yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1
 
@@ -1498,7 +1536,7 @@ class TestComplexFunctions(object):
 
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
         yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
-        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1 ], -1, 1, True, np.complex64
+        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True, np.complex64
 
         yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True, np.complex64
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True, np.complex64
@@ -1509,12 +1547,12 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64
         yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1, False, np.complex64
 
-        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1 ], 1, 1, False, np.complex64
+        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1, False, np.complex64
         yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1, False, np.complex64
         yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1, False, np.complex64
 
     def test_against_cmath(self):
-        import cmath, sys
+        import cmath
 
         points = [-1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
@@ -1530,7 +1568,7 @@ class TestComplexFunctions(object):
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
-                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname, p, a, b))
+                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
     def check_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
@@ -1631,7 +1669,7 @@ class TestAttributes(TestCase):
         add = ncu.add
         assert_equal(add.__name__, 'add')
         assert_(add.__doc__.startswith('add(x1, x2[, out])\n\n'))
-        self.assertTrue(add.ntypes >= 18) # don't fail if types added
+        self.assertTrue(add.ntypes >= 18)  # don't fail if types added
         self.assertTrue('ii->i' in add.types)
         assert_equal(add.nin, 2)
         assert_equal(add.nout, 1)
@@ -1639,12 +1677,15 @@ class TestAttributes(TestCase):
 
 
 class TestSubclass(TestCase):
+
     def test_subclass_op(self):
+
         class simple(np.ndarray):
             def __new__(subtype, shape):
                 self = np.ndarray.__new__(subtype, shape, dtype=object)
                 self.fill(0)
                 return self
+
         a = simple((3, 4))
         assert_equal(a+a, a)
 
@@ -1680,7 +1721,7 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
         atol = np.float32(1e-2)
     else:
         scale = np.finfo(dtype).eps * 1e3
-        atol  = 1e-4
+        atol = 1e-4
 
     y0 = f(x0)
     yp = f(x0 + dx*scale*np.absolute(x0)/np.absolute(dx))
@@ -1701,7 +1742,6 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
             ym = f(x)
             assert_(np.all(np.absolute(y0[jr].real - ym.real*re_sign) < atol), (y0[jr], ym))
             assert_(np.all(np.absolute(y0[jr].imag - ym.imag*im_sign) < atol), (y0[jr], ym))
-
 
         if np.any(ji):
             x = x0[ji]
@@ -1791,9 +1831,9 @@ def test_spacing_gfortran():
             6.10351563E-05,
             9.76562500E-04]
 
-    for dt, dec in zip([np.float32, np.float64], (10, 20)):
+    for dt, dec_ in zip([np.float32, np.float64], (10, 20)):
         x = np.array([1e-5, 1, 1000, 10500], dtype=dt)
-        assert_array_almost_equal(np.spacing(x), ref[dt], decimal=dec)
+        assert_array_almost_equal(np.spacing(x), ref[dt], decimal=dec_)
 
 def test_nextafter_vs_spacing():
     # XXX: spacing does not handle long double yet
@@ -1830,7 +1870,7 @@ def test_reduceat():
 
     # This is when the error occurs.
     # test no buffer
-    res = np.setbufsize(32)
+    np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
     np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
