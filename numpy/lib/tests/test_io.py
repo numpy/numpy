@@ -13,15 +13,17 @@ from datetime import datetime
 
 import numpy as np
 import numpy.ma as ma
-from numpy.lib._iotools import (ConverterError, ConverterLockError,
-                                ConversionWarning)
+from numpy.lib._iotools import (
+    ConverterError, ConverterLockError, ConversionWarning
+    )
 from numpy.compat import asbytes, bytes, unicode
 from nose import SkipTest
-from numpy.ma.testutils import (
-    TestCase, assert_equal, assert_array_equal, assert_allclose,
-    assert_raises, assert_raises_regex, run_module_suite
-)
-from numpy.testing import assert_warns, assert_, build_err_msg
+from numpy.ma.testutils import assert_equal, assert_almost_equal
+from numpy.testing import (
+    TestCase, run_module_suite, assert_warns, assert_, build_err_msg,
+    assert_raises_regex, assert_raises, assert_allclose,
+    assert_array_equal,
+    )
 from numpy.testing.utils import tempdir
 
 

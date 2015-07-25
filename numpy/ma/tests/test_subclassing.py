@@ -8,15 +8,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3473 $"
-__date__ = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
-
 import numpy as np
-from numpy.testing import *
-from numpy.ma.testutils import *
-from numpy.ma.core import *
+from numpy.testing import TestCase, run_module_suite, assert_raises
+from numpy.ma.testutils import assert_equal
+from numpy.ma.core import (
+    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
+    divide, asarray, asanyarray, nomask
+    )
+# from numpy.ma.core import (
 
 
 class SubArray(np.ndarray):

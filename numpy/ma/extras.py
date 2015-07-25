@@ -10,39 +10,27 @@ A collection of utilities for `numpy.ma`.
 """
 from __future__ import division, absolute_import, print_function
 
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3473 $"
-__date__ = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
-
-__all__ = ['apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
-           'atleast_3d', 'average',
-           'clump_masked', 'clump_unmasked', 'column_stack', 'compress_cols',
-           'compress_nd', 'compress_rowcols', 'compress_rows', 'count_masked',
-           'corrcoef', 'cov',
-           'diagflat', 'dot', 'dstack',
-           'ediff1d',
-           'flatnotmasked_contiguous', 'flatnotmasked_edges',
-           'hsplit', 'hstack',
-           'in1d', 'intersect1d',
-           'mask_cols', 'mask_rowcols', 'mask_rows', 'masked_all',
-           'masked_all_like', 'median', 'mr_',
-           'notmasked_contiguous', 'notmasked_edges',
-           'polyfit',
-           'row_stack',
-           'setdiff1d', 'setxor1d',
-           'unique', 'union1d',
-           'vander', 'vstack',
-           ]
+__all__ = [
+    'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
+    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked',
+    'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
+    'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
+    'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
+    'hsplit', 'hstack', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
+    'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
+    'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
+    'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
+    ]
 
 import itertools
 import warnings
 
 from . import core as ma
-from .core import MaskedArray, MAError, add, array, asarray, concatenate, count, \
-    filled, getmask, getmaskarray, make_mask_descr, masked, masked_array, \
-    mask_or, nomask, ones, sort, zeros, getdata
-#from core import *
+from .core import (
+    MaskedArray, MAError, add, array, asarray, concatenate, filled,
+    getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
+    nomask, ones, sort, zeros, getdata
+    )
 
 import numpy as np
 from numpy import ndarray, array as nxarray
@@ -50,9 +38,11 @@ import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
 
 
-#...............................................................................
 def issequence(seq):
-    """Is seq a sequence (ndarray, list or tuple)?"""
+    """
+    Is seq a sequence (ndarray, list or tuple)?
+
+    """
     if isinstance(seq, (ndarray, tuple, list)):
         return True
     return False
@@ -268,7 +258,6 @@ class _fromnxfunction:
             return '\n'.join((sig, doc, locdoc))
         return
 
-
     def __call__(self, *args, **params):
         func = getattr(np, self.__name__)
         if len(args) == 1:
@@ -350,9 +339,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             len(res)
         except TypeError:
             asscalar = True
-    # Note: we shouldn't set the dtype of the output from the first result...
-    #...so we force the type to object, and build a list of dtypes
-    #...we'll just take the largest, to avoid some downcasting
+    # Note: we shouldn't set the dtype of the output from the first result
+    # so we force the type to object, and build a list of dtypes.  We'll
+    # just take the largest, to avoid some downcasting
     dtypes = []
     if asscalar:
         dtypes.append(np.asarray(res).dtype)
@@ -420,7 +409,8 @@ def apply_over_axes(func, a, axes):
     if array(axes).ndim == 0:
         axes = (axes,)
     for axis in axes:
-        if axis < 0: axis = N + axis
+        if axis < 0:
+            axis = N + axis
         args = (val, axis)
         res = func(*args)
         if res.ndim == val.ndim:
@@ -557,10 +547,9 @@ def average(a, axis=None, weights=None, returned=False):
                     d = add.reduce(w, axis)
                     del w
                 elif wsh == (ash[axis],):
-                    ni = ash[axis]
                     r = [None] * len(ash)
                     r[axis] = slice(None, None, 1)
-                    w = eval ("w[" + repr(tuple(r)) + "] * ones(ash, float)")
+                    w = eval("w[" + repr(tuple(r)) + "] * ones(ash, float)")
                     n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                     del w, r
@@ -580,11 +569,10 @@ def average(a, axis=None, weights=None, returned=False):
                     n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                 elif wsh == (ash[axis],):
-                    ni = ash[axis]
                     r = [None] * len(ash)
                     r[axis] = slice(None, None, 1)
-                    w = eval ("w[" + repr(tuple(r)) + \
-                              "] * masked_array(ones(ash, float), mask)")
+                    w = eval("w[" + repr(tuple(r)) +
+                             "] * masked_array(ones(ash, float), mask)")
                     n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                 else:
@@ -715,7 +703,6 @@ def median(a, axis=None, out=None, overwrite_input=False):
     return s
 
 
-#..............................................................................
 def compress_nd(x, axis=None):
     """Supress slices from multiple dimensions which contain masked values.
 
@@ -1284,11 +1271,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
 
-#####--------------------------------------------------------------------------
-#---- --- Covariance ---
-#####--------------------------------------------------------------------------
-
-
+###############################################################################
+#                                Covariance                                   #
+###############################################################################
 
 
 def _covhelper(x, y=None, rowvar=True, allow_masked=True):
@@ -1301,7 +1286,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
     xmask = ma.getmaskarray(x)
     # Quick exit if we can't process masked data
     if not allow_masked and xmask.any():
-        raise ValueError("Cannot process masked data...")
+        raise ValueError("Cannot process masked data.")
     #
     if x.shape[0] == 1:
         rowvar = True
@@ -1319,7 +1304,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         y = array(y, copy=False, ndmin=2, dtype=float)
         ymask = ma.getmaskarray(y)
         if not allow_masked and ymask.any():
-            raise ValueError("Cannot process masked data...")
+            raise ValueError("Cannot process masked data.")
         if xmask.any() or ymask.any():
             if y.shape == x.shape:
                 # Define some common mask
@@ -1912,26 +1897,29 @@ def clump_masked(a):
     return slices
 
 
+###############################################################################
+#                              Polynomial fit                                 #
+###############################################################################
 
-#####--------------------------------------------------------------------------
-#---- Polynomial fit ---
-#####--------------------------------------------------------------------------
 
 def vander(x, n=None):
     """
     Masked values in the input array result in rows of zeros.
+
     """
     _vander = np.vander(x, n)
     m = getmask(x)
     if m is not nomask:
         _vander[m] = 0
     return _vander
+
 vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Any masked values in x is propagated in y, and vice-versa.
+
     """
     x = asarray(x)
     y = asarray(y)
@@ -1950,7 +1938,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         w = asarray(w)
         if w.ndim != 1:
             raise TypeError("expected a 1-d array for weights")
-        if w.shape[0] != y.shape[0] :
+        if w.shape[0] != y.shape[0]:
             raise TypeError("expected w and y to have the same length")
         m = mask_or(m, getmask(w))
 
@@ -1963,5 +1951,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x, y, deg, rcond, full, w, cov)
 
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)
-
-################################################################################
