@@ -429,7 +429,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
 #endif
     /* Fill in the rest of the space with 0 */
     if (PyArray_DESCR(ap)->elsize > datalen) {
-        memset(ov + datalen, 0, (PyArray_DESCR(ap)->elsize - datalen));
+        memset((char*)ov + datalen, 0, (PyArray_DESCR(ap)->elsize - datalen));
     }
     if (!PyArray_ISNOTSWAPPED(ap)) {
         byte_swap_vector(ov, PyArray_DESCR(ap)->elsize >> 2, 4);
