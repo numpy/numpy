@@ -318,7 +318,6 @@ def test_as_strided():
     assert_equal(a.dtype, a_view.dtype)
 
 
-
 class VerySimpleSubClass(np.ndarray):
     def __new__(cls, *args, **kwargs):
         kwargs['subok'] = True
