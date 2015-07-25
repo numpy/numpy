@@ -49,6 +49,7 @@ def get_complex_dtype(dtype):
     return {single: csingle, double: cdouble,
             csingle: csingle, cdouble: cdouble}[dtype]
 
+
 def get_rtol(dtype):
     # Choose a safe rtol
     if dtype in (single, csingle):
@@ -56,7 +57,9 @@ def get_rtol(dtype):
     else:
         return 1e-11
 
+
 class LinalgCase(object):
+
     def __init__(self, name, a, b, exception_cls=None):
         assert isinstance(name, str)
         self.name = name
@@ -91,17 +94,17 @@ SQUARE_CASES = [
                array([[1., 2.], [3., 4.]], dtype=double),
                array([[2., 1., 4.], [3., 4., 6.]], dtype=double)),
     LinalgCase("csingle",
-               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=csingle),
-               array([2.+1j, 1.+2j], dtype=csingle)),
+               array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=csingle),
+               array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("cdouble",
-               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble),
-               array([2.+1j, 1.+2j], dtype=cdouble)),
+               array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
+               array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_2",
-               array([[1.+2j, 2+3j], [3+4j, 4+5j]], dtype=cdouble),
-               array([[2.+1j, 1.+2j, 1+3j], [1-2j, 1-3j, 1-6j]], dtype=cdouble)),
+               array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
+               array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
     LinalgCase("empty",
-               atleast_2d(array([], dtype = double)),
-               atleast_2d(array([], dtype = double)),
+               atleast_2d(array([], dtype=double)),
+               atleast_2d(array([], dtype=double)),
                linalg.LinAlgError),
     LinalgCase("8x8",
                np.random.rand(8, 8),
@@ -134,23 +137,29 @@ NONSQUARE_CASES = [
                array([[1., 2.], [3., 4.], [5., 6.]], dtype=double),
                array([2., 1., 3.], dtype=double)),
     LinalgCase("csingle_nsq_1",
-               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=csingle),
-               array([2.+1j, 1.+2j], dtype=csingle)),
+               array(
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=csingle),
+               array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
-               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=csingle),
-               array([2.+1j, 1.+2j, 3.-3j], dtype=csingle)),
+               array(
+                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=csingle),
+               array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
-               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble),
-               array([2.+1j, 1.+2j], dtype=cdouble)),
+               array(
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+               array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
-               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble),
-               array([2.+1j, 1.+2j, 3.-3j], dtype=cdouble)),
+               array(
+                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+               array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
-               array([[1.+1j, 2.+2j, 3.-3j], [3.-5j, 4.+9j, 6.+2j]], dtype=cdouble),
-               array([[2.+1j, 1.+2j], [1-1j, 2-2j]], dtype=cdouble)),
+               array(
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2_2",
-               array([[1.+1j, 2.+2j], [3.-3j, 4.-9j], [5.-4j, 6.+8j]], dtype=cdouble),
-               array([[2.+1j, 1.+2j], [1-1j, 2-2j], [1-1j, 2-2j]], dtype=cdouble)),
+               array(
+                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(11)),
@@ -170,13 +179,13 @@ HERMITIAN_CASES = [
                array([[1., 2.], [2., 1.]], dtype=double),
                None),
     LinalgCase("hcsingle",
-               array([[1., 2+3j], [2-3j, 1]], dtype=csingle),
+               array([[1., 2 + 3j], [2 - 3j, 1]], dtype=csingle),
                None),
     LinalgCase("hcdouble",
-               array([[1., 2+3j], [2-3j, 1]], dtype=cdouble),
+               array([[1., 2 + 3j], [2 - 3j, 1]], dtype=cdouble),
                None),
     LinalgCase("hempty",
-               atleast_2d(array([], dtype = double)),
+               atleast_2d(array([], dtype=double)),
                None,
                linalg.LinAlgError),
     LinalgCase("hnonarray",
@@ -209,20 +218,20 @@ for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
         if not isinstance(case.a, np.ndarray):
             continue
 
-        a = np.array([case.a, 2*case.a, 3*case.a])
+        a = np.array([case.a, 2 * case.a, 3 * case.a])
         if case.b is None:
             b = None
         else:
-            b = np.array([case.b, 7*case.b, 6*case.b])
+            b = np.array([case.b, 7 * case.b, 6 * case.b])
         new_case = LinalgCase(case.name + "_tile3", a, b,
                               case.exception_cls)
         tgt.append(new_case)
 
-        a = np.array([case.a]*2*3).reshape((3, 2) + case.a.shape)
+        a = np.array([case.a] * 2 * 3).reshape((3, 2) + case.a.shape)
         if case.b is None:
             b = None
         else:
-            b = np.array([case.b]*2*3).reshape((3, 2) + case.b.shape)
+            b = np.array([case.b] * 2 * 3).reshape((3, 2) + case.b.shape)
         new_case = LinalgCase(case.name + "_tile213", a, b,
                               case.exception_cls)
         tgt.append(new_case)
@@ -230,6 +239,7 @@ for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
 #
 # Generate stride combination variations of the above
 #
+
 
 def _stride_comb_iter(x):
     """
@@ -240,7 +250,7 @@ def _stride_comb_iter(x):
         yield x, "nop"
         return
 
-    stride_set = [(1,)]*x.ndim
+    stride_set = [(1,)] * x.ndim
     stride_set[-1] = (1, 3, -4)
     if x.ndim > 1:
         stride_set[-2] = (1, 3, -4)
@@ -248,7 +258,7 @@ def _stride_comb_iter(x):
         stride_set[-3] = (1, -4)
 
     for repeats in itertools.product(*tuple(stride_set)):
-        new_shape = [abs(a*b) for a, b in zip(x.shape, repeats)]
+        new_shape = [abs(a * b) for a, b in zip(x.shape, repeats)]
         slices = tuple([slice(None, None, repeat) for repeat in repeats])
 
         # new array with different strides, but same data
@@ -308,34 +318,41 @@ def _check_cases(func, cases):
             msg += traceback.format_exc()
             raise AssertionError(msg)
 
+
 class LinalgTestCase(object):
+
     def test_sq_cases(self):
         _check_cases(self.do, SQUARE_CASES)
 
 
 class LinalgNonsquareTestCase(object):
+
     def test_sq_cases(self):
         _check_cases(self.do, NONSQUARE_CASES)
 
 
 class LinalgGeneralizedTestCase(object):
+
     @dec.slow
     def test_generalized_sq_cases(self):
         _check_cases(self.do, GENERALIZED_SQUARE_CASES)
 
 
 class LinalgGeneralizedNonsquareTestCase(object):
+
     @dec.slow
     def test_generalized_nonsq_cases(self):
         _check_cases(self.do, GENERALIZED_NONSQUARE_CASES)
 
 
 class HermitianTestCase(object):
+
     def test_herm_cases(self):
         _check_cases(self.do, HERMITIAN_CASES)
 
 
 class HermitianGeneralizedTestCase(object):
+
     @dec.slow
     def test_generalized_herm_cases(self):
         _check_cases(self.do, GENERALIZED_HERMITIAN_CASES)
@@ -372,6 +389,7 @@ def identity_like_generalized(a):
 
 
 class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
@@ -391,17 +409,17 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
         a = np.arange(8).reshape(2, 2, 2)
         b = np.arange(6).reshape(1, 2, 3).view(ArraySubclass)
 
-        expected = linalg.solve(a, b)[:, 0:0,:]
-        result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0,:])
+        expected = linalg.solve(a, b)[:, 0:0, :]
+        result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0, :])
         assert_array_equal(result, expected)
         assert_(isinstance(result, ArraySubclass))
 
         # Test errors for non-square and only b's dimension being 0
         assert_raises(linalg.LinAlgError, linalg.solve, a[:, 0:0, 0:1], b)
-        assert_raises(ValueError, linalg.solve, a, b[:, 0:0,:])
+        assert_raises(ValueError, linalg.solve, a, b[:, 0:0, :])
 
         # Test broadcasting error
-        b = np.arange(6).reshape(1, 3, 2) # broadcasting error
+        b = np.arange(6).reshape(1, 3, 2)  # broadcasting error
         assert_raises(ValueError, linalg.solve, a, b)
         assert_raises(ValueError, linalg.solve, a[0:0], b[0:0])
 
@@ -424,19 +442,20 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
         a = np.arange(4).reshape(1, 2, 2)
         b = np.arange(6).reshape(3, 2, 1).view(ArraySubclass)
 
-        expected = linalg.solve(a, b)[:,:, 0:0]
-        result = linalg.solve(a, b[:,:, 0:0])
+        expected = linalg.solve(a, b)[:, :, 0:0]
+        result = linalg.solve(a, b[:, :, 0:0])
         assert_array_equal(result, expected)
         assert_(isinstance(result, ArraySubclass))
 
         # test both zero.
         expected = linalg.solve(a, b)[:, 0:0, 0:0]
-        result = linalg.solve(a[:, 0:0, 0:0], b[:,0:0, 0:0])
+        result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0, 0:0])
         assert_array_equal(result, expected)
         assert_(isinstance(result, ArraySubclass))
 
 
 class TestInv(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
@@ -467,6 +486,7 @@ class TestInv(LinalgTestCase, LinalgGeneralizedTestCase):
 
 
 class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
@@ -483,10 +503,11 @@ class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase):
 
 
 class TestEig(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
         assert_allclose(dot_generalized(a, evectors),
-                        np.asarray(evectors) * np.asarray(evalues)[...,None,:],
+                        np.asarray(evectors) * np.asarray(evalues)[..., None, :],
                         rtol=get_rtol(evalues.dtype))
         assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
@@ -507,9 +528,10 @@ class TestEig(LinalgTestCase, LinalgGeneralizedTestCase):
 
 
 class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
-        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[...,None,:],
+        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
         assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
@@ -530,26 +552,30 @@ class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase):
 
 
 class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
-        c = asarray(a) # a might be a matrix
+        c = asarray(a)  # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
+        old_assert_almost_equal(s[0] / s[-1], linalg.cond(a), decimal=5)
 
 
 class TestCond2(LinalgTestCase):
+
     def do(self, a, b):
-        c = asarray(a) # a might be a matrix
+        c = asarray(a)  # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(s[0]/s[-1], linalg.cond(a, 2), decimal=5)
+        old_assert_almost_equal(s[0] / s[-1], linalg.cond(a, 2), decimal=5)
 
 
 class TestCondInf(object):
+
     def test(self):
         A = array([[1., 0, 0], [0, -2., 0], [0, 0, 3.]])
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
 class TestPinv(LinalgTestCase):
+
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
@@ -557,6 +583,7 @@ class TestPinv(LinalgTestCase):
 
 
 class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
+
     def do(self, a, b):
         d = linalg.det(a)
         (s, ld) = linalg.slogdet(a)
@@ -599,6 +626,7 @@ class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
 
 
 class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase):
+
     def do(self, a, b):
         arr = np.asarray(a)
         m, n = arr.shape
@@ -611,7 +639,8 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase):
             assert_equal(rank, n)
         assert_almost_equal(sv, sv.__array_wrap__(s))
         if rank == n and m > n:
-            expect_resids = (np.asarray(abs(np.dot(a, x) - b))**2).sum(axis=0)
+            expect_resids = (
+                np.asarray(abs(np.dot(a, x) - b)) ** 2).sum(axis=0)
             expect_resids = np.asarray(expect_resids)
             if len(np.asarray(b).shape) == 1:
                 expect_resids.shape = (1,)
@@ -631,15 +660,17 @@ class TestMatrixPower(object):
     arbfloat = array([[0.1, 3.2], [1.2, 0.7]])
 
     large = identity(10)
-    t = large[1,:].copy()
-    large[1,:] = large[0,:]
-    large[0,:] = t
+    t = large[1, :].copy()
+    large[1, :] = large[0,:]
+    large[0, :] = t
 
     def test_large_power(self):
-        assert_equal(matrix_power(self.R90, 2**100+2**10+2**5+1), self.R90)
+        assert_equal(
+            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 2 ** 5 + 1), self.R90)
 
     def test_large_power_trailing_zero(self):
-        assert_equal(matrix_power(self.R90, 2**100+2**10+2**5), identity(2))
+        assert_equal(
+            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 2 ** 5), identity(2))
 
     def testip_zero(self):
         def tz(M):
@@ -679,12 +710,14 @@ class TestMatrixPower(object):
 
 
 class TestBoolPower(object):
+
     def test_square(self):
         A = array([[True, False], [True, True]])
         assert_equal(matrix_power(A, 2), A)
 
 
 class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
+
     def do(self, a, b):
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
@@ -711,8 +744,8 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_raises(ValueError, np.linalg.eigvalsh, x, "upper")
 
     def test_UPLO(self):
-        Klo = np.array([[0, 0],[1, 0]], dtype=np.double)
-        Kup = np.array([[0, 1],[0, 0]], dtype=np.double)
+        Klo = np.array([[0, 0], [1, 0]], dtype=np.double)
+        Kup = np.array([[0, 1], [0, 0]], dtype=np.double)
         tgt = np.array([-1, 1], dtype=np.double)
         rtol = get_rtol(np.double)
 
@@ -734,6 +767,7 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
+
     def do(self, a, b):
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
@@ -743,14 +777,14 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_almost_equal(ev, evalues)
 
         assert_allclose(dot_generalized(a, evc),
-                        np.asarray(ev)[...,None,:] * np.asarray(evc),
+                        np.asarray(ev)[..., None, :] * np.asarray(evc),
                         rtol=get_rtol(ev.dtype))
 
         ev2, evc2 = linalg.eigh(a, 'U')
         assert_almost_equal(ev2, evalues)
 
         assert_allclose(dot_generalized(a, evc2),
-                        np.asarray(ev2)[...,None,:] * np.asarray(evc2),
+                        np.asarray(ev2)[..., None, :] * np.asarray(evc2),
                         rtol=get_rtol(ev.dtype), err_msg=repr(a))
 
     def test_types(self):
@@ -769,8 +803,8 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_raises(ValueError, np.linalg.eigh, x, "upper")
 
     def test_UPLO(self):
-        Klo = np.array([[0, 0],[1, 0]], dtype=np.double)
-        Kup = np.array([[0, 1],[0, 0]], dtype=np.double)
+        Klo = np.array([[0, 0], [1, 0]], dtype=np.double)
+        Kup = np.array([[0, 1], [0, 0]], dtype=np.double)
         tgt = np.array([-1, 1], dtype=np.double)
         rtol = get_rtol(np.double)
 
@@ -807,7 +841,7 @@ class _TestNorm(object):
         c = [-1, 2, -3, 4]
 
         def _test(v):
-            np.testing.assert_almost_equal(norm(v), 30**0.5,
+            np.testing.assert_almost_equal(norm(v), 30 ** 0.5,
                                            decimal=self.dec)
             np.testing.assert_almost_equal(norm(v, inf), 4.0,
                                            decimal=self.dec)
@@ -815,11 +849,11 @@ class _TestNorm(object):
                                            decimal=self.dec)
             np.testing.assert_almost_equal(norm(v, 1), 10.0,
                                            decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v, -1), 12.0/25,
+            np.testing.assert_almost_equal(norm(v, -1), 12.0 / 25,
                                            decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v, 2), 30**0.5,
+            np.testing.assert_almost_equal(norm(v, 2), 30 ** 0.5,
                                            decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v, -2), ((205./144)**-0.5),
+            np.testing.assert_almost_equal(norm(v, -2), ((205. / 144) ** -0.5),
                                            decimal=self.dec)
             np.testing.assert_almost_equal(norm(v, 0), 4,
                                            decimal=self.dec)
@@ -833,8 +867,8 @@ class _TestNorm(object):
 
     def test_matrix_2x2(self):
         A = matrix([[1, 3], [5, 7]], dtype=self.dt)
-        assert_almost_equal(norm(A), 84**0.5)
-        assert_almost_equal(norm(A, 'fro'), 84**0.5)
+        assert_almost_equal(norm(A), 84 ** 0.5)
+        assert_almost_equal(norm(A, 'fro'), 84 ** 0.5)
         assert_almost_equal(norm(A, 'nuc'), 10.0)
         assert_almost_equal(norm(A, inf), 12.0)
         assert_almost_equal(norm(A, -inf), 4.0)
@@ -852,9 +886,10 @@ class _TestNorm(object):
         # happened to have equal nuclear norm and induced 1-norm.
         # The 1/10 scaling factor accommodates the absolute tolerance
         # used in assert_almost_equal.
-        A = (1/10) * np.array([[1, 2, 3], [6, 0, 5], [3, 2, 1]], dtype=self.dt)
-        assert_almost_equal(norm(A), (1/10) * 89**0.5)
-        assert_almost_equal(norm(A, 'fro'), (1/10) * 89**0.5)
+        A = (1 / 10) * \
+            np.array([[1, 2, 3], [6, 0, 5], [3, 2, 1]], dtype=self.dt)
+        assert_almost_equal(norm(A), (1 / 10) * 89 ** 0.5)
+        assert_almost_equal(norm(A, 'fro'), (1 / 10) * 89 ** 0.5)
         assert_almost_equal(norm(A, 'nuc'), 1.3366836911774836)
         assert_almost_equal(norm(A, inf), 1.1)
         assert_almost_equal(norm(A, -inf), 0.6)
@@ -871,7 +906,7 @@ class _TestNorm(object):
         for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
             expected0 = [norm(A[:, k], ord=order) for k in range(A.shape[1])]
             assert_almost_equal(norm(A, ord=order, axis=0), expected0)
-            expected1 = [norm(A[k,:], ord=order) for k in range(A.shape[0])]
+            expected1 = [norm(A[k, :], ord=order) for k in range(A.shape[0])]
             assert_almost_equal(norm(A, ord=order, axis=1), expected1)
 
         # Matrix norms.
@@ -901,7 +936,7 @@ class _TestNorm(object):
                     assert_almost_equal(n, expected)
 
     def test_keepdims(self):
-        A = np.arange(1,25, dtype=self.dt).reshape(2,3,4)
+        A = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
 
         allclose_err = 'order {0}, axis = {1}'
         shape_err = 'Shape mismatch found {0}, expected {1}, order={2}, axis={3}'
@@ -910,8 +945,8 @@ class _TestNorm(object):
         expected = norm(A, ord=None, axis=None)
         found = norm(A, ord=None, axis=None, keepdims=True)
         assert_allclose(np.squeeze(found), expected,
-                        err_msg=allclose_err.format(None,None))
-        expected_shape = (1,1,1)
+                        err_msg=allclose_err.format(None, None))
+        expected_shape = (1, 1, 1)
         assert_(found.shape == expected_shape,
                 shape_err.format(found.shape, expected_shape, None, None))
 
@@ -921,12 +956,12 @@ class _TestNorm(object):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
                 assert_allclose(np.squeeze(found), expected,
-                        err_msg=allclose_err.format(order,k))
+                                err_msg=allclose_err.format(order, k))
                 expected_shape = list(A.shape)
                 expected_shape[k] = 1
                 expected_shape = tuple(expected_shape)
                 assert_(found.shape == expected_shape,
-                    shape_err.format(found.shape, expected_shape, order, k))
+                        shape_err.format(found.shape, expected_shape, order, k))
 
         # Matrix norms.
         for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
@@ -934,13 +969,13 @@ class _TestNorm(object):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
                 assert_allclose(np.squeeze(found), expected,
-                        err_msg=allclose_err.format(order,k))
+                                err_msg=allclose_err.format(order, k))
                 expected_shape = list(A.shape)
                 expected_shape[k[0]] = 1
                 expected_shape[k[1]] = 1
                 expected_shape = tuple(expected_shape)
                 assert_(found.shape == expected_shape,
-                    shape_err.format(found.shape, expected_shape, order, k))
+                        shape_err.format(found.shape, expected_shape, order, k))
 
     def test_bad_args(self):
         # Check that bad arguments raise the appropriate exceptions.
@@ -968,7 +1003,9 @@ class _TestNorm(object):
         assert_raises(ValueError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
+
 class TestNorm_NonSystematic(object):
+
     def test_longdouble_norm(self):
         # Non-regression test: p-norm of longdouble would previously raise
         # UnboundLocalError.
@@ -984,8 +1021,8 @@ class TestNorm_NonSystematic(object):
     def test_complex_high_ord(self):
         # gh-4156
         d = np.empty((2,), dtype=np.clongdouble)
-        d[0] = 6+7j
-        d[1] = -6+7j
+        d[0] = 6 + 7j
+        d[1] = -6 + 7j
         res = 11.615898132184
         old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=10)
         d = d.astype(np.complex128)
@@ -1010,11 +1047,13 @@ class TestNormInt64(_TestNorm):
 
 
 class TestMatrixRank(object):
+
     def test_matrix_rank(self):
         # Full rank matrix
         yield assert_equal, 4, matrix_rank(np.eye(4))
         # rank deficient matrix
-        I=np.eye(4); I[-1, -1] = 0.
+        I = np.eye(4)
+        I[-1, -1] = 0.
         yield assert_equal, matrix_rank(I), 3
         # All zeros - zero rank
         yield assert_equal, matrix_rank(np.zeros((4, 4))), 0
@@ -1094,7 +1133,6 @@ class TestQR(object):
         # very limited in scope. Note that the results are in FORTRAN
         # order, hence the h arrays are transposed.
         a = array([[1, 2], [3, 4], [5, 6]], dtype=np.double)
-        b = a.astype(np.single)
 
         # Test double
         h, tau = linalg.qr(a, mode='raw')
@@ -1162,6 +1200,7 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
+
 def test_xerbla_override():
     # Check that our xerbla has been successfully linked in. If it is not,
     # the default xerbla routine is called, which prints a message to stdout
@@ -1195,7 +1234,7 @@ def test_xerbla_override():
             a = np.array([[1.]])
             np.linalg.lapack_lite.dorgqr(
                 1, 1, 1, a,
-                0, # <- invalid value
+                0,  # <- invalid value
                 a, a, 0, 0)
         except ValueError as e:
             if "DORGQR parameter number 5" in str(e):
@@ -1213,6 +1252,7 @@ def test_xerbla_override():
 
 
 class TestMultiDot(object):
+
     def test_basic_function_with_three_arguments(self):
         # multi_dot with three arguments uses a fast hand coded algorithm to
         # determine the optimal order. Therefore test it separately.
