@@ -9,6 +9,9 @@ import warnings
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
 
+# getargspec and formatargspec were removed in Python 3.6
+from numpy.compat import getargspec, formatargspec
+
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
     'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
@@ -531,7 +534,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
     elif inspect.isfunction(object):
         name = object.__name__
-        arguments = inspect.formatargspec(*inspect.getargspec(object))
+        arguments = formatargspec(*getargspec(object))
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -546,8 +549,8 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         arguments = "()"
         try:
             if hasattr(object, '__init__'):
-                arguments = inspect.formatargspec(
-                        *inspect.getargspec(object.__init__.__func__)
+                arguments = formatargspec(
+                        *getargspec(object.__init__.__func__)
                         )
                 arglist = arguments.split(', ')
                 if len(arglist) > 1:
@@ -589,8 +592,8 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print("Instance of class: ", object.__class__.__name__, file=output)
         print(file=output)
         if hasattr(object, '__call__'):
-            arguments = inspect.formatargspec(
-                    *inspect.getargspec(object.__call__.__func__)
+            arguments = formatargspec(
+                    *getargspec(object.__call__.__func__)
                     )
             arglist = arguments.split(', ')
             if len(arglist) > 1:
@@ -619,8 +622,8 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
     elif inspect.ismethod(object):
         name = object.__name__
-        arguments = inspect.formatargspec(
-                *inspect.getargspec(object.__func__)
+        arguments = formatargspec(
+                *getargspec(object.__func__)
                 )
         arglist = arguments.split(', ')
         if len(arglist) > 1:
