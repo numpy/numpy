@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-from numpy.distutils.misc_util import appendpath, minrelpath, \
-    gpaths, get_shared_lib_extension
 from os.path import join, sep, dirname
+
+from numpy.distutils.misc_util import (
+    appendpath, minrelpath, gpaths, get_shared_lib_extension
+)
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal
+)
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
@@ -53,7 +57,7 @@ class TestGpaths(TestCase):
         ls = gpaths('command/*.py', local_path)
         assert_(join(local_path, 'command', 'build_src.py') in ls, repr(ls))
         f = gpaths('system_info.py', local_path)
-        assert_(join(local_path, 'system_info.py')==f[0], repr(f))
+        assert_(join(local_path, 'system_info.py') == f[0], repr(f))
 
 class TestSharedExtension(TestCase):
 

@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-from numpy.testing import *
+from numpy.testing import TestCase, run_module_suite, assert_equal
 from f2py_f90_ext import foo
 
 class TestFoo(TestCase):

@@ -1,10 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-from numpy import array
 import math
-import util
 import textwrap
+
+from numpy import array
+from numpy.testing import run_module_suite, assert_, assert_equal, dec
+import util
 
 class TestF77Callback(util.F2PyTest):
     code = """
@@ -128,5 +129,4 @@ cf2py  intent(out) a
 
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

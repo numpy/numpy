@@ -1,13 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import math
-
-from numpy.testing import *
-from numpy import array
-
-import util
 import textwrap
+
+from numpy.testing import run_module_suite, assert_, assert_equal, dec
+import util
 
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
@@ -34,8 +31,8 @@ class TestMixed(util.F2PyTest):
         -------
         a : int
         """
-        assert_equal(self.module.bar11.__doc__, textwrap.dedent(expected).lstrip())
+        assert_equal(self.module.bar11.__doc__,
+                     textwrap.dedent(expected).lstrip())
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

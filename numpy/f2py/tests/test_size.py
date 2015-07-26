@@ -1,19 +1,17 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import math
 
-from numpy.testing import *
-from numpy import array
-
+from numpy.testing import run_module_suite, assert_equal, dec
 import util
+
 
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
 
+
 class TestSizeSumExample(util.F2PyTest):
-    sources = [_path('src', 'size', 'foo.f90'),
-               ]
+    sources = [_path('src', 'size', 'foo.f90')]
 
     @dec.slow
     def test_all(self):
@@ -43,5 +41,4 @@ class TestSizeSumExample(util.F2PyTest):
         assert_equal(r, [1, 2, 3, 4, 5, 6], repr(r))
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

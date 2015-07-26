@@ -1,8 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-from numpy.testing import *
 from gen_ext import fib3
+from numpy.testing import TestCase, run_module_suite, assert_array_equal
 
 class TestFib3(TestCase):
     def test_fib(self):
