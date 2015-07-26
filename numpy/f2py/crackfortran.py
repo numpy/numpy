@@ -144,54 +144,62 @@ import sys
 import string
 import fileinput
 import re
-import pprint
 import os
 import copy
 import platform
 
 from . import __version__
-from .auxfuncs import *
+from .auxfuncs import (
+    errmess, hascommon, isdouble, iscomplex, isexternal,isinteger,
+    isintent_aux, isintent_c, isintent_callback, isintent_in,
+    isintent_inout, isintent_inplace,islogical, isoptional,isscalar,
+    isstring, isstringarray, l_or, show
+)
+
 
 f2py_version = __version__.version
 
 # Global flags:
-strictf77=1          # Ignore `!' comments unless line[0]=='!'
-sourcecodeform='fix' # 'fix','free'
-quiet=0              # Be verbose if 0 (Obsolete: not used any more)
-verbose=1            # Be quiet if 0, extra verbose if > 1.
-tabchar=4*' '
-pyffilename=''
-f77modulename=''
-skipemptyends=0      # for old F77 programs without 'program' statement
-ignorecontains=1
-dolowercase=1
-debug=[]
+strictf77 = 1          # Ignore `!' comments unless line[0]=='!'
+sourcecodeform = 'fix' # 'fix','free'
+quiet = 0              # Be verbose if 0 (Obsolete: not used any more)
+verbose = 1            # Be quiet if 0, extra verbose if > 1.
+tabchar = 4*' '
+pyffilename = ''
+f77modulename = ''
+skipemptyends = 0      # for old F77 programs without 'program' statement
+ignorecontains = 1
+dolowercase = 1
+debug = []
 
 # Global variables
-groupcounter=0
-grouplist={groupcounter:[]}
-neededmodule=-1
-expectbegin=1
-skipblocksuntil=-1
-usermodules=[]
-f90modulevars={}
-gotnextfile=1
-filepositiontext=''
-currentfilename=''
-skipfunctions=[]
-skipfuncs=[]
-onlyfuncs=[]
-include_paths=[]
+beginpattern = ''
+currentfilename = ''
+expectbegin = 1
+f90modulevars = {}
+filepositiontext = ''
+gotnextfile = 1
+groupcache = None
+groupcounter = 0
+grouplist = {groupcounter:[]}
+groupname = ''
+include_paths = []
+neededmodule = -1
+onlyfuncs = []
 previous_context = None
+skipblocksuntil = -1
+skipfuncs = []
+skipfunctions = []
+usermodules = []
 
 
 def reset_global_f2py_vars():
-    global groupcounter, grouplist, neededmodule, expectbegin, \
-        skipblocksuntil, usermodules, f90modulevars, gotnextfile, \
-        filepositiontext, currentfilename, skipfunctions, skipfuncs, \
-        onlyfuncs, include_paths, previous_context, \
-        strictf77, sourcecodeform, quiet, verbose, tabchar, pyffilename, \
-        f77modulename, skipemptyends, ignorecontains, dolowercase, debug
+    global groupcounter, grouplist, neededmodule, expectbegin
+    global skipblocksuntil, usermodules, f90modulevars, gotnextfile
+    global filepositiontext, currentfilename, skipfunctions, skipfuncs
+    global onlyfuncs, include_paths, previous_context
+    global strictf77, sourcecodeform, quiet, verbose, tabchar, pyffilename
+    global f77modulename, skipemptyends, ignorecontains, dolowercase, debug
 
     # flags
     strictf77 = 1
@@ -223,15 +231,16 @@ def reset_global_f2py_vars():
     previous_context = None
 
 
-###### Some helper functions
-def show(o,f=0):pprint.pprint(o)
-errmess=sys.stderr.write
 def outmess(line,flag=1):
     global filepositiontext
-    if not verbose: return
+
+    if not verbose:
+        return
     if not quiet:
-        if flag:sys.stdout.write(filepositiontext)
+        if flag:
+            sys.stdout.write(filepositiontext)
         sys.stdout.write(line)
+
 re._MAXCACHE=50
 defaultimplicitrules={}
 for c in "abcdefghopqrstuvwxyz$_": defaultimplicitrules[c]={'typespec':'real'}
@@ -312,8 +321,9 @@ def readfortrancode(ffile,dowithline=show,istop=1):
      2) Call dowithline(line) on every line.
      3) Recursively call itself when statement \"include '<filename>'\" is met.
     """
-    global gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77,\
-           beginpattern, quiet, verbose, dolowercase, include_paths
+    global gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77
+    global beginpattern, quiet, verbose, dolowercase, include_paths
+
     if not istop:
         saveglobals=gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77,\
            beginpattern, quiet, verbose, dolowercase
@@ -552,9 +562,10 @@ def crackline(line,reset=0):
 
     Cracked data is saved in grouplist[0].
     """
-    global beginpattern, groupcounter, groupname, groupcache, grouplist, gotnextfile,\
-           filepositiontext, currentfilename, neededmodule, expectbegin, skipblocksuntil,\
-           skipemptyends, previous_context
+    global beginpattern, groupcounter, groupname, groupcache, grouplist
+    global filepositiontext, currentfilename, neededmodule, expectbegin
+    global skipblocksuntil, skipemptyends, previous_context, gotnextfile
+
     if ';' in line and not (f2pyenhancementspattern[0].match(line) or
                             multilinepattern[0].match(line)):
         for l in line.split(';'):
@@ -764,9 +775,10 @@ def _resolvenameargspattern(line):
     return None, [], None, None
 
 def analyzeline(m, case, line):
-    global groupcounter, groupname, groupcache, grouplist, filepositiontext,\
-           currentfilename, f77modulename, neededinterface, neededmodule, expectbegin,\
-           gotnextfile, previous_context
+    global groupcounter, groupname, groupcache, grouplist, filepositiontext
+    global currentfilename, f77modulename, neededinterface, neededmodule
+    global expectbegin, gotnextfile, previous_context
+
     block=m.group('this')
     if case != 'multiline':
         previous_context = None
@@ -1267,24 +1279,33 @@ def removespaces(expr):
         expr2=expr2+expr[i]
     expr2=expr2+expr[-1]
     return expr2
+
 def markinnerspaces(line):
-    l='';f=0
-    cc='\''
-    cc1='"'
-    cb=''
+    l = '';
+    f = 0
+    cc = '\''
+    cb = ''
     for c in line:
-        if cb=='\\' and c in ['\\', '\'', '"']:
-            l=l+c
-            cb=c
+        if cb == '\\' and c in ['\\', '\'', '"']:
+            l = l + c
+            cb = c
             continue
-        if f==0 and c in ['\'', '"']: cc=c; cc1={'\'':'"','"':'\''}[c]
-        if c==cc:f=f+1
-        elif c==cc:f=f-1
-        elif c==' ' and f==1: l=l+'@_@'; continue
-        l=l+c;cb=c
+        if f == 0 and c in ['\'', '"']:
+            cc = c
+        if c == cc:
+            f = f + 1
+        elif c == cc:
+            f = f - 1
+        elif c==' ' and f == 1:
+            l = l + '@_@'
+            continue
+        l = l + c
+        cb = c
     return l
+
 def updatevars(typespec, selector, attrspec, entitydecl):
     global groupcache, groupcounter
+
     last_name = None
     kindselect, charselect, typename=cracktypespec(typespec, selector)
     if attrspec:
@@ -1513,6 +1534,7 @@ def getblockname(block,unknown='unknown'):
 
 def setmesstext(block):
     global filepositiontext
+
     try:
         filepositiontext='In: %s:%s\n'%(block['from'], block['name'])
     except:
@@ -1528,6 +1550,7 @@ def get_usedict(block):
 
 def get_useparameters(block, param_map=None):
     global f90modulevars
+
     if param_map is None:
         param_map = {}
     usedict = get_usedict(block)
@@ -1555,6 +1578,7 @@ def get_useparameters(block, param_map=None):
 
 def postcrack2(block,tab='',param_map=None):
     global f90modulevars
+
     if not f90modulevars:
         return block
     if isinstance(block, list):
@@ -1594,6 +1618,7 @@ def postcrack(block,args=None,tab=''):
           determine expression types if in argument list
     """
     global usermodules, onlyfunctions
+
     if isinstance(block, list):
         gret=[]
         uret=[]
@@ -1611,14 +1636,13 @@ def postcrack(block,args=None,tab=''):
                         str(block))
     if 'name' in block and not block['name']=='unknown_interface':
         outmess('%sBlock: %s\n'%(tab, block['name']), 0)
-    blocktype=block['block']
-    block=analyzeargs(block)
-    block=analyzecommon(block)
-    block['vars']=analyzevars(block)
-    block['sortvars']=sortvarnames(block['vars'])
+    block = analyzeargs(block)
+    block = analyzecommon(block)
+    block['vars'] = analyzevars(block)
+    block['sortvars'] = sortvarnames(block['vars'])
     if 'args' in block and block['args']:
-        args=block['args']
-    block['body']=analyzebody(block, args, tab=tab)
+        args = block['args']
+    block['body'] = analyzebody(block, args, tab=tab)
 
     userisdefined=[]
 ##     fromuser = []
@@ -1751,6 +1775,7 @@ def analyzecommon(block):
 
 def analyzebody(block,args,tab=''):
     global usermodules, skipfuncs, onlyfuncs, f90modulevars
+
     setmesstext(block)
     body=[]
     for b in block['body']:
@@ -2069,7 +2094,8 @@ def get_parameters(vars, global_params={}):
                             v[m.start():m.end()].lower().replace('d', 'e'))
                 v = ''.join(tt)
             if iscomplex(vars[n]):
-                if v[0]=='(' and v[-1]==')':
+                if v[0] == '(' and v[-1] == ')':
+                    # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
             try:
                 params[n] = eval(v, g_params, params)
@@ -2109,6 +2135,7 @@ def _eval_scalar(value, params):
 
 def analyzevars(block):
     global f90modulevars
+
     setmesstext(block)
     implicitrules, attrrules=buildimplicitrules(block)
     vars=copy.copy(block['vars'])
@@ -2547,6 +2574,7 @@ def determineexprtype(expr,vars,rules={}):
 ######
 def crack2fortrangen(block,tab='\n', as_interface=False):
     global skipfuncs, onlyfuncs
+
     setmesstext(block)
     ret=''
     if isinstance(block, list):
@@ -2561,8 +2589,9 @@ def crack2fortrangen(block,tab='\n', as_interface=False):
     prefix=''
     name=''
     args=''
-    blocktype=block['block']
-    if blocktype=='program': return ''
+    blocktype = block['block']
+    if blocktype == 'program':
+        return ''
     argsl = []
     if 'name' in block:
         name=block['name']
@@ -2579,7 +2608,7 @@ def crack2fortrangen(block,tab='\n', as_interface=False):
         for k in list(block['f2pyenhancements'].keys()):
             f2pyenhancements = '%s%s%s %s'%(f2pyenhancements, tab+tabchar, k, block['f2pyenhancements'][k])
     intent_lst = block.get('intent', [])[:]
-    if blocktype=='function' and 'callback' in intent_lst:
+    if blocktype == 'function' and 'callback' in intent_lst:
         intent_lst.remove('callback')
     if intent_lst:
         f2pyenhancements = '%s%sintent(%s) %s'%\
@@ -2610,7 +2639,7 @@ def crack2fortrangen(block,tab='\n', as_interface=False):
             entry_stmts = '%s%sentry %s(%s)' \
                           % (entry_stmts, tab+tabchar, k, ','.join(i))
         body = body + entry_stmts
-    if blocktype=='block data' and name=='_BLOCK_DATA_':
+    if blocktype == 'block data' and name == '_BLOCK_DATA_':
         name = ''
     ret='%s%s%s %s%s%s %s%s%s%s%s%s%send %s %s'%(tab, prefix, blocktype, name, args, result, mess, f2pyenhancements, use, vars, common, body, tab, blocktype, name)
     return ret
@@ -2777,6 +2806,7 @@ def vars2fortran(block,vars,args,tab='', as_interface=False):
 
 def crackfortran(files):
     global usermodules
+
     outmess('Reading fortran codes...\n', 0)
     readfortrancode(files, crackline)
     outmess('Post-processing...\n', 0)
@@ -2788,6 +2818,7 @@ def crackfortran(files):
 
 def crack2fortran(block):
     global f2py_version
+
     pyf=crack2fortrangen(block)+'\n'
     header="""!    -*- f90 -*-
 ! Note: the context of this file is case sensitive.

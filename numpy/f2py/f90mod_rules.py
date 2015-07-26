@@ -19,14 +19,13 @@ __version__ = "$Revision: 1.27 $"[10:-1]
 
 f2py_version='See `f2py -v`'
 
-import pprint
-import sys
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
-
-from .auxfuncs import *
 import numpy as np
+
+from .auxfuncs import (
+    applyrules, dictappend, hasbody,hasnote, isallocatable, isfunction,
+    isintent_hide, ismodule, isprivate, isroutine,isstringarray, l_or,
+    outmess
+)
 from . import capi_maps
 from . import func2subr
 from .crackfortran import undo_rmbadname, undo_rmbadname1

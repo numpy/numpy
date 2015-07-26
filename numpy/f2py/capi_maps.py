@@ -22,9 +22,26 @@ import copy
 import re
 import os
 import sys
-from .auxfuncs import *
+from .auxfuncs import (
+    debugcapi, dictappend, errmess, gentitle, getcallprotoargument,
+    getcallstatement, getfortranname, getpymethoddef, getrestdoc,
+    getusercode, getusercode1, hasinitvalue, hasnote, hasresultnote,
+    isarray, iscomplex, iscomplexarray, iscomplexfunction, isexternal,
+    isfunction, isintent_aux, isintent_callback, isintent_dict,
+    isintent_hide, isintent_in, isintent_inout, isintent_out, ismodule,
+    isoptional, isrequired, isscalar, isstring, isstringarray,
+    isstringfunction, issubroutine, l_and, l_not, l_or, outmess
+)
+
 from .crackfortran import markoutercomma
 from . import cb_rules
+
+__all__ = [
+    'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',
+    'getarrdocsign', 'getinit', 'sign2map', 'routsign2map', 'modsign2map',
+    'cb_sign2map', 'cb_routsign2map', 'common_sign2map'
+]
+
 
 # Numarray and Numeric users should set this False
 using_newcore = True

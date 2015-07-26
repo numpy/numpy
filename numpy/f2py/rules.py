@@ -57,23 +57,33 @@ __version__ = "$Revision: 1.129 $"[10:-1]
 from . import __version__
 f2py_version = __version__.version
 
-import pprint
-import sys
+import os
 import time
 import copy
 
-from .auxfuncs import *
+from .auxfuncs import (
+    applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
+    hascallstatement, hasexternals, hasinitvalue, hasnote, hasresultnote,
+    isarray, isarrayofstrings, iscomplex, iscomplexarray,
+    iscomplexfunction, iscomplexfunction_warn, isdummyroutine, isexternal,
+    isfunction, isfunction_wrap, isint1array, isintent_aux, isintent_c,
+    isintent_callback, isintent_copy, isintent_hide, isintent_inout,
+    isintent_nothide, isintent_out, isintent_overwrite, islogical,
+    islong_complex, islong_double, islong_doublefunction, islong_long,
+    islong_longfunction, ismoduleroutine, isoptional, isrequired, isscalar,
+    issigned_long_longarray, isstring, isstringarray, isstringfunction,
+    issubroutine, issubroutine_wrap, isthreadsafe, isunsigned,
+    isunsigned_char, isunsigned_chararray, isunsigned_long_long,
+    isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
+    l_and, l_not, l_or, outmess, replace, stripcomma,
+)
+
 from . import capi_maps
-from .capi_maps import *
 from . import cfuncs
 from . import common_rules
 from . import use_rules
 from . import f90mod_rules
 from . import func2subr
-
-errmess = sys.stderr.write
-outmess = sys.stdout.write
-show = pprint.pprint
 
 options={}
 sepdict={}
@@ -1165,7 +1175,7 @@ def buildmodule(m, um):
     outmess('\tBuilding module "%s"...\n'%(m['name']))
     ret = {}
     mod_rules=defmod_rules[:]
-    vrd=modsign2map(m)
+    vrd = capi_maps.modsign2map(m)
     rd=dictappend({'f2py_version':f2py_version}, vrd)
     funcwrappers = []
     funcwrappers2 = [] # F90 codes
@@ -1330,14 +1340,14 @@ def buildapi(rout):
     args, depargs=getargs2(rout)
     capi_maps.depargs=depargs
     var=rout['vars']
-    auxvars = [a for a in var.keys() if isintent_aux(var[a])]
+    # auxvars = [a for a in var.keys() if isintent_aux(var[a])]
 
     if ismoduleroutine(rout):
         outmess('\t\t\tConstructing wrapper function "%s.%s"...\n'%(rout['modulename'], rout['name']))
     else:
         outmess('\t\tConstructing wrapper function "%s"...\n'%(rout['name']))
     # Routine
-    vrd=routsign2map(rout)
+    vrd = capi_maps.routsign2map(rout)
     rd=dictappend({}, vrd)
     for r in rout_rules:
         if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
@@ -1348,7 +1358,7 @@ def buildapi(rout):
     nth, nthk=0, 0
     savevrd={}
     for a in args:
-        vrd=sign2map(a, var[a])
+        vrd=capi_maps.sign2map(a, var[a])
         if isintent_aux(var[a]):
             _rules = aux_rules
         else:

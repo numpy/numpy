@@ -20,17 +20,12 @@ __version__ = "$Revision: 1.19 $"[10:-1]
 from . import __version__
 f2py_version = __version__.version
 
-import pprint
-import sys
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
-
-from .auxfuncs import *
+from .auxfuncs import (
+    hasbody, hascommon, hasnote, isintent_hide, outmess
+)
 from . import capi_maps
 from . import func2subr
 from .crackfortran import rmbadname
-##############
 
 def findcommonblocks(block,top=1):
     ret = []

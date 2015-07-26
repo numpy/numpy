@@ -21,14 +21,11 @@ __version__ = "$Revision: 1.3 $"[10:-1]
 
 f2py_version='See `f2py -v`'
 
-import pprint
-import sys
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
 
-from .auxfuncs import *
-##############
+from .auxfuncs import (
+    applyrules,dictappend, gentitle, hasnote, outmess
+)
+
 
 usemodule_rules={
     'body':"""
@@ -100,10 +97,10 @@ def buildusevar(name, realname, vars, usemodulename):
     vrd['texnamename']=name
     for i in nummap.keys():
         vrd['texnamename']=vrd['texnamename'].replace(repr(i), nummap[i])
-    if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
-    rd=dictappend({}, vrd)
-    var=vars[realname]
+    if hasnote(vars[realname]):
+        vrd['note']=vars[realname]['note']
+    rd = dictappend({}, vrd)
 
     print(name, realname, vars[realname])
-    ret=applyrules(usemodule_rules, rd)
+    ret = applyrules(usemodule_rules, rd)
     return ret

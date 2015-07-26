@@ -17,16 +17,17 @@ from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.16 $"[10:-1]
 
-f2py_version='See `f2py -v`'
+f2py_version = 'See `f2py -v`'
 
-import pprint
 import copy
-import sys
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
 
-from .auxfuncs import *
+from .auxfuncs import (
+    getfortranname, isexternal, isfunction, isfunction_wrap, isintent_in,
+    isintent_out, islogicalfunction,ismoduleroutine, isscalar,
+    issubroutine, issubroutine_wrap, outmess, show
+)
+
+
 def var2fixfortran(vars,a,fa=None,f90mode=None):
     if fa is None:
         fa = a
@@ -108,9 +109,7 @@ def createfuncwrapper(rout,signature=0):
         args = [newname]+rout['args']
 
     l = var2fixfortran(vars, name, newname, f90mode)
-    return_char_star = 0
     if l[:13]=='character*(*)':
-        return_char_star = 1
         if f90mode: l = 'character(len=10)'+l[13:]
         else: l = 'character*10'+l[13:]
         charselect = vars[name]['charselector']

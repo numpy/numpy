@@ -15,18 +15,19 @@ Pearu Peterson
 """
 from __future__ import division, absolute_import, print_function
 
-import pprint
-import sys
-
 from . import __version__
-from .auxfuncs import *
+from .auxfuncs import (
+    applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,
+    iscomplex, iscomplexarray, iscomplexfunction, isfunction, isintent_c,
+    isintent_hide, isintent_in, isintent_inout, isintent_nothide,
+    isintent_out, isoptional, isrequired, isscalar, isstring,
+    isstringfunction, issubroutine, l_and, l_not, l_or, outmess, replace,
+    stripcomma, throw_error
+)
 from . import cfuncs
 
 f2py_version = __version__.version
 
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
 
 
 ################## Rules for callback function ##############

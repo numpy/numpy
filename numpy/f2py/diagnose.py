@@ -7,8 +7,9 @@ import tempfile
 
 def run_command(cmd):
     print('Running %r:' % (cmd))
-    s = os.system(cmd)
+    os.system(cmd)
     print('------')
+
 def run():
     _path = os.getcwd()
     os.chdir(tempfile.gettempdir())
