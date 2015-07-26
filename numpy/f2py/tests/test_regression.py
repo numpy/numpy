@@ -8,8 +8,10 @@ from numpy.testing import dec, assert_raises, assert_equal
 
 import util
 
+
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
+
 
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
