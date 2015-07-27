@@ -1221,6 +1221,13 @@ class TestHistogram(TestCase):
         wa, wb = histogram(values, bins=2, range=[1, 3], weights=weights)
         assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
 
+    def test_no_side_effects(self):
+        # This is a regression test that ensures that values passed to
+        # ``histogram`` are unchanged.
+        values = np.array([1.3, 2.5, 2.3])
+        np.histogram(values, range=[-10, 10], bins=100)
+        assert_array_almost_equal(values, [1.3, 2.5, 2.3])
+
     def test_empty(self):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
