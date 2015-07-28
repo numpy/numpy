@@ -106,6 +106,12 @@ class TestIndexing(object):
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
 
+    def test_void_scalar_empty_tuple(self):
+        s = np.zeros((), dtype='V4')
+        assert_equal(s[()].dtype, s.dtype)
+        assert_equal(s[()], s)
+        assert_equal(type(s[...]), np.ndarray)
+
     def test_same_kind_index_casting(self):
         # Indexes should be cast with same-kind and not safe, even if that
         # is somewhat unsafe. So test various different code paths.
