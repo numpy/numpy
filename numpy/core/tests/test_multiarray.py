@@ -1093,6 +1093,48 @@ class TestStructured(object):
         b = a[0]
         assert_(b.base is a)
 
+    def test_assignment(self):
+        def testassign(arr, v):
+            c = arr.copy()
+            c[0] = v  # assign using setitem
+            c[1:] = v # assign using "dtype_transfer" code paths
+            return c
+
+        dt = np.dtype([('foo', 'i8'), ('bar', 'i8')])
+        arr = np.ones(2, dt)
+        v1 = np.array([(2,3)], dtype=[('foo', 'i8'), ('bar', 'i8')])
+        v2 = np.array([(2,3)], dtype=[('bar', 'i8'), ('foo', 'i8')])
+        v3 = np.array([(2,3)], dtype=[('bar', 'i8'), ('baz', 'i8')])
+        v4 = np.array([(2,)],  dtype=[('bar', 'i8')])
+        v5 = np.array([(2,3)], dtype=[('foo', 'f8'), ('bar', 'f8')])
+        w = arr.view({'names': ['bar'], 'formats': ['i8'], 'offsets': [8]})
+
+        ans = np.array([(2,3),(2,3)], dtype=dt)
+        assert_equal(testassign(arr, v1), ans)
+        assert_equal(testassign(arr, v2), ans)
+        assert_equal(testassign(arr, v3), ans)
+        assert_raises(ValueError, lambda: testassign(arr, v4))
+        assert_equal(testassign(arr, v5), ans)
+        w[:] = 4
+        assert_equal(arr, np.array([(1,4),(1,4)], dtype=dt))
+
+        # test field-reordering, assignment by position, and self-assignment
+        a = np.array([(1,2,3)],
+                     dtype=[('foo', 'i8'), ('bar', 'i8'), ('baz', 'f4')])
+        a[['foo', 'bar']] = a[['bar', 'foo']]
+        assert_equal(a[0].item(), (2,1,3))
+
+        # test that this works even for 'simple_unaligned' structs
+        # (ie, that PyArray_EquivTypes cares about field order too)
+        a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
+        a[['a', 'b']] = a[['b', 'a']]
+        assert_equal(a[0].item(), (2,1))
+
+    def test_structuredscalar_indexing(self):
+        # test gh-7262
+        x = np.empty(shape=1, dtype="(2)3S,(2)3U")
+        assert_equal(x[["f0","f1"]][0], x[0][["f0","f1"]])
+        assert_equal(x[0], x[0][()])
 
 class TestBool(object):
     def test_test_interning(self):

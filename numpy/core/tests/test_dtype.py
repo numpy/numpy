@@ -104,6 +104,15 @@ class TestBuiltin(object):
                          'formats':['i1', 'f4'],
                          'offsets':[0, 2]}, align=True)
 
+    def test_field_order_equality(self):
+        x = np.dtype({'names': ['A', 'B'], 
+                      'formats': ['i4', 'f4'], 
+                      'offsets': [0, 4]})
+        y = np.dtype({'names': ['B', 'A'], 
+                      'formats': ['f4', 'i4'], 
+                      'offsets': [4, 0]})
+        assert_equal(x == y, False)
+
 class TestRecord(object):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
