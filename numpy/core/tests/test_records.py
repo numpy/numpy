@@ -153,11 +153,6 @@ class TestFromrecords(object):
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
 
-        # suppress deprecation warning in 1.12 (remove in 1.13)
-        with assert_warns(FutureWarning):
-            assert_equal(r[['a', 'b']].dtype.type, np.record)
-            assert_equal(type(r[['a', 'b']]), np.recarray)
-
         #and that it preserves subclasses (gh-6949)
         class C(np.recarray):
             pass
@@ -334,15 +329,6 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
-    def test_out_of_order_fields(self):
-        """Ticket #1431."""
-        # this test will be invalid in 1.13
-        # suppress deprecation warning in 1.12 (remove in 1.13)
-        with assert_warns(FutureWarning):
-            x = self.data[['col1', 'col2']]
-            y = self.data[['col2', 'col1']]
-        assert_equal(x[0][0], y[0][1])
-
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
@@ -371,8 +357,7 @@ class TestRecord(object):
 
         # https://github.com/numpy/numpy/issues/3256
         ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
-        with assert_warns(FutureWarning):
-            ra[['x','y']]  # TypeError?
+        ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561
