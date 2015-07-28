@@ -601,6 +601,20 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = Py_TYPE(self);
     }
 
+    if (type != NULL && (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
+        const char *msg =
+            "Numpy has detected that you may be viewing or writing to an array "
+            "returned by selecting multiple fields in a structured array. \n\n"
+            "This code may break in numpy 1.13 because this will return a view "
+            "instead of a copy -- see release notes for details.";
+        /* 2016-09-19, 1.12 */
+        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+            return NULL;
+        }
+        /* Only warn once per array */
+        PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
+    }
+
     flags = PyArray_FLAGS(self);
 
     dtype = PyArray_DESCR(self);

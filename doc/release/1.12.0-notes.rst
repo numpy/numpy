@@ -29,6 +29,33 @@ Future Changes
   other numpy functions such as np.mean. In particular, this means calls which
   returned a scalar may return a 0-d subclass object instead.
 
+Multiple-field manipulation of structured arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In 1.13 the behavior of structured arrays involving multiple fields will change
+in two ways:
+
+First, indexing a structured array with multiple fields (eg,
+``arr[['f1', 'f3']]``) will return a view into the original array in 1.13,
+instead of a copy. Note the returned view will have extra padding bytes
+corresponding to intervening fields in the original array, unlike the copy in
+1.12, which will affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
+
+Second, for numpy versions 1.6 to 1.12 assignment between structured arrays
+occurs "by field name": Fields in the dst array are set to the
+identically-named field in the src or to 0 if the src does not have a field:
+
+    >>> a = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> b = np.ones(2, dtype=[('z', 'i4'), ('y', 'i4'), ('x', 'i4')])
+    >>> b[:] = a
+    >>> b
+    array([(0, 2, 1), (0, 4, 3)],
+          dtype=[('z', '<i4'), ('y', '<i4'), ('x', '<i4')])
+
+In 1.13 assignment will instead occur "by position": The Nth field of the dst
+will be set to the Nth field of the src, regardless of field name. The old
+behavior can be obtained by using indexing to reorder the fields before
+assignment, eg ``b[['x', 'y']] = a[['y', 'x']]``.
+
 
 Compatibility notes
 ===================

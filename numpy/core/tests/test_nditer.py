@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
@@ -8,7 +9,7 @@ from numpy.compat import asbytes, sixu
 from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, dec, HAS_REFCOUNT, suppress_warnings
+    assert_raises, assert_warns, dec, HAS_REFCOUNT, suppress_warnings
     )
 
 
@@ -1740,9 +1741,11 @@ def test_iter_buffered_cast_structured_type():
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
     sdt2 = [('d', 'u2'), ('a', 'O'), ('b', 'f8')]
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
-    i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
-                    casting='unsafe',
-                    op_dtypes=sdt2)
+    # New in 1.12: This behavior changes in 1.13, test for dep warning
+    with assert_warns(FutureWarning):
+        i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
+                        casting='unsafe',
+                        op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     assert_equal([np.array(x_) for x_ in i],
                  [np.array((3, 1, 2), dtype=sdt2),
@@ -1752,9 +1755,11 @@ def test_iter_buffered_cast_structured_type():
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
     sdt2 = [('b', 'O'), ('a', 'f8')]
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
-    i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                    casting='unsafe',
-                    op_dtypes=sdt2)
+    # New in 1.12: This behavior changes in 1.13, test for dep warning
+    with assert_warns(FutureWarning):
+        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
+                        casting='unsafe',
+                        op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     vals = []
     for x in i:
@@ -1768,9 +1773,11 @@ def test_iter_buffered_cast_structured_type():
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'i4')])]
     sdt2 = [('b', 'O'), ('a', 'f8')]
     a = np.array([(1, 2, (0, 9)), (4, 5, (20, 21))], dtype=sdt1)
-    i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                    casting='unsafe',
-                    op_dtypes=sdt2)
+    # New in 1.12: This behavior changes in 1.13, test for dep warning
+    with assert_warns(FutureWarning):
+        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
+                        casting='unsafe',
+                        op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     vals = []
     for x in i:
@@ -1784,9 +1791,11 @@ def test_iter_buffered_cast_structured_type():
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'O')])]
     sdt2 = [('b', 'O'), ('a', 'f8')]
     a = np.array([(1, 2, (0, 9)), (4, 5, (20, 21))], dtype=sdt1)
-    i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                    casting='unsafe',
-                    op_dtypes=sdt2)
+    # New in 1.12: This behavior changes in 1.13, test for dep warning
+    with assert_warns(FutureWarning):
+        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
+                        casting='unsafe',
+                        op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     vals = []
     for x in i:
@@ -1800,9 +1809,11 @@ def test_iter_buffered_cast_structured_type():
     sdt1 = [('b', 'O'), ('a', 'f8')]
     sdt2 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'O')])]
     a = np.array([(1, 2), (4, 5)], dtype=sdt1)
-    i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                    casting='unsafe',
-                    op_dtypes=sdt2)
+    # New in 1.12: This behavior changes in 1.13, test for dep warning
+    with assert_warns(FutureWarning):
+        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
+                        casting='unsafe',
+                        op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     vals = []
     for x in i:
