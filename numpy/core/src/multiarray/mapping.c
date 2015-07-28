@@ -1428,6 +1428,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
 
+        PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
         if (viewcopy == NULL) {
             Py_DECREF(*view);
@@ -1436,6 +1437,9 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
         Py_DECREF(*view);
         *view = (PyArrayObject*)viewcopy;
+
+        /* warn when writing to the copy */
+        PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         return 0;
     }
     return -1;

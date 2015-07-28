@@ -3,13 +3,14 @@ from __future__ import division, absolute_import, print_function
 import sys
 import collections
 import pickle
+import warnings
 from os import path
 
 import numpy as np
 from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
+    assert_array_almost_equal, assert_raises, assert_warns
     )
 
 
@@ -126,8 +127,11 @@ class TestFromrecords(TestCase):
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
-        assert_equal(r[['a', 'b']].dtype.type, np.record)
-        assert_equal(type(r[['a', 'b']]), np.recarray)
+
+        # suppress deprecation warning in 1.12 (remove in 1.13)
+        with assert_warns(FutureWarning):
+            assert_equal(r[['a', 'b']].dtype.type, np.record)
+            assert_equal(type(r[['a', 'b']]), np.recarray)
 
         #and that it preserves subclasses (gh-6949)
         class C(np.recarray):
@@ -298,8 +302,11 @@ class TestRecord(TestCase):
 
     def test_out_of_order_fields(self):
         """Ticket #1431."""
-        x = self.data[['col1', 'col2']]
-        y = self.data[['col2', 'col1']]
+        # this test will be invalid in 1.13
+        # suppress deprecation warning in 1.12 (remove in 1.13)
+        with assert_warns(FutureWarning):
+            x = self.data[['col1', 'col2']]
+            y = self.data[['col2', 'col1']]
         assert_equal(x[0][0], y[0][1])
 
     def test_pickle_1(self):
@@ -330,7 +337,8 @@ class TestRecord(TestCase):
 
         # https://github.com/numpy/numpy/issues/3256
         ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
-        ra[['x','y']]  # TypeError?
+        with assert_warns(FutureWarning):
+            ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561

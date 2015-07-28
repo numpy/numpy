@@ -27,7 +27,7 @@ from numpy.core.multiarray_tests import (
     test_inplace_increment, get_buffer_info, test_as_c_array,
     )
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_raises,
+    TestCase, run_module_suite, assert_, assert_raises, assert_warns,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
     assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
@@ -864,8 +864,10 @@ class TestStructured(TestCase):
 
         # Check that 'equiv' casting can reorder fields and change byte
         # order
+        # New in 1.12: This behavior changes in 1.13, test for dep warning
         assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
-        c = a.astype(b.dtype, casting='equiv')
+        with assert_warns(FutureWarning):
+            c = a.astype(b.dtype, casting='equiv')
         assert_equal(a == c, [True, True])
 
         # Check that 'safe' casting can change byte order and up-cast
@@ -4241,14 +4243,23 @@ class TestRecord(TestCase):
             # multiple subfields
             fn2 = func('f2')
             b[fn2] = 3
-            assert_equal(b[['f1', 'f2']][0].tolist(), (2, 3))
-            assert_equal(b[['f2', 'f1']][0].tolist(), (3, 2))
-            assert_equal(b[['f1', 'f3']][0].tolist(), (2, (1,)))
-            # view of subfield view/copy
-            assert_equal(b[['f1', 'f2']][0].view(('i4', 2)).tolist(), (2, 3))
-            assert_equal(b[['f2', 'f1']][0].view(('i4', 2)).tolist(), (3, 2))
-            view_dtype = [('f1', 'i4'), ('f3', [('', 'i4')])]
-            assert_equal(b[['f1', 'f3']][0].view(view_dtype).tolist(), (2, (1,)))
+            with suppress_warnings() as sup:
+                sup.filter(FutureWarning,
+                           "Assignment between structured arrays.*")
+                sup.filter(FutureWarning,
+                           "Numpy has detected that you .*")
+
+                assert_equal(b[['f1', 'f2']][0].tolist(), (2, 3))
+                assert_equal(b[['f2', 'f1']][0].tolist(), (3, 2))
+                assert_equal(b[['f1', 'f3']][0].tolist(), (2, (1,)))
+                # view of subfield view/copy
+                assert_equal(b[['f1', 'f2']][0].view(('i4', 2)).tolist(),
+                             (2, 3))
+                assert_equal(b[['f2', 'f1']][0].view(('i4', 2)).tolist(),
+                             (3, 2))
+                view_dtype = [('f1', 'i4'), ('f3', [('', 'i4')])]
+                assert_equal(b[['f1', 'f3']][0].view(view_dtype).tolist(),
+                             (2, (1,)))
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
             raise SkipTest('non ascii unicode field indexing skipped; '
@@ -4278,11 +4289,12 @@ class TestRecord(TestCase):
         b['f2'][0] = 2
         b['f3'][0] = (3,)
 
-        # All the different functions raise a warning, but not an error, and
-        # 'a' is not modified:
+        # All the different functions raise a warning, but not an error
         assert_equal(collect_warnings(a[['f1', 'f2']].__setitem__, 0, (10, 20)),
                      [FutureWarning])
+        # For <=1.12 a is not modified, but it will be in 1.13
         assert_equal(a, b)
+
         # Views also warn
         subset = a[['f1', 'f2']]
         subset_view = subset.view()
@@ -4293,6 +4305,16 @@ class TestRecord(TestCase):
         # Only one warning per multiple field indexing, though (even if there
         # are multiple views involved):
         assert_equal(collect_warnings(subset['f1'].__setitem__, 0, 10), [])
+
+        # make sure views of a multi-field index warn too
+        c = np.zeros(3, dtype='i8,i8,i8')
+        assert_equal(collect_warnings(c[['f0', 'f2']].view, 'i8,i8'),
+                     [FutureWarning])
+
+        # make sure assignment using a different dtype warns
+        a = np.zeros(2, dtype=[('a', 'i4'), ('b', 'i4')])
+        b = np.zeros(2, dtype=[('b', 'i4'), ('a', 'i4')])
+        assert_equal(collect_warnings(a.__setitem__, (), b), [FutureWarning])
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')

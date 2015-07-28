@@ -20,7 +20,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    TestCase, run_module_suite, assert_raises, suppress_warnings)
+    TestCase, run_module_suite, assert_raises, assert_warns, suppress_warnings)
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
 from numpy.ma.testutils import (
@@ -1629,7 +1629,9 @@ class TestFillingValues(TestCase):
         # BEHAVIOR in 1.6 and later: match structured types by name
         fill_val = np.array(("???", -999, -12345678.9),
                             dtype=[("c", "|S3"), ("a", int), ("b", float), ])
-        fval = _check_fill_value(fill_val, ndtype)
+        # suppress deprecation warning in 1.12 (remove in 1.13)
+        with assert_warns(FutureWarning):
+            fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
 

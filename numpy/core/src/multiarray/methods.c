@@ -1417,6 +1417,9 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     ret = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+    if (ret == NULL) {
+        return NULL;
+    }
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
