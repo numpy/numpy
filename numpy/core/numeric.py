@@ -854,7 +854,8 @@ def correlate(a, v, mode='valid', bias=True):
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
     bias : bool, optional
-        if `bias` is False, then the unbiased cross-correlation is computed:
+        if `bias` is False (typically used for periodic signals),
+        then the unbiased cross-correlation is computed as:        
 
             c_{av}[k] = 1 / (N-k) * sum_n^{N-k} a[n+k] * conj(v[n])
 
