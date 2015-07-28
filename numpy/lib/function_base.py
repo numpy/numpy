@@ -232,7 +232,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
                     tmp_w = tmp_w[keep]
-            tmp_a = np.array(tmp_a, dtype=float, copy=False)
+            tmp_a = tmp_a.astype(float)
             tmp_a -= mn
             tmp_a *= norm
 
