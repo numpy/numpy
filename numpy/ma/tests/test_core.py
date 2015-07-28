@@ -1765,7 +1765,7 @@ class TestFillingValues(object):
         fill_val = np.array((-999, -12345678.9, "???"),
                             dtype=[("A", int), ("B", float), ("C", "|S3")])
         fval = _check_fill_value(fill_val, ndtype)
-        self.assertTrue(isinstance(fval, ndarray))
+        assert_(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using an object-array shouldn't matter either
