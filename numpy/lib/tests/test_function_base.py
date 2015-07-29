@@ -601,6 +601,31 @@ class TestGradient(TestCase):
         num_error = np.abs((np.gradient(y, dx, edge_order=2) / analytical) - 1)
         assert_(np.all(num_error < 0.03) == True)
 
+    def test_specific_axes(self):
+        # Testing that gradient can work on a given axis only
+        v = [[1, 1], [3, 4]]
+        x = np.array(v)
+        dx = [np.array([[2., 3.], [2., 3.]]),
+              np.array([[0., 0.], [1., 1.]])]
+        assert_array_equal(gradient(x, axis=0), dx[0])
+        assert_array_equal(gradient(x, axis=1), dx[1])
+        assert_array_equal(gradient(x, axis=-1), dx[1])
+        assert_array_equal(gradient(x, axis=(1,0)), [dx[1], dx[0]])
+
+        # test axis=None which means all axes
+        assert_almost_equal(gradient(x, axis=None), [dx[0], dx[1]])
+        # and is the same as no axis keyword given
+        assert_almost_equal(gradient(x, axis=None), gradient(x))
+
+        # test vararg order
+        assert_array_equal(gradient(x, 2, 3, axis=(1,0)), [dx[1]/2.0, dx[0]/3.0])
+        # test maximal number of varargs
+        assert_raises(SyntaxError, gradient, x, 1, 2, axis=1)
+
+        assert_raises(ValueError, gradient, x, axis=3)
+        assert_raises(ValueError, gradient, x, axis=-3)
+        assert_raises(TypeError, gradient, x, axis=[1,])
+
 
 class TestAngle(TestCase):
 
