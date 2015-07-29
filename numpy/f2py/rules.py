@@ -419,7 +419,8 @@ rout_rules = [
             {isthreadsafe: '\t\t\tPy_BEGIN_ALLOW_THREADS'},
             {hascallstatement: '''\t\t\t\t#callstatement#;
 \t\t\t\t/*(*f2py_func)(#callfortran#);*/'''},
-            {l_not(l_or(hascallstatement, isdummyroutine)): '\t\t\t\t(*f2py_func)(#callfortran#);'},
+            {l_not(l_or(hascallstatement, isdummyroutine))
+                   : '\t\t\t\t(*f2py_func)(#callfortran#);'},
             {isthreadsafe: '\t\t\tPy_END_ALLOW_THREADS'},
             {hasexternals: """\t\t}"""}
         ],
@@ -454,7 +455,8 @@ rout_rules = [
 \t\tf2py_success = 0;
 \t} else {"""},
             {isthreadsafe: '\tPy_BEGIN_ALLOW_THREADS'},
-            {l_not(l_or(hascallstatement, isdummyroutine)): '\t(*f2py_func)(#callfortran#);'},
+            {l_not(l_or(hascallstatement, isdummyroutine))
+                   : '\t(*f2py_func)(#callfortran#);'},
             {hascallstatement:
                 '\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
             {isthreadsafe: '\tPy_END_ALLOW_THREADS'},
@@ -491,7 +493,8 @@ rout_rules = [
 \t\tf2py_success = 0;
 \t} else {"""},
             {isthreadsafe: '\tPy_BEGIN_ALLOW_THREADS'},
-            {l_not(l_or(hascallstatement, isdummyroutine)): '\t(*f2py_func)(#callfortran#);'},
+            {l_not(l_or(hascallstatement, isdummyroutine))
+                   : '\t(*f2py_func)(#callfortran#);'},
             {hascallstatement:
                 '\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
             {isthreadsafe: '\tPy_END_ALLOW_THREADS'},
@@ -539,10 +542,12 @@ rout_rules = [
             {hascallstatement: '''\t#callstatement#;
 /*\t#name#_return_value = (*f2py_func)(#callfortran#);*/
 '''},
-            {l_not(l_or(hascallstatement, isdummyroutine)): '\t#name#_return_value = (*f2py_func)(#callfortran#);'},
+            {l_not(l_or(hascallstatement, isdummyroutine))
+                   : '\t#name#_return_value = (*f2py_func)(#callfortran#);'},
             {isthreadsafe: '\tPy_END_ALLOW_THREADS'},
             {hasexternals: '\t}'},
-            {l_and(debugcapi, iscomplexfunction): '\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value.r,#name#_return_value.i);'},
+            {l_and(debugcapi, iscomplexfunction)
+                   : '\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value.r,#name#_return_value.i);'},
             {l_and(debugcapi, l_not(iscomplexfunction)): '\tfprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value);'}],
         'pyobjfrom': {iscomplexfunction: '\t#name#_return_value_capi = pyobj_from_#ctype#1(#name#_return_value);'},
         'need': [{l_not(isdummyroutine): 'F_FUNC'},
@@ -556,10 +561,8 @@ rout_rules = [
     }, {  # String function # in use for --no-wrap
         'declfortranroutine': 'extern void #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
         'routine_def': {l_not(l_or(ismoduleroutine, isintent_c)):
-                        # '\t{\"#name#\",-1,{{-1}},0,(char *)F_FUNC(#fortranname#,#FORTRANNAME#),(void *)#apiname#,doc_#apiname#},',
                         '\t{\"#name#\",-1,{{-1}},0,(char *)#F_FUNC#(#fortranname#,#FORTRANNAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
                         l_and(l_not(ismoduleroutine), isintent_c):
-                        # '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(void *)#apiname#,doc_#apiname#},'
                         '\t{\"#name#\",-1,{{-1}},0,(char *)#fortranname#,(f2py_init_func)#apiname#,doc_#apiname#},'
                         },
         'decl': ['\t#ctype# #name#_return_value = NULL;',
@@ -807,11 +810,6 @@ if (#varname#_capi==Py_None) {
   }
 }
 """},
-            # {l_not(isintent_callback):"""
-            # if (#varname#_capi==Py_None) {
-            # printf(\"hoi\\n\");
-            # }
-            # """},
             """\
 \t#varname#_nofargs_capi = #cbname#_nofargs;
 \tif (create_cb_arglist(#varname#_capi,#varname#_xa_capi,#maxnofargs#,#nofoptargs#,&#cbname#_nofargs,&#varname#_args_capi,\"failed in processing argument list for call-back #varname#.\")) {
@@ -849,7 +847,6 @@ if (#varname#_capi==Py_None) {
     }, {
         'need': {hasinitvalue: 'math.h'},
         '_check': l_and(isscalar, l_not(iscomplex)),
-        #'_depend':''
     }, {  # Not hidden
         'decl': '\tPyObject *#varname#_capi = Py_None;',
         'argformat': {isrequired: 'O'},
@@ -895,8 +892,6 @@ if (#varname#_capi==Py_None) {
         'need': {l_not(islogical): '#ctype#_from_pyobj'},
         '_check': l_and(isscalar, l_not(iscomplex), isintent_nothide),
         '_depend': ''
-        # },{ # Hidden
-        #    '_check':l_and(isscalar,l_not(iscomplex),isintent_hide)
     }, {  # Hidden
         'frompyobj': {hasinitvalue: '\t#varname# = #init#;'},
         'need': typedef_need_dict,
@@ -928,8 +923,8 @@ if (#varname#_capi==Py_None) {
         '_check': l_and(iscomplex, isintent_nothide)
     }, {
         'frompyobj': [{hasinitvalue: '\tif (#varname#_capi==Py_None) {#varname#.r = #init.r#, #varname#.i = #init.i#;} else'},
-                      {l_and(isoptional, l_not(hasinitvalue)): '\tif (#varname#_capi != Py_None)'},
-                      # '\t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\\n");'
+                      {l_and(isoptional, l_not(hasinitvalue))
+                             : '\tif (#varname#_capi != Py_None)'},
                       '\t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
                       '\n\tif (f2py_success) {'],
         'cleanupfrompyobj': '\t}  /*if (f2py_success) of #varname# frompyobj*/',
@@ -960,7 +955,6 @@ if (#varname#_capi==Py_None) {
         'callfortran':'#varname#,',
         'callfortranappend':'slen(#varname#),',
         'pyobjfrom':{debugcapi: '\tfprintf(stderr,"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
-        # 'freemem':'\tSTRINGFREE(#varname#);',
         'return': {isintent_out: ',#varname#'},
         'need': ['len..'],  # 'STRINGFREE'],
         '_check':isstring
@@ -1042,21 +1036,6 @@ if (#varname#_capi==Py_None) {
         'keyformat': {isoptional: 'O'},
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
-        #     'pyobjfrom':{isintent_inout:"""
-        # /* Partly because of the following hack, intent(inout) is depreciated,
-        #    Use intent(in,out) instead.
-
-        # \tif ((#varname#_capi != Py_None) && PyArray_Check(#varname#_capi)
-        # \t\t&& (#varname#_capi != (PyObject *)capi_#varname#_tmp)) {
-        # \t\tif (PyArray_NDIM((PyArrayObject *)#varname#_capi) != PyArray_NDIM(capi_#varname#_tmp)) {
-        # \t\t\tif (#varname#_capi != PyArray_BASE(capi_#varname#_tmp))
-        # \t\t\t\tcopy_ND_array(PyArray_BASE((PyArrayObject *)capi_#varname#_tmp),(PyArrayObject *)#varname#_capi);
-        # \t\t} else
-        # \t\t\tcopy_ND_array(capi_#varname#_tmp,(PyArrayObject *)#varname#_capi);
-        # \t}
-        # */
-        # """},
-        #     'need':{isintent_inout:'copy_ND_array'},
         '_check': l_and(isarray, isintent_nothide)
     }, {
         'frompyobj': ['\t#setdims#;',
@@ -1096,16 +1075,13 @@ if (#varname#_capi==Py_None) {
             {l_not(l_or(isintent_out, isintent_hide)): """\
 \tif((PyObject *)capi_#varname#_tmp!=#varname#_capi) {
 \t\tPy_XDECREF(capi_#varname#_tmp); }"""},
-            {l_and(isintent_hide, l_not(isintent_out)): """\t\tPy_XDECREF(capi_#varname#_tmp);"""},
+            {l_and(isintent_hide, l_not(isintent_out))
+                   : """\t\tPy_XDECREF(capi_#varname#_tmp);"""},
             {hasinitvalue: '\t}  /*if (f2py_success) of #varname# init*/'},
         ],
         '_check': isarray,
         '_depend': ''
     },
-    # { # Hidden
-    # 'freemem':{l_not(isintent_out):'\tPy_XDECREF(capi_#varname#_tmp);'},
-    #    '_check':l_and(isarray,isintent_hide)
-    #    },
     # Scalararray
     {  # Common
         '_check': l_and(isarray, l_not(iscomplexarray))
@@ -1373,7 +1349,6 @@ def buildapi(rout):
     args, depargs = getargs2(rout)
     capi_maps.depargs = depargs
     var = rout['vars']
-    # auxvars = [a for a in var.keys() if isintent_aux(var[a])]
 
     if ismoduleroutine(rout):
         outmess('\t\t\tConstructing wrapper function "%s.%s"...\n' %

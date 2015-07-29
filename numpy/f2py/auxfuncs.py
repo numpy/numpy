@@ -71,7 +71,8 @@ def debugcapi(var):
 
 
 def _isstring(var):
-    return 'typespec' in var and var['typespec'] == 'character' and (not isexternal(var))
+    return 'typespec' in var and var['typespec'] == 'character' and \
+           not isexternal(var)
 
 
 def isstring(var):
@@ -87,14 +88,13 @@ def isstringarray(var):
 
 
 def isarrayofstrings(var):
-    # leaving out '*' for now so that
-    # `character*(*) a(m)` and `character a(m,*)`
-    # are treated differently. Luckily `character**` is illegal.
+    # leaving out '*' for now so that `character*(*) a(m)` and `character
+    # a(m,*)` are treated differently. Luckily `character**` is illegal.
     return isstringarray(var) and var['dimension'][-1] == '(*)'
 
 
 def isarray(var):
-    return 'dimension' in var and (not isexternal(var))
+    return 'dimension' in var and not isexternal(var)
 
 
 def isscalar(var):
@@ -102,7 +102,8 @@ def isscalar(var):
 
 
 def iscomplex(var):
-    return isscalar(var) and var.get('typespec') in ['complex', 'double complex']
+    return isscalar(var) and \
+           var.get('typespec') in ['complex', 'double complex']
 
 
 def islogical(var):
@@ -190,7 +191,8 @@ def islong_complex(var):
 
 
 def iscomplexarray(var):
-    return isarray(var) and var.get('typespec') in ['complex', 'double complex']
+    return isarray(var) and \
+           var.get('typespec') in ['complex', 'double complex']
 
 
 def isint1array(var):
@@ -251,16 +253,11 @@ def ismoduleroutine(rout):
 
 
 def ismodule(rout):
-    return ('block' in rout and 'module' == rout['block'])
+    return 'block' in rout and 'module' == rout['block']
 
 
 def isfunction(rout):
-    return ('block' in rout and 'function' == rout['block'])
-
-# def isfunction_wrap(rout):
-# return wrapfuncs and (iscomplexfunction(rout) or isstringfunction(rout))
-# and (not isexternal(rout))
-
+    return 'block' in rout and 'function' == rout['block']
 
 def isfunction_wrap(rout):
     if isintent_c(rout):
@@ -269,7 +266,7 @@ def isfunction_wrap(rout):
 
 
 def issubroutine(rout):
-    return ('block' in rout and 'subroutine' == rout['block'])
+    return 'block' in rout and 'subroutine' == rout['block']
 
 
 def issubroutine_wrap(rout):
@@ -372,7 +369,8 @@ def hasexternals(rout):
 
 
 def isthreadsafe(rout):
-    return 'f2pyenhancements' in rout and 'threadsafe' in rout['f2pyenhancements']
+    return 'f2pyenhancements' in rout and \
+           'threadsafe' in rout['f2pyenhancements']
 
 
 def hasvariables(rout):
@@ -380,11 +378,12 @@ def hasvariables(rout):
 
 
 def isoptional(var):
-    return ('attrspec' in var and 'optional' in var['attrspec'] and 'required' not in var['attrspec']) and isintent_nothide(var)
+    return ('attrspec' in var and 'optional' in var['attrspec'] and
+            'required' not in var['attrspec']) and isintent_nothide(var)
 
 
 def isexternal(var):
-    return ('attrspec' in var and 'external' in var['attrspec'])
+    return 'attrspec' in var and 'external' in var['attrspec']
 
 
 def isrequired(var):
@@ -410,7 +409,9 @@ def isintent_in(var):
 
 
 def isintent_inout(var):
-    return 'intent' in var and ('inout' in var['intent'] or 'outin' in var['intent']) and 'in' not in var['intent'] and 'hide' not in var['intent'] and 'inplace' not in var['intent']
+    return ('intent' in var and ('inout' in var['intent'] or
+            'outin' in var['intent']) and 'in' not in var['intent'] and
+            'hide' not in var['intent'] and 'inplace' not in var['intent'])
 
 
 def isintent_out(var):
@@ -418,8 +419,9 @@ def isintent_out(var):
 
 
 def isintent_hide(var):
-    return ('intent' in var and ('hide' in var['intent'] or ('out' in var['intent'] and 'in' not in var['intent'] and (not l_or(isintent_inout, isintent_inplace)(var)))))
-
+    return ('intent' in var and ('hide' in var['intent'] or
+            ('out' in var['intent'] and 'in' not in var['intent'] and
+                (not l_or(isintent_inout, isintent_inplace)(var)))))
 
 def isintent_nothide(var):
     return not isintent_hide(var)
@@ -662,7 +664,6 @@ def getcallprotoargument(rout, cb_map={}):
                 pass
             elif isstring(var):
                 pass
-                #ctype = 'void*'
             else:
                 ctype = ctype + '*'
             if isstring(var) or isarrayofstrings(var):

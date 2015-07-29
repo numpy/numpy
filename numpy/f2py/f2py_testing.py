@@ -21,7 +21,6 @@ def cmdline():
 
 def run(runtest, test_functions, repeat=1):
     l = [(t, repr(t.__doc__.split('\n')[1].strip())) for t in test_functions]
-    #l = [(t,'') for t in test_functions]
     start_memusage = memusage()
     diff_memusage = None
     start_jiffies = jiffies()

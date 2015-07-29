@@ -203,7 +203,6 @@ def buildhooks(pymod):
                 if isfunction(b):
                     fhooks[0] = fhooks[0] + wrap
                     fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
-                    # efargs.append(fargs[-1])
                     ifargs.append(func2subr.createfuncwrapper(b, signature=1))
                 else:
                     if wrap:
@@ -214,9 +213,6 @@ def buildhooks(pymod):
                     else:
                         fargs.append(b['name'])
                         mfargs.append(fargs[-1])
-                    # if '--external-modroutines' in options and options['--external-modroutines']:
-                    #    outmess('\t\t\tapplying --external-modroutines for %s\n'%(b['name']))
-                    #     efargs.append(fargs[-1])
                 api['externroutines'] = []
                 ar = applyrules(api, vrd)
                 ar['docs'] = []
@@ -247,7 +243,6 @@ def buildhooks(pymod):
             m['name'], m['name'], m['name'])] + ret['initf90modhooks']
         fadd('')
         fadd('subroutine f2pyinit%s(f2pysetupfunc)' % (m['name']))
-        #fadd('use %s'%(m['name']))
         if mfargs:
             for a in undo_rmbadname(mfargs):
                 fadd('use %s, only : %s' % (m['name'], a))

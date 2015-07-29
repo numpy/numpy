@@ -1034,8 +1034,6 @@ def analyzeline(m, case, line):
                 groupcache[groupcounter - 2]['externals'].append(name)
             groupcache[groupcounter]['vars'] = copy.deepcopy(
                 groupcache[groupcounter - 2]['vars'])
-            # try: del groupcache[groupcounter]['vars'][groupcache[groupcounter-2]['name']]
-            # except: pass
             try:
                 del groupcache[groupcounter]['vars'][name][
                     groupcache[groupcounter]['vars'][name]['attrspec'].index('external')]
@@ -1162,7 +1160,6 @@ def analyzeline(m, case, line):
                     outmess('analyzeline: ignoring program arguments\n')
                     continue
                 if k not in groupcache[groupcounter]['args']:
-                    #outmess('analyzeline: ignoring external %s (not in arguments list)\n'%(`k`))
                     continue
                 if 'externals' not in groupcache[groupcounter]:
                     groupcache[groupcounter]['externals'] = []
@@ -1315,9 +1312,6 @@ def analyzeline(m, case, line):
                 outmess(
                     'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
-            # if '(' in l[0]:
-            # outmess('analyzeline: ignoring this data statement.\n')
-            #    continue
             i = 0
             j = 0
             llen = len(l[1])
@@ -1335,7 +1329,6 @@ def analyzeline(m, case, line):
                         fc = not fc
                     i = i + 1
                 i = i + 1
-                # v,l[1][j:i-1]=name,initvalue
                 if v not in vars:
                     vars[v] = {}
                 if '=' in vars[v] and not vars[v]['='] == l[1][j:i - 1]:
@@ -1439,7 +1432,6 @@ def analyzeline(m, case, line):
                 outmess('analyzeline: No context for multiline block.\n')
             return
         gc = groupcounter
-        #gc = previous_context[2]
         appendmultiline(groupcache[gc],
                         previous_context[:2],
                         m.group('this'))
@@ -1916,15 +1908,11 @@ def postcrack(block, args=None, tab=''):
     block['body'] = analyzebody(block, args, tab=tab)
 
     userisdefined = []
-##     fromuser = []
     if 'use' in block:
         useblock = block['use']
         for k in list(useblock.keys()):
             if '__user__' in k:
                 userisdefined.append(k)
-# if 'map' in useblock[k]:
-# for n in useblock[k]['map'].itervalues():
-##                         if n not in fromuser: fromuser.append(n)
     else:
         useblock = {}
     name = ''
@@ -1948,9 +1936,6 @@ def postcrack(block, args=None, tab=''):
         interface = {'block': 'interface', 'body': [],
                      'vars': {}, 'name': name + '_user_interface'}
         for e in block['externals']:
-            # if e in fromuser:
-            #    outmess('  Skipping %s that is defined explicitly in another use statement\n'%(`e`))
-            #    continue
             if e in interfaced:
                 edef = []
                 j = -1
@@ -1990,7 +1975,6 @@ def sortvarnames(vars):
     for v in list(vars.keys()):
         if 'depend' in vars[v] and vars[v]['depend']:
             dep.append(v)
-            # print '%s depends on %s'%(v,vars[v]['depend'])
         else:
             indep.append(v)
     n = len(dep)
@@ -2016,7 +2000,6 @@ def sortvarnames(vars):
             dep = dep[1:]
             n = len(dep)
             i = 0
-    # print indep
     return indep
 
 
@@ -2470,7 +2453,6 @@ def get_parameters(vars, global_params={}):
                 params[n] = eval(v, g_params, params)
             except Exception as msg:
                 params[n] = v
-                # print params
                 outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
@@ -2645,7 +2627,6 @@ def analyzevars(block):
                         m = re.match(
                             r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', d, re.I)
                         if m:
-                            #outmess('analyzevars:replacing parameter %s in %s (dimension of %s) with %s\n'%(`p`,`d`,`n`,`params[p]`))
                             d = m.group('before') + \
                                 str(params[p]) + m.group('after')
                     if d == star:
@@ -2696,14 +2677,12 @@ def analyzevars(block):
             vars[n]['check'] = []
             if 'dimension' in vars[n]:
                 #/----< no check
-                # vars[n]['check'].append('rank(%s)==%s'%(n,len(vars[n]['dimension'])))
                 i = -1
                 ni = len(vars[n]['dimension'])
                 for d in vars[n]['dimension']:
                     ddeps = []  # dependecies of 'd'
                     ad = ''
                     pd = ''
-                    #origd = d
                     if d not in vars:
                         if d in savelindims:
                             pd, ad = '(', savelindims[d][1]
@@ -2746,8 +2725,6 @@ def analyzevars(block):
                             vars[d]['attrspec'].append('optional')
                     elif d not in ['*', ':']:
                         #/----< no check
-                        #if ni>1: vars[n]['check'].append('shape(%s,%i)==%s'%(n,i,d))
-                        # else: vars[n]['check'].append('len(%s)>=%s'%(n,d))
                         if flag:
                             if d in vars:
                                 if n not in ddeps:
@@ -3045,8 +3022,6 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
         result = ' result (%s)' % block['result']
         if block['result'] not in argsl:
             argsl.append(block['result'])
-    # if 'prefix' in block:
-    #    prefix=block['prefix']+' '
     body = crack2fortrangen(block['body'], tab + tabchar)
     vars = vars2fortran(
         block, block['vars'], argsl, tab + tabchar, as_interface=as_interface)
@@ -3206,8 +3181,6 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','
         if 'dimension' in vars[a]:
-            # if not isintent_c(vars[a]):
-            #    vars[a]['dimension'].reverse()
             vardef = '%s%sdimension(%s)' % (
                 vardef, c, ','.join(vars[a]['dimension']))
             c = ','

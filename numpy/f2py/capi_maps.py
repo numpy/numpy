@@ -168,17 +168,20 @@ if using_newcore:
     # c2buildvalue_map=???
     pass
 
-f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double', '12': 'long_double', '16': 'long_double'},
-              'integer': {'': 'int', '1': 'signed_char', '2': 'short', '4': 'int', '8': 'long_long',
-                          '-1': 'unsigned_char', '-2': 'unsigned_short', '-4': 'unsigned',
-                          '-8': 'unsigned_long_long'},
+f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
+                       '12': 'long_double', '16': 'long_double'},
+              'integer': {'': 'int', '1': 'signed_char', '2': 'short',
+                          '4': 'int', '8': 'long_long',
+                          '-1': 'unsigned_char', '-2': 'unsigned_short',
+                          '-4': 'unsigned', '-8': 'unsigned_long_long'},
               'complex': {'': 'complex_float', '8': 'complex_float',
                           '16': 'complex_double', '24': 'complex_long_double',
                           '32': 'complex_long_double'},
               'complexkind': {'': 'complex_float', '4': 'complex_float',
                               '8': 'complex_double', '12': 'complex_long_double',
                               '16': 'complex_long_double'},
-              'logical': {'': 'int', '1': 'char', '2': 'short', '4': 'int', '8': 'long_long'},
+              'logical': {'': 'int', '1': 'char', '2': 'short', '4': 'int',
+                          '8': 'long_long'},
               'double complex': {'': 'complex_double'},
               'double precision': {'': 'double'},
               'byte': {'': 'char'},
@@ -187,11 +190,10 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double', '12': 'long_dou
 
 if os.path.isfile('.f2py_f2cmap'):
     # User defined additions to f2cmap_all.
-    # .f2py_f2cmap must contain a dictionary of dictionaries, only.
-    # For example, {'real':{'low':'float'}} means that Fortran 'real(low)' is
-    # interpreted as C 'float'.
-    # This feature is useful for F90/95 users if they use PARAMETERSs
-    # in type specifications.
+    # .f2py_f2cmap must contain a dictionary of dictionaries, only.  For
+    # example, {'real':{'low':'float'}} means that Fortran 'real(low)' is
+    # interpreted as C 'float'.  This feature is useful for F90/95 users if
+    # they use PARAMETERSs in type specifications.
     try:
         outmess('Reading .f2py_f2cmap ...\n')
         f = open('.f2py_f2cmap', 'r')
@@ -219,6 +221,7 @@ if os.path.isfile('.f2py_f2cmap'):
     except Exception as msg:
         errmess(
             'Failed to apply user defined changes from .f2py_f2cmap: %s. Skipping.\n' % (msg))
+
 cformat_map = {'double': '%g',
                'float': '%g',
                'long_double': '%Lg',
@@ -311,7 +314,6 @@ def getstrlength(var):
         elif 'len' in a:
             len = a['len']
     if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
-        # if len in ['(*)','*','(:)',':']:
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))
@@ -331,8 +333,6 @@ def getarrdims(a, var, verbose=0):
         ret['rank'] = '0'
         ret['dims'] = ''
     elif isarray(var):
-        #         if not isintent_c(var):
-        #             var['dimension'].reverse()
         dim = copy.copy(var['dimension'])
         ret['size'] = '*'.join(dim)
         try:
@@ -579,7 +579,6 @@ def sign2map(a, var):
               isexternal, 'callback',
               isintent_callback, 'callback',
               isintent_aux, 'auxiliary',
-              # ismutable,'mutable',l_not(ismutable),'immutable',
               ]
         rl = []
         for i in range(0, len(il), 2):
@@ -588,13 +587,9 @@ def sign2map(a, var):
         if isstring(var):
             rl.append('slen(%s)=%s' % (a, ret['length']))
         if isarray(var):
-            #             if not isintent_c(var):
-            #                 var['dimension'].reverse()
             ddim = ','.join(
                 map(lambda x, y: '%s|%s' % (x, y), var['dimension'], dim))
             rl.append('dims(%s)' % ddim)
-#             if not isintent_c(var):
-#                 var['dimension'].reverse()
         if isexternal(var):
             ret['vardebuginfo'] = 'debug-capi:%s=>%s:%s' % (
                 a, ret['cbname'], ','.join(rl))
@@ -662,8 +657,6 @@ def routsign2map(rout):
                                 ln = k
                                 break
                     lcb_map[ln] = un[1]
-            # else:
-            #    errmess('routsign2map: cb_map does not contain module "%s" used in "use" statement.\n'%(u))
     elif 'externals' in rout and rout['externals']:
         errmess('routsign2map: Confused: function %s has externals %s but no "use" statement.\n' % (
             ret['name'], repr(rout['externals'])))
@@ -719,7 +712,6 @@ def modsign2map(m):
     ret['restdoc'] = getrestdoc(m) or []
     if hasnote(m):
         ret['note'] = m['note']
-        #m['note']=['See elsewhere.']
     ret['usercode'] = getusercode(m) or ''
     ret['usercode1'] = getusercode1(m) or ''
     if m['body']:

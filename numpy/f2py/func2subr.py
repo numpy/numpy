@@ -180,9 +180,6 @@ def createfuncwrapper(rout, signature=0):
         add('end subroutine f2pywrap_%s_%s' % (rout['modulename'], name))
     else:
         add('end')
-    # print '**'*10
-    # print ret[0]
-    # print '**'*10
     return ret[0]
 
 
@@ -263,9 +260,6 @@ def createsubrwrapper(rout, signature=0):
         add('end subroutine f2pywrap_%s_%s' % (rout['modulename'], name))
     else:
         add('end')
-    # print '**'*10
-    # print ret[0]
-    # print '**'*10
     return ret[0]
 
 

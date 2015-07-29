@@ -550,6 +550,5 @@ def buildcallback(rout, um):
                                       'argname': rd['argname']
                                       }
     outmess('\t  %s\n' % (ar['docstrshort']))
-    # print ar['body']
     return
 ################## Build call-back function #############
