@@ -1084,6 +1084,12 @@ cdef class RandomState:
 
         if p is not None:
             d = len(p)
+
+            atol = np.sqrt(np.finfo(np.float64).eps)
+            if isinstance(p, np.ndarray):
+                if np.issubdtype(p.dtype, np.floating):
+                    atol = max(atol, np.sqrt(np.finfo(p.dtype).eps))
+
             p = <ndarray>PyArray_ContiguousFromObject(p, NPY_DOUBLE, 1, 1)
             pix = <double*>PyArray_DATA(p)
 
@@ -1093,7 +1099,7 @@ cdef class RandomState:
                 raise ValueError("a and p must have same size")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if abs(kahan_sum(pix, d) - 1.) > 1e-8:
+            if abs(kahan_sum(pix, d) - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
