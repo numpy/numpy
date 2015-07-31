@@ -21,6 +21,6 @@ through our
 [development workflow](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html)
 
 Either way, please be sure to follow our
-[convention for commit messages](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html).
+[convention for commit messages](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html#writing-the-commit-message).
 
 
