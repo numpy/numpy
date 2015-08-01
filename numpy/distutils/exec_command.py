@@ -395,6 +395,25 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
 
+    if sys.version_info[0] >= 3 and os.name == 'nt':
+        # Pre-encode os.environ, discarding un-encodable entries,
+        # to avoid it failing during encoding as part of spawn. Failure
+        # is possible if the environment contains entries that are not
+        # encoded using the system codepage as windows expects.
+        #
+        # This is not necessary on unix, where os.environ is encoded
+        # using the surrogateescape error handler and decoded using
+        # it as part of spawn.
+        encoded_environ = {}
+        for k, v in os.environ.items():
+            try:
+                encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
+                    sys.getfilesystemencoding())
+            except UnicodeEncodeError:
+                log.debug("ignoring un-encodable env entry %s", k)
+    else:
+        encoded_environ = os.environ
+
     argv0 = argv[0]
     if not using_command:
         argv[0] = quote_arg(argv0)
@@ -412,8 +431,8 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             os.dup2(fout.fileno(), se_fileno)
     try:
-        status = spawn_command(os.P_WAIT, argv0, argv, os.environ)
-    except OSError:
+        status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
+    except Exception:
         errmess = str(get_exception())
         status = 999
         sys.stderr.write('%s: %s'%(errmess, argv[0]))
