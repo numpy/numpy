@@ -25,7 +25,7 @@ def get_class(name, notfound_action=1):
 
 simple_site = """
 [ALL]
-library_dirs = {dir1:s}:{dir2:s}
+library_dirs = {dir1:s}{pathsep:s}{dir2:s}
 libraries = {lib1:s},{lib2:s}
 extra_compile_args = -I/fake/directory
 runtime_library_dirs = {dir1:s}
@@ -108,7 +108,8 @@ class TestSystemInfoReading(TestCase):
             'dir1': self._dir1,
             'lib1': self._lib1,
             'dir2': self._dir2,
-            'lib2': self._lib2
+            'lib2': self._lib2,
+            'pathsep': os.pathsep
         })
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
