@@ -31,7 +31,7 @@ from . import __version__
 
 f2py_version = __version__.version
 errmess = sys.stderr.write
-#outmess=sys.stdout.write
+# outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
 
@@ -170,124 +170,170 @@ numpy Version: %s
 Requires:    Python 2.3 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_version)
+http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
+
 
 def scaninputline(inputline):
-    files, funcs, skipfuncs, onlyfuncs, debug=[], [], [], [], []
-    f, f2, f3, f4, f5, f6, f7, f8, f9=1, 0, 0, 0, 0, 0, 0, 0, 0
+    files, skipfuncs, onlyfuncs, debug = [], [], [], []
+    f, f2, f3, f5, f6, f7, f8, f9 = 1, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
-    dolc=-1
+    dolc = -1
     dolatexdoc = 0
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
     include_paths = []
-    signsfile, modulename=None, None
-    options = {'buildpath':buildpath,
+    signsfile, modulename = None, None
+    options = {'buildpath': buildpath,
                'coutput': None,
                'f2py_wrapper_output': None}
     for l in inputline:
-        if l=='': pass
-        elif l=='only:': f=0
-        elif l=='skip:': f=-1
-        elif l==':': f=1;f4=0
-        elif l[:8]=='--debug-': debug.append(l[8:])
-        elif l=='--lower': dolc=1
-        elif l=='--build-dir': f6=1
-        elif l=='--no-lower': dolc=0
-        elif l=='--quiet': verbose = 0
-        elif l=='--verbose': verbose += 1
-        elif l=='--latex-doc': dolatexdoc=1
-        elif l=='--no-latex-doc': dolatexdoc=0
-        elif l=='--rest-doc': dorestdoc=1
-        elif l=='--no-rest-doc': dorestdoc=0
-        elif l=='--wrap-functions': wrapfuncs=1
-        elif l=='--no-wrap-functions': wrapfuncs=0
-        elif l=='--short-latex': options['shortlatex']=1
-        elif l=='--coutput': f8=1
-        elif l=='--f2py-wrapper-output': f9=1
-        elif l=='--overwrite-signature': options['h-overwrite']=1
-        elif l=='-h': f2=1
-        elif l=='-m': f3=1
-        elif l[:2]=='-v':
+        if l == '':
+            pass
+        elif l == 'only:':
+            f = 0
+        elif l == 'skip:':
+            f = -1
+        elif l == ':':
+            f = 1
+        elif l[:8] == '--debug-':
+            debug.append(l[8:])
+        elif l == '--lower':
+            dolc = 1
+        elif l == '--build-dir':
+            f6 = 1
+        elif l == '--no-lower':
+            dolc = 0
+        elif l == '--quiet':
+            verbose = 0
+        elif l == '--verbose':
+            verbose += 1
+        elif l == '--latex-doc':
+            dolatexdoc = 1
+        elif l == '--no-latex-doc':
+            dolatexdoc = 0
+        elif l == '--rest-doc':
+            dorestdoc = 1
+        elif l == '--no-rest-doc':
+            dorestdoc = 0
+        elif l == '--wrap-functions':
+            wrapfuncs = 1
+        elif l == '--no-wrap-functions':
+            wrapfuncs = 0
+        elif l == '--short-latex':
+            options['shortlatex'] = 1
+        elif l == '--coutput':
+            f8 = 1
+        elif l == '--f2py-wrapper-output':
+            f9 = 1
+        elif l == '--overwrite-signature':
+            options['h-overwrite'] = 1
+        elif l == '-h':
+            f2 = 1
+        elif l == '-m':
+            f3 = 1
+        elif l[:2] == '-v':
             print(f2py_version)
             sys.exit()
-        elif l=='--show-compilers':
-            f5=1
-        elif l[:8]=='-include':
+        elif l == '--show-compilers':
+            f5 = 1
+        elif l[:8] == '-include':
             cfuncs.outneeds['userincludes'].append(l[9:-1])
-            cfuncs.userincludes[l[9:-1]]='#include '+l[8:]
+            cfuncs.userincludes[l[9:-1]] = '#include ' + l[8:]
         elif l[:15] in '--include_paths':
-            outmess('f2py option --include_paths is deprecated, use --include-paths instead.\n')
-            f7=1
+            outmess(
+                'f2py option --include_paths is deprecated, use --include-paths instead.\n')
+            f7 = 1
         elif l[:15] in '--include-paths':
-            f7=1
-        elif l[0]=='-':
-            errmess('Unknown option %s\n'%repr(l))
+            f7 = 1
+        elif l[0] == '-':
+            errmess('Unknown option %s\n' % repr(l))
             sys.exit()
-        elif f2: f2=0;signsfile=l
-        elif f3: f3=0;modulename=l
-        elif f6: f6=0;buildpath=l
-        elif f7: f7=0;include_paths.extend(l.split(os.pathsep))
-        elif f8: f8=0;options["coutput"]=l
-        elif f9: f9=0;options["f2py_wrapper_output"]=l
-        elif f==1:
+        elif f2:
+            f2 = 0
+            signsfile = l
+        elif f3:
+            f3 = 0
+            modulename = l
+        elif f6:
+            f6 = 0
+            buildpath = l
+        elif f7:
+            f7 = 0
+            include_paths.extend(l.split(os.pathsep))
+        elif f8:
+            f8 = 0
+            options["coutput"] = l
+        elif f9:
+            f9 = 0
+            options["f2py_wrapper_output"] = l
+        elif f == 1:
             try:
                 open(l).close()
                 files.append(l)
             except IOError as detail:
-                errmess('IOError: %s. Skipping file "%s".\n'%(str(detail), l))
-        elif f==-1: skipfuncs.append(l)
-        elif f==0: onlyfuncs.append(l)
+                errmess('IOError: %s. Skipping file "%s".\n' %
+                        (str(detail), l))
+        elif f == -1:
+            skipfuncs.append(l)
+        elif f == 0:
+            onlyfuncs.append(l)
     if not f5 and not files and not modulename:
         print(__usage__)
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s'%(buildpath))
+            outmess('Creating build directory %s' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
     if signsfile and os.path.isfile(signsfile) and 'h-overwrite' not in options:
-        errmess('Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n'%(signsfile))
+        errmess(
+            'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
         sys.exit()
 
-    options['debug']=debug
-    options['verbose']=verbose
-    if dolc==-1 and not signsfile: options['do-lower']=0
-    else: options['do-lower']=dolc
-    if modulename: options['module']=modulename
-    if signsfile: options['signsfile']=signsfile
-    if onlyfuncs: options['onlyfuncs']=onlyfuncs
-    if skipfuncs: options['skipfuncs']=skipfuncs
+    options['debug'] = debug
+    options['verbose'] = verbose
+    if dolc == -1 and not signsfile:
+        options['do-lower'] = 0
+    else:
+        options['do-lower'] = dolc
+    if modulename:
+        options['module'] = modulename
+    if signsfile:
+        options['signsfile'] = signsfile
+    if onlyfuncs:
+        options['onlyfuncs'] = onlyfuncs
+    if skipfuncs:
+        options['skipfuncs'] = skipfuncs
     options['dolatexdoc'] = dolatexdoc
     options['dorestdoc'] = dorestdoc
     options['wrapfuncs'] = wrapfuncs
-    options['buildpath']=buildpath
-    options['include_paths']=include_paths
+    options['buildpath'] = buildpath
+    options['include_paths'] = include_paths
     return files, options
 
+
 def callcrackfortran(files, options):
-    rules.options=options
-    funcs=[]
-    crackfortran.debug=options['debug']
-    crackfortran.verbose=options['verbose']
+    rules.options = options
+    crackfortran.debug = options['debug']
+    crackfortran.verbose = options['verbose']
     if 'module' in options:
-        crackfortran.f77modulename=options['module']
+        crackfortran.f77modulename = options['module']
     if 'skipfuncs' in options:
-        crackfortran.skipfuncs=options['skipfuncs']
+        crackfortran.skipfuncs = options['skipfuncs']
     if 'onlyfuncs' in options:
-        crackfortran.onlyfuncs=options['onlyfuncs']
-    crackfortran.include_paths[:]=options['include_paths']
-    crackfortran.dolowercase=options['do-lower']
-    postlist=crackfortran.crackfortran(files)
+        crackfortran.onlyfuncs = options['onlyfuncs']
+    crackfortran.include_paths[:] = options['include_paths']
+    crackfortran.dolowercase = options['do-lower']
+    postlist = crackfortran.crackfortran(files)
     if 'signsfile' in options:
-        outmess('Saving signatures to file "%s"\n'%(options['signsfile']))
-        pyf=crackfortran.crack2fortran(postlist)
-        if options['signsfile'][-6:]=='stdout':
+        outmess('Saving signatures to file "%s"\n' % (options['signsfile']))
+        pyf = crackfortran.crack2fortran(postlist)
+        if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
         else:
-            f=open(options['signsfile'], 'w')
+            f = open(options['signsfile'], 'w')
             f.write(pyf)
             f.close()
     if options["coutput"] is None:
@@ -304,10 +350,11 @@ def callcrackfortran(files, options):
             mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
     return postlist
 
+
 def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
-    modules, mnames, isusedby=[], [], {}
+    modules, mnames, isusedby = [], [], {}
     for i in range(len(lst)):
         if '__user__' in lst[i]['name']:
             cb_rules.buildcallbacks(lst[i])
@@ -315,25 +362,28 @@ def buildmodules(lst):
             if 'use' in lst[i]:
                 for u in lst[i]['use'].keys():
                     if u not in isusedby:
-                        isusedby[u]=[]
+                        isusedby[u] = []
                     isusedby[u].append(lst[i]['name'])
             modules.append(lst[i])
             mnames.append(lst[i]['name'])
     ret = {}
     for i in range(len(mnames)):
         if mnames[i] in isusedby:
-            outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i], ','.join(['"%s"'%s for s in isusedby[mnames[i]]])))
+            outmess('\tSkipping module "%s" which is used by %s.\n' % (
+                mnames[i], ','.join(['"%s"' % s for s in isusedby[mnames[i]]])))
         else:
-            um=[]
+            um = []
             if 'use' in modules[i]:
                 for u in modules[i]['use'].keys():
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
-                        outmess('\tModule "%s" uses nonexisting "%s" which will be ignored.\n'%(mnames[i], u))
+                        outmess(
+                            '\tModule "%s" uses nonexisting "%s" which will be ignored.\n' % (mnames[i], u))
             ret[mnames[i]] = {}
             dict_append(ret[mnames[i]], rules.buildmodule(modules[i], um))
     return ret
+
 
 def dict_append(d_out, d_in):
     for (k, v) in d_in.items():
@@ -344,67 +394,78 @@ def dict_append(d_out, d_in):
         else:
             d_out[k].append(v)
 
+
 def run_main(comline_list):
     """Run f2py as if string.join(comline_list,' ') is used as a command line.
     In case of using -h flag, return None.
     """
     crackfortran.reset_global_f2py_vars()
-    f2pydir=os.path.dirname(os.path.abspath(cfuncs.__file__))
+    f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
     fobjhsrc = os.path.join(f2pydir, 'src', 'fortranobject.h')
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
-    files, options=scaninputline(comline_list)
-    auxfuncs.options=options
-    postlist=callcrackfortran(files, options)
-    isusedby={}
+    files, options = scaninputline(comline_list)
+    auxfuncs.options = options
+    postlist = callcrackfortran(files, options)
+    isusedby = {}
     for i in range(len(postlist)):
         if 'use' in postlist[i]:
             for u in postlist[i]['use'].keys():
                 if u not in isusedby:
-                    isusedby[u]=[]
+                    isusedby[u] = []
                 isusedby[u].append(postlist[i]['name'])
     for i in range(len(postlist)):
-        if postlist[i]['block']=='python module' and '__user__' in postlist[i]['name']:
+        if postlist[i]['block'] == 'python module' and '__user__' in postlist[i]['name']:
             if postlist[i]['name'] in isusedby:
-                #if not quiet:
-                outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'], ','.join(['"%s"'%s for s in isusedby[postlist[i]['name']]])))
+                # if not quiet:
+                outmess('Skipping Makefile build for module "%s" which is used by %s\n' % (
+                    postlist[i]['name'], ','.join(['"%s"' % s for s in isusedby[postlist[i]['name']]])))
     if 'signsfile' in options:
-        if options['verbose']>1:
-            outmess('Stopping. Edit the signature file and then run f2py on the signature file: ')
-            outmess('%s %s\n'%(os.path.basename(sys.argv[0]), options['signsfile']))
+        if options['verbose'] > 1:
+            outmess(
+                'Stopping. Edit the signature file and then run f2py on the signature file: ')
+            outmess('%s %s\n' %
+                    (os.path.basename(sys.argv[0]), options['signsfile']))
         return
     for i in range(len(postlist)):
-        if postlist[i]['block']!='python module':
+        if postlist[i]['block'] != 'python module':
             if 'python module' not in options:
-                errmess('Tip: If your original code is Fortran source then you must use -m option.\n')
-            raise TypeError('All blocks must be python module blocks but got %s'%(repr(postlist[i]['block'])))
-    auxfuncs.debugoptions=options['debug']
-    f90mod_rules.options=options
-    auxfuncs.wrapfuncs=options['wrapfuncs']
+                errmess(
+                    'Tip: If your original code is Fortran source then you must use -m option.\n')
+            raise TypeError('All blocks must be python module blocks but got %s' % (
+                repr(postlist[i]['block'])))
+    auxfuncs.debugoptions = options['debug']
+    f90mod_rules.options = options
+    auxfuncs.wrapfuncs = options['wrapfuncs']
 
-    ret=buildmodules(postlist)
+    ret = buildmodules(postlist)
 
     for mn in ret.keys():
-        dict_append(ret[mn], {'csrc':fobjcsrc,'h':fobjhsrc})
+        dict_append(ret[mn], {'csrc': fobjcsrc, 'h': fobjhsrc})
     return ret
 
-def filter_files(prefix,suffix,files,remove_prefix=None):
+
+def filter_files(prefix, suffix, files, remove_prefix=None):
     """
     Filter files by prefix and suffix.
     """
     filtered, rest = [], []
-    match = re.compile(prefix+r'.*'+suffix+r'\Z').match
+    match = re.compile(prefix + r'.*' + suffix + r'\Z').match
     if remove_prefix:
         ind = len(prefix)
     else:
         ind = 0
     for file in [x.strip() for x in files]:
-        if match(file): filtered.append(file[ind:])
-        else: rest.append(file)
+        if match(file):
+            filtered.append(file[ind:])
+        else:
+            rest.append(file)
     return filtered, rest
+
 
 def get_prefix(module):
     p = os.path.dirname(os.path.dirname(module.__file__))
     return p
+
 
 def run_compile():
     """
@@ -416,11 +477,13 @@ def run_compile():
     del sys.argv[i]
 
     remove_build_dir = 0
-    try: i = sys.argv.index('--build-dir')
-    except ValueError: i=None
+    try:
+        i = sys.argv.index('--build-dir')
+    except ValueError:
+        i = None
     if i is not None:
-        build_dir = sys.argv[i+1]
-        del sys.argv[i+1]
+        build_dir = sys.argv[i + 1]
+        del sys.argv[i + 1]
         del sys.argv[i]
     else:
         remove_build_dir = 1
@@ -432,7 +495,8 @@ def run_compile():
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
-    _reg2 = re.compile(r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+    _reg2 = re.compile(
+        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -440,19 +504,21 @@ def run_compile():
     for a in sys.argv[1:]:
         if a in ['only:', 'skip:']:
             fl = 1
-        elif a==':':
+        elif a == ':':
             fl = 0
-        if fl or a==':':
+        if fl or a == ':':
             f2py_flags2.append(a)
-    if f2py_flags2 and f2py_flags2[-1]!=':':
+    if f2py_flags2 and f2py_flags2[-1] != ':':
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
 
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
-    _reg3 = re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
+    _reg3 = re.compile(
+        r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
     flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
-    _reg4 = re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
+    _reg4 = re.compile(
+        r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
@@ -460,13 +526,13 @@ def run_compile():
         del_list = []
         for s in flib_flags:
             v = '--fcompiler='
-            if s[:len(v)]==v:
+            if s[:len(v)] == v:
                 from numpy.distutils import fcompiler
                 fcompiler.load_all_fcompiler_classes()
                 allowed_keys = list(fcompiler.fcompiler_class.keys())
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
-                    vmap = {} # XXX
+                    vmap = {}  # XXX
                     try:
                         nv = vmap[ov]
                     except KeyError:
@@ -479,7 +545,7 @@ def run_compile():
         for s in del_list:
             i = flib_flags.index(s)
             del flib_flags[i]
-        assert len(flib_flags)<=2, repr(flib_flags)
+        assert len(flib_flags) <= 2, repr(flib_flags)
 
     _reg5 = re.compile(r'[-][-](verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
@@ -493,15 +559,15 @@ def run_compile():
 
     for optname in ['--include_paths', '--include-paths']:
         if optname in sys.argv:
-            i = sys.argv.index (optname)
-            f2py_flags.extend (sys.argv[i:i+2])
-            del sys.argv[i+1], sys.argv[i]
+            i = sys.argv.index(optname)
+            f2py_flags.extend(sys.argv[i:i + 2])
+            del sys.argv[i + 1], sys.argv[i]
             sources = sys.argv[1:]
 
     if '-m' in sys.argv:
         i = sys.argv.index('-m')
-        modulename = sys.argv[i+1]
-        del sys.argv[i+1], sys.argv[i]
+        modulename = sys.argv[i + 1]
+        del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
     else:
         from numpy.distutils.command.build_src import get_f2py_modulename
@@ -518,27 +584,18 @@ def run_compile():
     libraries, sources = filter_files('-l', '', sources, remove_prefix=1)
     undef_macros, sources = filter_files('-U', '', sources, remove_prefix=1)
     define_macros, sources = filter_files('-D', '', sources, remove_prefix=1)
-    using_numarray = 0
-    using_numeric = 0
     for i in range(len(define_macros)):
         name_value = define_macros[i].split('=', 1)
-        if len(name_value)==1:
+        if len(name_value) == 1:
             name_value.append(None)
-        if len(name_value)==2:
+        if len(name_value) == 2:
             define_macros[i] = tuple(name_value)
         else:
             print('Invalid use of -D:', name_value)
 
     from numpy.distutils.system_info import get_info
 
-    num_include_dir = None
     num_info = {}
-    #import numpy
-    #n = 'numpy'
-    #p = get_prefix(numpy)
-    #from numpy.distutils.misc_util import get_numpy_include_dirs
-    #num_info = {'include_dirs': get_numpy_include_dirs()}
-
     if num_info:
         include_dirs.extend(num_info.get('include_dirs', []))
 
@@ -558,9 +615,9 @@ def run_compile():
         for n in sysinfo_flags:
             i = get_info(n)
             if not i:
-                outmess('No %s resources found in system'\
+                outmess('No %s resources found in system'
                         ' (try `f2py --help-link`)\n' % (repr(n)))
-            dict_append(ext_args,**i)
+            dict_append(ext_args, **i)
 
     ext = Extension(**ext_args)
     sys.argv = [sys.argv[0]] + setup_flags
@@ -569,16 +626,17 @@ def run_compile():
                      '--build-base', build_dir,
                      '--build-platlib', '.'])
     if fc_flags:
-        sys.argv.extend(['config_fc']+fc_flags)
+        sys.argv.extend(['config_fc'] + fc_flags)
     if flib_flags:
-        sys.argv.extend(['build_ext']+flib_flags)
+        sys.argv.extend(['build_ext'] + flib_flags)
 
-    setup(ext_modules = [ext])
+    setup(ext_modules=[ext])
 
     if remove_build_dir and os.path.exists(build_dir):
         import shutil
-        outmess('Removing build directory %s\n'%(build_dir))
+        outmess('Removing build directory %s\n' % (build_dir))
         shutil.rmtree(build_dir)
+
 
 def main():
     if '--help-link' in sys.argv[1:]:
@@ -591,7 +649,7 @@ def main():
     else:
         run_main(sys.argv[1:])
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #    main()
 
 

@@ -5,10 +5,13 @@ import os
 import sys
 import tempfile
 
+
 def run_command(cmd):
     print('Running %r:' % (cmd))
-    s = os.system(cmd)
+    os.system(cmd)
     print('------')
+
+
 def run():
     _path = os.getcwd()
     os.chdir(tempfile.gettempdir())
@@ -53,7 +56,7 @@ def run():
 
     if has_newnumpy:
         try:
-            print('Found new numpy version %r in %s' % \
+            print('Found new numpy version %r in %s' %
                   (numpy.__version__, numpy.__file__))
         except Exception as msg:
             print('error:', msg)
@@ -61,7 +64,7 @@ def run():
 
     if has_f2py2e:
         try:
-            print('Found f2py2e version %r in %s' % \
+            print('Found f2py2e version %r in %s' %
                   (f2py2e.__version__.version, f2py2e.__file__))
         except Exception as msg:
             print('error:', msg)
@@ -70,25 +73,27 @@ def run():
     if has_numpy_distutils:
         try:
             if has_numpy_distutils == 2:
-                print('Found numpy.distutils version %r in %r' % (\
-            numpy.distutils.__version__,
-            numpy.distutils.__file__))
+                print('Found numpy.distutils version %r in %r' % (
+                    numpy.distutils.__version__,
+                    numpy.distutils.__file__))
             else:
-                print('Found numpy_distutils version %r in %r' % (\
-            numpy_distutils.numpy_distutils_version.numpy_distutils_version,
-            numpy_distutils.__file__))
+                print('Found numpy_distutils version %r in %r' % (
+                    numpy_distutils.numpy_distutils_version.numpy_distutils_version,
+                    numpy_distutils.__file__))
             print('------')
         except Exception as msg:
             print('error:', msg)
             print('------')
         try:
             if has_numpy_distutils == 1:
-                print('Importing numpy_distutils.command.build_flib ...', end=' ')
+                print(
+                    'Importing numpy_distutils.command.build_flib ...', end=' ')
                 import numpy_distutils.command.build_flib as build_flib
                 print('ok')
                 print('------')
                 try:
-                    print('Checking availability of supported Fortran compilers:')
+                    print(
+                        'Checking availability of supported Fortran compilers:')
                     for compiler_class in build_flib.all_compilers:
                         compiler_class(verbose=1).is_available()
                         print('------')
@@ -96,7 +101,8 @@ def run():
                     print('error:', msg)
                     print('------')
         except Exception as msg:
-            print('error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
+            print(
+                'error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
             print('------')
         try:
             if has_numpy_distutils == 2:
@@ -125,7 +131,8 @@ def run():
                 print('------')
             else:
                 try:
-                    print('Importing numpy_distutils.command.cpuinfo ...', end=' ')
+                    print(
+                        'Importing numpy_distutils.command.cpuinfo ...', end=' ')
                     from numpy_distutils.command.cpuinfo import cpuinfo
                     print('ok')
                     print('------')
@@ -138,7 +145,7 @@ def run():
             cpu = cpuinfo()
             print('CPU information:', end=' ')
             for name in dir(cpuinfo):
-                if name[0]=='_' and name[1]!='_' and getattr(cpu, name[1:])():
+                if name[0] == '_' and name[1] != '_' and getattr(cpu, name[1:])():
                     print(name[1:], end=' ')
             print('------')
         except Exception as msg:

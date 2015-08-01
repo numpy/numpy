@@ -571,7 +571,7 @@ class _test_shared_memory:
             assert_(obj[1][2] == a.arr[1][2], repr((obj, a.arr)))
             a.arr[1][2] = 54
             assert_(obj[1][2] == a.arr[1][2] ==
-                    array( 54, dtype=self.type.dtype), repr((obj, a.arr)))
+                    array(54, dtype=self.type.dtype), repr((obj, a.arr)))
             assert_(a.arr is obj)
             assert_(obj.flags['FORTRAN'])  # obj attributes changed inplace!
             assert_(not obj.flags['CONTIGUOUS'])
