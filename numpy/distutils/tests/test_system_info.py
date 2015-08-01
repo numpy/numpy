@@ -6,6 +6,7 @@ from tempfile import mkstemp, mkdtemp
 
 from numpy.distutils import ccompiler
 from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
+from numpy.testing.decorators import skipif
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
@@ -185,6 +186,7 @@ class TestSystemInfoReading(TestCase):
         except OSError:
             pass
 
+    @skipif('msvc' in repr(ccompiler.new_compiler()))
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
