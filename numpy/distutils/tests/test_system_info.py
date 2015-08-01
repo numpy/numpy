@@ -179,7 +179,8 @@ class TestSystemInfoReading(TestCase):
             os.chdir(self._dir1)
             c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src1.replace('.c', '.o')))
+            assert_(os.path.isfile(self._src1.replace('.c', '.o')) or
+                    os.path.isfile(self._src1.replace('.c', '.obj')))
             os.chdir(previousDir)
         except OSError:
             pass
