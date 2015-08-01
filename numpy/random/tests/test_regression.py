@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 from numpy.testing import (TestCase, run_module_suite, assert_,
-                           assert_array_equal)
+                           assert_array_equal, assert_raises)
 from numpy import random
 from numpy.compat import long
 import numpy as np
@@ -100,6 +100,18 @@ class TestRegression(TestCase):
         x = np.random.beta(0.0001, 0.0001, size=100)
         assert_(not np.any(np.isnan(x)), 'Nans in np.random.beta')
 
+    def test_choice_sum_of_probs_tolerance(self):
+        # The sum of probs should be 1.0 with some tolerance.
+        # For low precision dtypes the tolerance was too tight.
+        # See numpy github issue 6123.
+        np.random.seed(1234)
+        a = [1, 2, 3]
+        counts = [4, 4, 2]
+        for dt in np.float16, np.float32, np.float64:
+            probs = np.array(counts, dtype=dt) / sum(counts)
+            c = np.random.choice(a, p=probs)
+            assert_(c in a)
+            assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
 
 if __name__ == "__main__":
     run_module_suite()
