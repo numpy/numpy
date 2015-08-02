@@ -300,7 +300,7 @@ what was provided by *np.allclose*.
 
 *np.allclose* uses *np.isclose* internally.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*np.allcose* now uses *np.isclose* internally and inherits the ability to
+*np.allclose* now uses *np.isclose* internally and inherits the ability to
 compare NaNs as equal by setting ``equal_nan=True``. Subclasses, such as
 *np.ma.MaskedArray*, are also preserved now.
 
