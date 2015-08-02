@@ -487,7 +487,7 @@ do {                                                            \
 #ifdef NPY_USE_C99_COMPLEX
 
 /* Microsoft C defines _MSC_VER */
-if defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
 typedef union {
         npy_cdouble npy_z;
         _Dcomplex c99_z;
