@@ -24,8 +24,7 @@ def configuration(parent_package='',top_path=None):
     def generate_libraries(ext, build_dir):
         config_cmd = config.get_config_cmd()
         libs = get_mathlibs()
-        tc = testcode_wincrypt()
-        if config_cmd.try_run(tc):
+        if sys.platform == 'win32':
             libs.append('Advapi32')
         ext.libraries.extend(libs)
         return None
@@ -56,18 +55,6 @@ def configuration(parent_package='',top_path=None):
 
     return config
 
-def testcode_wincrypt():
-    return """\
-/* check to see if _WIN32 is defined */
-int main(int argc, char *argv[])
-{
-#ifdef _WIN32
-    return 0;
-#else
-    return 1;
-#endif
-}
-"""
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
