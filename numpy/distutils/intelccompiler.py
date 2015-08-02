@@ -19,6 +19,7 @@ class IntelCCompiler(UnixCCompiler):
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
+                             archiver='xiar' + ' cru',
                              linker_exe=compiler,
                              linker_so=compiler + ' -shared')
 
@@ -48,6 +49,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
+                             archiver='xiar' + ' cru',
                              linker_exe=compiler,
                              linker_so=compiler + ' -shared')
 
@@ -66,6 +68,7 @@ class IntelCCompilerW(MSVCCompiler):
     def initialize(self, plat_name=None):
         MSVCCompiler.initialize(self, plat_name)
         self.cc = self.find_exe("icl.exe")
+        self.lib = self.find_exe("xilib")
         self.linker = self.find_exe("xilink")
         self.compile_options = ['/nologo', '/O3', '/MD', '/W3', '/Qstd=c99']
         self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
