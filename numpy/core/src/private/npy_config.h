@@ -32,7 +32,7 @@
 #endif
 
 /* Disable broken MS math functions */
-#if defined(_MSC_VER) || defined(__MINGW32_VERSION)
+#if (defined(_MSC_VER) && (_MSC_VER < 1900)) || defined(__MINGW32_VERSION)
 
 #undef HAVE_ATAN2
 #undef HAVE_ATAN2F
@@ -41,6 +41,23 @@
 #undef HAVE_HYPOT
 #undef HAVE_HYPOTF
 #undef HAVE_HYPOTL
+
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER == 1900)
+
+#undef HAVE_CASIN
+#undef HAVE_CASINF
+#undef HAVE_CASINL
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+#undef HAVE_CASINHL
+#undef HAVE_CATAN
+#undef HAVE_CATANF
+#undef HAVE_CATANL
+#undef HAVE_CATANH
+#undef HAVE_CATANHF
+#undef HAVE_CATANHL
 
 #endif
 
