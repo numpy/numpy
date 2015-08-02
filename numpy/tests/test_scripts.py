@@ -60,6 +60,10 @@ def run_command(cmd, check_code=True):
 @skipif_inplace
 def test_f2py():
     # test that we can run f2py script
-    f2py_cmd = 'f2py' + basename(sys.executable)[6:]
-    code, stdout, stderr = run_command([f2py_cmd, '-v'])
+    if sys.platform == 'win32':
+        f2py_cmd = r"%s\Scripts\f2py.py" % dirname(sys.executable)
+        code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
+    else:
+        f2py_cmd = 'f2py' + basename(sys.executable)[6:]
+        code, stdout, stderr = run_command([f2py_cmd, '-v'])
     assert_equal(stdout.strip(), asbytes('2'))
