@@ -35,6 +35,9 @@ abs_intp(npy_intp x)
     return abs(x);
 #elif (NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG)
     return labs(x);
+#elif defined(_MSC_VER) && (_MSC_VER < 1600)
+    /* llabs is not available with Visual Studio 2008 */
+    return x > 0 ? x : -x;
 #else
     return llabs(x);
 #endif
