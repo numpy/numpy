@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
-from numpy.distutils.msvc9compiler import MSVCCompiler
+from distutils.msvc9compiler import MSVCCompiler
 from numpy.distutils.ccompiler import simple_version_match
 
 
@@ -19,6 +19,7 @@ class IntelCCompiler(UnixCCompiler):
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
+                             archiver='xiar' + ' cru',
                              linker_exe=compiler,
                              linker_so=compiler + ' -shared')
 
@@ -40,6 +41,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
     compiler_type = 'intelem'
     cc_exe = 'icc -m64 -fPIC'
     cc_args = "-fPIC"
+
     def __init__(self, verbose=0, dry_run=0, force=0):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
         self.cc_exe = 'icc -m64 -fPIC'
@@ -47,6 +49,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
+                             archiver='xiar' + ' cru',
                              linker_exe=compiler,
                              linker_so=compiler + ' -shared')
 
@@ -65,10 +68,11 @@ class IntelCCompilerW(MSVCCompiler):
     def initialize(self, plat_name=None):
         MSVCCompiler.initialize(self, plat_name)
         self.cc = self.find_exe("icl.exe")
+        self.lib = self.find_exe("xilib")
         self.linker = self.find_exe("xilink")
-        self.compile_options = ['/nologo', '/O3', '/MD', '/W3']
-        self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3', '/Z7',
-                                      '/D_DEBUG']
+        self.compile_options = ['/nologo', '/O3', '/MD', '/W3', '/Qstd=c99']
+        self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
+                                      '/Qstd=c99', '/Z7', '/D_DEBUG']
 
 
 class IntelEM64TCCompilerW(IntelCCompilerW):

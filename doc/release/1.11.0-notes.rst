@@ -1,0 +1,35 @@
+NumPy 1.11.0 Release Notes
+**************************
+
+This release supports Python 2.6 - 2.7 and 3.2 - 3.5.
+
+
+Highlights
+==========
+
+
+Dropped Support:
+
+
+Future Changes:
+
+
+Compatibility notes
+===================
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
+
+
+Deprecations
+============
+

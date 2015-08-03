@@ -39,7 +39,8 @@ class config(old_config):
         old_config._check_compiler(self)
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 
-        if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
+        if sys.platform == 'win32' and (self.compiler.compiler_type in
+                                        ('msvc', 'intelw', 'intelemw')):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
             # initialize call query_vcvarsall, which throws an IOError, and
             # causes an error along the way without much information. We try to
