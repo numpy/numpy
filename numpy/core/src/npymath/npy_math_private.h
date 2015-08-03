@@ -540,11 +540,5 @@ typedef union {
 } __npy_clongdouble_to_c99_cast;
 #endif /* !NPY_USE_C99_COMPLEX */
 
-/* Intel C for Windows uses POW for 64 bits longdouble*/
-#if defined(_MSC_VER) && defined(__INTEL_COMPILER)
-#if defined(HAVE_POWL) && (NPY_SIZEOF_LONGDOUBLE == 8)
-#undef HAVE_POWL
-#endif
-#endif /* _MSC_VER and __INTEL_COMPILER */
 
 #endif /* !_NPY_MATH_PRIVATE_H_ */
