@@ -1,0 +1,25 @@
+NumPy 1.9.2 Release Notes
+*************************
+
+This is a bugfix only release in the 1.9.x series.
+
+Issues fixed
+============
+
+* `#5316 <https://github.com/numpy/numpy/issues/5316>`__: fix too large dtype alignment of strings and complex types
+* `#5424 <https://github.com/numpy/numpy/issues/5424>`__: fix ma.median when used on ndarrays
+* `#5481 <https://github.com/numpy/numpy/issues/5481>`__: Fix astype for structured array fields of different byte order
+* `#5354 <https://github.com/numpy/numpy/issues/5354>`__: fix segfault when clipping complex arrays
+* `#5524 <https://github.com/numpy/numpy/issues/5524>`__: allow np.argpartition on non ndarrays
+* `#5612 <https://github.com/numpy/numpy/issues/5612>`__: Fixes ndarray.fill to accept full range of uint64
+* `#5155 <https://github.com/numpy/numpy/issues/5155>`__: Fix loadtxt with comments=None and a string None data
+* `#4476 <https://github.com/numpy/numpy/issues/4476>`__: Masked array view fails if structured dtype has datetime component
+* `#5388 <https://github.com/numpy/numpy/issues/5388>`__: Make RandomState.set_state and RandomState.get_state threadsafe
+* `#5390 <https://github.com/numpy/numpy/issues/5390>`__: make seed, randint and shuffle threadsafe
+* `#5374 <https://github.com/numpy/numpy/issues/5374>`__: Fixed incorrect assert_array_almost_equal_nulp documentation
+* `#5393 <https://github.com/numpy/numpy/issues/5393>`__: Add support for ATLAS > 3.9.33.
+* `#5313 <https://github.com/numpy/numpy/issues/5313>`__: PyArray_AsCArray caused segfault for 3d arrays
+* `#5492 <https://github.com/numpy/numpy/issues/5492>`__: handle out of memory in rfftf
+* `#4181 <https://github.com/numpy/numpy/issues/4181>`__: fix a few bugs in the random.pareto docstring
+* `#5359 <https://github.com/numpy/numpy/issues/5359>`__: minor changes to linspace docstring
+* `#4723 <https://github.com/numpy/numpy/issues/4723>`__: fix a compile issues on AIX
