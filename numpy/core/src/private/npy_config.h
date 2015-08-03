@@ -61,6 +61,15 @@
 
 #endif
 
+
+/* Intel C for Windows uses POW for 64 bits longdouble*/
+#if defined(_MSC_VER) && defined(__INTEL_COMPILER)
+#if defined(HAVE_POWL) && (NPY_SIZEOF_LONGDOUBLE == 8)
+#undef HAVE_POWL
+#endif
+#endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
+
+
 /* Disable broken gnu trig functions on linux */
 #if defined(__linux__) && defined(__GNUC__)
 
