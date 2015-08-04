@@ -5,6 +5,9 @@ from __future__ import division, print_function
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('numpy', parent_package, top_path)
+
+    # If you update this list, then also update the file numpy/bento.info
+    config.add_subpackage('build_utils')
     config.add_subpackage('distutils')
     config.add_subpackage('testing')
     config.add_subpackage('f2py')
