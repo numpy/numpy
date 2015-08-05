@@ -173,7 +173,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/O1']  # Scipy test failures with /O2
 
     def get_flags_arch(self):
-        return ["/arch:IA-32", "/QaxSSE3"]
+        return ["/arch:IA32", "/QaxSSE3"]
 
     def runtime_library_dir_option(self, dir):
         raise NotImplementedError
