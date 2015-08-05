@@ -13,9 +13,9 @@ waflib.Logs.verbose = 1
 # Importing this adds new checkers to waf configure context - I don't like this
 # way of working, should find a more explicit way to attach new functions to
 # context.
-import numpy.build_utils.waf
+import numpy._build_utils.waf
 
-from numpy.build_utils.apple_accelerate \
+from numpy._build_utils.apple_accelerate \
     import \
         get_sgemv_fix
 
@@ -104,18 +104,18 @@ def type_checks(conf):
     header_name = "Python.h"
     features = "c pyext"
     for c_type in ("int", "long", "short"):
-        macro_name = "SIZEOF_%s" % numpy.build_utils.waf.sanitize_string(c_type)
+        macro_name = "SIZEOF_%s" % numpy._build_utils.waf.sanitize_string(c_type)
         conf.check_declaration(macro_name, header_name=header_name,
                                features=features)
         NUMPYCONFIG_SYM.append((macro_name, macro_name))
 
     for c_type, e_size in (("float", 4), ("double", 8), ("long double", [12, 16])):
-        macro_name = "SIZEOF_%s" % numpy.build_utils.waf.sanitize_string(c_type)
+        macro_name = "SIZEOF_%s" % numpy._build_utils.waf.sanitize_string(c_type)
         size = conf.check_type_size(c_type, header_name=header_name,
                                     features=features, expected_sizes=e_size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
-        macro_name = "SIZEOF_COMPLEX_%s" % numpy.build_utils.waf.sanitize_string(c_type)
+        macro_name = "SIZEOF_COMPLEX_%s" % numpy._build_utils.waf.sanitize_string(c_type)
         complex_def = "struct {%s __x; %s __y;}" % (c_type, c_type)
         size = conf.check_type_size(complex_def, header_name=header_name,
                                     features=features, expected_sizes=2*size)
@@ -126,12 +126,12 @@ def type_checks(conf):
 
     size = conf.check_type_size("Py_intptr_t", header_name=header_name,
                                 expected_sizes=[4, 8], features=features)
-    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("Py_intptr_t"),
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy._build_utils.waf.sanitize_string("Py_intptr_t"),
                            '%d' % size))
 
     size = conf.check_type_size("off_t", header_name=header_name,
                                 expected_sizes=[4, 8], features=features)
-    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.waf.sanitize_string("off_t"),
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy._build_utils.waf.sanitize_string("off_t"),
                            '%d' % size))
 
     # We check declaration AND type because that's how distutils does it.
@@ -219,7 +219,7 @@ def check_math_runtime(conf):
     features = "c pyext cprogram"
     for f in OPTIONAL_STDFUNCS_MAYBE:
         try:
-            conf.check_declaration("HAVE_%s" % numpy.build_utils.waf.sanitize_string(f),
+            conf.check_declaration("HAVE_%s" % numpy._build_utils.waf.sanitize_string(f),
                                     header_name=header_name,
                                     features=features)
             OPTIONAL_STDFUNCS.remove(f)
@@ -257,10 +257,10 @@ def check_complex(conf):
         for t in C99_COMPLEX_TYPES:
             try:
                 conf.check_type(t, header_name='complex.h')
-                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t),
-                                        '#define NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t)))
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy._build_utils.waf.sanitize_string(t),
+                                        '#define NPY_HAVE_%s' % numpy._build_utils.waf.sanitize_string(t)))
             except waflib.Errors.ConfigurationError:
-                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t), ''))
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy._build_utils.waf.sanitize_string(t), ''))
 
         for prec in ["", "f", "l"]:
             flist = [f + prec for f in C99_COMPLEX_FUNCS]
@@ -268,7 +268,7 @@ def check_complex(conf):
     else:
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_COMPLEX', ''))
         for t in C99_COMPLEX_TYPES:
-            NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t), ''))
+            NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy._build_utils.waf.sanitize_string(t), ''))
 
 def check_win32_specifics(conf):
     from numpy.distutils.misc_util import get_build_architecture
@@ -300,7 +300,7 @@ def post_configure(context):
     type_checks(conf)
     signal_smp_checks(conf)
     check_math_runtime(conf)
-    numpy.build_utils.waf.check_inline(conf)
+    numpy._build_utils.waf.check_inline(conf)
     check_complex(conf)
     check_win32_specifics(conf)
 

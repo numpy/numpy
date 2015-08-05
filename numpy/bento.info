@@ -3,7 +3,7 @@ Recurse:
 
 Library:
     Packages:
-        build_utils,
+        _build_utils,
         compat,
         core,
         core.code_generators,
