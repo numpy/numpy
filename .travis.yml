@@ -16,6 +16,10 @@ addons:
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+
 python:
   - 2.6
   - 2.7
@@ -60,11 +64,11 @@ before_install:
   # We therefore control our own environment, avoid travis' numpy
   - virtualenv --python=python venv
   - source venv/bin/activate
-  - pip install nose
-  # pip install coverage
   - python -V
   - pip install --upgrade pip setuptools
   # Speed up install by not compiling Cython
+  - pip install nose
+  # pip install coverage
   - pip install --install-option="--no-cython-compile" Cython
   - popd
 
