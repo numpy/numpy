@@ -215,7 +215,7 @@ class GnuFCompiler(FCompiler):
                 # use -mincoming-stack-boundary=2
                 # due to the change to 16 byte stack alignment since GCC 4.6
                 # but 32 bit Windows ABI defines 4 bytes stack alignment
-                opt = ['-O2 -march=core2 -mtune=generic -mfpmath=sse -msse2'
+                opt = ['-O2 -march=core2 -mtune=generic -mfpmath=sse -msse2 '
                        '-mincoming-stack-boundary=2']
             else:
                 opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2']
