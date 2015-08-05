@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-# travis boxes give you 1.5 cpus
+# Travis legacy boxes give you 1.5 CPUs, container-based boxes give you 2 CPUs
 export NPY_NUM_BUILD_JOBS=2
 
 # setup env
@@ -47,12 +47,7 @@ setup_chroot()
   # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   DIR=$1
-  # speeds up setup as we don't have eatmydata during bootstrap
-  sudo mkdir -p $DIR
-  sudo mount -t tmpfs -o size=4G tmpfs $DIR
   set -u
-  sudo apt-get update
-  sudo apt-get -qq -y --force-yes install debootstrap eatmydata
   sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
   sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
@@ -117,8 +112,6 @@ PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
 if [ -n "$USE_DEBUG" ]; then
-  sudo apt-get update
-  sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
   PYTHON=python3-dbg
 fi
 
