@@ -10,7 +10,8 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-from numpy.build_utils.apple_accelerate import uses_accelerate_framework, get_sgemv_fix
+from numpy._build_utils.apple_accelerate import (uses_accelerate_framework,
+                                                 get_sgemv_fix)
 
 from setup_common import *
 

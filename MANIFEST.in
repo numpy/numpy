@@ -10,6 +10,8 @@ include setupegg.py
 include site.cfg.example
 include numpy/random/mtrand/generate_mtrand_c.py
 recursive-include numpy/random/mtrand *.pyx *.pxd
+# Add build support that should go in sdist, but not go in bdist/be installed
+recursive-include numpy/_build_utils *
 # Adding scons build related files not found by distutils
 recursive-include numpy/core/code_generators *.py *.txt
 recursive-include numpy/core *.in *.h
