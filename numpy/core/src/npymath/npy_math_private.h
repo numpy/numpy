@@ -491,7 +491,7 @@ do {                                                            \
  * Intel compiler does not use MSVC complex types, but defines _MSC_VER by
  * default.
  */
-#if defined(_MSC_VER) && (_MSC_VER < 1900) && !defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef union {
         npy_cdouble npy_z;
         _Dcomplex c99_z;
