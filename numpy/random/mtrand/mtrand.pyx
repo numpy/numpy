@@ -585,7 +585,9 @@ cdef class RandomState:
     `size` that defaults to ``None``. If `size` is ``None``, then a single
     value is generated and returned. If `size` is an integer, then a 1-D
     array filled with generated values is returned. If `size` is a tuple,
-    then an array with that shape is filled and returned.
+    then an array with that shape is filled and returned.  It should also be
+    noted that when using a given seed, the same sequence of 'RandomState'
+    function calls will always yield the same results.
 
     Parameters
     ----------
