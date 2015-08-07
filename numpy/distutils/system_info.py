@@ -138,10 +138,12 @@ import distutils.sysconfig
 from distutils import log
 from distutils.util import get_platform
 
-from numpy.distutils.exec_command import \
+from numpy.distutils.exec_command import (
     find_executable, exec_command, get_pythonexe
-from numpy.distutils.misc_util import is_sequence, is_string, \
-                                      get_shared_lib_extension
+)
+from numpy.distutils.misc_util import (
+    is_sequence, is_string, get_shared_lib_extension
+)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 import distutils.ccompiler
@@ -1702,10 +1704,29 @@ class blas_info(system_info):
                 c.compile([src], output_dir=tmpdir,
                           include_dirs=self.get_include_dirs())
                 res = True
-            except distutils.ccompiler.CompileError:
+            except DistutilsError:
                 res = False
         finally:
             shutil.rmtree(tmpdir)
+
+        if sys.platform == 'win32' and not res:
+            c = distutils.ccompiler.new_compiler(compiler='mingw32')
+            tmpdir = tempfile.mkdtemp()
+            s = """#include <cblas.h>"""
+            src = os.path.join(tmpdir, 'source.c')
+            try:
+                with open(src, 'wt') as f:
+                    f.write(s)
+                obj = c.compile([src], output_dir=tmpdir)
+                try:
+                    c.compile([src], output_dir=tmpdir,
+                              include_dirs=self.get_include_dirs())
+                    res = True
+                except DistutilsError:
+                    res = False
+            finally:
+                shutil.rmtree(tmpdir)
+
         return res
 
 
