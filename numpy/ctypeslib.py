@@ -327,6 +327,7 @@ if ctypes is not None:
         ((ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong), "i"),
         ((ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong), "u"),
         ((ct.c_float, ct.c_double), "f"),
+        ((ct.c_bool, ), "b"),
     ]
 
     # Prep that numerical ctypes types:
