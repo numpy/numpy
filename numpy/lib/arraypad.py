@@ -1114,7 +1114,7 @@ def _validate_lengths(narray, number_elements):
 # Public functions
 
 
-def pad(array, pad_width, mode=None, **kwargs):
+def pad(array, pad_width, mode, **kwargs):
     """
     Pads an array.
 
@@ -1355,9 +1355,6 @@ def pad(array, pad_width, mode=None, **kwargs):
             if i in ['end_values', 'constant_values']:
                 kwargs[i] = _normalize_shape(narray, kwargs[i],
                                              cast_to_int=False)
-    elif mode is None:
-        raise ValueError('Keyword "mode" must be a function or one of %s.' %
-                         (list(allowedkwargs.keys()),))
     else:
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function
