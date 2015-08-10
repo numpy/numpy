@@ -588,8 +588,8 @@ cdef class RandomState:
     then an array with that shape is filled and returned.
 
     * Compatibility Guarantee*
-    When using a fixed seed and a fixed series of calls to 'RandomState' methods
-    will always produce the same results regardless of platform or numpy
+    A fixed seed and a fixed series of calls to 'RandomState' methods will
+    always produce the same results regardless of platform or numpy
     version. Small differences in floating point values may occur due to
     rounding differences between compilers.
 
