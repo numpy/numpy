@@ -1809,7 +1809,11 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     &array_as_number,                           /* tp_as_number */
     &array_as_sequence,                         /* tp_as_sequence */
     &array_as_mapping,                          /* tp_as_mapping */
-    PyObject_HashNotImplemented,                /* tp_hash */
+    /*
+     * The tp_hash slot will be set PyObject_HashNotImplemented when the
+     * module is loaded.
+     */
+    (hashfunc)0,                                /* tp_hash */
     (ternaryfunc)0,                             /* tp_call */
     (reprfunc)array_str,                        /* tp_str */
     (getattrofunc)0,                            /* tp_getattro */
@@ -1820,7 +1824,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
      | Py_TPFLAGS_CHECKTYPES
      | Py_TPFLAGS_HAVE_NEWBUFFER
 #endif
-     | Py_TPFLAGS_BASETYPE),                  /* tp_flags */
+     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
     0,                                          /* tp_doc */
 
     (traverseproc)0,                            /* tp_traverse */
