@@ -6,6 +6,8 @@ import warnings
 import copy
 import binascii
 
+from numpy.distutils.misc_util import mingw32
+
 
 #-------------------
 # Versioning support
@@ -184,7 +186,7 @@ def check_long_double_representation(cmd):
     # Disable whole program optimization (the default on vs2015, with python 3.5+)
     # which generates intermediary object files and prevents checking the
     # float representation.
-    if sys.platform == "win32":
+    if sys.platform == "win32" and not mingw32():
         try:
             cmd.compiler.compile_options.remove("/GL")
         except ValueError:
