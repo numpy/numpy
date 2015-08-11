@@ -484,6 +484,7 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'usertypes.c'),
                 pjoin('src', 'multiarray', 'vdot.c'),
                 pjoin('src', 'private', 'templ_common.h.src'),
+                pjoin('src', 'private', 'mem_overlap.c'),
                 ]
 
             if bld.env.HAS_CBLAS:

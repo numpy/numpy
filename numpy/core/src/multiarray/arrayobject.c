@@ -51,6 +51,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "buffer.h"
 #include "array_assign.h"
 #include "alloc.h"
+#include "mem_overlap.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
