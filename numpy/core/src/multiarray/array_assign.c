@@ -23,6 +23,7 @@
 #include "array_assign.h"
 #include "common.h"
 #include "lowlevel_strided_loops.h"
+#include "mem_overlap.h"
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
@@ -101,27 +102,17 @@ raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment)
 }
 
 
-/* Gets a half-open range [start, end) which contains the array data */
-NPY_NO_EXPORT void
-get_array_memory_extents(PyArrayObject *arr,
-                         npy_uintp *out_start, npy_uintp *out_end)
-{
-    npy_intp low, upper;
-    offset_bounds_from_strides(PyArray_ITEMSIZE(arr), PyArray_NDIM(arr),
-                               PyArray_DIMS(arr), PyArray_STRIDES(arr),
-                               &low, &upper);
-    *out_start = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)low;
-    *out_end = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)upper;
-}
-
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
 NPY_NO_EXPORT int
 arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
 {
-    npy_uintp start1 = 0, start2 = 0, end1 = 0, end2 = 0;
+    mem_overlap_t result;
 
-    get_array_memory_extents(arr1, &start1, &end1);
-    get_array_memory_extents(arr2, &start2, &end2);
-
-    return (start1 < end2) && (start2 < end1);
+    result = solve_may_share_memory(arr1, arr2, NPY_MAY_SHARE_BOUNDS);
+    if (result == MEM_OVERLAP_NO) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
 }

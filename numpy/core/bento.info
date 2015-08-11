@@ -22,7 +22,8 @@ Library:
             src/multiarray/multiarraymodule_onefile.c
     Extension: multiarray_tests
         Sources:
-            src/multiarray/multiarray_tests.c.src
+            src/multiarray/multiarray_tests.c.src,
+            src/private/mem_overlap.c
     Extension: umath
         Sources:
             src/umath/umathmodule_onefile.c

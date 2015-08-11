@@ -17,6 +17,7 @@
 #include "descriptor.h"
 #include "getset.h"
 #include "arrayobject.h"
+#include "mem_overlap.h"
 
 /*******************  array attribute get and set routines ******************/
 

@@ -762,6 +762,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'npy_config.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
+            join('src', 'private', 'mem_overlap.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -831,6 +832,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
+            join('src', 'private', 'mem_overlap.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -959,7 +961,8 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('multiarray_tests',
-                    sources=[join('src', 'multiarray', 'multiarray_tests.c.src')])
+                    sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
+                             join('src', 'private', 'mem_overlap.c')])
 
     #######################################################################
     #                        operand_flag_tests module                    #

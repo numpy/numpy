@@ -53,6 +53,7 @@
 #include "ucsnarrow.c"
 #include "arrayobject.c"
 #include "numpymemoryview.c"
+#include "mem_overlap.c"
 #include "multiarraymodule.c"
 #include "compiled_base.c"
 
