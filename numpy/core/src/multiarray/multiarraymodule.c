@@ -60,6 +60,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "compiled_base.h"
+#include "mem_overlap.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -4052,29 +4053,87 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+
 static PyObject *
-array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args)
+array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
     PyArrayObject * self = NULL;
     PyArrayObject * other = NULL;
-    int overlap;
+    PyObject *max_work_obj = NULL;
+    static char *kwlist[] = {"self", "other", "max_work", NULL};
 
-    if (!PyArg_ParseTuple(args, "O&O&", PyArray_Converter, &self,
-                          PyArray_Converter, &other)) {
+    mem_overlap_t result;
+    static PyObject *too_hard_cls = NULL;
+    Py_ssize_t max_work = NPY_MAY_SHARE_EXACT;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
+                                     PyArray_Converter, &self,
+                                     PyArray_Converter, &other,
+                                     &max_work_obj)) {
         return NULL;
     }
 
-    overlap = arrays_overlap(self, other);
+    if (max_work_obj == NULL || max_work_obj == Py_None) {
+        /* noop */
+    }
+    else if (PyLong_Check(max_work_obj)) {
+        max_work = PyLong_AsSsize_t(max_work_obj);
+    }
+#if !defined(NPY_PY3K)
+    else if (PyInt_Check(max_work_obj)) {
+        max_work = PyInt_AsSsize_t(max_work_obj);
+    }
+#endif
+    else {
+        PyErr_SetString(PyExc_ValueError, "max_work must be an integer");
+        goto fail;
+    }
+
+    if (max_work < -2) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for max_work");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS;
+    result = solve_may_share_memory(self, other, max_work);
+    NPY_END_THREADS;
+
     Py_XDECREF(self);
     Py_XDECREF(other);
 
-    if (overlap) {
-        Py_RETURN_TRUE;
-    }
-    else {
+    if (result == MEM_OVERLAP_NO) {
         Py_RETURN_FALSE;
     }
+    else if (result == MEM_OVERLAP_YES) {
+        Py_RETURN_TRUE;
+    }
+    else if (result == MEM_OVERLAP_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "Integer overflow in computing overlap");
+        return NULL;
+    }
+    else if (result == MEM_OVERLAP_TOO_HARD) {
+        npy_cache_import("numpy.core._internal", "TooHardError",
+                         &too_hard_cls);
+        if (too_hard_cls) {
+            PyErr_SetString(too_hard_cls, "Exceeded max_work");
+        }
+        return NULL;
+    }
+    else {
+        /* Doesn't happen usually */
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Error in computing overlap");
+        return NULL;
+    }
+
+fail:
+    Py_XDECREF(self);
+    Py_XDECREF(other);
+    return NULL;
 }
+
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
@@ -4182,9 +4241,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"result_type",
         (PyCFunction)array_result_type,
         METH_VARARGS, NULL},
-    {"may_share_memory",
-        (PyCFunction)array_may_share_memory,
-        METH_VARARGS, NULL},
+    {"shares_memory",
+        (PyCFunction)array_shares_memory,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     /* Datetime-related functions */
     {"datetime_data",
         (PyCFunction)array_datetime_data,
@@ -4642,6 +4701,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     ADDCONST(RAISE);
     ADDCONST(WRAP);
     ADDCONST(MAXDIMS);
+
+    ADDCONST(MAY_SHARE_BOUNDS);
+    ADDCONST(MAY_SHARE_EXACT);
 #undef ADDCONST
 
     Py_INCREF(&PyArray_Type);

@@ -3784,23 +3784,40 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'may_share_memory',
+add_newdoc('numpy.core.multiarray', 'shares_memory',
     """
-    Determine if two arrays can share memory
+    shares_memory(a, b, max_work=None)
 
-    The memory-bounds of a and b are computed.  If they overlap then
-    this function returns True.  Otherwise, it returns False.
-
-    A return of True does not necessarily mean that the two arrays
-    share any element.  It just means that they *might*.
+    Determine if two arrays share memory
 
     Parameters
     ----------
     a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem (maximum number
+        of candidate solutions to consider). Note max_work=1 handles
+        most usual cases. In addition, the following special values
+        are recognized:
+
+        max_work=MAY_SHARE_EXACT  (default)
+            The problem is solved exactly. In this case, the function returns
+            True only if there is an element shared between the arrays.
+        max_work=MAY_SHARE_BOUNDS
+            Only the memory bounds of a and b are checked.
+
+    Raises
+    ------
+    numpy.TooHardError
+        Exceeded max_work.
 
     Returns
     -------
     out : bool
+
+    See Also
+    --------
+    may_share_memory
 
     Examples
     --------

@@ -6,8 +6,9 @@ import itertools
 import numpy as np
 from numpy.testing import run_module_suite, assert_, assert_raises, assert_equal
 
-from numpy.core.multiarray_tests import solve_diophantine, solve_may_share_memory
+from numpy.core.multiarray_tests import solve_diophantine
 from numpy.lib.stride_tricks import as_strided
+from numpy.compat import long
 
 if sys.version_info[0] >= 3:
     xrange = range
@@ -172,10 +173,10 @@ def test_diophantine_overflow():
 
 
 def check_may_share_memory_exact(a, b):
-    got = solve_may_share_memory(a, b, max_work=MAY_SHARE_EXACT)
+    got = np.may_share_memory(a, b, max_work=MAY_SHARE_EXACT)
 
     assert_equal(np.may_share_memory(a, b),
-                 solve_may_share_memory(a, b, max_work=MAY_SHARE_BOUNDS))
+                 np.may_share_memory(a, b, max_work=MAY_SHARE_BOUNDS))
 
     a.fill(0)
     b.fill(0)
@@ -215,8 +216,8 @@ def test_may_share_memory_manual():
 
     for x in xs:
         # The default is a simple extent check
-        assert_(solve_may_share_memory(x[:,0,:], x[:,1,:]))
-        assert_(solve_may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
+        assert_(np.may_share_memory(x[:,0,:], x[:,1,:]))
+        assert_(np.may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
 
         # Exact checks
         check_may_share_memory_exact(x[:,0,:], x[:,1,:])
@@ -286,10 +287,10 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
         a = x[s1].transpose(t1)
         b = x[s2].transpose(t2)
 
-        bounds_overlap = solve_may_share_memory(a, b)
+        bounds_overlap = np.may_share_memory(a, b)
         may_share_answer = np.may_share_memory(a, b)
-        easy_answer = solve_may_share_memory(a, b, max_work=get_max_work(a, b))
-        exact_answer = solve_may_share_memory(a, b, max_work=MAY_SHARE_EXACT)
+        easy_answer = np.may_share_memory(a, b, max_work=get_max_work(a, b))
+        exact_answer = np.may_share_memory(a, b, max_work=MAY_SHARE_EXACT)
 
         if easy_answer != exact_answer:
             # assert_equal is slow...
@@ -326,6 +327,21 @@ def test_may_share_memory_harder_fuzz():
     check_may_share_memory_easy_fuzz(get_max_work=lambda a, b: max(a.size, b.size)//2,
                                      same_steps=False,
                                      min_count=2000)
+
+
+
+def test_shares_memory_api():
+    x = np.zeros([4, 5, 6], dtype=np.int8)
+
+    assert_equal(np.shares_memory(x, x), True)
+    assert_equal(np.shares_memory(x, x.copy()), False)
+
+    a = x[:,::2,::3]
+    b = x[:,::3,::2]
+    assert_equal(np.shares_memory(a, b), True)
+    assert_equal(np.shares_memory(a, b, max_work=None), True)
+    assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
+    assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=long(1))
 
 
 if __name__ == "__main__":

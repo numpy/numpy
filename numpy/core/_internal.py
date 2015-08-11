@@ -759,3 +759,7 @@ def _gcd(a, b):
     while b:
         a, b = b, a % b
     return a
+
+# Exception used in shares_memory()
+class TooHardError(RuntimeError):
+    pass
