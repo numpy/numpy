@@ -1054,75 +1054,6 @@ fail:
     return NULL;
 }
 
-static PyObject *
-array_solve_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
-{
-    PyArrayObject * self = NULL;
-    PyArrayObject * other = NULL;
-    PyObject *max_work_obj = NULL;
-    static char *kwlist[] = {"self", "other", "max_work", NULL};
-
-    mem_overlap_t result;
-    Py_ssize_t max_work;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
-                                     PyArray_Converter, &self,
-                                     PyArray_Converter, &other,
-                                     &max_work_obj)) {
-        return NULL;
-    }
-
-    if (max_work_obj == NULL || max_work_obj == Py_None) {
-        max_work = NPY_MAY_SHARE_BOUNDS;
-    }
-#if defined(NPY_PY3K)
-    else if (PyLong_Check(max_work_obj)) {
-        max_work = PyLong_AsSsize_t(max_work_obj);
-    }
-#else
-    else if (PyInt_Check(max_work_obj)) {
-        max_work = PyInt_AsSsize_t(max_work_obj);
-    }
-#endif
-    else {
-        PyErr_SetString(PyExc_ValueError, "max_work must be an integer");
-        goto fail;
-    }
-
-    if (max_work < -1) {
-        PyErr_SetString(PyExc_ValueError, "Invalid value for max_work");
-        goto fail;
-    }
-
-    NPY_BEGIN_THREADS;
-    result = solve_may_share_memory(self, other, max_work);
-    NPY_END_THREADS;
-
-    Py_XDECREF(self);
-    Py_XDECREF(other);
-
-    if (result == MEM_OVERLAP_NO) {
-        Py_RETURN_FALSE;
-    }
-    else if (result == MEM_OVERLAP_YES ||
-             result == MEM_OVERLAP_OVERFLOW ||
-             result == MEM_OVERLAP_TOO_HARD) {
-        Py_RETURN_TRUE;
-    }
-    else {
-        /* Doesn't happen usually */
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error in may_share_memory");
-        return NULL;
-    }
-
-fail:
-    Py_XDECREF(self);
-    Py_XDECREF(other);
-    return NULL;
-}
-
 
 static PyObject *
 pylong_from_int128(npy_extint128_t value)
@@ -1605,9 +1536,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"solve_diophantine",
         (PyCFunction)array_solve_diophantine,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"solve_may_share_memory",
-        (PyCFunction)array_solve_may_share_memory,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"extint_safe_binop",
         extint_safe_binop,

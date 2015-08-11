@@ -1,9 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['logspace', 'linspace']
+__all__ = ['logspace', 'linspace', 'may_share_memory']
 
 from . import numeric as _nx
-from .numeric import result_type, NaN
+from .numeric import result_type, NaN, shares_memory, MAY_SHARE_BOUNDS, TooHardError
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
@@ -201,3 +201,46 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype)
+
+
+def may_share_memory(a, b, max_work=None):
+    """Determine if two arrays can share memory
+
+    A return of True does not necessarily mean that the two arrays
+    share any element.  It just means that they *might*.
+
+    Only the memory bounds of a and b are checked by default.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem.  See
+        `shares_memory` for details.  Default for ``may_share_memory``
+        is to do a bounds check.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    shares_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+    >>> x = np.zeros([3, 4])
+    >>> np.may_share_memory(x[:,0], x[:,1])
+    True
+
+    """
+    if max_work is None:
+        max_work = MAY_SHARE_BOUNDS
+    try:
+        return shares_memory(a, b, max_work=max_work)
+    except (TooHardError, OverflowError):
+        # Unable to determine, assume yes
+        return True
