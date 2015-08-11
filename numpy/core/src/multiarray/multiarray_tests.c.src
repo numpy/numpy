@@ -1,6 +1,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
+#include "mem_overlap.h"
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -947,6 +948,180 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
 }
 
 
+static PyObject *
+array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyObject *A = NULL;
+    PyObject *U = NULL;
+    Py_ssize_t b_input = 0;
+    Py_ssize_t max_work = -1;
+    int simplify = 0;
+    static char *kwlist[] = {"A", "U", "b", "max_work", "simplify", NULL};
+
+    diophantine_term_t terms[2*NPY_MAXDIMS+2];
+    npy_int64 x[2*NPY_MAXDIMS+2];
+    npy_int64 b;
+    unsigned int nterms, j;
+    mem_overlap_t result = MEM_OVERLAP_YES;
+    PyObject *retval = NULL;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!n|ni", kwlist,
+                                     &PyTuple_Type, &A,
+                                     &PyTuple_Type, &U,
+                                     &b_input, &max_work, &simplify)) {
+        return NULL;
+    }
+
+    if (PyTuple_GET_SIZE(A) > sizeof(terms) / sizeof(diophantine_term_t)) {
+        PyErr_SetString(PyExc_ValueError, "too many terms in equation");
+        goto fail;
+    }
+
+    nterms = PyTuple_GET_SIZE(A);
+
+    if (PyTuple_GET_SIZE(U) != nterms) {
+        PyErr_SetString(PyExc_ValueError, "A, U must be tuples of equal length");
+        goto fail;
+    }
+
+    for (j = 0; j < nterms; ++j) {
+        terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
+        if (terms[j].a == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+        terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
+        if (terms[j].ub == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+    }
+
+    b = b_input;
+
+    NPY_BEGIN_THREADS;
+    if (simplify) {
+        if (diophantine_simplify(&nterms, terms, b)) {
+            result = MEM_OVERLAP_OVERFLOW;
+        }
+    }
+    if (result == MEM_OVERLAP_YES) {
+        result = solve_diophantine(nterms, terms, b, max_work, x);
+    }
+    NPY_END_THREADS;
+
+    if (result == MEM_OVERLAP_YES) {
+        retval = PyTuple_New(nterms);
+        if (retval == NULL) {
+            goto fail;
+        }
+
+        for (j = 0; j < nterms; ++j) {
+            PyObject *obj;
+#if defined(NPY_PY3K)
+            obj = PyLong_FromSsize_t(x[j]);
+#else
+            obj = PyInt_FromSsize_t(x[j]);
+#endif
+            if (obj == NULL) {
+                goto fail;
+            }
+            PyTuple_SET_ITEM(retval, j, obj);
+        }
+    }
+    else if (result == MEM_OVERLAP_NO) {
+        retval = Py_None;
+        Py_INCREF(retval);
+    }
+    else if (result == MEM_OVERLAP_ERROR) {
+        PyErr_SetString(PyExc_ValueError, "Invalid arguments");
+    }
+    else if (result == MEM_OVERLAP_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError, "Integer overflow");
+    }
+    else if (result == MEM_OVERLAP_TOO_HARD) {
+        PyErr_SetString(PyExc_RuntimeError, "Too much work done");
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown error");
+    }
+
+    return retval;
+
+fail:
+    Py_XDECREF(retval);
+    return NULL;
+}
+
+static PyObject *
+array_solve_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyArrayObject * self = NULL;
+    PyArrayObject * other = NULL;
+    PyObject *max_work_obj = NULL;
+    static char *kwlist[] = {"self", "other", "max_work", NULL};
+
+    mem_overlap_t result;
+    Py_ssize_t max_work;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
+                                     PyArray_Converter, &self,
+                                     PyArray_Converter, &other,
+                                     &max_work_obj)) {
+        return NULL;
+    }
+
+    if (max_work_obj == NULL || max_work_obj == Py_None) {
+        max_work = NPY_MAY_SHARE_BOUNDS;
+    }
+#if defined(NPY_PY3K)
+    else if (PyLong_Check(max_work_obj)) {
+        max_work = PyLong_AsSsize_t(max_work_obj);
+    }
+#else
+    else if (PyInt_Check(max_work_obj)) {
+        max_work = PyInt_AsSsize_t(max_work_obj);
+    }
+#endif
+    else {
+        PyErr_SetString(PyExc_ValueError, "max_work must be an integer");
+        goto fail;
+    }
+
+    if (max_work < -1) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for max_work");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS;
+    result = solve_may_share_memory(self, other, max_work);
+    NPY_END_THREADS;
+
+    Py_XDECREF(self);
+    Py_XDECREF(other);
+
+    if (result == MEM_OVERLAP_NO) {
+        Py_RETURN_FALSE;
+    }
+    else if (result == MEM_OVERLAP_YES ||
+             result == MEM_OVERLAP_OVERFLOW ||
+             result == MEM_OVERLAP_TOO_HARD) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        /* Doesn't happen usually */
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error in may_share_memory");
+        return NULL;
+    }
+
+fail:
+    Py_XDECREF(self);
+    Py_XDECREF(other);
+    return NULL;
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -989,6 +1164,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_nditer_too_large",
         test_nditer_too_large,
         METH_VARARGS, NULL},
+    {"solve_diophantine",
+        (PyCFunction)array_solve_diophantine,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"solve_may_share_memory",
+        (PyCFunction)array_solve_may_share_memory,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
