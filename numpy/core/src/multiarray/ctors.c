@@ -45,7 +45,18 @@ static int
 fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
                      const char *end)
 {
-    int r = dtype->f->fromstr(*s, dptr, s, dtype);
+    char *e = *s;
+    int r = dtype->f->fromstr(*s, dptr, &e, dtype);
+    /*
+     * fromstr always returns 0 for basic dtypes
+     * s points to the end of the parsed string
+     * if an error occurs s is not changed
+     */
+    if (*s == e) {
+        /* Nothing read */
+        return -1;
+    }
+    *s = e;
     if (end != NULL && *s > end) {
         return -1;
     }
@@ -57,7 +68,14 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
                       void *NPY_UNUSED(stream_data))
 {
     /* the NULL argument is for backwards-compatibility */
-    return dtype->f->scanfunc(*fp, dptr, NULL, dtype);
+    int r = dtype->f->scanfunc(*fp, dptr, NULL, dtype);
+    /* r can be EOF or the number of items read (0 or 1) */
+    if (r == 1) {
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
 
 /*
@@ -3279,6 +3297,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     dptr = PyArray_DATA(r);
     for (i= 0; num < 0 || i < num; i++) {
         if (next(&stream, dptr, dtype, stream_data) < 0) {
+            /* EOF */
             break;
         }
         *nread += 1;
