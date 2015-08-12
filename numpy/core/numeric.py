@@ -836,7 +836,7 @@ def correlate(a, v, mode='valid', old_behavior=False):
         Input sequences.
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
-        is `valid`, unlike `convolve`, which uses `full`.
+        is 'valid', unlike `convolve`, which uses 'full'.
     old_behavior : bool
         If True, uses the old behavior from Numeric,
         (correlate(a,v) == correlate(v,a), and the conjugate is not taken
@@ -924,11 +924,11 @@ def convolve(a,v,mode='full'):
           completely, and boundary effects may be seen.
 
         'same':
-          Mode `same` returns output of length ``max(M, N)``.  Boundary
+          Mode 'same' returns output of length ``max(M, N)``.  Boundary
           effects are still visible.
 
         'valid':
-          Mode `valid` returns output of length
+          Mode 'valid' returns output of length
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
           for points where the signals overlap completely.  Values outside
           the signal boundary have no effect.
