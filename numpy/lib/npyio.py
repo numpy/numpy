@@ -667,6 +667,8 @@ def _getconv(dtype):
         return np.int64
     if issubclass(typ, np.integer):
         return lambda x: int(float(x))
+    elif issubclass(typ, np.longdouble):
+        return np.longdouble
     elif issubclass(typ, np.floating):
         return floatconv
     elif issubclass(typ, np.complex):

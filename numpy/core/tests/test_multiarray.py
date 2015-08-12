@@ -3411,7 +3411,9 @@ class TestIO(object):
         f = open(self.filename, 'r')
         s = f.read()
         f.close()
-        assert_equal(s, '1.51,2.0,3.51,4.0')
+        #assert_equal(s, '1.51,2.0,3.51,4.0')
+        y = np.array([float(p) for p in s.split(',')])
+        assert_array_equal(x,y)
 
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)

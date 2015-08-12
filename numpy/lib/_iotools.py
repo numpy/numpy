@@ -527,6 +527,7 @@ class StringConverter(object):
 
     _mapper.extend([(nx.floating, float, nx.nan),
                     (complex, _bytes_to_complex, nx.nan + 0j),
+                    (nx.longdouble, nx.longdouble, nx.nan),
                     (nx.string_, bytes, asbytes('???'))])
 
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
@@ -643,6 +644,18 @@ class StringConverter(object):
                     else:
                         self.default = default
                     break
+            # if a converter for the specific dtype is available use that
+            last_func = func
+            for (i, (deftype, func, default_def)) in enumerate(self._mapper):
+                if dtype.type == deftype:
+                    _status = i
+                    last_func = func
+                    if default is None:
+                        self.default = default_def
+                    else:
+                        self.default = default
+                    break
+            func = last_func
             if _status == -1:
                 # We never found a match in the _mapper...
                 _status = 0

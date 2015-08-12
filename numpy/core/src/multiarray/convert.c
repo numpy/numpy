@@ -171,7 +171,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 /*
                  * standard writing
                  */
-                strobj = PyObject_Str(obj);
+                strobj = PyObject_Repr(obj);
                 Py_DECREF(obj);
                 if (strobj == NULL) {
                     Py_DECREF(it);

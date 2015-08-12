@@ -33,7 +33,6 @@
 #include "npy_cblas.h"
 #include <limits.h>
 
-
 /*
  *****************************************************************************
  **                        PYTHON TYPES TO C TYPES                          **
@@ -309,6 +308,54 @@ static int
 
 /**end repeat**/
 
+static NPY_INLINE npy_longdouble
+string_to_long_double(PyObject*op)
+{
+    char *s;
+    char *end;
+    npy_longdouble temp;
+    PyObject* b;
+
+    if (PyUnicode_Check(op)) {
+        b = PyUnicode_AsUTF8String(op);
+        if (!b) {
+            return 0;
+        }
+    }
+    else {
+        b = op;
+        Py_XINCREF(b);
+    }
+    s = PyBytes_AsString(b);
+    if (s) {
+        errno = 0;
+        temp = NumPyOS_ascii_strtold(s, &end);
+        if (end==s || *end) {
+            PyErr_Format(PyExc_ValueError,
+                         "invalid literal for long double: %s",
+                         s);
+            Py_XDECREF(b);
+            return 0;
+        }
+        else if (errno) {
+            PyErr_Format(PyExc_ValueError,
+                         "invalid literal for long double: %s (%s)",
+                         s,
+                         strerror(errno));
+            Py_XDECREF(b);
+            return 0;
+        }
+        Py_XDECREF(b);
+    }
+    else {
+        /* Probably wasn't a string, try converting it via a python double */
+        PyErr_Clear();
+        Py_XDECREF(b);
+        temp = (npy_longdouble) MyPyFloat_AsDouble(op);
+    }
+    return temp;
+}
+
 /*
  * These return array scalars which are different than other date-types.
  */
@@ -330,7 +377,11 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
         temp = ((PyLongDoubleScalarObject *)op)->obval;
     }
     else {
-        temp = (npy_longdouble) MyPyFloat_AsDouble(op);
+        /* In case something funny happened in PyArray_IsScalar */
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        temp = string_to_long_double(op);
     }
     if (PyErr_Occurred()) {
         return -1;
@@ -1572,8 +1623,8 @@ static int
 /**end repeat**/
 
 /**begin repeat
- * #fname = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_float, npy_double, npy_longdouble#
+ * #fname = FLOAT, DOUBLE#
+ * #type = npy_float, npy_double#
  */
 static int
 @fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
@@ -1587,6 +1638,18 @@ static int
     return ret;
 }
 /**end repeat**/
+
+static int
+LONGDOUBLE_scan(FILE *fp, npy_longdouble *ip, void *NPY_UNUSED(ignore),
+        PyArray_Descr *NPY_UNUSED(ignored))
+{
+    long double result;
+    int ret;
+
+    ret = NumPyOS_ascii_ftoLf(fp, &result);
+    *ip = (npy_longdouble) result;
+    return ret;
+}
 
 static int
 HALF_scan(FILE *fp, npy_half *ip, void *NPY_UNUSED(ignore),
@@ -1675,8 +1738,8 @@ static int
 
 /**begin repeat
  *
- * #fname = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_float, npy_double, npy_longdouble#
+ * #fname = FLOAT, DOUBLE#
+ * #type = npy_float, npy_double#
  */
 static int
 @fname@_fromstr(char *str, void *ip, char **endptr,
@@ -1689,6 +1752,17 @@ static int
     return 0;
 }
 /**end repeat**/
+
+static int
+LONGDOUBLE_fromstr(char *str, void *ip, char **endptr,
+        PyArray_Descr *NPY_UNUSED(ignore))
+{
+    long double result;
+
+    result = NumPyOS_ascii_strtold(str, endptr);
+    *(npy_longdouble *)ip = result;
+    return 0;
+}
 
 static int
 HALF_fromstr(char *str, void *ip, char **endptr,
