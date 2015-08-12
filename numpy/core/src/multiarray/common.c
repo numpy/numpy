@@ -876,3 +876,36 @@ end:
     Py_XDECREF(shape1_i);
     Py_XDECREF(shape2_j);
 }
+
+/**
+ * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ *
+ * @param "value" should be the tuple.
+ *
+ * @return "descr" will be set to the field's dtype
+ * @return "offset" will be set to the field's offset
+ *
+ * returns -1 on failure, 0 on success.
+ */
+NPY_NO_EXPORT int
+_unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
+{
+    PyObject * off;
+    if (PyTuple_GET_SIZE(value) < 2) {
+        return -1;
+    }
+    *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
+    off  = PyTuple_GET_ITEM(value, 1);
+
+    if (PyInt_Check(off)) {
+        *offset = PyInt_AsSsize_t(off);
+    }
+    else if (PyLong_Check(off)) {
+        *offset = PyLong_AsSsize_t(off);
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
