@@ -162,13 +162,13 @@ def test_diophantine_overflow():
     max_int64 = np.iinfo(np.int64).max
 
     if max_int64 <= max_intp:
-        # The Python wrapper only takes intp inputs, but the solver
-        # works internally in 64-bit
-        A = (2, 3)
-        U = (max_int64//2, max_int64//6)
-        b = max_int64 - 1
+        # Check that the algorithm works internally in 128-bit;
+        # solving this problem requires large intermediate numbers
+        A = (max_int64//2, max_int64//2 - 10)
+        U = (max_int64//2, max_int64//2 - 10)
+        b = 2*(max_int64//2) - 10
 
-        assert_raises(OverflowError, solve_diophantine, A, U, b)
+        assert_equal(solve_diophantine(A, U, b), (1, 1))
 
 
 def check_may_share_memory_exact(a, b):
