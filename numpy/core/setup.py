@@ -763,6 +763,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -962,7 +963,9 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('multiarray_tests',
                     sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
-                             join('src', 'private', 'mem_overlap.c')])
+                             join('src', 'private', 'mem_overlap.c')],
+                    depends=[join('src', 'private', 'mem_overlap.h'),
+                             join('src', 'private', 'npy_extint128.h')])
 
     #######################################################################
     #                        operand_flag_tests module                    #
