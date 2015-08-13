@@ -4178,11 +4178,9 @@ class TestDot(TestCase):
         assert_raises(TypeError, c.dot, b)
 
     def test_accelerate_framework_sgemv_fix(self):
-        if sys.platform != 'darwin':
-            return
 
         def aligned_array(shape, align, dtype, order='C'):
-            d = np.dtype()
+            d = dtype(0)
             N = np.prod(shape)
             tmp = np.zeros(N * d.nbytes + align, dtype=np.uint8)
             address = tmp.__array_interface__["data"][0]
