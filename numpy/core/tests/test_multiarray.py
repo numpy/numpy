@@ -1016,7 +1016,7 @@ class TestMethods(TestCase):
         # test sorting of complex arrays requiring byte-swapping, gh-5441
         for endianess in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
                 c = arr.copy()
                 c.sort()
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
@@ -1212,7 +1212,7 @@ class TestMethods(TestCase):
         # test argsort of complex arrays requiring byte-swapping, gh-5441
         for endianess in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
                 msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
                 assert_equal(arr.argsort(),
                              np.arange(len(arr), dtype=np.intp), msg)
