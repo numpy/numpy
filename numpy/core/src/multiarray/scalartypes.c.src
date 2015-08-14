@@ -1681,13 +1681,15 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
      *     b['x'][0] = arange(3)  # uses ndarray setitem
      *
      * Ndarray's setfield would try to broadcast the lhs. Instead we use
-     * ndarray getfield to get the field safely, then setitem to set the value
-     * without broadcast. Note we also want subarrays to be set properly, ie
+     * ndarray getfield to get the field safely, then setitem with an empty
+     * tuple to set the value without broadcast. Note we also want subarrays to
+     * be set properly, ie
      *
      *     a = np.zeros(1, dtype=[('x', 'i', 5)])
      *     a[0]['x'] = 1
      *
-     * sets all values to 1. Setitem does this.
+     * sets all values to 1. "getfield + setitem with empty tuple" takes
+     * care of both object arrays and subarrays.
      */
     PyObject *getfield_args, *value, *arr, *meth, *arr_field, *emptytuple;
 
@@ -1726,15 +1728,15 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    /* 2. Fill the resulting array using setitem */
+    /* 2. Assign the value using setitem with empty tuple. */
     emptytuple = PyTuple_New(0);
     if (PyObject_SetItem(arr_field, emptytuple, value) < 0) {
         Py_DECREF(arr_field);
         Py_DECREF(emptytuple);
         return NULL;
     }
-    Py_DECREF(arr_field);
     Py_DECREF(emptytuple);
+    Py_DECREF(arr_field);
 
     Py_RETURN_NONE;
 }
@@ -2158,10 +2160,13 @@ voidtype_length(PyVoidScalarObject *self)
 }
 
 static PyObject *
+voidtype_subscript(PyVoidScalarObject *self, PyObject *ind);
+
+static PyObject *
 voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
 {
     npy_intp m;
-    PyObject *flist=NULL, *fieldind, *fieldparam, *fieldinfo, *ret;
+    PyObject *flist=NULL;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2177,22 +2182,16 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
         PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
         return NULL;
     }
-    /* no error checking needed: descr->names is well structured */
-    fieldind = PyTuple_GET_ITEM(flist, n);
-    fieldparam = PyDict_GetItem(self->descr->fields, fieldind);
-    fieldinfo = PyTuple_GetSlice(fieldparam, 0, 2);
-    ret = voidtype_getfield(self, fieldinfo, NULL);
-    Py_DECREF(fieldinfo);
-    return ret;
-}
 
+    return voidtype_subscript(self, PyTuple_GetItem(flist, n));
+}
 
 /* get field by name or number */
 static PyObject *
 voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 {
     npy_intp n;
-    PyObject *ret, *fieldinfo, *fieldparam;
+    PyObject *ret, *args;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2205,14 +2204,9 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 #else
     if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
 #endif
-        /* look up in fields */
-        fieldparam = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldparam) {
-            goto fail;
-        }
-        fieldinfo = PyTuple_GetSlice(fieldparam, 0, 2);
-        ret = voidtype_getfield(self, fieldinfo, NULL);
-        Py_DECREF(fieldinfo);
+        args = Py_BuildValue("(O)", ind);
+        ret = gentype_generic_method((PyObject *)self, args, NULL, "__getitem__");
+        Py_DECREF(args);
         return ret;
     }
 
@@ -2229,11 +2223,13 @@ fail:
 }
 
 static int
+voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val);
+
+static int
 voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 {
     npy_intp m;
-    PyObject *flist=NULL, *fieldinfo, *newtup;
-    PyObject *res;
+    PyObject *flist=NULL;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2247,24 +2243,11 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
         n += m;
     }
     if (n < 0 || n >= m) {
-        goto fail;
-    }
-    fieldinfo = PyDict_GetItem(self->descr->fields,
-            PyTuple_GET_ITEM(flist, n));
-    newtup = Py_BuildValue("(OOO)", val,
-            PyTuple_GET_ITEM(fieldinfo, 0),
-            PyTuple_GET_ITEM(fieldinfo, 1));
-    res = voidtype_setfield(self, newtup, NULL);
-    Py_DECREF(newtup);
-    if (!res) {
+        PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
         return -1;
     }
-    Py_DECREF(res);
-    return 0;
 
-fail:
-    PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
-    return -1;
+    return voidtype_ass_subscript(self, PyTuple_GetItem(flist, n), val);
 }
 
 static int
@@ -2272,8 +2255,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 {
     npy_intp n;
     char *msg = "invalid index";
-    PyObject *fieldinfo, *newtup;
-    PyObject *res;
+    PyObject *args;
 
     if (!PyDataType_HASFIELDS(self->descr)) {
         PyErr_SetString(PyExc_IndexError,
@@ -2292,20 +2274,49 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 #else
     if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
 #endif
-        /* look up in fields */
-        fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldinfo) {
-            goto fail;
-        }
-        newtup = Py_BuildValue("(OOO)", val,
-                PyTuple_GET_ITEM(fieldinfo, 0),
-                PyTuple_GET_ITEM(fieldinfo, 1));
-        res = voidtype_setfield(self, newtup, NULL);
-        Py_DECREF(newtup);
-        if (!res) {
+        /*
+         * Much like in voidtype_setfield, we cannot simply use ndarray's
+         * __setitem__ since assignment to void scalars should not broadcast
+         * the lhs. Instead we get a view through __getitem__ and then assign
+         * the value using setitem with an empty tuple (which treats both
+         * object arrays and subarrays properly).
+         *
+         * Also we do not want to use voidtype_setfield here, since we do
+         * not need to do the (slow) view safety checks, since we already
+         * know the dtype/offset are safe.
+         */
+
+        PyObject *arr, *arr_field, *meth, *emptytuple;
+
+        /* 1. Convert to 0-d array and use getitem */
+        arr = PyArray_FromScalar((PyObject*)self, NULL);
+        if (arr == NULL) {
             return -1;
         }
-        Py_DECREF(res);
+        meth = PyObject_GetAttrString(arr, "__getitem__");
+        if (meth == NULL) {
+            Py_DECREF(arr);
+            return -1;
+        }
+        args = Py_BuildValue("(O)", ind);
+        arr_field = PyObject_CallObject(meth, args);
+        Py_DECREF(meth);
+        Py_DECREF(arr);
+        Py_DECREF(args);
+
+        if(arr_field == NULL){
+            return -1;
+        }
+
+        /* 2. Assign the value using setitem with empty tuple. */
+        emptytuple = PyTuple_New(0);
+        if (PyObject_SetItem(arr_field, emptytuple, val) < 0) {
+            Py_DECREF(arr_field);
+            Py_DECREF(emptytuple);
+            return -1;
+        }
+        Py_DECREF(emptytuple);
+        Py_DECREF(arr_field);
         return 0;
     }
 

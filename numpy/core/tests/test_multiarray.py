@@ -3754,8 +3754,8 @@ class TestRecord(TestCase):
             b[0][fn1] = 2
             assert_equal(b[fn1], 2)
             # Subfield
-            assert_raises(IndexError, b[0].__setitem__, fnn, 1)
-            assert_raises(IndexError, b[0].__getitem__, fnn)
+            assert_raises(ValueError, b[0].__setitem__, fnn, 1)
+            assert_raises(ValueError, b[0].__getitem__, fnn)
             # Subfield
             fn3 = func('f3')
             sfn1 = func('sf1')
