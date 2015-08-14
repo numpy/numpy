@@ -1526,6 +1526,18 @@ class TestMethods(TestCase):
         b = a.searchsorted(a, 'r', s)
         assert_equal(b, out + 1)
 
+    def test_searchsorted_return_type(self):
+        # Functions returning indices should always return base ndarrays
+        class A(np.ndarray):
+            pass
+        a = np.arange(5).view(A)
+        b = np.arange(1, 3).view(A)
+        s = np.arange(5).view(A)
+        assert_(not isinstance(a.searchsorted(b, 'l'), A))
+        assert_(not isinstance(a.searchsorted(b, 'r'), A))
+        assert_(not isinstance(a.searchsorted(b, 'l', s), A))
+        assert_(not isinstance(a.searchsorted(b, 'r', s), A))
+
     def test_argpartition_out_of_range(self):
         # Test out of range values in kth raise an error, gh-5469
         d = np.arange(10)

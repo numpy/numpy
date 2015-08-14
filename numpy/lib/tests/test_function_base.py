@@ -913,6 +913,15 @@ class TestDigitize(TestCase):
         x, bins = bins, x
         assert_raises(TypeError, digitize, x, bins)
 
+    def test_return_type(self):
+        # Functions returning indices should always return base ndarrays
+        class A(np.ndarray):
+            pass
+        a = np.arange(5).view(A)
+        b = np.arange(1, 3).view(A)
+        assert_(not isinstance(digitize(b, a, False), A))
+        assert_(not isinstance(digitize(b, a, True), A))
+
 
 class TestUnwrap(TestCase):
 
