@@ -362,19 +362,22 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
-    npy_cache_import("numpy.core._internal", "_getfield_is_safe", &checkfunc);
-    if (checkfunc == NULL) {
-        return NULL;
-    }
+    /* check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
+        npy_cache_import("numpy.core._internal", "_getfield_is_safe",
+                         &checkfunc);
+        if (checkfunc == NULL) {
+            return NULL;
+        }
 
-    /* check that we are not reinterpreting memory containing Objects */
-    /* only returns True or raises */
-    safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
-                                 typed, offset);
-    if (safe == NULL) {
-        return NULL;
+        /* only returns True or raises */
+        safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
+                                     typed, offset);
+        if (safe == NULL) {
+            return NULL;
+        }
+        Py_DECREF(safe);
     }
-    Py_DECREF(safe);
 
     ret = PyArray_NewFromDescr(Py_TYPE(self),
                                typed,
