@@ -438,10 +438,6 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
-    npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
-    if (checkfunc == NULL) {
-        return -1;
-    }
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -456,13 +452,21 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    /* check that we are not reinterpreting memory containing Objects */
-    safe = PyObject_CallFunction(checkfunc, "OO", PyArray_DESCR(self), newtype);
-    if (safe == NULL) {
-        Py_DECREF(newtype);
-        return -1;
+    /* check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
+        npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
+        if (checkfunc == NULL) {
+            return -1;
+        }
+
+        safe = PyObject_CallFunction(checkfunc, "OO",
+                                     PyArray_DESCR(self), newtype);
+        if (safe == NULL) {
+            Py_DECREF(newtype);
+            return -1;
+        }
+        Py_DECREF(safe);
     }
-    Py_DECREF(safe);
 
     if (newtype->elsize == 0) {
         /* Allow a void view */

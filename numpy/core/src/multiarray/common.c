@@ -909,3 +909,21 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
 
     return 0;
 }
+
+/*
+ * check whether arrays with datatype dtype might have object fields. This will
+ * only happen for structured dtypes (which may have hidden objects even if the
+ * HASOBJECT flag is false), object dtypes, or subarray dtypes whose base type
+ * is either of these.
+ */
+NPY_NO_EXPORT int
+_may_have_objects(PyArray_Descr *dtype)
+{
+    PyArray_Descr *base = dtype;
+    if (PyDataType_HASSUBARRAY(dtype)) {
+        base = dtype->subarray->base;
+    }
+
+    return (PyDataType_HASFIELDS(base) ||
+            PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
+}

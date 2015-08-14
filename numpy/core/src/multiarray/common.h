@@ -89,6 +89,15 @@ NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
 
 /*
+ * check whether arrays with datatype dtype might have object fields. This will
+ * only happen for structured dtypes (which may have hidden objects even if the
+ * HASOBJECT flag is false), object dtypes, or subarray dtypes whose base type
+ * is either of these.
+ */
+NPY_NO_EXPORT int
+_may_have_objects(PyArray_Descr *dtype);
+
+/*
  * Returns -1 and sets an exception if *index is an invalid index for
  * an array of size max_item, otherwise adjusts it in place to be
  * 0 <= *index < max_item, and returns 0.
