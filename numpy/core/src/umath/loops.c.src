@@ -603,11 +603,21 @@ PyUFunc_On_Om(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
         if (result == NULL) {
             return;
         }
-        if (PyTuple_Check(result)) {
-            if (nout != PyTuple_Size(result)) {
-                Py_DECREF(result);
-                return;
-            }
+        if (nout == 0  && result == Py_None) {
+            /* No output expected, no output received, continue */
+            Py_DECREF(result);
+        }
+        else if (nout == 1) {
+            /* Single output expected, assign and continue */
+            op = (PyObject **)ptrs[nin];
+            Py_XDECREF(*op);
+            *op = result;
+        }
+        else if (PyTuple_Check(result) && nout == PyTuple_Size(result)) {
+            /*
+             * Multiple returns match expected number of outputs, assign
+             * and continue. Will also gobble empty tuples if nout == 0.
+             */
             for(j = 0; j < nout; j++) {
                 op = (PyObject **)ptrs[j+nin];
                 Py_XDECREF(*op);
@@ -616,21 +626,10 @@ PyUFunc_On_Om(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
             }
             Py_DECREF(result);
         }
-        else if (nout == 1) {
-            op = (PyObject **)ptrs[nin];
-            Py_XDECREF(*op);
-            *op = result;
-        }
         else {
-            /*
-             * The single output does not match the expected nout != 1,
-             * which may be reasonable for nout == 0. For other values,
-             * behave as if a 1-tuple had been returned and exit.
-             */
+            /* Mismatch between returns and expected outputs, exit */
             Py_DECREF(result);
-            if (nout != 0) {
-                return;
-            }
+            return;
         }
         for(j = 0; j < ntot; j++) {
             ptrs[j] += steps[j];
