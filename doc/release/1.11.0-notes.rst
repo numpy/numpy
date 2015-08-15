@@ -20,7 +20,9 @@ Compatibility notes
 
 New Features
 ============
-
+* `np.histogram` now provides plugin estimators for automatically estimating the optimal
+number of bins. Passing one of ['auto', 'fd', 'scott', 'rice', 'sturges']
+as the argument to 'bins' results in the corresponding estimator being used.
 
 Improvements
 ============
