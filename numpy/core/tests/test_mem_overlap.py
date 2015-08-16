@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 from numpy.testing import run_module_suite, assert_, assert_raises, assert_equal
 
-from numpy.core.multiarray_tests import solve_diophantine
+from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
 from numpy.lib.stride_tricks import as_strided
 from numpy.compat import long
 
@@ -329,7 +329,6 @@ def test_may_share_memory_harder_fuzz():
                                      min_count=2000)
 
 
-
 def test_shares_memory_api():
     x = np.zeros([4, 5, 6], dtype=np.int8)
 
@@ -342,6 +341,145 @@ def test_shares_memory_api():
     assert_equal(np.shares_memory(a, b, max_work=None), True)
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=long(1))
+
+
+def test_internal_overlap_diophantine():
+    def check(A, U, exists=None):
+        X = solve_diophantine(A, U, 0, require_ub_nontrivial=1)
+
+        if exists is None:
+            exists = (X is not None)
+
+        if X is not None:
+            assert_(sum(a*x for a, x in zip(A, X)) == sum(a*u//2 for a, u in zip(A, U)))
+            assert_(all(0 <= x <= u for x, u in zip(X, U)))
+            assert_(any(x != u//2 for x, u in zip(X, U)))
+
+        if exists:
+            assert_(X is not None, repr(X))
+        else:
+            assert_(X is None, repr(X))
+
+    # Smoke tests
+    check((3, 2), (2*2, 3*2), exists=True)
+    check((3*2, 2), (15*2, (3-1)*2), exists=False)
+
+
+def test_internal_overlap_slices():
+    # Slicing an array never generates internal overlap
+
+    x = np.zeros([17,34,71,97], dtype=np.int16)
+
+    rng = np.random.RandomState(1234)
+
+    def random_slice(n, step):
+        start = rng.randint(0, n+1)
+        stop = rng.randint(start, n+1)
+        if rng.randint(0, 2) == 0:
+            stop, start = start, stop
+            step *= -1
+        return slice(start, stop, step)
+
+    cases = 0
+    min_count = 5000
+
+    while cases < min_count:
+        steps = tuple(rng.randint(1, 11) if rng.randint(0, 5) == 0 else 1
+                      for j in range(x.ndim))
+        t1 = np.arange(x.ndim)
+        rng.shuffle(t1)
+        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
+        a = x[s1].transpose(t1)
+
+        assert not internal_overlap(a)
+        cases += 1
+
+
+def check_internal_overlap(a, manual_expected=None):
+    got = internal_overlap(a)
+
+    # Brute-force check
+    m = set()
+    ranges = tuple(xrange(n) for n in a.shape)
+    for v in itertools.product(*ranges):
+        offset = sum(s*w for s, w in zip(a.strides, v))
+        if offset in m:
+            expected = True
+            break
+        else:
+            m.add(offset)
+    else:
+        expected = False
+
+    # Compare
+    if got != expected:
+        assert_equal(got, expected, err_msg=repr((a.strides, a.shape)))
+    if manual_expected is not None and expected != manual_expected:
+        assert_equal(expected, manual_expected)
+    return got
+
+
+def test_internal_overlap_manual():
+    # Stride tricks can construct arrays with internal overlap
+
+    # We don't care about memory bounds, the array is not
+    # read/write accessed
+    x = np.arange(1).astype(np.int8)
+
+    # Check low-dimensional special cases
+
+    check_internal_overlap(x, False) # 1-dim
+    check_internal_overlap(x.reshape([]), False) # 0-dim
+
+    a = as_strided(x, strides=(3, 4), shape=(4, 4))
+    check_internal_overlap(a, False)
+
+    a = as_strided(x, strides=(3, 4), shape=(5, 4))
+    check_internal_overlap(a, True)
+
+    a = as_strided(x, strides=(0,), shape=(0,))
+    check_internal_overlap(a, False)
+
+    a = as_strided(x, strides=(0,), shape=(1,))
+    check_internal_overlap(a, False)
+
+    a = as_strided(x, strides=(0,), shape=(2,))
+    check_internal_overlap(a, True)
+
+    a = as_strided(x, strides=(0, -9993), shape=(87, 22))
+    check_internal_overlap(a, True)
+
+    a = as_strided(x, strides=(0, -9993), shape=(1, 22))
+    check_internal_overlap(a, False)
+
+    a = as_strided(x, strides=(0, -9993), shape=(0, 22))
+    check_internal_overlap(a, False)
+
+
+def test_internal_overlap_fuzz():
+    # Fuzz check; the brute-force check is fairly slow
+
+    x = np.arange(1).astype(np.int8)
+
+    overlap = 0
+    no_overlap = 0
+    min_count = 100
+
+    rng = np.random.RandomState(1234)
+
+    while min(overlap, no_overlap) < min_count:
+        ndim = rng.randint(1, 4)
+
+        strides = tuple(rng.randint(-1000, 1000) for j in range(ndim))
+        shape = tuple(rng.randint(1, 30) for j in range(ndim))
+
+        a = as_strided(x, strides=strides, shape=shape)
+        result = check_internal_overlap(a)
+
+        if result:
+            overlap += 1
+        else:
+            no_overlap += 1
 
 
 if __name__ == "__main__":

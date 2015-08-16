@@ -958,7 +958,9 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     Py_ssize_t b_input = 0;
     Py_ssize_t max_work = -1;
     int simplify = 0;
-    static char *kwlist[] = {"A", "U", "b", "max_work", "simplify", NULL};
+    int require_ub_nontrivial = 0;
+    static char *kwlist[] = {"A", "U", "b", "max_work", "simplify",
+                             "require_ub_nontrivial", NULL};
 
     diophantine_term_t terms[2*NPY_MAXDIMS+2];
     npy_int64 x[2*NPY_MAXDIMS+2];
@@ -968,10 +970,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     PyObject *retval = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!n|ni", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!n|nii", kwlist,
                                      &PyTuple_Type, &A,
                                      &PyTuple_Type, &U,
-                                     &b_input, &max_work, &simplify)) {
+                                     &b_input, &max_work, &simplify,
+                                     &require_ub_nontrivial)) {
         return NULL;
     }
 
@@ -1001,13 +1004,13 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     b = b_input;
 
     NPY_BEGIN_THREADS;
-    if (simplify) {
+    if (simplify && !require_ub_nontrivial) {
         if (diophantine_simplify(&nterms, terms, b)) {
             result = MEM_OVERLAP_OVERFLOW;
         }
     }
     if (result == MEM_OVERLAP_YES) {
-        result = solve_diophantine(nterms, terms, b, max_work, x);
+        result = solve_diophantine(nterms, terms, b, max_work, require_ub_nontrivial, x);
     }
     NPY_END_THREADS;
 
@@ -1051,6 +1054,62 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
 fail:
     Py_XDECREF(retval);
+    return NULL;
+}
+
+
+static PyObject *
+array_internal_overlap(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyArrayObject * self = NULL;
+    static char *kwlist[] = {"self", "max_work", NULL};
+
+    mem_overlap_t result;
+    Py_ssize_t max_work = NPY_MAY_SHARE_EXACT;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|n", kwlist,
+                                     PyArray_Converter, &self,
+                                     &max_work)) {
+        return NULL;
+    }
+
+    if (max_work < -2) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for max_work");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS;
+    result = solve_may_have_internal_overlap(self, max_work);
+    NPY_END_THREADS;
+
+    Py_XDECREF(self);
+
+    if (result == MEM_OVERLAP_NO) {
+        Py_RETURN_FALSE;
+    }
+    else if (result == MEM_OVERLAP_YES) {
+        Py_RETURN_TRUE;
+    }
+    else if (result == MEM_OVERLAP_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "Integer overflow in computing overlap");
+        return NULL;
+    }
+    else if (result == MEM_OVERLAP_TOO_HARD) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Exceeded max_work");
+        return NULL;
+    }
+    else {
+        /* Doesn't happen usually */
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Error in computing overlap");
+        return NULL;
+    }
+
+fail:
+    Py_XDECREF(self);
     return NULL;
 }
 
@@ -1536,6 +1595,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"solve_diophantine",
         (PyCFunction)array_solve_diophantine,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"internal_overlap",
+        (PyCFunction)array_internal_overlap,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"extint_safe_binop",
         extint_safe_binop,

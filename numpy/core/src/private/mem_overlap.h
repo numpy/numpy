@@ -28,7 +28,7 @@ typedef struct {
 
 NPY_VISIBILITY_HIDDEN mem_overlap_t
 solve_diophantine(unsigned int n, diophantine_term_t *E,
-                  npy_int64 b, Py_ssize_t max_work,
+                  npy_int64 b, Py_ssize_t max_work, int require_nontrivial,
                   npy_int64 *x);
 
 NPY_VISIBILITY_HIDDEN int
@@ -37,6 +37,9 @@ diophantine_simplify(unsigned int *n, diophantine_term_t *E, npy_int64 b);
 NPY_VISIBILITY_HIDDEN mem_overlap_t
 solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
                        Py_ssize_t max_work);
+
+NPY_VISIBILITY_HIDDEN mem_overlap_t
+solve_may_have_internal_overlap(PyArrayObject *a, Py_ssize_t max_work);
 
 NPY_VISIBILITY_HIDDEN void
 offset_bounds_from_strides(const int itemsize, const int nd,

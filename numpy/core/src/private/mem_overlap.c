@@ -307,12 +307,14 @@ diophantine_precompute(unsigned int n,
  * Depth-first bounded Euclid search
  */
 static mem_overlap_t
-diophantine_dfs(unsigned int v,
+diophantine_dfs(unsigned int n,
+                unsigned int v,
                 diophantine_term_t *E,
                 diophantine_term_t *Ep,
                 npy_int64 *Gamma, npy_int64 *Epsilon,
                 npy_int64 b,
                 Py_ssize_t max_work,
+                int require_ub_nontrivial,
                 npy_int64 *x,
                 Py_ssize_t *count)
 {
@@ -411,6 +413,23 @@ diophantine_dfs(unsigned int v,
         if (t_u >= t_l) {
             x[0] = x1 + c1*t_l;
             x[1] = x2 - c2*t_l;
+            if (require_ub_nontrivial) {
+                int j, is_ub_trivial;
+
+                is_ub_trivial = 1;
+                for (j = 0; j < n; ++j) {
+                    if (x[j] != E[j].ub/2) {
+                        is_ub_trivial = 0;
+                        break;
+                    }
+                }
+
+                if (is_ub_trivial) {
+                    /* Ignore 'trivial' solution */
+                    ++*count;
+                    return MEM_OVERLAP_NO;
+                }
+            }
             return MEM_OVERLAP_YES;
         }
         ++*count;
@@ -427,8 +446,9 @@ diophantine_dfs(unsigned int v,
                 return MEM_OVERLAP_OVERFLOW;
             }
 
-            res = diophantine_dfs(v-1, E, Ep, Gamma, Epsilon,
-                                  b2, max_work, x, count);
+            res = diophantine_dfs(n, v-1, E, Ep, Gamma, Epsilon,
+                                  b2, max_work, require_ub_nontrivial,
+                                  x, count);
             if (res != MEM_OVERLAP_NO) {
                 return res;
             }
@@ -448,18 +468,16 @@ diophantine_dfs(unsigned int v,
  *     0 <= x[i] <= U[i]
  *     A[i] > 0
  *
- * Solve via depth-first Euclid's algorithm, as explained in [1]
+ * Solve via depth-first Euclid's algorithm, as explained in [1].
  *
- * References
- * ----------
- * .. [1] P. Ramachandran, ''Use of Extended Euclidean Algorithm in Solving
- *        a System of Linear Diophantine Equations with Bounded Variables''.
- *        Algorithmic Number Theory, Lecture Notes in Computer Science **4076**,
- *        182-192 (2006). doi:10.1007/11792086_14
+ * If require_ub_nontrivial!=0, look for solutions to the problem
+ * where b = A[0]*(U[0]/2) + ... + A[n]*(U[n-1]/2) but ignoring
+ * the trivial solution x[i] = U[i]/2. All U[i] must be divisible by 2.
+ * The value given for `b` is ignored in this case.
  */
 NPY_VISIBILITY_HIDDEN mem_overlap_t
 solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
-                  Py_ssize_t max_work, npy_int64 *x)
+                  Py_ssize_t max_work, int require_ub_nontrivial, npy_int64 *x)
 {
     unsigned int j;
 
@@ -472,17 +490,42 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
         }
     }
 
+    if (require_ub_nontrivial) {
+        npy_int64 ub_sum = 0;
+        char overflow = 0;
+        for (j = 0; j < n; ++j) {
+            if (E[j].ub % 2 != 0) {
+                return MEM_OVERLAP_ERROR;
+            }
+            ub_sum = safe_add(ub_sum,
+                              safe_mul(E[j].a, E[j].ub/2, &overflow),
+                              &overflow);
+        }
+        if (overflow) {
+            return MEM_OVERLAP_ERROR;
+        }
+        b = ub_sum;
+    }
+
     if (b < 0) {
         return MEM_OVERLAP_NO;
     }
 
     if (n == 0) {
+        if (require_ub_nontrivial) {
+            /* Only trivial solution for 0-variable problem */
+            return MEM_OVERLAP_NO;
+        }
         if (b == 0) {
             return MEM_OVERLAP_YES;
         }
         return MEM_OVERLAP_NO;
     }
     else if (n == 1) {
+        if (require_ub_nontrivial) {
+            /* Only trivial solution for 1-variable problem */
+            return MEM_OVERLAP_NO;
+        }
         if (b % E[0].a == 0) {
             x[0] = b / E[0].a;
             if (x[0] >= 0 && x[0] <= E[0].ub) {
@@ -499,7 +542,8 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
         if (diophantine_precompute(n, E, Ep, Gamma, Epsilon)) {
             return MEM_OVERLAP_OVERFLOW;
         }
-        return diophantine_dfs(n-1, E, Ep, Gamma, Epsilon, b, max_work, x, &count);
+        return diophantine_dfs(n, n-1, E, Ep, Gamma, Epsilon, b, max_work,
+                               require_ub_nontrivial, x, &count);
     }
 }
 
@@ -651,13 +695,15 @@ get_array_memory_extents(PyArrayObject *arr,
 
 static int
 strides_to_terms(PyArrayObject *arr, diophantine_term_t *terms,
-                 unsigned int *nterms)
+                 unsigned int *nterms, int skip_empty)
 {
     unsigned int i;
 
     for (i = 0; i < PyArray_NDIM(arr); ++i) {
-        if (PyArray_DIM(arr, i) <= 1 || PyArray_STRIDE(arr, i) == 0) {
-            continue;
+        if (skip_empty) {
+            if (PyArray_DIM(arr, i) <= 1 || PyArray_STRIDE(arr, i) == 0) {
+                continue;
+            }
         }
 
         terms[*nterms].a = PyArray_STRIDE(arr, i);
@@ -745,10 +791,10 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
     }
 
     nterms = 0;
-    if (strides_to_terms(a, terms, &nterms)) {
+    if (strides_to_terms(a, terms, &nterms, 1)) {
         return MEM_OVERLAP_OVERFLOW;
     }
-    if (strides_to_terms(b, terms, &nterms)) {
+    if (strides_to_terms(b, terms, &nterms, 1)) {
         return MEM_OVERLAP_OVERFLOW;
     }
     if (PyArray_ITEMSIZE(a) > 1) {
@@ -769,5 +815,91 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
     }
 
     /* Solve */
-    return solve_diophantine(nterms, terms, rhs, max_work, x);
+    return solve_diophantine(nterms, terms, rhs, max_work, 0, x);
+}
+
+
+/**
+ * Determine whether an array has internal overlap.
+ *
+ * Returns: 0 (no overlap), 1 (overlap), or < 0 (failed to solve).
+ *
+ * max_work and reasons for solver failures are as in solve_may_share_memory.
+ */
+NPY_VISIBILITY_HIDDEN mem_overlap_t
+solve_may_have_internal_overlap(PyArrayObject *a, Py_ssize_t max_work)
+{
+    diophantine_term_t terms[NPY_MAXDIMS+1];
+    npy_int64 x[NPY_MAXDIMS+1];
+    unsigned int nterms;
+    int i, j;
+
+    if (PyArray_ISCONTIGUOUS(a)) {
+        /* Quick case */
+        return MEM_OVERLAP_NO;
+    }
+
+    /* The internal memory overlap problem is looking for two different
+       solutions to
+
+           sum(a*x) = b,   0 <= x[i] <= ub[i]
+
+       for any b. Equivalently,
+
+           sum(a*x0) - sum(a*x1) = 0
+
+       Mapping the coefficients on the left by x0'[i] = x0[i] if a[i] > 0
+       else ub[i]-x0[i] and opposite for x1, we have
+
+           sum(abs(a)*(x0' + x1')) = sum(abs(a)*ub)
+
+       Now, x0!=x1 if for some i we have x0'[i] + x1'[i] != ub[i].
+       We can now change variables to z[i] = x0'[i] + x1'[i] so the problem
+       becomes
+
+           sum(abs(a)*z) = sum(abs(a)*ub),   0 <= z[i] <= 2*ub[i],   z != ub
+
+       This can be solved with solve_diophantine.
+    */
+
+    nterms = 0;
+    if (strides_to_terms(a, terms, &nterms, 0)) {
+        return MEM_OVERLAP_OVERFLOW;
+    }
+    if (PyArray_ITEMSIZE(a) > 1) {
+        terms[nterms].a = 1;
+        terms[nterms].ub = PyArray_ITEMSIZE(a) - 1;
+        ++nterms;
+    }
+
+    /* Get rid of zero coefficients and empty terms */
+    i = 0;
+    for (j = 0; j < nterms; ++j) {
+        if (terms[j].ub == 0) {
+            continue;
+        }
+        else if (terms[j].ub < 0) {
+            return MEM_OVERLAP_NO;
+        }
+        else if (terms[j].a == 0) {
+            return MEM_OVERLAP_YES;
+        }
+        if (i != j) {
+            terms[i] = terms[j];
+        }
+        ++i;
+    }
+    nterms = i;
+
+    /* Double bounds to get the internal overlap problem */
+    for (j = 0; j < nterms; ++j) {
+        terms[j].ub *= 2;
+    }
+
+    /* Sort vs. coefficients; cannot call diophantine_simplify because it may
+       change the decision problem inequality part */
+    qsort(terms, nterms, sizeof(diophantine_term_t), diophantine_sort_A);
+
+    /* Solve */
+    return solve_diophantine(nterms, terms, -1, max_work, 1, x);
 }
