@@ -1676,37 +1676,12 @@ class blas_info(system_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-
         blas_libs = self.get_libs('blas_libs', self._lib_names)
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        if self.has_cblas():
-            info['language'] = 'c'
-            info['define_macros'] = [('HAVE_CBLAS', None)]
-        else:
-            info['language'] = 'f77'  # XXX: is it generally true?
+        info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
-
-    def has_cblas(self):
-        # primitive cblas check by looking for the header
-        res = False
-        c = distutils.ccompiler.new_compiler()
-        tmpdir = tempfile.mkdtemp()
-        s = """#include <cblas.h>"""
-        src = os.path.join(tmpdir, 'source.c')
-        try:
-            with open(src, 'wt') as f:
-                f.write(s)
-            try:
-                c.compile([src], output_dir=tmpdir,
-                          include_dirs=self.get_include_dirs())
-                res = True
-            except distutils.ccompiler.CompileError:
-                res = False
-        finally:
-            shutil.rmtree(tmpdir)
-        return res
 
 
 class openblas_info(blas_info):
