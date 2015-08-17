@@ -5651,6 +5651,10 @@ class TestSizeOf(TestCase):
 
 class TestHashing(TestCase):
 
+    def test_arrays_not_hashable(self):
+        x = np.ones(3)
+        assert_raises(TypeError, hash, x)
+
     def test_collections_hashable(self):
         x = np.array([])
         self.assertFalse(isinstance(x, collections.Hashable))
