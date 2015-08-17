@@ -1722,7 +1722,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
 
     /* ret is a contiguous array of intp type to hold returned indexes */
-    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
+    ret = (PyArrayObject *)PyArray_New(&PyArray_Type, PyArray_NDIM(ap2),
                                        PyArray_DIMS(ap2), NPY_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)ap2);
     if (ret == NULL) {
