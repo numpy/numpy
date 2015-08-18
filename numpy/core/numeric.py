@@ -852,7 +852,7 @@ def correlate(a, v, mode='valid', bias=True):
         Input sequences.
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
-        is `valid`, unlike `convolve`, which uses `full`.
+        is 'valid', unlike `convolve`, which uses 'full'.
     bias : bool, optional
         if `bias` is False (typically used for periodic signals),
         then the unbiased cross-correlation is computed as:        
