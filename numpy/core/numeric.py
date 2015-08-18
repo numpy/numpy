@@ -950,11 +950,11 @@ def convolve(a,v,mode='full'):
           completely, and boundary effects may be seen.
 
         'same':
-          Mode `same` returns output of length ``max(M, N)``.  Boundary
+          Mode 'same' returns output of length ``max(M, N)``.  Boundary
           effects are still visible.
 
         'valid':
-          Mode `valid` returns output of length
+          Mode 'valid' returns output of length
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
           for points where the signals overlap completely.  Values outside
           the signal boundary have no effect.
