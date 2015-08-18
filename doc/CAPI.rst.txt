@@ -71,7 +71,7 @@ This is a very flexible function.
     using ``PyArray_DescrFromType(<typenum>)``. If you want to use a
     flexible size array, then you need to use
     ``PyArray_DescrNewFromType(<flexible typenum>)`` and set its ``elsize``
-    paramter to the desired size. The typenum in both of these cases
+    parameter to the desired size. The typenum in both of these cases
     is one of the ``PyArray_XXXX`` enumerated types.
 
 ``nd`` : ``int``
