@@ -4,8 +4,6 @@ import sys
 
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
-if sys.platform == 'win32':
-    from distutils.msvc9compiler import MSVCCompiler
 from numpy.distutils.ccompiler import simple_version_match
 
 
@@ -58,6 +56,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
 
 
 if sys.platform == 'win32':
+    from distutils.msvc9compiler import MSVCCompiler
     class IntelCCompilerW(MSVCCompiler):
         """
         A modified Intel compiler on Windows compatible with an MSVC-built Python.
