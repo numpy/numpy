@@ -1318,6 +1318,50 @@ class TestMethods(TestCase):
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
 
+    def test_argsort_order(self):
+        dtype = np.dtype([
+                ('id', 'i8'),
+                ('First', 'S8'), 
+                ('Last', 'S8'), 
+                ])
+        data = np.array(
+            [ (0, 'Sam', 'Adams') ] * 100
+        +   [ (1, 'Brian', 'Adams') ] * 100
+        +   [ (2, 'Smith', 'Adams') ] * 100
+            , dtype=dtype)
+        data['id'] = np.arange(len(data)) % 100
+
+        # test stable sort
+        a = data.argsort(kind='m', order=['Last'])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+
+        a = data.argsort(kind='m', order=['Last', 'First'])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+
+        a = data.argsort(kind='m', order=['First', 'Last'])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=['First'])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        # reversed stable sort
+        a = data.argsort(kind='m', order=[('Last', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+
+        a = data.argsort(kind='m', order=[('Last', -1), ('First', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=[('Last', -1), 'First'])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=[('First', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
+
     def test_sort_unicode_kind(self):
         d = np.arange(10)
         k = b'\xc3\xa4'.decode("UTF8")

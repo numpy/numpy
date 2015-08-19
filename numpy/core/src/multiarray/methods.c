@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayobject.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
@@ -118,6 +119,75 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
             } \
         } \
         return forward_ndarray_method(self, args, kwds, callable)
+
+static PyArray_Descr * 
+parse_order(PyArray_Descr *descr, PyObject * order) 
+{
+    npy_intp i;
+    PyArray_Descr * newd = NULL;
+    SortOrderAuxData * p = NULL;
+
+    if (!PyDataType_HASFIELDS(descr)) {
+        PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+                        "order when the array has no fields.");
+        goto exception;
+    }
+
+    if (PyString_Check(order) || PyUnicode_Check(order)) {
+        order = PyTuple_Pack(1, order);
+    } else {
+        order = PySequence_Tuple(order);
+    }
+
+    if(!order) {
+        PyErr_SetString(PyExc_KeyError, "Only sequence type is accepted for the order argument.");
+        goto exception;
+    }
+
+    npy_intp n_fields = PyTuple_GET_SIZE(order);
+
+    p = sort_order_aux_data_alloc(n_fields);
+
+    newd = PyArray_DescrNew(descr);
+
+    for (i = 0; i < n_fields; i++) {
+        PyObject *item, *tup, *key;
+        npy_intp flag;
+
+        item = PyTuple_GET_ITEM(order, i);
+        
+        if(PyTuple_Check(item)) {
+            key = PyTuple_GET_ITEM(item, 0);
+            flag = PyInt_AsLong(PyTuple_GET_ITEM(item, 1));
+        } else {
+            key = item;
+            flag = 1;
+        }
+        tup = PyDict_GetItem(descr->fields, key);
+        if (!tup) {
+            PyErr_SetString(PyExc_KeyError, "The field name does not exist.");
+            goto exception;
+        }
+        p->descrs[i] = PyTuple_GET_ITEM(tup, 0);
+        p->offsets[i] = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
+        p->flags[i] = flag;
+    }
+    Py_DECREF(order);
+
+    newd->c_metadata = p;
+
+    return newd;
+
+exception:
+    if(p) 
+        sort_order_aux_data_free(p);
+
+    Py_XDECREF(order);
+    Py_XDECREF(newd);
+
+    return NULL;
+
+}
 
 
 static PyObject *
@@ -1129,27 +1199,11 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         order = NULL;
     }
     if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                            "order when the array has no fields.");
+        newd = parse_order(saved, order);
+        if(!newd) {
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        Py_DECREF(newd->names);
-        newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1190,27 +1244,11 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
         order = NULL;
     }
     if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                            "order when the array has no fields.");
+        newd = parse_order(saved, order);
+        if(!newd) {
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        Py_DECREF(newd->names);
-        newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1251,26 +1289,11 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         order = NULL;
     }
     if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify "
-                            "order when the array has no fields.");
+        newd = parse_order(saved, order);
+        if(!newd) {
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1305,26 +1328,11 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
         order = NULL;
     }
     if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify "
-                            "order when the array has no fields.");
+        newd = parse_order(saved, order);
+        if(!newd) {
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 

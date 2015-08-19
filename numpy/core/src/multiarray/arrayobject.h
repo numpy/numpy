@@ -12,6 +12,24 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
 
+/* AUX data used by array_sort / array_argsort and VOID_compare */
+typedef struct {
+    struct NpyAuxData_tag base;
+    npy_intp n_fields;
+    int * flags;
+    npy_intp * offsets;
+    PyArray_Descr ** descrs;
+} SortOrderAuxData;
+
+NPY_NO_EXPORT NpyAuxData * 
+sort_order_aux_data_clone(NpyAuxData * p);
+
+NPY_NO_EXPORT SortOrderAuxData * 
+sort_order_aux_data_alloc(npy_intp n_fields);
+
+NPY_NO_EXPORT void 
+sort_order_aux_data_free(NpyAuxData * p);
+
 NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj);
 

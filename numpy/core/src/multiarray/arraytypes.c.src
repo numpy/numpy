@@ -2780,34 +2780,52 @@ UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
  * Must align data passed on to sub-comparisons.
  * Also must swap data based on to sub-comparisons.
  */
+
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
     PyArray_Descr *descr;
-    PyObject *names, *key;
+    PyObject *key;
     PyObject *tup;
     PyArrayObject_fields dummy_struct;
     PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
     char *nip1, *nip2;
-    int i, res = 0, swap = 0;
+    npy_intp n_fields;
+    int i, flag, res = 0, swap = 0;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
     descr = PyArray_DESCR(ap);
+
+    SortOrderAuxData * soad = (SortOrderAuxData*) descr->c_metadata; 
+
     /*
      * Compare on the first-field.  If equal, then
      * compare on the second-field, etc.
      */
-    names = descr->names;
-    for (i = 0; i < PyTuple_GET_SIZE(names); i++) {
+    if (soad) {
+        n_fields = soad->n_fields;
+    } else {
+        n_fields = PyTuple_GET_SIZE(descr->names);
+    }
+
+    for (i = 0; i < n_fields; i++) {
         PyArray_Descr *new;
         npy_intp offset;
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(descr->fields, key);
-        if (unpack_field(tup, &new, &offset) < 0) {
-            goto finish;
+        if (soad) {
+            new = soad->descrs[i];
+            offset = soad->offsets[i];
+            flag = soad->flags[i];
+        } else {
+            key = PyTuple_GET_ITEM(descr->names, i);
+            tup = PyDict_GetItem(descr->fields, key);
+            if (unpack_field(tup, &new, &offset) < 0) {
+                goto finish;
+            }
+            flag = 1;
         }
+
         /* descr is the only field checked by compare or copyswap */
         dummy_struct.descr = new;
         swap = PyArray_ISBYTESWAPPED(dummy);
@@ -2844,6 +2862,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             }
         }
         if (res != 0) {
+            if (flag != 1) res = - res;
             break;
         }
     }
@@ -2851,7 +2870,6 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 finish:
     return res;
 }
-
 
 /*
  *****************************************************************************
@@ -4734,5 +4752,40 @@ set_typeinfo(PyObject *dict)
     Py_DECREF(infodict);
     return 0;
 }
+
+NPY_NO_EXPORT SortOrderAuxData * 
+sort_order_aux_data_alloc(npy_intp n_fields) 
+{
+    SortOrderAuxData * c = malloc(sizeof(SortOrderAuxData));
+    c->n_fields = n_fields;
+    c->flags = malloc(sizeof(int) * n_fields);
+    c->offsets = malloc(sizeof(npy_intp) * n_fields);
+    c->descrs = malloc(sizeof(PyArray_Descr *) * n_fields);
+
+    c->base.clone = sort_order_aux_data_clone;
+    c->base.free = sort_order_aux_data_free;
+    return c;
+}
+
+NPY_NO_EXPORT NpyAuxData * 
+sort_order_aux_data_clone(NpyAuxData * p) 
+{
+    SortOrderAuxData * o = (SortOrderAuxData*) p;
+    SortOrderAuxData * c = sort_order_aux_data_alloc(c->n_fields);
+
+    memcpy(c->flags, o->flags, o->n_fields * sizeof(int));
+    memcpy(c->offsets, o->offsets, o->n_fields * sizeof(npy_intp));
+    memcpy(c->descrs, o->descrs, o->n_fields * sizeof(PyArray_Descr *));
+
+    memcpy(&c->base, &o->base, sizeof(NpyAuxData));
+
+    return (NpyAuxData*) c;
+}
+NPY_NO_EXPORT void 
+sort_order_aux_data_free(NpyAuxData * p) 
+{
+    free(p);
+}
+
 
 #undef _MAX_LETTER
