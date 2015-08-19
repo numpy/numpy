@@ -50,8 +50,6 @@ matrix:
     - python: 3.4
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 2.7
-      env: USE_BENTO=1
-    - python: 2.7
       env: USE_WHEEL=1
 before_install:
   - uname -a

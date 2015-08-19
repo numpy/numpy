@@ -60,36 +60,6 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
 }
 
-setup_bento()
-{
-  export CI_ROOT=$PWD
-  cd ..
-
-  # Waf
-  wget https://raw.githubusercontent.com/numpy/numpy-vendor/master/waf-1.7.16.tar.bz2
-  tar xjvf waf-1.7.16.tar.bz2
-  cd waf-1.7.16
-  python waf-light
-  export WAFDIR=$PWD
-  cd ..
-
-  # Bento
-  wget https://github.com/cournape/Bento/archive/master.zip
-  unzip master.zip
-  cd Bento-master
-  python bootstrap.py
-  export BENTO_ROOT=$PWD
-  cd ..
-
-  cd $CI_ROOT
-
-  # In-place numpy build
-  $BENTO_ROOT/bentomaker build -v -i -j
-
-  # Prepend to PYTHONPATH so tests can be run
-  export PYTHONPATH=$PWD:$PYTHONPATH
-}
-
 run_test()
 {
   if [ -n "$USE_DEBUG" ]; then
@@ -134,7 +104,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   $PIP install nose
   popd
   run_test
-elif [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
+elif [ "$USE_CHROOT" != "1" ]; then
   setup_base
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
@@ -142,10 +112,6 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   setup_chroot $DIR
   # run again in chroot with this time testing
   sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3 PIP=pip3 IN_CHROOT=1 $0 test"
-elif [ -n "$USE_BENTO" ] && [ $# -eq 0 ]; then
-  setup_bento
-  # run again this time testing
-  $0 test
 else
   run_test
 fi
