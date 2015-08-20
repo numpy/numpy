@@ -578,6 +578,7 @@ PyArray_Concatenate(PyObject *op, int axis)
     int iarrays, narrays;
     PyArrayObject **arrays;
     PyArrayObject *ret;
+    PyArray_Descr *dtype = NULL;
 
     if (!PySequence_Check(op)) {
         PyErr_SetString(PyExc_TypeError,
@@ -597,17 +598,75 @@ PyArray_Concatenate(PyObject *op, int axis)
     }
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         PyObject *item = PySequence_GetItem(op, iarrays);
+        PyArrayObject *arr;
+
         if (item == NULL) {
             narrays = iarrays;
             goto fail;
         }
-        arrays[iarrays] = (PyArrayObject *)PyArray_FromAny(item, NULL,
-                                            0, 0, 0, NULL);
-        Py_DECREF(item);
-        if (arrays[iarrays] == NULL) {
-            narrays = iarrays;
+        if (PyArray_Check(item)) {
+            /* If it is already an array, we steal item's reference */
+            arr = (PyArrayObject *)item;
+            dtype = PyArray_DESCR(arr);
+        }
+        else {
+            arr = (PyArrayObject *)PyArray_FromAny(item, NULL, 0, 0, 0, NULL);
+            Py_DECREF(item);
+            if (arr == NULL) {
+                narrays = iarrays;
+                goto fail;
+            }
+            if (PyArray_SIZE(arr) == 0) {
+                /*
+                 * Item was not an array and is empty, so we need to
+                 * cast it to a known dtype in op, or delay creation
+                 * until after we have found a non-default dtype.
+                 */
+                if (dtype == NULL) {
+                    Py_DECREF(arr);
+                    arr = NULL;
+                }
+                else {
+                    PyArrayObject *temp;
+
+                    Py_INCREF(dtype);
+                    temp = (PyArrayObject *)PyArray_FromArray(arr, dtype,
+                                                        NPY_ARRAY_FORCECAST);
+                    Py_DECREF(arr);
+                    if (temp == NULL) {
+                        narrays = iarrays;
+                        goto fail;
+                    }
+                    arr = temp;
+                }
+            }
+            else {
+                dtype = PyArray_DESCR(arr);
+            }
+        }
+        arrays[iarrays] = arr;
+    }
+    /*
+     * Leading non-array empty items in op have not been converted to
+     * arrays for lack of a non-default dtype, convert them now. Notice
+     * that dtype may still be NULL, in which case we end up with the
+     * default dtype we tried so hard to avoid.
+     */
+    iarrays = 0;
+    while (iarrays < narrays && arrays[iarrays] == NULL) {
+        PyObject *item = PySequence_GetItem(op, iarrays);
+        PyArrayObject *arr;
+
+        if (item == NULL) {
             goto fail;
         }
+        Py_XINCREF(dtype);
+        arr = (PyArrayObject *)PyArray_FromAny(item, dtype, 0, 0, 0, NULL);
+        Py_DECREF(item);
+        if (arr == NULL) {
+            goto fail;
+        }
+        arrays[iarrays++] = arr;
     }
 
     if (axis >= NPY_MAXDIMS) {
@@ -627,7 +686,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 fail:
     /* 'narrays' was set to how far we got in the conversion */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        Py_DECREF(arrays[iarrays]);
+        Py_XDECREF(arrays[iarrays]);
     }
     PyArray_free(arrays);
 
