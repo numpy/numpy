@@ -2817,9 +2817,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         PyArray_Descr *new;
         npy_intp offset;
         if (soad) {
-            new = soad->descrs[i];
-            offset = soad->offsets[i];
-            flag = soad->flags[i];
+            new = soad->fields[i].descr;
+            offset = soad->fields[i].offset;
+            flag = soad->fields[i].flag;
         } else {
             key = PyTuple_GET_ITEM(descr->names, i);
             tup = PyDict_GetItem(descr->fields, key);
@@ -4759,11 +4759,11 @@ set_typeinfo(PyObject *dict)
 NPY_NO_EXPORT SortOrderAuxData * 
 sort_order_aux_data_alloc(npy_intp n_fields) 
 {
-    SortOrderAuxData * c = malloc(sizeof(SortOrderAuxData));
+    SortOrderAuxData * c;
+    c = malloc( sizeof(SortOrderAuxData) 
+              + sizeof(c->fields[0]) * (n_fields - 1)
+            );
     c->n_fields = n_fields;
-    c->flags = malloc(sizeof(int) * n_fields);
-    c->offsets = malloc(sizeof(npy_intp) * n_fields);
-    c->descrs = malloc(sizeof(PyArray_Descr *) * n_fields);
 
     c->base.clone = sort_order_aux_data_clone;
     c->base.free = sort_order_aux_data_free;
@@ -4774,12 +4774,9 @@ NPY_NO_EXPORT NpyAuxData *
 sort_order_aux_data_clone(NpyAuxData * p) 
 {
     SortOrderAuxData * o = (SortOrderAuxData*) p;
-    SortOrderAuxData * c = sort_order_aux_data_alloc(c->n_fields);
+    SortOrderAuxData * c = sort_order_aux_data_alloc(o->n_fields);
 
-    memcpy(c->flags, o->flags, o->n_fields * sizeof(int));
-    memcpy(c->offsets, o->offsets, o->n_fields * sizeof(npy_intp));
-    memcpy(c->descrs, o->descrs, o->n_fields * sizeof(PyArray_Descr *));
-
+    memcpy(c->fields, o->fields, o->n_fields * sizeof(o->fields[0]));
     memcpy(&c->base, &o->base, sizeof(NpyAuxData));
 
     return (NpyAuxData*) c;

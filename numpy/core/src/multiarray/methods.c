@@ -169,9 +169,9 @@ parse_order(PyArray_Descr *descr, PyObject * order)
             PyErr_SetString(PyExc_KeyError, "The field name does not exist.");
             goto exception;
         }
-        p->descrs[i] = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
-        p->offsets[i] = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
-        p->flags[i] = flag;
+        p->fields[i].descr = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
+        p->fields[i].offset = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
+        p->fields[i].flag = flag;
     }
     Py_DECREF(order);
 

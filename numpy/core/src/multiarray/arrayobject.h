@@ -16,9 +16,11 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
 typedef struct {
     struct NpyAuxData_tag base;
     npy_intp n_fields;
-    int * flags;
-    npy_intp * offsets;
-    PyArray_Descr ** descrs;
+    struct {
+        int flag;
+        npy_intp offset;
+        PyArray_Descr * descr;
+    } fields[1]; /* The plain old array trick */
 } SortOrderAuxData;
 
 NPY_NO_EXPORT NpyAuxData * 
