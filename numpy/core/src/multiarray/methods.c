@@ -123,26 +123,25 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
 static PyArray_Descr * 
 parse_order(PyArray_Descr *descr, PyObject * order) 
 {
+    /* This function parses order argument and creates a new descr
+     * with c_metadata ready to be used by VOID_Compare */
     npy_intp i;
     PyArray_Descr *newd = NULL;
     SortOrderAuxData *p = NULL;
     npy_intp n_fields;
+    PyObject * _parse_order;
 
-    if (!PyDataType_HASFIELDS(descr)) {
-        PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                        "order when the array has no fields.");
-        goto exception;
+    npy_cache_import("numpy.core._internal", "_parse_order", &_parse_order);
+    if (_parse_order == NULL) {
+        return NULL;
     }
 
-    if (PyString_Check(order) || PyUnicode_Check(order)) {
-        order = PyTuple_Pack(1, order);
-    } else {
-        order = PySequence_Tuple(order);
-    }
+    /* check that we are not reinterpreting memory containing Objects */
+    /* only returns True or raises */
+    order = PyObject_CallFunction(_parse_order, "OO", descr, order);
 
-    if(!order) {
-        PyErr_SetString(PyExc_KeyError, "Only sequence type is accepted for the order argument.");
-        goto exception;
+    if (order == NULL) {
+        return NULL;
     }
 
     n_fields = PyTuple_GET_SIZE(order);
@@ -157,18 +156,13 @@ parse_order(PyArray_Descr *descr, PyObject * order)
 
         item = PyTuple_GET_ITEM(order, i);
         
-        if(PyTuple_Check(item)) {
-            key = PyTuple_GET_ITEM(item, 0);
-            flag = PyInt_AsLong(PyTuple_GET_ITEM(item, 1));
-        } else {
-            key = item;
-            flag = 1;
-        }
+        /* key, flag = item */
+        key = PyTuple_GET_ITEM(item, 0);
+        flag = PyInt_AsLong(PyTuple_GET_ITEM(item, 1));
+
+        /* tup = descr.fields[key] */
         tup = PyDict_GetItem(descr->fields, key);
-        if (!tup) {
-            PyErr_SetString(PyExc_KeyError, "The field name does not exist.");
-            goto exception;
-        }
+
         p->fields[i].descr = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
         p->fields[i].offset = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
         p->fields[i].flag = flag;

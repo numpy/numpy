@@ -270,18 +270,32 @@ class _ctypes(object):
 # Given a datatype and an order object
 #  return a new names tuple
 #  with the order indicated
-def _newnames(datatype, order):
-    oldnames = datatype.names
-    nameslist = list(oldnames)
+def _parse_order(datatype, order):
+    names = set(datatype.names)
+    if len(names) == 0:
+        raise ValueError("Cannot specify order when the array has no fields.");
+
     if isinstance(order, str):
         order = [order]
     if isinstance(order, (list, tuple)):
+        neworder = []
         for name in order:
-            try:
-                nameslist.remove(name)
-            except ValueError:
+            if isinstance(name, str):
+                # default is ASC ordering.
+                flag = 1
+            else:
+                name, flag = name
+                flag = int(flag)
+ 
+            if name not in names:
                 raise ValueError("unknown field name: %s" % (name,))
-        return tuple(list(order) + nameslist)
+
+            if flag not in (-1, 1):
+                raise ValueError("sorting order for field : %s is not in (-1, 1)" % (name,))
+            neworder.append((name, flag))
+
+        return tuple(neworder)
+
     raise ValueError("unsupported order value: %s" % (order,))
 
 def _index_fields(ary, names):
