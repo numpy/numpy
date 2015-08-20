@@ -579,12 +579,14 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
-    order : str or list of str, optional
+    order : str or list, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string.  Not all fields need be specified, but
-        unspecified fields will still be used, in the order in which they
-        come up in the dtype, to break ties.
+        which fields to compare first, second, etc.  
+        A single field can be specified as a string. A field can be specified
+        in the list as either a string where the field is assumed to be ascending, 
+        or a tuple where the second item is an integer describing the ordering:
+        -1 for descending, +1 for ascending and 0 for neglecting.
+        Unspecified fields are neglected. 
 
     Returns
     -------
@@ -664,12 +666,14 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         the flattened array is used.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'
-    order : str or list of str, optional
+    order : str or list, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+        which fields to compare first, second, etc.  
+        A single field can be specified as a string. A field can be specified
+        in the list as either a string where the field is assumed to be ascending, 
+        or a tuple where the second item is an integer describing the ordering:
+        -1 for descending, +1 for ascending and 0 for neglecting.
+        Unspecified fields are neglected. 
 
     Returns
     -------
@@ -722,12 +726,14 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm. Default is 'quicksort'.
-    order : str or list of str, optional
+    order : str or list, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+        which fields to compare first, second, etc.  
+        A single field can be specified as a string. A field can be specified
+        in the list as either a string where the field is assumed to be ascending, 
+        or a tuple where the second item is an integer describing the ordering:
+        -1 for descending, +1 for ascending and 0 for neglecting.
+        Unspecified fields are neglected. 
 
     Returns
     -------
@@ -810,6 +816,14 @@ def sort(a, axis=-1, kind='quicksort', order=None):
            ('Arthur', 1.8, 41)],
           dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
 
+    Sort descending by age, then ascending by height if ages are equal:
+
+    >>> np.sort(a, order=[('age', -1), 'height'])               # doctest: +SKIP
+    array([('Arthur', 1.8, 41),
+            ('Galahad', 1.7, 38), 
+            ('Lancelot', 1.8999999999999999, 38)]
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
+
     """
     if axis is None:
         a = asanyarray(a).flatten()
@@ -837,12 +851,14 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
         the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm.
-    order : str or list of str, optional
+    order : str or list, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+        which fields to compare first, second, etc. 
+        A single field can be specified as a string. A field can be specified
+        in the list as either a string where the field is assumed to be ascending, 
+        or a tuple where the second item is an integer describing the ordering:
+        -1 for descending, +1 for ascending and 0 for neglecting.
+        Unspecified fields are neglected. 
 
     Returns
     -------
@@ -899,6 +915,12 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     >>> np.argsort(x, order=('y','x'))
     array([0, 1])
+
+    >>> np.argsort(x, order=(('y', 1), ('x', -1)))
+    array([0, 1])
+
+    >>> np.argsort(x, order=(('y', -1), 'x'))
+    array([1, 0])
 
     """
     try:
