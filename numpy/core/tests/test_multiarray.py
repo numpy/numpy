@@ -1362,6 +1362,9 @@ class TestMethods(TestCase):
         assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
 
+        a = data.argsort(kind='m', order=[('Last', -1), ('First', 0)])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+
     def test_sort_unicode_kind(self):
         d = np.arange(10)
         k = b'\xc3\xa4'.decode("UTF8")

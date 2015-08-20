@@ -2829,6 +2829,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             flag = 1;
         }
 
+        /* 0 is to skip */
+        if(flag == 0) continue;
+
         /* descr is the only field checked by compare or copyswap */
         dummy_struct.descr = new;
         swap = PyArray_ISBYTESWAPPED(dummy);

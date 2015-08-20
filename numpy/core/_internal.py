@@ -271,14 +271,21 @@ class _ctypes(object):
 #  return a new names tuple
 #  with the order indicated
 def _parse_order(datatype, order):
-    names = set(datatype.names)
+    if order == -1:
+        # brutal reverse
+        raise NotImplementedError("brutal reverse is not yet implemented.")
+        return order
+
+    names = list(datatype.names)
     if len(names) == 0:
         raise ValueError("Cannot specify order when the array has no fields.");
 
     if isinstance(order, str):
         order = [order]
+
+    neworder = []
     if isinstance(order, (list, tuple)):
-        neworder = []
+
         for name in order:
             if isinstance(name, str):
                 # default is ASC ordering.
@@ -290,12 +297,12 @@ def _parse_order(datatype, order):
             if name not in names:
                 raise ValueError("unknown field name: %s" % (name,))
 
-            if flag not in (-1, 1):
+            if flag not in (-1, 0, 1):
                 raise ValueError("sorting order for field : %s is not in (-1, 1)" % (name,))
             neworder.append((name, flag))
 
         return tuple(neworder)
-
+            
     raise ValueError("unsupported order value: %s" % (order,))
 
 def _index_fields(ary, names):
