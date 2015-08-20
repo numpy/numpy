@@ -1333,33 +1333,33 @@ class TestMethods(TestCase):
 
         # test stable sort
         a = data.argsort(kind='m', order=['Last'])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
 
         a = data.argsort(kind='m', order=['Last', 'First'])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
 
         a = data.argsort(kind='m', order=['First', 'Last'])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
 
         a = data.argsort(kind='m', order=['First'])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
 
         # reversed stable sort
         a = data.argsort(kind='m', order=[('Last', -1)])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
 
         a = data.argsort(kind='m', order=[('Last', -1), ('First', -1)])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
 
         a = data.argsort(kind='m', order=[('Last', -1), 'First'])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
 
         a = data.argsort(kind='m', order=[('First', -1)])
-        assert (data[a]['id'].reshape(-1, 100) == numpy.arange(100)).all()
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
         assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
 
     def test_sort_unicode_kind(self):
