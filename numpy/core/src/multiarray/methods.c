@@ -124,8 +124,9 @@ static PyArray_Descr *
 parse_order(PyArray_Descr *descr, PyObject * order) 
 {
     npy_intp i;
-    PyArray_Descr * newd = NULL;
-    SortOrderAuxData * p = NULL;
+    PyArray_Descr *newd = NULL;
+    SortOrderAuxData *p = NULL;
+    npy_intp n_fields;
 
     if (!PyDataType_HASFIELDS(descr)) {
         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
@@ -144,7 +145,7 @@ parse_order(PyArray_Descr *descr, PyObject * order)
         goto exception;
     }
 
-    npy_intp n_fields = PyTuple_GET_SIZE(order);
+    n_fields = PyTuple_GET_SIZE(order);
 
     p = sort_order_aux_data_alloc(n_fields);
 
@@ -168,19 +169,19 @@ parse_order(PyArray_Descr *descr, PyObject * order)
             PyErr_SetString(PyExc_KeyError, "The field name does not exist.");
             goto exception;
         }
-        p->descrs[i] = PyTuple_GET_ITEM(tup, 0);
+        p->descrs[i] = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
         p->offsets[i] = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
         p->flags[i] = flag;
     }
     Py_DECREF(order);
 
-    newd->c_metadata = p;
+    newd->c_metadata = (NpyAuxData*) p;
 
     return newd;
 
 exception:
     if(p) 
-        sort_order_aux_data_free(p);
+        sort_order_aux_data_free((NpyAuxData*)p);
 
     Py_XDECREF(order);
     Py_XDECREF(newd);

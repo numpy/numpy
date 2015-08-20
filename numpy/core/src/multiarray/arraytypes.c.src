@@ -2790,15 +2790,18 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     PyArrayObject_fields dummy_struct;
     PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
     char *nip1, *nip2;
-    npy_intp n_fields;
+
     int i, flag, res = 0, swap = 0;
+
+    SortOrderAuxData * soad;
+    npy_intp n_fields;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
-    descr = PyArray_DESCR(ap);
 
-    SortOrderAuxData * soad = (SortOrderAuxData*) descr->c_metadata; 
+    descr = PyArray_DESCR(ap);
+    soad = (SortOrderAuxData*) descr->c_metadata; 
 
     /*
      * Compare on the first-field.  If equal, then
