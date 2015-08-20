@@ -57,9 +57,10 @@ class IntelEM64TCCompiler(UnixCCompiler):
 
 if sys.platform == 'win32':
     from distutils.msvc9compiler import MSVCCompiler
+
     class IntelCCompilerW(MSVCCompiler):
         """
-        A modified Intel compiler on Windows compatible with an MSVC-built Python.
+        A modified Intel compiler compatible with an MSVC-built Python.
         """
         compiler_type = 'intelw'
 
@@ -73,14 +74,15 @@ if sys.platform == 'win32':
             self.cc = self.find_exe("icl.exe")
             self.lib = self.find_exe("xilib")
             self.linker = self.find_exe("xilink")
-            self.compile_options = ['/nologo', '/O3', '/MD', '/W3', '/Qstd=c99']
+            self.compile_options = ['/nologo', '/O3', '/MD', '/W3',
+                                    '/Qstd=c99']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
-                                      '/Qstd=c99', '/Z7', '/D_DEBUG']
-
+                                          '/Qstd=c99', '/Z7', '/D_DEBUG']
 
     class IntelEM64TCCompilerW(IntelCCompilerW):
         """
-        A modified Intel x86_64 compiler compatible with a 64bit MSVC-built Python.
+        A modified Intel x86_64 compiler compatible with
+        a 64bit MSVC-built Python.
         """
         compiler_type = 'intelemw'
 
@@ -88,5 +90,4 @@ if sys.platform == 'win32':
             MSVCCompiler.__init__(self, verbose, dry_run, force)
             version_match = simple_version_match(start='Intel\(R\).*?64,')
             self.__version = version_match
-
 
