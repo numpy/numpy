@@ -167,21 +167,12 @@ parse_order(PyArray_Descr *descr, PyObject * order)
         p->fields[i].offset = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
         p->fields[i].flag = flag;
     }
+
     Py_DECREF(order);
 
     newd->c_metadata = (NpyAuxData*) p;
 
     return newd;
-
-exception:
-    if(p) 
-        sort_order_aux_data_free((NpyAuxData*)p);
-
-    Py_XDECREF(order);
-    Py_XDECREF(newd);
-
-    return NULL;
-
 }
 
 
