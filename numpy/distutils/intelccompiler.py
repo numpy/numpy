@@ -63,6 +63,7 @@ if sys.platform == 'win32':
         A modified Intel compiler compatible with an MSVC-built Python.
         """
         compiler_type = 'intelw'
+        compiler_cxx = 'icl'
 
         def __init__(self, verbose=0, dry_run=0, force=0):
             MSVCCompiler.__init__(self, verbose, dry_run, force)
