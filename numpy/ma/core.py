@@ -32,7 +32,7 @@ import numpy.core.numerictypes as ntypes
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import getargspec, formatargspec, long, basestring
+from numpy.compat import getargspec, formatargspec, long, basestring, unicode, bytes, sixu
 from numpy import expand_dims as n_expand_dims
 
 if sys.version_info[0] >= 3:
@@ -143,10 +143,10 @@ default_filler = {'b': True,
                   'f': 1.e20,
                   'i': 999999,
                   'O': '?',
-                  'S': 'N/A',
+                  'S': b'N/A',
                   'u': 999999,
                   'V': '???',
-                  'U': 'N/A'
+                  'U': sixu('N/A')
                   }
 
 # Add datetime64 and timedelta64 types
@@ -217,7 +217,7 @@ def default_fill_value(obj):
         defval = default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
         defval = default_filler['i']
-    elif isinstance(obj, str):
+    elif isinstance(obj, bytes):
         defval = default_filler['S']
     elif isinstance(obj, unicode):
         defval = default_filler['U']

@@ -1460,7 +1460,7 @@ class TestFillingValues(TestCase):
         fval = _check_fill_value(0, "|S3")
         assert_equal(fval, asbytes("0"))
         fval = _check_fill_value(None, "|S3")
-        assert_equal(fval, default_fill_value("|S3"))
+        assert_equal(fval, default_fill_value(b"camelot!"))
         self.assertRaises(TypeError, _check_fill_value, 1e+20, int)
         self.assertRaises(TypeError, _check_fill_value, 'stuff', int)
 
@@ -4105,5 +4105,10 @@ def test_append_masked_array_along_axis():
     assert_array_equal(result.mask, expected.mask)
 
 
+def test_default_fill_value_complex():
+    # regression test for Python 3, where 'unicode' was not defined
+    assert default_fill_value(1 + 1j) == 1.e20 + 0.0j
+
+###############################################################################
 if __name__ == "__main__":
     run_module_suite()
