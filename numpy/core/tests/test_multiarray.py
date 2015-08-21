@@ -1154,6 +1154,20 @@ class TestMethods(TestCase):
         x3 = np.array([3.1, 4.5, 6.2])
         r = np.rec.fromarrays([x1, x2, x3], names='id,word,number')
 
+        x1.sort(order=-1)
+        assert_equal(x1, np.array([32, 21, 14]))
+
+        x2.sort(order=-1)
+        assert_equal(x2, np.array(['name', 'my', 'first']))
+
+        x3.sort(order=1)
+        assert_equal(x3, np.array([3.1, 4.5, 6.2]))
+
+        r.sort(order=-1)
+        assert_equal(r.id, np.array([32, 21, 14]))
+        assert_equal(r.word, np.array(['first', 'my', 'name']))
+        assert_equal(r.number, np.array([4.5, 3.1, 6.2]))
+
         r.sort(order=['id'])
         assert_equal(r.id, np.array([14, 21, 32]))
         assert_equal(r.word, np.array(['name', 'my', 'first']))

@@ -127,8 +127,9 @@ parse_order(PyArrayObject *array, PyObject * order)
      * to the array, where the dtype has been decorated with 
      * c_metadata, ready to be used by VOID_Compare */
     npy_intp i;
-    PyArray_Descr *descr = NULL;
+    PyArray_Descr *descr = NULL, *newd = NULL;
     SortOrderAuxData *p = NULL;
+    PyObject *tup = NULL;
     npy_intp n_fields;
     static PyObject * _parse_order = NULL;
 
@@ -148,18 +149,34 @@ parse_order(PyArrayObject *array, PyObject * order)
 
     /* normalize the order parameter */
 
-    order = PyObject_CallFunction(_parse_order, "OO", descr, order);
+    tup = PyObject_CallFunction(_parse_order, "OO", array, order);
 
-    if (order == NULL) {
+    if (tup == NULL) {
         return NULL;
     }
+    array = (PyArrayObject*) PyTuple_GET_ITEM(tup, 0); 
+    order = PyTuple_GET_ITEM(tup, 1); 
+
+    Py_INCREF(array);
+    Py_INCREF(order);
+    Py_DECREF(tup);
+
+    descr = PyArray_DESCR(array);
+
+    /* Although I observed PyArray_View will actually use a
+     * copy of descr (and clear c_metadata), and unref the passed in descr.
+     * this behaviour is not documented. Thus
+     * it is safer to just make a copy here. */
+    newd = PyArray_DescrNew(descr);
+    ((PyArrayObject_fields*) array)->descr = newd;
+    Py_DECREF(descr);
 
     n_fields = PyTuple_GET_SIZE(order);
 
     p = sort_order_aux_data_alloc(n_fields);
 
     for (i = 0; i < n_fields; i++) {
-        PyObject *item, *tup, *key;
+        PyObject *item, *key;
         npy_intp flag;
 
         item = PyTuple_GET_ITEM(order, i);
@@ -169,7 +186,7 @@ parse_order(PyArrayObject *array, PyObject * order)
         flag = PyInt_AsLong(PyTuple_GET_ITEM(item, 1));
 
         /* tup = descr.fields[key] */
-        tup = PyDict_GetItem(descr->fields, key);
+        tup = PyDict_GetItem(newd->fields, key);
 
         p->fields[i].descr = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
         p->fields[i].offset = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
@@ -178,16 +195,7 @@ parse_order(PyArrayObject *array, PyObject * order)
 
     Py_DECREF(order);
 
-    /* Although I observed PyArray_View will actually use a
-     * copy of descr (and clear c_metadata), and unref the passed in descr.
-     * this behaviour is not documented. Thus
-     * it is safer to just make a copy here. */
-    descr = PyArray_DescrNew(descr);
-    array = (PyArrayObject*) PyArray_View(array, descr, NULL);
-
-    /* now fetch the true descr used in the view and attach our c_metadata */
-    descr = PyArray_DESCR(array);
-    descr->c_metadata = (NpyAuxData*) p;
+    newd->c_metadata = (NpyAuxData*) p;
 
     return array;
 }

@@ -267,17 +267,26 @@ class _ctypes(object):
     _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
 
 
-# Given a datatype and an order object
-#  return a new names tuple
-#  with the order indicated
-def _parse_order(datatype, order):
-    if order == -1:
-        # brutal reverse
-        raise NotImplementedError("brutal reverse is not yet implemented.")
-        return order
+# Given an array and an order object
+# return a new view of array and a normalized order tuple
+#  
+def _parse_order(array, order):
+    datatype = array.dtype
 
-    names = list(datatype.names)
-    if len(names) == 0:
+    if order == -1 or order == 1:
+        # total reversal
+        try:
+            names = list(datatype.names)
+            order = tuple([ (name, order) for name in names])
+            return array, order
+        except TypeError:
+            # no fields
+            array = array.view(dtype=[('_field', array.dtype)])
+            return array, (('_field', order),)
+
+    try:
+        names = list(datatype.names)
+    except TypeError:
         raise ValueError("Cannot specify order when the array has no fields.");
 
     if isinstance(order, str):
@@ -301,7 +310,7 @@ def _parse_order(datatype, order):
                 raise ValueError("sorting order for field : %s is not in (-1, 1)" % (name,))
             neworder.append((name, flag))
 
-        return tuple(neworder)
+        return array, tuple(neworder)
             
     raise ValueError("unsupported order value: %s" % (order,))
 
