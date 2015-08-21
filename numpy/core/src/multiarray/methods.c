@@ -129,7 +129,7 @@ parse_order(PyArray_Descr *descr, PyObject * order)
     PyArray_Descr *newd = NULL;
     SortOrderAuxData *p = NULL;
     npy_intp n_fields;
-    PyObject * _parse_order = NULL;
+    static PyObject * _parse_order = NULL;
 
     npy_cache_import("numpy.core._internal", "_parse_order", &_parse_order);
 
