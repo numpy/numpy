@@ -3128,6 +3128,15 @@ class TestMaskedArrayMathMethods(TestCase):
         mXX.dot(mYY, r1)
         assert_almost_equal(r, r1)
 
+    def test_dot_shape_mismatch(self):
+        # regression test
+        x = masked_array([[1,2],[3,4]], mask=[[0,1],[0,0]])
+        y = masked_array([[1,2],[3,4]], mask=[[0,1],[0,0]])
+        z = masked_array([[0,1],[3,3]])
+        x.dot(y, out=z)
+        assert_almost_equal(z.filled(0), [[1, 0], [15, 16]])
+        assert_almost_equal(z.mask, [[0, 1], [0, 0]])
+
     def test_varstd(self):
         # Tests var & std on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
