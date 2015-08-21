@@ -125,19 +125,30 @@ parse_order(PyArrayObject *array, PyObject * order)
 {
     /* This function parses order argument and creates a new view
      * to the array, where the dtype has been decorated with 
-     * c_metadata, ready to be used by VOID_Compare */
+     * c_metadata, ready to be used by VOID_Compare.
+     *
+     * The original array struct and descr are both intact. */
+
     npy_intp i;
     PyArray_Descr *descr = NULL, *newd = NULL;
     SortOrderAuxData *p = NULL;
     PyObject *tup = NULL;
+    PyArrayObject *newarray = NULL;
     npy_intp n_fields;
     static PyObject * _parse_order = NULL;
 
 
+    /* if order is not given, we do numerical sorting */
     if (order == NULL || order == Py_None) {
         Py_INCREF(array);
         return array;
     }
+
+    /* 
+     * If order is given, normalize it to a list of (field, direction).
+     * Then tell VOID_compare to use this, via c_metadata.
+     * The array to be sorted will always be viewed as a struct-array. 
+     * */
 
     descr = PyArray_DESCR(array);
 
@@ -154,21 +165,18 @@ parse_order(PyArrayObject *array, PyObject * order)
     if (tup == NULL) {
         return NULL;
     }
-    array = (PyArrayObject*) PyTuple_GET_ITEM(tup, 0); 
+    newarray = (PyArrayObject*) PyTuple_GET_ITEM(tup, 0); 
     order = PyTuple_GET_ITEM(tup, 1); 
-
-    Py_INCREF(array);
+    Py_INCREF(newarray);
     Py_INCREF(order);
     Py_DECREF(tup);
 
-    descr = PyArray_DESCR(array);
+    /* newarray has inherited the descr, so we set it to  
+     * a different one to keep the original descr intact. */
 
-    /* Although I observed PyArray_View will actually use a
-     * copy of descr (and clear c_metadata), and unref the passed in descr.
-     * this behaviour is not documented. Thus
-     * it is safer to just make a copy here. */
+    descr = PyArray_DESCR(newarray);
     newd = PyArray_DescrNew(descr);
-    ((PyArrayObject_fields*) array)->descr = newd;
+    ((PyArrayObject_fields*) newarray)->descr = newd;
     Py_DECREF(descr);
 
     n_fields = PyTuple_GET_SIZE(order);
@@ -197,7 +205,7 @@ parse_order(PyArrayObject *array, PyObject * order)
 
     newd->c_metadata = (NpyAuxData*) p;
 
-    return array;
+    return newarray;
 }
 
 

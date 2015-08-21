@@ -278,7 +278,7 @@ def _parse_order(array, order):
         try:
             names = list(datatype.names)
             order = tuple([ (name, order) for name in names])
-            return array, order
+            return array.view(), order
         except TypeError:
             # no fields
             array = array.view(dtype=[('_field', array.dtype)])
@@ -310,7 +310,7 @@ def _parse_order(array, order):
                 raise ValueError("sorting order for field : %s is not in (-1, 1)" % (name,))
             neworder.append((name, flag))
 
-        return array, tuple(neworder)
+        return array.view(), tuple(neworder)
             
     raise ValueError("unsupported order value: %s" % (order,))
 
