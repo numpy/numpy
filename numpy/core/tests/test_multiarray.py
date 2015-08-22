@@ -8,6 +8,7 @@ import warnings
 import operator
 import io
 import itertools
+import ctypes
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -2802,6 +2803,16 @@ class TestArgmax(TestCase):
         assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    def test_object_argmax_with_NULLs(self):
+        # See gh-6032
+        a = np.empty(4, dtype='O')
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+        assert_equal(a.argmax(), 0)
+        a[3] = 10
+        assert_equal(a.argmax(), 3)
+        a[1] = 30
+        assert_equal(a.argmax(), 1)
+
 
 class TestArgmin(TestCase):
 
@@ -2939,6 +2950,16 @@ class TestArgmin(TestCase):
         out2 = np.ones(3, dtype=int)
         assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
         assert_equal(out1, out2)
+
+    def test_object_argmin_with_NULLs(self):
+        # See gh-6032
+        a = np.empty(4, dtype='O')
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+        assert_equal(a.argmin(), 0)
+        a[3] = 30
+        assert_equal(a.argmin(), 3)
+        a[1] = 10
+        assert_equal(a.argmin(), 1)
 
 
 class TestMinMax(TestCase):
