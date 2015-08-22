@@ -5,9 +5,9 @@ from functools import reduce
 
 import numpy as np
 from numpy import float_
-import np.core.fromnumeric as fromnumeric
+import numpy.core.fromnumeric as fromnumeric
 
-from np.testing.utils import build_err_msg
+from numpy.testing.utils import build_err_msg
 
 # Fixme: this does not look right.
 np.seterr(all='ignore')
@@ -427,7 +427,7 @@ if __name__ == '__main__':
     setup_base = ("from __main__ import ModuleTester \n"
                   "import numpy\n"
                   "tester = ModuleTester(module)\n")
-    setup_cur = "import np.ma.core as module\n" + setup_base
+    setup_cur = "import numpy.ma.core as module\n" + setup_base
     (nrepeat, nloop) = (10, 10)
 
     if 1:
