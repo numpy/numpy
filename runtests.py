@@ -11,6 +11,7 @@ Examples::
     $ python runtests.py -t {SAMPLE_TEST}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
+    $ python runtests.py --bench
 
 Run a debugger:
 
@@ -100,9 +101,18 @@ def main(argv):
                         help="Debug build")
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
+    parser.add_argument("--bench", action="store_true",
+                        help="Run benchmark suite instead of test suite")
+    parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
+                        help=("Compare benchmark results to COMMIT. "
+                              "Note that you need to commit your changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
+
+    if args.bench_compare:
+        args.bench = True
+        args.no_build = True # ASV does the building
 
     if args.lcov_html:
         # generate C code coverage output
@@ -115,6 +125,9 @@ def main(argv):
 
     if args.gcov:
         gcov_reset_counters()
+
+    if args.debug and args.bench:
+        print("*** Benchmarks should not be run against debug version; remove -g flag ***")
 
     if not args.no_build:
         site_dir = build_project(args)
@@ -167,6 +180,57 @@ def main(argv):
             shutil.rmtree(dst_dir)
         extra_argv += ['--cover-html',
                        '--cover-html-dir='+dst_dir]
+
+    if args.bench:
+        # Run ASV
+        items = extra_argv
+        if args.tests:
+            items += args.tests
+        if args.submodule:
+            items += [args.submodule]
+
+        bench_args = []
+        for a in items:
+            bench_args.extend(['--bench', a])
+
+        if not args.bench_compare:
+            cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
+            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
+            os.execvp(cmd[0], cmd)
+            sys.exit(1)
+        else:
+            commits = [x.strip() for x in args.bench_compare.split(',')]
+            if len(commits) == 1:
+                commit_a = commits[0]
+                commit_b = 'HEAD'
+            elif len(commits) == 2:
+                commit_a, commit_b = commits
+            else:
+                p.error("Too many commits to compare benchmarks for")
+
+            # Check for uncommitted files
+            if commit_b == 'HEAD':
+                r1 = subprocess.call(['git', 'diff-index', '--quiet', '--cached', 'HEAD'])
+                r2 = subprocess.call(['git', 'diff-files', '--quiet'])
+                if r1 != 0 or r2 != 0:
+                    print("*"*80)
+                    print("WARNING: you have uncommitted changes --- these will NOT be benchmarked!")
+                    print("*"*80)
+
+            # Fix commit ids (HEAD is local to current repo)
+            p = subprocess.Popen(['git', 'rev-parse', commit_b], stdout=subprocess.PIPE)
+            out, err = p.communicate()
+            commit_b = out.strip()
+
+            p = subprocess.Popen(['git', 'rev-parse', commit_a], stdout=subprocess.PIPE)
+            out, err = p.communicate()
+            commit_a = out.strip()
+
+            cmd = ['asv', 'continuous', '-e', '-f', '1.05',
+                   commit_a, commit_b] + bench_args
+            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
+            os.execvp(cmd[0], cmd)
+            sys.exit(1)
 
     test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
