@@ -20,9 +20,15 @@ Compatibility notes
 
 New Features
 ============
+
 * `np.histogram` now provides plugin estimators for automatically estimating the optimal
 number of bins. Passing one of ['auto', 'fd', 'scott', 'rice', 'sturges']
 as the argument to 'bins' results in the corresponding estimator being used.
+
+* A benchmark suite using `Airspeed Velocity <http://spacetelescope.github.io/asv/>`__
+has been added, converting the previous vbench-based one. You can run the suite locally
+via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rst``.
+
 
 Improvements
 ============
