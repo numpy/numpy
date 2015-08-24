@@ -127,7 +127,8 @@ def main(argv):
         gcov_reset_counters()
 
     if args.debug and args.bench:
-        print("*** Benchmarks should not be run against debug version; remove -g flag ***")
+        print("*** Benchmarks should not be run against debug "
+              "version; remove -g flag ***")
 
     if not args.no_build:
         site_dir = build_project(args)
@@ -210,19 +211,23 @@ def main(argv):
 
             # Check for uncommitted files
             if commit_b == 'HEAD':
-                r1 = subprocess.call(['git', 'diff-index', '--quiet', '--cached', 'HEAD'])
+                r1 = subprocess.call(['git', 'diff-index', '--quiet',
+                                      '--cached', 'HEAD'])
                 r2 = subprocess.call(['git', 'diff-files', '--quiet'])
                 if r1 != 0 or r2 != 0:
                     print("*"*80)
-                    print("WARNING: you have uncommitted changes --- these will NOT be benchmarked!")
+                    print("WARNING: you have uncommitted changes --- "
+                          "these will NOT be benchmarked!")
                     print("*"*80)
 
             # Fix commit ids (HEAD is local to current repo)
-            p = subprocess.Popen(['git', 'rev-parse', commit_b], stdout=subprocess.PIPE)
+            p = subprocess.Popen(['git', 'rev-parse', commit_b],
+                                 stdout=subprocess.PIPE)
             out, err = p.communicate()
             commit_b = out.strip()
 
-            p = subprocess.Popen(['git', 'rev-parse', commit_a], stdout=subprocess.PIPE)
+            p = subprocess.Popen(['git', 'rev-parse', commit_a],
+                                 stdout=subprocess.PIPE)
             out, err = p.communicate()
             commit_a = out.strip()
 

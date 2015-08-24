@@ -23,9 +23,10 @@ class Indexing(Benchmark):
               'indexes_rand_': indexes_rand_}
 
         if sys.version_info[0] >= 3:
-            code = "def run():\n    for a in squares_.values(): a[%s]%s" % (sel, op)
+            code = "def run():\n    for a in squares_.values(): a[%s]%s"
         else:
-            code = "def run():\n    for a in squares_.itervalues(): a[%s]%s" % (sel, op)
+            code = "def run():\n    for a in squares_.itervalues(): a[%s]%s"
+        code = code % (sel, op)
 
         six.exec_(code, ns)
         self.func = ns['run']

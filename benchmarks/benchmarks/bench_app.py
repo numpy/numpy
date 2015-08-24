@@ -18,7 +18,9 @@ class LaplaceInplace(Benchmark):
         dy2 = (dy * dy)
 
         def num_update(u, dx2, dy2):
-            u[1:(-1), 1:(-1)] = ((((u[2:, 1:(-1)] + u[:(-2), 1:(-1)]) * dy2) + ((u[1:(-1), 2:] + u[1:(-1), :(-2)]) * dx2)) / (2 * (dx2 + dy2)))
+            u[1:(-1), 1:(-1)] = ((((u[2:, 1:(-1)] + u[:(-2), 1:(-1)]) * dy2) +
+                                  ((u[1:(-1), 2:] + u[1:(-1), :(-2)]) * dx2))
+                                 / (2 * (dx2 + dy2)))
 
         def num_inplace(u, dx2, dy2):
             tmp = u[:(-2), 1:(-1)].copy()
@@ -28,7 +30,8 @@ class LaplaceInplace(Benchmark):
             np.add(tmp2, u[1:(-1), :(-2)], out=tmp2)
             np.multiply(tmp2, dx2, out=tmp2)
             np.add(tmp, tmp2, out=tmp)
-            np.multiply(tmp, (1.0 / (2.0 * (dx2 + dy2))), out=u[1:(-1), 1:(-1)])
+            np.multiply(tmp, (1.0 / (2.0 * (dx2 + dy2))),
+                        out=u[1:(-1), 1:(-1)])
 
         def laplace(N, Niter=100, func=num_update, args=()):
             u = np.zeros([N, N], order='C')
@@ -55,7 +58,8 @@ class MaxesOfDots(Benchmark):
         nfeat = 100
         ntime = 200
 
-        self.arrays = [np.random.normal(size=(ntime, nfeat)) for i in xrange(nsubj)]
+        self.arrays = [np.random.normal(size=(ntime, nfeat))
+                       for i in xrange(nsubj)]
 
     def maxes_of_dots(self, arrays):
         """
