@@ -16,19 +16,20 @@ nxs, nys = 100, 100
 
 # a set of interesting types to test
 TYPES1 = [
-        'int16', 'float16',
-        'int32', 'float32',
-        'int64', 'float64',  'complex64',
-                 'longfloat', 'complex128',
-                             'complex256',
-        ]
+    'int16', 'float16',
+    'int32', 'float32',
+    'int64', 'float64',  'complex64',
+    'longfloat', 'complex128',
+    'complex256',
+]
 
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
 # and generate some redundancy
 values = [random.uniform(0, 100) for x in range(nx*ny/10)]*10
 
-squares = {t: numpy.array(values, dtype=getattr(numpy, t)).reshape((nx, ny))
+squares = {t: numpy.array(values,
+                          dtype=getattr(numpy, t)).reshape((nx, ny))
            for t in TYPES1}
 
 # adjust complex ones to have non-degenerated imagery part -- use
@@ -38,9 +39,9 @@ for t, v in squares.iteritems():
         v += v.T*1j
 
 # smaller squares
-squares_ = {t: s[:nxs, :nys] for t, s  in squares.iteritems()}
+squares_ = {t: s[:nxs, :nys] for t, s in squares.iteritems()}
 # vectors
-vectors = {t: s[0] for t, s  in squares.iteritems()}
+vectors = {t: s[0] for t, s in squares.iteritems()}
 
 indexes = range(nx)
 # so we do not have all items
