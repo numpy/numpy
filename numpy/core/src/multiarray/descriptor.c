@@ -509,8 +509,8 @@ _convert_from_array_descr(PyObject *obj, int align)
                  && (PyUString_Check(title) || PyUnicode_Check(title))
 #endif
                  && (PyDict_GetItem(fields, title) != NULL))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "two fields with the same name");
+            PyErr_Format(PyExc_ValueError,
+                    "field '%s' occurs more than once", PyString_AsString(name));
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
