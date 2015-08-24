@@ -580,17 +580,10 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
     order : integer, str or list, optional
-        This argument specifies the direction of the sorting, and 
-        which fields to compare first, second, etc.
-        If order is None or +1, the direction is ascending. 
-        If order is -1, the direction is descending. 
-        When `a` is an array with fields defined, order can be a list defining the 
-        priorities of fields.  A field can be specified in the list 
-        a tuple in the form of :py:code:`(field, dir)`,
-        If the direction is ascending, the :py:code:`dir` part of the tuple can be
-        omitted, and :py:code:`field` alone can be used in the list.
-        Unspecified fields and fields with :py:code:`dir` set to 0 are neglected.  
-        A single field in the ascending direction, can be specified as a string. 
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
@@ -671,17 +664,10 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'
     order : integer, str or list, optional
-        This argument specifies the direction of the sorting, and 
-        which fields to compare first, second, etc.
-        If order is None or +1, the direction is ascending. 
-        If order is -1, the direction is descending. 
-        When `a` is an array with fields defined, order can be a list defining the 
-        priorities of fields.  A field can be specified in the list 
-        a tuple in the form of :py:code:`(field, dir)`,
-        If the direction is ascending, the :py:code:`dir` part of the tuple can be
-        omitted, and :py:code:`field` alone can be used in the list.
-        Unspecified fields and fields with :py:code:`dir` set to 0 are neglected.  
-        A single field in the ascending direction, can be specified as a string. 
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
@@ -735,17 +721,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : integer, str or list, optional
-        This argument specifies the direction of the sorting, and 
-        which fields to compare first, second, etc.
-        If order is None or +1, the direction is ascending. 
-        If order is -1, the direction is descending. 
-        When `a` is an array with fields defined, order can be a list defining the 
-        priorities of fields.  A field can be specified in the list 
-        a tuple in the form of :py:code:`(field, dir)`,
-        If the direction is ascending, the :py:code:`dir` part of the tuple can be
-        omitted, and :py:code:`field` alone can be used in the list.
-        Unspecified fields and fields with :py:code:`dir` set to 0 are neglected.  
-        A single field in the ascending direction, can be specified as a string. 
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See notes for details.
 
     Returns
     -------
@@ -796,6 +775,27 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     where R is a non-nan real value. Complex values with the same nan
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
+
+    When the order argument is not None, the array is sorted as a structured
+    array. The value of order specifies the relative importance of columns: 
+    
+       * A list of tuples that consists of field name and an integer from (-1, 0, 1).
+         The structure array is sorted by the fields, each in the direction 
+         specified by the second item of the tuple: ascending (1) , descending (-1) , 
+         or skipped (0). 
+         The fields are used to break the ties in the order of their ocurrences in the list. 
+         The default direction (for fields not in the list) is 0.
+
+       * If a field has an ascending direction, the field name alone can be used in 
+         place of the tuple. This maintains compatibility with numpy <= 1.9.0.
+
+       * Order can also be a single integer +1 or -1, which means all fields are
+         in ascending or descending direction. The ranking of fields for tie-breaking
+         is the same as the ordering of the names of the dtype of the array.
+         In this case, for non-structure array input, a structured view is 
+         constructured for sorting. This is somewhat slower than sorting as a 
+         non-structure array via order=None.
+
 
     Examples
     --------
@@ -864,17 +864,10 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm.
     order : integer, str or list, optional
-        This argument specifies the direction of the sorting, and 
-        which fields to compare first, second, etc.
-        If order is None or +1, the direction is ascending. 
-        If order is -1, the direction is descending. 
-        When `a` is an array with fields defined, order can be a list defining the 
-        priorities of fields.  A field can be specified in the list 
-        a tuple in the form of :py:code:`(field, dir)`,
-        If the direction is ascending, the :py:code:`dir` part of the tuple can be
-        omitted, and :py:code:`field` alone can be used in the list.
-        Unspecified fields and fields with :py:code:`dir` set to 0 are neglected.  
-        A single field in the ascending direction, can be specified as a string. 
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
