@@ -2501,7 +2501,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NpyIter_IterNextFunc *op_iternext;
     npy_intp outer_dim, indval;
     int outer_axis;
-    npy_intp itersize, iterstride;
+    npy_intp itersize, *iterstride;
     char **iterptr;
     PyArray_Descr *intp_type;
     int i;
@@ -2572,7 +2572,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 
         NPY_BEGIN_THREADS_NDITER(op_iter);
         iterptr = NpyIter_GetDataPtrArray(op_iter);
-        iterstride = NpyIter_GetInnerStrideArray(op_iter)[0];
+        iterstride = NpyIter_GetInnerStrideArray(op_iter);
         do {
             itersize = *NpyIter_GetInnerLoopSizePtr(op_iter);
             while (itersize--) {
@@ -2583,7 +2583,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                     NpyIter_Deallocate(op_iter);
                     return -1;
                 }
-                *iterptr += iterstride;
+                *iterptr += *iterstride;
             }
         } while (op_iternext(op_iter));
 
