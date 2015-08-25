@@ -1221,6 +1221,9 @@ functions provide that information.
     This pointer may be cached before the iteration loop, calling
     ``iternext`` will not change it. This function may be safely
     called without holding the Python GIL.
+    
+    **WARNING**: While the pointer may be cached, its values may
+    change if the iterator is buffered.
 
 .. c:function:: npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter* iter)
 
