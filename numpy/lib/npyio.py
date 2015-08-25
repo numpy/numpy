@@ -65,7 +65,7 @@ def seek_gzip_factory(f):
         def tell(self):
             return self.offset
 
-    if isinstance(f,(str, unicode)):
+    if isinstance(f,(str, unicode)):  # Allow unicode filenamens for loadtxt
         f = GzipFile(f)
     elif isinstance(f, gzip.GzipFile):
         # cast to our GzipFile if its already a gzip.GzipFile
