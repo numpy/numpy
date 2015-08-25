@@ -3554,6 +3554,13 @@ class TestRecord(TestCase):
         dt.names = ['p', 'q']
         assert_equal(dt.names, ['p', 'q'])
 
+    def test_multiple_field_name_occurrence(self):
+        def test_assign():
+            dtype = np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
+
+        # Error raised when multiple fields have the same name
+        assert_raises(ValueError, test_assign)
+
     if sys.version_info[0] >= 3:
         def test_bytes_fields(self):
             # Bytes are not allowed in field names and not recognized in titles
@@ -3569,6 +3576,15 @@ class TestRecord(TestCase):
 
             y = x[0]
             assert_raises(IndexError, y.__getitem__, asbytes('a'))
+
+        def test_multiple_field_name_unicode(self):
+            def test_assign_unicode():
+                dt = np.dtype([("\u20B9", "f8"),
+                               ("B", "f8"),
+                               ("\u20B9", "f8")])
+
+            # Error raised when multiple fields have the same name(unicode included)
+            assert_raises(ValueError, test_assign_unicode)
 
     else:
         def test_unicode_field_titles(self):
