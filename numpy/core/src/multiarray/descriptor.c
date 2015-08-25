@@ -509,6 +509,10 @@ _convert_from_array_descr(PyObject *obj, int align)
                  && (PyUString_Check(title) || PyUnicode_Check(title))
 #endif
                  && (PyDict_GetItem(fields, title) != NULL))) {
+#if defined(NPY_PY3K)
+            name = PyUnicode_AsUTF8String(name);
+            Py_DECREF(name);
+#endif
             PyErr_Format(PyExc_ValueError,
                     "field '%s' occurs more than once", PyString_AsString(name));
             goto fail;
