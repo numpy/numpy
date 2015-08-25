@@ -404,6 +404,22 @@ class TestIndexing(TestCase):
         arr = np.zeros((1,), dtype=[('f1', 'i8'), ('f2', 'i8')])
         assert_array_equal(arr[SequenceLike()], arr[SequenceLike(),])
 
+    def test_indexing_array_weird_strides(self):
+        # See also gh-6221
+        # the shapes used here come from the issue and create the correct
+        # size for the iterator buffering size.
+        x = np.ones(10)
+        x2 = np.ones((10, 2))
+        ind = np.arange(10)[:, None, None, None]
+        ind = np.broadcast_to(ind, (10, 55, 4, 4))
+
+        # single advanced index case
+        assert_array_equal(x[ind], x[ind.copy()])
+        # higher dimensional advanced index
+        zind = np.zeros(4, dtype=np.intp)
+        assert_array_equal(x2[ind, zind], x2[ind.copy(), zind])
+
+
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
