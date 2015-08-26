@@ -543,8 +543,7 @@ sse2_ordered_cmp_@kind@_@TYPE@(const @type@ a, const @type@ b)
     @vtype@ v = @vpre@_@VOP@_@vsufs@(@vpre@_load_@vsufs@(&a),
                                      @vpre@_load_@vsufs@(&b));
     @vpre@_store_@vsufs@(&tmp, v);
-    return sizeof(@type@) == 4 ?
-        (*(npy_uint32 *)&tmp) & 1 : (*(npy_uint64 *)&tmp) & 1;
+    return !(tmp == 0.);
 }
 
 static void
