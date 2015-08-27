@@ -195,6 +195,16 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /* Pos of each override in args */
     int with_override_pos[NPY_MAXARGS];
 
+    /****************************************************************
+     * Temporarily disable this functionality for the 1.10 release.
+     * See gh-5844.
+     ****************************************************************/
+    *result = NULL;
+    return 0;
+    /****************************************************************
+     * Actual implementation follows:
+     ****************************************************************/
+
     /*
      * Check inputs
      */
