@@ -35,6 +35,16 @@ Deprecated to error
   e.g., in reshape, take, and specifying reduce axis.
 
 
+C API
+~~~~~
+
+Removed the ``check_return`` and ``inner_loop_selector`` members of
+the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
+to preserve struct layout). These were never used for anything, so
+it's unlikely that any third-party code is using them either, but we
+mention it here for completeness.
+
+
 New Features
 ============
 

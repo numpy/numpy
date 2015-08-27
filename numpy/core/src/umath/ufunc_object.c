@@ -2623,22 +2623,9 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     else {
         NPY_UF_DBG_PRINT("Executing legacy inner loop\n");
 
-        if (ufunc->legacy_inner_loop_selector != NULL) {
-            retval = execute_legacy_ufunc_loop(ufunc, trivial_loop_ok,
-                                op, dtypes, order,
-                                buffersize, arr_prep, arr_prep_args);
-        }
-        else {
-            /*
-             * TODO: When this is supported, it should be preferred over
-             * the legacy_inner_loop_selector
-             */
-            PyErr_SetString(PyExc_RuntimeError,
-                    "usage of the new inner_loop_selector isn't "
-                    "implemented yet");
-            retval = -1;
-            goto fail;
-        }
+        retval = execute_legacy_ufunc_loop(ufunc, trivial_loop_ok,
+                            op, dtypes, order,
+                            buffersize, arr_prep, arr_prep_args);
     }
     if (retval < 0) {
         goto fail;
@@ -4480,10 +4467,10 @@ NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
                         char *types, int ntypes,
                         int nin, int nout, int identity,
-                        const char *name, const char *doc, int check_return)
+                        const char *name, const char *doc, int unused)
 {
     return PyUFunc_FromFuncAndDataAndSignature(func, data, types, ntypes,
-        nin, nout, identity, name, doc, check_return, NULL);
+        nin, nout, identity, name, doc, 0, NULL);
 }
 
 /*UFUNC_API*/
@@ -4492,7 +4479,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
-                                     int check_return, const char *signature)
+                                     int unused, const char *signature)
 {
     PyUFuncObject *ufunc;
 
@@ -4510,6 +4497,9 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
+    ufunc->reserved1 = 0;
+    ufunc->reserved2 = NULL;
+
     ufunc->nin = nin;
     ufunc->nout = nout;
     ufunc->nargs = nin+nout;
@@ -4519,7 +4509,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->data = data;
     ufunc->types = types;
     ufunc->ntypes = ntypes;
-    ufunc->check_return = check_return;
     ufunc->ptr = NULL;
     ufunc->obj = NULL;
     ufunc->userloops=NULL;
@@ -4527,7 +4516,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
     ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
-    ufunc->inner_loop_selector = NULL;
     ufunc->masked_inner_loop_selector = &PyUFunc_DefaultMaskedInnerLoopSelector;
 
     if (name == NULL) {
