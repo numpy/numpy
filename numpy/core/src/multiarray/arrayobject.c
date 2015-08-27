@@ -1311,7 +1311,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             /* Never mind, carry on, see what happens */
         }
         else {
-            return _strings_richcompare(self, array_other, cmp_op, 0);
+            result = _strings_richcompare(self, array_other, cmp_op, 0);
+            Py_DECREF(array_other);
+            return result;
         }
         /* If we reach this point, it means that we are not comparing
          * string-to-string. It's possible that this will still work out,
