@@ -123,7 +123,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->identity = PyUFunc_None;
     self->functions = pyfunc_functions;
     self->ntypes = 1;
-    self->check_return = 0;
 
     /* generalized ufunc */
     self->core_enabled = 0;

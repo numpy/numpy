@@ -681,7 +681,7 @@ PyUFunc_Type
           PyUFuncGenericFunction *functions;
           void **data;
           int ntypes;
-          int check_return;
+          int reserved1;
           const char *name;
           char *types;
           const char *doc;
@@ -747,11 +747,6 @@ PyUFunc_Type
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data types) are
        available.
-
-   .. c:member:: int PyUFuncObject.check_return
-
-       Obsolete and unused. However, it is set by the corresponding entry in
-       the main ufunc creation routine: :c:func:`PyUFunc_FromFuncAndData` (...).
 
    .. c:member:: char *PyUFuncObject.name
 
