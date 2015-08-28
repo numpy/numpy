@@ -458,17 +458,6 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     struct lconv *locale_data = localeconv();
     const char *decimal_point = locale_data->decimal_point;
     size_t decimal_point_len = strlen(decimal_point);
-    /*
-     * It is unclear why this function needs locale information.
-     * The goal is to do locale-independent parsing. This function
-     * contains code to stop the parsing early if an unusual decimal
-     * point is encountered and then pass the string so far to
-     * NumPyOS_ascii_strtod_plain, which will also stop if an unusual
-     * decimal point is encountered. The only case I can think of
-     * where this would matter is if the decimal separator were
-     * something that could occur in the middle of a valid number,
-     * in which case this function does the wrong thing.
-     */
 
     char buffer[FLOAT_FORMATBUFLEN+1];
     const char *p;
@@ -525,10 +514,12 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     /*
      * ## 2
      *
-     * At least Python versions <= 2.6.1
+     * At least Python versions <= 2.6.8
      *
      * Fails to do best-efforts parsing of strings of the form "1<DP>234"
      * where <DP> is the decimal point under the foreign locale.
+     * This is because PyOS_ascii_strtod is buggy, and will completely
+     * refuse to parse the string, rather than parsing the first part "1".
      */
     if (decimal_point[0] != '.' || decimal_point[1] != 0) {
         p = s;
