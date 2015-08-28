@@ -2,12 +2,11 @@ from __future__ import division, absolute_import, print_function
 
 import locale
 from tempfile import NamedTemporaryFile
-import unittest
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
-    assert_array_equal
+    assert_array_equal, TestCase
 )
 from numpy.compat import sixu
 from test_print import in_foreign_locale
@@ -15,6 +14,10 @@ from test_print import in_foreign_locale
 longdouble_longer_than_double = (np.finfo(np.longdouble).eps
                                  < np.finfo(np.double).eps)
 
+
+_o = 1 + np.finfo(np.longdouble).eps
+string_to_longdouble_inaccurate = (_o != np.longdouble(repr(_o)))
+del _o
 
 def test_scalar_extraction():
     """Confirm that extracting a value doesn't convert to python float"""
@@ -51,6 +54,7 @@ def test_fromstring_foreign():
     assert_equal(a[0], f)
 
 
+@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_repr_roundtrip_bytes():
     o = 1 + np.finfo(np.longdouble).eps
     assert_equal(np.longdouble(repr(o).encode("ascii")), o)
@@ -67,57 +71,13 @@ def test_bogus_string():
     assert_raises(ValueError, np.longdouble, "1.0 flub")
 
 
-def test_underflow_zero():
-    z = np.finfo
-
-
+@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_fromstring():
     o = 1 + np.finfo(np.longdouble).eps
     s = (" " + repr(o))*5
     a = np.array([o]*5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
-
-
-def test_loadtxt():
-    o = 1 + np.finfo(np.longdouble).eps
-    f = NamedTemporaryFile(mode="wt")
-    for i in range(5):
-        f.write(repr(o) + "\n")
-    f.flush()
-    a = np.array([o]*5)
-    assert_equal(np.loadtxt(f.name, dtype=np.longdouble), a)
-    f.close()
-
-
-def test_genfromtxt():
-    o = 1 + np.finfo(np.longdouble).eps
-    f = NamedTemporaryFile(mode="wt")
-    for i in range(5):
-        f.write(repr(o) + "\n")
-    f.flush()
-    a = np.array([o]*5)
-    assert_equal(np.genfromtxt(f.name, dtype=np.longdouble), a)
-    f.close()
-
-
-def test_fromfile():
-    o = 1 + np.finfo(np.longdouble).eps
-    f = NamedTemporaryFile(mode="wt")
-    for i in range(5):
-        f.write(repr(o) + "\n")
-    f.flush()
-    a = np.array([o]*5)
-    F = open(f.name, "rt")
-    b = np.fromfile(F,
-                    dtype=np.longdouble,
-                    sep="\n")
-    F.close()
-    F = open(f.name, "rt")
-    s = F.read()
-    F.close()
-    f.close()
-    assert_equal(b, a, err_msg="decoded %s as %s" % (repr(s), repr(b)))
 
 
 def test_fromstring_bogus():
@@ -135,7 +95,7 @@ def test_fromstring_missing():
                  np.array([1]))
 
 
-class FileBased(unittest.TestCase):
+class FileBased(TestCase):
     def setUp(self):
         self.o = 1 + np.finfo(np.longdouble).eps
         self.f = NamedTemporaryFile(mode="wt")
@@ -154,6 +114,39 @@ class FileBased(unittest.TestCase):
         finally:
             F.close()
 
+    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    def test_fromfile(self):
+        for i in range(5):
+            self.f.write(repr(self.o) + "\n")
+        self.f.flush()
+        a = np.array([self.o]*5)
+        F = open(self.f.name, "rt")
+        b = np.fromfile(F,
+                        dtype=np.longdouble,
+                        sep="\n")
+        F.close()
+        F = open(self.f.name, "rt")
+        s = F.read()
+        F.close()
+        assert_equal(b, a, err_msg="decoded %s as %s" % (repr(s), repr(b)))
+
+    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    def test_genfromtxt(self):
+        for i in range(5):
+            self.f.write(repr(self.o) + "\n")
+        self.f.flush()
+        a = np.array([self.o]*5)
+        assert_equal(np.genfromtxt(self.f.name, dtype=np.longdouble), a)
+
+    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    def test_loadtxt(self):
+        for i in range(5):
+            self.f.write(repr(self.o) + "\n")
+        self.f.flush()
+        a = np.array([self.o]*5)
+        assert_equal(np.loadtxt(self.f.name, dtype=np.longdouble), a)
+
+    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
     def test_tofile_roundtrip(self):
         a = np.array([self.o]*3)
         a.tofile(self.f.name, sep=" ")
@@ -194,18 +187,21 @@ def test_repr_exact():
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
+@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_format():
     o = 1 + np.finfo(np.longdouble).eps
     assert_("{0:.40g}".format(o) != '1')
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
+@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_percent():
     o = 1 + np.finfo(np.longdouble).eps
     assert_("%.40g" % o != '1')
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "array repr problem")
+@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_array_repr():
     o = 1 + np.finfo(np.longdouble).eps
     a = np.array([o])
