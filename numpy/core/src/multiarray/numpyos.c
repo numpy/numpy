@@ -619,7 +619,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
     }
     return result;
 #else
-    return NumPyOS_ascii_strtod_plain(s, endptr);
+    return NumPyOS_ascii_strtod(s, endptr);
 #endif
 }
 
