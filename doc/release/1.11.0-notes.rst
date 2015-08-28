@@ -36,6 +36,10 @@ has an option to spend more effort to reduce false positives.
 Improvements
 ============
 
+*np.gradient* now supports an ``axis`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axis`` parameter was added to *np.gradient* for consistency.
+It allows to specify over which axes the gradient is calculated.
 
 Changes
 =======

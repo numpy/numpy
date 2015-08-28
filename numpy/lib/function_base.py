@@ -1138,10 +1138,12 @@ def gradient(f, *varargs, **kwargs):
         The default (axis = None) is to calculate the gradient for all the axes of the input array.
         axis may be negative, in which case it counts from the last to the first axis.
 
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     gradient : list of ndarray
-        Each element of `list` has the same shape as `f` giving the derivative 
+        Each element of `list` has the same shape as `f` giving the derivative
         of `f` with respect to each dimension.
 
     Examples
@@ -1152,10 +1154,10 @@ def gradient(f, *varargs, **kwargs):
     >>> np.gradient(x, 2)
     array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
 
-    For two dimensional arrays, the return will be two arrays ordered by 
-    axis. In this example the first array stands for the gradient in 
+    For two dimensional arrays, the return will be two arrays ordered by
+    axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
-    
+
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
