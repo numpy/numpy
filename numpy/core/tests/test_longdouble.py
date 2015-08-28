@@ -82,9 +82,16 @@ def test_fromstring():
 
 
 @in_foreign_locale
-def test_fromstring_best_effort():
+def test_fromstring_best_effort_float():
     assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
                  np.array([1.]))
+
+
+@in_foreign_locale
+def test_fromstring_best_effort():
+    assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
+                 np.array([1.]))
+
 
 def test_fromstring_bogus():
     assert_equal(np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" "),
