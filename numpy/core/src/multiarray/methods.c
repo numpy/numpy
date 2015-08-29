@@ -1117,6 +1117,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
+    static PyObject *importfunc = NULL;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist,
@@ -1130,20 +1131,17 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
+        npy_cache_import("numpy.core._internal", "_newnames", &importfunc);
+        if (importfunc == NULL) {
+            return NULL;
+        }
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+        new_name = PyObject_CallFunction(importfunc, "OO", saved, order);
         if (new_name == NULL) {
             return NULL;
         }
@@ -1176,6 +1174,7 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyArrayObject * ktharray;
     PyObject * kthobj;
+    static PyObject *importfunc = NULL;
 
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O", kwlist,
@@ -1191,20 +1190,17 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
+        npy_cache_import("numpy.core._internal", "_newnames", &importfunc);
+        if (importfunc == NULL) {
+            return NULL;
+        }
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+        new_name = PyObject_CallFunction(importfunc, "OO", saved, order);
         if (new_name == NULL) {
             return NULL;
         }
@@ -1239,6 +1235,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
+    static PyObject *importfunc = NULL;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O", kwlist,
@@ -1252,20 +1249,17 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
+        npy_cache_import("numpy.core._internal", "_newnames", &importfunc);
+        if (importfunc == NULL) {
+            return NULL;
+        }
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+        new_name = PyObject_CallFunction(importfunc, "OO", saved, order);
         if (new_name == NULL) {
             return NULL;
         }
@@ -1293,6 +1287,7 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyObject * kthobj;
     PyArrayObject * ktharray;
+    static PyObject *importfunc = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O", kwlist,
                                      &kthobj,
@@ -1306,20 +1301,17 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
+        npy_cache_import("numpy.core._internal", "_newnames", &importfunc);
+        if (importfunc == NULL) {
+            return NULL;
+        }
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+        new_name = PyObject_CallFunction(importfunc, "OO", saved, order);
         if (new_name == NULL) {
             return NULL;
         }

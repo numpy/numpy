@@ -10,8 +10,8 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "ctors.h"
 #include "descriptor.h"
@@ -507,19 +507,18 @@ PyArray_FieldNames(PyObject *fields)
 {
     PyObject *tup;
     PyObject *ret;
-    PyObject *_numpy_internal;
+    static PyObject *importfunc = NULL;
 
+    npy_cache_import("numpy.core._internal", "_makenames_list", &importfunc);
+    if (importfunc == NULL) {
+        return NULL;
+    }
     if (!PyDict_Check(fields)) {
         PyErr_SetString(PyExc_TypeError,
                 "Fields must be a dictionary");
         return NULL;
     }
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
-        return NULL;
-    }
-    tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "OO", fields, Py_False);
-    Py_DECREF(_numpy_internal);
+    tup = PyObject_CallFunction(importfunc, "OO", fields, Py_False);
     if (tup == NULL) {
         return NULL;
     }

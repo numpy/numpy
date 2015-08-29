@@ -242,16 +242,15 @@ array_dataptr_get(PyArrayObject *self)
 static PyObject *
 array_ctypes_get(PyArrayObject *self)
 {
-    PyObject *_numpy_internal;
-    PyObject *ret;
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
+    static PyObject *importfunc = NULL;
+
+    npy_cache_import("numpy.core._internal", "_ctypes", &importfunc);
+    if (importfunc == NULL) {
         return NULL;
     }
-    ret = PyObject_CallMethod(_numpy_internal, "_ctypes", "ON", self,
-                              PyLong_FromVoidPtr(PyArray_DATA(self)));
-    Py_DECREF(_numpy_internal);
-    return ret;
+
+    return PyObject_CallFunction(importfunc, "ON", self,
+                                 PyLong_FromVoidPtr(PyArray_DATA(self)));
 }
 
 static PyObject *

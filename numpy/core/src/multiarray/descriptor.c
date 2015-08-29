@@ -10,8 +10,8 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "_datetime.h"
 #include "common.h"
@@ -698,17 +698,16 @@ _convert_from_commastring(PyObject *obj, int align)
 {
     PyObject *listobj;
     PyArray_Descr *res;
-    PyObject *_numpy_internal;
+    static PyObject *importfunc = NULL;
 
+    npy_cache_import("numpy.core._internal", "_commastring", &importfunc);
+    if (importfunc == NULL) {
+        return NULL;
+    }
     if (!PyBytes_Check(obj)) {
         return NULL;
     }
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
-        return NULL;
-    }
-    listobj = PyObject_CallMethod(_numpy_internal, "_commastring", "O", obj);
-    Py_DECREF(_numpy_internal);
+    listobj = PyObject_CallFunction(importfunc, "O", obj);
     if (listobj == NULL) {
         return NULL;
     }
@@ -918,17 +917,15 @@ validate_object_field_overlap(PyArray_Descr *dtype)
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
-    PyObject *_numpy_internal;
-    PyArray_Descr *res;
+    static PyObject *importfunc = NULL;
 
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
+    npy_cache_import("numpy.core._internal", "_usefields", &importfunc);
+    if (importfunc == NULL) {
         return NULL;
     }
-    res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
-            "_usefields", "Oi", obj, align);
-    Py_DECREF(_numpy_internal);
-    return res;
+
+    return (PyArray_Descr *)PyObject_CallFunction(importfunc, "Oi",
+                                                  obj, align);
 }
 
 /*
@@ -1819,7 +1816,12 @@ NPY_NO_EXPORT PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
     PyObject *dobj, *res;
-    PyObject *_numpy_internal;
+    static PyObject *importfunc = NULL;
+
+    npy_cache_import("numpy.core._internal", "_array_descr", &importfunc);
+    if (importfunc == NULL) {
+        return NULL;
+    }
 
     if (!PyDataType_HASFIELDS(self)) {
         /* get default */
@@ -1838,13 +1840,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
         return res;
     }
 
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
-        return NULL;
-    }
-    res = PyObject_CallMethod(_numpy_internal, "_array_descr", "O", self);
-    Py_DECREF(_numpy_internal);
-    return res;
+    return PyObject_CallFunction(importfunc, "O", self);
 }
 
 /*
