@@ -1,7 +1,0 @@
-from bento.commands import hooks
-
-@hooks.pre_build
-def build(context):
-    context.tweak_extension("fftpack_lite",
-                            includes=["../core/include", "../core/include/numpy",
-                                      "../core", "../core/src/private"])
