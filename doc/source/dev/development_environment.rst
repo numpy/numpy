@@ -82,19 +82,12 @@ source tree is to use::
     $ python setup.py install --prefix /some/owned/folder
     $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
 
-Besides ``numpy.distutils``, NumPy supports building with `Bento`_.
-This provides (among other things) faster builds and a build log that's much
-more readable than the ``distutils`` one.  Note that support is still fairly
-experimental, partly due to Bento relying on `Waf`_ which tends to have
-non-backwards-compatible API changes.  Working versions of Bento and Waf are
-run on TravisCI, see ``tools/travis-test.sh``.
-
 
 Using virtualenvs
 -----------------
 
 A frequently asked question is "How do I set up a development version of NumPy
-in parallel to a released version that I use to do my job/research?".  
+in parallel to a released version that I use to do my job/research?".
 
 One simple way to achieve this is to install the released version in
 site-packages, by using a binary installer or pip for example, and set
@@ -190,15 +183,13 @@ For example to see where in the Python code you are, use ``py-list``.  For more
 details, see `DebuggingWithGdb`_.
 
 Instead of plain ``gdb`` you can of course use your favourite
-alternative debugger; run it on the python binary with arguments 
+alternative debugger; run it on the python binary with arguments
 ``runtests.py -g --python mytest.py``.
 
 Building NumPy with a Python built with debug support (on Linux distributions
-typically packaged as ``python-dbg``) is highly recommended.  
+typically packaged as ``python-dbg``) is highly recommended.
 
 
-
-.. _Bento: http://cournape.github.io/Bento/
 
 .. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
 

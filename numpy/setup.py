@@ -6,7 +6,6 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('numpy', parent_package, top_path)
 
-    # If you update this list, then also update the file numpy/bento.info
     config.add_subpackage('compat')
     config.add_subpackage('core')
     config.add_subpackage('distutils')
