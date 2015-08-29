@@ -3796,9 +3796,8 @@ add_newdoc('numpy.core.multiarray', 'shares_memory',
         Input arrays
     max_work : int, optional
         Effort to spend on solving the overlap problem (maximum number
-        of candidate solutions to consider). Note max_work=1 handles
-        most usual cases. In addition, the following special values
-        are recognized:
+        of candidate solutions to consider). The following special
+        values are recognized:
 
         max_work=MAY_SHARE_EXACT  (default)
             The problem is solved exactly. In this case, the function returns
