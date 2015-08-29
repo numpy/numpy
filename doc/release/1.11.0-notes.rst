@@ -29,6 +29,9 @@ as the argument to 'bins' results in the corresponding estimator being used.
 has been added, converting the previous vbench-based one. You can run the suite locally
 via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rst``.
 
+* A new function ``np.shares_memory`` that can check exactly whether two
+arrays have memory overlap is added. ``np.may_share_memory`` also now
+has an option to spend more effort to reduce false positives.
 
 Improvements
 ============

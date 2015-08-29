@@ -10,6 +10,7 @@ from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
+from ._internal import TooHardError
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -39,8 +40,8 @@ __all__ = [
     'getbufsize', 'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
     'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_', 'True_',
     'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
-    'ALLOW_THREADS', 'ComplexWarning', 'may_share_memory', 'full',
-    'full_like', 'matmul',
+    'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
+    'shares_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'TooHardError',
     ]
 
 if sys.version_info[0] < 3:
@@ -65,6 +66,8 @@ RAISE = multiarray.RAISE
 MAXDIMS = multiarray.MAXDIMS
 ALLOW_THREADS = multiarray.ALLOW_THREADS
 BUFSIZE = multiarray.BUFSIZE
+MAY_SHARE_BOUNDS = multiarray.MAY_SHARE_BOUNDS
+MAY_SHARE_EXACT = multiarray.MAY_SHARE_EXACT
 
 ndarray = multiarray.ndarray
 flatiter = multiarray.flatiter
@@ -375,7 +378,7 @@ fromstring = multiarray.fromstring
 fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
-may_share_memory = multiarray.may_share_memory
+shares_memory = multiarray.shares_memory
 if sys.version_info[0] < 3:
     newbuffer = multiarray.newbuffer
     getbuffer = multiarray.getbuffer
