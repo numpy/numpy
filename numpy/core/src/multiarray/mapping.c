@@ -285,35 +285,13 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /* Index is an ellipsis (`...`) */
         if (obj == Py_Ellipsis) {
-            /*
-             * If there is more then one Ellipsis, it is replaced. Deprecated,
-             * since it is hard to imagine anyone using two Ellipsis and
-             * actually planning on all but the first being automatically
-             * replaced with a slice.
-             */
+            /* At most one ellipsis in an index */
             if (index_type & HAS_ELLIPSIS) {
-                /* 2013-04-14, 1.8 */
-                if (DEPRECATE(
-                        "an index can only have a single Ellipsis (`...`); "
-                        "replace all but one with slices (`:`).") < 0) {
-                    goto failed_building_indices;
-                }
-                index_type |= HAS_SLICE;
-
-                indices[curr_idx].type = HAS_SLICE;
-                indices[curr_idx].object = PySlice_New(NULL, NULL, NULL);
-
-                if (indices[curr_idx].object == NULL) {
-                    goto failed_building_indices;
-                }
-
-                used_ndim += 1;
-                new_ndim += 1;
-                curr_idx += 1;
-                continue;
+                PyErr_Format(PyExc_IndexError,
+                    "an index can only have a single ellipsis ('...')");
+                goto failed_building_indices;
             }
             index_type |= HAS_ELLIPSIS;
-
             indices[curr_idx].type = HAS_ELLIPSIS;
             indices[curr_idx].object = NULL;
             /* number of slices it is worth, won't update if it is 0: */
@@ -415,102 +393,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     goto failed_building_indices;
                 }
             }
-            /*
-             * Special case to allow 0-d boolean indexing with
-             * scalars. Should be removed after boolean-array
-             * like as integer-array like deprecation.
-             * (does not cover ufunc.at, because it does not use the
-             * boolean special case, but that should not matter...)
-             * Since all but strictly boolean indices are invalid,
-             * there is no need for any further conversion tries.
-             */
-            else if (PyArray_NDIM(self) == 0) {
-                arr = tmp_arr;
-            }
             else {
-                /*
-                 * These Checks can be removed after deprecation, since
-                 * they should then be either correct already or error out
-                 * later just like a normal array.
-                 */
-                if (PyArray_ISBOOL(tmp_arr)) {
-                    /* 2013-04-14, 1.8 */
-                    if (DEPRECATE_FUTUREWARNING(
-                            "in the future, boolean array-likes will be "
-                            "handled as a boolean array index") < 0) {
-                        Py_DECREF(tmp_arr);
-                        goto failed_building_indices;
-                    }
-                    if (PyArray_NDIM(tmp_arr) == 0) {
-                        /*
-                         * Need to raise an error here, since the
-                         * DeprecationWarning before was not triggered.
-                         * TODO: A `False` triggers a Deprecation *not* a
-                         *       a FutureWarning.
-                         */
-                        PyErr_SetString(PyExc_IndexError,
-                                "in the future, 0-d boolean arrays will be "
-                                "interpreted as a valid boolean index");
-                        Py_DECREF(tmp_arr);
-                        goto failed_building_indices;
-                    }
-                    else {
-                        arr = tmp_arr;
-                    }
-                }
-                /*
-                 * Note: Down the road, the integers will be cast to intp.
-                 *       The user has to make sure they can be safely cast.
-                 *       If not, we might index wrong instead of an giving
-                 *       an error.
-                 */
-                else if (!PyArray_ISINTEGER(tmp_arr)) {
-                    if (PyArray_NDIM(tmp_arr) == 0) {
-                        /* match integer deprecation warning */
-                        /* 2013-09-25, 1.8 */
-                        if (DEPRECATE(
-                                    "using a non-integer number instead of an "
-                                    "integer will result in an error in the "
-                                    "future") < 0) {
-
-                            /* The error message raised in the future */
-                            PyErr_SetString(PyExc_IndexError,
-                                "only integers, slices (`:`), ellipsis (`...`), "
-                                "numpy.newaxis (`None`) and integer or boolean "
-                                "arrays are valid indices");
-                            Py_DECREF((PyObject *)tmp_arr);
-                            goto failed_building_indices;
-                        }
-                    }
-                    else {
-                        /* 2013-09-25, 1.8 */
-                        if (DEPRECATE(
-                                    "non integer (and non boolean) array-likes "
-                                    "will not be accepted as indices in the "
-                                    "future") < 0) {
-
-                            /* Error message to be raised in the future */
-                            PyErr_SetString(PyExc_IndexError,
-                                "non integer (and non boolean) array-likes will "
-                                "not be accepted as indices in the future");
-                            Py_DECREF((PyObject *)tmp_arr);
-                            goto failed_building_indices;
-                        }
-                    }
-                }
-
-                arr = (PyArrayObject *)PyArray_FromArray(tmp_arr,
-                                            PyArray_DescrFromType(NPY_INTP),
-                                            NPY_ARRAY_FORCECAST);
-
-                if (arr == NULL) {
-                    /* Since this will be removed, handle this later */
-                    PyErr_Clear();
-                    arr = tmp_arr;
-                }
-                else {
-                    Py_DECREF((PyObject *)tmp_arr);
-                }
+                arr = tmp_arr;
             }
         }
         else {

@@ -144,34 +144,31 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
     def test_indexing(self):
         a = np.array([[[5]]])
 
-        def assert_deprecated(*args, **kwargs):
-            self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
-
-        assert_deprecated(lambda: a[0.0])
-        assert_deprecated(lambda: a[0, 0.0])
-        assert_deprecated(lambda: a[0.0, 0])
-        assert_deprecated(lambda: a[0.0,:])
-        assert_deprecated(lambda: a[:, 0.0])
-        assert_deprecated(lambda: a[:, 0.0,:])
-        assert_deprecated(lambda: a[0.0,:,:])
-        assert_deprecated(lambda: a[0, 0, 0.0])
-        assert_deprecated(lambda: a[0.0, 0, 0])
-        assert_deprecated(lambda: a[0, 0.0, 0])
-        assert_deprecated(lambda: a[-1.4])
-        assert_deprecated(lambda: a[0, -1.4])
-        assert_deprecated(lambda: a[-1.4, 0])
-        assert_deprecated(lambda: a[-1.4,:])
-        assert_deprecated(lambda: a[:, -1.4])
-        assert_deprecated(lambda: a[:, -1.4,:])
-        assert_deprecated(lambda: a[-1.4,:,:])
-        assert_deprecated(lambda: a[0, 0, -1.4])
-        assert_deprecated(lambda: a[-1.4, 0, 0])
-        assert_deprecated(lambda: a[0, -1.4, 0])
+        assert_raises(IndexError, lambda: a[0.0])
+        assert_raises(IndexError, lambda: a[0, 0.0])
+        assert_raises(IndexError, lambda: a[0.0, 0])
+        assert_raises(IndexError, lambda: a[0.0,:])
+        assert_raises(IndexError, lambda: a[:, 0.0])
+        assert_raises(IndexError, lambda: a[:, 0.0,:])
+        assert_raises(IndexError, lambda: a[0.0,:,:])
+        assert_raises(IndexError, lambda: a[0, 0, 0.0])
+        assert_raises(IndexError, lambda: a[0.0, 0, 0])
+        assert_raises(IndexError, lambda: a[0, 0.0, 0])
+        assert_raises(IndexError, lambda: a[-1.4])
+        assert_raises(IndexError, lambda: a[0, -1.4])
+        assert_raises(IndexError, lambda: a[-1.4, 0])
+        assert_raises(IndexError, lambda: a[-1.4,:])
+        assert_raises(IndexError, lambda: a[:, -1.4])
+        assert_raises(IndexError, lambda: a[:, -1.4,:])
+        assert_raises(IndexError, lambda: a[-1.4,:,:])
+        assert_raises(IndexError, lambda: a[0, 0, -1.4])
+        assert_raises(IndexError, lambda: a[-1.4, 0, 0])
+        assert_raises(IndexError, lambda: a[0, -1.4, 0])
 
         # Test that the slice parameter deprecation warning doesn't mask
         # the scalar index warning.
-        assert_deprecated(lambda: a[0.0:, 0.0], num=2)
-        assert_deprecated(lambda: a[0.0:, 0.0,:], num=2)
+        assert_raises(IndexError, lambda: a[0.0:, 0.0])
+        assert_raises(IndexError, lambda: a[0.0:, 0.0,:])
 
     def test_valid_indexing(self):
         a = np.array([[[5]]])
@@ -186,36 +183,33 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
     def test_slicing(self):
         a = np.array([[5]])
 
-        def assert_deprecated(*args, **kwargs):
-            self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
-
         # start as float.
-        assert_deprecated(lambda: a[0.0:])
-        assert_deprecated(lambda: a[0:, 0.0:2])
-        assert_deprecated(lambda: a[0.0::2, :0])
-        assert_deprecated(lambda: a[0.0:1:2,:])
-        assert_deprecated(lambda: a[:, 0.0:])
+        assert_raises(IndexError, lambda: a[0.0:])
+        assert_raises(IndexError, lambda: a[0:, 0.0:2])
+        assert_raises(IndexError, lambda: a[0.0::2, :0])
+        assert_raises(IndexError, lambda: a[0.0:1:2,:])
+        assert_raises(IndexError, lambda: a[:, 0.0:])
         # stop as float.
-        assert_deprecated(lambda: a[:0.0])
-        assert_deprecated(lambda: a[:0, 1:2.0])
-        assert_deprecated(lambda: a[:0.0:2, :0])
-        assert_deprecated(lambda: a[:0.0,:])
-        assert_deprecated(lambda: a[:, 0:4.0:2])
+        assert_raises(IndexError, lambda: a[:0.0])
+        assert_raises(IndexError, lambda: a[:0, 1:2.0])
+        assert_raises(IndexError, lambda: a[:0.0:2, :0])
+        assert_raises(IndexError, lambda: a[:0.0,:])
+        assert_raises(IndexError, lambda: a[:, 0:4.0:2])
         # step as float.
-        assert_deprecated(lambda: a[::1.0])
-        assert_deprecated(lambda: a[0:, :2:2.0])
-        assert_deprecated(lambda: a[1::4.0, :0])
-        assert_deprecated(lambda: a[::5.0,:])
-        assert_deprecated(lambda: a[:, 0:4:2.0])
+        assert_raises(IndexError, lambda: a[::1.0])
+        assert_raises(IndexError, lambda: a[0:, :2:2.0])
+        assert_raises(IndexError, lambda: a[1::4.0, :0])
+        assert_raises(IndexError, lambda: a[::5.0,:])
+        assert_raises(IndexError, lambda: a[:, 0:4:2.0])
         # mixed.
-        assert_deprecated(lambda: a[1.0:2:2.0], num=2)
-        assert_deprecated(lambda: a[1.0::2.0], num=2)
-        assert_deprecated(lambda: a[0:, :2.0:2.0], num=2)
-        assert_deprecated(lambda: a[1.0:1:4.0, :0], num=2)
-        assert_deprecated(lambda: a[1.0:5.0:5.0,:], num=3)
-        assert_deprecated(lambda: a[:, 0.4:4.0:2.0], num=3)
+        assert_raises(IndexError, lambda: a[1.0:2:2.0])
+        assert_raises(IndexError, lambda: a[1.0::2.0])
+        assert_raises(IndexError, lambda: a[0:, :2.0:2.0])
+        assert_raises(IndexError, lambda: a[1.0:1:4.0, :0])
+        assert_raises(IndexError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(IndexError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
-        assert_deprecated(lambda: a[::0.0], function_fails=True)
+        assert_raises(IndexError, lambda: a[::0.0])
 
     def test_valid_slicing(self):
         a = np.array([[[5]]])
@@ -233,25 +227,25 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
     def test_non_integer_argument_deprecations(self):
         a = np.array([[5]])
 
-        self.assert_deprecated(np.reshape, args=(a, (1., 1., -1)), num=2)
-        self.assert_deprecated(np.reshape, args=(a, (np.array(1.), -1)))
-        self.assert_deprecated(np.take, args=(a, [0], 1.))
-        self.assert_deprecated(np.take, args=(a, [0], np.float64(1.)))
+        assert_raises(TypeError, np.reshape, a, (1., 1., -1))
+        assert_raises(TypeError, np.reshape, a, (np.array(1.), -1))
+        assert_raises(TypeError, np.take, a, [0], 1.)
+        assert_raises(TypeError, np.take, a, [0], np.float64(1.))
 
     def test_non_integer_sequence_multiplication(self):
         # Numpy scalar sequence multiply should not work with non-integers
         def mult(a, b):
             return a * b
 
-        self.assert_deprecated(mult, args=([1], np.float_(3)))
+        assert_raises(TypeError, mult, [1], np.float_(3))
         self.assert_not_deprecated(mult, args=([1], np.int_(3)))
 
     def test_reduce_axis_float_index(self):
         d = np.zeros((3,3,3))
-        self.assert_deprecated(np.min, args=(d, 0.5))
-        self.assert_deprecated(np.min, num=1, args=(d, (0.5, 1)))
-        self.assert_deprecated(np.min, num=1, args=(d, (1, 2.2)))
-        self.assert_deprecated(np.min, num=2, args=(d, (.2, 1.2)))
+        assert_raises(TypeError, np.min, d, 0.5)
+        assert_raises(TypeError, np.min, d, (0.5, 1))
+        assert_raises(TypeError, np.min, d, (1, 2.2))
+        assert_raises(TypeError, np.min, d, (.2, 1.2))
 
 
 class TestBooleanArgumentDeprecation(_DeprecationTestCase):
@@ -267,15 +261,15 @@ class TestBooleanArgumentDeprecation(_DeprecationTestCase):
     def test_bool_as_int_argument(self):
         a = np.array([[[1]]])
 
-        self.assert_deprecated(np.reshape, args=(a, (True, -1)))
-        self.assert_deprecated(np.reshape, args=(a, (np.bool_(True), -1)))
+        assert_raises(TypeError, np.reshape, a, (True, -1))
+        assert_raises(TypeError, np.reshape, a, (np.bool_(True), -1))
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
-        self.assert_deprecated(np.take, args=(a, [0], False))
-        self.assert_deprecated(lambda: a[False:True:True], exceptions=IndexError, num=3)
-        self.assert_deprecated(lambda: a[False, 0], exceptions=IndexError)
-        self.assert_deprecated(lambda: a[False, 0, 0], exceptions=IndexError)
+        assert_raises(TypeError, np.take, args=(a, [0], False))
+        assert_raises(IndexError, lambda: a[False:True:True])
+        assert_raises(IndexError, lambda: a[False, 0])
+        assert_raises(IndexError, lambda: a[False, 0, 0])
 
 
 class TestArrayToIndexDeprecation(_DeprecationTestCase):
@@ -294,11 +288,13 @@ class TestArrayToIndexDeprecation(_DeprecationTestCase):
         # so no exception is expected. The raising is effectively tested above.
         a = np.array([[[1]]])
 
-        self.assert_deprecated(operator.index, args=(np.array([1]),))
-        self.assert_deprecated(np.reshape, args=(a, (a, -1)), exceptions=())
-        self.assert_deprecated(np.take, args=(a, [0], a), exceptions=())
+        assert_raises(TypeError, operator.index, np.array([1]))
+        assert_raises(TypeError, np.reshape, a, (a, -1))
+        assert_raises(TypeError, np.take, a, [0], a)
+        
         # Check slicing. Normal indexing checks arrays specifically.
-        self.assert_deprecated(lambda: a[a:a:a], exceptions=(), num=3)
+        assert_raises(IndexError, lambda: a[a:a:a])
+
 
 class TestNonIntegerArrayLike(_DeprecationTestCase):
     """Tests that array likes, i.e. lists give a deprecation warning
@@ -309,25 +305,10 @@ class TestNonIntegerArrayLike(_DeprecationTestCase):
 
     def test_basic(self):
         a = np.arange(10)
-        self.assert_deprecated(a.__getitem__, args=([0.5, 1.5],),
-                               exceptions=IndexError)
-        self.assert_deprecated(a.__getitem__, args=((['1', '2'],),),
-                               exceptions=IndexError)
+        assert_raises(IndexError, a.__getitem__, [0.5, 1.5])
+        assert_raises(IndexError, a.__getitem__, (['1', '2'],))
 
         self.assert_not_deprecated(a.__getitem__, ([],))
-
-    def test_boolean_futurewarning(self):
-        a = np.arange(10)
-        with warnings.catch_warnings():
-            warnings.filterwarnings('always')
-            assert_warns(FutureWarning, a.__getitem__, [True])
-            # Unfortunatly, the deprecation warning takes precedence:
-            #assert_warns(FutureWarning, a.__getitem__, True)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error')
-            assert_raises(FutureWarning, a.__getitem__, [True])
-            #assert_raises(FutureWarning, a.__getitem__, True)
 
 
 class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
@@ -336,14 +317,9 @@ class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
 
     def test_basic(self):
         a = np.arange(10)
-        self.assert_deprecated(a.__getitem__, args=((Ellipsis, Ellipsis),))
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', '', DeprecationWarning)
-            # Just check that this works:
-            b = a[...,...]
-            assert_array_equal(a, b)
-            assert_raises(IndexError, a.__getitem__, ((Ellipsis, ) * 3,))
+        assert_raises(IndexError, lambda : a[..., ...])
+        assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 2,))
+        assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
 class TestBooleanUnaryMinusDeprecation(_DeprecationTestCase):

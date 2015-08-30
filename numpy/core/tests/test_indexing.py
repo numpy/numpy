@@ -35,16 +35,6 @@ class TestIndexing(TestCase):
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
 
-        # Regression, it needs to fall through integer and fancy indexing
-        # cases, so need the with statement to ignore the non-integer error.
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', '', DeprecationWarning)
-            a = np.array([1.])
-            assert_(isinstance(a[0.], np.float_))
-
-            a = np.array([np.array(1)], dtype=object)
-            assert_(isinstance(a[0.], np.ndarray))
-
     def test_same_kind_index_casting(self):
         # Indexes should be cast with same-kind and not safe, even if
         # that is somewhat unsafe. So test various different code paths.

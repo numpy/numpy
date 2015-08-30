@@ -1913,19 +1913,25 @@ class TestBincount(TestCase):
 
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
-        assert_raises_regex(TypeError, "an integer is required",
+        assert_raises_regex(TypeError,
+                            "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
-        assert_raises_regex(ValueError, "must be positive",
+        assert_raises_regex(ValueError,
+                            "must be positive",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError, "must be positive",
+        assert_raises_regex(ValueError,
+                            "must be positive",
                             lambda: np.bincount(x, minlength=0))
 
         x = np.arange(5)
-        assert_raises_regex(TypeError, "an integer is required",
+        assert_raises_regex(TypeError,
+                            "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
-        assert_raises_regex(ValueError, "minlength must be positive",
+        assert_raises_regex(ValueError,
+                            "minlength must be positive",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError, "minlength must be positive",
+        assert_raises_regex(ValueError,
+                            "minlength must be positive",
                             lambda: np.bincount(x, minlength=0))
 
 
