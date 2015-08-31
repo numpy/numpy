@@ -19,6 +19,7 @@ _o = 1 + np.finfo(np.longdouble).eps
 string_to_longdouble_inaccurate = (_o != np.longdouble(repr(_o)))
 del _o
 
+
 def test_scalar_extraction():
     """Confirm that extracting a value doesn't convert to python float"""
     o = 1 + np.finfo(np.longdouble).eps
@@ -78,6 +79,18 @@ def test_fromstring():
     a = np.array([o]*5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
+
+
+@in_foreign_locale
+def test_fromstring_best_effort_float():
+    assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
+                 np.array([1.]))
+
+
+@in_foreign_locale
+def test_fromstring_best_effort():
+    assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
+                 np.array([1.]))
 
 
 def test_fromstring_bogus():
