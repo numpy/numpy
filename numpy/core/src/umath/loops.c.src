@@ -1286,11 +1286,17 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const double in2 = *(double *)ip2;
-        if (in1 == NPY_DATETIME_NAT || npy_isnan(in2)) {
+        if (in1 == NPY_DATETIME_NAT) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+            double result = in1 * in2;
+            if (npy_isfinite(result)) {
+                *((npy_timedelta *)op1) = (npy_timedelta)result;
+            }
+            else {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
         }
     }
 }
@@ -1301,11 +1307,17 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void
     BINARY_LOOP {
         const double in1 = *(double *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        if (npy_isnan(in1) || in2 == NPY_DATETIME_NAT) {
+        if (in2 == NPY_DATETIME_NAT) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+            double result = in1 * in2;
+            if (npy_isfinite(result)) {
+                *((npy_timedelta *)op1) = (npy_timedelta)result;
+            }
+            else {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
         }
     }
 }
@@ -1337,11 +1349,11 @@ TIMEDELTA_md_m_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
         }
         else {
             double result = in1 / in2;
-            if (npy_isnan(result)) {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            if (npy_isfinite(result)) {
+                *((npy_timedelta *)op1) = (npy_timedelta)result;
             }
             else {
-                *((npy_timedelta *)op1) = (npy_timedelta)(result);
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
     }
