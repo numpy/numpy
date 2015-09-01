@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import pickle
+import warnings
 
 import numpy
 import numpy as np
@@ -961,6 +962,21 @@ class TestDateTime(TestCase):
             # float * M8
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
+        # NaTs
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            nat = np.timedelta64('NaT')
+            def check(a, b, res):
+                assert_equal(a * b, res)
+                assert_equal(b * a, res)
+            for tp in (int, float):
+                check(nat, tp(2), nat)
+                check(nat, tp(0), nat)
+            for f in (float('inf'), float('nan')):
+                check(np.timedelta64(1), f, nat)
+                check(np.timedelta64(0), f, nat)
+                check(nat, f, nat)
+
     def test_datetime_divide(self):
         for dta, tda, tdb, tdc, tdd in \
                     [
@@ -1009,6 +1025,24 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.divide, dta, 1.5)
             # float / M8
             assert_raises(TypeError, np.divide, 1.5, dta)
+
+        # NaTs
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            nat = np.timedelta64('NaT')
+            for tp in (int, float):
+                assert_equal(np.timedelta64(1) / tp(0), nat)
+                assert_equal(np.timedelta64(0) / tp(0), nat)
+                assert_equal(nat / tp(0), nat)
+                assert_equal(nat / tp(2), nat)
+            # Division by inf
+            assert_equal(np.timedelta64(1) / float('inf'), np.timedelta64(0))
+            assert_equal(np.timedelta64(0) / float('inf'), np.timedelta64(0))
+            assert_equal(nat / float('inf'), nat)
+            # Division by nan
+            assert_equal(np.timedelta64(1) / float('nan'), nat)
+            assert_equal(np.timedelta64(0) / float('nan'), nat)
+            assert_equal(nat / float('nan'), nat)
 
     def test_datetime_compare(self):
         # Test all the comparison operators
