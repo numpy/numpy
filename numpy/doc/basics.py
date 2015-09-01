@@ -151,10 +151,11 @@ useful to use floating-point numbers with more precision. Whether this
 is possible in numpy depends on the hardware and on the development
 environment: specifically, x86 machines provide hardware floating-point
 with 80-bit precision, and while most C compilers provide this as their
-``long double`` type, MSVC makes ``long double`` identical to ``double``
-(64 bits). Numpy makes the compiler's ``long double`` available as
-``np.longdouble`` (and ``np.clongdouble`` for the complex numbers).
-You can find out what your numpy provides with``np.finfo(np.longdouble)``.
+``long double`` type, MSVC (standard for Windows builds) makes
+``long double`` identical to ``double`` (64 bits). Numpy makes the
+compiler's ``long double`` available as ``np.longdouble`` (and
+``np.clongdouble`` for the complex numbers). You can find out what your
+numpy provides with``np.finfo(np.longdouble)``.
 
 Numpy does not provide a dtype with more precision than C
 ``long double``s; in particular, the 128-bit IEEE quad precision
@@ -166,9 +167,10 @@ depends on hardware and development environment; typically on 32-bit
 systems they are padded to 96 bits, while on 64-bit systems they are
 typically padded to 128 bits. ``np.longdouble`` is padded to the system
 default; ``np.float96`` and ``np.float128`` are provided for users who
-want specific padding (for space or compatibility reasons). In spite
-of the names, these provide only as much precision as ``np.longdouble``,
-that is, 64 or 80 bits on x86 machines.
+want specific padding. In spite of the names, ``np.float96`` and
+``np.float128`` provide only as much precision as ``np.longdouble``,
+that is, 80 bits on most x86 machines and 64 bits in standard
+Windows builds.
 
 Be warned that even if ``np.longdouble`` offers more precision than
 python ``float``, it is easy to lose that extra precision, since
