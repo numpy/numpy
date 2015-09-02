@@ -99,6 +99,8 @@ def main(argv):
                         help="Start Unix shell with PYTHONPATH set")
     parser.add_argument("--debug", "-g", action="store_true",
                         help="Debug build")
+    parser.add_argument("--parallel", "-j", type=int, default=0,
+                        help="Number of parallel jobs during build")
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -337,8 +339,10 @@ def build_project(args):
             env['F90'] = 'gfortran --coverage '
             env['LDSHARED'] = cvars['LDSHARED'] + ' --coverage'
             env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
-        cmd += ["build"]
 
+    cmd += ["build"]
+    if args.parallel > 1:
+        cmd += ["-j", str(args.parallel)]
     cmd += ['install', '--prefix=' + dst_dir]
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
