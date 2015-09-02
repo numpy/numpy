@@ -3,7 +3,7 @@
 
 
 typedef struct {
-    char sign;
+    signed char sign;
     npy_uint64 lo, hi;
 } npy_extint128_t;
 
