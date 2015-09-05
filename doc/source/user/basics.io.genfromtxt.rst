@@ -29,9 +29,9 @@ Defining the input
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
 the data.  It can be a string corresponding to the name of a local or
 remote file, or a file-like object with a :meth:`read` method (such as an
-actual file or a :class:`StringIO.StringIO` object).  If the argument is
-the URL of a remote file, this latter is automatically downloaded in the
-current directory.
+actual file or a :class:`StringIO.StringIO` object), a list of strings, or
+a generator.  If the argument is the URL of a remote file, then the file
+is automatically downloaded to the current directory.
 
 The input file can be a text file or an archive.  Currently, the function
 recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
