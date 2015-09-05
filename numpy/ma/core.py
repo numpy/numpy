@@ -2415,6 +2415,9 @@ class _MaskedPrintOption:
     def __str__(self):
         return str(self._display)
 
+    def __abs__(self):
+        return self
+
     __repr__ = __str__
 
 # if you single index into a masked location you get this object.

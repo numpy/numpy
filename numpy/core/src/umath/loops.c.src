@@ -14,6 +14,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "npy_import.h"
 #include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
@@ -2720,46 +2721,172 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
 }
 /**end repeat**/
 
+/**begin repeat
+ * #func = fmod, arccos, arccosh, arcsin, arcsinh, arctan, arctanh, cos, sin,
+           tan, cosh, sinh, tanh, exp, expm1, log, log10, log1p, sqrt, ceil,
+           trunc, fabs, floor, arctan2, hypot, isnan, isinf, ldexp, conjugate,
+           square, reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
+           radians, deg2rad, exp2, log2, cbrt, isfinite, rint, signbit,
+           nextafter, spacing#
+ */
 NPY_NO_EXPORT void
-OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
-    PyObject *zero = PyLong_FromLong(0);
+    PyObject *ret;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    npy_cache_import("numpy", "@func@", &ufunc);
+    if (ufunc == NULL) {
+        return;
+    }
+    npy_cache_import("numpy.core._objectmath", "@func@", &fallback);
+    if (fallback == NULL) {
+        return;
+    }
 
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = NULL;
-        int v;
 
-        if (in1 == NULL) {
-            in1 = Py_None;
-        }
+        in1 = in1 ? in1 : Py_None;
 
-        if ((v = PyObject_RichCompareBool(in1, zero, Py_LT)) == 1) {
-            ret = PyLong_FromLong(-1);
+        if (PyArray_Check(in1) || PyArray_IsScalar(in1, Generic)) {
+            ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
         }
-        else if (v == 0 &&
-                (v = PyObject_RichCompareBool(in1, zero, Py_GT)) == 1) {
-            ret = PyLong_FromLong(1);
+        else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
+                PyCallable_Check(attr)) {
+            ret = PyObject_CallFunctionObjArgs(attr, NULL);
+            Py_DECREF(attr);
         }
-        else if (v == 0 &&
-                (v = PyObject_RichCompareBool(in1, zero, Py_EQ)) == 1) {
-            ret = PyLong_FromLong(0);
-        }
-        else if (v == 0) {
-            /* in1 is NaN */
-            PyErr_SetString(PyExc_TypeError,
-                    "unorderable types for comparison");
+        else {
+            /* clear any error from attr lookup */
+            PyErr_Clear();
+
+            ret = PyObject_CallFunctionObjArgs(fallback, in1, NULL);
         }
 
         if (ret == NULL) {
-            break;
+            return;
         }
+
         Py_XDECREF(*out);
         *out = ret;
     }
-    Py_XDECREF(zero);
 }
+/**end repeat**/
+
+/**begin repeat
+ * #func = logical_and, logical_or, logical_xor, maximum, minimum, fmax, fmin,
+           logaddexp, logaddexp2, copysign#
+ */
+NPY_NO_EXPORT void
+OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
+{
+    PyObject *ret;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    npy_cache_import("numpy", "@func@", &ufunc);
+    if (ufunc == NULL) {
+        return;
+    }
+    npy_cache_import("numpy.core._objectmath", "@func@", &fallback);
+    if (fallback == NULL) {
+        return;
+    }
+
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op1;
+
+        in1 = in1 ? in1 : Py_None;
+        in2 = in2 ? in2 : Py_None;
+
+        if (PyArray_Check(in1) || PyArray_CheckScalar(in1) ||
+                PyArray_Check(in2) || PyArray_CheckScalar(in2) ){
+            ret = PyObject_CallFunctionObjArgs(ufunc, in1, in2, NULL);
+        }
+
+        else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
+                PyCallable_Check(attr)) {
+            ret = PyObject_CallFunctionObjArgs(attr, in2, NULL);
+            Py_DECREF(attr);
+        }
+        else {
+            /* clear any error from attr lookup */
+            PyErr_Clear();
+
+            ret = PyObject_CallFunctionObjArgs(fallback, in1, in2, NULL);
+        }
+
+        if (ret == NULL) {
+            return;
+        }
+         
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ * #func = modf, frexp#
+ */
+NPY_NO_EXPORT void
+OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
+{
+    PyObject *ret;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    npy_cache_import("numpy", "@func@", &ufunc);
+    if (ufunc == NULL) {
+        return;
+    }
+    npy_cache_import("numpy.core._objectmath", "@func@", &fallback);
+    if (fallback == NULL) {
+        return;
+    }
+
+    UNARY_LOOP_TWO_OUT {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out1 = (PyObject **)op1;
+        PyObject **out2 = (PyObject **)op2;
+
+        in1 = in1 ? in1 : Py_None;
+
+        if (PyArray_Check(in1) || PyArray_CheckScalar(in1)) {
+            ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
+        }
+        else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
+                PyCallable_Check(attr)) {
+            ret = PyObject_CallFunctionObjArgs(attr, NULL);
+            Py_DECREF(attr);
+        }
+        else {
+            /* clear any error from attr lookup */
+            PyErr_Clear();
+
+            ret = PyObject_CallFunctionObjArgs(fallback, in1, NULL);
+        }
+
+        if (ret == NULL) {
+            return;
+        }
+
+        if (!PyTuple_Check(ret) || PyTuple_Size(ret) != 2){
+            Py_XDECREF(ret);
+            return;
+        }
+         
+        Py_XDECREF(*out1);
+        *out1 = PyTuple_GET_ITEM(ret, 0);
+        Py_INCREF(*out1);
+
+        Py_XDECREF(*out2);
+        *out2 = PyTuple_GET_ITEM(ret, 1);
+        Py_INCREF(*out2);
+
+        Py_XDECREF(ret);
+    }
+}
+/**end repeat**/
 
 /*
  *****************************************************************************
