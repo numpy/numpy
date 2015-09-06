@@ -700,7 +700,8 @@ class TestMultiIndexingAutomated(TestCase):
             np.zeros([1]*31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
         # Some simpler indices that still cover a bit more
-        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
+        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
+                               'skip']
         # Very simple ones to fill the rest:
         self.fill_indices = [slice(None, None), 0]
 
@@ -843,7 +844,9 @@ class TestMultiIndexingAutomated(TestCase):
                 # Now it is always done.
                 if indx >= arr.shape[ax] or indx < - arr.shape[ax]:
                     raise IndexError
-            if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
+            if (len(indices) > 0 and
+                    indices[-1][0] == 'f' and
+                    ax != ellipsis_pos):
                 # NOTE: There could still have been a 0-sized Ellipsis
                 # between them. Checked that with ellipsis_pos.
                 indices[-1].append(indx)
@@ -912,13 +915,15 @@ class TestMultiIndexingAutomated(TestCase):
                         # Work around for a crash or IndexError with 'wrap'
                         # in some 0-sized cases.
                         try:
-                            mi = np.ravel_multi_index(indx[1:], orig_slice, mode='raise')
+                            mi = np.ravel_multi_index(indx[1:], orig_slice,
+                                                      mode='raise')
                         except:
                             # This happens with 0-sized orig_slice (sometimes?)
                             # here it is a ValueError, but indexing gives a:
                             raise IndexError('invalid index into 0-sized')
                     else:
-                        mi = np.ravel_multi_index(indx[1:], orig_slice, mode='wrap')
+                        mi = np.ravel_multi_index(indx[1:], orig_slice,
+                                                  mode='wrap')
                 else:
                     # Maybe never happens...
                     raise ValueError
@@ -1020,9 +1025,12 @@ class TestMultiIndexingAutomated(TestCase):
         # it is aligned to the left. This is probably correct for
         # consistency with arr[boolean_array,] also no broadcasting
         # is done at all
-        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool),))
-        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
-        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
+        self._check_multi_index(
+            self.a, (np.zeros_like(self.a, dtype=bool),))
+        self._check_multi_index(
+            self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
+        self._check_multi_index(
+            self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
 
     def test_multidim(self):
         # Automatically test combinations with complex indexes on 2nd (or 1st)
