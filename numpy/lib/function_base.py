@@ -1122,19 +1122,28 @@ def gradient(f, *varargs, **kwargs):
     ----------
     f : array_like
         An N-dimensional array containing samples of a scalar function.
-    varargs : list of scalar, optional
+    varargs : scalar or list of scalar, optional
         N scalars specifying the sample distances for each dimension,
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
+        single scalar specifies sample distance for all dimensions.
+        if `axis` is given, the number of varargs must equal the number of axes.
     edge_order : {1, 2}, optional
         Gradient is calculated using N\ :sup:`th` order accurate differences
         at the boundaries. Default: 1.
 
         .. versionadded:: 1.9.1
 
+    axis : None or int or tuple of ints, optional
+        Gradient is calculated only along the given axis or axes
+        The default (axis = None) is to calculate the gradient for all the axes of the input array.
+        axis may be negative, in which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     gradient : list of ndarray
-        Each element of `list` has the same shape as `f` giving the derivative 
+        Each element of `list` has the same shape as `f` giving the derivative
         of `f` with respect to each dimension.
 
     Examples
@@ -1145,10 +1154,10 @@ def gradient(f, *varargs, **kwargs):
     >>> np.gradient(x, 2)
     array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
 
-    For two dimensional arrays, the return will be two arrays ordered by 
-    axis. In this example the first array stands for the gradient in 
+    For two dimensional arrays, the return will be two arrays ordered by
+    axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
-    
+
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
@@ -1159,15 +1168,38 @@ def gradient(f, *varargs, **kwargs):
     >>> y = x**2
     >>> np.gradient(y, dx, edge_order=2)
     array([-0.,  2.,  4.,  6.,  8.])
+
+    The axis keyword can be used to specify a subset of axes of which the gradient is calculated
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), axis=0)
+    array([[ 2.,  2., -1.],
+           [ 2.,  2., -1.]])
     """
     f = np.asanyarray(f)
     N = len(f.shape)  # number of dimensions
+
+    axes = kwargs.pop('axis', None)
+    if axes is None:
+        axes = tuple(range(N))
+    # check axes to have correct type and no duplicate entries
+    if isinstance(axes, int):
+        axes = (axes,)
+    if not isinstance(axes, tuple):
+        raise TypeError("A tuple of integers or a single integer is required")
+
+    # normalize axis values:
+    axes = tuple(x + N if x < 0 else x for x in axes)
+    if max(axes) >= N or min(axes) < 0:
+        raise ValueError("'axis' entry is out of bounds")
+
+    if len(set(axes)) != len(axes):
+        raise ValueError("duplicate value in 'axis'")
+
     n = len(varargs)
     if n == 0:
         dx = [1.0]*N
     elif n == 1:
         dx = [varargs[0]]*N
-    elif n == N:
+    elif n == len(axes):
         dx = list(varargs)
     else:
         raise SyntaxError(
@@ -1211,7 +1243,7 @@ def gradient(f, *varargs, **kwargs):
     else:
         y = f
 
-    for axis in range(N):
+    for i, axis in enumerate(axes):
 
         if y.shape[axis] < 2:
             raise ValueError(
@@ -1267,7 +1299,7 @@ def gradient(f, *varargs, **kwargs):
             out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
 
         # divide by step size
-        out /= dx[axis]
+        out /= dx[i]
         outvals.append(out)
 
         # reset the slice object in this dimension to ":"
@@ -1276,7 +1308,7 @@ def gradient(f, *varargs, **kwargs):
         slice3[axis] = slice(None)
         slice4[axis] = slice(None)
 
-    if N == 1:
+    if len(axes) == 1:
         return outvals[0]
     else:
         return outvals
