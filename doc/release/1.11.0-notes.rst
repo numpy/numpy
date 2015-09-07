@@ -10,6 +10,9 @@ Highlights
 
 Dropped Support:
 
+* Building with Bento is no longer supported and the associated files have
+  been removed.
+
 
 Future Changes:
 
