@@ -88,6 +88,8 @@ This approach to the interface consists of the object having an
        ``u``  Unsigned integer
        ``f``  Floating point
        ``c``  Complex floating point
+       ``m``  Timedelta
+       ``M``  Datetime
        ``O``  Object (i.e. the memory contains a pointer to :c:type:`PyObject`)
        ``S``  String (fixed-length sequence of char)
        ``U``  Unicode (fixed-length sequence of :c:type:`Py_UNICODE`)
