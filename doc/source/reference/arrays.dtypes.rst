@@ -230,6 +230,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'u'``            unsigned integer
    ``'f'``            floating-point
    ``'c'``            complex-floating point
+   ``'m'``            timedelta
+   ``'M'``            datetime
    ``'O'``            (Python) objects
    ``'S'``, ``'a'``   (byte-)string
    ``'U'``            Unicode
