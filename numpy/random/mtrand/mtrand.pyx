@@ -3520,7 +3520,7 @@ cdef class RandomState:
 
         .. math:: P(x;l, m, r) = \\begin{cases}
                   \\frac{2(x-l)}{(r-l)(m-l)}& \\text{for $l \\leq x \\leq m$},\\\\
-                  \\frac{2(m-x)}{(r-l)(r-m)}& \\text{for $m \\leq x \\leq r$},\\\\
+                  \\frac{2(r-x)}{(r-l)(r-m)}& \\text{for $m \\leq x \\leq r$},\\\\
                   0& \\text{otherwise}.
                   \\end{cases}
 
