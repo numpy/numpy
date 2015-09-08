@@ -2178,8 +2178,6 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
-        PyErr_SetString(PyExc_IOError,
-                "first argument must be an open file");
         Py_DECREF(file);
         return NULL;
     }
