@@ -20,6 +20,20 @@ Future Changes:
 Compatibility notes
 ===================
 
+Deprecated to error
+~~~~~~~~~~~~~~~~~~~
+
+* Indexing with floats raises IndexError,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like raises IndexError,
+  e.g., a['1', '2']
+* Indexing with multiple ellipsis raises IndexError,
+  e.g., a[..., ...].
+* Indexing with boolean where integer expected raises IndexError,
+  e.g., a[False:True:True].
+* Non-integers used as index values raise TypeError,
+  e.g., in reshape, take, and specifying reduce axis.
+
 
 New Features
 ============
