@@ -10,6 +10,8 @@ if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
 fi
 
+# make some warnings fatal, mostly to match windows compilers
+werrors="-Werror=declaration-after-statement -Werror=vla -Werror=nonnull"
 
 setup_base()
 {
@@ -27,16 +29,14 @@ if [ -z "$USE_DEBUG" ]; then
     $PIP install .
   else
     sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
-    # windows compilers have this requirement
-    CFLAGS="$sysflags -Werror=declaration-after-statement -Werror=nonnull -Wlogical-op" $PIP install . 2>&1 | tee log
+    CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install . 2>&1 | tee log
     grep -v "_configtest" log | grep -vE "ld returned 1|no previously-included files matching" | grep -E "warning\>";
     # accept a mysterious memset warning that shows with -flto
     test $(grep -v "_configtest" log | grep -vE "ld returned 1|no previously-included files matching" | grep -E "warning\>" -c) -lt 2;
   fi
 else
   sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
-  # windows compilers have this requirement
-  CFLAGS="$sysflags -Werror=declaration-after-statement -Werror=nonnull" $PYTHON setup.py build_ext --inplace
+  CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace
 fi
 }
 
