@@ -178,12 +178,13 @@ Common block statements:
 
     <shortentitydecl> := <name> [ ( <arrayspec> ) ] [ , <shortentitydecl> ]
 
-  One ``python module`` block should not contain two or more
-  ``common`` blocks with the same name. Otherwise, the latter ones are
-  ignored. The types of variables in ``<shortentitydecl>`` are defined
-  using ``<argument type declarations>``. Note that the corresponding
-  ``<argument type declarations>`` may contain array specifications;
-  then you don't need to specify these in ``<shortentitydecl>``.
+  If a ``python module`` block contains two or more ``common`` blocks
+  with the same name, the variables from the additional declarations
+  are appened.  The types of variables in ``<shortentitydecl>`` are
+  defined using ``<argument type declarations>``. Note that the
+  corresponding ``<argument type declarations>`` may contain array
+  specifications; then you don't need to specify these in
+  ``<shortentitydecl>``.
 
 Other statements:
   The ``<other statement>`` part refers to any other Fortran language
