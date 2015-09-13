@@ -3207,6 +3207,22 @@ class TestLexsort(TestCase):
         expected_idx = np.array([2, 1, 0])
         assert_array_equal(idx, expected_idx)
 
+    def test_object(self):  # gh-6312
+        a = np.random.choice(10, 1000)
+        b = np.random.choice(['abc', 'xy', 'wz', 'efghi', 'qwst', 'x'], 1000)
+
+        for u in a, b:
+            left = np.lexsort((u.astype('O'),))
+            right = np.argsort(u, kind='mergesort')
+            assert_array_equal(left, right)
+
+        for u, v in (a, b), (b, a):
+            idx = np.lexsort((u, v))
+            assert_array_equal(idx, np.lexsort((u.astype('O'), v)))
+            assert_array_equal(idx, np.lexsort((u, v.astype('O'))))
+            u, v = np.array(u, dtype='object'), np.array(v, dtype='object')
+            assert_array_equal(idx, np.lexsort((u, v)))
+
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""
