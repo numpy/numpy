@@ -18,4 +18,5 @@ class MSVCCompiler(distutils_MSVCCompiler):
 
     def manifest_setup_ldargs(self, output_filename, build_temp, ld_args):
         ld_args.append('/MANIFEST')
-        distutils_MSVCCompiler.manifest_setup_ldargs(self, output_filename, build_temp, ld_args)
+        distutils_MSVCCompiler.manifest_setup_ldargs(self, output_filename,
+                                                     build_temp, ld_args)
