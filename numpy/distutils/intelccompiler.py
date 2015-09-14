@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
+import platform
 
 from distutils.unixccompiler import UnixCCompiler
+if platform.system() == 'Windows':
+    from numpy.distutils.msvc9compiler import MSVCCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.ccompiler import simple_version_match
 
@@ -15,14 +17,14 @@ class IntelCCompiler(UnixCCompiler):
 
     def __init__(self, verbose=0, dry_run=0, force=0):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
-        self.cc_exe = 'icc -fPIC'
+        self.cc_exe = 'icc -fPIC -fp-model strict -O3 -fomit-frame-pointer -openmp'
         compiler = self.cc_exe
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',
-                             linker_exe=compiler,
-                             linker_so=compiler + ' -shared')
+                             linker_exe=compiler + ' -shared-intel',
+                             linker_so=compiler + ' -shared -shared-intel')
 
 
 class IntelItaniumCCompiler(IntelCCompiler):
@@ -40,24 +42,22 @@ class IntelEM64TCCompiler(UnixCCompiler):
     A modified Intel x86_64 compiler compatible with a 64bit GCC-built Python.
     """
     compiler_type = 'intelem'
-    cc_exe = 'icc -m64 -fPIC'
-    cc_args = "-fPIC"
+    cc_exe = 'icc -m64'
+    cc_args = '-fPIC'
 
     def __init__(self, verbose=0, dry_run=0, force=0):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
-        self.cc_exe = 'icc -m64 -fPIC'
+        self.cc_exe = 'icc -m64 -fPIC -fp-model strict -O3 -fomit-frame-pointer -openmp -xSSE4.2'
         compiler = self.cc_exe
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',
-                             linker_exe=compiler,
-                             linker_so=compiler + ' -shared')
+                             linker_exe=compiler + ' -shared-intel',
+                             linker_so=compiler + ' -shared -shared-intel')
 
 
-if sys.platform == 'win32':
-    from distutils.msvc9compiler import MSVCCompiler
-
+if platform.system() == 'Windows':
     class IntelCCompilerW(MSVCCompiler):
         """
         A modified Intel compiler compatible with an MSVC-built Python.
@@ -72,11 +72,11 @@ if sys.platform == 'win32':
 
         def initialize(self, plat_name=None):
             MSVCCompiler.initialize(self, plat_name)
-            self.cc = self.find_exe("icl.exe")
-            self.lib = self.find_exe("xilib")
-            self.linker = self.find_exe("xilink")
+            self.cc = self.find_exe('icl.exe')
+            self.lib = self.find_exe('xilib')
+            self.linker = self.find_exe('xilink')
             self.compile_options = ['/nologo', '/O3', '/MD', '/W3',
-                                    '/Qstd=c99']
+                                    '/Qstd=c99', '/QxSSE4.2']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
                                           '/Qstd=c99', '/Z7', '/D_DEBUG']
 
@@ -91,4 +91,3 @@ if sys.platform == 'win32':
             MSVCCompiler.__init__(self, verbose, dry_run, force)
             version_match = simple_version_match(start='Intel\(R\).*?64,')
             self.__version = version_match
-

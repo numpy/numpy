@@ -74,7 +74,7 @@ class CompaqVisualFCompiler(FCompiler):
     fc_exe = 'DF'
 
     if sys.platform=='win32':
-        from distutils.msvccompiler import MSVCCompiler
+        from numpy.distutils.msvccompiler import MSVCCompiler
 
         try:
             m = MSVCCompiler()
