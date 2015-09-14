@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 import re
 import os
-import shlex
 
 if sys.version_info[0] < 3:
     from ConfigParser import SafeConfigParser, NoOptionError
@@ -56,35 +55,23 @@ def parse_flags(line):
         * 'ignored'
 
     """
-    lexer = shlex.shlex(line)
-    lexer.whitespace_split = True
-
     d = {'include_dirs': [], 'library_dirs': [], 'libraries': [],
-            'macros': [], 'ignored': []}
-    def next_token(t):
-        if t.startswith('-I'):
-            if len(t) > 2:
-                d['include_dirs'].append(t[2:])
-            else:
-                t = lexer.get_token()
-                d['include_dirs'].append(t)
-        elif t.startswith('-L'):
-            if len(t) > 2:
-                d['library_dirs'].append(t[2:])
-            else:
-                t = lexer.get_token()
-                d['library_dirs'].append(t)
-        elif t.startswith('-l'):
-            d['libraries'].append(t[2:])
-        elif t.startswith('-D'):
-            d['macros'].append(t[2:])
-        else:
-            d['ignored'].append(t)
-        return lexer.get_token()
+         'macros': [], 'ignored': []}
 
-    t = lexer.get_token()
-    while t:
-        t = next_token(t)
+    flags = (' ' + line).split(' -')
+    for flag in flags:
+        flag = '-' + flag
+        if len(flag) > 0:
+            if flag.startswith('-I'):
+                d['include_dirs'].append(flag[2:].strip())
+            elif flag.startswith('-L'):
+                d['library_dirs'].append(flag[2:].strip())
+            elif flag.startswith('-l'):
+                d['libraries'].append(flag[2:].strip())
+            elif flag.startswith('-D'):
+                d['macros'].append(flag[2:].strip())
+            else:
+                d['ignored'].append(flag)
 
     return d
 
