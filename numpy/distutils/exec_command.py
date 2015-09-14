@@ -441,8 +441,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     se_flush()
     if _so_has_fileno:
         os.dup2(so_dup, so_fileno)
+        os.close(so_dup)
     if _se_has_fileno:
         os.dup2(se_dup, se_fileno)
+        os.close(se_dup)
 
     fout.close()
     fout = open_latin1(outfile, 'r')
