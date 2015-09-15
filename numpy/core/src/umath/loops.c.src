@@ -2724,8 +2724,8 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
 /**begin repeat
  * #func = fmod, arccos, arccosh, arcsin, arcsinh, arctan, arctanh, cos, sin,
            tan, cosh, sinh, tanh, exp, expm1, log, log10, log1p, sqrt, ceil,
-           trunc, fabs, floor, arctan2, hypot, isnan, isinf, ldexp, conjugate,
-           square, reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
+           trunc, fabs, floor, arctan2, isnan, isinf, conjugate, square,
+           reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
            radians, deg2rad, exp2, log2, cbrt, isfinite, rint, signbit,
            nextafter, spacing#
  */
@@ -2734,6 +2734,13 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
     static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+
+    /* variables for UNARY_LOOP */
+    char *ip1 = args[0], *op1 = args[1];
+    npy_intp is1 = steps[0], os1 = steps[1];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+
     npy_cache_import("numpy", "@func@", &ufunc);
     if (ufunc == NULL) {
         return;
@@ -2743,7 +2750,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    UNARY_LOOP {
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
 
@@ -2776,13 +2783,20 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 
 /**begin repeat
  * #func = logical_and, logical_or, logical_xor, maximum, minimum, fmax, fmin,
-           logaddexp, logaddexp2, copysign#
+           logaddexp, logaddexp2, copysign, ldexp, hypot#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
     static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+
+    /* variables for BINARY_LOOP */
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+
     npy_cache_import("numpy", "@func@", &ufunc);
     if (ufunc == NULL) {
         return;
@@ -2792,7 +2806,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    BINARY_LOOP {
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
@@ -2835,6 +2849,13 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
     static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+
+    /* variables for UNARY_LOOP_TWO_OUT */
+    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];
+    npy_intp is1 = steps[0], os1 = steps[1], os2 = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+
     npy_cache_import("numpy", "@func@", &ufunc);
     if (ufunc == NULL) {
         return;
@@ -2844,7 +2865,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    UNARY_LOOP_TWO_OUT {
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out1 = (PyObject **)op1;
         PyObject **out2 = (PyObject **)op2;

@@ -5,6 +5,7 @@ Makes use of math and cmath module for some ufuncs.
 """
 from __future__ import division, absolute_import, print_function
 import math, cmath
+from numpy.core.umath import pi as PI
 
 LOG2 = math.log(2)
 
@@ -27,10 +28,10 @@ def minimum(x, y):
     return min(x, y)
 
 def fmax(x, y):
-    return x if (x >= y or math.isnan(y)) else y
+    return x if (x >= y or isnan(y)) else y
 
 def fmin(x, y):
-    return x if (x <= y or math.isnan(y)) else y
+    return x if (x <= y or isnan(y)) else y
 
 def iscomplex(x):
     return isinstance(x, complex)
@@ -57,10 +58,10 @@ def log2(x):
     return math.log(x, 2)
 
 def degrees(x):
-    return x*180/np.pi
+    return x*180/PI
 
 def radians(x):
-    return x*np.pi/180
+    return x*PI/180
 
 def square(x):
     return x*x
@@ -78,11 +79,9 @@ def spacing(x):
     raise Exception("Not done")
 
 def cbrt(x):
-    raise Exception("Not done")
+    return x**(1.0/3)
 
 def signbit(x):
-    if isinstance(x, complex):
-        return cmath.copysign(1, x) < 0
     return math.copysign(1, x) < 0
 
 def logaddexp(x,y):
@@ -115,6 +114,9 @@ def sign(x):
 def fmod(a, b):
     return math.fmod(a, b)
 
+def ldexp(a, b):
+    return math.ldexp(a, b)
+
 def hypot(a, b):
     return math.hypot(a, b)
 
@@ -125,15 +127,25 @@ def expm1(a):
 
 def isnan(a):
     try:
+        return math.isnan(a)
+    except:
+        pass
+    try:
         return cmath.isnan(a)
     except:
-        return False
+        pass
+    return False
 
 def isinf(a):
     try:
+        return math.isinf(a)
+    except:
+        pass
+    try:
         return cmath.isinf(a)
     except:
-        return False
+        pass
+    return False
 
 
 def _makecMathFunc(fname):
@@ -157,7 +169,6 @@ _mathfuncs = [('ceil',     'ceil'),
               ('fabs',     'fabs'),
               ('arctan2',  'atan2'),
               ('hypot',    'hypot'),
-              ('ldexp',    'ldexp'),
               ('modf',     'modf'),
               ('frexp',    'frexp'),
               ]
