@@ -2073,7 +2073,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
 
     trapz : Integration of array values using the composite trapezoidal rule.
 
-    diff :  Calculate the n-th order discrete difference along given axis.
+    diff :  Calculate the n-th discrete difference along given axis.
 
     Notes
     -----
