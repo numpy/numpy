@@ -1012,9 +1012,10 @@ def eig(a):
     w : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
-        array will be always be of complex type. When `a` is real
-        the resulting eigenvalues will be real (0 imaginary part) or
-        occur in conjugate pairs
+        array will be of complex type, unless the imaginary part is 
+        zero in which case it will be cast to a real type. When `a` 
+        is real the resulting eigenvalues will be real (0 imaginary 
+        part) or occur in conjugate pairs
 
     v : (..., M, M) array
         The normalized (unit "length") eigenvectors, such that the
