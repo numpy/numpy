@@ -1316,10 +1316,10 @@ def gradient(f, *varargs, **kwargs):
 
 def diff(a, n=1, axis=-1):
     """
-    Calculate the n-th order discrete difference along given axis.
+    Calculate the n-th discrete difference along given axis.
 
-    The first order difference is given by ``out[n] = a[n+1] - a[n]`` along
-    the given axis, higher order differences are calculated by using `diff`
+    The first difference is given by ``out[n] = a[n+1] - a[n]`` along
+    the given axis, higher differences are calculated by using `diff`
     recursively.
 
     Parameters
@@ -1334,8 +1334,9 @@ def diff(a, n=1, axis=-1):
     Returns
     -------
     diff : ndarray
-        The `n` order differences. The shape of the output is the same as `a`
+        The n-th differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`.
+.
 
     See Also
     --------
