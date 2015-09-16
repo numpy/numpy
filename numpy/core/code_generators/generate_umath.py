@@ -896,7 +896,7 @@ chartotype1 = {'e': 'e_e',
                'D': 'D_D',
                'G': 'G_G',
                'O': 'O_O',
-               'P': 'O_O'}
+               'P': 'O_O_method'}
 
 chartotype2 = {'e': 'ee_e',
                'f': 'ff_f',
@@ -906,7 +906,7 @@ chartotype2 = {'e': 'ee_e',
                'D': 'DD_D',
                'G': 'GG_G',
                'O': 'OO_O',
-               'P': 'OO_O'}
+               'P': 'OO_O_method'}
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
@@ -950,10 +950,6 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                 elif t.type == 'P':
                     datalist.append('(void *)"%s"' % t.func_data)
-                    astr = ('%s_data[%d] = (void *) %s;' %
-                               (name, k, t.func_data))
-                    code2list.append(astr)
-                    datalist.append('(void *)NULL')
                 else:
                     astr = ('%s_data[%d] = (void *) %s;' %
                                (name, k, t.func_data))
@@ -971,9 +967,6 @@ def make_arrays(funcdict):
                 tname = english_upper(chartoname[t.type])
                 funclist.append(
                         '%s_%s_%s' % (tname, name, t.func_data.suffix))
-            #elif t.type == 'P':
-            #    funclist.append('NULL')
-            #    datalist.append('(void *)NULL')
             else:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
