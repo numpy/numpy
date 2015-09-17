@@ -2518,14 +2518,13 @@ class TestObjects:
             np.maximum, np.minimum, np.fmax, np.fmin, np.fmod, np.logaddexp,
             np.logaddexp2, np.copysign, np.ldexp, np.hypot, np.nextafter]
 
-    def test_complex_obj(self):
+    def test_ufunc_builtin_numeric_objects(self):
         nums = [-1, 1, 0, np.nan, np.inf, -np.inf]
         cvals = [complex(a,b) for a in nums for b in nums]
         vals = [0.0, 1.0, 100.0] + nums + cvals
 
         unary_ufuncs = self.unary_ufuncs[:]
         unary_ufuncs.remove(np.spacing) #not implemented
-        unary_ufuncs.remove(np.cbrt)    #doesn't work for negative numbers
         unary_ufuncs.remove(np.log2)    #fails for complex(-1, np.inf)
         unary_ufuncs.remove(np.exp2)    #fails for complex(np.nan, 0)
         unary_ufuncs.remove(np.expm1)   #fails for complex(-np.inf, np.nan)
@@ -2537,10 +2536,6 @@ class TestObjects:
 
         binary_ufuncs = self.binary_ufuncs[:]
         binary_ufuncs.remove(np.nextafter) #not implemented
-        binary_ufuncs.remove(np.maximum)   #fails for complex nums
-        binary_ufuncs.remove(np.minimum)   #fails for complex nums
-        binary_ufuncs.remove(np.fmax)      #fails for complex nums
-        binary_ufuncs.remove(np.fmin)      #fails for complex nums
         
         for val in vals:
             vobj = np.array([val], dtype=object)

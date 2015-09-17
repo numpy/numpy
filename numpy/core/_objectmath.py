@@ -24,28 +24,120 @@ def _notimplemented_msg(fname, etype, etype2=None):
             "arguments of type {type}").format(name=fname, type=typestr)
 
 def logical_and(x, y):
-    return True if bool(x and y) else False
+    return bool(x and y)
 
 def logical_or(x, y):
-    return True if bool(x or y) else False
+    return bool(x or y)
 
 def logical_xor(x, y):
-    return True if bool((x or y) and not (x and y)) else False
+    return (bool(x or y) and not bool(x and y))
 
 def logical_not(x):
-    return True if bool(not x) else False
+    return bool(not x)
 
 def maximum(x, y):
-    return max(x, y)
+    evalx = type(x) in (bool, int, long)
+    evaly = type(y) in (bool, int, long)
+    if evalx and evaly:
+        return x if (x >= y) else y
+
+    evalx = evalx or (type(x) is float)
+    evaly = evaly or (type(y) is float)
+    if evalx and evaly:
+        x, y = float(x), float(y)
+        return x if (x >= y or _u_isnan(x)) else y
+
+    evalx = evalx or (type(x) is complex)
+    evaly = evaly or (type(y) is complex)
+    if evalx and evaly:
+        x, y = complex(x), complex(y)
+        if math.isnan(x.real) or math.isnan(x.imag):
+            return x
+        if math.isnan(y.real) or math.isnan(y.imag):
+            return y
+        if x.real > y.real or (x.real == y.real and x.imag >= y.imag):
+            return x
+        return y
+
+    raise TypeError(_notimplemented_msg('maximum', type(x)))
 
 def minimum(x, y):
-    return min(x, y)
+    evalx = type(x) in (bool, int, long)
+    evaly = type(y) in (bool, int, long)
+    if evalx and evaly:
+        return x if (x <= y) else y
+
+    evalx = evalx or (type(x) is float)
+    evaly = evaly or (type(y) is float)
+    if evalx and evaly:
+        x, y = float(x), float(y)
+        return x if (x <= y or _u_isnan(x)) else y
+
+    evalx = evalx or (type(x) is complex)
+    evaly = evaly or (type(y) is complex)
+    if evalx and evaly:
+        x, y = complex(x), complex(y)
+        if math.isnan(x.real) or math.isnan(x.imag):
+            return x
+        if math.isnan(y.real) or math.isnan(y.imag):
+            return y
+        if x.real < y.real or (x.real == y.real and x.imag <= y.imag):
+            return x
+        return y
+
+    raise TypeError(_notimplemented_msg('minimum', type(x)))
 
 def fmax(x, y):
-    return x if (x >= y or _u_isnan(y)) else y
+    evalx = type(x) in (bool, int, long)
+    evaly = type(y) in (bool, int, long)
+    if evalx and evaly:
+        return x if (x >= y) else y
+
+    evalx = evalx or (type(x) is float)
+    evaly = evaly or (type(y) is float)
+    if evalx and evaly:
+        x, y = float(x), float(y)
+        return x if (x >= y or _u_isnan(y)) else y
+
+    evalx = evalx or (type(x) is complex)
+    evaly = evaly or (type(y) is complex)
+    if evalx and evaly:
+        x, y = complex(x), complex(y)
+        if math.isnan(y.real) or math.isnan(y.imag):
+            return x
+        if math.isnan(x.real) or math.isnan(x.imag):
+            return y
+        if x.real > y.real or (x.real == y.real and x.imag >= y.imag):
+            return x
+        return y
+
+    raise TypeError(_notimplemented_msg('fmax', type(x)))
 
 def fmin(x, y):
-    return x if (x <= y or _u_isnan(y)) else y
+    evalx = type(x) in (bool, int, long)
+    evaly = type(y) in (bool, int, long)
+    if evalx and evaly:
+        return x if (x <= y) else y
+
+    evalx = evalx or (type(x) is float)
+    evaly = evaly or (type(y) is float)
+    if evalx and evaly:
+        x, y = float(x), float(y)
+        return x if (x <= y or _u_isnan(y)) else y
+
+    evalx = evalx or (type(x) is complex)
+    evaly = evaly or (type(y) is complex)
+    if evalx and evaly:
+        x, y = complex(x), complex(y)
+        if math.isnan(y.real) or math.isnan(y.imag):
+            return x
+        if math.isnan(x.real) or math.isnan(x.imag):
+            return y
+        if x.real < y.real or (x.real == y.real and x.imag <= y.imag):
+            return x
+        return y
+
+    raise TypeError(_notimplemented_msg('fmin', type(x)))
 
 def iscomplex(x):
     return isinstance(x, complex)
@@ -84,6 +176,8 @@ def reciprocal(x):
     return type(x)(1.0/x)
 
 def cbrt(x):
+    if x < 0:
+        return -(-x)**(1.0/3)
     return x**(1.0/3)
 
 def _ones_like(x):
@@ -231,27 +325,27 @@ def _makeMathFunc(fname):
 
 def trunc(x):
     if type(x) in (bool, int, long, float):
-        if _u_isinf(x) or _u_isnan(x):
+        if math.isinf(x) or math.isnan(x):
             return x
         return math.trunc(x)
     raise TypeError(_notimplemented_msg('trunc', type(x)))
 
 def ceil(x):
     if type(x) in (bool, int, long, float):
-        if _u_isinf(x) or _u_isnan(x):
+        if math.isinf(x) or math.isnan(x):
             return x
         return math.ceil(x)
     raise TypeError(_notimplemented_msg('ceil', type(x)))
 
 def floor(x):
     if type(x) in (bool, int, long, float):
-        if _u_isinf(x) or _u_isnan(x):
+        if math.isinf(x) or math.isnan(x):
             return x
         return math.floor(x)
     raise TypeError(_notimplemented_msg('floor', type(x)))
 
 def _roundnan(x):
-        if _u_isinf(x) or _u_isnan(x):
+        if math.isinf(x) or math.isnan(x):
             return x
         return round(x)
 
