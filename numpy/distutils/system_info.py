@@ -1703,6 +1703,10 @@ class openblas_info(blas_info):
         if info is None:
             return
 
+        # Add extra info for OpenBLAS
+        extra_info = self.calc_extra_info()
+        dict_append(info, **extra_info)
+
         if not self.check_embedded_lapack(info):
             return
 
@@ -1729,13 +1733,19 @@ class openblas_lapack_info(openblas_info):
         }"""
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
+        # Add the additional "extra" arguments
+        try:
+            extra_args = info['extra_link_args']
+        except:
+            extra_args = []
         try:
             with open(src, 'wt') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
                 c.link_executable(obj, out, libraries=info['libraries'],
-                                  library_dirs=info['library_dirs'])
+                                  library_dirs=info['library_dirs'],
+                                  extra_postargs=extra_args)
                 res = True
             except distutils.ccompiler.LinkError:
                 res = False
@@ -1752,7 +1762,8 @@ class openblas_lapack_info(openblas_info):
                 obj = c.compile([src], output_dir=tmpdir)
                 try:
                     c.link_executable(obj, out, libraries=info['libraries'],
-                                    library_dirs=info['library_dirs'])
+                                      library_dirs=info['library_dirs'],
+                                      extra_postargs=extra_args)
                     res = True
                 except distutils.ccompiler.LinkError:
                     res = False
