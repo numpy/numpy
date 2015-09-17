@@ -2503,6 +2503,66 @@ def test_complex_nan_comparisons():
                 assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
 
+class TestObjects:  
+    def __init__(self):
+        self.unary_ufuncs = [np.arccos, np.arccosh, np.arcsin, np.arcsinh,
+            np.arctan, np.arctanh, np.cos, np.sin, np.tan, np.cosh, np.sinh,
+            np.tanh, np.exp, np.expm1, np.log, np.log10, np.log1p, np.sqrt,
+            np.ceil, np.trunc, np.fabs, np.floor, np.arctan2, np.isnan,
+            np.isinf, np.conjugate, np.square, np.reciprocal, np.sign,
+            np.logical_not, np.degrees, np.rad2deg, np.radians, np.deg2rad,
+            np.exp2, np.log2, np.cbrt, np.isfinite, np.rint, np.signbit,
+            np.spacing, np.modf, np.frexp]
+
+        self.binary_ufuncs = [np.logical_and, np.logical_or, np.logical_xor, 
+            np.maximum, np.minimum, np.fmax, np.fmin, np.fmod, np.logaddexp,
+            np.logaddexp2, np.copysign, np.ldexp, np.hypot, np.nextafter]
+
+    def test_complex_obj(self):
+        nums = [-1, 1, 0, np.nan, np.inf, -np.inf]
+        cvals = [complex(a,b) for a in nums for b in nums]
+        vals = [0.0, 1.0, 100.0] + nums + cvals
+
+        unary_ufuncs = self.unary_ufuncs[:]
+        unary_ufuncs.remove(np.spacing) #not implemented
+        unary_ufuncs.remove(np.cbrt)    #doesn't work for negative numbers
+        unary_ufuncs.remove(np.log2)    #fails for complex(-1, np.inf)
+        unary_ufuncs.remove(np.exp2)    #fails for complex(np.nan, 0)
+        unary_ufuncs.remove(np.expm1)   #fails for complex(-np.inf, np.nan)
+        unary_ufuncs.remove(np.modf)    #tests not set up for this yet
+        unary_ufuncs.remove(np.frexp)   #tests not set up for this yet
+        unary_ufuncs.remove(np.reciprocal) #a bug in python3.4 causes this to 
+        #fail when USE_DEBUG=1, for complex(np.nan). See https://bugs.python.org/issue22604
+
+
+        binary_ufuncs = self.binary_ufuncs[:]
+        binary_ufuncs.remove(np.nextafter) #not implemented
+        binary_ufuncs.remove(np.maximum)   #fails for complex nums
+        binary_ufuncs.remove(np.minimum)   #fails for complex nums
+        binary_ufuncs.remove(np.fmax)      #fails for complex nums
+        binary_ufuncs.remove(np.fmin)      #fails for complex nums
+        
+        for val in vals:
+            vobj = np.array([val], dtype=object)
+            for u in unary_ufuncs:
+                try:
+                    result = u([val])
+                except:
+                    continue
+                assert_allclose(u(vobj)[0], result[0], rtol=1e-4)
+
+        for vala in vals:
+            for valb in vals:
+                aobj = np.array([vala], dtype=object)
+                bobj = np.array([valb], dtype=object)
+                for u in binary_ufuncs:
+                    try:
+                        result = u([vala], [valb])
+                    except:
+                        continue
+                    assert_allclose(u(aobj, bobj)[0], result[0], rtol=1e-4)
+                    # XXX need to test for mixed python & numpy args
+
 
 def test_rint_big_int():
     # np.rint bug for large integer values on Windows 32-bit and MKL

@@ -2722,12 +2722,12 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
 /**end repeat**/
 
 /**begin repeat
- * #func = fmod, arccos, arccosh, arcsin, arcsinh, arctan, arctanh, cos, sin,
+ * #func = arccos, arccosh, arcsin, arcsinh, arctan, arctanh, cos, sin,
            tan, cosh, sinh, tanh, exp, expm1, log, log10, log1p, sqrt, ceil,
            trunc, fabs, floor, arctan2, isnan, isinf, conjugate, square,
            reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
            radians, deg2rad, exp2, log2, cbrt, isfinite, rint, signbit,
-           nextafter, spacing#
+           spacing#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
@@ -2783,7 +2783,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 
 /**begin repeat
  * #func = logical_and, logical_or, logical_xor, maximum, minimum, fmax, fmin,
-           logaddexp, logaddexp2, copysign, ldexp, hypot#
+           logaddexp, logaddexp2, copysign, ldexp, hypot, fmod, nextafter#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
