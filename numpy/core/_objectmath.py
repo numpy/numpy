@@ -4,7 +4,7 @@ Makes use of math and cmath module for some ufuncs.
 
 """
 from __future__ import division, absolute_import, print_function
-import math, cmath
+import math
 from numpy.core.umath import pi as PI
 import numpy as np
 import sys
@@ -12,8 +12,14 @@ import sys
 LOG2 = math.log(2)
 
 if sys.version_info > (3,):
-    # can be improved
-    long = int
+    def islong(x):
+        return (x is int) and (x >= 2**64) #biggest numpy integer
+else:
+    def islong(x):
+        return (x in (int, long)) and (x >= 2**64)
+
+def numpy_knows(x):
+    return np.min_scalar_type(x) != np.dtype("O") #better way?
 
 def _notimplemented_msg(fname, etype, etype2=None):
     if etype2 is not None:
@@ -23,143 +29,88 @@ def _notimplemented_msg(fname, etype, etype2=None):
     return ("object-array fallback for ufunc '{name}' is not implemented for "
             "arguments of type {type}").format(name=fname, type=typestr)
 
+
 def logical_and(x, y):
+    if numpy_knows(x) and numpy_knows(y):
+        return np.logical_and(x, y).item()
     return bool(x and y)
 
 def logical_or(x, y):
+    if numpy_knows(x) and numpy_knows(y):
+        return np.logical_or(x, y).item()
     return bool(x or y)
 
 def logical_xor(x, y):
-    return (bool(x or y) and not bool(x and y))
+    if numpy_knows(x) and numpy_knows(y):
+        return np.logical_xor(x, y).item()
+    return bool(x or y) and not bool(x and y)
 
 def logical_not(x):
+    if numpy_knows(x):
+        return np.logical_not(x).item()
     return bool(not x)
 
 def maximum(x, y):
-    evalx = type(x) in (bool, int, long)
-    evaly = type(y) in (bool, int, long)
-    if evalx and evaly:
-        return x if (x >= y) else y
-
-    evalx = evalx or (type(x) is float)
-    evaly = evaly or (type(y) is float)
-    if evalx and evaly:
-        x, y = float(x), float(y)
-        return x if (x >= y or _u_isnan(x)) else y
-
-    evalx = evalx or (type(x) is complex)
-    evaly = evaly or (type(y) is complex)
-    if evalx and evaly:
-        x, y = complex(x), complex(y)
-        if math.isnan(x.real) or math.isnan(x.imag):
-            return x
-        if math.isnan(y.real) or math.isnan(y.imag):
-            return y
-        if x.real > y.real or (x.real == y.real and x.imag >= y.imag):
-            return x
-        return y
-
-    raise TypeError(_notimplemented_msg('maximum', type(x)))
+    if numpy_knows(x) and numpy_knows(y):
+        return np.maximum(x, y).item()
+    return max(x, y)
 
 def minimum(x, y):
-    evalx = type(x) in (bool, int, long)
-    evaly = type(y) in (bool, int, long)
-    if evalx and evaly:
-        return x if (x <= y) else y
-
-    evalx = evalx or (type(x) is float)
-    evaly = evaly or (type(y) is float)
-    if evalx and evaly:
-        x, y = float(x), float(y)
-        return x if (x <= y or _u_isnan(x)) else y
-
-    evalx = evalx or (type(x) is complex)
-    evaly = evaly or (type(y) is complex)
-    if evalx and evaly:
-        x, y = complex(x), complex(y)
-        if math.isnan(x.real) or math.isnan(x.imag):
-            return x
-        if math.isnan(y.real) or math.isnan(y.imag):
-            return y
-        if x.real < y.real or (x.real == y.real and x.imag <= y.imag):
-            return x
-        return y
-
-    raise TypeError(_notimplemented_msg('minimum', type(x)))
+    if numpy_knows(x) and numpy_knows(y):
+        return np.minimum(x, y).item()
+    return min(x, y)
 
 def fmax(x, y):
-    evalx = type(x) in (bool, int, long)
-    evaly = type(y) in (bool, int, long)
-    if evalx and evaly:
-        return x if (x >= y) else y
-
-    evalx = evalx or (type(x) is float)
-    evaly = evaly or (type(y) is float)
-    if evalx and evaly:
-        x, y = float(x), float(y)
-        return x if (x >= y or _u_isnan(y)) else y
-
-    evalx = evalx or (type(x) is complex)
-    evaly = evaly or (type(y) is complex)
-    if evalx and evaly:
-        x, y = complex(x), complex(y)
-        if math.isnan(y.real) or math.isnan(y.imag):
-            return x
-        if math.isnan(x.real) or math.isnan(x.imag):
-            return y
-        if x.real > y.real or (x.real == y.real and x.imag >= y.imag):
-            return x
-        return y
-
-    raise TypeError(_notimplemented_msg('fmax', type(x)))
+    if numpy_knows(x) and numpy_knows(y):
+        return np.fmax(x, y).item()
+    return min(x, y)
 
 def fmin(x, y):
-    evalx = type(x) in (bool, int, long)
-    evaly = type(y) in (bool, int, long)
-    if evalx and evaly:
-        return x if (x <= y) else y
-
-    evalx = evalx or (type(x) is float)
-    evaly = evaly or (type(y) is float)
-    if evalx and evaly:
-        x, y = float(x), float(y)
-        return x if (x <= y or _u_isnan(y)) else y
-
-    evalx = evalx or (type(x) is complex)
-    evaly = evaly or (type(y) is complex)
-    if evalx and evaly:
-        x, y = complex(x), complex(y)
-        if math.isnan(y.real) or math.isnan(y.imag):
-            return x
-        if math.isnan(x.real) or math.isnan(x.imag):
-            return y
-        if x.real < y.real or (x.real == y.real and x.imag <= y.imag):
-            return x
-        return y
-
-    raise TypeError(_notimplemented_msg('fmin', type(x)))
+    if numpy_knows(x) and numpy_knows(y):
+        return np.fmin(x, y).item()
+    return min(x, y)
 
 def iscomplex(x):
-    return isinstance(x, complex)
+    if numpy_knows(x):
+        return np.iscomplex(x).item()
+    if islong(x) or islong(y):
+        return False
+    raise TypeError
 
 def isreal(x):
-    return not isinstance(x, complex)
+    if numpy_knows(x):
+        return np.isreal(x).item()
+    if islong(x):
+        return True
+    raise TypeError
 
 def isfinite(x):
-    return True if (not _u_isinf(x) and not _u_isnan(x)) else False
+    if numpy_knows(x):
+        return np.isfinite(x).item()
+    if islong(x):
+        return True
+    return not _u_isinf(x) and not _u_isnan(x)
 
 def conjugate(x):
-    return x.conjugate() if hasattr(x, 'conjugate') else x
+    if numpy_knows(x):
+        return np.conjugate(x).item()
+    if islong(x):
+        return x
+    raise TypeError
 
 def exp2(x):
-    return 2.0**x
+    if numpy_knows(x):
+        return np.exp2(x).item()
+    if islong(x):
+        return 2**x
+    raise TypeError
 
 def log2(x):
-    if type(x) in (bool, int, long, float):
-        return math.log(x, 2)
-    if type(x) is complex:
-        return cmath.log(x, 2)
-    return _u_log(x)/_u_log(type(x)(2)) # or notimplemented?
+    if numpy_knows(x):
+        return np.log2(x).item()
+    if islong(x):
+        return math.log(x, 2)/math.log(2)
+    raise TypeError
 
 def degrees(x):
     return x*180/PI
@@ -173,200 +124,182 @@ def square(x):
     return x*x
 
 def reciprocal(x):
-    return type(x)(1.0/x)
+    if numpy_knows(x):
+        return np.reciprocal(x).item()
+    if islong(x):
+        return 0 if x != 1 else 1
+    raise TypeError
 
 def cbrt(x):
-    if x < 0:
-        return -(-x)**(1.0/3)
-    return x**(1.0/3)
+    if numpy_knows(x):
+        return np.cbrt(x).item()
+    if islong(x):
+        if x < 0:
+            return -(-x)**(1.0/3)
+        return x**(1.0/3)
+    raise TypeError
 
 def _ones_like(x):
     return 1
 
 def sign(x):
-    # np.sign does not handle bool
-    if type(x) in (int, long, float):
+    if numpy_knows(x):
+        return np.sign(x).item()
+    if islong(x):
         if x > 0:
-            return type(x)(1)
+            return 1
         if x < 0:
-            return type(x)(-1)
+            return -1
         if x == 0:
-            return type(x)(0)
+            return 0
         return x
-    if type(x) is complex:
-        if math.isnan(x.real) or math.isnan(x.imag):
-            return complex(np.nan)
-        if x.real > 0:
-            return complex(1)
-        if x.real < 0:
-            return complex(-1)
-        if x.imag > 0:
-            return complex(1)
-        if x.imag < 0:
-            return complex(-1)
-        if x == 0:
-            return complex(0)
-        return x #should never happen
-
-    raise TypeError(_notimplemented_msg('sign', type(x)))
-
+    raise TypeError
 
 def hypot(x, y):
-    if type(x) in (bool, int, long, float):
+    if numpy_knows(x):
+        return np.hypot(x, y).item()
+    if islong(x) or islong(y):
         return math.hypot(x, y)
-    return _u_sqrt(x**2 + y**2)
+    raise TypeError
 
 # the following only have implementation for builtin types
 
 def nextafter(x):
-    raise TypeError(_notimplemented_msg('nextafter', type(x)))
+    if islong(x):
+        x = float(x)
+    if numpy_knows(x):
+        return np.nextafter(x).item()
+    raise TypeError
 
 def spacing(x):
-    raise TypeError(_notimplemented_msg('spacing', type(x)))
+    if islong(x):
+        x = float(x)
+    if numpy_knows(x):
+        return np.spacing(x).item()
+    raise TypeError
 
 def signbit(x):
-    if type(x) in (bool, int, long, float):
+    if numpy_knows(x):
+        return np.signbit(x).item()
+    if islong(x):
         return math.copysign(1, x) < 0
-    raise TypeError(_notimplemented_msg('signbit', type(x)))
+    raise TypeError
 
 def copysign(x, y):
-    if (    type(x) in (bool, int, long, float) and 
-            type(y) in (bool, int, long, float) ):
+    if numpy_knows(x):
+        return np.copysign(x, y).item()
+    if islong(x) or islong(y):
         return math.copysign(x, y)
-    raise TypeError(_notimplemented_msg('copysign', type(x)))
+    raise TypeError
 
-def logaddexp(x,y):
-    if type(x) is complex or type(x) is complex:
-        return cmath.log(cmath.exp(x) + cmath.exp(y))
-    if (    type(x) not in (bool, int, long, float) or
-            type(y) not in (bool, int, long, float) ):
-        raise TypeError(_notimplemented_msg('logaddexp', type(x)))
+def logaddexp(x, y):
+    if islong(x):
+        x = float(x)
+    if islong(y):
+        y = float(y)
+    if numpy_knows(x):
+        return np.logaddexp(x, y).item()
+    raise TypeError
 
-    if x == y:
-        return x + LOG2
-    if x > y:
-        return x + math.log1p(math.exp(y-x))
-    if x < y:
-        return y + math.log1p(math.exp(x-y))
-    return x-y
+def logaddexp2(x, y):
+    if islong(x):
+        x = float(x)
+    if islong(y):
+        y = float(y)
+    if numpy_knows(x):
+        return np.logaddexp2(x, y).item()
+    raise TypeError
 
-def logaddexp2(x,y):
-    if type(x) is complex or type(x) is complex:
-        return cmath.log(2**x + 2**y)/LOG2
-    if type(x) not in (bool, int, long, float):
-        raise TypeError(_notimplemented_msg('logaddexp2', type(x)))
+def fmod(x, y): # correct? or try to return a long?
+    if islong(x):
+        x = float(x) 
+    if islong(y):
+        y = float(y)
+    if numpy_knows(x):
+        return np.fmod(x, y).item()
+    raise TypeError
 
-    if x == y:
-        return x + 1
-    if x > y:
-        return x + math.log1p(math.pow(2, y-x))/LOG2
-    if x < y:
-        return y + math.log1p(math.pow(2, x-y))/LOG2
-    return x-y
-
-def fmod(x, y):
-    if (    type(x) in (bool, int, long, float) and 
-            type(y) in (bool, int, long, float) ):
-        return math.fmod(x, y)
-    raise TypeError(_notimplemented_msg('fmod', type(x), type(y)))
-
-def ldexp(x, y):
-    if (    type(x) in (bool, int, long, float) and 
-            type(y) in (bool, int, long, float) ):
-        return math.ldexp(x, y)
-    raise TypeError(_notimplemented_msg('ldexp', type(x), type(y)))
+def ldexp(x, y): #same as fmod
+    if islong(x):
+        x = float(x) 
+    if islong(y):
+        y = float(y)
+    if numpy_knows(x):
+        return np.ldexp(x, y).item()
+    raise TypeError
 
 def expm1(x):
-    if type(x) in (bool, int, long, float):
-        return math.expm1(x)
-    if type(x) is complex:
-        return cmath.exp(x)-1
-    raise TypeError(_notimplemented_msg('expm1', type(x)))
+    if islong(x):
+        x = float(x) 
+    if numpy_knows(x):
+        return np.expm1(x).item()
+    raise TypeError
 
 def log1p(x):
-    if type(x) in (bool, int, long, float):
-        return math.log1p(x)
-    if type(x) is complex:
-        return cmath.log(x + 1)
-    raise TypeError(_notimplemented_msg('log1p', type(x)))
+    if islong(x):
+        x = float(x) 
+    if numpy_knows(x):
+        return np.log1p(x).item()
+    raise TypeError
 
 def isnan(x):
-    if type(x) in (bool, int, long, float):
-        return math.isnan(x)
-    if type(x) is complex:
-        return cmath.isnan(x)
-    raise TypeError(_notimplemented_msg('isnan', type(x)))
+    if numpy_knows(x):
+        return np.isnan(x).item()
+    if islong(x):
+        return False
+    raise TypeError
 
 def isinf(x):
-    if type(x) in (bool, int, long, float):
-        return math.isinf(x)
-    if type(x) is complex:
-        return cmath.isinf(x)
-    raise TypeError(_notimplemented_msg('isinf', type(x)))
-
-def _makecMathFunc(fname):
-    mfunc = getattr(math, fname)
-    cfunc = getattr(cmath, fname)
-    def cmathfunc(x):
-        if type(x) in (bool, int, long, float):
-            return mfunc(x)
-        if type(x) is complex:
-            return cfunc(x)
-        raise TypeError(_notimplemented_msg(fname, type(x)))
-    return cmathfunc
-
-def _makeMathFunc(fname):
-    mfunc = getattr(math, fname)
-    def mathfunc(x):
-        if type(x) in (bool, int, long, float):
-            return mfunc(x)
-        raise TypeError(_notimplemented_msg(fname, type(x)))
-    return mathfunc
+    if numpy_knows(x):
+        return np.isinf(x).item()
+    if islong(x):
+        return False
+    raise TypeError
 
 def trunc(x):
-    if type(x) in (bool, int, long, float):
-        if math.isinf(x) or math.isnan(x):
-            return x
+    if numpy_knows(x):
+        return np.trunc(x).item()
+    if islong(x):
         return math.trunc(x)
-    raise TypeError(_notimplemented_msg('trunc', type(x)))
+    raise TypeError
 
 def ceil(x):
-    if type(x) in (bool, int, long, float):
-        if math.isinf(x) or math.isnan(x):
-            return x
+    if numpy_knows(x):
+        return np.ceil(x).item()
+    if islong(x):
         return math.ceil(x)
-    raise TypeError(_notimplemented_msg('ceil', type(x)))
+    raise TypeError
 
 def floor(x):
-    if type(x) in (bool, int, long, float):
-        if math.isinf(x) or math.isnan(x):
-            return x
+    if numpy_knows(x):
+        return np.floor(x).item()
+    if islong(x):
         return math.floor(x)
-    raise TypeError(_notimplemented_msg('floor', type(x)))
-
-def _roundnan(x):
-        if math.isinf(x) or math.isnan(x):
-            return x
-        return round(x)
+    raise TypeError
 
 def rint(x):
-    if type(x) in (bool, int, long, float):
-        return _roundnan(x)
-    if type(x) is complex:
-        return complex(_roundnan(x.real), _roundnan(x.imag))
-    raise TypeError(_notimplemented_msg('rint', type(x)))
+    if numpy_knows(x):
+        return np.rint(x).item()
+    if islong(x):
+        return x
+    raise TypeError
 
+def _make_float_func(nname, fname):
+    nfunc = getattr(np, nname)
+    mfunc = getattr(math, fname)
+    def mathfunc(x):
+        if islong(x):
+            x = float(x) 
+        if numpy_knows(x):
+            return nfunc(x)
+        raise TypeError
+    return mathfunc
 
-_mathfuncs = [('fabs',     'fabs'),
-              ('arctan2',  'atan2'),
-              ('modf',     'modf'),
-              ('frexp',    'frexp'),
-              ]
-
-for _npy_name, _math_name in _mathfuncs:
-    globals()[_npy_name] = _makeMathFunc(_math_name)
-
-_cmathfuncs = [('arccos',   'acos'), 
+_mathfuncs = [ ('fabs',     'fabs'),
+               ('arctan2',  'atan2'),
+               ('modf',     'modf'),
+               ('frexp',    'frexp'),
+               ('arccos',   'acos'), 
                ('arccosh',  'acosh'), 
                ('arcsin',   'asin'), 
                ('arcsinh',  'asinh'), 
@@ -384,8 +317,8 @@ _cmathfuncs = [('arccos',   'acos'),
                ('sqrt',     'sqrt'),
               ]
 
-for _npy_name, _cmath_name in _cmathfuncs:
-    globals()[_npy_name] = _makecMathFunc(_cmath_name)
+for _npy_name, _math_name in _mathfuncs:
+    globals()[_npy_name] = _make_float_func(_npy_name, _math_name)
 
 # sometimes one ufunc wants to call another ufunc. To avoid going through all
 # of numpy's machinery again, this function creates a version of the ufunc that
