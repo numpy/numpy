@@ -636,8 +636,8 @@ class TestUfunc(TestCase):
         # Reductions on object arrays
         a = np.array(['a', 'b', 'c'], dtype=object)
         assert_equal(np.sum(a), 'abc')
-        #assert_equal(np.max(a), 'c')
-        #assert_equal(np.min(a), 'a')
+        assert_equal(np.max(a), 'c')
+        assert_equal(np.min(a), 'a')
         a = np.array([True, False, True], dtype=object)
         assert_equal(np.sum(a), 2)
         assert_equal(np.prod(a), 0)

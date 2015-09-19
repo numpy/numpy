@@ -12,14 +12,14 @@ import sys
 LOG2 = math.log(2)
 
 if sys.version_info > (3,):
-    def islong(x):
-        return (x is int) and (x >= 2**64) #biggest numpy integer
+    def isint(x):
+        return type(x) in (bool, int)
 else:
-    def islong(x):
-        return (x in (int, long)) and (x >= 2**64)
+    def isint(x):
+        return type(x) in (bool, int, long)
 
-def numpy_knows(x):
-    return np.min_scalar_type(x) != np.dtype("O") #better way?
+def handled_by_np(x):
+    return type(x) in (float, complex)
 
 def _notimplemented_msg(fname, etype, etype2=None):
     if etype2 is not None:
@@ -31,86 +31,74 @@ def _notimplemented_msg(fname, etype, etype2=None):
 
 
 def logical_and(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.logical_and(x, y).item()
     return bool(x and y)
 
 def logical_or(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.logical_or(x, y).item()
     return bool(x or y)
 
 def logical_xor(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.logical_xor(x, y).item()
     return bool(x or y) and not bool(x and y)
 
 def logical_not(x):
-    if numpy_knows(x):
-        return np.logical_not(x).item()
     return bool(not x)
 
 def maximum(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.maximum(x, y).item()
+    if isint(y) and handled_by_np(x):
+        return np.maximum(x, float(y))
+    if isint(x) and handled_by_np(y):
+        return np.maximum(float(x), y)
     return max(x, y)
 
 def minimum(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.minimum(x, y).item()
+    if isint(y) and handled_by_np(x):
+        return np.minimum(x, float(y))
+    if isint(x) and handled_by_np(y):
+        return np.minimum(float(x), y)
     return min(x, y)
 
 def fmax(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.fmax(x, y).item()
-    return min(x, y)
+    if isint(y) and handled_by_np(x):
+        return np.fmax(x, float(y))
+    if isint(x) and handled_by_np(y):
+        return np.fmax(float(x), y)
+    return max(x, y)
 
 def fmin(x, y):
-    if numpy_knows(x) and numpy_knows(y):
-        return np.fmin(x, y).item()
+    if isint(y) and handled_by_np(x):
+        return np.fmin(x, float(y))
+    if isint(x) and handled_by_np(y):
+        return np.fmin(float(x), y)
     return min(x, y)
 
 def iscomplex(x):
-    if numpy_knows(x):
-        return np.iscomplex(x).item()
-    if islong(x) or islong(y):
+    if isint(x):
         return False
-    raise TypeError
+    raise TypeError(_notimplemented_msg('iscomplex', type(x)))
 
 def isreal(x):
-    if numpy_knows(x):
-        return np.isreal(x).item()
-    if islong(x):
+    if isint(x):
         return True
-    raise TypeError
+    raise TypeError(_notimplemented_msg('isreal', type(x)))
+
+def isnan(x):
+    if isint(x):
+        return False
+    raise TypeError(_notimplemented_msg('isnan', type(x)))
+
+def isinf(x):
+    if isint(x):
+        return False
+    raise TypeError(_notimplemented_msg('isinf', type(x)))
 
 def isfinite(x):
-    if numpy_knows(x):
-        return np.isfinite(x).item()
-    if islong(x):
+    if isint(x):
         return True
-    return not _u_isinf(x) and not _u_isnan(x)
+    raise TypeError(_notimplemented_msg('isfinite', type(x)))
 
 def conjugate(x):
-    if numpy_knows(x):
-        return np.conjugate(x).item()
-    if islong(x):
+    if isint(x):
         return x
-    raise TypeError
-
-def exp2(x):
-    if numpy_knows(x):
-        return np.exp2(x).item()
-    if islong(x):
-        return 2**x
-    raise TypeError
-
-def log2(x):
-    if numpy_knows(x):
-        return np.log2(x).item()
-    if islong(x):
-        return math.log(x, 2)/math.log(2)
-    raise TypeError
+    raise TypeError(_notimplemented_msg('conjugate', type(x)))
 
 def degrees(x):
     return x*180/PI
@@ -124,28 +112,28 @@ def square(x):
     return x*x
 
 def reciprocal(x):
-    if numpy_knows(x):
-        return np.reciprocal(x).item()
-    if islong(x):
-        return 0 if x != 1 else 1
-    raise TypeError
+    if isint(x):
+        if x == 1:
+            return 1
+        if x == -1:
+            return -1
+        if x == 0:
+            return np.reciprocal(0)
+        return 0
+    raise TypeError(_notimplemented_msg('reciprocal', type(x)))
 
 def cbrt(x):
-    if numpy_knows(x):
-        return np.cbrt(x).item()
-    if islong(x):
+    if isint(x):
         if x < 0:
             return -(-x)**(1.0/3)
         return x**(1.0/3)
-    raise TypeError
+    raise TypeError(_notimplemented_msg('cbrt', type(x)))
 
 def _ones_like(x):
     return 1
 
 def sign(x):
-    if numpy_knows(x):
-        return np.sign(x).item()
-    if islong(x):
+    if isint(x):
         if x > 0:
             return 1
         if x < 0:
@@ -153,188 +141,116 @@ def sign(x):
         if x == 0:
             return 0
         return x
-    raise TypeError
+    raise TypeError(_notimplemented_msg('sign', type(x)))
 
 def hypot(x, y):
-    if numpy_knows(x):
-        return np.hypot(x, y).item()
-    if islong(x) or islong(y):
-        return math.hypot(x, y)
-    raise TypeError
-
-# the following only have implementation for builtin types
-
-def nextafter(x):
-    if islong(x):
-        x = float(x)
-    if numpy_knows(x):
-        return np.nextafter(x).item()
-    raise TypeError
-
-def spacing(x):
-    if islong(x):
-        x = float(x)
-    if numpy_knows(x):
-        return np.spacing(x).item()
-    raise TypeError
+    if isint(x) or isint(y):
+        if isint(x):
+            x = float(x)
+        if isint(y):
+            y = float(y)
+        return np.hypot(x, y)
+    raise TypeError(_notimplemented_msg('hypot', type(x)))
 
 def signbit(x):
-    if numpy_knows(x):
-        return np.signbit(x).item()
-    if islong(x):
+    if isint(x):
         return math.copysign(1, x) < 0
-    raise TypeError
+    raise TypeError(_notimplemented_msg('signbit', type(x)))
+
+def nextafter(x, y):
+    if isint(x) or isint(y):
+        if isint(x):
+            x = float(x)
+        if isint(y):
+            y = float(y)
+        return np.nextafter(x, y)
+    raise TypeError(_notimplemented_msg('nextafter', type(x)))
 
 def copysign(x, y):
-    if numpy_knows(x):
-        return np.copysign(x, y).item()
-    if islong(x) or islong(y):
+    if isint(x) or isint(y):
         return math.copysign(x, y)
-    raise TypeError
+    raise TypeError(_notimplemented_msg('copysign', type(x)))
 
 def logaddexp(x, y):
-    if islong(x):
-        x = float(x)
-    if islong(y):
-        y = float(y)
-    if numpy_knows(x):
-        return np.logaddexp(x, y).item()
-    raise TypeError
+    if isint(x) or isint(y):
+        if isint(x):
+            x = float(x)
+        if isint(y):
+            y = float(y)
+        return np.logaddexp(x, y)
+    raise TypeError(_notimplemented_msg('logaddexp', type(x)))
 
 def logaddexp2(x, y):
-    if islong(x):
-        x = float(x)
-    if islong(y):
-        y = float(y)
-    if numpy_knows(x):
-        return np.logaddexp2(x, y).item()
-    raise TypeError
+    if isint(x) or isint(y):
+        if isint(x):
+            x = float(x)
+        if isint(y):
+            y = float(y)
+        return np.logaddexp2(x, y)
+    raise TypeError(_notimplemented_msg('logaddexp2', type(x)))
 
-def fmod(x, y): # correct? or try to return a long?
-    if islong(x):
-        x = float(x) 
-    if islong(y):
-        y = float(y)
-    if numpy_knows(x):
-        return np.fmod(x, y).item()
-    raise TypeError
+def fmod(x, y): #needs work
+    if isint(x) or isint(y):
+        if isint(y) and handled_by_np(x):
+            return np.fmod(x, float(y))
+        if isint(x) and handled_by_np(y):
+            return np.fmod(float(x), y)
+        if isint(x) and isint(y):
+            if y == 0:
+                return 0
+            signchange = (-1 if x < 0 else 1)*(-1 if y < 0 else 1)
+            return signchange*(x % y)
+    raise TypeError(_notimplemented_msg('fmod', type(x)))
+
+def remainder(x, y): #needs work
+    if isint(x) or isint(y):
+        if isint(y) and handled_by_np(x):
+            return np.remainder(x, float(y))
+        if isint(x) and handled_by_np(y):
+            return np.remainder(float(x), y)
+        if isint(x) and isint(y):
+            if y == 0:
+                return 0
+            return x % y
+    raise TypeError(_notimplemented_msg('remainder', type(x)))
 
 def ldexp(x, y): #same as fmod
-    if islong(x):
-        x = float(x) 
-    if islong(y):
-        y = float(y)
-    if numpy_knows(x):
-        return np.ldexp(x, y).item()
-    raise TypeError
-
-def expm1(x):
-    if islong(x):
-        x = float(x) 
-    if numpy_knows(x):
-        return np.expm1(x).item()
-    raise TypeError
-
-def log1p(x):
-    if islong(x):
-        x = float(x) 
-    if numpy_knows(x):
-        return np.log1p(x).item()
-    raise TypeError
-
-def isnan(x):
-    if numpy_knows(x):
-        return np.isnan(x).item()
-    if islong(x):
-        return False
-    raise TypeError
-
-def isinf(x):
-    if numpy_knows(x):
-        return np.isinf(x).item()
-    if islong(x):
-        return False
-    raise TypeError
+    if isint(x) or isint(y):
+        return x*(2**y)
+    raise TypeError(_notimplemented_msg('ldexp', type(x)))
 
 def trunc(x):
-    if numpy_knows(x):
-        return np.trunc(x).item()
-    if islong(x):
-        return math.trunc(x)
-    raise TypeError
+    if isint(x):
+        return x
+    raise TypeError(_notimplemented_msg('trunc', type(x)))
 
 def ceil(x):
-    if numpy_knows(x):
-        return np.ceil(x).item()
-    if islong(x):
-        return math.ceil(x)
-    raise TypeError
+    if isint(x):
+        return x
+    raise TypeError(_notimplemented_msg('ceil', type(x)))
 
 def floor(x):
-    if numpy_knows(x):
-        return np.floor(x).item()
-    if islong(x):
-        return math.floor(x)
-    raise TypeError
+    if isint(x):
+        return x
+    raise TypeError(_notimplemented_msg('floor', type(x)))
 
 def rint(x):
-    if numpy_knows(x):
-        return np.rint(x).item()
-    if islong(x):
+    if isint(x):
         return x
-    raise TypeError
+    raise TypeError(_notimplemented_msg('rint', type(x)))
 
-def _make_float_func(nname, fname):
-    nfunc = getattr(np, nname)
-    mfunc = getattr(math, fname)
+def _make_float_func(name):
+    nfunc = getattr(np, name)
     def mathfunc(x):
-        if islong(x):
-            x = float(x) 
-        if numpy_knows(x):
-            return nfunc(x)
-        raise TypeError
+        if isint(x):
+            return nfunc(float(x))
+        raise TypeError(_notimplemented_msg(name, type(x)))
     return mathfunc
 
-_mathfuncs = [ ('fabs',     'fabs'),
-               ('arctan2',  'atan2'),
-               ('modf',     'modf'),
-               ('frexp',    'frexp'),
-               ('arccos',   'acos'), 
-               ('arccosh',  'acosh'), 
-               ('arcsin',   'asin'), 
-               ('arcsinh',  'asinh'), 
-               ('arctan',   'atan'),
-               ('arctanh',  'atanh'), 
-               ('cos',      'cos'), 
-               ('sin',      'sin'), 
-               ('tan',      'tan'), 
-               ('cosh',     'cosh'), 
-               ('sinh',     'sinh'),
-               ('tanh',     'tanh'),
-               ('exp',      'exp'),
-               ('log',      'log'),
-               ('log10',    'log10'),
-               ('sqrt',     'sqrt'),
-              ]
+_floatfuncs = ['fabs', 'arctan2', 'modf', 'frexp', 'arccos', 'arccosh',
+               'arcsin', 'arcsinh', 'arctan', 'arctanh', 'cos', 'sin', 'tan',
+               'cosh', 'sinh', 'tanh', 'exp', 'exp2', 'expm1', 'log', 'log10',
+               'log2', 'log1p', 'sqrt', 'spacing', ]
 
-for _npy_name, _math_name in _mathfuncs:
-    globals()[_npy_name] = _make_float_func(_npy_name, _math_name)
-
-# sometimes one ufunc wants to call another ufunc. To avoid going through all
-# of numpy's machinery again, this function creates a version of the ufunc that
-# dispatches the call appropriately
-def loopback_unary_ufunc(ufuncname):
-    npufunc = getattr(np, ufuncname)
-    objimpl = globals()[ufuncname]
-
-    def _ufunc(x):
-        if isinstance(x, (np.ndarray, np.generic)):
-            return npufunc(x)
-        methfunc = getattr(x, ufuncname, None)
-        if methfunc and callable(methfunc):
-            return methfunc()
-        return objimpl(x)
-    return _ufunc
-
-for uname in ['isnan', 'isinf', 'log', 'exp', 'sqrt']:
-    globals()['_u_'+uname] = loopback_unary_ufunc(uname)
+for _npy_name in _floatfuncs:
+    globals()[_npy_name] = _make_float_func(_npy_name)

@@ -2512,7 +2512,9 @@ class TestObjects:
             np.isinf, np.conjugate, np.square, np.reciprocal, np.sign,
             np.logical_not, np.degrees, np.rad2deg, np.radians, np.deg2rad,
             np.exp2, np.log2, np.cbrt, np.isfinite, np.rint, np.signbit,
-            np.spacing, np.modf, np.frexp]
+            np.spacing]
+
+        self.unary_funcs_2 = [np.modf, np.frexp]
 
         self.binary_ufuncs = [np.logical_and, np.logical_or, np.logical_xor, 
             np.maximum, np.minimum, np.fmax, np.fmin, np.fmod, np.logaddexp,
@@ -2521,42 +2523,53 @@ class TestObjects:
     def test_ufunc_builtin_numeric_objects(self):
         nums = [-1, 1, 0, np.nan, np.inf, -np.inf]
         cvals = [complex(a,b) for a in nums for b in nums]
-        vals = [0.0, 1.0, 100.0] + nums + cvals
+        vals = [0.0, 100.0, np.int32(1), np.float32(1)] + nums + cvals
 
         unary_ufuncs = self.unary_ufuncs[:]
-        unary_ufuncs.remove(np.spacing) #not implemented
-        unary_ufuncs.remove(np.log2)    #fails for complex(-1, np.inf)
-        unary_ufuncs.remove(np.exp2)    #fails for complex(np.nan, 0)
-        unary_ufuncs.remove(np.expm1)   #fails for complex(-np.inf, np.nan)
-        unary_ufuncs.remove(np.modf)    #tests not set up for this yet
-        unary_ufuncs.remove(np.frexp)   #tests not set up for this yet
         unary_ufuncs.remove(np.reciprocal) #a bug in python3.4 causes this to 
         #fail when USE_DEBUG=1, for complex(np.nan). See https://bugs.python.org/issue22604
 
-
-        binary_ufuncs = self.binary_ufuncs[:]
-        binary_ufuncs.remove(np.nextafter) #not implemented
-        
         for val in vals:
             vobj = np.array([val], dtype=object)
-            for u in unary_ufuncs:
-                try:
-                    result = u([val])
-                except:
-                    continue
-                assert_allclose(u(vobj)[0], result[0], rtol=1e-4)
+            for u in self.unary_ufuncs:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        result = u([val])
+                    except Exception as e:
+                        continue
+                    robj = u(vobj)
+                assert_allclose(robj[0], result[0], rtol=1e-4, 
+                    err_msg="in call `{0}({1})`".format(u.__name__, val))
+
+        for val in vals:
+            vobj = np.array([val], dtype=object)
+            for u in self.unary_funcs_2:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        r1, r2 = u([val])
+                    except:
+                        continue
+                    nr1, nr2 = u(vobj)
+                assert_allclose(nr1[0], r1[0], rtol=1e-4, 
+                    err_msg="in call `{0}({1})`".format(u.__name__, val))
 
         for vala in vals:
             for valb in vals:
                 aobj = np.array([vala], dtype=object)
                 bobj = np.array([valb], dtype=object)
-                for u in binary_ufuncs:
-                    try:
-                        result = u([vala], [valb])
-                    except:
-                        continue
-                    assert_allclose(u(aobj, bobj)[0], result[0], rtol=1e-4)
-                    # XXX need to test for mixed python & numpy args
+                for u in self.binary_ufuncs:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        try:
+                            result = u([vala], [valb])
+                        except:
+                            continue
+                        robj = u(aobj, bobj)
+                    assert_allclose(robj[0], result[0], rtol=1e-4,
+                        err_msg="in call `{0}({1}, {1})`".format(u.__name__,
+                                                             vala, valb))
 
 
 def test_rint_big_int():
