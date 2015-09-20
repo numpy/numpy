@@ -909,7 +909,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
-            join('src', 'umath', 'ufunc_type_resolution.c')]
+            join('src', 'umath', 'ufunc_type_resolution.c'),
+            join('src', 'umath', 'umath_type_resolve.c')]
 
     umath_deps = [
             generate_umath_py,
