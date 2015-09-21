@@ -1,0 +1,23 @@
+NumPy 1.9.3 Release Notes
+*************************
+
+This is a bugfix only release in the 1.9.x series.
+
+The only changes from 1.9.2 are a fix for reading gzipped text files on Python
+3.5 and some build fixes.
+
+Issues fixed
+============
+
+* `#5866 <https://github.com/numpy/numpy/pull/5866>`__: fix error finding
+  Python headers when ``build_ext`` ``--include-dirs`` is set;
+* `#6016 <https://github.com/numpy/numpy/pull/6016>`__: fix ``np.loadtxt``
+  error on Python 3.5 when reading from gzip files;
+* `#5555 <https://github.com/numpy/numpy/pull/5555>`__: Replace deprecated
+  options for ifort;
+* `#6096 <https://github.com/numpy/numpy/pull/6096>`__: remove /GL for VS2015
+  in check_long_double_representation;
+* `#6141 <https://github.com/numpy/numpy/pull/6141>`__: enable Visual Studio
+  2015 C99 features;
+* `#6171 <https://github.com/numpy/numpy/pull/6171>`__: revert C99 complex for
+  MSVC14.
