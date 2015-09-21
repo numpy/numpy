@@ -2749,7 +2749,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
     PyArrayObject *arr;
-    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr=NULL;
 
     /* variables for UNARY_LOOP */
     char *ip1 = args[0], *op1 = args[1];
@@ -2792,6 +2792,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         else {
             /* clear any error from attr lookup */
             PyErr_Clear();
+            Py_XDECREF(attr);
 
             ret = PyObject_CallFunctionObjArgs(fallback, in1, NULL);
         }
@@ -2816,7 +2817,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
     PyArrayObject *arr;
-    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr=NULL;
 
     /* variables for BINARY_LOOP */
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
@@ -2862,6 +2863,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         else{
             /* clear any error from attr lookup */
             PyErr_Clear();
+            Py_XDECREF(attr);
 
             ret = PyObject_CallFunctionObjArgs(fallback, in1, in2, NULL);
         }
@@ -2883,7 +2885,7 @@ NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 {
     PyObject *ret;
-    static PyObject *ufunc=NULL, *fallback=NULL, *attr;
+    static PyObject *ufunc=NULL, *fallback=NULL, *attr=NULL;
 
     /* variables for UNARY_LOOP_TWO_OUT */
     char *ip1 = args[0], *op1 = args[1], *op2 = args[2];
@@ -2922,6 +2924,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         else {
             /* clear any error from attr lookup */
             PyErr_Clear();
+            Py_XDECREF(attr);
 
             ret = PyObject_CallFunctionObjArgs(fallback, in1, NULL);
         }

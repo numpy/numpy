@@ -2521,13 +2521,14 @@ class TestObjects:
             np.logaddexp2, np.copysign, np.ldexp, np.hypot, np.nextafter]
 
     def test_ufunc_builtin_numeric_objects(self):
-        nums = [-1, 1, 0, np.nan, np.inf, -np.inf]
-        cvals = [complex(a,b) for a in nums for b in nums]
-        vals = [0.0, 100.0, np.int32(1), np.float32(1)] + nums + cvals
+        cnums = [-1, 1, 0, np.nan, np.inf, -np.inf]
+        cvals = [complex(a,b) for a in cnums for b in cnums]
+        nums = [0.0, 100.0, np.int32(1), np.float32(1), 2**200, 2**201]
+        vals = cnums + nums + cvals
 
-        unary_ufuncs = self.unary_ufuncs[:]
-        unary_ufuncs.remove(np.reciprocal) #a bug in python3.4 causes this to 
-        #fail when USE_DEBUG=1, for complex(np.nan). See https://bugs.python.org/issue22604
+        # note this does not test whether python longs work in some cases, since
+        # numpy cannot handle python longs internally so the reference
+        # value can't be computed.
 
         for val in vals:
             vobj = np.array([val], dtype=object)

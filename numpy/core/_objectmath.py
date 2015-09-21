@@ -18,7 +18,7 @@ else:
     def isint(x):
         return type(x) in (bool, int, long)
 
-def handled_by_np(x):
+def float_or_complex(x):
     return type(x) in (float, complex)
 
 def _notimplemented_msg(fname, etype, etype2=None):
@@ -43,39 +43,39 @@ def logical_not(x):
     return bool(not x)
 
 def maximum(x, y):
-    if isint(y) and handled_by_np(x):
+    if isint(y) and float_or_complex(x):
         return np.maximum(x, float(y))
-    if isint(x) and handled_by_np(y):
+    if isint(x) and float_or_complex(y):
         return np.maximum(float(x), y)
     return max(x, y)
 
 def minimum(x, y):
-    if isint(y) and handled_by_np(x):
+    if isint(y) and float_or_complex(x):
         return np.minimum(x, float(y))
-    if isint(x) and handled_by_np(y):
+    if isint(x) and float_or_complex(y):
         return np.minimum(float(x), y)
     return min(x, y)
 
 def fmax(x, y):
-    if isint(y) and handled_by_np(x):
+    if isint(y) and float_or_complex(x):
         return np.fmax(x, float(y))
-    if isint(x) and handled_by_np(y):
+    if isint(x) and float_or_complex(y):
         return np.fmax(float(x), y)
     return max(x, y)
 
 def fmin(x, y):
-    if isint(y) and handled_by_np(x):
+    if isint(y) and float_or_complex(x):
         return np.fmin(x, float(y))
-    if isint(x) and handled_by_np(y):
+    if isint(x) and float_or_complex(y):
         return np.fmin(float(x), y)
     return min(x, y)
 
-def iscomplex(x):
+def iscomplex(x): # not actually a ufunc (yet)
     if isint(x):
         return False
     raise TypeError(_notimplemented_msg('iscomplex', type(x)))
 
-def isreal(x):
+def isreal(x): # not actually a ufunc (yet)
     if isint(x):
         return True
     raise TypeError(_notimplemented_msg('isreal', type(x)))
@@ -118,7 +118,7 @@ def reciprocal(x):
         if x == -1:
             return -1
         if x == 0:
-            return np.reciprocal(0)
+            return np.reciprocal(0).item()
         return 0
     raise TypeError(_notimplemented_msg('reciprocal', type(x)))
 
@@ -150,7 +150,7 @@ def hypot(x, y):
         if isint(y):
             y = float(y)
         return np.hypot(x, y)
-    raise TypeError(_notimplemented_msg('hypot', type(x)))
+    raise TypeError(_notimplemented_msg('hypot', type(x), type(y)))
 
 def signbit(x):
     if isint(x):
@@ -164,12 +164,12 @@ def nextafter(x, y):
         if isint(y):
             y = float(y)
         return np.nextafter(x, y)
-    raise TypeError(_notimplemented_msg('nextafter', type(x)))
+    raise TypeError(_notimplemented_msg('nextafter', type(x), type(y)))
 
 def copysign(x, y):
     if isint(x) or isint(y):
         return math.copysign(x, y)
-    raise TypeError(_notimplemented_msg('copysign', type(x)))
+    raise TypeError(_notimplemented_msg('copysign', type(x), type(y)))
 
 def logaddexp(x, y):
     if isint(x) or isint(y):
@@ -178,7 +178,7 @@ def logaddexp(x, y):
         if isint(y):
             y = float(y)
         return np.logaddexp(x, y)
-    raise TypeError(_notimplemented_msg('logaddexp', type(x)))
+    raise TypeError(_notimplemented_msg('logaddexp', type(x), type(y)))
 
 def logaddexp2(x, y):
     if isint(x) or isint(y):
@@ -187,56 +187,61 @@ def logaddexp2(x, y):
         if isint(y):
             y = float(y)
         return np.logaddexp2(x, y)
-    raise TypeError(_notimplemented_msg('logaddexp2', type(x)))
+    raise TypeError(_notimplemented_msg('logaddexp2', type(x), type(y)))
 
 def fmod(x, y): #needs work
     if isint(x) or isint(y):
-        if isint(y) and handled_by_np(x):
+        if isint(y) and float_or_complex(x):
             return np.fmod(x, float(y))
-        if isint(x) and handled_by_np(y):
+        if isint(x) and float_or_complex(y):
             return np.fmod(float(x), y)
         if isint(x) and isint(y):
             if y == 0:
                 return 0
             signchange = (-1 if x < 0 else 1)*(-1 if y < 0 else 1)
             return signchange*(x % y)
-    raise TypeError(_notimplemented_msg('fmod', type(x)))
+    raise TypeError(_notimplemented_msg('fmod', type(x), type(y)))
 
 def remainder(x, y): #needs work
     if isint(x) or isint(y):
-        if isint(y) and handled_by_np(x):
+        if isint(y) and float_or_complex(x):
             return np.remainder(x, float(y))
-        if isint(x) and handled_by_np(y):
+        if isint(x) and float_or_complex(y):
             return np.remainder(float(x), y)
         if isint(x) and isint(y):
             if y == 0:
                 return 0
             return x % y
-    raise TypeError(_notimplemented_msg('remainder', type(x)))
+    raise TypeError(_notimplemented_msg('remainder', type(x), type(y)))
 
-def ldexp(x, y): #same as fmod
+def ldexp(x, y):  #needs work
+    # in the numpy ufunc, y must be an integer. Overflows if y > 2**9, roughly
     if isint(x) or isint(y):
-        return x*(2**y)
-    raise TypeError(_notimplemented_msg('ldexp', type(x)))
+        if y > 2**8:
+            # python can actually calculate for y > 2**8, but very slowly.
+            #warn
+            return np.inf
+        return x*(2.0**y)
+    raise TypeError(_notimplemented_msg('ldexp', type(x), type(y)))
 
 def trunc(x):
     if isint(x):
-        return x
+        return float(x)
     raise TypeError(_notimplemented_msg('trunc', type(x)))
 
 def ceil(x):
     if isint(x):
-        return x
+        return float(x)
     raise TypeError(_notimplemented_msg('ceil', type(x)))
 
 def floor(x):
     if isint(x):
-        return x
+        return float(x)
     raise TypeError(_notimplemented_msg('floor', type(x)))
 
 def rint(x):
     if isint(x):
-        return x
+        return float(x)
     raise TypeError(_notimplemented_msg('rint', type(x)))
 
 def _make_float_func(name):
