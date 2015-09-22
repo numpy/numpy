@@ -999,8 +999,8 @@ class mkl_info(system_info):
                 plt = '64'
                 #l = 'mkl_ipf'
             elif cpu.is_Xeon():
-                plt = 'em64t'
-                #l = 'mkl_em64t'
+                plt = 'intel64'
+                #l = 'mkl_intel64'
             else:
                 plt = '32'
                 #l = 'mkl_ia32'
