@@ -1,10 +1,12 @@
 This file gives an overview of what is necessary to build binary releases for
-NumPy on OS X. Windows binaries are built here using Wine, they can of course
-also be built on Windows itself. Building OS X binaries on another platform is
-not possible.
+NumPy. Windows binaries are built here using Wine, they can of course also be
+built on Windows itself. Building OS X binaries on another platform is not
+possible, but our current OSX binary build procedure uses travis-ci virtual
+machines running OSX.
 
 Current build and release info
 ==============================
+
 The current info on building and releasing NumPy and SciPy is scattered in
 several places. It should be summarized in one place, updated and where
 necessary described in more detail. The sections below list all places where
@@ -34,24 +36,35 @@ Release Scripts
 ---------------
 * https://github.com/numpy/numpy-vendor
 
-
 Supported platforms and versions
 ================================
-Python 2.6-2.7 and >=3.2 are the currently supported versions on all platforms.
+
+Python 2.6-2.7 and >=3.2 are the currently supported versions when building
+from source.  We test numpy against all these versions every time we merge
+code to trunk.  Binary installers may be available for a subset of these
+versions (see below).
 
 OS X
 ----
-OS X versions >= 10.5 are supported.  Note that there are currently still
-issues with compiling on 10.7, due to Apple moving to gcc-llvm.
-Only the Python from `python.org <http://python.org>`_ is supported. Binaries
-do *not* support Apple Python.
+
+Python 2.7 and >=3.3 are the versions for which we provide binary installers.
+OS X versions >= 10.6 are supported.  We build binary wheels for OSX that are
+compatible with Python.org Python, system Python, homebrew and macports - see
+this `OSX wheel building summary
+<https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
 
 Windows
 -------
-Windows XP, Vista and 7 are supported.
+
+32-bit Python 2.7, 3.3, 3.4 are the versions for which we provide binary
+installers. Windows XP, Vista and 7 are supported.  Our current windows mingw
+toolchain is not able to build 64-bit binaries of numpy.  We are hoping to
+update to a `mingw-w64 toolchain
+<https://github.com/numpy/numpy/wiki/Mingw-w64-faq>`_ soon.
 
 Linux
 -----
+
 Many distributions include NumPy. Building from source is also relatively
 straightforward. Only tarballs are created for Linux, no specific binary
 installers are provided (yet).
@@ -61,28 +74,24 @@ BSD / Solaris
 No binaries are provided, but succesful builds on Solaris and BSD have been
 reported.
 
-
 Tool chain
 ==========
+
 Compilers
 ---------
+
 The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
-* OS X uses gcc-4.0 (since that is what Python itself is built with) up to
-  Python 2.6. Python 2.7 comes in two flavors; the 32-bit version is built with
-  gcc-4.0 and the 64-bit version with gcc-4.2.  The "release.sh" script
-  sets environment variables to pick the right compiler.
-  All binaries should be built on OS X 10.5, with the exception of the 64-bit
-  Python 2.7 one which should be built on 10.6.
+* OS X builds on travis currently use `clang`.  It appears that binary wheels
+  for OSX >= 10.6 can be safely built from from OSX 10.9 when building against
+  the Python from the Python.org installers.
 * Windows builds use MinGW 3.4.5.  Updating this to a more recent MinGW with
   GCC 4.x is desired, but there are still practical difficulties in building
   the binary installers.
 
-Cython is not needed for building the binaries, because generated C files from
-Cython sources are checked in at the moment. It is worth keeping an eye on what
-Cython versions have been used to generate all current C files, it should be
-the same and most recent version (0.16 as of now).
+You will need Cython for building the binaries.  Cython compiles the ``.pyx``
+files in the numpy distribution to ``.c`` files.
 
 Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_
 is used. On Windows g77 (included in MinGW) is the current default, in the future
@@ -93,13 +102,6 @@ Python
 * Python(s) from `python.org <http://python.org>`_
 * virtualenv
 * paver
-* bdist_mpkg from https://github.com/rgommers/bdist_mpkg (has a necessary
-  patch, don't use the unsupported version on PyPi).
-
-Python itself should be installed multiple times - each version a binary is
-built for should be installed. The other dependencies only have to be installed
-for the default Python version on the system. The same applies to the doc-build
-dependencies below.
 
 Building docs
 -------------
@@ -113,7 +115,7 @@ Wine
 For building Windows binaries on OS X Wine can be used. In Wine the following
 needs to be installed:
 
-* Python 2.6-2.7 and 3.2
+* Python 2.6-2.7 and 3.3
 * MakeNsis
 * CpuId plugin for MakeNsis : this can be found in the NumPy source tree under
   tools/win32build/cpucaps and has to be built with MinGW (see SConstruct file in
@@ -167,22 +169,27 @@ What is released
 
 Binaries
 --------
-Windows binaries in "superpack" form for Python 2.6/2.7/3.2/3.3.
-A superpack contains three builds, for SSE2, SSE3 and no SSE.
 
-OS X binaries are made in dmg format, targeting only the Python from
-`python.org <http://python.org>`_
+Windows binary installers in "superpack" form for Python 2.7/3.3/3.4.  A
+superpack contains three builds, for SSE2, SSE3 and no SSE.
 
+Wheels
+------
+
+OSX wheels built via travis-ci : see - see `building OSX wheels`_.
+
+.. _build OSX wheels: https://github.com/MacPython/numpy-wheels 
 
 Other
 -----
+
 * Release Notes
 * Changelog
 
 Source distribution
 -------------------
-A source release in both .zip and .tar.gz formats is released.
 
+We build source releases in both .zip and .tar.gz formats.
 
 Release process
 ===============
@@ -200,6 +207,7 @@ Make sure current trunk builds a package correctly
 --------------------------------------------------
 ::
 
+    git clean -fxd
     python setup.py bdist
     python setup.py sdist
 
@@ -270,8 +278,12 @@ updated for a major release.
 
 Check the release notes
 -----------------------
-Check that the release notes are up-to-date, and mention at least the
-following:
+Check that the release notes are up-to-date.
+
+Write or update the release notes in a file named for the release, such as
+``doc/release/1.11.0-notes.rst``.
+
+Mention at least the following:
 
   - major new features
   - deprecated and removed features
@@ -289,15 +301,55 @@ Identify the commit hash of the release, e.g. 1b2e1d63ff.
 ::
     git co 1b2e1d63ff # gives warning about detached head
 
-Now, set ``release=True`` in setup.py, then
+First, change/check the following variables in ``pavement.py`` depending on the
+release version::
 
-::
+    RELEASE_NOTES = 'doc/release/1.7.0-notes.rst'
+    LOG_START = 'v1.6.0'
+    LOG_END = 'maintenance/1.7.x'
 
-    git commit -m "REL: Release." setup.py
+Do any other changes. When you are ready to release, do the following
+changes::
+
+    diff --git a/setup.py b/setup.py
+    index b1f53e3..8b36dbe 100755
+    --- a/setup.py
+    +++ b/setup.py
+    @@ -57,7 +57,7 @@ PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-
+     MAJOR               = 1
+     MINOR               = 7
+     MICRO               = 0
+    -ISRELEASED          = False
+    +ISRELEASED          = True
+     VERSION             = '%d.%d.%drc1' % (MAJOR, MINOR, MICRO)
+
+     # Return the git revision as a string
+
+And make sure the ``VERSION`` variable is set properly.
+
+Now you can make the release commit and tag.  We recommend you don't push
+the commit or tag immediately, just in case you need to do more cleanup.  We
+prefer to defer the push of the tag until we're confident this is the exact
+form of the released code (see: :ref:`push-tag-and-commit`):
+
+    git commit -s -m "REL: Release." setup.py
     git tag -s <version>
-    git push origin <version>
 
-Note: ``git tag -s`` creates a signed tag - make sure your PGP key is public.
+The ``-s`` flag makes a PGP (usually GPG) signed tag.  Please do sign the
+release tags.
+
+The release tag should have the release number in the annotation (tag
+message).  Unfortunately the name of a tag can be changed without breaking the
+signature, the contents of the message cannot.
+
+See : https://github.com/scipy/scipy/issues/4919 for a discussion of signing
+release tags, and http://keyring.debian.org/creating-key.html for instructions
+on creating a GPG key if you do not have one.
+
+To make your key more readily identifiable as you, consider sending your key
+to public keyservers, with a command such as::
+
+    gpg --send-keys <yourkeyid>
 
 Apply patch to fix bogus strides
 --------------------------------
@@ -314,8 +366,34 @@ Increment the release number in setup.py. Release candidates should have "rc1"
 Also create a new version hash in cversions.txt and a corresponding version
 define NPY_x_y_API_VERSION in numpyconfig.h
 
+Trigger the OSX builds on travis
+--------------------------------
+
+See `build OSX wheels`_.
+
+You may need to check the ``.travis.yml`` file of the
+https://github.com/MacPython/numpy-wheels repository.
+
+Make sure that the releast tag has been pushed, and that the ``.travis.yml``
+is set thusly::
+
+  - NP_COMMIT=latest-tag  # comment out to build version in submodule
+
+Trigger a build by doing an empty (or otherwise) commit to the repository::
+
+    cd /path/to/numpy-wheels
+    git commit --allow-empty
+    git push
+
+The wheels, once built, appear in http://wheels.scipy.org
+
 Make the release
 ----------------
+
+Build the changelog and notes for upload with::
+
+    paver write_release_and_log
+
 The tar-files and binary releases for distribution should be uploaded to SourceForge,
 together with the Release Notes and the Changelog. Uploading can be done
 through a web interface or, more efficiently, through scp/sftp/rsync as
@@ -327,19 +405,41 @@ For example::
 
 Update PyPi
 -----------
+
 The final release (not betas or release candidates) should be uploaded to PyPi.
 There are two ways to update PyPi, the first one is::
 
-  $ python setup.py sdist upload
+    $ git clean -fxd  # to be safe
+    $ python setup.py sdist --formats=gztar,zip  # to check
+    # python setup.py sdist --formats=gztar,zip upload --sign
 
-and the second one is to upload the PKG_INFO file inside the sdist dir in the
+This will ask for your key PGP passphrase, in order to sign the built source
+packages.
+
+The second way is to upload the PKG_INFO file inside the sdist dir in the
 web interface of PyPi. The source tarball can also be uploaded through this
-interface. A simple binary installer for windows, created with
-``bdist_wininst``, should also be uploaded to PyPi so ``easy_install numpy``
-works.
+interface.
+
+To push the travis-ci OSX wheels up to pypi see :
+https://github.com/MacPython/numpy-wheels#uploading-the-built-wheels-to-pypi
+
+.. _push-tag-and-commit:
+
+Push the release tag and commit
+-------------------------------
+
+Finally, now you are confident this tag correctly defines the source code that
+you released you can push the tag and release commit up to github::
+
+    git push  # Push release commit
+    git push upstream <version>  # Push tag named <version>
+
+where ``upstream`` points to the main https://github.com/numpy/numpy.git
+repository.
 
 Update docs.scipy.org
 ---------------------
+
 All documentation for a release can be updated on http://docs.scipy.org/ with:
 
     make dist
@@ -361,11 +461,16 @@ https://github.com/scipy/docs.scipy.org.  Do the following:
 
 Update scipy.org
 ----------------
+
 A release announcement with a link to the download site should be placed in the
 sidebar of the front page of scipy.org.
 
+The scipy.org should be a PR at https://github.com/scipy/scipy.org. The file
+that needs modification is ``www/index.rst``. Search for ``News``.
+
 Announce to the lists
 ---------------------
+
 The release should be announced on the mailing lists of
 NumPy and SciPy, to python-announce, and possibly also those of
 Matplotlib,IPython and/or Pygame.
@@ -373,6 +478,12 @@ Matplotlib,IPython and/or Pygame.
 During the beta/RC phase an explicit request for testing the binaries with
 several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
 mailing list.
+
+Announce to Linux Weekly News
+-----------------------------
+
+Email the editor of LWN to let them know of the release.  Directions at:
+https://lwn.net/op/FAQ.lwn#contact
 
 After the final release
 -----------------------
