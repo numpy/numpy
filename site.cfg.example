@@ -68,7 +68,7 @@
 #           extra_compile_args = -g -ftree-vectorize
 #
 #   extra_link_args
-#       Add additional arguments to when libraries/executables
+#       Add additional arguments when libraries/executables
 #       are linked.
 #       Simple variable with no parsing done. 
 #       Provide a single line with all complete flags.
