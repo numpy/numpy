@@ -76,20 +76,41 @@ def iterable(y):
     return 1
 
 
-def _hist_optim_numbins_estimator(a, estimator):
+def _hist_optim_numbins_estimator(a, estimator, data_range=None, data_weights=None):
     """
     A helper function to be called from histogram to deal with estimating optimal number of bins
+
+    a: np.array
+        The data with which to estimate the number of bins
 
     estimator: str
         If estimator is one of ['auto', 'fd', 'scott', 'rice', 'sturges'] this function
         will choose the appropriate estimator and return it's estimate for the optimal
         number of bins.
+
+    data_range: tuple (min, max)
+        What range should the data to be binned be restricted to
+
+    data_weights:
+        weights are not supported, must be left blank or None
+
     """
     assert isinstance(estimator, basestring)
     # private function should not be called otherwise
 
     if a.size == 0:
         return 1
+
+    if data_weights is not None:
+        raise TypeError("Automated estimation of the number of "
+                        "bins is not supported for weighted data")
+
+    if data_range is not None:
+        mn, mx = data_range
+        keep = (a >= mn)
+        keep &= (a <= mx)
+        if not np.logical_and.reduce(keep):
+            a = a[keep]
 
     def sturges(x):
         """
@@ -181,6 +202,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         If `bins` is a string from the list below, `histogram` will use the method
         chosen to calculate the optimal number of bins (see Notes for more detail
         on the estimators). For visualisation, we suggest using the 'auto' option.
+        Weighted data is unsupported in this mode.
 
         'auto'
             Maximum of the 'sturges' and 'fd' estimators. Provides good all round performance
@@ -340,7 +362,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 'max must be larger than min in range parameter.')
 
     if isinstance(bins, basestring):
-        bins = _hist_optim_numbins_estimator(a, bins)
+        bins = _hist_optim_numbins_estimator(a, bins, range, weights)
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
 
