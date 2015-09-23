@@ -130,7 +130,7 @@ double npy_atan2(double y, double x)
         return npy_atan(y);
     }
 
-    m = 2 * npy_signbit(x) + npy_signbit(y);
+    m = 2 * (npy_signbit((x)) != 0) + (npy_signbit((y)) != 0);
     if (y == 0.0) {
         switch(m) {
         case 0:
