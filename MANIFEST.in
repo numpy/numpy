@@ -12,6 +12,9 @@ include numpy/random/mtrand/generate_mtrand_c.py
 recursive-include numpy/random/mtrand *.pyx *.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
 recursive-include numpy/_build_utils *
+# Add sdist files whose use depends on local configuration.
+include numpy/core/src/multiarray/cblasfuncs.c
+include numpy/core/src/multiarray/python_xerbla.c
 # Adding scons build related files not found by distutils
 recursive-include numpy/core/code_generators *.py *.txt
 recursive-include numpy/core *.in *.h
