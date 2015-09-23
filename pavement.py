@@ -89,7 +89,7 @@ try:
         GIT_REVISION = "Unknown"
 
     if not setup_py.ISRELEASED:
-        FULLVERSION += '.dev-' + GIT_REVISION[:7]
+        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
 finally:
     sys.path.pop(0)
 
