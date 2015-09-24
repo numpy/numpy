@@ -84,10 +84,10 @@ The mechanism we use to accomplish this goal may be unfamiliar for those
 who are not experienced with the cultural norms around free/open-source
 software development. We provide a summary here, and highly recommend
 that all Contributors additionally read `Chapter 4: Social and Political
-Infrastructure <http://producingoss.com/en/producingoss.html#social-infrastructure>`__
+Infrastructure <http://producingoss.com/en/producingoss.html#social-infrastructure>`_
 of Karl Fogel's classic *Producing Open Source Software*, and in
 particular the section on `Consensus-based
-Democracy <http://producingoss.com/en/producingoss.html#consensus-democracy>`__,
+Democracy <http://producingoss.com/en/producingoss.html#consensus-democracy>`_,
 for a more detailed discussion.
 
 In this context, consensus does *not* require:
@@ -122,7 +122,7 @@ few days, then it's probably fine. And worst case, if a change is more
 controversial than expected, or a crucial critique is delayed because
 someone was on vacation, then it's no big deal: we apologize for
 misjudging the situation, `back up, and sort things
-out <http://producingoss.com/en/producingoss.html#version-control-relaxation>`__.
+out <http://producingoss.com/en/producingoss.html#version-control-relaxation>`_.
 
 If one does need to invoke a formal veto, then it should consist of:
 
@@ -186,7 +186,7 @@ Council decision making
 
 If it becomes necessary for the Steering Council to produce a formal
 decision, then they will use a form of the `Apache Foundation voting
-process <https://www.apache.org/foundation/voting.html>`__. This is a
+process <https://www.apache.org/foundation/voting.html>`_. This is a
 formalized version of consensus, in which +1 votes indicate agreement,
 -1 votes are vetoes (and must be accompanied with a rationale, as
 above), and one can also vote fractionally (e.g. -0.5, +0.5) if one
