@@ -389,5 +389,5 @@ Acknowledgements
 ================
 
 Substantial portions of this document were [STRIKEOUT:inspired] stolen
-wholesale from the Jupyter/IPython project's governance document, `IPEP
-29 <https://github.com/ipython/ipython/wiki/IPEP-29:-Project-Governance>`__.
+wholesale from the `Jupyter/IPython project's governance document
+<https://github.com/jupyter/governance/blob/master/governance.md>`_.
