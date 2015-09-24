@@ -101,6 +101,8 @@ def win32_checks(deflist):
         deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
 def check_math_capabilities(config, moredefs, mathlibs):
+    from numpy.distutils.misc_util import mingw32
+    
     def check_func(func_name):
         return config.check_func(func_name, libraries=mathlibs,
                                  decl=True, call=True)
@@ -170,7 +172,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
-    check_funcs(C99_FUNCS_EXTENDED)
+    if not mingw32():
+        check_funcs(C99_FUNCS_EXTENDED)
 
 def check_complex(config, mathlibs):
     priv = []
