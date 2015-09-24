@@ -323,10 +323,6 @@ its interactions with NumFOCUS.
    the reportee + 1 is the max). This avoids effective majorities
    resting on one person.
 
-[Initially, the NumFOCUS subcommittee will consist of: Chuck Harris,
-Ralf Gommers, Nathaniel Smith, and ???? as internal members, and Thomas
-Caswell as external member.]
-
 Institutional Partners and Funding
 ==================================
 
@@ -387,10 +383,6 @@ Institutional Partner benefits are:
 -  Ability to influence the project through the participation of their
    Council Member.
 -  Council Members invited to NumPy Developer Meetings.
-
-Existing Institutional Partners:
-
--  UC Berkeley (Nathaniel Smith)
 
 Document history
 ================
