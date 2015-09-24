@@ -48,6 +48,19 @@ def test_dev_a_b_rc_mixed():
     assert_(NumpyVersion('1.9.0a2.dev-6acvda54') < '1.9.0a2')
 
 
+def test_dev0_version():
+    assert_(NumpyVersion('1.9.0.dev0+Unknown') < '1.9.0')
+    for ver in ['1.9.0', '1.9.0a1', '1.9.0b2', '1.9.0b2.dev0+ffffffff']:
+        assert_(NumpyVersion('1.9.0.dev0+f16acvda') < ver)
+
+    assert_(NumpyVersion('1.9.0.dev0+f16acvda') == '1.9.0.dev0+11111111')
+
+
+def test_dev0_a_b_rc_mixed():
+    assert_(NumpyVersion('1.9.0a2.dev0+f16acvda') == '1.9.0a2.dev0+11111111')
+    assert_(NumpyVersion('1.9.0a2.dev0+6acvda54') < '1.9.0a2')
+
+
 def test_raises():
     for ver in ['1.9', '1,9.0', '1.7.x']:
         assert_raises(ValueError, NumpyVersion, ver)
