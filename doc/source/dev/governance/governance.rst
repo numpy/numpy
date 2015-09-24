@@ -46,10 +46,6 @@ and public Project discussions on GitHub, mailing lists, and other
 channels. The foundation of Project participation is openness and
 transparency.
 
-Here is a list of the current Contributors to the main NumPy repository:
-
-https://github.com/numpy/numpy/graphs/contributors
-
 The Project Community consists of all Contributors and Users of the
 Project. Contributors work on behalf of and are responsible to the
 larger Project Community and we strive to keep the barrier between
