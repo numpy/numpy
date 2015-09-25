@@ -1670,6 +1670,18 @@ class TestFillingValues(TestCase):
         a = identity(3, fill_value=0., dtype=complex)
         assert_equal(a.fill_value, 0.)
 
+    def test_shape_argument(self):
+        # Test that shape can be provides as an argument
+        # GH issue 6106
+        a = empty(shape=(3, ))
+        assert_equal(a.shape, (3, ))
+
+        a = ones(shape=(3, ), dtype=float)
+        assert_equal(a.shape, (3, ))
+
+        a = zeros(shape=(3, ), dtype=complex)
+        assert_equal(a.shape, (3, ))
+
     def test_fillvalue_in_view(self):
         # Test the behavior of fill_value in view
 
