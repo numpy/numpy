@@ -535,7 +535,7 @@ class TestString(TestCase):
         # Pull request #4722
         np.array(["", ""]).astype(object)
 
-class TestDtypeAttributeDeletion(object):
+class TestDtypeAttributeDeletion(TestCase):
 
     def test_dtype_non_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
@@ -551,6 +551,19 @@ class TestDtypeAttributeDeletion(object):
         attr = ["names"]
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
+
+
+class TestDtypeAttributes(TestCase):
+    def test_descr_has_trailing_void(self):
+        # see gh-6359
+        dtype = np.dtype({
+            'names': ['A', 'B'],
+            'formats': ['f4', 'f4'],
+            'offsets': [0, 8],
+            'itemsize': 16})
+        new_dtype = np.dtype(dtype.descr)
+        assert_equal(new_dtype.itemsize, 16)
+
 
 class TestDtypeAttributes(TestCase):
 

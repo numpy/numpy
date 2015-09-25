@@ -121,6 +121,10 @@ def _array_descr(descriptor):
         offset += field[0].itemsize
         result.append(tup)
 
+    if descriptor.itemsize > offset:
+        num = descriptor.itemsize - offset
+        result.append(('', '|V%d' % num))
+
     return result
 
 # Build a new array from the information in a pickle.
