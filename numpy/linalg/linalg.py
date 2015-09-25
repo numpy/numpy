@@ -1012,9 +1012,9 @@ def eig(a):
     w : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
-        array will be of complex type, unless the imaginary part is 
-        zero in which case it will be cast to a real type. When `a` 
-        is real the resulting eigenvalues will be real (0 imaginary 
+        array will be of complex type, unless the imaginary part is
+        zero in which case it will be cast to a real type. When `a`
+        is real the resulting eigenvalues will be real (0 imaginary
         part) or occur in conjugate pairs
 
     v : (..., M, M) array
@@ -1382,7 +1382,7 @@ def cond(x, p=None):
 
     Parameters
     ----------
-    x : (M, N) array_like
+    x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
         Order of the norm:
@@ -1451,12 +1451,12 @@ def cond(x, p=None):
     0.70710678118654746
 
     """
-    x = asarray(x) # in case we have a matrix
+    x = asarray(x)  # in case we have a matrix
     if p is None:
         s = svd(x, compute_uv=False)
-        return s[0]/s[-1]
+        return s[..., 0]/s[..., -1]
     else:
-        return norm(x, p)*norm(inv(x), p)
+        return norm(x, p, axis=(-2, -1)) * norm(inv(x), p, axis=(-2, -1))
 
 
 def matrix_rank(M, tol=None):
