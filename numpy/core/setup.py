@@ -736,6 +736,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'array_assign.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
+            join('src', 'multiarray', 'cblasfuncs.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
@@ -839,6 +840,8 @@ def configuration(parent_package='',top_path=None):
     blas_info = get_info('blas_opt', 0)
     if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
         extra_info = blas_info
+        # These files are also in MANIFEST.in so that they are always in
+        # the source distribution independently of HAVE_CBLAS.
         multiarray_src.extend([join('src', 'multiarray', 'cblasfuncs.c'),
                                join('src', 'multiarray', 'python_xerbla.c'),
                                ])
