@@ -3997,6 +3997,28 @@ class TestVdot(TestCase):
         assert_equal(np.vdot(b, a), res)
         assert_equal(np.vdot(b, b), res)
 
+    def test_vdot_uncontiguous(self):
+        for size in [2, 1000]:
+            # Different sizes match different branches in vdot.
+            a = np.zeros((size, 2, 2))
+            b = np.zeros((size, 2, 2))
+            a[:, 0, 0] = np.arange(size)
+            b[:, 0, 0] = np.arange(size) + 1
+            # Make a and b uncontiguous:
+            a = a[..., 0]
+            b = b[..., 0]
+
+            assert_equal(np.vdot(a, b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a, b.copy()),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a.copy(), b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a.copy('F'), b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a, b.copy('F')),
+                         np.vdot(a.flatten(), b.flatten()))
+
 
 class TestDot(TestCase):
     def setUp(self):

@@ -2312,8 +2312,10 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int typenum;
     char *ip1, *ip2, *op;
-    npy_intp n, stride;
+    npy_intp n, stride1, stride2;
     PyObject *op1, *op2;
+    npy_intp newdimptr[1] = {-1};
+    PyArray_Dims newdims = {newdimptr, 1};
     PyArrayObject *ap1 = NULL, *ap2  = NULL, *ret = NULL;
     PyArray_Descr *type;
     PyArray_DotFunc *vdot;
@@ -2337,7 +2339,8 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_DECREF(type);
         goto fail;
     }
-    op1 = PyArray_Ravel(ap1, NPY_CORDER);
+
+    op1 = PyArray_Newshape(ap1, &newdims, NPY_CORDER);
     if (op1 == NULL) {
         Py_DECREF(type);
         goto fail;
@@ -2349,7 +2352,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (ap2 == NULL) {
         goto fail;
     }
-    op2 = PyArray_Ravel(ap2, NPY_CORDER);
+    op2 = PyArray_Newshape(ap2, &newdims, NPY_CORDER);
     if (op2 == NULL) {
         goto fail;
     }
@@ -2369,7 +2372,8 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     n = PyArray_DIM(ap1, 0);
-    stride = type->elsize;
+    stride1 = PyArray_STRIDE(ap1, 0);
+    stride2 = PyArray_STRIDE(ap2, 0);
     ip1 = PyArray_DATA(ap1);
     ip2 = PyArray_DATA(ap2);
     op = PyArray_DATA(ret);
@@ -2397,11 +2401,11 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     if (n < 500) {
-        vdot(ip1, stride, ip2, stride, op, n, NULL);
+        vdot(ip1, stride1, ip2, stride2, op, n, NULL);
     }
     else {
         NPY_BEGIN_THREADS_DESCR(type);
-        vdot(ip1, stride, ip2, stride, op, n, NULL);
+        vdot(ip1, stride1, ip2, stride2, op, n, NULL);
         NPY_END_THREADS_DESCR(type);
     }
 
