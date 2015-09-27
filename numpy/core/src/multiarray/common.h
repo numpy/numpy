@@ -234,6 +234,7 @@ npy_uint_alignment(int itemsize)
             alignment = _ALIGN(npy_uint64);
             break;
         default:
+            break;
     }
     
     return alignment;
