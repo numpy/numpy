@@ -752,8 +752,8 @@ add_newdoc('numpy.core.multiarray', 'empty',
     Returns
     -------
     out : ndarray
-        Array of uninitialized (arbitrary) data with the given
-        shape, dtype, and order.
+        Array of uninitialized (arbitrary) data of the given shape, dtype, and
+        order.  Object arrays will be initialized to None.
 
     See Also
     --------
