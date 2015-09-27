@@ -2075,40 +2075,36 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(order='K'), [2, 3, 0, 1])
         assert_(a.ravel(order='K').flags.owndata)
 
+        # Test simple 1-d copy behaviour:
+        a = np.arange(10)[::2]
+        assert_(a.ravel('K').flags.owndata)
+        assert_(a.ravel('C').flags.owndata)
+        assert_(a.ravel('F').flags.owndata)
+
         # Not contiguous and 1-sized axis with non matching stride
         a = np.arange(2**3 * 2)[::2]
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
         a.strides = strides
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
+        assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
-        # General case of possible ravel that is not contiguous but
-        # works and includes a 1-sized axis with non matching stride
-        a = a.swapaxes(-1, -2)  # swap back to C-order
-        assert_(np.may_share_memory(a.ravel(order='C'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-
-        a = a.T  # swap all to Fortran order
-        assert_(np.may_share_memory(a.ravel(order='F'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-
-        # Test negative strides:
-        a = np.arange(4)[::-1].reshape(2, 2)
-        assert_(np.may_share_memory(a.ravel(order='C'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-        assert_equal(a.ravel('C'), [3, 2, 1, 0])
-        assert_equal(a.ravel('K'), [3, 2, 1, 0])
-
-        # Test keeporder with weirdly strided 1-sized dims (1-d first stride)
-        a = np.arange(8)[::2].reshape(1, 2, 2, 1)  # neither C, nor F order
+        # contiguous and 1-sized axis with non matching stride works:
+        a = np.arange(2**3)
+        a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
-        strides[0] = -12
-        strides[-1] = 0
+        strides[1] = 123
         a.strides = strides
         assert_(np.may_share_memory(a.ravel(order='K'), a))
-        assert_equal(a.ravel('K'), a.ravel('C'))
+        assert_equal(a.ravel(order='K'), np.arange(2**3))
+
+        # Test negative strides (not very interesting since non-contiguous):
+        a = np.arange(4)[::-1].reshape(2, 2)
+        assert_(a.ravel(order='C').flags.owndata)
+        assert_(a.ravel(order='K').flags.owndata)
+        assert_equal(a.ravel('C'), [3, 2, 1, 0])
+        assert_equal(a.ravel('K'), [3, 2, 1, 0])
 
         # 1-element tidy strides test (NPY_RELAXED_STRIDES_CHECKING):
         a = np.array([[1]])
@@ -2125,7 +2121,7 @@ class TestMethods(TestCase):
             assert_equal(a.ravel(order), [0])
             assert_(np.may_share_memory(a.ravel(order), a))
 
-        #Test that certain non-inplace ravels work right (mostly) for 'K':
+        # Test that certain non-inplace ravels work right (mostly) for 'K':
         b = np.arange(2**4 * 2)[::2].reshape(2, 2, 2, 2)
         a = b[..., ::2]
         assert_equal(a.ravel('K'), [0, 4, 8, 12, 16, 20, 24, 28])
@@ -2138,6 +2134,22 @@ class TestMethods(TestCase):
         assert_equal(a.ravel('C'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('A'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('F'), [0, 8, 4, 12, 2, 10, 6, 14])
+
+    def test_ravel_subclass(self):
+        class ArraySubclass(np.ndarray):
+            pass
+
+        a = np.arange(10).view(ArraySubclass)
+        assert_(isinstance(a.ravel('C'), ArraySubclass))
+        assert_(isinstance(a.ravel('F'), ArraySubclass))
+        assert_(isinstance(a.ravel('A'), ArraySubclass))
+        assert_(isinstance(a.ravel('K'), ArraySubclass))
+
+        a = np.arange(10)[::2].view(ArraySubclass)
+        assert_(isinstance(a.ravel('C'), ArraySubclass))
+        assert_(isinstance(a.ravel('F'), ArraySubclass))
+        assert_(isinstance(a.ravel('A'), ArraySubclass))
+        assert_(isinstance(a.ravel('K'), ArraySubclass))
 
     def test_swapaxes(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
