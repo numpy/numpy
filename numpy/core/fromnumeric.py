@@ -1371,7 +1371,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
 
 
 def ravel(a, order='C'):
-    """Return a flattened array.
+    """Return a contiguous flattened array.
 
     A 1-D array, containing the elements of the input, is returned.  A copy is
     made only if needed.
@@ -1415,6 +1415,7 @@ def ravel(a, order='C'):
     ndarray.flat : 1-D iterator over an array.
     ndarray.flatten : 1-D array copy of the elements of an array
                       in row-major order.
+    ndarray.reshape : Change the shape of an array without changing its data.
 
     Notes
     -----
@@ -1424,6 +1425,9 @@ def ravel(a, order='C'):
     implies that the index along the first axis varies slowest, and
     the index along the last quickest.  The opposite holds for
     column-major, Fortran-style index ordering.
+
+    When a view is desired in as many cases as possible, ``arr.reshape(-1)``
+    may be preferable.
 
     Examples
     --------
