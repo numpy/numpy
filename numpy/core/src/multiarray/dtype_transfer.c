@@ -2965,6 +2965,10 @@ static void _strided_masked_wrapper_decsrcref_transfer_function(
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
+        if (N <= 0) {
+            break;
+        }
+
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
@@ -3000,6 +3004,10 @@ static void _strided_masked_wrapper_transfer_function(
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
+        if (N <= 0) {
+            break;
+        }
+
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
