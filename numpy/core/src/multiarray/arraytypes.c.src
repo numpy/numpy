@@ -2784,7 +2784,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
         }
         return 1;
     }
-#if defined(NPY_PY3K)
+
     if (PyObject_RichCompareBool(*ip1, *ip2, Py_LT) == 1) {
         return -1;
     }
@@ -2794,9 +2794,6 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
     else {
         return 0;
     }
-#else
-    return PyObject_Compare(*ip1, *ip2);
-#endif
 }
 
 

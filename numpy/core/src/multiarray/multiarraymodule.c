@@ -1502,13 +1502,9 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     if (field1 == NULL || field2 == NULL) {
         return 0;
     }
-#if defined(NPY_PY3K)
+
     val = PyObject_RichCompareBool(field1, field2, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
-#else
-    val = PyObject_Compare(field1, field2);
-    if (val != 0 || PyErr_Occurred()) {
-#endif
         same = 0;
     }
     else {
@@ -1535,13 +1531,8 @@ _equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
         return 0;
     }
 
-#if defined(NPY_PY3K)
     val = PyObject_RichCompareBool(sub1->shape, sub2->shape, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
-#else
-    val = PyObject_Compare(sub1->shape, sub2->shape);
-    if (val != 0 || PyErr_Occurred()) {
-#endif
         PyErr_Clear();
         return 0;
     }
