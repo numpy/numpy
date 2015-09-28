@@ -374,5 +374,15 @@ class TestBooleanIndexShapeMismatchDeprecation():
              arr.__getitem__, (slice(None), index))
 
 
+class TestFullDefaultDtype:
+    """np.full defaults to float when dtype is not set.  In the future, it will
+    use the fill value's dtype.
+    """
+
+    def test_full_default_dtype(self):
+        assert_warns(FutureWarning, np.full, 1, 1)
+        assert_warns(FutureWarning, np.full, 1, None)
+
+
 if __name__ == "__main__":
     run_module_suite()
