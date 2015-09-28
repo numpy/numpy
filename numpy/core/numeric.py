@@ -258,8 +258,9 @@ def full(shape, fill_value, dtype=None, order='C'):
     fill_value : scalar
         Fill value.
     dtype : data-type, optional
-        The desired data-type for the array, e.g., `numpy.int8`.  Default is
-        is chosen as `np.array(fill_value).dtype`.
+        The desired data-type for the array, e.g., `np.int8`.  Default
+        is `float`, but will change to `np.array(fill_value).dtype` in a
+        future release.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
@@ -290,6 +291,10 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
+    if array(fill_value).dtype != a.dtype:
+        warnings.warn(
+            "in the future, full(..., {0!r}) will return an array of {1!r}".
+            format(fill_value, array(fill_value).dtype), FutureWarning)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
