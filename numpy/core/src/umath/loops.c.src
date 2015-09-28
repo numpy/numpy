@@ -2630,41 +2630,42 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
 NPY_NO_EXPORT void
 OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-#if defined(NPY_PY3K)
     PyObject *zero = PyLong_FromLong(0);
+
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
+        PyObject *ret = NULL;
         int v;
-        PyObject *ret;
-        if (PyObject_Cmp(in1 ? in1 : Py_None, zero, &v) == -1) {
-            return;
+
+        if (in1 == NULL) {
+            in1 = Py_None;
         }
-        ret = PyLong_FromLong(v);
-        if (PyErr_Occurred()) {
-            Py_DECREF(zero);
-            return;
+
+        if ((v = PyObject_RichCompareBool(in1, zero, Py_LT)) == 1) {
+            ret = PyLong_FromLong(-1);
+        }
+        else if (v == 0 &&
+                (v = PyObject_RichCompareBool(in1, zero, Py_GT)) == 1) {
+            ret = PyLong_FromLong(1);
+        }
+        else if (v == 0 &&
+                (v = PyObject_RichCompareBool(in1, zero, Py_EQ)) == 1) {
+            ret = PyLong_FromLong(0);
+        }
+        else if (v == 0) {
+            /* in1 is NaN */
+            PyErr_SetString(PyExc_TypeError,
+                    "unorderable types for comparison");
+        }
+
+        if (ret == NULL) {
+            break;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
-    Py_DECREF(zero);
-#else
-    PyObject *zero = PyInt_FromLong(0);
-    UNARY_LOOP {
-        PyObject *in1 = *(PyObject **)ip1;
-        PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyInt_FromLong(
-                            PyObject_Compare(in1 ? in1 : Py_None, zero));
-        if (PyErr_Occurred()) {
-            Py_DECREF(zero);
-            return;
-        }
-        Py_XDECREF(*out);
-        *out = ret;
-    }
-    Py_DECREF(zero);
-#endif
+    Py_XDECREF(zero);
 }
 
 /*

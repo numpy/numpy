@@ -325,7 +325,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
 {
     int v;
     v = PyObject_RichCompareBool(i1, i2, Py_LT);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = -1;
         return 1;
     }
@@ -334,7 +334,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
     }
 
     v = PyObject_RichCompareBool(i1, i2, Py_GT);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = 1;
         return 1;
     }
@@ -343,7 +343,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
     }
 
     v = PyObject_RichCompareBool(i1, i2, Py_EQ);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = 0;
         return 1;
     }
