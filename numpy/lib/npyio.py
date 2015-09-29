@@ -1129,10 +1129,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
                 if iscomplex_X:
-                    fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
-                else:
-                    fmt = [fmt, ] * ncol
-                format = delimiter.join(fmt)
+                    fmt = ' (%s+%sj)' % (fmt, fmt)
+                format = ((fmt + delimiter) * ncol)[:-1]
             elif iscomplex_X and n_fmt_chars != (2 * ncol):
                 raise error
             elif ((not iscomplex_X) and n_fmt_chars != ncol):
