@@ -1147,11 +1147,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             fh.write(asbytes(comments + header + newline))
         if iscomplex_X:
             for row in X:
-                row2 = []
-                for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
-                fh.write(asbytes(format % tuple(row2) + newline))
+                row = np.vstack((row.real,row.imag)).T.reshape([ncol * 2])
+                fh.write(asbytes(format % tuple(row) + newline))
         else:
             for row in X:
                 try:
