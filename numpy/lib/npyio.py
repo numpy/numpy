@@ -1145,18 +1145,15 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
             fh.write(asbytes(comments + header + newline))
-        if iscomplex_X:
-            for row in X:
-                row = np.vstack((row.real,row.imag)).T.reshape([ncol * 2])
+        for row in X:
+            if iscomplex_X:
+                row = np.vstack((row.real,row.imag)).T.reshape([-1])
+            try:
                 fh.write(asbytes(format % tuple(row) + newline))
-        else:
-            for row in X:
-                try:
-                    fh.write(asbytes(format % tuple(row) + newline))
-                except TypeError:
-                    raise TypeError("Mismatch between array dtype ('%s') and "
-                                    "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+            except TypeError:
+                raise TypeError("Mismatch between array dtype ('%s') and "
+                                "format specifier ('%s')"
+                                % (str(X.dtype), format))
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
             fh.write(asbytes(comments + footer + newline))
