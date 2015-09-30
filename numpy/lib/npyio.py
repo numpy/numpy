@@ -1104,25 +1104,22 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     try:
         X = np.asarray(X)
 
-        cmpl_dtype = False
-
         # Handle 1-dimensional arrays
         if X.ndim == 1:
-            # Common case -- 1d array of numbers
-            if X.dtype.names is None:
-                X = np.atleast_2d(X).T
-                ncol = 1
-
-            # Complex dtype -- each field indicates a separate column
-            else:
-                cmpl_dtype = True
-                ncol = len(X.dtype.descr)
-        else:
-            ncol = X.shape[1]
+            X = np.atleast_2d(X).T
 
         nrow = X.shape[0]
+        ncol = X.shape[1]
+
+        # struct dtype -- each field indicates a separate column
+        is_struct_dtype_X = False
+        if X.dtype.names is not None:
+            is_struct_dtype_X = True
+            struct_dtype_len = len(X.dtype.descr)
+            ncol *= struct_dtype_len
 
         iscomplex_X = np.iscomplexobj(X)
+
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if type(fmt) in (list, tuple):
@@ -1157,11 +1154,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         # helper to write several rows at once
         def write_rows(rows, xformat):
-            if not cmpl_dtype:
-                rows = rows.reshape([-1])
-                if iscomplex_X:
-                    rows = np.vstack((rows.real,rows.imag)).T.reshape([-1])
-            else:
+            rows = rows.reshape([-1])
+            if iscomplex_X:
+                rows = np.vstack((rows.real,rows.imag)).T.reshape([-1])
+            elif is_struct_dtype_X:
                 rows = [i for sub in rows for i in sub]
             try:
                 fh.write(asbytes(xformat % tuple(rows)))
