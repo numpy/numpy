@@ -27,8 +27,10 @@ Arithmetic
 - `chebval` -- evaluate a Chebyshev series at given points.
 - `chebval2d` -- evaluate a 2D Chebyshev series at given points.
 - `chebval3d` -- evaluate a 3D Chebyshev series at given points.
+- `chebvalnd` -- evaluate a ND Chebyshev series at given points.
 - `chebgrid2d` -- evaluate a 2D Chebyshev series on a Cartesian product.
 - `chebgrid3d` -- evaluate a 3D Chebyshev series on a Cartesian product.
+- `chebgridnd` -- evaluate a ND Chebyshev series on a Cartesian product.
 
 Calculus
 --------
@@ -42,10 +44,13 @@ Misc Functions
 - `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
 - `chebvander2d` -- Vandermonde-like matrix for 2D power series.
 - `chebvander3d` -- Vandermonde-like matrix for 3D power series.
+- `chebvandernd` -- Vandermonde-like matrix for ND power series.
 - `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
 - `chebweight` -- Chebyshev weight function.
 - `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
+- `chebfitnd` -- least-squares fit returning a ND Chebyshev series.
+- `chebfitfunc` -- Fit Chebyshev series to ND function.
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
 - `chebtrim` -- trim leading coefficients from a Chebyshev series.
@@ -90,9 +95,9 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
-
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
+
 
 __all__ = [
     'chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline', 'chebadd',
@@ -101,7 +106,8 @@ __all__ = [
     'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
     'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight']
+    'chebgauss', 'chebweight', 'chebvalnd', 'chebgridnd', 'chebfitnd',
+    'chebfitfunc', 'chebvandernd']
 
 chebtrim = pu.trimcoef
 
@@ -109,6 +115,7 @@ chebtrim = pu.trimcoef
 # A collection of functions for manipulating z-series. These are private
 # functions and do minimal error checking.
 #
+
 
 def _cseries_to_zseries(c):
     """Covert Chebyshev series to z-series.
@@ -282,7 +289,7 @@ def _zseries_der(zs):
     n = len(zs)//2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
     zs *= np.arange(-n, n+1)*2
-    d, r = _zseries_div(zs, ns)
+    d, _r = _zseries_div(zs, ns)
     return d
 
 
@@ -860,7 +867,7 @@ def chebpow(c, pow, maxpower=16):
         # in the usual way.
         zs = _cseries_to_zseries(c)
         prd = zs
-        for i in range(2, power + 1):
+        for _i in range(2, power + 1):
             prd = np.convolve(prd, zs)
         return _zseries_to_cseries(prd)
 
@@ -949,7 +956,7 @@ def chebder(c, m=1, scl=1, axis=0):
     if cnt >= n:
         c = c[:1]*0
     else:
-        for i in range(cnt):
+        for _i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
@@ -1411,6 +1418,125 @@ def chebgrid3d(x, y, z, c):
     return c
 
 
+def chebvalnd(c, *xi):
+    """
+    Evaluate a N-D Chebyshev series at points (x1, x2, ..., xn).
+
+    This function returns the values:
+
+    .. math::
+    p(x1,x2,..,xn) = \\sum_{i,j,..,k} c_{i,j,..,k}*T_i(x1)*T_j(x2)*...*T_k(xn)
+
+    The parameters `x1`, `x2`, ..., `xn` are converted to arrays only if they
+    are tuples or a lists, otherwise they are treated as a scalars and they
+    must have the same shape after conversion. In either case, either
+    `x1`, `x2`, ..., `xn` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[3:] +
+    x1.shape.
+
+    Parameters
+    ----------
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,...,k is contained in ``c[i,j,...,k]``. If `c` has
+        dimension greater than N the remaining indices enumerate multiple sets
+        of coefficients.
+    x1, x2,..., xn : array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `(x1, x2,...,xn)`, where `x1`, `x2`,..., `xn` must have the same shape.
+        If any of `x1`, `x2`, ..., `xn` is a list or tuple, it is first
+        converted to an ndarray, otherwise it is left unchanged and if it isn't
+        an ndarray it is  treated as a scalar.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        triples of corresponding values from `x1`, `x2`, ..., `xn`.
+
+    See Also
+    --------
+    chebval, chebgridnd, chebfitnd
+
+    Notes
+    -----
+
+    .. versionadded::1.11.0
+
+    """
+    try:
+        xi = np.array(xi, copy=0)
+    except:
+        variables = ', '.join('x{0}'.format(i) for i in range(len(xi)))
+        raise ValueError('{0} are incompatible'.format(variables))
+
+    c = chebval(xi[0], c)
+    for x in xi[1:]:
+        c = chebval(x, c, tensor=False)
+    return c
+
+
+def chebgridnd(c, *xi):
+    """
+    Evaluate a N-D Chebyshev series on the Cartesian product of x1, x2,..., xn.
+
+    This function returns the values:
+
+    .. math:: p(a,b,...) = \\sum_{i,j,...} c_{i,j,...} * T_i(a) * T_j(b) *  ...
+
+    where the points `(a, b, ...)` consist of all points formed by taking
+    `a` from `x1`, `b` from `x2`, and so on. The resulting points form
+    a grid with `x1` in the first dimension, `x2` in the second, and so on.
+
+    The parameters `x1`, `x2`, ... and `xn` are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars. In
+    either case, either `x1`, `x2`,... and `xn` or their elements must support
+    multiplication and addition both with themselves and with the elements
+    of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to
+    its shape to make it N-D. The shape of the result will be c.shape[3:] +
+    x1.shape + x2.shape + ... + xn.shape
+
+    Parameters
+    ----------
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than two the remaining indices enumerate multiple sets of
+        coefficients.
+    x1, x2,..., xn : ndarray, compatible object
+        1-D arrays representing the coordinates of a grid.
+        The N dimensional series is evaluated at the points in the
+        Cartesian product of `x1`, `x2`, ... and `xn`.  If `xi`, is a
+        list or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and, if it isn't an ndarray, it is treated as a
+        scalar.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the N dimensional polynomial at points in the Cartesian
+        product of `x1`, `x2`, ... and `xn`.
+
+    See Also
+    --------
+    chebval, chebvalnd, chebfitnd
+
+    Notes
+    -----
+
+    .. versionadded::1.11.0
+
+    """
+    for x in xi:
+        c = chebval(x, c)
+    return c
+
+
 def chebvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
@@ -1472,7 +1598,7 @@ def chebvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
+    .. math:: V[..., (deg[1]+1)*i + j] = T_i(x) * T_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1525,7 +1651,7 @@ def chebvander2d(x, y, deg):
 
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
+    v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1590,8 +1716,78 @@ def chebvander3d(x, y, z, deg):
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
     vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
+
+
+def chebvandernd(deg, *xi):
+    """Pseudo-Vandermonde matrix of given degrees.
+
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x1, x2, ..., xn)`. If `l, m, ..., n` are the given degrees in
+    `x1, x2, ..., xn`, then The pseudo-Vandermonde matrix is defined by
+
+    .. math::
+    V[..., (m+1)*...*(n+1)i + .. + (n+1)j + k] = T_i(x1)*T_j(x2)*...*T_k(xn),
+
+    where `0 <= i <= l`, `0 <= j <= m`, ..., `0 <= k <= n`. The leading indices
+    of `V` index the points `(x1, x2, ..., xn)` and the last index encodes the
+    degrees of the Chebyshev polynomials.
+
+    If ``V = chebvandernd([xdeg, ydeg, zdeg], x, y, z)``, then the columns
+    of `V` correspond to the elements of a 3-D coefficient array `c` of
+    shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
+
+    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+
+    and ``np.dot(V, c.flat)`` and ``chebvalnd(c, x, y, z)`` will be the
+    same up to roundoff. This equivalence is useful both for least squares
+    fitting and for the evaluation of a large number of N-D Chebyshev
+    series of the same degrees and sample points.
+
+    Parameters
+    ----------
+    deg : list of ints
+        List of maximum degrees of the form [x1_deg, x2_deg, ...,xn_deg].
+    x1, x2, ..., xn : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes will
+        be converted to either float64 or complex128 depending on whether
+        any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+
+    Returns
+    -------
+    vander : ndarray
+        The shape of the returned matrix is ``x1.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)*...*(deg[n-1]+1)`.  The dtype
+        will be the same as the converted `x1`, `x2`, ... `xn`.
+
+    See Also
+    --------
+    chebvander, chebvalnd, chebfitnd
+
+    Notes
+    -----
+
+    .. versionadded::1.11.0
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = np.array([id == d and id >= 0 for id, d in zip(ideg, deg)])
+    if np.any(is_valid != 1):
+        raise ValueError("degrees must be non-negative integers")
+    ndim = len(xi)
+    if len(ideg) != ndim:
+        msg = 'length of deg must be the same as number of dimensions'
+        raise ValueError(msg)
+
+    xi = np.array(xi, copy=0) + 0.0
+    shape0 = xi[0].shape
+    s0 = (1,) * ndim
+    v = 1
+    for i, (d, x) in enumerate(zip(ideg, xi)):
+        v = v * chebvander(x, d).reshape(shape0 + s0[:i] + (-1,) + s0[i + 1::])
+    return v.reshape(v.shape[:-ndim] + (-1,))
 
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):
@@ -1708,6 +1904,33 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+     Fit to exponential function
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> n = 11
+    >>> x = cheb.chebpts1(n)
+    >>> y= np.exp(x)
+    >>> coeff = cheb.chebfit(x, y, deg=n-1)
+
+    Evaluate on finer grid
+
+    >>> xi = np.linspace(-1, 1, 151)
+    >>> yi = np.exp(xi)
+
+    Compute residuals
+
+    >>> yyi = cheb.chebval(xi, coeff)
+    >>> devi = yi - yyi
+
+    and plot them
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(xi, np.abs(devi))
+    >>> plt.title('Chebyshev approximation error')
+    >>> plt.subplot(2,1,2)
+    >>> plt.plot(xi, yi, xi, yyi, '.')
+    >>> plt.title('Fitting Chebyshev to exp')
+    >>> plt.close()
 
     """
     order = int(deg) + 1
@@ -1764,6 +1987,393 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         return c, [resids, rank, s, rcond]
     else:
         return c
+
+
+def chebfitnd(xi, f, deg, rcond=None, full=False, w=None):
+    """
+    Least squares fit of Chebyshev series to N-dimensional data.
+    Return the coefficients of a Chebyshev series of degree `deg` that is the
+    least squares fit to the data values `f` given at points
+    `x1`, `x2`,..., `xn`
+
+    The fitted polynomial(s) are in the form
+    .. math::  p(x,y) = c_00 + c_11 * T_1(x)*T_1(y) + ..c_ij * T_i(x)*T_j(y).
+                        + c_nm * T_n(x)*T_m(y),
+    where `n`, `m` is `deg`.
+
+    Parameters
+    ----------
+    xi: tuple
+        x1-, x2-,....xn-coordinates of the sample points.
+    f : array_like
+        function values at the sample points ``(x1[i], x2[i], ..., xn[i])``.
+    deg : list
+        Degrees of the fitting series in the x1, x2, ..., xn directions,
+        respectively.
+    rcond : float, optional
+        Relative condition number of the fit. Singular values smaller than
+        this relative to the largest singular value will be ignored. The
+        default value is size(x1)*eps, where eps is the relative precision of
+        the float type, about 2e-16 in most cases.
+    full : bool, optional
+        Switch determining nature of return value. When it is False (the
+        default) just the coefficients are returned, when True diagnostic
+        information from the singular value decomposition is also returned.
+    w : array_like, optional
+        Weights. If not None, the contribution of each point
+        ``(x1[i], x2[i], ..., xn[i])`` to the fit is weighted by `w[i]`.
+        Ideally the weights are chosen so that the errors of the products
+        ``w[i]*f[i]`` all have the same variance.  The default value is None.
+
+    Returns
+    -------
+    coef : ndarray, shape (M1, M2,..., Mn)
+        Chebyshev coefficients ordered from low to high.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+        For more details, see `linalg.lstsq`.
+    Warns
+    -----
+    RankWarning
+        The rank of the coefficient matrix in the least-squares fit is
+        deficient. The warning is only raised if `full` = False.  The
+        warnings can be turned off by
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', RankWarning)
+
+    See Also
+    --------
+    chebvalnd, chebgridnd
+
+    Notes
+    -----
+    The solution is the coefficients of the Chebyshev series `p` that
+    minimizes the sum of the weighted squared errors
+
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
+
+    .. math:: V(x, y) * c = w * y,
+
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
+    observed values.  This equation is then solved using the singular value
+    decomposition of `V`.
+
+    If some of the singular values of `V` are so small that they are
+    neglected, then a `RankWarning` will be issued. This means that the
+    coefficient values may be poorly determined. Using a lower order fit
+    will usually get rid of the warning.  The `rcond` parameter can also be
+    set to a value smaller than its default, but the resulting fit may be
+    spurious and have large contributions from roundoff error.
+
+    Fits using Chebyshev series are usually better conditioned than fits
+    using power series, but much can depend on the distribution of the
+    sample points and the smoothness of the data. If the quality of the fit
+    is inadequate splines may be a good alternative.
+
+    .. versionadded::1.11.0
+
+    References
+    ----------
+    .. [1] Wikipedia, "Curve fitting",
+           http://en.wikipedia.org/wiki/Curve_fitting
+
+    Examples
+    --------
+    Fit to a 2D function
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> n = 51
+    >>> xorder, yorder = n-1, n-1
+    >>> x = cheb.chebpts1(n)
+    >>> xgrid, ygrid = np.meshgrid(x, x)
+    >>> def f(x, y): return np.exp(-x**2-6*y**2)
+    >>> zgrid = f(xgrid, ygrid)
+    >>> dcoeff2 = cheb.chebfitnd((xgrid, ygrid), zgrid, [xorder,yorder])
+
+    Evaluate on finer grid
+
+    >>> xi = np.linspace(-1, 1, 151)
+    >>> Xi,Yi = np.meshgrid(xi, xi)
+    >>> Zi = f(Xi, Yi)
+
+    Compute residuals
+
+    >>> zzi = cheb.chebvalnd(dcoeff, Xi, Yi)
+    >>> devi = Zi - zzi
+
+    >>> zz = cheb.chebvalnd(dcoeff, xgrid, ygrid)
+    >>> dev = zgrid - zz
+
+    and plot them
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.contourf(xgrid, ygrid, np.abs(dev))
+    >>> plt.colorbar()
+    >>> plt.title('Error at the chebfitnd-points')
+
+    >>> plt.figure()
+    >>> plt.contourf(Xi, Yi, np.abs(devi))
+    >>> plt.colorbar()
+    >>> plt.title('Error on a fine grid')
+
+    >>> plt.close()
+
+    """
+    xi_ = np.array(xi, copy=0) + 0.0
+    z = np.array(f) + 0.0
+    degrees = np.asarray(deg, dtype=int)
+    orders = degrees + 1
+    order = np.product(orders)
+
+    ndims = np.array([x.ndim for x in xi_])
+    ndim = len(ndims)
+    sizes = np.array([x.size for x in xi_])
+    if np.any(ndims != ndim) or z.ndim != ndim:
+        raise TypeError("expected %dD array for x1, x2,...,xn and f" % ndim)
+    if np.any(sizes == 0):
+        raise TypeError("expected non-empty vector for xi")
+
+    lhs = chebvandernd(degrees, *xi).reshape((-1, order))
+    rhs = z.ravel()
+    if w is not None:
+        w = np.asarray(w).ravel() + 0.0
+        if len(lhs) != len(w):
+            raise TypeError("expected x and w to have same length")
+        lhs = lhs * w
+        rhs = rhs * w
+
+    if rcond is None:
+        rcond = xi_[0].size * np.finfo(xi_.dtype).eps
+
+    if issubclass(lhs.dtype.type, np.complexfloating):
+        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(axis=0))
+    else:
+        scl = np.sqrt(np.square(lhs).sum(axis=0))
+    scl[scl == 0] = 1
+
+    # Solve the least squares problem.
+    c, resids, rank, s = la.lstsq(lhs/scl, rhs, rcond)
+    c = (c/scl).reshape(orders)
+
+    if rank != order and not full:
+        msg = "The fit may be poorly conditioned"
+        warnings.warn(msg, pu.RankWarning)
+
+    if full:
+        return c, [resids, rank, s, rcond]
+    else:
+        return c
+
+
+def _dct(x, n=None):
+    """
+    Discrete Cosine Transform
+
+                      N-1
+           y[k] = 2* sum x[n]*cos(pi*k*(2n+1)/(2*N)), 0 <= k < N.
+                      n=0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.arange(5)
+    >>> np.abs(x-_idct(_dct(x)))<1e-14
+    array([ True,  True,  True,  True,  True], dtype=bool)
+    >>> np.abs(x-_dct(_idct(x)))<1e-14
+    array([ True,  True,  True,  True,  True], dtype=bool)
+
+    Reference
+    ---------
+    http://en.wikipedia.org/wiki/Discrete_cosine_transform
+    http://users.ece.utexas.edu/~bevans/courses/ee381k/lectures/
+    """
+    fft = np.fft.fft
+    x = np.atleast_1d(x)
+
+    if n is None:
+        n = x.shape[-1]
+
+    if x.shape[-1] < n:
+        n_shape = x.shape[:-1] + (n - x.shape[-1],)
+        xx = np.hstack((x, np.zeros(n_shape)))
+    else:
+        xx = x[..., :n]
+
+    real_x = np.all(np.isreal(xx))
+    if (real_x and (np.remainder(n, 2) == 0)):
+        xp = 2 * fft(np.hstack((xx[..., ::2], xx[..., ::-2])))
+    else:
+        xp = fft(np.hstack((xx, xx[..., ::-1])))
+        xp = xp[..., :n]
+
+    w = np.exp(-1j * np.arange(n) * np.pi / (2 * n))
+
+    y = xp * w
+
+    if real_x:
+        return y.real
+    else:
+        return y
+
+
+def _idct(x, n=None):
+    """
+    Inverse Discrete Cosine Transform
+
+                N-1
+    x[k] = 1/N sum w[n]*y[n]*cos(pi*k*(2n+1)/(2*N)), 0 <= k < N.
+               n=0
+
+    w(0) = 1/2
+    w(n) = 1 for n>0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.arange(5)
+    >>> np.abs(x-_idct(_dct(x)))<1e-14
+    array([ True,  True,  True,  True,  True], dtype=bool)
+    >>> np.abs(x-_dct(_idct(x)))<1e-14
+    array([ True,  True,  True,  True,  True], dtype=bool)
+
+    Reference
+    ---------
+    http://en.wikipedia.org/wiki/Discrete_cosine_transform
+    http://users.ece.utexas.edu/~bevans/courses/ee381k/lectures/
+    """
+
+    ifft = np.fft.ifft
+    x = np.atleast_1d(x)
+
+    if n is None:
+        n = x.shape[-1]
+
+    w = np.exp(1j * np.arange(n) * np.pi / (2 * n))
+
+    if x.shape[-1] < n:
+        n_shape = x.shape[:-1] + (n - x.shape[-1],)
+        xx = np.hstack((x, np.zeros(n_shape))) * w
+    else:
+        xx = x[..., :n] * w
+
+    real_x = np.all(np.isreal(x))
+    if (real_x and (np.remainder(n, 2) == 0)):
+        xx[..., 0] = xx[..., 0] * 0.5
+        yp = ifft(xx)
+        y = np.zeros(xx.shape, dtype=complex)
+        y[..., ::2] = yp[..., :n / 2]
+        y[..., ::-2] = yp[..., n / 2::]
+    else:
+        yp = ifft(np.hstack((xx, np.zeros_like(xx[..., 0]),
+                             np.conj(xx[..., :0:-1]))))
+        y = yp[..., :n]
+
+    if real_x:
+        return y.real
+    else:
+        return y
+
+
+def chebfitfunc(f, n=(10, ), domain=None):
+    """
+    Fit Chebyshev series to N-dimensional function
+    so that f(x1, x2,..., xn) can be approximated by:
+
+    .. math::
+        f(x_1, x_2,...,x_n) = \\sum_{i,j,...k} c_i T_i(x_1)*...*c_k T_k(x_n)
+
+    where Tk is the k'th Chebyshev polynomial of the first kind.
+
+    Parameters
+    ----------
+    f : callable
+        function to approximate
+    n : list of integers, optional
+        number of base points (abscissas) used for each dimension.
+        Default n=10 (maximum 50)
+    domain : vector [a,b,c,d ,...], optional
+        defining the rectangle [a,b] x [c,d] x ....
+        (default domain = (-1,1) * len(n))
+
+    Returns
+    -------
+    ck : ndarray
+        polynomial coefficients in Chebychev form.
+
+    Examples
+    --------
+    Fit exponential function
+
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> domain = (0, 2)
+    >>> ck = cheb.chebfitfunc(np.exp, 7, domain)
+    >>> np.allclose(ck, [3.44152387e+00,   3.07252345e+00,   7.38000848e-01,
+    ...                  1.20520053e-01,   1.48805268e-02,   1.47579673e-03,
+    ...                  1.21719524e-04])
+    True
+    >>> x1 = cheb.map_to_interval(chebroot(9), *domain)
+    >>> ck1 = cheb.chebfitfunc(np.exp(x1))
+    >>> np.allclose(ck1, [5.40019009e-07,   8.69418381e-06,   1.22261037e-04,
+    ...                   1.47582673e-03,   1.48805283e-02,   1.20520053e-01,
+    ...                   7.38000848e-01,   3.07252345e+00,   3.44152387e+00])
+    True
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(0,2)
+    >>> h = plt.plot(x, np.exp(x), 'r', x, cheb.chebvalnd(ck, x), 'g.')
+    >>> h = plt.plot(x, np.exp(x), 'r', x, cheb.chebvalnd(ck1, x),'b.')
+    >>> plt.close()
+
+    See also
+    --------
+    chebval, chebvalnd
+
+    Notes
+    -----
+
+    .. versionadded::1.11.0
+
+    Reference
+    ---------
+    http://en.wikipedia.org/wiki/Chebyshev_nodes
+    http://mathworld.wolfram.com/ChebyshevApproximationFormula.html
+
+    W. Fraser (1965)
+    "A Survey of Methods of Computing Minimax and Near-Minimax Polynomial
+    Approximations for Functions of a Single Independent Variable"
+    Journal of the ACM (JACM), Vol. 12 ,  Issue 3, pp 295 - 314
+    """
+    n = np.atleast_1d(n)
+    if np.any(n > 50):
+        warnings.warn('chebfitfunc should only be used for n<50')
+
+    if hasattr(f, '__call__'):
+        if domain is None:
+            domain = chebdomain.tolist() * len(n)
+        domain = np.atleast_2d(domain).reshape((-1, 2))
+        xi = [pu.mapdomain(chebpts1(ni), chebdomain, d)
+              for ni, d in zip(n, domain)]
+        Xi = np.meshgrid(*xi)
+        ck = f(*Xi)
+    else:
+        ck = f
+        n = ck.shape
+
+    ndim = len(n)
+    for i in range(ndim):
+        ck = _dct(ck[..., ::-1])
+        ck[..., 0] = ck[..., 0] / 2.
+        if i < ndim-1:
+            ck = np.rollaxis(ck, axis=-1)
+    return ck / np.product(n)
 
 
 def chebcompanion(c):

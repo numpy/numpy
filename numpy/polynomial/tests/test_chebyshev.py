@@ -161,21 +161,29 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3))
 
     def test_chebval3d(self):
+        self._3d_testcase(cheb.chebval3d)
+
+    def _3d_testcase(self, chebval):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
         #test exceptions
-        assert_raises(ValueError, cheb.chebval3d, x1, x2, x3[:2], self.c3d)
+        assert_raises(ValueError, chebval, x1, x2, x3[:2], self.c3d)
 
         #test values
         tgt = y1*y2*y3
-        res = cheb.chebval3d(x1, x2, x3, self.c3d)
+        res = chebval(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
         #test shape
         z = np.ones((2, 3))
-        res = cheb.chebval3d(z, z, z, self.c3d)
+        res = chebval(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
+
+    def test_chebvalnd(self):
+        def chebval(*args):
+            return cheb.chebvalnd(args[-1], *args[:-1])
+        self._3d_testcase(chebval)
 
     def test_chebgrid2d(self):
         x1, x2, x3 = self.x
@@ -203,6 +211,20 @@ class TestEvaluation(TestCase):
         #test shape
         z = np.ones((2, 3))
         res = cheb.chebgrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+    def test_chebgridnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = cheb.chebgridnd(self.c3d, x1, x2, x3)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2, 3))
+        res = cheb.chebgridnd(self.c3d, z, z, z)
         assert_(res.shape == (2, 3)*3)
 
 
@@ -392,6 +414,19 @@ class TestVander(TestCase):
         van = cheb.chebvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
 
+    def test_chebvandernd(self):
+        # also tests chebvalnd for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = cheb.chebvandernd([1, 2, 3], x1, x2, x3)
+        tgt = cheb.chebvalnd(c, x1, x2, x3)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = cheb.chebvandernd([1, 2, 3], [x1], [x2], [x3])
+        assert_(van.shape == (1, 5, 24))
+
 
 class TestFitting(TestCase):
 
@@ -437,6 +472,26 @@ class TestFitting(TestCase):
         # is zero when summed.
         x = [1, 1j, -1, -1j]
         assert_almost_equal(cheb.chebfit(x, x, 1), [0, 1])
+
+    def test_chebfit2d(self):
+        def f(x, y):
+            return np.exp(-x**2 - 6*y**2)
+        n = 5
+        xorder, yorder = n-1, n-1
+        x = cheb.chebpts1(n)
+        X, Y = np.meshgrid(x, x)
+
+        Z = f(X, Y)
+
+        dcoeff0 = cheb.chebfitnd((X, Y), Z, [xorder, yorder])
+        dcoeff1 = cheb.chebfitfunc(f, n=(xorder+1,yorder+1))
+        assert_almost_equal(dcoeff0, dcoeff1)
+
+        Z0 = cheb.chebvalnd(dcoeff0, X, Y)
+        assert_almost_equal(Z0, Z)
+
+        Z1 = cheb.chebval2d(X, Y, dcoeff0)
+        assert_almost_equal(Z1, Z)
 
 
 class TestCompanion(TestCase):

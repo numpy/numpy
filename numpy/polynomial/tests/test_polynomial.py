@@ -170,6 +170,23 @@ class TestEvaluation(TestCase):
         res = poly.polyval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
 
+    def test_polyvalnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, poly.polyvalnd, self.c3d, x1, x2, x3[:2])
+
+        #test values
+        tgt = y1*y2*y3
+        res = poly.polyvalnd(self.c3d, x1, x2, x3)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2, 3))
+        res = poly.polyvalnd(self.c3d, z, z, z)
+        assert_(res.shape == (2, 3))
+
     def test_polygrid2d(self):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
@@ -196,6 +213,20 @@ class TestEvaluation(TestCase):
         #test shape
         z = np.ones((2, 3))
         res = poly.polygrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+    def test_polygridnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = poly.polygridnd(self.c3d, x1, x2, x3)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2, 3))
+        res = poly.polygridnd(self.c3d, z, z, z)
         assert_(res.shape == (2, 3)*3)
 
 
@@ -380,6 +411,18 @@ class TestVander(TestCase):
         van = poly.polyvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
 
+    def test_polyvandernd(self):
+        # also tests polyvalnd for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = poly.polyvandernd([1, 2, 3], x1, x2, x3)
+        tgt = poly.polyvalnd(c, x1, x2, x3)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = poly.polyvandernd([1, 2, 3], [x1], [x2], [x3])
+        assert_(van.shape == (1, 5, 24))
 
 class TestCompanion(TestCase):
 
@@ -457,6 +500,26 @@ class TestMisc(TestCase):
         # is zero when summed.
         x = [1, 1j, -1, -1j]
         assert_almost_equal(poly.polyfit(x, x, 1), [0, 1])
+
+    def test_polyfit2d(self):
+        def f(x, y):
+            return np.exp(-x**2 - 6*y**2)
+        n = 5
+        xorder, yorder = n-1, n-1
+        x = poly._chebpts1(n)
+        X, Y = np.meshgrid(x, x)
+
+        Z = f(X, Y)
+
+        dcoeff0 = poly.polyfitnd((X, Y), Z, [xorder, yorder])
+        dcoeff1 = poly.polyfitfunc(f, n=(xorder+1,yorder+1))
+        assert_almost_equal(dcoeff0, dcoeff1)
+
+        Z0 = poly.polyvalnd(dcoeff0, X, Y)
+        assert_almost_equal(Z0, Z)
+
+        Z1 = poly.polyval2d(X, Y, dcoeff0)
+        assert_almost_equal(Z1, Z)
 
     def test_polytrim(self):
         coef = [2, -1, 1, 0]

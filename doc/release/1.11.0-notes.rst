@@ -50,6 +50,8 @@ via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rs
 arrays have memory overlap is added. ``np.may_share_memory`` also now
 has an option to spend more effort to reduce false positives.
 
+* numpy.polynomial.chebyshev now supports N-dimensional fitting and evaluation for N>1 and N>3, respectively.
+
 Improvements
 ============
 
