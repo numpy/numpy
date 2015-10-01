@@ -47,8 +47,16 @@
 
 
 #pragma push_macro("PyMODINIT_FUNC")
+
 #undef PyMODINIT_FUNC
+#if defined(NPY_PY3K)
+#define PyMODINIT_FUNC NPY_NO_EXPORT PyObject*
+#else
+#define PyMODINIT_FUNC NPY_NO_EXPORT void
+#endif
+
 #include "umath_type_resolve.h"
+
 #pragma pop_macro("PyMODINIT_FUNC")
 
 
@@ -330,12 +338,6 @@ PyMODINIT_FUNC initumath(void)
         }
         return RETVAL;
     }
-
-    #if PY_MAJOR_VERSION < 3
-      m = initumath_type_resolve();
-    #else
-      m = PyInit_umath_type_resolve();
-    #endif
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
