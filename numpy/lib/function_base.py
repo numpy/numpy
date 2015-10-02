@@ -2316,11 +2316,11 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -2342,7 +2342,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no affect and are deprecated',
+        warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning)
     c = cov(x, y, rowvar)
     try:
