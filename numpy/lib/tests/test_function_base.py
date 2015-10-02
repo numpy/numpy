@@ -1824,13 +1824,17 @@ class TestPiecewise(TestCase):
         assert_array_equal(x, [1, 0])
 
     def test_condition_is_single_int_array(self):
-        x = piecewise([0, 0], np.array([1, 0]), [1])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            x = piecewise([0, 0], np.array([1, 0]), [1])
         assert_array_equal(x, [1, 0])
         # Should possibly deprecate this behavior
         # assert_raises(ValueError, piecewise, [0, 0], np.array([1, 0]), [1])
 
     def test_condition_is_list_of_single_int_array(self):
-        x = piecewise([0, 0], [np.array([1, 0])], [1])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            x = piecewise([0, 0], [np.array([1, 0])], [1])
         assert_array_equal(x, [1, 0])
 
     def test_simple(self):
