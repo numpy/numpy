@@ -68,6 +68,12 @@ Improvements
 The ``axis`` parameter was added to *np.gradient* for consistency.
 It allows to specify over which axes the gradient is calculated.
 
+*np.lexsort* now supports arrays with object data-type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now internally calls the generic ``npy_amergesort``
+when the type does not implement a merge-sort kind of ``argsort``
+method.
+
 Changes
 =======
 
