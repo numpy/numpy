@@ -1942,21 +1942,21 @@ class TestPiecewise(TestCase):
                                   [2.,   1.,  nan,   1.,   2.],
                                   [4.,   2.,  nan,   2.,   4.]])
 
-    def test_non_bool_deprecation(self):
-        choices = [np.array([1, 2, 3]),
-               np.array([4, 5, 6]),
-               np.array([7, 8, 9])]
-        conditions = [np.array([False, False, False]),
-                  np.array([False, True, False]),
-                  np.array([False, False, True])]
-        with warnings.catch_warnings():
-            warnings.filterwarnings("always")
-            conditions[0] = conditions[0].astype(np.int_)
-            assert_warns(DeprecationWarning, piecewise, 1, conditions, choices)
-            conditions[0] = conditions[0].astype(np.uint8)
-            assert_warns(DeprecationWarning, piecewise, 1, conditions, choices)
-            warnings.filterwarnings("error")
-            assert_raises(DeprecationWarning, piecewise, 1, conditions, choices)
+#     def test_non_bool_deprecation(self):
+#         choices = [np.array([1, 2, 3]),
+#                np.array([4, 5, 6]),
+#                np.array([7, 8, 9])]
+#         conditions = [np.array([False, False, False]),
+#                   np.array([False, True, False]),
+#                   np.array([False, False, True])]
+#         with warnings.catch_warnings():
+#             warnings.filterwarnings("always")
+#             conditions[0] = conditions[0].astype(np.int_)
+#             assert_warns(DeprecationWarning, piecewise, 1, conditions, choices)
+#             conditions[0] = conditions[0].astype(np.uint8)
+#             assert_warns(DeprecationWarning, piecewise, 1, conditions, choices)
+#             warnings.filterwarnings("error")
+#             assert_raises(DeprecationWarning, piecewise, 1, conditions, choices)
 
     def test_many_arguments(self):
         # This used to be limited by NPY_MAXARGS == 32
