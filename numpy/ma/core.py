@@ -6816,7 +6816,7 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj): 
+def rank(obj):
     """
     maskedarray version of the numpy function.
 
@@ -6833,7 +6833,7 @@ def rank(obj):
 rank.__doc__ = np.rank.__doc__
 
 
-def ndim(obj): 
+def ndim(obj):
     """
     maskedarray version of the numpy function.
 
