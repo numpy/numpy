@@ -1415,7 +1415,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     allow_masked : bool, optional
@@ -1424,7 +1424,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -1440,7 +1440,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
     """
-    msg = 'bias and ddof have no affect and are deprecated'
+    msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning)
