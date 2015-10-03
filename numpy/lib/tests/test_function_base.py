@@ -1597,6 +1597,12 @@ class TestCorrCoef(TestCase):
             assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
                                np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
+    def test_extreme(self):
+        x = [[1e-100, 1e100], [1e100, 1e-100]]
+        with np.errstate(all='raise'):
+            c = corrcoef(x)
+        assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
+
 
 class TestCov(TestCase):
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
