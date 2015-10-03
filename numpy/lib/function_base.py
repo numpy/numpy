@@ -2350,7 +2350,9 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     except ValueError:  # scalar covariance
         # nan if incorrect value (nan, inf, 0), 1 otherwise
         return c / c
-    return c / sqrt(multiply.outer(d, d))
+    d = np.sqrt(d)
+    c /= np.multiply.outer(d, d)
+    return c
 
 
 def blackman(M):
