@@ -1271,12 +1271,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file, str, list of str
-        File, filename, list, or generator to read.  If the filename extension is
-        `.gz` or `.bz2`, the file is first decompressed. Note that
-        generators must return byte strings in Python 3k.
-        The strings in a list or strings produced by a generator are treated
-        as lines.
+    fname : file, str, list of str, generator
+        File, filename, list, or generator to read.  If the filename
+        extension is `.gz` or `.bz2`, the file is first decompressed. Mote
+        that generators must return byte strings in Python 3k.  The strings
+        in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
         If None, the dtypes will be determined by the contents of each
@@ -1457,8 +1456,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fhd = iter(fname)
     except TypeError:
         raise TypeError(
-            "fname must be a string, filehandle, list of strings, or generator. "
-            "(got %s instead)" % type(fname))
+            "fname must be a string, filehandle, list of strings, "
+            "or generator. Got %s instead." % type(fname))
 
     split_line = LineSplitter(delimiter=delimiter, comments=comments,
                               autostrip=autostrip)._handyman
