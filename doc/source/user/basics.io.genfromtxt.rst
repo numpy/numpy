@@ -27,17 +27,19 @@ Defining the input
 ==================
 
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
-the data.  It can be a string corresponding to the name of a local or
-remote file, or a file-like object with a :meth:`read` method (such as an
-actual file or a :class:`StringIO.StringIO` object), a list of strings, or
-a generator.  If the argument is the URL of a remote file, then the file
-is automatically downloaded to the current directory.
+the data. It can be a string, a list of strings, or a generator. If a
+single string is provided, it is assumed to be the name of a local or
+remote file, or a open file-like object with a :meth:`read` method, for
+example, a file or :class:`StringIO.StringIO` object. If a list of strings
+or a generator returning strings is provided, each string is treated as one
+line in a file.  When the URL of a remote file is passed, the file is
+automatically downloaded to the current directory and opened.
 
-The input file can be a text file or an archive.  Currently, the function
+Recognized file types are text files and archives.  Currently, the function
 recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
-the archive is determined by examining the extension of the file: if the
-filename ends with ``'.gz'``, a :class:`gzip` archive is expected; if it
-ends with ``'bz2'``, a :class:`bzip2` archive is assumed.
+the archive is determined from the extension of the file: if the filename
+ends with ``'.gz'``, a :class:`gzip` archive is expected; if it ends with
+``'bz2'``, a :class:`bzip2` archive is assumed.
 
 
 
