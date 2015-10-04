@@ -26,7 +26,7 @@ Steering council
 Emeritus members
 ----------------
 
-* Travis Oliphant - Project Founder / Emeritus Leader (served: 2001(??)-2012)
+* Travis Oliphant - Project Founder / Emeritus Leader (served: 2005-2012)
 
 
 NumFOCUS Subcommittee
