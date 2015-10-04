@@ -2,8 +2,6 @@
   NumPy project governance and decision-making
 ================================================================
 
-[DRAFT, not yet accepted]
-
 The purpose of this document is to formalize the governance process
 used by the NumPy project in both ordinary and extraordinary
 situations, and to clarify how decisions are made and how the various
