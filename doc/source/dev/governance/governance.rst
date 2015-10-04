@@ -383,11 +383,11 @@ Institutional Partner benefits are:
 Document history
 ================
 
-[TODO: add a link to the git log for this file]
+https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
 
 Acknowledgements
 ================
 
-Substantial portions of this document were [STRIKEOUT:inspired] stolen
-wholesale from the `Jupyter/IPython project's governance document
+Substantial portions of this document were adapted from the
+`Jupyter/IPython project's governance document
 <https://github.com/jupyter/governance/blob/master/governance.md>`_.

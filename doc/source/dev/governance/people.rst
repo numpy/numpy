@@ -47,3 +47,9 @@ Institutional Partners
 ----------------------
 
 *  UC Berkeley (Nathaniel Smith)
+
+
+Document history
+----------------
+
+https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
