@@ -5107,7 +5107,7 @@ class MaskedArray(ndarray):
 
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
-        if result.ndim:
+        if result.ndim > 0:
             result._mask = self._mask
             result._update_from(self)
         elif self._mask:
