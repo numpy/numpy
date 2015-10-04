@@ -1,8 +1,6 @@
 Current steering council and institutional partners
 ===================================================
 
-[DRAFT, not yet accepted]
-
 Steering council
 ----------------
 
