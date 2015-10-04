@@ -64,19 +64,6 @@ cdef extern from "numpy/arrayobject.h":
 
         NPY_INTP
 
-    ctypedef class numpy.dtype [object PyArray_Descr]:
-        # Use PyDataType_* macros when possible, however there are no macros
-        # for accessing some of the fields, so some are defined.
-        cdef char kind
-        cdef char type
-        cdef char byteorder
-        cdef char flags
-        cdef int type_num
-        cdef int itemsize "elsize"
-        cdef int alignment
-        cdef dict fields
-        cdef tuple names
-
     PyArray_Descr* PyArray_DescrFromType (int)
 
     ctypedef struct PyArrayObject:

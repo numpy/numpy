@@ -314,7 +314,7 @@ PyMODINIT_FUNC PyInit_umath(void)
 PyMODINIT_FUNC initumath(void)
 #endif
 {
-    PyObject *m, *d, *s, *s2, *c_api;
+    PyObject *m, *mm, *d, *s, *s2, *c_api;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -420,6 +420,16 @@ PyMODINIT_FUNC initumath(void)
     PyDict_SetItemString(d, "mod", s2);
 
     initscalarmath(m);
+
+#if PY_MAJOR_VERSION < 3
+    mm = initumath_type_resolve();
+#else
+    mm = PyInit_umath_type_resolve();
+#endif
+    if (!mm) {
+        return RETVAL;
+    }
+
 
     if (!intern_strings()) {
         goto err;
