@@ -2286,7 +2286,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
         X_T = X.T
     else:
         X_T = (X*w).T
-    return (dot(X, X_T.conj())/fact).squeeze()
+    c = dot(X, X_T.conj())
+    c /= fact
+    return c.squeeze()
 
 
 def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
