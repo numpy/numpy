@@ -918,7 +918,11 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
-            join('src', 'private', 'ufunc_override.h')] + npymath_sources
+            join('src', 'private', 'ufunc_override.h'),
+            join('src', 'umath', '*.pyx'),
+            join('src', 'umath', '*.pxd'),
+            join('src', 'umath', 'umath_type_resolve.h'),
+            join('src', 'umath', 'umath_cython_boilerplate.h'),] + npymath_sources
 
     if not ENABLE_SEPARATE_COMPILATION:
         umath_deps.extend(umath_src)
