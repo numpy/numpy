@@ -242,21 +242,6 @@ deemed to be actively harmful to the project’s well-being, and attempts
 at communication and conflict resolution have failed. This requires the
 consensus of the remaining Members.
 
-[We also have to decide on the initial membership for the Council. While
-the above text makes pains to distinguish between "committer" and
-"Council Member", in the past we've pretty much treated them as the
-same. So to keep things simple and deterministic, I propose that we seed
-the Council with everyone who has reviewed/merged a pull request since
-Jan 1, 2014, and move those who haven't used their commit bit in >1.5
-years to the emeritus list. Based on the output of
-
-git log --grep="^Merge pull request" --since 2014-01-01 \| grep Author:
-\| sort -u
-
-I believe this would give us an initial Steering Council of: Sebastian
-Berg, Jaime Fernández del Río, Ralf Gommers, Alex Griffing, Charles
-Harris, Nathaniel Smith, Julian Taylor, and Pauli Virtanen (assuming
-everyone on that list is interested/willing to serve).]
 
 Conflict of interest
 ~~~~~~~~~~~~~~~~~~~~
