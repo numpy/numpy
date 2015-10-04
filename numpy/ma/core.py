@@ -5107,8 +5107,12 @@ class MaskedArray(ndarray):
 
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
-        result._mask = self._mask
-        result._update_from(self)
+        if result.ndim > 0:
+            result._mask = self._mask
+            result._update_from(self)
+        elif self._mask:
+            # Return masked when the scalar is masked
+            result = masked
         # No explicit output: we're done
         if out is None:
             return result
@@ -6816,7 +6820,7 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj): 
+def rank(obj):
     """
     maskedarray version of the numpy function.
 
@@ -6833,7 +6837,7 @@ def rank(obj):
 rank.__doc__ = np.rank.__doc__
 
 
-def ndim(obj): 
+def ndim(obj):
     """
     maskedarray version of the numpy function.
 

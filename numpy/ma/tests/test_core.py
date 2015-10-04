@@ -3443,6 +3443,31 @@ class TestMaskedArrayFunctions(TestCase):
         result = xm.round(decimals=2, out=output)
         self.assertTrue(result is output)
 
+    def test_round_with_scalar(self):
+        # Testing round with scalar/zero dimension input
+        # GH issue 2244
+        a = array(1.1, mask=[False])
+        assert_equal(a.round(), 1)
+
+        a = array(1.1, mask=[True])
+        assert_(a.round() is masked)
+
+        a = array(1.1, mask=[False])
+        output = np.empty(1, dtype=float)
+        output.fill(-9999)
+        a.round(out=output)
+        assert_equal(output, 1)
+
+        a = array(1.1, mask=[False])
+        output = array(-9999., mask=[True])
+        a.round(out=output)
+        assert_equal(output[()], 1)
+
+        a = array(1.1, mask=[True])
+        output = array(-9999., mask=[False])
+        a.round(out=output)
+        assert_(output[()] is masked)
+
     def test_identity(self):
         a = identity(5)
         self.assertTrue(isinstance(a, MaskedArray))
