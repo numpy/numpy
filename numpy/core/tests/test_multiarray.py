@@ -3365,6 +3365,19 @@ class TestIO(object):
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
+    def test_unbuffered_fromfile(self):
+        # gh-6246
+        self.x.tofile(self.filename)
+
+        def fail(*args, **kwargs):
+            raise io.IOError('Can not tell or seek')
+
+        f = io.open(self.filename, 'rb', buffering=0)
+        f.seek = fail
+        f.tell = fail
+        y = np.fromfile(self.filename, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
+
     def test_file_position_after_fromfile(self):
         # gh-4118
         sizes = [io.DEFAULT_BUFFER_SIZE//8,
