@@ -344,9 +344,12 @@ an Institutional Partner. Once an institution becomes eligible for
 Institutional Partnership, the Steering Council must nominate and
 approve the Partnership.
 
-If an existing Institutional Partner no longer has a contributing
-employee, they will be given a 1 year grace period for remaining
-employees to begin contributing.
+If at some point an existing Institutional Partner stops having any
+contributing employees, then a one year grace period commences. If at
+the end of this one year period they continue not to have any
+contributing employees, then their Institutional Partnership will
+lapse, and resuming it will require going through the normal process
+for new Partnerships.
 
 An Institutional Partner is free to pursue funding for their work on The
 Project through any legal means. This could involve a non-profit
