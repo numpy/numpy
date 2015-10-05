@@ -2269,7 +2269,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
 
     # Determine the normalization
     if w is None:
-        fact = float(X.shape[1] - ddof)
+        fact = X.shape[1] - ddof
     elif ddof == 0:
         fact = w_sum
     elif aweights is None:
@@ -2287,7 +2287,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
     else:
         X_T = (X*w).T
     c = dot(X, X_T.conj())
-    c /= fact
+    c *= 1. / np.float64(fact)
     return c.squeeze()
 
 
