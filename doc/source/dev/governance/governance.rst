@@ -202,6 +202,9 @@ In practice, we anticipate that for most Steering Council decisions
 Council membership
 ~~~~~~~~~~~~~~~~~~
 
+A list of current Steering Council Members is maintained at the
+page :ref:`governance-people`.
+
 To become eligible to join the Steering Council, an individual must be
 a Project Contributor who has produced contributions that are
 substantial in quality and quantity, and sustained over at least one
@@ -303,6 +306,10 @@ its interactions with NumFOCUS.
    the reportee + 1 is the max). This avoids effective majorities
    resting on one person.
 
+The current membership of the NumFOCUS Subcommittee is listed at the
+page :ref:`governance-people`.
+
+
 Institutional Partners and Funding
 ==================================
 
@@ -363,6 +370,10 @@ Institutional Partner benefits are:
 -  Ability to influence the project through the participation of their
    Council Member.
 -  Council Members invited to NumPy Developer Meetings.
+
+A list of current Institutional Partners is maintained at the page
+:ref:`governance-people`.
+
 
 Document history
 ================

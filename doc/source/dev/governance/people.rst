@@ -1,3 +1,5 @@
+.. _governance-people:
+
 Current steering council and institutional partners
 ===================================================
 
