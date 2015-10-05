@@ -99,10 +99,10 @@ else:
 
         Parameters
         ----------
-        libname : string
+        libname : str
             Name of the library, which can have 'lib' as a prefix,
             but without an extension.
-        loader_path : string
+        loader_path : str
             Where the library can be found.
 
         Returns
@@ -114,7 +114,7 @@ else:
         ------
         OSError
             If there is no library with the expected extension, or the 
-            library is defective and can't be loaded.
+            library is defective and cannot be loaded.
         """
         if ctypes.__version__ < '1.0.1':
             import warnings
