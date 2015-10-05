@@ -422,14 +422,13 @@ PyMODINIT_FUNC initumath(void)
     initscalarmath(m);
 
 #if PY_MAJOR_VERSION < 3
-    mm = initumath_type_resolve();
+    initumath_type_resolve();
 #else
     mm = PyInit_umath_type_resolve();
-#endif
     if (!mm) {
         return RETVAL;
     }
-
+#endif
 
     if (!intern_strings()) {
         goto err;
