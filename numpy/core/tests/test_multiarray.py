@@ -2559,7 +2559,7 @@ class TestBinop(object):
 
     def test_out_override(self):
         # regression test for github bug 4753
-        class OutClass(ndarray):
+        class OutClass(np.ndarray):
             def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
                 if 'out' in kw:
                     tmp_kw = kw.copy()
