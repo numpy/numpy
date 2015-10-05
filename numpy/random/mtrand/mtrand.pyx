@@ -587,6 +587,15 @@ cdef class RandomState:
     array filled with generated values is returned. If `size` is a tuple,
     then an array with that shape is filled and returned.
 
+    *Compatibility Guarantee*
+    A fixed seed and a fixed series of calls to 'RandomState' methods using
+    the same parameters will always produce the same results up to roundoff
+    error except when the values were incorrect. Incorrect values will be
+    fixed and the NumPy version in which the fix was made will be noted in
+    the relevant docstring. Extension of existing parameter ranges and the
+    addition of new parameters is allowed as long the previous behavior
+    remains unchanged.
+
     Parameters
     ----------
     seed : {None, int, array_like}, optional
