@@ -2108,7 +2108,7 @@ add_newdoc('numpy.core', 'einsum',
 
     Using the Einstein summation convention, many common multi-dimensional
     array operations can be represented in a simple fashion.  This function
-    provides a way compute such summations. The best way to understand this
+    provides a way to compute such summations. The best way to understand this
     function is to try the examples below, which show how many common NumPy
     functions can be implemented as calls to `einsum`.
 
