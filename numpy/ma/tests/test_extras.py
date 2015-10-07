@@ -84,6 +84,22 @@ class TestGeneric(TestCase):
         test = masked_all_like(control)
         assert_equal(test, control)
 
+    def check_clump(self, f):
+        for i in range(1, 7):
+            for j in range(2**i):
+                k = np.arange(i, dtype=int)
+                ja = np.full(i, j, dtype=int)
+                a = masked_array(2**k)
+                a.mask = (ja & (2**k)) != 0
+                s = 0
+                for sl in f(a):
+                    s += a.data[sl].sum()
+                if f == clump_unmasked:
+                    assert_equal(a.compressed().sum(), s)
+                else:
+                    a.mask = ~a.mask
+                    assert_equal(a.compressed().sum(), s)
+
     def test_clump_masked(self):
         # Test clump_masked
         a = masked_array(np.arange(10))
@@ -93,6 +109,8 @@ class TestGeneric(TestCase):
         control = [slice(0, 3), slice(6, 7), slice(8, 10)]
         assert_equal(test, control)
 
+        self.check_clump(clump_masked)
+
     def test_clump_unmasked(self):
         # Test clump_unmasked
         a = masked_array(np.arange(10))
@@ -100,6 +118,8 @@ class TestGeneric(TestCase):
         test = clump_unmasked(a)
         control = [slice(3, 6), slice(7, 8), ]
         assert_equal(test, control)
+
+        self.check_clump(clump_unmasked)
 
     def test_flatnotmasked_contiguous(self):
         # Test flatnotmasked_contiguous
