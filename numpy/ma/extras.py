@@ -1797,15 +1797,27 @@ def _ezclump(mask):
 
     Returns a series of slices.
     """
-    #def clump_masked(a):
     if mask.ndim > 1:
         mask = mask.ravel()
     idx = (mask[1:] ^ mask[:-1]).nonzero()
     idx = idx[0] + 1
-    slices = [slice(left, right)
-              for (left, right) in zip(itertools.chain([0], idx),
-                                       itertools.chain(idx, [len(mask)]),)]
-    return slices
+
+    if mask[0]:
+        if len(idx) == 0:
+            return [slice(0, mask.size)]
+
+        r = [slice(0, idx[0])]
+        r.extend((slice(left, right)
+                  for left, right in zip(idx[1:-1:2], idx[2::2])))
+    else:
+        if len(idx) == 0:
+            return []
+
+        r = [slice(left, right) for left, right in zip(idx[:-1:2], idx[1::2])]
+
+    if mask[-1]:
+        r.append(slice(idx[-1], mask.size))
+    return r
 
 
 def clump_unmasked(a):
@@ -1844,12 +1856,7 @@ def clump_unmasked(a):
     mask = getattr(a, '_mask', nomask)
     if mask is nomask:
         return [slice(0, a.size)]
-    slices = _ezclump(mask)
-    if a[0] is masked:
-        result = slices[1::2]
-    else:
-        result = slices[::2]
-    return result
+    return _ezclump(~mask)
 
 
 def clump_masked(a):
@@ -1888,13 +1895,7 @@ def clump_masked(a):
     mask = ma.getmask(a)
     if mask is nomask:
         return []
-    slices = _ezclump(mask)
-    if len(slices):
-        if a[0] is masked:
-            slices = slices[::2]
-        else:
-            slices = slices[1::2]
-    return slices
+    return _ezclump(mask)
 
 
 ###############################################################################
