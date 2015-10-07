@@ -3411,7 +3411,7 @@ def percentile(a, q, axis=None, out=None,
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 
