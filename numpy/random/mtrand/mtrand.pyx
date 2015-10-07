@@ -3087,7 +3087,7 @@ cdef class RandomState:
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
         >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
-        >>> beta = np.std(maxima)*np.pi/np.sqrt(6)
+        >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp(-np.exp(-(bins - mu)/beta)),
