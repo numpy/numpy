@@ -424,7 +424,7 @@ class recarray(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record:
+        if self.dtype.type is not record and self.dtype.fields:
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
             self.dtype = self.dtype

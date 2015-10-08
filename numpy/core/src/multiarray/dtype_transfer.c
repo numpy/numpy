@@ -22,6 +22,7 @@
 #include "npy_pycompat.h"
 
 #include "convert_datatype.h"
+#include "ctors.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
 
@@ -588,8 +589,8 @@ wrap_copy_swap_function(int aligned,
      *       The copyswap functions shouldn't need that.
      */
     Py_INCREF(dtype);
-    data->arr = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                            1, &shape, NULL, NULL, 0, NULL);
+    data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type, dtype,
+                            1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->arr == NULL) {
         PyArray_free(data);
         return NPY_FAIL;
@@ -1444,8 +1445,8 @@ get_nbo_cast_transfer_function(int aligned,
             return NPY_FAIL;
         }
     }
-    data->aip = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, tmp_dtype,
-                            1, &shape, NULL, NULL, 0, NULL);
+    data->aip = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
+                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->aip == NULL) {
         PyArray_free(data);
         return NPY_FAIL;
@@ -1468,8 +1469,8 @@ get_nbo_cast_transfer_function(int aligned,
             return NPY_FAIL;
         }
     }
-    data->aop = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, tmp_dtype,
-                            1, &shape, NULL, NULL, 0, NULL);
+    data->aop = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
+                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
         PyArray_free(data);

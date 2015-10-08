@@ -923,6 +923,30 @@ class TestStructured(TestCase):
 
         assert_raises(ValueError, testassign)
 
+    def test_zero_width_string(self):
+        # Test for PR #6430 / issues #473, #4955, #2585
+
+        dt = np.dtype([('I', int), ('S', 'S0')])
+
+        x = np.zeros(3, dtype=dt)
+
+        assert_equal(x['S'], [b'', b'', b''])
+        assert_equal(x['S'].itemsize, 0)
+
+        x['S'] = ['a', 'b', 'c']
+        assert_equal(x['S'], [b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0])
+
+        # Variation on test case from #4955
+        x['S'][x['I'] == 0] = 'hello'
+        assert_equal(x['S'], [b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0])
+
+        # Variation on test case from #2585
+        x['S'] = 'A'
+        assert_equal(x['S'], [b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0])
+
 
 class TestBool(TestCase):
     def test_test_interning(self):

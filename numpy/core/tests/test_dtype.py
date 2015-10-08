@@ -256,6 +256,16 @@ class TestRecord(TestCase):
         dt2 = np.dtype((np.void, dt.fields))
         assert_equal(dt2.fields, dt.fields)
 
+    def test_from_dict_with_zero_width_field(self):
+        # Regression test for #6430 / #2196
+        dt = np.dtype([('val1', np.float32, (0,)), ('val2', int)])
+        dt2 = np.dtype({'names': ['val1', 'val2'],
+                        'formats': [(np.float32, (0,)), int]})
+
+        assert_dtype_equal(dt, dt2)
+        assert_equal(dt.fields['val1'][0].itemsize, 0)
+        assert_equal(dt.itemsize, dt.fields['val2'][0].itemsize)
+
     def test_bool_commastring(self):
         d = np.dtype('?,?,?')  # raises?
         assert_equal(len(d.names), 3)
