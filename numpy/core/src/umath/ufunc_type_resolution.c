@@ -14,10 +14,8 @@
 #include "Python.h"
 
 #include "npy_config.h"
-#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
-#endif
 
 #include "npy_pycompat.h"
 
