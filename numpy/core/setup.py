@@ -15,8 +15,6 @@ from numpy._build_utils.apple_accelerate import (uses_accelerate_framework,
 
 from setup_common import *
 
-# Set to True to enable multiple file compilations (experimental)
-ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
@@ -444,9 +442,6 @@ def configuration(parent_package='',top_path=None):
             else:
                 PYTHON_HAS_UNICODE_WIDE = False
 
-            if ENABLE_SEPARATE_COMPILATION:
-                moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
-
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
@@ -548,9 +543,6 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
-
-            if ENABLE_SEPARATE_COMPILATION:
-                moredefs.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
 
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
@@ -850,11 +842,6 @@ def configuration(parent_package='',top_path=None):
     else:
         extra_info = {}
 
-    if not ENABLE_SEPARATE_COMPILATION:
-        multiarray_deps.extend(multiarray_src)
-        multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
-        multiarray_src.append(generate_multiarray_templated_sources)
-
     config.add_extension('multiarray',
                          sources=multiarray_src +
                                  [generate_config_h,
@@ -921,13 +908,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
-
-    if not ENABLE_SEPARATE_COMPILATION:
-        umath_deps.extend(umath_src)
-        umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
-        umath_src.append(generate_umath_templated_sources)
-        umath_src.append(join('src', 'umath', 'funcs.inc.src'))
-        umath_src.append(join('src', 'umath', 'simd.inc.src'))
 
     config.add_extension('umath',
                          sources=umath_src +

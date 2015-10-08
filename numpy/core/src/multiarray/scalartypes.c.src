@@ -3724,7 +3724,6 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 /**end repeat**/
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 /*
  * This table maps the built-in type numbers to their scalar
  * type numbers.  Note that signed integers are mapped to INTNEG_SCALAR,
@@ -3760,7 +3759,6 @@ _npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
  */
 NPY_NO_EXPORT signed char
 _npy_type_promotion_table[NPY_NTYPES][NPY_NTYPES];
-#endif
 
 NPY_NO_EXPORT void
 initialize_casting_tables(void)
