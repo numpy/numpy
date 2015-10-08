@@ -2671,6 +2671,20 @@ class TestMaskedArrayMethods(TestCase):
         assert_array_equal(x, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ])
         assert_equal(x.mask, [1, 0, 0, 0, 1, 1, 0, 0, 0, 0])
 
+    def test_put_nomask(self):
+        # GitHub issue 6425
+        x = zeros(10)
+        z = array([3., -1.], mask=[False, True])
+
+        x.put([1, 2], z)
+        self.assertTrue(x[0] is not masked)
+        assert_equal(x[0], 0)
+        self.assertTrue(x[1] is not masked)
+        assert_equal(x[1], 3)
+        self.assertTrue(x[2] is masked)
+        self.assertTrue(x[3] is not masked)
+        assert_equal(x[3], 0)
+
     def test_put_hardmask(self):
         # Tests put on hardmask
         d = arange(5)
