@@ -254,6 +254,20 @@ class TestFromrecords(TestCase):
         assert_equal(a[0]['qux'].D, asbytes('fgehi'))
         assert_equal(a[0]['qux']['D'], asbytes('fgehi'))
 
+    def test_zero_width_strings(self):
+        # Test for #6430, based on the test case from #1901
+
+        cols = [['test'] * 3, [''] * 3]
+        rec = np.rec.fromarrays(cols)
+        assert_equal(rec['f0'], ['test', 'test', 'test'])
+        assert_equal(rec['f1'], ['', '', ''])
+
+        dt = np.dtype([('f0', '|S4'), ('f1', '|S')])
+        rec = np.rec.fromarrays(cols, dtype=dt)
+        assert_equal(rec.itemsize, 4)
+        assert_equal(rec['f0'], [b'test', b'test', b'test'])
+        assert_equal(rec['f1'], [b'', b'', b''])
+
 
 class TestRecord(TestCase):
     def setUp(self):

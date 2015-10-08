@@ -379,13 +379,13 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         Py_DECREF(safe);
     }
 
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               typed,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_BYTES(self) + offset,
-                               PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
-                               (PyObject *)self);
+    ret = PyArray_NewFromDescr_int(Py_TYPE(self),
+                                   typed,
+                                   PyArray_NDIM(self), PyArray_DIMS(self),
+                                   PyArray_STRIDES(self),
+                                   PyArray_BYTES(self) + offset,
+                                   PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
+                                   (PyObject *)self, 0, 1);
     if (ret == NULL) {
         return NULL;
     }

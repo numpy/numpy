@@ -33,8 +33,6 @@ def _makenames_list(adict, align):
         if (num < 0):
             raise ValueError("invalid offset.")
         format = dtype(obj[0], align=align)
-        if (format.itemsize == 0):
-            raise ValueError("all itemsizes must be fixed.")
         if (n > 2):
             title = obj[2]
         else:
