@@ -26,7 +26,7 @@ The Project
 ===========
 
 The NumPy Project (The Project) is an open source software project
-affiliated with the 501(c)3 NumFocus Foundation. The goal of The Project
+affiliated with the 501(c)3 NumFOCUS Foundation. The goal of The Project
 is to develop open source software for array-based computing in Python,
 and in particular the ``numpy`` package, along with related software
 such as ``f2py`` and the NumPy Sphinx extensions. The Software developed
