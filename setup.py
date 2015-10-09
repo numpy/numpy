@@ -238,8 +238,12 @@ def setup_package():
         FULLVERSION, GIT_REVISION = get_version_info()
         metadata['version'] = FULLVERSION
     else:
-        if len(sys.argv) >= 2 and sys.argv[1] == 'bdist_wheel':
-            # bdist_wheel needs setuptools
+        if (len(sys.argv) >= 2 and sys.argv[1] == 'bdist_wheel' or
+                sys.version_info[0] < 3 and sys.platform == "win32"):
+            # bdist_wheel and the MS python2.7 VS sdk needs setuptools
+            # the latter can also be triggered by (see python issue23246)
+            # SET DISTUTILS_USE_SDK=1
+            # SET MSSdk=1
             import setuptools
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
