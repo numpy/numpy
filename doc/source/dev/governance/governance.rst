@@ -389,3 +389,12 @@ Acknowledgements
 Substantial portions of this document were adapted from the
 `Jupyter/IPython project's governance document
 <https://github.com/jupyter/governance/blob/master/governance.md>`_.
+
+License
+=======
+
+To the extent possible under law, the authors have waived all
+copyright and related or neighboring rights to the NumPy project
+governance and decision-making document, as per the `CC-0 public
+domain dedication / license
+<https://creativecommons.org/publicdomain/zero/1.0/>`_.
