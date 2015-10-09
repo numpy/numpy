@@ -2799,12 +2799,13 @@ add_newdoc('numpy.core.umath', 'sign',
     """
     Returns an element-wise indication of the sign of a number.
 
-    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.
+    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
+    is returned for nan inputs.
 
-    For complex inputs, the `sign` function returns:
-    ``-1+0j if x.real < 0,
-    1+0j if x.real > 0,
-    sign(x.imag)+0j if x.real == 0.``
+    For complex inputs, the `sign` function returns
+    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+
+    complex(nan, 0) is returned for complex nan inputs.
 
     Parameters
     ----------
