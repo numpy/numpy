@@ -205,7 +205,7 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     version_match = simple_version_match(start='Intel\(R\).*?64,')
 
     def get_flags_arch(self):
-        return ['/QxSSE4.2']
+        return ['/QaxSSE4.2']
 
 
 if __name__ == '__main__':
