@@ -26,11 +26,7 @@ typedef struct {
     npy_bool weekmask[7];
 } NpyBusDayCalendar;
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type;
-#else
-NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type;
-#endif
 
 
 /*
