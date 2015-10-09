@@ -78,7 +78,7 @@ if platform.system() == 'Windows':
             self.lib = self.find_exe('xilib')
             self.linker = self.find_exe('xilink')
             self.compile_options = ['/nologo', '/O3', '/MD', '/W3',
-                                    '/Qstd=c99', '/QxSSE4.2']
+                                    '/Qstd=c99', '/QaxSSE4.2']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
                                           '/Qstd=c99', '/Z7', '/D_DEBUG']
 
