@@ -18,5 +18,7 @@ class MSVCCompiler(distutils.msvccompiler.MSVCCompiler):
         if environ_include is not None:
             os.environ['include'] = environ_include + os.environ['include']
         if platform_bits == 32:
+            # msvc9 building for 32 bits requires SSE2 to work around a
+            # compiler bug.
             self.compile_options += ['/arch:SSE2']
             self.compile_options_debug += ['/arch:SSE2']
