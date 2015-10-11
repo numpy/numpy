@@ -291,10 +291,10 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    if array(fill_value).dtype != a.dtype:
+    if dtype is None and array(fill_value).dtype != a.dtype:
         warnings.warn(
-            "in the future, full(..., {0!r}) will return an array of {1!r}".
-            format(fill_value, array(fill_value).dtype), FutureWarning)
+            "in the future, full({0}, {1!r}) will return an array of {2!r}".
+            format(shape, fill_value, array(fill_value).dtype), FutureWarning)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
