@@ -114,6 +114,27 @@ class TestDateTime(TestCase):
         # Can cast safely if the integer multiplier does divide
         assert_(np.can_cast('M8[6h]', 'M8[3h]', casting='safe'))
 
+        # We can always cast types with generic units (corresponding to NaT) to
+        # more specific types
+        assert_(np.can_cast('m8', 'm8[h]', casting='same_kind'))
+        assert_(np.can_cast('m8', 'm8[h]', casting='safe'))
+        assert_(np.can_cast('M8', 'M8[h]', casting='same_kind'))
+        assert_(np.can_cast('M8', 'M8[h]', casting='safe'))
+        # but not the other way around
+        assert_(not np.can_cast('m8[h]', 'm8', casting='same_kind'))
+        assert_(not np.can_cast('m8[h]', 'm8', casting='safe'))
+        assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
+        assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
+
+    def test_compare_generic_nat(self):
+        # regression tests for GH6452
+        assert_equal(np.datetime64('NaT'),
+                     np.datetime64('2000') + np.timedelta64('NaT'))
+        # nb. we may want to make NaT != NaT true in the future; this test
+        # verifies the existing behavior (and that it should not warn)
+        assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
+        assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
+
     def test_datetime_scalar_construction(self):
         # Construct with different units
         assert_equal(np.datetime64('1950-03-12', 'D'),
