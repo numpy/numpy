@@ -1232,12 +1232,18 @@ datetime_metadata_divides(
 {
     npy_uint64 num1, num2;
 
-    /* Generic units divide into anything */
-    if (divisor->base == NPY_FR_GENERIC) {
+    /*
+     * Any unit can always divide into generic units. In other words, we
+     * should be able to convert generic units into any more specific unit.
+     */
+    if (dividend->base == NPY_FR_GENERIC) {
         return 1;
     }
-    /* Non-generic units never divide into generic units */
-    else if (dividend->base == NPY_FR_GENERIC) {
+    /*
+     * However, generic units cannot always divide into more specific units.
+     * We cannot safely convert datetimes with units back into generic units.
+     */
+    else if (divisor->base == NPY_FR_GENERIC) {
         return 0;
     }
 
@@ -1330,7 +1336,7 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAME_KIND_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= NPY_FR_D && dst_unit <= NPY_FR_D) ||
@@ -1344,7 +1350,7 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAFE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= dst_unit) &&
@@ -1380,7 +1386,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAME_KIND_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= NPY_FR_M && dst_unit <= NPY_FR_M) ||
@@ -1394,7 +1400,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAFE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= dst_unit) &&
