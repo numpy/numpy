@@ -4399,7 +4399,6 @@ class MaskedArray(ndarray):
          [7 -- 30]]
 
         """
-        m = self._mask
         # Hard mask: Get rid of the values/indices that fall on masked data
         if self._hardmask and self._mask is not nomask:
             mask = self._mask[indices]
@@ -4411,16 +4410,19 @@ class MaskedArray(ndarray):
 
         self._data.put(indices, values, mode=mode)
 
-        if m is nomask:
-            m = getmask(values)
+        # short circut if neither self nor values are masked
+        if self._mask is nomask and getmask(values) is nomask:
+            return
+
+        m = getmaskarray(self).copy()
+
+        if getmask(values) is nomask:
+            m.put(indices, False, mode=mode)
         else:
-            m = m.copy()
-            if getmask(values) is nomask:
-                m.put(indices, False, mode=mode)
-            else:
-                m.put(indices, values._mask, mode=mode)
-            m = make_mask(m, copy=False, shrink=True)
+            m.put(indices, values._mask, mode=mode)
+        m = make_mask(m, copy=False, shrink=True)
         self._mask = m
+        return
 
     def ids(self):
         """
