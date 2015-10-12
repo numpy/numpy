@@ -1406,16 +1406,19 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args)
 {
+    PyArrayObject* copied_array;
     PyObject* visit;
-    char *optr;
-    PyArrayIterObject *it;
+
+    NpyIter* iter;
+    char** dataptr;
+    npy_intp* strideptr,* innersizeptr;
+
     PyObject *copy, *deepcopy;
-    PyArrayObject *ret;
 
     if (!PyArg_ParseTuple(args, "O", &visit)) {
         return NULL;
     }
-    ret = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+    copied_array = (PyArrayObject*) PyArray_NewCopy(self, NPY_KEEPORDER);
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
@@ -1426,21 +1429,44 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         if (deepcopy == NULL) {
             return NULL;
         }
-        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-        if (it == NULL) {
+        iter = (NpyIter *)NpyIter_New(copied_array,
+                                      (NPY_ITER_READWRITE |
+                                       NPY_ITER_EXTERNAL_LOOP |
+                                       NPY_ITER_REFS_OK),
+                                      NPY_KEEPORDER,
+                                      NPY_NO_CASTING,
+                                      NULL);
+        if (iter == NULL) {
             Py_DECREF(deepcopy);
             return NULL;
         }
-        optr = PyArray_DATA(ret);
-        while(it->index < it->size) {
-            _deepcopy_call(it->dataptr, optr, PyArray_DESCR(self), deepcopy, visit);
-            optr += PyArray_DESCR(self)->elsize;
-            PyArray_ITER_NEXT(it);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(deepcopy);
+            return NULL;
         }
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            char* data = *dataptr;
+            npy_intp stride = *strideptr;
+            npy_intp count = *innersizeptr;
+
+            while (count--) {
+                _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                               deepcopy, visit);
+                data += stride;
+            }
+        } while (iternext(iter));
+
+        NpyIter_Deallocate(iter);
         Py_DECREF(deepcopy);
-        Py_DECREF(it);
     }
-    return (PyObject*)ret;
+    return (PyObject*) copied_array;
 }
 
 /* Convert Array to flat list (using getitem) */
