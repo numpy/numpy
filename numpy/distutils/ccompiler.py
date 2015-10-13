@@ -385,10 +385,11 @@ def CCompiler_customize(self, dist, need_cxx=0):
                     a, b = 'cc', 'c++'
                 self.compiler_cxx = [self.compiler[0].replace(a, b)]\
                                     + self.compiler[1:]
-        elif not self.compiler_cxx:
+        else:
             if hasattr(self, 'compiler'):
                 log.warn("#### %s #######" % (self.compiler,))
-            log.warn('Missing compiler_cxx fix for '+self.__class__.__name__)
+            if not hasattr(self, 'compiler_cxx'):
+                log.warn('Missing compiler_cxx fix for ' + self.__class__.__name__)
     return
 
 replace_method(CCompiler, 'customize', CCompiler_customize)
