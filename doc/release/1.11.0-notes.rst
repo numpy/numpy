@@ -10,6 +10,9 @@ Highlights
 
 Dropped Support:
 
+* Bento build support and related files have been removed.
+* Single file build support and related files have been removed.
+
 
 Future Changes:
 
@@ -17,16 +20,59 @@ Future Changes:
 Compatibility notes
 ===================
 
+Deprecated to error
+~~~~~~~~~~~~~~~~~~~
+
+* Indexing with floats raises IndexError,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like raises IndexError,
+  e.g., a['1', '2']
+* Indexing with multiple ellipsis raises IndexError,
+  e.g., a[..., ...].
+* Indexing with boolean where integer expected raises IndexError,
+  e.g., a[False:True:True].
+* Non-integers used as index values raise TypeError,
+  e.g., in reshape, take, and specifying reduce axis.
+
+
+C API
+~~~~~
+
+Removed the ``check_return`` and ``inner_loop_selector`` members of
+the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
+to preserve struct layout). These were never used for anything, so
+it's unlikely that any third-party code is using them either, but we
+mention it here for completeness.
+
 
 New Features
 ============
+
 * `np.histogram` now provides plugin estimators for automatically estimating the optimal
 number of bins. Passing one of ['auto', 'fd', 'scott', 'rice', 'sturges']
 as the argument to 'bins' results in the corresponding estimator being used.
 
+* A benchmark suite using `Airspeed Velocity <http://spacetelescope.github.io/asv/>`__
+has been added, converting the previous vbench-based one. You can run the suite locally
+via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rst``.
+
+* A new function ``np.shares_memory`` that can check exactly whether two
+arrays have memory overlap is added. ``np.may_share_memory`` also now
+has an option to spend more effort to reduce false positives.
+
 Improvements
 ============
 
+*np.gradient* now supports an ``axis`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axis`` parameter was added to *np.gradient* for consistency.
+It allows to specify over which axes the gradient is calculated.
+
+*np.lexsort* now supports arrays with object data-type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now internally calls the generic ``npy_amergesort``
+when the type does not implement a merge-sort kind of ``argsort``
+method.
 
 Changes
 =======

@@ -1415,7 +1415,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     allow_masked : bool, optional
@@ -1424,7 +1424,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -1440,7 +1440,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
     """
-    msg = 'bias and ddof have no affect and are deprecated'
+    msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning)
@@ -1797,15 +1797,27 @@ def _ezclump(mask):
 
     Returns a series of slices.
     """
-    #def clump_masked(a):
     if mask.ndim > 1:
         mask = mask.ravel()
     idx = (mask[1:] ^ mask[:-1]).nonzero()
     idx = idx[0] + 1
-    slices = [slice(left, right)
-              for (left, right) in zip(itertools.chain([0], idx),
-                                       itertools.chain(idx, [len(mask)]),)]
-    return slices
+
+    if mask[0]:
+        if len(idx) == 0:
+            return [slice(0, mask.size)]
+
+        r = [slice(0, idx[0])]
+        r.extend((slice(left, right)
+                  for left, right in zip(idx[1:-1:2], idx[2::2])))
+    else:
+        if len(idx) == 0:
+            return []
+
+        r = [slice(left, right) for left, right in zip(idx[:-1:2], idx[1::2])]
+
+    if mask[-1]:
+        r.append(slice(idx[-1], mask.size))
+    return r
 
 
 def clump_unmasked(a):
@@ -1844,12 +1856,7 @@ def clump_unmasked(a):
     mask = getattr(a, '_mask', nomask)
     if mask is nomask:
         return [slice(0, a.size)]
-    slices = _ezclump(mask)
-    if a[0] is masked:
-        result = slices[1::2]
-    else:
-        result = slices[::2]
-    return result
+    return _ezclump(~mask)
 
 
 def clump_masked(a):
@@ -1888,13 +1895,7 @@ def clump_masked(a):
     mask = ma.getmask(a)
     if mask is nomask:
         return []
-    slices = _ezclump(mask)
-    if len(slices):
-        if a[0] is masked:
-            slices = slices[::2]
-        else:
-            slices = slices[1::2]
-    return slices
+    return _ezclump(mask)
 
 
 ###############################################################################

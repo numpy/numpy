@@ -935,6 +935,22 @@ class TestSign(TestCase):
             assert_equal(res, tgt)
             assert_equal(out, tgt)
 
+    def test_sign_dtype_object(self):
+        # In reference to github issue #6229
+
+        foo = np.array([-.1, 0, .1])
+        a = np.sign(foo.astype(np.object))
+        b = np.sign(foo)
+
+        assert_array_equal(a, b)
+
+    def test_sign_dtype_nan_object(self):
+        # In reference to github issue #6229
+        def test_nan():
+            foo = np.array([np.nan])
+            a = np.sign(foo.astype(np.object))
+
+        assert_raises(TypeError, test_nan)
 
 class TestMinMax(TestCase):
     def test_minmax_blocked(self):

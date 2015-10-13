@@ -704,6 +704,42 @@ class TestMaskedArray(TestCase):
         finally:
             masked_print_option.set_display(ini_display)
 
+    def test_mvoid_multidim_print(self):
+
+        # regression test for gh-6019
+        t_ma = masked_array(data = [([1, 2, 3],)],
+                            mask = [([False, True, False],)],
+                            fill_value = ([999999, 999999, 999999],),
+                            dtype = [('a', '<i8', (3,))])
+        assert str(t_ma[0]) == "([1, --, 3],)"
+        assert repr(t_ma[0]) == "([1, --, 3],)"
+
+        # additonal tests with structured arrays
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]],)],
+                            mask = [([[False, True], [True, False]],)],
+                            dtype = [('a', '<i8', (2,2))])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]],)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]],)"
+
+        t_0d = masked_array(data = [(1,2)],
+                            mask = [(True,False)],
+                            dtype = [('a', '<i8'), ('b', '<i8')])
+        assert str(t_0d[0]) == "(--, 2)"
+        assert repr(t_0d[0]) == "(--, 2)"
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
+                            mask = [([[False, True], [True, False]], False)],
+                            dtype = [('a', '<i8', (2,2)), ('b', float)])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+
+        t_ne = masked_array(data=[(1, (1, 1))],
+                            mask=[(True, (True, False))],
+                            dtype = [('a', '<i8'), ('b', 'i4,i4')])
+        assert str(t_ne[0]) == "(--, (--, 1))"
+        assert repr(t_ne[0]) == "(--, (--, 1))"
+
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
         mx2 = masked_array([1., 2.])
@@ -1460,7 +1496,7 @@ class TestFillingValues(TestCase):
         fval = _check_fill_value(0, "|S3")
         assert_equal(fval, asbytes("0"))
         fval = _check_fill_value(None, "|S3")
-        assert_equal(fval, default_fill_value("|S3"))
+        assert_equal(fval, default_fill_value(b"camelot!"))
         self.assertRaises(TypeError, _check_fill_value, 1e+20, int)
         self.assertRaises(TypeError, _check_fill_value, 'stuff', int)
 
@@ -1669,6 +1705,18 @@ class TestFillingValues(TestCase):
 
         a = identity(3, fill_value=0., dtype=complex)
         assert_equal(a.fill_value, 0.)
+
+    def test_shape_argument(self):
+        # Test that shape can be provides as an argument
+        # GH issue 6106
+        a = empty(shape=(3, ))
+        assert_equal(a.shape, (3, ))
+
+        a = ones(shape=(3, ), dtype=float)
+        assert_equal(a.shape, (3, ))
+
+        a = zeros(shape=(3, ), dtype=complex)
+        assert_equal(a.shape, (3, ))
 
     def test_fillvalue_in_view(self):
         # Test the behavior of fill_value in view
@@ -2623,6 +2671,20 @@ class TestMaskedArrayMethods(TestCase):
         assert_array_equal(x, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ])
         assert_equal(x.mask, [1, 0, 0, 0, 1, 1, 0, 0, 0, 0])
 
+    def test_put_nomask(self):
+        # GitHub issue 6425
+        x = zeros(10)
+        z = array([3., -1.], mask=[False, True])
+
+        x.put([1, 2], z)
+        self.assertTrue(x[0] is not masked)
+        assert_equal(x[0], 0)
+        self.assertTrue(x[1] is not masked)
+        assert_equal(x[1], 3)
+        self.assertTrue(x[2] is masked)
+        self.assertTrue(x[3] is not masked)
+        assert_equal(x[3], 0)
+
     def test_put_hardmask(self):
         # Tests put on hardmask
         d = arange(5)
@@ -3128,6 +3190,15 @@ class TestMaskedArrayMathMethods(TestCase):
         mXX.dot(mYY, r1)
         assert_almost_equal(r, r1)
 
+    def test_dot_shape_mismatch(self):
+        # regression test
+        x = masked_array([[1,2],[3,4]], mask=[[0,1],[0,0]])
+        y = masked_array([[1,2],[3,4]], mask=[[0,1],[0,0]])
+        z = masked_array([[0,1],[3,3]])
+        x.dot(y, out=z)
+        assert_almost_equal(z.filled(0), [[1, 0], [15, 16]])
+        assert_almost_equal(z.mask, [[0, 1], [0, 0]])
+
     def test_varstd(self):
         # Tests var & std on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
@@ -3421,6 +3492,31 @@ class TestMaskedArrayFunctions(TestCase):
         output = empty((3, 4), dtype=float)
         result = xm.round(decimals=2, out=output)
         self.assertTrue(result is output)
+
+    def test_round_with_scalar(self):
+        # Testing round with scalar/zero dimension input
+        # GH issue 2244
+        a = array(1.1, mask=[False])
+        assert_equal(a.round(), 1)
+
+        a = array(1.1, mask=[True])
+        assert_(a.round() is masked)
+
+        a = array(1.1, mask=[False])
+        output = np.empty(1, dtype=float)
+        output.fill(-9999)
+        a.round(out=output)
+        assert_equal(output, 1)
+
+        a = array(1.1, mask=[False])
+        output = array(-9999., mask=[True])
+        a.round(out=output)
+        assert_equal(output[()], 1)
+
+        a = array(1.1, mask=[True])
+        output = array(-9999., mask=[False])
+        a.round(out=output)
+        assert_(output[()] is masked)
 
     def test_identity(self):
         a = identity(5)
@@ -4096,5 +4192,10 @@ def test_append_masked_array_along_axis():
     assert_array_equal(result.mask, expected.mask)
 
 
+def test_default_fill_value_complex():
+    # regression test for Python 3, where 'unicode' was not defined
+    assert default_fill_value(1 + 1j) == 1.e20 + 0.0j
+
+###############################################################################
 if __name__ == "__main__":
     run_module_suite()

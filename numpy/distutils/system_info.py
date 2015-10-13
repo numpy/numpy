@@ -999,8 +999,8 @@ class mkl_info(system_info):
                 plt = '64'
                 #l = 'mkl_ipf'
             elif cpu.is_Xeon():
-                plt = 'em64t'
-                #l = 'mkl_em64t'
+                plt = 'intel64'
+                #l = 'mkl_intel64'
             else:
                 plt = '32'
                 #l = 'mkl_ia32'
@@ -1676,37 +1676,12 @@ class blas_info(system_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-
         blas_libs = self.get_libs('blas_libs', self._lib_names)
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        if self.has_cblas():
-            info['language'] = 'c'
-            info['define_macros'] = [('HAVE_CBLAS', None)]
-        else:
-            info['language'] = 'f77'  # XXX: is it generally true?
+        info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
-
-    def has_cblas(self):
-        # primitive cblas check by looking for the header
-        res = False
-        c = distutils.ccompiler.new_compiler()
-        tmpdir = tempfile.mkdtemp()
-        s = """#include <cblas.h>"""
-        src = os.path.join(tmpdir, 'source.c')
-        try:
-            with open(src, 'wt') as f:
-                f.write(s)
-            try:
-                c.compile([src], output_dir=tmpdir,
-                          include_dirs=self.get_include_dirs())
-                res = True
-            except distutils.ccompiler.CompileError:
-                res = False
-        finally:
-            shutil.rmtree(tmpdir)
-        return res
 
 
 class openblas_info(blas_info):
@@ -1727,6 +1702,10 @@ class openblas_info(blas_info):
         info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
             return
+
+        # Add extra info for OpenBLAS
+        extra_info = self.calc_extra_info()
+        dict_append(info, **extra_info)
 
         if not self.check_embedded_lapack(info):
             return
@@ -1754,35 +1733,24 @@ class openblas_lapack_info(openblas_info):
         }"""
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
+        # Add the additional "extra" arguments
+        try:
+            extra_args = info['extra_link_args']
+        except:
+            extra_args = []
         try:
             with open(src, 'wt') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
                 c.link_executable(obj, out, libraries=info['libraries'],
-                                  library_dirs=info['library_dirs'])
+                                  library_dirs=info['library_dirs'],
+                                  extra_postargs=extra_args)
                 res = True
             except distutils.ccompiler.LinkError:
                 res = False
         finally:
             shutil.rmtree(tmpdir)
-        if sys.platform == 'win32' and not res:
-            c = distutils.ccompiler.new_compiler(compiler='mingw32')
-            tmpdir = tempfile.mkdtemp()
-            src = os.path.join(tmpdir, 'source.c')
-            out = os.path.join(tmpdir, 'a.out')
-            try:
-                with open(src, 'wt') as f:
-                    f.write(s)
-                obj = c.compile([src], output_dir=tmpdir)
-                try:
-                    c.link_executable(obj, out, libraries=info['libraries'],
-                                    library_dirs=info['library_dirs'])
-                    res = True
-                except distutils.ccompiler.LinkError:
-                    res = False
-            finally:
-                shutil.rmtree(tmpdir)
         return res
 
 

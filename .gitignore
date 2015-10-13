@@ -142,6 +142,9 @@ numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/reference/generated
+benchmarks/results
+benchmarks/env
+benchmarks/numpy
 # cythonized files
 cythonize.dat
 numpy/random/mtrand/mtrand.c

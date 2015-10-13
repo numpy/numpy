@@ -67,7 +67,7 @@ Functions
 
 .. c:function:: PyObject* PyUFunc_FromFuncAndData(PyUFuncGenericFunction* func,
    void** data, char* types, int ntypes, int nin, int nout, int identity,
-   char* name, char* doc, int check_return)
+   char* name, char* doc, int unused)
 
     Create a new broadcasting universal function from required variables.
     Each ufunc builds around the notion of an element-by-element
@@ -121,15 +121,12 @@ Functions
         dynamically determined from the object and available when
         accessing the **__doc__** attribute of the ufunc.
 
-    :param check_return:
-        Unused and present for backwards compatibility of the C-API. A
-        corresponding *check_return* integer does exist in the ufunc
-        structure and it does get set with this value when the ufunc
-        object is created.
+    :param unused:
+        Unused and present for backwards compatibility of the C-API.
 
 .. c:function:: PyObject* PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction* func,
    void** data, char* types, int ntypes, int nin, int nout, int identity,
-   char* name, char* doc, int check_return, char *signature)
+   char* name, char* doc, int unused, char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
    an extra *signature* argument, to define generalized universal functions.

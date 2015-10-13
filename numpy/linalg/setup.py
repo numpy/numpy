@@ -3,7 +3,7 @@ from __future__ import division, print_function
 import os
 import sys
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
     config = Configuration('linalg', parent_package, top_path)
@@ -20,35 +20,36 @@ def configuration(parent_package='',top_path=None):
         os.path.join(src_dir, 'blas_lite.c'),
         os.path.join(src_dir, 'dlamch.c'),
         os.path.join(src_dir, 'f2c_lite.c'),
-        os.path.join(src_dir, 'f2c.h'),
     ]
+    all_sources = config.paths(lapack_lite_src)
 
-    lapack_info = get_info('lapack_opt', 0) # and {}
+    lapack_info = get_info('lapack_opt', 0)  # and {}
+
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
             print("### Warning:  Using unoptimized lapack ###")
-            return ext.depends[:-1]
+            return all_sources
         else:
-            if sys.platform=='win32':
+            if sys.platform == 'win32':
                 print("### Warning:  python_xerbla.c is disabled ###")
-                return ext.depends[:1]
-            return ext.depends[:2]
+                return []
+            return [all_sources[0]]
 
-    config.add_extension('lapack_lite',
-                         sources = [get_lapack_lite_sources],
-                         depends = ['lapack_litemodule.c'] + lapack_lite_src,
-                         extra_info = lapack_info
-                         )
+    config.add_extension(
+        'lapack_lite',
+        sources=['lapack_litemodule.c', get_lapack_lite_sources],
+        depends=['lapack_lite/f2c.h'],
+        extra_info=lapack_info,
+    )
 
     # umath_linalg module
-
-    config.add_extension('_umath_linalg',
-                         sources = [get_lapack_lite_sources],
-                         depends =  ['umath_linalg.c.src'] + lapack_lite_src,
-                         extra_info = lapack_info,
-                         libraries = ['npymath'],
-                         )
-
+    config.add_extension(
+        '_umath_linalg',
+        sources=['umath_linalg.c.src', get_lapack_lite_sources],
+        depends=['lapack_lite/f2c.h'],
+        extra_info=lapack_info,
+        libraries=['npymath'],
+    )
     return config
 
 if __name__ == '__main__':

@@ -32,7 +32,7 @@ import numpy.core.numerictypes as ntypes
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import getargspec, formatargspec, long, basestring
+from numpy.compat import getargspec, formatargspec, long, basestring, unicode, bytes, sixu
 from numpy import expand_dims as n_expand_dims
 
 if sys.version_info[0] >= 3:
@@ -143,10 +143,10 @@ default_filler = {'b': True,
                   'f': 1.e20,
                   'i': 999999,
                   'O': '?',
-                  'S': 'N/A',
+                  'S': b'N/A',
                   'u': 999999,
                   'V': '???',
-                  'U': 'N/A'
+                  'U': sixu('N/A')
                   }
 
 # Add datetime64 and timedelta64 types
@@ -217,7 +217,7 @@ def default_fill_value(obj):
         defval = default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
         defval = default_filler['i']
-    elif isinstance(obj, str):
+    elif isinstance(obj, bytes):
         defval = default_filler['S']
     elif isinstance(obj, unicode):
         defval = default_filler['U']
@@ -4399,7 +4399,6 @@ class MaskedArray(ndarray):
          [7 -- 30]]
 
         """
-        m = self._mask
         # Hard mask: Get rid of the values/indices that fall on masked data
         if self._hardmask and self._mask is not nomask:
             mask = self._mask[indices]
@@ -4411,16 +4410,19 @@ class MaskedArray(ndarray):
 
         self._data.put(indices, values, mode=mode)
 
-        if m is nomask:
-            m = getmask(values)
+        # short circut if neither self nor values are masked
+        if self._mask is nomask and getmask(values) is nomask:
+            return
+
+        m = getmaskarray(self).copy()
+
+        if getmask(values) is nomask:
+            m.put(indices, False, mode=mode)
         else:
-            m = m.copy()
-            if getmask(values) is nomask:
-                m.put(indices, False, mode=mode)
-            else:
-                m.put(indices, values._mask, mode=mode)
-            m = make_mask(m, copy=False, shrink=True)
+            m.put(indices, values._mask, mode=mode)
+        m = make_mask(m, copy=False, shrink=True)
         self._mask = m
+        return
 
     def ids(self):
         """
@@ -5107,8 +5109,12 @@ class MaskedArray(ndarray):
 
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
-        result._mask = self._mask
-        result._update_from(self)
+        if result.ndim > 0:
+            result._mask = self._mask
+            result._update_from(self)
+        elif self._mask:
+            # Return masked when the scalar is masked
+            result = masked
         # No explicit output: we're done
         if out is None:
             return result
@@ -5856,33 +5862,15 @@ class mvoid(MaskedArray):
 
     def __str__(self):
         m = self._mask
-        if (m is nomask):
+        if m is nomask:
             return self._data.__str__()
-        m = tuple(m)
-        if (not any(m)):
-            return self._data.__str__()
-        r = self._data.tolist()
-        p = masked_print_option
-        if not p.enabled():
-            p = 'N/A'
-        else:
-            p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(r, m)]
-        return "(%s)" % ", ".join(r)
+        printopt = masked_print_option
+        rdtype = _recursive_make_descr(self._data.dtype, "O")
+        res = np.array([self._data]).astype(rdtype)
+        _recursive_printoption(res, self._mask, printopt)
+        return str(res[0])
 
-    def __repr__(self):
-        m = self._mask
-        if (m is nomask):
-            return self._data.__repr__()
-        m = tuple(m)
-        if not any(m):
-            return self._data.__repr__()
-        p = masked_print_option
-        if not p.enabled():
-            return self.filled(self.fill_value).__repr__()
-        p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(self._data.tolist(), m)]
-        return "(%s)" % ", ".join(r)
+    __repr__ = __str__
 
     def __iter__(self):
         "Defines an iterator for mvoid"
@@ -6816,7 +6804,7 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj): 
+def rank(obj):
     """
     maskedarray version of the numpy function.
 
@@ -6833,7 +6821,7 @@ def rank(obj):
 rank.__doc__ = np.rank.__doc__
 
 
-def ndim(obj): 
+def ndim(obj):
     """
     maskedarray version of the numpy function.
 
@@ -7536,7 +7524,7 @@ class _convert2ma:
             doc = sig + doc
         return doc
 
-    def __call__(self, a, *args, **params):
+    def __call__(self, *args, **params):
         # Find the common parameters to the call and the definition
         _extras = self._extras
         common_params = set(params).intersection(_extras)
@@ -7544,7 +7532,7 @@ class _convert2ma:
         for p in common_params:
             _extras[p] = params.pop(p)
         # Get the result
-        result = self._func.__call__(a, *args, **params).view(MaskedArray)
+        result = self._func.__call__(*args, **params).view(MaskedArray)
         if "fill_value" in common_params:
             result.fill_value = _extras.get("fill_value", None)
         if "hardmask" in common_params:

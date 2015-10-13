@@ -8,6 +8,7 @@ import warnings
 import operator
 import io
 import itertools
+import ctypes
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -2074,40 +2075,36 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(order='K'), [2, 3, 0, 1])
         assert_(a.ravel(order='K').flags.owndata)
 
+        # Test simple 1-d copy behaviour:
+        a = np.arange(10)[::2]
+        assert_(a.ravel('K').flags.owndata)
+        assert_(a.ravel('C').flags.owndata)
+        assert_(a.ravel('F').flags.owndata)
+
         # Not contiguous and 1-sized axis with non matching stride
         a = np.arange(2**3 * 2)[::2]
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
         a.strides = strides
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
+        assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
-        # General case of possible ravel that is not contiguous but
-        # works and includes a 1-sized axis with non matching stride
-        a = a.swapaxes(-1, -2)  # swap back to C-order
-        assert_(np.may_share_memory(a.ravel(order='C'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-
-        a = a.T  # swap all to Fortran order
-        assert_(np.may_share_memory(a.ravel(order='F'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-
-        # Test negative strides:
-        a = np.arange(4)[::-1].reshape(2, 2)
-        assert_(np.may_share_memory(a.ravel(order='C'), a))
-        assert_(np.may_share_memory(a.ravel(order='K'), a))
-        assert_equal(a.ravel('C'), [3, 2, 1, 0])
-        assert_equal(a.ravel('K'), [3, 2, 1, 0])
-
-        # Test keeporder with weirdly strided 1-sized dims (1-d first stride)
-        a = np.arange(8)[::2].reshape(1, 2, 2, 1)  # neither C, nor F order
+        # contiguous and 1-sized axis with non matching stride works:
+        a = np.arange(2**3)
+        a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
-        strides[0] = -12
-        strides[-1] = 0
+        strides[1] = 123
         a.strides = strides
         assert_(np.may_share_memory(a.ravel(order='K'), a))
-        assert_equal(a.ravel('K'), a.ravel('C'))
+        assert_equal(a.ravel(order='K'), np.arange(2**3))
+
+        # Test negative strides (not very interesting since non-contiguous):
+        a = np.arange(4)[::-1].reshape(2, 2)
+        assert_(a.ravel(order='C').flags.owndata)
+        assert_(a.ravel(order='K').flags.owndata)
+        assert_equal(a.ravel('C'), [3, 2, 1, 0])
+        assert_equal(a.ravel('K'), [3, 2, 1, 0])
 
         # 1-element tidy strides test (NPY_RELAXED_STRIDES_CHECKING):
         a = np.array([[1]])
@@ -2124,7 +2121,7 @@ class TestMethods(TestCase):
             assert_equal(a.ravel(order), [0])
             assert_(np.may_share_memory(a.ravel(order), a))
 
-        #Test that certain non-inplace ravels work right (mostly) for 'K':
+        # Test that certain non-inplace ravels work right (mostly) for 'K':
         b = np.arange(2**4 * 2)[::2].reshape(2, 2, 2, 2)
         a = b[..., ::2]
         assert_equal(a.ravel('K'), [0, 4, 8, 12, 16, 20, 24, 28])
@@ -2137,6 +2134,22 @@ class TestMethods(TestCase):
         assert_equal(a.ravel('C'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('A'), [0, 2, 4, 6, 8, 10, 12, 14])
         assert_equal(a.ravel('F'), [0, 8, 4, 12, 2, 10, 6, 14])
+
+    def test_ravel_subclass(self):
+        class ArraySubclass(np.ndarray):
+            pass
+
+        a = np.arange(10).view(ArraySubclass)
+        assert_(isinstance(a.ravel('C'), ArraySubclass))
+        assert_(isinstance(a.ravel('F'), ArraySubclass))
+        assert_(isinstance(a.ravel('A'), ArraySubclass))
+        assert_(isinstance(a.ravel('K'), ArraySubclass))
+
+        a = np.arange(10)[::2].view(ArraySubclass)
+        assert_(isinstance(a.ravel('C'), ArraySubclass))
+        assert_(isinstance(a.ravel('F'), ArraySubclass))
+        assert_(isinstance(a.ravel('A'), ArraySubclass))
+        assert_(isinstance(a.ravel('K'), ArraySubclass))
 
     def test_swapaxes(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
@@ -2415,15 +2428,15 @@ class TestBinop(object):
                     return "ufunc"
                 else:
                     inputs = list(inputs)
-                    inputs[i] = np.asarray(self)
+                    if i < len(inputs):
+                        inputs[i] = np.asarray(self)
                     func = getattr(ufunc, method)
+                    if ('out' in kw) and (kw['out'] is not None):
+                        kw['out'] = np.asarray(kw['out'])
                     r = func(*inputs, **kw)
-                    if 'out' in kw:
-                        return r
-                    else:
-                        x = self.__class__(r.shape, dtype=r.dtype)
-                        x[...] = r
-                        return x
+                    x = self.__class__(r.shape, dtype=r.dtype)
+                    x[...] = r
+                    return x
 
         class SomeClass3(SomeClass2):
             def __rsub__(self, other):
@@ -2506,6 +2519,64 @@ class TestBinop(object):
         kw = np.add(a, [1], signature='ii->i')
         assert_('sig' not in kw and 'signature' in kw)
         assert_equal(kw['signature'], 'ii->i')
+
+    def test_numpy_ufunc_index(self):
+        # Check that index is set appropriately, also if only an output
+        # is passed on (latter is another regression tests for github bug 4753)
+        class CheckIndex(object):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                return i
+
+        a = CheckIndex()
+        dummy = np.arange(2.)
+        # 1 input, 1 output
+        assert_equal(np.sin(a), 0)
+        assert_equal(np.sin(dummy, a), 1)
+        assert_equal(np.sin(dummy, out=a), 1)
+        assert_equal(np.sin(dummy, out=(a,)), 1)
+        assert_equal(np.sin(a, a), 0)
+        assert_equal(np.sin(a, out=a), 0)
+        assert_equal(np.sin(a, out=(a,)), 0)
+        # 1 input, 2 outputs
+        assert_equal(np.modf(dummy, a), 1)
+        assert_equal(np.modf(dummy, None, a), 2)
+        assert_equal(np.modf(dummy, dummy, a), 2)
+        assert_equal(np.modf(dummy, out=a), 1)
+        assert_equal(np.modf(dummy, out=(a,)), 1)
+        assert_equal(np.modf(dummy, out=(a, None)), 1)
+        assert_equal(np.modf(dummy, out=(a, dummy)), 1)
+        assert_equal(np.modf(dummy, out=(None, a)), 2)
+        assert_equal(np.modf(dummy, out=(dummy, a)), 2)
+        assert_equal(np.modf(a, out=(dummy, a)), 0)
+        # 2 inputs, 1 output
+        assert_equal(np.add(a, dummy), 0)
+        assert_equal(np.add(dummy, a), 1)
+        assert_equal(np.add(dummy, dummy, a), 2)
+        assert_equal(np.add(dummy, a, a), 1)
+        assert_equal(np.add(dummy, dummy, out=a), 2)
+        assert_equal(np.add(dummy, dummy, out=(a,)), 2)
+        assert_equal(np.add(a, dummy, out=a), 0)
+
+    def test_out_override(self):
+        # regression test for github bug 4753
+        class OutClass(np.ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                if 'out' in kw:
+                    tmp_kw = kw.copy()
+                    tmp_kw.pop('out')
+                    func = getattr(ufunc, method)
+                    kw['out'][...] = func(*inputs, **tmp_kw)
+
+        A = np.array([0]).view(OutClass)
+        B = np.array([5])
+        C = np.array([6])
+        np.multiply(C, B, A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
+        A[0] = 0
+        np.multiply(C, B, out=A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
 
 
 class TestCAPI(TestCase):
@@ -2802,6 +2873,16 @@ class TestArgmax(TestCase):
         assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    def test_object_argmax_with_NULLs(self):
+        # See gh-6032
+        a = np.empty(4, dtype='O')
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+        assert_equal(a.argmax(), 0)
+        a[3] = 10
+        assert_equal(a.argmax(), 3)
+        a[1] = 30
+        assert_equal(a.argmax(), 1)
+
 
 class TestArgmin(TestCase):
 
@@ -2939,6 +3020,16 @@ class TestArgmin(TestCase):
         out2 = np.ones(3, dtype=int)
         assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
         assert_equal(out1, out2)
+
+    def test_object_argmin_with_NULLs(self):
+        # See gh-6032
+        a = np.empty(4, dtype='O')
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+        assert_equal(a.argmin(), 0)
+        a[3] = 30
+        assert_equal(a.argmin(), 3)
+        a[1] = 10
+        assert_equal(a.argmin(), 1)
 
 
 class TestMinMax(TestCase):
@@ -3174,6 +3265,22 @@ class TestLexsort(TestCase):
         expected_idx = np.array([2, 1, 0])
         assert_array_equal(idx, expected_idx)
 
+    def test_object(self):  # gh-6312
+        a = np.random.choice(10, 1000)
+        b = np.random.choice(['abc', 'xy', 'wz', 'efghi', 'qwst', 'x'], 1000)
+
+        for u in a, b:
+            left = np.lexsort((u.astype('O'),))
+            right = np.argsort(u, kind='mergesort')
+            assert_array_equal(left, right)
+
+        for u, v in (a, b), (b, a):
+            idx = np.lexsort((u, v))
+            assert_array_equal(idx, np.lexsort((u.astype('O'), v)))
+            assert_array_equal(idx, np.lexsort((u, v.astype('O'))))
+            u, v = np.array(u, dtype='object'), np.array(v, dtype='object')
+            assert_array_equal(idx, np.lexsort((u, v)))
+
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""
@@ -3257,6 +3364,19 @@ class TestIO(object):
         s = "@".join(map(repr, x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
+
+    def test_unbuffered_fromfile(self):
+        # gh-6246
+        self.x.tofile(self.filename)
+
+        def fail(*args, **kwargs):
+            raise io.IOError('Can not tell or seek')
+
+        f = io.open(self.filename, 'rb', buffering=0)
+        f.seek = fail
+        f.tell = fail
+        y = np.fromfile(self.filename, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
 
     def test_file_position_after_fromfile(self):
         # gh-4118
@@ -3411,7 +3531,9 @@ class TestIO(object):
         f = open(self.filename, 'r')
         s = f.read()
         f.close()
-        assert_equal(s, '1.51,2.0,3.51,4.0')
+        #assert_equal(s, '1.51,2.0,3.51,4.0')
+        y = np.array([float(p) for p in s.split(',')])
+        assert_array_equal(x,y)
 
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
@@ -3554,6 +3676,13 @@ class TestRecord(TestCase):
         dt.names = ['p', 'q']
         assert_equal(dt.names, ['p', 'q'])
 
+    def test_multiple_field_name_occurrence(self):
+        def test_assign():
+            dtype = np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
+
+        # Error raised when multiple fields have the same name
+        assert_raises(ValueError, test_assign)
+
     if sys.version_info[0] >= 3:
         def test_bytes_fields(self):
             # Bytes are not allowed in field names and not recognized in titles
@@ -3569,6 +3698,15 @@ class TestRecord(TestCase):
 
             y = x[0]
             assert_raises(IndexError, y.__getitem__, asbytes('a'))
+
+        def test_multiple_field_name_unicode(self):
+            def test_assign_unicode():
+                dt = np.dtype([("\u20B9", "f8"),
+                               ("B", "f8"),
+                               ("\u20B9", "f8")])
+
+            # Error raised when multiple fields have the same name(unicode included)
+            assert_raises(ValueError, test_assign_unicode)
 
     else:
         def test_unicode_field_titles(self):
@@ -3957,6 +4095,28 @@ class TestVdot(TestCase):
         assert_equal(np.vdot(a, b), res)
         assert_equal(np.vdot(b, a), res)
         assert_equal(np.vdot(b, b), res)
+
+    def test_vdot_uncontiguous(self):
+        for size in [2, 1000]:
+            # Different sizes match different branches in vdot.
+            a = np.zeros((size, 2, 2))
+            b = np.zeros((size, 2, 2))
+            a[:, 0, 0] = np.arange(size)
+            b[:, 0, 0] = np.arange(size) + 1
+            # Make a and b uncontiguous:
+            a = a[..., 0]
+            b = b[..., 0]
+
+            assert_equal(np.vdot(a, b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a, b.copy()),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a.copy(), b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a.copy('F'), b),
+                         np.vdot(a.flatten(), b.flatten()))
+            assert_equal(np.vdot(a, b.copy('F')),
+                         np.vdot(a.flatten(), b.flatten()))
 
 
 class TestDot(TestCase):
@@ -5351,6 +5511,16 @@ def test_array_interface():
     assert_equal(np.array(ArrayLike()), 1)
 
 
+def test_array_interface_itemsize():
+    # See gh-6361
+    my_dtype = np.dtype({'names': ['A', 'B'], 'formats': ['f4', 'f4'],
+                         'offsets': [0, 8], 'itemsize': 16})
+    a = np.ones(10, dtype=my_dtype)
+    descr_t = np.dtype(a.__array_interface__['descr'])
+    typestr_t = np.dtype(a.__array_interface__['typestr'])
+    assert_equal(descr_t.itemsize, typestr_t.itemsize)
+
+
 def test_flat_element_deletion():
     it = np.ones(3).flat
     try:
@@ -5650,6 +5820,10 @@ class TestSizeOf(TestCase):
 
 
 class TestHashing(TestCase):
+
+    def test_arrays_not_hashable(self):
+        x = np.ones(3)
+        assert_raises(TypeError, hash, x)
 
     def test_collections_hashable(self):
         x = np.array([])
