@@ -47,3 +47,26 @@ class IndexingSeparate(Benchmark):
     def time_mmap_fancy_indexing(self):
         for i in range(1000):
             self.fp[self.indexes]
+
+
+class IndexingStructured0D(Benchmark):
+    def setup(self):
+        self.dt = np.dtype([('a', 'f4', 256)])
+
+        self.A = np.zeros((), self.dt)
+        self.B = self.A.copy()
+
+        self.a = np.zeros(1, self.dt)[0]
+        self.b = self.a.copy()
+
+    def time_array_slice(self):
+        self.B['a'][:] = self.A['a']
+
+    def time_array_all(self):
+        self.B['a'] = self.A['a']
+
+    def time_scalar_slice(self):
+        self.b['a'][:] = self.a['a']
+
+    def time_scalar_all(self):
+        self.b['a'] = self.a['a']
