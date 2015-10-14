@@ -217,9 +217,13 @@ class GnuFCompiler(FCompiler):
                 opt = ['-O2 -march=pentium4 -mtune=generic -mfpmath=sse -msse2'
                        ' -mlong-double-64 -mincoming-stack-boundary=2' 
                        ' -ffpe-summary=invalid,zero']
-            else:
+            elif is_win64():
                 opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2'
                        ' -mlong-double-64 -ffpe-summary=invalid,zero']
+            else:
+                # Don't set opt on Linux and rely on CFLAGS of the
+                # distributions
+                opt = ['-O2']
         else:
             opt = ['-O2']
 
