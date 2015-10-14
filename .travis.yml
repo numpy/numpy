@@ -26,7 +26,7 @@ python:
   - 3.2
   - 3.3
   - 3.4
-  - 3.5-dev
+  - 3.5
 matrix:
   include:
     - python: 3.3
