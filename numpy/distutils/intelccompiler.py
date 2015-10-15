@@ -20,12 +20,17 @@ class IntelCCompiler(UnixCCompiler):
         self.cc_exe = ('icc -fPIC -fp-model strict -O3 '
                        '-fomit-frame-pointer -openmp')
         compiler = self.cc_exe
+        if platform.system() == 'Darwin':
+            shared_flag = '-Wl,-undefined,dynamic_lookup'
+        else:
+            shared_flag = '-shared'
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',
                              linker_exe=compiler + ' -shared-intel',
-                             linker_so=compiler + ' -shared -shared-intel')
+                             linker_so=compiler + ' ' + shared_flag +
+                             ' -shared-intel')
 
 
 class IntelItaniumCCompiler(IntelCCompiler):
@@ -51,12 +56,17 @@ class IntelEM64TCCompiler(UnixCCompiler):
         self.cc_exe = ('icc -m64 -fPIC -fp-model strict -O3 '
                        '-fomit-frame-pointer -openmp -xSSE4.2')
         compiler = self.cc_exe
+        if platform.system() == 'Darwin':
+            shared_flag = '-Wl,-undefined,dynamic_lookup'
+        else:
+            shared_flag = '-shared'
         self.set_executables(compiler=compiler,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',
                              linker_exe=compiler + ' -shared-intel',
-                             linker_so=compiler + ' -shared -shared-intel')
+                             linker_so=compiler + ' ' + shared_flag +
+                             ' -shared-intel')
 
 
 if platform.system() == 'Windows':
