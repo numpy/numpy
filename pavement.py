@@ -549,8 +549,16 @@ def tarball_name(type='gztar'):
 
 @task
 def sdist(options):
+    # First clean the repo and update submodules (for up-to-date doc html theme
+    # and Sphinx extensions)
+    sh('git clean -xdf')
+    sh('git submodule init')
+    sh('git submodule update')
+
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
     # do not play well together.
+    # Cython is run over all Cython files in setup.py, so generated C files
+    # will be included.
     sh('python setup.py sdist --formats=gztar,zip')
 
     # Copy the superpack into installers dir

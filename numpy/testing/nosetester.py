@@ -10,7 +10,7 @@ import os
 import sys
 import warnings
 from numpy.compat import basestring
-from numpy import ModuleDeprecationWarning
+import numpy as np
 
 
 def get_package_name(filepath):
@@ -151,7 +151,7 @@ class NoseTester(object):
         The package to test. If a string, this should be the full path to
         the package. If None (default), `package` is set to the module from
         which `NoseTester` is initialized.
-    raise_warnings : str or sequence of warnings, optional
+    raise_warnings : None, str or sequence of warnings, optional
         This specifies which warnings to configure as 'raise' instead
         of 'warn' during the test execution.  Valid strings are:
 
@@ -163,11 +163,10 @@ class NoseTester(object):
     Notes
     -----
     The default for `raise_warnings` is
-    ``(DeprecationWarning, RuntimeWarning)`` for the master branch of NumPy,
-    and ``()`` for maintenance branches and released versions.  The purpose
-    of this switching behavior is to catch as many warnings as possible
-    during development, but not give problems for packaging of released
-    versions.
+    ``(DeprecationWarning, RuntimeWarning)`` for development versions of NumPy,
+    and ``()`` for released versions.  The purpose of this switching behavior
+    is to catch as many warnings as possible during development, but not give
+    problems for packaging of released versions.
 
     """
     # Stuff to exclude from tests. These are from numpy.distutils
@@ -177,7 +176,12 @@ class NoseTester(object):
                 'pyrex_ext',
                 'swig_ext']
 
-    def __init__(self, package=None, raise_warnings="develop"):
+    def __init__(self, package=None, raise_warnings=None):
+        if raise_warnings is None and '.dev0' in np.__version__:
+            raise_warnings = "develop"
+        elif raise_warnings is None:
+            raise_warnings = "release"
+
         package_name = None
         if package is None:
             f = sys._getframe(1)
@@ -418,7 +422,7 @@ class NoseTester(object):
             warnings.filterwarnings('ignore', message='Not importing directory')
             warnings.filterwarnings("ignore", message="numpy.dtype size changed")
             warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-            warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
+            warnings.filterwarnings("ignore", category=np.ModuleDeprecationWarning)
             warnings.filterwarnings("ignore", category=FutureWarning)
             # Filter out boolean '-' deprecation messages. This allows
             # older versions of scipy to test without a flood of messages.

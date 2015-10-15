@@ -196,16 +196,6 @@ After a date is set, create a new maintenance/x.y.z branch, add new empty
 release notes for the next version in the master branch and update the Trac
 Milestones.
 
-Handle test warnings
---------------------
-The default behavior of the test suite in the master branch is to report errors
-for DeprecationWarnings and RuntimeWarnings that are issued.  For a released
-version this is not desired.  Therefore any known warnings should be solved or
-explicitly silenced before making the release branch, then when the branch is
-made, the default behavior should be switched to not raise errors.  This is
-done in the constructor of the NoseTester class in numpy/testing/nosetester.py,
-by replacing ``raise_warnings="develop"`` with ``raise_warnings="release"``.
-
 Make sure current trunk builds a package correctly
 --------------------------------------------------
 ::
@@ -219,12 +209,6 @@ best to read the pavement.py script.
 
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
-
-Merge doc wiki edits
---------------------
-The edits in the documentation wiki suitable for merging should be merged,
-ideally just before making the release branch. How to do this is described in
-detail in doc/HOWTO_MERGE_WIKI_DOCS.txt.
 
 Check that docs can be built
 ----------------------------
