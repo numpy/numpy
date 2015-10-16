@@ -1228,7 +1228,7 @@ add_newdoc('numpy.core', 'inner',
     Parameters
     ----------
     a, b : array_like
-        If `a` and `b` are nonscalar, their last dimensions of must match.
+        If `a` and `b` are nonscalar, their last dimensions must match.
 
     Returns
     -------
