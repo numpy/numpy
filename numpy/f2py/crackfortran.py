@@ -1372,11 +1372,8 @@ def analyzeline(m, case, line):
         if 'common' in groupcache[groupcounter]:
             commonkey = groupcache[groupcounter]['common']
         for c in cl:
-            if c[0] in commonkey:
-                outmess(
-                    'analyzeline: previously defined common block encountered. Skipping.\n')
-                continue
-            commonkey[c[0]] = []
+            if c[0] not in commonkey:
+                commonkey[c[0]] = []
             for i in [x.strip() for x in markoutercomma(c[1]).split('@,@')]:
                 if i:
                     commonkey[c[0]].append(i)
