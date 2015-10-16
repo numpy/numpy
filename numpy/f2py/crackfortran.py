@@ -2624,11 +2624,12 @@ def analyzevars(block):
                     if d in params:
                         d = str(params[d])
                     for p in list(params.keys()):
-                        m = re.match(
-                            r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', d, re.I)
-                        if m:
+                        re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
+                        m = re_1.match(d)
+                        while m:
                             d = m.group('before') + \
                                 str(params[p]) + m.group('after')
+                            m = re_1.match(d)
                     if d == star:
                         dl = [star]
                     else:
