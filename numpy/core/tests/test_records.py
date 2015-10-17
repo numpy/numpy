@@ -121,6 +121,23 @@ class TestFromrecords(TestCase):
         assert_equal(type(rv), np.recarray)
         assert_equal(rv.dtype.type, np.record)
 
+        # check that accessing nested structures keep record type, but
+        # not for subarrays, non-void structures, non-structured voids
+        test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4',2)),
+                      ('d', ('i8', 'i4,i4'))]
+        r = np.rec.array([((1,1), b'11111111', [1,1], 1),
+                          ((1,1), b'11111111', [1,1], 1)], dtype=test_dtype)
+        assert_equal(r.a.dtype.type, np.record)
+        assert_equal(r.b.dtype.type, np.void)
+        assert_equal(r.c.dtype.type, np.float32)
+        assert_equal(r.d.dtype.type, np.int64)
+        # check the same, but for views
+        r = np.rec.array(np.ones(4, dtype='i4,i4'))
+        assert_equal(r.view('f4,f4').dtype.type, np.record)
+        assert_equal(r.view(('i4',2)).dtype.type, np.int32)
+        assert_equal(r.view('V8').dtype.type, np.void)
+        assert_equal(r.view(('i8', 'i4,i4')).dtype.type, np.int64)
+
         #check that we can undo the view
         arrs = [np.ones(4, dtype='f4,i4'), np.ones(4, dtype='f8')]
         for arr in arrs:
@@ -134,6 +151,12 @@ class TestFromrecords(TestCase):
         # make sure non-structured dtypes also show up as rec.array
         a = np.array(np.ones(4, dtype='f8'))
         assert_(repr(np.rec.array(a)).startswith('rec.array'))
+
+        # check that the 'np.record' part of the dtype isn't shown
+        a = np.rec.array(np.ones(3, dtype='i4,i4'))
+        assert_equal(repr(a).find('numpy.record'), -1)
+        a = np.rec.array(np.ones(3, dtype='i4'))
+        assert_(repr(a).find('dtype=int32') != -1)
 
     def test_recarray_from_names(self):
         ra = np.rec.array([

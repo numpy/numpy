@@ -448,12 +448,14 @@ class recarray(ndarray):
 
         # At this point obj will always be a recarray, since (see
         # PyArray_GetField) the type of obj is inherited. Next, if obj.dtype is
-        # non-structured, convert it to an ndarray. If obj is structured leave
-        # it as a recarray, but make sure to convert to the same dtype.type (eg
-        # to preserve numpy.record type if present), since nested structured
-        # fields do not inherit type.
+        # non-structured, convert it to an ndarray. Then if obj is structured
+        # with void type convert it to the same dtype.type (eg to preserve
+        # numpy.record type if present), since nested structured fields do not
+        # inherit type. Don't do this for non-void structures though.
         if obj.dtype.fields:
-            return obj.view(dtype=(self.dtype.type, obj.dtype.fields))
+            if issubclass(obj.dtype.type, nt.void):
+                return obj.view(dtype=(self.dtype.type, obj.dtype))
+            return obj
         else:
             return obj.view(ndarray)
 
@@ -463,8 +465,9 @@ class recarray(ndarray):
     # Thus, you can't create attributes on-the-fly that are field names.
     def __setattr__(self, attr, val):
 
-        # Automatically convert (void) dtypes to records.
-        if attr == 'dtype' and issubclass(val.type, nt.void):
+        # Automatically convert (void) structured types to records
+        # (but not non-void structures, subarrays, or non-structured voids)
+        if attr == 'dtype' and issubclass(val.type, nt.void) and val.fields:
             val = sb.dtype((record, val))
 
         newattr = attr not in self.__dict__
@@ -499,7 +502,9 @@ class recarray(ndarray):
         # we might also be returning a single element
         if isinstance(obj, ndarray):
             if obj.dtype.fields:
-                return obj.view(dtype=(self.dtype.type, obj.dtype.fields))
+                if issubclass(obj.dtype.type, nt.void):
+                    return obj.view(dtype=(self.dtype.type, obj.dtype))
+                return obj
             else:
                 return obj.view(type=ndarray)
         else:
@@ -519,11 +524,14 @@ class recarray(ndarray):
             # If this is a full record array (has numpy.record dtype),
             # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
-            # converts dtype to a numpy.record for us, use only dtype.descr,
-            # not repr(dtype).
+            # converts dtype to a numpy.record for us, convert back
+            # to non-record before printing
+            plain_dtype = self.dtype
+            if plain_dtype.type is record:
+                plain_dtype = sb.dtype((nt.void, plain_dtype))
             lf = '\n'+' '*len("rec.array(")
             return ('rec.array(%s, %sdtype=%s)' %
-                          (lst, lf, repr(self.dtype.descr)))
+                          (lst, lf, plain_dtype))
         else:
             # otherwise represent it using np.array plus a view
             # This should only happen if the user is playing
