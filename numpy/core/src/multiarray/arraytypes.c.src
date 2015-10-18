@@ -621,31 +621,6 @@ OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
 
 /* VOID */
 
-/* unpack tuple of dtype->fields (descr, offset, title[not-needed]) */
-static int
-unpack_field(PyObject * value, PyArray_Descr ** descr, npy_intp * offset)
-{
-    PyObject * off;
-    if (PyTuple_GET_SIZE(value) < 2) {
-        return -1;
-    }
-    *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
-    off  = PyTuple_GET_ITEM(value, 1);
-
-    if (PyInt_Check(off)) {
-        *offset = PyInt_AsSsize_t(off);
-    }
-    else if (PyLong_Check(off)) {
-        *offset = PyLong_AsSsize_t(off);
-    }
-    else {
-        return -1;
-    }
-
-    return 0;
-}
-
-
 static PyObject *
 VOID_getitem(void *input, void *vap)
 {
@@ -674,7 +649,7 @@ VOID_getitem(void *input, void *vap)
             PyArray_Descr *new;
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (unpack_field(tup, &new, &offset) < 0) {
+            if (_unpack_field(tup, &new, &offset) < 0) {
                 Py_DECREF(ret);
                 ((PyArrayObject_fields *)ap)->descr = descr;
                 return NULL;
@@ -811,7 +786,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             npy_intp offset;
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (unpack_field(tup, &new, &offset) < 0) {
+            if (_unpack_field(tup, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)ap)->descr = descr;
                 return -1;
             }
@@ -2178,7 +2153,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
@@ -2247,7 +2222,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &new, &offset) < 0) {
                 ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
@@ -2560,7 +2535,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &new, &offset) < 0) {
                 PyErr_Clear();
                 continue;
             }
@@ -2876,7 +2851,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(descr->fields, key);
-        if (unpack_field(tup, &new, &offset) < 0) {
+        if (_unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
         /* descr is the only field checked by compare or copyswap */

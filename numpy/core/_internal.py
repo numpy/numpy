@@ -288,55 +288,23 @@ def _newnames(datatype, order):
         return tuple(list(order) + nameslist)
     raise ValueError("unsupported order value: %s" % (order,))
 
-def _index_fields(ary, names):
-    """ Given a structured array and a sequence of field names
-    construct new array with just those fields.
+def _copy_fields(ary):
+    """Return copy of structured array with padding between fields removed.
 
     Parameters
     ----------
     ary : ndarray
-        Structured array being subscripted
-    names : string or list of strings
-        Either a single field name, or a list of field names
+       Structured array from which to remove padding bytes
 
     Returns
     -------
-    sub_ary : ndarray
-        If `names` is a single field name, the return value is identical to
-        ary.getfield, a writeable view into `ary`. If `names` is a list of
-        field names the return value is a copy of `ary` containing only those
-        fields. This is planned to return a view in the future.
-    
-    Raises
-    ------
-    ValueError
-        If `ary` does not contain a field given in `names`.
-
+    ary_copy : ndarray
+       Copy of ary with padding bytes removed
     """
     dt = ary.dtype
-
-    #use getfield to index a single field
-    if isinstance(names, basestring):
-        try:
-            return ary.getfield(dt.fields[names][0], dt.fields[names][1])
-        except KeyError:
-            raise ValueError("no field of name %s" % names)
-
-    for name in names:
-        if name not in dt.fields:
-            raise ValueError("no field of name %s" % name)
-
-    formats = [dt.fields[name][0] for name in names]
-    offsets = [dt.fields[name][1] for name in names]
-
-    view_dtype = {'names': names, 'formats': formats,
-                  'offsets': offsets, 'itemsize': dt.itemsize}
-
-    # return copy for now (future plan to return ary.view(dtype=view_dtype))
-    copy_dtype = {'names': view_dtype['names'],
-                  'formats': view_dtype['formats']}
-    return array(ary.view(dtype=view_dtype), dtype=copy_dtype, copy=True)
-
+    copy_dtype = {'names': dt.names,
+                  'formats': [dt.fields[name][0] for name in dt.names]}
+    return array(ary, dtype=copy_dtype, copy=True)
 
 def _get_all_field_offsets(dtype, base_offset=0):
     """ Returns the types and offsets of all fields in a (possibly structured)
@@ -478,6 +446,12 @@ def _view_is_safe(oldtype, newtype):
         If the new type is incompatible with the old type.
 
     """
+
+    # if the types are equivalent, there is no problem.
+    # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
+    if oldtype == newtype:
+        return
+
     new_fields = _get_all_field_offsets(newtype)
     new_size = newtype.itemsize
 
