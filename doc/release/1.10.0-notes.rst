@@ -50,6 +50,16 @@ See below for more details on these changes.
 Compatibility notes
 ===================
 
+Default casting rule change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default casting for inplace operations has changed to ``'same_kind'``. For
+instance, if n is an array of integers, and f is an array of floats, then
+``n += f`` will result in a ``TypeError``, whereas in previous Numpy
+versions the floats would be silently cast to ints. In the unlikely case
+that the example code is not an actual bug, it can be updated in a backward
+compatible way by rewriting it as ``np.add(n, f, out=n, casting='unsafe')``.
+The old ``'unsafe'`` default has been deprecated since Numpy 1.7.
+
 numpy version string
 ~~~~~~~~~~~~~~~~~~~~
 The numpy version string for development builds has been changed from
