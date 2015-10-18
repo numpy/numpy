@@ -1122,19 +1122,28 @@ def gradient(f, *varargs, **kwargs):
     ----------
     f : array_like
         An N-dimensional array containing samples of a scalar function.
-    varargs : list of scalar, optional
+    varargs : scalar or list of scalar, optional
         N scalars specifying the sample distances for each dimension,
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
+        single scalar specifies sample distance for all dimensions.
+        if `axis` is given, the number of varargs must equal the number of axes.
     edge_order : {1, 2}, optional
         Gradient is calculated using N\ :sup:`th` order accurate differences
         at the boundaries. Default: 1.
 
         .. versionadded:: 1.9.1
 
+    axis : None or int or tuple of ints, optional
+        Gradient is calculated only along the given axis or axes
+        The default (axis = None) is to calculate the gradient for all the axes of the input array.
+        axis may be negative, in which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     gradient : list of ndarray
-        Each element of `list` has the same shape as `f` giving the derivative 
+        Each element of `list` has the same shape as `f` giving the derivative
         of `f` with respect to each dimension.
 
     Examples
@@ -1145,10 +1154,10 @@ def gradient(f, *varargs, **kwargs):
     >>> np.gradient(x, 2)
     array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
 
-    For two dimensional arrays, the return will be two arrays ordered by 
-    axis. In this example the first array stands for the gradient in 
+    For two dimensional arrays, the return will be two arrays ordered by
+    axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
-    
+
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
@@ -1159,15 +1168,38 @@ def gradient(f, *varargs, **kwargs):
     >>> y = x**2
     >>> np.gradient(y, dx, edge_order=2)
     array([-0.,  2.,  4.,  6.,  8.])
+
+    The axis keyword can be used to specify a subset of axes of which the gradient is calculated
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), axis=0)
+    array([[ 2.,  2., -1.],
+           [ 2.,  2., -1.]])
     """
     f = np.asanyarray(f)
     N = len(f.shape)  # number of dimensions
+
+    axes = kwargs.pop('axis', None)
+    if axes is None:
+        axes = tuple(range(N))
+    # check axes to have correct type and no duplicate entries
+    if isinstance(axes, int):
+        axes = (axes,)
+    if not isinstance(axes, tuple):
+        raise TypeError("A tuple of integers or a single integer is required")
+
+    # normalize axis values:
+    axes = tuple(x + N if x < 0 else x for x in axes)
+    if max(axes) >= N or min(axes) < 0:
+        raise ValueError("'axis' entry is out of bounds")
+
+    if len(set(axes)) != len(axes):
+        raise ValueError("duplicate value in 'axis'")
+
     n = len(varargs)
     if n == 0:
         dx = [1.0]*N
     elif n == 1:
         dx = [varargs[0]]*N
-    elif n == N:
+    elif n == len(axes):
         dx = list(varargs)
     else:
         raise SyntaxError(
@@ -1211,7 +1243,7 @@ def gradient(f, *varargs, **kwargs):
     else:
         y = f
 
-    for axis in range(N):
+    for i, axis in enumerate(axes):
 
         if y.shape[axis] < 2:
             raise ValueError(
@@ -1267,7 +1299,7 @@ def gradient(f, *varargs, **kwargs):
             out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
 
         # divide by step size
-        out /= dx[axis]
+        out /= dx[i]
         outvals.append(out)
 
         # reset the slice object in this dimension to ":"
@@ -1276,7 +1308,7 @@ def gradient(f, *varargs, **kwargs):
         slice3[axis] = slice(None)
         slice4[axis] = slice(None)
 
-    if N == 1:
+    if len(axes) == 1:
         return outvals[0]
     else:
         return outvals
@@ -1284,10 +1316,10 @@ def gradient(f, *varargs, **kwargs):
 
 def diff(a, n=1, axis=-1):
     """
-    Calculate the n-th order discrete difference along given axis.
+    Calculate the n-th discrete difference along given axis.
 
-    The first order difference is given by ``out[n] = a[n+1] - a[n]`` along
-    the given axis, higher order differences are calculated by using `diff`
+    The first difference is given by ``out[n] = a[n+1] - a[n]`` along
+    the given axis, higher differences are calculated by using `diff`
     recursively.
 
     Parameters
@@ -1302,8 +1334,9 @@ def diff(a, n=1, axis=-1):
     Returns
     -------
     diff : ndarray
-        The `n` order differences. The shape of the output is the same as `a`
+        The n-th differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`.
+.
 
     See Also
     --------
@@ -2236,7 +2269,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
 
     # Determine the normalization
     if w is None:
-        fact = float(X.shape[1] - ddof)
+        fact = X.shape[1] - ddof
     elif ddof == 0:
         fact = w_sum
     elif aweights is None:
@@ -2253,7 +2286,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
         X_T = X.T
     else:
         X_T = (X*w).T
-    return (dot(X, X_T.conj())/fact).squeeze()
+    c = dot(X, X_T.conj())
+    c *= 1. / np.float64(fact)
+    return c.squeeze()
 
 
 def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
@@ -2283,11 +2318,11 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -2309,7 +2344,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no affect and are deprecated',
+        warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning)
     c = cov(x, y, rowvar)
     try:
@@ -2317,7 +2352,11 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     except ValueError:  # scalar covariance
         # nan if incorrect value (nan, inf, 0), 1 otherwise
         return c / c
-    return c / sqrt(multiply.outer(d, d))
+    d = sqrt(d)
+    # calculate "c / multiply.outer(d, d)" row-wise ... for memory and speed
+    for i in range(0, d.size):
+        c[i,:] /= (d * d[i])
+    return c
 
 
 def blackman(M):
@@ -3372,7 +3411,7 @@ def percentile(a, q, axis=None, out=None,
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 

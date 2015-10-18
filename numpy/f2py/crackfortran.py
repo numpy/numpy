@@ -1372,11 +1372,8 @@ def analyzeline(m, case, line):
         if 'common' in groupcache[groupcounter]:
             commonkey = groupcache[groupcounter]['common']
         for c in cl:
-            if c[0] in commonkey:
-                outmess(
-                    'analyzeline: previously defined common block encountered. Skipping.\n')
-                continue
-            commonkey[c[0]] = []
+            if c[0] not in commonkey:
+                commonkey[c[0]] = []
             for i in [x.strip() for x in markoutercomma(c[1]).split('@,@')]:
                 if i:
                     commonkey[c[0]].append(i)
@@ -2624,11 +2621,12 @@ def analyzevars(block):
                     if d in params:
                         d = str(params[d])
                     for p in list(params.keys()):
-                        m = re.match(
-                            r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', d, re.I)
-                        if m:
+                        re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
+                        m = re_1.match(d)
+                        while m:
                             d = m.group('before') + \
                                 str(params[p]) + m.group('after')
+                            m = re_1.match(d)
                     if d == star:
                         dl = [star]
                     else:

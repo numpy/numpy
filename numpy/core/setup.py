@@ -15,8 +15,6 @@ from numpy._build_utils.apple_accelerate import (uses_accelerate_framework,
 
 from setup_common import *
 
-# Set to True to enable multiple file compilations (experimental)
-ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
@@ -103,6 +101,8 @@ def win32_checks(deflist):
         deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
 def check_math_capabilities(config, moredefs, mathlibs):
+    from numpy.distutils.misc_util import mingw32
+    
     def check_func(func_name):
         return config.check_func(func_name, libraries=mathlibs,
                                  decl=True, call=True)
@@ -172,7 +172,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
-    check_funcs(C99_FUNCS_EXTENDED)
+    if not mingw32():
+        check_funcs(C99_FUNCS_EXTENDED)
 
 def check_complex(config, mathlibs):
     priv = []
@@ -444,9 +445,6 @@ def configuration(parent_package='',top_path=None):
             else:
                 PYTHON_HAS_UNICODE_WIDE = False
 
-            if ENABLE_SEPARATE_COMPILATION:
-                moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
-
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
@@ -548,9 +546,6 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
-
-            if ENABLE_SEPARATE_COMPILATION:
-                moredefs.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
 
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
@@ -736,6 +731,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'array_assign.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
+            join('src', 'multiarray', 'cblasfuncs.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
@@ -762,6 +758,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'npy_config.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
+            join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -831,11 +829,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
+            join('src', 'private', 'mem_overlap.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
     if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
         extra_info = blas_info
+        # These files are also in MANIFEST.in so that they are always in
+        # the source distribution independently of HAVE_CBLAS.
         multiarray_src.extend([join('src', 'multiarray', 'cblasfuncs.c'),
                                join('src', 'multiarray', 'python_xerbla.c'),
                                ])
@@ -843,11 +844,6 @@ def configuration(parent_package='',top_path=None):
             multiarray_src.extend(get_sgemv_fix())
     else:
         extra_info = {}
-
-    if not ENABLE_SEPARATE_COMPILATION:
-        multiarray_deps.extend(multiarray_src)
-        multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
-        multiarray_src.append(generate_multiarray_templated_sources)
 
     config.add_extension('multiarray',
                          sources=multiarray_src +
@@ -916,13 +912,6 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
 
-    if not ENABLE_SEPARATE_COMPILATION:
-        umath_deps.extend(umath_src)
-        umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
-        umath_src.append(generate_umath_templated_sources)
-        umath_src.append(join('src', 'umath', 'funcs.inc.src'))
-        umath_src.append(join('src', 'umath', 'simd.inc.src'))
-
     config.add_extension('umath',
                          sources=umath_src +
                                  [generate_config_h,
@@ -959,7 +948,10 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('multiarray_tests',
-                    sources=[join('src', 'multiarray', 'multiarray_tests.c.src')])
+                    sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
+                             join('src', 'private', 'mem_overlap.c')],
+                    depends=[join('src', 'private', 'mem_overlap.h'),
+                             join('src', 'private', 'npy_extint128.h')])
 
     #######################################################################
     #                        operand_flag_tests module                    #

@@ -455,7 +455,8 @@ The sections of the docstring are:
    The examples may assume that ``import numpy as np`` is executed before
    the example code in *numpy*. Additional examples may make use of
    *matplotlib* for plotting, but should import it explicitly, e.g.,
-   ``import matplotlib.pyplot as plt``.
+   ``import matplotlib.pyplot as plt``. All other imports, including the
+   demonstrated function, must be explicit.
 
 
 Documenting classes

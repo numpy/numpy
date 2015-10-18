@@ -13,6 +13,13 @@
 
 #include "npy_pycompat.h"
 
+#ifdef HAVE_STRTOLD_L
+#include <stdlib.h>
+#include <xlocale.h>
+#endif
+
+
+
 /*
  * From the C99 standard, section 7.19.6: The exponent always contains at least
  * two digits, and only as many more digits as necessary to represent the
@@ -507,10 +514,12 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     /*
      * ## 2
      *
-     * At least Python versions <= 2.6.1
+     * At least Python versions <= 2.6.8
      *
      * Fails to do best-efforts parsing of strings of the form "1<DP>234"
      * where <DP> is the decimal point under the foreign locale.
+     * This is because PyOS_ascii_strtod is buggy, and will completely
+     * refuse to parse the string, rather than parsing the first part "1".
      */
     if (decimal_point[0] != '.' || decimal_point[1] != 0) {
         p = s;
@@ -539,13 +548,88 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     return NumPyOS_ascii_strtod_plain(s, endptr);
 }
 
+NPY_NO_EXPORT long double
+NumPyOS_ascii_strtold(const char *s, char** endptr)
+{
+    const char *p;
+    long double result;
+#ifdef HAVE_STRTOLD_L
+    locale_t clocale;
+#endif
+
+    while (NumPyOS_ascii_isspace(*s)) {
+        ++s;
+    }
+
+    /*
+     * ##1
+     *
+     * Recognize POSIX inf/nan representations on all platforms.
+     */
+    p = s;
+    result = 1.0;
+    if (*p == '-') {
+        result = -1.0;
+        ++p;
+    }
+    else if (*p == '+') {
+        ++p;
+    }
+    if (NumPyOS_ascii_strncasecmp(p, "nan", 3) == 0) {
+        p += 3;
+        if (*p == '(') {
+            ++p;
+            while (NumPyOS_ascii_isalnum(*p) || *p == '_') {
+                ++p;
+            }
+            if (*p == ')') {
+                ++p;
+            }
+        }
+        if (endptr != NULL) {
+            *endptr = (char*)p;
+        }
+        return NPY_NAN;
+    }
+    else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
+        p += 3;
+        if (NumPyOS_ascii_strncasecmp(p, "inity", 5) == 0) {
+            p += 5;
+        }
+        if (endptr != NULL) {
+            *endptr = (char*)p;
+        }
+        return result*NPY_INFINITY;
+    }
+    /* End of ##1 */
+
+#ifdef HAVE_STRTOLD_L
+    clocale = newlocale(LC_ALL_MASK, "C", NULL);
+    if (clocale) {
+        errno = 0;
+        result = strtold_l(s, endptr, clocale);
+        freelocale(clocale);
+        if (errno) {
+            *endptr = (char*)s;
+        }
+    }
+    else {
+        *endptr = (char*)s;
+        result = 0;
+    }
+    return result;
+#else
+    return NumPyOS_ascii_strtod(s, endptr);
+#endif
+}
 
 /*
- * NumPyOS_ascii_ftolf:
+ * read_numberlike_string:
  *      * fp: FILE pointer
  *      * value: Place to store the value read
  *
- * Similar to PyOS_ascii_strtod, except that it reads input from a file.
+ * Read what looks like valid numeric input and store it in a buffer
+ * for later parsing as a number.
  *
  * Similarly to fscanf, this function always consumes leading whitespace,
  * and any text that could be the leading part in valid input.
@@ -555,17 +639,17 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
  *      * 1 if a number read,
  *      * EOF if end-of-file met before reading anything.
  */
-NPY_NO_EXPORT int
-NumPyOS_ascii_ftolf(FILE *fp, double *value)
+static int
+read_numberlike_string(FILE *fp, char *buffer, size_t buflen)
 {
-    char buffer[FLOAT_FORMATBUFLEN + 1];
+
     char *endp;
     char *p;
     int c;
     int ok;
 
     /*
-     * Pass on to PyOS_ascii_strtod the leftmost matching part in regexp
+     * Fill buffer with the leftmost matching part in regexp
      *
      *     \s*[+-]? ( [0-9]*\.[0-9]+([eE][+-]?[0-9]+)
      *              | nan  (  \([:alphanum:_]*\) )?
@@ -583,7 +667,7 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
 
 #define NEXT_CHAR()                                                         \
         do {                                                                \
-            if (c == EOF || endp >= buffer + FLOAT_FORMATBUFLEN)            \
+            if (c == EOF || endp >= buffer + buflen - 1)            \
                 END_MATCH();                                                \
             *endp++ = (char)c;                                              \
             c = getc(fp);                                                   \
@@ -668,11 +752,8 @@ buffer_filled:
     ungetc(c, fp);
     *endp = '\0';
 
-    /* 5. try to convert buffer. */
-    *value = NumPyOS_ascii_strtod(buffer, &p);
-
     /* return 1 if something read, else 0 */
-    return (buffer == p) ? 0 : 1;
+    return (buffer == endp) ? 0 : 1;
 }
 
 #undef END_MATCH
@@ -681,3 +762,50 @@ buffer_filled:
 #undef MATCH_ONE_OR_NONE
 #undef MATCH_ONE_OR_MORE
 #undef MATCH_ZERO_OR_MORE
+
+/*
+ * NumPyOS_ascii_ftolf:
+ *      * fp: FILE pointer
+ *      * value: Place to store the value read
+ *
+ * Similar to PyOS_ascii_strtod, except that it reads input from a file.
+ *
+ * Similarly to fscanf, this function always consumes leading whitespace,
+ * and any text that could be the leading part in valid input.
+ *
+ * Return value: similar to fscanf.
+ *      * 0 if no number read,
+ *      * 1 if a number read,
+ *      * EOF if end-of-file met before reading anything.
+ */
+NPY_NO_EXPORT int
+NumPyOS_ascii_ftolf(FILE *fp, double *value)
+{
+    char buffer[FLOAT_FORMATBUFLEN + 1];
+    char *p;
+    int r;
+
+    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN+1);
+
+    if (r != EOF && r != 0) {
+        *value = NumPyOS_ascii_strtod(buffer, &p);
+        r = (p == buffer) ? 0 : 1;
+    }
+    return r;
+}
+
+NPY_NO_EXPORT int
+NumPyOS_ascii_ftoLf(FILE *fp, long double *value)
+{
+    char buffer[FLOAT_FORMATBUFLEN + 1];
+    char *p;
+    int r;
+
+    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN+1);
+
+    if (r != EOF && r != 0) {
+        *value = NumPyOS_ascii_strtold(buffer, &p);
+        r = (p == buffer) ? 0 : 1;
+    }
+    return r;
+}

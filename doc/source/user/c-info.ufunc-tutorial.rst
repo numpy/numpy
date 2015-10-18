@@ -1060,7 +1060,7 @@ automatically generates a ufunc from a C function with the correct signature.
 
 .. c:function:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
    void** data, char* types, int ntypes, int nin, int nout, int identity,
-   char* name, char* doc, int check_return)
+   char* name, char* doc, int unused)
 
     *func*
 
@@ -1170,10 +1170,9 @@ automatically generates a ufunc from a C function with the correct signature.
         response to ``{ufunc_name}.__doc__``). Do not include the function
         signature or the name as this is generated automatically.
 
-    *check_return*
+    *unused*
 
-        Not presently used, but this integer value does get set in the
-        structure-member of similar name.
+        Unused; kept for compatiblity. Just set it to zero.
 
 .. index::
    pair: ufunc; adding new

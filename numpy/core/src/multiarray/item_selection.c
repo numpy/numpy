@@ -1427,9 +1427,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]) {
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]
+                && !PyArray_DESCR(mps[i])->f->compare) {
             PyErr_Format(PyExc_TypeError,
-                         "merge sort not available for item %zd", i);
+                         "item %zd type does not have compare function", i);
             goto fail;
         }
         if (!object
@@ -1520,15 +1521,25 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
+                int rcode;
                 elsize = PyArray_DESCR(mps[j])->elsize;
                 astride = PyArray_STRIDES(mps[j])[axis];
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
+                if(argsort == NULL) {
+                    argsort = npy_amergesort;
+                }
                 _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
                                              its[j]->dataptr, astride, N, elsize);
                 if (swaps[j]) {
                     _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
                 }
-                if (argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]) < 0) {
+                rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
+#if defined(NPY_PY3K)
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+#else
+                if (rcode < 0) {
+#endif
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
                     free(swaps);
@@ -1551,9 +1562,19 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
+                int rcode;
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
-                if (argsort(its[j]->dataptr, (npy_intp *)rit->dataptr,
-                            N, mps[j]) < 0) {
+                if(argsort == NULL) {
+                    argsort = npy_amergesort;
+                }
+                rcode = argsort(its[j]->dataptr,
+                        (npy_intp *)rit->dataptr, N, mps[j]);
+#if defined(NPY_PY3K)
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+#else
+                if (rcode < 0) {
+#endif
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);

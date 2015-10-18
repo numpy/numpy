@@ -765,39 +765,6 @@ _IsWriteable(PyArrayObject *ap)
 }
 
 
-/* Gets a half-open range [start, end) of offsets from the data pointer */
-NPY_NO_EXPORT void
-offset_bounds_from_strides(const int itemsize, const int nd,
-                           const npy_intp *dims, const npy_intp *strides,
-                           npy_intp *lower_offset, npy_intp *upper_offset) {
-    npy_intp max_axis_offset;
-    npy_intp lower = 0;
-    npy_intp upper = 0;
-    int i;
-
-    for (i = 0; i < nd; i++) {
-        if (dims[i] == 0) {
-            /* If the array size is zero, return an empty range */
-            *lower_offset = 0;
-            *upper_offset = 0;
-            return;
-        }
-        /* Expand either upwards or downwards depending on stride */
-        max_axis_offset = strides[i] * (dims[i] - 1);
-        if (max_axis_offset > 0) {
-            upper += max_axis_offset;
-        }
-        else {
-            lower += max_axis_offset;
-        }
-    }
-    /* Return a half-open range */
-    upper += itemsize;
-    *lower_offset = lower;
-    *upper_offset = upper;
-}
-
-
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
@@ -908,4 +875,55 @@ end:
     Py_XDECREF(shape2);
     Py_XDECREF(shape1_i);
     Py_XDECREF(shape2_j);
+}
+
+/**
+ * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ *
+ * @param "value" should be the tuple.
+ *
+ * @return "descr" will be set to the field's dtype
+ * @return "offset" will be set to the field's offset
+ *
+ * returns -1 on failure, 0 on success.
+ */
+NPY_NO_EXPORT int
+_unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
+{
+    PyObject * off;
+    if (PyTuple_GET_SIZE(value) < 2) {
+        return -1;
+    }
+    *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
+    off  = PyTuple_GET_ITEM(value, 1);
+
+    if (PyInt_Check(off)) {
+        *offset = PyInt_AsSsize_t(off);
+    }
+    else if (PyLong_Check(off)) {
+        *offset = PyLong_AsSsize_t(off);
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * check whether arrays with datatype dtype might have object fields. This will
+ * only happen for structured dtypes (which may have hidden objects even if the
+ * HASOBJECT flag is false), object dtypes, or subarray dtypes whose base type
+ * is either of these.
+ */
+NPY_NO_EXPORT int
+_may_have_objects(PyArray_Descr *dtype)
+{
+    PyArray_Descr *base = dtype;
+    if (PyDataType_HASSUBARRAY(dtype)) {
+        base = dtype->subarray->base;
+    }
+
+    return (PyDataType_HASFIELDS(base) ||
+            PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
 }

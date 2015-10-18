@@ -587,6 +587,15 @@ cdef class RandomState:
     array filled with generated values is returned. If `size` is a tuple,
     then an array with that shape is filled and returned.
 
+    *Compatibility Guarantee*
+    A fixed seed and a fixed series of calls to 'RandomState' methods using
+    the same parameters will always produce the same results up to roundoff
+    error except when the values were incorrect. Incorrect values will be
+    fixed and the NumPy version in which the fix was made will be noted in
+    the relevant docstring. Extension of existing parameter ranges and the
+    addition of new parameters is allowed as long the previous behavior
+    remains unchanged.
+
     Parameters
     ----------
     seed : {None, int, array_like}, optional
@@ -3078,7 +3087,7 @@ cdef class RandomState:
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
         >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
-        >>> beta = np.std(maxima)*np.pi/np.sqrt(6)
+        >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp(-np.exp(-(bins - mu)/beta)),
@@ -3520,7 +3529,7 @@ cdef class RandomState:
 
         .. math:: P(x;l, m, r) = \\begin{cases}
                   \\frac{2(x-l)}{(r-l)(m-l)}& \\text{for $l \\leq x \\leq m$},\\\\
-                  \\frac{2(m-x)}{(r-l)(r-m)}& \\text{for $m \\leq x \\leq r$},\\\\
+                  \\frac{2(r-x)}{(r-l)(r-m)}& \\text{for $m \\leq x \\leq r$},\\\\
                   0& \\text{otherwise}.
                   \\end{cases}
 

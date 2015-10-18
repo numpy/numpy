@@ -601,6 +601,31 @@ class TestGradient(TestCase):
         num_error = np.abs((np.gradient(y, dx, edge_order=2) / analytical) - 1)
         assert_(np.all(num_error < 0.03) == True)
 
+    def test_specific_axes(self):
+        # Testing that gradient can work on a given axis only
+        v = [[1, 1], [3, 4]]
+        x = np.array(v)
+        dx = [np.array([[2., 3.], [2., 3.]]),
+              np.array([[0., 0.], [1., 1.]])]
+        assert_array_equal(gradient(x, axis=0), dx[0])
+        assert_array_equal(gradient(x, axis=1), dx[1])
+        assert_array_equal(gradient(x, axis=-1), dx[1])
+        assert_array_equal(gradient(x, axis=(1,0)), [dx[1], dx[0]])
+
+        # test axis=None which means all axes
+        assert_almost_equal(gradient(x, axis=None), [dx[0], dx[1]])
+        # and is the same as no axis keyword given
+        assert_almost_equal(gradient(x, axis=None), gradient(x))
+
+        # test vararg order
+        assert_array_equal(gradient(x, 2, 3, axis=(1,0)), [dx[1]/2.0, dx[0]/3.0])
+        # test maximal number of varargs
+        assert_raises(SyntaxError, gradient, x, 1, 2, axis=1)
+
+        assert_raises(ValueError, gradient, x, axis=3)
+        assert_raises(ValueError, gradient, x, axis=-3)
+        assert_raises(TypeError, gradient, x, axis=[1,])
+
 
 class TestAngle(TestCase):
 
@@ -1572,6 +1597,12 @@ class TestCorrCoef(TestCase):
             assert_array_equal(corrcoef(np.array([]).reshape(2, 0)),
                                np.array([[np.nan, np.nan], [np.nan, np.nan]]))
 
+    def test_extreme(self):
+        x = [[1e-100, 1e100], [1e100, 1e-100]]
+        with np.errstate(all='raise'):
+            c = corrcoef(x)
+        assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
+
 
 class TestCov(TestCase):
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
@@ -1888,19 +1919,25 @@ class TestBincount(TestCase):
 
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
-        assert_raises_regex(TypeError, "an integer is required",
+        assert_raises_regex(TypeError,
+                            "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
-        assert_raises_regex(ValueError, "must be positive",
+        assert_raises_regex(ValueError,
+                            "must be positive",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError, "must be positive",
+        assert_raises_regex(ValueError,
+                            "must be positive",
                             lambda: np.bincount(x, minlength=0))
 
         x = np.arange(5)
-        assert_raises_regex(TypeError, "an integer is required",
+        assert_raises_regex(TypeError,
+                            "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
-        assert_raises_regex(ValueError, "minlength must be positive",
+        assert_raises_regex(ValueError,
+                            "minlength must be positive",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError, "minlength must be positive",
+        assert_raises_regex(ValueError,
+                            "minlength must be positive",
                             lambda: np.bincount(x, minlength=0))
 
 

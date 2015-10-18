@@ -21,9 +21,7 @@
 #include "Python.h"
 
 #include "npy_config.h"
-#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#endif
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -123,7 +121,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->identity = PyUFunc_None;
     self->functions = pyfunc_functions;
     self->ntypes = 1;
-    self->check_return = 0;
 
     /* generalized ufunc */
     self->core_enabled = 0;

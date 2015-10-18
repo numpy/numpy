@@ -21,7 +21,7 @@ from .utils import *
 from .arraysetops import *
 from .npyio import *
 from .financial import *
-from .arrayterator import *
+from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
 
