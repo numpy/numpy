@@ -3339,7 +3339,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
 
     # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact) and sz > 0:
         # warn and return nans like mean would
         rout = mean(part[indexer], axis=axis, out=out)
         part = np.rollaxis(part, axis, part.ndim)
