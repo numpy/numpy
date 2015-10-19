@@ -30,7 +30,10 @@ python:
 matrix:
   include:
     - python: 3.3
+      # Travis caching is not available infrastructre on the legacy
+      # architecture (i.e. when sudo=true), so skip Cython compiltion
       env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=3.4
+           CYTHON_OPTS="--install-option=--no-cython-compile"
       sudo: true
       addons:
         apt:
@@ -62,11 +65,11 @@ before_install:
   - virtualenv --python=python venv
   - source venv/bin/activate
   - python -V
-  - pip install --upgrade pip setuptools
+  - pip install --upgrade pip setuptools wheel
   - pip install nose
   # pip install coverage
-  # Speed up install by not compiling Cython
-  - pip install --install-option="--no-cython-compile" Cython
+  # Compile Cython when the resulting wheel will cached between builds
+  - pip install ${CYTHON_OPTS:-} Cython
   - popd
 
 script:
