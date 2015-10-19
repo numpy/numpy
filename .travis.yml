@@ -22,6 +22,8 @@ matrix:
       env: USE_BENTO=1
     - python: 2.7
       env: USE_WHEEL=1
+    - python: 2.7
+      env: PYTHONOPTIMIZE=2
 before_install:
   - uname -a
   - free -m
