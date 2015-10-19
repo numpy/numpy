@@ -57,7 +57,7 @@ To build the PDF documentation, do instead::
 
 You will need to have Latex installed for this.
 
-In addition to the above, you can also do::
+Instead of the above, you can also do::
 
    make dist
 
@@ -65,14 +65,19 @@ which will rebuild Numpy, install it to a temporary location, and
 build the documentation in all formats. This will most likely again
 only work on Unix platforms.
 
+The documentation for Numpy distributed at http://docs.scipy.org in html and
+pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details on
+how to update http://docs.scipy.org.
+
 .. _Matplotlib: http://matplotlib.org/
+.. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
 
 Sphinx extensions
 -----------------
 
 Numpy's documentation uses several custom extensions to Sphinx.  These
-are shipped in the ``sphinxext/`` directory, and are automatically
-enabled when building Numpy's documentation.
+are shipped in the ``sphinxext/`` directory (as git submodules, as discussed
+above), and are automatically enabled when building Numpy's documentation.
 
 If you want to make use of these extensions in third-party
 projects, they are available on PyPi_ as the numpydoc_ package.
