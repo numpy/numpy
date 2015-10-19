@@ -15,7 +15,7 @@ basic linear algebra and random number generation.
 """
 from __future__ import division, print_function
 
-DOCLINES = __doc__.split("\n")
+DOCLINES = (__doc__ or '').split("\n")
 
 import os
 import sys
