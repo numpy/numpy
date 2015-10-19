@@ -1060,7 +1060,7 @@ def select(condlist, choicelist, default=0):
     return result
 
 
-def copy(a, order='K'):
+def copy(a, order='K', subok=False):
     """
     Return an array copy of the given object.
 
@@ -1075,6 +1075,9 @@ def copy(a, order='K'):
         as possible. (Note that this function and :meth:ndarray.copy are very
         similar, but have different default values for their order=
         arguments.)
+    subok : bool, optional
+        If True, then sub-classes will be passed-through, otherwise
+        the returned array will be forced to be a base-class array (default).
 
     Returns
     -------
@@ -1104,7 +1107,7 @@ def copy(a, order='K'):
     False
 
     """
-    return array(a, order=order, copy=True)
+    return array(a, order=order, subok=subok, copy=True)
 
 # Basic operations
 

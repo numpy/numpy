@@ -85,6 +85,15 @@ class TestCopy(TestCase):
         assert_(not a_fort_copy.flags.c_contiguous)
         assert_(a_fort_copy.flags.f_contiguous)
 
+    def test_subok(self):
+        # Pass through sub-class when subok argument is True
+        # GH issue 3474
+        mx = np.ma.array([1, 2, 3])
+        assert np.ma.isMaskedArray(np.copy(mx, subok=True))
+        assert not np.ma.isMaskedArray(np.copy(mx, subok=False))
+        # default is to force base class
+        assert not np.ma.isMaskedArray(np.copy(mx))
+
 
 class TestAverage(TestCase):
 
