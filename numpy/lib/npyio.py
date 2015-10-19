@@ -599,6 +599,13 @@ def savez_compressed(file, *args, **kwds):
     """
     _savez(file, args, kwds, True)
 
+def _is_valid_dict(val):
+    # Check if val is a dict and if all dict keys are str
+    if type(val)!=dict:
+        return False
+    keystr=np.array(list(map(lambda x:type(x)==str,val.keys())))
+    return np.all(keystr)
+    
 
 def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
@@ -629,22 +636,33 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # Stage arrays in a temporary file on disk, before writing to zip.
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
     os.close(fd)
+    # Tempory file with valid extension for call with _savez
+    fd, tmpnpzfile = tempfile.mkstemp(suffix='-numpy.npz')
+    os.close(fd) 
     try:
         for key, val in namedict.items():
-            fname = key + '.npy'
-            fid = open(tmpfile, 'wb')
-            try:
-                format.write_array(fid, np.asanyarray(val),
-                                   allow_pickle=allow_pickle,
-                                   pickle_kwargs=pickle_kwargs)
-                fid.close()
-                fid = None
-                zipf.write(tmpfile, arcname=fname)
-            finally:
-                if fid:
+            if _is_valid_dict(val):
+                # valid dict so can be a nested npz file
+                fname = key + '.npz'
+                _savez(tmpnpzfile, args=[], kwds=val, compress=compress,
+                       allow_pickle=allow_pickle, pickle_kwargs=pickle_kwargs)
+                zipf.write(tmpnpzfile, arcname=fname)
+            else:
+                fname = key + '.npy'
+                fid = open(tmpfile, 'wb')
+                try:
+                    format.write_array(fid, np.asanyarray(val),
+                                    allow_pickle=allow_pickle,
+                                    pickle_kwargs=pickle_kwargs)
                     fid.close()
+                    fid = None
+                    zipf.write(tmpfile, arcname=fname)
+                finally:
+                    if fid:
+                        fid.close()
     finally:
         os.remove(tmpfile)
+        os.remove(tmpnpzfile)
 
     zipf.close()
 
