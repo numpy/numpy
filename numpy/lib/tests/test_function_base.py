@@ -2597,6 +2597,34 @@ class TestMedian(TestCase):
             assert_equal(np.median(a, (0, 2)), b)
             assert_equal(len(w), 1)
 
+    def test_empty(self):
+        # empty arrays
+        a = np.array([], dtype=float)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a), np.nan)
+            assert_(w[0].category is RuntimeWarning)
+
+        # multiple dimensions
+        a = np.array([], dtype=float, ndmin=3)
+        # no axis
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a), np.nan)
+            assert_(w[0].category is RuntimeWarning)
+
+        # axis 0 and 1
+        b = np.array([], dtype=float, ndmin=2)
+        assert_equal(np.median(a, axis=0), b)
+        assert_equal(np.median(a, axis=1), b)
+
+        # axis 2
+        b = np.array(np.nan, dtype=float, ndmin=2)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.median(a, axis=2), b)
+            assert_(w[0].category is RuntimeWarning)
+
     def test_object(self):
         o = np.arange(7.)
         assert_(type(np.median(o.astype(object))), float)
