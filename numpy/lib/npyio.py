@@ -162,13 +162,19 @@ class NpzFile(object):
         _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
+        self.file_types={}
         self.allow_pickle = allow_pickle
         self.pickle_kwargs = pickle_kwargs
         for x in self._files:
             if x.endswith('.npy'):
                 self.files.append(x[:-4])
+                self.file_types[x[:-4]]='NPY'
+            elif x.endswith('.npz'):
+                self.files.append(x[:-4])
+                self.file_types[x[:-4]]='NPZ'               
             else:
                 self.files.append(x)
+                self.file_types[x]='OTH'  
         self.zip = _zip
         self.f = BagObj(self)
         if own_fid:
@@ -212,12 +218,22 @@ class NpzFile(object):
             member = 1
         elif key in self.files:
             member = 1
-            key += '.npy'
+            if self.file_types[key]=='NPY':
+                key += '.npy'
+            elif self.file_types[key]=='NPZ':
+                key += '.npz'
         if member:
             bytes = self.zip.open(key)
             magic = bytes.read(len(format.MAGIC_PREFIX))
             bytes.close()
-            if magic == format.MAGIC_PREFIX:
+            if key.endswith('.npz'):
+               #if nested NPZ return a NpzFile object on the zip stream
+               import tempfile
+               fid=tempfile.TemporaryFile()
+               fid.write(self.zip.read(key))
+               fid.seek(0)
+               return  NpzFile(fid, own_fid=True, allow_pickle=self.allow_pickle, pickle_kwargs=self.pickle_kwargs)
+            elif magic == format.MAGIC_PREFIX:
                 bytes = self.zip.open(key)
                 return format.read_array(bytes,
                                          allow_pickle=self.allow_pickle,
