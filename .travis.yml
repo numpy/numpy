@@ -50,6 +50,8 @@ matrix:
       env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
     - python: 2.7
       env: USE_WHEEL=1
+    - python: 2.7
+      env: PYTHONOPTIMIZE=2
 before_install:
   - uname -a
   - free -m
