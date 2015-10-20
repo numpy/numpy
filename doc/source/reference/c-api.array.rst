@@ -286,7 +286,7 @@ From scratch
     This function steals a reference to *descr* if it is not NULL.
 
     Create a new array with the provided data-type descriptor, *descr*
-    , of the shape deteremined by *nd* and *dims*.
+    , of the shape determined by *nd* and *dims*.
 
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
