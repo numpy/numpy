@@ -1829,7 +1829,7 @@ Item selection and manipulation
     *self* would be preserved. No checking is done on whether or not self is
     in ascending order.
 
-    The *side* argument indicates whther the index returned should be that of
+    The *side* argument indicates whether the index returned should be that of
     the first suitable location (if :c:data:`NPY_SEARCHLEFT`) or of the last
     (if :c:data:`NPY_SEARCHRIGHT`).
 
@@ -1913,8 +1913,8 @@ Calculation
     The out argument specifies where to place the result. If out is
     NULL, then the output array is created, otherwise the output is
     placed in out which must be the correct size and type. A new
-    reference to the ouput array is always returned even when out
-    is not NULL. The caller of the routine has the responsability
+    reference to the output array is always returned even when out
+    is not NULL. The caller of the routine has the responsibility
     to ``DECREF`` out if not NULL or a memory-leak will occur.
 
 .. c:function:: PyObject* PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out)
@@ -2040,7 +2040,7 @@ Array Functions
 
         The address to any Python object. This Python object will be replaced
         with an equivalent well-behaved, C-style contiguous, ndarray of the
-        given data type specifice by the last two arguments. Be sure that
+        given data type specified by the last two arguments. Be sure that
         stealing a reference in this way to the input object is justified.
 
     :param ptr:
@@ -2110,7 +2110,7 @@ Array Functions
 
     .. versionadded:: 1.6
 
-    Applies the einstein summation convention to the array operands
+    Applies the Einstein summation convention to the array operands
     provided, returning a new array or placing the result in *out*.
     The string in *subscripts* is a comma separated list of index
     letters. The number of operands is in *nop*, and *op_in* is an
@@ -2773,7 +2773,7 @@ to.
     interface to a variable with members that detail the object's use
     of its chunk of memory. The *buf* variable is a pointer to a
     structure with base, ptr, len, and flags members. The
-    :c:type:`PyArray_Chunk` structure is binary compatibile with the
+    :c:type:`PyArray_Chunk` structure is binary compatible with the
     Python's buffer object (through its len member on 32-bit platforms
     and its ptr member on 64-bit platforms or in Python 2.5). On
     return, the base member is set to *obj* (or its base if *obj* is
@@ -2905,7 +2905,7 @@ the C-API is needed then some additional steps must be taken.
     :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` to some name that will hold the
     C-API (*e.g.* myextension_ARRAY_API). This must be done **before**
     including the numpy/arrayobject.h file. In the module
-    intialization routine you call ``import_array`` (). In addition,
+    initialization routine you call ``import_array`` (). In addition,
     in the files that do not have the module initialization
     sub_routine define :c:macro:`NO_IMPORT_ARRAY` prior to including
     numpy/arrayobject.h.
@@ -3070,7 +3070,7 @@ These macros are only meaningful if :c:data:`NPY_ALLOW_THREADS`
 evaluates True during compilation of the extension module. Otherwise,
 these macros are equivalent to whitespace. Python uses a single Global
 Interpreter Lock (GIL) for each Python process so that only a single
-thread may excecute at a time (even on multi-cpu machines). When
+thread may execute at a time (even on multi-cpu machines). When
 calling out to a compiled function that may take time to compute (and
 does not have side-effects for other threads like updated global
 variables), the GIL should be released so that other Python threads
