@@ -152,38 +152,6 @@ is broken). gcc 4.4 will hopefully be able to run natively.
 This is the only tested way to get a numpy with a FULL blas/lapack (scipy
 does not work because of C++).
 
-Carl Kleffner's mingw-w64 toolchain
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Carl Kleffner has been working on mingw-w64 / OpenBLAS support and has put
-together toolchains for that option. The toolchains are available at 
-https://bitbucket.org/carlkl/mingw-w64-for-python/downloads. The site.cfg
-should be configured like so:
-
-   [openblas]
-   libraries = openblaspy
-   library_dirs = <openblaspath>/lib
-   include_dirs = <openblaspath>/include
-
-The libopenblaspy.dll from <openblaspath>/bin must be copied to numpy/core
-before the build. For this mingw-w64 toolchain manual creation of the python
-import libs is necessary, i.e.:
-
-   gendef python2.7.dll
-   dlltool -D python27.dll -d python27.def -l libpython27.dll.a
-   move libpython27.dll.a libs\libpython27.dll.a
-
-For python-2.6 up to python 3.2 use
-https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/mingwpy_win32_vc90.tar.xz
-or
-https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/mingwpy_amd64_vc90.tar.xz
-
-For python-3.3 and python-3.4 use
-https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/mingwpy_win32_vc100.tar.xz
-or
-https://bitbucket.org/carlkl/mingw-w64-for-python/downloads/mingwpy_amd64_vc100.tar.xz
- 
-
 MS compilers
 ------------
 

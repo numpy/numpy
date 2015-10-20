@@ -4583,6 +4583,15 @@ PyMODINIT_FUNC initmultiarray(void) {
         goto err;
     }
 
+#if defined(MS_WIN64) && defined(__GNUC__)
+  PyErr_WarnEx(PyExc_Warning,
+        "Numpy built with MINGW-W64 on Windows 64 bits is experimental, " \
+        "and only available for \n" \
+        "testing. You are advised not to use it for production. \n\n" \
+        "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
+        1);
+#endif
+
     /* Initialize access to the PyDateTime API */
     numpy_pydatetime_import();
 
