@@ -1,8 +1,0 @@
-short_version = $VERSION
-version = $VERSION
-full_version = $FULL_VERSION
-git_revision = $GIT_REVISION
-release = $IS_RELEASED
-
-if not release:
-    version = full_version
