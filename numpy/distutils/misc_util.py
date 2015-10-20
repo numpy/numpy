@@ -381,22 +381,9 @@ def mingw32():
     """Return true when using mingw32 environment.
     """
     if sys.platform=='win32':
-        # mingw32 compiler configured in %USERPROFILE%\pydistutils.cfg 
-        # or distutils\distutils.cfg
-        from distutils.dist import Distribution
-        _dist = Distribution()
-        _dist.parse_config_files()
-        _bld = _dist.get_option_dict('build')
-        if _bld and 'mingw32' in _bld.get('compiler'):
+        if os.environ.get('OSTYPE', '')=='msys':
             return True
-        # parse setup.py command line: --compiler=mingw32 or -c mingw32
-        elif (_i for _i in sys.argv if 'mingw32' in _i) and \
-             (_i for _i in sys.argv if ('setup.py') in _i):
-            return True
-        # using msys or msys2 shell
-        elif os.environ.get('OSTYPE', '')=='msys':
-            return True
-        elif os.environ.get('MSYSTEM', '') in ('MINGW32', 'MINGW64'):
+        if os.environ.get('MSYSTEM', '')=='MINGW32':
             return True
     return False
 
