@@ -24,6 +24,7 @@ def is_win32():
     return sys.platform == "win32" and platform.architecture()[0] == "32bit"
 
 if is_win64():
+    #_EXTRAFLAGS = ["-fno-leading-underscore"]
     _EXTRAFLAGS = []
 else:
     _EXTRAFLAGS = []
@@ -214,12 +215,10 @@ class GnuFCompiler(FCompiler):
                 # use -mincoming-stack-boundary=2
                 # due to the change to 16 byte stack alignment since GCC 4.6
                 # but 32 bit Windows ABI defines 4 bytes stack alignment
-                opt = ['-O2 -march=pentium4 -mtune=generic -mfpmath=sse -msse2'
-                       ' -mlong-double-64 -mincoming-stack-boundary=2' 
-                       ' -ffpe-summary=invalid,zero']
+                opt = ['-O2 -march=core2 -mtune=generic -mfpmath=sse -msse2 '
+                       '-mincoming-stack-boundary=2']
             else:
-                opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2'
-                       ' -mlong-double-64 -ffpe-summary=invalid,zero']
+                opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2']
         else:
             opt = ['-O2']
 
@@ -271,11 +270,11 @@ class Gnu95FCompiler(GnuFCompiler):
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_f90' : [None, "-Wall",
+        'compiler_f90' : [None, "-Wall", "-g",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
         'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
                           "-fno-second-underscore"] + _EXTRAFLAGS,
-        'linker_so'    : ["<F90>", "-Wall"],
+        'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
         'linker_exe'   : [None, "-Wall"]

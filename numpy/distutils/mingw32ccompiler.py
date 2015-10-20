@@ -95,10 +95,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # Before build with MinGW-W64 generate the python import library
         # with gendef and dlltool according to the MingW-W64 FAQ.
         # Use the MinGW-W64 provided msvc runtime import libraries.
-        # The mingwpy package deploys it's own import libraries.
         # Don't call build_import_library() and build_msvcr_library.
 
-        if 'MinGW-W64' not in str(out_string) and 'mingwpy' not in str(out_string):
+        if 'MinGW-W64' not in str(out_string):
 
             # **changes: eric jones 4/11/01
             # 1. Check for import library on Windows.  Build if it doesn't
@@ -132,10 +131,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(
-                    compiler='gcc -O2 -march=x86-64 -mtune=generic -DMS_WIN64'
-                             ' -msse2 -mlong-double-64 -Wall',
-                    compiler_so='gcc -O2 -march=x86-64 -mtune=generic -DMS_WIN64'
-                                ' -msse2 -mlong-double-64 -Wall -Wstrict-prototypes',
+                    compiler='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
+                             ' -O2 -msse2 -Wall',
+                    compiler_so='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
+                                ' -O2 -msse2 -Wall -Wstrict-prototypes',
                     linker_exe='gcc',
                     linker_so='gcc -shared -Wl,-gc-sections -Wl,-s')
         else:
@@ -159,11 +158,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                 # build needs '-mincoming-stack-boundary=2' due to ABI
                 # incompatibility to Win32 ABI
                 self.set_executables(
-                    compiler='gcc -O2 -march=pentium4 -mtune=generic'
-                             ' -mfpmath=sse -msse2 -mlong-double-64'
+                    compiler='gcc -O2 -march=core2 -mtune=generic'
+                             ' -mfpmath=sse -msse2'
                              ' -mincoming-stack-boundary=2 -Wall',
-                    compiler_so='gcc -O2 -march=pentium4 -mtune=generic'
-                                ' -mfpmath=sse -msse2 -mlong-double-64'
+                    compiler_so='gcc -O2 -march=core2 -mtune=generic'
+                                ' -mfpmath=sse -msse2'
                                 ' -mincoming-stack-boundary=2 -Wall'
                                 ' -Wstrict-prototypes',
                     linker_exe='g++ ',
