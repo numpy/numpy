@@ -1751,24 +1751,6 @@ class openblas_lapack_info(openblas_info):
                 res = False
         finally:
             shutil.rmtree(tmpdir)
-        if sys.platform == 'win32' and not res:
-            c = distutils.ccompiler.new_compiler(compiler='mingw32')
-            tmpdir = tempfile.mkdtemp()
-            src = os.path.join(tmpdir, 'source.c')
-            out = os.path.join(tmpdir, 'a.out')
-            try:
-                with open(src, 'wt') as f:
-                    f.write(s)
-                obj = c.compile([src], output_dir=tmpdir)
-                try:
-                    c.link_executable(obj, out, libraries=info['libraries'],
-                                      library_dirs=info['library_dirs'],
-                                      extra_postargs=extra_args)
-                    res = True
-                except distutils.ccompiler.LinkError:
-                    res = False
-            finally:
-                shutil.rmtree(tmpdir)
         return res
 
 
