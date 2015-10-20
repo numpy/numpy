@@ -732,7 +732,7 @@ class TestVectorize(TestCase):
         args = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
         r1 = f(args)
         r2 = np.cos(args)
-        assert_array_almost_equal(r1, r2)
+        assert_array_equal(r1, r2)
 
     def test_keywords(self):
 
