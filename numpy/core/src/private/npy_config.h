@@ -61,11 +61,6 @@
 
 #endif
 
-/* Disable broken mingw-w64 hypot function */
-#if defined(__MINGW32__) 
-#undef HAVE_HYPOT
-#endif
-
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)

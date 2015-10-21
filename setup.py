@@ -221,7 +221,6 @@ def setup_package():
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
-        package_data={'numpy.core': ['libopenblaspy.dll']},
     )
 
     # Run build
