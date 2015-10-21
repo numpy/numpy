@@ -270,6 +270,10 @@ class _fromnxfunction:
                 _d = func(tuple([np.asarray(a) for a in x]), **params)
                 _m = func(tuple([getmaskarray(a) for a in x]), **params)
                 return masked_array(_d, mask=_m)
+            else:
+                _d = func(np.asarray(x), **params)
+                _m = func(getmaskarray(x), **params)
+                return masked_array(_d, mask=_m)
         else:
             arrays = []
             args = list(args)
