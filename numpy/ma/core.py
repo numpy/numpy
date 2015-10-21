@@ -1544,7 +1544,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
           dtype=[('man', '|b1'), ('mouse', '|b1')])
 
     """
-    if m is nomask:
+    if m is nomask and shrink:
         return nomask
     elif isinstance(m, ndarray):
         # We won't return after this point to make sure we can shrink the mask
@@ -2247,7 +2247,7 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     else:
         condition = umath.equal(xnew, value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
     return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
 
 
