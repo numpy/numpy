@@ -1145,6 +1145,11 @@ class TestMaskedArrayArithmetic(TestCase):
         a /= 1.
         assert_equal(a.mask, [0, 0, 0])
 
+    def test_noshink_on_creation(self):
+        # Check that the mask is not shrunk on array creation when not wanted
+        a = np.ma.masked_values([1., 2.5, 3.1], 1.5, shrink=False)
+        assert_equal(a.mask, [0, 0, 0])
+
     def test_mod(self):
         # Tests mod
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
