@@ -674,8 +674,8 @@ fail:
  *
  * This is for use by PyArray_InnerProduct. It is assumed on entry that the
  * arrays ap1 and ap2 have a common data type given by typenum that is
- * float, double, cfloat, or cdouble and have dimension <= 2, and have the
- * contiguous flag set. The * __numpy_ufunc__ nonsense is also assumed to
+ * float, double, cfloat, or cdouble and have dimension <= 2.
+ * The * __numpy_ufunc__ nonsense is also assumed to
  * have been taken care of.
  */
 
@@ -688,6 +688,24 @@ cblas_innerproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2)
     PyArrayObject *ret = NULL;
     npy_intp dimensions[NPY_MAXDIMS];
     PyTypeObject *subtype;
+
+    /* assure contiguous arrays */
+    if (!PyArray_IS_C_CONTIGUOUS(ap1)) {
+        PyObject *op1 = PyArray_NewCopy(ap1, NPY_CORDER);
+        Py_DECREF(ap1);
+        ap1 = (PyArrayObject *)op1;
+        if (ap1 == NULL) {
+            goto fail;
+        }
+    }
+    if (!PyArray_IS_C_CONTIGUOUS(ap2)) {
+        PyObject *op2 = PyArray_NewCopy(ap2, NPY_CORDER);
+        Py_DECREF(ap2);
+        ap2 = (PyArrayObject *)op2;
+        if (ap2 == NULL) {
+          goto fail;
+        }
+    }
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         /* One of ap1 or ap2 is a scalar */

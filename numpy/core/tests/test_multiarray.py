@@ -4728,6 +4728,22 @@ class TestInner(TestCase):
         p = np.inner(a, a)
         assert_almost_equal(p, 0, decimal=14)
 
+    def test_inner_product_with_various_contiguities(self):
+        # github issue 6532
+        for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
+            # check an inner product involving a matrix transpose
+            A = np.array([[1, 2], [3, 4]], dtype=dt)
+            B = np.array([[1, 3], [2, 4]], dtype=dt)
+            C = np.array([1, 1], dtype=dt)
+            desired = np.array([4, 6], dtype=dt)
+            assert_equal(np.inner(A.T, C), desired)
+            assert_equal(np.inner(B, C), desired)
+            # check an inner product involving an aliased and reversed view
+            a = np.arange(5).astype(dt)
+            b = a[::-1]
+            desired = np.array(10, dtype=dt).item()
+            assert_equal(np.inner(b, a), desired)
+
 
 class TestSummarization(TestCase):
     def test_1d(self):
