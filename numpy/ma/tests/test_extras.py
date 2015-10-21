@@ -23,11 +23,12 @@ from numpy.ma.core import (
     nomask, ones, zeros, count
     )
 from numpy.ma.extras import (
-    atleast_2d, mr_, dot, polyfit, cov, corrcoef, median, average, unique,
-    setxor1d, setdiff1d, union1d, intersect1d, in1d, ediff1d,
-    apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
+    atleast_1d, atleast_2d, atleast_3d, mr_, dot, polyfit, cov, corrcoef,
+    median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
+    ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like
+    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like,
+    diagflat
     )
 import numpy.ma.extras as mae
 
@@ -1146,6 +1147,25 @@ class TestShapeBase(TestCase):
         assert_equal(b.mask.shape, b.data.shape)
         assert_equal(a.shape, (3,))
         assert_equal(a.mask.shape, a.data.shape)
+
+    def test_shape_scalar(self):
+        # the atleast and diagflat function should work with scalars
+        # GitHub issue #3367
+        b = atleast_1d(1.0)
+        assert_equal(b.shape, (1, ))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = atleast_2d(1.0)
+        assert_equal(b.shape, (1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = atleast_3d(1.0)
+        assert_equal(b.shape, (1, 1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = diagflat(1.0)
+        assert_equal(b.shape, (1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
 
 
 if __name__ == "__main__":
