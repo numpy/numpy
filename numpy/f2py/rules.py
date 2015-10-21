@@ -420,7 +420,7 @@ rout_rules = [
             {hascallstatement: '''\t\t\t\t#callstatement#;
 \t\t\t\t/*(*f2py_func)(#callfortran#);*/'''},
             {l_not(l_or(hascallstatement, isdummyroutine))
-                   : '\t\t\t\t(*f2py_func)(#callfortran#);'},
+                   : '\t\t\t\t(*f2py_func)(#callfortran#); #callfortran_extra#'},
             {isthreadsafe: '\t\t\tPy_END_ALLOW_THREADS'},
             {hasexternals: """\t\t}"""}
         ],
@@ -456,7 +456,7 @@ rout_rules = [
 \t} else {"""},
             {isthreadsafe: '\tPy_BEGIN_ALLOW_THREADS'},
             {l_not(l_or(hascallstatement, isdummyroutine))
-                   : '\t(*f2py_func)(#callfortran#);'},
+                   : '\t(*f2py_func)(#callfortran#); #callfortran_extra#'},
             {hascallstatement:
                 '\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
             {isthreadsafe: '\tPy_END_ALLOW_THREADS'},
@@ -494,7 +494,7 @@ rout_rules = [
 \t} else {"""},
             {isthreadsafe: '\tPy_BEGIN_ALLOW_THREADS'},
             {l_not(l_or(hascallstatement, isdummyroutine))
-                   : '\t(*f2py_func)(#callfortran#);'},
+                   : '\t(*f2py_func)(#callfortran#); #callfortran_extra#'},
             {hascallstatement:
                 '\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
             {isthreadsafe: '\tPy_END_ALLOW_THREADS'},
@@ -540,7 +540,7 @@ rout_rules = [
 \t} else {"""},
             {isthreadsafe: '\tPy_BEGIN_ALLOW_THREADS'},
             {hascallstatement: '''\t#callstatement#;
-/*\t#name#_return_value = (*f2py_func)(#callfortran#);*/
+/*\t#name#_return_value = (*f2py_func)(#callfortran#); #callfortran_extra#*/
 '''},
             {l_not(l_or(hascallstatement, isdummyroutine))
                    : '\t#name#_return_value = (*f2py_func)(#callfortran#);'},

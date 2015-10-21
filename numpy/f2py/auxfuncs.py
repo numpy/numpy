@@ -689,6 +689,21 @@ def getpymethoddef(rout):
     return getmultilineblock(rout, 'pymethoddef')
 
 
+def getcallfortran_extra(rout):
+    try:
+        r = rout['f2pyenhancements'].get('raise_python_exception')
+        message_var = r
+        func_tmpl = """
+        if ({message_variable}[0] != ' ') {{
+            PyErr_SetString(PyExc_Exception, {message_variable});
+        }}
+        """
+        s = func_tmpl.format(message_variable=message_var)
+        return s
+    except Exception as e:
+        return ''
+
+
 def getargs(rout):
     sortargs, args = [], []
     if 'args' in rout:

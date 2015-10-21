@@ -614,8 +614,8 @@ containspattern = re.compile(
 formatpattern = re.compile(
     beforethisafter % ('', 'format', 'format', '.*'), re.I), 'format'
 # Non-fortran and f2py-specific statements
-f2pyenhancementspattern = re.compile(beforethisafter % ('', 'threadsafe|fortranname|callstatement|callprotoargument|usercode|pymethoddef',
-                                                        'threadsafe|fortranname|callstatement|callprotoargument|usercode|pymethoddef', '.*'), re.I | re.S), 'f2pyenhancements'
+f2pyenhancementspattern = re.compile(beforethisafter % ('', 'threadsafe|fortranname|callstatement|callprotoargument|usercode|pymethoddef|raise_python_exception',
+                                                        'threadsafe|fortranname|callstatement|callprotoargument|usercode|pymethoddef|raise_python_exception', '.*'), re.I | re.S), 'f2pyenhancements'
 multilinepattern = re.compile(
     r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*\Z", re.S), 'multiline'
 ##

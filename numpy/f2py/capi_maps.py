@@ -24,13 +24,13 @@ import os
 import sys
 from .auxfuncs import (
     debugcapi, dictappend, errmess, gentitle, getcallprotoargument,
-    getcallstatement, getfortranname, getpymethoddef, getrestdoc,
-    getusercode, getusercode1, hasinitvalue, hasnote, hasresultnote,
+    getcallstatement, getfortranname, getpymethoddef, getrestdoc, getusercode,
+    getusercode1, getcallfortran_extra, hasinitvalue, hasnote, hasresultnote,
     isarray, iscomplex, iscomplexarray, iscomplexfunction, isexternal,
-    isfunction, isintent_aux, isintent_callback, isintent_dict,
-    isintent_hide, isintent_in, isintent_inout, isintent_out, ismodule,
-    isoptional, isrequired, isscalar, isstring, isstringarray,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess
+    isfunction, isintent_aux, isintent_callback, isintent_dict, isintent_hide,
+    isintent_in, isintent_inout, isintent_out, ismodule, isoptional,
+    isrequired, isscalar, isstring, isstringarray, isstringfunction,
+    issubroutine, l_and, l_not, l_or, outmess
 )
 
 from .crackfortran import markoutercomma
@@ -636,6 +636,7 @@ def routsign2map(rout):
            'callstatement': getcallstatement(rout) or '',
            'usercode': getusercode(rout) or '',
            'usercode1': getusercode1(rout) or '',
+           'callfortran_extra': getcallfortran_extra(rout),
            }
     if '_' in fname:
         ret['F_FUNC'] = 'F_FUNC_US'
