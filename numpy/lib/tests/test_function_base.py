@@ -1942,7 +1942,7 @@ class TestPiecewise(TestCase):
                                   [2.,   1.,  nan,   1.,   2.],
                                   [4.,   2.,  nan,   2.,   4.]])
 
-    # @unittest.skip("Does not work on version < 3.4")
+
     def test_non_bool_deprecation(self):
         choices = [np.array([1, 2, 3]),
                    np.array([4, 5, 6]),
@@ -1964,6 +1964,7 @@ class TestPiecewise(TestCase):
         conditions = [np.array([False])] * 100
         choices = [np.array([1])] * 100
         piecewise(1, conditions, choices)
+
 
 class TestBincount(TestCase):
 
