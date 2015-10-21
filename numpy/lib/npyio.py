@@ -2,6 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import os
+import os.path
+import contextlib
 import re
 import itertools
 import warnings
@@ -599,13 +601,41 @@ def savez_compressed(file, *args, **kwds):
     """
     _savez(file, args, kwds, True)
 
+@contextlib.contextmanager
+def DeleteOnContextExitNamedTemporaryFile(*args, **kwds):
+    """ Factory for a NamedTemporaryFile that is
+        deleted on context exit but not on file close.
+        
+        Usefull replacement for NamedTemporaryFile,
+        as WinNT prevents a file to be opened twice.
+        
+        Typical case:
+        with DeleteOnExitNamedTemporaryFile() as fid:
+            foo(fid)
+            fid.close()
+            # File not deleted here
+            bar(fid.name)
+        # File deleted here
+    """
+    # Import deferred for startup time improvement
+    import tempfile    
+    local_kwds = kwds.copy()
+    local_kwds['delete'] = False
+    filename = None
+    with tempfile.NamedTemporaryFile(*args, **local_kwds) as fid:
+        filename = fid.name
+        yield fid
+    try:
+        if os.path.exists(filename):
+            os.unlink(filename)
+    except OSError:
+        pass
+
 
 def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
-    # Import deferred for startup time improvement
-    import tempfile
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
@@ -624,35 +654,20 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     else:
         compression = zipfile.ZIP_STORED
 
-    zipf = zipfile_factory(file, mode="w", compression=compression)
-
-    # Stage arrays in a temporary file on disk, before writing to zip.
-
-    # Since target file might be big enough to exceed capacity of a global
-    # temporary directory, create temp file side-by-side with the target file.
-    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-    os.close(fd)
-    try:
+    # Context manager compatible with the 'with' statement
+    # In python => 2.7 ZipFile class has been corrected
+    # No more need of contextlib.closing
+    with contextlib.closing(
+            zipfile_factory(file, mode="w", compression=compression)) as zipf:
         for key, val in namedict.items():
-            fname = key + '.npy'
-            fid = open(tmpfile, 'wb')
-            try:
+            with DeleteOnContextExitNamedTemporaryFile() as fid:
+                fname = key + '.npy'
                 format.write_array(fid, np.asanyarray(val),
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
                 fid.close()
-                fid = None
-                zipf.write(tmpfile, arcname=fname)
-            except IOError as exc:
-                raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-            finally:
-                if fid:
-                    fid.close()
-    finally:
-        os.remove(tmpfile)
+                zipf.write(fid.name, arcname=fname)
 
-    zipf.close()
 
 
 def _getconv(dtype):
