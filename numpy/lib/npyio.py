@@ -632,10 +632,30 @@ def DeleteOnContextExitNamedTemporaryFile(*args, **kwds):
         pass
 
 
-def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
+def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None, disk_temp_files=True):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
+    if disk_temp_files:
+        # use in-disk temporary files
+        TempFile = DeleteOnContextExitNamedTemporaryFile
+        def _zipwrite(fid,fname):
+            fid.close()
+            zipf.write(fid.name, arcname=fname)
+    else:
+        # use in-mem temporary files
+        import io
+        TempFile = io.BytesIO
+        if sys.version_info[0] < 3:
+            def _zipwrite(fid,fname):
+                fid.flush()
+                zipf.writestr(fname, fid.getvalue())            
+        else:
+            # getbuffer() doesn't copy data, but only
+            # available in python 3
+            def _zipwrite(fid,fname):
+                fid.flush()
+                zipf.writestr(fname, fid.getbuffer())             
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
@@ -660,13 +680,12 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     with contextlib.closing(
             zipfile_factory(file, mode="w", compression=compression)) as zipf:
         for key, val in namedict.items():
-            with DeleteOnContextExitNamedTemporaryFile() as fid:
+            with TempFile() as fid:
                 fname = key + '.npy'
                 format.write_array(fid, np.asanyarray(val),
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
-                fid.close()
-                zipf.write(fid.name, arcname=fname)
+                _zipwrite(fid,fname)
 
 
 

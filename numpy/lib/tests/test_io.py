@@ -14,6 +14,7 @@ from datetime import datetime
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
+from numpy.lib.npyio import _savez, DeleteOnContextExitNamedTemporaryFile
 from numpy.compat import asbytes, bytes, unicode
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
@@ -302,6 +303,17 @@ class TestSavezLoad(RoundtripTest, TestCase):
             fp = data.zip.fp
             data.close()
             assert_(fp.closed)
+
+    def test_in_mem_tempfiles(self):
+        # Check _savez with in-mem temporary files.
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
+        with DeleteOnContextExitNamedTemporaryFile(suffix='.npz') as fid:
+            _savez(file=fid.name, args=[], kwds={'a':a,'b':b},
+                   compress=False, disk_temp_files=False)
+            l = np.load(fid.name)
+            assert_equal(a, l['a'])
+            assert_equal(b, l['b'])
 
 
 class TestSaveTxt(TestCase):
