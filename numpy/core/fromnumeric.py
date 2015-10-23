@@ -848,7 +848,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     -------
     index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
-        In other words, ``a[index_array]`` yields a sorted `a`.
+        If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
 
     See Also
     --------
