@@ -100,6 +100,8 @@ upload:
 	    $(UPLOAD_DIR)/numpy-user-$(RELEASE).pdf
 	ssh $(USERNAME)@new.scipy.org mv $(UPLOAD_DIR)/numpy-html.zip \
 	    $(UPLOAD_DIR)/numpy-html-$(RELEASE).zip
+	ssh $(USERNAME)@new.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
+	ssh $(USERNAME)@new.scipy.org cp -r $(UPLOAD_DIR)/* /srv/docs_scipy_org/doc/numpy
 	ssh $(USERNAME)@new.scipy.org /srv/bin/fixperm-scipy_org.sh
 
 #------------------------------------------------------------------------------
