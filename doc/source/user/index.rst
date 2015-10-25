@@ -16,5 +16,6 @@ classes contained in the package, see the :ref:`reference`.
    quickstart
    basics
    misc
+   numpy-for-matlab-users
    building
    c-info
