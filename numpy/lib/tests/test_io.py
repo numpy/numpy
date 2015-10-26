@@ -14,7 +14,7 @@ from datetime import datetime
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode
+from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
@@ -1828,6 +1828,106 @@ M   33  21.99
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
+
+
+class TestPathUsage(TestCase):
+    # Test that pathlib.Path can be used
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_loadtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            a = np.array([[1.1, 2], [3, 4]])
+            np.savetxt(path, a)
+            x = np.loadtxt(path)
+            assert_array_equal(x, a)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_save_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            data = np.load(path)
+            assert_array_equal(data, a)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_savez_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npz') as path:
+            path = Path(path)
+            np.savez(path, lab='place holder')
+            with np.load(path) as data:
+                assert_array_equal(data['lab'], 'place holder')
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_savez_compressed_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npz') as path:
+            path = Path(path)
+            np.savez_compressed(path, lab='place holder')
+            data = np.load(path)
+            assert_array_equal(data['lab'], 'place holder')
+            data.close()
+    
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_genfromtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            a = np.array([(1, 2), (3, 4)])
+            np.savetxt(path, a)
+            data = np.genfromtxt(path)
+            assert_array_equal(a, data)
+    
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_ndfromtxt(self):
+        # Test outputing a standard ndarray
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write('1 2\n3 4')
+            control = np.array([[1, 2], [3, 4]], dtype=int)
+            test = np.ndfromtxt(path, dtype=int)
+            assert_array_equal(test, control)
+    
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_mafromtxt(self):
+        # From `test_fancy_dtype_alt` above
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write('1,2,3.0\n4,5,6.0\n')
+                
+            test = np.mafromtxt(path, delimiter=',')
+            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
+            assert_equal(test, control)
+    
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_recfromtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write('A,B\n0,1\n2,3')
+            kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+            test = np.recfromtxt(path, **kwargs)
+            control = np.array([(0, 1), (2, 3)],
+                               dtype=[('A', np.int), ('B', np.int)])
+            self.assertTrue(isinstance(test, np.recarray))
+            assert_equal(test, control)
+    
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_recfromcsv(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write('A,B\n0,1\n2,3')
+            kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
+            test = np.recfromcsv(path, dtype=None, **kwargs)
+            control = np.array([(0, 1), (2, 3)],
+                               dtype=[('A', np.int), ('B', np.int)])
+            self.assertTrue(isinstance(test, np.recarray))
+            assert_equal(test, control)
+
 
 def test_gzip_load():
     a = np.random.random((5, 5))

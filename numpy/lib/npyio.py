@@ -14,12 +14,12 @@ from ._datasource import DataSource
 from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
-    ConverterLockError, ConversionWarning, _is_string_like, has_nested_fields,
-    flatten_dtype, easy_dtype, _bytes_to_name
+    ConverterLockError, ConversionWarning, _is_string_like,
+    has_nested_fields, flatten_dtype, easy_dtype, _bytes_to_name
     )
 
 from numpy.compat import (
-    asbytes, asstr, asbytes_nested, bytes, basestring, unicode
+    asbytes, asstr, asbytes_nested, bytes, basestring, unicode, is_pathlib_path
     )
 
 if sys.version_info[0] >= 3:
@@ -86,10 +86,19 @@ class BagObj(object):
         return object.__getattribute__(self, '_obj').keys()
 
 
-def zipfile_factory(*args, **kwargs):
+def zipfile_factory(file, *args, **kwargs):
+    """
+    Create a ZipFile.
+    
+    Allows for Zip64, and the `file` argument can accept file, str, or
+    pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
+    constructor.
+    """
+    if is_pathlib_path(file):
+        file = str(file)
     import zipfile
     kwargs['allowZip64'] = True
-    return zipfile.ZipFile(*args, **kwargs)
+    return zipfile.ZipFile(file, *args, **kwargs)
 
 
 class NpzFile(object):
@@ -261,7 +270,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     Parameters
     ----------
-    file : file-like object or string
+    file : file-like object, string, or pathlib.Path
         The file to read. File-like objects must support the
         ``seek()`` and ``read()`` methods. Pickled files require that the
         file-like object support the ``readline()`` method as well.
@@ -355,11 +364,12 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     memmap([4, 5, 6])
 
     """
-    import gzip
-
     own_fid = False
     if isinstance(file, basestring):
         fid = open(file, "rb")
+        own_fid = True
+    elif is_pathlib_path(file):
+        fid = file.open("rb")
         own_fid = True
     else:
         fid = file
@@ -425,9 +435,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     Parameters
     ----------
-    file : file or str
+    file : file, str, or pathlib.Path
         File or filename to which the data is saved.  If file is a file-object,
-        then the filename is unchanged.  If file is a string, a ``.npy``
+        then the filename is unchanged.  If file is a string or Path, a ``.npy``
         extension will be appended to the file name if it does not already
         have one.
     allow_pickle : bool, optional
@@ -476,6 +486,11 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
             file = file + '.npy'
         fid = open(file, "wb")
         own_fid = True
+    elif is_pathlib_path(file):
+        if not file.name.endswith('.npy'):
+            file = file.parent / (file.name + '.npy')
+        fid = file.open("wb")
+        own_fid = True
     else:
         fid = file
 
@@ -507,8 +522,9 @@ def savez(file, *args, **kwds):
     ----------
     file : str or file
         Either the file name (string) or an open file (file-like object)
-        where the data will be saved. If file is a string, the ``.npz``
-        extension will be appended to the file name if it is not already there.
+        where the data will be saved. If file is a string or a Path, the
+        ``.npz`` extension will be appended to the file name if it is not
+        already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
         know the names of the arrays outside `savez`, the arrays will be saved
@@ -610,6 +626,9 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
             file = file + '.npz'
+    elif is_pathlib_path(file):
+        if not file.name.endswith('.npz'):
+            file = file.parent / (file.name + '.npz')
 
     namedict = kwds
     for i, val in enumerate(args):
@@ -695,7 +714,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file or str
+    fname : file, str, or pathlib.Path
         File, filename, or generator to read.  If the filename extension is
         ``.gz`` or ``.bz2``, the file is first decompressed. Note that
         generators should return byte strings for Python 3k.
@@ -822,6 +841,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     fown = False
     try:
+        if is_pathlib_path(fname):
+            fname = str(fname)
         if _is_string_like(fname):
             fown = True
             if fname.endswith('.gz'):
@@ -1117,6 +1138,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter = asstr(delimiter)
 
     own_fh = False
+    if is_pathlib_path(fname):
+        fname = str(fname)
     if _is_string_like(fname):
         own_fh = True
         if fname.endswith('.gz'):
@@ -1302,7 +1325,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file, str, list of str, generator
+    fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
         extension is `.gz` or `.bz2`, the file is first decompressed. Mote
         that generators must return byte strings in Python 3k.  The strings
@@ -1477,6 +1500,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
     try:
+        if is_pathlib_path(fname):
+            fname = str(fname)
         if isinstance(fname, basestring):
             if sys.version_info[0] == 2:
                 fhd = iter(np.lib._datasource.open(fname, 'rbU'))

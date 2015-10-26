@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
+from numpy.compat import Path
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
@@ -70,6 +71,19 @@ class TestMemmap(TestCase):
         self.assertEqual(abspath, fp.filename)
         b = fp[:1]
         self.assertEqual(abspath, b.filename)
+        del b
+        del fp
+
+    @dec.skipif(Path is None, "No pathlib.Path")
+    def test_path(self):
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
+                       shape=self.shape)
+        abspath = os.path.abspath(tmpname)
+        fp[:] = self.data[:]
+        self.assertEqual(abspath, str(fp.filename))
+        b = fp[:1]
+        self.assertEqual(abspath, str(b.filename))
         del b
         del fp
 
