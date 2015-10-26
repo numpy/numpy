@@ -809,7 +809,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     PyArrayIterObject *it;
     npy_intp size;
 
-    int ret = -1;
+    int ret = 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -829,6 +829,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     if (needcopy) {
         buffer = PyDataMem_NEW(N * elsize);
         if (buffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
@@ -947,7 +948,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     PyArrayIterObject *it, *rit;
     npy_intp size;
 
-    int ret = -1;
+    int ret = 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -969,6 +970,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     rit = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)rop, &axis);
     if (it == NULL || rit == NULL) {
+        ret = -1;
         goto fail;
     }
     size = it->size;
@@ -978,6 +980,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     if (needcopy) {
         valbuffer = PyDataMem_NEW(N * elsize);
         if (valbuffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
@@ -985,6 +988,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     if (needidxbuffer) {
         idxbuffer = (npy_intp *)PyDataMem_NEW(N * sizeof(npy_intp));
         if (idxbuffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
