@@ -169,6 +169,12 @@ The *__complex__* method has been implemented on the ndarray object
 Calling ``complex()`` on a size 1 array will now cast to a python
 complex.
 
+``pathlib.Path`` objects now supported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
+functions can now take ``pathlib.Path`` objects as an argument instead of a
+filename or open file object.
+
 
 Changes
 =======
