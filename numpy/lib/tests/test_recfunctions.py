@@ -720,15 +720,5 @@ class TestAppendFieldsObj(TestCase):
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
 
-    def test_append_with_objects(self):
-        "Test append_fields when the appended data contains objects"
-        obj = self.data['obj']
-        x = np.array([(10, 1.), (20, 2.)], dtype=[('A', int), ('B', float)])
-        y = np.array([obj, obj], dtype=object)
-        test = append_fields(x, 'C', data=y, dtypes=object, usemask=False)
-        control = np.array([(10, 1.0, obj), (20, 2.0, obj)],
-                           dtype=[('A', int), ('B', float), ('C', object)])
-        assert_equal(test, control)
-
 if __name__ == '__main__':
     run_module_suite()
