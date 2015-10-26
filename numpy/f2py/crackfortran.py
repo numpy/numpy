@@ -149,12 +149,11 @@ import copy
 import platform
 
 from . import __version__
-from .auxfuncs import (
-    errmess, hascommon, isdouble, iscomplex, isexternal, isinteger,
-    isintent_aux, isintent_c, isintent_callback, isintent_in,
-    isintent_inout, isintent_inplace, islogical, isoptional, isscalar,
-    isstring, isstringarray, l_or, show
-)
+
+# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# As the needed functions cannot be determined by static inspection of the
+# code, it is safest to use import * pending a major refactoring of f2py.
+from .auxfuncs import *
 
 
 f2py_version = __version__.version
