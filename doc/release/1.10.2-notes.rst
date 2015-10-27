@@ -1,0 +1,60 @@
+NumPy 1.10.2 Release Notes
+**************************
+
+This release deals with a number of bugs that turned up in 1.10.1 and
+adds various build and release improvements.
+
+Numpy 1.10.1 supports Python 2.6 - 2.7 and 3.2 - 3.5.
+
+Issues Fixed
+============
+
+* gh-6563 Intent(out) broken in recent versions of f2py.
+* gh-6530 The partition function errors out on empty input.
+* gh-6498 Mention change in default casting rule in 1.10 release notes.
+* gh-6497 Failure of reduce operation on recarrays.
+* gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
+* gh-6491 Error in broadcasting stride_tricks array.
+* gh-6467 Performance regression for record array access.
+* gh-6462 Median of empty array produces IndexError.
+
+Merged PRs
+==========
+
+The following PRs in master have been backported to 1.10.2
+
+* gh-5773 MAINT: Hide testing helper tracebacks when using them with pytest.
+* gh-6208 MAINT: Speedup field access by removing unneeded safety checks.
+* gh-6460 BUG: Replacing the os.environ.clear by less invasive procedure.
+* gh-6470 BUG: Fix AttributeError in numpy distutils.
+* gh-6472 MAINT: Use Python 3.5 instead of 3.5-dev for travis 3.5 testing.
+* gh-6474 REL: Update Paver script for sdist and auto-switch test warnings.
+* gh-6478 BUG: Fix Intel compiler flags for OS X build.
+* gh-6481 MAINT: LIBPATH with spaces is now supported Python 2.7+ and Win32.
+* gh-6487 BUG: Allow nested use of parameters in definition of arrays in f2py.
+* gh-6488 BUG: Extend common blocks rather than overwriting in f2py.
+* gh-6499 DOC: Mention that default casting for inplace operations has changed.
+* gh-6500 BUG: Recarrays viewed as subarrays don't convert to np.record type.
+* gh-6501 REL: Add "make upload" command for built docs, update "make dist".
+* gh-6526 BUG: Fix use of __doc__ in setup.py for -OO mode.
+* gh-6527 BUG: Fix the IndexError when taking the median of an empty array.
+* gh-6537 BUG: Make ma.atleast_* with scalar argument return arrays.
+* gh-6538 BUG: Fix ma.masked_values does not shrink mask if requested.
+* gh-6546 BUG: Fix inner product regression for non-contiguous arrays.
+* gh-6553 BUG: Fix partition and argpartition error for empty input.
+* gh-6556 BUG: Error in broadcast_arrays with as_strided array.
+* gh-6558 MAINT: Minor update to "make upload" doc build command.
+* gh-6562 BUG: Disable view safety checks in recarray.
+* gh-6567 BUG: Revert some import * fixes in f2py.
+* gh-6577 BUG: Fix for #6569, allowing build_ext --inplace
+* gh-6579 MAINT: Fix mistake in doc upload rule
+
+The following PR reverted initial work for mingwpy.
+
+* gh-6536 BUG: revert gh-5614 to fix non-windows build problems
+
+Notes
+=====
+A bug in the Numpy 1.10.1 release resulted in exceptions being raised for
+``RuntimeWarning`` and ``DeprecationWarning`` in projects depending on Numpy.
+That has been fixed.
