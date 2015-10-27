@@ -68,6 +68,24 @@ class TestTake(TestCase):
         k = b'\xc3\xa4'.decode("UTF8")
         assert_raises(ValueError, d.take, 5, mode=k)
 
+    def test_empty_partition(self):
+        # In reference to github issue #6530
+        a_original = np.array([0, 2, 4, 6, 8, 10])
+        a = a_original.copy()
+
+        # An empty partition should be a successful no-op
+        a.partition(np.array([], dtype=np.int16))
+
+        assert_array_equal(a, a_original)
+
+    def test_empty_argpartition(self):
+            # In reference to github issue #6530
+            a = np.array([0, 2, 4, 6, 8, 10])
+            a = a.argpartition(np.array([], dtype=np.int16))
+
+            b = np.array([0, 1, 2, 3, 4, 5])
+            assert_array_equal(a, b)
+
 
 if __name__ == "__main__":
     run_module_suite()
