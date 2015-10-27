@@ -2173,5 +2173,9 @@ class TestRegression(TestCase):
         after = sys.getrefcount(a)
         assert_equal(before, after)
 
+    def test_empty_percentile(self):
+        # gh-6530 / gh-6553
+        assert_array_equal(np.percentile(np.arange(10), []), np.array([]))
+
 if __name__ == "__main__":
     run_module_suite()
