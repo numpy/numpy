@@ -177,7 +177,8 @@ class NoseTester(object):
                 'swig_ext']
 
     def __init__(self, package=None, raise_warnings=None):
-        if raise_warnings is None and '.dev0' in np.__version__:
+        if raise_warnings is None and (
+                not hasattr(np, '__version__') or '.dev0' in np.__version__):
             raise_warnings = "develop"
         elif raise_warnings is None:
             raise_warnings = "release"
