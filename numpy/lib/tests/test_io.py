@@ -1905,12 +1905,17 @@ def test_load_refcount():
     np.savez(f, [1, 2, 3])
     f.seek(0)
 
-    gc.collect()
-    n_before = len(gc.get_objects())
-    np.load(f)
-    n_after = len(gc.get_objects())
-
-    assert_equal(n_before, n_after)
+    assert_(gc.isenabled())
+    gc.disable()
+    try:
+        gc.collect()
+        np.load(f)
+        # gc.collect returns the number of unreachable objects in cycles that
+        # were found -- we are checking that no cycles were created by np.load
+        n_objects_in_cycles = gc.collect()
+    finally:
+        gc.enable()
+    assert_equal(n_objects_in_cycles, 0)
 
 if __name__ == "__main__":
     run_module_suite()
