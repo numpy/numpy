@@ -401,6 +401,14 @@ class TestMaskedArray(TestCase):
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
+    def test_copy_immutable(self):
+        # Tests that the copy method is immutable, GitHub issue #5247
+        a = np.ma.array([1, 2, 3])
+        b = np.ma.array([4, 5, 6])
+        a_copy_method = a.copy
+        b.copy
+        assert_equal(a_copy_method(), [1, 2, 3])
+
     def test_deepcopy(self):
         from copy import deepcopy
         a = array([0, 1, 2], mask=[False, True, False])

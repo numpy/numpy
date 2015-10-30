@@ -2467,24 +2467,17 @@ def flatten_structured_array(a):
     return out
 
 
-class _arraymethod(object):
+def _arraymethod(funcname, onmask=True):
     """
-    Define a wrapper for basic array methods.
+    Return a class method wrapper around a basic array method.
 
-    Upon call, returns a masked array, where the new ``_data`` array is
-    the output of the corresponding method called on the original
-    ``_data``.
+    Creates a class method which returns a masked array, where the new
+    ``_data`` array is the output of the corresponding basic method called
+    on the original ``_data``.
 
     If `onmask` is True, the new mask is the output of the method called
     on the initial mask. Otherwise, the new mask is just a reference
     to the initial mask.
-
-    Attributes
-    ----------
-    _onmask : bool
-        Holds the `onmask` parameter.
-    obj : object
-        The object calling `_arraymethod`.
 
     Parameters
     ----------
@@ -2495,47 +2488,31 @@ class _arraymethod(object):
         alone (False). Default is True. Make available as `_onmask`
         attribute.
 
+    Returns
+    -------
+    method : instancemethod
+        Class method wrapper of the specified basic array method.
+
     """
-
-    def __init__(self, funcname, onmask=True):
-        self.__name__ = funcname
-        self._onmask = onmask
-        self.obj = None
-        self.__doc__ = self.getdoc()
-
-    def getdoc(self):
-        "Return the doc of the function (from the doc of the method)."
-        methdoc = getattr(ndarray, self.__name__, None) or \
-            getattr(np, self.__name__, None)
-        if methdoc is not None:
-            return methdoc.__doc__
-
-    def __get__(self, obj, objtype=None):
-        self.obj = obj
-        return self
-
-    def __call__(self, *args, **params):
-        methodname = self.__name__
-        instance = self.obj
-        # Fallback : if the instance has not been initialized, use the first
-        # arg
-        if instance is None:
-            args = list(args)
-            instance = args.pop(0)
-        data = instance._data
-        mask = instance._mask
-        cls = type(instance)
-        result = getattr(data, methodname)(*args, **params).view(cls)
-        result._update_from(instance)
+    def wrapped_method(self, *args, **params):
+        result = getattr(self._data, funcname)(*args, **params)
+        result = result.view(type(self))
+        result._update_from(self)
+        mask = self._mask
         if result.ndim:
-            if not self._onmask:
+            if not onmask:
                 result.__setmask__(mask)
             elif mask is not nomask:
-                result.__setmask__(getattr(mask, methodname)(*args, **params))
+                result.__setmask__(getattr(mask, funcname)(*args, **params))
         else:
             if mask.ndim and (not mask.dtype.names and mask.all()):
                 return masked
         return result
+    methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
+    if methdoc is not None:
+        wrapped_method.__doc__ = methdoc.__doc__
+    wrapped_method.__name__ = funcname
+    return wrapped_method
 
 
 class MaskedIterator(object):
