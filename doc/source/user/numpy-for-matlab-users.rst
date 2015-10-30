@@ -237,7 +237,7 @@ General Purpose Equivalents
      - ``scipy.integrate.ode(f).set_integrator('dopri5')``
      - integrate an ODE with Runge-Kutta 4,5
    * - ``ode15s``
-     - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=15)``
+     - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=5)``
      - integrate an ODE with BDF method
 
 Linear Algebra Equivalents
