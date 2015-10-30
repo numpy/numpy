@@ -4,7 +4,6 @@
 # data, etc files to distribution. Avoid using MANIFEST.in for that.
 #
 include MANIFEST.in
-include COMPATIBILITY
 include *.txt
 include setupegg.py
 include site.cfg.example
