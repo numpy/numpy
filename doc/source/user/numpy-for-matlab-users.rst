@@ -42,7 +42,7 @@ Some Key Differences
 'array' or 'matrix'? Which should I use?
 ========================================
 
-Numpy provides, in addition to `np.ndarray`` an additional matrix type
+Numpy provides, in addition to ``np.ndarray``, an additional matrix type
 that you may see used in some existing code. Which one to use?
 
 Short answer
@@ -51,7 +51,7 @@ Short answer
 **Use arrays**.
 
 -  They are the standard vector/matrix/tensor type of numpy. Many numpy
-   function return arrays, not matrices.
+   functions return arrays, not matrices.
 -  There is a clear distinction between element-wise operations and
    linear algebra operations.
 -  You can have standard vectors or row/column vectors if you like.
@@ -123,7 +123,7 @@ There are pros and cons to using both:
    -  ``:)`` Is quite at home handling data of any rank.
    -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
       with that.
-   -  ``:)`` *All* operations (``*``, ``/``, ``+``, ```` etc.) are
+   -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
       elementwise
 
 -  ``matrix``
@@ -159,7 +159,7 @@ which hopefully make things easier for Matlab converts.
    return ``array``\ s, but the ``matlib`` versions return ``matrix``
    objects.
 -  ``mat`` has been changed to be a synonym for ``asmatrix``, rather
-   than ``matrix``, thus making it concise way to convert an ``array``
+   than ``matrix``, thus making it a concise way to convert an ``array``
    to a ``matrix`` without copying the data.
 -  Some top-level functions have been removed. For example
    ``numpy.rand()`` now needs to be accessed as ``numpy.random.rand()``.
@@ -252,7 +252,7 @@ Linear Algebra Equivalents
 
    * - ``ndims(a)``
      - ``ndim(a)`` or ``a.ndim``
-     - get the number of dimensions of a (tensor rank)
+     - get the number of dimensions of ``a`` (tensor rank)
 
    * - ``numel(a)``
      - ``size(a)`` or ``a.size``
@@ -264,7 +264,7 @@ Linear Algebra Equivalents
 
    * - ``size(a,n)``
      - ``a.shape[n-1]``
-     - get the number of elements of the n-th dimension of array a. (Note that MATLAB® uses 1 based indexing while Python uses 0 based indexing, See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
+     - get the number of elements of the n-th dimension of array ``a``. (Note that MATLAB® uses 1 based indexing while Python uses 0 based indexing, See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
      - ``array([[1.,2.,3.], [4.,5.,6.]])``
@@ -273,7 +273,7 @@ Linear Algebra Equivalents
    * - ``[ a b; c d ]``
      - ``vstack([hstack([a,b]), hstack([c,d])])`` or
        ``bmat('a b; c d').A``
-     - construct a matrix from blocks a,b,c, and d
+     - construct a matrix from blocks ``a``, ``b``, ``c``, and ``d``
 
    * - ``a(end)``
      - ``a[-1]``
@@ -345,27 +345,29 @@ Linear Algebra Equivalents
 
    * - ``(a>0.5)``
      - ``(a>0.5)``
-     - matrix whose i,jth element is (a_ij > 0.5)
+     - matrix whose i,jth element is (a_ij > 0.5).  The Matlab result is
+       an array of 0s and 1s.  The NumPy result is an array of the boolean
+       values ``False`` and ``True``.
 
    * - ``find(a>0.5)``
      - ``nonzero(a>0.5)``
-     - find the indices where (a > 0.5)
+     - find the indices where (``a`` > 0.5)
 
    * - ``a(:,find(v>0.5))``
      - ``a[:,nonzero(v>0.5)[0]]``
-     - extract the columms of a where vector v > 0.5
+     - extract the columms of ``a`` where vector v > 0.5
 
    * - ``a(:,find(v>0.5))``
      - ``a[:,v.T>0.5]``
-     - extract the columms of a where column vector v > 0.5
+     - extract the columms of ``a`` where column vector v > 0.5
 
    * - ``a(a<0.5)=0``
      - ``a[a<0.5]=0``
-     - a with elements less than 0.5 zeroed out
+     - ``a`` with elements less than 0.5 zeroed out
 
    * - ``a .* (a>0.5)``
      - ``a * (a>0.5)``
-     - a with elements less than 0.5 zeroed out
+     - ``a`` with elements less than 0.5 zeroed out
 
    * - ``a(:) = 3``
      - ``a[:] = 3``
@@ -380,7 +382,7 @@ Linear Algebra Equivalents
      - numpy slices are by reference
 
    * - ``y=x(:)``
-     - ``y = x.flatten(1)``
+     - ``y = x.flatten()``
      - turn array into vector (note that this forces a copy)
 
    * - ``1:10``
@@ -413,11 +415,11 @@ Linear Algebra Equivalents
 
    * - ``diag(a)``
      - ``diag(a)``
-     - vector of diagonal elements of a
+     - vector of diagonal elements of ``a``
 
    * - ``diag(a,0)``
      - ``diag(a,0)``
-     - square diagonal matrix whose nonzero values are the elements of a
+     - square diagonal matrix whose nonzero values are the elements of ``a``
 
    * - ``rand(3,4)``
      - ``random.rand(3,4)``
@@ -445,7 +447,7 @@ Linear Algebra Equivalents
 
    * - ``repmat(a, m, n)``
      - ``tile(a, (m, n))``
-     - create m by n copies of a
+     - create m by n copies of ``a``
 
    * - ``[a b]``
      - ``concatenate((a,b),1)`` or ``hstack((a,b))`` or ``column_stack((a,b))`` or ``c_[a,b]``
@@ -453,27 +455,27 @@ Linear Algebra Equivalents
 
    * - ``[a; b]``
      - ``concatenate((a,b))`` or ``vstack((a,b))`` or ``r_[a,b]``
-     - concatenate rows of a and b
+     - concatenate rows of ``a`` and ``b``
 
    * - ``max(max(a))``
      - ``a.max()``
-     - maximum element of a (with ndims(a)<=2 for matlab)
+     - maximum element of ``a`` (with ndims(a)<=2 for matlab)
 
    * - ``max(a)``
      - ``a.max(0)``
-     - maximum element of each column of matrix a
+     - maximum element of each column of matrix ``a``
 
    * - ``max(a,[],2)``
      - ``a.max(1)``
-     - maximum element of each row of matrix a
+     - maximum element of each row of matrix ``a``
 
    * - ``max(a,b)``
      - ``maximum(a, b)``
-     - compares a and b element-wise, and returns the maximum value from each pair
+     - compares ``a`` and ``b`` element-wise, and returns the maximum value from each pair
 
    * - ``norm(v)``
      - ``sqrt(dot(v,v))`` or ``np.linalg.norm(v)``
-     - L2 norm of vector v
+     - L2 norm of vector ``v``
 
    * - ``a & b``
      - ``logical_and(a,b)``
@@ -493,15 +495,15 @@ Linear Algebra Equivalents
 
    * - ``inv(a)``
      - ``linalg.inv(a)``
-     - inverse of square matrix a
+     - inverse of square matrix ``a``
 
    * - ``pinv(a)``
      - ``linalg.pinv(a)``
-     - pseudo-inverse of matrix a
+     - pseudo-inverse of matrix ``a``
 
    * - ``rank(a)``
      - ``linalg.matrix_rank(a)``
-     - rank of a matrix a
+     - rank of a matrix ``a``
 
    * - ``a\b``
      - ``linalg.solve(a,b)`` if ``a`` is square; ``linalg.lstsq(a,b)`` otherwise
@@ -513,23 +515,23 @@ Linear Algebra Equivalents
 
    * - ``[U,S,V]=svd(a)``
      - ``U, S, Vh = linalg.svd(a), V = Vh.T``
-     - singular value decomposition of a
+     - singular value decomposition of ``a``
 
    * - ``chol(a)``
      - ``linalg.cholesky(a).T``
-     - cholesky factorization of a matrix (chol(a) in matlab returns an upper triangular matrix, but linalg.cholesky(a) returns a lower triangular matrix)
+     - cholesky factorization of a matrix (``chol(a)`` in matlab returns an upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower triangular matrix)
 
    * - ``[V,D]=eig(a)``
      - ``D,V = linalg.eig(a)``
-     - eigenvalues and eigenvectors of a
+     - eigenvalues and eigenvectors of ``a``
 
    * - ``[V,D]=eig(a,b)``
      - ``V,D = np.linalg.eig(a,b)``
-     - eigenvalues and eigenvectors of a,b
+     - eigenvalues and eigenvectors of ``a``, ``b``
 
    * - ``[V,D]=eigs(a,k)``
      -
-     - find the k largest eigenvalues and eigenvectors of a
+     - find the ``k`` largest eigenvalues and eigenvectors of ``a``
 
    * - ``[Q,R,P]=qr(a,0)``
      - ``Q,R = scipy.linalg.qr(a)``
@@ -545,11 +547,11 @@ Linear Algebra Equivalents
 
    * - ``fft(a)``
      - ``fft(a)``
-     - Fourier transform of a
+     - Fourier transform of ``a``
 
    * - ``ifft(a)``
      - ``ifft(a)``
-     - inverse Fourier transform of a
+     - inverse Fourier transform of ``a``
 
    * - ``sort(a)``
      - ``sort(a)`` or ``a.sort()``
