@@ -20,7 +20,8 @@ Highlights
 * Addition of `nanprod` to the set of nanfunctions.
 * Support for the '@' operator in Python 3.5.
 
-Dropped Support:
+Dropped Support
+===============
 
 * The _dotblas module has been removed. CBLAS Support is now in
   Multiarray.
@@ -35,15 +36,22 @@ Dropped Support:
 * Keywords ``skiprows`` and ``missing`` removed from np.genfromtxt.
 * Keyword ``old_behavior`` removed from np.correlate.
 
-Future Changes:
+Future Changes
+==============
 
 * In array comparisons like ``arr1 == arr2``, many corner cases
   involving strings or structured dtypes that used to return scalars
   now issue ``FutureWarning`` or ``DeprecationWarning``, and in the
   future will be change to either perform elementwise comparisons or
   raise an error.
-* The SafeEval class will be removed.
-* The alterdot and restoredot functions will be removed.
+* In ``np.lib.split`` an empty array in the result always had dimension
+  ``(0,)`` no matter the dimensions of the array being split. In Numpy 1.11
+  that behavior will be changed so that the dimensions will be preserved. A
+  ``FutureWarning`` for this change has been in place since Numpy 1.9 but,
+  due to a bug, sometimes no warning was raised and the dimensions were
+  already preserved.
+* The SafeEval class will be removed in Numpy 1.11.
+* The alterdot and restoredot functions will be removed in Numpy 1.11.
 
 See below for more details on these changes.
 
