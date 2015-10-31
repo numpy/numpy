@@ -8,20 +8,22 @@ Highlights
 ==========
 
 
-Dropped Support:
+Dropped Support
+===============
 
 * Bento build support and related files have been removed.
 * Single file build support and related files have been removed.
 
 
-Future Changes:
+Future Changes
+==============
 
 
 Compatibility notes
 ===================
 
-Deprecated to error
-~~~~~~~~~~~~~~~~~~~
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Indexing with floats raises IndexError,
   e.g., a[0, 0.0].
@@ -34,6 +36,15 @@ Deprecated to error
 * Non-integers used as index values raise TypeError,
   e.g., in reshape, take, and specifying reduce axis.
 
+FutureWarning to changed behavior 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* In ``np.lib.split`` an empty array in the result always had dimension
+  ``(0,)`` no matter the dimensions of the array being split. This
+  has been changed so that the dimensions will be preserved. A
+  ``FutureWarning`` for this change has been in place since Numpy 1.9 but,
+  due to a bug, sometimes no warning was raised and the dimensions were
+  already preserved.
 
 C API
 ~~~~~
