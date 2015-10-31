@@ -96,7 +96,7 @@
 %#endif
 %#define array_is_contiguous(a) (PyArray_ISCONTIGUOUS((PyArrayObject*)a))
 %#define array_is_native(a)     (PyArray_ISNOTSWAPPED((PyArrayObject*)a))
-%#define array_is_fortran(a)    (PyArray_ISFORTRAN((PyArrayObject*)a))
+%#define array_is_fortran(a)    (PyArray_IS_F_CONTIGUOUS((PyArrayObject*)a))
 }
 
 /**********************************************************************/
