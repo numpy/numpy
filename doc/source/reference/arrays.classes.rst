@@ -39,9 +39,9 @@ Special attributes and methods
 
 Numpy provides several hooks that classes can customize:
 
-.. function:: class.__numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
+.. method:: class.__numpy_ufunc__(ufunc, method, i, inputs, **kwargs)
 
-   .. versionadded:: 1.10
+   .. versionadded:: 1.11
 
    Any class (ndarray subclass or not) can define this method to
    override behavior of Numpy's ufuncs. This works quite similarly to
@@ -109,7 +109,7 @@ Numpy provides several hooks that classes can customize:
       your_obj)`` always calls only your ``__numpy_ufunc__``, as
       expected.
 
-.. function:: class.__array_finalize__(self)
+.. method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
@@ -118,7 +118,7 @@ Numpy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. function:: class.__array_prepare__(array, context=None)
+.. method:: class.__array_prepare__(array, context=None)
 
    At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
    method is called on the input object with the highest array
@@ -130,7 +130,7 @@ Numpy provides several hooks that classes can customize:
    the subclass and update metadata before returning the array to the
    ufunc for computation.
 
-.. function:: class.__array_wrap__(array, context=None)
+.. method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -149,7 +149,7 @@ Numpy provides several hooks that classes can customize:
    possibility for the Python type of the returned object. Subclasses
    inherit a default value of 0.0 for this attribute.
 
-.. function:: class.__array__([dtype])
+.. method:: class.__array__([dtype])
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
