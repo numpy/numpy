@@ -51,7 +51,8 @@ The following PRs in master have been backported to 1.10.2
 
 The following PR reverted initial work for mingwpy.
 
-* gh-6536 BUG: revert gh-5614 to fix non-windows build problems
+* gh-6536 BUG: Revert gh-5614 to fix non-windows build problems
+* gh-6576 BUG: Revert gh-6376 to fix split behavior for empty arrays.
 
 Notes
 =====
