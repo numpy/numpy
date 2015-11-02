@@ -60,9 +60,11 @@ The following PRs in master have been backported to 1.10.2
 * gh-6558 MAINT: Minor update to "make upload" doc build command.
 * gh-6562 BUG: Disable view safety checks in recarray.
 * gh-6567 BUG: Revert some import * fixes in f2py.
+* gh-6574 DOC: Release notes for Numpy 1.10.2.
 * gh-6577 BUG: Fix for #6569, allowing build_ext --inplace
 * gh-6579 MAINT: Fix mistake in doc upload rule.
 * gh-6596 BUG: Fix swig for relaxed stride checking.
+* gh-6606 DOC: Update 1.10.2 release notes.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
