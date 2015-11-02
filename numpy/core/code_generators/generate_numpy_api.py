@@ -84,13 +84,13 @@ _import_array(void)
   /* Perform runtime check of C API version */
   if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "ABI version %%x but this version of numpy is %%x", \
+             "ABI version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
       return -1;
   }
   if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "API version %%x but this version of numpy is %%x", \
+             "API version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
       return -1;
   }
