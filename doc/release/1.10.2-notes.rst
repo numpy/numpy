@@ -21,15 +21,16 @@ updated numpy.i
 Issues Fixed
 ============
 
-* gh-6590 Fortran Array problem in numpy 1.10.
-* gh-6563 Intent(out) broken in recent versions of f2py.
-* gh-6530 The partition function errors out on empty input.
-* gh-6498 Mention change in default casting rule in 1.10 release notes.
-* gh-6497 Failure of reduce operation on recarrays.
-* gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
-* gh-6491 Error in broadcasting stride_tricks array.
-* gh-6467 Performance regression for record array access.
 * gh-6462 Median of empty array produces IndexError.
+* gh-6467 Performance regression for record array access.
+* gh-6491 Error in broadcasting stride_tricks array.
+* gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
+* gh-6497 Failure of reduce operation on recarrays.
+* gh-6498 Mention change in default casting rule in 1.10 release notes.
+* gh-6530 The partition function errors out on empty input.
+* gh-6563 Intent(out) broken in recent versions of f2py.
+* gh-6575 BUG: Split produces empty arrays with wrong number of dimensions
+* gh-6590 Fortran Array problem in numpy 1.10.
 
 Merged PRs
 ==========
@@ -63,12 +64,14 @@ The following PRs in master have been backported to 1.10.2
 * gh-6579 MAINT: Fix mistake in doc upload rule.
 * gh-6596 BUG: Fix swig for relaxed stride checking.
 
-The following PR reverted initial work for mingwpy.
+Initial support for mingwpy was reverted as it was causing problems for
+non-windows builds.
 
 * gh-6536 BUG: Revert gh-5614 to fix non-windows build problems
 
-And the this PR reverted a fix for np.lib.split that undid some behavior
-that will be standard in 1.11.
+A fix for np.lib.split was reverted because it resulted in "fixing"
+behavior will be present in the Numpy 1.11 and was already present in
+Numpy 1.9. See the discussion of the issue at gh-6575 for clarification.
 
 * gh-6576 BUG: Revert gh-6376 to fix split behavior for empty arrays.
 
