@@ -13,6 +13,8 @@ random_integers      Uniformly distributed integers in a given range.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 seed                 Seed the random number generator.
+choice               Random sample from 1-D array.
+
 ==================== =========================================================
 
 ==================== =========================================================
@@ -91,6 +93,8 @@ __all__ = [
     'binomial',
     'bytes',
     'chisquare',
+    'choice',
+    'dirichlet',
     'exponential',
     'f',
     'gamma',
