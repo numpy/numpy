@@ -31,6 +31,7 @@ Issues Fixed
 * gh-6563 Intent(out) broken in recent versions of f2py.
 * gh-6575 BUG: Split produces empty arrays with wrong number of dimensions
 * gh-6590 Fortran Array problem in numpy 1.10.
+* gh-6602 Random __all__ missing choice and dirichlet.
 
 Merged PRs
 ==========
@@ -65,6 +66,7 @@ The following PRs in master have been backported to 1.10.2
 * gh-6579 MAINT: Fix mistake in doc upload rule.
 * gh-6596 BUG: Fix swig for relaxed stride checking.
 * gh-6606 DOC: Update 1.10.2 release notes.
+* gh-6614 BUG: Add choice and dirichlet to numpy.random.__all__.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
