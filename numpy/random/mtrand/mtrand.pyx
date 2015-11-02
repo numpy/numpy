@@ -2219,7 +2219,7 @@ cdef class RandomState:
             Degrees of freedom, should be > 0 as of Numpy 1.10,
             should be > 1 for earlier versions.
         nonc : float
-            Non-centrality, should be > 0.
+            Non-centrality, should be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -2285,8 +2285,8 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if fdf <= 0:
                 raise ValueError("df <= 0")
-            if fnonc <= 0:
-                raise ValueError("nonc <= 0")
+            if fnonc < 0:
+                raise ValueError("nonc < 0")
             return cont2_array_sc(self.internal_state, rk_noncentral_chisquare,
                                   size, fdf, fnonc, self.lock)
 
@@ -2296,7 +2296,7 @@ cdef class RandomState:
         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
             raise ValueError("df <= 0")
-        if np.any(np.less_equal(ononc, 0.0)):
+        if np.any(np.less(ononc, 0.0)):
             raise ValueError("nonc < 0")
         return cont2_array(self.internal_state, rk_noncentral_chisquare, size,
                            odf, ononc, self.lock)
