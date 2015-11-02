@@ -231,6 +231,9 @@ double rk_chisquare(rk_state *state, double df)
 
 double rk_noncentral_chisquare(rk_state *state, double df, double nonc)
 {
+    if (nonc == 0){
+        return rk_chisquare(state, df);
+    }
     if(1 < df)
     {
         const double Chi2 = rk_chisquare(state, df - 1);

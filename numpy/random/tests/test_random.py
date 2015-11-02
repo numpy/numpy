@@ -504,6 +504,13 @@ class TestRandomDist(TestCase):
                             [ 0.332334982684171  ,  0.15451287602753125]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
+        np.random.seed(self.seed)
+        actual = np.random.noncentral_chisquare(df=5, nonc=0, size=(3, 2))
+        desired = np.array([[9.597154162763948, 11.725484450296079],
+                            [10.413711048138335, 3.694475922923986],
+                            [13.484222138963087, 14.377255424602957]])
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
+
     def test_noncentral_f(self):
         np.random.seed(self.seed)
         actual = np.random.noncentral_f(dfnum=5, dfden=2, nonc=1,
