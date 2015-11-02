@@ -6,9 +6,22 @@ adds various build and release improvements.
 
 Numpy 1.10.1 supports Python 2.6 - 2.7 and 3.2 - 3.5.
 
+
+Compatibility notes
+===================
+
+fix swig bug in ``numpy.i``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Relaxed stride checking revealed a bug in ``array_is_fortran(a)``, that was
+using PyArray_ISFORTRAN to check for Fortran contiguity instead of
+PyArray_IS_F_CONTIGUOUS. You may want to regenerate swigged files using the
+updated numpy.i
+
+
 Issues Fixed
 ============
 
+* gh-6590 Fortran Array problem in numpy 1.10.
 * gh-6563 Intent(out) broken in recent versions of f2py.
 * gh-6530 The partition function errors out on empty input.
 * gh-6498 Mention change in default casting rule in 1.10 release notes.
@@ -47,11 +60,16 @@ The following PRs in master have been backported to 1.10.2
 * gh-6562 BUG: Disable view safety checks in recarray.
 * gh-6567 BUG: Revert some import * fixes in f2py.
 * gh-6577 BUG: Fix for #6569, allowing build_ext --inplace
-* gh-6579 MAINT: Fix mistake in doc upload rule
+* gh-6579 MAINT: Fix mistake in doc upload rule.
+* gh-6596 BUG: Fix swig for relaxed stride checking.
 
 The following PR reverted initial work for mingwpy.
 
 * gh-6536 BUG: Revert gh-5614 to fix non-windows build problems
+
+And the this PR reverted a fix for np.lib.split that undid some behavior
+that will be standard in 1.11.
+
 * gh-6576 BUG: Revert gh-6376 to fix split behavior for empty arrays.
 
 Notes
