@@ -2278,7 +2278,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     True
 
     """
-    return all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    return bool(res)
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """

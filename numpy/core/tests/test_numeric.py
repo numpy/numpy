@@ -1471,6 +1471,16 @@ class TestAllclose(object):
         x = np.array([1.0, np.nan])
         assert_(np.allclose(x, x, equal_nan=True))
 
+    def test_return_class_is_ndarray(self):
+        # Issue gh-6475
+        # Check that allclose does not preserve subtypes
+        class Foo(np.ndarray):
+            def __new__(cls, *args, **kwargs):
+                return np.array(*args, **kwargs).view(cls)
+
+        a = Foo([1])
+        assert_(type(np.allclose(a, a)) is bool)
+
 
 class TestIsclose(object):
     rtol = 1e-5
