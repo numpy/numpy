@@ -295,7 +295,7 @@
       Py_INCREF(array_descr(ary));
       result = (PyArrayObject*) PyArray_FromArray(ary,
                                                   array_descr(ary),
-                                                  NPY_FORTRANORDER);
+                                                  NPY_ARRAY_F_CONTIGUOUS);
       *is_new_object = 1;
     }
     return result;
