@@ -33,6 +33,7 @@ Issues Fixed
 * gh-6590 Fortran Array problem in numpy 1.10.
 * gh-6602 Random __all__ missing choice and dirichlet.
 * gh-6618 NPY_FORTRANORDER in make_fortran() in numpy.i
+* gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
 
 Merged PRs
 ==========
@@ -69,6 +70,7 @@ The following PRs in master have been backported to 1.10.2
 * gh-6606 DOC: Update 1.10.2 release notes.
 * gh-6614 BUG: Add choice and dirichlet to numpy.random.__all__.
 * gh-6621 BUG: Fix swig make_fortran function.
+* gh-6628 BUG: Make allclose return python bool.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
