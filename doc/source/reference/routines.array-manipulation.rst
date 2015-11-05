@@ -26,6 +26,7 @@ Transpose-like operations
 .. autosummary::
    :toctree: generated/
 
+   moveaxis
    rollaxis
    swapaxes
    ndarray.T

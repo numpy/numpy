@@ -518,7 +518,7 @@ def transpose(a, axes=None):
 
     See Also
     --------
-    rollaxis
+    moveaxis
     argsort
 
     Notes
