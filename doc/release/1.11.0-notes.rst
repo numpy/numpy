@@ -103,6 +103,8 @@ New Features
   given precision. The byteorder specification is also ignored, the
   generated arrays are always in native byte order.
 
+* ``np.moveaxis`` allows for moving one or more array axes to a new position
+  by explicitly providing source and destination axes.
 
 Improvements
 ============
