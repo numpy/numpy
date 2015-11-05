@@ -3903,7 +3903,7 @@ class TestLexsort(TestCase):
         x = np.linspace(0., 1., 42*3).reshape(42, 3)
         assert_raises(np.AxisError, np.lexsort, x, axis=2)
 
-class TestIO(object):
+class TestIO(TestCase):
     """Test tofile, fromfile, tobytes, and fromstring"""
 
     def setUp(self):
@@ -3994,17 +3994,23 @@ class TestIO(object):
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
-    def test_unbuffered_fromfile(self):
+    def test_unseekable_fromfile(self):
         # gh-6246
         self.x.tofile(self.filename)
 
         def fail(*args, **kwargs):
-            raise io.IOError('Can not tell or seek')
+            raise IOError('Can not tell or seek')
 
         with io.open(self.filename, 'rb', buffering=0) as f:
             f.seek = fail
             f.tell = fail
-            y = np.fromfile(self.filename, dtype=self.dtype)
+            self.assertRaises(IOError, np.fromfile, f, dtype=self.dtype)
+
+    def test_io_open_unbuffered_fromfile(self):
+        # gh-6632
+        self.x.tofile(self.filename)
+        with io.open(self.filename, 'rb', buffering=0) as f:
+            y = np.fromfile(f, dtype=self.dtype)
             assert_array_equal(y, self.x.flat)
 
     def test_largish_file(self):
@@ -4027,6 +4033,13 @@ class TestIO(object):
             d.tofile(f)
         assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
 
+
+    def test_io_open_buffered_fromfile(self):
+        # gh-6632
+        self.x.tofile(self.filename)
+        f = io.open(self.filename, 'rb', buffering=-1)
+        y = np.fromfile(f, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
 
     def test_file_position_after_fromfile(self):
         # gh-4118

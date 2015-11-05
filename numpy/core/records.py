@@ -723,7 +723,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
-    to be a file object.
+    to be a file object. The file object must support random access
+    (i.e. it must have tell and seek methods).
 
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
