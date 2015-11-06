@@ -121,6 +121,14 @@ class TestFromrecords(TestCase):
         assert_equal(type(rv), np.recarray)
         assert_equal(rv.dtype.type, np.record)
 
+        #check that getitem also preserves np.recarray and np.record
+        r = np.rec.array(np.ones(4, dtype=[('a', 'i4'), ('b', 'i4'), 
+                                           ('c', 'i4,i4')]))
+        assert_equal(r['c'].dtype.type, np.record)
+        assert_equal(type(r['c']), np.recarray)
+        assert_equal(r[['a', 'b']].dtype.type, np.record)
+        assert_equal(type(r[['a', 'b']]), np.recarray)
+
         # check that accessing nested structures keep record type, but
         # not for subarrays, non-void structures, non-structured voids
         test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4',2)),

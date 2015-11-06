@@ -502,6 +502,7 @@ class recarray(ndarray):
         # we might also be returning a single element
         if isinstance(obj, ndarray):
             if obj.dtype.fields:
+                obj = obj.view(recarray)
                 if issubclass(obj.dtype.type, nt.void):
                     return obj.view(dtype=(self.dtype.type, obj.dtype))
                 return obj
