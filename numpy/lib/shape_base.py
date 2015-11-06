@@ -799,6 +799,9 @@ def tile(A, reps):
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 
+    Note : Although tile may be used for broadcasting, it is strongly
+    recommended to use numpy's broadcasting operations and functions.
+
     Parameters
     ----------
     A : array_like
@@ -814,6 +817,7 @@ def tile(A, reps):
     See Also
     --------
     repeat : Repeat elements of an array.
+    broadcast_to : Broadcast an array to a new shape
 
     Examples
     --------
