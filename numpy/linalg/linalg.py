@@ -1622,7 +1622,7 @@ def pinv(a, rcond=1e-15 ):
         if s[i] > cutoff:
             s[i] = 1./s[i]
         else:
-            s[i] = 0.;
+            s[i] = 0.
     res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
