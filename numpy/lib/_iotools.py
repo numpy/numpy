@@ -675,7 +675,7 @@ class StringConverter(object):
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([asbytes('')])
+            self.missing_values = {asbytes('')}
         else:
             if isinstance(missing_values, bytes):
                 missing_values = missing_values.split(asbytes(","))
