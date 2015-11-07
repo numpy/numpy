@@ -257,17 +257,10 @@ def check_types(config_cmd, ext, build_dir):
     # Expected size (in number of bytes) for each type. This is an
     # optimization: those are only hints, and an exhaustive search for the size
     # is done if the hints are wrong.
-    expected = {}
-    expected['short'] = [2]
-    expected['int'] = [4]
-    expected['long'] = [8, 4]
-    expected['float'] = [4]
-    expected['double'] = [8]
-    expected['long double'] = [16, 12, 8]
-    expected['Py_intptr_t'] = [8, 4]
-    expected['PY_LONG_LONG'] = [8]
-    expected['long long'] = [8]
-    expected['off_t'] = [8, 4]
+    expected = {'short': [2], 'int': [4], 'long': [8, 4],
+                'float': [4], 'double': [8], 'long double': [16, 12, 8],
+                'Py_intptr_t': [8, 4], 'PY_LONG_LONG': [8], 'long long': [8],
+                'off_t': [8, 4]}
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
