@@ -18,10 +18,9 @@ class TestTake(TestCase):
         index_arrays = [np.empty(0, dtype=np.intp),
                         np.empty(tuple(), dtype=np.intp),
                         np.empty((1, 1), dtype=np.intp)]
-        real_indices = {}
-        real_indices['raise'] = {-1:1, 4:IndexError}
-        real_indices['wrap'] = {-1:1, 4:0}
-        real_indices['clip'] = {-1:0, 4:1}
+        real_indices = {'raise': {-1: 1, 4: IndexError},
+                        'wrap': {-1: 1, 4: 0},
+                        'clip': {-1: 0, 4: 1}}
         # Currently all types but object, use the same function generation.
         # So it should not be necessary to test all. However test also a non
         # refcounted struct on top of object.

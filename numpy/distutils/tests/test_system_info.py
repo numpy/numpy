@@ -64,15 +64,14 @@ class test_system_info(system_info):
                  ):
         self.__class__.info = {}
         self.local_prefixes = []
-        defaults = {}
-        defaults['library_dirs'] = ''
-        defaults['include_dirs'] = ''
-        defaults['runtime_library_dirs'] = ''
-        defaults['rpath'] = ''
-        defaults['src_dirs'] = ''
-        defaults['search_static_first'] = "0"
-        defaults['extra_compile_args'] = ''
-        defaults['extra_link_args'] = ''
+        defaults = {'library_dirs': '',
+                    'include_dirs': '',
+                    'runtime_library_dirs': '',
+                    'rpath': '',
+                    'src_dirs': '',
+                    'search_static_first': "0",
+                    'extra_compile_args': '',
+                    'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
         # We have to parse the config files afterwards
         # to have a consistent temporary filepath

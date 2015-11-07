@@ -470,15 +470,13 @@ class system_info(object):
                   ):
         self.__class__.info = {}
         self.local_prefixes = []
-        defaults = {}
-        defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
-        defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
-        defaults['runtime_library_dirs'] = os.pathsep.join(default_runtime_dirs)
-        defaults['rpath'] = ''
-        defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
-        defaults['search_static_first'] = str(self.search_static_first)
-        defaults['extra_compile_args'] = ''
-        defaults['extra_link_args'] = ''
+        defaults = {'library_dirs': os.pathsep.join(default_lib_dirs),
+                    'include_dirs': os.pathsep.join(default_include_dirs),
+                    'runtime_library_dirs': os.pathsep.join(default_runtime_dirs),
+                    'rpath': '',
+                    'src_dirs': os.pathsep.join(default_src_dirs),
+                    'search_static_first': str(self.search_static_first),
+                    'extra_compile_args': '', 'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
