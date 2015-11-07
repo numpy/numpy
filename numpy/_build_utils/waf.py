@@ -268,10 +268,7 @@ def check_type_size(conf, type_name, expected_sizes=None, **kw):
 
 @waflib.Configure.conf
 def check_functions_at_once(self, funcs, **kw):
-    header = []
-    header = ['#ifdef __cplusplus']
-    header.append('extern "C" {')
-    header.append('#endif')
+    header = ['#ifdef __cplusplus', 'extern "C" {', '#endif']
     for f in funcs:
         header.append("\tchar %s();" % f)
         # Handle MSVC intrinsics: force MS compiler to make a function

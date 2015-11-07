@@ -141,8 +141,7 @@ class LibraryInfo(object):
         return _escape_backslash(val)
 
     def __str__(self):
-        m = ['Name: %s' % self.name]
-        m.append('Description: %s' % self.description)
+        m = ['Name: %s' % self.name, 'Description: %s' % self.description]
         if self.requires:
             m.append('Requires:')
         else:
