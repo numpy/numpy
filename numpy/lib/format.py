@@ -265,8 +265,7 @@ def header_data_from_array_1_0(array):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    d = {}
-    d['shape'] = array.shape
+    d = {'shape': array.shape}
     if array.flags.c_contiguous:
         d['fortran_order'] = False
     elif array.flags.f_contiguous:
