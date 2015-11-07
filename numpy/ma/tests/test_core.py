@@ -3192,7 +3192,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_almost_equal(r.filled(0), fX.dot(fX))
         assert_(r.mask[1,3])
         r1 = empty_like(r)
-        mX.dot(mX, r1)
+        mX.dot(mX, out=r1)
         assert_almost_equal(r, r1)
 
         mYY = mXX.swapaxes(-1, -2)
@@ -3200,7 +3200,7 @@ class TestMaskedArrayMathMethods(TestCase):
         r = mXX.dot(mYY)
         assert_almost_equal(r.filled(0), fXX.dot(fYY))
         r1 = empty_like(r)
-        mXX.dot(mYY, r1)
+        mXX.dot(mYY, out=r1)
         assert_almost_equal(r, r1)
 
     def test_dot_shape_mismatch(self):
