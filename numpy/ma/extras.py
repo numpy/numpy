@@ -1073,7 +1073,8 @@ def dot(a, b, strict=False):
            fill_value = 999999)
 
     """
-    #!!!: Works only with 2D arrays. There should be a way to get it to run with higher dimension
+    # !!!: Works only with 2D arrays. There should be a way to get it to run
+    # with higher dimension
     if strict and (a.ndim == 2) and (b.ndim == 2):
         a = mask_rows(a)
         b = mask_cols(b)
