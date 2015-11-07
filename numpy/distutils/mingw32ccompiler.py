@@ -244,9 +244,7 @@ def find_python_dll():
     # - find it in python main dir
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
-    lib_dirs = []
-    lib_dirs.append(sys.prefix)
-    lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    lib_dirs = [sys.prefix, os.path.join(sys.prefix, 'lib')]
     try:
         lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
     except KeyError:
