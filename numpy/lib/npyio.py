@@ -356,6 +356,16 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     """
     import gzip
+    try:
+        from pathlib import Path
+        supports_pathlib = True
+    except:
+        supports_pathlib = False
+
+    if supports_pathlib:
+        if isinstance(file, Path):
+            file = file.__str__()
+
 
     own_fid = False
     if isinstance(file, basestring):
@@ -505,10 +515,11 @@ def savez(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str or file
-        Either the file name (string) or an open file (file-like object)
-        where the data will be saved. If file is a string, the ``.npz``
-        extension will be appended to the file name if it is not already there.
+    file : str, file, or Path (from pathlib library)
+        Either the file name (string), an open file (file-like object)
+        where the data will be saved, or a Path from the pathlib library. 
+        If file is a string, the ``.npz`` extension will be appended to 
+        the file name if it is not already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
         know the names of the arrays outside `savez`, the arrays will be saved
@@ -584,7 +595,7 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str
+    file : str, file, or Path (from pathlib library)
         File name of ``.npz`` file.
     args : Arguments
         Function arguments.
@@ -606,10 +617,18 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     import zipfile
     # Import deferred for startup time improvement
     import tempfile
+    try:
+        from pathlib import Path
+        supports_pathlib = True
+    except:
+        supports_pathlib = False
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
             file = file + '.npz'
+    elif supports_pathlib:
+        if isinstance(file, Path):
+            file = file.__str__()
 
     namedict = kwds
     for i, val in enumerate(args):
