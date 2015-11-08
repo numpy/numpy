@@ -606,10 +606,19 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     import zipfile
     # Import deferred for startup time improvement
     import tempfile
+    try:
+        from pathlib import Path
+        supports_pathlib = True
+    except:
+        supports_pathlib = False
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
             file = file + '.npz'
+    elif supports_pathlib:
+        if isinstance(file,Path):
+            file = file.__str__()
+    import pdb; pdb.set_trace()
 
     namedict = kwds
     for i, val in enumerate(args):
