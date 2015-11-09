@@ -61,6 +61,11 @@ New Features
 Improvements
 ============
 
+*np.loadtxt* now supports a single integer as ``usecol`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of using ``usecol=(n,)`` to read the nth column of a file
+it is now allowed to use ``usecol=n``. Also the error message is
+more user friendly when a non-integer is passed as a column index.
 
 
 Changes

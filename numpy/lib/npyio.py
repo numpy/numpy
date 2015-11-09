@@ -6,7 +6,7 @@ import re
 import itertools
 import warnings
 import weakref
-from operator import itemgetter
+from operator import itemgetter, index as opindex
 
 import numpy as np
 from . import format
@@ -714,10 +714,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
-    usecols : sequence, optional
-        Which columns to read, with 0 being the first.  For example,
-        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
+
+    usecols : int or sequence, optional
+        Which columns to read, with 0 being the first. For example, 
+        usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
+        
+        .. versionadded:: 1.11.0
+        
+        Also when a single column has to be read it is possible to use
+        an integer instead of a tuple. E.g ``usecols = 3`` reads the
+        third column the same way as `usecols = (3,)`` would.
+
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -786,8 +794,25 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
+
     if usecols is not None:
-        usecols = list(usecols)
+        # Allow usecols to be a single int or a sequence of ints
+        try:
+            usecols_as_list = list(usecols)
+        except TypeError:
+            usecols_as_list = [usecols]
+        for col_idx in usecols_as_list:
+            try:
+                opindex(col_idx)
+            except TypeError as e:
+                e.args = (
+                    "usecols must be an int or a sequence of ints but "
+                    "it contains at least one element of type %s" %
+                    type(col_idx),
+                    )
+                raise
+        # Fall back to existing code
+        usecols = usecols_as_list
 
     fown = False
     try:
