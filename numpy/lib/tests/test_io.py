@@ -608,6 +608,29 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=float, usecols=np.array([1, 2]))
         assert_array_equal(x, a[:, 1:])
 
+        # Testing with an integer instead of a sequence
+        for int_type in [int, np.int8, np.int16,
+                         np.int32, np.int64, np.uint8, np.uint16,
+                         np.uint32, np.uint64]:
+            to_read = int_type(1)
+            c.seek(0)
+            x = np.loadtxt(c, dtype=float, usecols=to_read)
+            assert_array_equal(x, a[:, 1])
+
+        # Testing with some crazy custom integer type
+        class CrazyInt(object):
+            def __index__(self):
+                return 1
+
+        crazy_int = CrazyInt()
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=crazy_int)
+        assert_array_equal(x, a[:, 1])
+
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=(crazy_int,))
+        assert_array_equal(x, a[:, 1])
+
         # Checking with dtypes defined converters.
         data = '''JOE 70.1 25.3
                 BOB 60.5 27.9
@@ -618,6 +641,21 @@ class TestLoadTxt(TestCase):
         arr = np.loadtxt(c, usecols=(0, 2), dtype=list(zip(names, dtypes)))
         assert_equal(arr['stid'], [b"JOE", b"BOB"])
         assert_equal(arr['temp'], [25.3, 27.9])
+
+        # Testing non-ints in usecols
+        c.seek(0)
+        bogus_idx = 1.5
+        assert_raises_regex(
+            TypeError,
+            '^usecols must be.*%s' % type(bogus_idx),
+            np.loadtxt, c, usecols=bogus_idx
+            )
+
+        assert_raises_regex(
+            TypeError,
+            '^usecols must be.*%s' % type(bogus_idx),
+            np.loadtxt, c, usecols=[0, bogus_idx, 0]
+            )
 
     def test_fancy_dtype(self):
         c = TextIO()
