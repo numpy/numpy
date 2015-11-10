@@ -87,8 +87,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     div = (num - 1) if endpoint else num
 
     # Convert float/complex array scalars to float, gh-3504
-    start = start * 1.
-    stop = stop * 1.
+    # Make sure one can use variables that have an __array_interface__, gh-6634
+    from numpy import asarray
+    start = asarray(start) * 1.
+    stop = asarray(stop) * 1.
 
     dt = result_type(start, stop, float(num))
     if dtype is None:
