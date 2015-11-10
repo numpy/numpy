@@ -1293,7 +1293,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_NDIM(arr),
                                     PyArray_SHAPE(arr),
                                     PyArray_STRIDES(arr),
-                                    PyArray_DATA(arr) + offset,
+                                    ((char *)PyArray_DATA(arr)) + offset,
                                     PyArray_FLAGS(arr),
                                     (PyObject *)arr);
         if (*view == NULL) {
