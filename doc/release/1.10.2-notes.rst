@@ -29,9 +29,12 @@ Issues Fixed
 * gh-6498 Mention change in default casting rule in 1.10 release notes.
 * gh-6530 The partition function errors out on empty input.
 * gh-6563 Intent(out) broken in recent versions of f2py.
+* gh-6569 Cannot run tests after 'python setup.py build_ext -i'
+* gh-6572 Error in broadcasting stride_tricks array component.
 * gh-6575 BUG: Split produces empty arrays with wrong number of dimensions
 * gh-6590 Fortran Array problem in numpy 1.10.
 * gh-6602 Random __all__ missing choice and dirichlet.
+* gh-6611 ma.dot no longer always returns a masked array in 1.10.
 * gh-6618 NPY_FORTRANORDER in make_fortran() in numpy.i
 * gh-6636 Memory leak in nested dtypes in numpy.recarray
 * gh-6641 Subsetting recarray by fields yields a structured array.
@@ -74,6 +77,7 @@ The following PRs in master have been backported to 1.10.2
 * gh-6628 BUG: Make allclose return python bool.
 * gh-6642 BUG: Fix memleak in _convert_from_dict.
 * gh-6643 ENH: make recarray.getitem return a recarray.
+* gh-6653 BUG: Fix ma dot to always return masked array.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
