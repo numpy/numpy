@@ -11,7 +11,9 @@ __author__ = "Pierre GF Gerard-Marchant"
 import warnings
 import pickle
 import operator
+import itertools
 from functools import reduce
+
 
 import numpy as np
 import numpy.ma.core
@@ -3815,6 +3817,15 @@ class TestMaskedArrayFunctions(TestCase):
         test = make_mask(mask, dtype=mask.dtype)
         assert_equal(test.dtype, bdtype)
         assert_equal(test, np.array([(0, 0), (0, 1)], dtype=bdtype))
+
+        # test that nomask is returned when m is nomask.
+        bools = [True, False]
+        dtypes = [MaskType, np.float]
+        msgformat = 'copy=%s, shrink=%s, dtype=%s'
+        for cpy, shr, dt in itertools.product(bools, bools, dtypes):
+            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
+            assert_(res is nomask, msgformat % (cpy, shr, dt))
+
 
     def test_mask_or(self):
         # Initialize
