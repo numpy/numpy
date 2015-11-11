@@ -1495,9 +1495,10 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     shrink : bool, optional
         Whether to shrink `m` to ``nomask`` if all its values are False.
     dtype : dtype, optional
-        Data-type of the output mask. By default, the output mask has
-        a dtype of MaskType (bool). If the dtype is flexible, each field
-        has a boolean dtype.
+        Data-type of the output mask. By default, the output mask has a
+        dtype of MaskType (bool). If the dtype is flexible, each field has
+        a boolean dtype. This is ignored when `m` is ``nomask``, in which
+        case ``nomask`` is always returned.
 
     Returns
     -------
@@ -1547,7 +1548,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
           dtype=[('man', '|b1'), ('mouse', '|b1')])
 
     """
-    if m is nomask and shrink:
+    if m is nomask:
         return nomask
     elif isinstance(m, ndarray):
         # We won't return after this point to make sure we can shrink the mask
