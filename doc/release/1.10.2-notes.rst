@@ -17,23 +17,27 @@ using PyArray_ISFORTRAN to check for Fortran contiguity instead of
 PyArray_IS_F_CONTIGUOUS. You may want to regenerate swigged files using the
 updated numpy.i
 
-
 Issues Fixed
 ============
 
 * gh-6462 Median of empty array produces IndexError.
 * gh-6467 Performance regression for record array access.
+* gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
 * gh-6491 Error in broadcasting stride_tricks array.
 * gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
 * gh-6497 Failure of reduce operation on recarrays.
 * gh-6498 Mention change in default casting rule in 1.10 release notes.
 * gh-6530 The partition function errors out on empty input.
 * gh-6563 Intent(out) broken in recent versions of f2py.
+* gh-6569 Cannot run tests after 'python setup.py build_ext -i'
+* gh-6572 Error in broadcasting stride_tricks array component.
 * gh-6575 BUG: Split produces empty arrays with wrong number of dimensions
 * gh-6590 Fortran Array problem in numpy 1.10.
 * gh-6602 Random __all__ missing choice and dirichlet.
+* gh-6611 ma.dot no longer always returns a masked array in 1.10.
 * gh-6618 NPY_FORTRANORDER in make_fortran() in numpy.i
-* gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
+* gh-6636 Memory leak in nested dtypes in numpy.recarray
+* gh-6641 Subsetting recarray by fields yields a structured array.
 
 Merged PRs
 ==========
@@ -71,6 +75,9 @@ The following PRs in master have been backported to 1.10.2
 * gh-6614 BUG: Add choice and dirichlet to numpy.random.__all__.
 * gh-6621 BUG: Fix swig make_fortran function.
 * gh-6628 BUG: Make allclose return python bool.
+* gh-6642 BUG: Fix memleak in _convert_from_dict.
+* gh-6643 ENH: make recarray.getitem return a recarray.
+* gh-6653 BUG: Fix ma dot to always return masked array.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
