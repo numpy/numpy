@@ -38,6 +38,7 @@ Issues Fixed
 * gh-6618 NPY_FORTRANORDER in make_fortran() in numpy.i
 * gh-6636 Memory leak in nested dtypes in numpy.recarray
 * gh-6641 Subsetting recarray by fields yields a structured array.
+* gh-6667 ma.make_mask handles ma.nomask input incorrectly.
 
 Merged PRs
 ==========
@@ -78,6 +79,7 @@ The following PRs in master have been backported to 1.10.2
 * gh-6642 BUG: Fix memleak in _convert_from_dict.
 * gh-6643 ENH: make recarray.getitem return a recarray.
 * gh-6653 BUG: Fix ma dot to always return masked array.
+* gh-6668 BUG: ma.make_mask should always return nomask for nomask argument.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
