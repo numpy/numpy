@@ -1444,6 +1444,8 @@ pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
         r[7] = @trf@(a[7 * stride]);
 
         for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
             r[0] += @trf@(a[(i + 0) * stride]);
             r[1] += @trf@(a[(i + 1) * stride]);
             r[2] += @trf@(a[(i + 2) * stride]);
@@ -2190,6 +2192,8 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
         r[7] = a[6 * stride + 1];
 
         for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
             r[0] += a[(i + 0) * stride];
             r[1] += a[(i + 0) * stride + 1];
             r[2] += a[(i + 2) * stride];
