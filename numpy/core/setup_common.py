@@ -107,6 +107,15 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "copysign", "nextafter", "ftello", "fseeko",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
 
+# vector math based on OpenMP vector function abi
+for f in ('sin', 'cos', 'exp', 'log'):
+    for t, sz in (('f', 4), ('', 2)):
+        # SSE vector math
+        OPTIONAL_STDFUNCS.append("_ZGVbN%dv_%s%s" % (sz, f, t))
+        # AVX2 vector math
+        OPTIONAL_STDFUNCS.append("_ZGVdN%dv_%s%s" % (sz * 2, f, t))
+
+
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h",  # SSE

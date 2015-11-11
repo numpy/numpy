@@ -1440,11 +1440,25 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *****************************************************************************
  */
 
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+#include <xmmintrin.h>
+#endif
+#ifdef NPY_HAVE_AVX2_INTRINSICS
+#include <immintrin.h>
+#endif
+
 /**begin repeat
  * Float types
  *  #type = npy_float, npy_double#
+ *  #vtype = __m128, __m128d#
+ *  #vtype2 = __m256, __m256d#
+ *  #vsuf = s, d#
+ *  #vsz = 4, 2#
+ *  #vsz2 = 8, 4#
  *  #TYPE = FLOAT, DOUBLE#
  *  #scalarf = npy_sqrtf, npy_sqrt#
+ *  #c = f, #
+ *  #C = F, #
  */
 
 NPY_NO_EXPORT void
@@ -1457,6 +1471,60 @@ NPY_NO_EXPORT void
         }
     }
 }
+
+/**begin repeat1
+ * Float types
+ *  #f = sin, cos, exp, log#
+ *  #F = SIN, COS, EXP, LOG#
+ */
+/* vector math based on OpenMP vector function abi */
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+@vtype@ _ZGVbN@vsz@v_@f@@c@(@vtype@);
+#endif
+#ifdef NPY_HAVE_AVX2_INTRINSICS
+@vtype2@ _ZGVdN@vsz2@v_@f@@c@(@vtype2@);
+#endif
+
+NPY_NO_EXPORT void
+@TYPE@_@f@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    /* use vector math functions when there is no aliasing */
+    if (
+#if (!defined HAVE__ZGVDN@vsz2@V_@F@@C@ || !defined NPY_HAVE_AVX2_INTRINSICS) && \
+        (!defined HAVE__ZGVBN@vsz@V_@F@@C@ || !defined NPY_HAVE_SSE2_INTRINSICS)
+        1 ||
+#endif
+        steps[0] != sizeof(@type@) || steps[1] != sizeof(@type@) ||
+            (abs_intp(args[1] - args[0]) <= (@vsz@) &&
+            (args[1] - args[0]) != 0)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *(@type@ *)op1 = npy_@f@@c@(in1);
+        }
+    }
+    else {
+        @type@ *ip1 = (@type@ *)args[0], *op1 = (@type@ *)args[1];
+        npy_intp i, n = dimensions[0];
+        for(i = 0; i < n - (n % @vsz2@); i+=@vsz2@) {
+#if defined HAVE__ZGVDN@vsz2@V_@F@@C@ && defined NPY_HAVE_AVX2_INTRINSICS
+            @vtype2@ v = _mm256_loadu_p@vsuf@(&ip1[i]);
+            v = _ZGVdN@vsz2@v_@f@@c@(v);
+            _mm256_storeu_p@vsuf@(&op1[i], v);
+#elif defined HAVE__ZGVBN@vsz@V_@F@@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+            @vtype@ v = _mm_loadu_p@vsuf@(&ip1[i]);
+            v = _ZGVbN@vsz@v_@f@@c@(v);
+            _mm_storeu_p@vsuf@(&op1[i], v);
+            v = _mm_loadu_p@vsuf@(&ip1[i + @vsz@]);
+            v = _ZGVbN@vsz@v_@f@@c@(v);
+            _mm_storeu_p@vsuf@(&op1[i + @vsz@], v);
+#endif
+        }
+        for(; i < n; i++) {
+            op1[i] = npy_@f@@c@(ip1[i]);
+        }
+    }
+}
+/**end repeat1**/
 
 /**end repeat**/
 

@@ -456,17 +456,55 @@ double npy_log2(double x)
  * #type = npy_longdouble, npy_double, npy_float#
  * #c = l,,f#
  * #C = L,,F#
+ * #vsuf = ,d,s#
+ * #vsz = 0,2,4#
+ * #vsz2 = 0,4,8#
+ * #vtype = ,__m128d,__m128#
+ * #vtype2 = ,__m256d,__m256#
  */
 /**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
- * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
- *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
+ * #kind = tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
+ *         expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ * #KIND = TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
 #ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x)
 {
     return @kind@@c@(x);
+}
+#endif
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = sin,cos,exp,log#
+ * #KIND = SIN,COS,EXP,LOG#
+ */
+#ifdef HAVE_@KIND@@C@
+
+#if @vsz@ > 0 && defined NPY_HAVE_SSE2_INTRINSICS
+#include <xmmintrin.h>
+@vtype@ _ZGVbN@vsz@v_@kind@@c@(@vtype@);
+#endif
+#if @vsz@ > 0 && defined NPY_HAVE_AVX2_INTRINSICS
+#include <immintrin.h>
+@vtype2@ _ZGVdN@vsz2@v_@kind@@c@(@vtype2@);
+#endif
+
+@type@ npy_@kind@@c@(@type@ x)
+{
+#if @vsz@ > 0 && defined HAVE__ZGVDN@vsz2@V_@KIND@@C@ && defined NPY_HAVE_AVX2_INTRINSICS
+    @vtype2@ v = _mm256_set1_p@vsuf@(x);
+    v = _ZGVdN@vsz2@v_@kind@@c@(v);
+    return v[0];
+#elif @vsz@ > 0 &&  defined HAVE__ZGVBN@vsz@V_@KIND@@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+    @vtype@ v = _mm_set1_p@vsuf@(x);
+    v = _ZGVbN@vsz@v_@kind@@c@(v);
+    return v[0];
+#else
+    return @kind@@c@(x);
+#endif
 }
 #endif
 

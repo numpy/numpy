@@ -348,7 +348,7 @@ def check_types(config_cmd, ext, build_dir):
 def check_mathlib(config_cmd):
     # Testing the C math library
     mathlibs = []
-    mathlibs_choices = [[], ['m'], ['cpml']]
+    mathlibs_choices = [[], ['mvec', 'm'], ['m'], ['cpml']]
     mathlib = os.environ.get('MATHLIB')
     if mathlib:
         mathlibs_choices.insert(0, mathlib.split(','))
