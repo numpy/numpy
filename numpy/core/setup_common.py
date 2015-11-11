@@ -125,7 +125,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
+                       ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
+                        "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
+                       ("__builtin_prefetch", "(float*)0, 0, 3"),
                        ]
 
 # function attributes
