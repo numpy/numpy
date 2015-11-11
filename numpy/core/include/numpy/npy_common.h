@@ -46,6 +46,14 @@
 #define NPY_HAVE_SSE2_INTRINSICS
 #endif
 
+#if defined HAVE_IMMINTRIN_H && defined HAVE__MM256_LOADU_PS
+#define NPY_HAVE_AVX_INTRINSICS
+#endif
+
+#if defined HAVE_IMMINTRIN_H && defined HAVE__MM256_ABS_EPI8
+#define NPY_HAVE_AVX2_INTRINSICS
+#endif
+
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:

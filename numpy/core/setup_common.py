@@ -107,11 +107,11 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "copysign", "nextafter", "ftello", "fseeko",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
 
-
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
+                "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
 ]
 
@@ -130,6 +130,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
                        ("__builtin_prefetch", "(float*)0, 0, 3"),
+                       ("_mm256_loadu_ps", "(float*)0", "immintrin.h"), # AVX
+                       ("_mm256_abs_epi8", "*(__m256i*)0", "immintrin.h"), # AVX2
                        ]
 
 # function attributes
