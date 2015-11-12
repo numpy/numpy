@@ -193,7 +193,7 @@ basic slicing that returns a :term:`view`).
    fundamentally different than ``x[(1,2,3)]``. The latter is
    equivalent to ``x[1,2,3]`` which will trigger basic selection while
    the former will trigger advanced indexing. Be sure to understand
-   why this is occurs.
+   why this occurs.
 
    Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
    whereas ``x[[1,2,slice(None)]]`` will trigger basic slicing.
