@@ -1102,6 +1102,18 @@ def assert_raises(*args,**kwargs):
     deemed to have suffered an error, exactly as for an
     unexpected exception.
 
+    Alternatively, `assert_raises` can be used as a context manager:
+
+    >>> from numpy.testing import assert_raises
+    >>> with assert_raises(ZeroDivisionError):
+    ...   1 / 0
+
+    is equivalent to
+
+    >>> def div(x, y):
+    ...    return x / y
+    >>> assert_raises(ZeroDivisionError, div, 1, 0)
+
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     nose = import_nose()
