@@ -3989,7 +3989,8 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
+                         int raise_exceptions)
 {
     PyArrayObject * self = NULL;
     PyArrayObject * other = NULL;
@@ -3998,8 +3999,10 @@ array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwd
 
     mem_overlap_t result;
     static PyObject *too_hard_cls = NULL;
-    Py_ssize_t max_work = NPY_MAY_SHARE_EXACT;
+    Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
+
+    max_work = default_max_work;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
                                      PyArray_Converter, &self,
@@ -4043,17 +4046,29 @@ array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwd
         Py_RETURN_TRUE;
     }
     else if (result == MEM_OVERLAP_OVERFLOW) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Integer overflow in computing overlap");
-        return NULL;
+        if (raise_exceptions) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Integer overflow in computing overlap");
+            return NULL;
+        }
+        else {
+            /* Don't know, so say yes */
+            Py_RETURN_TRUE;
+        }
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
-        npy_cache_import("numpy.core._internal", "TooHardError",
-                         &too_hard_cls);
-        if (too_hard_cls) {
-            PyErr_SetString(too_hard_cls, "Exceeded max_work");
+        if (raise_exceptions) {
+            npy_cache_import("numpy.core._internal", "TooHardError",
+                             &too_hard_cls);
+            if (too_hard_cls) {
+                PyErr_SetString(too_hard_cls, "Exceeded max_work");
+            }
+            return NULL;
         }
-        return NULL;
+        else {
+            /* Don't know, so say yes */
+            Py_RETURN_TRUE;
+        }
     }
     else {
         /* Doesn't happen usually */
@@ -4066,6 +4081,20 @@ fail:
     Py_XDECREF(self);
     Py_XDECREF(other);
     return NULL;
+}
+
+
+static PyObject *
+array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_EXACT, 1);
+}
+
+
+static PyObject *
+array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_BOUNDS, 0);
 }
 
 
@@ -4177,6 +4206,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"shares_memory",
         (PyCFunction)array_shares_memory,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"may_share_memory",
+        (PyCFunction)array_may_share_memory,
         METH_VARARGS | METH_KEYWORDS, NULL},
     /* Datetime-related functions */
     {"datetime_data",

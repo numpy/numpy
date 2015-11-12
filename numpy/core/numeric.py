@@ -41,7 +41,8 @@ __all__ = [
     'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_', 'True_',
     'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
     'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
-    'shares_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'TooHardError',
+    'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
+    'TooHardError',
     ]
 
 if sys.version_info[0] < 3:
@@ -384,6 +385,7 @@ fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 shares_memory = multiarray.shares_memory
+may_share_memory = multiarray.may_share_memory
 if sys.version_info[0] < 3:
     newbuffer = multiarray.newbuffer
     getbuffer = multiarray.getbuffer
