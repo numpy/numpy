@@ -4051,6 +4051,8 @@ static PyObject *
 array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
                          int raise_exceptions)
 {
+    PyObject * self_obj = NULL;
+    PyObject * other_obj = NULL;
     PyArrayObject * self = NULL;
     PyArrayObject * other = NULL;
     PyObject *max_work_obj = NULL;
@@ -4063,11 +4065,33 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
 
     max_work = default_max_work;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
-                                     PyArray_Converter, &self,
-                                     PyArray_Converter, &other,
-                                     &max_work_obj)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+                                     &self_obj, &other_obj, &max_work_obj)) {
         return NULL;
+    }
+
+    if (PyArray_Check(self_obj)) {
+        self = (PyArrayObject*)self_obj;
+        Py_INCREF(self);
+    }
+    else {
+        /* Use FromAny to enable checking overlap for objects exposing array
+           interfaces etc. */
+        self = (PyArrayObject*)PyArray_FromAny(self_obj, NULL, 0, 0, 0, NULL);
+        if (self == NULL) {
+            goto fail;
+        }
+    }
+
+    if (PyArray_Check(other_obj)) {
+        other = (PyArrayObject*)other_obj;
+        Py_INCREF(other);
+    }
+    else {
+        other = (PyArrayObject*)PyArray_FromAny(other_obj, NULL, 0, 0, 0, NULL);
+        if (other == NULL) {
+            goto fail;
+        }
     }
 
     if (max_work_obj == NULL || max_work_obj == Py_None) {
