@@ -10,16 +10,36 @@ Numpy 1.10.1 supports Python 2.6 - 2.7 and 3.2 - 3.5.
 Compatibility notes
 ===================
 
-fix swig bug in ``numpy.i``
+Relaxed stride checking is no longer the default
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There were back compatibility problems involving views changing the dtype of
+multidimensional Fortran arrays that need to be dealt with over a longer
+timeframe.
+
+Fix swig bug in ``numpy.i``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Relaxed stride checking revealed a bug in ``array_is_fortran(a)``, that was
 using PyArray_ISFORTRAN to check for Fortran contiguity instead of
 PyArray_IS_F_CONTIGUOUS. You may want to regenerate swigged files using the
 updated numpy.i
 
+Deprecate views changing dimensions in fortran order
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This deprecates assignment of a new descriptor to the dtype attribute of
+a non-C-contiguous array if it result in changing the shape. This
+effectively bars viewing a multidimensional Fortran array using a dtype
+that changes the element size along the first axis.
+
+The reason for the deprecation is that, when relaxed strides checking is
+enabled, arrays that are both C and Fortran contiguous are always treated
+as C contiguous which breaks some code that depended the two being mutually
+exclusive for non-scalar arrays of ndim > 1. This deprecation prepares the
+way to always enable relaxed stride checking.
+
+
 Issues Fixed
 ============
-
+* gh-6019 Masked array repr fails for structured array with multi-dimensional column.
 * gh-6462 Median of empty array produces IndexError.
 * gh-6467 Performance regression for record array access.
 * gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
@@ -28,6 +48,7 @@ Issues Fixed
 * gh-6497 Failure of reduce operation on recarrays.
 * gh-6498 Mention change in default casting rule in 1.10 release notes.
 * gh-6530 The partition function errors out on empty input.
+* gh-6532 numpy.inner return wrong inaccurate value sometimes.
 * gh-6563 Intent(out) broken in recent versions of f2py.
 * gh-6569 Cannot run tests after 'python setup.py build_ext -i'
 * gh-6572 Error in broadcasting stride_tricks array component.
@@ -39,6 +60,10 @@ Issues Fixed
 * gh-6636 Memory leak in nested dtypes in numpy.recarray
 * gh-6641 Subsetting recarray by fields yields a structured array.
 * gh-6667 ma.make_mask handles ma.nomask input incorrectly.
+* gh-6675 Optimized blas detection broken in master and 1.10.
+* gh-6678 Getting unexpected error from: X.dtype = complex (or Y = X.view(complex))
+* gh-6718 f2py test fail in pip installed numpy-1.10.1 in virtualenv.
+* gh-6719 Error compiling Cython file: Pythonic division not allowed without gil.
 
 Merged PRs
 ==========
@@ -46,6 +71,7 @@ Merged PRs
 The following PRs in master have been backported to 1.10.2
 
 * gh-5773 MAINT: Hide testing helper tracebacks when using them with pytest.
+* gh-6094 BUG: Fixed a bug with string representation of masked structured arrays.
 * gh-6208 MAINT: Speedup field access by removing unneeded safety checks.
 * gh-6460 BUG: Replacing the os.environ.clear by less invasive procedure.
 * gh-6470 BUG: Fix AttributeError in numpy distutils.
@@ -80,6 +106,17 @@ The following PRs in master have been backported to 1.10.2
 * gh-6643 ENH: make recarray.getitem return a recarray.
 * gh-6653 BUG: Fix ma dot to always return masked array.
 * gh-6668 BUG: ma.make_mask should always return nomask for nomask argument.
+* gh-6686 BUG: Fix a bug in assert_string_equal.
+* gh-6695 BUG: Fix removing tempdirs created during build.
+* gh-6697 MAINT: Fix spurious semicolon in macro definition of PyArray_FROM_OT.
+* gh-6698 TST: test np.rint bug for large integers.
+* gh-6717 BUG: Readd fallback CBLAS detection on linux.
+* gh-6721 BUG: Fix for #6719.
+* gh-6726 BUG: Fix bugs exposed by relaxed stride rollback.
+* gh-6757 BUG: link cblas library if cblas is detected.
+* gh-6756 TST: only test f2py, not f2py2.7 etc, fixes #6718.
+* gh-6747 DEP: Deprecate changing shape of non-C-contiguous array via descr.
+
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
@@ -87,10 +124,18 @@ non-windows builds.
 * gh-6536 BUG: Revert gh-5614 to fix non-windows build problems
 
 A fix for np.lib.split was reverted because it resulted in "fixing"
-behavior will be present in the Numpy 1.11 and was already present in
-Numpy 1.9. See the discussion of the issue at gh-6575 for clarification.
+behavior that will be present in the Numpy 1.11 and that was already
+present in Numpy 1.9. See the discussion of the issue at gh-6575 for
+clarification.
 
 * gh-6576 BUG: Revert gh-6376 to fix split behavior for empty arrays.
+
+Relaxed stride checking was reverted. There were back compatibility
+problems involving views changing the dtype of multidimensional Fortran
+arrays that need to be dealt with over a longer timeframe.
+
+* gh-6735 MAINT: Make no relaxed stride checking the default for 1.10.
+
 
 Notes
 =====
