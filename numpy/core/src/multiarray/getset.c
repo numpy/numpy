@@ -419,6 +419,29 @@ array_nbytes_get(PyArrayObject *self)
 #endif
 }
 
+static int
+_use_C_view_dimension(PyArrayObject *ap)
+{
+    npy_intp sd;
+    npy_intp dim;
+    int i;
+    npy_bool is_c_contig = 1;
+
+    sd = PyArray_ITEMSIZE(ap);
+    for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
+        dim = PyArray_DIMS(ap)[i];
+        if (PyArray_STRIDES(ap)[i] != sd) {
+            is_c_contig = 0;
+            break;
+         }
+        /* contiguous, if it got this far */
+        if (dim == 0) {
+            break;
+        }
+        sd *= dim;
+    }
+    return is_c_contig;
+}
 
 /*
  * If the type is changed.
@@ -492,7 +515,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
          PyDataType_HASSUBARRAY(newtype))) {
         goto fail;
     }
-    if (PyArray_ISCONTIGUOUS(self)) {
+
+    if (_use_C_view_dimension(self)) {
         i = PyArray_NDIM(self) - 1;
     }
     else {

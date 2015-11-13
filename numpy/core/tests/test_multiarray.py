@@ -5458,6 +5458,9 @@ class TestNewBufferProtocol(object):
             shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
 
+    def test_1d_fortran_view(self):
+        np.array([[1.], [2.]], dtype='float32', order='F').view('complex64')
+
 
 class TestArrayAttributeDeletion(object):
 
