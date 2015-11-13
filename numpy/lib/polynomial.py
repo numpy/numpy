@@ -427,7 +427,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        weights to apply to the y-coordinates of the sample points.
+        Weights to apply to the y-coordinates of the sample points. For
+        gaussian uncertainties, use 1/sigma (not 1/sigma**2).
     cov : bool, optional
         Return the estimate and the covariance matrix of the estimate
         If full is True, then cov is not returned.
