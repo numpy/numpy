@@ -1018,11 +1018,12 @@ def assert_string_equal(actual, desired):
             if not d2.startswith('+ '):
                 raise AssertionError(repr(d2))
             l.append(d2)
-            d3 = diff.pop(0)
-            if d3.startswith('? '):
-                l.append(d3)
-            else:
-                diff.insert(0, d3)
+            if diff:
+                d3 = diff.pop(0)
+                if d3.startswith('? '):
+                    l.append(d3)
+                else:
+                    diff.insert(0, d3)
             if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
                 continue
             diff_list.extend(l)

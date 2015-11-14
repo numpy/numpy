@@ -9,7 +9,8 @@ from numpy.testing import (
     assert_array_almost_equal, build_err_msg, raises, assert_raises,
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
-    clear_and_catch_warnings, run_module_suite
+    clear_and_catch_warnings, run_module_suite,
+    assert_string_equal
     )
 import unittest
 
@@ -714,6 +715,22 @@ class TestULP(unittest.TestCase):
             self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, nzero,
                                                                maxulp=maxulp))
+
+class TestStringEqual(unittest.TestCase):
+    def test_simple(self):
+        assert_string_equal("hello", "hello")
+        assert_string_equal("hello\nmultiline", "hello\nmultiline")
+
+        try:
+            assert_string_equal("foo\nbar", "hello\nbar")
+        except AssertionError as exc:
+            assert_equal(str(exc), "Differences in strings:\n- foo\n+ hello")
+        else:
+            raise AssertionError("exception not raised")
+
+        self.assertRaises(AssertionError,
+                          lambda: assert_string_equal("foo", "hello"))
+
 
 def assert_warn_len_equal(mod, n_in_context):
     mod_warns = mod.__warningregistry__
