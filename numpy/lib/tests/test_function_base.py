@@ -1267,6 +1267,13 @@ class TestHistogram(TestCase):
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
 
+    def test_finite_range(self):
+        # Normal ranges should be fine
+        vals = np.linspace(0.0, 1.0, num=100)
+        histogram(vals, range=[0.25,0.75])
+        assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
+        assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
+        
 
 class TestHistogramOptimBinNums(TestCase):
     """
@@ -1488,6 +1495,16 @@ class TestHistogramdd(TestCase):
         hist, _ = histogramdd(x, bins=bins)
         assert_(hist[0] == 0.0)
         assert_(hist[1] == 0.0)
+
+    def test_finite_range(self):
+        vals = np.random.random((100,3))
+        histogramdd(vals, range=[[0.0,1.0],[0.25,0.75],[0.25,0.5]])
+        assert_raises(ValueError, histogramdd, vals, 
+                      range=[[0.0,1.0],[0.25,0.75],[0.25,np.inf]])
+        assert_raises(ValueError, histogramdd, vals, 
+                      range=[[0.0,1.0],[np.nan,0.75],[0.25,0.5]])
+
+
 
 
 class TestUnique(TestCase):
