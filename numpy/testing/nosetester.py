@@ -121,8 +121,8 @@ def run_module_suite(file_to_run=None, argv=None):
         argv = argv + [file_to_run]
 
     nose = import_nose()
-    from .noseclasses import KnownFailure
-    nose.run(argv=argv, addplugins=[KnownFailure()])
+    from .noseclasses import KnownFailurePlugin
+    nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
 
 
 class NoseTester(object):
@@ -301,8 +301,8 @@ class NoseTester(object):
                    '--cover-tests', '--cover-erase']
         # construct list of plugins
         import nose.plugins.builtin
-        from .noseclasses import KnownFailure, Unplugger
-        plugins = [KnownFailure()]
+        from .noseclasses import KnownFailurePlugin, Unplugger
+        plugins = [KnownFailurePlugin()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
         # add doctesting if required
         doctest_argv = '--with-doctest' in argv

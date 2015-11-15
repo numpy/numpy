@@ -17,7 +17,6 @@ from decimal import Decimal
 
 
 import numpy as np
-from nose import SkipTest
 from numpy.compat import asbytes, getexception, strchar, unicode, sixu
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
@@ -29,7 +28,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose,
-    assert_array_less, runstring, dec
+    assert_array_less, runstring, dec, SkipTest
     )
 
 # Need to test an object that does not fully implement math interface

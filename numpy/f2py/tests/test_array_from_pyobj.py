@@ -5,13 +5,11 @@ import os
 import sys
 import copy
 
-import nose
-
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
 )
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal
+    run_module_suite, assert_, assert_equal, SkipTest
 )
 from numpy.core.multiarray import typeinfo
 import util
@@ -28,7 +26,7 @@ def setup():
 
     # Check compiler availability first
     if not util.has_c_compiler():
-        raise nose.SkipTest("No C compiler available")
+        raise SkipTest("No C compiler available")
 
     if wrap is None:
         config_code = """
