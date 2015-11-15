@@ -17,7 +17,7 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, run_module_suite,
-    dec
+    dec, SkipTest
 )
 
 
@@ -1215,7 +1215,6 @@ def test_xerbla_override():
     # Check that our xerbla has been successfully linked in. If it is not,
     # the default xerbla routine is called, which prints a message to stdout
     # and may, or may not, abort the process depending on the LAPACK package.
-    from nose import SkipTest
 
     XERBLA_OK = 255
 

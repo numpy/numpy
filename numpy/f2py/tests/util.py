@@ -17,10 +17,9 @@ import textwrap
 import re
 import random
 
-import nose
-
 from numpy.compat import asbytes, asstr
 import numpy.f2py
+from numpy.testing import SkipTest
 
 try:
     from hashlib import md5
@@ -334,7 +333,7 @@ class F2PyTest(object):
 
         # Check compiler availability first
         if not has_c_compiler():
-            raise nose.SkipTest("No C compiler available")
+            raise SkipTest("No C compiler available")
 
         codes = []
         if self.sources:
@@ -350,9 +349,9 @@ class F2PyTest(object):
             elif fn.endswith('.f90'):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
-            raise nose.SkipTest("No Fortran 77 compiler available")
+            raise SkipTest("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
-            raise nose.SkipTest("No Fortran 90 compiler available")
+            raise SkipTest("No Fortran 90 compiler available")
 
         # Build the module
         if self.code is not None:
