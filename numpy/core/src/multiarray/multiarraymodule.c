@@ -3989,8 +3989,11 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
+                         int raise_exceptions)
 {
+    PyObject * self_obj = NULL;
+    PyObject * other_obj = NULL;
     PyArrayObject * self = NULL;
     PyArrayObject * other = NULL;
     PyObject *max_work_obj = NULL;
@@ -3998,14 +4001,38 @@ array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwd
 
     mem_overlap_t result;
     static PyObject *too_hard_cls = NULL;
-    Py_ssize_t max_work = NPY_MAY_SHARE_EXACT;
+    Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O", kwlist,
-                                     PyArray_Converter, &self,
-                                     PyArray_Converter, &other,
-                                     &max_work_obj)) {
+    max_work = default_max_work;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+                                     &self_obj, &other_obj, &max_work_obj)) {
         return NULL;
+    }
+
+    if (PyArray_Check(self_obj)) {
+        self = (PyArrayObject*)self_obj;
+        Py_INCREF(self);
+    }
+    else {
+        /* Use FromAny to enable checking overlap for objects exposing array
+           interfaces etc. */
+        self = (PyArrayObject*)PyArray_FromAny(self_obj, NULL, 0, 0, 0, NULL);
+        if (self == NULL) {
+            goto fail;
+        }
+    }
+
+    if (PyArray_Check(other_obj)) {
+        other = (PyArrayObject*)other_obj;
+        Py_INCREF(other);
+    }
+    else {
+        other = (PyArrayObject*)PyArray_FromAny(other_obj, NULL, 0, 0, 0, NULL);
+        if (other == NULL) {
+            goto fail;
+        }
     }
 
     if (max_work_obj == NULL || max_work_obj == Py_None) {
@@ -4043,17 +4070,29 @@ array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwd
         Py_RETURN_TRUE;
     }
     else if (result == MEM_OVERLAP_OVERFLOW) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Integer overflow in computing overlap");
-        return NULL;
+        if (raise_exceptions) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Integer overflow in computing overlap");
+            return NULL;
+        }
+        else {
+            /* Don't know, so say yes */
+            Py_RETURN_TRUE;
+        }
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
-        npy_cache_import("numpy.core._internal", "TooHardError",
-                         &too_hard_cls);
-        if (too_hard_cls) {
-            PyErr_SetString(too_hard_cls, "Exceeded max_work");
+        if (raise_exceptions) {
+            npy_cache_import("numpy.core._internal", "TooHardError",
+                             &too_hard_cls);
+            if (too_hard_cls) {
+                PyErr_SetString(too_hard_cls, "Exceeded max_work");
+            }
+            return NULL;
         }
-        return NULL;
+        else {
+            /* Don't know, so say yes */
+            Py_RETURN_TRUE;
+        }
     }
     else {
         /* Doesn't happen usually */
@@ -4066,6 +4105,20 @@ fail:
     Py_XDECREF(self);
     Py_XDECREF(other);
     return NULL;
+}
+
+
+static PyObject *
+array_shares_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_EXACT, 1);
+}
+
+
+static PyObject *
+array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_BOUNDS, 0);
 }
 
 
@@ -4177,6 +4230,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"shares_memory",
         (PyCFunction)array_shares_memory,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"may_share_memory",
+        (PyCFunction)array_may_share_memory,
         METH_VARARGS | METH_KEYWORDS, NULL},
     /* Datetime-related functions */
     {"datetime_data",
