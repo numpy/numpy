@@ -336,8 +336,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if (range is not None):
         mn, mx = range
         if (mn > mx):
-            raise AttributeError(
+            raise ValueError(
                 'max must be larger than min in range parameter.')
+        if not np.all(np.isfinite([mn, mx])):
+            raise ValueError(
+                'range parameter must be finite.')
+
 
     if isinstance(bins, basestring):
         bins = _hist_optim_numbins_estimator(a, bins)
@@ -422,7 +426,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     else:
         bins = asarray(bins)
         if (np.diff(bins) < 0).any():
-            raise AttributeError(
+            raise ValueError(
                 'bins must increase monotonically.')
 
         # Initialize empty histogram
@@ -533,7 +537,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     try:
         M = len(bins)
         if M != D:
-            raise AttributeError(
+            raise ValueError(
                 'The dimension of bins must be equal to the dimension of the '
                 ' sample x.')
     except TypeError:
@@ -551,6 +555,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             smin = atleast_1d(array(sample.min(0), float))
             smax = atleast_1d(array(sample.max(0), float))
     else:
+        if not np.all(np.isfinite(range)):
+            raise ValueError(
+                'range parameter must be finite.')
         smin = zeros(D)
         smax = zeros(D)
         for i in arange(D):
