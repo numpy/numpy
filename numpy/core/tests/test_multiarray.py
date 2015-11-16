@@ -5459,7 +5459,32 @@ class TestNewBufferProtocol(object):
             assert_(strides[-1] == 8)
 
     def test_1d_fortran_view(self):
+	# bug report case (gh-6678)
         np.array([[1.], [2.]], dtype='float32', order='F').view('complex64')
+	
+	# test arrays which are both C- and F- contiguous
+        f1x4 = np.array([[1,  2,  3,  4]], order='F', dtype='f4')
+        f4x1 = np.array([[1],[2],[3],[4]], order='F', dtype='f4')
+        c1x4 = np.array([[1,  2,  3,  4]], order='C', dtype='f4')
+        c4x1 = np.array([[1],[2],[3],[4]], order='C', dtype='f4')
+
+	assert_equal(f1x4.view('i2').shape, (2,4))
+	assert_equal(f4x1.view('i2').shape, (8,1))
+	assert_equal(c1x4.view('i2').shape, (1,8))
+	assert_equal(c4x1.view('i2').shape, (4,2))
+
+	assert_raises(f1x4.view('c8'), ValueError)
+	assert_equal( f4x1.view('c8').shape, (2,1))
+	assert_equal( c1x4.view('c8').shape, (1,2))
+	assert_raises(c4x1.view('c8'), ValueError)
+
+	# test arrays with many dimensions
+	a = np.empty((2,4,6), dtype='f4', order='C')
+	b = np.empty((2,4,6), dtype='f4', order='F')
+	c = np.empty((2,6,4), dtype='f4', order='C').transpose((0,2,1))
+	assert_equal(a.view('c8').shape, (2,4,3))
+	assert_equal(b.view('c8').shape, (1,4,6))
+	assert_raises(c.view('c8'), ValueError)
 
 
 class TestArrayAttributeDeletion(object):
