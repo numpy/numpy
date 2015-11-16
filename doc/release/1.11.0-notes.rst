@@ -71,6 +71,10 @@ via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rs
 arrays have memory overlap is added. ``np.may_share_memory`` also now
 has an option to spend more effort to reduce false positives.
 
+* ``SkipTest`` and ``KnownFailureException`` exception classes are exposed in the
+``numpy.testing`` namespace. Raise them in a test function to mark the test to
+be skipped or mark it as a known failure, respectively.
+
 Improvements
 ============
 

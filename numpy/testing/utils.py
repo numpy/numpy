@@ -13,6 +13,7 @@ from functools import partial
 import shutil
 import contextlib
 from tempfile import mkdtemp
+
 from .nosetester import import_nose
 from numpy.core import float32, empty, arange, array_repr, ndarray
 
@@ -28,11 +29,27 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-           'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings']
+           'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
+           'SkipTest', 'KnownFailureException']
+
+
+class KnownFailureException(Exception):
+    '''Raise this exception to mark a test as a known failing test.'''
+    pass
+
+KnownFailureTest = KnownFailureException  # backwards compat
+
+
+# nose.SkipTest is unittest.case.SkipTest
+# import it into the namespace, so that it's available as np.testing.SkipTest
+try:
+    from unittest.case import SkipTest
+except ImportError:
+    # on py2.6 unittest.case is not available. Ask nose for a replacement.
+    SkipTest = import_nose().SkipTest
 
 
 verbose = 0
-
 
 def assert_(val, msg=''):
     """
