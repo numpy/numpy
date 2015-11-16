@@ -9,6 +9,7 @@ import operator
 import io
 import itertools
 import ctypes
+import os
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -3376,6 +3377,18 @@ class TestIO(object):
         f.tell = fail
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
+
+    def test_largish_file(self):
+        # check the fallocate path on files > 16MB
+        d = np.zeros(4 * 1024 ** 2)
+        d.tofile(self.filename)
+        assert_equal(os.path.getsize(self.filename), d.nbytes)
+        assert_array_equal(d, np.fromfile(self.filename));
+        # check offset
+        with open(self.filename, "r+b") as f:
+            f.seek(d.nbytes)
+            d.tofile(f)
+            assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
 
     def test_file_position_after_fromfile(self):
         # gh-4118
