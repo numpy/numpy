@@ -19,16 +19,30 @@ main = f2py2e.main
 def compile(source,
             modulename='untitled',
             extra_args='',
-            verbose=1,
-            source_fn=None
+            verbose=True,
+            source_fn=None,
+            extension='.f'
             ):
     ''' Build extension module from processing source with f2py.
-    Read the source of this function for more information.
+
+    Parameters
+    ----------
+    source : str
+        Fortran source of module / subroutine to compile
+    modulename : str, optional
+        the name of compiled python module
+    extra_args: str, optional
+        additional parameters passed to f2py
+    verbose: bool, optional
+        print f2py output to screen
+    extension: {'.f', '.f90'}, optional
+        filename extension influences the fortran compiler behavior
+
     '''
     from numpy.distutils.exec_command import exec_command
     import tempfile
     if source_fn is None:
-        f = tempfile.NamedTemporaryFile(suffix='.f')
+        f = tempfile.NamedTemporaryFile(suffix=extension)
     else:
         f = open(source_fn, 'w')
 
@@ -36,13 +50,15 @@ def compile(source,
         f.write(source)
         f.flush()
 
-        args = ' -c -m %s %s %s' % (modulename, f.name, extra_args)
-        c = '%s -c "import numpy.f2py as f2py2e;f2py2e.main()" %s' % \
-            (sys.executable, args)
-        s, o = exec_command(c)
+        args = ' -c -m {} {} {}'.format(modulename, f.name, extra_args)
+        c = '{} -c "import numpy.f2py as f2py2e;f2py2e.main()" {}'
+        c = c.format(sys.executable, args)
+        status, output = exec_command(c)
+        if verbose:
+            print(output)
     finally:
         f.close()
-    return s
+    return status
 
 from numpy.testing import Tester
 test = Tester().test
