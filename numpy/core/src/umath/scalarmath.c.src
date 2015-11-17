@@ -316,16 +316,32 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
     (outp)->real = (a).real * (b).real - (a).imag * (b).imag;   \
     (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;   \
     } while(0)
-/* Note: complex division by zero must yield some complex inf */
+/* Algorithm identical to that in loops.c.src, for consistency */
 #define @name@_ctype_divide(a, b, outp) do{                         \
-    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;              \
-    if (d != 0) {                                                   \
-        (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;   \
-        (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;   \
+    @rtype@ in1r = (a).real;                                        \
+    @rtype@ in1i = (a).imag;                                        \
+    @rtype@ in2r = (b).real;                                        \
+    @rtype@ in2i = (b).imag;                                        \
+    @rtype@ in2r_abs = npy_fabs@c@(in2r);                           \
+    @rtype@ in2i_abs = npy_fabs@c@(in2i);                           \
+    if (in2r_abs >= in2i_abs) {                                     \
+        if (in2r_abs == 0 && in2i_abs == 0) {                       \
+            /* divide by zero should yield a complex inf or nan */  \
+            (outp)->real = in1r/in2r_abs;                           \
+            (outp)->imag = in1i/in2i_abs;                           \
+        }                                                           \
+        else {                                                      \
+            @rtype@ rat = in2i/in2r;                                \
+            @rtype@ scl = 1.0@c@/(in2r + in2i*rat);                 \
+            (outp)->real = (in1r + in1i*rat)*scl;                   \
+            (outp)->imag = (in1i - in1r*rat)*scl;                   \
+        }                                                           \
     }                                                               \
     else {                                                          \
-        (outp)->real = (a).real/d;                                  \
-        (outp)->imag = (a).imag/d;                                  \
+        @rtype@ rat = in2r/in2i;                                    \
+        @rtype@ scl = 1.0@c@/(in2i + in2r*rat);                     \
+        (outp)->real = (in1r*rat + in1i)*scl;                       \
+        (outp)->imag = (in1i*rat - in1r)*scl;                       \
     }                                                               \
     } while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
