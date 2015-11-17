@@ -288,143 +288,23 @@ def _newnames(datatype, order):
         return tuple(list(order) + nameslist)
     raise ValueError("unsupported order value: %s" % (order,))
 
-def _index_fields(ary, names):
-    """ Given a structured array and a sequence of field names
-    construct new array with just those fields.
+def _copy_fields(ary):
+    """Return copy of structured array with padding between fields removed.
 
     Parameters
     ----------
     ary : ndarray
-        Structured array being subscripted
-    names : string or list of strings
-        Either a single field name, or a list of field names
+       Structured array from which to remove padding bytes
 
     Returns
     -------
-    sub_ary : ndarray
-        If `names` is a single field name, the return value is identical to
-        ary.getfield, a writeable view into `ary`. If `names` is a list of
-        field names the return value is a copy of `ary` containing only those
-        fields. This is planned to return a view in the future.
-    
-    Raises
-    ------
-    ValueError
-        If `ary` does not contain a field given in `names`.
-
+    ary_copy : ndarray
+       Copy of ary with padding bytes removed
     """
     dt = ary.dtype
-
-    #use getfield to index a single field
-    if isinstance(names, basestring):
-        try:
-            return ary.getfield(dt.fields[names][0], dt.fields[names][1])
-        except KeyError:
-            raise ValueError("no field of name %s" % names)
-
-    for name in names:
-        if name not in dt.fields:
-            raise ValueError("no field of name %s" % name)
-
-    formats = [dt.fields[name][0] for name in names]
-    offsets = [dt.fields[name][1] for name in names]
-
-    view_dtype = {'names': names, 'formats': formats,
-                  'offsets': offsets, 'itemsize': dt.itemsize}
-
-    # return copy for now (future plan to return ary.view(dtype=view_dtype))
-    copy_dtype = {'names': view_dtype['names'],
-                  'formats': view_dtype['formats']}
-    return array(ary.view(dtype=view_dtype), dtype=copy_dtype, copy=True)
-
-
-def _get_all_field_offsets(dtype, base_offset=0):
-    """ Returns the types and offsets of all fields in a (possibly structured)
-    data type, including nested fields and subarrays.
-
-    Parameters
-    ----------
-    dtype : data-type
-        Data type to extract fields from.
-    base_offset : int, optional
-        Additional offset to add to all field offsets.
-
-    Returns
-    -------
-    fields : list of (data-type, int) pairs
-        A flat list of (dtype, byte offset) pairs.
-
-    """
-    fields = []
-    if dtype.fields is not None:
-        for name in dtype.names:
-            sub_dtype = dtype.fields[name][0]
-            sub_offset = dtype.fields[name][1] + base_offset
-            fields.extend(_get_all_field_offsets(sub_dtype, sub_offset))
-    else:
-        if dtype.shape:
-            sub_offsets = _get_all_field_offsets(dtype.base, base_offset)
-            count = 1
-            for dim in dtype.shape:
-                count *= dim
-            fields.extend((typ, off + dtype.base.itemsize*j)
-                           for j in range(count) for (typ, off) in sub_offsets)
-        else:
-            fields.append((dtype, base_offset))
-    return fields
-
-def _check_field_overlap(new_fields, old_fields):
-    """ Perform object memory overlap tests for two data-types (see
-    _view_is_safe).
-
-    This function checks that new fields only access memory contained in old
-    fields, and that non-object fields are not interpreted as objects and vice
-    versa.
-
-    Parameters
-    ----------
-    new_fields : list of (data-type, int) pairs
-        Flat list of (dtype, byte offset) pairs for the new data type, as
-        returned by _get_all_field_offsets.
-    old_fields: list of (data-type, int) pairs
-        Flat list of (dtype, byte offset) pairs for the old data type, as
-        returned by _get_all_field_offsets.
-
-    Raises
-    ------
-    TypeError
-        If the new fields are incompatible with the old fields
-
-    """
-
-    #first go byte by byte and check we do not access bytes not in old_fields
-    new_bytes = set()
-    for tp, off in new_fields:
-        new_bytes.update(set(range(off, off+tp.itemsize)))
-    old_bytes = set()
-    for tp, off in old_fields:
-        old_bytes.update(set(range(off, off+tp.itemsize)))
-    if new_bytes.difference(old_bytes):
-        raise TypeError("view would access data parent array doesn't own")
-
-    #next check that we do not interpret non-Objects as Objects, and vv
-    obj_offsets = [off for (tp, off) in old_fields if tp.type is object_]
-    obj_size = dtype(object_).itemsize
-
-    for fld_dtype, fld_offset in new_fields:
-        if fld_dtype.type is object_:
-            # check we do not create object views where
-            # there are no objects.
-            if fld_offset not in obj_offsets:
-                raise TypeError("cannot view non-Object data as Object type")
-        else:
-            # next check we do not create non-object views
-            # where there are already objects.
-            # see validate_object_field_overlap for a similar computation.
-            for obj_offset in obj_offsets:
-                if (fld_offset < obj_offset + obj_size and
-                        obj_offset < fld_offset + fld_dtype.itemsize):
-                    raise TypeError("cannot view Object as non-Object type")
+    copy_dtype = {'names': dt.names,
+                  'formats': [dt.fields[name][0] for name in dt.names]}
+    return array(ary, dtype=copy_dtype, copy=True)
 
 def _getfield_is_safe(oldtype, newtype, offset):
     """ Checks safety of getfield for object arrays.
@@ -447,23 +327,22 @@ def _getfield_is_safe(oldtype, newtype, offset):
         If the field access is invalid
 
     """
-    new_fields = _get_all_field_offsets(newtype, offset)
-    old_fields = _get_all_field_offsets(oldtype)
-    # raises if there is a problem
-    _check_field_overlap(new_fields, old_fields)
+    if newtype.hasobject or oldtype.hasobject:
+        if offset == 0 and newtype == oldtype:
+            return
+        if oldtype.names:
+            for name in oldtype.names:
+                if (oldtype.fields[name][1] == offset and
+                        oldtype.fields[name][0] == newtype):
+                    return
+        raise TypeError("Cannot get/set field of an object array")
+    return
 
 def _view_is_safe(oldtype, newtype):
     """ Checks safety of a view involving object arrays, for example when
     doing::
 
         np.zeros(10, dtype=oldtype).view(newtype)
-
-    We need to check that
-    1) No memory that is not an object will be interpreted as a object,
-    2) No memory containing an object will be interpreted as an arbitrary type.
-    Both cases can cause segfaults, eg in the case the view is written to.
-    Strategy here is to also disallow views where newtype has any field in a
-    place oldtype doesn't.
 
     Parameters
     ----------
@@ -478,31 +357,15 @@ def _view_is_safe(oldtype, newtype):
         If the new type is incompatible with the old type.
 
     """
-    new_fields = _get_all_field_offsets(newtype)
-    new_size = newtype.itemsize
 
-    old_fields = _get_all_field_offsets(oldtype)
-    old_size = oldtype.itemsize
+    # if the types are equivalent, there is no problem.
+    # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
+    if oldtype == newtype:
+        return
 
-    # if the itemsizes are not equal, we need to check that all the
-    # 'tiled positions' of the object match up. Here, we allow
-    # for arbirary itemsizes (even those possibly disallowed
-    # due to stride/data length issues).
-    if old_size == new_size:
-        new_num = old_num = 1
-    else:
-        gcd_new_old = _gcd(new_size, old_size)
-        new_num = old_size // gcd_new_old
-        old_num = new_size // gcd_new_old
-
-    # get position of fields within the tiling
-    new_fieldtile = [(tp, off + new_size*j)
-                     for j in range(new_num) for (tp, off) in new_fields]
-    old_fieldtile = [(tp, off + old_size*j)
-                     for j in range(old_num) for (tp, off) in old_fields]
-
-    # raises if there is a problem
-    _check_field_overlap(new_fieldtile, old_fieldtile)
+    if newtype.hasobject or oldtype.hasobject:
+        raise TypeError("Cannot change data-type for object array.")
+    return
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype

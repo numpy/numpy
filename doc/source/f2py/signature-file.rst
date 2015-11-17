@@ -21,7 +21,7 @@ scanning Fortran codes and writing a signature file, F2PY lowers all
 cases automatically except in multiline blocks or when ``--no-lower``
 option is used.
 
-The syntax of signature files is overvied below.
+The syntax of signature files is presented below.
 
 Python module block
 =====================
@@ -178,12 +178,13 @@ Common block statements:
 
     <shortentitydecl> := <name> [ ( <arrayspec> ) ] [ , <shortentitydecl> ]
 
-  One ``python module`` block should not contain two or more
-  ``common`` blocks with the same name. Otherwise, the latter ones are
-  ignored. The types of variables in ``<shortentitydecl>`` are defined
-  using ``<argument type declarations>``. Note that the corresponding
-  ``<argument type declarations>`` may contain array specifications;
-  then you don't need to specify these in ``<shortentitydecl>``.
+  If a ``python module`` block contains two or more ``common`` blocks
+  with the same name, the variables from the additional declarations
+  are appended.  The types of variables in ``<shortentitydecl>`` are
+  defined using ``<argument type declarations>``. Note that the
+  corresponding ``<argument type declarations>`` may contain array
+  specifications; then you don't need to specify these in
+  ``<shortentitydecl>``.
 
 Other statements:
   The ``<other statement>`` part refers to any other Fortran language
@@ -400,8 +401,8 @@ The following attributes are used by F2PY:
       a C function. This is because the concepts of Fortran- and
       C contiguity overlap in one-dimensional cases.
 
-      If ``intent(c)`` is used as an statement but without entity
-      declaration list, then F2PY adds ``intent(c)`` attibute to all
+      If ``intent(c)`` is used as a statement but without an entity
+      declaration list, then F2PY adds the ``intent(c)`` attribute to all
       arguments.
 
       Also, when wrapping C functions, one must use ``intent(c)``
@@ -596,7 +597,7 @@ A C expression may contain:
   ``shape(<name>,<n>)``
     Returns the ``<n>``-th dimension of an array ``<name>``.
   ``len(<name>)``
-    Returns the lenght of an array ``<name>``.
+    Returns the length of an array ``<name>``.
   ``size(<name>)``
     Returns the size of an array ``<name>``.
   ``slen(<name>)``

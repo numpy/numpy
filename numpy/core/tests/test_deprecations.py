@@ -10,8 +10,9 @@ import operator
 import warnings
 
 import numpy as np
-from numpy.testing import (run_module_suite, assert_raises,
-                           assert_warns, assert_array_equal, assert_)
+from numpy.testing import (
+    run_module_suite, assert_raises, assert_warns, assert_no_warnings,
+    assert_array_equal, assert_)
 
 
 class _DeprecationTestCase(object):
@@ -382,6 +383,7 @@ class TestFullDefaultDtype:
     def test_full_default_dtype(self):
         assert_warns(FutureWarning, np.full, 1, 1)
         assert_warns(FutureWarning, np.full, 1, None)
+        assert_no_warnings(np.full, 1, 1, float)
 
 
 if __name__ == "__main__":

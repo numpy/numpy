@@ -1,0 +1,99 @@
+NumPy 1.10.2 Release Notes
+**************************
+
+This release deals with a number of bugs that turned up in 1.10.1 and
+adds various build and release improvements.
+
+Numpy 1.10.1 supports Python 2.6 - 2.7 and 3.2 - 3.5.
+
+
+Compatibility notes
+===================
+
+fix swig bug in ``numpy.i``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Relaxed stride checking revealed a bug in ``array_is_fortran(a)``, that was
+using PyArray_ISFORTRAN to check for Fortran contiguity instead of
+PyArray_IS_F_CONTIGUOUS. You may want to regenerate swigged files using the
+updated numpy.i
+
+Issues Fixed
+============
+
+* gh-6462 Median of empty array produces IndexError.
+* gh-6467 Performance regression for record array access.
+* gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
+* gh-6491 Error in broadcasting stride_tricks array.
+* gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
+* gh-6497 Failure of reduce operation on recarrays.
+* gh-6498 Mention change in default casting rule in 1.10 release notes.
+* gh-6530 The partition function errors out on empty input.
+* gh-6563 Intent(out) broken in recent versions of f2py.
+* gh-6569 Cannot run tests after 'python setup.py build_ext -i'
+* gh-6572 Error in broadcasting stride_tricks array component.
+* gh-6575 BUG: Split produces empty arrays with wrong number of dimensions
+* gh-6590 Fortran Array problem in numpy 1.10.
+* gh-6602 Random __all__ missing choice and dirichlet.
+* gh-6611 ma.dot no longer always returns a masked array in 1.10.
+* gh-6618 NPY_FORTRANORDER in make_fortran() in numpy.i
+* gh-6636 Memory leak in nested dtypes in numpy.recarray
+* gh-6641 Subsetting recarray by fields yields a structured array.
+* gh-6667 ma.make_mask handles ma.nomask input incorrectly.
+
+Merged PRs
+==========
+
+The following PRs in master have been backported to 1.10.2
+
+* gh-5773 MAINT: Hide testing helper tracebacks when using them with pytest.
+* gh-6208 MAINT: Speedup field access by removing unneeded safety checks.
+* gh-6460 BUG: Replacing the os.environ.clear by less invasive procedure.
+* gh-6470 BUG: Fix AttributeError in numpy distutils.
+* gh-6472 MAINT: Use Python 3.5 instead of 3.5-dev for travis 3.5 testing.
+* gh-6474 REL: Update Paver script for sdist and auto-switch test warnings.
+* gh-6478 BUG: Fix Intel compiler flags for OS X build.
+* gh-6481 MAINT: LIBPATH with spaces is now supported Python 2.7+ and Win32.
+* gh-6487 BUG: Allow nested use of parameters in definition of arrays in f2py.
+* gh-6488 BUG: Extend common blocks rather than overwriting in f2py.
+* gh-6499 DOC: Mention that default casting for inplace operations has changed.
+* gh-6500 BUG: Recarrays viewed as subarrays don't convert to np.record type.
+* gh-6501 REL: Add "make upload" command for built docs, update "make dist".
+* gh-6526 BUG: Fix use of __doc__ in setup.py for -OO mode.
+* gh-6527 BUG: Fix the IndexError when taking the median of an empty array.
+* gh-6537 BUG: Make ma.atleast_* with scalar argument return arrays.
+* gh-6538 BUG: Fix ma.masked_values does not shrink mask if requested.
+* gh-6546 BUG: Fix inner product regression for non-contiguous arrays.
+* gh-6553 BUG: Fix partition and argpartition error for empty input.
+* gh-6556 BUG: Error in broadcast_arrays with as_strided array.
+* gh-6558 MAINT: Minor update to "make upload" doc build command.
+* gh-6562 BUG: Disable view safety checks in recarray.
+* gh-6567 BUG: Revert some import * fixes in f2py.
+* gh-6574 DOC: Release notes for Numpy 1.10.2.
+* gh-6577 BUG: Fix for #6569, allowing build_ext --inplace
+* gh-6579 MAINT: Fix mistake in doc upload rule.
+* gh-6596 BUG: Fix swig for relaxed stride checking.
+* gh-6606 DOC: Update 1.10.2 release notes.
+* gh-6614 BUG: Add choice and dirichlet to numpy.random.__all__.
+* gh-6621 BUG: Fix swig make_fortran function.
+* gh-6628 BUG: Make allclose return python bool.
+* gh-6642 BUG: Fix memleak in _convert_from_dict.
+* gh-6643 ENH: make recarray.getitem return a recarray.
+* gh-6653 BUG: Fix ma dot to always return masked array.
+* gh-6668 BUG: ma.make_mask should always return nomask for nomask argument.
+
+Initial support for mingwpy was reverted as it was causing problems for
+non-windows builds.
+
+* gh-6536 BUG: Revert gh-5614 to fix non-windows build problems
+
+A fix for np.lib.split was reverted because it resulted in "fixing"
+behavior will be present in the Numpy 1.11 and was already present in
+Numpy 1.9. See the discussion of the issue at gh-6575 for clarification.
+
+* gh-6576 BUG: Revert gh-6376 to fix split behavior for empty arrays.
+
+Notes
+=====
+A bug in the Numpy 1.10.1 release resulted in exceptions being raised for
+``RuntimeWarning`` and ``DeprecationWarning`` in projects depending on Numpy.
+That has been fixed.

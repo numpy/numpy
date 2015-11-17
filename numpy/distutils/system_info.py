@@ -470,15 +470,13 @@ class system_info(object):
                   ):
         self.__class__.info = {}
         self.local_prefixes = []
-        defaults = {}
-        defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
-        defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
-        defaults['runtime_library_dirs'] = os.pathsep.join(default_runtime_dirs)
-        defaults['rpath'] = ''
-        defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
-        defaults['search_static_first'] = str(self.search_static_first)
-        defaults['extra_compile_args'] = ''
-        defaults['extra_link_args'] = ''
+        defaults = {'library_dirs': os.pathsep.join(default_lib_dirs),
+                    'include_dirs': os.pathsep.join(default_include_dirs),
+                    'runtime_library_dirs': os.pathsep.join(default_runtime_dirs),
+                    'rpath': '',
+                    'src_dirs': os.pathsep.join(default_src_dirs),
+                    'search_static_first': str(self.search_static_first),
+                    'extra_compile_args': '', 'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
@@ -1751,24 +1749,6 @@ class openblas_lapack_info(openblas_info):
                 res = False
         finally:
             shutil.rmtree(tmpdir)
-        if sys.platform == 'win32' and not res:
-            c = distutils.ccompiler.new_compiler(compiler='mingw32')
-            tmpdir = tempfile.mkdtemp()
-            src = os.path.join(tmpdir, 'source.c')
-            out = os.path.join(tmpdir, 'a.out')
-            try:
-                with open(src, 'wt') as f:
-                    f.write(s)
-                obj = c.compile([src], output_dir=tmpdir)
-                try:
-                    c.link_executable(obj, out, libraries=info['libraries'],
-                                      library_dirs=info['library_dirs'],
-                                      extra_postargs=extra_args)
-                    res = True
-                except distutils.ccompiler.LinkError:
-                    res = False
-            finally:
-                shutil.rmtree(tmpdir)
         return res
 
 

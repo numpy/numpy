@@ -848,7 +848,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     -------
     index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
-        In other words, ``a[index_array]`` yields a sorted `a`.
+        If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
 
     See Also
     --------
@@ -2073,7 +2073,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
 
     trapz : Integration of array values using the composite trapezoidal rule.
 
-    diff :  Calculate the n-th order discrete difference along given axis.
+    diff :  Calculate the n-th discrete difference along given axis.
 
     Notes
     -----

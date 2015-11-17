@@ -17,7 +17,6 @@ from decimal import Decimal
 
 
 import numpy as np
-from nose import SkipTest
 from numpy.compat import asbytes, getexception, strchar, unicode, sixu
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
@@ -29,7 +28,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose,
-    assert_array_less, runstring, dec
+    assert_array_less, runstring, dec, SkipTest
     )
 
 # Need to test an object that does not fully implement math interface
@@ -2428,15 +2427,15 @@ class TestBinop(object):
                     return "ufunc"
                 else:
                     inputs = list(inputs)
-                    inputs[i] = np.asarray(self)
+                    if i < len(inputs):
+                        inputs[i] = np.asarray(self)
                     func = getattr(ufunc, method)
+                    if ('out' in kw) and (kw['out'] is not None):
+                        kw['out'] = np.asarray(kw['out'])
                     r = func(*inputs, **kw)
-                    if 'out' in kw:
-                        return r
-                    else:
-                        x = self.__class__(r.shape, dtype=r.dtype)
-                        x[...] = r
-                        return x
+                    x = self.__class__(r.shape, dtype=r.dtype)
+                    x[...] = r
+                    return x
 
         class SomeClass3(SomeClass2):
             def __rsub__(self, other):
@@ -2519,6 +2518,64 @@ class TestBinop(object):
         kw = np.add(a, [1], signature='ii->i')
         assert_('sig' not in kw and 'signature' in kw)
         assert_equal(kw['signature'], 'ii->i')
+
+    def test_numpy_ufunc_index(self):
+        # Check that index is set appropriately, also if only an output
+        # is passed on (latter is another regression tests for github bug 4753)
+        class CheckIndex(object):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                return i
+
+        a = CheckIndex()
+        dummy = np.arange(2.)
+        # 1 input, 1 output
+        assert_equal(np.sin(a), 0)
+        assert_equal(np.sin(dummy, a), 1)
+        assert_equal(np.sin(dummy, out=a), 1)
+        assert_equal(np.sin(dummy, out=(a,)), 1)
+        assert_equal(np.sin(a, a), 0)
+        assert_equal(np.sin(a, out=a), 0)
+        assert_equal(np.sin(a, out=(a,)), 0)
+        # 1 input, 2 outputs
+        assert_equal(np.modf(dummy, a), 1)
+        assert_equal(np.modf(dummy, None, a), 2)
+        assert_equal(np.modf(dummy, dummy, a), 2)
+        assert_equal(np.modf(dummy, out=a), 1)
+        assert_equal(np.modf(dummy, out=(a,)), 1)
+        assert_equal(np.modf(dummy, out=(a, None)), 1)
+        assert_equal(np.modf(dummy, out=(a, dummy)), 1)
+        assert_equal(np.modf(dummy, out=(None, a)), 2)
+        assert_equal(np.modf(dummy, out=(dummy, a)), 2)
+        assert_equal(np.modf(a, out=(dummy, a)), 0)
+        # 2 inputs, 1 output
+        assert_equal(np.add(a, dummy), 0)
+        assert_equal(np.add(dummy, a), 1)
+        assert_equal(np.add(dummy, dummy, a), 2)
+        assert_equal(np.add(dummy, a, a), 1)
+        assert_equal(np.add(dummy, dummy, out=a), 2)
+        assert_equal(np.add(dummy, dummy, out=(a,)), 2)
+        assert_equal(np.add(a, dummy, out=a), 0)
+
+    def test_out_override(self):
+        # regression test for github bug 4753
+        class OutClass(np.ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+                if 'out' in kw:
+                    tmp_kw = kw.copy()
+                    tmp_kw.pop('out')
+                    func = getattr(ufunc, method)
+                    kw['out'][...] = func(*inputs, **tmp_kw)
+
+        A = np.array([0]).view(OutClass)
+        B = np.array([5])
+        C = np.array([6])
+        np.multiply(C, B, A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
+        A[0] = 0
+        np.multiply(C, B, out=A)
+        assert_equal(A[0], 30)
+        assert_(isinstance(A, OutClass))
 
 
 class TestCAPI(TestCase):
@@ -3207,6 +3264,22 @@ class TestLexsort(TestCase):
         expected_idx = np.array([2, 1, 0])
         assert_array_equal(idx, expected_idx)
 
+    def test_object(self):  # gh-6312
+        a = np.random.choice(10, 1000)
+        b = np.random.choice(['abc', 'xy', 'wz', 'efghi', 'qwst', 'x'], 1000)
+
+        for u in a, b:
+            left = np.lexsort((u.astype('O'),))
+            right = np.argsort(u, kind='mergesort')
+            assert_array_equal(left, right)
+
+        for u, v in (a, b), (b, a):
+            idx = np.lexsort((u, v))
+            assert_array_equal(idx, np.lexsort((u.astype('O'), v)))
+            assert_array_equal(idx, np.lexsort((u, v.astype('O'))))
+            u, v = np.array(u, dtype='object'), np.array(v, dtype='object')
+            assert_array_equal(idx, np.lexsort((u, v)))
+
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""
@@ -3290,6 +3363,19 @@ class TestIO(object):
         s = "@".join(map(repr, x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
+
+    def test_unbuffered_fromfile(self):
+        # gh-6246
+        self.x.tofile(self.filename)
+
+        def fail(*args, **kwargs):
+            raise io.IOError('Can not tell or seek')
+
+        f = io.open(self.filename, 'rb', buffering=0)
+        f.seek = fail
+        f.tell = fail
+        y = np.fromfile(self.filename, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
 
     def test_file_position_after_fromfile(self):
         # gh-4118
@@ -3667,8 +3753,8 @@ class TestRecord(TestCase):
             b[0][fn1] = 2
             assert_equal(b[fn1], 2)
             # Subfield
-            assert_raises(IndexError, b[0].__setitem__, fnn, 1)
-            assert_raises(IndexError, b[0].__getitem__, fnn)
+            assert_raises(ValueError, b[0].__setitem__, fnn, 1)
+            assert_raises(ValueError, b[0].__getitem__, fnn)
             # Subfield
             fn3 = func('f3')
             sfn1 = func('sf1')
@@ -4640,6 +4726,22 @@ class TestInner(TestCase):
         a = np.zeros(shape=(1, 80), dtype=np.float64)
         p = np.inner(a, a)
         assert_almost_equal(p, 0, decimal=14)
+
+    def test_inner_product_with_various_contiguities(self):
+        # github issue 6532
+        for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
+            # check an inner product involving a matrix transpose
+            A = np.array([[1, 2], [3, 4]], dtype=dt)
+            B = np.array([[1, 3], [2, 4]], dtype=dt)
+            C = np.array([1, 1], dtype=dt)
+            desired = np.array([4, 6], dtype=dt)
+            assert_equal(np.inner(A.T, C), desired)
+            assert_equal(np.inner(B, C), desired)
+            # check an inner product involving an aliased and reversed view
+            a = np.arange(5).astype(dt)
+            b = a[::-1]
+            desired = np.array(10, dtype=dt).item()
+            assert_equal(np.inner(b, a), desired)
 
 
 class TestSummarization(TestCase):
@@ -5741,89 +5843,6 @@ class TestHashing(TestCase):
     def test_collections_hashable(self):
         x = np.array([])
         self.assertFalse(isinstance(x, collections.Hashable))
-
-from numpy.core._internal import _view_is_safe
-
-class TestObjViewSafetyFuncs(TestCase):
-    def test_view_safety(self):
-        psize = np.dtype('p').itemsize
-
-        # creates dtype but with extra character code - for missing 'p' fields
-        def mtype(s):
-            n, offset, fields = 0, 0, []
-            for c in s.split(','):  # subarrays won't work
-                if c != '-':
-                    fields.append(('f{0}'.format(n), c, offset))
-                    n += 1
-                offset += np.dtype(c).itemsize if c != '-' else psize
-
-            names, formats, offsets = zip(*fields)
-            return np.dtype({'names': names, 'formats': formats,
-                          'offsets': offsets, 'itemsize': offset})
-
-        # test nonequal itemsizes with objects:
-        # these should succeed:
-        _view_is_safe(np.dtype('O,p,O,p'), np.dtype('O,p,O,p,O,p'))
-        _view_is_safe(np.dtype('O,O'), np.dtype('O,O,O'))
-        # these should fail:
-        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('O,O'))
-        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('O,p'))
-        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('p,O'))
-
-        # test nonequal itemsizes with missing fields:
-        # these should succeed:
-        _view_is_safe(mtype('-,p,-,p'), mtype('-,p,-,p,-,p'))
-        _view_is_safe(np.dtype('p,p'), np.dtype('p,p,p'))
-        # these should fail:
-        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,p'))
-        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,-'))
-        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('-,p'))
-
-        # scans through positions at which we can view a type
-        def scanView(d1, otype):
-            goodpos = []
-            for shift in range(d1.itemsize - np.dtype(otype).itemsize+1):
-                d2 = np.dtype({'names': ['f0'], 'formats': [otype],
-                            'offsets': [shift], 'itemsize': d1.itemsize})
-                try:
-                    _view_is_safe(d1, d2)
-                except TypeError:
-                    pass
-                else:
-                    goodpos.append(shift)
-            return goodpos
-
-        # test partial overlap with object field
-        assert_equal(scanView(np.dtype('p,O,p,p,O,O'), 'p'),
-                     [0] + list(range(2*psize, 3*psize+1)))
-        assert_equal(scanView(np.dtype('p,O,p,p,O,O'), 'O'),
-                     [psize, 4*psize, 5*psize])
-
-        # test partial overlap with missing field
-        assert_equal(scanView(mtype('p,-,p,p,-,-'), 'p'),
-                     [0] + list(range(2*psize, 3*psize+1)))
-
-        # test nested structures with objects:
-        nestedO = np.dtype([('f0', 'p'), ('f1', 'p,O,p')])
-        assert_equal(scanView(nestedO, 'p'), list(range(psize+1)) + [3*psize])
-        assert_equal(scanView(nestedO, 'O'), [2*psize])
-
-        # test nested structures with missing fields:
-        nestedM = np.dtype([('f0', 'p'), ('f1', mtype('p,-,p'))])
-        assert_equal(scanView(nestedM, 'p'), list(range(psize+1)) + [3*psize])
-
-        # test subarrays with objects
-        subarrayO = np.dtype('p,(2,3)O,p')
-        assert_equal(scanView(subarrayO, 'p'), [0, 7*psize])
-        assert_equal(scanView(subarrayO, 'O'),
-                     list(range(psize, 6*psize+1, psize)))
-
-        #test dtype with overlapping fields
-        overlapped = np.dtype({'names': ['f0', 'f1', 'f2', 'f3'],
-                            'formats': ['p', 'p', 'p', 'p'],
-                            'offsets': [0, 1, 3*psize-1, 3*psize],
-                            'itemsize': 4*psize})
-        assert_equal(scanView(overlapped, 'p'), [0, 1, 3*psize-1, 3*psize])
 
 
 class TestArrayPriority(TestCase):

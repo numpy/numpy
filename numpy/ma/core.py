@@ -32,8 +32,11 @@ import numpy.core.numerictypes as ntypes
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import getargspec, formatargspec, long, basestring, unicode, bytes, sixu
+from numpy.compat import (
+    getargspec, formatargspec, long, basestring, unicode, bytes, sixu
+    )
 from numpy import expand_dims as n_expand_dims
+
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -1492,9 +1495,10 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     shrink : bool, optional
         Whether to shrink `m` to ``nomask`` if all its values are False.
     dtype : dtype, optional
-        Data-type of the output mask. By default, the output mask has
-        a dtype of MaskType (bool). If the dtype is flexible, each field
-        has a boolean dtype.
+        Data-type of the output mask. By default, the output mask has a
+        dtype of MaskType (bool). If the dtype is flexible, each field has
+        a boolean dtype. This is ignored when `m` is ``nomask``, in which
+        case ``nomask`` is always returned.
 
     Returns
     -------
@@ -2247,7 +2251,7 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     else:
         condition = umath.equal(xnew, value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
     return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
 
 
@@ -2467,24 +2471,17 @@ def flatten_structured_array(a):
     return out
 
 
-class _arraymethod(object):
+def _arraymethod(funcname, onmask=True):
     """
-    Define a wrapper for basic array methods.
+    Return a class method wrapper around a basic array method.
 
-    Upon call, returns a masked array, where the new ``_data`` array is
-    the output of the corresponding method called on the original
-    ``_data``.
+    Creates a class method which returns a masked array, where the new
+    ``_data`` array is the output of the corresponding basic method called
+    on the original ``_data``.
 
     If `onmask` is True, the new mask is the output of the method called
     on the initial mask. Otherwise, the new mask is just a reference
     to the initial mask.
-
-    Attributes
-    ----------
-    _onmask : bool
-        Holds the `onmask` parameter.
-    obj : object
-        The object calling `_arraymethod`.
 
     Parameters
     ----------
@@ -2495,47 +2492,31 @@ class _arraymethod(object):
         alone (False). Default is True. Make available as `_onmask`
         attribute.
 
+    Returns
+    -------
+    method : instancemethod
+        Class method wrapper of the specified basic array method.
+
     """
-
-    def __init__(self, funcname, onmask=True):
-        self.__name__ = funcname
-        self._onmask = onmask
-        self.obj = None
-        self.__doc__ = self.getdoc()
-
-    def getdoc(self):
-        "Return the doc of the function (from the doc of the method)."
-        methdoc = getattr(ndarray, self.__name__, None) or \
-            getattr(np, self.__name__, None)
-        if methdoc is not None:
-            return methdoc.__doc__
-
-    def __get__(self, obj, objtype=None):
-        self.obj = obj
-        return self
-
-    def __call__(self, *args, **params):
-        methodname = self.__name__
-        instance = self.obj
-        # Fallback : if the instance has not been initialized, use the first
-        # arg
-        if instance is None:
-            args = list(args)
-            instance = args.pop(0)
-        data = instance._data
-        mask = instance._mask
-        cls = type(instance)
-        result = getattr(data, methodname)(*args, **params).view(cls)
-        result._update_from(instance)
+    def wrapped_method(self, *args, **params):
+        result = getattr(self._data, funcname)(*args, **params)
+        result = result.view(type(self))
+        result._update_from(self)
+        mask = self._mask
         if result.ndim:
-            if not self._onmask:
+            if not onmask:
                 result.__setmask__(mask)
             elif mask is not nomask:
-                result.__setmask__(getattr(mask, methodname)(*args, **params))
+                result.__setmask__(getattr(mask, funcname)(*args, **params))
         else:
             if mask.ndim and (not mask.dtype.names and mask.all()):
                 return masked
         return result
+    methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
+    if methdoc is not None:
+        wrapped_method.__doc__ = methdoc.__doc__
+    wrapped_method.__name__ = funcname
+    return wrapped_method
 
 
 class MaskedIterator(object):
@@ -4399,7 +4380,6 @@ class MaskedArray(ndarray):
          [7 -- 30]]
 
         """
-        m = self._mask
         # Hard mask: Get rid of the values/indices that fall on masked data
         if self._hardmask and self._mask is not nomask:
             mask = self._mask[indices]
@@ -4411,16 +4391,19 @@ class MaskedArray(ndarray):
 
         self._data.put(indices, values, mode=mode)
 
-        if m is nomask:
-            m = getmask(values)
+        # short circut if neither self nor values are masked
+        if self._mask is nomask and getmask(values) is nomask:
+            return
+
+        m = getmaskarray(self).copy()
+
+        if getmask(values) is nomask:
+            m.put(indices, False, mode=mode)
         else:
-            m = m.copy()
-            if getmask(values) is nomask:
-                m.put(indices, False, mode=mode)
-            else:
-                m.put(indices, values._mask, mode=mode)
-            m = make_mask(m, copy=False, shrink=True)
+            m.put(indices, values._mask, mode=mode)
+        m = make_mask(m, copy=False, shrink=True)
         self._mask = m
+        return
 
     def ids(self):
         """
@@ -4672,24 +4655,44 @@ class MaskedArray(ndarray):
             return D.astype(dtype).filled(0).sum(axis=None, out=out)
     trace.__doc__ = ndarray.trace.__doc__
 
-    def dot(self, other, out=None):
-        am = ~getmaskarray(self)
-        bm = ~getmaskarray(other)
-        if out is None:
-            d = np.dot(filled(self, 0), filled(other, 0))
-            m = ~np.dot(am, bm)
-            if d.ndim == 0:
-                d = np.asarray(d)
-            r = d.view(get_masked_subclass(self, other))
-            r.__setmask__(m)
-            return r
-        d = self.filled(0).dot(other.filled(0), out._data)
-        if out.mask.shape != d.shape:
-            out._mask = np.empty(d.shape, MaskType)
-        np.dot(am, bm, out._mask)
-        np.logical_not(out._mask, out._mask)
-        return out
-    dot.__doc__ = ndarray.dot.__doc__
+    def dot(self, b, out=None, strict=False):
+        """
+        a.dot(b, out=None)
+
+        Masked dot product of two arrays. Note that `out` and `strict` are
+        located in different positions than in `ma.dot`. In order to
+        maintain compatibility with the functional version, it is
+        recommended that the optional arguments be treated as keyword only.
+        At some point that may be mandatory.
+
+        .. versionadded:: 1.10.0
+
+        Parameters
+        ----------
+        b : masked_array_like
+            Inputs array.
+        out : masked_array, optional
+            Output argument. This must have the exact kind that would be
+            returned if it was not used. In particular, it must have the
+            right type, must be C-contiguous, and its dtype must be the
+            dtype that would be returned for `ma.dot(a,b)`. This is a
+            performance feature. Therefore, if these conditions are not
+            met, an exception is raised, instead of attempting to be
+            flexible.
+        strict : bool, optional
+            Whether masked data are propagated (True) or set to 0 (False)
+            for the computation. Default is False.  Propagating the mask
+            means that if a masked value appears in a row or column, the
+            whole row or column is considered masked.
+
+            .. versionadded:: 1.10.2
+
+        See Also
+        --------
+        numpy.ma.dot : equivalent function
+    
+        """
+        return dot(self, b, out=out, strict=strict)
 
     def sum(self, axis=None, dtype=None, out=None):
         """
@@ -5107,8 +5110,12 @@ class MaskedArray(ndarray):
 
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
-        result._mask = self._mask
-        result._update_from(self)
+        if result.ndim > 0:
+            result._mask = self._mask
+            result._update_from(self)
+        elif self._mask:
+            # Return masked when the scalar is masked
+            result = masked
         # No explicit output: we're done
         if out is None:
             return result
@@ -5856,33 +5863,15 @@ class mvoid(MaskedArray):
 
     def __str__(self):
         m = self._mask
-        if (m is nomask):
+        if m is nomask:
             return self._data.__str__()
-        m = tuple(m)
-        if (not any(m)):
-            return self._data.__str__()
-        r = self._data.tolist()
-        p = masked_print_option
-        if not p.enabled():
-            p = 'N/A'
-        else:
-            p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(r, m)]
-        return "(%s)" % ", ".join(r)
+        printopt = masked_print_option
+        rdtype = _recursive_make_descr(self._data.dtype, "O")
+        res = np.array([self._data]).astype(rdtype)
+        _recursive_printoption(res, self._mask, printopt)
+        return str(res[0])
 
-    def __repr__(self):
-        m = self._mask
-        if (m is nomask):
-            return self._data.__repr__()
-        m = tuple(m)
-        if not any(m):
-            return self._data.__repr__()
-        p = masked_print_option
-        if not p.enabled():
-            return self.filled(self.fill_value).__repr__()
-        p = str(p)
-        r = [(str(_), p)[int(_m)] for (_, _m) in zip(self._data.tolist(), m)]
-        return "(%s)" % ", ".join(r)
+    __repr__ = __str__
 
     def __iter__(self):
         "Defines an iterator for mvoid"
@@ -5919,7 +5908,7 @@ class mvoid(MaskedArray):
         --------
         MaskedArray.filled
 
-    """
+        """
         return asarray(self).filled(fill_value)[()]
 
     def tolist(self):
@@ -6816,7 +6805,7 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj): 
+def rank(obj):
     """
     maskedarray version of the numpy function.
 
@@ -6833,7 +6822,7 @@ def rank(obj):
 rank.__doc__ = np.rank.__doc__
 
 
-def ndim(obj): 
+def ndim(obj):
     """
     maskedarray version of the numpy function.
 
@@ -7054,6 +7043,186 @@ def round_(a, decimals=0, out=None):
             out._mask = getmask(a)
         return out
 round = round_
+
+
+# Needed by dot, so move here from extras.py. It will still be exported
+# from extras.py for compatibility.
+def mask_rowcols(a, axis=None):
+    """
+    Mask rows and/or columns of a 2D array that contain masked values.
+
+    Mask whole rows and/or columns of a 2D array that contain
+    masked values.  The masking behavior is selected using the
+    `axis` parameter.
+
+      - If `axis` is None, rows *and* columns are masked.
+      - If `axis` is 0, only rows are masked.
+      - If `axis` is 1 or -1, only columns are masked.
+
+    Parameters
+    ----------
+    a : array_like, MaskedArray
+        The array to mask.  If not a MaskedArray instance (or if no array
+        elements are masked).  The result is a MaskedArray with `mask` set
+        to `nomask` (False). Must be a 2D array.
+    axis : int, optional
+        Axis along which to perform the operation. If None, applies to a
+        flattened version of the array.
+
+    Returns
+    -------
+    a : MaskedArray
+        A modified version of the input array, masked depending on the value
+        of the `axis` parameter.
+
+    Raises
+    ------
+    NotImplementedError
+        If input array `a` is not 2D.
+
+    See Also
+    --------
+    mask_rows : Mask rows of a 2D array that contain masked values.
+    mask_cols : Mask cols of a 2D array that contain masked values.
+    masked_where : Mask where a condition is met.
+
+    Notes
+    -----
+    The input array's mask is modified by this function.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a[1, 1] = 1
+    >>> a
+    array([[0, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0]])
+    >>> a = ma.masked_equal(a, 1)
+    >>> a
+    masked_array(data =
+     [[0 0 0]
+     [0 -- 0]
+     [0 0 0]],
+          mask =
+     [[False False False]
+     [False  True False]
+     [False False False]],
+          fill_value=999999)
+    >>> ma.mask_rowcols(a)
+    masked_array(data =
+     [[0 -- 0]
+     [-- -- --]
+     [0 -- 0]],
+          mask =
+     [[False  True False]
+     [ True  True  True]
+     [False  True False]],
+          fill_value=999999)
+
+    """
+    a = array(a, subok=False)
+    if a.ndim != 2:
+        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
+    m = getmask(a)
+    # Nothing is masked: return a
+    if m is nomask or not m.any():
+        return a
+    maskedval = m.nonzero()
+    a._mask = a._mask.copy()
+    if not axis:
+        a[np.unique(maskedval[0])] = masked
+    if axis in [None, 1, -1]:
+        a[:, np.unique(maskedval[1])] = masked
+    return a
+
+
+# Include masked dot here to avoid import problems in getting it from
+# extras.py. Note that it is not included in __all__, but rather exported
+# from extras in order to avoid backward compatibility problems.
+def dot(a, b, strict=False, out=None):
+    """
+    Return the dot product of two arrays.
+
+    This function is the equivalent of `numpy.dot` that takes masked values
+    into account. Note that `strict` and `out` are in different position
+    than in the method version. In order to maintain compatibility with the
+    corresponding method, it is recommended that the optional arguments be
+    treated as keyword only.  At some point that may be mandatory.
+
+    .. note::
+      Works only with 2-D arrays at the moment.
+
+
+    Parameters
+    ----------
+    a, b : masked_array_like
+        Inputs arrays.
+    strict : bool, optional
+        Whether masked data are propagated (True) or set to 0 (False) for
+        the computation. Default is False.  Propagating the mask means that
+        if a masked value appears in a row or column, the whole row or
+        column is considered masked.
+    out : masked_array, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a,b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
+
+        .. versionadded:: 1.10.2
+
+    See Also
+    --------
+    numpy.dot : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> a = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[1, 0, 0], [0, 0, 0]])
+    >>> b = ma.array([[1, 2], [3, 4], [5, 6]], mask=[[1, 0], [0, 0], [0, 0]])
+    >>> np.ma.dot(a, b)
+    masked_array(data =
+     [[21 26]
+     [45 64]],
+                 mask =
+     [[False False]
+     [False False]],
+           fill_value = 999999)
+    >>> np.ma.dot(a, b, strict=True)
+    masked_array(data =
+     [[-- --]
+     [-- 64]],
+                 mask =
+     [[ True  True]
+     [ True False]],
+           fill_value = 999999)
+
+    """
+    # !!!: Works only with 2D arrays. There should be a way to get it to run
+    # with higher dimension
+    if strict and (a.ndim == 2) and (b.ndim == 2):
+        a = mask_rowcols(a, 0)
+        b = mask_rowcols(b, 1)
+    am = ~getmaskarray(a)
+    bm = ~getmaskarray(b)
+
+    if out is None:
+        d = np.dot(filled(a, 0), filled(b, 0))
+        m = ~np.dot(am, bm)
+        if d.ndim == 0:
+            d = np.asarray(d)
+        r = d.view(get_masked_subclass(a, b))
+        r.__setmask__(m)
+        return r
+    else:
+        d = np.dot(filled(a, 0), filled(b, 0), out._data)
+        if out.mask.shape != d.shape:
+            out._mask = np.empty(d.shape, MaskType)
+        np.dot(am, bm, out._mask)
+        np.logical_not(out._mask, out._mask)
+        return out
 
 
 def inner(a, b):

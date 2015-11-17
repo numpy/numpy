@@ -1,13 +1,8 @@
 #ifndef _NPY_PRIVATE__DATETIME_H_
 #define _NPY_PRIVATE__DATETIME_H_
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
-#else
-NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
-NPY_NO_EXPORT int _days_per_month_table[2][12];
-#endif
 
 NPY_NO_EXPORT void
 numpy_pydatetime_import(void);

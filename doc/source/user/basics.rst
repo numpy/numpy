@@ -3,7 +3,7 @@ Numpy basics
 ************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    basics.types
    basics.creation

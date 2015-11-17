@@ -147,8 +147,8 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
 static NPY_INLINE FILE*
 npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
-    int fd, fd2;
-    PyObject *ret, *os;
+    int fd, fd2, unbuf;
+    PyObject *ret, *os, *io, *io_raw;
     npy_off_t pos;
     FILE *handle;
 
@@ -193,9 +193,30 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     /* Record the original raw file handle position */
     *orig_pos = npy_ftell(handle);
     if (*orig_pos == -1) {
-        PyErr_SetString(PyExc_IOError, "obtaining file position failed");
-        fclose(handle);
-        return NULL;
+        /* The io module is needed to determine if buffering is used */
+        io = PyImport_ImportModule("io");
+        if (io == NULL) {
+            fclose(handle);
+            return NULL;
+        }
+        /* File object instances of RawIOBase are unbuffered */
+        io_raw = PyObject_GetAttrString(io, "RawIOBase");
+        Py_DECREF(io);
+        if (io_raw == NULL) {
+            fclose(handle);
+            return NULL;
+        }
+        unbuf = PyObject_IsInstance(file, io_raw);
+        Py_DECREF(io_raw);
+        if (unbuf == 1) {
+            /* Succeed if the IO is unbuffered */
+            return handle;
+        }
+        else {
+            PyErr_SetString(PyExc_IOError, "obtaining file position failed");
+            fclose(handle);
+            return NULL;
+        }
     }
 
     /* Seek raw handle to the Python-side position */
@@ -224,8 +245,8 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 static NPY_INLINE int
 npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
 {
-    int fd;
-    PyObject *ret;
+    int fd, unbuf;
+    PyObject *ret, *io, *io_raw;
     npy_off_t position;
 
     position = npy_ftell(handle);
@@ -241,9 +262,30 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     if (fd == -1) {
         return -1;
     }
+
     if (npy_lseek(fd, orig_pos, SEEK_SET) == -1) {
-        PyErr_SetString(PyExc_IOError, "seeking file failed");
-        return -1;
+
+        /* The io module is needed to determine if buffering is used */
+        io = PyImport_ImportModule("io");
+        if (io == NULL) {
+            return -1;
+        }
+        /* File object instances of RawIOBase are unbuffered */
+        io_raw = PyObject_GetAttrString(io, "RawIOBase");
+        Py_DECREF(io);
+        if (io_raw == NULL) {
+            return -1;
+        }
+        unbuf = PyObject_IsInstance(file, io_raw);
+        Py_DECREF(io_raw);
+        if (unbuf == 1) {
+            /* Succeed if the IO is unbuffered */
+            return 0;
+        }
+        else {
+            PyErr_SetString(PyExc_IOError, "seeking file failed");
+            return -1;
+        }
     }
 
     if (position == -1) {

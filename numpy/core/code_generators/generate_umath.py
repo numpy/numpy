@@ -1006,7 +1006,7 @@ InitOperators(PyObject *dictionary) {
 %s
 }
 """ % (filename, code1, code2, code3)
-    return code;
+    return code
 
 
 if __name__ == "__main__":

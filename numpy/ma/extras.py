@@ -29,7 +29,8 @@ from . import core as ma
 from .core import (
     MaskedArray, MAError, add, array, asarray, concatenate, filled,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata
+    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
+    mask_rowcols
     )
 
 import numpy as np
@@ -269,6 +270,10 @@ class _fromnxfunction:
             elif isinstance(x, tuple) or isinstance(x, list):
                 _d = func(tuple([np.asarray(a) for a in x]), **params)
                 _m = func(tuple([getmaskarray(a) for a in x]), **params)
+                return masked_array(_d, mask=_m)
+            else:
+                _d = func(np.asarray(x), **params)
+                _m = func(getmaskarray(x), **params)
                 return masked_array(_d, mask=_m)
         else:
             arrays = []
@@ -842,96 +847,6 @@ def compress_cols(a):
         raise NotImplementedError("compress_cols works for 2D arrays only.")
     return compress_rowcols(a, 1)
 
-def mask_rowcols(a, axis=None):
-    """
-    Mask rows and/or columns of a 2D array that contain masked values.
-
-    Mask whole rows and/or columns of a 2D array that contain
-    masked values.  The masking behavior is selected using the
-    `axis` parameter.
-
-      - If `axis` is None, rows *and* columns are masked.
-      - If `axis` is 0, only rows are masked.
-      - If `axis` is 1 or -1, only columns are masked.
-
-    Parameters
-    ----------
-    a : array_like, MaskedArray
-        The array to mask.  If not a MaskedArray instance (or if no array
-        elements are masked).  The result is a MaskedArray with `mask` set
-        to `nomask` (False). Must be a 2D array.
-    axis : int, optional
-        Axis along which to perform the operation. If None, applies to a
-        flattened version of the array.
-
-    Returns
-    -------
-    a : MaskedArray
-        A modified version of the input array, masked depending on the value
-        of the `axis` parameter.
-
-    Raises
-    ------
-    NotImplementedError
-        If input array `a` is not 2D.
-
-    See Also
-    --------
-    mask_rows : Mask rows of a 2D array that contain masked values.
-    mask_cols : Mask cols of a 2D array that contain masked values.
-    masked_where : Mask where a condition is met.
-
-    Notes
-    -----
-    The input array's mask is modified by this function.
-
-    Examples
-    --------
-    >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
-    >>> a[1, 1] = 1
-    >>> a
-    array([[0, 0, 0],
-           [0, 1, 0],
-           [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
-    >>> a
-    masked_array(data =
-     [[0 0 0]
-     [0 -- 0]
-     [0 0 0]],
-          mask =
-     [[False False False]
-     [False  True False]
-     [False False False]],
-          fill_value=999999)
-    >>> ma.mask_rowcols(a)
-    masked_array(data =
-     [[0 -- 0]
-     [-- -- --]
-     [0 -- 0]],
-          mask =
-     [[False  True False]
-     [ True  True  True]
-     [False  True False]],
-          fill_value=999999)
-
-    """
-    a = array(a, subok=False)
-    if a.ndim != 2:
-        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
-    m = getmask(a)
-    # Nothing is masked: return a
-    if m is nomask or not m.any():
-        return a
-    maskedval = m.nonzero()
-    a._mask = a._mask.copy()
-    if not axis:
-        a[np.unique(maskedval[0])] = masked
-    if axis in [None, 1, -1]:
-        a[:, np.unique(maskedval[1])] = masked
-    return a
-
 def mask_rows(a, axis=None):
     """
     Mask rows of a 2D array that contain masked values.
@@ -1022,58 +937,6 @@ def mask_cols(a, axis=None):
     """
     return mask_rowcols(a, 1)
 
-
-def dot(a, b, strict=False):
-    """
-    Return the dot product of two arrays.
-
-    .. note::
-      Works only with 2-D arrays at the moment.
-
-    This function is the equivalent of `numpy.dot` that takes masked values
-    into account, see `numpy.dot` for details.
-
-    Parameters
-    ----------
-    a, b : ndarray
-        Inputs arrays.
-    strict : bool, optional
-        Whether masked data are propagated (True) or set to 0 (False) for the
-        computation. Default is False.
-        Propagating the mask means that if a masked value appears in a row or
-        column, the whole row or column is considered masked.
-
-    See Also
-    --------
-    numpy.dot : Equivalent function for ndarrays.
-
-    Examples
-    --------
-    >>> a = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[1, 0, 0], [0, 0, 0]])
-    >>> b = ma.array([[1, 2], [3, 4], [5, 6]], mask=[[1, 0], [0, 0], [0, 0]])
-    >>> np.ma.dot(a, b)
-    masked_array(data =
-     [[21 26]
-     [45 64]],
-                 mask =
-     [[False False]
-     [False False]],
-           fill_value = 999999)
-    >>> np.ma.dot(a, b, strict=True)
-    masked_array(data =
-     [[-- --]
-     [-- 64]],
-                 mask =
-     [[ True  True]
-     [ True False]],
-           fill_value = 999999)
-
-    """
-    #!!!: Works only with 2D arrays. There should be a way to get it to run with higher dimension
-    if strict and (a.ndim == 2) and (b.ndim == 2):
-        a = mask_rows(a)
-        b = mask_cols(b)
-    return a.dot(b)
 
 #####--------------------------------------------------------------------------
 #---- --- arraysetops ---
@@ -1415,7 +1278,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     allow_masked : bool, optional
@@ -1424,7 +1287,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -1440,7 +1303,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
     """
-    msg = 'bias and ddof have no affect and are deprecated'
+    msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning)
@@ -1797,15 +1660,27 @@ def _ezclump(mask):
 
     Returns a series of slices.
     """
-    #def clump_masked(a):
     if mask.ndim > 1:
         mask = mask.ravel()
     idx = (mask[1:] ^ mask[:-1]).nonzero()
     idx = idx[0] + 1
-    slices = [slice(left, right)
-              for (left, right) in zip(itertools.chain([0], idx),
-                                       itertools.chain(idx, [len(mask)]),)]
-    return slices
+
+    if mask[0]:
+        if len(idx) == 0:
+            return [slice(0, mask.size)]
+
+        r = [slice(0, idx[0])]
+        r.extend((slice(left, right)
+                  for left, right in zip(idx[1:-1:2], idx[2::2])))
+    else:
+        if len(idx) == 0:
+            return []
+
+        r = [slice(left, right) for left, right in zip(idx[:-1:2], idx[1::2])]
+
+    if mask[-1]:
+        r.append(slice(idx[-1], mask.size))
+    return r
 
 
 def clump_unmasked(a):
@@ -1844,12 +1719,7 @@ def clump_unmasked(a):
     mask = getattr(a, '_mask', nomask)
     if mask is nomask:
         return [slice(0, a.size)]
-    slices = _ezclump(mask)
-    if a[0] is masked:
-        result = slices[1::2]
-    else:
-        result = slices[::2]
-    return result
+    return _ezclump(~mask)
 
 
 def clump_masked(a):
@@ -1888,13 +1758,7 @@ def clump_masked(a):
     mask = ma.getmask(a)
     if mask is nomask:
         return []
-    slices = _ezclump(mask)
-    if len(slices):
-        if a[0] is masked:
-            slices = slices[::2]
-        else:
-            slices = slices[1::2]
-    return slices
+    return _ezclump(mask)
 
 
 ###############################################################################

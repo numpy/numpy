@@ -11,7 +11,9 @@ __author__ = "Pierre GF Gerard-Marchant"
 import warnings
 import pickle
 import operator
+import itertools
 from functools import reduce
+
 
 import numpy as np
 import numpy.ma.core
@@ -401,6 +403,14 @@ class TestMaskedArray(TestCase):
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
+    def test_copy_immutable(self):
+        # Tests that the copy method is immutable, GitHub issue #5247
+        a = np.ma.array([1, 2, 3])
+        b = np.ma.array([4, 5, 6])
+        a_copy_method = a.copy
+        b.copy
+        assert_equal(a_copy_method(), [1, 2, 3])
+
     def test_deepcopy(self):
         from copy import deepcopy
         a = array([0, 1, 2], mask=[False, True, False])
@@ -703,6 +713,42 @@ class TestMaskedArray(TestCase):
             assert_equal(repr(mx[0]), "(1, -X-)")
         finally:
             masked_print_option.set_display(ini_display)
+
+    def test_mvoid_multidim_print(self):
+
+        # regression test for gh-6019
+        t_ma = masked_array(data = [([1, 2, 3],)],
+                            mask = [([False, True, False],)],
+                            fill_value = ([999999, 999999, 999999],),
+                            dtype = [('a', '<i8', (3,))])
+        assert str(t_ma[0]) == "([1, --, 3],)"
+        assert repr(t_ma[0]) == "([1, --, 3],)"
+
+        # additonal tests with structured arrays
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]],)],
+                            mask = [([[False, True], [True, False]],)],
+                            dtype = [('a', '<i8', (2,2))])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]],)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]],)"
+
+        t_0d = masked_array(data = [(1,2)],
+                            mask = [(True,False)],
+                            dtype = [('a', '<i8'), ('b', '<i8')])
+        assert str(t_0d[0]) == "(--, 2)"
+        assert repr(t_0d[0]) == "(--, 2)"
+
+        t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
+                            mask = [([[False, True], [True, False]], False)],
+                            dtype = [('a', '<i8', (2,2)), ('b', float)])
+        assert str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+        assert repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+
+        t_ne = masked_array(data=[(1, (1, 1))],
+                            mask=[(True, (True, False))],
+                            dtype = [('a', '<i8'), ('b', 'i4,i4')])
+        assert str(t_ne[0]) == "(--, (--, 1))"
+        assert repr(t_ne[0]) == "(--, (--, 1))"
 
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
@@ -1107,6 +1153,11 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(b.mask, [0, 0, 0])
         # In place binary operation
         a /= 1.
+        assert_equal(a.mask, [0, 0, 0])
+
+    def test_noshink_on_creation(self):
+        # Check that the mask is not shrunk on array creation when not wanted
+        a = np.ma.masked_values([1., 2.5, 3.1], 1.5, shrink=False)
         assert_equal(a.mask, [0, 0, 0])
 
     def test_mod(self):
@@ -2635,6 +2686,20 @@ class TestMaskedArrayMethods(TestCase):
         assert_array_equal(x, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ])
         assert_equal(x.mask, [1, 0, 0, 0, 1, 1, 0, 0, 0, 0])
 
+    def test_put_nomask(self):
+        # GitHub issue 6425
+        x = zeros(10)
+        z = array([3., -1.], mask=[False, True])
+
+        x.put([1, 2], z)
+        self.assertTrue(x[0] is not masked)
+        assert_equal(x[0], 0)
+        self.assertTrue(x[1] is not masked)
+        assert_equal(x[1], 3)
+        self.assertTrue(x[2] is masked)
+        self.assertTrue(x[3] is not masked)
+        assert_equal(x[3], 0)
+
     def test_put_hardmask(self):
         # Tests put on hardmask
         d = arange(5)
@@ -3129,7 +3194,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_almost_equal(r.filled(0), fX.dot(fX))
         assert_(r.mask[1,3])
         r1 = empty_like(r)
-        mX.dot(mX, r1)
+        mX.dot(mX, out=r1)
         assert_almost_equal(r, r1)
 
         mYY = mXX.swapaxes(-1, -2)
@@ -3137,7 +3202,7 @@ class TestMaskedArrayMathMethods(TestCase):
         r = mXX.dot(mYY)
         assert_almost_equal(r.filled(0), fXX.dot(fYY))
         r1 = empty_like(r)
-        mXX.dot(mYY, r1)
+        mXX.dot(mYY, out=r1)
         assert_almost_equal(r, r1)
 
     def test_dot_shape_mismatch(self):
@@ -3443,6 +3508,31 @@ class TestMaskedArrayFunctions(TestCase):
         result = xm.round(decimals=2, out=output)
         self.assertTrue(result is output)
 
+    def test_round_with_scalar(self):
+        # Testing round with scalar/zero dimension input
+        # GH issue 2244
+        a = array(1.1, mask=[False])
+        assert_equal(a.round(), 1)
+
+        a = array(1.1, mask=[True])
+        assert_(a.round() is masked)
+
+        a = array(1.1, mask=[False])
+        output = np.empty(1, dtype=float)
+        output.fill(-9999)
+        a.round(out=output)
+        assert_equal(output, 1)
+
+        a = array(1.1, mask=[False])
+        output = array(-9999., mask=[True])
+        a.round(out=output)
+        assert_equal(output[()], 1)
+
+        a = array(1.1, mask=[True])
+        output = array(-9999., mask=[False])
+        a.round(out=output)
+        assert_(output[()] is masked)
+
     def test_identity(self):
         a = identity(5)
         self.assertTrue(isinstance(a, MaskedArray))
@@ -3727,6 +3817,15 @@ class TestMaskedArrayFunctions(TestCase):
         test = make_mask(mask, dtype=mask.dtype)
         assert_equal(test.dtype, bdtype)
         assert_equal(test, np.array([(0, 0), (0, 1)], dtype=bdtype))
+
+        # test that nomask is returned when m is nomask.
+        bools = [True, False]
+        dtypes = [MaskType, np.float]
+        msgformat = 'copy=%s, shrink=%s, dtype=%s'
+        for cpy, shr, dt in itertools.product(bools, bools, dtypes):
+            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
+            assert_(res is nomask, msgformat % (cpy, shr, dt))
+
 
     def test_mask_or(self):
         # Initialize

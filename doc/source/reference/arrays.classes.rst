@@ -24,7 +24,7 @@ subclass of an ndarray, then :func:`asanyarray` can be used to allow
 subclasses to propagate more cleanly through your subroutine. In
 principal a subclass could redefine any aspect of the array and
 therefore, under strict guidelines, :func:`asanyarray` would rarely be
-useful. However, most subclasses of the arrayobject will not
+useful. However, most subclasses of the array object will not
 redefine certain aspects of the array object such as the buffer
 interface, or the attributes of the array. One important example,
 however, of why your subroutine may not be able to handle an arbitrary
@@ -47,10 +47,10 @@ Numpy provides several hooks that classes can customize:
    override behavior of Numpy's ufuncs. This works quite similarly to
    Python's ``__mul__`` and other binary operation routines.
 
-   - *ufunc* is the ufunc object that was called. 
+   - *ufunc* is the ufunc object that was called.
    - *method* is a string indicating which Ufunc method was called
      (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
-     ``"accumulate"``, ``"outer"``, ``"inner"``). 
+     ``"accumulate"``, ``"outer"``, ``"inner"``).
    - *i* is the index of *self* in *inputs*.
    - *inputs* is a tuple of the input arguments to the ``ufunc``
    - *kwargs* is a dictionary containing the optional input arguments

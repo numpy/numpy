@@ -6,11 +6,7 @@
 #include "npy_cpu.h"
 #include "utils.h"
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-        #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
-#else
-        #define NPY_NO_EXPORT static
-#endif
+#define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
 /* Only use thread if configured in config and python supports it */
 #if defined WITH_THREAD && !NPY_NO_SMP

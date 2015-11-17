@@ -103,21 +103,17 @@ class TestArraySplit(TestCase):
 
     def test_integer_split_2D_rows(self):
         a = np.array([np.arange(10), np.arange(10)])
-        res = assert_warns(FutureWarning, array_split, a, 3, axis=0)
-
-        # After removing the FutureWarning, the last should be zeros((0, 10))
-        desired = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.array([])]
-        compare_results(res, desired)
+        res = array_split(a, 3, axis=0)
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
+                   np.zeros((0, 10))]
+        compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
         # Same thing for manual splits:
-        res = assert_warns(FutureWarning, array_split, a, [0, 1, 2], axis=0)
-
-        # After removing the FutureWarning, the last should be zeros((0, 10))
-        desired = [np.array([]), np.array([np.arange(10)]),
-                   np.array([np.arange(10)])]
-        compare_results(res, desired)
+        res = array_split(a, [0, 1, 2], axis=0)
+        tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
+               np.array([np.arange(10)])]
+        compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
     def test_integer_split_2D_cols(self):
@@ -132,12 +128,10 @@ class TestArraySplit(TestCase):
         """ This will fail if we change default axis
         """
         a = np.array([np.arange(10), np.arange(10)])
-        res = assert_warns(FutureWarning, array_split, a, 3)
-
-        # After removing the FutureWarning, the last should be zeros((0, 10))
-        desired = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.array([])]
-        compare_results(res, desired)
+        res = array_split(a, 3)
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
+                   np.zeros((0, 10))]
+        compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 

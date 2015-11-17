@@ -310,7 +310,7 @@ Differences with Array interface (Version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were
-largely asthetic.  In particular:
+largely aesthetic.  In particular:
 
 1. The PyArrayInterface structure had no descr member at the end
    (and therefore no flag ARR_HAS_DESCR)

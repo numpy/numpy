@@ -23,11 +23,12 @@ from numpy.ma.core import (
     nomask, ones, zeros, count
     )
 from numpy.ma.extras import (
-    atleast_2d, mr_, dot, polyfit, cov, corrcoef, median, average, unique,
-    setxor1d, setdiff1d, union1d, intersect1d, in1d, ediff1d,
-    apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
+    atleast_1d, atleast_2d, atleast_3d, mr_, dot, polyfit, cov, corrcoef,
+    median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
+    ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like
+    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like,
+    diagflat
     )
 import numpy.ma.extras as mae
 
@@ -84,6 +85,22 @@ class TestGeneric(TestCase):
         test = masked_all_like(control)
         assert_equal(test, control)
 
+    def check_clump(self, f):
+        for i in range(1, 7):
+            for j in range(2**i):
+                k = np.arange(i, dtype=int)
+                ja = np.full(i, j, dtype=int)
+                a = masked_array(2**k)
+                a.mask = (ja & (2**k)) != 0
+                s = 0
+                for sl in f(a):
+                    s += a.data[sl].sum()
+                if f == clump_unmasked:
+                    assert_equal(a.compressed().sum(), s)
+                else:
+                    a.mask = ~a.mask
+                    assert_equal(a.compressed().sum(), s)
+
     def test_clump_masked(self):
         # Test clump_masked
         a = masked_array(np.arange(10))
@@ -93,6 +110,8 @@ class TestGeneric(TestCase):
         control = [slice(0, 3), slice(6, 7), slice(8, 10)]
         assert_equal(test, control)
 
+        self.check_clump(clump_masked)
+
     def test_clump_unmasked(self):
         # Test clump_unmasked
         a = masked_array(np.arange(10))
@@ -100,6 +119,8 @@ class TestGeneric(TestCase):
         test = clump_unmasked(a)
         control = [slice(3, 6), slice(7, 8), ]
         assert_equal(test, control)
+
+        self.check_clump(clump_unmasked)
 
     def test_flatnotmasked_contiguous(self):
         # Test flatnotmasked_contiguous
@@ -517,26 +538,26 @@ class TestCompressFunctions(TestCase):
         m = [1, 0, 0, 0, 0, 0]
         a = masked_array(n, mask=m).reshape(2, 3)
         b = masked_array(n, mask=m).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 1], [1, 0]])
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[1, 1, 1], [1, 0, 0], [1, 0, 0]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0, 0, 0, 0, 0, 1]
         a = masked_array(n, mask=m).reshape(2, 3)
         b = masked_array(n, mask=m).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[0, 1], [1, 1]])
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [0, 0, 1], [1, 1, 1]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
         assert_equal(c, dot(a, b))
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0, 0, 0, 0, 0, 0]
@@ -549,36 +570,52 @@ class TestCompressFunctions(TestCase):
         #
         a = masked_array(n, mask=[1, 0, 0, 0, 0, 0]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 0, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 1], [0, 0]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[1, 0, 0], [1, 0, 0], [1, 0, 0]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         a = masked_array(n, mask=[0, 0, 0, 0, 0, 1]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 0, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[0, 0], [1, 1]])
         c = dot(a, b)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [0, 0, 1], [0, 0, 1]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         a = masked_array(n, mask=[0, 0, 0, 0, 0, 1]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 1, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 0], [1, 1]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [1, 1, 1], [0, 0, 1]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
+
+    def test_dot_returns_maskedarray(self):
+        # See gh-6611
+        a = np.eye(3)
+        b = array(a)
+        assert_(type(dot(a, a)) is MaskedArray)
+        assert_(type(dot(a, b)) is MaskedArray)
+        assert_(type(dot(b, a)) is MaskedArray)
+        assert_(type(dot(b, b)) is MaskedArray)
+
+    def test_dot_out(self):
+        a = array(np.eye(3))
+        out = array(np.zeros((3, 3)))
+        res = dot(a, a, out=out)
+        assert_(res is out)
+        assert_equal(a, res)
 
 
 class TestApplyAlongAxis(TestCase):
@@ -1126,6 +1163,25 @@ class TestShapeBase(TestCase):
         assert_equal(b.mask.shape, b.data.shape)
         assert_equal(a.shape, (3,))
         assert_equal(a.mask.shape, a.data.shape)
+
+    def test_shape_scalar(self):
+        # the atleast and diagflat function should work with scalars
+        # GitHub issue #3367
+        b = atleast_1d(1.0)
+        assert_equal(b.shape, (1, ))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = atleast_2d(1.0)
+        assert_equal(b.shape, (1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = atleast_3d(1.0)
+        assert_equal(b.shape, (1, 1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
+
+        b = diagflat(1.0)
+        assert_equal(b.shape, (1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
 
 
 if __name__ == "__main__":

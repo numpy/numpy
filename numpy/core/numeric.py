@@ -41,7 +41,8 @@ __all__ = [
     'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_', 'True_',
     'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
     'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
-    'shares_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'TooHardError',
+    'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
+    'TooHardError',
     ]
 
 if sys.version_info[0] < 3:
@@ -291,10 +292,10 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    if array(fill_value).dtype != a.dtype:
+    if dtype is None and array(fill_value).dtype != a.dtype:
         warnings.warn(
-            "in the future, full(..., {0!r}) will return an array of {1!r}".
-            format(fill_value, array(fill_value).dtype), FutureWarning)
+            "in the future, full({0}, {1!r}) will return an array of {2!r}".
+            format(shape, fill_value, array(fill_value).dtype), FutureWarning)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
@@ -384,6 +385,7 @@ fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 shares_memory = multiarray.shares_memory
+may_share_memory = multiarray.may_share_memory
 if sys.version_info[0] < 3:
     newbuffer = multiarray.newbuffer
     getbuffer = multiarray.getbuffer
@@ -696,8 +698,12 @@ def require(a, dtype=None, requirements=None):
 
 def isfortran(a):
     """
-    Returns True if array is arranged in Fortran-order in memory
-    and not C-order.
+    Returns True if the array is Fortran contiguous but *not* C contiguous.
+
+    This function is obsolete and, because of changes due to relaxed stride
+    checking, its return value for the same array may differ for versions
+    of Numpy >= 1.10 and previous versions. If you only want to check if an
+    array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
     ----------
@@ -2274,7 +2280,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     True
 
     """
-    return all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    return bool(res)
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """

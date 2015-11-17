@@ -385,10 +385,11 @@ def CCompiler_customize(self, dist, need_cxx=0):
                     a, b = 'cc', 'c++'
                 self.compiler_cxx = [self.compiler[0].replace(a, b)]\
                                     + self.compiler[1:]
-        elif not self.compiler_cxx:
+        else:
             if hasattr(self, 'compiler'):
                 log.warn("#### %s #######" % (self.compiler,))
-            log.warn('Missing compiler_cxx fix for '+self.__class__.__name__)
+            if not hasattr(self, 'compiler_cxx'):
+                log.warn('Missing compiler_cxx fix for ' + self.__class__.__name__)
     return
 
 replace_method(CCompiler, 'customize', CCompiler_customize)
@@ -617,8 +618,8 @@ ccompiler.gen_lib_options = gen_lib_options
 # Also fix up the various compiler modules, which do
 # from distutils.ccompiler import gen_lib_options
 # Don't bother with mwerks, as we don't support Classic Mac.
-for _cc in ['msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
-    _m = sys.modules.get('distutils.'+_cc+'compiler')
+for _cc in ['msvc9', 'msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
+    _m = sys.modules.get('distutils.' + _cc + 'compiler')
     if _m is not None:
         setattr(_m, 'gen_lib_options', gen_lib_options)
 

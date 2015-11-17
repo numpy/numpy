@@ -8,20 +8,22 @@ Highlights
 ==========
 
 
-Dropped Support:
+Dropped Support
+===============
 
-* Building with Bento is no longer supported and the associated files have
-  been removed.
+* Bento build support and related files have been removed.
+* Single file build support and related files have been removed.
 
 
-Future Changes:
+Future Changes
+==============
 
 
 Compatibility notes
 ===================
 
-Deprecated to error
-~~~~~~~~~~~~~~~~~~~
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Indexing with floats raises IndexError,
   e.g., a[0, 0.0].
@@ -33,6 +35,25 @@ Deprecated to error
   e.g., a[False:True:True].
 * Non-integers used as index values raise TypeError,
   e.g., in reshape, take, and specifying reduce axis.
+
+FutureWarning to changed behavior 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* In ``np.lib.split`` an empty array in the result always had dimension
+  ``(0,)`` no matter the dimensions of the array being split. This
+  has been changed so that the dimensions will be preserved. A
+  ``FutureWarning`` for this change has been in place since Numpy 1.9 but,
+  due to a bug, sometimes no warning was raised and the dimensions were
+  already preserved.
+
+C API
+~~~~~
+
+Removed the ``check_return`` and ``inner_loop_selector`` members of
+the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
+to preserve struct layout). These were never used for anything, so
+it's unlikely that any third-party code is using them either, but we
+mention it here for completeness.
 
 
 New Features
@@ -50,6 +71,10 @@ via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rs
 arrays have memory overlap is added. ``np.may_share_memory`` also now
 has an option to spend more effort to reduce false positives.
 
+* ``SkipTest`` and ``KnownFailureException`` exception classes are exposed in the
+``numpy.testing`` namespace. Raise them in a test function to mark the test to
+be skipped or mark it as a known failure, respectively.
+
 Improvements
 ============
 
@@ -57,6 +82,12 @@ Improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``axis`` parameter was added to *np.gradient* for consistency.
 It allows to specify over which axes the gradient is calculated.
+
+*np.lexsort* now supports arrays with object data-type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now internally calls the generic ``npy_amergesort``
+when the type does not implement a merge-sort kind of ``argsort``
+method.
 
 Changes
 =======

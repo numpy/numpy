@@ -6,7 +6,7 @@ import nose
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal
+    run_module_suite, assert_, assert_equal, SkipTest
 )
 
 
@@ -207,7 +207,7 @@ def test_scalar_format():
 def in_foreign_locale(func):
     """
     Swap LC_NUMERIC locale to one in which the decimal point is ',' and not '.'
-    If not possible, raise nose.SkipTest
+    If not possible, raise SkipTest
 
     """
     if sys.platform == 'win32':
@@ -225,8 +225,8 @@ def in_foreign_locale(func):
                 except locale.Error:
                     pass
             else:
-                raise nose.SkipTest("Skipping locale test, because "
-                                    "French locale not found")
+                raise SkipTest("Skipping locale test, because "
+                                "French locale not found")
             return func(*args, **kwargs)
         finally:
             locale.setlocale(locale.LC_NUMERIC, locale=curloc)

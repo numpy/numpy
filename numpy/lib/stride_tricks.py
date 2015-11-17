@@ -62,11 +62,14 @@ def _broadcast_to(array, shape, subok, readonly):
     if any(size < 0 for size in shape):
         raise ValueError('all elements of broadcast shape must be non-'
                          'negative')
+    needs_writeable = not readonly and array.flags.writeable
+    extras = ['reduce_ok'] if needs_writeable else []
+    op_flag = 'readwrite' if needs_writeable else 'readonly'
     broadcast = np.nditer(
-        (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'],
-        op_flags=['readonly'], itershape=shape, order='C').itviews[0]
+        (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
+        op_flags=[op_flag], itershape=shape, order='C').itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
-    if not readonly and array.flags.writeable:
+    if needs_writeable and not result.flags.writeable:
         result.flags.writeable = True
     return result
 

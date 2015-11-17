@@ -587,6 +587,15 @@ cdef class RandomState:
     array filled with generated values is returned. If `size` is a tuple,
     then an array with that shape is filled and returned.
 
+    *Compatibility Guarantee*
+    A fixed seed and a fixed series of calls to 'RandomState' methods using
+    the same parameters will always produce the same results up to roundoff
+    error except when the values were incorrect. Incorrect values will be
+    fixed and the NumPy version in which the fix was made will be noted in
+    the relevant docstring. Extension of existing parameter ranges and the
+    addition of new parameters is allowed as long the previous behavior
+    remains unchanged.
+
     Parameters
     ----------
     seed : {None, int, array_like}, optional
@@ -2210,7 +2219,7 @@ cdef class RandomState:
             Degrees of freedom, should be > 0 as of Numpy 1.10,
             should be > 1 for earlier versions.
         nonc : float
-            Non-centrality, should be > 0.
+            Non-centrality, should be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -2276,8 +2285,8 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if fdf <= 0:
                 raise ValueError("df <= 0")
-            if fnonc <= 0:
-                raise ValueError("nonc <= 0")
+            if fnonc < 0:
+                raise ValueError("nonc < 0")
             return cont2_array_sc(self.internal_state, rk_noncentral_chisquare,
                                   size, fdf, fnonc, self.lock)
 
@@ -2287,7 +2296,7 @@ cdef class RandomState:
         ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
             raise ValueError("df <= 0")
-        if np.any(np.less_equal(ononc, 0.0)):
+        if np.any(np.less(ononc, 0.0)):
             raise ValueError("nonc < 0")
         return cont2_array(self.internal_state, rk_noncentral_chisquare, size,
                            odf, ononc, self.lock)
@@ -3078,7 +3087,7 @@ cdef class RandomState:
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
         >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
-        >>> beta = np.std(maxima)*np.pi/np.sqrt(6)
+        >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp(-np.exp(-(bins - mu)/beta)),

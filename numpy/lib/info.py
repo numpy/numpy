@@ -109,6 +109,12 @@ polydiv          Divide polynomials
 polyval          Evaluate polynomial at given argument
 ================ ===================
 
+Iterators
+---------
+================ ===================
+Arrayterator     A buffered iterator for big arrays.
+================ ===================
+
 Import Tricks
 -------------
 ================ ===================

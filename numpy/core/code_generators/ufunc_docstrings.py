@@ -2799,7 +2799,13 @@ add_newdoc('numpy.core.umath', 'sign',
     """
     Returns an element-wise indication of the sign of a number.
 
-    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.
+    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
+    is returned for nan inputs.
+
+    For complex inputs, the `sign` function returns
+    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+
+    complex(nan, 0) is returned for complex nan inputs.
 
     Parameters
     ----------
@@ -2811,12 +2817,20 @@ add_newdoc('numpy.core.umath', 'sign',
     y : ndarray
       The sign of `x`.
 
+    Notes
+    -----
+    There is more than one definition of sign in common use for complex
+    numbers.  The definition used here is equivalent to :math:`x/\\sqrt{x*x}`
+    which is different from a common alternative, :math:`x/|x|`.
+
     Examples
     --------
     >>> np.sign([-5., 4.5])
     array([-1.,  1.])
     >>> np.sign(0)
     0
+    >>> np.sign(5-2j)
+    (1+0j)
 
     """)
 

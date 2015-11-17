@@ -22,19 +22,13 @@ import copy
 import re
 import os
 import sys
-from .auxfuncs import (
-    debugcapi, dictappend, errmess, gentitle, getcallprotoargument,
-    getcallstatement, getfortranname, getpymethoddef, getrestdoc,
-    getusercode, getusercode1, hasinitvalue, hasnote, hasresultnote,
-    isarray, iscomplex, iscomplexarray, iscomplexfunction, isexternal,
-    isfunction, isintent_aux, isintent_callback, isintent_dict,
-    isintent_hide, isintent_in, isintent_inout, isintent_out, ismodule,
-    isoptional, isrequired, isscalar, isstring, isstringarray,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess
-)
-
 from .crackfortran import markoutercomma
 from . import cb_rules
+
+# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# As the needed functions cannot be determined by static inspection of the
+# code, it is safest to use import * pending a major refactoring of f2py.
+from .auxfuncs import *
 
 __all__ = [
     'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',
@@ -525,8 +519,7 @@ def sign2map(a, var):
             if k[:4] == 'out=':
                 out_a = k[4:]
                 break
-    ret = {'varname': a, 'outvarname': out_a}
-    ret['ctype'] = getctype(var)
+    ret = {'varname': a, 'outvarname': out_a, 'ctype': getctype(var)}
     intent_flags = []
     for f, s in isintent_dict.items():
         if f(var):
@@ -829,8 +822,7 @@ void
 
 
 def common_sign2map(a, var):  # obsolute
-    ret = {'varname': a}
-    ret['ctype'] = getctype(var)
+    ret = {'varname': a, 'ctype': getctype(var)}
     if isstringarray(var):
         ret['ctype'] = 'char'
     if ret['ctype'] in c2capi_map:

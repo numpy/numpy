@@ -1362,10 +1362,10 @@ def gradient(f, *varargs, **kwargs):
 
 def diff(a, n=1, axis=-1):
     """
-    Calculate the n-th order discrete difference along given axis.
+    Calculate the n-th discrete difference along given axis.
 
-    The first order difference is given by ``out[n] = a[n+1] - a[n]`` along
-    the given axis, higher order differences are calculated by using `diff`
+    The first difference is given by ``out[n] = a[n+1] - a[n]`` along
+    the given axis, higher differences are calculated by using `diff`
     recursively.
 
     Parameters
@@ -1380,8 +1380,9 @@ def diff(a, n=1, axis=-1):
     Returns
     -------
     diff : ndarray
-        The `n` order differences. The shape of the output is the same as `a`
+        The n-th differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`.
+.
 
     See Also
     --------
@@ -2314,7 +2315,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
 
     # Determine the normalization
     if w is None:
-        fact = float(X.shape[1] - ddof)
+        fact = X.shape[1] - ddof
     elif ddof == 0:
         fact = w_sum
     elif aweights is None:
@@ -2331,7 +2332,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
         X_T = X.T
     else:
         X_T = (X*w).T
-    return (dot(X, X_T.conj())/fact).squeeze()
+    c = dot(X, X_T.conj())
+    c *= 1. / np.float64(fact)
+    return c.squeeze()
 
 
 def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
@@ -2361,11 +2364,11 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
     ddof : _NoValue, optional
-        Has no affect, do not use.
+        Has no effect, do not use.
 
         .. deprecated:: 1.10.0
 
@@ -2387,7 +2390,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no affect and are deprecated',
+        warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning)
     c = cov(x, y, rowvar)
     try:
@@ -2395,7 +2398,11 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     except ValueError:  # scalar covariance
         # nan if incorrect value (nan, inf, 0), 1 otherwise
         return c / c
-    return c / sqrt(multiply.outer(d, d))
+    d = sqrt(d)
+    # calculate "c / multiply.outer(d, d)" row-wise ... for memory and speed
+    for i in range(0, d.size):
+        c[i,:] /= (d * d[i])
+    return c
 
 
 def blackman(M):
@@ -3378,7 +3385,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
 
     # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact):
+    if np.issubdtype(a.dtype, np.inexact) and sz > 0:
         # warn and return nans like mean would
         rout = mean(part[indexer], axis=axis, out=out)
         part = np.rollaxis(part, axis, part.ndim)
@@ -3450,7 +3457,7 @@ def percentile(a, q, axis=None, out=None,
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 

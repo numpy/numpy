@@ -36,6 +36,19 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
+
+/*
+ * Returns value of PyMapping_GetItemString but as a borrowed reference instead
+ * of a new reference.
+ */
+static PyObject *
+Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
+{
+    PyObject *ret = PyMapping_GetItemString(o, key);
+    Py_XDECREF(ret);
+    return ret;
+}
+
 /*
  * Creates a dtype object from ctypes inputs.
  *
@@ -952,17 +965,19 @@ _convert_from_dict(PyObject *obj, int align)
     if (fields == NULL) {
         return (PyArray_Descr *)PyErr_NoMemory();
     }
-    /* Use PyMapping_GetItemString to support dictproxy objects as well */
-    names = PyMapping_GetItemString(obj, "names");
-    descrs = PyMapping_GetItemString(obj, "formats");
+    /*
+     * Use PyMapping_GetItemString to support dictproxy objects as well.
+     */
+    names = Borrowed_PyMapping_GetItemString(obj, "names");
+    descrs = Borrowed_PyMapping_GetItemString(obj, "formats");
     if (!names || !descrs) {
         Py_DECREF(fields);
         PyErr_Clear();
         return _use_fields_dict(obj, align);
     }
     n = PyObject_Length(names);
-    offsets = PyMapping_GetItemString(obj, "offsets");
-    titles = PyMapping_GetItemString(obj, "titles");
+    offsets = Borrowed_PyMapping_GetItemString(obj, "offsets");
+    titles = Borrowed_PyMapping_GetItemString(obj, "titles");
     if (!offsets || !titles) {
         PyErr_Clear();
     }
@@ -980,7 +995,7 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    tmp = PyMapping_GetItemString(obj, "aligned");
+    tmp = Borrowed_PyMapping_GetItemString(obj, "aligned");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1154,7 +1169,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Override the itemsize if provided */
-    tmp = PyMapping_GetItemString(obj, "itemsize");
+    tmp = Borrowed_PyMapping_GetItemString(obj, "itemsize");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1186,7 +1201,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Add the metadata if provided */
-    metadata = PyMapping_GetItemString(obj, "metadata");
+    metadata = Borrowed_PyMapping_GetItemString(obj, "metadata");
 
     if (metadata == NULL) {
         PyErr_Clear();

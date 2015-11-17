@@ -1,0 +1,41 @@
+NumPy 1.10.1 Release Notes
+**************************
+
+This release deals with a few build problems that showed up in 1.10.0. Most
+users would not have seen these problems. The differences are:
+
+* Compiling with msvc9 or msvc10 for 32 bit Windows now requires SSE2.
+  This was the easiest fix for what looked to be some miscompiled code when
+  SSE2 was not used. If you need to compile for 32 bit Windows systems
+  without SSE2 support, mingw32 should still work.
+
+* Make compiling with VS2008 python2.7 SDK easier
+
+* Change Intel compiler options so that code will also be generated to
+  support systems without SSE4.2.
+
+* Some _config test functions needed an explicit integer return in
+  order to avoid the openSUSE rpmlinter erring out.
+
+* We ran into a problem with pipy not allowing reuse of filenames and a
+  resulting proliferation of *.*.*.postN releases. Not only were the names
+  getting out of hand, some packages were unable to work with the postN
+  suffix.
+
+
+Numpy 1.10.1 supports Python 2.6 - 2.7 and 3.2 - 3.5.
+
+
+Commits:
+
+45a3d84 DEP: Remove warning for `full` when dtype is set.
+0c1a5df BLD: import setuptools to allow compile with VS2008 python2.7 sdk
+04211c6 BUG: mask nan to 1 in ordered compare
+826716f DOC: Document the reason msvc requires SSE2 on 32 bit platforms.
+49fa187 BLD: enable SSE2 for 32-bit msvc 9 and 10 compilers
+dcbc4cc MAINT: remove Wreturn-type warnings from config checks
+d6564cb BLD: do not build exclusively for SSE4.2 processors
+15cb66f BLD: do not build exclusively for SSE4.2 processors
+c38bc08 DOC: fix var. reference in percentile docstring
+78497f4 DOC: Sync 1.10.0-notes.rst in 1.10.x branch with master.
+

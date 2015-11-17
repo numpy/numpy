@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import doctest
+import inspect
 
 import nose
 from nose.plugins import doctests as npd
@@ -16,7 +17,8 @@ from nose.plugins.base import Plugin
 from nose.util import src
 import numpy
 from .nosetester import get_package_name
-import inspect
+from .utils import KnownFailureException, KnownFailureTest
+
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
@@ -298,19 +300,14 @@ class Unplugger(object):
                                   if p.name != self.to_unplug]
 
 
-class KnownFailureTest(Exception):
-    '''Raise this exception to mark a test as a known failing test.'''
-    pass
-
-
-class KnownFailure(ErrorClassPlugin):
+class KnownFailurePlugin(ErrorClassPlugin):
     '''Plugin that installs a KNOWNFAIL error class for the
-    KnownFailureClass exception.  When KnownFailureTest is raised,
+    KnownFailureClass exception.  When KnownFailure is raised,
     the exception will be logged in the knownfail attribute of the
     result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
     exception will not be counted as an error or failure.'''
     enabled = True
-    knownfail = ErrorClass(KnownFailureTest,
+    knownfail = ErrorClass(KnownFailureException,
                            label='KNOWNFAIL',
                            isfailure=False)
 
@@ -318,7 +315,7 @@ class KnownFailure(ErrorClassPlugin):
         env_opt = 'NOSE_WITHOUT_KNOWNFAIL'
         parser.add_option('--no-knownfail', action='store_true',
                           dest='noKnownFail', default=env.get(env_opt, False),
-                          help='Disable special handling of KnownFailureTest '
+                          help='Disable special handling of KnownFailure '
                                'exceptions')
 
     def configure(self, options, conf):
@@ -328,6 +325,8 @@ class KnownFailure(ErrorClassPlugin):
         disable = getattr(options, 'noKnownFail', False)
         if disable:
             self.enabled = False
+
+KnownFailure = KnownFailurePlugin   # backwards compat
 
 
 # Class allows us to save the results of the tests in runTests - see runTests

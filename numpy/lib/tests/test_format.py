@@ -287,7 +287,7 @@ import numpy as np
 from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec
+    dec, SkipTest
     )
 from numpy.lib import format
 
@@ -812,7 +812,6 @@ def test_bad_header():
 
 
 def test_large_file_support():
-    from nose import SkipTest
     if (sys.platform == 'win32' or sys.platform == 'cygwin'):
         raise SkipTest("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file

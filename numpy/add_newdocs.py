@@ -1228,7 +1228,7 @@ add_newdoc('numpy.core', 'inner',
     Parameters
     ----------
     a, b : array_like
-        If `a` and `b` are nonscalar, their last dimensions of must match.
+        If `a` and `b` are nonscalar, their last dimensions must match.
 
     Returns
     -------
@@ -2108,7 +2108,7 @@ add_newdoc('numpy.core', 'einsum',
 
     Using the Einstein summation convention, many common multi-dimensional
     array operations can be represented in a simple fashion.  This function
-    provides a way compute such summations. The best way to understand this
+    provides a way to compute such summations. The best way to understand this
     function is to try the examples below, which show how many common NumPy
     functions can be implemented as calls to `einsum`.
 
@@ -3822,6 +3822,45 @@ add_newdoc('numpy.core.multiarray', 'shares_memory',
     --------
     >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
     False
+
+    """)
+
+
+add_newdoc('numpy.core.multiarray', 'may_share_memory',
+    """
+    may_share_memory(a, b, max_work=None)
+
+    Determine if two arrays might share memory
+
+    A return of True does not necessarily mean that the two arrays
+    share any element.  It just means that they *might*.
+
+    Only the memory bounds of a and b are checked by default.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem.  See
+        `shares_memory` for details.  Default for ``may_share_memory``
+        is to do a bounds check.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    shares_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+    >>> x = np.zeros([3, 4])
+    >>> np.may_share_memory(x[:,0], x[:,1])
+    True
 
     """)
 
