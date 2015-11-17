@@ -18,6 +18,20 @@ try:
 except ImportError:
     from dummy_threading import local as tlocal
 
+# stores temporary directory of each thread to only create one per thread
+_tdata = tlocal()
+
+# store all created temporary directories so they can be deleted on exit
+_tmpdirs = []
+def clean_up_temporary_directory():
+    for d in _tmpdirs:
+        try:
+            shutil.rmtree(d)
+        except OSError:
+            pass
+
+atexit.register(clean_up_temporary_directory)
+
 try:
     set
 except NameError:
@@ -283,26 +297,13 @@ def gpaths(paths, local_path='', include_non_existing=True):
         paths = (paths,)
     return _fix_paths(paths, local_path, include_non_existing)
 
-
-def clean_up_temporary_directory():
-    tdata = tlocal()
-    _temporary_directory = getattr(tdata, 'tempdir', None)
-    if not _temporary_directory:
-        return
-    try:
-        shutil.rmtree(_temporary_directory)
-    except OSError:
-        pass
-    _temporary_directory = None
-
 def make_temp_file(suffix='', prefix='', text=True):
-    tdata = tlocal()
-    if not hasattr(tdata, 'tempdir'):
-        tdata.tempdir = tempfile.mkdtemp()
-        atexit.register(clean_up_temporary_directory)
+    if not hasattr(_tdata, 'tempdir'):
+        _tdata.tempdir = tempfile.mkdtemp()
+        _tmpdirs.append(_tdata.tempdir)
     fid, name = tempfile.mkstemp(suffix=suffix,
                                  prefix=prefix,
-                                 dir=tdata.tempdir,
+                                 dir=_tdata.tempdir,
                                  text=text)
     fo = os.fdopen(fid, 'w')
     return fo, name
