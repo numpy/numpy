@@ -1926,5 +1926,15 @@ def test_complex_nan_comparisons():
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
 
 
+def test_rint_big_int():
+    # np.rint bug for large integer values on Windows 32-bit and MKL
+    # https://github.com/numpy/numpy/issues/6685
+    val = 4607998452777363968
+    # This is exactly representable in floating point
+    assert_equal(val, int(float(val)))
+    # Rint should not change the value
+    assert_equal(val, np.rint(val))
+
+
 if __name__ == "__main__":
     run_module_suite()
