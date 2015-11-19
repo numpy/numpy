@@ -322,8 +322,8 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
     @rtype@ in1i = (a).imag;                                        \
     @rtype@ in2r = (b).real;                                        \
     @rtype@ in2i = (b).imag;                                        \
-    @rtype@ in2r_abs = fabs(in2r);                                  \
-    @rtype@ in2i_abs = fabs(in2i);                                  \
+    @rtype@ in2r_abs = npy_fabs@c@(in2r);                           \
+    @rtype@ in2i_abs = npy_fabs@c@(in2i);                           \
     if (in2r_abs >= in2i_abs) {                                     \
         if (in2r_abs == 0 && in2i_abs == 0) {                       \
             /* divide by zero should yield a complex inf or nan */  \
@@ -331,13 +331,13 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
             (outp)->imag = in1i/in2i_abs;                           \
         } else {                                                    \
             @rtype@ rat = in2i/in2r;                                \
-            @rtype@ scl = 1.0e0/(in2r + in2i*rat);                  \
+            @rtype@ scl = 1.0@c@/(in2r + in2i*rat);                 \
             (outp)->real = (in1r + in1i*rat)*scl;                   \
             (outp)->imag = (in1i - in1r*rat)*scl;                   \
         }                                                           \
     } else {                                                        \
         @rtype@ rat = in2r/in2i;                                    \
-        @rtype@ scl = 1.0e0/(in2i + in2r*rat);                      \
+        @rtype@ scl = 1.0@c@/(in2i + in2r*rat);                     \
         (outp)->real = (in1r*rat + in1i)*scl;                       \
         (outp)->imag = (in1i*rat - in1r)*scl;                       \
     }                                                               \
