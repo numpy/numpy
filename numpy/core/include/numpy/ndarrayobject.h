@@ -96,7 +96,7 @@ extern "C" CONFUSE_EMACS
                                                       NULL)
 
 #define PyArray_FROM_OT(m,type) PyArray_FromAny(m,                            \
-                                PyArray_DescrFromType(type), 0, 0, 0, NULL);
+                                PyArray_DescrFromType(type), 0, 0, 0, NULL)
 
 #define PyArray_FROM_OTF(m, type, flags) \
         PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, \
