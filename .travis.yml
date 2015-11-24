@@ -17,7 +17,7 @@ matrix:
     - python: 2.7
       env: NPY_SEPARATE_COMPILATION=0 PYTHON_OO=1
     - python: 3.4
-      env: NPY_RELAXED_STRIDES_CHECKING=0
+      env: NPY_RELAXED_STRIDES_CHECKING=1
     - python: 2.7
       env: USE_BENTO=1
     - python: 2.7

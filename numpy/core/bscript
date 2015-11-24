@@ -35,7 +35,7 @@ def make_relpath(f):
     return os.path.relpath(f, os.path.abspath(os.path.dirname(__file__)))
 
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
-NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
+NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0")
 
 NUMPYCONFIG_SYM = []
 
