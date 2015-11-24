@@ -169,7 +169,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int new_ndim, fancy_ndim, used_ndim, index_ndim;
     int curr_idx, get_idx;
 
-    npy_intp i, n;
+    int i;
+    npy_intp n;
 
     npy_bool make_tuple = 0;
     PyObject *obj = NULL;
@@ -370,14 +371,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
 #else
             if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
 #endif
-                i = PyArray_PyIntAsIntp(obj);
-                if ((i == -1) && PyErr_Occurred()) {
+                npy_intp ind = PyArray_PyIntAsIntp(obj);
+
+                if ((ind == -1) && PyErr_Occurred()) {
                     PyErr_Clear();
                 }
                 else {
                     index_type |= HAS_INTEGER;
                     indices[curr_idx].object = NULL;
-                    indices[curr_idx].value = i;
+                    indices[curr_idx].value = ind;
                     indices[curr_idx].type = HAS_INTEGER;
                     used_ndim += 1;
                     new_ndim += 0;
@@ -643,15 +645,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * sure that array-likes or odder arrays are always
                  * handled right.
                  */
-                i = PyArray_PyIntAsIntp((PyObject *)arr);
+                npy_intp ind = PyArray_PyIntAsIntp((PyObject *)arr);
+
                 Py_DECREF(arr);
-                if ((i == -1) && PyErr_Occurred()) {
+                if ((ind == -1) && PyErr_Occurred()) {
                     goto failed_building_indices;
                 }
                 else {
                     index_type |= (HAS_INTEGER | HAS_SCALAR_ARRAY);
                     indices[curr_idx].object = NULL;
-                    indices[curr_idx].value = i;
+                    indices[curr_idx].value = ind;
                     indices[curr_idx].type = HAS_INTEGER;
                     used_ndim += 1;
                     new_ndim += 0;
@@ -1409,7 +1412,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_NDIM(arr),
                                     PyArray_SHAPE(arr),
                                     PyArray_STRIDES(arr),
-                                    PyArray_DATA(arr) + offset,
+                                    PyArray_BYTES(arr) + offset,
                                     PyArray_FLAGS(arr),
                                     (PyObject *)arr);
         if (*view == NULL) {
@@ -2492,9 +2495,9 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
                   int index_num, PyArrayObject *arr)
 {
     int j = 0, i;
-    int curr_dim = 0;
+    npy_intp curr_dim = 0;
      /* dimension of index result (up to first fancy index) */
-    int result_dim = 0;
+    npy_intp result_dim = 0;
     /* -1 init; 0 found fancy; 1 fancy stopped; 2 found not consecutive fancy */
     int consec_status = -1;
     int axis, broadcast_axis;
@@ -2561,8 +2564,8 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
 
         /* advance curr_dim for non-fancy indices */
         else if (indices[i].type == HAS_ELLIPSIS) {
-            curr_dim += indices[i].value;
-            result_dim += indices[i].value;
+            curr_dim += (int)indices[i].value;
+            result_dim += (int)indices[i].value;
         }
         else if (indices[i].type != HAS_NEWAXIS){
             curr_dim += 1;
@@ -3007,7 +3010,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         stride = extra_op_dtype->elsize;
         for (i=PyArray_NDIM(subspace) - 1; i >= 0; i--) {
             strides[mit->nd_fancy + strideperm[i].perm] = stride;
-            stride *= PyArray_DIM(subspace, strideperm[i].perm);
+            stride *= PyArray_DIM(subspace, (int)strideperm[i].perm);
         }
 
         /*
