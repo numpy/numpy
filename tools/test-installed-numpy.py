@@ -38,7 +38,7 @@ import numpy
 
 # Check that NPY_RELAXED_STRIDES_CHECKING is active when set.
 # The same flags check is also used in the tests to switch behavior.
-if (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0"):
+if (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0"):
     if not numpy.ones((10, 1), order='C').flags.f_contiguous:
         print('NPY_RELAXED_STRIDES_CHECKING set, but not active.')
         sys.exit(1)
