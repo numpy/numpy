@@ -100,7 +100,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  $PIP install --pre --upgrade --find-links . numpy
+  $PIP install --pre --no-index --upgrade --find-links=. numpy
   $PIP install nose
   popd
   run_test
