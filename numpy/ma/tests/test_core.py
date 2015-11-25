@@ -1662,6 +1662,10 @@ class TestFillingValues(TestCase):
         assert_equal(test, control)
         control = np.array((0, 0, 0), dtype="int, float, float").astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
+        # but when indexing, fill value should become scalar not tuple
+        # See issue #6723
+        M = masked_array(control)
+        assert_equal(M["f1"].fill_value.ndim, 0)
 
     def test_fillvalue_datetime_timedelta(self):
         # Test default fillvalue for datetime64 and timedelta64 types.
