@@ -127,6 +127,7 @@ cdef extern from "initarray.h":
 # Initialize numpy
 import_array()
 
+cimport cython
 import numpy as np
 import operator
 import warnings
@@ -4484,7 +4485,7 @@ cdef class RandomState:
         mnarr = <ndarray>multin
         mnix = <long*>PyArray_DATA(mnarr)
         sz = PyArray_SIZE(mnarr)
-        with self.lock, nogil:
+        with self.lock, nogil, cython.cdivision(True):
             i = 0
             while i < sz:
                 Sum = 1.0
