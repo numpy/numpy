@@ -2758,13 +2758,19 @@ class MaskedArray(ndarray):
                     _data._sharedmask = True
         else:
             # Case 2. : With a mask in input.
-            # Read the mask with the current mdtype
-            try:
-                mask = np.array(mask, copy=copy, dtype=mdtype)
-            # Or assume it's a sequence of bool/int
-            except TypeError:
-                mask = np.array([tuple([m] * len(mdtype)) for m in mask],
-                                dtype=mdtype)
+            # If mask is boolean, create an array of True or False
+            if mask is True:
+                mask = np.ones(_data.shape, dtype=mdtype)
+            elif mask is False:
+                mask = np.zeros(_data.shape, dtype=mdtype)
+            else:
+                # Read the mask with the current mdtype
+                try:
+                    mask = np.array(mask, copy=copy, dtype=mdtype)
+                # Or assume it's a sequence of bool/int
+                except TypeError:
+                    mask = np.array([tuple([m] * len(mdtype)) for m in mask],
+                                    dtype=mdtype)
             # Make sure the mask and the data have the same shape
             if mask.shape != _data.shape:
                 (nd, nm) = (_data.size, mask.size)
