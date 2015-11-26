@@ -625,6 +625,18 @@ class TestMaskedArray(TestCase):
         control = "[(--, (2, --)) (4, (--, 6.0))]"
         assert_equal(str(test), control)
 
+        # Test 0-d array with multi-dimensional dtype
+        t_2d0 = masked_array(data = (0, [[0.0, 0.0, 0.0],
+                                        [0.0, 0.0, 0.0]],
+                                    0.0),
+                             mask = (False, [[True, False, True],
+                                             [False, False, True]],
+                                     False),
+                             dtype = "int, (2,3)float, float")
+        control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
+        assert_equal(str(t_2d0), control)
+
+
     def test_flatten_structured_array(self):
         # Test flatten_structured_array on arrays
         # On ndarray
