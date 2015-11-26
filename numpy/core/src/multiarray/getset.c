@@ -419,6 +419,39 @@ array_nbytes_get(PyArrayObject *self)
 #endif
 }
 
+/*
+ * This reproduces the old NON-relaxed-strides behavior for the contiguity
+ * check in array_descr_set, where it replaces a call to PyArray_ISCONTIGUOUS.
+ * The code here is copied from _UpdateContiguousFlags in flagsobject.c.
+ *
+ * For backwards compatbility, we want views of different dtype size to be
+ * possible as long as the array is C- or F-contiguous in the old non-relaxed
+ * strides sense.  See gh-6678.
+ *
+ * This is temporary backward compatible behavior and this function should
+ * eventually be removed.
+ */
+static int
+_use_C_view_dimension(PyArrayObject *ap)
+{
+    npy_intp sd;
+    npy_intp dim;
+    int i;
+
+    sd = PyArray_ITEMSIZE(ap);
+    for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
+        dim = PyArray_DIM(ap, i);
+        if (PyArray_STRIDE(ap, i) != sd) {
+            return 0;
+        }
+        /* contiguous, if it got this far */
+        if (dim == 0) {
+            break;
+        }
+        sd *= dim;
+    }
+    return 1;
+}
 
 /*
  * If the type is changed.
@@ -492,7 +525,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
          PyDataType_HASSUBARRAY(newtype))) {
         goto fail;
     }
-    if (PyArray_ISCONTIGUOUS(self)) {
+
+    if (_use_C_view_dimension(self)) {
         i = PyArray_NDIM(self) - 1;
     }
     else {

@@ -1604,6 +1604,31 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
+static PyArrayObject *
+recomputeStrides(PyObject *op, int order){
+    PyArrayObject *oparr = (PyArrayObject *)op;
+    PyArrayObject *ret;
+
+    assert(STRIDING_OK(op, order));
+
+    /*
+     * arrays with dims of size 1 may be both C- and F-contiguous. If a
+     * specific new order is requsted for such arrays, we want to simply return
+     * a view, but it also makes sense to recompute the strides to match what a
+     * new array with the same shape would have.
+     */
+    if ( (order == NPY_CORDER || order == NPY_FORTRANORDER) &&
+            (PyArray_IS_F_CONTIGUOUS(oparr) && PyArray_IS_C_CONTIGUOUS(oparr)) ) {
+        ret = (PyArrayObject*)PyArray_View(oparr, NULL, NULL);
+        _array_fill_strides(PyArray_STRIDES(ret), PyArray_DIMS(ret),
+                            PyArray_NDIM(ret), PyArray_ITEMSIZE(ret),
+                            order, &((PyArrayObject_fields *)ret)->flags);
+        return ret;
+    }
+
+    return (PyArrayObject*)op;
+}
+
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
@@ -1684,7 +1709,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
             /* copy=False with default dtype, order and ndim */
             if (STRIDING_OK(oparr, order)) {
-                ret = oparr;
+                ret = recomputeStrides(op, order);
                 Py_INCREF(ret);
                 goto finish;
             }
@@ -1714,7 +1739,7 @@ full_path:
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
             if (!copy && STRIDING_OK(oparr, order)) {
-                ret = oparr;
+                ret = recomputeStrides(op, order);
                 Py_INCREF(ret);
                 goto finish;
             }
@@ -1727,8 +1752,8 @@ full_path:
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
             if (!copy && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
-                ret = oparr;
+                ret = recomputeStrides(op, order);
+                Py_INCREF(ret);
                 goto finish;
             }
             else {
