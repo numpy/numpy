@@ -375,7 +375,7 @@ class TestBooleanIndexShapeMismatchDeprecation():
              arr.__getitem__, (slice(None), index))
 
 
-class TestFullDefaultDtype:
+class TestFullDefaultDtype(object):
     """np.full defaults to float when dtype is not set.  In the future, it will
     use the fill value's dtype.
     """
@@ -384,6 +384,20 @@ class TestFullDefaultDtype:
         assert_warns(FutureWarning, np.full, 1, 1)
         assert_warns(FutureWarning, np.full, 1, None)
         assert_no_warnings(np.full, 1, 1, float)
+
+
+class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
+    """View of non-C-contiguous arrays deprecated in 1.11.0.
+
+    The deprecation will not be raised for arrays that are both C and F
+    contiguous, as C contiguous is dominant. There are more such arrays
+    with relaxed stride checking than without so the deprecation is not
+    as visible with relaxed stride checking in force.
+    """
+
+    def test_fortran_contiguous(self):
+        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.complex,))
+        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
 if __name__ == "__main__":
