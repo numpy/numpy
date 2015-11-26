@@ -1321,21 +1321,23 @@ def gradient(f, *varargs, **kwargs):
         return outvals
 
 def divergence(v,*varargs,**kwargs):
-	"""
-	Return the divergence of an N-dimensional vector field of N components, each of dimension N.
+    """
+    Return the divergence of an N-dimensional vector field of N 
+    components, each of dimension N.
 
-    The divergence is computed using second order accurate central differences
-    in the interior and either first differences or second order accurate
-    one-sides (forward or backwards) differences at the boundaries. The
-    returned gradient hence has the same shape as the input array.
+    The divergence is computed using second order accurate central
+    differences in the interior and either first differences or second
+    order accurate one-sides (forward or backwards) differences at the
+    boundaries. The returned gradient hence has the same shape as the
+    input array.
     
     Parameters
-    ----------
+    ----------  
+    v : list of numpy arrays
+        Each of these array is the N-dimensional projection of the vector
+        field on the corresponding axis. 
     
-	v : list of numpy arrays
-	Each of these array is the N-dimensional projection of the vector field on the corresponding axis. 
-	
-	varargs : scalar or list of scalar, optional
+    varargs : scalar or list of scalar, optional
         N scalars specifying the sample distances for each dimension,
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
         single scalar specifies sample distance for all dimensions.
@@ -1348,442 +1350,446 @@ def divergence(v,*varargs,**kwargs):
     Returns
     -------
     divergence : numpy array
-        The output corresponds to the divergence of the input vector field. This means that
-        the output array has the form dAx/dx + dAy/dy + dAz/dz + ... for an input 
-        vector field A = (Ax, Ay, Az, ...) up to N dimensions.
+        The output corresponds to the divergence of the input vector field. 
+        This means that the output array has the form 
+        dAx/dx + dAy/dy + dAz/dz + ... for an input vector field 
+        A = (Ax, Ay, Az, ...) up to N dimensions.
+    
+    Example
+    -------
+    This example shows how the calculated divergence of the 2-D field 
+    (0.5*x**2, -y*x) (whose divergence should be 0 everywhere) returns a 0 array
+    
+    >>> import numpy as np
+    >>> X,Y=np.mgrid[0:2000,0:2000]
+    >>> a1=0.5*X**2
+    >>> a2=-Y*X
+    >>> c=[a1,a2]
+    >>> d=np.divergence(c)
+    >>> print d
+    [[ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     ..., 
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+    """
 	
-	Example
-	-------
-	This example shows how the calculated divergence of the 2-D field
-	(0.5*x**2, -y*x) (whose divergence should be 0 everywhere) returns a 0 array
+    N = [0]*len(v)
+    for i, v_c in enumerate(v):
+        v_c = np.asanyarray(v_c)
+        N[i] = len(v_c.shape) # Get number of dimensions from every component
+    if False in [N[0] == N[i] for i in range(len(v))]: 
+        #Check if all components are the same size
+        raise ValueError("Not all components of input are the same size")
+    else:
+        N = N[0] 
+	# If all vector field components are the same shape,
+	#N becomes the number of dimensions
+    
+    
+    
+    axes = tuple(range(N))
+
+
+    # normalize axis values:
+    axes = tuple(x + N if x < 0 else x for x in axes)
+    if max(axes) >= N or min(axes) < 0:
+        raise ValueError("'axis' entry is out of bounds")
+
+    if len(set(axes)) != len(axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    n = len(varargs)
+    if n == 0:
+        dx = [1.0] * N
+    elif n ==1:
+        dx = [varargs[0]] * N
+    elif n == len(axes):
+        dx = list(varargs)
+    else:
+        raise SyntaxError("invalid number of arguments")
+
+    edge_order = kwargs.pop('edge_order', 1)
+    if kwargs:
+        raise TypeError('W{} are not valid keyword arguments.'.format(
+		'", "'.join(kwargs.keys())))
+
+    if edge_order > 2:
+        raise ValueError("'edge_order' greater than 2 not supported")
+    
+    outvals=np.zeros(np.shape(v_c)) #Initialize output
+    
+    # use central differences on interior and one-sided differences on the 
+    # endpoints. This preserves second order-accuracy over the full domain.
+
+    # create slice objects --- initially all are [:, :, ..., :]
+    slice1 = [slice(None)]*N
+    slice2 = [slice(None)]*N
+    slice3 = [slice(None)]*N
+    slice4 = [slice(None)]*N
+    for i,axis in enumerate(axes):
+        y=v[axis]
+
+        otype = y.dtype.char
+        if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
+            otype = 'd'
+        # Difference of datetime64 elements results in timedelta64
+        if otype == 'M':
+            # Need to use the full dtype name because 
+	    #it contains unit information
+            otype = y.dtype.name.replace('datetime', 'timedelta')
+        elif otype == 'm':
+            # Needs to keep the specific units, can't be a general unit
+            otype = y.dtype
+
+        # Convert datetime64 data into ints. Make dummy variable 'y'
+        # that is a view of ints if the data is datetime64, otherwise
+        # just set y equal to the array 'f'.
+        if y.dtype.char in ["M", "m"]:
+            y = v[axis].view('int64')
+        else:
+            y = v[axis]
+
+        if y.shape[axis] < 2:
+            raise ValueError(
+            "Shape of array too small to calculate a numerical gradient, "
+            "at least two elements are required.")
+        
+        # Numerical differentiation: 1st order edges, 2nd order interior
+        if y.shape[axis] == 2:# or edge_order == 1:
+            # Use first order differences for time data
+            out = np.empty_like(y, dtype=otype)
+        
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+        
+            slice1[axis] = 0
+            slice2[axis] = 1
+            slice3[axis] = 0
+            # 1D equivalent -- out[0] = (y[1] - y[0])
+            out[slice1] = (y[slice2] - y[slice3])
+            
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
+            out[slice1] = (y[slice2] - y[slice3])
+            
+            # Numerical differentiation: 2st order edges, 2nd order interior
+        else:
+            # Use second order differences where possible
+            out = np.empty_like(y, dtype=otype)
+            
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+            
+            slice1[axis] = 0
+            slice2[axis] = 0
+            slice3[axis] = 1
+            slice4[axis] = 2
+            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
+            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            slice4[axis] = -3
+            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
+            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+        
+        # divide by step size
+        out /= dx[i]
+        outvals += out 
+	#here the different derivatives are added to produce the divergence
+        
+        # reset the slice object in this dimension to ":"
+        slice1[axis] = slice(None)
+        slice2[axis] = slice(None)
+        slice3[axis] = slice(None)
+        slice4[axis] = slice(None)
 	
-	>>> import numpy as np
-	>>> X,Y=np.mgrid[0:2000,0:2000]
-	>>> a1=0.5*X**2
-	>>> a2=-Y*X
-	>>> c=[a1,a2]
-	>>> d=np.divergence(c)
-	>>> print d
-	[[ 0.  0.  0. ...,  0.  0.  0.]
-	 [ 0.  0.  0. ...,  0.  0.  0.]
-	 [ 0.  0.  0. ...,  0.  0.  0.]
-	 ..., 
-	 [ 0.  0.  0. ...,  0.  0.  0.]
-	 [ 0.  0.  0. ...,  0.  0.  0.]
-	 [ 0.  0.  0. ...,  0.  0.  0.]"""
-	
-	N = [0]*len(v)
-	for i, v_c in enumerate(v):
-		v_c = np.asanyarray(v_c)
-		N[i] = len(v_c.shape) # Extract the number of dimensions from every vector field  component v_c
-	if False in [N[0] == N[i] for i in range(len(v))]: #Check if all components are the same size
-		raise ValueError("Not all components of input vector field are the same size")
-	else:
-		N = N[0] # If all vector field components are the same shape, N becomes the number of dimensions
-	
-	
-	
-	axes = tuple(range(N))
-
-
-	# normalize axis values:
-	axes = tuple(x + N if x < 0 else x for x in axes)
-	if max(axes) >= N or min(axes) < 0:
-		raise ValueError("'axis' entry is out of bounds")
-
-	if len(set(axes)) != len(axes):
-		raise ValueError("duplicate value in 'axis'")
-
-	n = len(varargs)
-	if n == 0:
-		dx = [1.0] * N
-	elif n ==1:
-		dx = [varargs[0]] * N
-	elif n == len(axes):
-		dx = list(varargs)
-	else:
-		raise SyntaxError("invalid number of arguments")
-
-	edge_order = kwargs.pop('edge_order', 1)
-	if kwargs:
-		raise TypeError('W{} are not valid keyword arguments.'.format('", "'.join(kwargs.keys())))
-
-	if edge_order > 2:
-		raise ValueError("'edge_order' greater than 2 not supported")
-	
-	outvals=np.zeros(np.shape(v_c)) #Initialize output
-	
-	# use central differences on interior and one-sided differences on the 
-	# endpoints. This preserves second order-accuracy over the full domain.
-
-	# create slice objects --- initially all are [:, :, ..., :]
-	slice1 = [slice(None)]*N
-	slice2 = [slice(None)]*N
-	slice3 = [slice(None)]*N
-	slice4 = [slice(None)]*N
-	for i,axis in enumerate(axes):
-		y=v[axis]
-
-		otype = y.dtype.char
-		if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
-			otype = 'd'
-		# Difference of datetime64 elements results in timedelta64
-		if otype == 'M':
-			# Need to use the full dtype name because it contains unit information
-			otype = y.dtype.name.replace('datetime', 'timedelta')
-		elif otype == 'm':
-			# Needs to keep the specific units, can't be a general unit
-			otype = y.dtype
-
-		# Convert datetime64 data into ints. Make dummy variable 'y'
-		# that is a view of ints if the data is datetime64, otherwise
-		# just set y equal to the array 'f'.
-		if y.dtype.char in ["M", "m"]:
-			y = v[axis].view('int64')
-		else:
-			y = v[axis]
-	
-
-
-		if y.shape[axis] < 2:
-			raise ValueError(
-			"Shape of array too small to calculate a numerical gradient, "
-			"at least two elements are required.")
-		
-		# Numerical differentiation: 1st order edges, 2nd order interior
-		if y.shape[axis] == 2:# or edge_order == 1:
-			# Use first order differences for time data
-			out = np.empty_like(y, dtype=otype)
-			
-			slice1[axis] = slice(1, -1)
-			slice2[axis] = slice(2, None)
-			slice3[axis] = slice(None, -2)
-			# 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-			out[slice1] = (y[slice2] - y[slice3])/2.0
-			
-			slice1[axis] = 0
-			slice2[axis] = 1
-			slice3[axis] = 0
-			# 1D equivalent -- out[0] = (y[1] - y[0])
-			out[slice1] = (y[slice2] - y[slice3])
-			
-			slice1[axis] = -1
-			slice2[axis] = -1
-			slice3[axis] = -2
-			# 1D equivalent -- out[-1] = (y[-1] - y[-2])
-			out[slice1] = (y[slice2] - y[slice3])
-			
-			# Numerical differentiation: 2st order edges, 2nd order interior
-		else:
-			# Use second order differences where possible
-			out = np.empty_like(y, dtype=otype)
-			
-			slice1[axis] = slice(1, -1)
-			slice2[axis] = slice(2, None)
-			slice3[axis] = slice(None, -2)
-			# 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-			out[slice1] = (y[slice2] - y[slice3])/2.0
-			
-			slice1[axis] = 0
-			slice2[axis] = 0
-			slice3[axis] = 1
-			slice4[axis] = 2
-			# 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
-			out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-			
-			slice1[axis] = -1
-			slice2[axis] = -1
-			slice3[axis] = -2
-			slice4[axis] = -3
-			# 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
-			out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-		
-		# divide by step size
-		out /= dx[i]
-		outvals += out #here the different derivatives are added to produce the divergence
-		
-		# reset the slice object in this dimension to ":"
-		slice1[axis] = slice(None)
-		slice2[axis] = slice(None)
-		slice3[axis] = slice(None)
-		slice4[axis] = slice(None)
-	
-	if len(axes) == 1:
-		return outvals[0]
-	else:
-		return outvals
+    if len(axes) == 1:
+        return outvals[0]
+    else:
+        return outvals
 		
 def curl(v,*varargs,**kwargs):
-	"""
-	Return the curl of a 3-D vector field.
+    """
+    Return the curl of a 3-D vector field.
 
-	The curl is computed using second order accurate central differences
-	in the interior and either first differences or second order accurate
-	one-sides (forward or backwards) differences at the boundaries. The
-	returned gradient hence has the same shape as the input array.
+    The curl is computed using second order accurate central differences
+    in the interior and either first differences or second order accurate
+    one-sides (forward or backwards) differences at the boundaries. The
+    returned gradient hence has the same shape as the input array.
     
-	Parameters
-	----------
+    Parameters
+    ----------
+    v : list of numpy arrays
+        Each of these array is the N-dimensional projection 
+        of the vector field on the corresponding axis. 
     
-	v : list of numpy arrays
-	Each of these array is the N-dimensional projection 
-	of the vector field on the corresponding axis. 
-	
-	varargs : scalar or list of scalar, optional
+    varargs : scalar or list of scalar, optional
         N scalars specifying the sample distances for each dimension,
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
-	edge_order : {1, 2}, optional
+    edge_order : {1, 2}, optional
         Gradient is calculated using N\ :sup:`th` order accurate differences
         at the boundaries. Default: 1.
         
-	axis : None or int or tuple of ints, optional
+    axis : None or int or tuple of ints, optional
         Gradient is calculated only along the given axis or axes
         The default (axis = None) is to calculate the gradient for 
         all the axes of the input array.
         axis may be negative, in which case it counts from the last to the first axis.
         
-	Returns
-	-------
-	curl : list of numpy arrays
+    Returns
+    -------
+    curl : list of numpy arrays
         The output corresponds to the curl of the input 3-D vector field.
         This means that the output has the form 
         (dAz/dy-dAy/dz, dAx/dz-dAz/dx, dAy/dx-dAx/dy) of an input vector 
         field A = (Ax, Ay, Ax).
-	
-	Example
-	-------
-	The following example shows in matplotlib how the vector field (0,0,x*y) has the 
-	correct value, nonzero only in the third component of the resulting vector field
-	after applying curl
-	
-	>>> import matplotlib.pylab as plt
-	>>> import numpy as np
-	>>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
-	>>> a0=X*Y
-	>>> a1=np.zeros(np.shape(X))
-	>>> a2=np.zeros(np.shape(X))
-	>>> a=[a0,a1,a2]
-	>>> [cx,cy,cz]=np.curl(a)
-	>>> plt.imshow(cx[:,:,1])
-	>>> plt.colorbar()
-	>>> plt.show()
-	>>> plt.imshow(cy[:,:,1])
-	>>> plt.colorbar()
-	>>> plt.show()
-	>>> plt.imshow(cz[:,:,1])
-	>>> plt.colorbar()
-	>>> plt.show()
+    
+    Example
+    -------
+    The following example shows in matplotlib how the vector field (0,0,x*y) has the 
+    correct value, nonzero only in the third component of the resulting vector field
+    after applying curl
+    
+    >>> import matplotlib.pylab as plt
+    >>> import numpy as np
+    >>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
+    >>> a0=X*Y
+    >>> a1=np.zeros(np.shape(X))
+    >>> a2=np.zeros(np.shape(X))
+    >>> a=[a0,a1,a2]
+    >>> [cx,cy,cz]=np.curl(a)
+    >>> plt.imshow(cx[:,:,1])
+    >>> plt.colorbar()
+    >>> plt.show()
+    >>> plt.imshow(cy[:,:,1])
+    >>> plt.colorbar()
+    >>> plt.show()
+    >>> plt.imshow(cz[:,:,1])
+    >>> plt.colorbar()
+    >>> plt.show()
+    """
+    
+    N = [0]*len(v)
+    for i, v_c in enumerate(v):
+        v_c = np.asanyarray(v_c)
+        N[i] = len(v_c.shape) 
+        # Extract the number of dimensions from every component v_c
+    if False in [N[0] == N[i] for i in range(len(v))]: 
+        #Check if all components are the same size
+        raise ValueError("Not all components of input "
+                         "vector field are the same size")
+    else:
+        N = N[0] 
+        # If all vector field components are the same shape,
+        #N becomes the number of dimensions
 
-	
-	
-	"""
-	
-	N = [0]*len(v)
-	
-	for i, v_c in enumerate(v):
-		v_c = np.asanyarray(v_c)
-		N[i] = len(v_c.shape) # Extract the number of dimensions from every vector field  component v_c
-	if False in [N[0] == N[i] for i in range(len(v))]: #Check if all components are the same size
-		raise ValueError("Not all components of input vector field are the same size")
-	else:
-		N = N[0] # If all vector field components are the same shape, N becomes the number of dimensions
-	
-	
-	
-	if N != 3:
-		raise TypeError("A three dimensional vector field is required.Please, enter a list of 3 numpy arrays.")	
-	axes = kwargs.pop('axis', None)
-	if axes is None:
-		axes = tuple(range(N))
-	if isinstance(axes, int):
-		axes = (axes,)
-	if not isinstance(axes, tuple):
-		raise TypeError("A tuple of integers or a single integer is required")
+    if N != 3:
+        raise TypeError("A three dimensional vector field is required."
+                          "Please, enter a list of 3 numpy arrays.")	
+    axes = kwargs.pop('axis', None)
+    if axes is None:
+        axes = tuple(range(N))
+    if isinstance(axes, int):
+        axes = (axes,)
+    if not isinstance(axes, tuple):
+        raise TypeError("A tuple of integers or a single integer is required")
 
-	# normalize axis values:
-	axes = tuple(x + N if x < 0 else x for x in axes)
-	
+    # normalize axis values:
+    axes = tuple(x + N if x < 0 else x for x in axes)
 
-	n = len(varargs)
-	if n == 0:
-		dx = [1.0] * N
-	elif n ==1:
-		dx = [varargs[0]] * N
-	elif n == len(axes):
-		dx = list(varargs)
-	else:
-		raise SyntaxError("invalid number of arguments")
+    n = len(varargs)
+    if n == 0:
+        dx = [1.0] * N
+    elif n ==1:
+        dx = [varargs[0]] * N
+    elif n == len(axes):
+        dx = list(varargs)
+    else:
+        raise SyntaxError("invalid number of arguments")
 
-	edge_order = kwargs.pop('edge_order', 1)
-	if kwargs:
-		raise TypeError('W{} are not valid keyword arguments.'.format('", "'.join(kwargs.keys())))
+    edge_order = kwargs.pop('edge_order', 1)
+    if kwargs:
+        raise TypeError('W{} are not valid keyword arguments.'.format(
+                                      '", "'.join(kwargs.keys())))
+    if edge_order > 2:
+        raise ValueError("'edge_order' greater than 2 not supported")
+    
+    outvals=[np.zeros(np.shape(v_c))] * 3 #Initialize output vector field
+    
+    # use central differences on interior and one-sided differences on the 
+    # endpoints. This preserves second order-accuracy over the full domain.
 
-	if edge_order > 2:
-		raise ValueError("'edge_order' greater than 2 not supported")
-	
-	outvals=[np.zeros(np.shape(v_c))] * 3 #Initialize output vector field
-	
-	# use central differences on interior and one-sided differences on the 
-	# endpoints. This preserves second order-accuracy over the full domain.
+    # create slice objects --- initially all are [:, :, ..., :]
+    slice1 = [slice(None)]*N
+    slice2 = [slice(None)]*N
+    slice3 = [slice(None)]*N
+    slice4 = [slice(None)]*N
+    
+    lst_axes = [1,2,2,0,0,1] # ordered list of dimension of the derivatives
+    lst_args = [2,1,0,2,1,0] # ordered list of arguments for the derivatives
+    
+    for i in range(6):
+        # select the appropriate derivative and argument for each of the 6 
+        # required computations 
+        axis = lst_axes[i]
+        arg = lst_args[i]
+        y=v[arg]
+        otype = y.dtype.char
+        if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
+            otype = 'd'
+        # Difference of datetime64 elements results in timedelta64
+        if otype == 'M':
+            # Need to use the full dtype name because 
+            #it contains unit information
+            otype = y.dtype.name.replace('datetime', 'timedelta')
+        elif otype == 'm':
+            # Needs to keep the specific units, can't be a general unit
+            otype = y.dtype
 
-	# create slice objects --- initially all are [:, :, ..., :]
-	slice1 = [slice(None)]*N
-	slice2 = [slice(None)]*N
-	slice3 = [slice(None)]*N
-	slice4 = [slice(None)]*N
-	
-	lst_axes = [1,2,2,0,0,1] # ordered list of the dimension of the derivatives
-	lst_args = [2,1,0,2,1,0] # ordered list of the arguments for the derivatives
-	
-	for i in range(6):
-		# select the appropriate derivative and argument for each of the 6 
-		# required computations 
-		axis = lst_axes[i]
-		arg = lst_args[i]
-		y=v[arg]
-		otype = y.dtype.char
-		if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
-			otype = 'd'
-		# Difference of datetime64 elements results in timedelta64
-		if otype == 'M':
-			# Need to use the full dtype name because it contains unit information
-			otype = y.dtype.name.replace('datetime', 'timedelta')
-		elif otype == 'm':
-			# Needs to keep the specific units, can't be a general unit
-			otype = y.dtype
+        # Convert datetime64 data into ints. Make dummy variable 'y'
+        # that is a view of ints if the data is datetime64, otherwise
+        # just set y equal to the array 'f'.
+        if y.dtype.char in ["M", "m"]:
+            y = v[arg].view('int64')
+        else:
+            y = v[arg]
 
-		# Convert datetime64 data into ints. Make dummy variable 'y'
-		# that is a view of ints if the data is datetime64, otherwise
-		# just set y equal to the array 'f'.
-		if y.dtype.char in ["M", "m"]:
-			y = v[arg].view('int64')
-		else:
-			y = v[arg]
-	
+        if y.shape[axis] < 2:
+            raise ValueError(
+            "Shape of array too small to calculate a numerical gradient, "
+            "at least two elements are required.")
+        
+        # Numerical differentiation: 1st order edges, 2nd order interior
+        if y.shape[axis] == 2:# or edge_order == 1:
+            # Use first order differences for time data
+            out = np.empty_like(y, dtype=otype)
+            
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+            
+            slice1[axis] = 0
+            slice2[axis] = 1
+            slice3[axis] = 0
+            # 1D equivalent -- out[0] = (y[1] - y[0])
+            out[slice1] = (y[slice2] - y[slice3])
+            
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
+            out[slice1] = (y[slice2] - y[slice3])
+            
+            # Numerical differentiation: 2st order edges, 2nd order interior
+        else:
+    	    # Use second order differences where possible
+            out = np.empty_like(y, dtype=otype)
+            
+            slice1[axis] = slice(1, -1)
+            slice2[axis] = slice(2, None)
+            slice3[axis] = slice(None, -2)
+            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
+            out[slice1] = (y[slice2] - y[slice3])/2.0
+            
+            slice1[axis] = 0
+            slice2[axis] = 0
+            slice3[axis] = 1
+            slice4[axis] = 2
+            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
+            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            
+            slice1[axis] = -1
+            slice2[axis] = -1
+            slice3[axis] = -2
+            slice4[axis] = -3
+            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
+            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+        
+        # divide by step size
+        out /= dx[axis]
+        
+        if i == 0:
+            out0 = out
+        elif i == 1:
+            out1 = out
+        elif i == 2:
+            out2 = out
+        elif i == 3:
+            out3 = out
+        elif i == 4:
+            out4 = out
+        else:
+            out5 = out
+        
+        # reset the slice object in this dimension to ":"
+        slice1[axis] = slice(None)
+        slice2[axis] = slice(None)
+        slice3[axis] = slice(None)
+        slice4[axis] = slice(None)
 
-
-		if y.shape[axis] < 2:
-			raise ValueError(
-			"Shape of array too small to calculate a numerical gradient, "
-			"at least two elements are required.")
-		
-		# Numerical differentiation: 1st order edges, 2nd order interior
-		if y.shape[axis] == 2:# or edge_order == 1:
-			# Use first order differences for time data
-			out = np.empty_like(y, dtype=otype)
-			
-			slice1[axis] = slice(1, -1)
-			slice2[axis] = slice(2, None)
-			slice3[axis] = slice(None, -2)
-			# 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-			out[slice1] = (y[slice2] - y[slice3])/2.0
-			
-			slice1[axis] = 0
-			slice2[axis] = 1
-			slice3[axis] = 0
-			# 1D equivalent -- out[0] = (y[1] - y[0])
-			out[slice1] = (y[slice2] - y[slice3])
-			
-			slice1[axis] = -1
-			slice2[axis] = -1
-			slice3[axis] = -2
-			# 1D equivalent -- out[-1] = (y[-1] - y[-2])
-			out[slice1] = (y[slice2] - y[slice3])
-			
-			# Numerical differentiation: 2st order edges, 2nd order interior
-		else:
-			# Use second order differences where possible
-			out = np.empty_like(y, dtype=otype)
-			
-			slice1[axis] = slice(1, -1)
-			slice2[axis] = slice(2, None)
-			slice3[axis] = slice(None, -2)
-			# 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-			out[slice1] = (y[slice2] - y[slice3])/2.0
-			
-			slice1[axis] = 0
-			slice2[axis] = 0
-			slice3[axis] = 1
-			slice4[axis] = 2
-			# 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
-			out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-			
-			slice1[axis] = -1
-			slice2[axis] = -1
-			slice3[axis] = -2
-			slice4[axis] = -3
-			# 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
-			out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-		
-		# divide by step size
-		out /= dx[axis]
-		
-		if i == 0:
-			out0 = out
-		elif i == 1:
-			out1 = out
-		elif i == 2:
-			out2 = out
-		elif i == 3:
-			out3 = out
-		elif i == 4:
-			out4 = out
-		else:
-			out5 = out
-		
-		# reset the slice object in this dimension to ":"
-		slice1[axis] = slice(None)
-		slice2[axis] = slice(None)
-		slice3[axis] = slice(None)
-		slice4[axis] = slice(None)
-
-	
-	outvals[0] = out0 - out1
-	outvals[1] = out2 - out3
-	outvals[2] = out4 - out5
-	return outvals
+    
+    outvals[0] = out0 - out1
+    outvals[1] = out2 - out3
+    outvals[2] = out4 - out5
+    return outvals
 
 
 def laplace_s(f):
-	"""
-	Computes the laplacian of an N-dimensional numpy array, as a
-	concatenation of the numpy functions gradient and divergence. 
-	For more information on each of these, type help(gradient) or 
-	help(divergence) 
-	
-	Parameters
-	----------
-	f : array_like
-		Input array
-		
-	Returns
-	-------
-	l : array_like
-		Laplacian of input array
-		
-	See Also
-	--------
-	gradient, divergence
-	
-	Example
-	-------
-	This example returns an array that grows linearly in the X axis
-	after applying the laplacian function to the array X**3+Y**2+Z**2:
-	
-	>>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
-	>>> f=X**3+Y**2+Z**2
-	>>> d=divergence(np.gradient(f))
-	>>> print np.shape(d)
-	>>> plt.imshow(d[:,:,1])
-	>>> plt.colorbar()
-	>>> plt.show()
+    """
+    Return the laplacian of an N-dimensional array.
 
-	"""
-	
-	l = np.divergence(np.gradient(f, axis=None))
-	return l
+    Computes the laplacian of an N-dimensional numpy array, as a
+    concatenation of the numpy functions gradient and divergence. 
+    For more information on each of these, type help(gradient) or 
+    help(divergence) 
+    
+    Parameters
+    ----------
+    f : array_like
+        Input array
+    	
+    Returns
+    -------
+    l : array_like
+        Laplacian of input array
+    	
+    See Also
+    --------
+    gradient, divergence
+    
+    Example
+    -------
+    This example returns an array that grows linearly in the X axis
+    after applying the laplacian function to the array X**3+Y**2+Z**2:
+    
+    >>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
+    >>> f=X**3+Y**2+Z**2
+    >>> d=laplace_s(f)
+    >>> print np.shape(d)
+    >>> plt.imshow(d[:,:,1])
+    >>> plt.colorbar()
+    >>> plt.show()
+    """
+    
+    l = np.divergence(np.gradient(f))
+    return l
 
 
 def diff(a, n=1, axis=-1):
