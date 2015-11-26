@@ -556,7 +556,7 @@ and the argument you are passing is an integer extracted from a
 NumPy array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
 Numpy array scalars in addition to the standard integer types.
-Fortunately, this capabilitiy has been provided for you.  Simply copy
+Fortunately, this capability has been provided for you.  Simply copy
 the file::
 
     pyfragments.swg
