@@ -3710,8 +3710,19 @@ class MaskedArray(ndarray):
                 # convert to object array to make filled work
                 names = self.dtype.names
                 if names is None:
-                    res = self._data.astype("O")
-                    res.view(ndarray)[m] = f
+                    data = self._data
+                    mask = m
+                    nval = 50
+                    # For big arrays, to avoid a costly conversion to the
+                    # object dtype, extract the corners before the conversion.
+                    for axis in range(self.ndim):
+                        if data.shape[axis] > 2 * nval:
+                            arr = np.split(data, (nval, -nval), axis=axis)
+                            data = np.concatenate((arr[0], arr[2]), axis=axis)
+                            arr = np.split(mask, (nval, -nval), axis=axis)
+                            mask = np.concatenate((arr[0], arr[2]), axis=axis)
+                    res = data.astype("O")
+                    res.view(ndarray)[mask] = f
                 else:
                     rdtype = _recursive_make_descr(self.dtype, "O")
                     res = self._data.astype(rdtype)
@@ -4690,7 +4701,7 @@ class MaskedArray(ndarray):
         See Also
         --------
         numpy.ma.dot : equivalent function
-    
+
         """
         return dot(self, b, out=out, strict=strict)
 
