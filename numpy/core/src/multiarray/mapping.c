@@ -2455,6 +2455,55 @@ void setup_fancy_permutation(PyArrayMapIterObject *mit) {
 }
 
 
+/* Identical to setup_fancy_permutation but Deprecates/Warns */
+int setup_plain_permutation(PyArrayMapIterObject *mit,
+                             npy_index_info *indices, int index_num)
+{
+    int i;
+    if (mit->numiter > 1) {
+        if (DEPRECATE(
+                    "more than two array indices found; "
+                    "please use `arr.oindex`, `arr.vindex`, or "
+                    "`arr.lindex` to clarify use case.") < 0) {
+            return -1;
+        }
+    }
+    else if (mit->consec == 0) {
+        /* We need to check whether or not the fancy index is "first" */
+        for (i = 0; i < index_num; i++) {
+            if (indices[i].type == HAS_FANCY) {
+                /*
+                 * First dimension being the fancy one is correct the
+                 * index is thus clear.
+                 */
+                break;
+            }
+            else if (indices[i].type == HAS_INTEGER) {
+                /* Integer indices have no output dim, so ignore them */
+                continue;
+            }
+            else if ((indices[i].type == HAS_ELLIPSIS) &&
+                     (indices[i].value == 0)) {
+                /* no-slice Ellipsis does not matter */
+                continue  ;       
+            }
+            /* If we are here, the idex is not clear */
+            if (DEPRECATE(
+                        "advanced index is not clear due to combination of "
+                        "scalars and array-indices; "
+                        "please use `arr.oindex`, `arr.vindex`, or "
+                        "`arr.lindex` to clarify use case.") < 0) {
+                return -1;
+            }
+            break;
+        }            
+    } 
+
+    setup_fancy_permutation(mit);
+    return 0;
+}
+
+
 void setup_outer_permutation(PyArrayMapIterObject *mit,
                              npy_index_info *indices, int index_num) {
     /*
@@ -2523,7 +2572,6 @@ void setup_vector_permutation(PyArrayMapIterObject *mit,
     int curr_subspace = mit->nd - 1;
     int curr_fancy = mit->nd_fancy - 1;
     int arr_ndim;
-    int explained_fancy_ndim = 0;
     int boolean_fancy_ndim = 0;
     int working_dim = mit->nd - 1;  /* ndim being set/worked on */
     int fill_dim;
@@ -3126,33 +3174,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /*
-     * Fill in the set map, depending on which type of indexing we use.
-     */
-    if (indexing_method & (FANCY_INDEXING|PLAIN_INDEXING)) {
-        setup_fancy_permutation(mit);
-    }
-    else if (indexing_method == OUTER_INDEXING) {
-        setup_outer_permutation(mit, indices, index_num);
-    }
-    else if (indexing_method == VECTOR_INDEXING) {
-        setup_vector_permutation(mit, indices, index_num);
-    }
-    else {
-        PyErr_SetString(PyExc_SystemError,
-                        "internal indexing error; invalid indexing type.");
-        Py_DECREF(mit);
-        return NULL;
-    }
-
-    /*
-     * Fill the get map from the setmap info for convenience,
-     * could be done later as well, but assume that this is very fast.
-     */
-    for (i=0; i < mit->nd; i++) {
-        mit->set_perm[mit->get_perm[i]] = i;
-    }
-
-    /*
      * Set iteration information of the indexing arrays.
      */
     for (i=0; i < index_num; i++) {
@@ -3167,13 +3188,45 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
     }
 
-    if (mit->numiter == 0) {
-        /*
-         * For MapIterArray, it is possible that there is no fancy index.
-         * to support this case, add a a dummy iterator.
-         * Since it is 0-d its transpose, etc. does not matter.
-         */
 
+    /*
+     * Fill in the set map, depending on which type of indexing we use.
+     */
+    if (indexing_method == FANCY_INDEXING) {
+        setup_fancy_permutation(mit);
+    }
+    else if (indexing_method == PLAIN_INDEXING) {
+        if (setup_plain_permutation(mit, indices, index_num) < 0) {
+            Py_DECREF(mit);
+            return NULL;
+        }
+    }
+    else if (indexing_method == OUTER_INDEXING) {
+        setup_outer_permutation(mit, indices, index_num);
+    }
+    else if (indexing_method == VECTOR_INDEXING) {
+        setup_vector_permutation(mit, indices, index_num);
+    }
+    else {
+        PyErr_SetString(PyExc_SystemError,
+                        "internal indexing error; invalid indexing type.");
+        Py_DECREF(mit);
+        return NULL;
+    }
+    /*
+     * Fill the get map from the setmap info for convenience,
+     * could be done later as well, but assume that this is very fast.
+     */
+    for (i = 0; i < mit->nd; i++) {
+        mit->set_perm[mit->get_perm[i]] = i;
+    }
+
+    /*
+     * For MapIterArray, it is possible that there is no fancy index.
+     * to support this case, add a a dummy iterator.
+     * Since it is 0-d its transpose, etc. does not matter.
+     */
+    if (mit->numiter == 0) {
         /* signal necessity to decref... */
         dummy_array = 1;
 
