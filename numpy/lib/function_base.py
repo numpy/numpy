@@ -1375,31 +1375,23 @@ def divergence(v,*varargs,**kwargs):
      [ 0.  0.  0. ...,  0.  0.  0.]
      [ 0.  0.  0. ...,  0.  0.  0.]
     """
-	
     N = [0]*len(v)
     for i, v_c in enumerate(v):
         v_c = np.asanyarray(v_c)
         N[i] = len(v_c.shape) # Get number of dimensions from every component
     if False in [N[0] == N[i] for i in range(len(v))]: 
         #Check if all components are the same size
-        raise ValueError("Not all components of input are the same size")
+        raise ValueError("Not all components of input"
+	                 " have the same number of dimensions")
     else:
-        N = N[0] 
+        if False in [np.shape(v[0]) == np.shape(v[i]) for i in range(len(v))]:
+            raise ValueError("Not all components of input are the same size")
+        else:
+	    N = N[0] 
 	# If all vector field components are the same shape,
 	#N becomes the number of dimensions
     
-    
-    
     axes = tuple(range(N))
-
-
-    # normalize axis values:
-    axes = tuple(x + N if x < 0 else x for x in axes)
-    if max(axes) >= N or min(axes) < 0:
-        raise ValueError("'axis' entry is out of bounds")
-
-    if len(set(axes)) != len(axes):
-        raise ValueError("duplicate value in 'axis'")
 
     n = len(varargs)
     if n == 0:
@@ -1583,34 +1575,23 @@ def curl(v,*varargs,**kwargs):
     >>> plt.colorbar()
     >>> plt.show()
     """
-    
     N = [0]*len(v)
     for i, v_c in enumerate(v):
         v_c = np.asanyarray(v_c)
-        N[i] = len(v_c.shape) 
+	N[i] = len(v_c.shape) 
         # Extract the number of dimensions from every component v_c
-    if False in [N[0] == N[i] for i in range(len(v))]: 
+    if False in [N[i] == 3 for i in range(len(v))]: 
         #Check if all components are the same size
-        raise ValueError("Not all components of input "
-                         "vector field are the same size")
+        raise ValueError("Not all components of input vector field"
+                         " have three dimensions")
     else:
-        N = N[0] 
+        if False in [np.shape(v[0]) == np.shape(v[i]) for i in range(len(v))]:
+            raise ValueError("Not all components of input are the same size")
+        else:
+            N = N[0] 
         # If all vector field components are the same shape,
         #N becomes the number of dimensions
 
-    if N != 3:
-        raise TypeError("A three dimensional vector field is required."
-                          "Please, enter a list of 3 numpy arrays.")	
-    axes = kwargs.pop('axis', None)
-    if axes is None:
-        axes = tuple(range(N))
-    if isinstance(axes, int):
-        axes = (axes,)
-    if not isinstance(axes, tuple):
-        raise TypeError("A tuple of integers or a single integer is required")
-
-    # normalize axis values:
-    axes = tuple(x + N if x < 0 else x for x in axes)
 
     n = len(varargs)
     if n == 0:
@@ -1751,13 +1732,17 @@ def curl(v,*varargs,**kwargs):
     return outvals
 
 
-def laplace_s(f):
+def laplace(f):
     """
-    Return the laplacian of an N-dimensional array.
+    Return the laplacian of input.
 
-    Computes the laplacian of an N-dimensional numpy array, as a
-    concatenation of the numpy functions gradient and divergence. 
-    For more information on each of these, type help(gradient) or 
+    Computes the laplacian of an N-dimensional numpy array (scalar
+    field), or of a list of N N-dimensional numpy arrays (vector
+    field) as the composition of the numpy functions gradient and
+    divergence. In the case of an input vector field, the result
+    is the vector laplacian, in which a list of the laplacian of
+    each component is returned.
+    For more information on the computations, type help(gradient) or 
     help(divergence) 
     
     Parameters
@@ -1787,8 +1772,20 @@ def laplace_s(f):
     >>> plt.colorbar()
     >>> plt.show()
     """
-    
-    l = np.divergence(np.gradient(f))
+    if type(f) == np.ndarray:
+        l = np.divergence(np.gradient(f))
+    elif type(f) == list:
+        if False in [np.shape(f[0]) == np.shape(f[i]) for i in range(len(f))]:
+            raise TypeError("All components of the input vector field "
+			    "must be the same shape")
+	else:
+	    for i in range(len(f)):
+                l = []
+                laplace_comp = np.divergence(np.gradient(f[i])
+                l.append(laplace_comp)
+    else:
+        raise TypeError("Please, enter a numpy array or a list of"
+			" numpy arrays of the same shape")
     return l
 
 
