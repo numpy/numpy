@@ -332,7 +332,8 @@ fail:
  * @param dimension of the indexing result
  * @param dimension of the fancy/advanced indices part
  * @param whether to allow the boolean special case
- * @param whether to allow the sequence as tuple handeling.
+ * @param whether to allow the sequence as tuple handeling and non-complete
+ *        index.
  *
  * @returns the index_type or -1 on failure and fills the number of indices.
  */
@@ -340,7 +341,7 @@ NPY_NO_EXPORT int
 prepare_index(PyArrayObject *self, PyObject *index,
               npy_index_info *indices,
               int *num, int *ndim, int *out_fancy_ndim, int allow_boolean,
-              int allow_sequence_as_tuple)
+              int is_plain_index)
 {
     int new_ndim, fancy_ndim, used_ndim, index_ndim;
     int curr_idx, get_idx;
@@ -690,27 +691,40 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * to find the ellipsis value or append an ellipsis if necessary.
      */
     if (used_ndim < PyArray_NDIM(self)) {
-       if (index_type & HAS_ELLIPSIS) {
-           indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[ellipsis_pos].value;
-       }
-       else {
-           /*
-            * There is no ellipsis yet, but it is not a full index
-            * so we append an ellipsis to the end. Use -1 to signal not given.
-            */
-           indices[curr_idx].orig_index = -1;
-           index_type |= HAS_ELLIPSIS;
-           indices[curr_idx].object = NULL;
-           indices[curr_idx].type = HAS_ELLIPSIS;
-           indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
-           ellipsis_pos = curr_idx;
+        if (index_type & HAS_ELLIPSIS) {
+            indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += indices[ellipsis_pos].value;
+        }
+        else if (is_plain_index) {
+            /*
+             * There is no ellipsis yet, but it is not a full index
+             * so we append an ellipsis to the end. Use -1 to signal not given.
+             */
+            indices[curr_idx].orig_index = -1;
+            index_type |= HAS_ELLIPSIS;
+            indices[curr_idx].object = NULL;
+            indices[curr_idx].type = HAS_ELLIPSIS;
+            indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
+            ellipsis_pos = curr_idx;
 
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[curr_idx].value;
-           curr_idx += 1;
-       }
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += indices[curr_idx].value;
+            curr_idx += 1;
+        }
+        else {
+            /*
+             * This is a non-plain indexing operation, and the dimensions
+             * should match up exactly.
+             */
+            PyErr_SetString(PyExc_IndexError,
+                            "too few indices for array; non-plain indexing "
+                            "requires indices and dimensions to match exactly. "
+                            "Use slices (`:`) as appropriate or prepend an "
+                            "ellipsis (`...`) to allow an arbitrary number of "
+                            "additional array dimensions.");
+            goto failed_building_indices;
+        }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
         PyErr_SetString(PyExc_IndexError,
@@ -2461,11 +2475,20 @@ int setup_plain_permutation(PyArrayMapIterObject *mit,
 {
     int i;
     if (mit->numiter > 1) {
-        if (DEPRECATE(
-                    "more than two array indices found; "
-                    "please use `arr.oindex`, `arr.vindex`, or "
-                    "`arr.lindex` to clarify use case.") < 0) {
-            return -1;
+        int orig_index = -1;
+        /* Check indices, we might have a single boolean index, which is OK */
+        for (i = 0; i < index_num; i++) {
+            if (indices[i].type == HAS_FANCY) {
+                if (orig_index != indices[i].orig_index && orig_index != -1) {
+                    if (DEPRECATE(
+                            "more than two array indices found; "
+                            "please use `arr.oindex`, `arr.vindex`, or "
+                            "`arr.lindex` to clarify use case.") < 0) {
+                    return -1;             
+                    }
+                }
+                orig_index = indices[i].orig_index;
+            }
         }
     }
     else if (mit->consec == 0) {
