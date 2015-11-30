@@ -1392,126 +1392,13 @@ def divergence(v,*varargs,**kwargs):
 	#N becomes the number of dimensions
     
     axes = tuple(range(N))
-
-    n = len(varargs)
-    if n == 0:
-        dx = [1.0] * N
-    elif n ==1:
-        dx = [varargs[0]] * N
-    elif n == len(axes):
-        dx = list(varargs)
-    else:
-        raise SyntaxError("invalid number of arguments")
-
-    edge_order = kwargs.pop('edge_order', 1)
-    if kwargs:
-        raise TypeError('W{} are not valid keyword arguments.'.format(
-		'", "'.join(kwargs.keys())))
-
-    if edge_order > 2:
-        raise ValueError("'edge_order' greater than 2 not supported")
-    
     outvals=np.zeros(np.shape(v_c)) #Initialize output
     
-    # use central differences on interior and one-sided differences on the 
-    # endpoints. This preserves second order-accuracy over the full domain.
-
-    # create slice objects --- initially all are [:, :, ..., :]
-    slice1 = [slice(None)]*N
-    slice2 = [slice(None)]*N
-    slice3 = [slice(None)]*N
-    slice4 = [slice(None)]*N
-    for i,axis in enumerate(axes):
-        y=v[axis]
-
-        otype = y.dtype.char
-        if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
-            otype = 'd'
-        # Difference of datetime64 elements results in timedelta64
-        if otype == 'M':
-            # Need to use the full dtype name because 
-	    #it contains unit information
-            otype = y.dtype.name.replace('datetime', 'timedelta')
-        elif otype == 'm':
-            # Needs to keep the specific units, can't be a general unit
-            otype = y.dtype
-
-        # Convert datetime64 data into ints. Make dummy variable 'y'
-        # that is a view of ints if the data is datetime64, otherwise
-        # just set y equal to the array 'f'.
-        if y.dtype.char in ["M", "m"]:
-            y = v[axis].view('int64')
-        else:
-            y = v[axis]
-
-        if y.shape[axis] < 2:
-            raise ValueError(
-            "Shape of array too small to calculate a numerical gradient, "
-            "at least two elements are required.")
-        
-        # Numerical differentiation: 1st order edges, 2nd order interior
-        if y.shape[axis] == 2:# or edge_order == 1:
-            # Use first order differences for time data
-            out = np.empty_like(y, dtype=otype)
-        
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
-        
-            slice1[axis] = 0
-            slice2[axis] = 1
-            slice3[axis] = 0
-            # 1D equivalent -- out[0] = (y[1] - y[0])
-            out[slice1] = (y[slice2] - y[slice3])
-            
-            slice1[axis] = -1
-            slice2[axis] = -1
-            slice3[axis] = -2
-            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
-            out[slice1] = (y[slice2] - y[slice3])
-            
-            # Numerical differentiation: 2st order edges, 2nd order interior
-        else:
-            # Use second order differences where possible
-            out = np.empty_like(y, dtype=otype)
-            
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
-            
-            slice1[axis] = 0
-            slice2[axis] = 0
-            slice3[axis] = 1
-            slice4[axis] = 2
-            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
-            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-            
-            slice1[axis] = -1
-            slice2[axis] = -1
-            slice3[axis] = -2
-            slice4[axis] = -3
-            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
-            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-        
-        # divide by step size
-        out /= dx[i]
-        outvals += out 
-	#here the different derivatives are added to produce the divergence
-        
-        # reset the slice object in this dimension to ":"
-        slice1[axis] = slice(None)
-        slice2[axis] = slice(None)
-        slice3[axis] = slice(None)
-        slice4[axis] = slice(None)
+    for i,ax in enumerate(axes):
+        outvals += np.gradient(v[ax], *varargs, axis=ax,edge_order=0)
 	
-    if len(axes) == 1:
-        return outvals[0]
-    else:
-        return outvals
+    return outvals
+		
 		
 def curl(v,*varargs,**kwargs):
     """
@@ -1592,119 +1479,18 @@ def curl(v,*varargs,**kwargs):
         # If all vector field components are the same shape,
         #N becomes the number of dimensions
 
-
-    n = len(varargs)
-    if n == 0:
-        dx = [1.0] * N
-    elif n ==1:
-        dx = [varargs[0]] * N
-    elif n == len(axes):
-        dx = list(varargs)
-    else:
-        raise SyntaxError("invalid number of arguments")
-
-    edge_order = kwargs.pop('edge_order', 1)
-    if kwargs:
-        raise TypeError('W{} are not valid keyword arguments.'.format(
-                                      '", "'.join(kwargs.keys())))
-    if edge_order > 2:
-        raise ValueError("'edge_order' greater than 2 not supported")
-    
     outvals=[np.zeros(np.shape(v_c))] * 3 #Initialize output vector field
-    
-    # use central differences on interior and one-sided differences on the 
-    # endpoints. This preserves second order-accuracy over the full domain.
 
-    # create slice objects --- initially all are [:, :, ..., :]
-    slice1 = [slice(None)]*N
-    slice2 = [slice(None)]*N
-    slice3 = [slice(None)]*N
-    slice4 = [slice(None)]*N
-    
     lst_axes = [1,2,2,0,0,1] # ordered list of dimension of the derivatives
     lst_args = [2,1,0,2,1,0] # ordered list of arguments for the derivatives
     
     for i in range(6):
         # select the appropriate derivative and argument for each of the 6 
         # required computations 
-        axis = lst_axes[i]
+        ax = lst_axes[i]
         arg = lst_args[i]
-        y=v[arg]
-        otype = y.dtype.char
-        if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
-            otype = 'd'
-        # Difference of datetime64 elements results in timedelta64
-        if otype == 'M':
-            # Need to use the full dtype name because 
-            #it contains unit information
-            otype = y.dtype.name.replace('datetime', 'timedelta')
-        elif otype == 'm':
-            # Needs to keep the specific units, can't be a general unit
-            otype = y.dtype
 
-        # Convert datetime64 data into ints. Make dummy variable 'y'
-        # that is a view of ints if the data is datetime64, otherwise
-        # just set y equal to the array 'f'.
-        if y.dtype.char in ["M", "m"]:
-            y = v[arg].view('int64')
-        else:
-            y = v[arg]
-
-        if y.shape[axis] < 2:
-            raise ValueError(
-            "Shape of array too small to calculate a numerical gradient, "
-            "at least two elements are required.")
-        
-        # Numerical differentiation: 1st order edges, 2nd order interior
-        if y.shape[axis] == 2:# or edge_order == 1:
-            # Use first order differences for time data
-            out = np.empty_like(y, dtype=otype)
-            
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
-            
-            slice1[axis] = 0
-            slice2[axis] = 1
-            slice3[axis] = 0
-            # 1D equivalent -- out[0] = (y[1] - y[0])
-            out[slice1] = (y[slice2] - y[slice3])
-            
-            slice1[axis] = -1
-            slice2[axis] = -1
-            slice3[axis] = -2
-            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
-            out[slice1] = (y[slice2] - y[slice3])
-            
-            # Numerical differentiation: 2st order edges, 2nd order interior
-        else:
-    	    # Use second order differences where possible
-            out = np.empty_like(y, dtype=otype)
-            
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
-            
-            slice1[axis] = 0
-            slice2[axis] = 0
-            slice3[axis] = 1
-            slice4[axis] = 2
-            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] y[2]) / 2.0
-            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-            
-            slice1[axis] = -1
-            slice2[axis] = -1
-            slice3[axis] = -2
-            slice4[axis] = -3
-            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] y[-3])
-            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
-        
-        # divide by step size
-        out /= dx[axis]
+        out = np.gradient(v[arg], *varargs, axis=ax, edge_order=0)
         
         if i == 0:
             out0 = out
@@ -1718,14 +1504,7 @@ def curl(v,*varargs,**kwargs):
             out4 = out
         else:
             out5 = out
-        
-        # reset the slice object in this dimension to ":"
-        slice1[axis] = slice(None)
-        slice2[axis] = slice(None)
-        slice3[axis] = slice(None)
-        slice4[axis] = slice(None)
 
-    
     outvals[0] = out0 - out1
     outvals[1] = out2 - out3
     outvals[2] = out4 - out5
@@ -1753,7 +1532,13 @@ def laplace(f):
     Returns
     -------
     l : array_like
-        Laplacian of input array
+        Laplacian of input. If the input is a scalar field f
+        (single numpy array) the output is (d^2(f)/dx_0^2 +
+        d^2(f)/dx_1^2 + d^2(f)/dx_2^2 + ...), where d^2(f)/dx_i^2
+        refers to the second derivative of f with respect to x_i.
+        If the input is a scalar field the output is a list of 
+        numpy arrays, being each of them the laplacian operator
+        applied to each of the input vector field components f_i
     	
     See Also
     --------
@@ -1766,22 +1551,21 @@ def laplace(f):
     
     >>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
     >>> f=X**3+Y**2+Z**2
-    >>> d=laplace_s(f)
-    >>> print np.shape(d)
+    >>> d=laplace(f)
     >>> plt.imshow(d[:,:,1])
     >>> plt.colorbar()
     >>> plt.show()
     """
     if type(f) == np.ndarray:
-        l = np.divergence(np.gradient(f))
+        l = np.divergence(np.gradient(f, *varargs, edge_order=0))
     elif type(f) == list:
         if False in [np.shape(f[0]) == np.shape(f[i]) for i in range(len(f))]:
             raise TypeError("All components of the input vector field "
 			    "must be the same shape")
-	else:
-	    for i in range(len(f)):
-                l = []
-                laplace_comp = np.divergence(np.gradient(f[i])
+        else:
+            l = []
+            for i in range(len(f)):
+                laplace_comp = np.divergence(np.gradient(f[i], *varargs, edge_order=0))
                 l.append(laplace_comp)
     else:
         raise TypeError("Please, enter a numpy array or a list of"
