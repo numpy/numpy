@@ -2759,9 +2759,9 @@ class MaskedArray(ndarray):
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
-            if mask is True:
+            if mask is True and mdtype == MaskType:
                 mask = np.ones(_data.shape, dtype=mdtype)
-            elif mask is False:
+            elif mask is False and mdtype == MaskType:
                 mask = np.zeros(_data.shape, dtype=mdtype)
             else:
                 # Read the mask with the current mdtype
