@@ -3695,7 +3695,7 @@ class MaskedArray(ndarray):
             if m is nomask:
                 res = self._data
             else:
-                if m.shape == ():
+                if m.shape == () and m.itemsize==len(m.dtype):
                     if m.dtype.names:
                         m = m.view((bool, len(m.dtype)))
                         if m.any():
