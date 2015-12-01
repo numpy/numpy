@@ -191,6 +191,15 @@ class TestMaskedArray(TestCase):
         dma_3 = MaskedArray(dma_1, mask=[1, 0, 0, 0] * 6)
         fail_if_equal(dma_3.mask, dma_1.mask)
 
+        x = array([1, 2, 3], mask=True)
+        assert_equal(x._mask, [True, True, True])
+        x = array([1, 2, 3], mask=False)
+        assert_equal(x._mask, [False, False, False])
+        y = array([1, 2, 3], mask=x._mask, copy=False)
+        assert_(np.may_share_memory(x.mask, y.mask))
+        y = array([1, 2, 3], mask=x._mask, copy=True)
+        assert_(not np.may_share_memory(x.mask, y.mask))
+
     def test_creation_with_list_of_maskedarrays(self):
         # Tests creaating a masked array from alist of masked arrays.
         x = array(np.arange(5), mask=[1, 0, 0, 0, 0])
