@@ -3718,7 +3718,7 @@ class MaskedArray(ndarray):
                     # object dtype, extract the corners before the conversion.
                     for axis in range(self.ndim):
                         if data.shape[axis] > self._print_width:
-                            ind = np.int(self._print_width / 2)
+                            ind = self._print_width // 2
                             arr = np.split(data, (ind, -ind), axis=axis)
                             data = np.concatenate((arr[0], arr[2]), axis=axis)
                             arr = np.split(mask, (ind, -ind), axis=axis)
