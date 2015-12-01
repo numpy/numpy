@@ -2684,6 +2684,8 @@ class MaskedArray(ndarray):
     _defaultmask = nomask
     _defaulthardmask = False
     _baseclass = ndarray
+    # Maximum number of elements per axis used when printing an array.
+    _print_width = 100
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None,
@@ -3710,8 +3712,19 @@ class MaskedArray(ndarray):
                 # convert to object array to make filled work
                 names = self.dtype.names
                 if names is None:
-                    res = self._data.astype("O")
-                    res.view(ndarray)[m] = f
+                    data = self._data
+                    mask = m
+                    # For big arrays, to avoid a costly conversion to the
+                    # object dtype, extract the corners before the conversion.
+                    for axis in range(self.ndim):
+                        if data.shape[axis] > self._print_width:
+                            ind = self._print_width // 2
+                            arr = np.split(data, (ind, -ind), axis=axis)
+                            data = np.concatenate((arr[0], arr[2]), axis=axis)
+                            arr = np.split(mask, (ind, -ind), axis=axis)
+                            mask = np.concatenate((arr[0], arr[2]), axis=axis)
+                    res = data.astype("O")
+                    res.view(ndarray)[mask] = f
                 else:
                     rdtype = _recursive_make_descr(self.dtype, "O")
                     res = self._data.astype(rdtype)
@@ -4690,7 +4703,7 @@ class MaskedArray(ndarray):
         See Also
         --------
         numpy.ma.dot : equivalent function
-    
+
         """
         return dot(self, b, out=out, strict=strict)
 
