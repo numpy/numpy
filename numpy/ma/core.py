@@ -2684,6 +2684,8 @@ class MaskedArray(ndarray):
     _defaultmask = nomask
     _defaulthardmask = False
     _baseclass = ndarray
+    # Maximum number of elements per axis used when printing an array.
+    _print_width = 100
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None,
@@ -3712,14 +3714,14 @@ class MaskedArray(ndarray):
                 if names is None:
                     data = self._data
                     mask = m
-                    nval = 50
                     # For big arrays, to avoid a costly conversion to the
                     # object dtype, extract the corners before the conversion.
                     for axis in range(self.ndim):
-                        if data.shape[axis] > 2 * nval:
-                            arr = np.split(data, (nval, -nval), axis=axis)
+                        if data.shape[axis] > self._print_width:
+                            ind = np.int(self._print_width / 2)
+                            arr = np.split(data, (ind, -ind), axis=axis)
                             data = np.concatenate((arr[0], arr[2]), axis=axis)
-                            arr = np.split(mask, (nval, -nval), axis=axis)
+                            arr = np.split(mask, (ind, -ind), axis=axis)
                             mask = np.concatenate((arr[0], arr[2]), axis=axis)
                     res = data.astype("O")
                     res.view(ndarray)[mask] = f
