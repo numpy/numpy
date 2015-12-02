@@ -36,7 +36,7 @@ DeprecationWarning to error
 * Non-integers used as index values raise TypeError,
   e.g., in reshape, take, and specifying reduce axis.
 
-FutureWarning to changed behavior 
+FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * In ``np.lib.split`` an empty array in the result always had dimension
@@ -88,6 +88,13 @@ It allows to specify over which axes the gradient is calculated.
 The function now internally calls the generic ``npy_amergesort``
 when the type does not implement a merge-sort kind of ``argsort``
 method.
+
+Memory and speed improvements for masked arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
+``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and avoid
+a big memory peak. Another optimization was done to avoid a memory peak and
+useless computations when printing a masked array.
 
 Changes
 =======
