@@ -225,3 +225,5 @@ else:
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
+
+    is_relaxed_strides = ones((2, 1), order='C').flags.f_contiguous
