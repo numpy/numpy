@@ -1333,7 +1333,7 @@ def inplace_sum(items):
     return total
 
 
-def divergence(v,*varargs,**kwargs):
+def divergence(v,*varargs):
     """
     Return the divergence of an N-dimensional vector field of N 
     components, each of dimension N.
@@ -1500,7 +1500,7 @@ def laplace(f):
     >>> plt.show()
     """
     if type(f) == np.ndarray:
-        l = divergence(gradient(f, edge_order=0))
+        l = divergence(gradient(f,*varargs, edge_order=0),*varargs)
     elif type(f) == list:
         if not all([np.shape(f[0]) == np.shape(f[i]) for i in range(len(f))]):
             raise TypeError("All components of the input vector field "
@@ -1508,7 +1508,8 @@ def laplace(f):
         else:
             l = []
             for i in range(len(f)):
-                l.append(divergence(gradient(f[i], edge_order=0)))
+                l.append(divergence(gradient(f[i], 
+			*varargs, edge_order=0)),*varargs)
                 
     else:
         raise TypeError("Please, enter a numpy array or a list of"
