@@ -1320,6 +1320,19 @@ def gradient(f, *varargs, **kwargs):
     else:
         return outvals
 
+def inplace_sum(items): 
+    """
+    Returns the sum of the elements of a list. 
+    Used in the follwing functions:
+    divergence,
+    """
+    it = iter(items)
+    total = next(it)
+    for item in it:
+        total += item
+    return total
+
+
 def divergence(v,*varargs,**kwargs):
     """
     Return the divergence of an N-dimensional vector field of N 
@@ -1342,10 +1355,6 @@ def divergence(v,*varargs,**kwargs):
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
-    edge_order : {1, 2}, optional
-        Gradient is calculated using N\ :sup:`th` order accurate differences
-        at the boundaries. Default: 1.
-        
             
     Returns
     -------
@@ -1375,32 +1384,14 @@ def divergence(v,*varargs,**kwargs):
      [ 0.  0.  0. ...,  0.  0.  0.]
      [ 0.  0.  0. ...,  0.  0.  0.]
     """
-    N = [0]*len(v)
-    for i, v_c in enumerate(v):
-        v_c = np.asanyarray(v_c)
-        N[i] = len(v_c.shape) # Get number of dimensions from every component
-    if False in [N[0] == N[i] for i in range(len(v))]: 
-        #Check if all components are the same size
-        raise ValueError("Not all components of input"
-	                 " have the same number of dimensions")
-    else:
-        if False in [np.shape(v[0]) == np.shape(v[i]) for i in range(len(v))]:
-            raise ValueError("Not all components of input are the same size")
-        else:
-	    N = N[0] 
-	# If all vector field components are the same shape,
-	#N becomes the number of dimensions
     
+    N=len(v)
     axes = tuple(range(N))
-    outvals=np.zeros(np.shape(v_c)) #Initialize output
-    
-    for i,ax in enumerate(axes):
-        outvals += np.gradient(v[ax], *varargs, axis=ax,edge_order=0)
-	
-    return outvals
+    out = inplace_sum([gradient(v[ax],*varargs,axis=ax,edge_order=0)
+            for ax in axes])
+    return out
 		
-		
-def curl(v,*varargs,**kwargs):
+def curl(v,*varargs):
     """
     Return the curl of a 3-D vector field.
 
@@ -1420,15 +1411,6 @@ def curl(v,*varargs,**kwargs):
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
-    edge_order : {1, 2}, optional
-        Gradient is calculated using N\ :sup:`th` order accurate differences
-        at the boundaries. Default: 1.
-        
-    axis : None or int or tuple of ints, optional
-        Gradient is calculated only along the given axis or axes
-        The default (axis = None) is to calculate the gradient for 
-        all the axes of the input array.
-        axis may be negative, in which case it counts from the last to the first axis.
         
     Returns
     -------
@@ -1440,9 +1422,9 @@ def curl(v,*varargs,**kwargs):
     
     Example
     -------
-    The following example shows in matplotlib how the vector field (0,0,x*y) has the 
-    correct value, nonzero only in the third component of the resulting vector field
-    after applying curl
+    The following example shows in matplotlib how the vector 
+    field (0,0,x*y) has the correct value, nonzero only in the 
+    third component of the resulting vector field after applying curl
     
     >>> import matplotlib.pylab as plt
     >>> import numpy as np
@@ -1462,54 +1444,15 @@ def curl(v,*varargs,**kwargs):
     >>> plt.colorbar()
     >>> plt.show()
     """
-    N = [0]*len(v)
-    for i, v_c in enumerate(v):
-        v_c = np.asanyarray(v_c)
-	N[i] = len(v_c.shape) 
-        # Extract the number of dimensions from every component v_c
-    if False in [N[i] == 3 for i in range(len(v))]: 
-        #Check if all components are the same size
-        raise ValueError("Not all components of input vector field"
-                         " have three dimensions")
-    else:
-        if False in [np.shape(v[0]) == np.shape(v[i]) for i in range(len(v))]:
-            raise ValueError("Not all components of input are the same size")
-        else:
-            N = N[0] 
-        # If all vector field components are the same shape,
-        #N becomes the number of dimensions
-
-    outvals=[np.zeros(np.shape(v_c))] * 3 #Initialize output vector field
-
-    lst_axes = [1,2,2,0,0,1] # ordered list of dimension of the derivatives
-    lst_args = [2,1,0,2,1,0] # ordered list of arguments for the derivatives
     
-    for i in range(6):
-        # select the appropriate derivative and argument for each of the 6 
-        # required computations 
-        ax = lst_axes[i]
-        arg = lst_args[i]
+    if len(v) != 3:
+        raise ValueError("Enter a list of 3 arrays")
 
-        out = np.gradient(v[arg], *varargs, axis=ax, edge_order=0)
-        
-        if i == 0:
-            out0 = out
-        elif i == 1:
-            out1 = out
-        elif i == 2:
-            out2 = out
-        elif i == 3:
-            out3 = out
-        elif i == 4:
-            out4 = out
-        else:
-            out5 = out
-
-    outvals[0] = out0 - out1
-    outvals[1] = out2 - out3
-    outvals[2] = out4 - out5
+    outvals = [gradient(v[(ax+2)%3], *varargs, axis=(ax+1)%3, edge_order=0)-
+               gradient(v[(ax+1)%3], *varargs, axis=(ax+2)%3, edge_order=0)
+               for ax in range(3)]
+    
     return outvals
-
 
 def laplace(f):
     """
@@ -1551,27 +1494,26 @@ def laplace(f):
     
     >>> X,Y,Z=np.mgrid[0:200,0:200,0:200]
     >>> f=X**3+Y**2+Z**2
-    >>> d=laplace(f)
+    >>> d=np.laplace(f)
     >>> plt.imshow(d[:,:,1])
     >>> plt.colorbar()
     >>> plt.show()
     """
     if type(f) == np.ndarray:
-        l = np.divergence(np.gradient(f, *varargs, edge_order=0))
+        l = divergence(gradient(f, edge_order=0))
     elif type(f) == list:
-        if False in [np.shape(f[0]) == np.shape(f[i]) for i in range(len(f))]:
+        if not all([np.shape(f[0]) == np.shape(f[i]) for i in range(len(f))]):
             raise TypeError("All components of the input vector field "
 			    "must be the same shape")
         else:
             l = []
             for i in range(len(f)):
-                laplace_comp = np.divergence(np.gradient(f[i], *varargs, edge_order=0))
-                l.append(laplace_comp)
+                l.append(divergence(gradient(f[i], edge_order=0)))
+                
     else:
         raise TypeError("Please, enter a numpy array or a list of"
 			" numpy arrays of the same shape")
     return l
-
 
 def diff(a, n=1, axis=-1):
     """
