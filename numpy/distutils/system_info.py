@@ -1678,33 +1678,60 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        if platform.system() != 'Windows' and self.has_cblas():
+        if platform.system() == 'Windows':
             # The check for windows is needed because has_cblas uses the
             # same compiler that was used to compile Python and msvc is
             # often not installed when mingw is being used. This rough
             # treatment is not desirable, but windows is tricky.
-            info['language'] = 'c'
-            info['define_macros'] = [('HAVE_CBLAS', None)]
-        else:
             info['language'] = 'f77'  # XXX: is it generally true?
+        else:
+            lib = self.has_cblas(info)
+            if lib is not None:
+                info['language'] = 'c'
+                info['libraries'] = [lib]
+                info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
-    def has_cblas(self):
-        # primitive cblas check by looking for the header
+    def has_cblas(self, info):
+        # primitive cblas check by looking for the header and trying to link
+        # cblas or blas
         res = False
         c = distutils.ccompiler.new_compiler()
         tmpdir = tempfile.mkdtemp()
-        s = """#include <cblas.h>"""
+        s = """#include <cblas.h>
+        int main(int argc, const char *argv[])
+        {
+            double a[4] = {1,2,3,4};
+            double b[4] = {5,6,7,8};
+            return cblas_ddot(4, a, 1, b, 1) > 10;
+        }"""
         src = os.path.join(tmpdir, 'source.c')
         try:
             with open(src, 'wt') as f:
                 f.write(s)
+
             try:
-                c.compile([src], output_dir=tmpdir,
-                          include_dirs=self.get_include_dirs())
-                res = True
+                # check we can compile (find headers)
+                obj = c.compile([src], output_dir=tmpdir,
+                                include_dirs=self.get_include_dirs())
+
+                # check we can link (find library)
+                # some systems have separate cblas and blas libs. First
+                # check for cblas lib, and if not present check for blas lib.
+                try:
+                    c.link_executable(obj, os.path.join(tmpdir, "a.out"),
+                                      libraries=["cblas"],
+                                      library_dirs=info['library_dirs'],
+                                      extra_postargs=info.get('extra_link_args', []))
+                    res = "cblas"
+                except distutils.ccompiler.LinkError:
+                    c.link_executable(obj, os.path.join(tmpdir, "a.out"),
+                                      libraries=["blas"],
+                                      library_dirs=info['library_dirs'],
+                                      extra_postargs=info.get('extra_link_args', []))
+                    res = "blas"
             except distutils.ccompiler.CompileError:
-                res = False
+                res = None
         finally:
             shutil.rmtree(tmpdir)
         return res
