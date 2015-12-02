@@ -719,6 +719,14 @@ class TestMaskedArray(TestCase):
         self.assertTrue(f['a'] is masked)
         assert_equal(f[1], 4)
 
+        # exotic dtype
+        A = masked_array(data=[([0,1],)],
+                         mask=[([True, False],)],
+                         dtype=[("A", ">i2", (2,))])
+        assert_equal(A[0]["A"], A["A"][0])
+        assert_equal(A[0]["A"], masked_array(data=[0, 1],
+                         mask=[True, False], dtype=">i2"))
+
     def test_mvoid_iter(self):
         # Test iteration on __getitem__
         ndtype = [('a', int), ('b', int)]
