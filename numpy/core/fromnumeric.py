@@ -1134,7 +1134,7 @@ def resize(a, new_shape):
     a = ravel(a)
     Na = len(a)
     if not Na:
-        return mu.zeros(new_shape, a.dtype.char)
+        return mu.zeros(new_shape, a.dtype)
     total_size = um.multiply.reduce(new_shape)
     n_copies = int(total_size / Na)
     extra = total_size % Na
