@@ -12,6 +12,7 @@ import numpy as np
 from numpy.compat.py3k import basestring, asbytes
 from nose.tools import assert_equal
 from numpy.testing.decorators import skipif
+from numpy.testing import assert_
 
 skipif_inplace = skipif(isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py')))
 
@@ -63,7 +64,18 @@ def test_f2py():
     if sys.platform == 'win32':
         f2py_cmd = r"%s\Scripts\f2py.py" % dirname(sys.executable)
         code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
+        assert_equal(stdout.strip(), asbytes('2'))
     else:
-        f2py_cmd = 'f2py' + basename(sys.executable)[6:]
-        code, stdout, stderr = run_command([f2py_cmd, '-v'])
-    assert_equal(stdout.strip(), asbytes('2'))
+        # unclear what f2py cmd was installed as, check plain (f2py) and
+        # current python version specific one (f2py3.4)
+        f2py_cmds = ['f2py', 'f2py' + basename(sys.executable)[6:]]
+        success = False
+        for f2py_cmd in f2py_cmds:
+            try:
+                code, stdout, stderr = run_command([f2py_cmd, '-v'])
+                assert_equal(stdout.strip(), asbytes('2'))
+                success = True
+                break
+            except FileNotFoundError:
+                pass
+        assert_(success, "wasn't able to find f2py or %s on commandline" % f2py_cmds[1])
