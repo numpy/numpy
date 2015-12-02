@@ -1217,8 +1217,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         sharing the same x-coordinates can be (independently) fit with one
         call to `polyfit` by passing in for `y` a 2-D array that contains
         one data set per column.
-    deg : int
-        Degree of the polynomial(s) to be fit.
+    deg : int or array_like
+        Degree of the fitting polynomial. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included.
+        `deg` may alternatively be a list or array specifying which
+        terms in the Legendre expansion to include in the fit.
+
+        .. versionchanged:: 1.11.0
+        `deg` may be a list specifying which terms to fit
     rcond : float, optional
         Relative condition number of the fit.  Singular values smaller
         than `rcond`, relative to the largest singular value, will be
@@ -1332,12 +1338,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     0.50443316,  0.28853036]), 1.1324274851176597e-014]
 
     """
-    order = int(deg) + 1
     x = np.asarray(x) + 0.0
     y = np.asarray(y) + 0.0
+    deg = np.asarray([deg,], dtype=int).flatten()
 
     # check arguments.
-    if deg < 0:
+    if deg.size < 1:
+        raise TypeError("expected deg to be one or more integers")
+    if deg.min() < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
@@ -1348,8 +1356,20 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
+    if deg.size == 1:
+        restricted_fit = False
+        lmax = deg[0]
+        order = lmax + 1
+    else:
+        restricted_fit = True
+        lmax = deg.max()
+        order = deg.size
+
     # set up the least squares matrices in transposed form
-    lhs = polyvander(x, deg).T
+    van = polyvander(x, lmax)
+    if restricted_fit:
+        van = van[:, deg]
+    lhs = van.T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1376,6 +1396,15 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     # Solve the least squares problem.
     c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
+
+    # Expand c to include non-fitted coefficients which are set to zero
+    if restricted_fit:
+        if c.ndim == 2:
+            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
+        else:
+            cc = np.zeros(lmax+1, dtype=c.dtype)
+        cc[deg] = c
+        c = cc
 
     # warn on rank reduction
     if rank != order and not full:
