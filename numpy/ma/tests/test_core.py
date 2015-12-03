@@ -608,6 +608,13 @@ class TestMaskedArray(TestCase):
         control = np.array([(0, 1), (2, 0)], dtype=a['B'].dtype)
         assert_equal(test, control)
 
+        # test if mask gets set correctly (see #6760)
+        Z = numpy.ma.zeros(2, numpy.dtype([("A", "(2,2)i1,(2,2)i1", (2,2))]))
+        assert_equal(Z.data.dtype, numpy.dtype([('A', [('f0', 'i1', (2, 2)),
+                                          ('f1', 'i1', (2, 2))], (2, 2))]))
+        assert_equal(Z.mask.dtype, numpy.dtype([('A', [('f0', '?', (2, 2)),
+                                          ('f1', '?', (2, 2))], (2, 2))]))
+
     def test_filled_w_f_order(self):
         # Test filled w/ F-contiguous array
         a = array(np.array([(0, 1, 2), (4, 5, 6)], order='F'),
