@@ -1248,7 +1248,7 @@ def _recursive_make_descr(datatype, newtype=bool_):
     # Is this some kind of composite a la (np.float,2)
     elif datatype.subdtype:
         mdescr = list(datatype.subdtype)
-        mdescr[0] = newtype
+        mdescr[0] = _recursive_make_descr(datatype.subdtype[0], newtype)
         return tuple(mdescr)
     else:
         return newtype
