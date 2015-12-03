@@ -48,8 +48,13 @@ matrix:
             - python3-nose
     - python: 2.7
       env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
-    - python: 2.7
-      env: USE_WHEEL=1
+    - python: 3.5
+      env:
+       - USE_WHEEL=1
+       - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
+       # The following is generated with the command:
+       # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
+       - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9TrXrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPowiFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAMahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
     - python: 2.7
       env: PYTHONOPTIMIZE=2
 before_install:
@@ -73,3 +78,6 @@ before_install:
 
 script:
   - ./tools/travis-test.sh
+
+after_success:
+  - ./tools/travis-upload-wheel.sh
