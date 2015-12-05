@@ -82,12 +82,12 @@ Improvements
 ============
 
 *np.gradient* now supports an ``axis`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``axis`` parameter was added to *np.gradient* for consistency.
 It allows to specify over which axes the gradient is calculated.
 
 *np.lexsort* now supports arrays with object data-type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The function now internally calls the generic ``npy_amergesort``
 when the type does not implement a merge-sort kind of ``argsort``
 method.
@@ -98,6 +98,11 @@ Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
 ``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and avoid
 a big memory peak. Another optimization was done to avoid a memory peak and
 useless computations when printing a masked array.
+
+*ndarray.tofile* now uses fallocate on linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now uses the fallocate system call to reserve sufficient
+diskspace on filesystems that support it.
 
 Changes
 =======
