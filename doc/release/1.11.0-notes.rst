@@ -89,6 +89,11 @@ The function now internally calls the generic ``npy_amergesort``
 when the type does not implement a merge-sort kind of ``argsort``
 method.
 
+*ndarray.tofile* now uses fallocate on linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now uses the fallocate system call to reserve sufficient diskspace
+on filesystems that support it.
+
 Changes
 =======
 
