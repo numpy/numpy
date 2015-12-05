@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 import numpy
 import random
 
@@ -26,7 +28,7 @@ TYPES1 = [
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
 # and generate some redundancy
-values = [random.uniform(0, 100) for x in range(nx*ny/10)]*10
+values = [random.uniform(0, 100) for x in range(nx*ny//10)]*10
 
 squares = {t: numpy.array(values,
                           dtype=getattr(numpy, t)).reshape((nx, ny))
@@ -34,16 +36,16 @@ squares = {t: numpy.array(values,
 
 # adjust complex ones to have non-degenerated imagery part -- use
 # original data transposed for that
-for t, v in squares.iteritems():
+for t, v in squares.items():
     if t.startswith('complex'):
         v += v.T*1j
 
 # smaller squares
-squares_ = {t: s[:nxs, :nys] for t, s in squares.iteritems()}
+squares_ = {t: s[:nxs, :nys] for t, s in squares.items()}
 # vectors
-vectors = {t: s[0] for t, s in squares.iteritems()}
+vectors = {t: s[0] for t, s in squares.items()}
 
-indexes = range(nx)
+indexes = list(range(nx))
 # so we do not have all items
 indexes.pop(5)
 indexes.pop(95)
