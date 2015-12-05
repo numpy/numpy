@@ -4,6 +4,8 @@ from .common import Benchmark
 
 import numpy as np
 
+from six.moves import xrange
+
 
 class LaplaceInplace(Benchmark):
     params = ['inplace', 'normal']
