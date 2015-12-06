@@ -4971,33 +4971,24 @@ cdef class RandomState:
                [0, 1, 2]])
 
         """
-        cdef npy_intp i, j
-
-        i = len(x) - 1
+        cdef:
+            npy_intp[::1] idxs
+            npy_intp i, j, n = len(x)
 
         # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray) and \
-           (x.ndim > 1 or x.dtype.fields is not None):
-            # For a multi-dimensional ndarray, indexing returns a view onto
-            # each row. So we can't just use ordinary assignment to swap the
-            # rows; we need a bounce buffer.
-            buf = np.empty_like(x[0])
-            with self.lock:
-                while i > 0:
+        if isinstance(x, np.ndarray):
+            # Take from a shuffled range to benefit from static typing.
+            idxs = np.arange(n, dtype=np.intp)
+            with self.lock, cython.boundscheck(False), cython.wraparound(False):
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
-                    buf[...] = x[j]
-                    x[j] = x[i]
-                    x[i] = buf
-                    i = i - 1
+                    idxs[i], idxs[j] = idxs[j], idxs[i]
+            x.take(idxs, 0, out=x)
         else:
-            # For single-dimensional arrays, lists, and any other Python
-            # sequence types, indexing returns a real object that's
-            # independent of the array contents, so we can just swap directly.
             with self.lock:
-                while i > 0:
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
-                    i = i - 1
 
     def permutation(self, object x):
         """
