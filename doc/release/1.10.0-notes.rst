@@ -78,6 +78,12 @@ relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
 
+UPDATE: In 1.10.2 the default value of  NPY_RELAXED_STRIDE_CHECKING was
+changed to false for back compatibility reasons. More time is needed before
+it can be made the default. As part of the roadmap a deprecation of
+dimension changing views of f_contiguous not c_contiguous arrays was also
+added.
+
 Concatenation of 1d arrays along any but ``axis=0`` raises ``IndexError``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Using axis != 0 has raised a DeprecationWarning since NumPy 1.7, it now
