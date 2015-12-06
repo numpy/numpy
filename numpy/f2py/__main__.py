@@ -1,4 +1,6 @@
 # See http://cens.ioc.ee/projects/f2py2e/
+from __future__ import division, print_function
+
 import os
 import sys
 for mode in ["g3-numpy", "2e-numeric", "2e-numarray", "2e-numpy"]:
