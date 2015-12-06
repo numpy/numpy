@@ -204,6 +204,10 @@ extended to ``@``, ``numpy.dot``, ``numpy.inner``, and ``numpy.matmul``.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This matches the behavior of ``assert_raises``.
 
+Speed improvement for np.random.shuffle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.random.shuffle`` is now much faster for 1d ndarrays.
+
 Changes
 =======
 Pyrex support was removed from ``numpy.distutils``.  The method

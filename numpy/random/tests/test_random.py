@@ -10,6 +10,7 @@ import sys
 import warnings
 
 
+
 class TestSeed(TestCase):
     def test_scalar(self):
         s = np.random.RandomState(0)
@@ -39,6 +40,7 @@ class TestSeed(TestCase):
         assert_raises(ValueError, np.random.RandomState, [4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
+
 
 class TestBinomial(TestCase):
     def test_n_zero(self):
@@ -130,6 +132,7 @@ class TestSetState(TestCase):
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+
 class TestRandint(TestCase):
 
     rfunc = np.random.randint
@@ -207,12 +210,13 @@ class TestRandint(TestCase):
         assert_(tgt[np.dtype(np.bool).name] == res)
 
 
-class TestRandomDist(TestCase):
+class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    def setUp(self):
-        self.seed = 1234567890
+    @classmethod
+    def setup_class(cls):
+        cls.seed = 1234567890
 
     def test_rand(self):
         np.random.seed(self.seed)
@@ -368,40 +372,41 @@ class TestRandomDist(TestCase):
         np.testing.assert_equal(actual, desired)
 
     def test_shuffle(self):
-        # Test lists, arrays, and multidimensional versions of both:
-        for conv in [lambda x: x,
-                     np.asarray,
+        # Test lists, arrays (of various dtypes), and multidimensional versions
+        # of both, c-contiguous or not:
+        for conv in [lambda x: np.array([]),
+                     lambda x: x,
+                     lambda x: np.asarray(x).astype(np.int8),
+                     lambda x: np.asarray(x).astype(np.float32),
+                     lambda x: np.asarray(x).astype(np.complex64),
+                     lambda x: np.asarray(x).astype(object),
                      lambda x: [(i, i) for i in x],
-                     lambda x: np.asarray([(i, i) for i in x])]:
+                     lambda x: np.asarray([[i, i] for i in x]),
+                     lambda x: np.vstack([x, x]).T,
+                     # gh-4270
+                     lambda x: np.asarray([(i, i) for i in x],
+                                          [("a", object, 1),
+                                           ("b", np.int32, 1)])]:
             np.random.seed(self.seed)
             alist = conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
             np.random.shuffle(alist)
             actual = alist
             desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
-            np.testing.assert_array_equal(actual, desired)
-
-    def test_shuffle_flexible(self):
-        # gh-4270
-        arr = [(0, 1), (2, 3)]
-        dt = np.dtype([('a', np.int32, 1), ('b', np.int32, 1)])
-        nparr = np.array(arr, dtype=dt)
-        a, b = nparr[0].copy(), nparr[1].copy()
-        for i in range(50):
-            np.random.shuffle(nparr)
-            assert_(a in nparr)
-            assert_(b in nparr)
+            yield np.testing.assert_array_equal, actual, desired
 
     def test_shuffle_masked(self):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5,4)) % 3 - 1, -1)
         b = np.ma.masked_values(np.arange(20) % 3 - 1, -1)
-        ma = np.ma.count_masked(a)
-        mb = np.ma.count_masked(b)
+        a_orig = a.copy()
+        b_orig = b.copy()
         for i in range(50):
             np.random.shuffle(a)
-            self.assertEqual(ma, np.ma.count_masked(a))
+            assert_equal(
+                sorted(a.data[~a.mask]), sorted(a_orig.data[~a_orig.mask]))
             np.random.shuffle(b)
-            self.assertEqual(mb, np.ma.count_masked(b))
+            assert_equal(
+                sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
     def test_beta(self):
         np.random.seed(self.seed)
