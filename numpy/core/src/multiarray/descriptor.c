@@ -806,10 +806,18 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     }
     new->elsize = conv->elsize;
     if (PyDataType_HASFIELDS(conv)) {
+        Py_XDECREF(new->fields);
         new->fields = conv->fields;
         Py_XINCREF(new->fields);
+
+        Py_XDECREF(new->names);
         new->names = conv->names;
         Py_XINCREF(new->names);
+    }
+    if (conv->metadata != NULL) {
+        Py_XDECREF(new->metadata);
+        new->metadata = conv->metadata;
+        Py_XINCREF(new->metadata);
     }
     new->flags = conv->flags;
     Py_DECREF(conv);
