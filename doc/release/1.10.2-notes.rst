@@ -39,9 +39,11 @@ way to always enable relaxed stride checking.
 
 Issues Fixed
 ============
+
 * gh-6019 Masked array repr fails for structured array with multi-dimensional column.
 * gh-6462 Median of empty array produces IndexError.
 * gh-6467 Performance regression for record array access.
+* gh-6468 numpy.interp uses 'left' value even when x[0]==xp[0].
 * gh-6475 np.allclose returns a memmap when one of its arguments is a memmap.
 * gh-6491 Error in broadcasting stride_tricks array.
 * gh-6495 Unrecognized command line option '-ffpe-summary' in gfortran.
@@ -64,11 +66,15 @@ Issues Fixed
 * gh-6678 Getting unexpected error from: X.dtype = complex (or Y = X.view(complex))
 * gh-6718 f2py test fail in pip installed numpy-1.10.1 in virtualenv.
 * gh-6719 Error compiling Cython file: Pythonic division not allowed without gil.
+* gh-6771 Numpy.rec.fromarrays losing dtype metadata between versions 1.9.2 and 1.10.1
+* gh-6781 The travis-ci script in maintenance/1.10.x needs fixing.
+
 
 Merged PRs
 ==========
 
-The following PRs in master have been backported to 1.10.2
+The following PRs have been merged into 1.10.2. When the PR is a backport,
+the PR number for the original PR against master is listed.
 
 * gh-5773 MAINT: Hide testing helper tracebacks when using them with pytest.
 * gh-6094 BUG: Fixed a bug with string representation of masked structured arrays.
@@ -116,7 +122,10 @@ The following PRs in master have been backported to 1.10.2
 * gh-6757 BUG: link cblas library if cblas is detected.
 * gh-6756 TST: only test f2py, not f2py2.7 etc, fixes #6718.
 * gh-6747 DEP: Deprecate changing shape of non-C-contiguous array via descr.
-
+* gh-6775 MAINT: Include from __future__ boilerplate in some files missing it.
+* gh-6780 BUG: metadata is not copied to base_dtype.
+* gh-6783 BUG: Fix travis ci testing for new google infrastructure.
+* gh-6785 BUG: Quick and dirty fix for interp.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
