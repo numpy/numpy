@@ -488,11 +488,25 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
 
     if ((newtype->elsize != PyArray_DESCR(self)->elsize) &&
-        (PyArray_NDIM(self) == 0 || !PyArray_ISONESEGMENT(self) ||
-         PyDataType_HASSUBARRAY(newtype))) {
+            (PyArray_NDIM(self) == 0 ||
+             !PyArray_ISONESEGMENT(self) ||
+             PyDataType_HASSUBARRAY(newtype))) {
         goto fail;
     }
-    if (PyArray_ISCONTIGUOUS(self)) {
+
+    /* Deprecate not C contiguous and a dimension changes */
+    if (newtype->elsize != PyArray_DESCR(self)->elsize &&
+            !PyArray_IS_C_CONTIGUOUS(self)) {
+        /* 11/27/2015 1.11.0 */
+        if (DEPRECATE("Changing the shape of non-C contiguous array by\n"
+                      "descriptor assignment is deprecated. To maintain\n"
+                      "the Fortran contiguity of a multidimensional Fortran\n"
+                      "array, use 'a.T.view(...).T' instead") < 0) {
+            return -1;
+        }
+    }
+
+    if (PyArray_IS_C_CONTIGUOUS(self)) {
         i = PyArray_NDIM(self) - 1;
     }
     else {

@@ -18,6 +18,8 @@ Dropped Support
 Future Changes
 ==============
 
+* Relaxed stride checking will become the default.
+
 
 Compatibility notes
 ===================
@@ -103,3 +105,16 @@ Changes
 Deprecations
 ============
 
+Views of arrays in Fortran order
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The f_contiguous flag was used to signal that views as a dtypes that
+changed the element size would change the first index. This was always a
+bit problematical for arrays that were both f_contiguous and c_contiguous
+because c_contiguous took precendence. Relaxed stride checking results in
+more such dual contiguous arrays and breaks some existing code as a result.
+Note that this also affects changing the dtype by assigning to the dtype
+attribute of an array. The aim of this deprecation is to restrict views to
+c_contiguous arrays at some future time. A work around that is backward
+compatible is to use `a.T.view(...).T` instead. A parameter will also be
+added to the view method to explicitly ask for Fortran order views, but
+that will not be backward compatible.
