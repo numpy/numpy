@@ -4977,18 +4977,27 @@ cdef class RandomState:
 
         # Logic adapted from random.shuffle()
         if isinstance(x, np.ndarray):
-            # Take from a shuffled range to benefit from static typing.
-            idxs = np.arange(n, dtype=np.intp)
-            with self.lock, cython.boundscheck(False), cython.wraparound(False):
-                for i in reversed(range(1, n)):
-                    j = rk_interval(i, self.internal_state)
-                    idxs[i], idxs[j] = idxs[j], idxs[i]
-            x.take(idxs, 0, out=x)
+            if x.ndim == 1 and x.dtype.itemsize == np.dtype(np.intp).itemsize:
+                # Directly shuffle the array if possible.
+                self._shuffle_intpsized(x.view(np.intp))
+            else:
+                # Take from a shuffled range to benefit from static typing.
+                idxs = np.arange(n, dtype=np.intp)
+                self._shuffle_intpsized(idxs)
+                x.take(idxs, 0, out=x)
         else:
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
+
+    cdef void _shuffle_intpsized(self, npy_intp[:] x):
+        cdef:
+            npy_intp i, j, n = x.size
+        with self.lock, cython.boundscheck(False), cython.wraparound(False):
+            for i in reversed(range(1, n)):
+                j = rk_interval(i, self.internal_state)
+                x[i], x[j] = x[j], x[i]
 
     def permutation(self, object x):
         """
