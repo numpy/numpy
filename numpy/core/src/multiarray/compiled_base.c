@@ -529,14 +529,15 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     }
 
     /*
-     * It would seem that for the following code to work, 'len' should
-     * at least be 4. But because of the way 'guess' is normalized, it
-     * will always be set to 1 if len <= 4. Given that, and that keys
-     * outside of the 'arr' bounds have already been handled, and the
-     * order in which comparisons happen below, it should become obvious
-     * that it will work with any array of at least 2 items.
+     * If len <= 4 use linear search.
+     * From above we know key >= arr[0] when we start.
      */
-    assert (len >= 2);
+    if (len <= 4) {
+        npy_intp i;
+
+        for (i = 1; i < len && key >= arr[i]; ++i);
+        return i - 1;
+    }
 
     if (guess > len - 3) {
         guess = len - 3;
@@ -546,36 +547,36 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     }
 
     /* check most likely values: guess - 1, guess, guess + 1 */
-    if (key <= arr[guess]) {
-        if (key <= arr[guess - 1]) {
+    if (key < arr[guess]) {
+        if (key < arr[guess - 1]) {
             imax = guess - 1;
             /* last attempt to restrict search to items in cache */
             if (guess > LIKELY_IN_CACHE_SIZE &&
-                        key > arr[guess - LIKELY_IN_CACHE_SIZE]) {
+                        key >= arr[guess - LIKELY_IN_CACHE_SIZE]) {
                 imin = guess - LIKELY_IN_CACHE_SIZE;
             }
         }
         else {
-            /* key > arr[guess - 1] */
+            /* key >= arr[guess - 1] */
             return guess - 1;
         }
     }
     else {
-        /* key > arr[guess] */
-        if (key <= arr[guess + 1]) {
+        /* key >= arr[guess] */
+        if (key < arr[guess + 1]) {
             return guess;
         }
         else {
-            /* key > arr[guess + 1] */
-            if (key <= arr[guess + 2]) {
+            /* key >= arr[guess + 1] */
+            if (key < arr[guess + 2]) {
                 return guess + 1;
             }
             else {
-                /* key > arr[guess + 2] */
+                /* key >= arr[guess + 2] */
                 imin = guess + 2;
                 /* last attempt to restrict search to items in cache */
                 if (guess < len - LIKELY_IN_CACHE_SIZE - 1 &&
-                            key <= arr[guess + LIKELY_IN_CACHE_SIZE]) {
+                            key < arr[guess + LIKELY_IN_CACHE_SIZE]) {
                     imax = guess + LIKELY_IN_CACHE_SIZE;
                 }
             }
@@ -673,7 +674,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
-    /* binary_search_with_guess needs at least a 2 item long array */
+    /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
         const npy_double xp_val = dx[0];
         const npy_double fp_val = dy[0];

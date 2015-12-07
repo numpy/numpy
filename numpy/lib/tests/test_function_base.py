@@ -1974,10 +1974,42 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
 
     def test_right_left_behavior(self):
-        assert_equal(interp([-1, 0, 1], [0], [1]), [1, 1, 1])
-        assert_equal(interp([-1, 0, 1], [0], [1], left=0), [0, 1, 1])
-        assert_equal(interp([-1, 0, 1], [0], [1], right=0), [1, 1, 0])
-        assert_equal(interp([-1, 0, 1], [0], [1], left=0, right=0), [0, 1, 0])
+        # Needs range of sizes to test different code paths.
+        # size ==1 is special cased, 1 < size < 5 is linear search, and
+        # size >= 5 goes through local search and possibly binary search.
+        for size in range(1, 10):
+            xp = np.arange(size, dtype=np.double)
+            yp = np.ones(size, dtype=np.double)
+            incpts = np.array([-1, 0, size - 1, size], dtype=np.double)
+            decpts = incpts[::-1]
+
+            incres = interp(incpts, xp, yp)
+            decres = interp(decpts, xp, yp)
+            inctgt = np.array([1, 1, 1, 1], dtype=np.float)
+            dectgt = inctgt[::-1]
+            assert_equal(incres, inctgt)
+            assert_equal(decres, dectgt)
+
+            incres = interp(incpts, xp, yp, left=0)
+            decres = interp(decpts, xp, yp, left=0)
+            inctgt = np.array([0, 1, 1, 1], dtype=np.float)
+            dectgt = inctgt[::-1]
+            assert_equal(incres, inctgt)
+            assert_equal(decres, dectgt)
+
+            incres = interp(incpts, xp, yp, right=2)
+            decres = interp(decpts, xp, yp, right=2)
+            inctgt = np.array([1, 1, 1, 2], dtype=np.float)
+            dectgt = inctgt[::-1]
+            assert_equal(incres, inctgt)
+            assert_equal(decres, dectgt)
+
+            incres = interp(incpts, xp, yp, left=0, right=2)
+            decres = interp(decpts, xp, yp, left=0, right=2)
+            inctgt = np.array([0, 1, 1, 2], dtype=np.float)
+            dectgt = inctgt[::-1]
+            assert_equal(incres, inctgt)
+            assert_equal(decres, dectgt)
 
     def test_scalar_interpolation_point(self):
         x = np.linspace(0, 1, 5)
