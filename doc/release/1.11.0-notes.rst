@@ -18,7 +18,8 @@ Dropped Support
 Future Changes
 ==============
 
-* Relaxed stride checking will become the default.
+* Relaxed stride checking will become the default in 1.12.0.
+* Support for Python 2.6, 3.2, and 3.3 will be dropped in 1.12.0.
 
 
 Compatibility notes
