@@ -4977,7 +4977,9 @@ cdef class RandomState:
 
         # Logic adapted from random.shuffle()
         if isinstance(x, np.ndarray):
-            if x.ndim == 1 and x.dtype.itemsize == np.dtype(np.intp).itemsize:
+            if (x.ndim == 1 and
+                x.dtype.itemsize == np.dtype(np.intp).itemsize and
+                not isinstance(x, np.ma.MaskedArray)):
                 # Directly shuffle the array if possible.
                 self._shuffle_intpsized(x.view(np.intp))
             else:

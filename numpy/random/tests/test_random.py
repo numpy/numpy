@@ -8,6 +8,7 @@ from numpy import random
 from numpy.compat import asbytes
 import sys
 
+
 class TestSeed(TestCase):
     def test_scalar(self):
         s = np.random.RandomState(0)
@@ -37,6 +38,7 @@ class TestSeed(TestCase):
         assert_raises(ValueError, np.random.RandomState, [4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
+
 
 class TestBinomial(TestCase):
     def test_n_zero(self):
@@ -127,6 +129,7 @@ class TestSetState(TestCase):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
+
 
 class TestRandint(TestCase):
 
@@ -379,13 +382,19 @@ class TestRandomDist(TestCase):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5,4)) % 3 - 1, -1)
         b = np.ma.masked_values(np.arange(20) % 3 - 1, -1)
-        ma = np.ma.count_masked(a)
-        mb = np.ma.count_masked(b)
+        a_orig = a.copy()
+        b_orig = b.copy()
         for i in range(50):
             np.random.shuffle(a)
-            self.assertEqual(ma, np.ma.count_masked(a))
+            assert_equal(
+                sorted(a.data[a.mask]), sorted(a_orig.data[a_orig.mask]))
+            assert_equal(
+                sorted(a.data[~a.mask]), sorted(a_orig.data[~a_orig.mask]))
             np.random.shuffle(b)
-            self.assertEqual(mb, np.ma.count_masked(b))
+            assert_equal(
+                sorted(b.data[b.mask]), sorted(b_orig.data[b_orig.mask]))
+            assert_equal(
+                sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
     def test_beta(self):
         np.random.seed(self.seed)
