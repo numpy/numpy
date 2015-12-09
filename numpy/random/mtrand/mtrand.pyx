@@ -997,6 +997,46 @@ cdef class RandomState:
         return bytestring
 
 
+    cdef int _floyd_add(self, long key, long *set, npy_intp size) nogil:
+        cdef long mask, step, i
+        mask = size - 1
+        i = 1103515245 * key + 12345
+        for step from 0 <= step < size:
+            i = (i + step) & mask
+            if set[i] < 0:
+                set[i] = key
+                return 1
+            elif set[i] == key:
+                return 0
+
+    cdef object _floyd_sample(self, long n, long k):
+        cdef npy_intp size, i
+        cdef unsigned long t, j
+        cdef ndarray set_array "arrayObject"
+        cdef long *set_data
+
+        size = 2 ** <npy_intp>(log(k*1.3)/log(2.0) + 1.)
+        set_array = <ndarray>np.empty(size, np.int_)
+        set_data = <long *>PyArray_DATA(set_array)
+
+        with self.lock, nogil:
+            for i from 0 <= i < size:
+                set_data[i] = -1
+
+            for j from n-k <= j < n:
+                t = rk_interval(j, self.internal_state)
+                if not self._floyd_add(<long>t, set_data, size):
+                    self._floyd_add(<long>j, set_data, size)
+
+            i = 0
+            for j from 0 <= j < size:
+                if set_data[j] >= 0:
+                    set_data[i] = set_data[j]
+                    i += 1
+
+        sample = set_array[:k]
+        return sample
+
     def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=None, replace=True, p=None)
@@ -1154,7 +1194,15 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                idx = self.permutation(pop_size)[:size]
+                # if self.version <= 0 or ...
+                if pop_size < 2*size:
+                    # For small popsize do a single O(size) pass instead of
+                    # the two passes required for Floyd's algorithm.
+                    idx = self.permutation(pop_size)[:size]
+                else:
+                    idx = self._floyd_sample(pop_size, size)
+                    self.shuffle(idx)
+
                 if shape is not None:
                     idx.shape = shape
 
