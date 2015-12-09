@@ -204,9 +204,11 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     The input should be ordered in the same way as is returned by `fft`,
     i.e., ``a[0]`` should contain the zero frequency term,
-    ``a[1:n/2+1]`` should contain the positive-frequency terms, and
+    ``a[1:n/2]`` should contain the positive-frequency terms, and
     ``a[n/2+1:]`` should contain the negative-frequency terms, in order of
-    decreasingly negative frequency.  See `numpy.fft` for details.
+    decreasingly negative frequency. For an even number of input points, 
+    ``A[n/2]`` represents both positive and negative Nyquist frequency.
+    See `numpy.fft` for details.
 
     Parameters
     ----------
