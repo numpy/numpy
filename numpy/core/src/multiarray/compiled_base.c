@@ -92,10 +92,9 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyArray_Descr *type;
-    PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
-    PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
-    npy_intp *numbers, *ians, len , mx, mn, ans_size, minlength;
+    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
+    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
+    npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
     npy_intp i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -110,7 +109,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         goto fail;
     }
     len = PyArray_SIZE(lst);
-    type = PyArray_DescrFromType(NPY_INTP);
 
     if (mlength == Py_None) {
         minlength = 0;
@@ -128,14 +126,15 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     /* handle empty list */
     if (len == 0) {
-        if (!(ans = (PyArrayObject *)PyArray_Zeros(1, &minlength, type, 0))){
+        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
+        if (ans == NULL){
             goto fail;
         }
         Py_DECREF(lst);
         return (PyObject *)ans;
     }
 
-    numbers = (npy_intp *) PyArray_DATA(lst);
+    numbers = (npy_intp *)PyArray_DATA(lst);
     minmax(numbers, len, &mn, &mx);
     if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -149,11 +148,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         }
     }
     if (weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_Zeros(1, &ans_size, type, 0);
+        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
         if (ans == NULL) {
             goto fail;
         }
-        ians = (npy_intp *)(PyArray_DATA(ans));
+        ians = (npy_intp *)PyArray_DATA(ans);
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++)
             ians[numbers[i]] += 1;
@@ -166,14 +165,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         if (wts == NULL) {
             goto fail;
         }
-        weights = (double *)PyArray_DATA (wts);
+        weights = (double *)PyArray_DATA(wts);
         if (PyArray_SIZE(wts) != len) {
             PyErr_SetString(PyExc_ValueError,
                     "The weights and list don't have the same length.");
             goto fail;
         }
-        type = PyArray_DescrFromType(NPY_DOUBLE);
-        ans = (PyArrayObject *)PyArray_Zeros(1, &ans_size, type, 0);
+        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
         if (ans == NULL) {
             goto fail;
         }
