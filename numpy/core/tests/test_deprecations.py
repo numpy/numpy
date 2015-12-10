@@ -89,7 +89,7 @@ class _DeprecationTestCase(object):
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
             lst = [w.category for w in self.log]
-            raise AssertionError("\n".join([msg] + [lst]))
+            raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
             warnings.filterwarnings("error", message=self.message,
@@ -399,6 +399,19 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.complex,))
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
+
+class TestTestDeprecated(object):
+    def test_assert_deprecated(self):
+        test_case_instance = _DeprecationTestCase()
+        test_case_instance.setUp()
+        assert_raises(AssertionError,
+                      test_case_instance.assert_deprecated,
+                      lambda: None)
+
+        def foo():
+            warnings.warn("foo", category=DeprecationWarning)
+
+        test_case_instance.assert_deprecated(foo)
 
 if __name__ == "__main__":
     run_module_suite()
