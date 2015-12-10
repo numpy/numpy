@@ -24,6 +24,14 @@
 include "Python.pxi"
 include "numpy.pxd"
 
+from libc cimport stdint
+
+ctypedef fused stdsized:
+    stdint.int8_t
+    stdint.int16_t
+    stdint.int32_t
+    stdint.int64_t
+
 cdef extern from "math.h":
     double exp(double x)
     double log(double x)
@@ -4972,28 +4980,46 @@ cdef class RandomState:
 
         """
         cdef:
-            npy_intp[::1] idxs
             npy_intp i, j, n = len(x)
+            stdint.int8_t[:] int8_buf
+            stdint.int16_t[:] int16_buf
+            stdint.int32_t[:] int32_buf
+            stdint.int64_t[:] int64_buf
 
-        # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray):
-            if (x.ndim == 1 and
-                x.dtype.itemsize == np.dtype(np.intp).itemsize and
-                not isinstance(x, np.ma.MaskedArray)):
-                # Directly shuffle the array if possible.
-                self._shuffle_intpsized(x.view(np.intp))
-            else:
-                # Take from a shuffled range to benefit from static typing.
-                idxs = np.arange(n, dtype=np.intp)
-                self._shuffle_intpsized(idxs)
-                x.take(idxs, 0, out=x)
+        # Fast, statically typed path: shuffle the underlying buffer.
+        # We exclude subclasses as this approach fails e.g. with MaskedArrays.
+        if (type(x) is np.ndarray and x.ndim == 1 and
+                x.dtype.itemsize in [1, 2, 4, 8]):
+            if x.dtype.itemsize == 1:
+                int8_buf = x.view(np.int8)
+                self._shuffle_stdsize(int8_buf)
+            elif x.dtype.itemsize == 2:
+                int16_buf = x.view(np.int16)
+                self._shuffle_stdsize(int16_buf)
+            elif x.dtype.itemsize == 4:
+                int32_buf = x.view(np.int32)
+                self._shuffle_stdsize(int32_buf)
+            elif x.dtype.itemsize == 8:
+                int64_buf = x.view(np.int64)
+                self._shuffle_stdsize(int64_buf)
+        # Untyped path 1: multidimensional arrays require an bounce buffer
+        # because indexing returns views.
+        elif isinstance(x, np.ndarray) and x.ndim > 1:
+            buf = np.empty_like(x[0])
+            with self.lock:
+                for i in reversed(range(1, n)):
+                    j = rk_interval(i, self.internal_state)
+                    buf[:] = x[j]
+                    x[j] = x[i]
+                    x[i] = buf[:]
+        # Untyped path 2 (including for 1d, non-standard-sized arrays).
         else:
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
 
-    cdef void _shuffle_intpsized(self, npy_intp[:] x):
+    cdef void _shuffle_stdsize(self, stdsized[:] x):
         cdef:
             npy_intp i, j, n = x.size
         with self.lock, cython.boundscheck(False), cython.wraparound(False):

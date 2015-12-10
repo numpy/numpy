@@ -355,9 +355,12 @@ class TestRandomDist(TestCase):
         np.testing.assert_equal(actual, desired)
 
     def test_shuffle(self):
-        # Test lists, arrays, and multidimensional versions of both:
+        # Test lists, arrays (of various dtypes), and multidimensional versions
+        # of both:
         for conv in [lambda x: x,
-                     np.asarray,
+                     lambda x: np.asarray(x).astype(np.int8),
+                     lambda x: np.asarray(x).astype(np.float32),
+                     lambda x: np.asarray(x).astype(np.complex64),
                      lambda x: [(i, i) for i in x],
                      lambda x: np.asarray([(i, i) for i in x])]:
             np.random.seed(self.seed)
@@ -387,12 +390,8 @@ class TestRandomDist(TestCase):
         for i in range(50):
             np.random.shuffle(a)
             assert_equal(
-                sorted(a.data[a.mask]), sorted(a_orig.data[a_orig.mask]))
-            assert_equal(
                 sorted(a.data[~a.mask]), sorted(a_orig.data[~a_orig.mask]))
             np.random.shuffle(b)
-            assert_equal(
-                sorted(b.data[b.mask]), sorted(b_orig.data[b_orig.mask]))
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
