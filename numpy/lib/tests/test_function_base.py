@@ -1403,7 +1403,7 @@ class TestHistogram(TestCase):
         histogram(vals, range=[0.25,0.75])
         assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
         assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
-        
+
 
 class TestHistogramOptimBinNums(TestCase):
     """
@@ -1428,7 +1428,7 @@ class TestHistogramOptimBinNums(TestCase):
         """
         # Some basic sanity checking, with some fixed data.
         # Checking for the correct number of bins
-        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7, 
+        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,
                              'doane': 8, 'sqrt': 8, 'auto': 7},
                       500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10,
                              'doane': 12, 'sqrt': 23, 'auto': 10},
@@ -1674,9 +1674,9 @@ class TestHistogramdd(TestCase):
     def test_finite_range(self):
         vals = np.random.random((100, 3))
         histogramdd(vals, range=[[0.0, 1.0], [0.25, 0.75], [0.25, 0.5]])
-        assert_raises(ValueError, histogramdd, vals, 
+        assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
-        assert_raises(ValueError, histogramdd, vals, 
+        assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
 
 
@@ -2149,6 +2149,21 @@ class TestBincount(TestCase):
         assert_raises_regex(ValueError,
                             "minlength must be positive",
                             lambda: np.bincount(x, minlength=0))
+
+    def test_dtype_reference_leaks(self):
+        # gh-6805
+        intp_refcount = sys.getrefcount(np.dtype(np.intp))
+        double_refcount = sys.getrefcount(np.dtype(np.double))
+
+        for j in range(10):
+            np.bincount([1, 2, 3])
+        assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
+        assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
+
+        for j in range(10):
+            np.bincount([1, 2, 3], [4, 5, 6])
+        assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
+        assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
 
 
 class TestInterp(TestCase):
