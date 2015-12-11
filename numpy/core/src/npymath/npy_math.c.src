@@ -260,6 +260,9 @@ double npy_atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", off)
+#endif
 double npy_rint(double x)
 {
     double y, r;
@@ -280,6 +283,9 @@ double npy_rint(double x)
     }
     return y;
 }
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", on)
+#endif
 #endif
 
 #ifndef HAVE_TRUNC
