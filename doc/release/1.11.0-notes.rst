@@ -133,3 +133,11 @@ c_contiguous arrays at some future time. A work around that is backward
 compatible is to use `a.T.view(...).T` instead. A parameter will also be
 added to the view method to explicitly ask for Fortran order views, but
 that will not be backward compatible.
+
+Invalid arguments for array ordering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is currently possible to pass in arguments for the ```order```
+parameter in methods like ```array.flatten``` or ```array.ravel```
+that were not one of the following: 'C', 'F', 'A', 'K' (note that
+all of these possible values are unicode- and case-insensitive).
+Such behaviour will not be allowed in future releases.

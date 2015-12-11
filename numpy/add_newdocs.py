@@ -3567,10 +3567,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
 
     Parameters
     ----------
-    order : {'C', 'F', 'A'}, optional
-        Whether to flatten in row-major (C-style) or
-        column-major (Fortran-style) order or preserve the
-        C/Fortran ordering from `a`.  The default is 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        'C' means to flatten in row-major (C-style) order.
+        'F' means to flatten in column-major (Fortran-
+        style) order. 'A' means to flatten in column-major
+        order if `a` is Fortran *contiguous* in memory,
+        row-major order otherwise. 'K' means to flatten
+        `a` in the order the elements occur in memory.
+        The default is 'C'.
 
     Returns
     -------

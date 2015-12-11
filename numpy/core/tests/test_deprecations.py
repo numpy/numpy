@@ -400,6 +400,36 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
+class TestInvalidOrderParameterInputForFlattenArrayDeprecation(_DeprecationTestCase):
+    """Invalid arguments to the ORDER parameter in array.flatten() should not be
+    allowed and should raise an error.  However, in the interests of not breaking
+    code that may inadvertently pass invalid arguments to this parameter, a
+    DeprecationWarning will be issued instead for the time being to give developers
+    time to refactor relevant code.
+    """
+
+    def test_flatten_array_non_string_arg(self):
+        x = np.zeros((3, 5))
+        self.message = ("Non-string object detected for "
+                        "the array ordering. Please pass "
+                        "in 'C', 'F', 'A', or 'K' instead")
+        self.assert_deprecated(x.flatten, args=(np.pi,))
+
+    def test_flatten_array_invalid_string_arg(self):
+        # Tests that a DeprecationWarning is raised
+        # when a string of length greater than one
+        # starting with "C", "F", "A", or "K" (case-
+        # and unicode-insensitive) is passed in for
+        # the ORDER parameter. Otherwise, a TypeError
+        # will be raised!
+
+        x = np.zeros((3, 5))
+        self.message = ("Non length-one string passed "
+                        "in for the array ordering. Please "
+                        "pass in 'C', 'F', 'A', or 'K' instead")
+        self.assert_deprecated(x.flatten, args=("FACK",))
+
+
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()

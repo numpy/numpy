@@ -540,6 +540,15 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         return ret;
     }
     else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
+        /* 2015-12-14, 1.11 */
+        int ret = DEPRECATE("Non-string object detected for "
+                            "the array ordering. Please pass "
+                            "in 'C', 'F', 'A', or 'K' instead");
+
+        if (ret < 0) {
+            return -1;
+        }
+
         if (PyObject_IsTrue(object)) {
             *val = NPY_FORTRANORDER;
         }
@@ -553,6 +562,18 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     }
     else {
         str = PyBytes_AS_STRING(object);
+        if (strlen(str) != 1) {
+            /* 2015-12-14, 1.11 */
+            int ret = DEPRECATE("Non length-one string passed "
+                                "in for the array ordering. "
+                                "Please pass in 'C', 'F', 'A', "
+                                "or 'K' instead");
+
+            if (ret < 0) {
+                return -1;
+            }
+        }
+
         if (str[0] == 'C' || str[0] == 'c') {
             *val = NPY_CORDER;
         }
