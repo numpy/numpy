@@ -328,8 +328,8 @@ class TestSeterr(TestCase):
             def log_err(*args):
                 self.called += 1
                 extobj_err = args
-                assert (len(extobj_err) == 2)
-                assert ("divide" in extobj_err[0])
+                assert_(len(extobj_err) == 2)
+                assert_("divide" in extobj_err[0])
 
             with np.errstate(divide='ignore'):
                 np.seterrobj([20000, 3, log_err])

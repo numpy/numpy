@@ -61,7 +61,7 @@ def get_rtol(dtype):
 class LinalgCase(object):
 
     def __init__(self, name, a, b, exception_cls=None):
-        assert isinstance(name, str)
+        assert_(isinstance(name, str))
         self.name = name
         self.a = a
         self.b = b
@@ -267,7 +267,7 @@ def _stride_comb_iter(x):
         xi = xi[slices]
         xi[...] = x
         xi = xi.view(x.__class__)
-        assert np.all(xi == x)
+        assert_(np.all(xi == x))
         yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
 
         # generate also zero strides if possible

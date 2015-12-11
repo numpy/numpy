@@ -5,7 +5,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite
+from numpy.testing import TestCase, run_module_suite, assert_
 
 
 class A(object):
@@ -26,17 +26,17 @@ class C0(B0):
 class TestInherit(TestCase):
     def test_init(self):
         x = B(1.0)
-        assert str(x) == '1.0'
+        assert_(str(x) == '1.0')
         y = C(2.0)
-        assert str(y) == '2.0'
+        assert_(str(y) == '2.0')
         z = D(3.0)
-        assert str(z) == '3.0'
+        assert_(str(z) == '3.0')
 
     def test_init2(self):
         x = B0(1.0)
-        assert str(x) == '1.0'
+        assert_(str(x) == '1.0')
         y = C0(2.0)
-        assert str(y) == '2.0'
+        assert_(str(y) == '2.0')
 
 if __name__ == "__main__":
     run_module_suite()
