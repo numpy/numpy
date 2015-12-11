@@ -94,14 +94,16 @@ export PIP
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Build wheel
   $PIP install wheel
+  # ensure that the pip / setuptools versions deployed inside the venv are recent enough
+  $PIP install -U virtualenv
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
-  virtualenv --python=python venv-for-wheel
+  virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  $PIP install --pre --no-index --upgrade --find-links=. numpy
-  $PIP install nose
+  pip install --pre --no-index --upgrade --find-links=. numpy
+  pip install nose
   popd
   run_test
 elif [ "$USE_CHROOT" != "1" ]; then
