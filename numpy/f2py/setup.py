@@ -29,6 +29,20 @@ from numpy.distutils.misc_util import Configuration
 
 from __version__ import version
 
+
+def _get_f2py_shebang():
+    """ Return shebang line for f2py script
+
+    If we are building a binary distribution format, then the shebang line
+    should be ``#!python`` rather than ``#!`` followed by the contents of
+    ``sys.executable``.
+    """
+    if set(('bdist_wheel', 'bdist_egg', 'bdist_wininst',
+            'bdist_rpm')).intersection(sys.argv):
+        return '#!python'
+    return '#!' + sys.executable
+
+
 def configuration(parent_package='',top_path=None):
     config = Configuration('f2py', parent_package, top_path)
 
@@ -52,32 +66,10 @@ def configuration(parent_package='',top_path=None):
         if newer(__file__, target):
             log.info('Creating %s', target)
             f = open(target, 'w')
-            f.write('''\
-#!%s
-# See http://cens.ioc.ee/projects/f2py2e/
-import os, sys
-for mode in ["g3-numpy", "2e-numeric", "2e-numarray", "2e-numpy"]:
-    try:
-        i=sys.argv.index("--"+mode)
-        del sys.argv[i]
-        break
-    except ValueError: pass
-os.environ["NO_SCIPY_IMPORT"]="f2py"
-if mode=="g3-numpy":
-    sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
-    sys.exit(1)
-elif mode=="2e-numeric":
-    from f2py2e import main
-elif mode=="2e-numarray":
-    sys.argv.append("-DNUMARRAY")
-    from f2py2e import main
-elif mode=="2e-numpy":
-    from numpy.f2py import main
-else:
-    sys.stderr.write("Unknown mode: " + repr(mode) + "\\n")
-    sys.exit(1)
-main()
-'''%(sys.executable))
+            f.write(_get_f2py_shebang() + '\n')
+            mainloc = os.path.join(os.path.dirname(__file__), "__main__.py")
+            with open(mainloc) as mf:
+                f.write(mf.read())
             f.close()
         return target
 
