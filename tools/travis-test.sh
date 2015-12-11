@@ -57,7 +57,7 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python2-dev python2-nose python2-pip cython2 cython"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python-dev python-nose python-pip cython"
 }
 
 run_test()
