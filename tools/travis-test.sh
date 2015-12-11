@@ -57,7 +57,7 @@ setup_chroot()
   sudo chroot $DIR bash -c "apt-get update"
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
   echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python-dev python-nose python-pip cython"
 }
 
 run_test()
@@ -113,7 +113,7 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   DIR=/chroot
   setup_chroot $DIR
   # run again in chroot with this time testing
-  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3 PIP=pip3 IN_CHROOT=1 $0 test"
+  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python2 PIP=pip2 IN_CHROOT=1 $0 test"
 else
   run_test
 fi
