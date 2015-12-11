@@ -3588,8 +3588,8 @@ class TestFlat(TestCase):
             self.a.flat[12] = 100.0
         except ValueError:
             testpassed = True
-        assert testpassed
-        assert self.a.flat[12] == 12.0
+        assert_(testpassed)
+        assert_(self.a.flat[12] == 12.0)
 
     def test_discontiguous(self):
         testpassed = False
@@ -3597,8 +3597,8 @@ class TestFlat(TestCase):
             self.b.flat[4] = 100.0
         except ValueError:
             testpassed = True
-        assert testpassed
-        assert self.b.flat[4] == 12.0
+        assert_(testpassed)
+        assert_(self.b.flat[4] == 12.0)
 
     def test___array__(self):
         c = self.a.flat.__array__()
@@ -3606,16 +3606,16 @@ class TestFlat(TestCase):
         e = self.a0.flat.__array__()
         f = self.b0.flat.__array__()
 
-        assert c.flags.writeable is False
-        assert d.flags.writeable is False
-        assert e.flags.writeable is True
-        assert f.flags.writeable is True
+        assert_(c.flags.writeable is False)
+        assert_(d.flags.writeable is False)
+        assert_(e.flags.writeable is True)
+        assert_(f.flags.writeable is True)
 
-        assert c.flags.updateifcopy is False
-        assert d.flags.updateifcopy is False
-        assert e.flags.updateifcopy is False
-        assert f.flags.updateifcopy is True
-        assert f.base is self.b0
+        assert_(c.flags.updateifcopy is False)
+        assert_(d.flags.updateifcopy is False)
+        assert_(e.flags.updateifcopy is False)
+        assert_(f.flags.updateifcopy is True)
+        assert_(f.base is self.b0)
 
 class TestResize(TestCase):
     def test_basic(self):
@@ -5440,14 +5440,14 @@ class TestNewBufferProtocol(object):
         if np.ones((10, 1), order="C").flags.f_contiguous:
             c.strides = (-1, 80, 8)
 
-        assert memoryview(c).strides == (800, 80, 8)
+        assert_(memoryview(c).strides == (800, 80, 8))
 
         # Writing C-contiguous data to a BytesIO buffer should work
         fd = io.BytesIO()
         fd.write(c.data)
 
         fortran = c.T
-        assert memoryview(fortran).strides == (8, 80, 800)
+        assert_(memoryview(fortran).strides == (8, 80, 800))
 
         arr = np.ones((1, 10))
         if arr.flags.f_contiguous:

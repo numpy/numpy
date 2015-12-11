@@ -1815,9 +1815,9 @@ M   33  21.99
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
-        assert test.dtype['f0'] == np.float
-        assert test.dtype['f1'] == np.int64
-        assert test.dtype['f2'] == np.integer
+        assert_(test.dtype['f0'] == np.float)
+        assert_(test.dtype['f1'] == np.int64)
+        assert_(test.dtype['f2'] == np.integer)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)

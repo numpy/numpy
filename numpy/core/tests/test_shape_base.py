@@ -295,8 +295,8 @@ def test_stack():
     for axis, expected_shape in zip(axes, expected_shapes):
         assert_equal(np.stack(arrays, axis).shape, expected_shape)
     # empty arrays
-    assert stack([[], [], []]).shape == (3, 0)
-    assert stack([[], [], []], axis=1).shape == (0, 3)
+    assert_(stack([[], [], []]).shape == (3, 0))
+    assert_(stack([[], [], []], axis=1).shape == (0, 3))
     # edge cases
     assert_raises_regex(ValueError, 'need at least one array', stack, [])
     assert_raises_regex(ValueError, 'must have the same shape',

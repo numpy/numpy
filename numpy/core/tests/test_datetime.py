@@ -571,9 +571,9 @@ class TestDateTime(TestCase):
         "Verify that datetime dtype __setstate__ can handle bad arguments"
         dt = np.dtype('>M8[us]')
         assert_raises(ValueError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, 1))
-        assert (dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
+        assert_(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
         assert_raises(TypeError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, ({}, 'xxx')))
-        assert (dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
+        assert_(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
 
     def test_dtype_promotion(self):
         # datetime <op> datetime computes the metadata gcd
