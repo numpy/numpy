@@ -680,15 +680,15 @@ class TestOperations(TestCase):
                        dtype='S4').view(np.chararray)
         sl1 = arr[:]
         assert_array_equal(sl1, arr)
-        assert sl1.base is arr
-        assert sl1.base.base is arr.base
+        assert_(sl1.base is arr)
+        assert_(sl1.base.base is arr.base)
 
         sl2 = arr[:, :]
         assert_array_equal(sl2, arr)
-        assert sl2.base is arr
-        assert sl2.base.base is arr.base
+        assert_(sl2.base is arr)
+        assert_(sl2.base.base is arr.base)
 
-        assert arr[0, 0] == asbytes('abc')
+        assert_(arr[0, 0] == asbytes('abc'))
 
 
 def test_empty_indexing():

@@ -757,46 +757,46 @@ class TestMaskedArray(TestCase):
                             mask = [([False, True, False],)],
                             fill_value = ([999999, 999999, 999999],),
                             dtype = [('a', '<i8', (3,))])
-        assert str(t_ma[0]) == "([1, --, 3],)"
-        assert repr(t_ma[0]) == "([1, --, 3],)"
+        assert_(str(t_ma[0]) == "([1, --, 3],)")
+        assert_(repr(t_ma[0]) == "([1, --, 3],)")
 
         # additonal tests with structured arrays
 
         t_2d = masked_array(data = [([[1, 2], [3,4]],)],
                             mask = [([[False, True], [True, False]],)],
                             dtype = [('a', '<i8', (2,2))])
-        assert str(t_2d[0]) == "([[1, --], [--, 4]],)"
-        assert repr(t_2d[0]) == "([[1, --], [--, 4]],)"
+        assert_(str(t_2d[0]) == "([[1, --], [--, 4]],)")
+        assert_(repr(t_2d[0]) == "([[1, --], [--, 4]],)")
 
         t_0d = masked_array(data = [(1,2)],
                             mask = [(True,False)],
                             dtype = [('a', '<i8'), ('b', '<i8')])
-        assert str(t_0d[0]) == "(--, 2)"
-        assert repr(t_0d[0]) == "(--, 2)"
+        assert_(str(t_0d[0]) == "(--, 2)")
+        assert_(repr(t_0d[0]) == "(--, 2)")
 
         t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
                             mask = [([[False, True], [True, False]], False)],
                             dtype = [('a', '<i8', (2,2)), ('b', float)])
-        assert str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
-        assert repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+        assert_(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
+        assert_(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 
         t_ne = masked_array(data=[(1, (1, 1))],
                             mask=[(True, (True, False))],
                             dtype = [('a', '<i8'), ('b', 'i4,i4')])
-        assert str(t_ne[0]) == "(--, (--, 1))"
-        assert repr(t_ne[0]) == "(--, (--, 1))"
+        assert_(str(t_ne[0]) == "(--, (--, 1))")
+        assert_(repr(t_ne[0]) == "(--, (--, 1))")
 
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
         mx2 = masked_array([1., 2.])
         mx = masked_array([mx1, mx2], mask=[False, True])
-        assert mx[0] is mx1
-        assert mx[1] is not mx2
-        assert np.all(mx[1].data == mx2.data)
-        assert np.all(mx[1].mask)
+        assert_(mx[0] is mx1)
+        assert_(mx[1] is not mx2)
+        assert_(np.all(mx[1].data == mx2.data))
+        assert_(np.all(mx[1].mask))
         # check that we return a view.
         mx[1].data[0] = 0.
-        assert mx2[0] == 0.
+        assert_(mx2[0] == 0.)
 
 
 class TestMaskedArrayArithmetic(TestCase):
@@ -4254,7 +4254,7 @@ def test_append_masked_array_along_axis():
 
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
-    assert default_fill_value(1 + 1j) == 1.e20 + 0.0j
+    assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
 
 ###############################################################################
 if __name__ == "__main__":

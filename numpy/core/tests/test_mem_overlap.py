@@ -79,7 +79,8 @@ def _check_assignment(srcidx, dstidx):
     cpy[dstidx] = arr[srcidx]
     arr[dstidx] = arr[srcidx]
 
-    assert np.all(arr == cpy), 'assigning arr[%s] = arr[%s]' % (dstidx, srcidx)
+    assert_(np.all(arr == cpy),
+            'assigning arr[%s] = arr[%s]' % (dstidx, srcidx))
 
 
 def test_overlapping_assignments():
@@ -129,7 +130,7 @@ def test_diophantine_fuzz():
             if X is None:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert X_simplified is None, (A, U, b, X_simplified)
+                assert_(X_simplified is None, (A, U, b, X_simplified))
 
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
@@ -149,7 +150,7 @@ def test_diophantine_fuzz():
             else:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert X_simplified is not None, (A, U, b, X_simplified)
+                assert_(X_simplified is not None, (A, U, b, X_simplified))
 
                 # Check validity
                 assert_(sum(a*x for a, x in zip(A, X)) == b)
@@ -391,7 +392,7 @@ def test_internal_overlap_slices():
         s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
         a = x[s1].transpose(t1)
 
-        assert not internal_overlap(a)
+        assert_(not internal_overlap(a))
         cases += 1
 
 
