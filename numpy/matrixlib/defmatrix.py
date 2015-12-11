@@ -277,9 +277,9 @@ class matrix(N.ndarray):
         elif ndim == 1:
             shape = (1, shape[0])
 
-        order = False
+        order = 'C'
         if (ndim == 2) and arr.flags.fortran:
-            order = True
+            order = 'F'
 
         if not (order or arr.flags.contiguous):
             arr = arr.copy()
@@ -519,10 +519,12 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        order : {'C', 'F', 'A'}, optional
-            Whether to flatten in C (row-major), Fortran (column-major) order,
-            or preserve the C/Fortran ordering from `m`.
-            The default is 'C'.
+        order : {'C', 'F', 'A', 'K'}, optional
+            'C' means to flatten in row-major (C-style) order. 'F' means to
+            flatten in column-major (Fortran-style) order. 'A' means to
+            flatten in column-major order if `m` is Fortran *contiguous* in
+            memory, row-major order otherwise. 'K' means to flatten `m` in
+            the order the elements occur in memory. The default is 'C'.
 
         Returns
         -------

@@ -3966,6 +3966,7 @@ def delete(arr, obj, axis=None):
 
     arr = asarray(arr)
     ndim = arr.ndim
+    arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
@@ -4003,7 +4004,7 @@ def delete(arr, obj, axis=None):
             stop = xr[0] + 1
 
         newshape[axis] -= numtodel
-        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new = empty(newshape, arr.dtype, arrorder)
         # copy initial chunk
         if start == 0:
             pass
@@ -4054,7 +4055,7 @@ def delete(arr, obj, axis=None):
         if (obj < 0):
             obj += N
         newshape[axis] -= 1
-        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = slice(obj, None)
@@ -4197,6 +4198,7 @@ def insert(arr, obj, values, axis=None):
 
     arr = asarray(arr)
     ndim = arr.ndim
+    arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
@@ -4265,7 +4267,7 @@ def insert(arr, obj, values, axis=None):
             values = np.rollaxis(values, 0, (axis % values.ndim) + 1)
         numnew = values.shape[axis]
         newshape[axis] += numnew
-        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, index)
         new[slobj] = arr[slobj]
         slobj[axis] = slice(index, index+numnew)
@@ -4298,7 +4300,7 @@ def insert(arr, obj, values, axis=None):
     old_mask = ones(newshape[axis], dtype=bool)
     old_mask[indices] = False
 
-    new = empty(newshape, arr.dtype, arr.flags.fnc)
+    new = empty(newshape, arr.dtype, arrorder)
     slobj2 = [slice(None)]*ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
