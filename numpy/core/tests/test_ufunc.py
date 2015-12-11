@@ -37,17 +37,17 @@ class TestUfuncKwargs(TestCase):
 class TestUfunc(TestCase):
     def test_pickle(self):
         import pickle
-        assert pickle.loads(pickle.dumps(np.sin)) is np.sin
+        assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
 
         # Check that ufunc not defined in the top level numpy namespace such as
         # numpy.core.test_rational.test_add can also be pickled
-        assert pickle.loads(pickle.dumps(test_add)) is test_add
+        assert_(pickle.loads(pickle.dumps(test_add)) is test_add)
 
     def test_pickle_withstring(self):
         import pickle
         astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
                 "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
-        assert pickle.loads(astring) is np.cos
+        assert_(pickle.loads(astring) is np.cos)
 
     def test_reduceat_shifting_sum(self):
         L = 6

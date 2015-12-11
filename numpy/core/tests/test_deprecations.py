@@ -277,7 +277,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
                         with warnings.catch_warnings() as l:
                             warnings.filterwarnings("always")
                             assert_raises(TypeError, f, arg1, arg2)
-                            assert not l
+                            assert_(not l)
                     else:
                         # py2
                         assert_warns(DeprecationWarning, f, arg1, arg2)
