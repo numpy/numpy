@@ -720,27 +720,27 @@ class TestMaskedArray(TestCase):
 
         t_2d = masked_array(data = [([[1, 2], [3,4]],)],
                             mask = [([[False, True], [True, False]],)],
-                            dtype = [('a', '<i8', (2,2))])
-        assert str(t_2d[0]) == "([[1, --], [--, 4]],)"
-        assert repr(t_2d[0]) == "([[1, --], [--, 4]],)"
+                            dtype = [('a', '<i4', (2,2))])
+        assert_(str(t_2d[0]) == "([[1, --], [--, 4]],)")
+        assert_(repr(t_2d[0]) == "([[1, --], [--, 4]],)")
 
         t_0d = masked_array(data = [(1,2)],
                             mask = [(True,False)],
-                            dtype = [('a', '<i8'), ('b', '<i8')])
-        assert str(t_0d[0]) == "(--, 2)"
-        assert repr(t_0d[0]) == "(--, 2)"
+                            dtype = [('a', '<i4'), ('b', '<i4')])
+        assert_(str(t_0d[0]) == "(--, 2)")
+        assert_(repr(t_0d[0]) == "(--, 2)")
 
         t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
                             mask = [([[False, True], [True, False]], False)],
-                            dtype = [('a', '<i8', (2,2)), ('b', float)])
-        assert str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
-        assert repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)"
+                            dtype = [('a', '<i4', (2,2)), ('b', float)])
+        assert_(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
+        assert_(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 
         t_ne = masked_array(data=[(1, (1, 1))],
                             mask=[(True, (True, False))],
-                            dtype = [('a', '<i8'), ('b', 'i4,i4')])
-        assert str(t_ne[0]) == "(--, (--, 1))"
-        assert repr(t_ne[0]) == "(--, (--, 1))"
+                            dtype = [('a', '<i4'), ('b', 'i4,i4')])
+        assert_(str(t_ne[0]) == "(--, (--, 1))")
+        assert_(repr(t_ne[0]) == "(--, (--, 1))")
 
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
