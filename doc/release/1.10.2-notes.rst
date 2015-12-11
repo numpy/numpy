@@ -68,6 +68,7 @@ Issues Fixed
 * gh-6719 Error compiling Cython file: Pythonic division not allowed without gil.
 * gh-6771 Numpy.rec.fromarrays losing dtype metadata between versions 1.9.2 and 1.10.1
 * gh-6781 The travis-ci script in maintenance/1.10.x needs fixing.
+* gh-6807 Windows testing errors for 1.10.2
 
 
 Merged PRs
@@ -126,6 +127,9 @@ the PR number for the original PR against master is listed.
 * gh-6780 BUG: metadata is not copied to base_dtype.
 * gh-6783 BUG: Fix travis ci testing for new google infrastructure.
 * gh-6785 BUG: Quick and dirty fix for interp.
+* gh-6813 TST,BUG: Make test_mvoid_multidim_print work for 32 bit systems.
+* gh-6817 BUG: Disable 32-bit msvc9 compiler optimizations for npy_rint.
+* gh-6819 TST: Fix test_mvoid_multidim_print failures on Python 2.x for Windows.
 
 Initial support for mingwpy was reverted as it was causing problems for
 non-windows builds.
