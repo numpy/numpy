@@ -756,7 +756,7 @@ class TestMaskedArray(TestCase):
         t_ma = masked_array(data = [([1, 2, 3],)],
                             mask = [([False, True, False],)],
                             fill_value = ([999999, 999999, 999999],),
-                            dtype = [('a', '<i8', (3,))])
+                            dtype = [('a', '<i4', (3,))])
         assert_(str(t_ma[0]) == "([1, --, 3],)")
         assert_(repr(t_ma[0]) == "([1, --, 3],)")
 
