@@ -329,13 +329,15 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
             /* divide by zero should yield a complex inf or nan */  \
             (outp)->real = in1r/in2r_abs;                           \
             (outp)->imag = in1i/in2i_abs;                           \
-        } else {                                                    \
+        }                                                           \
+        else {                                                      \
             @rtype@ rat = in2i/in2r;                                \
             @rtype@ scl = 1.0@c@/(in2r + in2i*rat);                 \
             (outp)->real = (in1r + in1i*rat)*scl;                   \
             (outp)->imag = (in1i - in1r*rat)*scl;                   \
         }                                                           \
-    } else {                                                        \
+    }                                                               \
+    else {                                                          \
         @rtype@ rat = in2r/in2i;                                    \
         @rtype@ scl = 1.0@c@/(in2i + in2r*rat);                     \
         (outp)->real = (in1r*rat + in1i)*scl;                       \

@@ -169,10 +169,10 @@ class TestComplexDivision(TestCase):
                     ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
                 )
                 for cases in data:
-                    n=cases[0]
-                    d=cases[1]
-                    ex=cases[2]
-                    result = t(complex(n[0],n[1]))/t(complex(d[0],d[1]))
+                    n = cases[0]
+                    d = cases[1]
+                    ex = cases[2]
+                    result = t(complex(n[0], n[1])) / t(complex(d[0], d[1]))
                     # check real and imag parts separately to avoid comparison
                     # in array context, which does not account for signed zeros
                     assert_equal(result.real, ex[0])
@@ -183,23 +183,24 @@ class TestComplexDivision(TestCase):
             for t in [np.complex64, np.complex128]:
                 # tupled (numerator, denominator, expected)
                 # for testing as expected == numerator/denominator
-                data = (
+                data = list()
+
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by else condition as neither are == 0
-                    (( 2.0, 1.0), ( 2.0, 1.0), (1.0, 0.0)),
+                data.append((( 2.0, 1.0), ( 2.0, 1.0), (1.0, 0.0)))
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by if condition as both are == 0
                 # is performed in test_zero_division(), so this is skipped
 
                 # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
-                    (( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0))
-                )
+                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+
                 for cases in data:
-                    n=cases[0]
-                    d=cases[1]
-                    ex=cases[2]
-                    result = t(complex(n[0],n[1]))/t(complex(d[0],d[1]))
+                    n = cases[0]
+                    d = cases[1]
+                    ex = cases[2]
+                    result = t(complex(n[0], n[1])) / t(complex(d[0], d[1]))
                     # check real and imag parts separately to avoid comparison
                     # in array context, which does not account for signed zeros
                     assert_equal(result.real, ex[0])
