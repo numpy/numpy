@@ -268,14 +268,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         large datasets respectively. Switchover point is usually x.size~1000.
 
     'FD' (Freedman Diaconis Estimator)
-        .. math:: h = 2 \\frac{IQR}{n^{-1/3}}
+        .. math:: h = 2 \\frac{IQR}{n^{1/3}}
         The binwidth is proportional to the interquartile range (IQR)
         and inversely proportional to cube root of a.size. Can be too
         conservative for small datasets, but is quite good
         for large datasets. The IQR is very robust to outliers.
 
     'Scott'
-        .. math:: h = \\frac{3.5\\sigma}{n^{-1/3}}
+        .. math:: h = \\frac{3.5\\sigma}{n^{1/3}}
         The binwidth is proportional to the standard deviation (sd) of the data
         and inversely proportional to cube root of a.size. Can be too
         conservative for small datasets, but is quite good
