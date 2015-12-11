@@ -132,7 +132,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         If the IQR is 0, we return 1 for the number of bins.
         Binwidth is inversely proportional to the cube root of data size (asymptotically optimal)
         """
-        iqr = np.subtract(*np.percentile(x, [75, 25]))
+        iqr = np.diff(np.percentile(x, [25, 75]))
 
         if iqr > 0:
             h = (2 * iqr * x.size ** (-1.0 / 3))
