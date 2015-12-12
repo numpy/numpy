@@ -1,23 +1,22 @@
 from __future__ import division, absolute_import, print_function
 
-import re
 import os
+import re
 import sys
 import types
 from copy import copy
-
-from distutils.ccompiler import *
 from distutils import ccompiler
+from distutils.ccompiler import *
 from distutils.errors import DistutilsExecError, DistutilsModuleError, \
                              DistutilsPlatformError
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
+from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       quote_args, get_num_build_jobs
-from numpy.distutils.compat import get_exception
 
 
 def replace_method(klass, method_name, func):
@@ -634,7 +633,6 @@ ccompiler.gen_preprocess_options = gen_preprocess_options
 # that removing this fix causes f2py problems on Windows XP (see ticket #723).
 # Specifically, on WinXP when gfortran is installed in a directory path, which
 # contains spaces, then f2py is unable to find it.
-import re
 import string
 _wordchars_re = re.compile(r'[^\\\'\"%s ]*' % string.whitespace)
 _squote_re = re.compile(r"'(?:[^'\\]|\\.)*'")
