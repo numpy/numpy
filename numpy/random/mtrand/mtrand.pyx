@@ -997,7 +997,7 @@ cdef class RandomState:
         return bytestring
 
 
-        cdef int _floyd_add(self, long key, long *set, npy_intp size) nogil:
+    cdef int _floyd_add(self, long key, long *set, npy_intp size) nogil:
         cdef long mask, step, i
         mask = size - 1  # E.g. 0b1000 -> 0b111
         i = key
