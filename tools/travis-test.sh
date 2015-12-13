@@ -75,6 +75,17 @@ run_test()
   $PYTHON ../tools/test-installed-numpy.py # --mode=full
   # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which $PYTHON) ../tools/test-installed-numpy.py
   # - coverage report --rcfile=../.coveragerc --show-missing
+
+  if [ -n "$USE_ASV" ]; then
+    pushd ../benchmarks
+    $PYTHON `which asv` machine --machine travis
+    $PYTHON `which asv` dev 2>&1| tee asv-output.log
+    if grep -q Traceback asv-output.log; then
+        echo "Some benchmarks have errors!"
+        exit 1
+    fi
+    popd
+  fi
 }
 
 # travis venv tests override python

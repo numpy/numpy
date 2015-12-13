@@ -56,7 +56,9 @@ matrix:
        # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
        - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9TrXrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPowiFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAMahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
     - python: 2.7
-      env: PYTHONOPTIMIZE=2
+      env:
+       - PYTHONOPTIMIZE=2
+       - USE_ASV=1
 before_install:
   - uname -a
   - free -m
@@ -74,6 +76,7 @@ before_install:
   # pip install coverage
   # Speed up install by not compiling Cython
   - pip install --install-option="--no-cython-compile" Cython
+  - if [ -n "$USE_ASV" ]; then pip install asv; fi
   - popd
 
 script:
