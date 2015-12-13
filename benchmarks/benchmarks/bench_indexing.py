@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, squares_, indexes_, indexes_rand_
+from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
 
 import sys
 import six
@@ -17,10 +17,10 @@ class Indexing(Benchmark):
     def setup(self, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': squares_,
+        ns = {'squares_': get_squares_(),
               'np': np,
-              'indexes_': indexes_,
-              'indexes_rand_': indexes_rand_}
+              'indexes_': get_indexes_(),
+              'indexes_rand_': get_indexes_rand_()}
 
         if sys.version_info[0] >= 3:
             code = "def run():\n    for a in squares_.values(): a[%s]%s"
