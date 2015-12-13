@@ -25,40 +25,90 @@ TYPES1 = [
     'complex256',
 ]
 
+
+def memoize(func):
+    result = []
+    def wrapper():
+        if not result:
+            result.append(func())
+        return result[0]
+    return wrapper
+
+
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
 # and generate some redundancy
-values = [random.uniform(0, 100) for x in range(nx*ny//10)]*10
 
-squares = {t: numpy.array(values,
-                          dtype=getattr(numpy, t)).reshape((nx, ny))
-           for t in TYPES1}
+@memoize
+def get_values():
+    rnd = numpy.random.RandomState(1)
+    values = numpy.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
+    return values
 
-# adjust complex ones to have non-degenerated imagery part -- use
-# original data transposed for that
-for t, v in squares.items():
-    if t.startswith('complex'):
-        v += v.T*1j
 
-# smaller squares
-squares_ = {t: s[:nxs, :nys] for t, s in squares.items()}
-# vectors
-vectors = {t: s[0] for t, s in squares.items()}
+@memoize
+def get_squares():
+    values = get_values()
+    squares = {t: numpy.array(values,
+                              dtype=getattr(numpy, t)).reshape((nx, ny))
+               for t in TYPES1}
 
-indexes = list(range(nx))
-# so we do not have all items
-indexes.pop(5)
-indexes.pop(95)
+    # adjust complex ones to have non-degenerated imagery part -- use
+    # original data transposed for that
+    for t, v in squares.items():
+        if t.startswith('complex'):
+            v += v.T*1j
+    return squares
 
-indexes_rand = indexes[:]       # copy
-random.shuffle(indexes_rand)         # in-place shuffle
 
-# only now make them arrays
-indexes = numpy.array(indexes)
-indexes_rand = numpy.array(indexes_rand)
-# smaller versions
-indexes_ = indexes[indexes < nxs]
-indexes_rand_ = indexes_rand[indexes_rand < nxs]
+@memoize
+def get_squares_():
+    # smaller squares
+    squares_ = {t: s[:nxs, :nys] for t, s in get_squares().items()}
+    return squares_
+
+
+@memoize
+def get_vectors():
+    # vectors
+    vectors = {t: s[0] for t, s in get_squares().items()}
+    return vectors
+
+
+@memoize
+def get_indexes():
+    indexes = list(range(nx))
+    # so we do not have all items
+    indexes.pop(5)
+    indexes.pop(95)
+
+    indexes = numpy.array(indexes)
+    return indexes
+
+
+@memoize
+def get_indexes_rand():
+    rnd = random.Random(1)
+
+    indexes_rand = get_indexes().tolist()       # copy
+    rnd.shuffle(indexes_rand)         # in-place shuffle
+    indexes_rand = numpy.array(indexes_rand)
+    return indexes_rand
+
+
+@memoize
+def get_indexes_():
+    # smaller versions
+    indexes = get_indexes()
+    indexes_ = indexes[indexes < nxs]
+    return indexes_
+
+
+@memoize
+def get_indexes_rand_():
+    indexes_rand = get_indexes_rand()
+    indexes_rand_ = indexes_rand[indexes_rand < nxs]
+    return indexes_rand_
 
 
 class Benchmark(object):

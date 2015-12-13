@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, squares_, indexes_rand
+from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
 
 import numpy as np
 
@@ -36,7 +36,7 @@ class Eindot(Benchmark):
 
 class Linalg(Benchmark):
     params = [['svd', 'pinv', 'det', 'norm'],
-              list(squares_.keys())]
+              TYPES1]
     param_names = ['op', 'type']
 
     def setup(self, op, typename):
@@ -46,10 +46,10 @@ class Linalg(Benchmark):
 
         if op == 'cholesky':
             # we need a positive definite
-            self.a = np.dot(squares_[typename],
-                            squares_[typename].T)
+            self.a = np.dot(get_squares_()[typename],
+                            get_squares_()[typename].T)
         else:
-            self.a = squares_[typename]
+            self.a = get_squares_()[typename]
 
         # check that dtype is supported at all
         try:
@@ -63,8 +63,8 @@ class Linalg(Benchmark):
 
 class Lstsq(Benchmark):
     def setup(self):
-        self.a = squares_['float64']
-        self.b = indexes_rand[:100].astype(np.float64)
+        self.a = get_squares_()['float64']
+        self.b = get_indexes_rand()[:100].astype(np.float64)
 
     def time_numpy_linalg_lstsq_a__b_float64(self):
         np.linalg.lstsq(self.a, self.b)
