@@ -163,8 +163,8 @@ class TestRankDeprecation(_DeprecationTestCase):
 
 
 class TestComparisonDeprecations(_DeprecationTestCase):
-    """This tests the deprecation, for non-elementwise comparison logic.
-    This used to mean that when an error occured during element-wise comparison
+    """This tests the deprecation, for non-element-wise comparison logic.
+    This used to mean that when an error occurred during element-wise comparison
     (i.e. broadcasting) NotImplemented was returned, but also in the comparison
     itself, False was given instead of the error.
 
@@ -192,13 +192,13 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         b = np.array(['a', 'b', 'c'])
         assert_raises(ValueError, lambda x, y: x == y, a, b)
 
-        # The empty list is not cast to string, this is only to document
+        # The empty list is not cast to string, as this is only to document
         # that fact (it likely should be changed). This means that the
         # following works (and returns False) due to dtype mismatch:
         a == []
 
     def test_none_comparison(self):
-        # Test comparison of None, which should result in elementwise
+        # Test comparison of None, which should result in element-wise
         # comparison in the future. [1, 2] == None should be [False, False].
         with warnings.catch_warnings():
             warnings.filterwarnings('always', '', FutureWarning)
@@ -211,7 +211,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             assert_raises(FutureWarning, operator.ne, np.arange(3), None)
 
     def test_scalar_none_comparison(self):
-        # Scalars should still just return false and not give a warnings.
+        # Scalars should still just return False and not give a warnings.
         # The comparisons are flagged by pep8, ignore that.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
@@ -226,9 +226,9 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             assert_(np.datetime64('NaT') != None)
         assert_(len(w) == 0)
 
-        # For documentaiton purpose, this is why the datetime is dubious.
+        # For documentation purposes, this is why the datetime is dubious.
         # At the time of deprecation this was no behaviour change, but
-        # it has to be considered when the deprecations is done.
+        # it has to be considered when the deprecations are done.
         assert_(np.equal(np.datetime64('NaT'), None))
 
     def test_void_dtype_equality_failures(self):
@@ -338,8 +338,8 @@ class TestIdentityComparisonDeprecations(_DeprecationTestCase):
 class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
     """The alterdot/restoredot functions are deprecated.
 
-    These functions no longer do anything in numpy 1.10, so should not be
-    used.
+    These functions no longer do anything in numpy 1.10, so
+    they should not be used.
 
     """
 
@@ -350,7 +350,7 @@ class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
 
 class TestBooleanIndexShapeMismatchDeprecation():
     """Tests deprecation for boolean indexing where the boolean array
-    does not match the input array along the given diemsions.
+    does not match the input array along the given dimensions.
     """
     message = r"boolean index did not match indexed array"
 
