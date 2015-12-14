@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, squares
+from .common import Benchmark, get_squares
 
 import numpy as np
 
@@ -57,5 +57,8 @@ class CopyTo(Benchmark):
 
 
 class Savez(Benchmark):
+    def setup(self):
+        self.squares = get_squares()
+
     def time_vb_savez_squares(self):
-        np.savez('tmp.npz', squares)
+        np.savez('tmp.npz', self.squares)

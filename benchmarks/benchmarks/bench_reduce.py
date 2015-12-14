@@ -1,16 +1,19 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, TYPES1, squares
+from .common import Benchmark, TYPES1, get_squares
 
 import numpy as np
 
 
 class AddReduce(Benchmark):
+    def setup(self):
+        self.squares = get_squares().values()
+
     def time_axis_0(self):
-        [np.add.reduce(a, axis=0) for a in squares.values()]
+        [np.add.reduce(a, axis=0) for a in self.squares]
 
     def time_axis_1(self):
-        [np.add.reduce(a, axis=1) for a in squares.values()]
+        [np.add.reduce(a, axis=1) for a in self.squares]
 
 
 class AddReduceSeparate(Benchmark):
@@ -18,7 +21,7 @@ class AddReduceSeparate(Benchmark):
     param_names = ['axis', 'type']
 
     def setup(self, axis, typename):
-        self.a = squares[typename]
+        self.a = get_squares()[typename]
 
     def time_reduce(self, axis, typename):
         np.add.reduce(self.a, axis=axis)
