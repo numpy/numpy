@@ -1280,7 +1280,7 @@ cdef class RandomState:
 
         Random values in a given shape.
 
-        Create an array of the given shape and propagate it with
+        Create an array of the given shape and populate it with
         random samples from a uniform distribution
         over ``[0, 1)``.
 
