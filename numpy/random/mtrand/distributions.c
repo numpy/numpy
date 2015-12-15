@@ -188,7 +188,7 @@ double rk_beta(rk_state *state, double a, double b)
     if ((a <= 1.0) && (b <= 1.0))
     {
         double U, V, X, Y;
-        /* Use Jonk's algorithm */
+        /* Use Johnk's algorithm */
 
         while (1)
         {
