@@ -29,16 +29,18 @@ python:
   - 3.5
 matrix:
   include:
-    - python: 3.3
-      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=3.4
+    - python: 2.7
+      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=2.7
       sudo: true
+      dist: trusty
       addons:
         apt:
           packages:
-            - *common_packages
             - debootstrap
-    - python: 3.2
+    - python: 3.4
       env: USE_DEBUG=1
+      sudo: true
+      dist: trusty
       addons:
         apt:
           packages:
