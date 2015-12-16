@@ -64,11 +64,12 @@ def test_f2py():
     if sys.platform == 'win32':
         f2py_cmd = r"%s\Scripts\f2py.py" % dirname(sys.executable)
         code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
-        assert_equal(stdout.strip(), asbytes('2'))
+        success = stdout.strip() == asbytes('2')
+        assert_(success, "Warning: f2py not found in path")
     else:
         # unclear what f2py cmd was installed as, check plain (f2py) and
         # current python version specific one (f2py3.4)
-        f2py_cmds = ['f2py', 'f2py' + basename(sys.executable)[6:]]
+        f2py_cmds = ('f2py', 'f2py' + basename(sys.executable)[6:])
         success = False
         for f2py_cmd in f2py_cmds:
             try:
@@ -76,6 +77,6 @@ def test_f2py():
                 assert_equal(stdout.strip(), asbytes('2'))
                 success = True
                 break
-            except FileNotFoundError:
+            except OSError:
                 pass
-        assert_(success, "wasn't able to find f2py or %s on commandline" % f2py_cmds[1])
+        assert_(success, "Warning: neither %s nor %s found in path" % f2py_cmds)
