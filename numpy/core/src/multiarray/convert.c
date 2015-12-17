@@ -21,7 +21,8 @@
 
 #include "convert.h"
 
-int fallocate(int fd, int mode, off_t offset, off_t len);
+int
+fallocate(int fd, int mode, off_t offset, off_t len);
 
 /*
  * allocate nbytes of diskspace for file fp
@@ -29,7 +30,8 @@ int fallocate(int fd, int mode, off_t offset, off_t len);
  * fast exit on not enough free space
  * returns -1 and raises exception on no space, ignores all other errors
  */
-static int npy_fallocate(npy_intp nbytes, FILE * fp)
+static int
+npy_fallocate(npy_intp nbytes, FILE * fp)
 {
     /*
      * unknown behavior on non-linux so don't try it
