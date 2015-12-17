@@ -76,20 +76,20 @@ are only a handful of key differences between the two.
    -  For ``matrix``, **'``*``\ ' means matrix multiplication**, and the
       ``multiply()`` function is used for element-wise multiplication.
 
--  Handling of vectors (rank-1 arrays)
+-  Handling of vectors (one-dimensional arrays)
 
-   -  For ``array``, the **vector shapes 1xN, Nx1, and N are all
-      different things**. Operations like ``A[:,1]`` return a rank-1
-      array of shape N, not a rank-2 of shape Nx1. Transpose on a rank-1
-      ``array`` does nothing.
-   -  For ``matrix``, **rank-1 arrays are always upconverted to 1xN or
-      Nx1 matrices** (row or column vectors). ``A[:,1]`` returns a
-      rank-2 matrix of shape Nx1.
+   -  For ``array``, the **vector shapes 1xN, Nx1, and N are all different
+      things**. Operations like ``A[:,1]`` return a one-dimensional array of
+      shape N, not a two-dimensional array of shape Nx1. Transpose on a
+      one-dimensional ``array`` does nothing.
+   -  For ``matrix``, **one-dimensional arrays are always upconverted to 1xN
+      or Nx1 matrices** (row or column vectors). ``A[:,1]`` returns a
+      two-dimensional matrix of shape Nx1.
 
--  Handling of higher-rank arrays (rank > 2)
+-  Handling of higher-dimensional arrays (ndim > 2)
 
-   -  ``array`` objects **can have rank > 2**.
-   -  ``matrix`` objects **always have exactly rank 2**.
+   -  ``array`` objects **can have number of dimensions > 2**;
+   -  ``matrix`` objects **always have exactly two dimensions**.
 
 -  Convenience attributes
 
@@ -110,17 +110,17 @@ There are pros and cons to using both:
 
 -  ``array``
 
-   -  ``:)`` You can treat rank-1 arrays as *either* row or column
+   -  ``:)`` You can treat one-dimensional arrays as *either* row or column
       vectors. ``dot(A,v)`` treats ``v`` as a column vector, while
-      ``dot(v,A)`` treats ``v`` as a row vector. This can save you
-      having to type a lot of transposes.
+      ``dot(v,A)`` treats ``v`` as a row vector. This can save you having to
+      type a lot of transposes.
    -  ``<:(`` Having to use the ``dot()`` function for matrix-multiply is
       messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``.
    -  ``:)`` Element-wise multiplication is easy: ``A*B``.
    -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
       testing, and is the type most likely to be returned by 3rd party
       code that uses NumPy.
-   -  ``:)`` Is quite at home handling data of any rank.
+   -  ``:)`` Is quite at home handling data of any number of dimensions.
    -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
       with that.
    -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
@@ -129,9 +129,9 @@ There are pros and cons to using both:
 -  ``matrix``
 
    -  ``:\\`` Behavior is more like that of MATLAB® matrices.
-   -  ``<:(`` Maximum of rank-2. To hold rank-3 data you need ``array`` or
-      perhaps a Python list of ``matrix``.
-   -  ``<:(`` Minimum of rank-2. You cannot have vectors. They must be
+   -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
+      need ``array`` or perhaps a Python list of ``matrix``.
+   -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
       cast as single-column or single-row matrices.
    -  ``<:(`` Since ``array`` is the default in NumPy, some functions may
       return an ``array`` even if you give them a ``matrix`` as an
@@ -201,7 +201,7 @@ commands in Python:
     import scipy.linalg
 
 Also assume below that if the Notes talk about "matrix" that the
-arguments are rank 2 entities.
+arguments are two-dimensional entities.
 
 General Purpose Equivalents
 ---------------------------
@@ -252,7 +252,7 @@ Linear Algebra Equivalents
 
    * - ``ndims(a)``
      - ``ndim(a)`` or ``a.ndim``
-     - get the number of dimensions of ``a`` (tensor rank)
+     - get the number of dimensions of an array
 
    * - ``numel(a)``
      - ``size(a)`` or ``a.size``
@@ -264,7 +264,9 @@ Linear Algebra Equivalents
 
    * - ``size(a,n)``
      - ``a.shape[n-1]``
-     - get the number of elements of the n-th dimension of array ``a``. (Note that MATLAB® uses 1 based indexing while Python uses 0 based indexing, See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
+     - get the number of elements of the n-th dimension of array ``a``. (Note
+       that MATLAB® uses 1 based indexing while Python uses 0 based indexing,
+       See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
      - ``array([[1.,2.,3.], [4.,5.,6.]])``
@@ -399,15 +401,15 @@ Linear Algebra Equivalents
 
    * - ``zeros(3,4)``
      - ``zeros((3,4))``
-     - 3x4 rank-2 array full of 64-bit floating point zeros
+     - 3x4 two-dimensional array full of 64-bit floating point zeros
 
    * - ``zeros(3,4,5)``
      - ``zeros((3,4,5))``
-     - 3x4x5 rank-3 array full of 64-bit floating point zeros
+     - 3x4x5 three-dimensional array full of 64-bit floating point zeros
 
    * - ``ones(3,4)``
      - ``ones((3,4))``
-     - 3x4 rank-2 array full of 64-bit floating point ones
+     - 3x4 two-dimensional array full of 64-bit floating point ones
 
    * - ``eye(3)``
      - ``eye(3)``
@@ -503,7 +505,7 @@ Linear Algebra Equivalents
 
    * - ``rank(a)``
      - ``linalg.matrix_rank(a)``
-     - rank of a matrix ``a``
+     - matrix rank of a 2D array / matrix ``a``
 
    * - ``a\b``
      - ``linalg.solve(a,b)`` if ``a`` is square; ``linalg.lstsq(a,b)`` otherwise
