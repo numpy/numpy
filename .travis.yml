@@ -56,7 +56,10 @@ matrix:
        - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
        # The following is generated with the command:
        # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
-       - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9TrXrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPowiFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAMahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
+       - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9Tr\
+                  XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
+                  iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
+                  ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
     - python: 2.7
       env:
        - PYTHONOPTIMIZE=2
