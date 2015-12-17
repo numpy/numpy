@@ -26,12 +26,12 @@ class TestSeed(TestCase):
         assert_equal(s.randint(1000), 265)
 
     def test_invalid_scalar(self):
-        # seed must be a unsigned 32 bit integers
+        # seed must be an unsigned 32 bit integer
         assert_raises(TypeError, np.random.RandomState, -0.5)
         assert_raises(ValueError, np.random.RandomState, -1)
 
     def test_invalid_array(self):
-        # seed must be a unsigned 32 bit integers
+        # seed must be an unsigned 32 bit integer
         assert_raises(TypeError, np.random.RandomState, [-0.5])
         assert_raises(ValueError, np.random.RandomState, [-1])
         assert_raises(ValueError, np.random.RandomState, [4294967296])
@@ -129,7 +129,7 @@ class TestSetState(TestCase):
         self.prng.negative_binomial(0.5, 0.5)
 
 class TestRandomDist(TestCase):
-    # Make sure the random distrobution return the correct value for a
+    # Make sure the random distribution returns the correct value for a
     # given seed
 
     def setUp(self):
