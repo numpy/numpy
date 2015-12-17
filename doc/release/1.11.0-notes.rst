@@ -39,6 +39,7 @@ DeprecationWarning to error
 * Non-integers used as index values raise TypeError,
   e.g., in reshape, take, and specifying reduce axis.
 
+
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -62,21 +63,29 @@ mention it here for completeness.
 New Features
 ============
 
-* `np.histogram` now provides plugin estimators for automatically estimating the optimal
-number of bins. Passing one of ['auto', 'fd', 'scott', 'rice', 'sturges']
-as the argument to 'bins' results in the corresponding estimator being used.
+* `np.histogram` now provides plugin estimators for automatically
+  estimating the optimal number of bins. Passing one of ['auto', 'fd',
+  'scott', 'rice', 'sturges'] as the argument to 'bins' results in the
+  corresponding estimator being used.
 
-* A benchmark suite using `Airspeed Velocity <http://spacetelescope.github.io/asv/>`__
-has been added, converting the previous vbench-based one. You can run the suite locally
-via ``python runtests.py --bench``. For more details, see ``benchmarks/README.rst``.
+* A benchmark suite using `Airspeed Velocity
+  <http://spacetelescope.github.io/asv/>`__ has been added, converting the
+  previous vbench-based one. You can run the suite locally via ``python
+  runtests.py --bench``. For more details, see ``benchmarks/README.rst``.
 
 * A new function ``np.shares_memory`` that can check exactly whether two
-arrays have memory overlap is added. ``np.may_share_memory`` also now
-has an option to spend more effort to reduce false positives.
+  arrays have memory overlap is added. ``np.may_share_memory`` also now has
+  an option to spend more effort to reduce false positives.
 
-* ``SkipTest`` and ``KnownFailureException`` exception classes are exposed in the
-``numpy.testing`` namespace. Raise them in a test function to mark the test to
-be skipped or mark it as a known failure, respectively.
+* ``SkipTest`` and ``KnownFailureException`` exception classes are exposed
+  in the ``numpy.testing`` namespace. Raise them in a test function to mark
+  the test to be skipped or mark it as a known failure, respectively.
+
+* ``f2py.compile`` has a new ``extension`` keyword parameter that allows the
+  fortran extension to be specified for generated temp files. For instance,
+  the files can be specifies to be ``*.f90``. The ``verbose`` argument is
+  also activated, it was previously ignored.
+
 
 Improvements
 ============
