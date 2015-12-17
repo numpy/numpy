@@ -38,6 +38,8 @@ def compile(source,
     extension: {'.f', '.f90'}, optional
         filename extension influences the fortran compiler behavior
 
+        .. versionadded:: 1.11.0
+
     '''
     from numpy.distutils.exec_command import exec_command
     import tempfile
