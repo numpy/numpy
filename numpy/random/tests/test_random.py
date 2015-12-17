@@ -5,38 +5,53 @@ from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
         assert_warns)
 from numpy import random
+from numpy.random import RandomState
 from numpy.compat import asbytes
+import os
+import pickle
 import sys
+
 
 class TestSeed(TestCase):
     def test_scalar(self):
-        s = np.random.RandomState(0)
+        s = RandomState(0)
         assert_equal(s.randint(1000), 684)
-        s = np.random.RandomState(4294967295)
+        s = RandomState(4294967295)
         assert_equal(s.randint(1000), 419)
 
     def test_array(self):
-        s = np.random.RandomState(range(10))
+        s = RandomState(range(10))
         assert_equal(s.randint(1000), 468)
-        s = np.random.RandomState(np.arange(10))
+        s = RandomState(np.arange(10))
         assert_equal(s.randint(1000), 468)
-        s = np.random.RandomState([0])
+        s = RandomState([0])
         assert_equal(s.randint(1000), 973)
-        s = np.random.RandomState([4294967295])
+        s = RandomState([4294967295])
         assert_equal(s.randint(1000), 265)
 
     def test_invalid_scalar(self):
         # seed must be a unsigned 32 bit integers
-        assert_raises(TypeError, np.random.RandomState, -0.5)
-        assert_raises(ValueError, np.random.RandomState, -1)
+        assert_raises(TypeError, RandomState, -0.5)
+        assert_raises(ValueError, RandomState, -1)
 
     def test_invalid_array(self):
         # seed must be a unsigned 32 bit integers
-        assert_raises(TypeError, np.random.RandomState, [-0.5])
-        assert_raises(ValueError, np.random.RandomState, [-1])
-        assert_raises(ValueError, np.random.RandomState, [4294967296])
-        assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
-        assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
+        assert_raises(TypeError, RandomState, [-0.5])
+        assert_raises(ValueError, RandomState, [-1])
+        assert_raises(ValueError, RandomState, [4294967296])
+        assert_raises(ValueError, RandomState, [1, 2, 4294967296])
+        assert_raises(ValueError, RandomState, [1, -2, 4294967296])
+
+    def test_version(self):
+        assert_equal(RandomState().version, 1)
+        assert_equal(RandomState(version=1).version, 1)
+        assert_equal(RandomState(0).version, 0)
+        assert_equal(RandomState(0, version=1).version, 1)
+        assert_raises(
+            ValueError, RandomState, version=random.HIGHEST_VERSION + 1)
+        assert_raises(
+            ValueError, RandomState().seed, 0, version=random.HIGHEST_VERSION + 1)
+
 
 class TestBinomial(TestCase):
     def test_n_zero(self):
@@ -84,49 +99,77 @@ class TestMultinomial(TestCase):
 class TestSetState(TestCase):
     def setUp(self):
         self.seed = 1234567890
-        self.prng = random.RandomState(self.seed)
-        self.state = self.prng.get_state()
+        self.prngs_states = []
+        for version in range(random.HIGHEST_VERSION + 1):
+            prng = RandomState(version=version)
+            state = prng.get_state()
+            self.prngs_states.append((prng, state))
 
     def test_basic(self):
-        old = self.prng.tomaxint(16)
-        self.prng.set_state(self.state)
-        new = self.prng.tomaxint(16)
-        assert_(np.all(old == new))
+        for prng, state in self.prngs_states:
+            old = prng.tomaxint(16)
+            prng.set_state(state)
+            new = prng.tomaxint(16)
+            assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.prng.standard_normal(size=3)
-        self.prng.set_state(self.state)
-        new = self.prng.standard_normal(size=3)
-        assert_(np.all(old == new))
+        for prng, state in self.prngs_states:
+            old = prng.standard_normal(size=3)
+            prng.set_state(state)
+            new = prng.standard_normal(size=3)
+            assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
+        for prng, state in self.prngs_states:
+            prng.standard_normal()
+            state = prng.get_state()
+            old = prng.standard_normal(size=3)
+            prng.set_state(state)
+            new = prng.standard_normal(size=3)
+            assert_(np.all(old == new))
 
-        self.prng.standard_normal()
-        state = self.prng.get_state()
-        old = self.prng.standard_normal(size=3)
-        self.prng.set_state(state)
-        new = self.prng.standard_normal(size=3)
-        assert_(np.all(old == new))
-
-    def test_backwards_compatibility(self):
+    def test_backwards_compatibility_gaussian(self):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
-        old_state = self.state[:-2]
-        x1 = self.prng.standard_normal(size=16)
-        self.prng.set_state(old_state)
-        x2 = self.prng.standard_normal(size=16)
-        self.prng.set_state(self.state)
-        x3 = self.prng.standard_normal(size=16)
-        assert_(np.all(x1 == x2))
-        assert_(np.all(x1 == x3))
+        for prng, state in self.prngs_states:
+            old_state = state[:-2]
+            x1 = prng.standard_normal(size=16)
+            prng.set_state(old_state)
+            x2 = prng.standard_normal(size=16)
+            prng.set_state(state)
+            x3 = prng.standard_normal(size=16)
+            assert_(np.all(x1 == x2))
+            assert_(np.all(x1 == x3))
+
+    def test_backwards_compatibility_version(self):
+        # Make sure the version is set iff it is >= 1.
+        for prng, state in self.prngs_states:
+            if prng.version == 0:
+                assert_(isinstance(state[0], str))
+            else:
+                assert_(isinstance(state[0], int))
+                assert_(isinstance(state[1], str))
+
+    def test_version_bounds(self):
+        state_without_version = RandomState(version=1).get_state()[1:]
+        assert_raises(ValueError, RandomState().set_state,
+                      (random.HIGHEST_VERSION + 1,) + state_without_version)
+
+    def test_backwards_compatibility_pickle(self):
+        # Pickled with numpy 1.9.2.
+        with open(os.path.join(os.path.dirname(__file__), "randomstate.pkl"),
+                  "rb") as f:
+            assert_(pickle.load(f).randint(2 ** 31 - 1) == 103801538)
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.prng.negative_binomial(0.5, 0.5)
+        for prng, state in self.prngs_states:
+            prng.negative_binomial(0.5, 0.5)
+
 
 class TestRandomDist(TestCase):
     # Make sure the random distrobution return the correct value for a
@@ -176,86 +219,95 @@ class TestRandomDist(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_choice_uniform_replace(self):
-        np.random.seed(self.seed)
-        actual = np.random.choice(4, 4)
-        desired = np.array([2, 3, 2, 3])
-        np.testing.assert_array_equal(actual, desired)
+        for version in range(random.HIGHEST_VERSION + 1):
+            np.random.seed(self.seed, version=version)
+            actual = np.random.choice(4, 4)
+            desired = np.array([2, 3, 2, 3])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_replace(self):
-        np.random.seed(self.seed)
-        actual = np.random.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
-        desired = np.array([1, 1, 2, 2])
-        np.testing.assert_array_equal(actual, desired)
+        for version in range(random.HIGHEST_VERSION + 1):
+            np.random.seed(self.seed, version=version)
+            actual = np.random.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
+            desired = np.array([1, 1, 2, 2])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_choice_uniform_noreplace(self):
-        np.random.seed(self.seed)
-        actual = np.random.choice(4, 3, replace=False)
-        desired = np.array([0, 1, 3])
-        np.testing.assert_array_equal(actual, desired)
+        for version in range(random.HIGHEST_VERSION + 1):
+            np.random.seed(self.seed, version=version)
+            actual = np.random.choice(4, 3, replace=False)
+            desired = np.array([[0, 1, 3], [2, 3, 1]][version])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_noreplace(self):
-        np.random.seed(self.seed)
-        actual = np.random.choice(4, 3, replace=False,
-                                  p=[0.1, 0.3, 0.5, 0.1])
-        desired = np.array([2, 3, 1])
-        np.testing.assert_array_equal(actual, desired)
+        for version in range(random.HIGHEST_VERSION + 1):
+            np.random.seed(self.seed, version=version)
+            actual = np.random.choice(4, 3, replace=False,
+                                    p=[0.1, 0.3, 0.5, 0.1])
+            desired = np.array([[2, 3, 1], [2, 3, 1]][version])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_choice_noninteger(self):
-        np.random.seed(self.seed)
-        actual = np.random.choice(['a', 'b', 'c', 'd'], 4)
-        desired = np.array(['c', 'd', 'c', 'd'])
-        np.testing.assert_array_equal(actual, desired)
+        for version in range(random.HIGHEST_VERSION + 1):
+            np.random.seed(self.seed, version=version)
+            actual = np.random.choice(['a', 'b', 'c', 'd'], 4)
+            desired = np.array(['c', 'd', 'c', 'd'])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_choice_exceptions(self):
-        sample = np.random.choice
-        assert_raises(ValueError, sample, -1, 3)
-        assert_raises(ValueError, sample, 3., 3)
-        assert_raises(ValueError, sample, [[1, 2], [3, 4]], 3)
-        assert_raises(ValueError, sample, [], 3)
-        assert_raises(ValueError, sample, [1, 2, 3, 4], 3,
-                                          p=[[0.25, 0.25], [0.25, 0.25]])
-        assert_raises(ValueError, sample, [1, 2], 3, p=[0.4, 0.4, 0.2])
-        assert_raises(ValueError, sample, [1, 2], 3, p=[1.1, -0.1])
-        assert_raises(ValueError, sample, [1, 2], 3, p=[0.4, 0.4])
-        assert_raises(ValueError, sample, [1, 2, 3], 4, replace=False)
-        assert_raises(ValueError, sample, [1, 2, 3], 2, replace=False,
-                                          p=[1, 0, 0])
+        for version in range(random.HIGHEST_VERSION + 1):
+            rs = RandomState(version=version)
+            assert_raises(ValueError, rs.choice, -1, 3)
+            assert_raises(ValueError, rs.choice, 3., 3)
+            assert_raises(ValueError, rs.choice, [[1, 2], [3, 4]], 3)
+            assert_raises(ValueError, rs.choice, [], 3)
+            assert_raises(ValueError, rs.choice, [1, 2, 3, 4], 3,
+                                                 p=[[0.25, 0.25], [0.25, 0.25]])
+            assert_raises(ValueError, rs.choice, [1, 2], 3, p=[0.4, 0.4, 0.2])
+            assert_raises(ValueError, rs.choice, [1, 2], 3, p=[1.1, -0.1])
+            assert_raises(ValueError, rs.choice, [1, 2], 3, p=[0.4, 0.4])
+            assert_raises(ValueError, rs.choice, [1, 2, 3], 4, replace=False)
+            assert_raises(ValueError, rs.choice, [1, 2, 3], 2, replace=False,
+                                                 p=[1, 0, 0])
 
     def test_choice_return_shape(self):
-        p = [0.1, 0.9]
-        # Check scalar
-        assert_(np.isscalar(np.random.choice(2, replace=True)))
-        assert_(np.isscalar(np.random.choice(2, replace=False)))
-        assert_(np.isscalar(np.random.choice(2, replace=True, p=p)))
-        assert_(np.isscalar(np.random.choice(2, replace=False, p=p)))
-        assert_(np.isscalar(np.random.choice([1, 2], replace=True)))
-        assert_(np.random.choice([None], replace=True) is None)
-        a = np.array([1, 2])
-        arr = np.empty(1, dtype=object)
-        arr[0] = a
-        assert_(np.random.choice(arr, replace=True) is a)
+        for version in range(random.HIGHEST_VERSION + 1):
+            rs = RandomState(version=version)
 
-        # Check 0-d array
-        s = tuple()
-        assert_(not np.isscalar(np.random.choice(2, s, replace=True)))
-        assert_(not np.isscalar(np.random.choice(2, s, replace=False)))
-        assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
-        assert_(not np.isscalar(np.random.choice(2, s, replace=False, p=p)))
-        assert_(not np.isscalar(np.random.choice([1, 2], s, replace=True)))
-        assert_(np.random.choice([None], s, replace=True).ndim == 0)
-        a = np.array([1, 2])
-        arr = np.empty(1, dtype=object)
-        arr[0] = a
-        assert_(np.random.choice(arr, s, replace=True).item() is a)
+            p = [0.1, 0.9]
+            # Check scalar
+            assert_(np.isscalar(rs.choice(2, replace=True)))
+            assert_(np.isscalar(rs.choice(2, replace=False)))
+            assert_(np.isscalar(rs.choice(2, replace=True, p=p)))
+            assert_(np.isscalar(rs.choice(2, replace=False, p=p)))
+            assert_(np.isscalar(rs.choice([1, 2], replace=True)))
+            assert_(rs.choice([None], replace=True) is None)
+            a = np.array([1, 2])
+            arr = np.empty(1, dtype=object)
+            arr[0] = a
+            assert_(rs.choice(arr, replace=True) is a)
 
-        # Check multi dimensional array
-        s = (2, 3)
-        p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+            # Check 0-d array
+            s = tuple()
+            assert_(not np.isscalar(rs.choice(2, s, replace=True)))
+            assert_(not np.isscalar(rs.choice(2, s, replace=False)))
+            assert_(not np.isscalar(rs.choice(2, s, replace=True, p=p)))
+            assert_(not np.isscalar(rs.choice(2, s, replace=False, p=p)))
+            assert_(not np.isscalar(rs.choice([1, 2], s, replace=True)))
+            assert_(rs.choice([None], s, replace=True).ndim == 0)
+            a = np.array([1, 2])
+            arr = np.empty(1, dtype=object)
+            arr[0] = a
+            assert_(rs.choice(arr, s, replace=True).item() is a)
+
+            # Check multi dimensional array
+            s = (2, 3)
+            p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
+            assert_(rs.choice(6, s, replace=True).shape, s)
+            assert_(rs.choice(6, s, replace=False).shape, s)
+            assert_(rs.choice(6, s, replace=True, p=p).shape, s)
+            assert_(rs.choice(6, s, replace=False, p=p).shape, s)
+            assert_(rs.choice(np.arange(6), s, replace=True).shape, s)
 
     def test_bytes(self):
         np.random.seed(self.seed)
@@ -695,14 +747,14 @@ class TestThread(object):
         out2 = np.empty((len(self.seeds),) + sz)
 
         # threaded generation
-        t = [Thread(target=function, args=(np.random.RandomState(s), o))
+        t = [Thread(target=function, args=(RandomState(s), o))
              for s, o in zip(self.seeds, out1)]
         [x.start() for x in t]
         [x.join() for x in t]
 
         # the same serial
         for s, o in zip(self.seeds, out2):
-            function(np.random.RandomState(s), o)
+            function(RandomState(s), o)
 
         # these platforms change x87 fpu precision mode in threads
         if (np.intp().dtype.itemsize == 4 and sys.platform == "win32"):

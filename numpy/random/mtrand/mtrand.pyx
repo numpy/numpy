@@ -154,7 +154,6 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size,
                 array_data[i] = func(state)
         return array
 
-
 cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a,
                            object lock):
     cdef double *array_data
@@ -224,7 +223,6 @@ cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a
             for i from 0 <= i < length:
                 array_data[i] = func(state, a, b)
         return array
-
 
 cdef object cont2_array(rk_state *state, rk_cont2 func, object size,
                         ndarray oa, ndarray ob, object lock):
@@ -574,9 +572,15 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
+
+HIGHEST_VERSION = 1
+cdef int _HIGHEST_VERSION = HIGHEST_VERSION
+cdef long poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max) * 10
+
+
 cdef class RandomState:
     """
-    RandomState(seed=None)
+    RandomState(seed=None, *, version=None)
 
     Container for the Mersenne Twister pseudo-random number generator.
 
@@ -607,6 +611,11 @@ cdef class RandomState:
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
 
+    version : int between 0 and ``HIGHEST_VERSION``, keyword-only, optional
+        The version of the RNG methods.  Defaults to ``HIGHEST_VERSION``,
+        except if ``seed`` is set in which case it defaults to 0 for backwards
+        compatibility.
+
     Notes
     -----
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -616,22 +625,21 @@ cdef class RandomState:
     of probability distributions to choose from.
 
     """
+    cdef readonly int version
     cdef rk_state *internal_state
     cdef object lock
-    poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
 
-    def __init__(self, seed=None):
-        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
-
+    def __init__(self, seed=None, *, version=None):
         self.lock = Lock()
-        self.seed(seed)
+        self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
+        self.seed(seed, version=version)
 
     def __dealloc__(self):
         if self.internal_state != NULL:
             PyMem_Free(self.internal_state)
             self.internal_state = NULL
 
-    def seed(self, seed=None):
+    def seed(self, seed=None, *, version=None):
         """
         seed(seed=None)
 
@@ -651,6 +659,13 @@ cdef class RandomState:
         RandomState
 
         """
+        if version is None:
+            version = _HIGHEST_VERSION if seed is None else 0
+        if version not in range(_HIGHEST_VERSION + 1):
+            raise ValueError("`version` must be an integer between 0 and {0}".
+                             format(_HIGHEST_VERSION))
+        self.version = version
+
         cdef rk_error errcode
         cdef ndarray obj "arrayObject_obj"
         try:
@@ -682,14 +697,17 @@ cdef class RandomState:
 
         Returns
         -------
-        out : tuple(str, ndarray of 624 uints, int, int, float)
+        out : tuple(tuple(int, str), ndarray of 624 uints, int, int, float)
             The returned tuple has the following items:
 
-            1. the string 'MT19937'.
+            1. the version of RNG methods, and the string 'MT19937'.
             2. a 1-D array of 624 unsigned integer keys.
             3. an integer ``pos``.
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
+
+        For backwards compatibility, the first item is set to 'MT19937' if the
+        version is 0.
 
         See Also
         --------
@@ -703,14 +721,18 @@ cdef class RandomState:
 
         """
         cdef ndarray state "arrayObject_state"
+        version_info = (self.version,) if self.version else ()
+        rng_info = "MT19937"
         state = <ndarray>np.empty(624, np.uint)
         with self.lock:
-            memcpy(<void*>PyArray_DATA(state), <void*>(self.internal_state.key), 624*sizeof(long))
+            memcpy(<void*>PyArray_DATA(state),
+                   <void*>(self.internal_state.key),
+                   624 * sizeof(long))
             has_gauss = self.internal_state.has_gauss
             gauss = self.internal_state.gauss
             pos = self.internal_state.pos
         state = <ndarray>np.asarray(state, np.uint32)
-        return ('MT19937', state, pos, has_gauss, gauss)
+        return version_info + (rng_info, state, pos, has_gauss, gauss)
 
     def set_state(self, state):
         """
@@ -723,9 +745,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        state : tuple(str, ndarray of 624 uints, int, int, float)
+        state : tuple([int], str, ndarray of 624 uints, int, int, float)
             The `state` tuple has the following items:
 
+            0. the version of the RNG methods if >0, not present for version 0.
             1. the string 'MT19937', specifying the Mersenne Twister algorithm.
             2. a 1-D array of 624 unsigned integers ``keys``.
             3. an integer ``pos``.
@@ -747,6 +770,9 @@ cdef class RandomState:
         random distributions in NumPy. If the internal state is manually altered,
         the user should know exactly what he/she is doing.
 
+        For backwards compatibility, the form (str, ...) is also accepted, and
+        interpreted as setting `version` to 0.
+
         For backwards compatibility, the form (str, array of 624 uints, int) is
         also accepted although it is missing some information about the cached
         Gaussian value: ``state = ('MT19937', keys, pos)``.
@@ -761,15 +787,22 @@ cdef class RandomState:
         """
         cdef ndarray obj "arrayObject_obj"
         cdef int pos
-        algorithm_name = state[0]
-        if algorithm_name != 'MT19937':
-            raise ValueError("algorithm must be 'MT19937'")
-        key, pos = state[1:3]
-        if len(state) == 3:
+        if isinstance(state[0], basestring):
+            version = 0
+            rng, *rest = state
+        else:
+            version, rng, *rest = state
+        if version not in range(_HIGHEST_VERSION + 1):
+            raise ValueError("`version` must be an integer between 0 and {0}".
+                             format(_HIGHEST_VERSION))
+        if rng != 'MT19937':
+            raise ValueError("rng must be 'MT19937'")
+        key, pos, *rest = rest
+        if not rest:
             has_gauss = 0
             cached_gaussian = 0.0
         else:
-            has_gauss, cached_gaussian = state[3:5]
+            has_gauss, cached_gaussian = rest
         try:
             obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_ULONG, 1, 1)
         except TypeError:
@@ -778,7 +811,10 @@ cdef class RandomState:
         if PyArray_DIM(obj, 0) != 624:
             raise ValueError("state must be 624 longs")
         with self.lock:
-            memcpy(<void*>(self.internal_state.key), <void*>PyArray_DATA(obj), 624*sizeof(long))
+            self.version = version
+            memcpy(<void*>(self.internal_state.key),
+                   <void*>PyArray_DATA(obj),
+                   624 * sizeof(long))
             self.internal_state.pos = pos
             self.internal_state.has_gauss = has_gauss
             self.internal_state.gauss = cached_gaussian
@@ -996,7 +1032,6 @@ cdef class RandomState:
             rk_fill(bytes, length, self.internal_state)
         return bytestring
 
-
     def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=None, replace=True, p=None)
@@ -1075,6 +1110,9 @@ cdef class RandomState:
 
         """
 
+        cdef npy_intp i, j, pop_size, output_size
+        cdef ndarray[npy_intp, ndim=1] tmp_idx_array
+
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -1117,6 +1155,7 @@ cdef class RandomState:
             size = np.prod(shape, dtype=np.intp)
         else:
             size = 1
+        output_size = size
 
         # Actual sampling
         if replace:
@@ -1154,7 +1193,20 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                idx = self.permutation(pop_size)[:size]
+                if self.version <= 0:
+                    idx = self.permutation(pop_size)[:size]
+                else:
+                    # perform a truncated Knuth shuffle.
+                    tmp_idx_array = np.arange(pop_size)
+                    i = 0
+                    while i < output_size:
+                        # rand int from [i, pop_size-1]
+                        j = rk_interval(pop_size - 1 - i, self.internal_state) + i
+                        tmp_idx_array[i], tmp_idx_array[j] = (
+                            tmp_idx_array[j], tmp_idx_array[i])
+                        i = i + 1
+                    idx = tmp_idx_array[:output_size]
+
                 if shape is not None:
                     idx.shape = shape
 
@@ -1177,7 +1229,6 @@ cdef class RandomState:
             return res
 
         return a[idx]
-
 
     def uniform(self, low=0.0, high=1.0, size=None):
         """
@@ -3865,7 +3916,7 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if lam < 0:
                 raise ValueError("lam < 0")
-            if lam > self.poisson_lam_max:
+            if lam > poisson_lam_max:
                 raise ValueError("lam value too large")
             return discd_array_sc(self.internal_state, rk_poisson, size, flam,
                                   self.lock)
@@ -3875,7 +3926,7 @@ cdef class RandomState:
         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less(olam, 0)):
             raise ValueError("lam < 0")
-        if np.any(np.greater(olam, self.poisson_lam_max)):
+        if np.any(np.greater(olam, poisson_lam_max)):
             raise ValueError("lam value too large.")
         return discd_array(self.internal_state, rk_poisson, size, olam,
                            self.lock)
