@@ -237,9 +237,9 @@ def setup_package():
         FULLVERSION, GIT_REVISION = get_version_info()
         metadata['version'] = FULLVERSION
     else:
-        if (len(sys.argv) >= 2 and sys.argv[1] == 'bdist_wheel' or
+        if (len(sys.argv) >= 2 and sys.argv[1] in ('bdist_wheel', 'bdist_egg') or
                 sys.version_info[0] < 3 and sys.platform == "win32"):
-            # bdist_wheel and the MS python2.7 VS sdk needs setuptools
+            # bdist_wheel, bdist_egg and the MS python2.7 VS sdk needs setuptools
             # the latter can also be triggered by (see python issue23246)
             # SET DISTUTILS_USE_SDK=1
             # SET MSSdk=1
