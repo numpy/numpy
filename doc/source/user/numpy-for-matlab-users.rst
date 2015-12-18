@@ -7,12 +7,12 @@ Numpy for Matlab users
 Introduction
 ============
 
-MATLAB® and NumPy/SciPy have a lot in common. But
-there are many differences. NumPy and SciPy were created to do numerical
-and scientific computing in the most natural way with Python, not to be
-MATLAB® clones. This page is intended to be a place to collect wisdom
-about the differences, mostly for the purpose of helping proficient
-MATLAB® users become proficient NumPy and SciPy users.
+MATLAB® and NumPy/SciPy have a lot in common. But there are many
+differences. NumPy and SciPy were created to do numerical and scientific
+computing in the most natural way with Python, not to be MATLAB® clones.
+This page is intended to be a place to collect wisdom about the
+differences, mostly for the purpose of helping proficient MATLAB® users
+become proficient NumPy and SciPy users.
 
 .. raw:: html
 
@@ -25,18 +25,39 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, the basic data type is a multidimensional array of double precision floating point numbers.  Most expressions take such arrays and return such arrays.  Operations on the 2-D instances of these arrays are designed to act more or less like matrix operations in linear algebra. 
-     - In NumPy the basic type is a multidimensional ``array``.  Operations on these arrays in all dimensionalities including 2D are elementwise operations.  However, there is a special ``matrix`` type for doing linear algebra, which is just a subclass of the ``array`` class.  Operations on matrix-class arrays are linear algebra operations. 
-   
-   * - MATLAB® uses 1 (one) based indexing. The initial element of a sequence is found using a(1).
+   * - In MATLAB®, the basic data type is a multidimensional array of
+       double precision floating point numbers.  Most expressions take such
+       arrays and return such arrays.  Operations on the 2-D instances of
+       these arrays are designed to act more or less like matrix operations
+       in linear algebra.
+     - In NumPy the basic type is a multidimensional ``array``.  Operations
+       on these arrays in all dimensionalities including 2D are elementwise
+       operations.  However, there is a special ``matrix`` type for doing
+       linear algebra, which is just a subclass of the ``array`` class.
+       Operations on matrix-class arrays are linear algebra operations.
+
+   * - MATLAB® uses 1 (one) based indexing. The initial element of a
+       sequence is found using a(1).
        :ref:`See note INDEXING <numpy-for-matlab-users.notes>`
-     - Python uses 0 (zero) based indexing. The initial element of a sequence is found using a[0]. 
-   
-   * - MATLAB®'s scripting language was created for doing linear algebra.  The syntax for basic matrix operations is nice and clean, but the API for adding GUIs and making full-fledged applications is more or less an afterthought. 
-     - NumPy is  based on Python, which was designed from the outset to be an excellent general-purpose programming language.  While Matlab's syntax for some array manipulations is more compact than     NumPy's, NumPy (by virtue of being an add-on to Python) can do many things that Matlab just cannot, for instance subclassing the main array type to do both array and matrix math cleanly. 
-   
-   * - In MATLAB®, arrays have pass-by-value semantics, with a lazy copy-on-write scheme to prevent actually creating copies until they are actually needed.  Slice operations copy parts of the array. 
-     - In NumPy arrays have pass-by-reference semantics.  Slice operations are views into an array. 
+     - Python uses 0 (zero) based indexing. The initial element of a
+       sequence is found using a[0].
+
+   * - MATLAB®'s scripting language was created for doing linear algebra.
+       The syntax for basic matrix operations is nice and clean, but the API
+       for adding GUIs and making full-fledged applications is more or less
+       an afterthought.
+     - NumPy is  based on Python, which was designed from the outset to be
+       an excellent general-purpose programming language.  While Matlab's
+       syntax for some array manipulations is more compact than
+       NumPy's, NumPy (by virtue of being an add-on to Python) can do many
+       things that Matlab just cannot, for instance subclassing the main
+       array type to do both array and matrix math cleanly.
+
+   * - In MATLAB®, arrays have pass-by-value semantics, with a lazy
+       copy-on-write scheme to prevent actually creating copies until they
+       are actually needed.  Slice operations copy parts of the array.
+     - In NumPy arrays have pass-by-reference semantics.  Slice operations
+       are views into an array.
 
 
 'array' or 'matrix'? Which should I use?
@@ -212,30 +233,41 @@ General Purpose Equivalents
    * - **MATLAB**
      - **numpy**
      - **Notes**
+
    * - ``help func``
      - ``info(func)`` or ``help(func)`` or ``func?`` (in Ipython)
      - get help on the function *func*
+
    * - ``which func``
      - `see note HELP <numpy-for-matlab-users.notes>`__
      - find out where *func* is defined
+
    * - ``type func``
      - ``source(func)`` or ``func??`` (in Ipython)
      - print source for *func* (if not a native function)
+
    * - ``a && b``
      - ``a and b``
-     - short-circuiting logical  AND operator (Python native operator); scalar arguments only
+     - short-circuiting logical  AND operator (Python native operator);
+       scalar arguments only
+
    * - ``a || b``
      - ``a or b``
-     - short-circuiting logical OR operator (Python native operator); scalar arguments only
+     - short-circuiting logical OR operator (Python native operator);
+       scalar arguments only
+
    * - ``1*i``, ``1*j``,  ``1i``, ``1j``
      - ``1j``
      - complex numbers
+
    * - ``eps``
      - ``np.spacing(1)``
-     - Distance between 1 and the nearest floating point number             
+     - Distance between 1 and the nearest floating point number.
+
    * - ``ode45``
      - ``scipy.integrate.ode(f).set_integrator('dopri5')``
      - integrate an ODE with Runge-Kutta 4,5
+
    * - ``ode15s``
      - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=5)``
      - integrate an ODE with BDF method
@@ -299,15 +331,18 @@ Linear Algebra Equivalents
 
    * - ``a(1:3,5:9)``
      - ``a[0:3][:,4:9]``
-     - rows one to three and columns five to nine of ``a``.  This gives read-only access.
+     - rows one to three and columns five to nine of ``a``.  This gives
+       read-only access.
 
    * - ``a([2,4,5],[1,3])``
      - ``a[ix_([1,3,4],[0,2])]``
-     - rows 2,4 and 5 and columns 1 and 3.  This allows the matrix to be modified, and doesn't require a regular slice.
+     - rows 2,4 and 5 and columns 1 and 3.  This allows the matrix to be
+       modified, and doesn't require a regular slice.
 
    * - ``a(3:2:21,:)``
      - ``a[ 2:21:2,:]``
-     - every other row of ``a``, starting with the third and going to the twenty-first
+     - every other row of ``a``, starting with the third and going to the
+       twenty-first
 
    * - ``a(1:2:end,:)``
      - ``a[ ::2,:]``
@@ -347,8 +382,8 @@ Linear Algebra Equivalents
 
    * - ``(a>0.5)``
      - ``(a>0.5)``
-     - matrix whose i,jth element is (a_ij > 0.5).  The Matlab result is
-       an array of 0s and 1s.  The NumPy result is an array of the boolean
+     - matrix whose i,jth element is (a_ij > 0.5).  The Matlab result is an
+       array of 0s and 1s.  The NumPy result is an array of the boolean
        values ``False`` and ``True``.
 
    * - ``find(a>0.5)``
@@ -389,11 +424,13 @@ Linear Algebra Equivalents
 
    * - ``1:10``
      - ``arange(1.,11.)`` or ``r_[1.:11.]`` or  ``r_[1:10:10j]``
-     - create an increasing vector (see note :ref:`RANGES <numpy-for-matlab-users.notes>`)
+     - create an increasing vector (see note :ref:`RANGES
+       <numpy-for-matlab-users.notes>`)
 
    * - ``0:9``
      - ``arange(10.)`` or  ``r_[:10.]`` or  ``r_[:9:10j]``
-     - create an increasing vector (see note :ref:`RANGES <numpy-for-matlab-users.notes>`)
+     - create an increasing vector (see note :ref:`RANGES
+       <numpy-for-matlab-users.notes>`)
 
    * - ``[1:10]'``
      - ``arange(1.,11.)[:, newaxis]``
@@ -421,7 +458,8 @@ Linear Algebra Equivalents
 
    * - ``diag(a,0)``
      - ``diag(a,0)``
-     - square diagonal matrix whose nonzero values are the elements of ``a``
+     - square diagonal matrix whose nonzero values are the elements of
+       ``a``
 
    * - ``rand(3,4)``
      - ``random.rand(3,4)``
@@ -452,7 +490,8 @@ Linear Algebra Equivalents
      - create m by n copies of ``a``
 
    * - ``[a b]``
-     - ``concatenate((a,b),1)`` or ``hstack((a,b))`` or ``column_stack((a,b))`` or ``c_[a,b]``
+     - ``concatenate((a,b),1)`` or ``hstack((a,b))`` or
+       ``column_stack((a,b))`` or ``c_[a,b]``
      - concatenate columns of ``a`` and ``b``
 
    * - ``[a; b]``
@@ -473,7 +512,8 @@ Linear Algebra Equivalents
 
    * - ``max(a,b)``
      - ``maximum(a, b)``
-     - compares ``a`` and ``b`` element-wise, and returns the maximum value from each pair
+     - compares ``a`` and ``b`` element-wise, and returns the maximum value
+       from each pair
 
    * - ``norm(v)``
      - ``sqrt(dot(v,v))`` or ``np.linalg.norm(v)``
@@ -481,11 +521,13 @@ Linear Algebra Equivalents
 
    * - ``a & b``
      - ``logical_and(a,b)``
-     - element-by-element AND operator (Numpy ufunc) :ref:`See note LOGICOPS <numpy-for-matlab-users.notes>`
+     - element-by-element AND operator (Numpy ufunc) :ref:`See note
+       LOGICOPS <numpy-for-matlab-users.notes>`
 
    * - ``a | b``
      - ``logical_or(a,b)``
-     - element-by-element OR operator (Numpy ufunc) :ref:`See note LOGICOPS <numpy-for-matlab-users.notes>`
+     - element-by-element OR operator (Numpy ufunc) :ref:`See note LOGICOPS
+       <numpy-for-matlab-users.notes>`
 
    * - ``bitand(a,b)``
      - ``a & b``
@@ -508,7 +550,8 @@ Linear Algebra Equivalents
      - matrix rank of a 2D array / matrix ``a``
 
    * - ``a\b``
-     - ``linalg.solve(a,b)`` if ``a`` is square; ``linalg.lstsq(a,b)`` otherwise
+     - ``linalg.solve(a,b)`` if ``a`` is square; ``linalg.lstsq(a,b)``
+       otherwise
      - solution of a x = b for x
 
    * - ``b/a``
@@ -521,7 +564,9 @@ Linear Algebra Equivalents
 
    * - ``chol(a)``
      - ``linalg.cholesky(a).T``
-     - cholesky factorization of a matrix (``chol(a)`` in matlab returns an upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower triangular matrix)
+     - cholesky factorization of a matrix (``chol(a)`` in matlab returns an
+       upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
+       triangular matrix)
 
    * - ``[V,D]=eig(a)``
      - ``D,V = linalg.eig(a)``
@@ -624,6 +669,7 @@ Numpy's & and \| operators are:
    inputs. Matlab treats any non-zero value as 1 and returns the logical
    AND. For example (3 & 4) in Numpy is 0, while in Matlab both 3 and 4
    are considered logical true and (3 & 4) returns 1.
+
 -  Precedence: Numpy's & operator is higher precedence than logical
    operators like < and >; Matlab's is the reverse.
 
@@ -659,6 +705,7 @@ NumPy, or rather Python, has similar facilities.
 
 -  To modify your Python search path to include the locations of your
    own modules, define the ``PYTHONPATH`` environment variable.
+
 -  To have a particular script file executed when the interactive Python
    interpreter is started, define the ``PYTHONSTARTUP`` environment
    variable to contain the name of your startup script.
