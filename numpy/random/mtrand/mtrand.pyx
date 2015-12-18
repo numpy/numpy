@@ -4459,23 +4459,24 @@ cdef class RandomState:
         For the first run, we threw 3 times 1, 4 times 2, etc.  For the second,
         we threw 2 times 1, 4 times 2, etc.
 
-        A loaded dice is more likely to land on number 6:
+        A loaded die is more likely to land on number 6:
 
         >>> np.random.multinomial(100, [1/7.]*5 + [2/7.])
         array([11, 16, 14, 17, 16, 26])
 
-        The probability inputs should already be normalized. The value of the
-        last entry is always ignored and assumed to take up any leftover
-        probability mass. To sample a biased coin which has twice as much
-        weight on one side than the other should *not* be sampled like so:
-
-        >>> np.random.multinomial(100, [1.0, 2.0])  # WRONG
-        array([100,   0])
-
-        but rather, like so:
+        The probability inputs should be normalized. As an implementation
+        detail, the value of the last entry is ignored and assumed to take
+        up any leftover probability mass, but this should not be relied on.
+        A biased coin which has twice as much weight on one side as on the
+        other should be sampled like so:
 
         >>> np.random.multinomial(100, [1.0 / 3, 2.0 / 3])  # RIGHT
         array([38, 62])
+
+        not like:
+
+        >>> np.random.multinomial(100, [1.0, 2.0])  # WRONG
+        array([100,   0])
 
         """
         cdef npy_intp d
