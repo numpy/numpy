@@ -2097,7 +2097,8 @@ class vectorize(object):
         return _res
 
 
-def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
+def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
+        aweights=None):
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -2118,14 +2119,14 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None, fweights=None, aweights=None):
     y : array_like, optional
         An additional set of variables and observations. `y` has the same form
         as that of `m`.
-    rowvar : int, optional
-        If `rowvar` is non-zero (default), then each row represents a
+    rowvar : bool, optional
+        If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : int, optional
-        Default normalization is by ``(N - 1)``, where ``N`` corresponds to the
-        number of observations given (unbiased estimate). If `bias` is 1, then
+    bias : bool, optional
+        Default normalization (False) is by ``(N - 1)``, where ``N`` is the
+        number of observations given (unbiased estimate). If `bias` is True, then
         normalization is by ``N``. These values can be overridden by using the
         keyword ``ddof`` in numpy versions >= 1.5.
     ddof : int, optional
