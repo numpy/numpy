@@ -12,7 +12,7 @@ import warnings
 from functools import partial
 import shutil
 import contextlib
-from tempfile import mkdtemp
+from tempfile import mkdtemp, mkstemp
 
 from .nosetester import import_nose
 from numpy.core import float32, empty, arange, array_repr, ndarray
@@ -30,7 +30,7 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
            'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
-           'SkipTest', 'KnownFailureException']
+           'SkipTest', 'KnownFailureException', 'temppath', 'tempdir']
 
 
 class KnownFailureException(Exception):
@@ -1810,8 +1810,31 @@ def tempdir(*args, **kwargs):
 
     """
     tmpdir = mkdtemp(*args, **kwargs)
-    yield tmpdir
-    shutil.rmtree(tmpdir)
+    try:
+        yield tmpdir
+    finally:
+        shutil.rmtree(tmpdir)
+
+@contextlib.contextmanager
+def temppath(*args, **kwargs):
+    """Context manager for temporary files.
+
+    Context manager that returns the path to a closed temporary file. Its
+    parameters are the same as for tempfile.mkstemp and are passed directly
+    to that function. The underlying file is removed when the context is
+    exited, so it should be closed at that time.
+  
+    Windows does not allow a temporary file to be opened if it is already
+    open, so the underlying file must be closed after opening before it
+    can be opened again.
+
+    """
+    fd, path = mkstemp(*args, **kwargs)
+    os.close(fd)
+    try:
+        yield path
+    finally:
+        os.remove(path)
 
 
 class clear_and_catch_warnings(warnings.catch_warnings):
