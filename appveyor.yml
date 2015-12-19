@@ -1,0 +1,28 @@
+skip_tags: true
+clone_depth: 1
+
+os: Visual Studio 2015
+
+environment:
+  PYTHON_ARCH: "x86_64"
+  matrix:
+    - PY_MAJOR_VER: 2
+    - PY_MAJOR_VER: 3
+
+matrix:
+  #fast_finish: true
+  allow_failures:
+    - PY_MAJOR_VER: 2
+    - PY_MAJOR_VER: 3
+
+build_script:
+  - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda$env:PY_MAJOR_VER-latest-Windows-$env:PYTHON_ARCH.exe" C:\Miniconda.exe; echo "Finished downloading miniconda"
+  - cmd: C:\Miniconda.exe /S /D=C:\Py
+  - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
+  - conda config --set always_yes yes
+  - conda update conda
+  - conda install cython nose
+  - pip install . -vvv
+
+test_script:
+  - python runtests.py -v -n
