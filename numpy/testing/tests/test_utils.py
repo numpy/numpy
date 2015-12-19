@@ -788,11 +788,13 @@ def test_tempdir():
             pass
     assert_(not os.path.isdir(tdir))
 
+    raised = False
     try:
         with tempdir() as tdir:
             raise ValueError()
     except ValueError:
-        pass
+        raised = True
+    assert_(raised)
     assert_(not os.path.isdir(tdir))
 
 
@@ -803,11 +805,13 @@ def test_temppath():
             pass
     assert_(not os.path.isfile(fpath))
 
+    raised = False
     try:
         with temppath() as fpath:
             raise ValueError()
     except ValueError:
-        pass
+        raised = True
+    assert_(raised)
     assert_(not os.path.isfile(fpath))
 
 

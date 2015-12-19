@@ -19,7 +19,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
     assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal,
+    assert_array_equal,temppath
 )
 from numpy.testing.utils import tempdir
 
@@ -259,26 +259,17 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_not_closing_opened_fid(self):
         # Test that issue #2178 is fixed:
         # verify could seek on 'loaded' file
-
-        fd, tmp = mkstemp(suffix='.npz')
-        os.close(fd)
-        try:
-            fp = open(tmp, 'wb')
-            np.savez(fp, data='LOVELY LOAD')
-            fp.close()
-
-            fp = open(tmp, 'rb', 10000)
-            fp.seek(0)
-            assert_(not fp.closed)
-            np.load(fp)['data']
-            # fp must not get closed by .load
-            assert_(not fp.closed)
-            fp.seek(0)
-            assert_(not fp.closed)
-
-        finally:
-            fp.close()
-            os.remove(tmp)
+        with temppath(suffix='.npz') as tmp:
+            with open(tmp, 'wb') as fp:
+                np.savez(fp, data='LOVELY LOAD')
+            with open(tmp, 'rb', 10000) as fp:
+                fp.seek(0)
+                assert_(not fp.closed)
+                np.load(fp)['data']
+                # fp must not get closed by .load
+                assert_(not fp.closed)
+                fp.seek(0)
+                assert_(not fp.closed)
 
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
