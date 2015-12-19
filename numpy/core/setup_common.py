@@ -194,6 +194,8 @@ def check_long_double_representation(cmd):
             cmd.compiler.compile_options.remove("/GL")
         except ValueError:
             pass
+        except AttributeError:
+            pass
 
     # We need to use _compile because we need the object filename
     src, obj = cmd._compile(body, None, None, 'c')
