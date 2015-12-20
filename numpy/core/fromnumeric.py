@@ -1434,20 +1434,20 @@ def ravel(a, order='C'):
     It is equivalent to ``reshape(-1, order=order)``.
 
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> print np.ravel(x)
+    >>> print(np.ravel(x))
     [1 2 3 4 5 6]
 
-    >>> print x.reshape(-1)
+    >>> print(x.reshape(-1))
     [1 2 3 4 5 6]
 
-    >>> print np.ravel(x, order='F')
+    >>> print(np.ravel(x, order='F'))
     [1 4 2 5 3 6]
 
     When ``order`` is 'A', it will preserve the array's 'C' or 'F' ordering:
 
-    >>> print np.ravel(x.T)
+    >>> print(np.ravel(x.T))
     [1 4 2 5 3 6]
-    >>> print np.ravel(x.T, order='A')
+    >>> print(np.ravel(x.T, order='A'))
     [1 2 3 4 5 6]
 
     When ``order`` is 'K', it will preserve orderings that are neither 'C'

@@ -1293,7 +1293,7 @@ def measure(code_str,times=1,label=None):
     --------
     >>> etime = np.testing.measure('for i in range(1000): np.sqrt(i**2)',
     ...                            times=times)
-    >>> print "Time for a single execution : ", etime / times, "s"
+    >>> print("Time for a single execution : ", etime / times, "s")
     Time for a single execution :  0.005 s
 
     """

@@ -715,12 +715,12 @@ def polyadd(a1, a2):
 
     >>> p1 = np.poly1d([1, 2])
     >>> p2 = np.poly1d([9, 5, 4])
-    >>> print p1
+    >>> print(p1)
     1 x + 2
-    >>> print p2
+    >>> print(p2)
        2
     9 x + 5 x + 4
-    >>> print np.polyadd(p1, p2)
+    >>> print(np.polyadd(p1, p2))
        2
     9 x + 6 x + 6
 
@@ -826,13 +826,13 @@ def polymul(a1, a2):
 
     >>> p1 = np.poly1d([1, 2, 3])
     >>> p2 = np.poly1d([9, 5, 1])
-    >>> print p1
+    >>> print(p1)
        2
     1 x + 2 x + 3
-    >>> print p2
+    >>> print(p2)
        2
     9 x + 5 x + 1
-    >>> print np.polymul(p1, p2)
+    >>> print(np.polymul(p1, p2))
        4      3      2
     9 x + 23 x + 38 x + 17 x + 3
 
@@ -966,7 +966,7 @@ class poly1d(object):
     Construct the polynomial :math:`x^2 + 2x + 3`:
 
     >>> p = np.poly1d([1, 2, 3])
-    >>> print np.poly1d(p)
+    >>> print(np.poly1d(p))
        2
     1 x + 2 x + 3
 
@@ -1022,7 +1022,7 @@ class poly1d(object):
     using the `variable` parameter:
 
     >>> p = np.poly1d([1,2,3], variable='z')
-    >>> print p
+    >>> print(p)
        2
     1 z + 2 z + 3
 

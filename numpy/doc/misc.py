@@ -86,7 +86,7 @@ Examples
  >>> np.sqrt(np.array([-1.]))
  FloatingPointError: invalid value encountered in sqrt
  >>> def errorhandler(errstr, errflag):
- ...      print "saw stupid error!"
+ ...      print("saw stupid error!")
  >>> np.seterrcall(errorhandler)
  <function err_handler at 0x...>
  >>> j = np.seterr(all='call')

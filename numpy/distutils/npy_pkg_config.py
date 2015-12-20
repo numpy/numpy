@@ -366,7 +366,7 @@ def read_config(pkgname, dirs=None):
     >>> npymath_info = np.distutils.npy_pkg_config.read_config('npymath')
     >>> type(npymath_info)
     <class 'numpy.distutils.npy_pkg_config.LibraryInfo'>
-    >>> print npymath_info
+    >>> print(npymath_info)
     Name: npymath
     Description: Portable, core math library implementing C99 standard
     Requires:

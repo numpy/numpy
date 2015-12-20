@@ -80,7 +80,7 @@ class Arrayterator(object):
 
     >>> for subarr in a_itor:
     ...     if not subarr.all():
-    ...         print subarr, subarr.shape
+    ...         print(subarr, subarr.shape)
     ...
     [[[[0 1]]]] (1, 1, 1, 2)
 
@@ -158,7 +158,7 @@ class Arrayterator(object):
 
         >>> for subarr in a_itor.flat:
         ...     if not subarr:
-        ...         print subarr, type(subarr)
+        ...         print(subarr, type(subarr))
         ...
         0 <type 'numpy.int32'>
 

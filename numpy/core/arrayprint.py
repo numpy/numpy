@@ -114,13 +114,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Floating point precision can be set:
 
     >>> np.set_printoptions(precision=4)
-    >>> print np.array([1.123456789])
+    >>> print(np.array([1.123456789]))
     [ 1.1235]
 
     Long arrays can be summarised:
 
     >>> np.set_printoptions(threshold=5)
-    >>> print np.arange(10)
+    >>> print(np.arange(10))
     [0 1 2 ..., 7 8 9]
 
     Small results can be suppressed:
@@ -420,8 +420,8 @@ def array2string(a, max_line_width=None, precision=None,
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
-    >>> print np.array2string(x, precision=2, separator=',',
-    ...                       suppress_small=True)
+    >>> print(np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True))
     [ 0., 1., 2., 3.]
 
     >>> x  = np.arange(3.)

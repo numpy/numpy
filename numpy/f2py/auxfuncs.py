@@ -673,7 +673,7 @@ def getcallprotoargument(rout, cb_map={}):
     proto_args = ','.join(arg_types + arg_types2)
     if not proto_args:
         proto_args = 'void'
-    # print proto_args
+    # print(proto_args)
     return proto_args
 
 

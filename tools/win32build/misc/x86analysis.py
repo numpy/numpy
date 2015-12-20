@@ -148,9 +148,9 @@ def analyse(filename):
     sse3 = has_sse3(inst)
     #mmx = has_mmx(inst)
     #ppro = has_ppro(inst)
-    #print sse
-    #print sse2
-    #print sse3
+    #print(sse)
+    #print(sse2)
+    #print(sse3)
     print("SSE3 inst %d" % cntset(sse3))
     print("SSE2 inst %d" % cntset(sse2))
     print("SSE inst %d" % cntset(sse))

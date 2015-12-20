@@ -2147,12 +2147,12 @@ def masked_object(x, value, copy=True, shrink=True):
     >>> food = np.array(['green_eggs', 'ham'], dtype=object)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
-    >>> print eat
+    >>> print(eat)
     [-- ham]
     >>> # plain ol` ham is boring
     >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
-    >>> print eat
+    >>> print(eat)
     [cheese ham pineapple]
 
     Note that `mask` is set to ``nomask`` if possible.
@@ -2548,7 +2548,7 @@ class MaskedIterator(object):
     >>> type(fl)
     <class 'numpy.ma.core.MaskedIterator'>
     >>> for item in fl:
-    ...     print item
+    ...     print(item)
     ...
     0
     1
@@ -3064,11 +3064,11 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3.1],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1.0 -- 3.1]
          [-- 5.0 --]
          [7.0 -- 9.0]]
-        >>> print x.astype(int32)
+        >>> print(x.astype(int32))
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
@@ -3656,7 +3656,7 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
@@ -4261,11 +4261,11 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
-        >>> print x.ravel()
+        >>> print(x.ravel())
         [1 -- 3 -- 5 -- 7 -- 9]
 
         """
@@ -4317,11 +4317,11 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2],[3,4]], mask=[1,0,0,1])
-        >>> print x
+        >>> print(x)
         [[-- 2]
          [3 --]]
         >>> x = x.reshape((4,1))
-        >>> print x
+        >>> print(x)
         [[--]
          [2]
          [3]
@@ -4382,18 +4382,18 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
         >>> x.put([0,4,8],[10,20,30])
-        >>> print x
+        >>> print(x)
         [[10 -- 3]
          [-- 20 --]
          [7 -- 30]]
 
         >>> x.put(4,999)
-        >>> print x
+        >>> print(x)
         [[10 -- 3]
          [-- 999 --]
          [7 -- 30]]
@@ -4745,17 +4745,17 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
-        >>> print x.sum()
+        >>> print(x.sum())
         25
-        >>> print x.sum(axis=1)
+        >>> print(x.sum(axis=1))
         [4 5 16]
-        >>> print x.sum(axis=0)
+        >>> print(x.sum(axis=0))
         [8 5 12]
-        >>> print type(x.sum(axis=0, dtype=np.int64)[0])
+        >>> print(type(x.sum(axis=0, dtype=np.int64)[0]))
         <type 'numpy.int64'>
 
         """
@@ -4823,7 +4823,7 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
-        >>> print marr.cumsum()
+        >>> print(marr.cumsum())
         [0 1 3 -- -- -- 9 16 24 33]
 
         """
@@ -5223,12 +5223,12 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array(arange(4), mask=[1,1,0,0])
         >>> x.shape = (2,2)
-        >>> print x
+        >>> print(x)
         [[-- --]
          [2 3]]
-        >>> print x.argmin(axis=0, fill_value=-1)
+        >>> print(x.argmin(axis=0, fill_value=-1))
         [0 0]
-        >>> print x.argmin(axis=0, fill_value=9)
+        >>> print(x.argmin(axis=0, fill_value=9))
         [1 1]
 
         """
@@ -5324,19 +5324,19 @@ class MaskedArray(ndarray):
         >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # Default
         >>> a.sort()
-        >>> print a
+        >>> print(a)
         [1 3 5 -- --]
 
         >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # Put missing values in the front
         >>> a.sort(endwith=False)
-        >>> print a
+        >>> print(a)
         [-- -- 1 3 5]
 
         >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # fill_value takes over endwith
         >>> a.sort(endwith=False, fill_value=3)
-        >>> print a
+        >>> print(a)
         [1 -- -- 3 5]
 
         """
@@ -5452,7 +5452,7 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array(np.arange(6), mask=[0 ,1, 0, 0, 0 ,1]).reshape(3, 2)
-        >>> print x
+        >>> print(x)
         [[0 --]
          [2 3]
          [4 --]]
@@ -5462,7 +5462,7 @@ class MaskedArray(ndarray):
         masked_array(data = [0 3],
                      mask = [False False],
                fill_value = 999999)
-        >>> print x.mini(axis=1)
+        >>> print(x.mini(axis=1))
         [0 2 4]
 
         """
@@ -5741,11 +5741,11 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print x
+        >>> print(x)
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
-        >>> print x.toflex()
+        >>> print(x.toflex())
         [[(1, False) (2, True) (3, False)]
          [(4, True) (5, False) (6, True)]
          [(7, False) (8, True) (9, False)]]
@@ -6914,14 +6914,14 @@ def where(condition, x=_NoValue, y=_NoValue):
     >>> x = np.ma.array(np.arange(9.).reshape(3, 3), mask=[[0, 1, 0],
     ...                                                    [1, 0, 1],
     ...                                                    [0, 1, 0]])
-    >>> print x
+    >>> print(x)
     [[0.0 -- 2.0]
      [-- 4.0 --]
      [6.0 -- 8.0]]
     >>> np.ma.where(x > 5)    # return the indices where x > 5
     (array([2, 2]), array([0, 2]))
 
-    >>> print np.ma.where(x > 5, x, -3.1416)
+    >>> print(np.ma.where(x > 5, x, -3.1416))
     [[-3.1416 -- -3.1416]
      [-- -3.1416 --]
      [6.0 -- 8.0]]

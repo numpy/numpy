@@ -29,7 +29,7 @@ class FortranTestCase(unittest.TestCase):
     # commenting it out.  --WFS
     # def testSecondElementContiguous(self):
     #     "Test Fortran matrix initialized from reshaped default array"
-    #     print >>sys.stderr, self.typeStr, "... ",
+    #     print(self.typeStr, "... ", end="", file=sys.stderr)
     #     second = Fortran.__dict__[self.typeStr + "SecondElement"]
     #     matrix = np.arange(9).reshape(3, 3).astype(self.typeCode)
     #     self.assertEquals(second(matrix), 3)

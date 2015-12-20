@@ -1853,7 +1853,7 @@ def lstsq(a, b, rcond=-1):
            [ 3.,  1.]])
 
     >>> m, c = np.linalg.lstsq(A, y)[0]
-    >>> print m, c
+    >>> print(m, c)
     1.0 -0.95
 
     Plot the data along with the fitted line:

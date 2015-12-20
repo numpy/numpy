@@ -123,13 +123,13 @@ For example, consider the following Python code:
 
   class C(object):
       def __new__(cls, *args):
-          print 'Cls in __new__:', cls
-          print 'Args in __new__:', args
+          print('Cls in __new__:', cls)
+          print('Args in __new__:', args)
           return object.__new__(cls, *args)
 
       def __init__(self, *args):
-          print 'type(self) in __init__:', type(self)
-          print 'Args in __init__:', args
+          print('type(self) in __init__:', type(self))
+          print('Args in __init__:', args)
 
 meaning that we get:
 
@@ -159,13 +159,13 @@ of some other class.  Consider the following:
 
   class D(C):
       def __new__(cls, *args):
-          print 'D cls is:', cls
-          print 'D args in __new__:', args
+          print('D cls is:', cls)
+          print('D args in __new__:', args)
           return C.__new__(C, *args)
 
       def __init__(self, *args):
           # we never get here
-          print 'In D __init__'
+          print('In D __init__')
 
 meaning that:
 
@@ -242,18 +242,18 @@ The following code allows us to look at the call sequences and arguments:
 
    class C(np.ndarray):
        def __new__(cls, *args, **kwargs):
-           print 'In __new__ with class %s' % cls
+           print('In __new__ with class %s' % cls)
            return np.ndarray.__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
            # in practice you probably will not need or want an __init__
            # method for your subclass
-           print 'In __init__ with class %s' % self.__class__
+           print('In __init__ with class %s' % self.__class__)
 
        def __array_finalize__(self, obj):
-           print 'In array_finalize:'
-           print '   self type is %s' % type(self)
-           print '   obj type is %s' % type(obj)
+           print('In array_finalize:')
+           print('   self type is %s' % type(self))
+           print('   obj type is %s' % type(obj))
 
 
 Now:
@@ -441,16 +441,16 @@ some print statements:
           return obj
 
       def __array_finalize__(self, obj):
-          print 'In __array_finalize__:'
-          print '   self is %s' % repr(self)
-          print '   obj is %s' % repr(obj)
+          print('In __array_finalize__:')
+          print('   self is %s' % repr(self))
+          print('   obj is %s' % repr(obj))
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
       def __array_wrap__(self, out_arr, context=None):
-          print 'In __array_wrap__:'
-          print '   self is %s' % repr(self)
-          print '   arr is %s' % repr(out_arr)
+          print('In __array_wrap__:')
+          print('   self is %s' % repr(self))
+          print('   arr is %s' % repr(out_arr))
           # then just call the parent
           return np.ndarray.__array_wrap__(self, out_arr, context)
 
