@@ -1739,31 +1739,30 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
     a : array_like
         Elements to sum.
     axis : None or int or tuple of ints, optional
-        Axis or axes along which a sum is performed.
-        The default (`axis` = `None`) is perform a sum over all
-        the dimensions of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
+        Axis or axes along which a sum is performed.  The default,
+        axis=None, will sum all of the elements of the input array.  If
+        axis is negative it counts from the last to the first axis.
 
         .. versionadded:: 1.7.0
 
-        If this is a tuple of ints, a sum is performed on multiple
-        axes, instead of a single axis or all the axes as before.
+        If axis is a tuple of ints, a sum is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
     dtype : dtype, optional
-        The type of the returned array and of the accumulator in which
-        the elements are summed.  By default, the dtype of `a` is used.
-        An exception is when `a` has an integer type with less precision
-        than the default platform integer.  In that case, the default
-        platform integer is used instead.
+        The type of the returned array and of the accumulator in which the
+        elements are summed.  The dtype of `a` is used by default unless `a`
+        has an integer dtype of less precision than the default platform
+        integer.  In that case, if `a` is signed then the platform integer
+        is used while if `a` is unsigned then an unsigned integer of the
+        same precision as the platform integer is used.
     out : ndarray, optional
-        Array into which the output is placed.  By default, a new array is
-        created.  If `out` is given, it must be of the appropriate shape
-        (the shape of `a` with `axis` removed, i.e.,
-        ``numpy.delete(a.shape, axis)``).  Its type is preserved. See
-        `doc.ufuncs` (Section "Output arguments") for more details.
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output, but the type of the output
+        values will be cast if necessary.
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one. With this option, the result
+        will broadcast correctly against the input array.
 
     Returns
     -------
@@ -2392,29 +2391,31 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
     a : array_like
         Input data.
     axis : None or int or tuple of ints, optional
-        Axis or axes along which a product is performed.
-        The default (`axis` = `None`) is perform a product over all
-        the dimensions of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
+        Axis or axes along which a product is performed.  The default,
+        axis=None, will calculate the product of all the elements in the
+        input array. If axis is negative it counts from the last to the
+        first axis.
 
         .. versionadded:: 1.7.0
 
-        If this is a tuple of ints, a product is performed on multiple
-        axes, instead of a single axis or all the axes as before.
-    dtype : data-type, optional
-        The data-type of the returned array, as well as of the accumulator
-        in which the elements are multiplied.  By default, if `a` is of
-        integer type, `dtype` is the default platform integer. (Note: if
-        the type of `a` is unsigned, then so is `dtype`.)  Otherwise,
-        the dtype is the same as that of `a`.
+        If axis is a tuple of ints, a product is performed on all of the
+        axes specified in the tuple instead of a single axis or all the
+        axes as before.
+    dtype : dtype, optional
+        The type of the returned array, as well as of the accumulator in
+        which the elements are multiplied.  The dtype of `a` is used by
+        default unless `a` has an integer dtype of less precision than the
+        default platform integer.  In that case, if `a` is signed then the
+        platform integer is used while if `a` is unsigned then an unsigned
+        integer of the same precision as the platform integer is used.
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
-        the same shape as the expected output, but the type of the
-        output values will be cast if necessary.
+        the same shape as the expected output, but the type of the output
+        values will be cast if necessary.
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one. With this option, the result
+        will broadcast correctly against the input array.
 
     Returns
     -------
