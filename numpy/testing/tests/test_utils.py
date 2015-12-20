@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import sys
+import os
 
 import numpy as np
 from numpy.testing import (
@@ -10,7 +11,7 @@ from numpy.testing import (
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, run_module_suite,
-    assert_string_equal
+    assert_string_equal, assert_, tempdir, temppath, 
     )
 import unittest
 
@@ -778,6 +779,40 @@ def test_clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 2)
+
+
+def test_tempdir():
+    with tempdir() as tdir:
+        fpath = os.path.join(tdir, 'tmp')
+        with open(fpath, 'w'):
+            pass
+    assert_(not os.path.isdir(tdir))
+
+    raised = False
+    try:
+        with tempdir() as tdir:
+            raise ValueError()
+    except ValueError:
+        raised = True
+    assert_(raised)
+    assert_(not os.path.isdir(tdir))
+
+
+
+def test_temppath():
+    with temppath() as fpath:
+        with open(fpath, 'w') as f:
+            pass
+    assert_(not os.path.isfile(fpath))
+
+    raised = False
+    try:
+        with temppath() as fpath:
+            raise ValueError()
+    except ValueError:
+        raised = True
+    assert_(raised)
+    assert_(not os.path.isfile(fpath))
 
 
 class my_cacw(clear_and_catch_warnings):
