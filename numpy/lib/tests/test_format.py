@@ -112,7 +112,7 @@ Test the header writing.
     >>> for arr in basic_arrays + record_arrays:
     ...     f = BytesIO()
     ...     format.write_array_header_1_0(f, arr)   # XXX: arr is not a dict, items gets called on it
-    ...     print repr(f.getvalue())
+    ...     print(repr(f.getvalue()))
     ...
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (0,)}              \n"
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': ()}                \n"

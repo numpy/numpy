@@ -822,7 +822,7 @@ def sctype2char(sctype):
     Examples
     --------
     >>> for sctype in [np.int32, np.float, np.complex, np.string_, np.ndarray]:
-    ...     print np.sctype2char(sctype)
+    ...     print(np.sctype2char(sctype))
     l
     d
     D

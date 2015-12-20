@@ -48,7 +48,7 @@ def slow(t):
 
       @dec.slow
       def test_big(self):
-          print 'Big, slow test'
+          print('Big, slow test')
 
     """
 

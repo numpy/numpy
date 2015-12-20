@@ -1947,7 +1947,7 @@ class _numpy_info(system_info):
 ##                  hex(vstr2hex(module.__version__))),
 ##                 )
 ##         except Exception as msg:
-##             print msg
+##             print(msg)
         dict_append(info, define_macros=macros)
         include_dirs = self.get_include_dirs()
         inc_dir = None

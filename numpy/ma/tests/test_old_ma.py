@@ -831,13 +831,13 @@ def eqmask(m1, m2):
 #            t = testta(n, f)
 #            t1 = testtb(n, f)
 #            t2 = testtc(n, f)
-#            print f.test_name
-#            print """\
+#            print(f.test_name)
+#            print("""\
 #n = %7d
 #numpy time (ms) %6.1f
 #MA maskless ratio %6.1f
 #MA masked ratio %6.1f
-#""" % (n, t*1000.0, t1/t, t2/t)
+#""" % (n, t*1000.0, t1/t, t2/t))
 
 #def testta(n, f):
 #    x=np.arange(n) + 1.0
