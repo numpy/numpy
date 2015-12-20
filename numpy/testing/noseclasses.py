@@ -34,33 +34,24 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         module.
         """
         if module is None:
-            #print('_fm C1')  # dbg
             return True
         elif inspect.isfunction(object):
-            #print('_fm C2')  # dbg
             return module.__dict__ is object.__globals__
         elif inspect.isbuiltin(object):
-            #print('_fm C2-1')  # dbg
             return module.__name__ == object.__module__
         elif inspect.isclass(object):
-            #print('_fm C3')  # dbg
             return module.__name__ == object.__module__
         elif inspect.ismethod(object):
             # This one may be a bug in cython that fails to correctly set the
             # __module__ attribute of methods, but since the same error is easy
             # to make by extension code writers, having this safety in place
             # isn't such a bad idea
-            #print('_fm C3-1')  # dbg
             return module.__name__ == object.__self__.__class__.__module__
         elif inspect.getmodule(object) is not None:
-            #print('_fm C4')  # dbg
-            #print('C4 mod',module,'obj',object) # dbg
             return module is inspect.getmodule(object)
         elif hasattr(object, '__module__'):
-            #print('_fm C5')  # dbg
             return module.__name__ == object.__module__
         elif isinstance(object, property):
-            #print('_fm C6')  # dbg
             return True  # [XX] no way not be sure.
         else:
             raise ValueError("object must be a class or function")
@@ -95,10 +86,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
 
         # Look for tests in a class's contained objects.
         if isclass(obj) and self._recurse:
-            #print('RECURSE into class:',obj)  # dbg
             for valname, val in obj.__dict__.items():
-                #valname1 = '%s.%s' % (name, valname)  # dbg
-                #print('N',name,'VN:',valname,'val:',str(val)[:77]) # dbg
                 # Special handling for staticmethod/classmethod.
                 if isinstance(val, staticmethod):
                     val = getattr(obj, valname)

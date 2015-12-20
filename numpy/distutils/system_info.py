@@ -677,11 +677,6 @@ class system_info(object):
             exts.append('.dll.a')
         if sys.platform == 'darwin':
             exts.append('.dylib')
-        # Debian and Ubuntu added a g3f suffix to shared library to deal with
-        # g77 -> gfortran ABI transition
-        # XXX: disabled, it hides more problem than it solves.
-        #if sys.platform[:5] == 'linux':
-        #    exts.append('.so.3gf')
         return exts
 
     def check_libs(self, lib_dirs, libs, opt_libs=[]):
@@ -995,13 +990,10 @@ class mkl_info(system_info):
             l = 'mkl'  # use shared library
             if cpu.is_Itanium():
                 plt = '64'
-                #l = 'mkl_ipf'
             elif cpu.is_Xeon():
                 plt = 'intel64'
-                #l = 'mkl_intel64'
             else:
                 plt = '32'
-                #l = 'mkl_ia32'
             if l not in self._lib_mkl:
                 self._lib_mkl.insert(0, l)
             system_info.__init__(
@@ -1243,8 +1235,6 @@ class atlas_3_10_blas_info(atlas_3_10_info):
 class atlas_3_10_threads_info(atlas_3_10_info):
     dir_env_var = ['PTATLAS', 'ATLAS']
     _lib_names = ['tatlas']
-    #if sys.platfcorm[:7] == 'freebsd':
-        ## I don't think freebsd supports 3.10 at this time - 2014
     _lib_atlas = _lib_names
     _lib_lapack = _lib_names
 
@@ -1535,7 +1525,6 @@ class lapack_opt_info(system_info):
                                              ('HAVE_CBLAS', None)])
                 return
 
-        #atlas_info = {} ## uncomment for testing
         need_lapack = 0
         need_blas = 0
         info = {}
@@ -1567,7 +1556,6 @@ class lapack_opt_info(system_info):
 
         if need_blas:
             blas_info = get_info('blas')
-            #blas_info = {} ## uncomment for testing
             if blas_info:
                 dict_append(info, **blas_info)
             else:
@@ -1941,13 +1929,6 @@ class _numpy_info(system_info):
                       '"\\"%s\\""' % (vrs)),
                       (self.modulename.upper(), None)]
             break
-##         try:
-##             macros.append(
-##                 (self.modulename.upper()+'_VERSION_HEX',
-##                  hex(vstr2hex(module.__version__))),
-##                 )
-##         except Exception as msg:
-##             print(msg)
         dict_append(info, define_macros=macros)
         include_dirs = self.get_include_dirs()
         inc_dir = None
@@ -2321,17 +2302,6 @@ class umfpack_info(system_info):
 
         self.set_info(**info)
         return
-
-## def vstr2hex(version):
-##     bits = []
-##     n = [24,16,8,4,0]
-##     r = 0
-##     for s in version.split('.'):
-##         r |= int(s) << n[0]
-##         del n[0]
-##     return r
-
-#--------------------------------------------------------------------
 
 
 def combine_paths(*args, **kws):

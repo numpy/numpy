@@ -13,10 +13,6 @@ class MyScanner(Scanner):
         Scanner.__init__(self, self.lexicon, info, name)
 
     def begin(self, state_name):
-#        if self.state_name == '':
-#            print('<default>')
-#        else:
-#            print(self.state_name)
         Scanner.begin(self, state_name)
 
 def sep_seq(sequence, sep):
