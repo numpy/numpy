@@ -1463,7 +1463,6 @@ def curl(v,*varargs):
                gradient(v[(ax+1) % 3], *varargs, axis=(ax+2) % 3,
         edge_order=0)
                for ax in range(3)]
-    print('hola')
     return outvals
 
 def laplace(f, *varargs):
