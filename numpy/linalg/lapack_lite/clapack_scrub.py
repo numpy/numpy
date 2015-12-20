@@ -14,9 +14,9 @@ class MyScanner(Scanner):
 
     def begin(self, state_name):
 #        if self.state_name == '':
-#            print '<default>'
+#            print('<default>')
 #        else:
-#            print self.state_name
+#            print(self.state_name)
         Scanner.begin(self, state_name)
 
 def sep_seq(sequence, sep):

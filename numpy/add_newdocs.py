@@ -49,7 +49,7 @@ add_newdoc('numpy.core', 'flatiter',
     >>> type(fl)
     <type 'numpy.flatiter'>
     >>> for item in fl:
-    ...     print item
+    ...     print(item)
     ...
     0
     1
@@ -1548,7 +1548,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     >>> a = [1,5,1,4,3,4,4] # First column
     >>> b = [9,4,0,4,0,2,1] # Second column
     >>> ind = np.lexsort((b,a)) # Sort by a, then by b
-    >>> print ind
+    >>> print(ind)
     [2 0 4 6 5 3 1]
 
     >>> [(a[i],b[i]) for i in ind]
@@ -4773,7 +4773,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> y = x.view(dtype=np.int16, type=np.matrix)
     >>> y
     matrix([[513]], dtype=int16)
-    >>> print type(y)
+    >>> print(type(y))
     <class 'numpy.matrixlib.defmatrix.matrix'>
 
     Creating a view on a structured array so it can be used in calculations
@@ -4789,7 +4789,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Making changes to the view changes the underlying array
 
     >>> xv[0,1] = 20
-    >>> print x
+    >>> print(x)
     [(1, 20) (3, 4)]
 
     Using a view to convert an array to a recarray:
@@ -4915,7 +4915,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     [10000, 0, None]
 
     >>> def err_handler(type, flag):
-    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
     >>> old_bufsize = np.setbufsize(20000)
     >>> old_err = np.seterr(divide='raise')
@@ -4979,7 +4979,7 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     [10000, 0, None]
 
     >>> def err_handler(type, flag):
-    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
     >>> new_errobj = [20000, 12, err_handler]
     >>> np.seterrobj(new_errobj)
@@ -5064,7 +5064,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     >>> inds
     array([1, 4, 3, 2])
     >>> for n in range(x.size):
-    ...   print bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]]
+    ...   print(bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]])
     ...
     0.0 <= 0.2 < 1.0
     4.0 <= 6.4 < 10.0
@@ -5473,7 +5473,7 @@ add_newdoc('numpy.core', 'ufunc', ('identity',
     1
     >>> np.power.identity
     1
-    >>> print np.exp.identity
+    >>> print(np.exp.identity)
     None
     """))
 
@@ -6181,7 +6181,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
     Examples
     --------
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
-    >>> print dt.fields
+    >>> print(dt.fields)
     {'grades': (dtype(('float64',(2,))), 16), 'name': (dtype('|S16'), 0)}
 
     """))

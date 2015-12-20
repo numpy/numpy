@@ -501,7 +501,7 @@ def typename(char):
     >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
     ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
     >>> for typechar in typechars:
-    ...     print typechar, ' : ', np.typename(typechar)
+    ...     print(typechar, ' : ', np.typename(typechar))
     ...
     S1  :  character
     ?  :  bool

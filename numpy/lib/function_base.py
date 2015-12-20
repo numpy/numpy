@@ -833,7 +833,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     >>> try:
     ...     np.asarray_chkfinite(a)
     ... except ValueError:
-    ...     print 'ValueError'
+    ...     print('ValueError')
     ...
     ValueError
 
@@ -2200,13 +2200,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
     >>> X = np.vstack((x,y))
-    >>> print np.cov(X)
+    >>> print(np.cov(X))
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x, y)
+    >>> print(np.cov(x, y))
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x)
+    >>> print(np.cov(x))
     11.71
 
     """

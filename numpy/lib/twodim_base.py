@@ -664,7 +664,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     Or we fill the histogram H with a determined bin content:
 
     >>> H = np.ones((4, 4)).cumsum().reshape(4, 4)
-    >>> print H[::-1]  # This shows the bin content in the order as plotted
+    >>> print(H[::-1])  # This shows the bin content in the order as plotted
     [[ 13.  14.  15.  16.]
      [  9.  10.  11.  12.]
      [  5.   6.   7.   8.]
