@@ -439,7 +439,7 @@ if apply_over_axes.__doc__ is not None:
     >>> a = ma.arange(24).reshape(2,3,4)
     >>> a[:,0,1] = ma.masked
     >>> a[:,1,:] = ma.masked
-    >>> print a
+    >>> print(a)
     [[[0 -- 2 3]
       [-- -- -- --]
       [8 9 10 11]]
@@ -447,14 +447,14 @@ if apply_over_axes.__doc__ is not None:
      [[12 -- 14 15]
       [-- -- -- --]
       [20 21 22 23]]]
-    >>> print ma.apply_over_axes(ma.sum, a, [0,2])
+    >>> print(ma.apply_over_axes(ma.sum, a, [0,2]))
     [[[46]
       [--]
       [124]]]
 
     Tuple axis arguments to ufuncs are equivalent:
 
-    >>> print ma.sum(a, axis=(0,2)).reshape((1,-1,1))
+    >>> print(ma.sum(a, axis=(0,2)).reshape((1,-1,1)))
     [[[46]
       [--]
       [124]]]
@@ -502,13 +502,13 @@ def average(a, axis=None, weights=None, returned=False):
     1.25
 
     >>> x = np.ma.arange(6.).reshape(3, 2)
-    >>> print x
+    >>> print(x)
     [[ 0.  1.]
      [ 2.  3.]
      [ 4.  5.]]
     >>> avg, sumweights = np.ma.average(x, axis=0, weights=[1, 2, 3],
     ...                                 returned=True)
-    >>> print avg
+    >>> print(avg)
     [2.66666666667 3.66666666667]
 
     """
@@ -1476,7 +1476,7 @@ def flatnotmasked_edges(a):
     array([3, 8])
 
     >>> a[:] = np.ma.masked
-    >>> print flatnotmasked_edges(ma)
+    >>> print(flatnotmasked_edges(ma))
     None
 
     """
@@ -1578,7 +1578,7 @@ def flatnotmasked_contiguous(a):
     >>> np.ma.flatnotmasked_contiguous(a)
     [slice(3, 5, None), slice(6, 9, None)]
     >>> a[:] = np.ma.masked
-    >>> print np.ma.flatnotmasked_edges(a)
+    >>> print(np.ma.flatnotmasked_edges(a))
     None
 
     """

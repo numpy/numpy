@@ -567,7 +567,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x2=np.array(['a','dd','xyz','12'])
     >>> x3=np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
-    >>> print r[1]
+    >>> print(r[1])
     (2, 'dd', 2.0)
     >>> x1[1]=34
     >>> r.a
@@ -643,7 +643,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     >>> r=np.core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
     ... names='col1,col2,col3')
-    >>> print r[0]
+    >>> print(r[0])
     (456, 'dbe', 1.2)
     >>> r.col1
     array([456,   2])
@@ -651,7 +651,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     array(['dbe', 'de'],
           dtype='|S3')
     >>> import pickle
-    >>> print pickle.loads(pickle.dumps(r))
+    >>> print(pickle.loads(pickle.dumps(r)))
     [(456, 'dbe', 1.2) (2, 'de', 1.3)]
     """
 
@@ -736,7 +736,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> fd.seek(0)
     >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
-    >>> print r[5]
+    >>> print(r[5])
     (0.5, 10, 'abcde')
     >>> r.shape
     (10,)

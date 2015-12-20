@@ -109,7 +109,7 @@ Glossary
 
          >>> def log(f):
          ...     def new_logging_func(*args, **kwargs):
-         ...         print "Logging call with parameters:", args, kwargs
+         ...         print("Logging call with parameters:", args, kwargs)
          ...         return f(*args, **kwargs)
          ...
          ...     return new_logging_func
@@ -185,7 +185,7 @@ Glossary
        It is often used in combintion with ``enumerate``::
          >>> keys = ['a','b','c']
          >>> for n, k in enumerate(keys):
-         ...     print "Key %d: %s" % (n, k)
+         ...     print("Key %d: %s" % (n, k))
          ...
          Key 0: a
          Key 1: b
@@ -315,7 +315,7 @@ Glossary
          ...     color = 'blue'
          ...
          ...     def paint(self):
-         ...         print "Painting the city %s!" % self.color
+         ...         print("Painting the city %s!" % self.color)
          ...
          >>> p = Paintbrush()
          >>> p.color = 'red'

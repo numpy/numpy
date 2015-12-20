@@ -150,7 +150,7 @@ def atleast_3d(*arys):
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
-    ...     print arr, arr.shape
+    ...     print(arr, arr.shape)
     ...
     [[[1]
       [2]]] (1, 2, 1)

@@ -1808,7 +1808,7 @@ def set_string_function(f, repr=True):
     >>> a = np.arange(10)
     >>> a
     HA! - What are you going to do now?
-    >>> print a
+    >>> print(a)
     [0 1 2 3 4 5 6 7 8 9]
 
     We can reset the function to the default:
@@ -2710,7 +2710,7 @@ def seterrcall(func):
     Callback upon error:
 
     >>> def err_handler(type, flag):
-    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
 
     >>> saved_handler = np.seterrcall(err_handler)
@@ -2729,7 +2729,7 @@ def seterrcall(func):
 
     >>> class Log(object):
     ...     def write(self, msg):
-    ...         print "LOG: %s" % msg
+    ...         print("LOG: %s" % msg)
     ...
 
     >>> log = Log()
@@ -2787,7 +2787,7 @@ def geterrcall():
 
     >>> oldsettings = np.seterr(all='call')
     >>> def err_handler(type, flag):
-    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...     print("Floating point error (%s), with flag %s" % (type, flag))
     >>> oldhandler = np.seterrcall(err_handler)
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1

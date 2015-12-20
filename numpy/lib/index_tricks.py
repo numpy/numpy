@@ -491,7 +491,7 @@ class ndenumerate(object):
     --------
     >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
-    ...     print index, x
+    ...     print(index, x)
     (0, 0) 1
     (0, 1) 2
     (1, 0) 3
@@ -542,7 +542,7 @@ class ndindex(object):
     Examples
     --------
     >>> for index in np.ndindex(3, 2, 1):
-    ...     print index
+    ...     print(index)
     (0, 0, 0)
     (0, 1, 0)
     (1, 0, 0)
