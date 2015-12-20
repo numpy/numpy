@@ -627,6 +627,97 @@ class TestGradient(TestCase):
         assert_raises(TypeError, gradient, x, axis=[1,])
 
 
+class TestDivergence(TestCase):
+
+    def test_basic(self):
+        v = [[[1, 2], [3, 4]], [[1, 3], [2, 4]]]
+        x = np.array(v)
+        dx = np.array([[4., 4.], [4., 4.]])
+        assert_array_equal(np.divergence(x), dx)
+        assert_array_equal(np.divergence(v), dx)
+
+    def test_badargs(self):
+        # for 2D array, divergence can take 0, 1, or 2 extra args
+        x = np.array([[[1, 2], [3, 4]], [[1, 3], [2, 4]]])
+        assert_raises(SyntaxError, np.divergence, x, np.array([1., 1.]),
+                      np.array([1., 1.]), np.array([1., 1.]))
+ 
+    def test_masked(self):
+        # Make sure that divergence supports subclasses like masked arrays
+        x = np.ma.array([[[1, 1], [3, 4]], [[1, 2], [3, 4]]],
+                        mask=[[[False, False], [False, False]],
+                        [[False, False], [True, False]]])
+        out = np.divergence(x)
+        assert_equal(type(out), type(x))
+        # And make sure that the output and input don't have aliased mask
+        # arrays
+        assert_(x.mask is not out.mask)
+
+    def test_datetime64(self):
+        # Make sure that divergence() can handle special
+        # data types like datetime64
+        x = np.array(
+            [[['1910-08-16', '1910-08-11'], ['1910-08-10', '1910-08-12']],
+            [['1910-08-13', '1910-08-17'], ['1910-08-03', '1910-08-05']]],
+            dtype='datetime64[D]')
+        divx = np.array([[-2, 5], [-4, 3]], dtype='timedelta64[D]')
+        assert_array_equal(np.divergence(x), divx)
+        assert_(divx.dtype == np.dtype('timedelta64[D]'))
+
+    def test_timedelta64(self):
+        # Make sure gradient() can handle special types like timedelta64
+        x = np.array([[[1,2], [4,5]], [[1,2], [4,5]]], 
+                    dtype = 'timedelta64[D]') 
+        divx = np.array([[4, 4], [4, 4]], dtype='timedelta64[D]')   
+
+        assert_array_equal(np.divergence(x), divx)
+        assert_(divx.dtype == np.dtype('timedelta64[D]'))
+
+class TestCurl(TestCase):
+
+    def test_basic(self):
+        a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+        x = [a, a, a]
+        v = np.array(x)
+        curlx = [np.array([[[1., 1.],[1., 1.]], [[1., 1.],
+        [1., 1.]]]), np.array([[[-3., -3.], [-3., -3.]], [[-3., -3.],
+        [-3., -3.]]]), np.array([[[2., 2.], [2., 2.]], [[2., 2.], [2., 2.]]])]
+        assert_array_equal(np.curl(x), curlx)
+        assert_array_equal(np.curl(v), curlx)
+        
+class TestLaplace(TestCase):
+
+    def test_basic_scalar(self):
+        a = np.array([[3, 1, 5], [6, 8, 14], [2, 9, 14]])
+        x = np.laplace(a)
+        lapx = np.array([[-1, 0, -3], [-3, -2, -5], [-9, -8, -11]])
+        assert_array_equal(x, lapx)
+
+    def test_basic_vector(self):
+        p=np.array([[[1,4,5],[3,6,2],[6,5,4]],[[7,6,5],[1,2,3],[6,9,7]],
+                   [[2,3,5],[7,6,5],[9,7,6]]])
+        q=np.array([[[1,3,7],[2,6,8],[3,5,1]],[[1,1,5],[1,4,3],[7,4,8]],
+                   [[2,7,55],[1,3,5],[4,1,1]]])
+        r=np.array([[[2,2,2],[1,1,3],[3,3,2]],[[5,5,5],[7,4,2],[6,6,6]],
+                   [[11,5,25],[10,13,5],[4,11,21]]]) 
+
+        a = [[[-12., -10., 3.], [2., -2., -1.], [4., -9.,  1.]],
+            [[0., 6., 6.], [19., 19., 7.], [9., 0., -3.]],
+            [[-13., -6., 2.], [5.,  6., 2.], [1., -7., -2.]]]
+
+        b = [[[3., 6., 46.], [-1., -5., -3.], [-13., -12., -28.]],
+            [[11., 9., 63.], [3., -6., 10.],  [6., 2., 0.]],
+            [[48., 53., 141.], [5., 3., 53.], [0., 3., 35.]]]
+
+        c = [[[6., 0., 15.], [2., 11., 4.], [-3., 4., 8.]],
+            [[0., 0., 24.],  [-5., 10., 12.], [-8., 5., 18.]],
+            [[24., 13., 79.], [-19.,-15., 29.], [-7., -5., 50.]]]
+        
+        p1 = [p, q, r]
+        a1 = [a, b, c]
+        
+        assert_array_equal(np.laplace(p1), a1)
+
 class TestAngle(TestCase):
 
     def test_basic(self):

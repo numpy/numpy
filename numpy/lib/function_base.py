@@ -41,7 +41,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    '_inplace_sum', 'divergence', 'curl', 'laplace'
     ]
 
 
@@ -1320,11 +1321,14 @@ def gradient(f, *varargs, **kwargs):
     else:
         return outvals
 
-def inplace_sum(items): 
+def _inplace_sum(items): 
     """
     Returns the sum of the elements of a list. 
     Used in the follwing functions:
     divergence,
+
+        .. versionadded:: 1.11.0
+
     """
     it = iter(items)
     total = next(it)
@@ -1355,7 +1359,9 @@ def divergence(v,*varargs):
         i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
-            
+    
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     divergence : numpy array
@@ -1383,12 +1389,13 @@ def divergence(v,*varargs):
      [ 0.  0.  0. ...,  0.  0.  0.]
      [ 0.  0.  0. ...,  0.  0.  0.]
      [ 0.  0.  0. ...,  0.  0.  0.]
+     
     """
     
-    N=len(v)
+    N = len(v)
     axes = tuple(range(N))
-    out = inplace_sum([gradient(v[ax],*varargs,axis=ax,edge_order=0)
-            for ax in axes])
+    out = _inplace_sum(gradient(v[ax], *varargs, axis=ax, edge_order=0)
+          for ax in axes)
     return out
 		
 def curl(v,*varargs):
@@ -1412,6 +1419,8 @@ def curl(v,*varargs):
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
         
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     curl : list of numpy arrays
@@ -1443,18 +1452,21 @@ def curl(v,*varargs):
     >>> plt.imshow(cz[:,:,1])
     >>> plt.colorbar()
     >>> plt.show()
+    
     """
     
     if len(v) != 3:
         raise ValueError("Enter a list of 3 arrays")
 
-    outvals = [gradient(v[(ax+2)%3], *varargs, axis=(ax+1)%3, edge_order=0)-
-               gradient(v[(ax+1)%3], *varargs, axis=(ax+2)%3, edge_order=0)
+    outvals = [gradient(v[(ax+2) % 3], *varargs, axis=(ax+1) % 3, 
+        edge_order=0) -
+               gradient(v[(ax+1) % 3], *varargs, axis=(ax+2) % 3,
+        edge_order=0)
                for ax in range(3)]
-    
+    print('hola')
     return outvals
 
-def laplace(f):
+def laplace(f, *varargs):
     """
     Return the laplacian of input.
 
@@ -1472,6 +1484,8 @@ def laplace(f):
     f : array_like
         Input array
     	
+        .. versionadded:: 1.11.0
+
     Returns
     -------
     l : array_like
@@ -1498,6 +1512,7 @@ def laplace(f):
     >>> plt.imshow(d[:,:,1])
     >>> plt.colorbar()
     >>> plt.show()
+    
     """
     if type(f) == np.ndarray:
         l = divergence(gradient(f,*varargs, edge_order=0),*varargs)

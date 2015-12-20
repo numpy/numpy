@@ -89,6 +89,26 @@ The function now internally calls the generic ``npy_amergesort``
 when the type does not implement a merge-sort kind of ``argsort``
 method.
 
+New function *divergence*
+~~~~~~~~~~~~~~~~~~~~~~~~~
+*divergence* makes use of the gradient function to calculate the divergence
+of a list of arrays (vector field) as the sum of the derivatives of each
+component with respect to the corresponding axis.
+
+New function *curl*
+~~~~~~~~~~~~~~~~~~~
+*curl* makes use of gradient to calculate the curl of lists of 3 arrays 
+(3-D vector fields).
+
+New function *laplace*
+~~~~~~~~~~~~~~~~~~~~~~
+*laplace* calculates the laplacian of either an array (scalar laplacian) or
+a list of arrays (vector field). In the first case, a composition of the
+functions gradient and divergence is used to return an array. In the second
+case, the same operation is applied to every component (array) independently,
+and a list of these is returned.
+
+
 Changes
 =======
 
