@@ -91,6 +91,21 @@ def _assert_equal_on_sequences(actual, desired, err_msg=''):
     return
 
 
+def _assert_equal_both_non_masked(actual, desired, err_msg=''):
+    """
+    Asserts the equality of two non masked arrays
+
+    """
+    if (isinstance(desired, (list, tuple)) and
+            isinstance(actual, (list, tuple))):
+        return _assert_equal_on_sequences(actual, desired, err_msg)
+    elif (isinstance(actual, np.matrix) or
+            isinstance(desired, np.matrix)):
+        return assert_array_equal(actual, desired, err_msg)
+    else:
+        return utils.assert_equal(actual, desired, err_msg)
+
+
 def assert_equal_records(a, b):
     """
     Asserts that two records are equal.
@@ -111,37 +126,22 @@ def assert_equal(actual, desired, err_msg=''):
     Asserts that two items are equal.
 
     """
-    # Case #1: dictionary .....
-    if isinstance(desired, dict):
-        if not isinstance(actual, dict):
-            raise AssertionError(repr(type(actual)))
-        assert_equal(len(actual), len(desired), err_msg)
-        for k, i in desired.items():
-            if k not in actual:
-                raise AssertionError("%s not in %s" % (k, actual))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
-        return
-    # Case #2: lists .....
-    if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
-        return _assert_equal_on_sequences(actual, desired, err_msg='')
-    if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
-        msg = build_err_msg([actual, desired], err_msg,)
-        if not desired == actual:
-            raise AssertionError(msg)
-        return
-    # Case #4. arrays or equivalent
-    if ((actual is masked) and not (desired is masked)) or \
-            ((desired is masked) and not (actual is masked)):
-        msg = build_err_msg([actual, desired],
-                            err_msg, header='', names=('x', 'y'))
+    # Delegate assertion if actual isn't masked and desired isn't masked.
+    if not (isinstance(actual, masked_array) or
+            isinstance(desired, masked_array)):
+        return _assert_equal_both_non_masked(actual, desired, err_msg)
+
+    # Masked only compares with masked.
+    if (actual is masked) != (desired is masked):
+        msg = build_err_msg([actual, desired], err_msg, header='', names=('x', 'y'))
         raise ValueError(msg)
-    actual = np.array(actual, copy=False, subok=True)
-    desired = np.array(desired, copy=False, subok=True)
-    (actual_dtype, desired_dtype) = (actual.dtype, desired.dtype)
-    if actual_dtype.char == "S" and desired_dtype.char == "S":
-        return _assert_equal_on_sequences(actual.tolist(),
-                                          desired.tolist(),
-                                          err_msg='')
+
+    actual = np.asanyarray(actual)
+    desired = np.asanyarray(desired)
+    if actual.dtype.char == "S" and desired.dtype.char == "S":
+        actual = actual.tolist()
+        desired = desired.tolist()
+        return _assert_equal_on_sequences(actual, desired, err_msg)
     return assert_array_equal(actual, desired, err_msg)
 
 
