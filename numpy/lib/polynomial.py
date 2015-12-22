@@ -61,7 +61,7 @@ def poly(seq_of_zeros):
 
     See Also
     --------
-    polyval : Evaluate a polynomial at a point.
+    polyval : Compute polynomial values.
     roots : Return the roots of a polynomial.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
@@ -182,7 +182,7 @@ def roots(p):
     --------
     poly : Find the coefficients of a polynomial with a given sequence
            of roots.
-    polyval : Evaluate a polynomial at a point.
+    polyval : Compute polynomial values.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
 
@@ -466,7 +466,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     See Also
     --------
-    polyval : Computes polynomial values.
+    polyval : Compute polynomial values.
     linalg.lstsq : Computes a least-squares fit.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
@@ -631,7 +631,7 @@ def polyval(p, x):
        to zero) from highest degree to the constant term, or an
        instance of poly1d.
     x : array_like or poly1d object
-       A number, a 1D array of numbers, or an instance of poly1d, "at"
+       A number, an array of numbers, or an instance of poly1d, at
        which to evaluate `p`.
 
     Returns
