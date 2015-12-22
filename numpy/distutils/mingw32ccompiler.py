@@ -60,7 +60,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            import re
             p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
@@ -100,7 +99,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
-        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
+        v = int(re.sub(r'[^\d]+','',msvc_runtime_library()))
+        msvcr_version = '0x%03i0' % v
         self.define_macro('__MSVCRT_VERSION__', msvcr_version)
 
         # MS_WIN64 should be defined when building for amd64 on windows,

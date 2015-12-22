@@ -398,6 +398,7 @@ def msvc_runtime_library():
                '1400': 'msvcr80',    # MSVC 8
                '1500': 'msvcr90',    # MSVC 9 (VS 2008)
                '1600': 'msvcr100',   # MSVC 10 (aka 2010)
+               '1900': 'vcruntime140', # MSVC 14 (VS 2015)
               }.get(msc_ver, None)
     else:
         lib = None
