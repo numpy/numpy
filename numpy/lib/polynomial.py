@@ -144,7 +144,7 @@ def poly(seq_of_zeros):
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
-        roots = NX.asarray(seq_of_zeros, complex)
+        roots = NX.asanyarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
         neg_roots = NX.conjugate(sort_complex(
                                         NX.compress(roots.imag < 0, roots)))
@@ -318,7 +318,7 @@ def polyint(p, m=1, k=None):
               "k must be a scalar or a rank-1 array of length 1 or >m.")
 
     truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     if m == 0:
         if truepoly:
             return poly1d(p)
@@ -388,7 +388,7 @@ def polyder(p, m=1):
         raise ValueError("Order of derivative must be positive (see polyint)")
 
     truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     n = len(p) - 1
     y = p[:-1] * NX.arange(n, 0, -1)
     if m == 0:
@@ -466,7 +466,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     See Also
     --------
-    polyval : Computes polynomial values.
+    
+ : Computes polynomial values.
     linalg.lstsq : Computes a least-squares fit.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
@@ -671,11 +672,11 @@ def polyval(p, x):
     poly1d([ 76.])
 
     """
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     if isinstance(x, poly1d):
         y = 0
     else:
-        x = NX.asarray(x)
+        x = NX.asanyarray(x)
         y = NX.zeros_like(x)
     for i in range(len(p)):
         y = y * x + p[i]
