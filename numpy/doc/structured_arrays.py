@@ -27,7 +27,7 @@ position we get the second structure: ::
 Conveniently, one can access any field of the array by indexing using the
 string that names that field. ::
 
- >>> y = x['foo']
+ >>> y = x['bar']
  >>> y
  array([ 2.,  3.], dtype=float32)
  >>> y[:] = 2*y
