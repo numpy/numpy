@@ -179,6 +179,12 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             if not libraries:
                 libraries = []
             libraries.append(runtime_library)
+            
+            # Starting with VS 2015 the CRT was split
+            # The referenced library is compiler dependent, ucrtbase is not
+            if runtime_library.startswith('vcruntime'):
+                libraries.append('ucrtbase')
+                
         args = (self,
                 target_desc,
                 objects,
@@ -326,7 +332,8 @@ def build_msvcr_library(debug=False):
     msvcr_name = msvc_runtime_library()
 
     # Skip using a custom library for versions < MSVC 8.0
-    if int(msvcr_name.lstrip('msvcr')) < 80:
+    msvcr_ver = int(re.sub(r'[^\d]+','',msvcr_name))
+    if msvcr_ver < 80:
         log.debug('Skip building msvcr library:'
                   ' custom functionality not present')
         return False
@@ -534,10 +541,11 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     msvcv = msvc_runtime_library()
     if msvcv:
-        assert msvcv.startswith("msvcr"), msvcv
+        assert (msvcv.startswith("msvcr")
+                or msvcv.startswith("vcruntime")), msvcv
         # Dealing with something like "mscvr90" or "mscvr100", the last
         # last digit is the minor release, want int("9") or int("10"):
-        maj = int(msvcv[5:-1])
+        maj = int(re.sub(r'[^\d]+','',msvcr_name[:-1]))
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \
