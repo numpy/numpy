@@ -936,37 +936,14 @@ cdef class RandomState:
                [3, 2, 2, 0]])
 
         """
-        cdef long lo, hi, rv
-        cdef unsigned long diff
-        cdef long *array_data
-        cdef ndarray array "arrayObject"
-        cdef npy_intp length
-        cdef npy_intp i
-
-        if high is None:
-            lo = 0
-            hi = low
-        else:
-            lo = low
-            hi = high
-
-        if lo >= hi :
+        if high is not None and low >= high:
             raise ValueError("low >= high")
 
-        diff = <unsigned long>hi - <unsigned long>lo - 1UL
-        if size is None:
-            with self.lock:
-                rv = lo + <long>rk_interval(diff, self. internal_state)
-            return rv
-        else:
-            array = <ndarray>np.empty(size, int)
-            length = PyArray_SIZE(array)
-            array_data = <long *>PyArray_DATA(array)
-            with self.lock, nogil:
-                for i from 0 <= i < length:
-                    rv = lo + <long>rk_interval(diff, self. internal_state)
-                    array_data[i] = rv
-            return array
+        if high is None:
+            high = low
+            low = 0
+
+        return self.random_integers(low, high - 1, size)
 
     def bytes(self, npy_intp length):
         """
@@ -1449,10 +1426,37 @@ cdef class RandomState:
         >>> plt.show()
 
         """
+        if high is not None and low > high:
+            raise ValueError("low > high")
+
+        cdef long lo, hi, rv
+        cdef unsigned long diff
+        cdef long *array_data
+        cdef ndarray array "arrayObject"
+        cdef npy_intp length
+        cdef npy_intp i
+
         if high is None:
-            high = low
-            low = 1
-        return self.randint(low, high+1, size)
+            lo = 1
+            hi = low
+        else:
+            lo = low
+            hi = high
+
+        diff = <unsigned long>hi - <unsigned long>lo
+        if size is None:
+            with self.lock:
+                rv = lo + <long>rk_interval(diff, self. internal_state)
+            return rv
+        else:
+            array = <ndarray>np.empty(size, int)
+            length = PyArray_SIZE(array)
+            array_data = <long *>PyArray_DATA(array)
+            with self.lock, nogil:
+                for i from 0 <= i < length:
+                    rv = lo + <long>rk_interval(diff, self. internal_state)
+                    array_data[i] = rv
+            return array
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None):
