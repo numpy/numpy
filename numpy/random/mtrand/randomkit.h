@@ -144,9 +144,19 @@ extern long rk_long(rk_state *state);
 extern unsigned long rk_ulong(rk_state *state);
 
 /*
+ * Returns a random unsigned long long between 0 and ULONGLONG_MAX inclusive
+ */
+extern unsigned long long rk_ulonglong(rk_state *state);
+
+/*
  * Returns a random unsigned long between 0 and max inclusive.
  */
 extern unsigned long rk_interval(unsigned long max, rk_state *state);
+
+/*
+ * Returns a random unsigned long long between 0 and max inclusive.
+ */
+extern unsigned long long rk_ll_interval(unsigned long long max, rk_state *state);
 
 /*
  * Returns a random double between 0.0 and 1.0, 1.0 excluded.

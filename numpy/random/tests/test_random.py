@@ -159,6 +159,18 @@ class TestRandomDist(TestCase):
                             [-48, -66]])
         np.testing.assert_array_equal(actual, desired)
 
+    def test_large_int64_randint(self):
+        # See Issue #6812
+        np.random.seed(self.seed)
+        actual = np.random.randint(np.iinfo(np.int64).min,
+                                   np.iinfo(np.int64).max, 10)
+        desired = np.array([2191376711989041151, 1690157618316108847,
+                            7169946713346608947, 7224755809774414763,
+                            -782741873214082756, 5131664369514206857,
+                            -4296915062901047764, 9151544378226042618,
+                            739620276746913830, 692151521286146367])
+        np.testing.assert_array_equal(actual, desired)
+
     def test_random_integers(self):
         np.random.seed(self.seed)
         actual = np.random.random_integers(-99, 99, size=(3, 2))

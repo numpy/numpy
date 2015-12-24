@@ -256,6 +256,16 @@ rk_ulong(rk_state *state)
 #endif
 }
 
+unsigned long long
+rk_ulonglong(rk_state *state)
+{
+#if ULLONG_MAX <= 0xffffffffULL
+    return (long long) rk_random(state);
+#else
+    return ((long long) rk_random(state) << 32) | ((long long) rk_random(state));
+#endif
+}
+
 unsigned long
 rk_interval(unsigned long max, rk_state *state)
 {
@@ -284,6 +294,38 @@ rk_interval(unsigned long max, rk_state *state)
     }
 #else
     while ((value = (rk_ulong(state) & mask)) > max);
+#endif
+    return value;
+}
+
+unsigned long long
+rk_ll_interval(unsigned long long max, rk_state *state)
+{
+    unsigned long long mask = max, value;
+
+    if (max == 0) {
+        return 0;
+    }
+    /* Smallest bit mask >= max */
+    mask |= mask >> 1;
+    mask |= mask >> 2;
+    mask |= mask >> 4;
+    mask |= mask >> 8;
+    mask |= mask >> 16;
+#if ULLONG_MAX > 0xffffffffULL
+    mask |= mask >> 32;
+#endif
+
+    /* Search a random value in [0..mask] <= max */
+#if ULLONG_MAX > 0xffffffffULL
+    if (max <= 0xffffffffULL) {
+        while ((value = ((long long) rk_random(state) & mask)) > max);
+    }
+    else {
+        while ((value = (rk_ulonglong(state) & mask)) > max);
+    }
+#else
+    while ((value = ((rk_ulonglong(state) & mask)) > max);
 #endif
     return value;
 }
