@@ -167,6 +167,17 @@ class TestRandomDist(TestCase):
                             [-48, -66]])
         np.testing.assert_array_equal(actual, desired)
 
+    def test_random_integers_max_int(self):
+        # Tests whether random_integers can generate the
+        # maximum allowed Python int that can be converted
+        # into a C long. Previous implementations of this
+        # method have thrown an OverflowError when attemping
+        # to generate this integer.
+        actual = np.random.random_integers(np.iinfo('l').max,
+                                           np.iinfo('l').max)
+        desired = np.iinfo('l').max
+        np.testing.assert_equal(actual, desired)
+
     def test_random_sample(self):
         np.random.seed(self.seed)
         actual = np.random.random_sample((3, 2))
