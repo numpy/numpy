@@ -1,12 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import locale
-from tempfile import NamedTemporaryFile
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
-    assert_array_equal, TestCase
+    assert_array_equal, TestCase, temppath,
 )
 from numpy.compat import sixu
 from test_print import in_foreign_locale
@@ -109,66 +108,48 @@ def test_fromstring_missing():
 
 
 class FileBased(TestCase):
-    def setUp(self):
-        self.o = 1 + np.finfo(np.longdouble).eps
-        self.f = NamedTemporaryFile(mode="wt")
 
-    def tearDown(self):
-        self.f.close()
-        del self.f
+    ldbl = 1 + np.finfo(np.longdouble).eps
+    tgt = np.array([ldbl]*5)
+    out = ''.join([repr(t) + '\n' for t in tgt])
 
     def test_fromfile_bogus(self):
-        self.f.write("1. 2. 3. flop 4.\n")
-        self.f.flush()
-        F = open(self.f.name, "rt")
-        try:
-            assert_equal(np.fromfile(F, dtype=float, sep=" "),
-                         np.array([1., 2., 3.]))
-        finally:
-            F.close()
+        with temppath() as path:
+            with open(path, 'wt') as f:
+                f.write("1. 2. 3. flop 4.\n")
+            res = np.fromfile(path, dtype=float, sep=" ")
+        assert_equal(res, np.array([1., 2., 3.]))
 
     @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
     def test_fromfile(self):
-        for i in range(5):
-            self.f.write(repr(self.o) + "\n")
-        self.f.flush()
-        a = np.array([self.o]*5)
-        F = open(self.f.name, "rt")
-        b = np.fromfile(F,
-                        dtype=np.longdouble,
-                        sep="\n")
-        F.close()
-        F = open(self.f.name, "rt")
-        s = F.read()
-        F.close()
-        assert_equal(b, a, err_msg="decoded %s as %s" % (repr(s), repr(b)))
+        with temppath() as path:
+            with open(path, 'wt') as f:
+                f.write(self.out)
+            res = np.fromfile(path, dtype=np.longdouble, sep="\n")
+        assert_equal(res, self.tgt)
 
     @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
     def test_genfromtxt(self):
-        for i in range(5):
-            self.f.write(repr(self.o) + "\n")
-        self.f.flush()
-        a = np.array([self.o]*5)
-        assert_equal(np.genfromtxt(self.f.name, dtype=np.longdouble), a)
+        with temppath() as path:
+            with open(path, 'wt') as f:
+                f.write(self.out)
+            res = np.genfromtxt(path, dtype=np.longdouble)
+        assert_equal(res, self.tgt)
 
     @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
     def test_loadtxt(self):
-        for i in range(5):
-            self.f.write(repr(self.o) + "\n")
-        self.f.flush()
-        a = np.array([self.o]*5)
-        assert_equal(np.loadtxt(self.f.name, dtype=np.longdouble), a)
+        with temppath() as path:
+            with open(path, 'wt') as f:
+                f.write(self.out)
+            res = np.loadtxt(path, dtype=np.longdouble)
+        assert_equal(res, self.tgt)
 
     @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
     def test_tofile_roundtrip(self):
-        a = np.array([self.o]*3)
-        a.tofile(self.f.name, sep=" ")
-        F = open(self.f.name, "rt")
-        try:
-            assert_equal(np.fromfile(F, dtype=np.longdouble, sep=" "),
-                         a)
-        finally:
-            F.close()
+        with temppath() as path:
+            self.tgt.tofile(path, sep=" ")
+            res = np.fromfile(path, dtype=np.longdouble, sep=" ")
+        assert_equal(res, self.tgt)
 
 
 @in_foreign_locale
