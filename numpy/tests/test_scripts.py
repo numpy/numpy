@@ -14,7 +14,7 @@ from nose.tools import assert_equal
 from numpy.testing.decorators import skipif
 from numpy.testing import assert_
 
-skipif_inplace = skipif(isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py')))
+is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
 def run_command(cmd, check_code=True):
     """ Run command sequence `cmd` returning exit code, stdout, stderr
@@ -58,7 +58,7 @@ def run_command(cmd, check_code=True):
     return proc.returncode, stdout, stderr
 
 
-@skipif_inplace
+@skipif(is_inplace)
 def test_f2py():
     # test that we can run f2py script
     if sys.platform == 'win32':
@@ -77,6 +77,7 @@ def test_f2py():
                 assert_equal(stdout.strip(), asbytes('2'))
                 success = True
                 break
-            except OSError:
+            except:
                 pass
-        assert_(success, "Warning: neither %s nor %s found in path" % f2py_cmds)
+        msg = "Warning: neither %s nor %s found in path" % f2py_cmds
+        assert_(success, msg)
