@@ -45,8 +45,8 @@ objects implementing the :class:`buffer` or :ref:`array
 
    The array can be indexed using Python container-like syntax:
 
-   >>> x[1,2] # i.e., the element of x in the *second* row, *third*
-   column, namely, 6.
+   >>> # The element of x in the *second* row, *third* column, namely, 6.
+   >>> x[1, 2]
 
    For example :ref:`slicing <arrays.indexing>` can produce views of
    the array:
