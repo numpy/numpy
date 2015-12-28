@@ -119,6 +119,20 @@ ctypedef long (* rk_discdd)(rk_state *state, double n, double p) nogil
 ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N) nogil
 ctypedef long (* rk_discd)(rk_state *state, double a) nogil
 
+ctypedef void (* randint_array_t)(rk_state *state, object lock, long lo,
+                                  unsigned long diff, void *flat_array, npy_intp length)
+ctypedef fused npy_integers:
+    char
+    short
+    int
+    long
+    long long
+    unsigned char
+    unsigned short
+    unsigned int
+    unsigned long
+    unsigned long long
+
 
 cdef extern from "initarray.h":
    void init_by_array(rk_state *self, unsigned long *init_key,
@@ -552,6 +566,17 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
                 PyArray_MultiIter_NEXTi(multi, 1)
     return array
 
+@cython.boundscheck(False)
+cdef randint_array(rk_state *state, object lock, long lo, unsigned long diff,
+                npy_integers *flat_array, npy_intp length):
+    cdef npy_intp i
+    with lock, nogil:
+        for i from 0 <= i < length:
+            flat_array[i] = lo + <long>rk_interval(diff, state)
+
+def get_randint_array_function(ndarray[npy_integers] array):
+    return <npy_intp>randint_array[npy_integers]
+
 cdef double kahan_sum(double *darr, npy_intp n):
     cdef double c, y, t, sum
     cdef npy_intp i
@@ -885,9 +910,9 @@ cdef class RandomState:
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
 
-    def randint(self, low, high=None, size=None):
+    def randint(self, low, high=None, size=None, dtype=None):
         """
-        randint(low, high=None, size=None)
+        randint(low, high=None, size=None, dtype=None)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -908,6 +933,9 @@ cdef class RandomState:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+        dtype: data-type, optional
+            The desired type for the array. If not given, then the default
+            data-type will be used (np.int64).
 
         Returns
         -------
@@ -938,10 +966,15 @@ cdef class RandomState:
         """
         cdef long lo, hi, rv
         cdef unsigned long diff
-        cdef long *array_data
         cdef ndarray array "arrayObject"
+        cdef randint_array_t fill_function
         cdef npy_intp length
         cdef npy_intp i
+
+        if dtype is not None and type(dtype) != type:
+            raise TypeError("data type not understood")
+
+        dtype = dtype or np.int
 
         if high is None:
             lo = 0
@@ -957,15 +990,15 @@ cdef class RandomState:
         if size is None:
             with self.lock:
                 rv = lo + <long>rk_interval(diff, self. internal_state)
-            return rv
+            return dtype(rv)
         else:
-            array = <ndarray>np.empty(size, int)
+            array = <ndarray>np.empty(size, dtype)
+
+            fill_function = <randint_array_t><void*><npy_intp>get_randint_array_function(array.take([0]))
             length = PyArray_SIZE(array)
-            array_data = <long *>PyArray_DATA(array)
-            with self.lock, nogil:
-                for i from 0 <= i < length:
-                    rv = lo + <long>rk_interval(diff, self. internal_state)
-                    array_data[i] = rv
+
+            fill_function(self.internal_state, self.lock, lo, diff,
+                          PyArray_DATA(array), length)
             return array
 
     def bytes(self, npy_intp length):
@@ -1375,7 +1408,7 @@ cdef class RandomState:
         else:
             return self.standard_normal(args)
 
-    def random_integers(self, low, high=None, size=None):
+    def random_integers(self, low, high=None, size=None, dtype=None):
         """
         random_integers(low, high=None, size=None)
 
@@ -1398,6 +1431,9 @@ cdef class RandomState:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+        dtype: data-type, optional
+            The desired type for the array. If not given, then the default
+            data-type will be used (np.int64).
 
         Returns
         -------
@@ -1452,7 +1488,7 @@ cdef class RandomState:
         if high is None:
             high = low
             low = 1
-        return self.randint(low, high+1, size)
+        return self.randint(low, high+1, size, dtype)
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None):
