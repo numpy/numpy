@@ -60,7 +60,9 @@ cdef extern from "randomkit.h":
     unsigned long rk_random(rk_state *state)
     long rk_long(rk_state *state) nogil
     unsigned long rk_ulong(rk_state *state) nogil
+    unsigned long long rk_ulonglong(rk_state *state) nogil
     unsigned long rk_interval(unsigned long max, rk_state *state) nogil
+    unsigned long long rk_ll_interval(unsigned long long max, rk_state *state) nogil
     double rk_double(rk_state *state) nogil
     void rk_fill(void *buffer, size_t size, rk_state *state) nogil
     rk_error rk_devfill(void *buffer, size_t size, int strong)
@@ -943,15 +945,19 @@ cdef class RandomState:
         cdef npy_intp length
         cdef npy_intp i
 
-        if high is None:
-            lo = 0
-            hi = low
-        else:
-            lo = low
-            hi = high
+        try:
+            if high is None:
+                lo = 0
+                hi = low
+            else:
+                lo = low
+                hi = high
 
-        if lo >= hi :
-            raise ValueError("low >= high")
+            if lo >= hi :
+                raise ValueError("low >= high")
+
+        except OverflowError:
+            return self._randint64(low, high, size)
 
         diff = <unsigned long>hi - <unsigned long>lo - 1UL
         if size is None:
@@ -965,6 +971,39 @@ cdef class RandomState:
             with self.lock, nogil:
                 for i from 0 <= i < length:
                     rv = lo + <long>rk_interval(diff, self. internal_state)
+                    array_data[i] = rv
+            return array
+
+    def _randint64(self, low, high=None, size=None):
+        cdef long long lo, hi, rv
+        cdef unsigned long long diff
+        cdef long long *array_data
+        cdef ndarray array "arrayObject"
+        cdef npy_intp length
+        cdef npy_intp i
+
+        if high is None:
+            lo = 0
+            hi = low
+        else:
+            lo = low
+            hi = high
+
+        if lo >= hi :
+            raise ValueError("low >= high")
+
+        diff = <unsigned long long>hi - <unsigned long long>lo - 1ULL
+        if size is None:
+            with self.lock:
+                rv = lo + <long long>rk_ll_interval(diff, self. internal_state)
+            return rv
+        else:
+            array = <ndarray>np.empty(size, np.int64)
+            length = PyArray_SIZE(array)
+            array_data = <long long *>PyArray_DATA(array)
+            with self.lock, nogil:
+                for i from 0 <= i < length:
+                    rv = lo + <long long>rk_ll_interval(diff, self. internal_state)
                     array_data[i] = rv
             return array
 
