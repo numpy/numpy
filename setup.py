@@ -126,6 +126,8 @@ def get_version_info():
 def write_version_py(filename='numpy/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
+#
+# To compare versions robustly, use `numpy.lib.NumpyVersion`
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'

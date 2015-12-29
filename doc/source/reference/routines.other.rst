@@ -31,3 +31,10 @@ Memory ranges
 
    shares_memory
    may_share_memory
+
+Numpy version comparison
+------------------------
+.. autosummary::
+   :toctree: generated/
+
+   lib.NumpyVersion
