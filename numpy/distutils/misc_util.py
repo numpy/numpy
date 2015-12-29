@@ -38,6 +38,7 @@ except NameError:
     from sets import Set as set
 
 from numpy.distutils.compat import get_exception
+from numpy.compat import basestring
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
@@ -429,7 +430,7 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, str)
+    return isinstance(s, basestring)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
