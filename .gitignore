@@ -105,6 +105,7 @@ numpy/core/include/numpy/__ufunc_api.h
 numpy/core/include/numpy/_numpyconfig.h
 numpy/version.py
 site.cfg
+setup.cfg
 .tox
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
