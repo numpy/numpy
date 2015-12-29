@@ -90,6 +90,20 @@ class TestRegression(TestCase):
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+    def test_eig_vs_eigh_above_560(self):
+        # gh-6896
+        N = 560
+
+        A = np.arange(N*N).reshape(N, N)
+        A = A + A.T
+
+        w1 = np.sort(linalg.eig(A)[0])
+        w2 = np.sort(linalg.eigh(A, UPLO='U')[0])
+        w3 = np.sort(linalg.eigh(A, UPLO='L')[0])
+        assert_array_almost_equal(w1, w2)
+        assert_array_almost_equal(w1, w3)
+
+
 
 if __name__ == '__main__':
     run_module_suite()
