@@ -21,6 +21,8 @@ import os
 import sys
 import subprocess
 
+from setuptools import setup
+
 
 if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
     raise RuntimeError("Python version 2.6, 2.7 or >= 3.2 required.")
@@ -86,9 +88,11 @@ def git_version():
 
     return GIT_REVISION
 
-# BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
-# update it when the contents of directories change.
-if os.path.exists('MANIFEST'): os.remove('MANIFEST')
+# BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
+# properly updated when the contents of directories change (true for distutils,
+# not sure about setuptools).
+if os.path.exists('MANIFEST'):
+    os.remove('MANIFEST')
 
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
@@ -159,6 +163,7 @@ def configuration(parent_package='',top_path=None):
 
     return config
 
+
 def check_submodules():
     """ verify that the submodules are checked out and clean
         use `git submodule update --init`; on failure
@@ -181,12 +186,14 @@ def check_submodules():
         if line.startswith('-') or line.startswith('+'):
             raise ValueError('Submodule not clean: %s' % line)
 
-from distutils.command.sdist import sdist
+
+from setuptools.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
         sdist.run(self)
+
 
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
@@ -197,6 +204,7 @@ def generate_cython():
                          cwd=cwd)
     if p != 0:
         raise RuntimeError("Running cythonize failed!")
+
 
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -223,32 +231,20 @@ def setup_package():
         cmdclass={"sdist": sdist_checked},
     )
 
+    FULLVERSION, GIT_REVISION = get_version_info()
+    metadata['version'] = FULLVERSION
     # Run build
     if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
             sys.argv[1] in ('--help-commands', 'egg_info', '--version',
                             'clean')):
-        # Use setuptools for these commands (they don't work well or at all
-        # with distutils).  For normal builds use distutils.
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
-
-        FULLVERSION, GIT_REVISION = get_version_info()
-        metadata['version'] = FULLVERSION
+        pass
     else:
-        if (len(sys.argv) >= 2 and sys.argv[1] in ('bdist_wheel', 'bdist_egg') or
-                sys.version_info[0] < 3 and sys.platform == "win32"):
-            # bdist_wheel, bdist_egg and the MS python2.7 VS sdk needs setuptools
-            # the latter can also be triggered by (see python issue23246)
-            # SET DISTUTILS_USE_SDK=1
-            # SET MSSdk=1
-            import setuptools
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
             # Generate Cython sources, unless building from source release
             generate_cython()
+
         metadata['configuration'] = configuration
 
     try:
