@@ -45,6 +45,12 @@ Building NumPy requires the following software installed:
    can be used, including optimized LAPACK libraries such as ATLAS, MKL or the
    Accelerate/vecLib framework on OS X.
 
+4) Cython
+
+   To build development versions of Numpy, you'll need a recent version of
+   Cython.  Released Numpy sources on PyPi include the C files generated from
+   Cython code, so for released versions having Cython installed isn't needed.
+
 Basic Installation
 ------------------
 
