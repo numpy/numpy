@@ -21,8 +21,6 @@ import os
 import sys
 import subprocess
 
-from setuptools import setup
-
 
 if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
     raise RuntimeError("Python version 2.6, 2.7 or >= 3.2 required.")
@@ -206,6 +204,64 @@ def generate_cython():
         raise RuntimeError("Running cythonize failed!")
 
 
+def parse_setuppy_commands():
+    """Check the commands and respond appropriately.  Disable broken commands."""
+    if len(sys.argv) < 2:
+        # User forgot to give an argument probably, let setuptools handle that.
+        return
+
+    # TODO: 'alias' seems broken, but check after the rest works
+    # TODO: 'rotate' command - not sure if it works or is useful
+    # TODO: 'saveopts' and 'setopt' commands - not sure if they work or are useful
+    # TODO: 'bdist_*' commands
+    good_commands = ('--help-commands', 'egg_info', '--version', 'develop',
+                     'install', 'install_egg_info', 'sdist', 'build',
+                     'build_ext', 'build_clib', 'bdist_wheel', 'bdist_rpm',
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+    for command in good_commands:
+        if command in sys.argv[1:]:
+            return
+
+    bad_commands = dict(
+        test="""
+            `setup.py test` is not supported.  Use one of the following
+            instead:
+
+              - `python runtests.py`              (to build and test)
+              - `python runtests.py --no-build`   (to test installed numpy)
+              - `>>> numpy.test()`           (run tests for installed numpy
+                                              from within an interpreter)
+            """,
+        upload="""
+            `setup.py upload` is not supported, because it's insecure.
+            Instead, build what you want to upload and upload those files
+            with `twine upload -s <filenames>` instead.
+            """,
+        upload_docs="`setup.py upload_docs` is not supported",
+        easy_install="`setup.py easy_install` is not supported",
+        clean="""
+            `setup.py clean` is not supported, use one of the following instead:
+
+              - `git clean -xdf` (cleans all files)
+              - `git clean -Xdf` (cleans all versioned files, doesn't touch
+                                  files that aren't checked into the git repo)
+            """,
+        check="`setup.py check` is not supported",
+        register="`setup.py register` is not supported",
+        bdist_dumb="`setup.py bdist_dumb` is not supported",
+
+        )
+    for command in bad_commands.keys():
+        if command in sys.argv[1:]:
+            import textwrap
+            print(textwrap.dedent(bad_commands[command]) +
+                  "\nAdd `--force` to your command to use it anyway if you "
+                  "must (unsupported).\n")
+            sys.exit(1)
+
+    modify_commands = dict()
+
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     old_path = os.getcwd()
@@ -233,6 +289,12 @@ def setup_package():
 
     FULLVERSION, GIT_REVISION = get_version_info()
     metadata['version'] = FULLVERSION
+
+    from setuptools import setup
+    # Raise errors for unsupported commands, improve help output, etc.
+    if not "--force" in sys.argv:
+        parse_setuppy_commands()
+
     # Run build
     if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
             sys.argv[1] in ('--help-commands', 'egg_info', '--version',
