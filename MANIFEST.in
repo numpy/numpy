@@ -5,7 +5,6 @@
 #
 include MANIFEST.in
 include *.txt
-include setupegg.py
 include site.cfg.example
 include numpy/random/mtrand/generate_mtrand_c.py
 recursive-include numpy/random/mtrand *.pyx *.pxd

@@ -82,7 +82,7 @@ real-dist: dist-build html html-scipyorg
 
 dist-build:
 	rm -f ../dist/*.egg
-	cd .. && $(PYTHON) setupegg.py bdist_egg
+	cd .. && $(PYTHON) setup.py bdist_egg
 	install -d $(subst :, ,$(INSTALL_PPH))
 	$(PYTHON) `which easy_install` --prefix=$(INSTALL_DIR) ../dist/*.egg
 

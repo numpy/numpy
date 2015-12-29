@@ -56,9 +56,9 @@ To perform an in-place build that can be run from the source folder run::
 
     python setup.py build_ext --inplace
 
-The NumPy build system uses ``distutils`` and ``numpy.distutils``.
-``setuptools`` is only used when building via ``pip`` or with ``python
-setupegg.py``.  Using ``virtualenv`` should work as expected.
+The NumPy build system uses ``setuptools`` (from numpy 1.11.0, before that it
+was plain ``distutils``) and ``numpy.distutils``.
+Using ``virtualenv`` should work as expected.
 
 *Note: for build instructions to do development work on NumPy itself, see*
 :ref:`development-environment`.

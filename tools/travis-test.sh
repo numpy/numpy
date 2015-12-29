@@ -132,6 +132,7 @@ run_test()
 
 export PYTHON
 export PIP
+$PIP install setuptools
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Build wheel
   $PIP install wheel

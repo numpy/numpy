@@ -36,9 +36,7 @@ that the correct version is imported by
     >>> import numpy
 
 Note that you can eg. install Numpy to a temporary location and set
-the PYTHONPATH environment variable appropriately. Also note that if
-you have a system Numpy installed via Python eggs, you will also need
-to use ``setupegg.py`` to install the temporary Numpy.
+the PYTHONPATH environment variable appropriately.
 
 After Numpy is installed, write::
 
