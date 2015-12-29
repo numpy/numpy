@@ -20,6 +20,7 @@ DOCLINES = (__doc__ or '').split("\n")
 import os
 import sys
 import subprocess
+import textwrap
 
 
 if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
@@ -205,23 +206,74 @@ def generate_cython():
 
 
 def parse_setuppy_commands():
-    """Check the commands and respond appropriately.  Disable broken commands."""
+    """Check the commands and respond appropriately.  Disable broken commands.
+
+    Return a boolean value for whether or not to run the build or not (avoid
+    parsing Cython and template files if False).
+    """
     if len(sys.argv) < 2:
         # User forgot to give an argument probably, let setuptools handle that.
-        return
+        return True
 
-    # TODO: 'alias' seems broken, but check after the rest works
-    # TODO: 'rotate' command - not sure if it works or is useful
-    # TODO: 'saveopts' and 'setopt' commands - not sure if they work or are useful
-    # TODO: 'bdist_*' commands
-    good_commands = ('--help-commands', 'egg_info', '--version', 'develop',
-                     'install', 'install_egg_info', 'sdist', 'build',
-                     'build_ext', 'build_clib', 'bdist_wheel', 'bdist_rpm',
+    info_commands = ['--help-commands', '--name', '--version', '-V',
+                     '--fullname', '--author', '--author-email',
+                     '--maintainer', '--maintainer-email', '--contact',
+                     '--contact-email', '--url', '--license', '--description',
+                     '--long-description', '--platforms', '--classifiers',
+                     '--keywords', '--provides', '--requires', '--obsoletes']
+    # Add commands that do more than print info, but also don't need Cython and
+    # template parsing.
+    info_commands.extend(['egg_info', 'install_egg_info', 'rotate'])
+
+    for command in info_commands:
+        if command in sys.argv[1:]:
+            return False
+
+    # Note that 'alias', 'saveopts' and 'setopt' commands also seem to work
+    # fine as they are, but are usually used together with one of the commands
+    # below and not standalone.  Hence they're not added to good_commands.
+    good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
+                     'build_clib', 'buld_scripts', 'bdist_wheel', 'bdist_rpm',
                      'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+
     for command in good_commands:
         if command in sys.argv[1:]:
-            return
+            return True
 
+    # The following commands are supported, but we need to show some more
+    # useful messages to the user
+    if 'install' in sys.argv[1:]:
+        print(textwrap.dedent("""
+            Note: if you need reliable uninstall behavior, then install
+            with pip instead of using `setup.py install`:
+
+              - `pip install .`       (from a git repo or downloaded source
+                                       release)
+              - `pip install numpy`   (last Numpy release on PyPi)
+
+            """))
+        return True
+
+    if '--help' in sys.argv[1:] or '-h' in sys.argv[1]:
+        print(textwrap.dedent("""
+            Numpy-specific help
+            -------------------
+
+            To install Numpy from here with reliable uninstall, we recommend
+            that you use `pip install .`. To install the latest Numpy release
+            from PyPi, use `pip install numpy`.
+
+            For help with build/installation issues, please ask on the
+            numpy-discussion mailing list.  If you are sure that you have run
+            into a bug, please report it at https://github.com/numpy/numpy/issues.
+
+            Setuptools commands help
+            ------------------------
+            """))
+        return False
+
+    # The following commands aren't supported.  They can only be executed when
+    # the user explicitly adds a --force command-line argument.
     bad_commands = dict(
         test="""
             `setup.py test` is not supported.  Use one of the following
@@ -249,17 +301,30 @@ def parse_setuppy_commands():
         check="`setup.py check` is not supported",
         register="`setup.py register` is not supported",
         bdist_dumb="`setup.py bdist_dumb` is not supported",
-
+        bdist="`setup.py bdist` is not supported",
+        build_sphinx="""
+            `setup.py build_sphinx` is not supported, use the
+            Makefile under doc/""",
+        flake8="`setup.py flake8` is not supported, use flake8 standalone",
         )
+    bad_commands['nosetests'] = bad_commands['test']
+    for commands in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
+                     'register', 'check', 'install_data', 'install_headers',
+                     'install_lib', 'install_scripts', ):
+        bad_commands[command] = "`setup.py %s` is not supported" % command
+
     for command in bad_commands.keys():
         if command in sys.argv[1:]:
-            import textwrap
             print(textwrap.dedent(bad_commands[command]) +
                   "\nAdd `--force` to your command to use it anyway if you "
                   "must (unsupported).\n")
             sys.exit(1)
 
-    modify_commands = dict()
+    # If we got here, we didn't detect what setup.py command was given
+    import warnings
+    warnings.warn("Unrecognized setuptools command, proceeding with "
+                  "generating Cython sources and expanding templates")
+    return True
 
 
 def setup_package():
@@ -287,20 +352,14 @@ def setup_package():
         cmdclass={"sdist": sdist_checked},
     )
 
-    FULLVERSION, GIT_REVISION = get_version_info()
-    metadata['version'] = FULLVERSION
+    if "--force" in sys.argv:
+        run_build = True
+    else:
+        # Raise errors for unsupported commands, improve help output, etc.
+        run_build = parse_setuppy_commands()
 
     from setuptools import setup
-    # Raise errors for unsupported commands, improve help output, etc.
-    if not "--force" in sys.argv:
-        parse_setuppy_commands()
-
-    # Run build
-    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-            sys.argv[1] in ('--help-commands', 'egg_info', '--version',
-                            'clean')):
-        pass
-    else:
+    if run_build:
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
@@ -308,6 +367,10 @@ def setup_package():
             generate_cython()
 
         metadata['configuration'] = configuration
+    else:
+        # Version number is added to metadata inside configuration() if build
+        # is run.
+        metadata['version'] = get_version_info()[0]
 
     try:
         setup(**metadata)
