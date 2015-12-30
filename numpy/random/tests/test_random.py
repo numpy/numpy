@@ -171,7 +171,7 @@ class TestRandomDist(TestCase):
         # Tests whether random_integers can generate the
         # maximum allowed Python int that can be converted
         # into a C long. Previous implementations of this
-        # method have thrown an OverflowError when attemping
+        # method have thrown an OverflowError when attempting
         # to generate this integer.
         actual = np.random.random_integers(np.iinfo('l').max,
                                            np.iinfo('l').max)
