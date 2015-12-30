@@ -12,4 +12,4 @@ from unittest import TestCase
 from . import decorators as dec
 from .nosetester import run_module_suite, NoseTester as Tester
 from .utils import *
-test = Tester().test
+test = nosetester._numpy_tester().test
