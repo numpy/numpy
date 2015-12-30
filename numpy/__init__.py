@@ -184,13 +184,11 @@ else:
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
+    # We don't actually use this ourselves anymore, but I'm not 100% sure that
+    # no-one else in the world is using it (though I hope not)
     from .testing import Tester
-    if ".dev0" in __version__:
-        test = Tester(raise_warnings="develop").test
-        bench = Tester(raise_warnings="develop").bench
-    else:
-        test = Tester(raise_warnings="release").test
-        bench = Tester(raise_warnings="release").bench
+    test = testing.nosetester._numpy_tester().test
+    bench = testing.nosetester._numpy_tester().bench
 
     from . import core
     from .core import *
