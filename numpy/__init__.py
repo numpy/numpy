@@ -184,9 +184,11 @@ else:
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
+    # We don't actually use this ourselves anymore, but I'm not 100% sure that
+    # no-one else in the world is using it (though I hope not)
     from .testing import Tester
-    test = Tester().test
-    bench = Tester().bench
+    test = testing.nosetester._numpy_tester().test
+    bench = testing.nosetester._numpy_tester().bench
 
     from . import core
     from .core import *

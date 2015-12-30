@@ -158,15 +158,13 @@ class NoseTester(object):
           - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
           - "release" : equals ``()``, don't raise on any warnings.
 
-        See Notes for more details.
-
-    Notes
-    -----
-    The default for `raise_warnings` is
-    ``(DeprecationWarning, RuntimeWarning)`` for development versions of NumPy,
-    and ``()`` for released versions.  The purpose of this switching behavior
-    is to catch as many warnings as possible during development, but not give
-    problems for packaging of released versions.
+        Default is "release".
+    depth : int, optional
+        If `package` is None, then this can be used to initialize from the
+        module of the caller of (the caller of (...)) the code that
+        initializes `NoseTester`. Default of 0 means the module of the
+        immediate caller; higher values are useful for utility routines that
+        want to initialize `NoseTester` objects on behalf of other code.
 
     """
     # Stuff to exclude from tests. These are from numpy.distutils
@@ -176,16 +174,21 @@ class NoseTester(object):
                 'pyrex_ext',
                 'swig_ext']
 
-    def __init__(self, package=None, raise_warnings=None):
-        if raise_warnings is None and (
-                not hasattr(np, '__version__') or '.dev0' in np.__version__):
-            raise_warnings = "develop"
-        elif raise_warnings is None:
+    def __init__(self, package=None, raise_warnings="release", depth=0):
+        # Back-compat: 'None' used to mean either "release" or "develop"
+        # depending on whether this was a release or develop version of
+        # numpy. Those semantics were fine for testing numpy, but not so
+        # helpful for downstream projects like scipy that use
+        # numpy.testing. (They want to set this based on whether *they* are a
+        # release or develop version, not whether numpy is.) So we continue to
+        # accept 'None' for back-compat, but it's now just an alias for the
+        # default "release".
+        if raise_warnings is None:
             raise_warnings = "release"
 
         package_name = None
         if package is None:
-            f = sys._getframe(1)
+            f = sys._getframe(1 + depth)
             package_path = f.f_locals.get('__file__', None)
             if package_path is None:
                 raise AssertionError
@@ -514,3 +517,10 @@ class NoseTester(object):
         add_plugins = [Unplugger('doctest')]
 
         return nose.run(argv=argv, addplugins=add_plugins)
+
+def _numpy_tester():
+    if hasattr(np, "__version__") and ".dev0" in np.__version__:
+        mode = "develop"
+    else:
+        mode = "release"
+    return NoseTester(raise_warnings=mode, depth=1)
