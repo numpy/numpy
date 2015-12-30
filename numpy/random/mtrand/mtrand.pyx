@@ -232,7 +232,6 @@ cdef object cont2_array(rk_state *state, rk_cont2 func, object size,
     cdef double *oa_data
     cdef double *ob_data
     cdef ndarray array "arrayObject"
-    cdef npy_intp length
     cdef npy_intp i
     cdef broadcast multi
 
@@ -288,7 +287,6 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size,
     cdef double *ob_data
     cdef double *oc_data
     cdef ndarray array "arrayObject"
-    cdef npy_intp length
     cdef npy_intp i
     cdef broadcast multi
 
@@ -358,7 +356,6 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size,
                          ndarray on, ndarray op, object lock):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef npy_intp length
     cdef npy_intp i
     cdef double *op_data
     cdef long *on_data
@@ -412,7 +409,6 @@ cdef object discdd_array(rk_state *state, rk_discdd func, object size,
                          ndarray on, ndarray op, object lock):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef npy_intp length
     cdef npy_intp i
     cdef double *op_data
     cdef double *on_data
@@ -469,7 +465,6 @@ cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,
     cdef long *om_data
     cdef long *oN_data
     cdef ndarray array "arrayObject"
-    cdef npy_intp length
     cdef npy_intp i
     cdef broadcast multi
 
