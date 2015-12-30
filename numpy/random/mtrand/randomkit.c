@@ -70,6 +70,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
+#include <assert.h>
 
 #ifdef _WIN32
 /*
@@ -115,6 +116,10 @@
 #include <unistd.h>
 #endif
 
+/*
+ * Do not move this include. randomkit.h must be included
+ * after windows timeb.h is included.
+ */
 #include "randomkit.h"
 
 #ifndef RK_DEV_URANDOM
@@ -207,7 +212,11 @@ rk_randomseed(rk_state *state)
 #define UPPER_MASK 0x80000000UL
 #define LOWER_MASK 0x7fffffffUL
 
-/* Slightly optimised reference implementation of the Mersenne Twister */
+/*
+ * Slightly optimised reference implementation of the Mersenne Twister
+ * Note that regardless of the precision of long, only 32 bit random
+ * integers are produced
+ */
 unsigned long
 rk_random(rk_state *state)
 {
@@ -239,6 +248,219 @@ rk_random(rk_state *state)
 
     return y;
 }
+
+
+/*
+ * Returns an unsigned 64 bit random integer.
+ */
+NPY_INLINE static npy_uint64
+rk_uint64(rk_state *state)
+{
+    npy_uint64 upper = (npy_uint64)rk_random(state) << 32;
+    npy_uint64 lower = (npy_uint64)rk_random(state);
+    return upper | lower;
+}
+
+
+/*
+ * Returns an unsigned 32 bit random integer.
+ */
+NPY_INLINE static npy_uint32
+rk_uint32(rk_state *state)
+{
+    return (npy_uint32)rk_random(state);
+}
+
+
+/*
+ * Fills an array with cnt random npy_uint64 between off and off + rng
+ * inclusive. The numbers wrap if rng is sufficiently large.
+ */
+void
+rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
+                 npy_uint64 *out, rk_state *state)
+{
+    npy_uint64 val, mask = rng;
+    npy_intp i;
+
+    if (rng == 0) {
+        for (i = 0; i < cnt; i++) {
+            out[i] = off;
+        }
+        return;
+    }
+
+    /* Smallest bit mask >= max */
+    mask |= mask >> 1;
+    mask |= mask >> 2;
+    mask |= mask >> 4;
+    mask |= mask >> 8;
+    mask |= mask >> 16;
+    mask |= mask >> 32;
+
+    for (i = 0; i < cnt; i++) {
+        if (rng <= 0xffffffffUL) {
+            while ((val = (rk_uint32(state) & mask)) > rng);
+        }
+        else {
+            while ((val = (rk_uint64(state) & mask)) > rng);
+        }
+        out[i] =  off + val;
+    }
+}
+
+
+/*
+ * Fills an array with cnt random npy_uint32 between off and off + rng
+ * inclusive. The numbers wrap if rng is sufficiently large.
+ */
+void
+rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
+                 npy_uint32 *out, rk_state *state)
+{
+    npy_uint32 val, mask = rng;
+    npy_intp i;
+
+    if (rng == 0) {
+        for (i = 0; i < cnt; i++) {
+            out[i] = off;
+        }
+        return;
+    }
+
+    /* Smallest bit mask >= max */
+    mask |= mask >> 1;
+    mask |= mask >> 2;
+    mask |= mask >> 4;
+    mask |= mask >> 8;
+    mask |= mask >> 16;
+
+    for (i = 0; i < cnt; i++) {
+        while ((val = (rk_uint32(state) & mask)) > rng);
+        out[i] =  off + val;
+    }
+}
+
+
+/*
+ * Fills an array with cnt random npy_uint16 between off and off + rng
+ * inclusive. The numbers wrap if rng is sufficiently large.
+ */
+void
+rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
+                 npy_uint16 *out, rk_state *state)
+{
+    npy_uint16 val, mask = rng;
+    npy_intp i;
+    npy_uint32 buf;
+    int bcnt = 0;
+
+    if (rng == 0) {
+        for (i = 0; i < cnt; i++) {
+            out[i] = off;
+        }
+        return;
+    }
+
+    /* Smallest bit mask >= max */
+    mask |= mask >> 1;
+    mask |= mask >> 2;
+    mask |= mask >> 4;
+    mask |= mask >> 8;
+
+    for (i = 0; i < cnt; i++) {
+        do {
+            if (!bcnt) {
+                buf = rk_uint32(state);
+                bcnt = 1;
+            }
+            else {
+                buf >>= 16;
+                bcnt--;
+            }
+            val = (npy_uint16)buf & mask;
+        } while (val > rng);
+        out[i] =  off + val;
+    }
+}
+
+
+/*
+ * Fills an array with cnt random npy_uint8 between off and off + rng
+ * inclusive. The numbers wrap if rng is sufficiently large.
+ */
+void
+rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
+                npy_uint8 *out, rk_state *state)
+{
+    npy_uint8 val, mask = rng;
+    npy_intp i;
+    npy_uint32 buf;
+    int bcnt = 0;
+
+    if (rng == 0) {
+        for (i = 0; i < cnt; i++) {
+            out[i] = off;
+        }
+        return;
+    }
+
+    /* Smallest bit mask >= max */
+    mask |= mask >> 1;
+    mask |= mask >> 2;
+    mask |= mask >> 4;
+
+    for (i = 0; i < cnt; i++) {
+        do {
+            if (!bcnt) {
+                buf = rk_uint32(state);
+                bcnt = 3;
+            }
+            else {
+                buf >>= 8;
+                bcnt--;
+            }
+            val = (npy_uint8)buf & mask;
+        } while (val > rng);
+        out[i] =  off + val;
+    }
+}
+
+
+/*
+ * Fills an array with cnt random npy_bool between off and off + rng
+ * inclusive.
+ */
+void
+rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
+                npy_bool *out, rk_state *state)
+{
+    npy_intp i;
+    npy_uint32 buf;
+    int bcnt = 0;
+
+    if (rng == 0) {
+        for (i = 0; i < cnt; i++) {
+            out[i] = off;
+        }
+        return;
+    }
+
+    /* If we reach here rng and mask are one and off is zero */
+    assert(rng == 1 && off == 0);
+    for (i = 0; i < cnt; i++) {
+        if (!bcnt) {
+            buf = rk_uint32(state);
+            bcnt = 31;
+        }
+        else {
+            buf >>= 1;
+            bcnt--;
+        }
+        out[i] = (buf & 0x00000001) != 0;
+    }
+}
+
 
 long
 rk_long(rk_state *state)

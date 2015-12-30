@@ -67,6 +67,17 @@ cdef extern from "randomkit.h":
     rk_error rk_altfill(void *buffer, size_t size, int strong,
             rk_state *state) nogil
     double rk_gauss(rk_state *state) nogil
+    void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
+                          npy_uint64 *out, rk_state *state) nogil
+    void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
+                          npy_uint32 *out, rk_state *state) nogil
+    void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
+                          npy_uint16 *out, rk_state *state) nogil
+    void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
+                         npy_uint8 *out, rk_state *state) nogil
+    void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
+                        npy_bool *out, rk_state *state) nogil
+
 
 cdef extern from "distributions.h":
     # do not need the GIL, but they do need a lock on the state !! */
@@ -131,6 +142,7 @@ cimport cython
 import numpy as np
 import operator
 import warnings
+
 try:
     from threading import Lock
 except ImportError:
@@ -569,6 +581,304 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
+
+# Set up dictionary of integer types and relevant functions.
+#
+# The dictionary is keyed by dtype(...).name and the values
+# are a tuple (low, high, function), where low and high are
+# the bounds of the largest half open interval `[low, high)`
+# and the function is the relevant function to call for
+# that precision.
+#
+# The functions are all the same except for changed types in
+# a few places. It would be easy to template them.
+
+def _rand_bool(low, high, size, rngstate):
+    """
+    _rand_bool(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_bool off, rng, buf
+    cdef npy_bool *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_bool>(high - low)
+    off = <npy_bool>(low)
+    if size is None:
+        rk_random_bool(off, rng, 1, &buf, state)
+        return buf
+    else:
+        array = <ndarray>np.empty(size, np.bool_)
+        cnt = PyArray_SIZE(array)
+        out = <npy_bool *>PyArray_DATA(array)
+        with nogil:
+            rk_random_bool(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_int8(low, high, size, rngstate):
+    """
+    _rand_int8(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint8 off, rng, buf
+    cdef npy_uint8 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint8>(high - low)
+    off = <npy_uint8>(<npy_int8>low)
+    if size is None:
+        rk_random_uint8(off, rng, 1, &buf, state)
+        return <npy_int8>buf
+    else:
+        array = <ndarray>np.empty(size, np.int8)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint8 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint8(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_int16(low, high, size, rngstate):
+    """
+    _rand_int16(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint16 off, rng, buf
+    cdef npy_uint16 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint16>(high - low)
+    off = <npy_uint16>(<npy_int16>low)
+    if size is None:
+        rk_random_uint16(off, rng, 1, &buf, state)
+        return <npy_int16>buf
+    else:
+        array = <ndarray>np.empty(size, np.int16)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint16 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint16(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_int32(low, high, size, rngstate):
+    """
+    _rand_int32(self, low, high, size, rngstate)
+
+    Return random np.int32 integers between `low` and `high`, inclusive.
+
+    Return random integers from the "discrete uniform" distribution in the
+    closed interval [`low`, `high`).  If `high` is None (the default),
+    then results are from [0, `low`). On entry the arguments are presumed
+    to have been validated for size and order for the np.int32 type.
+
+    Parameters
+    ----------
+    low : int
+        Lowest (signed) integer to be drawn from the distribution (unless
+        ``high=None``, in which case this parameter is the *highest* such
+        integer).
+    high : int
+        If provided, the largest (signed) integer to be drawn from the
+        distribution (see above for behavior if ``high=None``).
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn.  Default is None, in which case a
+        single value is returned.
+    rngstate : encapsulated pointer to rk_state
+        The specific type depends on the python version. In Python 2 it is
+        a PyCObject, in Python 3 a PyCapsule object.
+
+    Returns
+    -------
+    out : python scalar or ndarray of np.int32
+          `size`-shaped array of random integers from the appropriate
+          distribution, or a single such random int if `size` not provided.
+
+    """
+    cdef npy_uint32 off, rng, buf
+    cdef npy_uint32 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint32>(high - low)
+    off = <npy_uint32>(<npy_int32>low)
+    if size is None:
+        rk_random_uint32(off, rng, 1, &buf, state)
+        return <npy_int32>buf
+    else:
+        array = <ndarray>np.empty(size, np.int32)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint32 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint32(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_int64(low, high, size, rngstate):
+    """
+    _rand_int64(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint64 off, rng, buf
+    cdef npy_uint64 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint64>(high - low)
+    off = <npy_uint64>(<npy_int64>low)
+    if size is None:
+        rk_random_uint64(off, rng, 1, &buf, state)
+        return <npy_int64>buf
+    else:
+        array = <ndarray>np.empty(size, np.int64)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint64 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint64(off, rng, cnt, out, state)
+        return array
+
+def _rand_uint8(low, high, size, rngstate):
+    """
+    _rand_uint8(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint8 off, rng, buf
+    cdef npy_uint8 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint8>(high - low)
+    off = <npy_uint8>(low)
+    if size is None:
+        rk_random_uint8(off, rng, 1, &buf, state)
+        return buf
+    else:
+        array = <ndarray>np.empty(size, np.uint8)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint8 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint8(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_uint16(low, high, size, rngstate):
+    """
+    _rand_uint16(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint16 off, rng, buf
+    cdef npy_uint16 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint16>(high - low)
+    off = <npy_uint16>(low)
+    if size is None:
+        rk_random_uint16(off, rng, 1, &buf, state)
+        return buf
+    else:
+        array = <ndarray>np.empty(size, np.uint16)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint16 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint16(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_uint32(low, high, size, rngstate):
+    """
+    _rand_uint32(self, low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint32 off, rng, buf
+    cdef npy_uint32 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint32>(high - low)
+    off = <npy_uint32>(low)
+    if size is None:
+        rk_random_uint32(off, rng, 1, &buf, state)
+        return <npy_uint32>buf
+    else:
+        array = <ndarray>np.empty(size, np.uint32)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint32 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint32(off, rng, cnt, out, state)
+        return array
+
+
+def _rand_uint64(low, high, size, rngstate):
+    """
+    _rand_uint64(low, high, size, rngstate)
+
+    See `_rand_int32` for documentation, only the return type changes.
+
+    """
+    cdef npy_uint64 off, rng, buf
+    cdef npy_uint64 *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+
+    rng = <npy_uint64>(high - low)
+    off = <npy_uint64>(low)
+    if size is None:
+        rk_random_uint64(off, rng, 1, &buf, state)
+        return <npy_uint64>buf
+    else:
+        array = <ndarray>np.empty(size, np.uint64)
+        cnt = PyArray_SIZE(array)
+        out = <npy_uint64 *>PyArray_DATA(array)
+        with nogil:
+            rk_random_uint64(off, rng, cnt, out, state)
+        return array
+
+# Look up table for randint functions keyed by type name. The stored data
+# is a tuple (lbnd, ubnd, func), where lbnd is the smallest value for the
+# type, ubnd is one greater than the largest value, and func is the
+# function to call.
+_randint_type = {
+    'bool': (0, 2, _rand_bool),
+    'int8': (-2**7, 2**7, _rand_int8),
+    'int16': (-2**15, 2**15, _rand_int16),
+    'int32': (-2**31, 2**31, _rand_int32),
+    'int64': (-2**63, 2**63, _rand_int64),
+    'uint8': (0, 2**8, _rand_uint8),
+    'uint16': (0, 2**16, _rand_uint16),
+    'uint32': (0, 2**32, _rand_uint32),
+    'uint64': (0, 2**64, _rand_uint64)
+    }
+
+
 cdef class RandomState:
     """
     RandomState(seed=None)
@@ -613,11 +923,12 @@ cdef class RandomState:
     """
     cdef rk_state *internal_state
     cdef object lock
+    cdef object state_address
     poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
 
     def __init__(self, seed=None):
         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
-
+        self.state_address = NpyCapsule_FromVoidPtr(self.internal_state, NULL)
         self.lock = Lock()
         self.seed(seed)
 
@@ -880,15 +1191,15 @@ cdef class RandomState:
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
 
-    def randint(self, low, high=None, size=None):
+    def randint(self, low, high=None, size=None, dtype='l'):
         """
-        randint(low, high=None, size=None)
+        randint(low, high=None, size=None, dtype='l')
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
-        Return random integers from the "discrete uniform" distribution in the
-        "half-open" interval [`low`, `high`). If `high` is None (the default),
-        then results are from [0, `low`).
+        Return random integers from the "discrete uniform" distribution of
+        the specified dtype in the "half-open" interval [`low`, `high`). If
+        `high` is None (the default), then results are from [0, `low`).
 
         Parameters
         ----------
@@ -903,6 +1214,13 @@ cdef class RandomState:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+        dtype : dtype, optional
+            Desired dtype of the result. All dtypes are determined by their
+            name, i.e., 'int64', 'int`, etc, so byteorder is not available
+            and a specific precision may have different C types depending
+            on the platform. The default value is 'l' (C long).
+
+            .. versionadded:: 1.11.0
 
         Returns
         -------
@@ -931,14 +1249,24 @@ cdef class RandomState:
                [3, 2, 2, 0]])
 
         """
-        if high is not None and low >= high:
-            raise ValueError("low >= high")
-
         if high is None:
             high = low
             low = 0
 
-        return self.random_integers(low, high - 1, size)
+        key = np.dtype(dtype).name
+        if not key in _randint_type:
+            raise TypeError('Unsupported dtype "%s" for randint' % key)
+        lowbnd, highbnd, randfunc = _randint_type[key]
+
+        if low < lowbnd:
+            raise ValueError("low is out of bounds for %s" % (key,))
+        if high > highbnd:
+            raise ValueError("high is out of bounds for %s" % (key,))
+        if low >= high:
+            raise ValueError("low >= high")
+
+        with self.lock:
+            return randfunc(low, high - 1, size, self.state_address)
 
     def bytes(self, npy_intp length):
         """
@@ -1351,11 +1679,13 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Return random integers between `low` and `high`, inclusive.
+        Random integers of type np.int between `low` and `high`, inclusive.
 
-        Return random integers from the "discrete uniform" distribution in the
-        closed interval [`low`, `high`].  If `high` is None (the default),
-        then results are from [1, `low`].
+        Return random integers of type np.int from the "discrete uniform"
+        distribution in the closed interval [`low`, `high`].  If `high` is
+        None (the default), then results are from [1, `low`]. The np.int
+        type translates to the C long type used by Python 2 for "short"
+        integers and its precision is platform dependent.
 
         Parameters
         ----------
@@ -1421,37 +1751,13 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        if high is not None and low > high:
-            raise ValueError("low > high")
-
-        cdef long lo, hi, rv
-        cdef unsigned long diff
-        cdef long *array_data
-        cdef ndarray array "arrayObject"
-        cdef npy_intp length
-        cdef npy_intp i
-
         if high is None:
-            lo = 1
-            hi = low
-        else:
-            lo = low
-            hi = high
+            high = low
+            low = 1
 
-        diff = <unsigned long>hi - <unsigned long>lo
-        if size is None:
-            with self.lock:
-                rv = lo + <long>rk_interval(diff, self. internal_state)
-            return rv
-        else:
-            array = <ndarray>np.empty(size, int)
-            length = PyArray_SIZE(array)
-            array_data = <long *>PyArray_DATA(array)
-            with self.lock, nogil:
-                for i from 0 <= i < length:
-                    rv = lo + <long>rk_interval(diff, self. internal_state)
-                    array_data[i] = rv
-            return array
+        return self.randint(low, high + 1, size=size, dtype='l')
+
+
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None):
