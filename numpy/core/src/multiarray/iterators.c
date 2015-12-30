@@ -1456,9 +1456,9 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     int i, ntot, err=0;
 
     ntot = n + nadd;
-    if (ntot < 2 || ntot > NPY_MAXARGS) {
+    if (ntot < 1 || ntot > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 2 and at most %d "
+                     "Need at least 1 and at most %d "
                      "array objects.", NPY_MAXARGS);
         return NULL;
     }
@@ -1522,9 +1522,9 @@ PyArray_MultiIterNew(int n, ...)
 
     int i, err = 0;
 
-    if (n < 2 || n > NPY_MAXARGS) {
+    if (n < 1 || n > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 2 and at most %d "
+                     "Need at least 1 and at most %d "
                      "array objects.", NPY_MAXARGS);
         return NULL;
     }
@@ -1603,12 +1603,12 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
             ++n;
         }
     }
-    if (n < 2 || n > NPY_MAXARGS) {
+    if (n < 1 || n > NPY_MAXARGS) {
         if (PyErr_Occurred()) {
             return NULL;
         }
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 2 and at most %d "
+                     "Need at least 1 and at most %d "
                      "array objects.", NPY_MAXARGS);
         return NULL;
     }
