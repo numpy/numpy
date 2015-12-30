@@ -2,6 +2,12 @@
 
 cdef extern from "numpy/npy_no_deprecated_api.h": pass
 
+cdef extern from "mt_compat.h":
+
+    object NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(object o))
+    void * NpyCapsule_AsVoidPtr(object o)
+    
+
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
@@ -71,7 +77,17 @@ cdef extern from "numpy/arrayobject.h":
         double real
         double imag
 
+    ctypedef int npy_int
     ctypedef int npy_intp
+    ctypedef int npy_int64
+    ctypedef int npy_uint64
+    ctypedef int npy_int32
+    ctypedef int npy_uint32
+    ctypedef int npy_int16
+    ctypedef int npy_uint16
+    ctypedef int npy_int8
+    ctypedef int npy_uint8
+    ctypedef int npy_bool
 
     ctypedef extern class numpy.dtype [object PyArray_Descr]: pass
 

@@ -7,6 +7,9 @@
 #include <npy_config.h>
 #endif
 
+/* need Python.h for npy_intp, npy_uintp */
+#include <Python.h>
+
 /*
  * gcc does not unroll even with -O3
  * use with care, unrolling on modern cpus rarely speeds things up
