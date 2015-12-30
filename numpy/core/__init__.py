@@ -55,9 +55,9 @@ __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 
 
-from numpy.testing import Tester
-test = Tester().test
-bench = Tester().bench
+from numpy.testing.nosetester import _numpy_tester
+test = _numpy_tester().test
+bench = _numpy_tester().bench
 
 # Make it possible so that ufuncs can be pickled
 #  Here are the loading and unloading functions
