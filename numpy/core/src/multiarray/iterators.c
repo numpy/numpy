@@ -1458,8 +1458,8 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     ntot = n + nadd;
     if (ntot < 2 || ntot > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                     "Need between 2 and (%d) "                 \
-                     "array objects (inclusive).", NPY_MAXARGS);
+                     "Need at least 2 and at most %d "
+                     "array objects.", NPY_MAXARGS);
         return NULL;
     }
     multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
@@ -1524,8 +1524,8 @@ PyArray_MultiIterNew(int n, ...)
 
     if (n < 2 || n > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                     "Need between 2 and (%d) "                 \
-                     "array objects (inclusive).", NPY_MAXARGS);
+                     "Need at least 2 and at most %d "
+                     "array objects.", NPY_MAXARGS);
         return NULL;
     }
 
@@ -1608,7 +1608,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
             return NULL;
         }
         PyErr_Format(PyExc_ValueError,
-                     "Need at least two and fewer than (%d) "
+                     "Need at least 2 and at most %d "
                      "array objects.", NPY_MAXARGS);
         return NULL;
     }
