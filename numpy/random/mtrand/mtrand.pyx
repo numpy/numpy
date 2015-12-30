@@ -547,6 +547,95 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
                 PyArray_MultiIter_NEXTi(multi, 1)
     return array
 
+cdef object gen_randint_array(rk_state *state, object low, object high,
+                              object size, object lock, npy_intp is_half_open):
+    cdef ndarray lo, hi
+    cdef long lnlo, lnhi
+
+    lnlo = PyInt_AsLong(low)
+    lnhi = PyInt_AsLong(high)
+
+    err_msg = "low >= high" if is_half_open else "low > high"
+
+    if not PyErr_Occurred():
+        if lnlo > lnhi - <long>is_half_open:
+            raise ValueError(err_msg)
+
+        return randint_array_sc(state, lnlo, lnhi, size, lock, is_half_open)
+
+    PyErr_Clear()
+
+    lo = <ndarray>PyArray_FROM_OTF(low, NPY_LONG, NPY_ARRAY_ALIGNED)
+    hi = <ndarray>PyArray_FROM_OTF(high, NPY_LONG, NPY_ARRAY_ALIGNED)
+
+    if np.any(np.less(np.subtract(hi, <long>is_half_open), lo)):
+        raise ValueError(err_msg)
+
+    return randint_array(state, lo, hi, size, lock, is_half_open)
+
+cdef object randint_array_sc(rk_state *state, long low, long high,
+                          object size, object lock, npy_intp is_half_open):
+    cdef long rv
+    cdef long *array_data
+    cdef unsigned long diff
+    cdef ndarray array "arrayObject"
+    cdef npy_intp length
+    cdef npy_intp i
+
+    diff = <unsigned long>high - <unsigned long>low - is_half_open
+    if size is None:
+        with lock:
+            rv = low + <long>rk_interval(diff, state)
+        return rv
+    else:
+        array = <ndarray>np.empty(size, int)
+        length = PyArray_SIZE(array)
+        array_data = <long *>PyArray_DATA(array)
+        with lock, nogil:
+            for i from 0 <= i < length:
+                rv = low + <long>rk_interval(diff, state)
+                array_data[i] = rv
+        return array
+
+cdef object randint_array(rk_state *state, ndarray low, ndarray high,
+                          object size, object lock, npy_intp is_half_open):
+    cdef long *low_data
+    cdef long *high_data
+    cdef long *array_data
+    cdef unsigned long diff
+    cdef ndarray array "arrayObject"
+    cdef broadcast multi
+    cdef npy_intp i
+
+    if size is None:
+        multi = <broadcast> PyArray_MultiIterNew(2, <void *>low, <void *>high)
+        array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
+        array_data = <long *>PyArray_DATA(array)
+        with lock, nogil:
+            for i from 0 <= i < multi.size:
+                low_data = <long *>PyArray_MultiIter_DATA(multi, 0)
+                high_data = <long *>PyArray_MultiIter_DATA(multi, 1)
+                diff = <unsigned long> high_data[0] - <unsigned long> low_data[0] \
+                       - <unsigned long>is_half_open
+                array_data[i] = low_data[0] + <long>rk_interval(diff, state)
+                PyArray_MultiIter_NEXT(multi)
+    else:
+        array = <ndarray>np.empty(size, int)
+        array_data = <long *>PyArray_DATA(array)
+        multi = <broadcast> PyArray_MultiIterNew(3, <void *> array, <void *>low, <void *>high)
+        if (multi.size != PyArray_SIZE(array)):
+            raise ValueError("size is not compatible with inputs")
+        with lock, nogil:
+            for i from 0 <= i < multi.size:
+                low_data = <long *>PyArray_MultiIter_DATA(multi, 1)
+                high_data = <long *>PyArray_MultiIter_DATA(multi, 2)
+                diff = <unsigned long> high_data[0] - <unsigned long> low_data[0] \
+                       - <unsigned long>is_half_open
+                array_data[i] = low_data[0] + <long>rk_interval(diff, state)
+                PyArray_MultiIter_NEXT(multi)
+
+    return array
+
 cdef double kahan_sum(double *darr, npy_intp n):
     cdef double c, y, t, sum
     cdef npy_intp i
@@ -890,6 +979,9 @@ cdef class RandomState:
         "half-open" interval [`low`, `high`). If `high` is None (the default),
         then results are from [0, `low`).
 
+        This function can broadcast arguments, but if an array is passed in
+        for either `low` or `high`, all elements in the array must be integers.
+
         Parameters
         ----------
         low : int
@@ -923,6 +1015,15 @@ cdef class RandomState:
         array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])
         >>> np.random.randint(1, size=10)
         array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        >>> np.random.randint(5, [11, 16, 25])
+        array([ 9, 6, 12])
+
+        Because the broadcasting requires that the array argument(s)
+        contain all integers, this is the function call that would
+        be equivalent to `np.random.random_integers(6, [18, None])`:
+
+        >>> np.random.randint([6, 0], [18, 6])
+        array([10, 5])
 
         Generate a 2 x 4 array of ints between 0 and 4, inclusive:
 
@@ -931,14 +1032,12 @@ cdef class RandomState:
                [3, 2, 2, 0]])
 
         """
-        if high is not None and low >= high:
-            raise ValueError("low >= high")
-
         if high is None:
             high = low
             low = 0
 
-        return self.random_integers(low, high - 1, size)
+        return gen_randint_array(self.internal_state, low,
+                                 high, size, self.lock, 1)
 
     def bytes(self, npy_intp length):
         """
@@ -1357,6 +1456,9 @@ cdef class RandomState:
         closed interval [`low`, `high`].  If `high` is None (the default),
         then results are from [1, `low`].
 
+        This function can broadcast arguments, but if an array is passed in
+        for either `low` or `high`, all elements in the array must be integers.
+
         Parameters
         ----------
         low : int
@@ -1400,6 +1502,15 @@ cdef class RandomState:
         array([[5, 4],
                [3, 3],
                [4, 5]])
+        >>> np.random.random_integers(5, [10, 15, 20])
+        array([ 9, 11, 13])
+
+        Because the broadcasting requires that the array argument(s)
+        contain all integers, this is the function call that would
+        be equivalent to `np.random.random_integers(5, [10, None])`:
+
+        >>> np.random.random_integers([5, 1], [10, 5])
+        array([10, 4])
 
         Choose five random numbers from the set of five evenly-spaced
         numbers between 0 and 2.5, inclusive (*i.e.*, from the set
@@ -1421,37 +1532,12 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        if high is not None and low > high:
-            raise ValueError("low > high")
-
-        cdef long lo, hi, rv
-        cdef unsigned long diff
-        cdef long *array_data
-        cdef ndarray array "arrayObject"
-        cdef npy_intp length
-        cdef npy_intp i
-
         if high is None:
-            lo = 1
-            hi = low
-        else:
-            lo = low
-            hi = high
+            high = low
+            low = 1
 
-        diff = <unsigned long>hi - <unsigned long>lo
-        if size is None:
-            with self.lock:
-                rv = lo + <long>rk_interval(diff, self. internal_state)
-            return rv
-        else:
-            array = <ndarray>np.empty(size, int)
-            length = PyArray_SIZE(array)
-            array_data = <long *>PyArray_DATA(array)
-            with self.lock, nogil:
-                for i from 0 <= i < length:
-                    rv = lo + <long>rk_interval(diff, self. internal_state)
-                    array_data[i] = rv
-            return array
+        return gen_randint_array(self.internal_state, low,
+                                 high, size, self.lock, 0)
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None):
