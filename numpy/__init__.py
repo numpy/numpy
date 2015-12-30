@@ -185,8 +185,12 @@ else:
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
     from .testing import Tester
-    test = Tester().test
-    bench = Tester().bench
+    if ".dev0" in __version__:
+        test = Tester(raise_warnings="develop").test
+        bench = Tester(raise_warnings="develop").bench
+    else:
+        test = Tester(raise_warnings="release").test
+        bench = Tester(raise_warnings="release").bench
 
     from . import core
     from .core import *
