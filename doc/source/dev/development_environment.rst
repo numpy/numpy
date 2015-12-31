@@ -137,6 +137,9 @@ run the test suite with Python 3.4, use::
 For more extensive info on running and writing tests, see
 https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt .
 
+*Note: do not run the tests from the root directory of your numpy git repo,
+that will result in strange test errors.*
+
 
 Rebuilding & cleaning the workspace
 -----------------------------------
