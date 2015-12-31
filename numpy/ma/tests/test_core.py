@@ -222,6 +222,22 @@ class TestMaskedArray(TestCase):
         assert_equal(xmm.fill_value, xm.fill_value)
         assert_equal(xmm._hardmask, xm._hardmask)
 
+    def test_asarray_default_order(self):
+        # See Issue #6646
+        m = np.eye(3).T
+        self.assertFalse(m.flags.c_contiguous)
+
+        new_m = asarray(m)
+        self.assertTrue(new_m.flags.c_contiguous)
+
+    def test_asarray_enforce_order(self):
+        # See Issue #6646
+        m = np.eye(3).T
+        self.assertFalse(m.flags.c_contiguous)
+
+        new_m = asarray(m, order='C')
+        self.assertTrue(new_m.flags.c_contiguous)
+
     def test_fix_invalid(self):
         # Checks fix_invalid.
         with np.errstate(invalid='ignore'):

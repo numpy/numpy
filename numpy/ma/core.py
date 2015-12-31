@@ -2642,9 +2642,9 @@ class MaskedArray(ndarray):
 
     Construction::
 
-      x = MaskedArray(data, mask=nomask, dtype=None,
-                      copy=False, subok=True, ndmin=0, fill_value=None,
-                      keep_mask=True, hard_mask=None, shrink=True)
+      x = MaskedArray(data, mask=nomask, dtype=None, copy=False, subok=True,
+                      ndmin=0, fill_value=None, keep_mask=True, hard_mask=None,
+                      shrink=True, order=None)
 
     Parameters
     ----------
@@ -2677,6 +2677,14 @@ class MaskedArray(ndarray):
         cannot be unmasked. Default is False.
     shrink : bool, optional
         Whether to force compression of an empty mask. Default is True.
+    order : {'C', 'F', 'A'}, optional
+        Specify the order of the array.  If order is 'C', then the array
+        will be in C-contiguous order (last-index varies the fastest).
+        If order is 'F', then the returned array will be in
+        Fortran-contiguous order (first-index varies the fastest).
+        If order is 'A' (default), then the returned array may be
+        in any order (either C-, Fortran-contiguous, or even discontiguous),
+        unless a copy is required, in which case it will be C-contiguous.
 
     """
 
@@ -2688,9 +2696,8 @@ class MaskedArray(ndarray):
     _print_width = 100
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
-                subok=True, ndmin=0, fill_value=None,
-                keep_mask=True, hard_mask=None, shrink=True,
-                **options):
+                subok=True, ndmin=0, fill_value=None, keep_mask=True,
+                hard_mask=None, shrink=True, order=None, **options):
         """
         Create a new masked array from scratch.
 
@@ -2700,7 +2707,8 @@ class MaskedArray(ndarray):
 
         """
         # Process data.
-        _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
+        _data = np.array(data, dtype=dtype, copy=copy,
+                         order=order, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
         # Check that we're not erasing the mask.
         if isinstance(data, MaskedArray) and (data.shape != _data.shape):
@@ -6086,10 +6094,9 @@ masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray
 
 
-def array(data, dtype=None, copy=False, order=False,
-          mask=nomask, fill_value=None,
-          keep_mask=True, hard_mask=False, shrink=True, subok=True, ndmin=0,
-          ):
+def array(data, dtype=None, copy=False, order=None,
+          mask=nomask, fill_value=None, keep_mask=True,
+          hard_mask=False, shrink=True, subok=True, ndmin=0):
     """
     Shortcut to MaskedArray.
 
@@ -6097,10 +6104,10 @@ def array(data, dtype=None, copy=False, order=False,
     compatibility.
 
     """
-    # we should try to put 'order' somewhere
-    return MaskedArray(data, mask=mask, dtype=dtype, copy=copy, subok=subok,
-                       keep_mask=keep_mask, hard_mask=hard_mask,
-                       fill_value=fill_value, ndmin=ndmin, shrink=shrink)
+    return MaskedArray(data, mask=mask, dtype=dtype, copy=copy,
+                       subok=subok, keep_mask=keep_mask,
+                       hard_mask=hard_mask, fill_value=fill_value,
+                       ndmin=ndmin, shrink=shrink, order=order)
 array.__doc__ = masked_array.__doc__
 
 
@@ -7530,7 +7537,9 @@ def asarray(a, dtype=None, order=None):
     <class 'numpy.ma.core.MaskedArray'>
 
     """
-    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=False)
+    order = order or 'C'
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True,
+                        subok=False, order=order)
 
 
 def asanyarray(a, dtype=None):
