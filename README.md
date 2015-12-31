@@ -14,7 +14,7 @@ More information can be found at the website:
 
 * http://www.numpy.org
 
-After installation, tests can be run with:
+After installation, tests can be run (if ``nose`` is installed) with:
 
     python -c 'import numpy; numpy.test()'
 

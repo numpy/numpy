@@ -57,7 +57,7 @@ def import_nose():
     """ Import nose only when needed.
     """
     fine_nose = True
-    minimum_nose_version = (0, 10, 0)
+    minimum_nose_version = (1, 0, 0)
     try:
         import nose
     except ImportError:
