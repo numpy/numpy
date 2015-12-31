@@ -120,6 +120,15 @@ The function now internally calls the generic ``npy_amergesort``
 when the type does not implement a merge-sort kind of ``argsort``
 method.
 
+*np.ma.core.MaskedArray* now supports an ``order`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When constructing a new ``MaskedArray`` instance, it can be
+configured with an ``order`` argument analogous to the one
+when calling ``np.ndarray``. The addition of this argument
+allows for the proper processing of an ``order`` argument
+in several MaskedArray-related utility functions such as
+``np.ma.core.array`` and ``np.ma.core.asarray``.
+
 Memory and speed improvements for masked arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
