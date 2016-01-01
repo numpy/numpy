@@ -77,6 +77,6 @@ def test_f2py():
                 assert_equal(stdout.strip(), asbytes('2'))
                 success = True
                 break
-            except OSError:
+            except:
                 pass
         assert_(success, "Warning: neither %s nor %s found in path" % f2py_cmds)
