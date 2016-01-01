@@ -778,7 +778,7 @@ static PyObject *
 test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyArrayObject *array_obj;
-    npy_intp dims[3];   // max 3-dim
+    npy_intp dims[3];   /* max 3-dim */
     npy_intp i=0, j=0, k=0;
     npy_intp num_dims = 0;
     PyArray_Descr *descr = NULL;
