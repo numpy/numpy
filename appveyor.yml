@@ -12,12 +12,6 @@ environment:
     - PY_MAJOR_VER: 3
       PYTHON_ARCH: "x86"
 
-matrix:
-  #fast_finish: true
-  allow_failures:
-    - PY_MAJOR_VER: 2
-    - PY_MAJOR_VER: 3
-
 build_script:
   - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda$env:PY_MAJOR_VER-latest-Windows-$env:PYTHON_ARCH.exe" C:\Miniconda.exe; echo "Finished downloading miniconda"
   - cmd: C:\Miniconda.exe /S /D=C:\Py
