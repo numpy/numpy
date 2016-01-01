@@ -523,6 +523,19 @@ def test_compressed_roundtrip():
     arr1 = np.load(npz_file)['arr']
     assert_array_equal(arr, arr1)
 
+def test_compressed_roundtrip():
+    arr = np.random.rand(200, 200)
+    npz_file = os.path.join(tempdir, 'compressed.npz')
+    try:
+        import pathlib
+    except:
+        return
+    npz_file = pathlib.Path(npz_file)
+    np.savez_compressed(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
 
 def test_python2_python3_interoperability():
     if sys.version_info[0] >= 3:
