@@ -50,8 +50,10 @@ setup_base()
         | grep -E "warning\>" \
         | tee warnings
       # Check for an acceptable number of warnings. Some warnings are out of
-      # our control, so adjust the number as needed.
-      [[ $(wc -l < warnings) -lt 1 ]]
+      # our control, so adjust the number as needed. At the moment a
+      # cython generated code produces a warning about '-2147483648L', but
+      # the code seems to compile OK.
+      [[ $(wc -l < warnings) -lt 2 ]]
     fi
   else
     sysflags="$($PYTHON -c "from distutils import sysconfig; \
