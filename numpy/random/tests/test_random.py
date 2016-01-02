@@ -159,6 +159,14 @@ class TestRandomDist(TestCase):
                             [-48, -66]])
         np.testing.assert_array_equal(actual, desired)
 
+    def test_randint_can_broadcast(self):
+        # See Issue #6745
+        np.random.seed(self.seed)
+        actual = np.random.randint(-99, [9, 99, 999,
+                                         9999, 99999])
+        desired = np.array([-97, 3, 972, 1065, 69328])
+        np.testing.assert_array_equal(actual, desired)
+
     def test_random_integers(self):
         np.random.seed(self.seed)
         actual = np.random.random_integers(-99, 99, size=(3, 2))
@@ -177,6 +185,14 @@ class TestRandomDist(TestCase):
                                            np.iinfo('l').max)
         desired = np.iinfo('l').max
         np.testing.assert_equal(actual, desired)
+
+    def test_random_integers_can_broadcast(self):
+        # See Issue #6745
+        np.random.seed(self.seed)
+        actual = np.random.random_integers([-99999, -9999,
+                                            -999, -99, -9], 99)
+        desired = np.array([-12573, -3856, 72, 41, 42])
+        np.testing.assert_array_equal(actual, desired)
 
     def test_random_sample(self):
         np.random.seed(self.seed)
