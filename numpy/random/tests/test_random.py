@@ -128,6 +128,83 @@ class TestSetState(TestCase):
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+class TestRandint(TestCase):
+
+    rfunc = np.random.randint
+
+    # valid integer/boolean types
+    itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
+             np.int32, np.uint32, np.int64, np.uint64]
+
+    def test_unsupported_type(self):
+        assert_raises(TypeError, self.rfunc, 1, dtype=np.float)
+
+    def test_bounds_checking(self):
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+            assert_raises(ValueError, self.rfunc, lbnd - 1 , ubnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, lbnd , ubnd + 1, dtype=dt)
+            assert_raises(ValueError, self.rfunc, ubnd , lbnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, 1 , 0, dtype=dt)
+
+    def test_rng_zero_and_extremes(self):
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+            tgt = ubnd - 1
+            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            tgt = lbnd
+            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            tgt = (lbnd + ubnd)//2
+            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
+    def test_in_bounds_fuzz(self):
+        # Don't use fixed seed
+        np.random.seed()
+        for dt in self.itype[1:]:
+            for ubnd in [4, 8, 16]:
+                vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
+                assert_(vals.max() < ubnd)
+                assert_(vals.min() >= 2)
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+        assert_(vals.max() < 2)
+        assert_(vals.min() >= 0)
+
+    def test_repeatability(self):
+        import hashlib
+        # We use a md5 hash of generated sequences of 1000 samples
+        # in the range [0, 6) for all but np.bool, where the range
+        # is [0, 2). Hashes are for little endian numbers.
+        tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
+               'int16': '1b7741b80964bb190c50d541dca1cac1',
+               'int32': '4dc9fcc2b395577ebb51793e58ed1a05',
+               'int64': '17db902806f448331b5a758d7d2ee672',
+               'int8': '27dd30c4e08a797063dffac2490b0be6',
+               'uint16': '1b7741b80964bb190c50d541dca1cac1',
+               'uint32': '4dc9fcc2b395577ebb51793e58ed1a05',
+               'uint64': '17db902806f448331b5a758d7d2ee672',
+               'uint8': '27dd30c4e08a797063dffac2490b0be6'}
+
+        for dt in self.itype[1:]:
+            np.random.seed(1234)
+
+            # view as little endian for hash
+            if sys.byteorder == 'little':
+                val = self.rfunc(0, 6, size=1000, dtype=dt)
+            else:
+                val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
+
+            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            assert_(tgt[np.dtype(dt).name] == res)
+
+        # bools do not depend on endianess
+        np.random.seed(1234)
+        val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
+        res = hashlib.md5(val).hexdigest()
+        assert_(tgt[np.dtype(np.bool).name] == res)
+
+
 class TestRandomDist(TestCase):
     # Make sure the random distribution returns the correct value for a
     # given seed
