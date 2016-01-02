@@ -2177,5 +2177,11 @@ class TestRegression(TestCase):
         # gh-6530 / gh-6553
         assert_array_equal(np.percentile(np.arange(10), []), np.array([]))
 
+    def test_void_compare_segfault(self):
+        # gh-6922. The following should not segfault
+        a = np.ones(3, dtype=[('object', 'O'), ('int', '<i2')])
+        a.sort()
+
+
 if __name__ == "__main__":
     run_module_suite()
