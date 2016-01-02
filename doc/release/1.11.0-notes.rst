@@ -86,6 +86,23 @@ New Features
   the files can be specifies to be ``*.f90``. The ``verbose`` argument is
   also activated, it was previously ignored.
 
+* A ``dtype`` parameter has been added to ``np.random.randint``
+  Random ndarrays of the following types can now be generated:
+
+  - np.bool,
+  - np.int8, np.uint8,
+  - np.int16, np.uint16,
+  - np.int32, np.uint32,
+  - np.int64, np.uint64,
+  - np.int_ (long), np.intp
+
+  The specification is by precision rather than by C type. Hence, on some
+  platforms np.int64 may be a `long` instead of `long long` even if the
+  specified dtype is `long long` because the two may have the same
+  precision. The resulting type depends on which c type numpy uses for the
+  given precision. The byteorder specification is also ignored, the
+  generated arrays are always in native byte order.
+
 
 Improvements
 ============
