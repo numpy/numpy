@@ -3526,6 +3526,8 @@ class MaskedArray(ndarray):
     def filled(self, fill_value=None):
         """
         Return a copy of self, with masked values filled with a given value.
+        **However**, if there are no masked values to fill, self will be
+        returned instead as an ndarray.
 
         Parameters
         ----------
@@ -3537,7 +3539,9 @@ class MaskedArray(ndarray):
         -------
         filled_array : ndarray
             A copy of ``self`` with invalid entries replaced by *fill_value*
-            (be it the function argument or the attribute of ``self``.
+            (be it the function argument or the attribute of ``self``), or
+            ``self`` itself as an ndarray if there are no invalid entries to
+            be replaced.
 
         Notes
         -----
