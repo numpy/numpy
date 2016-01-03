@@ -7,6 +7,8 @@ from numpy.testing import (
 from numpy import random
 from numpy.compat import asbytes
 import sys
+import warnings
+
 
 class TestSeed(TestCase):
     def test_scalar(self):
@@ -254,6 +256,20 @@ class TestRandomDist(TestCase):
                                            np.iinfo('l').max)
         desired = np.iinfo('l').max
         np.testing.assert_equal(actual, desired)
+
+    def test_random_integers_deprecated(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+
+            # DeprecationWarning raised with high == None
+            assert_raises(DeprecationWarning,
+                          np.random.random_integers,
+                          np.iinfo('l').max)
+
+            # DeprecationWarning raised with high != None
+            assert_raises(DeprecationWarning,
+                          np.random.random_integers,
+                          np.iinfo('l').max, np.iinfo('l').max)
 
     def test_random_sample(self):
         np.random.seed(self.seed)

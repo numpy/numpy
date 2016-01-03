@@ -1683,6 +1683,10 @@ cdef class RandomState:
         type translates to the C long type used by Python 2 for "short"
         integers and its precision is platform dependent.
 
+        This function has been deprecated. Use randint instead.
+
+        .. deprecated:: 1.11.0
+
         Parameters
         ----------
         low : int
@@ -1748,8 +1752,16 @@ cdef class RandomState:
 
         """
         if high is None:
+            warnings.warn(("This function is deprecated. Please call "
+                           "randint(1, {low} + 1) instead".format(low=low)),
+                          DeprecationWarning)
             high = low
             low = 1
+
+        else:
+            warnings.warn(("This function is deprecated. Please call "
+                           "randint({low}, {high} + 1) instead".format(
+                    low=low, high=high)), DeprecationWarning)
 
         return self.randint(low, high + 1, size=size, dtype='l')
 
