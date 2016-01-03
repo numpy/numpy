@@ -1216,7 +1216,7 @@ cdef class RandomState:
             single value is returned.
         dtype : dtype, optional
             Desired dtype of the result. All dtypes are determined by their
-            name, i.e., 'int64', 'int`, etc, so byteorder is not available
+            name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
             on the platform. The default value is 'l' (C long).
 
