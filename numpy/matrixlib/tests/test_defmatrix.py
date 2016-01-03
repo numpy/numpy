@@ -309,7 +309,7 @@ class TestMatrixReturn(object):
             'partition', 'argpartition',
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset',
+            'prod', 'std', 'ctypes', 'itemset', 'vindex', 'oindex', 'lindex',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:

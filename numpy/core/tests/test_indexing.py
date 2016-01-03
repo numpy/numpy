@@ -673,8 +673,9 @@ class TestFancyIndexingCast(object):
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(np.ComplexWarning,
-                     zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
+        assert_warns(
+            np.ComplexWarning,
+            zero_array.lindex.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
@@ -1031,6 +1032,8 @@ class TestMultiIndexingAutomated(object):
             Index being tested.
         """
         # Test item getting
+        if all(_ is not Ellipsis for _ in index):
+            index = index + (Ellipsis,)
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
         except Exception as e:
@@ -1066,13 +1069,17 @@ class TestMultiIndexingAutomated(object):
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
-        self._compare_index_result(arr, index, mimic_get, no_copy)
+        self._compare_index_result(arr, index, mimic_get, no_copy, lindex=False)
 
-    def _compare_index_result(self, arr, index, mimic_get, no_copy):
+    def _compare_index_result(self, arr, index, mimic_get, no_copy,
+            lindex=True):
         """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
-        indexed_arr = arr.lindex[index]
+        if lindex:
+            indexed_arr = arr.lindex[index]
+        else:
+            indexed_arr = arr[index]
         assert_array_equal(indexed_arr, mimic_get)
         # Check if we got a view, unless its a 0-sized or 0-d array.
         # (then its not a view, and that does not matter)
@@ -1088,7 +1095,11 @@ class TestMultiIndexingAutomated(object):
 
         # Test non-broadcast setitem:
         b = arr.copy()
-        b.lindex[index] = mimic_get + 1000
+        if lindex:
+            b.lindex[index] = mimic_get + 1000
+        else:
+            b[index] = mimic_get + 1000
+
         if b.size == 0:
             return  # nothing to compare here...
         if no_copy and indexed_arr.ndim != 0:
