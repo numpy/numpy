@@ -2795,7 +2795,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                 if (nip1 == NULL) {
                     goto finish;
                 }
-                new->f->copyswap(nip1, ip1 + offset, swap, dummy);
+                memcpy(nip1, ip1 + offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip1, NULL, swap, dummy);
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
                 /* create buffer and copy */
@@ -2806,7 +2808,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     }
                     goto finish;
                 }
-                new->f->copyswap(nip2, ip2 + offset, swap, dummy);
+                memcpy(nip2, ip2 + offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip2, NULL, swap, dummy);
             }
         }
         res = new->f->compare(nip1, nip2, dummy);
