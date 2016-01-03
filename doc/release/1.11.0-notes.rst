@@ -99,7 +99,7 @@ New Features
   The specification is by precision rather than by C type. Hence, on some
   platforms np.int64 may be a `long` instead of `long long` even if the
   specified dtype is `long long` because the two may have the same
-  precision. The resulting type depends on which c type numpy uses for the
+  precision. The resulting type depends on which C type numpy uses for the
   given precision. The byteorder specification is also ignored, the
   generated arrays are always in native byte order.
 
