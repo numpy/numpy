@@ -3986,16 +3986,17 @@ PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method)
 
 NPY_NO_EXPORT PyObject *
 arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
-                                 PyObject *op)
+                                PyObject *op)
 {
     return array_subscript(
         attr_indexer->array, op, attr_indexer->indexing_method);
+
 }
 
 
 NPY_NO_EXPORT int
 arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
-                                        PyObject *op, PyObject *vals)
+                                       PyObject *op, PyObject *vals)
 {
     return array_assign_subscript(
         attr_indexer->array, op, vals, attr_indexer->indexing_method);
