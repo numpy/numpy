@@ -694,7 +694,7 @@ class TestEinsum(object):
         y1 = np.zeros((5, 5))
         np.einsum('aabb->ab', x, out=y1)
         idx = np.arange(5)
-        y2 = x[idx[:, None], idx[:, None], idx, idx]
+        y2 = x.vindex[idx[:, None], idx[:, None], idx, idx]
         assert_equal(y1, y2)
 
     def test_einsum_all_contig_non_contig_output(self):

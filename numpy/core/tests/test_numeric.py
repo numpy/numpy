@@ -1174,7 +1174,7 @@ class TestIndex(object):
         V = rand(5, 8)
         g1 = randint(0, 5, size=15)
         g2 = randint(0, 8, size=15)
-        V[g1, g2] = -V[g1, g2]
+        V.vindex[g1, g2] = -V.vindex[g1, g2]
         assert_((np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
 
     def test_boolean_edgecase(self):
@@ -2411,7 +2411,7 @@ class TestRollaxis(object):
             # positive axis, positive start
             res = np.rollaxis(a, axis=i, start=j)
             i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
-            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(np.all(res.vindex[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(i, j)], str((i,j)))
             assert_(not res.flags['OWNDATA'])
 
@@ -2419,7 +2419,7 @@ class TestRollaxis(object):
             ip = i + 1
             res = np.rollaxis(a, axis=-ip, start=j)
             i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
-            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(np.all(res.vindex[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(4 - ip, j)])
             assert_(not res.flags['OWNDATA'])
 
@@ -2427,7 +2427,7 @@ class TestRollaxis(object):
             jp = j + 1 if j < 4 else j
             res = np.rollaxis(a, axis=i, start=-jp)
             i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
-            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(np.all(res.vindex[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(i, 4 - jp)])
             assert_(not res.flags['OWNDATA'])
 
@@ -2436,7 +2436,7 @@ class TestRollaxis(object):
             jp = j + 1 if j < 4 else j
             res = np.rollaxis(a, axis=-ip, start=-jp)
             i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
-            assert_(np.all(res[i0, i1, i2, i3] == a))
+            assert_(np.all(res.vindex[i0, i1, i2, i3] == a))
             assert_(res.shape == self.tgtshape[(4 - ip, 4 - jp)])
             assert_(not res.flags['OWNDATA'])
 

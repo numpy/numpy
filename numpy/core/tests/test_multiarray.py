@@ -2410,8 +2410,8 @@ class TestMethods(object):
                        msg="%d: %r <= %r" % (i, p[:, i], p[:, :i].T))
                     at((p[:, i + 1:].T > p[:, i]).all(),
                        msg="%d: %r < %r" % (i, p[:, i], p[:, i + 1:].T))
-                    aae(p, d1[np.arange(d1.shape[0])[:, None],
-                        np.argpartition(d1, i, axis=1, kind=k)])
+                    aae(p, d1.vindex[np.arange(d1.shape[0])[:, None],
+                                     np.argpartition(d1, i, axis=1, kind=k)])
 
                     p = np.partition(d0, i, axis=0, kind=k)
                     aae(p[i, :], np.array([i] * d1.shape[0], dtype=dt))
@@ -2420,8 +2420,8 @@ class TestMethods(object):
                        msg="%d: %r <= %r" % (i, p[i, :], p[:i, :]))
                     at((p[i + 1:, :] > p[i, :]).all(),
                        msg="%d: %r < %r" % (i, p[i, :], p[:, i + 1:]))
-                    aae(p, d0[np.argpartition(d0, i, axis=0, kind=k),
-                        np.arange(d0.shape[1])[None, :]])
+                    aae(p, d0.vindex[np.argpartition(d0, i, axis=0, kind=k),
+                                     np.arange(d0.shape[1])[None, :]])
 
                     # check inplace
                     dc = d.copy()
@@ -2498,14 +2498,14 @@ class TestMethods(object):
 
             kth = (1, 6, 7, -1)
             p = np.partition(d1, kth, axis=1)
-            pa = d1[np.arange(d1.shape[0])[:, None],
-                    d1.argpartition(kth, axis=1)]
+            pa = d1.vindex[np.arange(d1.shape[0])[:, None],
+                           d1.argpartition(kth, axis=1)]
             assert_array_equal(p, pa)
             for i in range(d1.shape[0]):
                 self.assert_partitioned(p[i,:], kth)
             p = np.partition(d0, kth, axis=0)
-            pa = d0[np.argpartition(d0, kth, axis=0),
-                    np.arange(d0.shape[1])[None,:]]
+            pa = d0.vindex[np.argpartition(d0, kth, axis=0),
+                           np.arange(d0.shape[1])[None, :]]
             assert_array_equal(p, pa)
             for i in range(d0.shape[1]):
                 self.assert_partitioned(p[:, i], kth)
@@ -2963,9 +2963,10 @@ class TestMethods(object):
                     # check array contents
                     i0, i1, i2, i3 = [dim-1 for dim in c.shape]
                     j0, j1, j2, j3 = [dim-1 for dim in src.shape]
-                    assert_equal(src[idx[j0], idx[j1], idx[j2], idx[j3]],
-                                 c[idx[i0], idx[i1], idx[i2], idx[i3]],
-                                 str((i, j, k)))
+                    assert_equal(
+                        src.vindex[idx[j0], idx[j1], idx[j2], idx[j3]],
+                        c.vindex[idx[i0], idx[i1], idx[i2], idx[i3]],
+                        str((i, j, k)))
                     # check a view is always returned, gh-5260
                     assert_(not c.flags['OWNDATA'], str((i, j, k)))
                     # check on non-contiguous input array

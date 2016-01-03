@@ -607,7 +607,7 @@ class TestNanFunctions_Median(object):
         # Randomly set some elements to NaN:
         w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
         w = w.astype(np.intp)
-        d[tuple(w)] = np.nan
+        d.vindex[tuple(w)] = np.nan
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
             res = np.nanmedian(d, axis=None, keepdims=True)
@@ -773,7 +773,7 @@ class TestNanFunctions_Percentile(object):
         # Randomly set some elements to NaN:
         w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
         w = w.astype(np.intp)
-        d[tuple(w)] = np.nan
+        d.vindex[tuple(w)] = np.nan
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
             res = np.nanpercentile(d, 90, axis=None, keepdims=True)

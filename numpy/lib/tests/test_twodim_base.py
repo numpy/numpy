@@ -379,32 +379,32 @@ def test_tril_indices():
     b = np.arange(1, 21).reshape(4, 5)
 
     # indexing:
-    assert_array_equal(a[il1],
+    assert_array_equal(a.vindex[il1],
                        array([1, 5, 6, 9, 10, 11, 13, 14, 15, 16]))
-    assert_array_equal(b[il3],
+    assert_array_equal(b.vindex[il3],
                        array([1, 6, 7, 11, 12, 13, 16, 17, 18, 19]))
 
     # And for assigning values:
-    a[il1] = -1
+    a.vindex[il1] = -1
     assert_array_equal(a,
                        array([[-1, 2, 3, 4],
                               [-1, -1, 7, 8],
                               [-1, -1, -1, 12],
                               [-1, -1, -1, -1]]))
-    b[il3] = -1
+    b.vindex[il3] = -1
     assert_array_equal(b,
                        array([[-1, 2, 3, 4, 5],
                               [-1, -1, 8, 9, 10],
                               [-1, -1, -1, 14, 15],
                               [-1, -1, -1, -1, 20]]))
     # These cover almost the whole array (two diagonals right of the main one):
-    a[il2] = -10
+    a.vindex[il2] = -10
     assert_array_equal(a,
                        array([[-10, -10, -10, 4],
                               [-10, -10, -10, -10],
                               [-10, -10, -10, -10],
                               [-10, -10, -10, -10]]))
-    b[il4] = -10
+    b.vindex[il4] = -10
     assert_array_equal(b,
                        array([[-10, -10, -10, 4, 5],
                               [-10, -10, -10, -10, 10],
@@ -426,20 +426,20 @@ class TestTriuIndices(object):
         b = np.arange(1, 21).reshape(4, 5)
 
         # Both for indexing:
-        assert_array_equal(a[iu1],
+        assert_array_equal(a.vindex[iu1],
                            array([1, 2, 3, 4, 6, 7, 8, 11, 12, 16]))
-        assert_array_equal(b[iu3],
+        assert_array_equal(b.vindex[iu3],
                            array([1, 2, 3, 4, 5, 7, 8, 9,
                                   10, 13, 14, 15, 19, 20]))
 
         # And for assigning values:
-        a[iu1] = -1
+        a.vindex[iu1] = -1
         assert_array_equal(a,
                            array([[-1, -1, -1, -1],
                                   [5, -1, -1, -1],
                                   [9, 10, -1, -1],
                                   [13, 14, 15, -1]]))
-        b[iu3] = -1
+        b.vindex[iu3] = -1
         assert_array_equal(b,
                            array([[-1, -1, -1, -1, -1],
                                   [6, -1, -1, -1, -1],
@@ -448,13 +448,13 @@ class TestTriuIndices(object):
 
         # These cover almost the whole array (two diagonals right of the
         # main one):
-        a[iu2] = -10
+        a.vindex[iu2] = -10
         assert_array_equal(a,
                            array([[-1, -1, -10, -10],
                                   [5, -1, -1, -10],
                                   [9, 10, -1, -1],
                                   [13, 14, 15, -1]]))
-        b[iu4] = -10
+        b.vindex[iu4] = -10
         assert_array_equal(b,
                            array([[-1, -1, -10, -10, -10],
                                   [6, -1, -1, -10, -10],

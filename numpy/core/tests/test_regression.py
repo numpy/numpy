@@ -658,7 +658,7 @@ class TestRegression(object):
         # Make sure optimization is not called in this case.
         a = np.array([1, 2, 3])
         a2 = np.array([[1, 2, 3]])
-        assert_equal(a[np.where(a == 3)], a2[np.where(a2 == 3)])
+        assert_equal(a[np.where(a == 3)], a2.vindex[np.where(a2 == 3)])
 
     def test_object_argmax(self):
         a = np.array([1, 2, 3], dtype=object)
@@ -1461,7 +1461,7 @@ class TestRegression(object):
         stra = 'aaaa'
         strb = 'bbbb'
         x = np.array([[(0, stra), (1, strb)]], 'i8,O')
-        x[x.nonzero()] = x.ravel()[:1]
+        x.vindex[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
@@ -1472,7 +1472,7 @@ class TestRegression(object):
         numb = sys.getrefcount(strb)
         numa = sys.getrefcount(stra)
         x = np.array([[(0, stra), (1, strb)]], 'i8,O')
-        x[x.nonzero()] = x.ravel()[:1]
+        x.vindex[x.nonzero()] = x.ravel()[:1]
         assert_(sys.getrefcount(strb) == numb)
         assert_(sys.getrefcount(stra) == numa + 2)
 

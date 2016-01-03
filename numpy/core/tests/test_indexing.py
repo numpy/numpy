@@ -1036,8 +1036,8 @@ class TestMultiIndexingAutomated(object):
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(type(e), arr.__getitem__, index)
-            assert_raises(type(e), arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.lindex.__getitem__, index)
+            assert_raises(type(e), arr.lindex.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1072,7 +1072,7 @@ class TestMultiIndexingAutomated(object):
         """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
-        indexed_arr = arr[index]
+        indexed_arr = arr.lindex[index]
         assert_array_equal(indexed_arr, mimic_get)
         # Check if we got a view, unless its a 0-sized or 0-d array.
         # (then its not a view, and that does not matter)
@@ -1088,7 +1088,7 @@ class TestMultiIndexingAutomated(object):
 
         # Test non-broadcast setitem:
         b = arr.copy()
-        b[index] = mimic_get + 1000
+        b.lindex[index] = mimic_get + 1000
         if b.size == 0:
             return  # nothing to compare here...
         if no_copy and indexed_arr.ndim != 0:
