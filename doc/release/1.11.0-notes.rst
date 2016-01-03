@@ -184,15 +184,23 @@ that will not be backward compatible.
 
 Invalid arguments for array ordering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-It is currently possible to pass in arguments for the ```order```
-parameter in methods like ```array.flatten``` or ```array.ravel```
+It is currently possible to pass in arguments for the ``order``
+parameter in methods like ``array.flatten`` or ``array.ravel``
 that were not one of the following: 'C', 'F', 'A', 'K' (note that
 all of these possible values are unicode- and case-insensitive).
 Such behaviour will not be allowed in future releases.
 
 Random number generator in the ``testing`` namespace
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Python standard library random number generator was previously exposed in the
 ``testing`` namespace as ``testing.rand``. Using this generator is not
 recommended and it will be removed in a future release. Use generators from
 ``numpy.random`` namespace instead.
+
+Random integer generation on a closed interval
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In accordance with the Python C API, which gives preference to the half-open
+interval over the closed one, ``np.random.random_integers`` is being
+deprecated in favor of calling ``np.random.randint``, which has been
+enhanced with the ``dtype`` parameter as described under "New Features".
+However, ``np.random.random_integers`` will not be removed anytime soon.
