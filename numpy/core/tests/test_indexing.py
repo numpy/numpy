@@ -895,10 +895,7 @@ class TestMultiIndexingAutomated(TestCase):
                                     + arr.shape[ax + len(indx[1:]):]))
 
                 # Check if broadcasting works
-                if len(indx[1:]) != 1:
-                    res = np.broadcast(*indx[1:])  # raises ValueError...
-                else:
-                    res = indx[1]
+                res = np.broadcast(*indx[1:])
                 # unfortunately the indices might be out of bounds. So check
                 # that first, and use mode='wrap' then. However only if
                 # there are any indices...

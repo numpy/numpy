@@ -2207,11 +2207,20 @@ class TestBroadcast(TestCase):
             for a, ia in zip(arrs, mit.iters):
                 assert_(a is ia.base)
 
+    def test_broadcast_single_arg(self):
+        # gh-6899
+        arrs = [np.empty((5, 6, 7))]
+        mit = np.broadcast(*arrs)
+        assert_equal(mit.shape, (5, 6, 7))
+        assert_equal(mit.nd, 3)
+        assert_equal(mit.numiter, 1)
+        assert_(arrs[0] is mit.iters[0].base)
+
     def test_number_of_arguments(self):
         arr = np.empty((5,))
         for j in range(35):
             arrs = [arr] * j
-            if j < 2 or j > 32:
+            if j < 1 or j > 32:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
