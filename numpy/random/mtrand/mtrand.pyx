@@ -24,6 +24,14 @@
 include "Python.pxi"
 include "numpy.pxd"
 
+from libc cimport stdint
+
+ctypedef fused stdsized:
+    stdint.int8_t
+    stdint.int16_t
+    stdint.int32_t
+    stdint.int64_t
+
 cdef extern from "math.h":
     double exp(double x)
     double log(double x)
@@ -4971,33 +4979,53 @@ cdef class RandomState:
                [0, 1, 2]])
 
         """
-        cdef npy_intp i, j
+        cdef:
+            npy_intp i, j, n = len(x)
+            stdint.int8_t[:] int8_buf
+            stdint.int16_t[:] int16_buf
+            stdint.int32_t[:] int32_buf
+            stdint.int64_t[:] int64_buf
 
-        i = len(x) - 1
-
-        # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray) and \
-           (x.ndim > 1 or x.dtype.fields is not None):
-            # For a multi-dimensional ndarray, indexing returns a view onto
-            # each row. So we can't just use ordinary assignment to swap the
-            # rows; we need a bounce buffer.
+        # Fast, statically typed path: shuffle the underlying buffer.
+        # We exclude subclasses as this approach fails e.g. with MaskedArrays.
+        if (type(x) is np.ndarray and x.ndim == 1 and
+                x.dtype.itemsize in [1, 2, 4, 8]):
+            if x.dtype.itemsize == 1:
+                int8_buf = x.view(np.int8)
+                self._shuffle_stdsize(int8_buf)
+            elif x.dtype.itemsize == 2:
+                int16_buf = x.view(np.int16)
+                self._shuffle_stdsize(int16_buf)
+            elif x.dtype.itemsize == 4:
+                int32_buf = x.view(np.int32)
+                self._shuffle_stdsize(int32_buf)
+            elif x.dtype.itemsize == 8:
+                int64_buf = x.view(np.int64)
+                self._shuffle_stdsize(int64_buf)
+        # Untyped path 1: multidimensional arrays require an bounce buffer
+        # because indexing returns views.
+        elif isinstance(x, np.ndarray) and x.ndim > 1:
             buf = np.empty_like(x[0])
             with self.lock:
-                while i > 0:
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
-                    buf[...] = x[j]
+                    buf[:] = x[j]
                     x[j] = x[i]
-                    x[i] = buf
-                    i = i - 1
+                    x[i] = buf[:]
+        # Untyped path 2 (including for 1d, non-standard-sized arrays).
         else:
-            # For single-dimensional arrays, lists, and any other Python
-            # sequence types, indexing returns a real object that's
-            # independent of the array contents, so we can just swap directly.
             with self.lock:
-                while i > 0:
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
-                    i = i - 1
+
+    cdef void _shuffle_stdsize(self, stdsized[:] x):
+        cdef:
+            npy_intp i, j, n = x.size
+        with self.lock, cython.boundscheck(False), cython.wraparound(False):
+            for i in reversed(range(1, n)):
+                j = rk_interval(i, self.internal_state)
+                x[i], x[j] = x[j], x[i]
 
     def permutation(self, object x):
         """
