@@ -16,6 +16,7 @@ from tempfile import mkdtemp, mkstemp
 
 from .nosetester import import_nose
 from numpy.core import float32, empty, arange, array_repr, ndarray
+from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -122,6 +123,8 @@ def gisinf(x):
             raise TypeError("isinf not supported for this type")
     return st
 
+@deprecate(message="numpy.testing.rand is deprecated in numpy 1.11. "
+                   "Use numpy.random.rand instead.")
 def rand(*args):
     """Returns an array of random numbers with the given shape.
 
