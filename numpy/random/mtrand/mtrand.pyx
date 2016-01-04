@@ -681,8 +681,8 @@ def _rand_int32(low, high, size, rngstate):
     Return random np.int32 integers between `low` and `high`, inclusive.
 
     Return random integers from the "discrete uniform" distribution in the
-    closed interval [`low`, `high`).  If `high` is None (the default),
-    then results are from [0, `low`). On entry the arguments are presumed
+    closed interval [`low`, `high`].  If `high` is None (the default),
+    then results are from [0, `low`]. On entry the arguments are presumed
     to have been validated for size and order for the np.int32 type.
 
     Parameters
