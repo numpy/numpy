@@ -681,19 +681,15 @@ def _rand_int32(low, high, size, rngstate):
     Return random np.int32 integers between `low` and `high`, inclusive.
 
     Return random integers from the "discrete uniform" distribution in the
-    closed interval [`low`, `high`].  If `high` is None (the default),
-    then results are from [0, `low`]. On entry the arguments are presumed
+    closed interval [`low`, `high`]. On entry the arguments are presumed
     to have been validated for size and order for the np.int32 type.
 
     Parameters
     ----------
     low : int
-        Lowest (signed) integer to be drawn from the distribution (unless
-        ``high=None``, in which case this parameter is the *highest* such
-        integer).
+        Lowest (signed) integer to be drawn from the distribution.
     high : int
-        If provided, the largest (signed) integer to be drawn from the
-        distribution (see above for behavior if ``high=None``).
+        Highest (signed) integer to be drawn from the distribution.
     size : int or tuple of ints
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
