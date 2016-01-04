@@ -93,7 +93,7 @@ class TestRegression(TestCase):
     def test_eig_vs_eigh_above_560(self):
         # Tests for an (apparent) error in linalg.eigh(... UPLO='L')
         # with Accelerate (dsyevd) on OS X. The discrepancy only occurs
-        # with sufficiently large matricies, effects dsyevd when called
+        # with sufficiently large matrices, and affects dsyevd when called
         # directly from C as well.
         # See gh-6896
         N = 560
