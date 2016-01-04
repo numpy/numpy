@@ -91,7 +91,11 @@ class TestRegression(TestCase):
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
     def test_eig_vs_eigh_above_560(self):
-        # gh-6896
+        # Tests for an (apparent) error in linalg.eigh(... UPLO='L')
+        # with Accelerate (dsyevd) on OS X. The discrepancy only occurs
+        # with sufficiently large matricies, effects dsyevd when called
+        # directly from C as well.
+        # See gh-6896
         N = 560
 
         A = np.arange(N*N).reshape(N, N)
