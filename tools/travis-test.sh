@@ -25,7 +25,8 @@ if [ -n "$PYTHON_OO" ]; then
 fi
 
 # make some warnings fatal, mostly to match windows compilers
-werrors="-Werror=declaration-after-statement -Werror=vla -Werror=nonnull"
+werrors="-Werror=declaration-after-statement -Werror=vla "
+werrors+="-Werror=nonnull -Werror=pointer-arith"
 
 setup_base()
 {
