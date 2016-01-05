@@ -1,12 +1,17 @@
 NumPy 1.10.3 Release Notes
 **************************
 
-This release is a bugfix release motivated by a segfault regression.
+This release is a bugfix source release motivated by a segfault regression.
+No windows binaries are provided for this release, as there appear to be
+bugs in the toolchain we use to generate those files. Hopefully that
+problem will be fixed for the next release. In the meantime, we suggest
+using one of the providers of windows binaries.
 
 Issues Fixed
 ============
 
 * gh-6922 BUG: numpy.recarray.sort segfaults on Windows
+* gh-6937 BUG: busday_offset does the wrong thing with modifiedpreceding roll.
 
 Merged PRs
 ==========
@@ -19,5 +24,5 @@ the PR number for the original PR against master is listed.
 * gh-6884 REL: Update pavement.py and setup.py to reflect current version.
 * gh-6916 BUG: Fix test_f2py so it runs correctly in runtests.py.
 * gh-6924 BUG: Fix segfault gh-6922.
+* gh-6942 Fix datetime roll='modifiedpreceding' bug.
 * gh-6943 DOC,BUG: Fix some latex generation problems.
-
