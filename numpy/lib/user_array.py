@@ -1,5 +1,6 @@
 """
 Standard container-class for easy multiple-inheritance.
+
 Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
@@ -16,7 +17,19 @@ from numpy.compat import long
 
 
 class container(object):
+    """
+    container(data, dtype=None, copy=True)
 
+    Standard container-class for easy multiple-inheritance.
+
+    Methods
+    -------
+    copy
+    tostring
+    byteswap
+    astype
+
+    """
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
@@ -219,15 +232,19 @@ class container(object):
         return self._rc(greater_equal(self.array, other))
 
     def copy(self):
+        ""
         return self._rc(self.array.copy())
 
     def tostring(self):
+        ""
         return self.array.tostring()
 
     def byteswap(self):
+        ""
         return self._rc(self.array.byteswap())
 
     def astype(self, typecode):
+        ""
         return self._rc(self.array.astype(typecode))
 
     def _rc(self, a):
