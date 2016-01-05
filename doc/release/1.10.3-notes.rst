@@ -19,4 +19,5 @@ the PR number for the original PR against master is listed.
 * gh-6884 REL: Update pavement.py and setup.py to reflect current version.
 * gh-6916 BUG: Fix test_f2py so it runs correctly in runtests.py.
 * gh-6924 BUG: Fix segfault gh-6922.
+* gh-6943 DOC,BUG: Fix some latex generation problems.
 
