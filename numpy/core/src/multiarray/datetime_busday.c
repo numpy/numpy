@@ -889,7 +889,7 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
                     break;
                 case 'p':
                     if (strcmp(str, "modifiedpreceding") == 0) {
-                        *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
+                        *roll = NPY_BUSDAY_MODIFIEDPRECEDING;
                         goto finish;
                     }
                     break;
