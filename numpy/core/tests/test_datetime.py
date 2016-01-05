@@ -1524,6 +1524,12 @@ class TestDateTime(TestCase):
         assert_equal(
                 np.busday_offset('2010-10-30', 0, roll='modifiedpreceding'),
                 np.datetime64('2010-10-29'))
+        assert_equal(
+                np.busday_offset('2010-10-16', 0, roll='modifiedfollowing'),
+                np.datetime64('2010-10-18'))
+        assert_equal(
+                np.busday_offset('2010-10-16', 0, roll='modifiedpreceding'),
+                np.datetime64('2010-10-15'))
         # roll='raise' by default
         assert_raises(ValueError, np.busday_offset, '2011-06-04', 0)
 
