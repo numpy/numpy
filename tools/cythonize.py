@@ -100,6 +100,24 @@ def process_tempita_pyx(fromfile, tofile):
         f.write(pyxcontent)
     process_pyx(pyxfile, tofile)
 
+
+def process_tempita_pxi(fromfile, tofile):
+    try:
+        try:
+            from Cython import Tempita as tempita
+        except ImportError:
+            import tempita
+    except ImportError:
+        raise Exception('Building %s requires Tempita: '
+                        'pip install --user Tempita' % VENDOR)
+    with open(fromfile, "r") as f:
+        tmpl = f.read()
+    pyxcontent = tempita.sub(tmpl)
+    assert fromfile.endswith('.pxi.in')
+    assert tofile.endswith('.pxi')
+    with open(tofile, "w") as f:
+        f.write(pyxcontent)
+
 rules = {
     # fromext : function
     '.pyx' : process_pyx,
@@ -170,22 +188,37 @@ def process(path, fromfile, tofile, processor_function, hash_db):
 def find_process_files(root_dir):
     hash_db = load_hashes(HASH_FILE)
     for cur_dir, dirs, files in os.walk(root_dir):
+        # .pxi or .pxi.in files are most likely dependencies for
+        # .pyx files, so we need to process them first
+        files.sort(key=lambda name: (name.endswith('.pxi') or
+                                     name.endswith('.pxi.in')),
+                   reverse=True)
+
         for filename in files:
             in_file = os.path.join(cur_dir, filename + ".in")
             if filename.endswith('.pyx') and os.path.isfile(in_file):
                 continue
-            for fromext, function in rules.items():
-                if filename.endswith(fromext):
-                    toext = ".c"
-                    with open(os.path.join(cur_dir, filename), 'rb') as f:
-                        data = f.read()
-                        m = re.search(br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$", data, re.I|re.M)
-                        if m:
-                            toext = ".cxx"
-                    fromfile = filename
-                    tofile = filename[:-len(fromext)] + toext
-                    process(cur_dir, fromfile, tofile, function, hash_db)
-                    save_hashes(hash_db, HASH_FILE)
+            elif filename.endswith('.pxi.in'):
+                toext = '.pxi'
+                fromext = '.pxi.in'
+                fromfile = filename
+                function = process_tempita_pxi
+                tofile = filename[:-len(fromext)] + toext
+                process(cur_dir, fromfile, tofile, function, hash_db)
+                save_hashes(hash_db, HASH_FILE)
+            else:
+                for fromext, function in rules.items():
+                    if filename.endswith(fromext):
+                        toext = ".c"
+                        with open(os.path.join(cur_dir, filename), 'rb') as f:
+                            data = f.read()
+                            m = re.search(br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$", data, re.I|re.M)
+                            if m:
+                                toext = ".cxx"
+                        fromfile = filename
+                        tofile = filename[:-len(fromext)] + toext
+                        process(cur_dir, fromfile, tofile, function, hash_db)
+                        save_hashes(hash_db, HASH_FILE)
 
 def main():
     try:

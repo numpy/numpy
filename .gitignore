@@ -12,6 +12,7 @@
 *.iws
 *.org
 .project
+pmip
 *.rej
 .settings/
 .*.sw[nop]

@@ -161,6 +161,12 @@ an array along any given axis.
   non-zero counts to be generated on more than just a flattened
   array object.
 
+Broadcasting for ``randint``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to broadcast both the ``low`` and ``high`` arguments in
+``np.random.randint``. However, if either is array-like, it is expected that
+all elements of the array are integers.
+
 BLIS support in ``numpy.distutils``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Building against the BLAS implementation provided by the BLIS library is now

@@ -153,16 +153,50 @@ class TestRandint(TestCase):
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
 
+            assert_raises(ValueError, self.rfunc, [lbnd, lbnd - 1, lbnd], ubnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, lbnd, [ubnd, ubnd + 1, ubnd], dtype=dt)
+            assert_raises(ValueError, self.rfunc, [lbnd, ubnd, lbnd], lbnd + 1, dtype=dt)
+            assert_raises(ValueError, self.rfunc, ubnd - 1, [ubnd, lbnd, ubnd], dtype=dt)
+
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * 3, tgt + 1, dtype=dt), tgt)
+            assert_equal(self.rfunc(tgt, [tgt + 1] * 3, dtype=dt), tgt)
+
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * 3, tgt + 1, dtype=dt), tgt)
+            assert_equal(self.rfunc(tgt, [tgt + 1] * 3, dtype=dt), tgt)
+
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * 3, tgt + 1, dtype=dt), tgt)
+            assert_equal(self.rfunc(tgt, [tgt + 1] * 3, dtype=dt), tgt)
+
+    def test_full_range(self):
+        # Test for ticket #1690
+        #
+        # Expanded in PR #6938 with the introduction of `dtype`
+        # as a parameter for `np.random.randint` from PR #6910
+        # and the addition of broadcasting functionality
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
+            try:
+                self.rfunc(lbnd, ubnd, dtype=dt)
+                self.rfunc([lbnd] * 3, ubnd, dtype=dt)
+                self.rfunc(lbnd, [ubnd] * 3, dtype=dt)
+                self.rfunc([lbnd] * 3, [ubnd] * 3, dtype=dt)
+            except Exception as e:
+                raise AssertionError("No error should have been raised, "
+                                     "but one was with the following "
+                                     "message:\n\n%s" % str(e))
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
@@ -172,7 +206,7 @@ class TestRandint(TestCase):
                 vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
@@ -208,6 +242,38 @@ class TestRandint(TestCase):
         val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
+
+    def test_int64_uint64_corner_case(self):
+        # When stored in Numpy arrays, `lbnd` is casted
+        # as np.int64, and `ubnd` is casted as np.uint64.
+        # Checking whether `lbnd` >= `ubnd` used to be
+        # done solely via direct comparison, which is incorrect
+        # because when Numpy tries to compare both numbers,
+        # it casts both to np.float64 because there is
+        # no integer superset of np.int64 and np.uint64. However,
+        # `ubnd` is too large to be represented in np.float64,
+        # causing it be round down to np.iinfo(np.int64).max,
+        # leading to a ValueError because `lbnd` now equals
+        # the new `ubnd`.
+
+        dt = np.int64
+        tgt = np.iinfo(np.int64).max
+        lbnd = np.int64(np.iinfo(np.int64).max)
+        ubnd = np.uint64(np.iinfo(np.int64).max + 1)
+
+        # None of these function calls should
+        # generate a ValueError now
+        actual = np.random.randint(lbnd, ubnd, dtype=dt)
+        assert_equal(actual, tgt)
+
+        actual = np.random.randint([lbnd] * 3, ubnd, dtype=dt)
+        assert_equal(actual, tgt)
+
+        actual = np.random.randint(lbnd, [ubnd] * 3, dtype=dt)
+        assert_equal(actual, tgt)
+
+        actual = np.random.randint([lbnd] * 3, [ubnd] * 3, dtype=dt)
+        assert_equal(actual, tgt)
 
     def test_respect_dtype_singleton(self):
         # See gh-7203
@@ -865,8 +931,25 @@ class TestBroadcast(TestCase):
     def setSeed(self):
         np.random.seed(self.seed)
 
-    # TODO: Include test for randint once it can broadcast
-    # Can steal the test written in PR #6938
+    def test_randint(self):
+        low = [1]
+        high = [1000]
+        bad_high = [0]
+        bad_low = [1001]
+        randint = np.random.randint
+        desired = np.array([697, 669, 307])
+
+        self.setSeed()
+        actual = randint(low * 3, high)
+        assert_array_equal(actual, desired)
+        assert_raises(ValueError, randint, low * 3, bad_high)
+        assert_raises(ValueError, randint, bad_low * 3, high)
+
+        self.setSeed()
+        actual = randint(low, high * 3)
+        assert_array_equal(actual, desired)
+        assert_raises(ValueError, randint, low, bad_high * 3)
+        assert_raises(ValueError, randint, bad_low, high * 3)
 
     def test_uniform(self):
         low = [0]
@@ -1411,6 +1494,7 @@ class TestBroadcast(TestCase):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
+
 class TestThread(TestCase):
     # make sure each state produces the same sequence even in threads
     def setUp(self):
@@ -1452,6 +1536,7 @@ class TestThread(TestCase):
         def gen_random(state, out):
             out[...] = state.multinomial(10, [1/6.]*6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
+
 
 # See Issue #4263
 class TestSingleEltArrayInput(TestCase):
@@ -1507,23 +1592,22 @@ class TestSingleEltArrayInput(TestCase):
             out = func(self.argOne, argTwo[0])
             self.assertEqual(out.shape, self.tgtShape)
 
-# TODO: Uncomment once randint can broadcast arguments
-#    def test_randint(self):
-#        itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
-#                 np.int32, np.uint32, np.int64, np.uint64]
-#        func = np.random.randint
-#        high = np.array([1])
-#        low = np.array([0])
-#
-#        for dt in itype:
-#            out = func(low, high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low[0], high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low, high[0], dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
+    def test_randint(self):
+        itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+                 np.int32, np.uint32, np.int64, np.uint64]
+        func = np.random.randint
+        high = np.array([1])
+        low = np.array([0])
+
+        for dt in itype:
+            out = func(low, high, dtype=dt)
+            self.assertEqual(out.shape, self.tgtShape)
+
+            out = func(low[0], high, dtype=dt)
+            self.assertEqual(out.shape, self.tgtShape)
+
+            out = func(low, high[0], dtype=dt)
+            self.assertEqual(out.shape, self.tgtShape)
 
     def test_three_arg_funcs(self):
         funcs = [np.random.noncentral_f, np.random.triangular,
