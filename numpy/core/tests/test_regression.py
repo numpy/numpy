@@ -2090,11 +2090,11 @@ class TestRegression(TestCase):
         assert_equal(arr, arr_cp)
         self.assertTrue(arr is not arr_cp)
         # Ensure that we have actually copied the item.
-        self.assertIsNot(arr[0, 1], arr_cp[1, 1])
+        self.assertTrue(arr[0, 1] is not arr_cp[1, 1])
         # Ensure we are allowed to have references to the same object.
-        self.assertIs(arr[0, 1], arr[1, 1])
+        self.assertTrue(arr[0, 1] is arr[1, 1])
         # Check the references hold for the copied objects.
-        self.assertIs(arr_cp[0, 1], arr_cp[1, 1])
+        self.assertTrue(arr_cp[0, 1] is arr_cp[1, 1])
 
     def test_bool_subscript_crash(self):
         # gh-4494

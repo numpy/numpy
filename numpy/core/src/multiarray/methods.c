@@ -1410,8 +1410,12 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     PyObject* visit;
 
     NpyIter* iter;
+    NpyIter_IterNextFunc* iternext;
+
+    char* data;
     char** dataptr;
     npy_intp* strideptr,* innersizeptr;
+    npy_intp stride, count;
 
     PyObject *copy, *deepcopy;
 
@@ -1440,7 +1444,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
             Py_DECREF(deepcopy);
             return NULL;
         }
-        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+        iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(deepcopy);
@@ -1452,9 +1456,9 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         do {
-            char* data = *dataptr;
-            npy_intp stride = *strideptr;
-            npy_intp count = *innersizeptr;
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
 
             while (count--) {
                 _deepcopy_call(data, data, PyArray_DESCR(copied_array),
