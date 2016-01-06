@@ -2083,6 +2083,33 @@ class TestMethods(TestCase):
             a.diagonal()
         assert_(sys.getrefcount(a) < 50)
 
+    def test_trace(self):
+        a = np.arange(12).reshape((3, 4))
+        assert_equal(a.trace(), 15)
+        assert_equal(a.trace(0), 15)
+        assert_equal(a.trace(1), 18)
+        assert_equal(a.trace(-1), 13)
+
+        b = np.arange(8).reshape((2, 2, 2))
+        assert_equal(b.trace(), [6, 8])
+        assert_equal(b.trace(0), [6, 8])
+        assert_equal(b.trace(1), [2, 3])
+        assert_equal(b.trace(-1), [4, 5])
+        assert_equal(b.trace(0, 0, 1), [6, 8])
+        assert_equal(b.trace(0, 0, 2), [5, 9])
+        assert_equal(b.trace(0, 1, 2), [3, 11])
+        assert_equal(b.trace(offset=1, axis1=0, axis2=2), [1, 3])
+
+    def test_trace_subclass(self):
+        # The class would need to overwrite trace to ensure single-element
+        # output also has the right subclass.
+        class MyArray(np.ndarray):
+            pass
+
+        b = np.arange(8).reshape((2, 2, 2)).view(MyArray)
+        t = b.trace()
+        assert isinstance(t, MyArray)
+
     def test_put(self):
         icodes = np.typecodes['AllInteger']
         fcodes = np.typecodes['AllFloat']
