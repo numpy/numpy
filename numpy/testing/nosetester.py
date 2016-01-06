@@ -171,7 +171,6 @@ class NoseTester(object):
     excludes = ['f2py_ext',
                 'f2py_f90_ext',
                 'gen_ext',
-                'pyrex_ext',
                 'swig_ext']
 
     def __init__(self, package=None, raise_warnings="release", depth=0):
