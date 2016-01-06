@@ -3146,6 +3146,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_almost_equal(mX.trace(),
                             X.trace() - sum(mXdiag.mask * X.diagonal(),
                                             axis=0))
+        assert_equal(np.trace(mX), mX.trace())
 
     def test_dot(self):
         # Tests dot on MaskedArrays.
