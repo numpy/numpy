@@ -133,6 +133,17 @@ diskspace on filesystems that support it.
 Changes
 =======
 
+*np.broadcast* can now be called with a single argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The resulting object in that case will simply mimic iteration over
+a single array. This change obsoletes distinctions like
+
+    if len(x) == 1:
+        shape = x[0].shape
+    else:
+        shape = np.broadcast(*x).shape
+
+Instead, ``np.broadcast`` can be used in all cases.
 
 Deprecations
 ============
