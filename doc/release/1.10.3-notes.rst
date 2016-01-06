@@ -10,8 +10,9 @@ using one of the providers of windows binaries.
 Issues Fixed
 ============
 
-* gh-6922 BUG: numpy.recarray.sort segfaults on Windows
+* gh-6922 BUG: numpy.recarray.sort segfaults on Windows.
 * gh-6937 BUG: busday_offset does the wrong thing with modifiedpreceding roll.
+* gh-6949 BUG: Type is lost when slicing a subclass of recarray.
 
 Merged PRs
 ==========
@@ -26,3 +27,5 @@ the PR number for the original PR against master is listed.
 * gh-6924 BUG: Fix segfault gh-6922.
 * gh-6942 Fix datetime roll='modifiedpreceding' bug.
 * gh-6943 DOC,BUG: Fix some latex generation problems.
+* gh-6950 BUG trace is not subclass aware, np.trace(ma) != ma.trace().
+* gh-6952 BUG recarray slices should preserve subclass.
