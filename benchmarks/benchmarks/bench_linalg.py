@@ -8,6 +8,8 @@ import numpy as np
 class Eindot(Benchmark):
     def setup(self):
         self.a = np.arange(60000.0).reshape(150, 400)
+        self.at = self.a.T
+        self.atc = self.a.T.copy()
         self.b = np.arange(240000.0).reshape(400, 600)
         self.c = np.arange(600)
         self.d = np.arange(400)
@@ -20,6 +22,18 @@ class Eindot(Benchmark):
 
     def time_dot_a_b(self):
         np.dot(self.a, self.b)
+
+    def time_dot_trans_a_at(self):
+        np.dot(self.a, self.at)
+
+    def time_dot_trans_a_atc(self):
+        np.dot(self.a, self.atc)
+
+    def time_dot_trans_at_a(self):
+        np.dot(self.at, self.a)
+
+    def time_dot_trans_atc_a(self):
+        np.dot(self.atc, self.a)
 
     def time_einsum_i_ij_j(self):
         np.einsum('i,ij,j', self.d, self.b, self.c)
