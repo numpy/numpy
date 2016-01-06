@@ -1367,7 +1367,11 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     (2, 3)
 
     """
-    return asarray(a).trace(offset, axis1, axis2, dtype, out)
+    if isinstance(a, np.matrix):
+        # Get trace of matrix via an array to preserve backward compatibility.
+        return asarray(a).trace(offset, axis1, axis2, dtype, out)
+    else:
+        return asanyarray(a).trace(offset, axis1, axis2, dtype, out)
 
 
 def ravel(a, order='C'):
