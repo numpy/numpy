@@ -1936,7 +1936,80 @@ class TestMethods(TestCase):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])
         c = np.array([[9, 1], [1, -9]])
+        d = np.arange(24).reshape(4, 6)
+        ddt = np.array(
+            [[  55,  145,  235,  325],
+             [ 145,  451,  757, 1063],
+             [ 235,  757, 1279, 1801],
+             [ 325, 1063, 1801, 2539]]
+        )
+        dtd = np.array(
+            [[504, 540, 576, 612, 648, 684],
+             [540, 580, 620, 660, 700, 740],
+             [576, 620, 664, 708, 752, 796],
+             [612, 660, 708, 756, 804, 852],
+             [648, 700, 752, 804, 856, 908],
+             [684, 740, 796, 852, 908, 964]]
+        )
 
+
+        # gemm vs syrk optimizations
+        for et in [np.float32, np.float64, np.complex64, np.complex128]:
+            eaf = a.astype(et)
+            assert_equal(np.dot(eaf, eaf), eaf)
+            assert_equal(np.dot(eaf.T, eaf), eaf)
+            assert_equal(np.dot(eaf, eaf.T), eaf)
+            assert_equal(np.dot(eaf.T, eaf.T), eaf)
+            assert_equal(np.dot(eaf.T.copy(), eaf), eaf)
+            assert_equal(np.dot(eaf, eaf.T.copy()), eaf)
+            assert_equal(np.dot(eaf.T.copy(), eaf.T.copy()), eaf)
+
+        # syrk validations
+        for et in [np.float32, np.float64, np.complex64, np.complex128]:
+            eaf = a.astype(et)
+            ebf = b.astype(et)
+            assert_equal(np.dot(ebf, ebf), eaf)
+            assert_equal(np.dot(ebf.T, ebf), eaf)
+            assert_equal(np.dot(ebf, ebf.T), eaf)
+            assert_equal(np.dot(ebf.T, ebf.T), eaf)
+
+        # syrk - different shape, stride, and view validations
+        for et in [np.float32, np.float64, np.complex64, np.complex128]:
+            edf = d.astype(et)
+            assert_equal(
+                np.dot(edf[::-1, :], edf.T),
+                np.dot(edf[::-1, :].copy(), edf.T.copy())
+            )
+            assert_equal(
+                np.dot(edf[:, ::-1], edf.T),
+                np.dot(edf[:, ::-1].copy(), edf.T.copy())
+            )
+            assert_equal(
+                np.dot(edf, edf[::-1, :].T),
+                np.dot(edf, edf[::-1, :].T.copy())
+            )
+            assert_equal(
+                np.dot(edf, edf[:, ::-1].T),
+                np.dot(edf, edf[:, ::-1].T.copy())
+            )
+            assert_equal(
+                np.dot(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
+                np.dot(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
+            )
+            assert_equal(
+                np.dot(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
+                np.dot(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
+            )
+
+        # syrk - different shape
+        for et in [np.float32, np.float64, np.complex64, np.complex128]:
+            edf = d.astype(et)
+            eddtf = ddt.astype(et)
+            edtdf = dtd.astype(et)
+            assert_equal(np.dot(edf, edf.T), eddtf)
+            assert_equal(np.dot(edf.T, edf), edtdf)
+
+        # function versus methods
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
