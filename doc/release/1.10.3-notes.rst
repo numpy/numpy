@@ -7,6 +7,14 @@ bugs in the toolchain we use to generate those files. Hopefully that
 problem will be fixed for the next release. In the meantime, we suggest
 using one of the providers of windows binaries.
 
+Compatibility notes
+===================
+
+* The trace function now calls the trace method on subclasses of ndarray,
+  except for matrix, for which the current behavior is preserved. This is
+  to help with the units package of AstroPy and hopefully will not cause
+  problems.
+
 Issues Fixed
 ============
 
