@@ -130,6 +130,14 @@ useless computations when printing a masked array.
 The function now uses the fallocate system call to reserve sufficient
 diskspace on filesystems that support it.
 
+``np.dot`` optimized for operations of the form ``A.T @ A`` and ``A @ A.T``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, ``gemm`` BLAS operations were used for all matrix products. Now,
+if the matrix product is between a matrix and its transpose, it will use
+``syrk`` BLAS operations for a performance boost.
+
+**Note:** Requires the transposed and non-transposed matrices to share data.
+
 Changes
 =======
 
