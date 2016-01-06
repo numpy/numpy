@@ -145,6 +145,12 @@ a single array. This change obsoletes distinctions like
 
 Instead, ``np.broadcast`` can be used in all cases.
 
+*np.trace* now respects array subclasses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This behaviour mimics that of other functions such as ``np.diagonal`` and
+ensures, e.g., that for masked arrays ``np.trace(ma)`` and ``ma.trace()`` give
+the same result.
+
 Deprecations
 ============
 
