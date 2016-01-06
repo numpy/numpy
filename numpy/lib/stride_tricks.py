@@ -121,9 +121,6 @@ def _broadcast_shape(*args):
     """
     if not args:
         raise ValueError('must provide at least one argument')
-    if len(args) == 1:
-        # a single argument does not work with np.broadcast
-        return np.asarray(args[0]).shape
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])
