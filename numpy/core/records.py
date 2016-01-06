@@ -425,7 +425,7 @@ class recarray(ndarray):
 
     def __array_finalize__(self, obj):
         if self.dtype.type is not record:
-            # if self.dtype is not np.record, invoke __setattr__ which will 
+            # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
             self.dtype = self.dtype
 
@@ -496,13 +496,13 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = ndarray.__getitem__(self, indx)
+        obj = super(recarray, self).__getitem__(indx)
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element
         if isinstance(obj, ndarray):
             if obj.dtype.fields:
-                obj = obj.view(recarray)
+                obj = obj.view(type(self))
                 if issubclass(obj.dtype.type, nt.void):
                     return obj.view(dtype=(self.dtype.type, obj.dtype))
                 return obj
