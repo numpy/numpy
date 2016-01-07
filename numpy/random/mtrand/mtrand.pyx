@@ -4982,8 +4982,7 @@ cdef class RandomState:
 
         """
         cdef:
-            npy_intp i, j, n = len(x)
-            size_t stride, nbytes
+            npy_intp i, j, n = len(x), stride, itemsize
             char* x_ptr
             char* buf_ptr
 
@@ -4993,15 +4992,17 @@ cdef class RandomState:
             # as MaskedArrays may not support this approach).
             x_ptr = <char*><size_t>x.ctypes.data
             stride = x.strides[0]
-            nbytes = x[:1].nbytes
+            itemsize = x.dtype.itemsize
             buf = np.empty_like(x[0])  # GC'd at function exit
             buf_ptr = <char*><size_t>buf.ctypes.data
             with self.lock:
-                for i in reversed(range(1, n)):
-                    j = rk_interval(i, self.internal_state)
-                    string.memcpy(buf_ptr, x_ptr + j * stride, nbytes)
-                    string.memcpy(x_ptr + j * stride, x_ptr + i * stride, nbytes)
-                    string.memcpy(x_ptr + i * stride, buf_ptr, nbytes)
+                # We trick gcc into providing a specialized implementation for
+                # the most common case, yielding a ~33% performance improvement.
+                # Note that apparently, only one branch can ever be specialized.
+                if itemsize == sizeof(npy_intp):
+                    self._shuffle_raw(n, sizeof(npy_intp), stride, x_ptr, buf_ptr)
+                else:
+                    self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
             # Multidimensional ndarrays require a bounce buffer.
             buf = np.empty_like(x[0])
@@ -5017,6 +5018,15 @@ cdef class RandomState:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
+
+    cdef inline _shuffle_raw(self, npy_intp n, npy_intp itemsize,
+                             npy_intp stride, char* data, char* buf):
+        cdef npy_intp i, j
+        for i in reversed(range(1, n)):
+            j = rk_interval(i, self.internal_state)
+            string.memcpy(buf, data + j * stride, itemsize)
+            string.memcpy(data + j * stride, data + i * stride, itemsize)
+            string.memcpy(data + i * stride, buf, itemsize)
 
     def permutation(self, object x):
         """
