@@ -132,6 +132,10 @@ diskspace on filesystems that support it.
 
 Changes
 =======
+Pyrex support was removed from ``numpy.distutils``.  The method
+``build_src.generate_a_pyrex_source`` will remain available; it has been
+monkeypatched by users to support Cython instead of Pyrex.  It's recommended to
+switch to a better supported method of build Cython extensions though.
 
 
 Deprecations
