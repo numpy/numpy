@@ -167,13 +167,6 @@ class NoseTester(object):
         want to initialize `NoseTester` objects on behalf of other code.
 
     """
-    # Stuff to exclude from tests. These are from numpy.distutils
-    excludes = ['f2py_ext',
-                'f2py_f90_ext',
-                'gen_ext',
-                'pyrex_ext',
-                'swig_ext']
-
     def __init__(self, package=None, raise_warnings="release", depth=0):
         # Back-compat: 'None' used to mean either "release" or "develop"
         # depending on whether this was a release or develop version of
@@ -295,9 +288,6 @@ class NoseTester(object):
         import_nose()
         # compile argv
         argv = self._test_argv(label, verbose, extra_argv)
-        # bypass tests noted for exclude
-        for ename in self.excludes:
-            argv += ['--exclude', ename]
         # our way of doing coverage
         if coverage:
             argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
