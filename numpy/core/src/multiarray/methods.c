@@ -1423,14 +1423,20 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     copied_array = (PyArrayObject*) PyArray_NewCopy(self, NPY_KEEPORDER);
+    if (copied_array == NULL) {
+        return NULL;
+    }
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
+            Py_DECREF(copied_array);
+            Py_DECREF(copy);
             return NULL;
         }
         deepcopy = PyObject_GetAttrString(copy, "deepcopy");
         Py_DECREF(copy);
         if (deepcopy == NULL) {
+            Py_DECREF(copied_array);
             return NULL;
         }
         iter = (NpyIter *)NpyIter_New(copied_array,
@@ -1442,12 +1448,14 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
                                       NULL);
         if (iter == NULL) {
             Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
             return NULL;
         }
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
             return NULL;
         }
 
