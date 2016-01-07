@@ -140,6 +140,10 @@ if the matrix product is between a matrix and its transpose, it will use
 
 Changes
 =======
+Pyrex support was removed from ``numpy.distutils``.  The method
+``build_src.generate_a_pyrex_source`` will remain available; it has been
+monkeypatched by users to support Cython instead of Pyrex.  It's recommended to
+switch to a better supported method of build Cython extensions though.
 
 *np.broadcast* can now be called with a single argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
