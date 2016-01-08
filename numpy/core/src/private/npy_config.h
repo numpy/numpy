@@ -93,6 +93,12 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
 #endif
 #undef TRIG_OK
 
