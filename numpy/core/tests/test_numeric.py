@@ -235,6 +235,31 @@ class TestBoolCmp(TestCase):
         self.nf[self.ef] = np.nan
         self.nd[self.ed] = np.nan
 
+        self.inff = self.f.copy()
+        self.infd = self.d.copy()
+        self.inff[::3][self.ef[::3]] = np.inf
+        self.infd[::3][self.ed[::3]] = np.inf
+        self.inff[1::3][self.ef[1::3]] = -np.inf
+        self.infd[1::3][self.ed[1::3]] = -np.inf
+        self.inff[2::3][self.ef[2::3]] = np.nan
+        self.infd[2::3][self.ed[2::3]] = np.nan
+        self.efnonan = self.ef.copy()
+        self.efnonan[2::3] = False
+        self.ednonan = self.ed.copy()
+        self.ednonan[2::3] = False
+
+        self.signf = self.f.copy()
+        self.signd = self.d.copy()
+        self.signf[self.ef] *= -1.
+        self.signd[self.ed] *= -1.
+        self.signf[1::6][self.ef[1::6]] = -np.inf
+        self.signd[1::6][self.ed[1::6]] = -np.inf
+        self.signf[3::6][self.ef[3::6]] = -np.nan
+        self.signd[3::6][self.ed[3::6]] = -np.nan
+        self.signf[4::6][self.ef[4::6]] = -0.
+        self.signd[4::6][self.ed[4::6]] = -0.
+
+
     def test_float(self):
         # offset for alignment test
         for i in range(4):
@@ -256,6 +281,10 @@ class TestBoolCmp(TestCase):
 
             # isnan on amd64 takes the same codepath
             assert_array_equal(np.isnan(self.nf[i:]), self.ef[i:])
+            assert_array_equal(np.isfinite(self.nf[i:]), ~self.ef[i:])
+            assert_array_equal(np.isfinite(self.inff[i:]), ~self.ef[i:])
+            assert_array_equal(np.isinf(self.inff[i:]), self.efnonan[i:])
+            assert_array_equal(np.signbit(self.signf[i:]), self.ef[i:])
 
     def test_double(self):
         # offset for alignment test
@@ -278,6 +307,10 @@ class TestBoolCmp(TestCase):
 
             # isnan on amd64 takes the same codepath
             assert_array_equal(np.isnan(self.nd[i:]), self.ed[i:])
+            assert_array_equal(np.isfinite(self.nd[i:]), ~self.ed[i:])
+            assert_array_equal(np.isfinite(self.infd[i:]), ~self.ed[i:])
+            assert_array_equal(np.isinf(self.infd[i:]), self.ednonan[i:])
+            assert_array_equal(np.signbit(self.signd[i:]), self.ed[i:])
 
 
 class TestSeterr(TestCase):
