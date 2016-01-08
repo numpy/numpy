@@ -783,7 +783,7 @@ class matrix(N.ndarray):
 
     def argmax(self, axis=None, out=None):
         """
-        Indices of the maximum values along an axis.
+        Index of the maximum value along an axis, if multiple returns the first one
 
         Parameters
         ----------
