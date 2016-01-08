@@ -221,7 +221,20 @@ double npy_hypot(double x, double y)
 #ifndef HAVE_ACOSH
 double npy_acosh(double x)
 {
-    return 2*npy_log(npy_sqrt((x + 1.0)/2) + npy_sqrt((x - 1.0)/2));
+    if (x < 1.0) {
+        return NPY_NAN;
+    }
+
+    if (npy_isfinite(x)) {
+        if (x > 1e8) {
+             return npy_log(x) + NPY_LOGE2;
+        }
+        else {
+            double u = x - 1.0;
+            return npy_log1p(u + npy_sqrt(2*u + u*u));
+        }
+    }
+    return x;
 }
 #endif
 
