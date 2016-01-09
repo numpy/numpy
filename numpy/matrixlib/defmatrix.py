@@ -783,7 +783,11 @@ class matrix(N.ndarray):
 
     def argmax(self, axis=None, out=None):
         """
-        Indices of the maximum values along an axis.
+        Indexes of the maximum values along an axis.
+
+        Return the indexes of the first occurrences of the maximum values
+        along the specified axis.  If axis is None, the index is for the
+        flattened matrix.
 
         Parameters
         ----------
@@ -853,7 +857,11 @@ class matrix(N.ndarray):
 
     def argmin(self, axis=None, out=None):
         """
-        Return the indices of the minimum values along an axis.
+        Indexes of the minimum values along an axis.
+
+        Return the indexes of the first occurrences of the minimum values
+        along the specified axis.  If axis is None, the index is for the
+        flattened matrix.
 
         Parameters
         ----------
