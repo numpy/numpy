@@ -2041,6 +2041,13 @@ class TestMethods(TestCase):
         assert_raises(TypeError, np.dot, b, c)
         assert_raises(TypeError, c.dot, b)
 
+    def test_dot_type_mismatch(self):
+        c = 1.
+        A = np.array((1,1), dtype='i,i')
+
+        assert_raises(ValueError, np.dot, c, A)
+        assert_raises(TypeError, np.dot, A, c)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
