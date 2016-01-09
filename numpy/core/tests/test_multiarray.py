@@ -4881,6 +4881,33 @@ class TestInner(TestCase):
             desired = np.array(10, dtype=dt).item()
             assert_equal(np.inner(b, a), desired)
 
+    def test_3d_tensor(self):
+        for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
+            a = np.arange(24).reshape(2,3,4).astype(dt)
+            b = np.arange(24, 48).reshape(2,3,4).astype(dt)
+            desired = np.array(
+                [[[[ 158,  182,  206],
+                   [ 230,  254,  278]],
+
+                  [[ 566,  654,  742],
+                   [ 830,  918, 1006]],
+
+                  [[ 974, 1126, 1278],
+                   [1430, 1582, 1734]]],
+
+                 [[[1382, 1598, 1814],
+                   [2030, 2246, 2462]],
+
+                  [[1790, 2070, 2350],
+                   [2630, 2910, 3190]],
+
+                  [[2198, 2542, 2886],
+                   [3230, 3574, 3918]]]],
+                dtype=dt
+            )
+            assert_equal(np.inner(a, b), desired)
+            assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
+
 
 class TestSummarization(TestCase):
     def test_1d(self):
