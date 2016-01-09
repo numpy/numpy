@@ -4832,6 +4832,13 @@ if sys.version_info[:2] >= (3, 5):
 
 class TestInner(TestCase):
 
+    def test_inner_type_mismatch(self):
+        c = 1.
+        A = np.array((1,1), dtype='i,i')
+
+        assert_raises(TypeError, np.inner, c, A)
+        assert_raises(TypeError, np.inner, A, c)
+
     def test_inner_scalar_and_vector(self):
         for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
             sca = np.array(3, dtype=dt)[()]
