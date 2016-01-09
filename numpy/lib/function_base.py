@@ -3646,11 +3646,13 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     y : array_like
         Input array to integrate.
     x : array_like, optional
-        If `x` is None, then spacing between all `y` elements is `dx`.
+        The sample points corresponding to the `y` values. If `x` is None,
+        the sample points are assumed to be evenly spaced `dx` apart. The
+        default is None.
     dx : scalar, optional
-        If `x` is None, spacing given by `dx` is assumed. Default is 1.
+        The spacing between sample points when `x` is None. The default is 1.
     axis : int, optional
-        Specify the axis.
+        The axis along which to integrate.
 
     Returns
     -------
