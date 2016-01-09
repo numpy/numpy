@@ -49,7 +49,7 @@ def findf90modules(m):
 fgetdims1 = """\
       external f2pysetdata
       logical ns
-      integer r,i,j
+      integer r,i
       integer(%d) s(*)
       ns = .FALSE.
       if (allocated(d)) then
