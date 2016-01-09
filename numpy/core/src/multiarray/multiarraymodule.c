@@ -827,6 +827,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot find a common data type.");
         goto fail;
     }
 
@@ -912,7 +913,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        PyErr_SetString(PyExc_TypeError, "Cannot find a common data type.");
         return NULL;
     }
 
