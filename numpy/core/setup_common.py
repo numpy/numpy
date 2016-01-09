@@ -192,7 +192,7 @@ def check_long_double_representation(cmd):
     if sys.platform == "win32" and not mingw32():
         try:
             cmd.compiler.compile_options.remove("/GL")
-        except ValueError:
+        except (AttributeError, ValueError):
             pass
 
     # We need to use _compile because we need the object filename
