@@ -4849,7 +4849,16 @@ class TestInner(TestCase):
             C = np.array([1, 1], dtype=dt)
             desired = np.array([4, 6], dtype=dt)
             assert_equal(np.inner(A.T, C), desired)
+            assert_equal(np.inner(C, A.T), desired)
             assert_equal(np.inner(B, C), desired)
+            assert_equal(np.inner(C, B), desired)
+            # check a matrix product
+            desired = np.array([[7, 10], [15, 22]], dtype=dt)
+            assert_equal(np.inner(A, B), desired)
+            # check the syrk vs. gemm paths
+            desired = np.array([[5, 11], [11, 25]], dtype=dt)
+            assert_equal(np.inner(A, A), desired)
+            assert_equal(np.inner(A, A.copy()), desired)
             # check an inner product involving an aliased and reversed view
             a = np.arange(5).astype(dt)
             b = a[::-1]
