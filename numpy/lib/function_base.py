@@ -3648,7 +3648,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     x : array_like, optional
         If `x` is None, then spacing between all `y` elements is `dx`.
     dx : scalar, optional
-        If `x` is None, spacing given by `dx` is assumed. Default is 1.
+        If `dx` is None, spacing given by `x` is assumed. Default is 1.
     axis : int, optional
         Specify the axis.
 
