@@ -2045,7 +2045,7 @@ class TestMethods(TestCase):
         c = 1.
         A = np.array((1,1), dtype='i,i')
 
-        assert_raises(ValueError, np.dot, c, A)
+        assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
 
     def test_diagonal(self):
