@@ -131,10 +131,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
             cblas_dsyrk(order, CblasUpper, trans, n, k, 1.,
                         Adata, lda, 0., Rdata, ldc);
 
-            for (i = 0; i < n; i++)
-            {
-                for (j = i + 1; j < n; j++)
-                {
+            for (i = 0; i < n; i++) {
+                for (j = i + 1; j < n; j++) {
                      *((npy_double*)PyArray_GETPTR2(R, j, i)) = *((npy_double*)PyArray_GETPTR2(R, i, j));
                 }
             }
@@ -143,10 +141,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
             cblas_ssyrk(order, CblasUpper, trans, n, k, 1.f,
                         Adata, lda, 0.f, Rdata, ldc);
 
-            for (i = 0; i < n; i++)
-            {
-                for (j = i + 1; j < n; j++)
-                {
+            for (i = 0; i < n; i++) {
+                for (j = i + 1; j < n; j++) {
                      *((npy_float*)PyArray_GETPTR2(R, j, i)) = *((npy_float*)PyArray_GETPTR2(R, i, j));
                 }
             }
@@ -155,10 +151,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
             cblas_zsyrk(order, CblasUpper, trans, n, k, oneD,
                         Adata, lda, zeroD, Rdata, ldc);
 
-            for (i = 0; i < n; i++)
-            {
-                for (j = i + 1; j < n; j++)
-                {
+            for (i = 0; i < n; i++) {
+                for (j = i + 1; j < n; j++) {
                      *((npy_cdouble*)PyArray_GETPTR2(R, j, i)) = *((npy_cdouble*)PyArray_GETPTR2(R, i, j));
                 }
             }
@@ -167,10 +161,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
             cblas_csyrk(order, CblasUpper, trans, n, k, oneF,
                         Adata, lda, zeroF, Rdata, ldc);
 
-            for (i = 0; i < n; i++)
-            {
-                for (j = i + 1; j < n; j++)
-                {
+            for (i = 0; i < n; i++) {
+                for (j = i + 1; j < n; j++) {
                      *((npy_cfloat*)PyArray_GETPTR2(R, j, i)) = *((npy_cfloat*)PyArray_GETPTR2(R, i, j));
                 }
             }
@@ -728,19 +720,15 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             (PyArray_STRIDE(ap1, 1) == PyArray_STRIDE(ap2, 0)) &&
             ((Trans1 == CblasTrans) ^ (Trans2 == CblasTrans)) &&
             ((Trans1 == CblasNoTrans) ^ (Trans2 == CblasNoTrans))
-        )
-        {
-            if (Trans1 == CblasNoTrans)
-            {
+        ) {
+            if (Trans1 == CblasNoTrans) {
                 syrk(typenum, Order, Trans1, N, M, ap1, lda, ret);
             }
-            else
-            {
+            else {
                 syrk(typenum, Order, Trans1, N, M, ap2, ldb, ret);
             }
         }
-        else
-        {
+        else {
             gemm(typenum, Order, Trans1, Trans2, L, N, M, ap1, lda, ap2, ldb, ret);
         }
         NPY_END_ALLOW_THREADS;
