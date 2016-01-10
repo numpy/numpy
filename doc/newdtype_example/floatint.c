@@ -1,10 +1,10 @@
 
 #include "Python.h"
-#include "structmember.h" /* for offsetof macro if needed */
+#include "structmember.h" /* for offset of macro if needed */
 #include "numpy/arrayobject.h"
 
 
-/* Use a Python float as the cannonical type being added
+/* Use a Python float as the canonical type being added
 */
 
 typedef struct _floatint {
