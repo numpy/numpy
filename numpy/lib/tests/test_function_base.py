@@ -674,6 +674,10 @@ class TestExtins(TestCase):
         assert_array_equal(b, [3, 2, 2, 3, 3])
 
     def test_place(self):
+        # Make sure that non-np.ndarray objects
+        # raise an error instead of doing nothing
+        assert_raises(TypeError, place, [1, 2, 3], [True, False], [0, 1])
+
         a = np.array([1, 4, 3, 2, 5, 8, 7])
         place(a, [0, 1, 0, 1, 0, 1, 0], [2, 4, 6])
         assert_array_equal(a, [1, 2, 3, 4, 5, 6, 7])

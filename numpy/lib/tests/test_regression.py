@@ -85,10 +85,6 @@ class TestRegression(TestCase):
         assert_(x != y)
         assert_(x == x)
 
-    def test_mem_insert(self, level=rlevel):
-        # Ticket #572
-        np.lib.place(1, 1, 1)
-
     def test_polyfit_build(self):
         # Ticket #628
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,

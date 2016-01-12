@@ -445,7 +445,13 @@ def put(a, ind, v, mode='raise'):
     array([ 0,  1,  2,  3, -5])
 
     """
-    return a.put(ind, v, mode)
+    try:
+        put = a.put
+    except AttributeError:
+        raise TypeError("argument 1 must be numpy.ndarray, "
+                        "not {name}".format(name=type(a).__name__))
+
+    return put(ind, v, mode)
 
 
 def swapaxes(a, axis1, axis2):
