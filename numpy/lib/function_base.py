@@ -1779,7 +1779,7 @@ def place(arr, mask, vals):
 
     Parameters
     ----------
-    arr : array_like
+    arr : ndarray
         Array to put data into.
     mask : array_like
         Boolean mask array. Must have the same size as `a`.
@@ -1801,6 +1801,10 @@ def place(arr, mask, vals):
            [44, 55, 44]])
 
     """
+    if not isinstance(arr, np.ndarray):
+        raise TypeError("argument 1 must be numpy.ndarray, "
+                        "not {name}".format(name=type(arr).__name__))
+
     return _insert(arr, mask, vals)
 
 
