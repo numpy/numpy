@@ -210,13 +210,12 @@ class TestRandint(TestCase):
         assert_(tgt[np.dtype(np.bool).name] == res)
 
 
-class TestRandomDist:
+class TestRandomDist(TestCase):
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    @classmethod
-    def setup_class(cls):
-        cls.seed = 1234567890
+    def setUp(self):
+        self.seed = 1234567890
 
     def test_rand(self):
         np.random.seed(self.seed)
@@ -392,7 +391,7 @@ class TestRandomDist:
             np.random.shuffle(alist)
             actual = alist
             desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
-            yield np.testing.assert_array_equal, actual, desired
+            np.testing.assert_array_equal(actual, desired)
 
     def test_shuffle_masked(self):
         # gh-3263
