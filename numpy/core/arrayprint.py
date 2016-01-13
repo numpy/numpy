@@ -739,8 +739,8 @@ class DatetimeFormat(object):
 class TimedeltaFormat(object):
     def __init__(self, data):
         if data.dtype.kind == 'm':
-            nat_value = array(['NaT'], dtype=data.dtype)[0]
-            v = data[not_equal(data, nat_value)].view('i8')
+            # select non-NaT elements
+            v = data[data == data].view('i8')
             if len(v) > 0:
                 # Max str length of non-NaT elements
                 max_str_len = max(len(str(maximum.reduce(v))),
@@ -754,7 +754,7 @@ class TimedeltaFormat(object):
             self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
-        if x + 1 == x:
+        if x != x:
             return self._nat
         else:
             return self.format % x.astype('i8')
