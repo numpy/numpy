@@ -629,7 +629,7 @@ class system_info(object):
         dirs.extend(default_dirs)
         ret = []
         for d in dirs:
-            if not os.path.isdir(d):
+            if len(d) > 0 and not os.path.isdir(d):
                 warnings.warn('Specified path %s is invalid.' % d)
                 continue
 
