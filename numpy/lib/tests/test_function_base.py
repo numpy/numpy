@@ -805,6 +805,11 @@ class TestExtins(TestCase):
         assert_raises_regex(ValueError, "Cannot insert from an empty array",
                             lambda: place(a, [0, 0, 0, 0, 0, 1, 0], []))
 
+        # See Issue #6974
+        a = np.array(['12', '34'])
+        place(a, [0, 1], '9')
+        assert_array_equal(a, ['12', '9'])
+
     def test_both(self):
         a = rand(10)
         mask = a > 0.5
