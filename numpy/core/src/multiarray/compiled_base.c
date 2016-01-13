@@ -302,193 +302,111 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 }
 
 /*
- * Insert values from an input array into an output array, at positions
- * indicated by a mask. If the arrays are of dtype object (indicated by
- * the objarray flag), take care of reference counting.
- *
- * This function implements the copying logic of arr_insert() defined
- * below.
- */
-static void
-arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
-                char *avals_data, int melsize, int delsize, int objarray,
-                int totmask, int numvals, int nd, npy_intp *instrides,
-                npy_intp *inshape)
-{
-    int mindx, rem_indx, indx, i, copied;
-
-    /*
-     * Walk through mask array, when non-zero is encountered
-     * copy next value in the vals array to the input array.
-     * If we get through the value array, repeat it as necessary.
-     */
-    copied = 0;
-    for (mindx = 0; mindx < totmask; mindx++) {
-        if (memcmp(mptr,zero,melsize) != 0) {
-            /* compute indx into input array */
-            rem_indx = mindx;
-            indx = 0;
-            for (i = nd - 1; i > 0; --i) {
-                indx += (rem_indx % inshape[i]) * instrides[i];
-                rem_indx /= inshape[i];
-            }
-            indx += rem_indx * instrides[0];
-            /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
-            /* Copy value element over to input array */
-            memcpy(input_data+indx,vptr,delsize);
-            if (objarray) {
-                Py_INCREF(*((PyObject **)vptr));
-            }
-            vptr += delsize;
-            copied += 1;
-            /* If we move past value data.  Reset */
-            if (copied >= numvals) {
-                vptr = avals_data;
-                copied = 0;
-            }
-        }
-        mptr += melsize;
-    }
-}
-
-/*
  * Returns input array with values inserted sequentially into places
  * indicated by the mask
  */
 NPY_NO_EXPORT PyObject *
 arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
-    PyObject *mask = NULL, *vals = NULL;
-    PyArrayObject *ainput = NULL, *amask = NULL, *avals = NULL, *tmp = NULL;
-    int numvals, totmask, sameshape;
-    char *input_data, *mptr, *vptr, *zero = NULL;
-    int melsize, delsize, nd, objarray, k;
-    npy_intp *instrides, *inshape;
+    char *src, *dest;
+    npy_bool *mask_data;
+    PyArray_Descr *dtype;
+    PyArray_CopySwapFunc *copyswap;
+    PyObject *array0, *mask0, *values0;
+    PyArrayObject *array, *mask, *values;
+    npy_intp i, j, chunk, nm, ni, nv;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
+    NPY_BEGIN_THREADS_DEF;
+    values = mask = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "O&OO", kwlist,
-                PyArray_Converter, &ainput,
-                &mask, &vals)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "O!OO:place", kwlist,
+                &PyArray_Type, &array0, &mask0, &values0)) {
+        return NULL;
+    }
+
+    array = (PyArrayObject *)PyArray_FromArray((PyArrayObject *)array0, NULL,
+                                    NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+    if (array == NULL) {
         goto fail;
     }
 
-    amask = (PyArrayObject *)PyArray_FROM_OF(mask, NPY_ARRAY_CARRAY);
-    if (amask == NULL) {
+    ni = PyArray_SIZE(array);
+    dest = PyArray_DATA(array);
+    chunk = PyArray_DESCR(array)->elsize;
+    mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
+    if (mask == NULL) {
         goto fail;
     }
-    /* Cast an object array */
-    if (PyArray_DESCR(amask)->type_num == NPY_OBJECT) {
-        tmp = (PyArrayObject *)PyArray_Cast(amask, NPY_INTP);
-        if (tmp == NULL) {
-            goto fail;
-        }
-        Py_DECREF(amask);
-        amask = tmp;
+
+    nm = PyArray_SIZE(mask);
+    if (nm != ni) {
+        PyErr_SetString(PyExc_ValueError,
+                        "place: mask and data must be "
+                        "the same size");
+        goto fail;
     }
 
-    sameshape = 1;
-    if (PyArray_NDIM(amask) == PyArray_NDIM(ainput)) {
-        for (k = 0; k < PyArray_NDIM(amask); k++) {
-            if (PyArray_DIMS(amask)[k] != PyArray_DIMS(ainput)[k]) {
-                sameshape = 0;
+    mask_data = PyArray_DATA(mask);
+    dtype = PyArray_DESCR(array);
+    Py_INCREF(dtype);
+
+    values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
+                                    0, 0, NPY_ARRAY_CARRAY, NULL);
+    if (values == NULL) {
+        goto fail;
+    }
+
+    nv = PyArray_SIZE(values); /* zero if null array */
+    if (nv <= 0) {
+        npy_bool allFalse = 1;
+        i = 0;
+
+        while (allFalse && i < ni) {
+            if (mask_data[i]) {
+                allFalse = 0;
+            } else {
+                i++;
             }
         }
-    }
-    else {
-        /* Test to see if amask is 1d */
-        if (PyArray_NDIM(amask) != 1) {
-            sameshape = 0;
-        }
-        else if ((PyArray_SIZE(ainput)) != PyArray_SIZE(amask)) {
-            sameshape = 0;
-        }
-    }
-    if (!sameshape) {
-        PyErr_SetString(PyExc_TypeError,
-                        "mask array must be 1-d or same shape as input array");
-        goto fail;
-    }
-
-    avals = (PyArrayObject *)PyArray_FromObject(vals,
-                                        PyArray_DESCR(ainput)->type_num, 0, 1);
-    if (avals == NULL) {
-        goto fail;
-    }
-    numvals = PyArray_SIZE(avals);
-    nd = PyArray_NDIM(ainput);
-    input_data = PyArray_DATA(ainput);
-    mptr = PyArray_DATA(amask);
-    melsize = PyArray_DESCR(amask)->elsize;
-    vptr = PyArray_DATA(avals);
-    delsize = PyArray_DESCR(avals)->elsize;
-    zero = PyArray_Zero(amask);
-    if (zero == NULL) {
-        goto fail;
-    }
-    objarray = (PyArray_DESCR(ainput)->type_num == NPY_OBJECT);
-
-    if (!numvals) {
-        /* nothing to insert! fail unless none of mask is true */
-        const char *iter = mptr;
-        const char *const last = iter + PyArray_NBYTES(amask);
-        while (iter != last && !memcmp(iter, zero, melsize)) {
-            iter += melsize;
-        }
-        if (iter != last) {
+        if (!allFalse) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot insert from an empty array!");
+                            "Cannot insert from an empty array!");
             goto fail;
+        } else {
+            Py_XDECREF(values);
+            Py_XDECREF(mask);
+            Py_RETURN_NONE;
         }
-        goto finish;
     }
 
-    /* Handle zero-dimensional case separately */
-    if (nd == 0) {
-        if (memcmp(mptr,zero,melsize) != 0) {
-            /* Copy value element over to input array */
-            memcpy(input_data,vptr,delsize);
-            if (objarray) {
-                Py_INCREF(*((PyObject **)vptr));
+    src = PyArray_DATA(values);
+    j = 0;
+
+    copyswap = PyArray_DESCR(array)->f->copyswap;
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+    for (i = 0; i < ni; i++) {
+        if (mask_data[i]) {
+            if (j >= nv) {
+                j = 0;
             }
+
+            copyswap(dest + i*chunk, src + j*chunk, 0, array);
+            j++;
         }
-        Py_DECREF(amask);
-        Py_DECREF(avals);
-        PyDataMem_FREE(zero);
-        Py_DECREF(ainput);
-        Py_RETURN_NONE;
     }
+    NPY_END_THREADS;
 
-    totmask = (int) PyArray_SIZE(amask);
-    instrides = PyArray_STRIDES(ainput);
-    inshape = PyArray_DIMS(ainput);
-    if (objarray) {
-        /* object array, need to refcount, can't release the GIL */
-        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
-                        melsize, delsize, objarray, totmask, numvals, nd,
-                        instrides, inshape);
-    }
-    else {
-        /* No increfs take place in arr_insert_loop, so release the GIL */
-        NPY_BEGIN_ALLOW_THREADS;
-        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
-                        melsize, delsize, objarray, totmask, numvals, nd,
-                        instrides, inshape);
-        NPY_END_ALLOW_THREADS;
-    }
-
-finish:
-    Py_DECREF(amask);
-    Py_DECREF(avals);
-    PyDataMem_FREE(zero);
-    Py_DECREF(ainput);
+    Py_XDECREF(values);
+    Py_XDECREF(mask);
+    Py_DECREF(array);
     Py_RETURN_NONE;
 
-fail:
-    PyDataMem_FREE(zero);
-    Py_XDECREF(ainput);
-    Py_XDECREF(amask);
-    Py_XDECREF(avals);
+ fail:
+    Py_XDECREF(mask);
+    Py_XDECREF(array);
+    Py_XDECREF(values);
     return NULL;
 }
 
