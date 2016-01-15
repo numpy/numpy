@@ -1217,11 +1217,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     but depending on this fact is deprecated. Writing to the resulting
     array continues to work as it used to, but a FutureWarning is issued.
 
-    In NumPy 1.9 it returns a read-only view on the original array.
+    Starting in NumPy 1.9 it returns a read-only view on the original array.
     Attempting to write to the resulting array will produce an error.
 
-    In NumPy 1.10, it will return a read/write view and writing to the
-    returned array will alter your original array.  The returned array
+    In some future release, it will return a read/write view and writing to
+    the returned array will alter your original array.  The returned array
     will have the same type as the input array.
 
     If you don't write to the array returned by this function, then you can
