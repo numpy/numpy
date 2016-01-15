@@ -111,82 +111,6 @@ fail:
 }
 
 /*
- * Wraps `gmtime` functionality for multiple platforms. This
- * converts a time value to a time structure in UTC.
- *
- * Returns 0 on success, -1 on failure.
- */
-static int
-get_gmtime(NPY_TIME_T *ts, struct tm *tms)
-{
-    char *func_name = "<unknown>";
-#if defined(_WIN32)
- #if defined(_MSC_VER) && (_MSC_VER >= 1400)
-    if (gmtime_s(tms, ts) != 0) {
-        func_name = "gmtime_s";
-        goto fail;
-    }
- #elif defined(NPY_MINGW_USE_CUSTOM_MSVCR)
-    if (_gmtime64_s(tms, ts) != 0) {
-        func_name = "_gmtime64_s";
-        goto fail;
-    }
- #else
-    struct tm *tms_tmp;
-    tms_tmp = gmtime(ts);
-    if (tms_tmp == NULL) {
-        func_name = "gmtime";
-        goto fail;
-    }
-    memcpy(tms, tms_tmp, sizeof(struct tm));
- #endif
-#else
-    if (gmtime_r(ts, tms) == NULL) {
-        func_name = "gmtime_r";
-        goto fail;
-    }
-#endif
-
-    return 0;
-
-fail:
-    PyErr_Format(PyExc_OSError, "Failed to use '%s' to convert "
-                                "to a UTC time", func_name);
-    return -1;
-}
-
-/*
- * Wraps `mktime` functionality for multiple platforms. This
- * converts a local time struct to an UTC value.
- *
- * Returns timestamp on success, -1 on failure.
- */
-static NPY_TIME_T
-get_mktime(struct tm *tms)
-{
-    char *func_name = "<unknown>";
-    NPY_TIME_T ts;
-#if defined(NPY_MINGW_USE_CUSTOM_MSVCR)
-    ts = _mktime64(tms);
-    if (ts == -1) {
-        func_name = "_mktime64";
-        goto fail;
-    }
-#else
-    ts = mktime(tms);
-    if (ts == -1) {
-        func_name = "mktime";
-        goto fail;
-    }
-#endif
-    return ts;
-fail:
-    PyErr_Format(PyExc_OSError, "Failed to use '%s' to convert "
-                                "local time to UTC", func_name);
-    return -1;
-}
-
-/*
  * Converts a datetimestruct in UTC to a datetimestruct in local time,
  * also returning the timezone offset applied. This function works for any year
  * > 1970 on all platforms and both 32 and 64 bits. If the year < 1970, then it
@@ -263,85 +187,6 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 }
 
 /*
- * Converts a datetimestruct in local time to a datetimestruct in UTC.
- *
- * Returns 0 on success, -1 on failure.
- */
-static int
-convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
-                const npy_datetimestruct *dts_local)
-{
-    npy_int64 year_correction = 0;
-
-    /* Make a copy of the input 'dts' to modify */
-    *out_dts_utc = *dts_local;
-
-    /*
-     * For 32 bit NPY_TIME_T, the get_mktime()/get_gmtime() functions do not
-     * work for years later than 2038. So if the year >= 2038, we instead call
-     * get_mktime()/get_gmtime() for the year 2036 or 2037 (depending on the
-     * leap year) which must work and at the end we add the 'year_correction'
-     * back.
-     */
-    if (sizeof(NPY_TIME_T) == 4 && out_dts_utc->year >= 2038) {
-        if (is_leapyear(out_dts_utc->year)) {
-            /* 2036 is a leap year */
-            year_correction = out_dts_utc->year - 2036;
-            out_dts_utc->year -= year_correction; /* = 2036 */
-        }
-        else {
-            /* 2037 is not a leap year */
-            year_correction = out_dts_utc->year - 2037;
-            out_dts_utc->year -= year_correction; /* = 2037 */
-        }
-    }
-
-    /*
-     * ISO 8601 states to treat date-times without a timezone offset
-     * or 'Z' for UTC as local time. The C standard libary functions
-     * mktime and gmtime allow us to do this conversion.
-     *
-     * Only do this timezone adjustment for recent and future years.
-     * In this case, "recent" is defined to be 1970 and later, because
-     * on MS Windows, mktime raises an error when given an earlier date.
-     */
-    if (out_dts_utc->year >= 1970) {
-        NPY_TIME_T rawtime = 0;
-        struct tm tm_;
-
-        tm_.tm_sec = out_dts_utc->sec;
-        tm_.tm_min = out_dts_utc->min;
-        tm_.tm_hour = out_dts_utc->hour;
-        tm_.tm_mday = out_dts_utc->day;
-        tm_.tm_mon = out_dts_utc->month - 1;
-        tm_.tm_year = out_dts_utc->year - 1900;
-        tm_.tm_isdst = -1;
-
-        /* mktime converts a local 'struct tm' into a time_t */
-        rawtime = get_mktime(&tm_);
-        if (rawtime == -1) {
-            return -1;
-        }
-
-        /* gmtime converts a 'time_t' into a UTC 'struct tm' */
-        if (get_gmtime(&rawtime, &tm_) < 0) {
-            return -1;
-        }
-        out_dts_utc->sec = tm_.tm_sec;
-        out_dts_utc->min = tm_.tm_min;
-        out_dts_utc->hour = tm_.tm_hour;
-        out_dts_utc->day = tm_.tm_mday;
-        out_dts_utc->month = tm_.tm_mon + 1;
-        out_dts_utc->year = tm_.tm_year + 1900;
-    }
-
-    /* Reapply the year 2038 year correction */
-    out_dts_utc->year += year_correction;
-
-    return 0;
-}
-
-/*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
  * + The date "20100312" is parsed as the year 20100312, not as
@@ -363,10 +208,6 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
  *           to be cast to the 'unit' parameter.
  *
  * 'out' gets filled with the parsed date-time.
- * 'out_local' gets set to 1 if the parsed time was in local time,
- *      to 0 otherwise. The values 'now' and 'today' don't get counted
- *      as local, and neither do UTC +/-#### timezone offsets, because
- *      they aren't using the computer's local timezone offset.
  * 'out_bestunit' gives a suggested unit based on the amount of
  *      resolution provided in the string, or -1 for NaT.
  * 'out_special' gets set to 1 if the parsed time was 'today',
@@ -381,7 +222,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
                     NPY_DATETIMEUNIT unit,
                     NPY_CASTING casting,
                     npy_datetimestruct *out,
-                    npy_bool *out_local,
                     NPY_DATETIMEUNIT *out_bestunit,
                     npy_bool *out_special)
 {
@@ -411,9 +251,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
          * Indicate that this was a special value, and
          * recommend generic units.
          */
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         if (out_bestunit != NULL) {
             *out_bestunit = NPY_FR_GENERIC;
         }
@@ -462,9 +299,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
          * Indicate that this was a special value, and
          * is a date (unit 'D').
          */
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         if (out_bestunit != NULL) {
             *out_bestunit = bestunit;
         }
@@ -505,9 +339,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
          * use 's' because the time() function has resolution
          * seconds.
          */
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         if (out_bestunit != NULL) {
             *out_bestunit = bestunit;
         }
@@ -569,9 +400,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
 
     /* Next character must be a '-' or the end of the string */
     if (sublen == 0) {
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         bestunit = NPY_FR_Y;
         goto finish;
     }
@@ -606,9 +434,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
 
     /* Next character must be a '-' or the end of the string */
     if (sublen == 0) {
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         bestunit = NPY_FR_M;
         goto finish;
     }
@@ -644,9 +469,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
 
     /* Next character must be a 'T', ' ', or end of string */
     if (sublen == 0) {
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
         bestunit = NPY_FR_D;
         goto finish;
     }
@@ -811,25 +633,20 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
 
 parse_timezone:
     if (sublen == 0) {
-        if (convert_datetimestruct_local_to_utc(out, out) < 0) {
-            goto error;
-        }
-
-        /* Since neither "Z" nor a time-zone was specified, it's local */
-        if (out_local != NULL) {
-            *out_local = 1;
-        }
-
         goto finish;
+    }
+    else {
+        /* 2016-01-14, 1.11 */
+        PyErr_Clear();
+        if (DEPRECATE(
+                "parsing timezone aware datetimes is deprecated; "
+                "this will raise an error in the future") < 0) {
+            return -1;
+        }
     }
 
     /* UTC specifier */
     if (*substr == 'Z') {
-        /* "Z" means not local */
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
-
         if (sublen == 1) {
             goto finish;
         }
@@ -841,14 +658,6 @@ parse_timezone:
     /* Time zone offset */
     else if (*substr == '-' || *substr == '+') {
         int offset_neg = 0, offset_hour = 0, offset_minute = 0;
-
-        /*
-         * Since "local" means local with respect to the current
-         * machine, we say this is non-local.
-         */
-        if (out_local != NULL) {
-            *out_local = 0;
-        }
 
         if (*substr == '-') {
             offset_neg = 1;
@@ -1056,7 +865,9 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  * the number of year digits is >= 4 instead of strictly 4.
  *
  * If 'local' is non-zero, it produces a string in local time with
- * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
+ * a +-#### timezone offset. If 'local' is zero and 'utc' is non-zero,
+ * produce a string ending with 'Z' to denote UTC. By default, no time
+ * zone information is attached.
  *
  * 'base' restricts the output to that unit. Set 'base' to
  * -1 to auto-detect a base after which all the values are zero.
@@ -1075,7 +886,7 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base, int tzoffset,
+                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
@@ -1491,7 +1302,7 @@ add_time_zone:
         sublen -= 4;
     }
     /* UTC "Zulu" time */
-    else {
+    else if (utc) {
         if (sublen < 1) {
             goto string_too_short;
         }
@@ -1528,6 +1339,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
 
     int local = 0;
+    int utc = 0;
     PyArray_DatetimeMetaData *meta;
     int strsize;
 
@@ -1643,11 +1455,19 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
             if (strcmp(str, "local") == 0) {
                 local = 1;
+                utc = 0;
                 Py_DECREF(timezone_obj);
                 timezone_obj = NULL;
             }
             else if (strcmp(str, "UTC") == 0) {
                 local = 0;
+                utc = 1;
+                Py_DECREF(timezone_obj);
+                timezone_obj = NULL;
+            }
+            else if (strcmp(str, "naive") == 0) {
+                local = 0;
+                utc = 0;
                 Py_DECREF(timezone_obj);
                 timezone_obj = NULL;
             }
@@ -1738,7 +1558,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
             if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
-                                local, unit, tzoffset, casting) < 0) {
+                                local, utc, unit, tzoffset, casting) < 0) {
                 goto fail;
             }
         } while(iternext(iter));

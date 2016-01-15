@@ -647,7 +647,6 @@ datetimetype_repr(PyObject *self)
     npy_datetimestruct dts;
     PyObject *ret;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
-    int local;
     NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
@@ -663,16 +662,8 @@ datetimetype_repr(PyObject *self)
         return NULL;
     }
 
-    local = (scal->obmeta.base > NPY_FR_D);
-    /*
-     * Because we're defaulting to local time, display hours with
-     * minutes precision, so that 30-minute timezone offsets can work.
-     */
     unit = scal->obmeta.base;
-    if (unit == NPY_FR_h) {
-        unit = NPY_FR_m;
-    }
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -758,7 +749,6 @@ datetimetype_str(PyObject *self)
     PyDatetimeScalarObject *scal;
     npy_datetimestruct dts;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
-    int local;
     NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
@@ -774,16 +764,8 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    local = (scal->obmeta.base > NPY_FR_D);
-    /*
-     * Because we're defaulting to local time, display hours with
-     * minutes precision, so that 30-minute timezone offsets can work.
-     */
     unit = scal->obmeta.base;
-    if (unit == NPY_FR_h) {
-        unit = NPY_FR_m;
-    }
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
