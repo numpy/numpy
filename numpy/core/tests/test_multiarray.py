@@ -143,7 +143,8 @@ class TestAttributes(TestCase):
         numpy_int = np.int_(0)
 
         if sys.version_info[0] >= 3:
-            # On Py3k int_ should not inherit from int, because it's not fixed-width anymore
+            # On Py3k int_ should not inherit from int, because it's not
+            # fixed-width anymore
             assert_equal(isinstance(numpy_int, int), False)
         else:
             # Otherwise, it should inherit from int...
@@ -175,7 +176,8 @@ class TestAttributes(TestCase):
 
         def make_array(size, offset, strides):
             try:
-                r = np.ndarray([size], dtype=int, buffer=x, offset=offset*x.itemsize)
+                r = np.ndarray([size], dtype=int, buffer=x,
+                               offset=offset*x.itemsize)
             except:
                 raise RuntimeError(getexception())
             r.strides = strides = strides*x.itemsize
@@ -2326,6 +2328,41 @@ class TestMethods(TestCase):
         a = np.array([1-1j, 1, 2.0, 'f'], object)
         assert_raises(AttributeError, lambda: a.conj())
         assert_raises(AttributeError, lambda: a.conjugate())
+
+    def test_divmod_basic(self):
+        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
+                    continue
+                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
+                    continue
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*71, dtype=dt1)
+                b = np.array(sg2*19, dtype=dt2)
+                div, rem = divmod(a, b)
+                assert_allclose(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_divmod_roundoff(self):
+        # gh-6127
+        dt = 'fdg'
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*78*6e-8, dtype=dt1)
+                b = np.array(sg2*6e-8, dtype=dt2)
+                div, rem = divmod(a, b)
+                assert_allclose(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
 
 
 class TestBinop(object):

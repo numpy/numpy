@@ -1,12 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import itertools
 
 import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal
+    assert_almost_equal, assert_allclose
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -134,6 +135,44 @@ class TestPower(TestCase):
                     assert_(result == 9, msg)
                 else:
                     assert_almost_equal(result, 9, err_msg=msg)
+
+
+class TestDivmod(TestCase):
+    def test_divmod_basic(self):
+        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
+                    continue
+                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
+                    continue
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*71, dtype=dt1)[()]
+                b = np.array(sg2*19, dtype=dt2)[()]
+                div, rem = divmod(a, b)
+                assert_allclose(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_divmod_roundoff(self):
+        # gh-6127
+        dt = 'fdg'
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*78*6e-8, dtype=dt1)[()]
+                b = np.array(sg2*6e-8, dtype=dt2)[()]
+                div, rem = divmod(a, b)
+                assert_allclose(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
 
 class TestComplexDivision(TestCase):
     def test_zero_division(self):
