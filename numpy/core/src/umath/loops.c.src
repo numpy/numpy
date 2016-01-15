@@ -1688,13 +1688,8 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const @type@ res = npy_fmod@c@(in1,in2);
-        if (res && ((in2 < 0) != (res < 0))) {
-            *((@type@ *)op1) = res + in2;
-        }
-        else {
-            *((@type@ *)op1) = res;
-        }
+        const @type@ div = in1/in2;
+        *((@type@ *)op1) = in2*(div - npy_floor@c@(div));
     }
 }
 

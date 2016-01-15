@@ -272,10 +272,10 @@ static void
 static @type@ (*_basic_@name@_floor)(@type@);
 static @type@ (*_basic_@name@_sqrt)(@type@);
 static @type@ (*_basic_@name@_fmod)(@type@, @type@);
-#define @name@_ctype_add(a, b, outp) *(outp) = a + b
-#define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
-#define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
-#define @name@_ctype_divide(a, b, outp) *(outp) = a / b
+#define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
+#define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
+#define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
+#define @name@_ctype_divide(a, b, outp) *(outp) = (a) / (b)
 #define @name@_ctype_true_divide @name@_ctype_divide
 #define @name@_ctype_floor_divide(a, b, outp)   \
     *(outp) = _basic_@name@_floor((a) / (b))
@@ -343,23 +343,16 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
  */
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    @type@ mod;
-    mod = _basic_@name@_fmod(a, b);
-    if (mod && (((b < 0) != (mod < 0)))) {
-        mod += b;
-    }
-    *out = mod;
+    @type@ tmp = a/b;
+    *out = b * (tmp - _basic_@name@_floor(tmp));
 }
 /**end repeat**/
 
 static void
 half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
-    float mod, fa = npy_half_to_float(a), fb = npy_half_to_float(b);
-    mod = _basic_float_fmod(fa, fb);
-    if (mod && (((fb < 0) != (mod < 0)))) {
-        mod += fb;
-    }
-    *out = npy_float_to_half(mod);
+    float tmp, fa = npy_half_to_float(a), fb = npy_half_to_float(b);
+    float_ctype_remainder(fa, fb, &tmp);
+    *out = npy_float_to_half(tmp);
 }
 
 
