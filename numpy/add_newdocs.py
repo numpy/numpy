@@ -3466,7 +3466,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
 
     Return specified diagonals. In NumPy 1.9 the returned array is a
     read-only view instead of a copy as in previous NumPy versions.  In
-    NumPy 1.10 the read-only restriction will be removed.
+    a future version the read-only restriction will be removed.
 
     Refer to :func:`numpy.diagonal` for full documentation.
 
