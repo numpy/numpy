@@ -333,8 +333,8 @@ advanced usage and will not typically be used.
     with previous versions of NumPy, this defaults to 'unsafe' for numpy < 1.7.
     In numpy 1.7 a transition to 'same_kind' was begun where ufuncs produce a
     DeprecationWarning for calls which are allowed under the 'unsafe'
-    rules, but not under the 'same_kind' rules. In numpy 1.10 the default
-    will be 'same_kind'.
+    rules, but not under the 'same_kind' rules. From numpy 1.10 and
+    onwards, the default is 'same_kind'.
 
 *order*
 
