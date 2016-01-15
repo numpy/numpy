@@ -868,7 +868,7 @@ _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
          * to use PyErr_Occurred().
          */
         make_iso_8601_datetime(&dts, dst, dst_itemsize,
-                                0, d->src_meta.base, -1,
+                                0, 0, d->src_meta.base, -1,
                                 NPY_UNSAFE_CASTING);
 
         dst += dst_stride;
@@ -901,7 +901,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
 
             if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL, NULL) < 0) {
+                                    &dts, NULL, NULL) < 0) {
                 dt = NPY_DATETIME_NAT;
             }
         }
@@ -909,7 +909,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         else {
             if (parse_iso_8601_datetime(src, tmp - src,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL, NULL) < 0) {
+                                    &dts, NULL, NULL) < 0) {
                 dt = NPY_DATETIME_NAT;
             }
         }
