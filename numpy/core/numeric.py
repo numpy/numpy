@@ -2467,7 +2467,11 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
             # Make NaN == NaN
             both_nan = isnan(x) & isnan(y)
             cond[both_nan] = both_nan[both_nan]
-        return cond
+
+        if isscalar(a) and isscalar(b):
+            return bool(cond)
+        else:
+            return cond
 
 def array_equal(a1, a2):
     """

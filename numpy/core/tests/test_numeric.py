@@ -1589,7 +1589,11 @@ class TestIsclose(object):
 
     def tst_isclose_allclose(self, x, y):
         msg = "isclose.all() and allclose aren't same for %s and %s"
-        assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
+        msg2 = "isclose and allclose aren't same for %s and %s"
+        if np.isscalar(x) and np.isscalar(y):
+            assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg % (x, y))
+        else:
+            assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
 
     def test_ip_all_isclose(self):
         self.setup()
@@ -1649,6 +1653,14 @@ class TestIsclose(object):
         np.isclose(x, y)
         assert_array_equal(x, np.array([np.inf, 1]))
         assert_array_equal(y, np.array([0, np.inf]))
+
+    def test_non_finite_scalar(self):
+        # GH7014, when two scalars are compared the output should also be a
+        # scalar
+        assert_(np.isclose(np.inf, -np.inf) is False)
+        assert_(np.isclose(0, np.inf) is False)
+        assert_(type(np.isclose(0, np.inf)) is bool)
+
 
 class TestStdVar(TestCase):
     def setUp(self):
