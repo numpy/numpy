@@ -70,7 +70,7 @@ raise a ``TypeError``.
 New Features
 ============
 
-* `np.histogram` now provides plugin estimators for automatically
+* ``np.histogram`` now provides plugin estimators for automatically
   estimating the optimal number of bins. Passing one of ['auto', 'fd',
   'scott', 'rice', 'sturges'] as the argument to 'bins' results in the
   corresponding estimator being used.
@@ -104,8 +104,8 @@ New Features
   - np.int_ (long), np.intp
 
   The specification is by precision rather than by C type. Hence, on some
-  platforms np.int64 may be a `long` instead of `long long` even if the
-  specified dtype is `long long` because the two may have the same
+  platforms np.int64 may be a ``long`` instead of ``long long`` even if the
+  specified dtype is ``long long`` because the two may have the same
   precision. The resulting type depends on which C type numpy uses for the
   given precision. The byteorder specification is also ignored, the
   generated arrays are always in native byte order.
@@ -201,7 +201,7 @@ more such dual contiguous arrays and breaks some existing code as a result.
 Note that this also affects changing the dtype by assigning to the dtype
 attribute of an array. The aim of this deprecation is to restrict views to
 c_contiguous arrays at some future time. A work around that is backward
-compatible is to use `a.T.view(...).T` instead. A parameter will also be
+compatible is to use ``a.T.view(...).T`` instead. A parameter will also be
 added to the view method to explicitly ask for Fortran order views, but
 that will not be backward compatible.
 
