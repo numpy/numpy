@@ -59,6 +59,13 @@ to preserve struct layout). These were never used for anything, so
 it's unlikely that any third-party code is using them either, but we
 mention it here for completeness.
 
+*np.dot* now raises ``TypeError`` instead of ``ValueError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This behaviour mimics that of other functions such as ``np.inner``. If the two
+arguments cannot be cast to a common type, it could have raised a ``TypeError``
+or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
+raise a ``TypeError``.
+
 
 New Features
 ============
@@ -173,6 +180,13 @@ Instead, ``np.broadcast`` can be used in all cases.
 This behaviour mimics that of other functions such as ``np.diagonal`` and
 ensures, e.g., that for masked arrays ``np.trace(ma)`` and ``ma.trace()`` give
 the same result.
+
+*np.dot* now raises ``TypeError`` instead of ``ValueError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This behaviour mimics that of other functions such as ``np.inner``. If the two
+arguments cannot be cast to a common type, it could have raised a ``TypeError``
+or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
+raise a ``TypeError``.
 
 Deprecations
 ============
