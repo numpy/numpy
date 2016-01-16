@@ -617,8 +617,9 @@ SHA256
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
-            ['git', 'log',  '%s..%s' % (LOG_START, LOG_END)],
-            stdout=subprocess.PIPE)
+        ['git', 'log', '--no-merges', '--use-mailmap',
+         '%s..%s' % (LOG_START, LOG_END)],
+        stdout=subprocess.PIPE)
 
     out = st.communicate()[0]
     a = open(filename, 'w')
