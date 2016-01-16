@@ -255,7 +255,7 @@ class TestInsert(TestCase):
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
         assert_equal(insert(b, [], []), b)
         # Bools will be treated differently in the future:
-        #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
+        # assert_equal(insert(a, np.array([True]*4), 9), [9, 1, 9, 2, 9, 3, 9])
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
             assert_equal(
@@ -294,15 +294,15 @@ class TestInsert(TestCase):
                      insert(a, 1, a[:, 2,:], axis=1))
 
         # invalid axis value
-        assert_raises(IndexError, insert, a, 1, a[:, 2,:], axis=3)
-        assert_raises(IndexError, insert, a, 1, a[:, 2,:], axis=-4)
+        assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=3)
+        assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=-4)
 
         # negative axis value
         a = np.arange(24).reshape((2, 3, 4))
-        assert_equal(insert(a, 1, a[:,:, 3], axis=-1),
-                     insert(a, 1, a[:,:, 3], axis=2))
-        assert_equal(insert(a, 1, a[:, 2,:], axis=-2),
-                     insert(a, 1, a[:, 2,:], axis=1))
+        assert_equal(insert(a, 1, a[:, :, 3], axis=-1),
+                     insert(a, 1, a[:, :, 3], axis=2))
+        assert_equal(insert(a, 1, a[:, 2, :], axis=-2),
+                     insert(a, 1, a[:, 2, :], axis=1))
 
     def test_0d(self):
         # This is an error in the future
@@ -368,13 +368,13 @@ class TestAmin(TestCase):
 class TestPtp(TestCase):
 
     def test_basic(self):
-        a = [3, 4, 5, 10, -3, -5, 6.0]
-        assert_equal(np.ptp(a, axis=0), 15.0)
-        b = [[3, 6.0, 9.0],
-             [4, 10.0, 5.0],
-             [8, 3.0, 2.0]]
-        assert_equal(np.ptp(b, axis=0), [5.0, 7.0, 7.0])
-        assert_equal(np.ptp(b, axis=-1), [6.0, 6.0, 6.0])
+        a = np.array([3, 4, 5, 10, -3, -5, 6.0])
+        assert_equal(a.ptp(axis=0), 15.0)
+        b = np.array([[3, 6.0, 9.0],
+                      [4, 10.0, 5.0],
+                      [8, 3.0, 2.0]])
+        assert_equal(b.ptp(axis=0), [5.0, 7.0, 7.0])
+        assert_equal(b.ptp(axis=-1), [6.0, 6.0, 6.0])
 
 
 class TestCumsum(TestCase):
@@ -411,12 +411,11 @@ class TestProd(TestCase):
             if ctype in ['1', 'b']:
                 self.assertRaises(ArithmeticError, np.prod, a)
                 self.assertRaises(ArithmeticError, np.prod, a2, 1)
-                self.assertRaises(ArithmeticError, np.prod, a)
             else:
-                assert_equal(np.prod(a, axis=0), 26400)
-                assert_array_equal(np.prod(a2, axis=0),
+                assert_equal(a.prod(axis=0), 26400)
+                assert_array_equal(a2.prod(axis=0),
                                    np.array([50, 36, 84, 180], ctype))
-                assert_array_equal(np.prod(a2, axis=-1),
+                assert_array_equal(a2.prod(axis=-1),
                                    np.array([24, 1890, 600], ctype))
 
 
@@ -460,10 +459,10 @@ class TestDiff(TestCase):
 
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
-        out1 = x[:,:, 1:] - x[:,:, :-1]
-        out2 = out1[:,:, 1:] - out1[:,:, :-1]
-        out3 = x[1:,:,:] - x[:-1,:,:]
-        out4 = out3[1:,:,:] - out3[:-1,:,:]
+        out1 = x[:, :, 1:] - x[:, :, :-1]
+        out2 = out1[:, :, 1:] - out1[:, :, :-1]
+        out3 = x[1:, :, :] - x[:-1, :, :]
+        out4 = out3[1:, :, :] - out3[:-1, :, :]
         assert_array_equal(diff(x), out1)
         assert_array_equal(diff(x, n=2), out2)
         assert_array_equal(diff(x, axis=0), out3)
@@ -610,7 +609,7 @@ class TestGradient(TestCase):
         assert_array_equal(gradient(x, axis=0), dx[0])
         assert_array_equal(gradient(x, axis=1), dx[1])
         assert_array_equal(gradient(x, axis=-1), dx[1])
-        assert_array_equal(gradient(x, axis=(1,0)), [dx[1], dx[0]])
+        assert_array_equal(gradient(x, axis=(1, 0)), [dx[1], dx[0]])
 
         # test axis=None which means all axes
         assert_almost_equal(gradient(x, axis=None), [dx[0], dx[1]])
@@ -618,7 +617,7 @@ class TestGradient(TestCase):
         assert_almost_equal(gradient(x, axis=None), gradient(x))
 
         # test vararg order
-        assert_array_equal(gradient(x, 2, 3, axis=(1,0)), [dx[1]/2.0, dx[0]/3.0])
+        assert_array_equal(gradient(x, 2, 3, axis=(1, 0)), [dx[1]/2.0, dx[0]/3.0])
         # test maximal number of varargs
         assert_raises(SyntaxError, gradient, x, 1, 2, axis=1)
 
@@ -1018,8 +1017,8 @@ class TestTrapz(TestCase):
         q = x[:, None, None] + y[None,:, None] + z[None, None,:]
 
         qx = (q * wx[:, None, None]).sum(axis=0)
-        qy = (q * wy[None,:, None]).sum(axis=1)
-        qz = (q * wz[None, None,:]).sum(axis=2)
+        qy = (q * wy[None, :, None]).sum(axis=1)
+        qz = (q * wz[None, None, :]).sum(axis=2)
 
         # n-d `x`
         r = trapz(q, x=x[:, None, None], axis=0)
@@ -1501,14 +1500,12 @@ class TestHistogramdd(TestCase):
         assert_(hist[1] == 0.0)
 
     def test_finite_range(self):
-        vals = np.random.random((100,3))
-        histogramdd(vals, range=[[0.0,1.0],[0.25,0.75],[0.25,0.5]])
+        vals = np.random.random((100, 3))
+        histogramdd(vals, range=[[0.0, 1.0], [0.25, 0.75], [0.25, 0.5]])
         assert_raises(ValueError, histogramdd, vals, 
-                      range=[[0.0,1.0],[0.25,0.75],[0.25,np.inf]])
+                      range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals, 
-                      range=[[0.0,1.0],[np.nan,0.75],[0.25,0.5]])
-
-
+                      range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
 
 
 class TestUnique(TestCase):
