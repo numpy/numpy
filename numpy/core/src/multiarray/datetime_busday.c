@@ -288,6 +288,7 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
 
     /* If we get a NaT, just return it */
     if (date == NPY_DATETIME_NAT) {
+        *out = NPY_DATETIME_NAT;
         return 0;
     }
 
