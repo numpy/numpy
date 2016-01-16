@@ -20,6 +20,16 @@ cache:
   directories:
     - $HOME/.cache/pip
 
+env:
+  global:
+    - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
+    # The following is generated with the command:
+    # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
+    - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9Tr\
+               XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
+               iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
+               ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
+
 python:
   - 2.6
   - 2.7
@@ -51,16 +61,10 @@ matrix:
             - python3-setuptools
     - python: 2.7
       env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
+    - python: 2.7
+      env: USE_WHEEL=1
     - python: 3.5
-      env:
-       - USE_WHEEL=1
-       - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
-       # The following is generated with the command:
-       # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
-       - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9Tr\
-                  XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
-                  iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
-                  ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
+      env: USE_WHEEL=1
     - python: 2.7
       env:
        - PYTHONOPTIMIZE=2
