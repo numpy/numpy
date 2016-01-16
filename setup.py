@@ -235,14 +235,14 @@ def parse_setuppy_commands():
     # fine as they are, but are usually used together with one of the commands
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
-                     'build_clib', 'buld_scripts', 'bdist_wheel', 'bdist_rpm',
+                     'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
                      'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
 
     for command in good_commands:
         if command in sys.argv[1:]:
             return True
 
-    # The following commands are supported, but we need to show some more
+    # The following commands are supported, but we need to show more
     # useful messages to the user
     if 'install' in sys.argv[1:]:
         print(textwrap.dedent("""
