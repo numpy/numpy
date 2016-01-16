@@ -188,12 +188,12 @@ class sdist_checked(sdist):
         check_submodules()
         sdist.run(self)
 
-def generate_cython():
+def generate_cython(root_path):
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
     p = subprocess.call([sys.executable,
                           os.path.join(cwd, 'tools', 'cythonize.py'),
-                          'numpy/random'],
+                          root_path],
                          cwd=cwd)
     if p != 0:
         raise RuntimeError("Running cythonize failed!")
@@ -248,7 +248,8 @@ def setup_package():
         cwd = os.path.abspath(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
             # Generate Cython sources, unless building from source release
-            generate_cython()
+            generate_cython('numpy/random')
+            generate_cython('numpy/core/src/umath')
         metadata['configuration'] = configuration
 
     try:

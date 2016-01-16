@@ -30,6 +30,7 @@
 
 #include "numpy/npy_math.h"
 
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
@@ -42,31 +43,24 @@
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
 
+
+#pragma push_macro("PyMODINIT_FUNC")
+
+#undef PyMODINIT_FUNC
+#if defined(NPY_PY3K)
+#define PyMODINIT_FUNC NPY_NO_EXPORT PyObject*
+#else
+#define PyMODINIT_FUNC NPY_NO_EXPORT void
+#endif
+
+#include "umath_type_resolve.h"
+
+#pragma pop_macro("PyMODINIT_FUNC")
+
+
 NPY_NO_EXPORT int initscalarmath(PyObject *);
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
-
-static int
-object_ufunc_type_resolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
-{
-    int i, nop = ufunc->nin + ufunc->nout;
-
-    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
-    if (out_dtypes[0] == NULL) {
-        return -1;
-    }
-
-    for (i = 1; i < nop; ++i) {
-        Py_INCREF(out_dtypes[0]);
-        out_dtypes[i] = out_dtypes[0];
-    }
-
-    return 0;
-}
 
 static int
 object_ufunc_loop_selector(PyUFuncObject *ufunc,
@@ -317,7 +311,7 @@ PyMODINIT_FUNC PyInit_umath(void)
 PyMODINIT_FUNC initumath(void)
 #endif
 {
-    PyObject *m, *d, *s, *s2, *c_api;
+    PyObject *m, *mm, *d, *s, *s2, *c_api;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -423,6 +417,15 @@ PyMODINIT_FUNC initumath(void)
     PyDict_SetItemString(d, "mod", s2);
 
     initscalarmath(m);
+
+#if PY_MAJOR_VERSION < 3
+    initumath_type_resolve();
+#else
+    mm = PyInit_umath_type_resolve();
+    if (!mm) {
+        return RETVAL;
+    }
+#endif
 
     if (!intern_strings()) {
         goto err;
