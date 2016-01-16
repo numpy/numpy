@@ -133,7 +133,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
 
             for (i = 0; i < n; i++) {
                 for (j = i + 1; j < n; j++) {
-                     *((npy_double*)PyArray_GETPTR2(R, j, i)) = *((npy_double*)PyArray_GETPTR2(R, i, j));
+                    *((npy_double*)PyArray_GETPTR2(R, j, i)) =
+                            *((npy_double*)PyArray_GETPTR2(R, i, j));
                 }
             }
             break;
@@ -143,7 +144,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
 
             for (i = 0; i < n; i++) {
                 for (j = i + 1; j < n; j++) {
-                     *((npy_float*)PyArray_GETPTR2(R, j, i)) = *((npy_float*)PyArray_GETPTR2(R, i, j));
+                    *((npy_float*)PyArray_GETPTR2(R, j, i)) =
+                            *((npy_float*)PyArray_GETPTR2(R, i, j));
                 }
             }
             break;
@@ -153,7 +155,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
 
             for (i = 0; i < n; i++) {
                 for (j = i + 1; j < n; j++) {
-                     *((npy_cdouble*)PyArray_GETPTR2(R, j, i)) = *((npy_cdouble*)PyArray_GETPTR2(R, i, j));
+                    *((npy_cdouble*)PyArray_GETPTR2(R, j, i)) =
+                            *((npy_cdouble*)PyArray_GETPTR2(R, i, j));
                 }
             }
             break;
@@ -163,7 +166,8 @@ syrk(int typenum, enum CBLAS_ORDER order, enum CBLAS_TRANSPOSE trans,
 
             for (i = 0; i < n; i++) {
                 for (j = i + 1; j < n; j++) {
-                     *((npy_cfloat*)PyArray_GETPTR2(R, j, i)) = *((npy_cfloat*)PyArray_GETPTR2(R, i, j));
+                    *((npy_cfloat*)PyArray_GETPTR2(R, j, i)) =
+                            *((npy_cfloat*)PyArray_GETPTR2(R, i, j));
                 }
             }
             break;
@@ -319,8 +323,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
              */
             if (nd == 1) {
                 /*
-                 * Either PyArray_NDIM(ap1) is 1 dim or PyArray_NDIM(ap2) is 1 dim
-                 * and the other is 2-dim
+                 * Either PyArray_NDIM(ap1) is 1 dim or PyArray_NDIM(ap2) is
+                 * 1 dim and the other is 2 dim
                  */
                 dimensions[0] = (PyArray_NDIM(oap1) == 2) ?
                                 PyArray_DIM(oap1, 0) : PyArray_DIM(oap2, 1);
@@ -729,7 +733,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             }
         }
         else {
-            gemm(typenum, Order, Trans1, Trans2, L, N, M, ap1, lda, ap2, ldb, ret);
+            gemm(typenum, Order, Trans1, Trans2, L, N, M, ap1, lda, ap2, ldb,
+                 ret);
         }
         NPY_END_ALLOW_THREADS;
     }
