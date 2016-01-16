@@ -1,0 +1,30 @@
+package:
+  name: numpy
+  version: "" # Set at build time.
+
+source:
+  git_url: ..
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - openblas    # [linux]
+    - python
+    - cython
+    - gcc         # [unix]
+
+  run:
+    - openblas    # [linux]
+    - python
+    - libgcc      # [unix]
+
+test:
+  imports:
+    - numpy
+
+about:
+  home: http://www.numpy.org
+  license: BSD
+  summary: "NumPy: array processing for numbers, strings, records, and objects."
