@@ -68,6 +68,12 @@ NPY_NUM_BUILD_JOBS.
 Choosing compilers
 ==================
 
+Numpy needs a C compiler, and for development versions also Cython.  A Fortran
+compiler isn't needed to build Numpy itself; the ``numpy.f2py`` tests will be
+skipped when running the test suite if no Fortran compiler is available.  For
+building Scipy a Fortran compiler is needed though, so we include some details
+on Fortran compilers in the rest of this section.
+
 On OS X and Linux, all common compilers will work.  Note that for Fortran,
 ``gfortran`` is strongly preferred over ``g77``, but if you happen to have both
 installed then ``g77`` will be detected and used first.  To explicitly select
@@ -118,19 +124,19 @@ ATLAS) will also work.
 Ubuntu/Debian
 -------------
 
-In order to build with optimized a BLAS providing development package must be installed.
-Options are for example:
+For best performance a development package providing BLAS and CBLAS should be
+installed.  Some of the options available are:
 
- - ``libblas-dev``: reference BLAS (not very optimized)
- - ``libatlas-base-dev``: generic tuned ATLAS, it is recommended to tune it to
-   the available hardware, see /usr/share/doc/libatlas3-base/README.Debian for
-   instructions
- - ``libopenblas-base``: fast and runtime detected so no tuning required but a
-   very recent version is needed (>=0.2.15 is recommended).  Older versions of
-   OpenBLAS suffered from correctness issues on some CPUs.
+- ``libblas-dev``: reference BLAS (not very optimized)
+- ``libatlas-base-dev``: generic tuned ATLAS, it is recommended to tune it to
+  the available hardware, see /usr/share/doc/libatlas3-base/README.Debian for
+  instructions
+- ``libopenblas-base``: fast and runtime detected so no tuning required but a
+  very recent version is needed (>=0.2.15 is recommended).  Older versions of
+  OpenBLAS suffered from correctness issues on some CPUs.
 
-The actual implementation can be exchanged also after installation via the
-alternatives mechanism::
+The package linked to when numpy is loaded can be chosen after installation via
+the alternatives mechanism::
 
     update-alternatives --config libblas.so.3
     update-alternatives --config liblapack.so.3
