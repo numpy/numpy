@@ -1,12 +1,5 @@
-.. -*- rest -*-
-.. vim:syntax=rest
-.. NB! Keep this document a valid restructured document.
-
 Building and installing NumPy
 +++++++++++++++++++++++++++++
-
-:Authors: Numpy Developers <numpy-discussion@scipy.org>
-:Discussions to: numpy-discussion@scipy.org
 
 **IMPORTANT**: the below notes are about building Numpy, which for most users
 is *not* the recommended way to install Numpy.  Instead, use either a complete
@@ -16,7 +9,7 @@ http://scipy.org/install.html.
 
 .. Contents::
 
-PREREQUISITES
+Prerequisites
 =============
 
 Building NumPy requires the following software installed:
@@ -145,3 +138,12 @@ alternatives mechanism::
 Or by preloading a specific BLAS library with::
 
     LD_PRELOAD=/usr/lib/atlas-base/atlas/libblas.so.3 python ...
+
+
+Build issues
+============
+
+If you run into build issues and need help, the Numpy
+`mailing list <http://scipy.org/scipylib/mailing-lists.html>`_ is the best
+place to ask.  If the issue is clearly a bug in Numpy, please file an issue (or
+even better, a pull request) at https://github.com/numpy/numpy.
