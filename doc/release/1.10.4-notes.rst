@@ -25,7 +25,7 @@ Issues Fixed
 Merged PRs
 ==========
 
-The following PRs have been merged into 1.10.3. When the PR is a backport,
+The following PRs have been merged into 1.10.4. When the PR is a backport,
 the PR number for the original PR against master is listed.
 
 * gh-6840 TST: Update travis testing script in 1.10.x
