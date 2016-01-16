@@ -539,6 +539,7 @@ class TestNanFunctions_Median(TestCase):
         for axis in [None, 0, 1]:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
+                warnings.simplefilter('ignore', FutureWarning)
                 assert_(np.isnan(np.nanmedian(mat, axis=axis)).all())
                 if axis is None:
                     assert_(len(w) == 1)
