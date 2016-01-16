@@ -62,9 +62,9 @@ test and use your changes (in ``.py`` files), by simply restarting the
 interpreter.
 
 Note that another way to do an inplace build visible outside the repo base dir
-is with ``python setup.py develop``.  This doesn't work for NumPy, because
-NumPy builds don't use ``setuptools`` by default.  ``python setupegg.py
-develop`` will work though.
+is with ``python setup.py develop``.  Instead of adjusting ``PYTHONPATH``, this
+installs a ``.egg-link`` file into your site-packages as well as adjusts the
+``easy-install.pth`` there, so its a more permanent (and magical) operation.
 
 
 Other build options
