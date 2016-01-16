@@ -11,13 +11,13 @@ from . import unixccompiler
 from .info import __doc__
 from .npy_pkg_config import *
 
+# If numpy is installed, add distutils.test()
 try:
     from . import __config__
-    _INSTALLED = True
-except ImportError:
-    _INSTALLED = False
-
-if _INSTALLED:
+    # Normally numpy is installed if the above import works, but an interrupted
+    # in-place build could also have left a __config__.py.  In that case the
+    # next import may still fail, so keep it inside the try block.
     from numpy.testing.nosetester import _numpy_tester
     test = _numpy_tester().test
-    bench = _numpy_tester().bench
+except ImportError:
+    pass
