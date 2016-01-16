@@ -149,11 +149,12 @@ useless computations when printing a masked array.
 The function now uses the fallocate system call to reserve sufficient
 diskspace on filesystems that support it.
 
-``np.dot`` optimized for operations of the form ``A.T @ A`` and ``A @ A.T``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Optimizations for operations of the form ``A.T @ A`` and ``A @ A.T``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Previously, ``gemm`` BLAS operations were used for all matrix products. Now,
 if the matrix product is between a matrix and its transpose, it will use
-``syrk`` BLAS operations for a performance boost.
+``syrk`` BLAS operations for a performance boost. This optimization has been
+extended to ``@``, ``numpy.dot``, ``numpy.inner``, and ``numpy.matmul``.
 
 **Note:** Requires the transposed and non-transposed matrices to share data.
 
