@@ -10,7 +10,7 @@ Building and installing NumPy
 
 **IMPORTANT**: the below notes are about building Numpy, which for most users
 is *not* the recommended way to install Numpy.  Instead, use either a complete
-scientific Python distribution or a binary installer - see
+scientific Python distribution (recommended) or a binary installer - see
 http://scipy.org/install.html.
 
 
@@ -43,53 +43,84 @@ Building NumPy requires the following software installed:
 Python__ http://www.python.org
 nose__ http://somethingaboutorange.com/mrl/projects/nose/
 
+
+.. note:: 
+
+   If you want to build Numpy in order to work on Numpy itself, use
+   ``runtests.py``.  For more details, see
+   http://docs.scipy.org/doc/numpy-dev/dev/development_environment.html
+
+.. note::
+
+   More extensive information on building Numpy (and Scipy) is maintained at
+   http://scipy.org/scipylib/building/index.html
+
+
 Basic Installation
 ==================
 
-To install numpy run:
+To install numpy run::
 
     python setup.py build -j 4 install --prefix $HOME/.local
 
 This will compile numpy on 4 CPUs and install it into the specified prefix.
-To perform an inplace build that can be run from the source folder run:
+To perform an inplace build that can be run from the source folder run::
 
-   python setup.py build_ext --inplace -j 4
+    python setup.py build_ext --inplace -j 4
 
 The number of build jobs can also be specified via the environment variable
 NPY_NUM_BUILD_JOBS.
 
-Fortran ABI mismatch
-====================
 
-The two most popular open source fortran compilers are g77 and gfortran.
-Unfortunately, they are not ABI compatible, which means that concretely you
-should avoid mixing libraries built with one with another. In particular,
-if your blas/lapack/atlas is built with g77, you *must* use g77 when
-building numpy and scipy; on the contrary, if your atlas is built with
-gfortran, you *must* build numpy/scipy with gfortran.
+Choosing compilers
+==================
 
-Choosing the fortran compiler
------------------------------
-
-To build with g77:
-
-    python setup.py build --fcompiler=gnu
-
-To build with gfortran:
+On OS X and Linux, all common compilers will work.  Note that for Fortran,
+``gfortran`` is strongly preferred over ``g77``, but if you happen to have both
+installed then ``g77`` will be detected and used first.  To explicitly select
+``gfortran`` in that case, do::
 
     python setup.py build --fcompiler=gnu95
 
-How to check the ABI of blas/lapack/atlas
------------------------------------------
+Windows
+-------
 
-One relatively simple and reliable way to check for the compiler used to
-build a library is to use ldd on the library. If libg2c.so is a dependency,
-this means that g77 has been used. If libgfortran.so is a dependency,
-gfortran has been used. If both are dependencies, this means both have been
-used, which is almost always a very bad idea.
+On Windows, building from source can be difficult.  Currently the most robust
+option is to use the Intel compilers, or alternatively MSVC (the same version
+as used to build Python itself) with Intel ifort.  Intel itself maintains a
+good `application note <https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl>`_
+on this.
+
+If you want to use a free compiler toolchain, the recommended compiler is MingwPy__.
+The older MinGW32 compiler set used to produce older .exe installers for Numpy
+itself is still available at https://github.com/numpy/numpy-vendor, but not
+recommended for use anymore.
+
+MingwPy__ http://mingwpy.github.io
+
 
 Building with optimized BLAS support
 ====================================
+
+Configuring which BLAS/LAPACK is used if you have multiple libraries installed,
+or you have only one installed but in a non-standard location, is done via a
+``site.cfg`` file.  See the ``site.cfg.example`` shipped with Numpy for more
+details.
+
+Windows
+-------
+
+The Intel compilers work with Intel MKL, see the application note linked above. 
+MingwPy__ works with OpenBLAS.
+For an overview of the state of BLAS/LAPACK libraries on Windows, see 
+`here <http://mingwpy.github.io/blas_lapack.html>`_.
+
+OS X
+----
+
+OS X ships the Accelerate framework, which Numpy can build against without any
+manual configuration.  Other BLAS/LAPACK implementations (OpenBLAS, Intel MKL,
+ATLAS) will also work.
 
 Ubuntu/Debian
 -------------
@@ -97,74 +128,20 @@ Ubuntu/Debian
 In order to build with optimized a BLAS providing development package must be installed.
 Options are for example:
 
- - libblas-dev
-   reference BLAS not very optimized
- - libatlas-base-dev
-   generic tuned ATLAS, it is recommended to tune it to the available hardware,
-   see /usr/share/doc/libatlas3-base/README.Debian for instructions
- - libopenblas-base
-   fast and runtime detected so no tuning required but as of version 2.11 still
-   suffers from correctness issues on some CPUs, test your applications
-   thoughly.
+ - ``libblas-dev``: reference BLAS (not very optimized)
+ - ``libatlas-base-dev``: generic tuned ATLAS, it is recommended to tune it to
+   the available hardware, see /usr/share/doc/libatlas3-base/README.Debian for
+   instructions
+ - ``libopenblas-base``: fast and runtime detected so no tuning required but a
+   very recent version is needed (>=0.2.15 is recommended).  Older versions of
+   OpenBLAS suffered from correctness issues on some CPUs.
 
 The actual implementation can be exchanged also after installation via the
-alternatives mechanism:
+alternatives mechanism::
 
-   update-alternatives --config libblas.so.3
-   update-alternatives --config liblapack.so.3
+    update-alternatives --config libblas.so.3
+    update-alternatives --config liblapack.so.3
 
-Or by preloading a specific BLAS library with
+Or by preloading a specific BLAS library with::
+
     LD_PRELOAD=/usr/lib/atlas-base/atlas/libblas.so.3 python ...
-
-
-Windows 32 bits notes
-=====================
-
-The MinGW compilers used to build the official Numpy binary installers for
-32-bit Python on Windows can be found in https://github.com/numpy/numpy-vendor.
-That repo also contains pre-built ATLAS binarues.  The command to build and
-install Numpy is:
-
-   $ python setup.py config --compiler=mingw32 build --compiler=mingw32 install
-
-Typically, one needs to use a site.cfg file that looks like:
-
-   [atlas]
-   library_dirs = C:\local\lib\atlas
-   include_dirs = C:\local\lib\atlas
-
-Windows 64 bits notes
-=====================
-
-Note: only AMD64 is supported (IA64 is not) - AMD64 is the version most
-people want.
-
-Free compilers (mingw-w64)
---------------------------
-
-http://mingw-w64.sourceforge.net/
-
-To use the free compilers (mingw-w64), you need to build your own
-toolchain, as the mingw project only distribute cross-compilers
-(cross-compilation is not supported by numpy). Since this toolchain is
-still being worked on, serious compiler bugs can be expected.  binutil 2.19
-+ gcc 4.3.3 + mingw-w64 runtime gives you a working C compiler (but the C++
-is broken). gcc 4.4 will hopefully be able to run natively.
-
-This is the only tested way to get a numpy with a FULL blas/lapack (scipy
-does not work because of C++).
-
-MS compilers
-------------
-
-If you are familiar with MS tools, that's obviously the easiest path, and
-the compilers are hopefully more mature (although in my experience, they
-are quite fragile, and often segfault on invalid C code). The main drawback
-is that mingw-w64 gfortran + MSVC does not work at all (it is unclear
-whether it ever will).  MSVC + ifort + MKL does work.
-
-For python 2.6, you need VS 2008. The freely available version does not
-contains 64 bits compilers (you also need the PSDK, v6.1).
-
-It is crucial to use the right MS compiler version. For python 2.6, you
-must use version 15. You can check the compiler version with cl.exe /?.
