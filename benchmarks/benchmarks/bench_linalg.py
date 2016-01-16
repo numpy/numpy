@@ -51,6 +51,24 @@ class Eindot(Benchmark):
     def time_inner_trans_a_ac(self):
         np.inner(self.a, self.ac)
 
+    def time_matmul_a_b(self):
+        np.matmul(self.a, self.b)
+
+    def time_matmul_d_matmul_b_c(self):
+        np.matmul(self.d, np.matmul(self.b, self.c))
+
+    def time_matmul_trans_a_at(self):
+        np.matmul(self.a, self.at)
+
+    def time_matmul_trans_a_atc(self):
+        np.matmul(self.a, self.atc)
+
+    def time_matmul_trans_at_a(self):
+        np.matmul(self.at, self.a)
+
+    def time_matmul_trans_atc_a(self):
+        np.matmul(self.atc, self.a)
+
     def time_tensordot_a_b_axes_1_0_0_1(self):
         np.tensordot(self.a3, self.b3, axes=([1, 0], [0, 1]))
 
