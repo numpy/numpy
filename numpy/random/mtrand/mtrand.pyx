@@ -1496,6 +1496,12 @@ cdef class RandomState:
 
         anywhere within the interval ``[a, b)``, and zero elsewhere.
 
+        When ``high`` == ``low``, values of ``low`` will be returned.
+        If ``high`` < ``low``, the results are officially undefined
+        and may eventually raise an error, i.e. do not rely on this
+        function to behave when passed arguments satisfying that
+        inequality condition.
+
         Examples
         --------
         Draw samples from the distribution:
