@@ -101,10 +101,6 @@ where different FORTRAN compilers might have been used.
 Choosing the fortran compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To build with g77::
-
-    python setup.py build --fcompiler=gnu
-
 To build with gfortran::
 
     python setup.py build --fcompiler=gnu95
