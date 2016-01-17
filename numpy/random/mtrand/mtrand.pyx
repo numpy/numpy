@@ -24,6 +24,8 @@
 include "Python.pxi"
 include "numpy.pxd"
 
+from libc cimport string
+
 cdef extern from "math.h":
     double exp(double x)
     double log(double x)
@@ -4979,33 +4981,52 @@ cdef class RandomState:
                [0, 1, 2]])
 
         """
-        cdef npy_intp i, j
+        cdef:
+            npy_intp i, j, n = len(x), stride, itemsize
+            char* x_ptr
+            char* buf_ptr
 
-        i = len(x) - 1
-
-        # Logic adapted from random.shuffle()
-        if isinstance(x, np.ndarray) and \
-           (x.ndim > 1 or x.dtype.fields is not None):
-            # For a multi-dimensional ndarray, indexing returns a view onto
-            # each row. So we can't just use ordinary assignment to swap the
-            # rows; we need a bounce buffer.
+        if type(x) is np.ndarray and x.ndim == 1 and x.size:
+            # Fast, statically typed path: shuffle the underlying buffer.
+            # Only for non-empty, 1d objects of class ndarray (subclasses such
+            # as MaskedArrays may not support this approach).
+            x_ptr = <char*><size_t>x.ctypes.data
+            stride = x.strides[0]
+            itemsize = x.dtype.itemsize
+            buf = np.empty_like(x[0])  # GC'd at function exit
+            buf_ptr = <char*><size_t>buf.ctypes.data
+            with self.lock:
+                # We trick gcc into providing a specialized implementation for
+                # the most common case, yielding a ~33% performance improvement.
+                # Note that apparently, only one branch can ever be specialized.
+                if itemsize == sizeof(npy_intp):
+                    self._shuffle_raw(n, sizeof(npy_intp), stride, x_ptr, buf_ptr)
+                else:
+                    self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
+        elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
+            # Multidimensional ndarrays require a bounce buffer.
             buf = np.empty_like(x[0])
             with self.lock:
-                while i > 0:
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     buf[...] = x[j]
                     x[j] = x[i]
                     x[i] = buf
-                    i = i - 1
         else:
-            # For single-dimensional arrays, lists, and any other Python
-            # sequence types, indexing returns a real object that's
-            # independent of the array contents, so we can just swap directly.
+            # Untyped path.
             with self.lock:
-                while i > 0:
+                for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
-                    i = i - 1
+
+    cdef inline _shuffle_raw(self, npy_intp n, npy_intp itemsize,
+                             npy_intp stride, char* data, char* buf):
+        cdef npy_intp i, j
+        for i in reversed(range(1, n)):
+            j = rk_interval(i, self.internal_state)
+            string.memcpy(buf, data + j * stride, itemsize)
+            string.memcpy(data + j * stride, data + i * stride, itemsize)
+            string.memcpy(data + i * stride, buf, itemsize)
 
     def permutation(self, object x):
         """
