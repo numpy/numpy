@@ -663,7 +663,10 @@ class system_info(object):
         return [b for b in [a.strip() for a in libs.split(',')] if b]
 
     def get_libraries(self, key='libraries'):
-        return self.get_libs(key, '')
+        if hasattr(self, '_lib_names'):
+            return self.get_libs(key, default=self._lib_names)
+        else:
+            return self.get_libs(key, '')
 
     def library_extensions(self):
         static_exts = ['.a']
