@@ -8,9 +8,14 @@ Highlights
 ==========
 
 
-Dropped Support
-===============
+Build System Changes
+====================
 
+* Numpy now uses ``setuptools`` for its builds instead of plain distutils.
+  This fixes usage of ``install_requires='numpy'`` in the ``setup.py`` files of
+  projects that depend on Numpy (see gh-6551).  It potentially affects the way
+  that build/install methods for Numpy itself behave though.  Please report any
+  unexpected behavior on the Numpy issue tracker.
 * Bento build support and related files have been removed.
 * Single file build support and related files have been removed.
 
