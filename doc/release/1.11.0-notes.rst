@@ -186,6 +186,10 @@ if the matrix product is between a matrix and its transpose, it will use
 
 **Note:** Requires the transposed and non-transposed matrices to share data.
 
+*np.testing.assert_warns* can now be used as a context manager
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This matches the behavior of ``assert_raises``.
+
 Changes
 =======
 Pyrex support was removed from ``numpy.distutils``.  The method
