@@ -5,6 +5,7 @@ to document how deprecations should eventually be turned into errors.
 """
 from __future__ import division, absolute_import, print_function
 
+import datetime
 import sys
 import operator
 import warnings
@@ -12,7 +13,13 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_raises, assert_warns, assert_no_warnings,
-    assert_array_equal, assert_)
+    assert_array_equal, assert_, dec)
+
+try:
+    import pytz
+    _has_pytz = True
+except ImportError:
+    _has_pytz = False
 
 
 class _DeprecationTestCase(object):
@@ -384,6 +391,26 @@ class TestFullDefaultDtype(object):
         assert_warns(FutureWarning, np.full, 1, 1)
         assert_warns(FutureWarning, np.full, 1, None)
         assert_no_warnings(np.full, 1, 1, float)
+
+
+class TestDatetime64Timezone(_DeprecationTestCase):
+    """Parsing of datetime64 with timezones deprecated in 1.11.0, because
+    datetime64 is now timezone naive rather than UTC only.
+
+    It will be quite a while before we can remove this, because, at the very
+    least, a lot of existing code uses the 'Z' modifier to avoid conversion
+    from local time to UTC, even if otherwise it handles time in a timezone
+    naive fashion.
+    """
+    def test_string(self):
+        self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
+        self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
+
+    @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    def test_datetime(self):
+        tz = pytz.timezone('US/Eastern')
+        dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
+        self.assert_deprecated(np.datetime64, args=(dt,))
 
 
 class TestNonCContiguousViewDeprecation(_DeprecationTestCase):

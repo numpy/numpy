@@ -708,9 +708,9 @@ class ComplexFormat(object):
             i = i + 'j'
         return r + i
 
+
 class DatetimeFormat(object):
-    def __init__(self, x, unit=None,
-                timezone=None, casting='same_kind'):
+    def __init__(self, x, unit=None, timezone=None, casting='same_kind'):
         # Get the unit from the dtype
         if unit is None:
             if x.dtype.kind == 'M':
@@ -718,15 +718,9 @@ class DatetimeFormat(object):
             else:
                 unit = 's'
 
-        # If timezone is default, make it 'local' or 'UTC' based on the unit
         if timezone is None:
-            # Date units -> UTC, time units -> local
-            if unit in ('Y', 'M', 'W', 'D'):
-                self.timezone = 'UTC'
-            else:
-                self.timezone = 'local'
-        else:
-            self.timezone = timezone
+            timezone = 'naive'
+        self.timezone = timezone
         self.unit = unit
         self.casting = casting
 

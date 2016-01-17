@@ -23,10 +23,6 @@
  *           to be cast to the 'unit' parameter.
  *
  * 'out' gets filled with the parsed date-time.
- * 'out_local' gets set to 1 if the parsed time was in local time,
- *      to 0 otherwise. The values 'now' and 'today' don't get counted
- *      as local, and neither do UTC +/-#### timezone offsets, because
- *      they aren't using the computer's local timezone offset.
  * 'out_bestunit' gives a suggested unit based on the amount of
  *      resolution provided in the string, or -1 for NaT.
  * 'out_special' gets set to 1 if the parsed time was 'today',
@@ -41,7 +37,6 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
                     NPY_DATETIMEUNIT unit,
                     NPY_CASTING casting,
                     npy_datetimestruct *out,
-                    npy_bool *out_local,
                     NPY_DATETIMEUNIT *out_bestunit,
                     npy_bool *out_special);
 
@@ -76,7 +71,7 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base, int tzoffset,
+                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting);
 
 /*
