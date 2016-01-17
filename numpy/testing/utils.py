@@ -15,7 +15,7 @@ import contextlib
 from tempfile import mkdtemp, mkstemp
 
 from .nosetester import import_nose
-from numpy.core import float32, empty, arange, array_repr, ndarray, dtype
+from numpy.core import float32, empty, arange, array_repr, ndarray
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -343,31 +343,16 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         except AssertionError:
             raise AssertionError(msg)
 
-    def isnat(x):
-        return (hasattr(x, 'dtype')
-                and getattr(x.dtype, 'kind', '_') in 'mM'
-                and x != x)
-
     # Inf/nan/negative zero handling
     try:
         # isscalar test to check cases such as [np.nan] != np.nan
-        # dtypes compare equal to strings, but unlike strings aren't scalars,
-        # so we need to exclude them from this check
-        if (isscalar(desired) != isscalar(actual)
-                and not (isinstance(desired, dtype)
-                         or isinstance(actual, dtype))):
+        if isscalar(desired) != isscalar(actual):
             raise AssertionError(msg)
 
-        # check NaT before NaN, because isfinite errors on datetime dtypes
-        if isnat(desired) and isnat(actual):
-            if desired.dtype.kind != actual.dtype.kind:
-                # datetime64 and timedelta64 NaT should not be comparable
-                raise AssertionError(msg)
-            return
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
         # otherwise
-        elif not (gisfinite(desired) and gisfinite(actual)):
+        if not (gisfinite(desired) and gisfinite(actual)):
             isdesnan = gisnan(desired)
             isactnan = gisnan(actual)
             if isdesnan or isactnan:
@@ -678,9 +663,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
-    def isdatetime(x):
-        return x.dtype.char in 'mM'
-
     def chk_same_position(x_id, y_id, hasval='nan'):
         """Handling nan/inf: check that x and y have the nan/inf at the same
         locations."""
@@ -690,15 +672,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
-            raise AssertionError(msg)
-
-    def chk_same_dtype(x_dt, y_dt):
-        try:
-            assert_equal(x_dt, y_dt)
-        except AssertionError:
-            msg = build_err_msg([x, y], err_msg + '\nx and y dtype mismatch',
-                                verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
@@ -737,20 +710,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
             if any(x_id):
                 val = safe_comparison(x[~x_id], y[~y_id])
-            else:
-                val = safe_comparison(x, y)
-        elif isdatetime(x) and isdatetime(y):
-            x_isnat, y_isnat = (x != x), (y != y)
-
-            if any(x_isnat) or any(y_isnat):
-                # cannot mix timedelta64/datetime64 NaT
-                chk_same_dtype(x.dtype, y.dtype)
-                chk_same_position(x_isnat, y_isnat, hasval='nat')
-
-            if all(x_isnat):
-                return
-            if any(x_isnat):
-                val = safe_comparison(x[~x_isnat], y[~y_isnat])
             else:
                 val = safe_comparison(x, y)
         else:
@@ -1867,7 +1826,7 @@ def temppath(*args, **kwargs):
     parameters are the same as for tempfile.mkstemp and are passed directly
     to that function. The underlying file is removed when the context is
     exited, so it should be closed at that time.
-
+  
     Windows does not allow a temporary file to be opened if it is already
     open, so the underlying file must be closed after opening before it
     can be opened again.

@@ -130,11 +130,10 @@ class TestDateTime(TestCase):
         # regression tests for GH6452
         assert_equal(np.datetime64('NaT'),
                      np.datetime64('2000') + np.timedelta64('NaT'))
-        assert_equal(np.datetime64('NaT'), np.datetime64('NaT', 'us'))
-        assert_equal(np.timedelta64('NaT'), np.timedelta64('NaT', 'us'))
-        # neither of these should issue a warning
-        assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
-        assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
+        # nb. we may want to make NaT != NaT true in the future; this test
+        # verifies the existing behavior (and that it should not warn)
+        assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
+        assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
 
     def test_datetime_scalar_construction(self):
         # Construct with different units
@@ -553,9 +552,6 @@ class TestDateTime(TestCase):
                             "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
                      "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
 
-        a = np.array(['NaT', 'NaT'], dtype='datetime64[ns]')
-        assert_equal(str(a), "['NaT' 'NaT']")
-
         # Check that one NaT doesn't corrupt subsequent entries
         a = np.array(['2010', 'NaT', '2030']).astype('M')
         assert_equal(str(a), "['2010' 'NaT' '2030']")
@@ -662,7 +658,7 @@ class TestDateTime(TestCase):
             b[8] = 'NaT'
 
             assert_equal(b.astype(object).astype(unit), b,
-                         "Error roundtripping unit %s" % unit)
+                            "Error roundtripping unit %s" % unit)
         # With time units
         for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
                      'M8[300as]', 'M8[20us]']:
@@ -678,7 +674,7 @@ class TestDateTime(TestCase):
             b[8] = 'NaT'
 
             assert_equal(b.astype(object).astype(unit), b,
-                         "Error roundtripping unit %s" % unit)
+                            "Error roundtripping unit %s" % unit)
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
@@ -1084,26 +1080,6 @@ class TestDateTime(TestCase):
         assert_equal(np.less_equal(a, b), [1, 0, 1, 0, 1])
         assert_equal(np.greater(a, b), [0, 1, 0, 1, 0])
         assert_equal(np.greater_equal(a, b), [1, 1, 0, 1, 0])
-
-    def test_datetime_compare_nat(self):
-        dt_nat = np.datetime64('NaT', 'D')
-        dt_other = np.datetime64('2000-01-01')
-        td_nat = np.timedelta64('NaT', 'h')
-        td_other = np.timedelta64(1, 'h')
-        for op in [np.equal, np.less, np.less_equal,
-                   np.greater, np.greater_equal]:
-            assert_(not op(dt_nat, dt_nat))
-            assert_(not op(dt_nat, dt_other))
-            assert_(not op(dt_other, dt_nat))
-            assert_(not op(td_nat, td_nat))
-            assert_(not op(td_nat, td_other))
-            assert_(not op(td_other, td_nat))
-        assert_(np.not_equal(dt_nat, dt_nat))
-        assert_(np.not_equal(dt_nat, dt_other))
-        assert_(np.not_equal(dt_other, dt_nat))
-        assert_(np.not_equal(td_nat, td_nat))
-        assert_(np.not_equal(td_nat, td_other))
-        assert_(np.not_equal(td_other, td_nat))
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD

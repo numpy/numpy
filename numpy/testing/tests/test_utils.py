@@ -11,7 +11,7 @@ from numpy.testing import (
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath,
+    assert_string_equal, assert_, tempdir, temppath, 
     )
 import unittest
 
@@ -118,25 +118,6 @@ class TestArrayEqual(_GenericTest, unittest.TestCase):
 
         c = np.array([1, 2, 3])
         self._test_not_equal(c, b)
-
-    def test_nat_array_datetime(self):
-        a = np.array([np.datetime64('2000-01'), np.datetime64('NaT')])
-        b = np.array([np.datetime64('2000-01'), np.datetime64('NaT')])
-        self._test_equal(a, b)
-
-        c = np.array([np.datetime64('NaT'), np.datetime64('NaT')])
-        self._test_not_equal(c, b)
-
-    def test_nat_array_timedelta(self):
-        a = np.array([np.timedelta64(1, 'h'), np.timedelta64('NaT')])
-        b = np.array([np.timedelta64(1, 'h'), np.timedelta64('NaT')])
-        self._test_equal(a, b)
-
-        c = np.array([np.timedelta64('NaT'), np.timedelta64('NaT')])
-        self._test_not_equal(c, b)
-
-        d = np.array([np.datetime64('NaT'), np.datetime64('NaT')])
-        self._test_not_equal(c, d)
 
     def test_string_arrays(self):
         """Test two arrays with different shapes are found not equal."""
@@ -245,16 +226,6 @@ class TestEqual(TestArrayEqual):
         y = np.array([complex(1, 2), complex(1, 2)])
         self._assert_func(x, x)
         self._test_not_equal(x, y)
-
-    def test_nat(self):
-        dt = np.datetime64('2000-01-01')
-        dt_nat = np.datetime64('NaT')
-        td_nat = np.timedelta64('NaT')
-        self._assert_func(dt_nat, dt_nat)
-        self._assert_func(td_nat, td_nat)
-        self._test_not_equal(dt_nat, td_nat)
-        self._test_not_equal(dt, td_nat)
-        self._test_not_equal(dt, dt_nat)
 
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
@@ -486,7 +457,7 @@ class TestWarns(unittest.TestCase):
 
 
 class TestAssertAllclose(unittest.TestCase):
-
+    
     def test_simple(self):
         x = 1e-3
         y = 1e-9
