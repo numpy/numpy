@@ -911,6 +911,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 def argmax(a, axis=None, out=None):
     """
     Returns the indices of the maximum values along an axis.
+    For complex array, only the real part is considered.
 
     Parameters
     ----------
@@ -971,6 +972,7 @@ def argmax(a, axis=None, out=None):
 def argmin(a, axis=None, out=None):
     """
     Returns the indices of the minimum values along an axis.
+    For complex array, only the real part is considered.
 
     Parameters
     ----------
