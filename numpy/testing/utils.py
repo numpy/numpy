@@ -1736,6 +1736,8 @@ def assert_warns(warning_class, *args, **kwargs):
         with assert_warns(SomeWarning):
             do_something()
 
+    The ability to be used as a context manager is new in NumPy v1.11.0.
+
     .. versionadded:: 1.4.0
 
     Parameters
@@ -1782,6 +1784,8 @@ def assert_no_warnings(*args, **kwargs):
 
         with assert_no_warnings():
             do_something()
+
+    The ability to be used as a context manager is new in NumPy v1.11.0.
 
     .. versionadded:: 1.7.0
 
