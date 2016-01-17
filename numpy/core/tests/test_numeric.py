@@ -1591,7 +1591,7 @@ class TestIsclose(object):
         msg = "isclose.all() and allclose aren't same for %s and %s"
         msg2 = "isclose and allclose aren't same for %s and %s"
         if np.isscalar(x) and np.isscalar(y):
-            assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg % (x, y))
+            assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg2 % (x, y))
         else:
             assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
 
