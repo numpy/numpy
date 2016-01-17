@@ -135,8 +135,13 @@ def main(argv):
 
     if not args.no_build:
         site_dir = build_project(args)
-        sys.path.insert(0, site_dir)
-        os.environ['PYTHONPATH'] = site_dir
+        for dirname in os.listdir(site_dir):
+           if dirname.startswith('numpy'):
+                # The .pth file isn't re-parsed, so need to put the numpy egg
+                # produced by easy-install on the path manually.
+                egg_dir = os.path.join(site_dir, dirname)
+                sys.path.insert(0, egg_dir)
+                os.environ['PYTHONPATH'] = egg_dir
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -346,6 +351,14 @@ def build_project(args):
         cmd += ["-j", str(args.parallel)]
     cmd += ['install', '--prefix=' + dst_dir]
 
+    from distutils.sysconfig import get_python_lib
+    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
+    # easy_install won't install to a path that Python by default cannot see
+    # and isn't on the PYTHONPATH.  Plus, it has to exist.
+    if not os.path.exists(site_dir):
+        os.makedirs(site_dir)
+    env['PYTHONPATH'] = site_dir
+
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
     if args.show_build_log:
@@ -383,9 +396,6 @@ def build_project(args):
             print("Build failed!")
         sys.exit(1)
 
-    from distutils.sysconfig import get_python_lib
-    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
-
     return site_dir
 
 
@@ -421,8 +431,8 @@ def lcov_generate():
                      '--output-file', LCOV_OUTPUT_FILE])
 
     print("Generating lcov HTML output...")
-    ret = subprocess.call(['genhtml', '-q', LCOV_OUTPUT_FILE, 
-                           '--output-directory', LCOV_HTML_DIR, 
+    ret = subprocess.call(['genhtml', '-q', LCOV_OUTPUT_FILE,
+                           '--output-directory', LCOV_HTML_DIR,
                            '--legend', '--highlight'])
     if ret != 0:
         print("genhtml failed!")
