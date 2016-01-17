@@ -154,7 +154,7 @@ class TestAverage(TestCase):
         ott = ott.reshape(2, 2)
         ott[:, 1] = masked
         assert_equal(average(ott, axis=0), [2.0, 0.0])
-        assert_equal(average(ott, axis=1).mask[0], True)
+        assert_equal(average(ott, axis=1).mask[0], [True])
         assert_equal([2., 0.], average(ott, axis=0))
         result, wts = average(ott, axis=0, returned=1)
         assert_equal(wts, [1., 0.])
