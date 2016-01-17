@@ -1655,7 +1655,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
      * However, as a special case, void-scalar assignment broadcasts
      * differently from ndarrays when assigning to an object field: Assignment
      * to an ndarray object field broadcasts, but assignment to a void-scalar
-     * object-field should not, in order to allow nested ndarrays.
+     * object-field should not, in order to allow nested ndarrays. 
      * These lines should then behave identically:
      *
      *     b = np.zeros(1, dtype=[('x', 'O')])
