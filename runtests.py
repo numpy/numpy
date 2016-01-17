@@ -135,13 +135,8 @@ def main(argv):
 
     if not args.no_build:
         site_dir = build_project(args)
-        for dirname in os.listdir(site_dir):
-           if dirname.startswith('numpy'):
-                # The .pth file isn't re-parsed, so need to put the numpy egg
-                # produced by easy-install on the path manually.
-                egg_dir = os.path.join(site_dir, dirname)
-                sys.path.insert(0, egg_dir)
-                os.environ['PYTHONPATH'] = egg_dir
+        sys.path.insert(0, site_dir)
+        os.environ['PYTHONPATH'] = site_dir
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -349,7 +344,10 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    cmd += ['install', '--prefix=' + dst_dir]
+    # Install; avoid producing eggs so numpy can be imported from dst_dir.
+    cmd += ['install', '--prefix=' + dst_dir,
+            '--single-version-externally-managed',
+            '--record=' + dst_dir + 'tmp_install_log.txt']
 
     from distutils.sysconfig import get_python_lib
     site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
