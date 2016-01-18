@@ -27,7 +27,7 @@ Future Changes
 
 * Relaxed stride checking will become the default in 1.12.0.
 * Support for Python 2.6, 3.2, and 3.3 will be dropped in 1.12.0.
-* ``MaskedArray``s take views of data **and** masks when slicing in 1.12.0.
+* ``MaskedArray`` takes view of data **and** mask when slicing in 1.12.0.
 
 
 Compatibility notes
@@ -59,7 +59,8 @@ it handles by converting to UTC. However, the resulting datetime is timezone
 naive::
 
     >>> np.datetime64('2000-01-01T00:00:00-08')
-    DeprecationWarning: parsing timezone aware datetimes is deprecated; this will raise an error in the future
+    DeprecationWarning: parsing timezone aware datetimes is deprecated;
+    this will raise an error in the future
     numpy.datetime64('2000-01-01T08:00:00')
 
 As a corollary to this change, we no longer prohibit casting between datetimes
@@ -67,6 +68,11 @@ with date units and datetimes with timeunits. With timezone naive datetimes,
 the rule for casting from dates to times is no longer ambiguous.
 
 pandas_: http://pandas.pydata.org
+
+polynomial fit changes
+~~~~~~~~~~~~~~~~~~~~~~
+The various fit functions in the numpy polynomial package no longer accept
+non-integers for degree specification.
 
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,6 +162,14 @@ New Features
 * ``np.moveaxis`` allows for moving one or more array axes to a new position
   by explicitly providing source and destination axes.
 
+* numpy.polynomial fits now support degree selection.  The ``deg``
+  parameter was extended to allow fitting using only specified terms in the
+  polynomial expansion for all polynomial types. The change is backward
+  compatible and it is still possible to specify ``deg`` as before, but it
+  is now possible pass ``deg`` as a list specifying which terms in the
+  series to use in the fit.
+
+
 Improvements
 ============
 
@@ -208,6 +222,7 @@ Speed improvement for np.random.shuffle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``np.random.shuffle`` is now much faster for 1d ndarrays.
 
+
 Changes
 =======
 Pyrex support was removed from ``numpy.distutils``.  The method
@@ -240,14 +255,6 @@ arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
 
-numpy.polynomial.*fit now supports restricted fitting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``deg`` parameter was extended to allow restricted fitting of
-specified terms in the polynomial expansion for all polynomial
-types. This change is backward compatible and it is still possible to
-specify ``deg`` as a single integer to specify the maximum
-order/degree of polynomial used in the fit, but it is now possible for
-``deg`` to be a list specifying which terms in the series to fit.
 
 Deprecations
 ============
