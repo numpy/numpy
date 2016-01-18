@@ -183,7 +183,7 @@ def fft(a, n=None, axis=-1, norm=None):
 
     """
 
-    a = asarray(a).astype(complex)
+    a = asarray(a).astype(complex, copy=False)
     if n is None:
         n = a.shape[axis]
     output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
