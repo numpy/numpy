@@ -240,6 +240,15 @@ arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
 
+numpy.polynomial.*fit now supports restricted fitting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``deg`` parameter was extended to allow restricted fitting of
+specified terms in the polynomial expansion for all polynomial
+types. This change is backward compatible and it is still possible to
+specify ``deg`` as a single integer to specify the maximum
+order/degree of polynomial used in the fit, but it is now possible for
+``deg`` to be a list specifying which terms in the series to fit.
+
 Deprecations
 ============
 
