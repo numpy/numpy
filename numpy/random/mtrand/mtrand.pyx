@@ -1522,20 +1522,20 @@ cdef class RandomState:
         cdef double flow, fhigh, fscale
         cdef object temp
 
-        flow = PyFloat_AsDouble(low)
-        fhigh = PyFloat_AsDouble(high)
+        olow = <ndarray>PyArray_FROM_OTF(low, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        ohigh = <ndarray>PyArray_FROM_OTF(high, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
-        fscale = fhigh - flow
-        if not npy_isfinite(fscale):
-            raise OverflowError('Range exceeds valid bounds')
+        if olow.shape == ohigh.shape == ():
+            flow = PyFloat_AsDouble(low)
+            fhigh = PyFloat_AsDouble(high)
+            fscale = fhigh - flow
 
-        if not PyErr_Occurred():
+            if not npy_isfinite(fscale):
+                raise OverflowError('Range exceeds valid bounds')
+
             return cont2_array_sc(self.internal_state, rk_uniform, size, flow,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        olow = <ndarray>PyArray_FROM_OTF(low, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        ohigh = <ndarray>PyArray_FROM_OTF(high, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         temp = np.subtract(ohigh, olow)
         Py_INCREF(temp)  # needed to get around Pyrex's automatic reference-counting
                          # rules because EnsureArray steals a reference
@@ -1866,18 +1866,19 @@ cdef class RandomState:
         cdef ndarray oloc, oscale
         cdef double floc, fscale
 
-        floc = PyFloat_AsDouble(loc)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oloc.shape == oscale.shape == ():
+            floc = PyFloat_AsDouble(loc)
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
+
             return cont2_array_sc(self.internal_state, rk_normal, size, floc,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-
-        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0)):
             raise ValueError("scale <= 0")
         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale,
@@ -1924,9 +1925,13 @@ cdef class RandomState:
         cdef ndarray oa, ob
         cdef double fa, fb
 
-        fa = PyFloat_AsDouble(a)
-        fb = PyFloat_AsDouble(b)
-        if not PyErr_Occurred():
+        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        ob = <ndarray>PyArray_FROM_OTF(b, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oa.shape == ob.shape == ():
+            fa = PyFloat_AsDouble(a)
+            fb = PyFloat_AsDouble(b)
+
             if fa <= 0:
                 raise ValueError("a <= 0")
             if fb <= 0:
@@ -1934,10 +1939,6 @@ cdef class RandomState:
             return cont2_array_sc(self.internal_state, rk_beta, size, fa, fb,
                                   self.lock)
 
-        PyErr_Clear()
-
-        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        ob = <ndarray>PyArray_FROM_OTF(b, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oa, 0)):
             raise ValueError("a <= 0")
         if np.any(np.less_equal(ob, 0)):
@@ -1993,17 +1994,16 @@ cdef class RandomState:
         cdef ndarray oscale
         cdef double fscale
 
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oscale.shape == ():
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
             return cont1_array_sc(self.internal_state, rk_exponential, size,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-
-        oscale = <ndarray> PyArray_FROM_OTF(scale, NPY_DOUBLE,
-                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0")
         return cont1_array(self.internal_state, rk_exponential, size, oscale,
@@ -2112,16 +2112,16 @@ cdef class RandomState:
         cdef ndarray oshape
         cdef double fshape
 
-        fshape = PyFloat_AsDouble(shape)
-        if not PyErr_Occurred():
+        oshape = <ndarray>PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oshape.shape == ():
+            fshape = PyFloat_AsDouble(shape)
+
             if fshape <= 0:
                 raise ValueError("shape <= 0")
             return cont1_array_sc(self.internal_state, rk_standard_gamma,
                                   size, fshape, self.lock)
 
-        PyErr_Clear()
-        oshape = <ndarray> PyArray_FROM_OTF(shape, NPY_DOUBLE,
-                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oshape, 0.0)):
             raise ValueError("shape <= 0")
         return cont1_array(self.internal_state, rk_standard_gamma, size,
@@ -2203,9 +2203,13 @@ cdef class RandomState:
         cdef ndarray oshape, oscale
         cdef double fshape, fscale
 
-        fshape = PyFloat_AsDouble(shape)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oshape = <ndarray>PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oshape.shape == oscale.shape == ():
+            fshape = PyFloat_AsDouble(shape)
+            fscale = PyFloat_AsDouble(scale)
+
             if fshape <= 0:
                 raise ValueError("shape <= 0")
             if fscale <= 0:
@@ -2213,9 +2217,6 @@ cdef class RandomState:
             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        oshape = <ndarray>PyArray_FROM_OTF(shape, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oshape, 0.0)):
             raise ValueError("shape <= 0")
         if np.any(np.less_equal(oscale, 0.0)):
@@ -2309,9 +2310,13 @@ cdef class RandomState:
         cdef ndarray odfnum, odfden
         cdef double fdfnum, fdfden
 
-        fdfnum = PyFloat_AsDouble(dfnum)
-        fdfden = PyFloat_AsDouble(dfden)
-        if not PyErr_Occurred():
+        odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if odfnum.shape == odfden.shape == ():
+            fdfnum = PyFloat_AsDouble(dfnum)
+            fdfden = PyFloat_AsDouble(dfden)
+
             if fdfnum <= 0:
                 raise ValueError("dfnum <= 0")
             if fdfden <= 0:
@@ -2319,10 +2324,6 @@ cdef class RandomState:
             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum,
                                   fdfden, self.lock)
 
-        PyErr_Clear()
-
-        odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odfnum, 0.0)):
             raise ValueError("dfnum <= 0")
         if np.any(np.less_equal(odfden, 0.0)):
@@ -2400,10 +2401,15 @@ cdef class RandomState:
         cdef ndarray odfnum, odfden, ononc
         cdef double fdfnum, fdfden, fnonc
 
-        fdfnum = PyFloat_AsDouble(dfnum)
-        fdfden = PyFloat_AsDouble(dfden)
-        fnonc = PyFloat_AsDouble(nonc)
-        if not PyErr_Occurred():
+        odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if odfnum.shape == odfden.shape == ononc.shape == ():
+            fdfnum = PyFloat_AsDouble(dfnum)
+            fdfden = PyFloat_AsDouble(dfden)
+            fnonc = PyFloat_AsDouble(nonc)
+
             if fdfnum <= 1:
                 raise ValueError("dfnum <= 1")
             if fdfden <= 0:
@@ -2412,12 +2418,6 @@ cdef class RandomState:
                 raise ValueError("nonc < 0")
             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,
                                   fdfnum, fdfden, fnonc, self.lock)
-
-        PyErr_Clear()
-
-        odfnum = <ndarray>PyArray_FROM_OTF(dfnum, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        odfden = <ndarray>PyArray_FROM_OTF(dfden, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
         if np.any(np.less_equal(odfnum, 1.0)):
             raise ValueError("dfnum <= 1")
@@ -2494,16 +2494,16 @@ cdef class RandomState:
         cdef ndarray odf
         cdef double fdf
 
-        fdf = PyFloat_AsDouble(df)
-        if not PyErr_Occurred():
+        odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if odf.shape == ():
+            fdf = PyFloat_AsDouble(df)
+
             if fdf <= 0:
                 raise ValueError("df <= 0")
             return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf,
                                   self.lock)
 
-        PyErr_Clear()
-
-        odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
             raise ValueError("df <= 0")
         return cont1_array(self.internal_state, rk_chisquare, size, odf,
@@ -2591,9 +2591,14 @@ cdef class RandomState:
         """
         cdef ndarray odf, ononc
         cdef double fdf, fnonc
-        fdf = PyFloat_AsDouble(df)
-        fnonc = PyFloat_AsDouble(nonc)
-        if not PyErr_Occurred():
+
+        odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if odf.shape == ononc.shape == ():
+            fdf = PyFloat_AsDouble(df)
+            fnonc = PyFloat_AsDouble(nonc)
+
             if fdf <= 0:
                 raise ValueError("df <= 0")
             if fnonc < 0:
@@ -2601,10 +2606,6 @@ cdef class RandomState:
             return cont2_array_sc(self.internal_state, rk_noncentral_chisquare,
                                   size, fdf, fnonc, self.lock)
 
-        PyErr_Clear()
-
-        odf = <ndarray>PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        ononc = <ndarray>PyArray_FROM_OTF(nonc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
             raise ValueError("df <= 0")
         if np.any(np.less(ononc, 0.0)):
@@ -2767,16 +2768,16 @@ cdef class RandomState:
         cdef ndarray odf
         cdef double fdf
 
-        fdf = PyFloat_AsDouble(df)
-        if not PyErr_Occurred():
+        odf = <ndarray> PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if odf.shape == ():
+            fdf = PyFloat_AsDouble(df)
+
             if fdf <= 0:
                 raise ValueError("df <= 0")
             return cont1_array_sc(self.internal_state, rk_standard_t, size,
                                   fdf, self.lock)
 
-        PyErr_Clear()
-
-        odf = <ndarray> PyArray_FROM_OTF(df, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(odf, 0.0)):
             raise ValueError("df <= 0")
         return cont1_array(self.internal_state, rk_standard_t, size, odf,
@@ -2863,19 +2864,18 @@ cdef class RandomState:
         cdef ndarray omu, okappa
         cdef double fmu, fkappa
 
-        fmu = PyFloat_AsDouble(mu)
-        fkappa = PyFloat_AsDouble(kappa)
-        if not PyErr_Occurred():
+        omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if omu.shape == okappa.shape == ():
+            fmu = PyFloat_AsDouble(mu)
+            fkappa = PyFloat_AsDouble(kappa)
+
             if fkappa < 0:
                 raise ValueError("kappa < 0")
             return cont2_array_sc(self.internal_state, rk_vonmises, size, fmu,
                                   fkappa, self.lock)
 
-        PyErr_Clear()
-
-        omu = <ndarray> PyArray_FROM_OTF(mu, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        okappa = <ndarray> PyArray_FROM_OTF(kappa, NPY_DOUBLE,
-                                            NPY_ARRAY_ALIGNED)
         if np.any(np.less(okappa, 0.0)):
             raise ValueError("kappa < 0")
         return cont2_array(self.internal_state, rk_vonmises, size, omu, okappa,
@@ -2977,16 +2977,16 @@ cdef class RandomState:
         cdef ndarray oa
         cdef double fa
 
-        fa = PyFloat_AsDouble(a)
-        if not PyErr_Occurred():
+        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oa.shape == ():
+            fa = PyFloat_AsDouble(a)
+
             if fa <= 0:
                 raise ValueError("a <= 0")
             return cont1_array_sc(self.internal_state, rk_pareto, size, fa,
                                   self.lock)
 
-        PyErr_Clear()
-
-        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oa, 0.0)):
             raise ValueError("a <= 0")
         return cont1_array(self.internal_state, rk_pareto, size, oa, self.lock)
@@ -3087,16 +3087,16 @@ cdef class RandomState:
         cdef ndarray oa
         cdef double fa
 
-        fa = PyFloat_AsDouble(a)
-        if not PyErr_Occurred():
+        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oa.shape == ():
+            fa = PyFloat_AsDouble(a)
+
             if fa <= 0:
                 raise ValueError("a <= 0")
             return cont1_array_sc(self.internal_state, rk_weibull, size, fa,
                                   self.lock)
 
-        PyErr_Clear()
-
-        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oa, 0.0)):
             raise ValueError("a <= 0")
         return cont1_array(self.internal_state, rk_weibull, size, oa,
@@ -3200,16 +3200,16 @@ cdef class RandomState:
         cdef ndarray oa
         cdef double fa
 
-        fa = PyFloat_AsDouble(a)
-        if not PyErr_Occurred():
+        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oa.shape == ():
+            fa = PyFloat_AsDouble(a)
+
             if fa <= 0:
                 raise ValueError("a <= 0")
             return cont1_array_sc(self.internal_state, rk_power, size, fa,
                                   self.lock)
 
-        PyErr_Clear()
-
-        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oa, 0.0)):
             raise ValueError("a <= 0")
         return cont1_array(self.internal_state, rk_power, size, oa, self.lock)
@@ -3296,17 +3296,18 @@ cdef class RandomState:
         cdef ndarray oloc, oscale
         cdef double floc, fscale
 
-        floc = PyFloat_AsDouble(loc)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oloc.shape == oscale.shape == ():
+            floc = PyFloat_AsDouble(loc)
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
             return cont2_array_sc(self.internal_state, rk_laplace, size, floc,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0")
         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale,
@@ -3427,17 +3428,18 @@ cdef class RandomState:
         cdef ndarray oloc, oscale
         cdef double floc, fscale
 
-        floc = PyFloat_AsDouble(loc)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oloc.shape == oscale.shape == ():
+            floc = PyFloat_AsDouble(loc)
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0")
         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale,
@@ -3520,17 +3522,18 @@ cdef class RandomState:
         cdef ndarray oloc, oscale
         cdef double floc, fscale
 
-        floc = PyFloat_AsDouble(loc)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oloc.shape == oscale.shape == ():
+            floc = PyFloat_AsDouble(loc)
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
             return cont2_array_sc(self.internal_state, rk_logistic, size, floc,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        oloc = PyArray_FROM_OTF(loc, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0")
         return cont2_array(self.internal_state, rk_logistic, size, oloc,
@@ -3644,19 +3647,18 @@ cdef class RandomState:
         cdef ndarray omean, osigma
         cdef double fmean, fsigma
 
-        fmean = PyFloat_AsDouble(mean)
-        fsigma = PyFloat_AsDouble(sigma)
+        omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        osigma = PyArray_FROM_OTF(sigma, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
-        if not PyErr_Occurred():
+        if omean.shape == osigma.shape == ():
+            fmean = PyFloat_AsDouble(mean)
+            fsigma = PyFloat_AsDouble(sigma)
+
             if fsigma <= 0:
                 raise ValueError("sigma <= 0")
             return cont2_array_sc(self.internal_state, rk_lognormal, size,
                                   fmean, fsigma, self.lock)
 
-        PyErr_Clear()
-
-        omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        osigma = PyArray_FROM_OTF(sigma, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(osigma, 0.0)):
             raise ValueError("sigma <= 0.0")
         return cont2_array(self.internal_state, rk_lognormal, size, omean,
@@ -3727,17 +3729,16 @@ cdef class RandomState:
         cdef ndarray oscale
         cdef double fscale
 
-        fscale = PyFloat_AsDouble(scale)
+        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
-        if not PyErr_Occurred():
+        if oscale.shape == ():
+            fscale = PyFloat_AsDouble(scale)
+
             if fscale <= 0:
                 raise ValueError("scale <= 0")
             return cont1_array_sc(self.internal_state, rk_rayleigh, size,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-
-        oscale = <ndarray>PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oscale, 0.0)):
             raise ValueError("scale <= 0.0")
         return cont1_array(self.internal_state, rk_rayleigh, size, oscale,
@@ -3809,9 +3810,13 @@ cdef class RandomState:
         cdef ndarray omean, oscale
         cdef double fmean, fscale
 
-        fmean = PyFloat_AsDouble(mean)
-        fscale = PyFloat_AsDouble(scale)
-        if not PyErr_Occurred():
+        omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if omean.shape == oscale.shape == ():
+            fmean = PyFloat_AsDouble(mean)
+            fscale = PyFloat_AsDouble(scale)
+
             if fmean <= 0:
                 raise ValueError("mean <= 0")
             if fscale <= 0:
@@ -3819,9 +3824,6 @@ cdef class RandomState:
             return cont2_array_sc(self.internal_state, rk_wald, size, fmean,
                                   fscale, self.lock)
 
-        PyErr_Clear()
-        omean = PyArray_FROM_OTF(mean, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oscale = PyArray_FROM_OTF(scale, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(omean,0.0)):
             raise ValueError("mean <= 0.0")
         elif np.any(np.less_equal(oscale,0.0)):
@@ -3895,10 +3897,15 @@ cdef class RandomState:
         cdef ndarray oleft, omode, oright
         cdef double fleft, fmode, fright
 
-        fleft = PyFloat_AsDouble(left)
-        fright = PyFloat_AsDouble(right)
-        fmode = PyFloat_AsDouble(mode)
-        if not PyErr_Occurred():
+        oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oleft.shape == omode.shape == oright.shape == ():
+            fleft = PyFloat_AsDouble(left)
+            fright = PyFloat_AsDouble(right)
+            fmode = PyFloat_AsDouble(mode)
+
             if fleft > fmode:
                 raise ValueError("left > mode")
             if fmode > fright:
@@ -3907,11 +3914,6 @@ cdef class RandomState:
                 raise ValueError("left == right")
             return cont3_array_sc(self.internal_state, rk_triangular, size,
                                   fleft, fmode, fright, self.lock)
-
-        PyErr_Clear()
-        oleft = <ndarray>PyArray_FROM_OTF(left, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        omode = <ndarray>PyArray_FROM_OTF(mode, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        oright = <ndarray>PyArray_FROM_OTF(right, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
         if np.any(np.greater(oleft, omode)):
             raise ValueError("left > mode")
@@ -4012,9 +4014,13 @@ cdef class RandomState:
         cdef long ln
         cdef double fp
 
-        fp = PyFloat_AsDouble(p)
-        ln = PyInt_AsLong(n)
-        if not PyErr_Occurred():
+        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
+        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if on.shape == op.shape == ():
+            fp = PyFloat_AsDouble(p)
+            ln = PyInt_AsLong(n)
+
             if ln < 0:
                 raise ValueError("n < 0")
             if fp < 0:
@@ -4026,10 +4032,6 @@ cdef class RandomState:
             return discnp_array_sc(self.internal_state, rk_binomial, size, ln,
                                    fp, self.lock)
 
-        PyErr_Clear()
-
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
-        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less(n, 0)):
             raise ValueError("n < 0")
         if np.any(np.less(p, 0)):
@@ -4115,9 +4117,13 @@ cdef class RandomState:
         cdef double fn
         cdef double fp
 
-        fp = PyFloat_AsDouble(p)
-        fn = PyFloat_AsDouble(n)
-        if not PyErr_Occurred():
+        on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if on.shape == op.shape == ():
+            fp = PyFloat_AsDouble(p)
+            fn = PyFloat_AsDouble(n)
+
             if fn <= 0:
                 raise ValueError("n <= 0")
             if fp < 0:
@@ -4127,10 +4133,6 @@ cdef class RandomState:
             return discdd_array_sc(self.internal_state, rk_negative_binomial,
                                    size, fn, fp, self.lock)
 
-        PyErr_Clear()
-
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(n, 0)):
             raise ValueError("n <= 0")
         if np.any(np.less(p, 0)):
@@ -4208,8 +4210,12 @@ cdef class RandomState:
         """
         cdef ndarray olam
         cdef double flam
-        flam = PyFloat_AsDouble(lam)
-        if not PyErr_Occurred():
+
+        olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if olam.shape == ():
+            flam = PyFloat_AsDouble(lam)
+
             if lam < 0:
                 raise ValueError("lam < 0")
             if lam > self.poisson_lam_max:
@@ -4217,9 +4223,6 @@ cdef class RandomState:
             return discd_array_sc(self.internal_state, rk_poisson, size, flam,
                                   self.lock)
 
-        PyErr_Clear()
-
-        olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less(olam, 0)):
             raise ValueError("lam < 0")
         if np.any(np.greater(olam, self.poisson_lam_max)):
@@ -4302,16 +4305,16 @@ cdef class RandomState:
         cdef ndarray oa
         cdef double fa
 
-        fa = PyFloat_AsDouble(a)
-        if not PyErr_Occurred():
+        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if oa.shape == ():
+            fa = PyFloat_AsDouble(a)
+
             if fa <= 1.0:
                 raise ValueError("a <= 1.0")
             return discd_array_sc(self.internal_state, rk_zipf, size, fa,
                                   self.lock)
 
-        PyErr_Clear()
-
-        oa = <ndarray>PyArray_FROM_OTF(a, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(oa, 1.0)):
             raise ValueError("a <= 1.0")
         return discd_array(self.internal_state, rk_zipf, size, oa, self.lock)
@@ -4365,8 +4368,11 @@ cdef class RandomState:
         cdef ndarray op
         cdef double fp
 
-        fp = PyFloat_AsDouble(p)
-        if not PyErr_Occurred():
+        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if op.shape == ():
+            fp = PyFloat_AsDouble(p)
+
             if fp < 0.0:
                 raise ValueError("p < 0.0")
             if fp > 1.0:
@@ -4374,10 +4380,6 @@ cdef class RandomState:
             return discd_array_sc(self.internal_state, rk_geometric, size, fp,
                                   self.lock)
 
-        PyErr_Clear()
-
-
-        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less(op, 0.0)):
             raise ValueError("p < 0.0")
         if np.any(np.greater(op, 1.0)):
@@ -4476,10 +4478,15 @@ cdef class RandomState:
         cdef ndarray ongood, onbad, onsample
         cdef long lngood, lnbad, lnsample
 
-        lngood = PyInt_AsLong(ngood)
-        lnbad = PyInt_AsLong(nbad)
-        lnsample = PyInt_AsLong(nsample)
-        if not PyErr_Occurred():
+        ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
+        onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
+        onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
+
+        if ongood.shape == onbad.shape == onsample.shape == ():
+            lngood = PyInt_AsLong(ngood)
+            lnbad = PyInt_AsLong(nbad)
+            lnsample = PyInt_AsLong(nsample)
+
             if lngood < 0:
                 raise ValueError("ngood < 0")
             if lnbad < 0:
@@ -4491,12 +4498,6 @@ cdef class RandomState:
             return discnmN_array_sc(self.internal_state, rk_hypergeometric,
                                     size, lngood, lnbad, lnsample, self.lock)
 
-        PyErr_Clear()
-
-        ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
-        onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
-        onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG,
-                                             NPY_ARRAY_ALIGNED)
         if np.any(np.less(ongood, 0)):
             raise ValueError("ngood < 0")
         if np.any(np.less(onbad, 0)):
@@ -4585,8 +4586,11 @@ cdef class RandomState:
         cdef ndarray op
         cdef double fp
 
-        fp = PyFloat_AsDouble(p)
-        if not PyErr_Occurred():
+        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
+
+        if op.shape == ():
+            fp = PyFloat_AsDouble(p)
+
             if fp <= 0.0:
                 raise ValueError("p <= 0.0")
             if fp >= 1.0:
@@ -4594,9 +4598,6 @@ cdef class RandomState:
             return discd_array_sc(self.internal_state, rk_logseries, size, fp,
                                   self.lock)
 
-        PyErr_Clear()
-
-        op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
         if np.any(np.less_equal(op, 0.0)):
             raise ValueError("p <= 0.0")
         if np.any(np.greater_equal(op, 1.0)):
