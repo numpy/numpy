@@ -1418,14 +1418,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         y-coordinates of the sample points. Several data sets of sample
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
-    deg : int or array_like
-        Degree of the fitting polynomial. If `deg` is a single integer
-        all terms up to and including the `deg`'th term are included.
-        `deg` may alternatively be a list or array specifying which
-        terms in the Legendre expansion to include in the fit.
-
-        .. versionchanged:: 1.11.0
-        `deg` may be a list specifying which terms to fit
+    deg : int or 1-D array_like
+        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included in the
+        fit. For Numpy versions >= 1.11 a list of integers specifying the
+        degrees of the terms to include may be used instead.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1521,11 +1518,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     """
     x = np.asarray(x) + 0.0
     y = np.asarray(y) + 0.0
-    deg = np.asarray([deg,], dtype=int).flatten()
+    deg = np.asarray(deg)
 
     # check arguments.
-    if deg.size < 1:
-        raise TypeError("expected deg to be one or more integers")
+    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty 1-D array of int")
     if deg.min() < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
@@ -1537,19 +1534,17 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
-    if deg.size == 1:
-        restricted_fit = False
-        lmax = deg[0]
+    if deg.ndim == 0:
+        lmax = deg
         order = lmax + 1
+        van = legvander(x, lmax)
     else:
-        restricted_fit = True
-        lmax = deg.max()
-        order = deg.size
+        deg = np.sort(deg)
+        lmax = deg[-1]
+        order = len(deg)
+        van = legvander(x, lmax)[:, deg]
 
     # set up the least squares matrices in transposed form
-    van = legvander(x, lmax)
-    if restricted_fit:
-        van = van[:, deg]
     lhs = van.T
     rhs = y.T
     if w is not None:
@@ -1579,7 +1574,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     c = (c.T/scl).T
 
     # Expand c to include non-fitted coefficients which are set to zero
-    if restricted_fit:
+    if deg.ndim > 0:
         if c.ndim == 2:
             cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
         else:

@@ -739,14 +739,11 @@ class ABCPolyBase(object):
             y-coordinates of the sample points. Several data sets of sample
             points sharing the same x-coordinates can be fitted at once by
             passing in a 2D-array that contains one dataset per column.
-        deg : int or array_like
-            Degree of the fitting polynomial. If `deg` is a single integer
-            all terms up to and including the `deg`'th term are included.
-            `deg` may alternatively be a list or array specifying which
-            terms in the Legendre expansion to include in the fit.
-
-            .. versionchanged:: 1.11.0
-            `deg` may be a list specifying which terms to fit
+        deg : int or 1-D array_like
+            Degree(s) of the fitting polynomials. If `deg` is a single integer
+            all terms up to and including the `deg`'th term are included in the
+            fit. For Numpy versions >= 1.11 a list of integers specifying the
+            degrees of the terms to include may be used instead.
         domain : {None, [beg, end], []}, optional
             Domain to use for the returned series. If ``None``,
             then a minimal domain that covers the points `x` is chosen.  If
