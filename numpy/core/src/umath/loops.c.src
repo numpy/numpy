@@ -1117,8 +1117,8 @@ NPY_NO_EXPORT void
 }
 
 /**begin repeat1
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
- * #OP =  ==, !=, >, >=, <, <=#
+ * #kind = equal, greater, greater_equal, less, less_equal#
+ * #OP =  ==, >, >=, <, <=#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -1126,10 +1126,48 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 @OP@ in2;
+        const npy_bool res = in1 @OP@ in2;
+        *((npy_bool *)op1) = res;
+
+        if ((in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) && res) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            /* 2016-01-18, 1.11 */
+            if (DEPRECATE_FUTUREWARNING(
+                    "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
+                    "will always be False.") < 0) {
+                NPY_DISABLE_C_API;
+                return;
+            }
+            NPY_DISABLE_C_API;
+        }
     }
 }
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((npy_bool *)op1) = in1 != in2;
+
+        if (in1 == NPY_DATETIME_NAT && in1 == NPY_DATETIME_NAT) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            /* 2016-01-18, 1.11 */
+            if (DEPRECATE_FUTUREWARNING(
+                    "In the future, NAT != NAT will be True "
+                    "rather than False.") < 0) {
+                NPY_DISABLE_C_API;
+                return;
+            }
+            NPY_DISABLE_C_API;
+        }
+    }
+}
+
 
 /**begin repeat1
  * #kind = maximum, minimum#
