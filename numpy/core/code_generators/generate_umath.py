@@ -493,7 +493,7 @@ defdict = {
           TD(flts, f="logaddexp2", astype={'e':'f'})
           ),
 'bitwise_and':
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.bitwise_and'),
           None,
           TD(bints),
