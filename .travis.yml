@@ -81,7 +81,7 @@ before_install:
   - virtualenv --python=python venv
   - source venv/bin/activate
   - python -V
-  - pip install --upgrade pip setuptools
+  - pip install --upgrade "pip<8.0.0" "setuptools<19.0"
   - pip install nose
   # pip install coverage
   # Speed up install by not compiling Cython
