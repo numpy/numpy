@@ -1,0 +1,66 @@
+NumPy 1.12.0 Release Notes
+**************************
+
+This release supports Python 2.7 and 3.4 - 3.5.
+
+Highlights
+==========
+
+
+Dropped Support
+===============
+
+* Support for Python 2.6, 3.2, and 3.3 has been dropped.
+
+
+Future Changes
+==============
+
+* In 1.13 NAT will always compare False except for ``NAT != NAT``,
+  which will be True.  In short, NAT will behave like NaN
+
+
+Compatibility notes
+===================
+
+Relaxed stride checking is the default
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This will have some impact on code that assumed that ``F_CONTIGUOUS`` and
+``C_CONTIGUOUS`` were mutually exclusive and could be set to determine the
+default order for arrays that are now both.
+
+``MaskedArray`` takes view of data **and** mask when slicing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+XXX
+
+
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+FutureWarning to changed behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+C API
+~~~~~
+
+
+New Features
+============
+
+
+
+Improvements
+============
+
+
+
+Changes
+=======
+
+Deprecations
+============
+
