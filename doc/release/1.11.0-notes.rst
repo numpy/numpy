@@ -1,14 +1,27 @@
 NumPy 1.11.0 Release Notes
 **************************
 
-This release supports Python 2.6 - 2.7 and 3.2 - 3.5.
+This release supports Python 2.6 - 2.7 and 3.2 - 3.5 and contains a number
+of enhancements and improvements. Note also the build system changes listed
+below as they may have subtle effects.
+
+No Windows (TM) binaries are provided for this release due to a broken
+toolchain. One of the providers of Python packages for Windows (TM) is your
+best bet.
 
 
 Highlights
 ==========
 
-* The datetime64 type is now timezone naive. See "datetime64 changes" below
-  for more details.
+Details of these improvements can be found below.
+
+* The datetime64 type is now timezone naive.
+* A dtype parameter has been added to ``randint``.
+* Improved detection of two arrays possibly sharing memory.
+* Automatic bin size estimation for ``np.histogram``.
+* Speed optimization of A @ A.T and dot(A, A.T).
+* New function ``np.moveaxis`` for reordering array axes.
+
 
 Build System Changes
 ====================
@@ -25,9 +38,29 @@ Build System Changes
 Future Changes
 ==============
 
-* Relaxed stride checking will become the default in 1.12.0.
-* Support for Python 2.6, 3.2, and 3.3 will be dropped in 1.12.0.
-* ``MaskedArray`` takes view of data **and** mask when slicing in 1.12.0.
+The following changes are scheduled for Numpy 1.12.0.
+
+* Support for Python 2.6, 3.2, and 3.3 will be dropped.
+* Slicing a ``MaskedArray`` will return views of both data **and** mask.
+  Currently the mask is returned as a copy.
+* Relaxed stride checking will become the default. See the 1.8.0 release
+  notes for a more extended discussion of what this change implies.
+* The behavior of the datetime64 "not a time" (NaT) value will be changed
+  to match that of floating point "not a number" (NaN) values: all
+  comparisons involving NaT will return False, except for NaT != NaT which
+  will return True.
+
+In a future release the following changes will be made.
+
+* The ``rand`` function exposed in ``numpy.testing`` will be removed. That
+  function is left over from early Numpy and was implemented using the
+  Python random module.  The random number generators from ``numpy.random``
+  should be used instead.
+* The ``ndarray.view`` method will only allow c_contiguous arrays to be
+  viewed using a dtype of different size causing the last dimension to
+  change.  That differs from the current behavior where arrays that are
+  f_contiguous but not c_contiguous can be viewed as a dtype type of
+  different size causing the first dimension to change.
 
 
 Compatibility notes
@@ -35,7 +68,6 @@ Compatibility notes
 
 datetime64 changes
 ~~~~~~~~~~~~~~~~~~
-
 In prior versions of NumPy the experimental datetime64 type always stored
 times in UTC. By default, creating a datetime64 object from a string or
 printing it would convert from or to local time::
@@ -44,7 +76,7 @@ printing it would convert from or to local time::
     >>>> np.datetime64('2000-01-01T00:00:00')
     numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
 
-A concensus of datetime64 users agreed that this behavior is undesirable
+A consensus of datetime64 users agreed that this behavior is undesirable
 and at odds with how datetime64 is usually used (e.g., by pandas_). For
 most use cases, a timezone naive datetime type is preferred, similar to the
 ``datetime.datetime`` type in the Python standard library. Accordingly,
@@ -64,29 +96,41 @@ naive::
     numpy.datetime64('2000-01-01T08:00:00')
 
 As a corollary to this change, we no longer prohibit casting between datetimes
-with date units and datetimes with timeunits. With timezone naive datetimes,
+with date units and datetimes with time units. With timezone naive datetimes,
 the rule for casting from dates to times is no longer ambiguous.
 
 pandas_: http://pandas.pydata.org
 
-polynomial fit changes
+``linalg.norm`` return type changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The return type of the ``linalg.norm`` function is now floating point without
+exception.  Some of the norm types previously returned integers.
+
+and returns floating results.polynomial fit changes
 ~~~~~~~~~~~~~~~~~~~~~~
 The various fit functions in the numpy polynomial package no longer accept
 non-integers for degree specification.
+
+*np.dot* now raises ``TypeError`` instead of ``ValueError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This behaviour mimics that of other functions such as ``np.inner``. If the two
+arguments cannot be cast to a common type, it could have raised a ``TypeError``
+or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
+raise a ``TypeError``.
 
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Indexing with floats raises IndexError,
   e.g., a[0, 0.0].
-* Indexing with non-integer array_like raises IndexError,
-  e.g., a['1', '2']
-* Indexing with multiple ellipsis raises IndexError,
-  e.g., a[..., ...].
-* Indexing with boolean where integer expected raises IndexError,
-  e.g., a[False:True:True].
-* Non-integers used as index values raise TypeError,
-  e.g., in reshape, take, and specifying reduce axis.
+* Indexing with non-integer array_like raises ``IndexError``,
+  e.g., ``a['1', '2']``
+* Indexing with multiple ellipsis raises ``IndexError``,
+  e.g., ``a[..., ...]``.
+* Indexing with boolean where integer expected raises ``IndexError``,
+  e.g., ``a[False:True:True]``.
+* Non-integers used as index values raise ``TypeError``,
+  e.g., in ``reshape``, ``take``, and specifying reduce axis.
 
 
 FutureWarning to changed behavior
@@ -107,13 +151,6 @@ the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
 to preserve struct layout). These were never used for anything, so
 it's unlikely that any third-party code is using them either, but we
 mention it here for completeness.
-
-*np.dot* now raises ``TypeError`` instead of ``ValueError``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This behaviour mimics that of other functions such as ``np.inner``. If the two
-arguments cannot be cast to a common type, it could have raised a ``TypeError``
-or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
-raise a ``TypeError``.
 
 
 New Features
@@ -145,65 +182,64 @@ New Features
 * A ``dtype`` parameter has been added to ``np.random.randint``
   Random ndarrays of the following types can now be generated:
 
-  - np.bool,
-  - np.int8, np.uint8,
-  - np.int16, np.uint16,
-  - np.int32, np.uint32,
-  - np.int64, np.uint64,
-  - np.int_ (long), np.intp
+  - ``np.bool``,
+  - ``np.int8``, ``np.uint8``,
+  - ``np.int16``, ``np.uint16``,
+  - ``np.int32``, ``np.uint32``,
+  - ``np.int64``, ``np.uint64``,
+  - ``np.int_ ``, ``np.intp``
 
   The specification is by precision rather than by C type. Hence, on some
-  platforms np.int64 may be a ``long`` instead of ``long long`` even if the
-  specified dtype is ``long long`` because the two may have the same
+  platforms ``np.int64`` may be a ``long`` instead of ``long long`` even if
+  the specified dtype is ``long long`` because the two may have the same
   precision. The resulting type depends on which C type numpy uses for the
   given precision. The byteorder specification is also ignored, the
   generated arrays are always in native byte order.
 
-* ``np.moveaxis`` allows for moving one or more array axes to a new position
-  by explicitly providing source and destination axes.
+* A new ``np.moveaxis`` function allows for moving one or more array axes
+  to a new position by explicitly providing source and destination axes.
+  This function should be easier to use than the current ``rollaxis``
+  function as well as providing more functionality.
 
-* numpy.polynomial fits now support degree selection.  The ``deg``
-  parameter was extended to allow fitting using only specified terms in the
-  polynomial expansion for all polynomial types. The change is backward
-  compatible and it is still possible to specify ``deg`` as before, but it
-  is now possible pass ``deg`` as a list specifying which terms in the
-  series to use in the fit.
+* The ``deg`` parameter of the various ``numpy.polynomial`` fits has been
+  extended to accept a list of the degrees of the terms to be included in
+  the fit, the coefficients of all other terms being constrained to zero.
+  The change is backward compatible, passing a scalar ``deg`` will behave
+  as before.
 
 
 Improvements
 ============
 
-*np.gradient* now supports an ``axis`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``axis`` parameter was added to *np.gradient* for consistency.
-It allows to specify over which axes the gradient is calculated.
+``np.gradient`` now supports an ``axis`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axis`` parameter was added to ``np.gradient`` for consistency.  It
+allows to specify over which axes the gradient is calculated.
 
-*np.lexsort* now supports arrays with object data-type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The function now internally calls the generic ``npy_amergesort``
-when the type does not implement a merge-sort kind of ``argsort``
-method.
+``np.lexsort`` now supports arrays with object data-type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function now internally calls the generic ``npy_amergesort`` when the
+type does not implement a merge-sort kind of ``argsort`` method.
 
-*np.ma.core.MaskedArray* now supports an ``order`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When constructing a new ``MaskedArray`` instance, it can be
-configured with an ``order`` argument analogous to the one
-when calling ``np.ndarray``. The addition of this argument
-allows for the proper processing of an ``order`` argument
-in several MaskedArray-related utility functions such as
+``np.ma.core.MaskedArray`` now supports an ``order`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When constructing a new ``MaskedArray`` instance, it can be configured with
+an ``order`` argument analogous to the one when calling ``np.ndarray``. The
+addition of this argument allows for the proper processing of an ``order``
+argument in several MaskedArray-related utility functions such as
 ``np.ma.core.array`` and ``np.ma.core.asarray``.
 
 Memory and speed improvements for masked arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
-``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and avoid
-a big memory peak. Another optimization was done to avoid a memory peak and
-useless computations when printing a masked array.
+``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and
+avoid a big memory peak. Another optimization was done to avoid a memory
+peak and useless computations when printing a masked array.
 
-*ndarray.tofile* now uses fallocate on linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``ndarray.tofile`` now uses fallocate on linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The function now uses the fallocate system call to reserve sufficient
-diskspace on filesystems that support it.
+disk space on file systems that support it.
 
 Optimizations for operations of the form ``A.T @ A`` and ``A @ A.T``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,8 +250,8 @@ extended to ``@``, ``numpy.dot``, ``numpy.inner``, and ``numpy.matmul``.
 
 **Note:** Requires the transposed and non-transposed matrices to share data.
 
-*np.testing.assert_warns* can now be used as a context manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.testing.assert_warns`` can now be used as a context manager
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This matches the behavior of ``assert_raises``.
 
 Speed improvement for np.random.shuffle
@@ -225,35 +261,45 @@ Speed improvement for np.random.shuffle
 
 Changes
 =======
-Pyrex support was removed from ``numpy.distutils``.  The method
-``build_src.generate_a_pyrex_source`` will remain available; it has been
-monkeypatched by users to support Cython instead of Pyrex.  It's recommended to
-switch to a better supported method of build Cython extensions though.
 
-*np.broadcast* can now be called with a single argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pyrex support was removed from ``numpy.distutils``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The method ``build_src.generate_a_pyrex_source`` will remain available; it
+has been monkeypatched by users to support Cython instead of Pyrex.  It's
+recommended to switch to a better supported method of build Cython
+extensions though.
+
+``np.broadcast`` can now be called with a single argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The resulting object in that case will simply mimic iteration over
 a single array. This change obsoletes distinctions like
 
     if len(x) == 1:
         shape = x[0].shape
     else:
-        shape = np.broadcast(*x).shape
+        shape = np.broadcast(\*x).shape
 
 Instead, ``np.broadcast`` can be used in all cases.
 
-*np.trace* now respects array subclasses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.trace`` now respects array subclasses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This behaviour mimics that of other functions such as ``np.diagonal`` and
 ensures, e.g., that for masked arrays ``np.trace(ma)`` and ``ma.trace()`` give
 the same result.
 
-*np.dot* now raises ``TypeError`` instead of ``ValueError``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.dot`` now raises ``TypeError`` instead of ``ValueError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This behaviour mimics that of other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
+
+``linalg.norm`` return type changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``linalg.norm`` function now does all its computations in floating point
+and returns floating results. This change fixes bugs due to integer overflow
+and the failure of abs with signed integers of minimum value, e.g., int8(-128).
+For consistancy, floats are used even where an integer might work.
 
 
 Deprecations
@@ -261,15 +307,15 @@ Deprecations
 
 Views of arrays in Fortran order
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The f_contiguous flag was used to signal that views as a dtypes that
-changed the element size would change the first index. This was always a
-bit problematical for arrays that were both f_contiguous and c_contiguous
-because c_contiguous took precedence. Relaxed stride checking results in
+The F_CONTIGUOUS flag was used to signal that views using a dtype that
+changed the element size would change the first index. This was always
+problematical for arrays that were both F_CONTIGUOUS and C_CONTIGUOUS
+because C_CONTIGUOUS took precedence. Relaxed stride checking results in
 more such dual contiguous arrays and breaks some existing code as a result.
 Note that this also affects changing the dtype by assigning to the dtype
 attribute of an array. The aim of this deprecation is to restrict views to
-c_contiguous arrays at some future time. A work around that is backward
-compatible is to use ``a.T.view(...).T`` instead. A parameter will also be
+C_CONTIGUOUS arrays at some future time. A work around that is backward
+compatible is to use ``a.T.view(...).T`` instead. A parameter may also be
 added to the view method to explicitly ask for Fortran order views, but
 that will not be backward compatible.
 
@@ -278,15 +324,15 @@ Invalid arguments for array ordering
 It is currently possible to pass in arguments for the ``order``
 parameter in methods like ``array.flatten`` or ``array.ravel``
 that were not one of the following: 'C', 'F', 'A', 'K' (note that
-all of these possible values are unicode- and case-insensitive).
-Such behaviour will not be allowed in future releases.
+all of these possible values are both unicode and case insensitive).
+Such behavior will not be allowed in future releases.
 
 Random number generator in the ``testing`` namespace
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Python standard library random number generator was previously exposed in the
-``testing`` namespace as ``testing.rand``. Using this generator is not
-recommended and it will be removed in a future release. Use generators from
-``numpy.random`` namespace instead.
+The Python standard library random number generator was previously exposed
+in the ``testing`` namespace as ``testing.rand``. Using this generator is
+not recommended and it will be removed in a future release. Use generators
+from ``numpy.random`` namespace instead.
 
 Random integer generation on a closed interval
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
