@@ -2112,6 +2112,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
     """
     x = asarray(x)
 
+    if not issubclass(x.dtype.type, inexact):
+        x = x.astype(float)
+
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:
         ndim = x.ndim
