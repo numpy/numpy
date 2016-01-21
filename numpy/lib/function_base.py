@@ -79,6 +79,8 @@ def iterable(y):
 def _hist_optim_numbins_estimator(a, estimator):
     """
     A helper function to be called from histogram to deal with estimating optimal number of bins
+    A description of the estimators can be found at
+    https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width
 
     estimator: str
         If estimator is one of ['auto', 'fd', 'scott', 'doane', 'rice', 'sturges', 'sqrt'],
