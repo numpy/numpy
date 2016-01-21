@@ -2296,9 +2296,9 @@ cdef class RandomState:
         fdfden = PyFloat_AsDouble(dfden)
         if not PyErr_Occurred():
             if fdfnum <= 0:
-                raise ValueError("shape <= 0")
+                raise ValueError("dfnum <= 0")
             if fdfden <= 0:
-                raise ValueError("scale <= 0")
+                raise ValueError("dfden <= 0")
             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum,
                                   fdfden, self.lock)
 
@@ -3426,7 +3426,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+            Samples from logistic distribution, shaped according to
+            `size`. Otherwise, a single value is returned.
 
         See Also
         --------
@@ -4284,7 +4285,7 @@ cdef class RandomState:
         -------
         out : ndarray
             Samples from the geometric distribution, shaped according to
-            `size`.
+            `size`. Otherwise, a single value is returned.
 
         Examples
         --------
@@ -4350,7 +4351,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-            The values are all integers in  [0, n].
+            Samples from the hypergeometric distribution, shaped
+            according to `size`. Otherwise, a single value is returned.
 
         See Also
         --------
@@ -4466,7 +4468,8 @@ cdef class RandomState:
         Returns
         -------
         samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+            Samples from the logseries distribution, shaped according to
+            `size`. Otherwise, a single value is returned.
 
         See Also
         --------
