@@ -56,7 +56,10 @@ New Features
 Improvements
 ============
 
+Additional estimators for ``histogram``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins`` argument.
 
 Changes
 =======

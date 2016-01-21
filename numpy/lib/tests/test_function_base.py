@@ -1284,7 +1284,7 @@ class TestHistogramOptimBinNums(TestCase):
     """
 
     def test_empty(self):
-        estimator_list = ['fd', 'scott', 'rice', 'sturges', 'auto']
+        estimator_list = ['fd', 'scott', 'rice', 'sturges', 'doane', 'sqrt', 'auto']
         # check it can deal with empty data
         for estimator in estimator_list:
             a, b = histogram([], bins=estimator)
@@ -1297,9 +1297,9 @@ class TestHistogramOptimBinNums(TestCase):
         All test values have been precomputed and the values shouldn't change
         """
         # some basic sanity checking, with some fixed data. Checking for the correct number of bins
-        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,  'auto': 7},
-                      500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10, 'auto': 10},
-                      5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14, 'auto': 17}}
+        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,  'doane': 8, 'sqrt': 8, 'auto': 7},
+                      500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10, 'doane': 12, 'sqrt': 23, 'auto': 10},
+                      5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14, 'doane': 17, 'sqrt': 71, 'auto': 17}}
 
         for testlen, expectedResults in basic_test.items():
             # create some sort of non uniform data to test with (2 peak uniform mixture)
@@ -1317,9 +1317,9 @@ class TestHistogramOptimBinNums(TestCase):
         Especially the FD methods
         All bin numbers have been precalculated
         """
-        small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 2, 'sturges': 1},
-                     2: {'fd': 2, 'scott': 1, 'rice': 3, 'sturges': 2},
-                     3: {'fd': 2, 'scott': 2, 'rice': 3, 'sturges': 3}}
+        small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 2, 'sturges': 1, 'doane': 1, 'sqrt': 1},
+                     2: {'fd': 2, 'scott': 1, 'rice': 3, 'sturges': 2, 'doane': 1, 'sqrt': 2},
+                     3: {'fd': 2, 'scott': 2, 'rice': 3, 'sturges': 3, 'doane': 3, 'sqrt': 2}}
 
         for testlen, expectedResults in small_dat.items():
             testdat = np.arange(testlen)
@@ -1342,7 +1342,7 @@ class TestHistogramOptimBinNums(TestCase):
         Primarily for Scott and FD as the SD and IQR are both 0 in this case
         """
         novar_dataset = np.ones(100)
-        novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 10, 'sturges': 8, 'auto': 8}
+        novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 10, 'sturges': 8, 'doane': 1, 'sqrt': 10, 'auto': 8}
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
@@ -1351,17 +1351,18 @@ class TestHistogramOptimBinNums(TestCase):
 
     def test_outlier(self):
         """
-        Check the fd and scott with outliers
+        Check the fd, scott and doane with outliers
         The fd determines a smaller binwidth since it's less affected by outliers
         since the range is so (artificially) large this means more bins
         most of which will be empty, but the data of interest usually is unaffected.
         The Scott estimator is more affected and returns fewer bins, despite most of
-        the variance being in one area of the data
+        the variance being in one area of the data. The Doane estimator lies somewhere
+        between the two.
         """
         xcenter = np.linspace(-10, 10, 50)
         outlier_dataset = np.hstack((np.linspace(-110, -100, 5), xcenter))
 
-        outlier_resultdict = {'fd': 21, 'scott': 5}
+        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11}
 
         for estimator, numbins in outlier_resultdict.items():
             a, b = np.histogram(outlier_dataset, estimator)

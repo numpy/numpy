@@ -81,15 +81,22 @@ def _hist_optim_numbins_estimator(a, estimator):
     A helper function to be called from histogram to deal with estimating optimal number of bins
 
     estimator: str
-        If estimator is one of ['auto', 'fd', 'scott', 'rice', 'sturges'] this function
-        will choose the appropriate estimator and return it's estimate for the optimal
-        number of bins.
+        If estimator is one of ['auto', 'fd', 'scott', 'doane', 'rice', 'sturges', 'sqrt'],
+        this function will choose the appropriate estimator and return it's
+        estimate for the optimal number of bins.
     """
     assert isinstance(estimator, basestring)
     # private function should not be called otherwise
 
     if a.size == 0:
         return 1
+
+    def sqrt(x):
+        """
+        Square Root Estimator
+        Used by many programs for its simplicity.
+        """
+        return np.ceil(np.sqrt(x.size))
 
     def sturges(x):
         """
@@ -108,18 +115,33 @@ def _hist_optim_numbins_estimator(a, estimator):
         The number of bins is proportional to the cube root of data size (asymptotically optimal)
         Depends only on size of the data
         """
-        return np.ceil(2 * x.size ** (1.0 / 3))
+        return np.ceil(2 * np.cbrt(x.size))
 
     def scott(x):
         """
         Scott Estimator
         The binwidth is proportional to the standard deviation of the data and
         inversely proportional to the cube root of data size (asymptotically optimal)
-
         """
-        h = 3.5 * x.std() * x.size ** (-1.0 / 3)
+        h = 3.5 * x.std() / np.cbrt(x.size)
         if h > 0:
             return np.ceil(x.ptp() / h)
+        return 1
+
+    def doane(x):
+        """
+        Doane's Estimator
+        Improved version of Sturges' formula which works better for non-normal
+        data.
+        See http://stats.stackexchange.com/questions/55134/doanes-formula-for-histogram-binning
+        """
+        stdskew = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
+        if stdskew > 0:
+            sigma = np.std(x)
+            if sigma > 0:
+                mu = np.mean(x)
+                skew = (np.mean(x**3) - 3 * mu * sigma**2 - mu**3) / sigma**3
+                return np.ceil(1.0 + np.log2(x.size) + np.log2(1.0 + np.absolute(skew) / stdskew))
         return 1
 
     def fd(x):
@@ -135,7 +157,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         iqr = np.subtract(*np.percentile(x, [75, 25]))
 
         if iqr > 0:
-            h = (2 * iqr * x.size ** (-1.0 / 3))
+            h = (2 * iqr / np.cbrt(x.size))
             return np.ceil(x.ptp() / h)
 
         # If iqr is 0, default number of bins is 1
@@ -150,7 +172,8 @@ def _hist_optim_numbins_estimator(a, estimator):
         """
         return max(fd(x), sturges(x))
 
-    optimal_numbins_methods = {'sturges': sturges, 'rice': rice, 'scott': scott,
+    optimal_numbins_methods = {'sqrt': sqrt, 'sturges': sturges,
+                               'rice': rice, 'scott': scott, 'doane': doane,
                                'fd': fd, 'auto': auto}
     try:
         estimator_func = optimal_numbins_methods[estimator.lower()]
@@ -189,6 +212,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             Robust (resilient to outliers) estimator that takes into account data
             variability and data size .
 
+        'doane'
+            An improved version of Sturges' estimator that works better with non-normal
+            datasets.
+
         'scott'
             Less robust estimator that that takes into account data
             variability and data size.
@@ -200,6 +227,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         'sturges'
             R's default method, only accounts for data size. Only optimal for
             gaussian data and underestimates number of bins for large non-gaussian datasets.
+
+        'sqrt'
+            Square root (of data size) estimator, used by Excel and other programs for
+            its speed and simplicity.
 
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
@@ -293,6 +324,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         The number of bins is the base2 log of a.size.
         This estimator assumes normality of data and is too conservative for larger,
         non-normal datasets. This is the default method in R's `hist` method.
+
+    'Doane'
+        .. math:: n_h = \\left\\lceil 1 + \\log _{2}(n) + \\log _{2}(1 + \\frac{\\left g_1 \\right}{\\sigma _{g_1}) \\right\\rceil
+        An improved version of Sturges' formula that produces better estimates for
+        non-normal datasets.
+
+    'Sqrt'
+        .. math:: n_h = \\left\\lceil \\sqrt n \\right\\rceil
+        The simplest and fastest estimator. Only takes into account the data size.
 
     Examples
     --------
