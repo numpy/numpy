@@ -70,8 +70,8 @@
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
 
-/* Disable broken glibc trig functions on linux */
-#if defined(__linux__) && defined(__GLIBC__)
+/* Disable broken gnu trig functions on linux */
+#if defined(__linux__) && defined(__GNUC__)
 
 #if defined(HAVE_FEATURES_H)
 #include <features.h>
@@ -102,6 +102,6 @@
 #endif
 #undef TRIG_OK
 
-#endif /* defined(__linux__) && defined(__GLIBC__) */
+#endif /* defined(__linux__) && defined(__GNUC__) */
 
 #endif
