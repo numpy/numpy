@@ -431,7 +431,7 @@ def block(arrays):
     array([[1, 1, 2, 2]])
 
     """
-    if isinstance(arrays[0], list) or isinstance(arrays[0], tuple):
+    if isinstance(arrays[0], (list, tuple)):
         result = vstack([hstack(row) for row in arrays])
     else:
         result = hstack(arrays)
