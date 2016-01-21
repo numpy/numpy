@@ -70,17 +70,13 @@
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
 
-/* Disable broken gnu trig functions on linux */
-#if defined(__linux__) && defined(__GNUC__)
-
+/* Disable broken gnu trig functions */
 #if defined(HAVE_FEATURES_H)
 #include <features.h>
-#define TRIG_OK __GLIBC_PREREQ(2, 16)
-#else
-#define TRIG_OK 0
-#endif
 
-#if !TRIG_OK
+#if defined(__GLIBC__)
+#if !__GLIBC_PREREQ(2, 16)
+
 #undef HAVE_CASIN
 #undef HAVE_CASINF
 #undef HAVE_CASINL
@@ -99,9 +95,10 @@
 #undef HAVE_CACOSH
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
-#endif
-#undef TRIG_OK
 
-#endif /* defined(__linux__) && defined(__GNUC__) */
+#endif /* __GLIBC_PREREQ(2, 16) */
+#endif /* defined(__GLIBC_PREREQ) */
+
+#endif /* defined(HAVE_FEATURES_H) */
 
 #endif
