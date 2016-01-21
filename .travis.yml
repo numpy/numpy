@@ -1,5 +1,6 @@
 # After changing this file, check it on:
 #   http://lint.travis-ci.org/
+sudo: true
 language: python
 python:
   - 2.6
@@ -38,8 +39,9 @@ before_install:
   - pip install nose
   # pip install coverage
   - python -V
-  - pip install --upgrade pip setuptools
+  - pip install --upgrade "pip<8.0.0" "setuptools<19.0"
   - pip install --find-links http://wheels.astropy.org/ --find-links http://wheels2.astropy.org/ --use-wheel Cython
+  - sudo apt-get update -yq
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev gfortran
   - popd
 
