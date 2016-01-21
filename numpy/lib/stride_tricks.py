@@ -35,8 +35,61 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
-def as_strided(x, shape=None, strides=None, subok=False):
-    """ Make an ndarray from the given array with the given shape and strides.
+def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
+    """
+    Create a view into the array with the given shape and strides.
+
+    .. warning:: This function has to be used with extreme care, see notes.
+
+    Parameters
+    ----------
+    x : ndarray
+        Array to create a new.
+    shape : sequence of int, optional
+        The shape of the new array. Defaults to ``x.shape``.
+    strides : sequence of int, optional
+        The strides of the new array. Defaults to ``x.strides``.
+    subok : bool, optional
+        .. versionadded:: 1.10
+
+        If True, subclasses are preserved.
+    writeable : bool, optional
+        .. versionadded:: 1.12
+
+        If set to False, the returned array will always be readonly.
+        Otherwise it will be writable if the original array was. It
+        is advisable to set this to False if possible (see Notes).
+
+    Returns
+    -------
+    view : ndarray
+
+    See also
+    --------
+    broadcast_to: broadcast an array to a given shape.
+    reshape : reshape an array.
+
+    Notes
+    -----
+    ``as_strided`` creates a view into the array given the exact strides
+    and shape. This means it manipulates the internal data structure of
+    ndarray and, if done incorrectly, the array elements can point to
+    invalid memory and can corrupt results or crash your program.
+    It is advisable to always use the original ``x.strides`` when
+    calculating new strides to avoid reliance on a contiguous memory
+    layout.
+
+    Furthermore, arrays created with this function often contain self
+    overlapping memory, so that two elements are identical.
+    Vectorized write operations on such arrays will typically be
+    unpredictable. They may even give different results for small, large,
+    or transposed arrays.
+    Since writing to these arrays has to be tested and done with great
+    care, you may want to use ``writeable=False`` to avoid accidental write
+    operations.
+
+    For these reasons it is advisable to avoid ``as_strided`` when
+    possible.
     """
     # first convert input to array, possibly keeping subclass
     x = np.array(x, copy=False, subok=subok)
@@ -45,13 +98,19 @@ def as_strided(x, shape=None, strides=None, subok=False):
         interface['shape'] = tuple(shape)
     if strides is not None:
         interface['strides'] = tuple(strides)
+
     array = np.asarray(DummyArray(interface, base=x))
 
     if array.dtype.fields is None and x.dtype.fields is not None:
         # This should only happen if x.dtype is [('', 'Vx')]
         array.dtype = x.dtype
 
-    return _maybe_view_as_subclass(x, array)
+    view = _maybe_view_as_subclass(x, array)
+
+    if view.flags.writeable and not writeable:
+        view.flags.writeable = False
+
+    return view
 
 
 def _broadcast_to(array, shape, subok, readonly):
