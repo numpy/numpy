@@ -357,9 +357,7 @@ def stack(arrays, axis=0):
 
 def block(tup_tup):
     """
-    Create block arrays similar to Matlab's "square bracket stacking":
-
-            [A A; B B]
+    Create a block array consisting of other arrays.
 
     You can create a block array with the same notation you use for
     `np.array`.
@@ -382,6 +380,10 @@ def block(tup_tup):
     dstack : Stack arrays in sequence depth wise (along third dimension).
     concatenate : Join a sequence of arrays together.
     vsplit : Split array into a list of multiple sub-arrays vertically.
+
+    Notes
+    -----
+    ``block`` is similar to Matlab's "square bracket stacking": ``[A A; B B]``
 
     Examples
     --------
@@ -427,6 +429,7 @@ def block(tup_tup):
     >>> b = np.array([2, 2])
     >>> block([a, b])
     array([[1, 1, 2, 2]])
+
     """
     if isinstance(tup_tup[0], list) or isinstance(tup_tup[0], tuple):
         result = vstack([hstack(row) for row in tup_tup])
