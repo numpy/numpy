@@ -393,18 +393,30 @@ def block(arrays):
     >>> block([A, B])
     array([[1, 2, 3, 2, 3, 4]])
 
+    1-D vectors are treated as row arrays
+    >>> a = np.array([1, 1])
+    >>> b = np.array([2, 2])
+    >>> block([a, b])
+    array([[1, 1, 2, 2]])
+
+    >>> a = np.array([1, 1])
+    >>> b = np.array([2, 2])
+    >>> block([[a], [b]])
+    array([[1, 1],
+           [2, 2]])
+
     >>> A = np.array([[1, 1], [1, 1]])
     >>> B = 2 * A
     >>> block([A, B])
     array([[1, 1, 2, 2],
            [1, 1, 2, 2]])
 
-    >>> # the tuple notation also works
+    The tuple notation also works:
     >>> block((A, B))
     array([[1, 1, 2, 2],
            [1, 1, 2, 2]])
 
-    >>> # block matrix with arbitrary shaped elements
+    Block matrix with arbitrary shaped elements
     >>> One = np.array([[1, 1, 1]])
     >>> Two = np.array([[2, 2, 2]])
     >>> Three = np.array([[3, 3, 3, 3, 3, 3]])
@@ -423,12 +435,6 @@ def block(arrays):
            [5, 6, 6, 6, 6, 6],
            [0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0]])
-
-    >>> # 1-D vectors are treated as row arrays
-    >>> a = np.array([1, 1])
-    >>> b = np.array([2, 2])
-    >>> block([a, b])
-    array([[1, 1, 2, 2]])
 
     """
     if isinstance(arrays[0], (list, tuple)):
