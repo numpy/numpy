@@ -355,7 +355,7 @@ def stack(arrays, axis=0):
     return _nx.concatenate(expanded_arrays, axis=axis)
 
 
-def block(tup_tup):
+def block(arrays):
     """
     Create a block array consisting of other arrays.
 
@@ -364,7 +364,7 @@ def block(tup_tup):
 
     Parameters
     ----------
-    tup_tup : sequence of sequence of ndarrays
+    arrays : sequence of sequence of ndarrays
         1-D arrays are treated as row vectors.
 
     Returns
@@ -431,8 +431,8 @@ def block(tup_tup):
     array([[1, 1, 2, 2]])
 
     """
-    if isinstance(tup_tup[0], list) or isinstance(tup_tup[0], tuple):
-        result = vstack([hstack(row) for row in tup_tup])
+    if isinstance(arrays[0], list) or isinstance(arrays[0], tuple):
+        result = vstack([hstack(row) for row in arrays])
     else:
-        result = hstack(tup_tup)
+        result = hstack(arrays)
     return atleast_2d(result)
