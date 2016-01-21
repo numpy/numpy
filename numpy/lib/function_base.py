@@ -115,7 +115,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         The number of bins is proportional to the cube root of data size (asymptotically optimal)
         Depends only on size of the data
         """
-        return np.ceil(2 * np.cbrt(x.size))
+        return np.ceil(2 * x.size ** (1.0 / 3))
 
     def scott(x):
         """
@@ -123,7 +123,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         The binwidth is proportional to the standard deviation of the data and
         inversely proportional to the cube root of data size (asymptotically optimal)
         """
-        h = 3.5 * x.std() / np.cbrt(x.size)
+        h = 3.5 * x.std() / x.size ** (1.0 / 3)
         if h > 0:
             return np.ceil(x.ptp() / h)
         return 1
@@ -157,7 +157,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         iqr = np.subtract(*np.percentile(x, [75, 25]))
 
         if iqr > 0:
-            h = (2 * iqr / np.cbrt(x.size))
+            h = (2 * iqr / x.size ** (1.0 / 3))
             return np.ceil(x.ptp() / h)
 
         # If iqr is 0, default number of bins is 1
