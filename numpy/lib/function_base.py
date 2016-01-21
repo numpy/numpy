@@ -137,8 +137,8 @@ def _hist_optim_numbins_estimator(a, estimator):
         data.
         See http://stats.stackexchange.com/questions/55134/doanes-formula-for-histogram-binning
         """
-        stdskew = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
-        if stdskew > 0:
+        if x.size > 2:
+            stdskew = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
             sigma = np.std(x)
             if sigma > 0:
                 mu = np.mean(x)
