@@ -261,8 +261,8 @@ class TestIndexing(TestCase):
     def test_uncontiguous_subspace_assignment(self):
         # During development there was a bug activating a skip logic
         # based on ndim instead of size.
-        a = np.full((3, 4, 2), -1)
-        b = np.full((3, 4, 2), -1)
+        a = np.full((3, 4, 2), -1.)
+        b = np.full((3, 4, 2), -1.)
 
         a[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T
         b[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T.copy()

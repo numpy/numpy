@@ -769,7 +769,7 @@ class TestStructured(TestCase):
         # start raising an error eventually. What we really care about in this
         # test is just that it doesn't return True.
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=FutureWarning)
             assert_equal(x == y, False)
 
         x = np.zeros((1,), dtype=[('a', ('f4', (2, 1))), ('b', 'i1')])
@@ -778,7 +778,7 @@ class TestStructured(TestCase):
         # start raising an error eventually. What we really care about in this
         # test is just that it doesn't return True.
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=FutureWarning)
             assert_equal(x == y, False)
 
         # Check that structured arrays that are different only in

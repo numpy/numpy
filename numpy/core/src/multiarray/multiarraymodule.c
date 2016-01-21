@@ -4070,6 +4070,17 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_BOUNDS, 0);
 }
 
+static PyObject *
+arr_set_warn_on_write(PyObject *NPY_UNUSED(ignored), PyObject *arr) {
+    if (!PyArray_Check(arr)) {
+        PyErr_SetString(PyExc_ValueError, "argument must be a numpy array.");
+        return NULL;
+    }
+    PyArray_ENABLEFLAGS((PyArrayObject *)arr, NPY_ARRAY_WARN_ON_WRITE);
+
+    Py_RETURN_NONE;
+}
+
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
@@ -4243,6 +4254,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unpackbits", (PyCFunction)io_unpack,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_set_warn_on_write", (PyCFunction)arr_set_warn_on_write,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

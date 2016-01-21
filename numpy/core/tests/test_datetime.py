@@ -20,6 +20,11 @@ except ImportError:
     _has_pytz = False
 
 
+# Ignore all NaT comparison warnings here
+warnings.filterwarnings("ignore", category=FutureWarning,
+                        message=".*NAT\ (==|!=|<|>|<=|>=)\ (x|NAT).*False.")
+
+
 class TestDateTime(TestCase):
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',

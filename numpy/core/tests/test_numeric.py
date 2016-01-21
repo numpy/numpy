@@ -1882,8 +1882,8 @@ class TestCreationFuncs(TestCase):
         self.check_function(np.empty)
 
     def test_filled(self):
-        self.check_function(np.full, 0)
-        self.check_function(np.full, 1)
+        self.check_function(np.full, 0.)
+        self.check_function(np.full, 1.)
 
     def test_for_reference_leak(self):
         # Make sure we have an object for reference
@@ -1895,7 +1895,7 @@ class TestCreationFuncs(TestCase):
         assert_(sys.getrefcount(dim) == beg)
         np.empty([dim]*10)
         assert_(sys.getrefcount(dim) == beg)
-        np.full([dim]*10, 0)
+        np.full([dim]*10, 0.)
         assert_(sys.getrefcount(dim) == beg)
 
 
@@ -2072,7 +2072,7 @@ class TestConvolve(TestCase):
     def test_object(self):
         d = [1.] * 100
         k = [1.] * 3
-        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3))
+        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3.))
 
     def test_no_overwrite(self):
         d = np.ones(100)
