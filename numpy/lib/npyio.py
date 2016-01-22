@@ -864,7 +864,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         line = asbytes(line)
         if comments is not None:
             line = regex_comments.split(asbytes(line), maxsplit=1)[0]
-        line = line.strip(asbytes('\r\n'))
+        #add space to .strip() so lines with leading spaces are read
+        line = line.strip(asbytes('\r\n '))
         if line:
             return line.split(delimiter)
         else:
