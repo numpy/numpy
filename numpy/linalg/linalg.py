@@ -2060,22 +2060,22 @@ def norm(x, ord=None, axis=None, keepdims=False):
     >>> LA.norm(b, 'fro')
     7.745966692414834
     >>> LA.norm(a, np.inf)
-    4
+    4.0
     >>> LA.norm(b, np.inf)
-    9
+    9.0
     >>> LA.norm(a, -np.inf)
-    0
+    0.0
     >>> LA.norm(b, -np.inf)
-    2
+    2.0
 
     >>> LA.norm(a, 1)
-    20
+    20.0
     >>> LA.norm(b, 1)
-    7
+    7.0
     >>> LA.norm(a, -1)
     -4.6566128774142013e-010
     >>> LA.norm(b, -1)
-    6
+    6.0
     >>> LA.norm(a, 2)
     7.745966692414834
     >>> LA.norm(b, 2)
@@ -2099,7 +2099,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     >>> LA.norm(c, axis=1)
     array([ 3.74165739,  4.24264069])
     >>> LA.norm(c, ord=1, axis=1)
-    array([6, 6])
+    array([ 6.,  6.])
 
     Using the `axis` argument to compute matrix norms:
 
