@@ -485,17 +485,6 @@ class TestBooleanIndexShapeMismatchDeprecation():
              arr.__getitem__, (slice(None), index))
 
 
-class TestFullDefaultDtype(object):
-    """np.full defaults to float when dtype is not set.  In the future, it will
-    use the fill value's dtype.
-    """
-
-    def test_full_default_dtype(self):
-        assert_warns(FutureWarning, np.full, 1, 1)
-        assert_warns(FutureWarning, np.full, 1, None)
-        assert_no_warnings(np.full, 1, 1, float)
-
-
 class TestDatetime64Timezone(_DeprecationTestCase):
     """Parsing of datetime64 with timezones deprecated in 1.11.0, because
     datetime64 is now timezone naive rather than UTC only.

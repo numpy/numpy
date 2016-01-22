@@ -84,6 +84,8 @@ more explanation.
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* ``np.full`` now returns an array of the fill-value's dtype if no dtype is
+  given, instead of defaulting to float.
 
 C API
 ~~~~~
