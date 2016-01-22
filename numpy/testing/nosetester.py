@@ -348,6 +348,8 @@ class NoseTester(object):
 
               - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
               - "release" : equals ``()``, don't raise on any warnings.
+            
+            Also show FutureWarnings for develop.
 
         Returns
         -------
@@ -393,14 +395,14 @@ class NoseTester(object):
         # reset doctest state on every run
         import doctest
         doctest.master = None
-
+            
         if raise_warnings is None:
             raise_warnings = self.raise_warnings
 
-        _warn_opts = dict(develop=(DeprecationWarning, RuntimeWarning),
-                          release=())
+        _warn_opts = dict(develop=((DeprecationWarning, RuntimeWarning), ()),
+                          release=((), ()))
         if isinstance(raise_warnings, basestring):
-            raise_warnings = _warn_opts[raise_warnings]
+            raise_warnings, ignore_warnings = _warn_opts[raise_warnings]
 
         with warnings.catch_warnings():
             # Reset the warning filters to the default state,
@@ -408,16 +410,18 @@ class NoseTester(object):
             warnings.resetwarnings()
             # Set all warnings to 'warn', this is because the default 'once'
             # has the bad property of possibly shadowing later warnings.
-            warnings.filterwarnings('always')
+            warnings.filterwarnings('error')
             # Force the requested warnings to raise
             for warningtype in raise_warnings:
                 warnings.filterwarnings('error', category=warningtype)
+            for warningtype in ignore_warnings:
+                warnings.filterwarnings("ignore", category=warningtype)
             # Filter out annoying import messages.
             warnings.filterwarnings('ignore', message='Not importing directory')
             warnings.filterwarnings("ignore", message="numpy.dtype size changed")
             warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
             warnings.filterwarnings("ignore", category=np.ModuleDeprecationWarning)
-            warnings.filterwarnings("ignore", category=FutureWarning)
+            #warnings.filterwarnings("ignore", category=FutureWarning)
             # Filter out boolean '-' deprecation messages. This allows
             # older versions of scipy to test without a flood of messages.
             warnings.filterwarnings("ignore", message=".*boolean negative.*")
@@ -433,7 +437,16 @@ class NoseTester(object):
 
             argv, plugins = self.prepare_test_args(
                     label, verbose, extra_argv, doctests, coverage)
+
+            warnings_before = warnings.filters[:]
+
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
+
+            if warnings_before != warnings.filters:
+                raise AssertionError(
+                    "warnings changed during test; catch_warnings should be "
+                    "used everywhere. New ones are: {}".format(
+                        set(warnings.filters) - set(warnings_before)))            
 
         return t.result
 

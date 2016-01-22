@@ -13,7 +13,8 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_warns, clear_and_catch_warnings
+    TestCase, run_module_suite, assert_warns, clear_and_catch_warnings,
+    suppressed_warning
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -33,6 +34,15 @@ from numpy.ma.extras import (
 import numpy.ma.extras as mae
 
 
+sup = suppressed_warning(FutureWarning,
+    "Currently, slicing will try to return a view of the data, "
+    "but will return a copy of the mask. In the future, it will "
+    "try to return both as views. This means that using "
+    "`__setitem__` will propagate values back through all masks "
+    "that are present.")
+
+
+@sup.wrapped_class
 class TestGeneric(TestCase):
     #
     def test_masked_all(self):
@@ -138,6 +148,7 @@ class TestGeneric(TestCase):
         assert_equal(test, None)
 
 
+@sup.wrapped_class
 class TestAverage(TestCase):
     # Several tests of average. Why so many ? Good point...
     def test_testAverage1(self):
@@ -269,6 +280,7 @@ class TestAverage(TestCase):
         assert_almost_equal(wav1.imag, expected1.imag)
 
 
+@sup.wrapped_class
 class TestConcatenator(TestCase):
     # Tests for mr_, the equivalent of r_ for masked arrays.
 
@@ -304,6 +316,7 @@ class TestConcatenator(TestCase):
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
 
+@sup.wrapped_class
 class TestNotMasked(TestCase):
     # Tests notmasked_edges and notmasked_contiguous.
 
@@ -365,6 +378,7 @@ class TestNotMasked(TestCase):
         assert_equal(tmp[2][-2], slice(0, 6, None))
 
 
+@sup.wrapped_class
 class TestCompressFunctions(TestCase):
 
     def test_compress_nd(self):
@@ -618,6 +632,7 @@ class TestCompressFunctions(TestCase):
         assert_equal(a, res)
 
 
+@sup.wrapped_class
 class TestApplyAlongAxis(TestCase):
     # Tests 2D functions
     def test_3d(self):
@@ -712,6 +727,7 @@ class TestMedian(TestCase):
         assert_(type(r) == MaskedArray)
 
 
+@sup.wrapped_class
 class TestCov(TestCase):
 
     def setUp(self):
@@ -785,6 +801,7 @@ class catch_warn_mae(clear_and_catch_warnings):
     class_modules = (mae,)
 
 
+@sup.wrapped_class
 class TestCorrcoef(TestCase):
 
     def setUp(self):
@@ -950,6 +967,7 @@ class TestPolynomial(TestCase):
             assert_almost_equal(a, a_)
 
 
+@sup.wrapped_class
 class TestArraySetOps(TestCase):
 
     def test_unique_onlist(self):
@@ -1186,3 +1204,4 @@ class TestShapeBase(TestCase):
 
 if __name__ == "__main__":
     run_module_suite()
+

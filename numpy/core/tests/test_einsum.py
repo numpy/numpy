@@ -5,8 +5,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises
-    )
+    assert_raises, suppressed_warning)
 
 class TestEinSum(TestCase):
     def test_einsum_errors(self):
@@ -282,9 +281,7 @@ class TestEinSum(TestCase):
             assert_equal(np.einsum(a, [0], b, [1]), np.outer(a, b))
 
         # Suppress the complex warnings for the 'as f8' tests
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', np.ComplexWarning)
-
+        with suppressed_warning(np.ComplexWarning):
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
             for n in range(1, 17):
                 a = np.arange(4*n, dtype=dtype).reshape(4, n)

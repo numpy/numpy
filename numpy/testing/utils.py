@@ -9,7 +9,7 @@ import sys
 import re
 import operator
 import warnings
-from functools import partial
+from functools import partial, wraps
 import shutil
 import contextlib
 from tempfile import mkdtemp, mkstemp
@@ -31,7 +31,8 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
            'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
-           'SkipTest', 'KnownFailureException', 'temppath', 'tempdir']
+           'SkipTest', 'KnownFailureException', 'temppath', 'tempdir',
+           'suppressed_warning']
 
 
 class KnownFailureException(Exception):
@@ -656,9 +657,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # pass (or maybe eventually catch the errors and return False, I
         # dunno, that's a little trickier and we can figure that out when the
         # time comes).
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            return comparison(*args, **kwargs)
+
+        # TODO: Make this more specific and a single context manager, remove
+        #       some of the other new stuff again, or remove this here....
+        with suppressed_warning(DeprecationWarning):
+            with suppressed_warning(FutureWarning):
+                return comparison(*args, **kwargs)
 
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
@@ -1875,6 +1879,55 @@ def temppath(*args, **kwargs):
         yield path
     finally:
         os.remove(path)
+
+
+class suppressed_warning(object):
+    def __init__(self, category=Warning, message=''):
+        super(suppressed_warning, self).__init__()
+        self.message = message
+        self.category = category
+        self.mess_pattern = re.compile(message, re.I)
+        self._entered = False
+
+    def __enter__(self):
+        self._orig_show = warnings.showwarning
+        self._filters = warnings.filters
+        warnings.filters = self._filters[:]
+        if self._entered:
+            raise RuntimeError("cannot enter suppressed_warnings twice.")
+        self._entered = True
+
+        warnings.filterwarnings(
+            "always", category=self.category)
+        warnings.showwarning = self.showwarning
+
+    def __exit__(self, *exc_info):
+        warnings.showwarning = self._orig_show
+        warnings.filters = self._filters
+        self._entered = False
+
+    def showwarning(self, message, category, filename, lineno,
+                    file=None, line=None):
+        if (issubclass(category, self.category) and
+                self.mess_pattern.match(message.args[0]) is not None):
+            return
+        self._orig_show(message, category, filename, lineno,
+                        file=file, line=line)
+
+    def wrapped(self, func):
+        @wraps(func)
+        def new_func(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+
+        return new_func
+
+    def wrapped_class(self, cls):
+        for name, method in cls.__dict__.items():
+            if name.startswith('test_') and callable(method):
+                setattr(cls, name, self.wrapped(method))
+
+        return cls
 
 
 class clear_and_catch_warnings(warnings.catch_warnings):

@@ -1847,7 +1847,7 @@ class TestCreationFuncs(TestCase):
         if fill_value is not None:
             fill_kwarg = {'fill_value': fill_value}
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
+            warnings.simplefilter('ignore', FutureWarning)
             for size, ndims, order, type, bytes in itertools.product(*par):
                 shape = ndims * [size]
                 try:
@@ -1895,7 +1895,7 @@ class TestCreationFuncs(TestCase):
         assert_(sys.getrefcount(dim) == beg)
         np.empty([dim]*10)
         assert_(sys.getrefcount(dim) == beg)
-        np.full([dim]*10, 0)
+        np.full([dim]*10, 0.)
         assert_(sys.getrefcount(dim) == beg)
 
 
@@ -2072,7 +2072,7 @@ class TestConvolve(TestCase):
     def test_object(self):
         d = [1.] * 100
         k = [1.] * 3
-        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3))
+        assert_array_almost_equal(np.convolve(d, k)[2:-2], np.full(98, 3.))
 
     def test_no_overwrite(self):
         d = np.ones(100)

@@ -19,7 +19,8 @@ import numpy as np
 import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
-from numpy.testing import TestCase, run_module_suite, assert_raises
+from numpy.testing import (
+    TestCase, run_module_suite, assert_raises, suppressed_warning)
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
 from numpy.ma.testutils import (
@@ -48,6 +49,15 @@ from numpy.ma.core import (
 pi = np.pi
 
 
+sup = suppressed_warning(FutureWarning,
+    "Currently, slicing will try to return a view of the data, "
+    "but will return a copy of the mask. In the future, it will "
+    "try to return both as views. This means that using "
+    "`__setitem__` will propagate values back through all masks "
+    "that are present.")
+
+
+@sup.wrapped_class
 class TestMaskedArray(TestCase):
     # Base test class for MaskedArrays.
 
@@ -806,6 +816,7 @@ class TestMaskedArray(TestCase):
         assert_(mx2[0] == 0.)
 
 
+@sup.wrapped_class
 class TestMaskedArrayArithmetic(TestCase):
     # Base test class for MaskedArrays.
 
@@ -1344,6 +1355,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(a.mask, [0, 0, 0, 0, 1])
 
 
+@sup.wrapped_class
 class TestMaskedArrayAttributes(TestCase):
 
     def test_keepmask(self):
@@ -1537,6 +1549,7 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(m._mask, np.ma.nomask)
 
 
+@sup.wrapped_class
 class TestFillingValues(TestCase):
 
     def test_check_on_scalar(self):
@@ -1820,6 +1833,7 @@ class TestFillingValues(TestCase):
         assert_(y.fill_value == 999999)
 
 
+@sup.wrapped_class
 class TestUfuncs(TestCase):
     # Test class for the application of ufuncs on MaskedArrays.
 
@@ -1937,6 +1951,7 @@ class TestUfuncs(TestCase):
         assert_(a / me_too == "Me2rdiv")
 
 
+@sup.wrapped_class
 class TestMaskedArrayInPlaceArithmetics(TestCase):
     # Test MaskedArray Arithmetics
 
@@ -2446,6 +2461,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                 assert_equal(len(w), 0, "Failed on type=%s." % t)
 
 
+@sup.wrapped_class
 class TestMaskedArrayMethods(TestCase):
     # Test class for miscellaneous MaskedArrays methods.
     def setUp(self):
@@ -3110,6 +3126,7 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(MaskedArray.cumsum(marray.T, 0), control.cumsum(0))
 
 
+@sup.wrapped_class
 class TestMaskedArrayMathMethods(TestCase):
 
     def setUp(self):
@@ -3368,6 +3385,7 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(a.max(1), [3, 6])
 
 
+@sup.wrapped_class
 class TestMaskedArrayMathMethodsComplex(TestCase):
     # Test class for miscellaneous MaskedArrays methods.
     def setUp(self):
@@ -3421,6 +3439,7 @@ class TestMaskedArrayMathMethodsComplex(TestCase):
                                 mX[:, k].compressed().std())
 
 
+@sup.wrapped_class
 class TestMaskedArrayFunctions(TestCase):
     # Test class for miscellaneous functions.
 
@@ -3982,6 +4001,7 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(test, 42)
 
 
+@sup.wrapped_class
 class TestMaskedFields(TestCase):
 
     def setUp(self):
@@ -4138,6 +4158,7 @@ class TestMaskedFields(TestCase):
             assert_equal(len(rec), len(self.data['ddtype']))
 
 
+@sup.wrapped_class
 class TestMaskedView(TestCase):
 
     def setUp(self):
@@ -4244,6 +4265,7 @@ def test_append_masked_array():
     assert_array_equal(result.mask, expected_mask)
 
 
+@sup.wrapped
 def test_append_masked_array_along_axis():
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
@@ -4263,6 +4285,8 @@ def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
 
+
 ###############################################################################
 if __name__ == "__main__":
     run_module_suite()
+
