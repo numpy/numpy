@@ -51,7 +51,9 @@ C API
 New Features
 ============
 
-
+``iqr`` function
+~~~~~~~~~~~~~~~~
+Computes the interquatrile region of a distribution.
 
 Improvements
 ============

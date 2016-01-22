@@ -2089,7 +2089,7 @@ class TestScoreatpercentile(TestCase):
         # Test defaults
         assert_equal(np.percentile(range(10), 50), 4.5)
 
-        # explicitly specify interpolation_method 'fraction' (the default)
+        # explicitly specify interpolation_method 'linear' (the default)
         assert_equal(np.percentile(range(10), 50,
                                    interpolation='linear'), 4.5)
 
@@ -2406,6 +2406,7 @@ class TestScoreatpercentile(TestCase):
                          np.array([np.nan] * 2))
             assert_(w[0].category is RuntimeWarning)
             assert_(w[1].category is RuntimeWarning)
+            assert_(w[2].category is RuntimeWarning)
 
         a = np.arange(24, dtype=float).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
@@ -2476,6 +2477,246 @@ class TestScoreatpercentile(TestCase):
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.percentile(
                 a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
+
+
+class TestIQR(TestCase):
+
+    def test_basic(self):
+        x = np.arange(8) * 0.5
+        np.random.shuffle(x)
+        assert_equal(np.iqr(x), 1.75)
+        x[1] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.iqr(x), np.nan)
+            assert_equal(np.iqr(x, interpolation='nearest'), np.nan)
+            assert_(w[0].category is RuntimeWarning)
+
+    def test_api(self):
+        d = np.ones((5, 5))
+        np.iqr(d)
+        np.iqr(d, None)
+        np.iqr(d, 1)
+        np.iqr(d, (0, 1))
+        np.iqr(d, None, (10, 90))
+        np.iqr(d, None, (30, 20), None)
+        np.iqr(d, None, (25, 75), None, False)
+        np.iqr(d, None, (50, 50), None, False, 'linear')
+        o = np.ones(1)
+        np.iqr(d, None, (25, 75), o, True, 'lower')
+
+    def test_empty(self):
+        assert_equal(np.iqr([]), 0.0)
+        assert_equal(np.iqr(np.arange(0)), 0.0)
+
+    def test_constant(self):
+        # Constant array always gives 0
+        x = np.ones((7, 4))
+        assert_equal(np.iqr(x), 0.0)
+        assert_array_equal(np.iqr(x, axis=0), np.zeros(4))
+        assert_array_equal(np.iqr(x, axis=1), np.zeros(7))
+
+        # 0 only along constant dimensions 
+        # This also tests much of `axis`
+        y = np.ones((4, 5, 6)) * np.arange(6)
+        assert_array_equal(np.iqr(y, axis=0), np.zeros((5, 6)))
+        assert_array_equal(np.iqr(y, axis=1), np.zeros((4, 6)))
+        assert_array_equal(np.iqr(y, axis=2), 2.5 * np.ones((4, 5)))
+        assert_array_equal(np.iqr(y, axis=(0, 1)), np.zeros(6))
+        assert_array_equal(np.iqr(y, axis=(0, 2)), 3. * np.ones(5))
+        assert_array_equal(np.iqr(y, axis=(1, 2)), 3. * np.ones(4))
+
+    def test_scalarlike(self):
+        x = np.arange(1) + 7.0
+        assert_equal(np.iqr(x[0]), 0.0)
+        assert_equal(np.iqr(x), 0.0)
+        assert_array_equal(np.iqr(x, keepdims=True), [0.0])
+
+    def test_2D(self):
+        x = np.arange(15).reshape((3, 5))
+        assert_equal(np.iqr(x), 7.0)
+        assert_array_equal(np.iqr(x, axis=0), 5. * np.ones(5))
+        assert_array_equal(np.iqr(x, axis=1), 2. * np.ones(3))
+        assert_array_equal(np.iqr(x, axis=(0, 1)), 7.0)
+        assert_array_equal(np.iqr(x, axis=(1, 0)), 7.0)
+
+    def test_axis(self):
+        # The `axis` keyword is also put through its paces in `test_constant`
+        # and `test_keepdims`.
+        o = np.random.normal(size=(71, 23))
+        x = np.dstack([o] * 10) # x.shape = (71, 23, 10)
+        q = np.iqr(o)
+
+        assert_equal(np.iqr(x, axis=(0, 1)), q)
+        x = np.rollaxis(x, -1, 0)
+        assert_equal(np.iqr(x, axis=(2, 1)), q)
+        x = x.swapaxes(0, 1).copy()
+        assert_equal(np.iqr(x, axis=(0, 2)), q)
+        x = x.swapaxes(0, 1).copy()
+
+        assert_equal(np.percentile(x, [25, 60], axis=(0, 1, 2)),
+                     np.percentile(x, [25, 60], axis=None))
+        assert_equal(np.percentile(x, [25, 60], axis=(0,)),
+                     np.percentile(x, [25, 60], axis=0))
+
+        d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
+        np.random.shuffle(d)
+        assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
+                     np.percentile(d[:,:,:, 0].flatten(), 25))
+        assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
+                     np.percentile(d[:,:, 1,:].flatten(), [10, 90]))
+        assert_equal(np.percentile(d, 25, axis=(3, 1, -4))[2],
+                     np.percentile(d[:,:, 2,:].flatten(), 25))
+        assert_equal(np.percentile(d, 25, axis=(3, 1, 2))[2],
+                     np.percentile(d[2,:,:,:].flatten(), 25))
+        assert_equal(np.percentile(d, 25, axis=(3, 2))[2, 1],
+                     np.percentile(d[2, 1,:,:].flatten(), 25))
+        assert_equal(np.percentile(d, 25, axis=(1, -2))[2, 1],
+                     np.percentile(d[2,:,:, 1].flatten(), 25))
+        assert_equal(np.percentile(d, 25, axis=(1, 3))[2, 2],
+                     np.percentile(d[2,:, 2,:].flatten(), 25))
+
+    def test_range(self):
+        x = np.arange(5)
+        assert_equal(np.iqr(x), 2)
+        assert_equal(np.iqr(x, range=(25, 87.5)), 2.5)
+        assert_equal(np.iqr(x, range=(12.5, 75)), 2.5)
+        assert_almost_equal(np.iqr(x, range=(10, 50)), 1.6) # 3-1.4
+
+    def test_out(self):
+        x = np.array([[1, 2, 3]])
+        o = np.zeros(1)
+        o0 = np.zeros(3)
+        o1 = np.zeros(1)
+
+        e = np.iqr(x, out=o)
+        assert_(o is e)
+        assert_array_equal(o, np.iqr(x))
+
+        e0 = np.iqr(x, axis=0, out=o0)
+        assert_(o0 is e0)
+        assert_array_equal(o0, np.iqr(x, axis=0))
+
+        e1 = np.iqr(x, axis=1, out=o1)
+        assert_(o1 is e1)
+        assert_array_equal(o1, np.iqr(x, axis=1))
+
+    def test_overwrite_input(self):
+        x = np.arange(1000)
+        np.random.shuffle(x)
+        y = x.copy()
+        np.iqr(x, overwrite_input=False)
+        assert_array_equal(x, y)
+
+    def test_interpolation(self):
+        x = np.arange(5)
+        y = np.arange(4)
+        # Default
+        assert_equal(np.iqr(x), 2)
+        assert_equal(np.iqr(y), 1.5)
+        # Linear
+        assert_equal(np.iqr(x, interpolation='linear'), 2)
+        assert_equal(np.iqr(y, interpolation='linear'), 1.5)
+        # Higher
+        assert_equal(np.iqr(x, interpolation='higher'), 2)
+        assert_equal(np.iqr(x, range=(25, 80), interpolation='higher'), 3)
+        assert_equal(np.iqr(y, interpolation='higher'), 2)
+        # Lower (will generally, but not always be the same as higher)
+        assert_equal(np.iqr(x, interpolation='lower'), 2)
+        assert_equal(np.iqr(x, range=(25, 80), interpolation='lower'), 2)
+        assert_equal(np.iqr(y, interpolation='lower'), 2)
+        # Nearest
+        assert_equal(np.iqr(x, interpolation='nearest'), 2)
+        assert_equal(np.iqr(y, interpolation='nearest'), 1)
+        # Midpoint
+        assert_equal(np.iqr(x, interpolation='midpoint'), 2)
+        assert_equal(np.iqr(x, range=(25, 80), interpolation='midpoint'), 2.5)
+        assert_equal(np.iqr(y, interpolation='midpoint'), 2)
+
+    def test_keepdims(self):
+        # Also tests most of `axis`
+        x = np.ones((3, 5, 7, 11))
+        assert_equal(np.iqr(x, axis=None, keepdims=False).shape, ())
+        assert_equal(np.iqr(x, axis=None, keepdims=True).shape, (1, 1, 1, 1))
+
+        assert_equal(np.iqr(x, axis=2, keepdims=False).shape, (3, 5, 11))
+        assert_equal(np.iqr(x, axis=2, keepdims=True).shape, (3, 5, 1, 11))
+
+        assert_equal(np.iqr(x, axis=(0, 1), keepdims=False).shape, (7, 11))
+        assert_equal(np.iqr(x, axis=(0, 1), keepdims=True).shape, (1, 1, 7, 11))
+
+        assert_equal(np.iqr(x, axis=(0, 3), keepdims=False).shape, (5, 7))
+        assert_equal(np.iqr(x, axis=(0, 3), keepdims=True).shape, (1, 5, 7, 1))
+
+        assert_equal(np.iqr(x, axis=(1,), keepdims=False).shape, (3, 7, 11))
+        assert_equal(np.iqr(x, axis=(1,), keepdims=True).shape, (3, 1, 7, 11))
+
+        assert_equal(np.iqr(x, (0, 1, 2, 3), keepdims=False).shape, ())
+        assert_equal(np.iqr(x, (0, 1, 2, 3), keepdims=True).shape, (1, 1, 1, 1))
+
+        assert_equal(np.iqr(x, axis=(0, 1, 3), keepdims=False).shape, (7,))
+        assert_equal(np.iqr(x, axis=(0, 1, 3), keepdims=True).shape, (1, 1, 7, 1))
+
+    def test_exception(self):
+        assert_raises(ValueError, np.iqr, [1, 2], interpolation='foobar')
+        assert_raises(ValueError, np.iqr, [1, 2], range=(0, 101))
+        assert_raises(IndexError, np.iqr, [1, 2], axis=3)
+        assert_raises(ValueError, np.iqr, [[1, 2], [2, 3]], axis=0, out=np.zeros(1))
+        assert_raises(ValueError, np.iqr, [1, 2], axis=(0, 0))
+        assert_raises(ValueError, np.iqr, [1, 2], range=(np.nan, 100))
+
+    def test_out_nan(self):
+        x = np.ones((3, 4))
+        x[2, 1] = np.nan
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', RuntimeWarning)
+
+            o = np.zeros((4,))
+            assert_(np.iqr(x, axis=0, out=o) is o)
+            assert_array_equal(np.isnan(o), [False, True, False, False])
+            assert_(np.iqr(x, axis=0, interpolation='nearest', out=o) is o)
+            assert_array_equal(np.isnan(o), [False, True, False, False])
+
+            o = np.zeros((3,))
+            assert_(np.iqr(x, axis=1, out=o) is o)
+            assert_array_equal(np.isnan(o), [False, False, True])
+            assert_(np.iqr(x, axis=1, interpolation='nearest', out=o) is o)
+            assert_array_equal(np.isnan(o), [False, False, True])
+
+            o = np.zeros(())
+            assert_(np.iqr(x, out=o) is o)
+            assert_equal(np.isnan(o), True)
+
+    def test_nan(self):
+        x = np.arange(24, dtype=float)
+        x[2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.iqr(x), np.nan)
+            assert_equal(np.iqr(x, axis=0), np.nan)
+            assert_(w[0].category is RuntimeWarning)
+            assert_(w[1].category is RuntimeWarning)
+
+        x = np.arange(24, dtype=float).reshape(2, 3, 4)
+        x[1, 2, 3] = np.nan
+        x[1, 1, 2] = np.nan
+
+        # no axis
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            p = np.iqr(x)
+            assert_equal(p, np.nan)
+            assert_equal(p.shape, ())
+            assert_(w[0].category is RuntimeWarning)
+
+        # axis0 zerod
+        q = np.iqr(np.arange(24, dtype=float).reshape(2, 3, 4), axis=0)
+        q[2, 3] = np.nan
+        q[1, 2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(np.iqr(x, axis=0), q)
+            assert_(w[0].category is RuntimeWarning)
 
 
 class TestMedian(TestCase):
