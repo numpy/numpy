@@ -657,9 +657,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # pass (or maybe eventually catch the errors and return False, I
         # dunno, that's a little trickier and we can figure that out when the
         # time comes).
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            return comparison(*args, **kwargs)
+
+        # TODO: Make this more specific and a single context manager, remove
+        #       some of the other new stuff again, or remove this here....
+        with suppressed_warning(DeprecationWarning):
+            with suppressed_warning(FutureWarning):
+                return comparison(*args, **kwargs)
 
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
@@ -1879,7 +1882,7 @@ def temppath(*args, **kwargs):
 
 
 class suppressed_warning(object):
-    def __init__(self, category, message):
+    def __init__(self, category=Warning, message=''):
         super(suppressed_warning, self).__init__()
         self.message = message
         self.category = category
@@ -1888,7 +1891,8 @@ class suppressed_warning(object):
 
     def __enter__(self):
         self._orig_show = warnings.showwarning
-        self._filters = warnings.filters[:]
+        self._filters = warnings.filters
+        warnings.filters = self._filters[:]
         if self._entered:
             raise RuntimeError("cannot enter suppressed_warnings twice.")
         self._entered = True
@@ -1899,7 +1903,7 @@ class suppressed_warning(object):
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        warnings.filters[:] = self._filters
+        warnings.filters = self._filters
         self._entered = False
 
     def showwarning(self, message, category, filename, lineno,

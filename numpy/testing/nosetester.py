@@ -445,7 +445,8 @@ class NoseTester(object):
             if warnings_before != warnings.filters:
                 raise AssertionError(
                     "warnings changed during test; catch_warnings should be "
-                    "used everywhere")            
+                    "used everywhere. New ones are: {}".format(
+                        set(warnings.filters) - set(warnings_before)))            
 
         return t.result
 
