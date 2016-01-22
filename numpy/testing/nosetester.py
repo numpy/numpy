@@ -437,7 +437,15 @@ class NoseTester(object):
 
             argv, plugins = self.prepare_test_args(
                     label, verbose, extra_argv, doctests, coverage)
+
+            warnings_before = warnings.filters[:]
+
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
+
+            if warnings_before != warnings.filters:
+                raise AssertionError(
+                    "warnings changed during test; catch_warnings should be "
+                    "used everywhere")            
 
         return t.result
 
