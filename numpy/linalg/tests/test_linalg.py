@@ -868,10 +868,7 @@ class _TestNorm(object):
                 assert_almost_equal(an, 0.0)
 
             an = norm(at, 0)
-            # Trying to assert equality to `np.dtype(int).type` fails on
-            # 32-bit platforms as it still becomes `np.int64` instead of
-            # `np.int32`. So, this is our workaround.
-            assert_(an.dtype.type in [np.int32, np.int64])
+            assert_(issubclass(an.dtype.type, np.floating))
             assert_almost_equal(an, 2)
 
             an = norm(at, 1)
