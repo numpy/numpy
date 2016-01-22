@@ -9,7 +9,7 @@ import datetime
 from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec
+    assert_warns, dec, suppressed_warning
 )
 
 # Use pytz to test out various time zones if available
@@ -21,10 +21,11 @@ except ImportError:
 
 
 # Ignore all NaT comparison warnings here
-warnings.filterwarnings("ignore", category=FutureWarning,
-                        message=".*NAT\ (==|!=|<|>|<=|>=)\ (x|NAT).*False.")
+sup = suppressed_warning(category=FutureWarning,
+                         message=".*NAT\ (==|!=|<|>|<=|>=)\ (x|NAT).*False.")
 
 
+@sup.wrapped_class
 class TestDateTime(TestCase):
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
@@ -1904,8 +1905,8 @@ class TestDateTime(TestCase):
         a = np.datetime64('2038-01-20T13:21:14')
         assert_equal(str(a), '2038-01-20T13:21:14')
 
-class TestDateTimeData(TestCase):
 
+class TestDateTimeData(TestCase):
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
