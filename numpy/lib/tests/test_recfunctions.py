@@ -720,5 +720,7 @@ class TestAppendFieldsObj(TestCase):
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
 
+
 if __name__ == '__main__':
     run_module_suite()
+

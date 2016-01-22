@@ -3107,17 +3107,15 @@ class MaskedArray(ndarray):
         """
         dout = self.data[indx]
 
-        if (isinstance(dout, np.ndarray) and 
+        if (isinstance(dout, np.ndarray) and
                 np.may_share_memory(dout, self.data)):
             # 2016.01.15 -- v1.11.0
-            #warnings.warn(
-            #    "Currently, slicing will try to return a view of the data," +
-            #    " but will return a copy of the mask. In the future, it will try" +
-            #    " to return both as views.",
-            #    FutureWarning
-            #)
-            from numpy.core.multiarray import _set_warn_on_write
-            _set_warn_on_write(self.mask)
+            warnings.warn(
+                "Currently, slicing will try to return a view of the data, "
+                "but will return a copy of the mask. In the future, it will "
+                "try to return both as views. This means that using "
+                "`__setitem__` will propagate values back through all masks "
+                "that are present.", FutureWarning, stacklevel=1)
 
         # We could directly use ndarray.__getitem__ on self.
         # But then we would have to modify __array_finalize__ to prevent the
@@ -3178,7 +3176,6 @@ class MaskedArray(ndarray):
                 dout._mask.shape = dout.shape
                 dout._sharedmask = True
                 # Note: Don't try to check for m.any(), that'll take too long
-
         return dout
 
     def __setitem__(self, indx, value):
@@ -3191,6 +3188,17 @@ class MaskedArray(ndarray):
         """
         if self is masked:
             raise MaskError('Cannot alter the masked element.')
+
+        if (isinstance(self.mask, np.ndarray) and
+                not self.mask.flags.owndata):
+            # 2016.01.15 -- v1.11.0
+            warnings.warn(
+                "Currently, slicing will try to return a view of the data, "
+                "but will return a copy of the mask. In the future, it will "
+                "try to return both as views. This means that using "
+                "`__setitem__` will propagate values back through all masks "
+                "that are present.", FutureWarning, stacklevel=1)
+
         _data = self._data
         _mask = self._mask
         if isinstance(indx, basestring):

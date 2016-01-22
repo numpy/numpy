@@ -378,6 +378,7 @@ class NoseTester(object):
         >>> result.knownfail #doctest: +SKIP
         []
         """
+
         # cap verbosity at 3 because nose becomes *very* verbose beyond that
         verbose = min(verbose, 3)
 

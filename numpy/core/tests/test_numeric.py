@@ -1847,7 +1847,7 @@ class TestCreationFuncs(TestCase):
         if fill_value is not None:
             fill_kwarg = {'fill_value': fill_value}
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
+            warnings.simplefilter('ignore', FutureWarning)
             for size, ndims, order, type, bytes in itertools.product(*par):
                 shape = ndims * [size]
                 try:
@@ -1882,8 +1882,8 @@ class TestCreationFuncs(TestCase):
         self.check_function(np.empty)
 
     def test_filled(self):
-        self.check_function(np.full, 0.)
-        self.check_function(np.full, 1.)
+        self.check_function(np.full, 0)
+        self.check_function(np.full, 1)
 
     def test_for_reference_leak(self):
         # Make sure we have an object for reference

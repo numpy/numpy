@@ -551,19 +551,24 @@ class TestGradient(TestCase):
                       np.array([1., 1.]), np.array([1., 1.]))
 
     def test_masked(self):
-        # Make sure that gradient supports subclasses like masked arrays
-        x = np.ma.array([[1, 1], [3, 4]],
-                        mask=[[False, False], [False, False]])
-        out = gradient(x)[0]
-        assert_equal(type(out), type(x))
-        # And make sure that the output and input don't have aliased mask
-        # arrays
-        assert_(x.mask is not out.mask)
-        # Also check that edge_order=2 doesn't alter the original mask
-        x2 = np.ma.arange(5)
-        x2[2] = np.ma.masked
-        np.gradient(x2, edge_order=2)
-        assert_array_equal(x2.mask, [False, False, True, False, False])
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "always", category=FutureWarning,
+                message="Currently, slicing will try to return a view of")
+
+            # Make sure that gradient supports subclasses like masked arrays
+            x = np.ma.array([[1, 1], [3, 4]],
+                            mask=[[False, False], [False, False]])
+            out = gradient(x)[0]
+            assert_equal(type(out), type(x))
+            # And make sure that the output and input don't have aliased mask
+            # arrays
+            assert_(x.mask is not out.mask)
+            # Also check that edge_order=2 doesn't alter the original mask
+            x2 = np.ma.arange(5)
+            x2[2] = np.ma.masked
+            np.gradient(x2, edge_order=2)
+            assert_array_equal(x2.mask, [False, False, True, False, False])
 
     def test_datetime64(self):
         # Make sure gradient() can handle special types like datetime64
@@ -1037,20 +1042,25 @@ class TestTrapz(TestCase):
         assert_almost_equal(r, qz)
 
     def test_masked(self):
-        # Testing that masked arrays behave as if the function is 0 where
-        # masked
-        x = np.arange(5)
-        y = x * x
-        mask = x == 2
-        ym = np.ma.array(y, mask=mask)
-        r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
-        assert_almost_equal(trapz(ym, x), r)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "always", category=FutureWarning,
+                message="Currently, slicing will try to return a view of")
 
-        xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(ym, xm), r)
+            # Testing that masked arrays behave as if the function is 0 where
+            # masked
+            x = np.arange(5)
+            y = x * x
+            mask = x == 2
+            ym = np.ma.array(y, mask=mask)
+            r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
+            assert_almost_equal(trapz(ym, x), r)
 
-        xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(y, xm), r)
+            xm = np.ma.array(x, mask=mask)
+            assert_almost_equal(trapz(ym, xm), r)
+
+            xm = np.ma.array(x, mask=mask)
+            assert_almost_equal(trapz(y, xm), r)
 
     def test_matrix(self):
         # Test to make sure matrices give the same answer as ndarrays
