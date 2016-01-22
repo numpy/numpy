@@ -7,6 +7,7 @@ import os
 import sys
 import itertools
 import traceback
+import warnings
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
@@ -844,6 +845,101 @@ class _TestNorm(object):
         assert_equal(norm([]), 0.0)
         assert_equal(norm(array([], dtype=self.dt)), 0.0)
         assert_equal(norm(atleast_2d(array([], dtype=self.dt))), 0.0)
+
+    def test_vector_return_type(self):
+        a = np.array([1, 0, 1])
+
+        exact_types = np.typecodes['AllInteger']
+        inexact_types = np.typecodes['AllFloat']
+
+        all_types = exact_types + inexact_types
+
+        for each_inexact_types in all_types:
+            at = a.astype(each_inexact_types)
+
+            an = norm(at, -np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 0.0)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                an = norm(at, -1)
+                assert_(issubclass(an.dtype.type, np.floating))
+                assert_almost_equal(an, 0.0)
+
+            an = norm(at, 0)
+            # Trying to assert equality to `np.dtype(int).type` fails on
+            # 32-bit platforms as it still becomes `np.int64` instead of
+            # `np.int32`. So, this is our workaround.
+            assert_(an.dtype.type in [np.int32, np.int64])
+            assert_almost_equal(an, 2)
+
+            an = norm(at, 1)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = norm(at, 2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0**(1.0/2.0))
+
+            an = norm(at, 4)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0**(1.0/4.0))
+
+            an = norm(at, np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 1.0)
+
+    def test_matrix_return_type(self):
+        a = np.array([[1, 0, 1], [0, 1, 1]])
+
+        exact_types = np.typecodes['AllInteger']
+
+        # float32, complex64, float64, complex128 types are the only types
+        # allowed by `linalg`, which performs the matrix operations used
+        # within `norm`.
+        inexact_types = 'fdFD'
+
+        all_types = exact_types + inexact_types
+
+        for each_inexact_types in all_types:
+            at = a.astype(each_inexact_types)
+
+            an = norm(at, -np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                an = norm(at, -1)
+                assert_(issubclass(an.dtype.type, np.floating))
+                assert_almost_equal(an, 1.0)
+
+            an = norm(at, 1)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = norm(at, 2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 3.0**(1.0/2.0))
+
+            an = norm(at, -2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 1.0)
+
+            an = norm(at, np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = norm(at, 'fro')
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = norm(at, 'nuc')
+            assert_(issubclass(an.dtype.type, np.floating))
+            # Lower bar needed to support low precision floats.
+            # They end up being off by 1 in the 7th place.
+            old_assert_almost_equal(an, 2.7320508075688772, decimal=6)
 
     def test_vector(self):
         a = [1, 2, 3, 4]
