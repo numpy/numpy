@@ -2060,22 +2060,22 @@ def norm(x, ord=None, axis=None, keepdims=False):
     >>> LA.norm(b, 'fro')
     7.745966692414834
     >>> LA.norm(a, np.inf)
-    4
+    4.0
     >>> LA.norm(b, np.inf)
-    9
+    9.0
     >>> LA.norm(a, -np.inf)
-    0
+    0.0
     >>> LA.norm(b, -np.inf)
-    2
+    2.0
 
     >>> LA.norm(a, 1)
-    20
+    20.0
     >>> LA.norm(b, 1)
-    7
+    7.0
     >>> LA.norm(a, -1)
     -4.6566128774142013e-010
     >>> LA.norm(b, -1)
-    6
+    6.0
     >>> LA.norm(a, 2)
     7.745966692414834
     >>> LA.norm(b, 2)
@@ -2099,7 +2099,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     >>> LA.norm(c, axis=1)
     array([ 3.74165739,  4.24264069])
     >>> LA.norm(c, ord=1, axis=1)
-    array([6, 6])
+    array([ 6.,  6.])
 
     Using the `axis` argument to compute matrix norms:
 
@@ -2111,6 +2111,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     """
     x = asarray(x)
+
+    if not issubclass(x.dtype.type, inexact):
+        x = x.astype(float)
 
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:
@@ -2147,7 +2150,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
             # Zero norm
-            return (x != 0).sum(axis=axis, keepdims=keepdims)
+            return (x != 0).astype(float).sum(axis=axis, keepdims=keepdims)
         elif ord == 1:
             # special case for speedup
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
