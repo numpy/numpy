@@ -106,9 +106,11 @@ def main(argv):
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
                         help="Run benchmark suite instead of test suite")
-    parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
-                        help=("Compare benchmark results to COMMIT. "
-                              "Note that you need to commit your changes first!"))
+    parser.add_argument("--bench-compare", action="append", metavar="BEFORE",
+                        help=("Compare benchmark results of current HEAD to BEFORE. "
+                              "Use an additional --bench-compare=COMMIT to override HEAD with COMMIT. "
+                              "Note that you need to commit your changes first!"
+                             ))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
