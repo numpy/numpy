@@ -1181,7 +1181,8 @@ def alterdot():
 
     """
     # 2014-08-13, 1.10
-    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
+    warnings.warn("alterdot no longer does anything.",
+                  DeprecationWarning, stacklevel=2)
 
 
 def restoredot():
@@ -1205,7 +1206,8 @@ def restoredot():
 
     """
     # 2014-08-13, 1.10
-    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
+    warnings.warn("restoredot no longer does anything.",
+                  DeprecationWarning, stacklevel=2)
 
 
 def tensordot(a, b, axes=2):
@@ -2260,8 +2262,8 @@ def binary_repr(num, width=None):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
-                "will raise an error in the future.", DeprecationWarning
-            )
+                "will raise an error in the future.", DeprecationWarning,
+                stacklevel=3)
 
     if num == 0:
         return '0' * (width or 1)

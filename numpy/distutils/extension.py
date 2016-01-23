@@ -63,7 +63,7 @@ class Extension(old_Extension):
         if isinstance(self.swig_opts, basestring):
             import warnings
             msg = "swig_opts is specified as a string instead of a list"
-            warnings.warn(msg, SyntaxWarning)
+            warnings.warn(msg, SyntaxWarning, stacklevel=2)
             self.swig_opts = self.swig_opts.split()
 
         # Python 2.3 distutils new features

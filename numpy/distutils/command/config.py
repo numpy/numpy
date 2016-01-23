@@ -431,7 +431,7 @@ int main (void)
                       "use it anymore, and avoid configuration checks \n" \
                       "involving running executable on the target machine.\n" \
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
         from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''

@@ -573,7 +573,7 @@ class system_info(object):
             if notfound_action:
                 if not self.has_info():
                     if notfound_action == 1:
-                        warnings.warn(self.notfounderror.__doc__)
+                        warnings.warn(self.notfounderror.__doc__, stacklevel=2)
                     elif notfound_action == 2:
                         raise self.notfounderror(self.notfounderror.__doc__)
                     else:
@@ -642,7 +642,7 @@ class system_info(object):
         ret = []
         for d in dirs:
             if len(d) > 0 and not os.path.isdir(d):
-                warnings.warn('Specified path %s is invalid.' % d)
+                warnings.warn('Specified path %s is invalid.' % d, stacklevel=2)
                 continue
 
             if d not in ret:
@@ -1104,7 +1104,7 @@ class atlas_info(system_info):
     Could not find lapack library within the ATLAS installation.
 *********************************************************************
 """
-            warnings.warn(message)
+            warnings.warn(message, stacklevel=2)
             self.set_info(**info)
             return
 
@@ -1135,7 +1135,7 @@ class atlas_info(system_info):
     numpy/INSTALL.txt.
 *********************************************************************
 """ % (lapack_lib, sz / 1024)
-                warnings.warn(message)
+                warnings.warn(message, stacklevel=2)
             else:
                 info['language'] = 'f77'
 
@@ -1420,7 +1420,7 @@ Linkage with ATLAS requires gfortran. Use
 when building extension libraries that use ATLAS.
 Make sure that -lgfortran is used for C++ extensions.
 *****************************************************
-""")
+""", stacklevel=2)
                 dict_append(info, language='f90',
                             define_macros=[('ATLAS_REQUIRES_GFORTRAN', None)])
     except Exception:  # failed to get version from file -- maybe on Windows
@@ -1531,7 +1531,7 @@ class lapack_opt_info(system_info):
             info = atlas_info
 
         else:
-            warnings.warn(AtlasNotFoundError.__doc__)
+            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
             need_blas = 1
             need_lapack = 1
             dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
@@ -1542,10 +1542,10 @@ class lapack_opt_info(system_info):
             if lapack_info:
                 dict_append(info, **lapack_info)
             else:
-                warnings.warn(LapackNotFoundError.__doc__)
+                warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
                 lapack_src_info = get_info('lapack_src')
                 if not lapack_src_info:
-                    warnings.warn(LapackSrcNotFoundError.__doc__)
+                    warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('flapack_src', lapack_src_info)])
 
@@ -1554,10 +1554,10 @@ class lapack_opt_info(system_info):
             if blas_info:
                 dict_append(info, **blas_info)
             else:
-                warnings.warn(BlasNotFoundError.__doc__)
+                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
                 blas_src_info = get_info('blas_src')
                 if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('fblas_src', blas_src_info)])
 
@@ -1634,7 +1634,7 @@ class blas_opt_info(system_info):
         if atlas_info:
             info = atlas_info
         else:
-            warnings.warn(AtlasNotFoundError.__doc__)
+            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
             need_blas = 1
             dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
@@ -1643,10 +1643,10 @@ class blas_opt_info(system_info):
             if blas_info:
                 dict_append(info, **blas_info)
             else:
-                warnings.warn(BlasNotFoundError.__doc__)
+                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
                 blas_src_info = get_info('blas_src')
                 if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('fblas_src', blas_src_info)])
 

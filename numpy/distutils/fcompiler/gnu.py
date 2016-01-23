@@ -137,7 +137,7 @@ class GnuFCompiler(FCompiler):
                 os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
                 if target == '10.3':
                     s = 'Env. variable MACOSX_DEPLOYMENT_TARGET set to 10.3'
-                    warnings.warn(s)
+                    warnings.warn(s, stacklevel=2)
 
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:

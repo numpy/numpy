@@ -641,7 +641,7 @@ class TestTestDeprecated(object):
                       lambda: None)
 
         def foo():
-            warnings.warn("foo", category=DeprecationWarning)
+            warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
         test_case_instance.tearDown()

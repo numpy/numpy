@@ -117,7 +117,7 @@ class LinuxCPUInfo(CPUInfoBase):
             fo = open('/proc/cpuinfo')
         except EnvironmentError:
             e = get_exception()
-            warnings.warn(str(e), UserWarning)
+            warnings.warn(str(e), UserWarning, stacklevel=2)
         else:
             for line in fo:
                 name_value = [s.strip() for s in line.split(':', 1)]

@@ -3210,7 +3210,8 @@ class MaskedArray(ndarray):
                                 "of fill_value at 0. Discarding "
                                 "heterogeneous fill_value and setting "
                                 "all to {fv!s}.".format(indx=indx,
-                                    fv=dout._fill_value[0]))
+                                    fv=dout._fill_value[0]),
+                                stacklevel=2)
                         dout._fill_value = dout._fill_value.flat[0]
                 dout._isfield = True
             # Update the mask if needed
@@ -4195,7 +4196,7 @@ class MaskedArray(ndarray):
             raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
-            warnings.warn("Warning: converting a masked element to nan.")
+            warnings.warn("Warning: converting a masked element to nan.", stacklevel=2)
             return np.nan
         return float(self.item())
 
@@ -6909,7 +6910,7 @@ def rank(obj):
     # 2015-04-12, 1.10.0
     warnings.warn(
         "`rank` is deprecated; use the `ndim` function instead. ",
-        np.VisibleDeprecationWarning)
+        np.VisibleDeprecationWarning, stacklevel=2)
     return np.ndim(getdata(obj))
 
 rank.__doc__ = np.rank.__doc__

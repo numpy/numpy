@@ -94,7 +94,7 @@ def check_api_version(apiversion, codegen_dir):
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
-                      MismatchCAPIWarning)
+                      MismatchCAPIWarning, stacklevel=2)
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
