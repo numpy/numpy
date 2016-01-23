@@ -484,7 +484,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->hour = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->hour < 0 || out->hour >= 24) {
+        if (out->hour >= 24) {
             PyErr_Format(PyExc_ValueError,
                         "Hours out of range in datetime string \"%s\"", str);
             goto error;
@@ -515,7 +515,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->min = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->hour < 0 || out->min >= 60) {
+        if (out->min >= 60) {
             PyErr_Format(PyExc_ValueError,
                         "Minutes out of range in datetime string \"%s\"", str);
             goto error;
@@ -546,7 +546,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->sec = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->sec < 0 || out->sec >= 60) {
+        if (out->sec >= 60) {
             PyErr_Format(PyExc_ValueError,
                         "Seconds out of range in datetime string \"%s\"", str);
             goto error;
