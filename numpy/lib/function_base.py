@@ -1383,7 +1383,7 @@ def select(condlist, choicelist, default=0):
         # 2014-02-24, 1.9
         warnings.warn("select with an empty condition list is not possible"
                       "and will be deprecated",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
         return np.asarray(default)[()]
 
     choicelist = [np.asarray(choice) for choice in choicelist]
@@ -1418,7 +1418,7 @@ def select(condlist, choicelist, default=0):
         msg = "select condlists containing integer ndarrays is deprecated " \
             "and will be removed in the future. Use `.astype(bool)` to " \
             "convert to bools."
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2692,7 +2692,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         fact = w_sum - ddof*sum(w*aweights)/w_sum
 
     if fact <= 0:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2766,7 +2766,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar)
     try:
         d = diag(c)
@@ -3774,7 +3774,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         if rout.ndim == 0:
             if n == True:
                 warnings.warn("Invalid value encountered in median",
-                              RuntimeWarning)
+                              RuntimeWarning, stacklevel=3)
                 if out is not None:
                     out[...] = a.dtype.type(np.nan)
                     rout = out
@@ -3783,7 +3783,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         elif np.count_nonzero(n.ravel()) > 0:
             warnings.warn("Invalid value encountered in median for" +
                           " %d results" % np.count_nonzero(n.ravel()),
-                          RuntimeWarning)
+                          RuntimeWarning, stacklevel=3)
             rout[n] = np.nan
         return rout
     else:
@@ -4039,7 +4039,7 @@ def _percentile(a, q, axis=None, out=None,
 
     if np.any(n):
         warnings.warn("Invalid value encountered in percentile",
-                              RuntimeWarning)
+                      RuntimeWarning, stacklevel=3)
         if zerod:
             if ap.ndim == 1:
                 if out is not None:
@@ -4403,7 +4403,7 @@ def delete(arr, obj, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from delete and raise an error", DeprecationWarning)
+            "from delete and raise an error", DeprecationWarning, stacklevel=2)
         if wrap:
             return wrap(arr)
         else:
@@ -4470,7 +4470,7 @@ def delete(arr, obj, axis=None):
     if obj.dtype == bool:
         warnings.warn(
             "in the future insert will treat boolean arrays and array-likes "
-            "as boolean index instead of casting it to integer", FutureWarning)
+            "as boolean index instead of casting it to integer", FutureWarning, stacklevel=2)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
@@ -4498,7 +4498,7 @@ def delete(arr, obj, axis=None):
             # 2013-09-24, 1.9
             warnings.warn(
                 "using a non-integer array as obj in delete will result in an "
-                "error in the future", DeprecationWarning)
+                "error in the future", DeprecationWarning, stacklevel=2)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
@@ -4509,13 +4509,13 @@ def delete(arr, obj, axis=None):
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
             warnings.warn(
                 "in the future negative indices will not be ignored by "
-                "`numpy.delete`.", FutureWarning)
+                "`numpy.delete`.", FutureWarning, stacklevel=2)
             obj = obj[positive_indices]
 
         keep[obj, ] = False
@@ -4642,7 +4642,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from insert and raise an error", DeprecationWarning)
+            "from insert and raise an error", DeprecationWarning, stacklevel=2)
         arr = arr.copy(order=arrorder)
         arr[...] = values
         if wrap:
@@ -4664,7 +4664,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning)
+                "integer", FutureWarning, stacklevel=2)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
@@ -4714,7 +4714,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "using a non-integer array as obj in insert will result in an "
-            "error in the future", DeprecationWarning)
+            "error in the future", DeprecationWarning, stacklevel=2)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N

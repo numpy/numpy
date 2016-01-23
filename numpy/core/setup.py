@@ -179,7 +179,7 @@ def check_complex(config, mathlibs):
 
     try:
         if os.uname()[0] == "Interix":
-            warnings.warn("Disabling broken complex support. See #1365")
+            warnings.warn("Disabling broken complex support. See #1365", stacklevel=2)
             return priv, pub
     except:
         # os.uname not available on all platforms. blanket except ugly but safe
