@@ -82,7 +82,7 @@ before_install:
   - pip install nose
   # pip install coverage
   # Speed up install by not compiling Cython
-  - pip install --install-option="--no-cython-compile" Cython
+  - pip install --install-option="--no-cython-compile" Cython==0.19
   - if [ -n "$USE_ASV" ]; then pip install asv; fi
   - popd
 
