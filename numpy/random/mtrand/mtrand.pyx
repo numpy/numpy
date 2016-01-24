@@ -1460,21 +1460,22 @@ cdef class RandomState:
 
         Parameters
         ----------
-        low : float, optional
+        low : float or array_like of floats, optional
             Lower boundary of the output interval.  All values generated will be
             greater than or equal to low.  The default value is 0.
-        high : float
+        high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
             less than high.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``low`` and ``high`` are both scalars.
+            Otherwise, ``np.broadcast(low, high).size`` samples are drawn.
 
         Returns
         -------
-        out : ndarray
-            Drawn samples, with shape `size`.
+        out : ndarray or scalar
+            Drawn samples from the parameterized uniform distribution.
 
         See Also
         --------
@@ -1791,14 +1792,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
+        loc : float or array_like of floats
             Mean ("centre") of the distribution.
-        scale : float
+        scale : float or array_like of floats
             Standard deviation (spread or "width") of the distribution.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(loc, scale).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized normal distribution.
 
         See Also
         --------
@@ -1898,20 +1905,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        a : float
+        a : float or array_like of floats
             Alpha, non-negative.
-        b : float
+        b : float or array_like of floats
             Beta, non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``a`` and ``b`` are both scalars.
+            Otherwise, ``np.broadcast(a, b).size`` samples are drawn.
 
         Returns
         -------
-        out : ndarray
-            Array of the given shape, containing values drawn from a
-            Beta distribution.
+        out : ndarray or scalar
+            Drawn samples from the parameterized beta distribution.
 
         """
         cdef ndarray oa, ob
@@ -1960,12 +1967,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        scale : float
+        scale : float or array_like of floats
             The scale parameter, :math:`\\beta = 1/\\lambda`.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``scale`` is a scalar.  Otherwise,
+            ``np.array(scale).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized exponential distribution.
 
         References
         ----------
@@ -2038,17 +2051,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        shape : float
+        shape : float or array_like of floats
             Parameter, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``shape`` is a scalar.  Otherwise,
+            ``np.array(shape).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            The drawn samples.
+        out : ndarray or scalar
+            Drawn samples from the parameterized standard gamma distribution.
 
         See Also
         --------
@@ -2125,19 +2139,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        shape : scalar > 0
-            The shape of the gamma distribution.
-        scale : scalar > 0, optional
-            The scale of the gamma distribution.  Default is equal to 1.
+        shape : float or array_like of floats
+            The shape of the gamma distribution. Should be greater than zero.
+        scale : float or array_like of floats, optional
+            The scale of the gamma distribution. Should be greater than zero.
+            Default is equal to 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``shape`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(shape, scale).size`` samples are drawn.
 
         Returns
         -------
-        out : ndarray, float
-            Returns one sample unless `size` parameter is specified.
+        out : ndarray or scalar
+            Drawn samples from the parameterized gamma distribution.
 
         See Also
         --------
@@ -2225,19 +2241,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : float
+        dfnum : int or array_like of ints
             Degrees of freedom in numerator. Should be greater than zero.
-        dfden : float
+        dfden : int or array_like of ints
             Degrees of freedom in denominator. Should be greater than zero.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``dfnum`` and ``dfden`` are both scalars.
+            Otherwise, ``np.broadcast(dfnum, dfden).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            Samples from the Fisher distribution.
+        out : ndarray or scalar
+            Drawn samples from the parameterized Fisher distribution.
 
         See Also
         --------
@@ -2296,9 +2313,9 @@ cdef class RandomState:
         fdfden = PyFloat_AsDouble(dfden)
         if not PyErr_Occurred():
             if fdfnum <= 0:
-                raise ValueError("shape <= 0")
+                raise ValueError("dfnum <= 0")
             if fdfden <= 0:
-                raise ValueError("scale <= 0")
+                raise ValueError("dfden <= 0")
             return cont2_array_sc(self.internal_state, rk_f, size, fdfnum,
                                   fdfden, self.lock)
 
@@ -2326,21 +2343,23 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : int
+        dfnum : int or array_like of ints
             Parameter, should be > 1.
-        dfden : int
+        dfden : int or array_like of ints
             Parameter, should be > 1.
-        nonc : float
+        nonc : float or array_like of floats
             Parameter, should be >= 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``dfnum``, ``dfden``, and ``nonc``
+            are all scalars.  Otherwise, ``np.broadcast(dfnum, dfden, nonc).size``
+            samples are drawn.
 
         Returns
         -------
-        samples : scalar or ndarray
-            Drawn samples.
+        out : ndarray or scalar
+            Drawn samples from the parameterized noncentral Fisher distribution.
 
         Notes
         -----
@@ -2422,18 +2441,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int
+        df : int or array_like of ints
              Number of degrees of freedom.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``df`` is a scalar.  Otherwise,
+            ``np.array(df).size`` samples are drawn.
 
         Returns
         -------
-        output : ndarray
-            Samples drawn from the distribution, packed in a `size`-shaped
-            array.
+        out : ndarray or scalar
+            Drawn samples from the parameterized chi-square distribution.
 
         Raises
         ------
@@ -2501,15 +2520,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int
+        df : int or array_like of ints
             Degrees of freedom, should be > 0 as of Numpy 1.10,
             should be > 1 for earlier versions.
-        nonc : float
+        nonc : float or array_like of floats
             Non-centrality, should be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``df`` and ``nonc`` are both scalars.
+            Otherwise, ``np.broadcast(df, nonc).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized noncentral chi-square distribution.
 
         Notes
         -----
@@ -2664,17 +2689,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int
+        df : int or array_like of ints
             Degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``df`` is a scalar.  Otherwise,
+            ``np.array(df).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            Drawn samples.
+        out : ndarray or scalar
+            Drawn samples from the parameterized standard Student's t distribution.
 
         Notes
         -----
@@ -2772,19 +2798,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        mu : float
+        mu : float or array_like of floats
             Mode ("center") of the distribution.
-        kappa : float
+        kappa : float or array_like of floats
             Dispersion of the distribution, has to be >=0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``mu`` and ``kappa`` are both scalars.
+            Otherwise, ``np.broadcast(mu, kappa).size`` samples are drawn.
 
         Returns
         -------
-        samples : scalar or ndarray
-            The returned samples, which are in the interval [-pi, pi].
+        out : ndarray or scalar
+            Drawn samples from the parameterized von Mises distribution.
 
         See Also
         --------
@@ -2880,12 +2907,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        shape : float, > 0.
-            Shape of the distribution.
+        a : float or array_like of floats
+            Shape of the distribution. Should be greater than zero.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``a`` is a scalar.  Otherwise,
+            ``np.array(a).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized Pareto distribution.
 
         See Also
         --------
@@ -2976,16 +3009,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        a : float
-            Shape of the distribution.
+        a : float or array_like of floats
+            Shape of the distribution. Should be greater than zero.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``a`` is a scalar.  Otherwise,
+            ``np.array(a).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray
+        out : ndarray or scalar
+            Drawn samples from the parameterized Weibull distribution.
 
         See Also
         --------
@@ -3078,17 +3113,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        a : float
-            parameter, > 0
+        a : float or array_like of floats
+            Parameter of the distribution. Should be greater than zero.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``a`` is a scalar.  Otherwise,
+            ``np.array(a).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            The returned samples lie in [0, 1].
+        out : ndarray or scalar
+            Drawn samples from the parameterized power distribution.
 
         Raises
         ------
@@ -3192,18 +3228,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float, optional
-            The position, :math:`\\mu`, of the distribution peak.
-        scale : float, optional
-            :math:`\\lambda`, the exponential decay.
+        loc : float or array_like of floats, optional
+            The position, :math:`\\mu`, of the distribution peak. Default is 0.
+        scale : float or array_like of floats, optional
+            :math:`\\lambda`, the exponential decay. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(loc, scale).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or float
+        out : ndarray or scalar
+            Drawn samples from the parameterized Laplace distribution.
 
         Notes
         -----
@@ -3286,18 +3324,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
-            The location of the mode of the distribution.
-        scale : float
-            The scale parameter of the distribution.
+        loc : float or array_like of floats, optional
+            The location of the mode of the distribution. Default is 0.
+        scale : float or array_like of floats, optional
+            The scale parameter of the distribution. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(loc, scale).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
+        out : ndarray or scalar
+            Drawn samples from the parameterized Gumbel distribution.
 
         See Also
         --------
@@ -3414,19 +3454,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
-
-        scale : float > 0.
-
+        loc : float or array_like of floats, optional
+            Parameter of the distribution. Default is 0.
+        scale : float or array_like of floats, optional
+            Parameter of the distribution. Should be greater than zero.
+            Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(loc, scale).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+        out : ndarray or scalar
+            Drawn samples from the parameterized logistic distribution.
 
         See Also
         --------
@@ -3507,20 +3549,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        mean : float
-            Mean value of the underlying normal distribution
-        sigma : float, > 0.
-            Standard deviation of the underlying normal distribution
+        mean : float or array_like of floats, optional
+            Mean value of the underlying normal distribution. Default is 0.
+        sigma : float or array_like of floats, optional
+            Standard deviation of the underlying normal distribution. Should
+            be greater than zero. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``mean`` and ``sigma`` are both scalars.
+            Otherwise, ``np.broadcast(mean, sigma).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or float
-            The desired samples. An array of the same shape as `size` if given,
-            if `size` is None a float is returned.
+        out : ndarray or scalar
+            Drawn samples from the parameterized log-normal distribution.
 
         See Also
         --------
@@ -3630,12 +3673,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        scale : scalar
-            Scale, also equals the mode. Should be >= 0.
+        scale : float or array_like of floats, optional
+            Scale, also equals the mode. Should be >= 0. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``scale`` is a scalar.  Otherwise,
+            ``np.array(scale).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized Rayleigh distribution.
 
         Notes
         -----
@@ -3711,19 +3760,20 @@ cdef class RandomState:
 
         Parameters
         ----------
-        mean : scalar
+        mean : float or array_like of floats
             Distribution mean, should be > 0.
-        scale : scalar
+        scale : float or array_like of floats
             Scale parameter, should be >= 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``mean`` and ``scale`` are both scalars.
+            Otherwise, ``np.broadcast(mean, scale).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            Drawn sample, all greater than zero.
+        out : ndarray or scalar
+            Drawn samples from the parameterized Wald distribution.
 
         Notes
         -----
@@ -3783,7 +3833,8 @@ cdef class RandomState:
         """
         triangular(left, mode, right, size=None)
 
-        Draw samples from the triangular distribution.
+        Draw samples from the triangular distribution over the
+        interval ``[left, right]``.
 
         The triangular distribution is a continuous probability
         distribution with lower limit left, peak at mode, and upper
@@ -3792,22 +3843,24 @@ cdef class RandomState:
 
         Parameters
         ----------
-        left : scalar
+        left : float or array_like of floats
             Lower limit.
-        mode : scalar
+        mode : float or array_like of floats
             The value where the peak of the distribution occurs.
             The value should fulfill the condition ``left <= mode <= right``.
-        right : scalar
+        right : float or array_like of floats
             Upper limit, should be larger than `left`.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``left``, ``mode``, and ``right``
+            are all scalars.  Otherwise, ``np.broadcast(left, mode, right).size``
+            samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            The returned samples all lie in the interval [left, right].
+        out : ndarray or scalar
+            Drawn samples from the parameterized triangular distribution.
 
         Notes
         -----
@@ -3883,19 +3936,22 @@ cdef class RandomState:
 
         Parameters
         ----------
-        n : float (but truncated to an integer)
-                parameter, >= 0.
-        p : float
-                parameter, >= 0 and <=1.
+        n : int or array_like of ints
+            Parameter of the distribution, >= 0. Floats are also accepted,
+            but they will be truncated to integers.
+        p : float or array_like of floats
+            Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``n`` and ``p`` are both scalars.
+            Otherwise, ``np.broadcast(n, p).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+        out : ndarray or scalar
+            Drawn samples from the parameterized binomial distribution, where
+            each sample is equal to the number of successes over the n trials.
 
         See Also
         --------
@@ -3995,19 +4051,24 @@ cdef class RandomState:
 
         Parameters
         ----------
-        n : int
-            Parameter, > 0.
-        p : float
-            Parameter, >= 0 and <=1.
+        n : int or array_like of ints
+            Parameter of the distribution, > 0. Floats are also accepted,
+            but they will be truncated to integers.
+        p : float or array_like of floats
+            Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``n`` and ``p`` are both scalars.
+            Otherwise, ``np.broadcast(n, p).size`` samples are drawn.
 
         Returns
         -------
-        samples : int or ndarray of ints
-            Drawn samples.
+        out : ndarray or scalar
+            Drawn samples from the parameterized negative binomial distribution,
+            where each sample is equal to N, the number of trials it took to
+            achieve n - 1 successes, N - (n - 1) failures, and a success on the,
+            (N + n)th trial.
 
         Notes
         -----
@@ -4090,18 +4151,19 @@ cdef class RandomState:
 
         Parameters
         ----------
-        lam : float or sequence of float
+        lam : float or array_like of floats
             Expectation of interval, should be >= 0. A sequence of expectation
             intervals must be broadcastable over the requested size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``lam`` is a scalar. Otherwise,
+            ``np.array(lam).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            The drawn samples, of shape *size*, if it was provided.
+        out : ndarray or scalar
+            Drawn samples from the parameterized Poisson distribution.
 
         Notes
         -----
@@ -4181,17 +4243,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        a : float > 1
-            Distribution parameter.
+        a : float or array_like of floats
+            Distribution parameter. Should be greater than 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``a`` is a scalar. Otherwise,
+            ``np.array(a).size`` samples are drawn.
 
         Returns
         -------
-        samples : scalar or ndarray
-            The returned samples are greater than or equal to one.
+        out : ndarray or scalar
+            Drawn samples from the parameterized Zipf distribution.
 
         See Also
         --------
@@ -4273,18 +4336,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        p : float
+        p : float or array_like of floats
             The probability of success of an individual trial.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``p`` is a scalar.  Otherwise,
+            ``np.array(p).size`` samples are drawn.
 
         Returns
         -------
-        out : ndarray
-            Samples from the geometric distribution, shaped according to
-            `size`.
+        out : ndarray or scalar
+            Drawn samples from the parameterized geometric distribution.
 
         Examples
         --------
@@ -4335,22 +4398,24 @@ cdef class RandomState:
 
         Parameters
         ----------
-        ngood : int or array_like
+        ngood : int or array_like of ints
             Number of ways to make a good selection.  Must be nonnegative.
-        nbad : int or array_like
+        nbad : int or array_like of ints
             Number of ways to make a bad selection.  Must be nonnegative.
-        nsample : int or array_like
+        nsample : int or array_like of ints
             Number of items sampled.  Must be at least 1 and at most
             ``ngood + nbad``.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``ngood``, ``nbad``, and ``nsample``
+            are all scalars.  Otherwise, ``np.broadcast(ngood, nbad, nsample).size``
+            samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-            The values are all integers in  [0, n].
+        out : ndarray or scalar
+            Drawn samples from the parameterized hypergeometric distribution.
 
         See Also
         --------
@@ -4454,19 +4519,18 @@ cdef class RandomState:
 
         Parameters
         ----------
-        loc : float
-
-        scale : float > 0.
-
+        p : float or array_like of floats
+            Shape parameter for the distribution.  Must be in the range (0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``p`` is a scalar.  Otherwise,
+            ``np.array(p).size`` samples are drawn.
 
         Returns
         -------
-        samples : ndarray or scalar
-                  where the values are all integers in  [0, n].
+        out : ndarray or scalar
+            Drawn samples from the parameterized logarithmic series distribution.
 
         See Also
         --------
