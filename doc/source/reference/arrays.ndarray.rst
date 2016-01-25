@@ -467,7 +467,7 @@ Truth value of an array (:func:`bool()`):
 
    Truth-value testing of an array invokes
    :meth:`ndarray.__nonzero__`, which raises an error if the number of
-   elements in the the array is larger than 1, because the truth value
+   elements in the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
    in such cases. (If the number of elements is 0, the array evaluates
