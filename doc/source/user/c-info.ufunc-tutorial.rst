@@ -1172,7 +1172,7 @@ automatically generates a ufunc from a C function with the correct signature.
 
     *unused*
 
-        Unused; kept for compatiblity. Just set it to zero.
+        Unused; kept for compatibility. Just set it to zero.
 
 .. index::
    pair: ufunc; adding new
