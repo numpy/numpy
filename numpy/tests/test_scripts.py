@@ -16,6 +16,7 @@ from numpy.testing import assert_
 
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
+
 def run_command(cmd, check_code=True):
     """ Run command sequence `cmd` returning exit code, stdout, stderr
 
@@ -73,10 +74,18 @@ def test_f2py():
         success = stdout.strip() == asbytes('2')
         assert_(success, "Warning: f2py not found in path")
     else:
-        # unclear what f2py cmd was installed as, check plain (f2py) and
-        # current python version specific one (f2py3.4)
-        f2py_cmds = ('f2py', 'f2py' + basename(sys.executable)[6:])
+        # unclear what f2py cmd was installed as, check plain (f2py),
+        # with major version (f2py3), or major/minor version (f2py3.4)
+        code, stdout, stderr = run_command([sys.executable, '-V'])
+
+        # for some reason, 'python -V' returns version in 'stderr' for
+        # Python 2.x but in 'stdout' for Python 3.x
+        version = (stdout or stderr)[7:].strip()
+        major, minor, revision = version.decode('utf-8').split('.')
+
+        f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
         success = False
+
         for f2py_cmd in f2py_cmds:
             try:
                 code, stdout, stderr = run_command([f2py_cmd, '-v'])
@@ -85,5 +94,5 @@ def test_f2py():
                 break
             except:
                 pass
-        msg = "Warning: neither %s nor %s found in path" % f2py_cmds
+        msg = "Warning: neither %s nor %s nor %s found in path" % f2py_cmds
         assert_(success, msg)
