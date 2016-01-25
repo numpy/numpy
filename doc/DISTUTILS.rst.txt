@@ -70,7 +70,7 @@ Below is an example of a minimal ``setup.py`` file for a pure SciPy package::
       #setup(**configuration(top_path='').todict())
       setup(configuration=configuration)
 
-The arguments of the ``configuration`` function specifiy the name of
+The arguments of the ``configuration`` function specify the name of
 parent SciPy package (``parent_package``) and the directory location
 of the main ``setup.py`` script (``top_path``).  These arguments,
 along with the name of the current package, should be passed to the
@@ -269,10 +269,10 @@ in writing setup scripts:
   more information on arguments.
 
 + ``config.have_f77c()`` --- return True if Fortran 77 compiler is
-  available (read: a simple Fortran 77 code compiled succesfully).
+  available (read: a simple Fortran 77 code compiled successfully).
 
 + ``config.have_f90c()`` --- return True if Fortran 90 compiler is
-  available (read: a simple Fortran 90 code compiled succesfully).
+  available (read: a simple Fortran 90 code compiled successfully).
 
 + ``config.get_version()`` --- return version string of the current package,
   ``None`` if version information could not be detected. This methods
@@ -426,7 +426,7 @@ at some point.
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
 
-Specifing config_fc options for libraries in setup.py script
+Specifying config_fc options for libraries in setup.py script
 ------------------------------------------------------------
 
 It is possible to specify config_fc options in setup.py scripts.

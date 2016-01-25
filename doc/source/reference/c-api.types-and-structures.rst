@@ -219,7 +219,7 @@ PyArrayDescr_Type
     represents signed integer, a 'u' represents unsigned integer, 'f'
     represents floating point, 'c' represents complex floating point, 'S'
     represents 8-bit character string, 'U' represents 32-bit/character
-    unicode string, and 'V' repesents arbitrary.
+    unicode string, and 'V' represents arbitrary.
 
 .. c:member:: char PyArray_Descr.type
 

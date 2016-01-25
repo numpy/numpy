@@ -268,7 +268,7 @@ From scratch
 
 .. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
 
-    Create a new unitialized array of type, *typenum*, whose size in
+    Create a new uninitialized array of type, *typenum*, whose size in
     each of *nd* dimensions is given by the integer array, *dims*.
     This function cannot be used to create a flexible-type array (no
     itemsize given).

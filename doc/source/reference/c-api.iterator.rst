@@ -487,7 +487,7 @@ Construction and Destruction
             If the operand is flagged as write-only and a copy is needed,
             an uninitialized temporary array will be created and then copied
             to back to ``op[i]`` on destruction, instead of doing
-            the unecessary copy operation.
+            the unnecessary copy operation.
 
         .. c:var:: NPY_ITER_NBO
         .. c:var:: NPY_ITER_ALIGNED

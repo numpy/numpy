@@ -208,7 +208,7 @@ numeric operators also apply in an elementwise manner to arrays; the
 reverse convention would lead to more special cases.)
 
 So that's why matrix multiplication doesn't and can't just use ``*``.
-Now, in the the rest of this section, we'll explain why it nonetheless
+Now, in the rest of this section, we'll explain why it nonetheless
 meets the high bar for adding a new operator.
 
 
@@ -451,7 +451,7 @@ appear in many important applications, and that numerical libraries
 like numpy are used by a substantial proportion of Python's user base.
 But numerical libraries aren't just about matrix formulas, and being
 important doesn't necessarily mean taking up a lot of code: if matrix
-formulas only occured in one or two places in the average
+formulas only occurred in one or two places in the average
 numerically-oriented project, then it still wouldn't be worth adding a
 new operator.  So how common is matrix multiplication, really?
 
@@ -1107,7 +1107,7 @@ by other means, and that causes painful reverberations through the
 larger ecosystem.  Defining a new language (presumably with its own
 parser which would have to be kept in sync with Python's, etc.), just
 to support a single binary operator, is neither practical nor
-desireable.  In the numerical context, Python's competition is
+desirable.  In the numerical context, Python's competition is
 special-purpose numerical languages (Matlab, R, IDL, etc.).  Compared
 to these, Python's killer feature is exactly that one can mix
 specialized numerical code with code for XML parsing, web page
@@ -1195,7 +1195,7 @@ References
    test the null hypothesis that :math:`H\beta = r`; a large :math:`S`
    then indicates that this hypothesis is unlikely to be true. For
    example, in an analysis of human height, the vector :math:`\beta`
-   might contain one value which was the the average height of the
+   might contain one value which was the average height of the
    measured men, and another value which was the average height of the
    measured women, and then setting :math:`H = [1, -1], r = 0` would
    let us test whether men and women are the same height on
