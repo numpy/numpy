@@ -62,7 +62,13 @@ def run_command(cmd, check_code=True):
 def test_f2py():
     # test that we can run f2py script
     if sys.platform == 'win32':
-        f2py_cmd = r"%s\Scripts\f2py.py" % dirname(sys.executable)
+        exe_dir = dirname(sys.executable)
+
+        if exe_dir.endswith('Scripts'): # virtualenv
+            f2py_cmd = r"%s\f2py.py" % exe_dir
+        else:
+            f2py_cmd = r"%s\Scripts\f2py.py" % exe_dir
+
         code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
         success = stdout.strip() == asbytes('2')
         assert_(success, "Warning: f2py not found in path")
