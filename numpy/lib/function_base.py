@@ -3383,7 +3383,7 @@ def percentile(a, q, axis=None, out=None,
     """
     Compute the qth percentile of the data along the specified axis.
 
-    Returns the qth percentile (or percentiles) of the array elements.
+    Returns the qth percentile(s) of the array elements.
 
     Parameters
     ----------
@@ -3429,7 +3429,7 @@ def percentile(a, q, axis=None, out=None,
     Returns
     -------
     percentile : scalar or ndarray
-        If `q` is a single percentile and `axis=None`, then the return is a
+        If `q` is a single percentile and `axis=None`, then the result is a
         scalar. If multiple percentiles are given, the result is an an array.
         The percentiles are listed in the first axis. The remaining axes are the
         reduced axes of the input `a`. If the input contains integers or floats
@@ -3476,11 +3476,7 @@ def percentile(a, q, axis=None, out=None,
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
     array([ 7.,  2.])
-    >>> assert not np.all(a==b)
-    >>> b = a.copy()
-    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
-    3.5
-    >>> assert not np.all(a==b)
+    >>> assert not np.all(a == b)
 
     """
     q = array(q, dtype=np.float64, copy=True)
