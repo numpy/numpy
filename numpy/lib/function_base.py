@@ -3543,7 +3543,7 @@ def _percentile(a, q, axis=None, out=None,
     elif interpolation == 'higher':
         indices = ceil(indices).astype(intp)
     elif interpolation == 'midpoint':
-        indices = floor(indices) + 0.5
+        indices = 0.5 * (floor(indices) + ceil(indices))
     elif interpolation == 'nearest':
         indices = around(indices).astype(intp)
     elif interpolation == 'linear':
