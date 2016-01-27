@@ -11,7 +11,7 @@
   by
 
   Travis Oliphant,  oliphant@ee.byu.edu
-  Brigham Young Univeristy
+  Brigham Young University
 
 
 maintainer email:  oliphant.travis@ieee.org

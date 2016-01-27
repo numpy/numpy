@@ -582,7 +582,7 @@ _is_same_name(const char* s1, const char* s2)
 /*
  * Sets core_num_dim_ix, core_num_dims, core_dim_ixs, core_offsets,
  * and core_signature in PyUFuncObject "ufunc".  Returns 0 unless an
- * error occured.
+ * error occurred.
  */
 static int
 _parse_signature(PyUFuncObject *ufunc, const char *signature)

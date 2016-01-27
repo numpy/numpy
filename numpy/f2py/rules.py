@@ -15,14 +15,14 @@ wrapper_function(args)
     get_b_from_python
     if (successful) {
 
-      callfortran
-      if (succesful) {
+      call_fortran
+      if (successful) {
 
         put_a_to_python
-        if (succesful) {
+        if (successful) {
 
           put_b_to_python
-          if (succesful) {
+          if (successful) {
 
             buildvalue = ...
 

@@ -49,7 +49,7 @@ uses the same data buffer. This is why it is necessary to force copies through
 use of the .copy() method if one really wants to make a new and independent
 copy of the data buffer.
 
-New views into arrays mean the the object reference counts for the data buffer
+New views into arrays mean the object reference counts for the data buffer
 increase. Simply doing away with the original array object will not remove the
 data buffer if other views of it still exist.
 

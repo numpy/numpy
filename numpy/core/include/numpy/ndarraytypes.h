@@ -781,7 +781,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * An array never has the next four set; they're only used as parameter
- * flags to the the various FromAny functions
+ * flags to the various FromAny functions
  *
  * This flag may be requested in constructor functions.
  */

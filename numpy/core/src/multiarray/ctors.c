@@ -1049,7 +1049,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             sd = descr->elsize;
         }
         /*
-         * It is bad to have unitialized OBJECT pointers
+         * It is bad to have uninitialized OBJECT pointers
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {

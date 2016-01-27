@@ -842,7 +842,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized buffer, or leak a reference to each
+                 * an uninitialized buffer, or leak a reference to each
                  * object if initialized.
                  *
                  * So, first do the copy with no refcounting...
@@ -1003,7 +1003,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized valbuffer, or leak a reference to
+                 * an uninitialized valbuffer, or leak a reference to
                  * each object item if initialized.
                  *
                  * So, first do the copy with no refcounting...

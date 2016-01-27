@@ -3,7 +3,7 @@
  * aspects of NumPy's nditer.
  *
  * Copyright (c) 2010-2011 by Mark Wiebe (mwwiebe@gmail.com)
- * The Univerity of British Columbia
+ * The University of British Columbia
  *
  * Copyright (c) 2011 Enthought, Inc
  *

@@ -5583,7 +5583,7 @@ class MaskedArray(ndarray):
 
     def ptp(self, axis=None, out=None, fill_value=None):
         """
-        Return (maximum - minimum) along the the given dimension
+        Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
 
         Parameters

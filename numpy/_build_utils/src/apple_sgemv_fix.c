@@ -155,7 +155,7 @@ void sgemv_( const char* trans, const int* m, const int* n,
      *
      * Because Fortran uses column major order and X.T and Y.T are row vectors,
      * the leading dimensions of X.T and Y.T in SGEMM become equal to the
-     * strides of the the column vectors X and Y in SGEMV. */
+     * strides of the column vectors X and Y in SGEMV. */
 
     switch (*trans) {
         case 'T':
