@@ -188,7 +188,7 @@ def check_submodules():
             raise ValueError('Submodule not clean: %s' % line)
 
 
-from setuptools.command.sdist import sdist
+from distutils.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
