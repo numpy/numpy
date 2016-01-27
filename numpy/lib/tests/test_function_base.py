@@ -2055,7 +2055,7 @@ def compare_results(res, desired):
         assert_array_equal(res[i], desired[i])
 
 
-class TestScoreatpercentile(TestCase):
+class TestPercentile(TestCase):
 
     def test_basic(self):
         x = np.arange(8) * 0.5
@@ -2104,6 +2104,10 @@ class TestScoreatpercentile(TestCase):
     def test_midpoint(self):
         assert_equal(np.percentile(range(10), 51,
                                    interpolation='midpoint'), 4.5)
+        assert_equal(np.percentile(range(11), 51,
+                                   interpolation='midpoint'), 5.5)
+        assert_equal(np.percentile(range(11), 50,
+                                   interpolation='midpoint'), 5)
 
     def test_nearest(self):
         assert_equal(np.percentile(range(10), 51,
