@@ -71,7 +71,7 @@ setup_chroot()
   #   linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   #
-  # Numpy may not distinquish between 64 and 32 bit atlas in the
+  # Numpy may not distinguish between 64 and 32 bit ATLAS in the
   # configuration stage.
   DIR=$1
   set -u
@@ -146,6 +146,19 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
+  pip install nose
+  popd
+  run_test
+elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
+  # use an up-to-date pip / setuptools inside the venv
+  $PIP install -U virtualenv
+  $PYTHON setup.py sdist
+  # Make another virtualenv to install into
+  virtualenv --python=`which $PYTHON` venv-for-wheel
+  . venv-for-wheel/bin/activate
+  # Move out of source directory to avoid finding local numpy
+  pushd dist
+  pip install numpy*
   pip install nose
   popd
   run_test
