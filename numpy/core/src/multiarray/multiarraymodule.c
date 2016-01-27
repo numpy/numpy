@@ -3928,7 +3928,7 @@ _PyArray_SigintHandler(int signum)
 {
     PyOS_setsig(signum, SIG_IGN);
     /*
-     * jump buffer may be unitialized as SIGINT allowing functions are usually
+     * jump buffer may be uninitialized as SIGINT allowing functions are usually
      * run in other threads than the master thread that receives the signal
      */
     if (sigint_buf_init > 0) {

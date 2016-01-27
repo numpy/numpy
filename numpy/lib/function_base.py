@@ -1022,7 +1022,7 @@ def select(condlist, choicelist, default=0):
     dtype = np.result_type(*choicelist)
 
     # Convert conditions to arrays and broadcast conditions and choices
-    # as the shape is needed for the result. Doing it seperatly optimizes
+    # as the shape is needed for the result. Doing it separately optimizes
     # for example when all choices are scalars.
     condlist = np.broadcast_arrays(*condlist)
     choicelist = np.broadcast_arrays(*choicelist)
@@ -1244,7 +1244,7 @@ def gradient(f, *varargs, **kwargs):
 
     # Convert datetime64 data into ints. Make dummy variable `y`
     # that is a view of ints if the data is datetime64, otherwise
-    # just set y equal to the the array `f`.
+    # just set y equal to the array `f`.
     if f.dtype.char in ["M", "m"]:
         y = f.view('int64')
     else:

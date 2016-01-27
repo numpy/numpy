@@ -37,7 +37,7 @@ NPY_NO_EXPORT int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask);
 
 /*
- * Sorts the the array of dates provided in place and removes
+ * Sorts the array of dates provided in place and removes
  * NaT, duplicates and any date which is already excluded on account
  * of the weekmask.
  *
