@@ -11,7 +11,7 @@ process_file(filename)
   All function and subroutine blocks in a source file with names that
   contain '<..>' will be replicated according to the rules in '<..>'.
 
-  The number of comma-separeted words in '<..>' will determine the number of
+  The number of comma-separated words in '<..>' will determine the number of
   replicates.
 
   '<..>' may have two different forms, named and short. For example,

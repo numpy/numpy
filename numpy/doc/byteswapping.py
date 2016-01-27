@@ -108,7 +108,7 @@ the correct endianness:
 >>> fixed_end_dtype_arr[0]
 1
 
-Note the the array has not changed in memory:
+Note the array has not changed in memory:
 
 >>> fixed_end_dtype_arr.tobytes() == big_end_str
 True
