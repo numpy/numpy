@@ -644,6 +644,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
                 fid.close()
                 fid = None
                 zipf.write(tmpfile, arcname=fname)
+            except IOError as exc:
+                raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
             finally:
                 if fid:
                     fid.close()
