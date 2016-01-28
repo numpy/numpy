@@ -6,12 +6,12 @@ import os
 
 import numpy as np
 from numpy.testing import (
-    assert_equal, assert_array_equal, assert_almost_equal,
+    assert_equal, assert_array_equal, assert_almost_equal, assert_array_less,
     assert_array_almost_equal, build_err_msg, raises, assert_raises,
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath, 
+    assert_string_equal, assert_, tempdir, temppath,
     )
 import unittest
 
@@ -333,6 +333,45 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         except AssertionError as e:
             # remove anything that's not the array string
             self.assertEqual(str(e).split('%)\n ')[1], b)
+
+
+class TestArrayLess(unittest.TestCase):
+
+    def setUp(self):
+        self._assert_func = assert_array_less
+
+    def test_simple(self):
+        a = 1
+        b = [2, 3, 4]
+        self._assert_func(a, b)
+        a = [1, 0, 1]
+        self._assert_func(a, b)
+        a = [1]
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(a, b))
+
+    def test_nan(self):
+        a = [1, np.nan]
+        b = [2, np.nan]
+        self._assert_func(a, b)
+        a = [np.nan, 1]
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(a, b))
+
+    def test_inf(self):
+        a = 2
+        b = np.inf
+        self._assert_func(a, b)
+        a = [ 0.911,  1.065,  1.325,  1.587]
+        self._assert_func(a, b)
+        a.append(np.inf)
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(a, b))
+        self._assert_func(-np.inf, np.inf)
+        a = [1, np.inf]
+        b = [2, np.inf]
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(a, b))
 
 
 class TestApproxEqual(unittest.TestCase):

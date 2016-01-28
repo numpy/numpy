@@ -689,20 +689,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isnumber(x) and isnumber(y):
             x_isnan, y_isnan = isnan(x), isnan(y)
-            x_isinf, y_isinf = isinf(x), isinf(y)
 
             # Validate that the special values are in the same place
             if any(x_isnan) or any(y_isnan):
                 chk_same_position(x_isnan, y_isnan, hasval='nan')
-            if any(x_isinf) or any(y_isinf):
-                # Check +inf and -inf separately, since they are different
-                chk_same_position(x == +inf, y == +inf, hasval='+inf')
-                chk_same_position(x == -inf, y == -inf, hasval='-inf')
 
             # Combine all the special values
             x_id, y_id = x_isnan, y_isnan
-            x_id |= x_isinf
-            y_id |= y_isinf
 
             # Only do the comparison if actual values are left
             if all(x_id):
@@ -886,7 +879,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
             if npany(gisinf(x)) or npany( gisinf(y)):
                 xinfid = gisinf(x)
                 yinfid = gisinf(y)
-                if not xinfid == yinfid:
+                if not (xinfid == yinfid).all():
                     return False
                 # if one item, x and y is +- inf
                 if x.size == y.size == 1:
@@ -1863,7 +1856,7 @@ def temppath(*args, **kwargs):
     parameters are the same as for tempfile.mkstemp and are passed directly
     to that function. The underlying file is removed when the context is
     exited, so it should be closed at that time.
-  
+
     Windows does not allow a temporary file to be opened if it is already
     open, so the underlying file must be closed after opening before it
     can be opened again.
