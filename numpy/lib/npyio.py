@@ -630,8 +630,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     # Since target file might be big enough to exceed capacity of a global
     # temporary directory, create temp file side-by-side with the target file.
-    file_path, file_name = os.path.split(file)
-    fd, tmpfile = tempfile.mkstemp(prefix=file_name, dir=file_path, suffix='-numpy.npy')
+    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
+    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
     os.close(fd)
     try:
         for key, val in namedict.items():
