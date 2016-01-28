@@ -21,7 +21,7 @@ Created: 11 January 2003
 
 Requires: Python 2.x
 
-Succesfully tested on:
+Successfully tested on:
 
 ========  ============  =================================================
 os.name   sys.platform  comments
