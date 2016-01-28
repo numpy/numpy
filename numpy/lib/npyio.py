@@ -627,7 +627,11 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
-    fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
+
+    # Since target file might be big enough to exceed capacity of a global
+    # temporary directory, create temp file side-by-side with the target file.
+    file_path, file_name = os.path.split(file)
+    fd, tmpfile = tempfile.mkstemp(prefix=file_name, dir=file_path, suffix='-numpy.npy')
     os.close(fd)
     try:
         for key, val in namedict.items():
