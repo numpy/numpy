@@ -2450,12 +2450,12 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                     x /= t(2)
                     assert_equal(x, y)
                 except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e))
+                    warnings.warn(str(e), stacklevel=1)
                 try:
                     xm /= t(2)
                     assert_equal(xm, y)
                 except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e))
+                    warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
                     assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
@@ -2485,7 +2485,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                     x /= a
                     assert_equal(x, y / a)
                 except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e))
+                    warnings.warn(str(e), stacklevel=1)
                 try:
                     xm /= a
                     assert_equal(xm, y / a)
@@ -2494,7 +2494,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
                         mask_or(mask_or(m, a.mask), (a == t(0)))
                     )
                 except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e))
+                    warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
                     assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
