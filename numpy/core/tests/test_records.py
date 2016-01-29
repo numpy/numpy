@@ -299,6 +299,15 @@ class TestRecord(TestCase):
         assert_equal(a, pickle.loads(pickle.dumps(a)))
         assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
 
+    def test_pickle_3(self):
+        # Issue #7140
+        a = self.data
+        pa = pickle.loads(pickle.dumps(a[0]))
+        assert_(pa.flags.c_contiguous)
+        assert_(pa.flags.f_contiguous)
+        assert_(pa.flags.writeable)
+        assert_(pa.flags.aligned)
+
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
         dt = np.dtype([('foo', 'i8'), ('bar', 'O')])
