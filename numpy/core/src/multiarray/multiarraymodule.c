@@ -1980,16 +1980,10 @@ fail:
 static PyObject *
 array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *array_in;
     PyArrayObject *array;
     npy_intp count;
 
-    if (!PyArg_ParseTuple(args, "O", &array_in)) {
-        return NULL;
-    }
-
-    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
-    if (array == NULL) {
+    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &array)) {
         return NULL;
     }
 

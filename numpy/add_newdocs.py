@@ -942,34 +942,6 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'count_nonzero',
-    """
-    count_nonzero(a)
-
-    Counts the number of non-zero values in the array ``a``.
-
-    Parameters
-    ----------
-    a : array_like
-        The array for which to count non-zeros.
-
-    Returns
-    -------
-    count : int or array of int
-        Number of non-zero values in the array.
-
-    See Also
-    --------
-    nonzero : Return the coordinates of all the non-zero values.
-
-    Examples
-    --------
-    >>> np.count_nonzero(np.eye(4))
-    4
-    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
-    5
-    """)
-
 add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
 

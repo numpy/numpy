@@ -67,6 +67,13 @@ class TestNonarrayArgs(TestCase):
         out = np.compress([0, 1], arr, axis=0)
         assert_equal(out, tgt)
 
+    def test_count_nonzero(self):
+        arr = [[0, 1, 7, 0, 0],
+               [3, 0, 0, 2, 19]]
+        tgt = np.array([2, 3])
+        out = np.count_nonzero(arr, axis=1)
+        assert_equal(out, tgt)
+
     def test_cumproduct(self):
         A = [[1, 2, 3], [4, 5, 6]]
         assert_(np.all(np.cumproduct(A) == np.array([1, 2, 6, 24, 120, 720])))
@@ -991,9 +998,110 @@ class TestNonzero(TestCase):
                         assert_(type(nzx_i) is np.ndarray)
                         assert_(nzx_i.flags.writeable)
 
-    # Tests that the array method
-    # call works
+    def test_count_nonzero_axis(self):
+        # Basic check of functionality
+        m = np.array([[0, 1, 7, 0, 0], [3, 0, 0, 2, 19]])
+
+        expected = np.array([1, 1, 1, 1, 1])
+        assert_equal(np.count_nonzero(m, axis=0), expected)
+
+        expected = np.array([2, 3])
+        assert_equal(np.count_nonzero(m, axis=1), expected)
+
+        assert_raises(ValueError, np.count_nonzero, m, axis=(1, 1))
+        assert_raises(TypeError, np.count_nonzero, m, axis='foo')
+        assert_raises(ValueError, np.count_nonzero, m, axis=3)
+        assert_raises(TypeError, np.count_nonzero,
+                      m, axis=np.array([[1], [2]]))
+
+    def test_count_nonzero_axis_all_dtypes(self):
+        # More thorough test that the axis argument is respected
+        # for all dtypes and responds correctly when presented with
+        # either integer or tuple arguments for axis
+        msg = "Mismatch for dtype: %s"
+
+        for dt in np.typecodes['All']:
+            err_msg = msg % (np.dtype(dt).name,)
+
+            if dt != 'V':
+                if dt != 'M':
+                    m = np.zeros((3, 3), dtype=dt)
+                    n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
+
+                else:  # np.zeros doesn't work for np.datetime64
+                    m = np.array(['1970-01-01'] * 9)
+                    m = m.reshape((3, 3))
+
+                    m[0, 0] = '1970-01-12'
+                    m[1, 0] = '1970-01-12'
+                    m = m.astype(dt)
+
+                expected = np.array([2, 0, 0])
+                assert_equal(np.count_nonzero(m, axis=0),
+                             expected, err_msg=err_msg)
+
+                expected = np.array([1, 1, 0])
+                assert_equal(np.count_nonzero(m, axis=1),
+                             expected, err_msg=err_msg)
+
+                expected = np.array(2)
+                assert_equal(np.count_nonzero(m, axis=(0, 1)),
+                             expected, err_msg=err_msg)
+                assert_equal(np.count_nonzero(m, axis=None),
+                             expected, err_msg=err_msg)
+                assert_equal(np.count_nonzero(m),
+                             expected, err_msg=err_msg)
+
+            if dt == 'V':
+                # There are no 'nonzero' objects for np.void, so the testing
+                # setup is slightly different for this dtype
+                m = np.array([np.void(1)] * 6).reshape((2, 3))
+
+                expected = np.array([0, 0, 0])
+                assert_equal(np.count_nonzero(m, axis=0),
+                             expected, err_msg=err_msg)
+
+                expected = np.array([0, 0])
+                assert_equal(np.count_nonzero(m, axis=1),
+                             expected, err_msg=err_msg)
+
+                expected = np.array(0)
+                assert_equal(np.count_nonzero(m, axis=(0, 1)),
+                             expected, err_msg=err_msg)
+                assert_equal(np.count_nonzero(m, axis=None),
+                             expected, err_msg=err_msg)
+                assert_equal(np.count_nonzero(m),
+                             expected, err_msg=err_msg)
+
+    def test_count_nonzero_axis_consistent(self):
+        # Check that the axis behaviour for valid axes in
+        # non-special cases is consistent (and therefore
+        # correct) by checking it against an integer array
+        # that is then casted to the generic object dtype
+        from itertools import combinations, permutations
+
+        axis = (0, 1, 2, 3)
+        size = (5, 5, 5, 5)
+        msg = "Mismatch for axis: %s"
+
+        rng = np.random.RandomState(1234)
+        m = rng.randint(-100, 100, size=size)
+        n = m.astype(np.object)
+
+        for length in range(len(axis)):
+            for combo in combinations(axis, length):
+                for perm in permutations(combo):
+                    assert_equal(
+                        np.count_nonzero(m, axis=perm),
+                        np.count_nonzero(n, axis=perm),
+                        err_msg=msg % (perm,))
+
     def test_array_method(self):
+        # Tests that the array method
+        # call to nonzero works
         m = np.array([[1, 0, 0], [4, 0, 6]])
         tgt = [[0, 1, 1], [0, 0, 2]]
 

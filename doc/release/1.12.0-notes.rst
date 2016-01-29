@@ -138,6 +138,9 @@ Generalized ``flip``
 axis=1 respectively. The newly added ``flip`` function reverses the elements of
 an array along any given axis.
 
+* ``np.count_nonzero`` now has an ``axis`` parameter, allowing
+  non-zero counts to be generated on more than just a flattened
+  array object.
 
 BLIS support in ``numpy.distutils``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
