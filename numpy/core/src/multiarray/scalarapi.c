@@ -799,7 +799,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             Py_INCREF(descr);
             vobj->obval = NULL;
             Py_SIZE(vobj) = itemsize;
-            vobj->flags = NPY_ARRAY_BEHAVED | NPY_ARRAY_OWNDATA;
+            vobj->flags = NPY_ARRAY_CARRAY | NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_OWNDATA;
             swap = 0;
             if (PyDataType_HASFIELDS(descr)) {
                 if (base) {
