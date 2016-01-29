@@ -67,9 +67,6 @@ class Custom(Benchmark):
     def time_nonzero(self):
         np.nonzero(self.b)
 
-    def time_count_nonzero(self):
-        np.count_nonzero(self.b)
-
     def time_not_bool(self):
         (~self.b)
 
