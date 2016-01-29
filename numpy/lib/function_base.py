@@ -3383,14 +3383,14 @@ def percentile(a, q, axis=None, out=None,
     """
     Compute the qth percentile of the data along the specified axis.
 
-    Returns the qth percentile of the array elements.
+    Returns the qth percentile(s) of the array elements.
 
     Parameters
     ----------
     a : array_like
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
-        Percentile to compute which must be between 0 and 100 inclusive.
+        Percentile to compute, which must be between 0 and 100 inclusive.
     axis : int or sequence of int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the percentiles along a flattened version of the array.
@@ -3400,43 +3400,42 @@ def percentile(a, q, axis=None, out=None,
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow use of memory of input array `a` for
-        calculations. The input array will be modified by the call to
-        percentile. This will save memory when you do not need to preserve
-        the contents of the input array. In this case you should not make
-        any assumptions about the content of the passed in array `a` after
-        this function completes -- treat it as undefined. Default is False.
-        Note that, if the `a` input is not already an array this parameter
-        will have no effect, `a` will be converted to an array internally
-        regardless of the value of this parameter.
+        If True, then allow use of memory of input array `a` for calculations.
+        The input array will be modified by the call to `percentile`. This will
+        save memory when you do not need to preserve the contents of the input
+        array. In this case you should not make any assumptions about the
+        contents of the input `a` after this function completes -- treat it as
+        undefined. Default is False. If `a` is not already an array, this
+        parameter will have no effect as `a` will be converted to an array
+        internally regardless of the value of this parameter.
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to use,
-        when the desired quantile lies between two data points `i` and `j`:
-            * linear: `i + (j - i) * fraction`, where `fraction` is the
-              fractional part of the index surrounded by `i` and `j`.
-            * lower: `i`.
-            * higher: `j`.
-            * nearest: `i` or `j` whichever is nearest.
-            * midpoint: (`i` + `j`) / 2.
+        This optional parameter specifies the interpolation method to use
+        when the desired quantile lies between two data points ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
+              fractional part of the index surrounded by ``i`` and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original array `a`.
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one. With this option, the result will
+        broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 
     Returns
     -------
     percentile : scalar or ndarray
-        If a single percentile `q` is given and axis=None a scalar is
-        returned.  If multiple percentiles `q` are given an array holding
-        the result is returned. The results are listed in the first axis.
-        (If `out` is specified, in which case that array is returned
-        instead).  If the input contains integers, or floats of smaller
-        precision than 64, then the output data-type is float64. Otherwise,
-        the output data-type is the same as that of the input.
+        If `q` is a single percentile and `axis=None`, then the result is a
+        scalar. If multiple percentiles are given, the result is an an array.
+        The percentiles are listed in the first axis. The remaining axes are the
+        reduced axes of the input `a`. If the input contains integers or floats
+        of smaller precision than 64, then the output data-type is float64.
+        Otherwise, the output data-type is the same as that of the input. If
+        `out` is specified, that array is returned instead. 
 
     See Also
     --------
@@ -3445,11 +3444,11 @@ def percentile(a, q, axis=None, out=None,
     Notes
     -----
     Given a vector V of length N, the q-th percentile of V is the q-th ranked
-    value in a sorted copy of V.  The values and distances of the two
-    nearest neighbors as well as the `interpolation` parameter will
-    determine the percentile if the normalized ranking does not match q
-    exactly. This function is the same as the median if ``q=50``, the same
-    as the minimum if ``q=0`` and the same as the maximum if ``q=100``.
+    value in a sorted copy of V. The values and distances of the two nearest
+    neighbors as well as the `interpolation` parameter will determine the
+    percentile if the normalized ranking does not match q exactly. This function
+    is the same as the median if ``q=50``, the same as the minimum if ``q=0``
+    and the same as the maximum if ``q=100``.
 
     Examples
     --------
@@ -3458,28 +3457,26 @@ def percentile(a, q, axis=None, out=None,
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.percentile(a, 50)
-    array([ 3.5])
+    3.5
     >>> np.percentile(a, 50, axis=0)
     array([[ 6.5,  4.5,  2.5]])
     >>> np.percentile(a, 50, axis=1)
+    array([ 7.,  2.])
+    >>> np.percentile(a, 50, axis=1, keepdims=True)
     array([[ 7.],
            [ 2.]])
 
     >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 50, axis=0, out=m)
+    >>> np.percentile(a, 50, axis=0, out=out)
     array([[ 6.5,  4.5,  2.5]])
     >>> m
     array([[ 6.5,  4.5,  2.5]])
 
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
-    array([[ 7.],
-           [ 2.]])
-    >>> assert not np.all(a==b)
-    >>> b = a.copy()
-    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
-    array([ 3.5])
+    array([ 7.,  2.])
+    >>> assert not np.all(a == b)
 
     """
     q = array(q, dtype=np.float64, copy=True)
