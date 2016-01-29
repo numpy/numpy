@@ -305,6 +305,8 @@ class TestRecord(TestCase):
         pa = pickle.loads(pickle.dumps(a[0]))
         assert_(pa.flags.c_contiguous)
         assert_(pa.flags.f_contiguous)
+        assert_(pa.flags.writeable)
+        assert_(pa.flags.aligned)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
