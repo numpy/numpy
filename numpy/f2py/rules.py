@@ -15,7 +15,7 @@ wrapper_function(args)
     get_b_from_python
     if (successful) {
 
-      call_fortran
+      callfortran
       if (successful) {
 
         put_a_to_python
