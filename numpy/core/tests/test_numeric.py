@@ -1004,8 +1004,8 @@ class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3, 5, 8)
         V = rand(5, 8)
-        g1 = randint(0, 5, size=15)
-        g2 = randint(0, 8, size=15)
+        g1 = randint(low=0, high=5, size=15)
+        g2 = randint(low=0, high=8, size=15)
         V[g1, g2] = -V[g1, g2]
         assert_((np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
 

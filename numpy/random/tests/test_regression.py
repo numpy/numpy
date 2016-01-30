@@ -60,7 +60,7 @@ class TestRegression(TestCase):
         lmax = np.iinfo('l').max
         lmin = np.iinfo('l').min
         try:
-            random.randint(lmin, lmax)
+            random.randint(low=lmin, high=lmax)
         except:
             raise AssertionError
 

@@ -2017,8 +2017,8 @@ class TestMethods(TestCase):
             for i in range(1, j - 2):
                 d = np.arange(j)
                 np.random.shuffle(d)
-                d = d % np.random.randint(2, 30)
-                idx = np.random.randint(d.size)
+                d = d % np.random.randint(low=2, high=30)
+                idx = np.random.randint(low=d.size)
                 kth = [0, idx, i, i + 1]
                 tgt = np.sort(d)[kth]
                 assert_array_equal(np.partition(d, kth)[kth], tgt,

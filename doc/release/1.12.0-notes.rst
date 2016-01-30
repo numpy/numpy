@@ -104,5 +104,17 @@ Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins`` argument.
 Changes
 =======
 
+``np.randint`` can handle more ``low=None`` and ``high=None`` combinations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If ``low=None`` and ``high=None``, random numbers will be generated over the
+range [``lowbnd``, ``highbnd``), where ``lowbnd`` and ``highbnd`` equal
+``np.iinfo(dtype).min`` and ``np.iinfo(dtype).max`` respectively.
+
+If only ``low=None``, random numbers will be generated over the range [``lowbnd``,
+``high``), where ``lowbnd`` is defined as previously. If only ``high=None``, random
+numbers will still be generated over the range [``0``, ``low``) provided ``low`` >= 0.
+Otherwise, numbers will be generated over [``low``, ``highbnd``), where ``highbnd`` is
+defined as previously.
+
 Deprecations
 ============

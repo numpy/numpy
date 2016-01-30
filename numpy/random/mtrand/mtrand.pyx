@@ -1159,25 +1159,33 @@ cdef class RandomState:
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
 
-    def randint(self, low, high=None, size=None, dtype='l'):
+    def randint(self, low=None, high=None, size=None, dtype='l'):
         """
-        randint(low, high=None, size=None, dtype='l')
+        randint(low=None, high=None, size=None, dtype='l')
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
         Return random integers from the "discrete uniform" distribution of
-        the specified dtype in the "half-open" interval [`low`, `high`). If
-        `high` is None (the default), then results are from [0, `low`).
+        the specified dtype in the "half-open" interval [`low`, `high`).
+
+        If ``low`` and ``high`` are None (default), the results are from
+        [`lowbnd`, `highbnd`), where `lowbnd` and `highbnd` are equal to
+        `np.iinfo(dtype).min` and `np.iinfo(dtype).max`.
+
+        If only ``low`` is None, the results are from [`lowbnd`, `high`),
+        where `lowbnd` is defined as previously. If only `high` is None,
+        then if `low` > 0, results are from [0, `low`). This behaviour is
+        intended to maintain **backwards compatibility**. Otherwise, results
+        are from [`low`, `highbnd`), where `highbnd` is defined as previously.
 
         Parameters
         ----------
-        low : int
-            Lowest (signed) integer to be drawn from the distribution (unless
-            ``high=None``, in which case this parameter is the *highest* such
-            integer).
+        low : int, optional
+            If provided, the lowest integer to be drawn from the
+            distribution (see above for behavior if ``low=None``).
         high : int, optional
-            If provided, one above the largest (signed) integer to be drawn
-            from the distribution (see above for behavior if ``high=None``).
+            If provided, one above the largest integer to be drawn from
+			the distribution (see above for behavior if ``high=None``).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -1205,26 +1213,79 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> np.random.randint(2, size=10)
-        array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])
-        >>> np.random.randint(1, size=10)
-        array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        Generate a random integer between 0 and 4, inclusive:
 
-        Generate a 2 x 4 array of ints between 0 and 4, inclusive:
+        >>> np.random.randint(low=1, high=5)
+        1
 
-        >>> np.random.randint(5, size=(2, 4))
-        array([[4, 0, 2, 1],
-               [3, 2, 2, 0]])
+        Generate a 2 x 4 array of ints between 1 and 4, inclusive:
+
+        >>> np.random.randint(low=1, high=5, size=(2, 4))
+        array([[3, 2, 1, 1],
+               [1, 2, 1, 4]])
+
+        Generate a 2 x 4 array of ints between 1 and 4, inclusive,
+        with 'dtype' equal to 'np.uint8':
+
+        >>> np.random.randint(low=1, high=5, size=(2, 4), dtype=np.uint8)
+        array([[3, 2, 1, 1],
+               [1, 2, 1, 4]], dtype=uint8)
+
+        Generate a 2 x 4 array of integers with 'dtype' equal to 'np.uint8':
+
+        >>> np.random.randint(size=(2, 4), dtype=np.uint8)
+        array([[240, 81, 30, 113],
+               [160, 69, 60, 128]], dtype=uint8)
+
+        Generate a 2 x 4 array of integers with 'dtype' equal to 'np.uint8'
+        that are at most 9 inclusive:
+
+        >>> np.random.randint(high=10, size=(2, 4), dtype=np.uint8)
+        array([[6, 8, 7, 4],
+               [7, 3, 4, 4]], dtype=uint8)
+
+        Generate a 2 x 4 array of integers with 'dtype' equal to 'np.int8'
+        that are at least -10 inclusive:
+
+        >>> np.random.randint(low=-10, size=(2, 4), dtype=np.int8)
+        array([[106, 89,  -8,  35],
+               [ 89, 34, 105, 123]], dtype=int8)
+
+        Generate a 2 x 4 array of integers with 'dtype' equal to 'np.int8'
+        that are between 0 and 4 inclusive:
+
+        >>> np.random.randint(low=5, size=(2, 4), dtype=np.uint8)
+        array([[3, 0,  -8,  35],
+               [3, 4, 105, 123]], dtype=int8)
+
+        Generate a 2 x 4 array of integers with 'dtype' equal to 'np.int8'
+        that are at least 10 inclusive:
+
+        >>> np.random.randint(low=10, high=np.iinfo(np.int8).max + 1,
+                              size=(2, 4), dtype=np.int8)
+        array([[ 45, 54,  25, 106],
+               [ 30, 23, 109,  91]], dtype=int8)
 
         """
-        if high is None:
-            high = low
-            low = 0
-
         key = np.dtype(dtype).name
         if not key in _randint_type:
-            raise TypeError('Unsupported dtype "%s" for randint' % key)
+            raise TypeError(("Unsupported dtype '{dtype}' "
+                             "for randint".format(dtype=key)))
         lowbnd, highbnd, randfunc = _randint_type[key]
+
+        if low is None:
+            low = lowbnd
+            high = (highbnd
+                    if high is None
+                    else high)
+
+        elif high is None:
+            if low <= 0:
+                high = highbnd
+
+            else:
+                high = low
+                low = 0
 
         if low < lowbnd:
             raise ValueError("low is out of bounds for %s" % (key,))
@@ -1732,17 +1793,17 @@ cdef class RandomState:
         """
         if high is None:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint(1, {low} + 1) instead".format(low=low)),
+                           "randint(low=1, high={low} + 1) instead".format(low=low)),
                           DeprecationWarning)
             high = low
             low = 1
 
         else:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint({low}, {high} + 1) instead".format(
+                           "randint(low={low}, high={high} + 1) instead".format(
                     low=low, high=high)), DeprecationWarning)
 
-        return self.randint(low, high + 1, size=size, dtype='l')
+        return self.randint(low=low, high=high + 1, size=size, dtype='l')
 
 
 
