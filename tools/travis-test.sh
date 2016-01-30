@@ -117,7 +117,11 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
-  $PYTHON ../tools/test-installed-numpy.py
+  if [ -n "$RUN_FULL_TESTS" ]; then
+    $PYTHON ../tools/test-installed-numpy.py --mode=full
+  else
+    $PYTHON ../tools/test-installed-numpy.py
+  fi
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis
