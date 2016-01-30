@@ -96,22 +96,31 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
 
     y = _nx.arange(0, num, dtype=dt)
 
+    delta = stop - start
     if num > 1:
-        delta = stop - start
-        step = delta / div
+        step = factor = delta / div
         if step == 0:
             # Special handling for denormal numbers, gh-5437
             y /= div
-            y *= delta
+            factor = delta
+
+        if getattr(step, '__array_priority__', 0) <= 0:
+            # Inplace is faster, but we should only do it if the step is not
+            # something that wants to override array, since in-place is broken
+            # for that case; this allows subclasses to use linspace; gh-7142
+            y *= factor
         else:
-            y *= step
+            y = y * factor
+
     else:
         # 0 and 1 item long sequences have an undefined step
         step = NaN
+        # As above, allowing for possible change of output class.
+        y = y * delta
 
     y += start
 
-    if endpoint and num > 1:
+    if endpoint:
         y[-1] = stop
 
     if retstep:
