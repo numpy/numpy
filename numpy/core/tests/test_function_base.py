@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy import (logspace, linspace, dtype, array, finfo, typecodes, arange,
-                   isnan)
+                   isnan, ndarray)
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal
@@ -114,6 +114,19 @@ class TestLinspace(TestCase):
         a = PhysicalQuantity(0.0)
         b = PhysicalQuantity(1.0)
         assert_equal(linspace(a, b), linspace(0.0, 1.0))
+
+    def test_subclass(self):
+        class PhysicalQuantity2(ndarray):
+            __array_priority__ = 10
+
+        a = array(0).view(PhysicalQuantity2)
+        b = array(1).view(PhysicalQuantity2)
+        ls = linspace(a, b)
+        assert type(ls) is PhysicalQuantity2
+        assert_equal(ls, linspace(0.0, 1.0))
+        ls = linspace(a, b, 1)
+        assert type(ls) is PhysicalQuantity2
+        assert_equal(ls, linspace(0.0, 1.0, 1))
 
     def test_denormal_numbers(self):
         # Regression test for gh-5437. Will probably fail when compiled

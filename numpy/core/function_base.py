@@ -96,18 +96,23 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
 
     y = _nx.arange(0, num, dtype=dt)
 
+    delta = stop - start
     if num > 1:
-        delta = stop - start
         step = delta / div
         if step == 0:
             # Special handling for denormal numbers, gh-5437
             y /= div
-            y *= delta
+            y = y * delta
         else:
-            y *= step
+            # One might be tempted to use faster, in-place multiplication here,
+            # but this prevents step from overriding what class is produced,
+            # and thus prevents, e.g., use of Quantities; see gh-7142.
+            y = y * step
     else:
         # 0 and 1 item long sequences have an undefined step
         step = NaN
+        # Multiply with delta to allow possible override of output class.
+        y = y * delta
 
     y += start
 
