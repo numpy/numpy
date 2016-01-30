@@ -944,11 +944,15 @@ def piecewise(x, condlist, funclist, *args, **kw):
             condlist = condlist.T
     if n == n2 - 1:  # compute the "otherwise" condition.
         totlist = np.logical_or.reduce(condlist, axis=0)
-        condlist = np.vstack([condlist, ~totlist])
+        try:
+            condlist = np.vstack([condlist, ~totlist])
+        except:
+            condlist = [asarray(c, dtype=bool) for c in condlist]
+            totlist = condlist[0]
+            for k in range(1, n):
+                totlist |= condlist[k]
+            condlist.append(~totlist)
         n += 1
-    if (n != n2):
-        raise ValueError(
-                "function list and condition list must be the same")
 
     y = zeros(x.shape, x.dtype)
     for k in range(n):
