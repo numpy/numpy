@@ -845,19 +845,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     return a
 
 
-def valarray(shape, value=0.0, typecode=None):
-    """Return an array of all value.
-    """
-    if typecode is None:
-        typecode = bool
-    out = ones(shape, dtype=typecode) * value
-
-    if not isinstance(out, np.ndarray):
-        out = asarray(out)
-    return out
-
-
-def piecewise(xi, condlist, funclist, *args, **kw):
+def piecewise(x, condlist, funclist, *args, **kw):
     """
     Evaluate a piecewise-defined function.
 
@@ -866,33 +854,34 @@ def piecewise(xi, condlist, funclist, *args, **kw):
 
     Parameters
     ----------
-    xi : tuple
-        input arguments to the functions in funclist, i.e., (x0, x1,...., xn)
+    x : ndarray
+        The input domain.
     condlist : list of bool arrays
         Each boolean array corresponds to a function in `funclist`.  Wherever
-        `condlist[i]` is True, `funclist[i](x0,x1,...,xn)` is used as the
-        output value. Each boolean array in `condlist` selects a piece of `xi`,
-        and should therefore be of the same shape as `xi`.
+        `condlist[i]` is True, `funclist[i](x)` is used as the output value.
+
+        Each boolean array in `condlist` selects a piece of `x`,
+        and should therefore be of the same shape as `x`.
 
         The length of `condlist` must correspond to that of `funclist`.
         If one extra function is given, i.e. if
         ``len(funclist) - len(condlist) == 1``, then that extra function
         is the default value, used wherever all conditions are false.
-    funclist : list of callables, f(*(xi + args), **kw), or scalars
+    funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
         condition is True.  It should take an array as input and give an array
         or a scalar value as output.  If, instead of a callable,
         a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
     args : tuple, optional
-        Any further arguments given here are passed to the functions
-        upon execution, i.e., if called ``piecewise(..., ..., args=(1, 'a'))``,
-        then each function is called as ``f(x0, x1,..., xn, 1, 'a')``.
+        Any further arguments given to `piecewise` are passed to the functions
+        upon execution, i.e., if called ``piecewise(..., ..., 1, 'a')``, then
+        each function is called as ``f(x, 1, 'a')``.
     kw : dict, optional
         Keyword arguments used in calling `piecewise` are passed to the
         functions upon execution, i.e., if called
         ``piecewise(..., ..., lambda=1)``, then each function is called as
-        ``f(x0, x1,..., xn, lambda=1)``.
+        ``f(x, lambda=1)``.
 
     Returns
     -------
@@ -910,17 +899,17 @@ def piecewise(xi, condlist, funclist, *args, **kw):
     Notes
     -----
     This is similar to choose or select, except that functions are
-    evaluated on elements of `xi` that satisfy the corresponding condition from
+    evaluated on elements of `x` that satisfy the corresponding condition from
     `condlist`.
 
     The result is::
 
-          |--
-          |funclist[0](x0[condlist[0]],x1[condlist[0]],...,xn[condlist[0]])
-    out = |funclist[1](x0[condlist[1]],x1[condlist[1]],...,xn[condlist[1]])
-          |...
-          |funclist[n2](x0[condlist[n2]],x1[condlist[n2]],...,xn[condlist[n2]])
-          |--
+            |--
+            |funclist[0](x[condlist[0]])
+      out = |funclist[1](x[condlist[1]])
+            |...
+            |funclist[n2](x[condlist[n2]])
+            |--
 
     Examples
     --------
@@ -930,84 +919,53 @@ def piecewise(xi, condlist, funclist, *args, **kw):
     >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
     array([-1., -1., -1.,  1.,  1.,  1.])
 
-    Define the absolute value, which is ``-x`` for ``x < 0`` and ``x`` for
+    Define the absolute value, which is ``-x`` for ``x <0`` and ``x`` for
     ``x >= 0``.
 
-    >>> np.piecewise((x,), [x < 0, x >= 0], [lambda x: -x, lambda x: x])
+    >>> np.piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
     array([ 2.5,  1.5,  0.5,  0.5,  1.5,  2.5])
 
-    Define the absolute value, which is ``-x * y`` for ``x * y <0`` and
-    ``x * y`` for ``x * y >= 0``
-    >>> X, Y = np.meshgrid(x, x)
-    >>> np.piecewise((X, Y), [X * Y < 0, ],
-    ...              [lambda x, y: -x * y, lambda x, y: x * y])
-    array([[ 6.25,  3.75,  1.25,  1.25,  3.75,  6.25],
-           [ 3.75,  2.25,  0.75,  0.75,  2.25,  3.75],
-           [ 1.25,  0.75,  0.25,  0.25,  0.75,  1.25],
-           [ 1.25,  0.75,  0.25,  0.25,  0.75,  1.25],
-           [ 3.75,  2.25,  0.75,  0.75,  2.25,  3.75],
-           [ 6.25,  3.75,  1.25,  1.25,  3.75,  6.25]])
     """
-    def otherwise_condition(condlist):
-        return ~np.logical_or.reduce(condlist, axis=0)
+    x = asanyarray(x)
+    n2 = len(funclist)
+    if (isscalar(condlist) or not (isinstance(condlist[0], list) or
+                                   isinstance(condlist[0], ndarray))):
+        condlist = [condlist]
+    condlist = array(condlist, dtype=bool)
+    n = len(condlist)
+    # This is a hack to work around problems with NumPy's
+    #  handling of 0-d arrays and boolean indexing with
+    #  numpy.bool_ scalars
+    zerod = False
+    if x.ndim == 0:
+        x = x[None]
+        zerod = True
+        if condlist.shape[-1] != 1:
+            condlist = condlist.T
+    if n == n2 - 1:  # compute the "otherwise" condition.
+        totlist = np.logical_or.reduce(condlist, axis=0)
+        try:
+            condlist = np.vstack([condlist, ~totlist])
+        except:
+            condlist = [asarray(c, dtype=bool) for c in condlist]
+            totlist = condlist[0]
+            for k in range(1, n):
+                totlist |= condlist[k]
+            condlist.append(~totlist)
+        n += 1
 
-    def ok_shapes(condlist, funclist):
-        nc, nf = len(condlist), len(funclist)
-        return nc in [nf-1, nf]
-
-    def check_shapes(condlist, funclist):
-        if not ok_shapes(condlist, funclist):
-            raise ValueError("function list and condition list" +
-                             " must be the same length")
-
-    if (np.isscalar(condlist) or not ok_shapes(condlist, funclist)):
-        condlist = (condlist,)
-    check_shapes(condlist, funclist)
-    if not isinstance(xi, tuple):
-        xi = (xi,)
-
-    condlist = np.broadcast_arrays(*condlist)
-    if len(condlist) == len(funclist)-1:
-        condlist.append(otherwise_condition(condlist))
-    # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    deprecated_ints = False
-    for i, cond in enumerate(condlist):
-        if cond.dtype.type is not np.bool_:
-            if np.issubdtype(cond.dtype, np.integer):
-                # A previous implementation accepted int ndarrays accidentally.
-                # Supported here deliberately, but deprecated.
-                condlist[i] = condlist[i].astype(bool)
-                deprecated_ints = True
-            else:
-                raise ValueError(
-                    'invalid entry in condlist: should be boolean ndarray')
-
-    if deprecated_ints:
-        msg = "piecewise condlists containing integer ndarrays is deprecated " \
-            "and will be removed in the future. Use `.astype(bool)` to " \
-            "convert to bools."
-        warnings.warn(msg, DeprecationWarning)
-
-    xi = np.broadcast_arrays(*xi)
-    fill_value = 0
-    dtype = np.result_type(fill_value, *xi)
-
-    if xi[0].ndim == 0:
-        # This may be common, so avoid the call.
-        result_shape = condlist[0].shape
-    else:
-        result_shape = np.broadcast_arrays(xi[0], condlist[0])[0].shape
-    # Use np.copyto to burn each funclist array onto result, using the
-    # corresponding condlist as a boolean mask. This is done in reverse
-    # order since the first choice should take precedence.
-    out = np.full(result_shape, fill_value, dtype)
-    for cond, func in zip(condlist[::-1], funclist[::-1]):
-        if isinstance(func, collections.Callable):
-            temp = tuple(np.extract(cond, x) for x in xi) + args
-            np.place(out, cond, func(*temp, **kw))
-        else:  # func is a scalar value
-            np.copyto(out, func, where=cond)
-    return out
+    y = zeros(x.shape, x.dtype)
+    for k in range(n):
+        item = funclist[k]
+        if not isinstance(item, collections.Callable):
+            y[condlist[k]] = item
+        else:
+            vals = x[condlist[k]]
+            if vals.size > 0:
+                y[condlist[k]] = item(vals, *args, **kw)
+    if zerod:
+        y = y.squeeze()
+    return y
 
 
 def select(condlist, choicelist, default=0):
@@ -3429,14 +3387,14 @@ def percentile(a, q, axis=None, out=None,
     """
     Compute the qth percentile of the data along the specified axis.
 
-    Returns the qth percentile(s) of the array elements.
+    Returns the qth percentile of the array elements.
 
     Parameters
     ----------
     a : array_like
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
-        Percentile to compute, which must be between 0 and 100 inclusive.
+        Percentile to compute which must be between 0 and 100 inclusive.
     axis : int or sequence of int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the percentiles along a flattened version of the array.
@@ -3446,42 +3404,43 @@ def percentile(a, q, axis=None, out=None,
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow use of memory of input array `a` for calculations.
-        The input array will be modified by the call to `percentile`. This will
-        save memory when you do not need to preserve the contents of the input
-        array. In this case you should not make any assumptions about the
-        contents of the input `a` after this function completes -- treat it as
-        undefined. Default is False. If `a` is not already an array, this
-        parameter will have no effect as `a` will be converted to an array
-        internally regardless of the value of this parameter.
+        If True, then allow use of memory of input array `a` for
+        calculations. The input array will be modified by the call to
+        percentile. This will save memory when you do not need to preserve
+        the contents of the input array. In this case you should not make
+        any assumptions about the content of the passed in array `a` after
+        this function completes -- treat it as undefined. Default is False.
+        Note that, if the `a` input is not already an array this parameter
+        will have no effect, `a` will be converted to an array internally
+        regardless of the value of this parameter.
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to use
-        when the desired quantile lies between two data points ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
-              fractional part of the index surrounded by ``i`` and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+        This optional parameter specifies the interpolation method to use,
+        when the desired quantile lies between two data points `i` and `j`:
+            * linear: `i + (j - i) * fraction`, where `fraction` is the
+              fractional part of the index surrounded by `i` and `j`.
+            * lower: `i`.
+            * higher: `j`.
+            * nearest: `i` or `j` whichever is nearest.
+            * midpoint: (`i` + `j`) / 2.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left in the
-        result as dimensions with size one. With this option, the result will
-        broadcast correctly against the original array `a`.
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 
     Returns
     -------
     percentile : scalar or ndarray
-        If `q` is a single percentile and `axis=None`, then the result is a
-        scalar. If multiple percentiles are given, the result is an an array.
-        The percentiles are listed in the first axis. The remaining axes are the
-        reduced axes of the input `a`. If the input contains integers or floats
-        of smaller precision than 64, then the output data-type is float64.
-        Otherwise, the output data-type is the same as that of the input. If
-        `out` is specified, that array is returned instead. 
+        If a single percentile `q` is given and axis=None a scalar is
+        returned.  If multiple percentiles `q` are given an array holding
+        the result is returned. The results are listed in the first axis.
+        (If `out` is specified, in which case that array is returned
+        instead).  If the input contains integers, or floats of smaller
+        precision than 64, then the output data-type is float64. Otherwise,
+        the output data-type is the same as that of the input.
 
     See Also
     --------
@@ -3490,11 +3449,11 @@ def percentile(a, q, axis=None, out=None,
     Notes
     -----
     Given a vector V of length N, the q-th percentile of V is the q-th ranked
-    value in a sorted copy of V. The values and distances of the two nearest
-    neighbors as well as the `interpolation` parameter will determine the
-    percentile if the normalized ranking does not match q exactly. This function
-    is the same as the median if ``q=50``, the same as the minimum if ``q=0``
-    and the same as the maximum if ``q=100``.
+    value in a sorted copy of V.  The values and distances of the two
+    nearest neighbors as well as the `interpolation` parameter will
+    determine the percentile if the normalized ranking does not match q
+    exactly. This function is the same as the median if ``q=50``, the same
+    as the minimum if ``q=0`` and the same as the maximum if ``q=100``.
 
     Examples
     --------
@@ -3503,26 +3462,28 @@ def percentile(a, q, axis=None, out=None,
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.percentile(a, 50)
-    3.5
+    array([ 3.5])
     >>> np.percentile(a, 50, axis=0)
     array([[ 6.5,  4.5,  2.5]])
     >>> np.percentile(a, 50, axis=1)
-    array([ 7.,  2.])
-    >>> np.percentile(a, 50, axis=1, keepdims=True)
     array([[ 7.],
            [ 2.]])
 
     >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 50, axis=0, out=out)
+    >>> np.percentile(a, 50, axis=0, out=m)
     array([[ 6.5,  4.5,  2.5]])
     >>> m
     array([[ 6.5,  4.5,  2.5]])
 
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
-    array([ 7.,  2.])
-    >>> assert not np.all(a == b)
+    array([[ 7.],
+           [ 2.]])
+    >>> assert not np.all(a==b)
+    >>> b = a.copy()
+    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
+    array([ 3.5])
 
     """
     q = array(q, dtype=np.float64, copy=True)

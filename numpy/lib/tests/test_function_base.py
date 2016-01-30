@@ -1869,6 +1869,10 @@ class TestPiecewise(TestCase):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
 
+    def test_scalar_domains_three_conditions(self):
+        x = piecewise(3, [True, False, False], [4, 2, 0])
+        assert_equal(x, 4)
+
     def test_default(self):
         # No value specified for x[1], should be 0
         x = piecewise([1, 2], [[True, False]], [2])
@@ -1988,6 +1992,13 @@ class TestPiecewise(TestCase):
         conditions = [np.array([False])] * 100
         choices = [np.array([1])] * 100
         piecewise(1, conditions, choices)
+
+    def test_multidimensional_extrafunc(self):
+        x = np.array([[-2.5, -1.5, -0.5],
+                      [0.5, 1.5, 2.5]])
+        y = piecewise(x, [x < 0, x >= 2], [-1, 1, 3])
+        assert_array_equal(y, np.array([[-1., -1., -1.],
+                                        [3., 3., 1.]]))
 
 
 class TestBincount(TestCase):
