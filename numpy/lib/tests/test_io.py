@@ -194,7 +194,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
-        with temppath(prefix="numpy_test_big_arrays_") as tmp:
+        with temppath(prefix="numpy_test_big_arrays_", suffix=".npz") as tmp:
             np.savez(tmp, a=a)
             del a
             npfile = np.load(tmp)
