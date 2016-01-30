@@ -4615,24 +4615,6 @@ class TestDot(TestCase):
         assert_equal(np.dot(arr, 3), desired)
         assert_equal(np.dot(3, arr), desired)
 
-    def test_dot_override(self):
-        class A(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                return "A"
-
-        class B(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                return NotImplemented
-
-        a = A()
-        b = B()
-        c = np.array([[1]])
-
-        assert_equal(np.dot(a, b), "A")
-        assert_equal(c.dot(a), "A")
-        assert_raises(TypeError, np.dot, b, c)
-        assert_raises(TypeError, c.dot, b)
-
     def test_accelerate_framework_sgemv_fix(self):
 
         def aligned_array(shape, align, dtype, order='C'):
