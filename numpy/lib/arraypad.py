@@ -1337,7 +1337,7 @@ def pad(array, pad_width, mode, **kwargs):
         'reflect_type': 'even',
         }
 
-    if isinstance(mode, str):
+    if isinstance(mode, np.compat.basestring):
         # Make sure have allowed kwargs appropriate for mode
         for key in kwargs:
             if key not in allowedkwargs[mode]:
