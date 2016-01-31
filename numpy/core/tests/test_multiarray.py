@@ -2136,6 +2136,9 @@ class TestMethods(TestCase):
         assert_equal(c, np.dot(a, b))
 
     def test_dot_override(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
@@ -2543,6 +2546,9 @@ class TestBinop(object):
         assert_array_equal(res, l[4] + l[4])
 
     def test_ufunc_override_rop_precedence(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         # Check that __rmul__ and other right-hand operations have
         # precedence over __numpy_ufunc__
 
@@ -2661,6 +2667,9 @@ class TestBinop(object):
             yield check, op_name, False
 
     def test_ufunc_override_rop_simple(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         # Check parts of the binary op overriding behavior in an
         # explicit test case that is easier to understand.
         class SomeClass(object):
@@ -2765,6 +2774,9 @@ class TestBinop(object):
         assert_(isinstance(res, SomeClass3))
 
     def test_ufunc_override_normalize_signature(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         # gh-5674
         class SomeClass(object):
             def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
@@ -2781,6 +2793,9 @@ class TestBinop(object):
         assert_equal(kw['signature'], 'ii->i')
 
     def test_numpy_ufunc_index(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         # Check that index is set appropriately, also if only an output
         # is passed on (latter is another regression tests for github bug 4753)
         class CheckIndex(object):
@@ -2818,6 +2833,9 @@ class TestBinop(object):
         assert_equal(np.add(a, dummy, out=a), 0)
 
     def test_out_override(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
+
         # regression test for github bug 4753
         class OutClass(np.ndarray):
             def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
@@ -4615,24 +4633,6 @@ class TestDot(TestCase):
         assert_equal(np.dot(arr, 3), desired)
         assert_equal(np.dot(3, arr), desired)
 
-    def test_dot_override(self):
-        class A(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                return "A"
-
-        class B(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                return NotImplemented
-
-        a = A()
-        b = B()
-        c = np.array([[1]])
-
-        assert_equal(np.dot(a, b), "A")
-        assert_equal(c.dot(a), "A")
-        assert_raises(TypeError, np.dot, b, c)
-        assert_raises(TypeError, c.dot, b)
-
     def test_accelerate_framework_sgemv_fix(self):
 
         def aligned_array(shape, align, dtype, order='C'):
@@ -4893,6 +4893,8 @@ class MatmulCommon():
         assert_equal(res, tgt12_21)
 
     def test_numpy_ufunc_override(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         class A(np.ndarray):
             def __new__(cls, *args, **kwargs):
