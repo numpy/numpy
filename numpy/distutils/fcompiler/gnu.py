@@ -313,7 +313,7 @@ class Gnu95FCompiler(GnuFCompiler):
                 if target:
                     d = os.path.normpath(self.get_libgcc_dir())
                     root = os.path.join(d, *((os.pardir,)*4))
-                    path = os.path.join(root, target, "lib")
+                    path = os.path.join(root, "lib")
                     mingwdir = os.path.normpath(path)
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
                         opt.append(mingwdir)
