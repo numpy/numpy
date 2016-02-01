@@ -2198,7 +2198,7 @@ def base_repr(number, base=2, padding=0):
     Parameters
     ----------
     number : int
-        The value to convert. Only positive values are handled.
+        The value to convert. Positive and negative values are handled.
     base : int, optional
         Convert `number` to the `base` number system. The valid range is 2-36,
         the default value is 2.
