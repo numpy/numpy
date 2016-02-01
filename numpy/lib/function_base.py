@@ -39,7 +39,7 @@ __all__ = [
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
     'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'msort', 'median', 'iqr', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
     ]
@@ -124,7 +124,7 @@ def _hist_optim_numbins_estimator(a, estimator):
 
     def fd(x):
         """
-        Freedman Diaconis rule using Inter Quartile Range (IQR) for binwidth
+        Freedman Diaconis rule using interquartile range (IQR) for binwidth
         Considered a variation of the Scott rule with more robustness as the IQR
         is less affected by outliers than the standard deviation. However the IQR depends on
         fewer points than the sd so it is less accurate, especially for long tailed distributions.
@@ -132,8 +132,7 @@ def _hist_optim_numbins_estimator(a, estimator):
         If the IQR is 0, we return 1 for the number of bins.
         Binwidth is inversely proportional to the cube root of data size (asymptotically optimal)
         """
-        iqr = np.subtract(*np.percentile(x, [75, 25]))
-
+        iqr = np.iqr(x)
         if iqr > 0:
             h = (2 * iqr * x.size ** (-1.0 / 3))
             return np.ceil(x.ptp() / h)
@@ -3641,6 +3640,109 @@ def _percentile(a, q, axis=None, out=None,
     return r
 
 
+def iqr(x, axis=None, range=(25, 75), out=None,
+           overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the interquartile range of the data along the specified axis.
+
+    The interquartile range (IQR) is the difference between the 75th and 25th
+    percentile of the data. It is a measure of the dispersion similar to
+    standard deviation or variance, but is much more robust against outliers.
+
+    Most of the parameters of this function mimic those of ``percentile``
+    closely. The ``range`` parameter allows this function to compute other
+    percentile ranges than the actual IQR. For example, setting
+    ``range=(0, 100)`` is equivalent to `ptp`.
+
+    The IQR of an empty array is scalar zero.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array or object that can be converted to an array.
+    axis : int or sequence of int, optional
+        Axis along which the range is computed. The default is to compute the
+        IQR for the entire array.
+    range : Two-element sequence containing floats in range of [0,100]
+        Percentiles over which to compute the range. Each must be between 0 and
+        100, inclusive. The default is the true IQR: (25, 75). The order of the
+        elements is not important.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output.
+    overwrite_input : bool, optional
+        If True, then allow use of memory of input array `x` for
+        percentile calculations. The input array will be modified by the
+        internal call to `percentile`. This will save memory when you do not
+        need to preserve the contents of the input array. In this case you
+        should not make any assumptions about the content of the passed in array
+        `x` after this function completes -- treat it as undefined. Default is
+        `False`. Note that if `x` is not already an array, this parameter will
+        have no effect as `x` will be converted to an array internally
+        regardless of the value of this parameter.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to use
+        when the percentile boundaries lie between two data points `i` and `j`:
+            * linear: `i + (j - i) * fraction`, where `fraction` is the
+              fractional part of the index surrounded by `i` and `j`.
+            * lower: `i`.
+            * higher: `j`.
+            * nearest: `i` or `j` whichever is nearest.
+            * midpoint: (`i` + `j`) / 2.
+    keepdims : bool, optional
+        If this is set to `True`, the reduced axes are left in the result as
+        dimensions with size one. With this option, the result will broadcast
+        correctly against the original array `x`.
+
+    Returns
+    -------
+    iqr : scalar or ndarray
+        If ``axis=None``, a scalar is returned. If ``out`` is specified, that
+        array is returned instead. If the input contains integers or floats of
+        smaller precision than 64, then the output data-type is ``float64``.
+        Otherwise, the output data-type is the same as that of the input.
+
+    See Also
+    --------
+    std, var, percentile, ptp
+
+    Examples
+    --------
+    >>> x = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> x
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.iqr(x)
+    4.0
+    >>> np.iqr(x, axis=0)
+    array([ 3.5,  2.5,  1.5])
+    >>> np.iqr(x, axis=1)
+    array([ 3.,  1.])
+    >>> np.iqr(x, axis=1, keepdims=True)
+    array([[ 3.],
+           [ 1.]])
+
+    """
+    x = np.asarray(x)
+
+    # This check prevents percentile from raising an error later. Also, it is
+    # the right thing to do.
+    if not x.size: return 0.0
+
+    if len(range) != 2:
+        raise TypeError("quantile range must be two element sequence")
+
+    # reverse is True because the original computation was a one-liner:
+    #    return np.subtract(*percentile(x, sorted(range, reverse=True), ...), out=out)
+    # The current version is a little less obfscated
+    range = sorted(range, reverse=True)
+
+    pct = np.percentile(x, range, axis=axis, overwrite_input=False,
+                           interpolation=interpolation, keepdims=keepdims)
+    out = np.subtract(pct[0], pct[1], out=out)
+    return out
+
+
 def trapz(y, x=None, dx=1.0, axis=-1):
     """
     Integrate along the given axis using the composite trapezoidal rule.
@@ -3733,7 +3835,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
 #always succeed
 def add_newdoc(place, obj, doc):
-    """Adds documentation to obj which is in module place.
+    """
+    Adds documentation to obj which is in module place.
 
     If doc is a string add it to obj as a docstring
 
@@ -3751,7 +3854,7 @@ def add_newdoc(place, obj, doc):
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
-       """
+    """
     try:
         new = getattr(__import__(place, globals(), {}, [obj]), obj)
         if isinstance(doc, str):

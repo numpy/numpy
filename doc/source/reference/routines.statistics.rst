@@ -18,8 +18,8 @@ Order statistics
    percentile
    nanpercentile
 
-Averages and variances
-----------------------
+Averages and dispersions
+------------------------
 
 .. autosummary::
    :toctree: generated/
@@ -33,6 +33,7 @@ Averages and variances
    nanmean
    nanstd
    nanvar
+   iqr
 
 Correlating
 -----------
