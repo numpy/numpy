@@ -32,8 +32,13 @@ default order for arrays that are now both.
 
 ``MaskedArray`` takes view of data **and** mask when slicing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 XXX
+
+
+``np.percentile`` 'midpoint' interpolation method fixed for exact indices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'midpoint' interpolator now gives the same result as 'lower' and 'higher' when
+the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
 
 
 DeprecationWarning to error
