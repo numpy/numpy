@@ -1044,6 +1044,12 @@ class TestBaseRepr(TestCase):
         assert_equal(np.base_repr(-12, 10, 4), '-000012')
         assert_equal(np.base_repr(-12, 4), '-30')
 
+    def test_base_range(self):
+        with self.assertRaises(ValueError):
+            np.base_repr(1, 1)
+        with self.assertRaises(ValueError):
+            np.base_repr(1, 37)
+
 
 class TestArrayComparisons(TestCase):
     def test_array_equal(self):
