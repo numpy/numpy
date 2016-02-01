@@ -919,21 +919,15 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
             * nearest: ``i`` or ``j``, whichever is nearest.
             * midpoint: ``(i + j) / 2``.
     keepdims : bool, optional
-<<<<<<< 35b5f5be1ffffada84c8be207e7b8b196a58f786
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
-=======
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `a`.
 
         If this is anything but the default value it will be passed
         through (in the special case of an empty array) to the
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
->>>>>>> BUG: many functions silently drop `keepdims` kwarg
 
     Returns
     -------

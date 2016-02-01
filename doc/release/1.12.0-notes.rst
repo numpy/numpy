@@ -91,6 +91,9 @@ Instead of using ``usecol=(n,)`` to read the nth column of a file
 it is now allowed to use ``usecol=n``. Also the error message is
 more user friendly when a non-integer is passed as a column index.
 
+Additional estimators for ``histogram``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins`` argument.
 
 Changes
 =======
