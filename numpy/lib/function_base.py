@@ -85,6 +85,9 @@ def _hist_optim_numbins_estimator(a, estimator):
         will choose the appropriate estimator and return it's estimate for the optimal
         number of bins.
     """
+    assert isinstance(estimator, basestring)
+    # private function should not be called otherwise
+
     if a.size == 0:
         return 1
 
@@ -121,7 +124,7 @@ def _hist_optim_numbins_estimator(a, estimator):
 
     def fd(x):
         """
-        Freedman Diaconis rule using Inter Quartile Range (IQR) for binwidth
+        Freedman Diaconis rule using interquartile range (IQR) for binwidth
         Considered a variation of the Scott rule with more robustness as the IQR
         is less affected by outliers than the standard deviation. However the IQR depends on
         fewer points than the sd so it is less accurate, especially for long tailed distributions.
@@ -3230,22 +3233,22 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : int or sequence of int, optional
-        Axis along which the medians are computed. The default (axis=None)
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the medians are computed. The default
         is to compute the median along a flattened version of the array.
         A sequence of axes is supported since version 1.9.0.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must have
-        the same shape and buffer length as the expected output, but the
-        type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-       If True, then allow use of memory of input array (a) for
+       If True, then allow use of memory of input array `a` for
        calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve the
-       contents of the input array. Treat the input as undefined, but it
-       will probably be fully or partially sorted. Default is False. Note
-       that, if `overwrite_input` is True and the input is not already an
-       ndarray, an error will be raised.
+       `median`. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. If `overwrite_input` is ``True`` and `a` is not already an
+       `ndarray`, an error will be raised.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -3253,15 +3256,14 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
         .. versionadded:: 1.9.0
 
-
     Returns
     -------
     median : ndarray
-        A new array holding the result (unless `out` is specified, in which
-        case that array is returned instead).  If the input contains
-        integers, or floats of smaller precision than 64, then the output
-        data-type is float64.  Otherwise, the output data-type is the same
-        as that of the input.
+        A new array holding the result. If the input contains integers
+        or floats smaller than ``float64``, then the output data-type is
+        ``np.float64``.  Otherwise, the data-type of the output is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
 
     See Also
     --------
@@ -3269,10 +3271,10 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     Notes
     -----
-    Given a vector V of length N, the median of V is the middle value of
-    a sorted copy of V, ``V_sorted`` - i.e., ``V_sorted[(N-1)/2]``, when N is
-    odd.  When N is even, it is the average of the two middle values of
-    ``V_sorted``.
+    Given a vector ``V`` of length ``N``, the median of ``V`` is the
+    middle value of a sorted copy of ``V``, ``V_sorted`` - i
+    e., ``V_sorted[(N-1)/2]``, when ``N`` is odd, and the average of the
+    two middle values of ``V_sorted`` when ``N`` is even.
 
     Examples
     --------
@@ -3385,73 +3387,79 @@ def percentile(a, q, axis=None, out=None,
     """
     Compute the qth percentile of the data along the specified axis.
 
-    Returns the qth percentile of the array elements.
+    Returns the qth percentile(s) of the array elements.
 
     Parameters
     ----------
     a : array_like
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
-        Percentile to compute which must be between 0 and 100 inclusive.
-    axis : int or sequence of int, optional
-        Axis along which the percentiles are computed. The default (None)
-        is to compute the percentiles along a flattened version of the array.
-        A sequence of axes is supported since version 1.9.0.
+        Percentile to compute, which must be between 0 and 100 inclusive.
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the percentiles are computed. The
+        default is to compute the percentile(s) along a flattened
+        version of the array. A sequence of axes is supported since
+        version 1.9.0.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow use of memory of input array `a` for
+        If True, then allow use of memory of input array `a` 
         calculations. The input array will be modified by the call to
-        percentile. This will save memory when you do not need to preserve
-        the contents of the input array. In this case you should not make
-        any assumptions about the content of the passed in array `a` after
-        this function completes -- treat it as undefined. Default is False.
-        Note that, if the `a` input is not already an array this parameter
-        will have no effect, `a` will be converted to an array internally
-        regardless of the value of this parameter.
+        `percentile`. This will save memory when you do not need to
+        preserve the contents of the input array. In this case you
+        should not make any assumptions about the contents of the input
+        `a` after this function completes -- treat it as undefined.
+        Default is False. If `a` is not already an array, this parameter
+        will have no effect as `a` will be converted to an array
+        internally regardless of the value of this parameter.
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to use,
-        when the desired quantile lies between two data points `i` and `j`:
-            * linear: `i + (j - i) * fraction`, where `fraction` is the
-              fractional part of the index surrounded by `i` and `j`.
-            * lower: `i`.
-            * higher: `j`.
-            * nearest: `i` or `j` whichever is nearest.
-            * midpoint: (`i` + `j`) / 2.
+        This optional parameter specifies the interpolation method to
+        use when the desired quantile lies between two data points
+        ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction``
+              is the fractional part of the index surrounded by ``i``
+              and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original array `a`.
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
 
     Returns
     -------
     percentile : scalar or ndarray
-        If a single percentile `q` is given and axis=None a scalar is
-        returned.  If multiple percentiles `q` are given an array holding
-        the result is returned. The results are listed in the first axis.
-        (If `out` is specified, in which case that array is returned
-        instead).  If the input contains integers, or floats of smaller
-        precision than 64, then the output data-type is float64. Otherwise,
-        the output data-type is the same as that of the input.
+        If `q` is a single percentile and `axis=None`, then the result
+        is a scalar. If multiple percentiles are given, first axis of
+        the result corresponds to the percentiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input 
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
 
     See Also
     --------
-    mean, median
+    mean, median, nanpercentile
 
     Notes
     -----
-    Given a vector V of length N, the q-th percentile of V is the q-th ranked
-    value in a sorted copy of V.  The values and distances of the two
-    nearest neighbors as well as the `interpolation` parameter will
-    determine the percentile if the normalized ranking does not match q
-    exactly. This function is the same as the median if ``q=50``, the same
-    as the minimum if ``q=0`` and the same as the maximum if ``q=100``.
+    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
+    ``V`` is the value ``q/100`` of the way from the mimumum to the
+    maximum in in a sorted copy of ``V``. The values and distances of
+    the two nearest neighbors as well as the `interpolation` parameter
+    will determine the percentile if the normalized ranking does not
+    match the location of ``q`` exactly. This function is the same as
+    the median if ``q=50``, the same as the minimum if ``q=0`` and the
+    same as the maximum if ``q=100``.
 
     Examples
     --------
@@ -3460,28 +3468,26 @@ def percentile(a, q, axis=None, out=None,
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.percentile(a, 50)
-    array([ 3.5])
+    3.5
     >>> np.percentile(a, 50, axis=0)
     array([[ 6.5,  4.5,  2.5]])
     >>> np.percentile(a, 50, axis=1)
+    array([ 7.,  2.])
+    >>> np.percentile(a, 50, axis=1, keepdims=True)
     array([[ 7.],
            [ 2.]])
 
     >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 50, axis=0, out=m)
+    >>> np.percentile(a, 50, axis=0, out=out)
     array([[ 6.5,  4.5,  2.5]])
     >>> m
     array([[ 6.5,  4.5,  2.5]])
 
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
-    array([[ 7.],
-           [ 2.]])
-    >>> assert not np.all(a==b)
-    >>> b = a.copy()
-    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
-    array([ 3.5])
+    array([ 7.,  2.])
+    >>> assert not np.all(a == b)
 
     """
     q = array(q, dtype=np.float64, copy=True)
@@ -3621,7 +3627,7 @@ def _percentile(a, q, axis=None, out=None,
             r = add(x1, x2)
 
     if np.any(n):
-        warnings.warn("Invalid value encountered in median",
+        warnings.warn("Invalid value encountered in percentile",
                               RuntimeWarning)
         if zerod:
             if ap.ndim == 1:
@@ -3733,7 +3739,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
 #always succeed
 def add_newdoc(place, obj, doc):
-    """Adds documentation to obj which is in module place.
+    """
+    Adds documentation to obj which is in module place.
 
     If doc is a string add it to obj as a docstring
 
@@ -3751,7 +3758,7 @@ def add_newdoc(place, obj, doc):
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
-       """
+    """
     try:
         new = getattr(__import__(place, globals(), {}, [obj]), obj)
         if isinstance(doc, str):
