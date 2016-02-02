@@ -1991,9 +1991,9 @@ cdef class RandomState:
         ----------
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
                Random Signal Principles", 4th ed, 2001, p. 57.
-        .. [2] "Poisson Process", Wikipedia,
+        .. [2] Wikipedia, "Poisson process", 
                http://en.wikipedia.org/wiki/Poisson_process
-        .. [3] "Exponential Distribution, Wikipedia,
+        .. [3] Wikipedia, "Exponential distribution",
                http://en.wikipedia.org/wiki/Exponential_distribution
 
         """
@@ -2093,8 +2093,8 @@ cdef class RandomState:
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
-        .. [2] Wikipedia, "Gamma-distribution",
-               http://en.wikipedia.org/wiki/Gamma-distribution
+        .. [2] Wikipedia, "Gamma distribution",
+               http://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -2184,8 +2184,8 @@ cdef class RandomState:
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
-        .. [2] Wikipedia, "Gamma-distribution",
-               http://en.wikipedia.org/wiki/Gamma-distribution
+        .. [2] Wikipedia, "Gamma distribution",
+               http://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -2381,7 +2381,7 @@ cdef class RandomState:
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NoncentralF-Distribution.html
-        .. [2] Wikipedia, "Noncentral F distribution",
+        .. [2] Wikipedia, "Noncentral F-distribution",
                http://en.wikipedia.org/wiki/Noncentral_F-distribution
 
         Examples
@@ -3273,7 +3273,7 @@ cdef class RandomState:
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
-        .. [4] Wikipedia, "Laplace Distribution",
+        .. [4] Wikipedia, "Laplace distribution",
                http://en.wikipedia.org/wiki/Laplace_distribution
 
         Examples
@@ -3994,7 +3994,7 @@ cdef class RandomState:
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
                http://mathworld.wolfram.com/BinomialDistribution.html
-        .. [5] Wikipedia, "Binomial-distribution",
+        .. [5] Wikipedia, "Binomial distribution",
                http://en.wikipedia.org/wiki/Binomial_distribution
 
         Examples
@@ -4459,7 +4459,7 @@ cdef class RandomState:
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
-        .. [3] Wikipedia, "Hypergeometric-distribution",
+        .. [3] Wikipedia, "Hypergeometric distribution",
                http://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
@@ -4569,8 +4569,8 @@ cdef class RandomState:
                Journal of Animal Ecology, 12:42-58.
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
-        .. [4] Wikipedia, "Logarithmic-distribution",
-               http://en.wikipedia.org/wiki/Logarithmic-distribution
+        .. [4] Wikipedia, "Logarithmic distribution",
+               http://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
