@@ -74,14 +74,9 @@ def test_f2py():
         success = stdout.strip() == asbytes('2')
         assert_(success, "Warning: f2py not found in path")
     else:
-        # unclear what f2py cmd was installed as, check plain (f2py),
-        # with major version (f2py3), or major/minor version (f2py3.4)
-        code, stdout, stderr = run_command([sys.executable, '-V'])
-
-        # for some reason, 'python -V' returns version in 'stderr' for
-        # Python 2.x but in 'stdout' for Python 3.x
-        version = (stdout or stderr)[7:].strip()
-        major, minor, revision = version.decode('utf-8').split('.')
+        version = sys.version_info
+        major = str(version.major)
+        minor = str(version.minor)
 
         f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
         success = False
