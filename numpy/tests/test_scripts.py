@@ -73,10 +73,20 @@ def test_f2py():
         success = stdout.strip() == asbytes('2')
         assert_(success, "Warning: f2py not found in path")
     else:
-        # unclear what f2py cmd was installed as, check plain (f2py) and
-        # current python version specific one (f2py3.4)
-        f2py_cmds = ('f2py', 'f2py' + basename(sys.executable)[6:])
+        version = sys.version_info
+
+        # Python 2.6 'sys.version_info'
+        # is just a tuple, but this changes
+        # in Python 2.7 to have a more user-
+        # friendly interface with version[0]
+        # being the 'major' version and
+        # version[1] being the minor version
+        major = str(version[0])
+        minor = str(version[1])
+
+        f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
         success = False
+
         for f2py_cmd in f2py_cmds:
             try:
                 code, stdout, stderr = run_command([f2py_cmd, '-v'])
@@ -85,5 +95,5 @@ def test_f2py():
                 break
             except:
                 pass
-        msg = "Warning: neither %s nor %s found in path" % f2py_cmds
+        msg = "Warning: neither %s nor %s nor %s found in path" % f2py_cmds
         assert_(success, msg)
