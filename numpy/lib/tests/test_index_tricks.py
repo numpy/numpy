@@ -51,7 +51,10 @@ class TestRavelUnravelIndex(TestCase):
                      [[], [], []])
         assert_equal(np.unravel_index(np.array([]), (10, 3, 5)),
                      [[], [], []])
-        # TODO: Similar tests for ravel_multi_index()
+        assert_equal(np.ravel_multi_index(([], [], []), (10, 3, 5)), [])
+        assert_equal(np.ravel_multi_index((np.array([]), np.array([])), (5, 3)),
+                    [])
+        assert_equal(np.ravel_multi_index(np.array([[], []]), (5, 3)), [])
 
     def test_dtypes(self):
         # Test with different data types
