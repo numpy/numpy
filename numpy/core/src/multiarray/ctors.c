@@ -3260,17 +3260,20 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         }
         num = numbytes / dtype->elsize;
     }
+    Py_INCREF(dtype);
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                               dtype,
                                               1, &num,
                                               NULL, NULL,
                                               0, NULL);
     if (r == NULL) {
-        return NULL;
+        goto fail;
     }
     NPY_BEGIN_ALLOW_THREADS;
     *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
     NPY_END_ALLOW_THREADS;
+fail:
+    Py_DECREF(dtype);
     return r;
 }
 
@@ -3293,6 +3296,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     npy_intp bytes, totalbytes;
 
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
+
+    Py_INCREF(dtype);
     r = (PyArrayObject *)
         PyArray_NewFromDescr(&PyArray_Type,
                              dtype,
@@ -3300,6 +3305,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
                              NULL, NULL,
                              0, NULL);
     if (r == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     clean_sep = swab_separator(sep);
@@ -3348,6 +3354,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     free(clean_sep);
 
 fail:
+    Py_DECREF(dtype);
     if (err == 1) {
         PyErr_NoMemory();
     }
