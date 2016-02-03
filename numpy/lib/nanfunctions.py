@@ -979,7 +979,8 @@ def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         # Move that axis to the beginning to match percentile's
         # convention.
         if q.ndim != 0:
-            result = np.swapaxes(result, 0, axis)
+            result = np.rollaxis(result, axis)   
+
     if out is not None:
         out[...] = result
     return result

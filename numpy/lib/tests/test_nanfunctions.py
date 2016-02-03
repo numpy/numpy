@@ -711,7 +711,7 @@ class TestNanFunctions_Percentile(TestCase):
         # For checking consistency in higher dimensional case
         large_mat = np.ones((3, 4, 5))
         large_mat[:, 0:2:4, :] = 0
-        large_mat[:, :, 3:] = 2*large_mat[:, :, 3:]
+        large_mat[:, :, 3:] *= 2
         for axis in [None, 0, 1]:
             for keepdim in [False, True]:
                 with warnings.catch_warnings(record=True) as w:
@@ -726,6 +726,9 @@ class TestNanFunctions_Percentile(TestCase):
                     nan_val = np.nanpercentile(large_mat, perc, axis=axis,
                                                keepdims=keepdim)
                     assert_equal(nan_val, val)
+
+        megamat = np.ones((3, 4, 5, 6))
+        assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
 
 if __name__ == "__main__":
