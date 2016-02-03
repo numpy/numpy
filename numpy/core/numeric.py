@@ -2090,31 +2090,6 @@ def isscalar(num):
     else:
         return type(num) in ScalarType
 
-_lkup = {
-    '0':'0000',
-    '1':'0001',
-    '2':'0010',
-    '3':'0011',
-    '4':'0100',
-    '5':'0101',
-    '6':'0110',
-    '7':'0111',
-    '8':'1000',
-    '9':'1001',
-    'a':'1010',
-    'b':'1011',
-    'c':'1100',
-    'd':'1101',
-    'e':'1110',
-    'f':'1111',
-    'A':'1010',
-    'B':'1011',
-    'C':'1100',
-    'D':'1101',
-    'E':'1110',
-    'F':'1111',
-    'L':''}
-
 def binary_repr(num, width=None):
     """
     Return the binary representation of the input number as a string.
@@ -2134,8 +2109,18 @@ def binary_repr(num, width=None):
     num : int
         Only an integer decimal number can be used.
     width : int, optional
-        The length of the returned string if `num` is positive, the length of
-        the two's complement if `num` is negative.
+        The length of the returned string if `num` is positive, or the length
+        of the two's complement if `num` is negative, provided that `width` is
+        at least a sufficient number of bits for `num` to be represented in the
+        designated form.
+
+        If the `width` value is insufficient, it will be ignored, and `num` will
+        be returned in binary(`num` > 0) or two's complement (`num` < 0) form
+        with its width equal to the minimum number of bits needed to represent
+        the number in the designated form. This behavior is deprecated and will
+        later raise an error.
+
+        .. deprecated:: 1.12.0
 
     Returns
     -------
@@ -2146,6 +2131,7 @@ def binary_repr(num, width=None):
     --------
     base_repr: Return a string representation of a number in the given base
                system.
+    bin: Python's built-in binary representation generator of an integer.
 
     Notes
     -----
@@ -2169,27 +2155,43 @@ def binary_repr(num, width=None):
     The two's complement is returned when the input number is negative and
     width is specified:
 
-    >>> np.binary_repr(-3, width=4)
-    '1101'
+    >>> np.binary_repr(-3, width=3)
+    '101'
+    >>> np.binary_repr(-3, width=5)
+    '11101'
 
     """
-    # ' <-- unbreak Emacs fontification
-    sign = ''
-    if num < 0:
+    def warn_if_insufficient(width, binwdith):
+        if width is not None and width < binwidth:
+            warnings.warn(
+                "Insufficient bit width provided. This behavior "
+                "will raise an error in the future.", DeprecationWarning
+            )
+
+    if num == 0:
+        return '0' * (width or 1)
+
+    elif num > 0:
+        binary = bin(num)[2:]
+        binwidth = len(binary)
+        outwidth = (binwidth if width is None
+                    else max(binwidth, width))
+        warn_if_insufficient(width, binwidth)
+        return binary.zfill(outwidth)
+
+    else:
         if width is None:
-            sign = '-'
-            num = -num
+            return '-' + bin(-num)[2:]
+
         else:
-            # replace num with its 2-complement
-            num = 2**width + num
-    elif num == 0:
-        return '0'*(width or 1)
-    ostr = hex(num)
-    bin = ''.join([_lkup[ch] for ch in ostr[2:]])
-    bin = bin.lstrip('0')
-    if width is not None:
-        bin = bin.zfill(width)
-    return sign + bin
+            poswidth = len(bin(-num)[2:])
+            twocomp = 2**(poswidth + 1) + num
+
+            binary = bin(twocomp)[2:]
+            binwidth = len(binary)
+            outwidth = max(binwidth, width)
+            warn_if_insufficient(width, binwidth)
+            return '1' * (outwidth - binwidth) + binary
 
 def base_repr(number, base=2, padding=0):
     """

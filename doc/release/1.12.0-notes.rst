@@ -154,10 +154,18 @@ Deprecations
 
 Assignment of ndarray object's ``data`` attribute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Assigning the 'data' attribute is an inherently unsafe operation as pointed 
+Assigning the 'data' attribute is an inherently unsafe operation as pointed
 out in gh-7083. Such a capability will be removed in the future.
 
 Unsafe int casting of the num attribute in linspace
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``np.linspace`` now raises DeprecationWarning when num cannot be safely 
+``np.linspace`` now raises DeprecationWarning when num cannot be safely
 interpreted as an integer.
+
+Insufficient bit width parameter to ``binary_repr``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
+represent the number in base 2 (positive) or 2's complement (negative) form,
+the function used to silently ignore the parameter and return a representation
+using the minimal number of bits needed for the form in question. Such behavior
+is now considered unsafe from a user perspective and will raise an error in the future.
