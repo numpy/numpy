@@ -946,6 +946,32 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
         dtype[i] = dtype[0];
     }
 
+    //for (i = 0; i < dimensions.len; ++i) {
+    //    if (!PyArray_CanCastArrayTo(op[i], dtype[i], NPY_SAME_KIND_CASTING)) {
+    //        if (PyArray_SIZE(op[i] == 0)) {
+    //            /*
+    //             * Unfortunately, if the input array is empty, then indices would
+    //             * likely have a default dtype of float64, which isn't compatibile.
+    //             * Force a recast of an empty array.
+    //             */
+    //            PyArrayObject *indices_tmp = NULL;
+    //            Py_INCREF(dtype[i]);
+    //            indices_tmp = (PyArrayObject*)PyArray_FromArray(op[i], dtype[i],
+    //                                                            NPY_ARRAY_FORCECAST);
+    //            if (indices_tmp == NULL) {
+    //                goto fail;
+    //            }
+    //            Py_DECREF(op[i]);
+    //            op[i] = indices_tmp;
+    //        }
+    //        else {
+    //            PyErr_SetString(PyExc_TypeError,
+    //                    "input multiindex array has a non-integer dtype");
+    //            goto fail;
+    //        }
+    //    }
+    //}
+
     iter = NpyIter_MultiNew(dimensions.len+1, op, NPY_ITER_BUFFERED|
                                                   NPY_ITER_EXTERNAL_LOOP|
                                                   NPY_ITER_ZEROSIZE_OK,
@@ -1120,7 +1146,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    if (!PyArray_CanCastArrayTo(indices, dtype, NPY_SAFE_CASTING)) {
+    if (!PyArray_CanCastArrayTo(indices, dtype, NPY_SAME_KIND_CASTING)) {
         if (PyArray_SIZE(indices) == 0) {
             /*
              * Unfortunately, if the input array is empty, then indices would
@@ -1138,7 +1164,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
             indices = indices_tmp;
         }
         else {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                     "input index array has a non-integer dtype");
             goto fail;
         }
