@@ -2223,7 +2223,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 xm[2] = masked
                 x += t(1)
@@ -2238,7 +2237,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2269,7 +2267,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2300,7 +2297,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2318,7 +2314,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x = arange(10, dtype=t) * t(2)
                 xm = arange(10, dtype=t) * t(2)
@@ -2335,7 +2330,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2356,7 +2350,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x = arange(10, dtype=t) * t(2)
                 xm = arange(10, dtype=t) * t(2)
@@ -2392,7 +2385,6 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
-                warnings.simplefilter('ignore', FutureWarning)
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)

@@ -41,8 +41,19 @@ Future Changes
 The following changes are scheduled for Numpy 1.12.0.
 
 * Support for Python 2.6, 3.2, and 3.3 will be dropped.
-* Slicing a ``MaskedArray`` will return views of both data **and** mask.
-  Currently the mask is returned as a copy.
+* When setting items of a ``MaskedArray`` using the square bracket
+  notation NumPy will in the future never copy the mask. Some
+  examples of this are ``child = ma_array[::2]; view[3] = 3``, where
+  the mask of ``child`` is a view into the mask of ``ma_array``.
+  Also when creating ``ma_array = MaskedArray(data, mask)`` will
+  make ``ma_array`` view the data in ``mask`` and setting an item
+  will currently copy ``mask`` but in the future modify the original.
+  Since this copy may occur much later, it may also avoid propagation
+  to an array such as ``child`` above.
+  NumPy will give a FutureWarning, whenever a mask is currently copied
+  and another array will be modified in the future. To get the new
+  behaviour without the warning, set ``ma_arr._sharedmask = False``.
+  To keep using the old behaviour use ``ma_array.unshare_mask()``.
 * Relaxed stride checking will become the default. See the 1.8.0 release
   notes for a more extended discussion of what this change implies.
 * The behavior of the datetime64 "not a time" (NaT) value will be changed
