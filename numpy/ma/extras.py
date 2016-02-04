@@ -689,6 +689,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     # insert indices of low and high median
     ind.insert(axis, h - 1)
     low = asorted[ind]
+    low._sharedmask = False
     ind[axis] = h
     high = asorted[ind]
     # duplicate high if odd number of elements so mean does nothing
@@ -1173,9 +1174,9 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                 # Define some common mask
                 common_mask = np.logical_or(xmask, ymask)
                 if common_mask is not nomask:
-                    x.unshare_mask()
-                    y.unshare_mask()
                     xmask = x._mask = y._mask = ymask = common_mask
+                    x._sharedmask = False
+                    y._sharedmask = False
         x = ma.concatenate((x, y), axis)
         xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
     x -= x.mean(axis=rowvar)[tup]
@@ -1326,6 +1327,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         _denom = ma.sqrt(ma.multiply.outer(diag, diag))
     else:
         _denom = diagflat(diag)
+        _denom._sharedmask = False  # We know return is always a copy
         n = x.shape[1 - rowvar]
         if rowvar:
             for i in range(n - 1):
