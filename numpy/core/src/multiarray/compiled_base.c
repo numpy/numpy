@@ -795,6 +795,51 @@ static int sequence_to_arrays(PyObject *seq,
     return 0;
 }
 
+/*
+ * Force-cast an array into intp if it is empty. Fail otherwise.
+ *
+ * op        - Pointer to the array pointer. Will be modified if
+ *             recasting is needed.
+ * paramname - Name to be used for error string.
+ */
+static int _cast_to_intp_or_fail(PyArrayObject **op,
+                                 char *paramname)
+{
+    PyArray_Descr *dtype = PyArray_DescrFromType(NPY_INTP);
+    if (dtype == NULL) {
+        return -1;
+    }
+
+    if (!PyArray_CanCastArrayTo(*op, dtype, NPY_SAME_KIND_CASTING)) {
+        if (PyArray_SIZE(*op) == 0) {
+            /*
+             * Unfortunately, if the input array is empty, then indices would
+             * likely have a default dtype of float64, which isn't compatibile.
+             * Force a recast of an empty array.
+             */
+            PyArrayObject *op_tmp = NULL;
+            op_tmp = (PyArrayObject*)PyArray_FromArray(*op, dtype,
+                                                       NPY_ARRAY_FORCECAST);
+            if (op_tmp == NULL) {
+                return -1;
+            }
+            Py_DECREF(*op);
+            *op = op_tmp;
+        }
+        else {
+            Py_DECREF(dtype);
+            PyErr_Format(PyExc_TypeError,
+                "non-empty %s array has a non-integer dtype", paramname);
+            return -1;
+        }
+    }
+    else {
+        Py_DECREF(dtype);
+    }
+
+    return 0;
+}
+
 /* Inner loop for ravel_multi_index */
 static int
 ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
@@ -933,7 +978,6 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-
     for (i = 0; i < dimensions.len; ++i) {
         op_flags[i] = NPY_ITER_READONLY|
                       NPY_ITER_ALIGNED;
@@ -942,34 +986,17 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
                                NPY_ITER_ALIGNED|
                                NPY_ITER_ALLOCATE;
     dtype[0] = PyArray_DescrFromType(NPY_INTP);
+    if (dtype[0] == NULL) {
+        goto fail;
+    }
+
     for (i = 1; i <= dimensions.len; ++i) {
         dtype[i] = dtype[0];
     }
 
     for (i = 0; i < dimensions.len; ++i) {
-        if (!PyArray_CanCastArrayTo(op[i], dtype[i], NPY_SAME_KIND_CASTING)) {
-            if (PyArray_SIZE(op[i]) == 0) {
-                /*
-                 * Unfortunately, if the input array is empty, then indices would
-                 * likely have a default dtype of float64, which isn't compatibile.
-                 * Force a recast of an empty array.
-                 */
-                PyArrayObject *indices_tmp = NULL;
-                PyArray_Descr *dtype_tmp = PyArray_DescrFromType(NPY_INTP);
-
-                indices_tmp = (PyArrayObject*)PyArray_FromArray(op[i], dtype_tmp,
-                                                                NPY_ARRAY_FORCECAST);
-                if (indices_tmp == NULL) {
-                    goto fail;
-                }
-                Py_DECREF(op[i]);
-                op[i] = indices_tmp;
-            }
-            else {
-                PyErr_SetString(PyExc_TypeError,
-                        "input multiindex array has a non-integer dtype");
-                goto fail;
-            }
+        if (_cast_to_intp_or_fail(&op[i], "multi_index") < 0) {
+            goto fail;
         }
     }
 
@@ -1142,33 +1169,13 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
         Py_INCREF(indices);
     }
 
-    dtype = PyArray_DescrFromType(NPY_INTP);
-    if (dtype == NULL) {
+    if (_cast_to_intp_or_fail(&indices, "index") < 0) {
         goto fail;
     }
 
-    if (!PyArray_CanCastArrayTo(indices, dtype, NPY_SAME_KIND_CASTING)) {
-        if (PyArray_SIZE(indices) == 0) {
-            /*
-             * Unfortunately, if the input array is empty, then indices would
-             * likely have a default dtype of float64, which isn't compatibile.
-             * Force a recast of an empty array.
-             */
-            PyArrayObject *indices_tmp = NULL;
-            Py_INCREF(dtype);
-            indices_tmp = (PyArrayObject*)PyArray_FromArray(indices, dtype,
-                                                            NPY_ARRAY_FORCECAST);
-            if (indices_tmp == NULL) {
-                goto fail;
-            }
-            Py_DECREF(indices);
-            indices = indices_tmp;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "input index array has a non-integer dtype");
-            goto fail;
-        }
+    dtype = PyArray_DescrFromType(NPY_INTP);
+    if (dtype == NULL) {
+        goto fail;
     }
 
     iter = NpyIter_New(indices, NPY_ITER_READONLY|
