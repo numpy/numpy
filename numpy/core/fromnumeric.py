@@ -3059,8 +3059,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                                 **kwargs)
 
 
-def var(a, axis=None, dtype=None, out=None, ddof=0,
-                            keepdims=np._NoValue):
+def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3174,4 +3173,4 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
             pass
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                **kwargs)
+                         **kwargs)
