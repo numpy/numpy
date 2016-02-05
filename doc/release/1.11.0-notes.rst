@@ -142,6 +142,7 @@ FutureWarning to changed behavior
   due to a bug, sometimes no warning was raised and the dimensions were
   already preserved.
 
+
 C API
 ~~~~~
 
