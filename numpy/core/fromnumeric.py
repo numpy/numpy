@@ -2934,12 +2934,13 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     if type(a) is not mu.ndarray:
         try:
             mean = a.mean
-            return mean(axis=axis, dtype=dtype, out=out, **kwargs)
         except AttributeError:
             pass
+        else:
+            return mean(axis=axis, dtype=dtype, out=out, **kwargs)
 
     return _methods._mean(a, axis=axis, dtype=dtype,
-                            out=out, **kwargs)
+                          out=out, **kwargs)
 
 
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
@@ -3051,12 +3052,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     if type(a) is not mu.ndarray:
         try:
             std = a.std
-            return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
         except AttributeError:
             pass
+        else:
+            return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                **kwargs)
+                         **kwargs)
 
 
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
@@ -3168,9 +3170,11 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     if type(a) is not mu.ndarray:
         try:
             var = a.var
-            return var(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
+
         except AttributeError:
             pass
+        else:
+            return var(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
