@@ -82,6 +82,9 @@ __all__ = [
 MaskType = np.bool_
 nomask = MaskType(0)
 
+class MaskedArrayFutureWarning(FutureWarning):
+    pass
+
 
 def doc_note(initialdoc, note):
     """
@@ -3105,13 +3108,6 @@ class MaskedArray(ndarray):
         Return the item described by i, as a masked array.
 
         """
-        # 2016.01.15 -- v1.11.0
-        warnings.warn(
-            "Currently, slicing will try to return a view of the data," +
-            " but will return a copy of the mask. In the future, it will try" +
-            " to return both as views.",
-            FutureWarning
-        )
 
         dout = self.data[indx]
         # We could directly use ndarray.__getitem__ on self.
@@ -3184,13 +3180,17 @@ class MaskedArray(ndarray):
 
         """
         # 2016.01.15 -- v1.11.0
-        warnings.warn(
-           "Currently, slicing will try to return a view of the data," +
-           " but will return a copy of the mask. In the future, it will try" +
-           " to return both as views. This means that using `__setitem__`" +
-           " will propagate values back through all masks that are present.",
-           FutureWarning
-        )
+        self._oldsharedmask = getattr(self, "_oldsharedmask", False)
+        self._oldsharedmask = self._oldsharedmask or self._sharedmask
+        if (self._mask is not nomask) and self._oldsharedmask:
+            warnings.warn(
+                "Currently, slicing will try to return a view of the data, but"
+                " will return a copy of the mask. In the future, it will try"
+                " to  return both as views. This means that using"
+                " `__setitem__` will propagate values back through all masks"
+                " that are present.",
+                MaskedArrayFutureWarning
+            )
 
         if self is masked:
             raise MaskError('Cannot alter the masked element.')
@@ -3234,7 +3234,9 @@ class MaskedArray(ndarray):
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
             if not self._isfield:
+                _oldsharedmask = self._oldsharedmask
                 self.unshare_mask()
+                self._oldsharedmask = _oldsharedmask
                 _mask = self._mask
             # Set the data, then the mask
             _data[indx] = dval
@@ -3440,6 +3442,7 @@ class MaskedArray(ndarray):
         if self._sharedmask:
             self._mask = self._mask.copy()
             self._sharedmask = False
+            self._oldsharedmask = False
         return self
 
     sharedmask = property(fget=lambda self: self._sharedmask,
