@@ -145,6 +145,11 @@ masked out when the reduce method was used.  The new identity is -1, which
 should work properly on twos complement machines as all bits will be set to
 one.
 
+Generalized Ufuncs will now unlock the GIL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generalized Ufuncs, including most of the linalg module, will now unlock
+the Python global interpreter lock.
+
 
 Changes
 =======
