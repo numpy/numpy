@@ -85,9 +85,6 @@ def _hist_optim_numbins_estimator(a, estimator):
         will choose the appropriate estimator and return it's estimate for the optimal
         number of bins.
     """
-    assert isinstance(estimator, basestring)
-    # private function should not be called otherwise
-
     if a.size == 0:
         return 1
 
