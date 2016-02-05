@@ -1951,6 +1951,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     npy_intp iter_shape[NPY_MAXARGS];
     NpyIter *iter = NULL;
     npy_uint32 iter_flags;
+    npy_intp total_problem_size;
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -2346,6 +2347,16 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
     }
 
+    total_problem_size = NpyIter_GetIterSize(iter);
+    if (total_problem_size < 0) {
+        /*
+         * Only used for threading, if negative (this means that it is
+         * larger then ssize_t before axes removal) assume that the actual
+         * problem is large enough to be threaded usefully.
+         */
+        total_problem_size = 1000;
+    }
+
     /* Remove all the core output dimensions from the iterator */
     for (i = broadcast_ndim; i < iter_ndim; ++i) {
         if (NpyIter_RemoveAxis(iter, broadcast_ndim) != NPY_SUCCEED) {
@@ -2387,6 +2398,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *count_ptr;
+        NPY_BEGIN_THREADS_DEF;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2397,10 +2409,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         dataptr = NpyIter_GetDataPtrArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
+        if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
+            NPY_BEGIN_THREADS_THRESHOLDED(total_problem_size);
+        }
         do {
             inner_dimensions[0] = *count_ptr;
             innerloop(dataptr, inner_dimensions, inner_strides, innerloopdata);
         } while (iternext(iter));
+
+        if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
+            NPY_END_THREADS;
+        }
     } else {
         /**
          * For each output operand, check if it has non-zero size,
