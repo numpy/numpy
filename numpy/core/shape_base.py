@@ -199,7 +199,7 @@ def vstack(tup):
     --------
     stack : Join a sequence of arrays along a new axis.
     hstack : Stack arrays in sequence horizontally (column wise).
-    dstack : Stack arrays in sequence depth wise (along third dimension).
+    dstack : Stack arrays in sequence depthwise (along third dimension).
     concatenate : Join a sequence of arrays along an existing axis.
     vsplit : Split array into a list of multiple sub-arrays vertically.
 
@@ -250,7 +250,7 @@ def hstack(tup):
     --------
     stack : Join a sequence of arrays along a new axis.
     vstack : Stack arrays in sequence vertically (row wise).
-    dstack : Stack arrays in sequence depth wise (along third axis).
+    dstack : Stack arrays in sequence depthwise (along third axis).
     concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
 
@@ -304,11 +304,9 @@ def stack(arrays, axis=0):
     See Also
     --------
     concatenate : Join a sequence of arrays along an existing axis.
-    vstack : Stack arrays in sequence vertically, along the existing row axis.
-    hstack : Stack arrays in sequence horizontally, along the existing
-             column axis.
-    dstack : Stack arrays in sequence depth wise, along the existing
-             third axis.
+    vstack : Stack arrays vertically, along an existing row axis.
+    hstack : Stack arrays horizontally, along an existing column axis.
+    dstack : Stack arrays depthwise, along an existing third axis.
     split : Split array into a list of multiple sub-arrays of equal size.
 
     Examples
