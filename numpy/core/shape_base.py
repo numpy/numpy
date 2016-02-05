@@ -304,6 +304,11 @@ def stack(arrays, axis=0):
     See Also
     --------
     concatenate : Join a sequence of arrays along an existing axis.
+    vstack : Stack arrays in sequence vertically, along the existing row axis.
+    hstack : Stack arrays in sequence horizontally, along the existing
+             column axis.
+    dstack : Stack arrays in sequence depth wise, along the existing
+             third axis.
     split : Split array into a list of multiple sub-arrays of equal size.
 
     Examples
