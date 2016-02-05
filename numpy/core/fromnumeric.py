@@ -1836,16 +1836,15 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
             out[...] = res
             return out
         return res
-    elif type(a) is not mu.ndarray:
+    if type(a) is not mu.ndarray:
         try:
             sum = a.sum
         except AttributeError:
-            return _methods._sum(a, axis=axis, dtype=dtype,
-                                out=out, **kwargs)
-        return sum(axis=axis, dtype=dtype, out=out, **kwargs)
-    else:
-        return _methods._sum(a, axis=axis, dtype=dtype,
-                            out=out, **kwargs)
+            pass
+        else:
+            return sum(axis=axis, dtype=dtype, out=out, **kwargs)
+    return _methods._sum(a, axis=axis, dtype=dtype,
+                         out=out, **kwargs)
 
 
 def product(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
@@ -2285,16 +2284,17 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
+
     if type(a) is not mu.ndarray:
         try:
             amax = a.max
         except AttributeError:
-            return _methods._amax(a, axis=axis,
-                                out=out, **kwargs)
-        return amax(axis=axis, out=out, **kwargs)
-    else:
-        return _methods._amax(a, axis=axis,
-                            out=out, **kwargs)
+            pass
+        else:
+            return amax(axis=axis, out=out, **kwargs)
+
+    return _methods._amax(a, axis=axis,
+                          out=out, **kwargs)
 
 
 def amin(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2389,12 +2389,12 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         try:
             amin = a.min
         except AttributeError:
-            return _methods._amin(a, axis=axis,
-                                out=out, **kwargs)
-        return amin(axis=axis, out=out, **kwargs)
-    else:
-        return _methods._amin(a, axis=axis,
-                            out=out, **kwargs)
+            pass
+        else:
+            return amin(axis=axis, out=out, **kwargs)
+
+    return _methods._amin(a, axis=axis,
+                          out=out, **kwargs)
 
 
 def alen(a):
@@ -2535,12 +2535,12 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         try:
             prod = a.prod
         except AttributeError:
-            return _methods._prod(a, axis=axis, dtype=dtype,
-                                out=out, **kwargs)
-        return prod(axis=axis, dtype=dtype, out=out, **kwargs)
-    else:
-        return _methods._prod(a, axis=axis, dtype=dtype,
-                            out=out, **kwargs)
+            pass
+        else:
+            return prod(axis=axis, dtype=dtype, out=out, **kwargs)
+
+    return _methods._prod(a, axis=axis, dtype=dtype,
+                          out=out, **kwargs)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):
