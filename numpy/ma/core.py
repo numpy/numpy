@@ -3146,11 +3146,11 @@ class MaskedArray(ndarray):
                 if self._fill_value is not None:
                     dout._fill_value = self._fill_value[indx]
 
-                    # If we're indexing a multidimensional field in a 
+                    # If we're indexing a multidimensional field in a
                     # structured array (such as dtype("(2,)i2,(2,)i1")),
                     # dimensionality goes up (M[field].ndim == M.ndim +
-                    # len(M.dtype[field].shape)).  That's fine for 
-                    # M[field] but problematic for M[field].fill_value 
+                    # len(M.dtype[field].shape)).  That's fine for
+                    # M[field] but problematic for M[field].fill_value
                     # which should have shape () to avoid breaking several
                     # methods. There is no great way out, so set to
                     # first element.  See issue #6723.
