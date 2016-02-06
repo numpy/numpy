@@ -3582,6 +3582,14 @@ class TestIO(object):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+    def test_nofile(self):
+        # this should probably be supported as a file
+        # but for now test for proper errors
+        b = io.BytesIO()
+        assert_raises(IOError, np.fromfile, b, np.uint8, 80)
+        d = np.ones(7);
+        assert_raises(IOError, lambda x: x.tofile(b), d)
+
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)
         y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
