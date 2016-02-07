@@ -320,7 +320,13 @@ static NPY_INLINE FILE *
 npy_PyFile_Dup2(PyObject *file,
                 const char *NPY_UNUSED(mode), npy_off_t *NPY_UNUSED(orig_pos))
 {
-    return PyFile_AsFile(file);
+    FILE * fp = PyFile_AsFile(file);
+    if (fp == NULL) {
+        PyErr_SetString(PyExc_IOError,
+                        "first argument must be an open file");
+        return NULL;
+    }
+    return fp;
 }
 
 static NPY_INLINE int
