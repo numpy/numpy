@@ -2993,7 +2993,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
 
 def var(a, axis=None, dtype=None, out=None, ddof=0,
-        keepdims=False):
+        keepdims=False, fweights=None, aweights=None):
     """
     Compute the variance along the specified axis.
 
@@ -3030,6 +3030,16 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+    fweights : array_like, int, optional
+        .. versionadded:: 1.10
+        1-D array of integer freguency weights; the number of times each
+        observation vector should be repeated.
+    aweights : array_like, optional
+        .. versionadded:: 1.10
+        1-D array of observation vector weights. These relative weights are
+        typically large for observations considered "important" and smaller for
+        observations considered less "important". If ``ddof=0`` the array of
+        weights can be used to assign probabilities to observation vectors.
 
     Returns
     -------
@@ -3062,6 +3072,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     the results to be inaccurate, especially for `float32` (see example
     below).  Specifying a higher-accuracy accumulator using the ``dtype``
     keyword can alleviate this issue.
+
+    The formula for calculating the weighted variance when fweight and aweight
+    is provided is similar to that of covariance.
 
     Examples
     --------
@@ -3097,4 +3110,5 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
             pass
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                         fweights=fweights, aweights=aweights,
                          keepdims=keepdims)
