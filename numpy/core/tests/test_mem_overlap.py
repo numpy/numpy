@@ -116,9 +116,9 @@ def test_diophantine_fuzz():
             A_max = min(max_int, A_max)
             U_max = min(max_int-1, U_max)
 
-            A = tuple(rng.randint(1, A_max+1, dtype=np.intp)
+            A = tuple(int(rng.randint(1, A_max+1, dtype=np.intp))
                       for j in range(ndim))
-            U = tuple(rng.randint(0, U_max+2, dtype=np.intp)
+            U = tuple(int(rng.randint(0, U_max+2, dtype=np.intp))
                       for j in range(ndim))
 
             b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))

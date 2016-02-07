@@ -208,6 +208,15 @@ class TestRandint(TestCase):
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
 
+    def test_respect_dtype_singleton(self):
+        # See gh-7203
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+
+            sample = self.rfunc(lbnd, ubnd, dtype=dt)
+            self.assertEqual(sample.dtype, np.dtype(dt))
+
 
 class TestRandomDist(TestCase):
     # Make sure the random distribution returns the correct value for a
