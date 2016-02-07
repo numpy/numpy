@@ -2100,7 +2100,7 @@ class TestPercentile(TestCase):
         # Test defaults
         assert_equal(np.percentile(range(10), 50), 4.5)
 
-        # explicitly specify interpolation_method 'fraction' (the default)
+        # explicitly specify interpolation_method 'linear' (the default)
         assert_equal(np.percentile(range(10), 50,
                                    interpolation='linear'), 4.5)
 
@@ -2421,6 +2421,7 @@ class TestPercentile(TestCase):
                          np.array([np.nan] * 2))
             assert_(w[0].category is RuntimeWarning)
             assert_(w[1].category is RuntimeWarning)
+            assert_(w[2].category is RuntimeWarning)
 
         a = np.arange(24, dtype=float).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
