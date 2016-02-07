@@ -583,8 +583,6 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
     if (fd == NULL) {
-        PyErr_SetString(PyExc_IOError,
-                "first argument must be a string or open file");
         goto fail;
     }
     if (PyArray_ToFile(self, fd, sep, format) < 0) {
