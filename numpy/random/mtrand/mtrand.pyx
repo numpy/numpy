@@ -612,7 +612,7 @@ def _rand_bool(low, high, size, rngstate):
     off = <npy_bool>(low)
     if size is None:
         rk_random_bool(off, rng, 1, &buf, state)
-        return buf
+        return np.bool_(<npy_bool>buf)
     else:
         array = <ndarray>np.empty(size, np.bool_)
         cnt = PyArray_SIZE(array)
@@ -639,7 +639,7 @@ def _rand_int8(low, high, size, rngstate):
     off = <npy_uint8>(<npy_int8>low)
     if size is None:
         rk_random_uint8(off, rng, 1, &buf, state)
-        return <npy_int8>buf
+        return np.int8(<npy_int8>buf)
     else:
         array = <ndarray>np.empty(size, np.int8)
         cnt = PyArray_SIZE(array)
@@ -666,7 +666,7 @@ def _rand_int16(low, high, size, rngstate):
     off = <npy_uint16>(<npy_int16>low)
     if size is None:
         rk_random_uint16(off, rng, 1, &buf, state)
-        return <npy_int16>buf
+        return np.int16(<npy_int16>buf)
     else:
         array = <ndarray>np.empty(size, np.int16)
         cnt = PyArray_SIZE(array)
@@ -717,7 +717,7 @@ def _rand_int32(low, high, size, rngstate):
     off = <npy_uint32>(<npy_int32>low)
     if size is None:
         rk_random_uint32(off, rng, 1, &buf, state)
-        return <npy_int32>buf
+        return np.int32(<npy_int32>buf)
     else:
         array = <ndarray>np.empty(size, np.int32)
         cnt = PyArray_SIZE(array)
@@ -744,7 +744,7 @@ def _rand_int64(low, high, size, rngstate):
     off = <npy_uint64>(<npy_int64>low)
     if size is None:
         rk_random_uint64(off, rng, 1, &buf, state)
-        return <npy_int64>buf
+        return np.int64(<npy_int64>buf)
     else:
         array = <ndarray>np.empty(size, np.int64)
         cnt = PyArray_SIZE(array)
@@ -770,7 +770,7 @@ def _rand_uint8(low, high, size, rngstate):
     off = <npy_uint8>(low)
     if size is None:
         rk_random_uint8(off, rng, 1, &buf, state)
-        return buf
+        return np.uint8(<npy_uint8>buf)
     else:
         array = <ndarray>np.empty(size, np.uint8)
         cnt = PyArray_SIZE(array)
@@ -797,7 +797,7 @@ def _rand_uint16(low, high, size, rngstate):
     off = <npy_uint16>(low)
     if size is None:
         rk_random_uint16(off, rng, 1, &buf, state)
-        return buf
+        return np.uint16(<npy_uint16>buf)
     else:
         array = <ndarray>np.empty(size, np.uint16)
         cnt = PyArray_SIZE(array)
@@ -824,7 +824,7 @@ def _rand_uint32(low, high, size, rngstate):
     off = <npy_uint32>(low)
     if size is None:
         rk_random_uint32(off, rng, 1, &buf, state)
-        return <npy_uint32>buf
+        return np.uint32(<npy_uint32>buf)
     else:
         array = <ndarray>np.empty(size, np.uint32)
         cnt = PyArray_SIZE(array)
@@ -851,7 +851,7 @@ def _rand_uint64(low, high, size, rngstate):
     off = <npy_uint64>(low)
     if size is None:
         rk_random_uint64(off, rng, 1, &buf, state)
-        return <npy_uint64>buf
+        return np.uint64(<npy_uint64>buf)
     else:
         array = <ndarray>np.empty(size, np.uint64)
         cnt = PyArray_SIZE(array)
