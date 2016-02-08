@@ -319,32 +319,70 @@ def test_stack():
 
 
 class TestBlock(TestCase):
-    def test_block_row_wise(self):
+    def test_block_simple_row_wise(self):
         A = np.ones((2, 2))
         B = 2 * A
-        assert_almost_equal(block([A, B]),
-                            np.array([[1, 1, 2, 2],
-                                      [1, 1, 2, 2]]))
-        # tuple notation
-        assert_almost_equal(block((A, B)),
-                            np.array([[1, 1, 2, 2],
-                                      [1, 1, 2, 2]]))
+        desired = np.array([[1, 1, 2, 2],
+                            [1, 1, 2, 2]])
+        result = block([A, B])
+        assert_almost_equal(desired, result)
+        # with tuples
+        result = block((A, B))
+        assert_almost_equal(desired, result)
 
-    def test_block_column_wise(self):
+    def test_block_simple_column_wise(self):
         A = np.ones((2, 2))
         B = 2 * A
-        assert_almost_equal(block([[A], [B]]),
-                            np.array([[1, 1],
-                                      [1, 1],
-                                      [2, 2],
-                                      [2, 2]]))
-        # tuple notation with only one element per tuple does not make much
-        # sense. test it anyway just to make sure
-        assert_almost_equal(block(((A, ), (B, ))),
-                            np.array([[1, 1],
-                                      [1, 1],
-                                      [2, 2],
-                                      [2, 2]]))
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2],
+                             [2, 2]])
+        result = block(A, B)
+        assert_almost_equal(expected, result)
+
+    def test_block_needless_brackts(self):
+        A = np.ones((2, 2))
+        B = 2 * A
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2],
+                             [2, 2]])
+        result = block([A], [B])  # here are the needless brackets
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_row_wise(self):
+        # # # 1-D vectors are treated as row arrays
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3, 2, 3, 4]])
+        result = block([a, b])
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_multiple_rows(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3, 2, 3, 4],
+                             [1, 2, 3, 2, 3, 4]])
+        result = block([a, b], [a, b])
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_column_wise(self):
+        # # # 1-D vectors are treated as row arrays
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3],
+                             [2, 3, 4]])
+        result = block(a, b)
+        assert_almost_equal(expected, result)
+
+    def test_block_mixed_1d_and_2d(self):
+        A = np.ones((2, 2))
+        B = np.array([2, 2])
+        result = block(A, B)
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2]])
+        assert_almost_equal(expected, result)
 
     def test_block_complex(self):
         # # # a bit more complex
@@ -355,11 +393,12 @@ class TestBlock(TestCase):
         five = np.array([5])
         six = np.array([6, 6, 6, 6, 6])
         Zeros = np.zeros((2, 6))
-        result = block([[One, Two],
-                        [Three],
-                        [four],
-                        [five, six],
-                        [Zeros]])
+
+        result = block([One, Two],
+                       Three,
+                       four,
+                       [five, six],
+                       Zeros)
         expected = np.array([[1, 1, 1, 2, 2, 2],
                              [3, 3, 3, 3, 3, 3],
                              [4, 4, 4, 4, 4, 4],
@@ -368,20 +407,14 @@ class TestBlock(TestCase):
                              [0, 0, 0, 0, 0, 0]])
         assert_almost_equal(result, expected)
 
-    def test_block_with_1d_arrays(self):
-        # # # 1-D vectors are treated as row arrays
-        a = np.array([1, 2, 3])
-        b = np.array([2, 3, 4])
-        assert_almost_equal(block([a, b]),
-                            np.array([[1, 2, 3, 2, 3, 4]]))
-        assert_almost_equal(block([[a], [b]]),
-                            np.array([[1, 2, 3],
-                                      [2, 3, 4]]))
-        a = np.array([1, 2, 3])
-        b = np.array([2, 3, 4])
-        assert_almost_equal(block([[a, b], [a, b]]),
-                            np.array([[1, 2, 3, 2, 3, 4],
-                                      [1, 2, 3, 2, 3, 4]]))
+    def test_block_with_mismatched_shape(self):
+        a = np.array([0, 0])
+        b = np.eye(2)
+        assert_raises(ValueError, np.block, (a, b))
+        assert_raises(ValueError, np.block, (b, a))
+
+    def test_not_list_or_tuple_as_input(self):
+        assert_raises(TypeError, np.block)
 
 
 if __name__ == "__main__":

@@ -355,7 +355,7 @@ def stack(arrays, axis=0):
     return _nx.concatenate(expanded_arrays, axis=axis)
 
 
-def block(arrays):
+def block(*arrays):
     """
     Create a block array consisting of other arrays.
 
@@ -393,6 +393,13 @@ def block(arrays):
     >>> block([A, B])
     array([[1, 2, 3, 2, 3, 4]])
 
+    Stacking in a column:
+    >>> A = np.array([[1, 2, 3]])
+    >>> B = np.array([[2, 3, 4]])
+    >>> block(A, B)
+    array([[1, 2, 3],
+           [2, 3, 4]])
+
     1-D vectors are treated as row arrays
     >>> a = np.array([1, 1])
     >>> b = np.array([2, 2])
@@ -401,17 +408,13 @@ def block(arrays):
 
     >>> a = np.array([1, 1])
     >>> b = np.array([2, 2])
-    >>> block([[a], [b]])
+    >>> block(a, b)
     array([[1, 1],
            [2, 2]])
 
-    >>> A = np.array([[1, 1], [1, 1]])
-    >>> B = 2 * A
-    >>> block([A, B])
-    array([[1, 1, 2, 2],
-           [1, 1, 2, 2]])
-
     The tuple notation also works:
+    >>> A = np.ones((2, 2))
+    >>> B = 2 * A
     >>> block((A, B))
     array([[1, 1, 2, 2],
            [1, 1, 2, 2]])
@@ -424,11 +427,11 @@ def block(arrays):
     >>> five = np.array([5])
     >>> six = np.array([6, 6, 6, 6, 6])
     >>> Zeros = np.zeros((2, 6), dtype=int)
-    >>> block([[One, Two],
-    ...        [Three],
-    ...        [four],
+    >>> block([One, Two],
+    ...        Three,
+    ...        four,
     ...        [five, six],
-    ...        [Zeros]])
+    ...        Zeros)
     array([[1, 1, 1, 2, 2, 2],
            [3, 3, 3, 3, 3, 3],
            [4, 4, 4, 4, 4, 4],
@@ -436,9 +439,19 @@ def block(arrays):
            [0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0]])
 
+
     """
-    if isinstance(arrays[0], (list, tuple)):
-        result = vstack([hstack(row) for row in arrays])
+    if len(arrays) < 1:
+        raise TypeError("need at least one array to create a block array")
+
+    result = []
+    for row in arrays:
+        if isinstance(row, (list, tuple)):
+            result.append(hstack(row))
+        else:
+            result.append(row)
+
+    if len(result) > 1:
+        return vstack(result)
     else:
-        result = hstack(arrays)
-    return atleast_2d(result)
+        return atleast_2d(result[0])
