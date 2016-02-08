@@ -312,10 +312,10 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 static void
 arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
                 char *avals_data, int melsize, int delsize, int objarray,
-                int totmask, int numvals, int nd, npy_intp *instrides,
+                npy_intp totmask, npy_intp numvals, int nd, npy_intp *instrides,
                 npy_intp *inshape)
 {
-    int mindx, rem_indx, indx, i, copied;
+    npy_intp mindx, rem_indx, indx, i, copied;
 
     /*
      * Walk through mask array, when non-zero is encountered
@@ -360,10 +360,10 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     PyObject *mask = NULL, *vals = NULL;
     PyArrayObject *ainput = NULL, *amask = NULL, *avals = NULL, *tmp = NULL;
-    int numvals, totmask, sameshape;
+    int sameshape;
     char *input_data, *mptr, *vptr, *zero = NULL;
     int melsize, delsize, nd, objarray, k;
-    npy_intp *instrides, *inshape;
+    npy_intp *instrides, *inshape, totmask, numvals;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
 
@@ -459,7 +459,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         Py_RETURN_NONE;
     }
 
-    totmask = (int) PyArray_SIZE(amask);
+    totmask = PyArray_SIZE(amask);
     instrides = PyArray_STRIDES(ainput);
     inshape = PyArray_DIMS(ainput);
     if (objarray) {
