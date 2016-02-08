@@ -2393,11 +2393,11 @@ add_newdoc('numpy.core.umath', 'fmin',
     Examples
     --------
     >>> np.fmin([2, 3, 4], [1, 5, 2])
-    array([2, 5, 4])
+    array([1, 3, 2])
 
     >>> np.fmin(np.eye(2), [0.5, 2])
-    array([[ 1. ,  2. ],
-           [ 0.5,  2. ]])
+    array([[ 0.5,  0. ],
+           [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([  0.,   0.,  NaN])
