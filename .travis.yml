@@ -80,7 +80,9 @@ before_install:
   #
   # Some change in virtualenv 14.0.5 caused `test_f2py` to fail. So, we have
   # pinned `virtualenv` to the last known working version to avoid this failure.
-  - pip install -U 'virtualenv==14.0.4'
+  # Appears we had some issues with certificates on Travis. It looks like
+  # bumping to 14.0.6 will help.
+  - pip install -U 'virtualenv==14.0.6'
   - virtualenv --python=python venv
   - source venv/bin/activate
   - python -V
