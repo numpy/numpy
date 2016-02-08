@@ -6390,5 +6390,13 @@ class TestUnicodeArrayNonzero(TestCase):
         self.assertTrue(a)
 
 
+def test_place_overflow():
+    # see #7207
+    size = 2**31
+    x = np.zeros(size, np.ubyte)
+    mask = np.ones(size, np.ubyte)
+    np.place(x, mask, mask)
+    assert_equal(x, mask)
+
 if __name__ == "__main__":
     run_module_suite()
