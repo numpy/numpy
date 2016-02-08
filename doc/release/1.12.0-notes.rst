@@ -41,6 +41,30 @@ XXX
 the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
 
 
+``keepdims`` kwarg is passed through to user-class methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+numpy functions that take a ``keepdims`` kwarg now pass the value
+through to the corresponding methods on ndarray sub-classes.  Previously the
+``keepdims`` keyword would be silently dropped.  These functions now have
+the following behavior:
+
+1. If user does not provide ``keepdims``, no keyword is passed to the underlying
+   method.
+2. Any user-provided value of ``keepdims`` is passed through as a keyword
+   argument to the method.
+
+This will raise in the case where the method does not support a
+``keepdims`` kwarg and the user explicitly passes in ``keepdims``.
+
+
+The following functions are changed: ``sum``, ``product``,
+``sometrue``, ``alltrue``, ``any``, ``all``, ``amax``, ``amin``,
+``prod``, ``mean``, ``std``, ``var``, ``nanmin``, ``nanmax``,
+``nansum``, ``nanprod``, ``nanmean``, ``nanmedian``, ``nanvar``,
+``nanstd``
+
+
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -73,4 +97,3 @@ Changes
 
 Deprecations
 ============
-

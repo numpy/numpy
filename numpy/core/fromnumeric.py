@@ -17,7 +17,6 @@ from . import _methods
 
 _dt_ = nt.sctype2char
 
-
 # functions that are methods
 __all__ = [
     'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
@@ -1380,6 +1379,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         return asanyarray(a).trace(offset, axis1, axis2, dtype, out)
 
 
+
 def ravel(a, order='C'):
     """Return a contiguous flattened array.
 
@@ -1740,7 +1740,7 @@ def clip(a, a_min, a_max, out=None):
     return clip(a_min, a_max, out)
 
 
-def sum(a, axis=None, dtype=None, out=None, keepdims=False):
+def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Sum of array elements over a given axis.
 
@@ -1770,9 +1770,15 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
         the same shape as the expected output, but the type of the output
         values will be cast if necessary.
     keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left in the
-        result as dimensions with size one. With this option, the result
-        will broadcast correctly against the input array.
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `sum` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -1821,26 +1827,27 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
     -128
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
     if isinstance(a, _gentype):
         res = _sum_(a)
         if out is not None:
             out[...] = res
             return out
         return res
-    elif type(a) is not mu.ndarray:
+    if type(a) is not mu.ndarray:
         try:
             sum = a.sum
         except AttributeError:
-            return _methods._sum(a, axis=axis, dtype=dtype,
-                                 out=out, keepdims=keepdims)
-        # NOTE: Dropping the keepdims parameters here...
-        return sum(axis=axis, dtype=dtype, out=out)
-    else:
-        return _methods._sum(a, axis=axis, dtype=dtype,
-                             out=out, keepdims=keepdims)
+            pass
+        else:
+            return sum(axis=axis, dtype=dtype, out=out, **kwargs)
+    return _methods._sum(a, axis=axis, dtype=dtype,
+                         out=out, **kwargs)
 
 
-def product(a, axis=None, dtype=None, out=None, keepdims=False):
+def product(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the product of array elements over a given axis.
 
@@ -1849,11 +1856,13 @@ def product(a, axis=None, dtype=None, out=None, keepdims=False):
     prod : equivalent function; see for details.
 
     """
-    return um.multiply.reduce(a, axis=axis, dtype=dtype,
-                              out=out, keepdims=keepdims)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, **kwargs)
 
 
-def sometrue(a, axis=None, out=None, keepdims=False):
+def sometrue(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Check whether some values are true.
 
@@ -1865,14 +1874,13 @@ def sometrue(a, axis=None, out=None, keepdims=False):
 
     """
     arr = asanyarray(a)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return arr.any(axis=axis, out=out, **kwargs)
 
-    try:
-        return arr.any(axis=axis, out=out, keepdims=keepdims)
-    except TypeError:
-        return arr.any(axis=axis, out=out)
 
-
-def alltrue(a, axis=None, out=None, keepdims=False):
+def alltrue(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Check if all elements of input array are true.
 
@@ -1882,14 +1890,13 @@ def alltrue(a, axis=None, out=None, keepdims=False):
 
     """
     arr = asanyarray(a)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return arr.all(axis=axis, out=out, **kwargs)
 
-    try:
-        return arr.all(axis=axis, out=out, keepdims=keepdims)
-    except TypeError:
-        return arr.all(axis=axis, out=out)
 
-
-def any(a, axis=None, out=None, keepdims=False):
+def any(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -1915,10 +1922,17 @@ def any(a, axis=None, out=None, keepdims=False):
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
         See `doc.ufuncs` (Section "Output arguments") for details.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `any` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -1963,14 +1977,13 @@ def any(a, axis=None, out=None, keepdims=False):
 
     """
     arr = asanyarray(a)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return arr.any(axis=axis, out=out, **kwargs)
 
-    try:
-        return arr.any(axis=axis, out=out, keepdims=keepdims)
-    except TypeError:
-        return arr.any(axis=axis, out=out)
 
-
-def all(a, axis=None, out=None, keepdims=False):
+def all(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -1994,10 +2007,17 @@ def all(a, axis=None, out=None, keepdims=False):
         type is preserved (e.g., if ``dtype(out)`` is float, the result
         will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
         "Output arguments") for more details.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `all` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2037,11 +2057,10 @@ def all(a, axis=None, out=None, keepdims=False):
 
     """
     arr = asanyarray(a)
-
-    try:
-        return arr.all(axis=axis, out=out, keepdims=keepdims)
-    except TypeError:
-        return arr.all(axis=axis, out=out)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return arr.all(axis=axis, out=out, **kwargs)
 
 
 def cumsum(a, axis=None, dtype=None, out=None):
@@ -2177,7 +2196,7 @@ def ptp(a, axis=None, out=None):
     return ptp(axis, out)
 
 
-def amax(a, axis=None, out=None, keepdims=False):
+def amax(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -2197,10 +2216,17 @@ def amax(a, axis=None, out=None, keepdims=False):
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
         See `doc.ufuncs` (Section "Output arguments") for more details.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `amax` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2255,20 +2281,23 @@ def amax(a, axis=None, out=None, keepdims=False):
     4.0
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+
     if type(a) is not mu.ndarray:
         try:
             amax = a.max
         except AttributeError:
-            return _methods._amax(a, axis=axis,
-                                  out=out, keepdims=keepdims)
-        # NOTE: Dropping the keepdims parameter
-        return amax(axis=axis, out=out)
-    else:
-        return _methods._amax(a, axis=axis,
-                              out=out, keepdims=keepdims)
+            pass
+        else:
+            return amax(axis=axis, out=out, **kwargs)
+
+    return _methods._amax(a, axis=axis,
+                          out=out, **kwargs)
 
 
-def amin(a, axis=None, out=None, keepdims=False):
+def amin(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -2288,10 +2317,17 @@ def amin(a, axis=None, out=None, keepdims=False):
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
         See `doc.ufuncs` (Section "Output arguments") for more details.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `amin` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2346,17 +2382,19 @@ def amin(a, axis=None, out=None, keepdims=False):
     0.0
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
     if type(a) is not mu.ndarray:
         try:
             amin = a.min
         except AttributeError:
-            return _methods._amin(a, axis=axis,
-                                  out=out, keepdims=keepdims)
-        # NOTE: Dropping the keepdims parameter
-        return amin(axis=axis, out=out)
-    else:
-        return _methods._amin(a, axis=axis,
-                              out=out, keepdims=keepdims)
+            pass
+        else:
+            return amin(axis=axis, out=out, **kwargs)
+
+    return _methods._amin(a, axis=axis,
+                          out=out, **kwargs)
 
 
 def alen(a):
@@ -2392,7 +2430,7 @@ def alen(a):
         return len(array(a, ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None, keepdims=False):
+def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the product of array elements over a given axis.
 
@@ -2426,6 +2464,12 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
         If this is set to True, the axes which are reduced are left in the
         result as dimensions with size one. With this option, the result
         will broadcast correctly against the input array.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `prod` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2484,16 +2528,19 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
     True
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
     if type(a) is not mu.ndarray:
         try:
             prod = a.prod
         except AttributeError:
-            return _methods._prod(a, axis=axis, dtype=dtype,
-                                  out=out, keepdims=keepdims)
-        return prod(axis=axis, dtype=dtype, out=out)
-    else:
-        return _methods._prod(a, axis=axis, dtype=dtype,
-                              out=out, keepdims=keepdims)
+            pass
+        else:
+            return prod(axis=axis, dtype=dtype, out=out, **kwargs)
+
+    return _methods._prod(a, axis=axis, dtype=dtype,
+                          out=out, **kwargs)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):
@@ -2793,7 +2840,7 @@ def round_(a, decimals=0, out=None):
     return round(decimals, out)
 
 
-def mean(a, axis=None, dtype=None, out=None, keepdims=False):
+def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -2823,10 +2870,17 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See `doc.ufuncs` for details.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `mean` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2874,18 +2928,22 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     0.55000000074505806
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
     if type(a) is not mu.ndarray:
         try:
             mean = a.mean
-            return mean(axis=axis, dtype=dtype, out=out)
         except AttributeError:
             pass
+        else:
+            return mean(axis=axis, dtype=dtype, out=out, **kwargs)
 
     return _methods._mean(a, axis=axis, dtype=dtype,
-                          out=out, keepdims=keepdims)
+                          out=out, **kwargs)
 
 
-def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
 
@@ -2921,6 +2979,12 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `std` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2981,19 +3045,23 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     0.44999999925494177
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+
     if type(a) is not mu.ndarray:
         try:
             std = a.std
-            return std(axis=axis, dtype=dtype, out=out, ddof=ddof)
         except AttributeError:
             pass
+        else:
+            return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                         keepdims=keepdims)
+                         **kwargs)
 
 
-def var(a, axis=None, dtype=None, out=None, ddof=0,
-        keepdims=False):
+def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3030,6 +3098,12 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `var` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -3089,12 +3163,18 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     0.2025
 
     """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+
     if type(a) is not mu.ndarray:
         try:
             var = a.var
-            return var(axis=axis, dtype=dtype, out=out, ddof=ddof)
+
         except AttributeError:
             pass
+        else:
+            return var(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                         keepdims=keepdims)
+                         **kwargs)
