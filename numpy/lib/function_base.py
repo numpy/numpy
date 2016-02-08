@@ -56,24 +56,24 @@ def iterable(y):
 
     Returns
     -------
-    b : {0, 1}
-      Return 1 if the object has an iterator method or is a sequence,
-      and 0 otherwise.
+    b : bool
+      Return ``True`` if the object has an iterator method or is a
+      sequence and ``False`` otherwise.
 
 
     Examples
     --------
     >>> np.iterable([1, 2, 3])
-    1
+    True
     >>> np.iterable(2)
-    0
+    False
 
     """
     try:
         iter(y)
-    except:
-        return 0
-    return 1
+    except TypeError:
+        return False
+    return True
 
 
 def _hist_optim_numbins_estimator(a, estimator):
