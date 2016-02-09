@@ -803,12 +803,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                if (slice_GetIndices((PySliceObject *)indices[i].object,
-                                     PyArray_DIMS(self)[orig_dim],
-                                     &start, &stop, &step, &n_steps) < 0) {
-                    if (!PyErr_Occurred()) {
-                        PyErr_SetString(PyExc_IndexError, "invalid slice");
-                    }
+                if (NpySlice_GetIndicesEx(indices[i].object,
+                                          PyArray_DIMS(self)[orig_dim],
+                                          &start, &stop, &step, &n_steps) < 0) {
                     return -1;
                 }
                 if (n_steps <= 0) {
