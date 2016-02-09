@@ -138,7 +138,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   $PIP install wheel
   # ensure that the pip / setuptools versions deployed inside
   # the venv are recent enough
-  $PIP install -U "virtualenv<14.0.0"
+  $PIP install -U virtualenv
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
