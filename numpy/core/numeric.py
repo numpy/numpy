@@ -31,12 +31,12 @@ __all__ = [
     'where', 'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose',
     'lexsort', 'set_numeric_ops', 'can_cast', 'promote_types',
     'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
-    'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
-    'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
-    'einsum', 'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
-    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'array2string',
-    'get_printoptions', 'set_printoptions', 'array_repr', 'array_str',
-    'set_string_function', 'little_endian', 'require', 'fromiter',
+    'ascontiguousarray', 'asfortranarray', 'asanycontiguousarray',
+    'isfortran', 'empty_like', 'zeros_like', 'ones_like', 'correlate',
+    'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot', 'alterdot',
+    'restoredot', 'roll', 'rollaxis', 'moveaxis', 'cross', 'tensordot',
+    'array2string', 'get_printoptions', 'set_printoptions', 'array_repr',
+    'array_str', 'set_string_function', 'little_endian', 'require', 'fromiter',
     'array_equal', 'array_equiv', 'indices', 'fromfunction', 'isclose', 'load',
     'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones', 'identity',
     'allclose', 'compare_chararrays', 'putmask', 'seterr', 'geterr',
@@ -547,12 +547,14 @@ def ascontiguousarray(a, dtype=None):
     -------
     out : ndarray
         Contiguous array of same shape and content as `a`, with type `dtype`
-        if specified.
+        if specified.  A copy is made only if needed.
 
     See Also
     --------
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
+    asanycontiguousarray : Convert input to an ndarray in either C or
+                           Fortran order.
     require : Return an ndarray that satisfies requirements.
     ndarray.flags : Information about the memory layout of the array.
 
@@ -583,12 +585,13 @@ def asfortranarray(a, dtype=None):
     -------
     out : ndarray
         The input `a` in Fortran, or column-major, order.
+        A copy is made only if needed.
 
     See Also
     --------
     ascontiguousarray : Convert input to a contiguous (C order) array.
-    asanyarray : Convert input to an ndarray with either row or
-        column-major memory order.
+    asanycontiguousarray : Convert input to an ndarray in either C or
+                           Fortran order.
     require : Return an ndarray that satisfies requirements.
     ndarray.flags : Information about the memory layout of the array.
 
@@ -603,6 +606,53 @@ def asfortranarray(a, dtype=None):
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
+
+def asanycontiguousarray(a, dtype=None):
+    """
+    Return a contiguous array in memory (either C or Fortran order).
+    If the input is already C- or Fortran-contiguous, its memory
+    order is preserved.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : str or dtype object, optional
+        Data-type of returned array.
+
+    Returns
+    -------
+    out : ndarray
+        C- or Fortran-contiguous array of same shape and content as `a`,
+        with type `dtype` if specified.  A copy is made only if needed.
+
+    See Also
+    --------
+    ascontiguousarray : Convert input to a contiguous (C order) array.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> np.asanycontiguousarray(x, dtype=np.float32)
+    array([[ 0.,  1.,  2.],
+           [ 3.,  4.,  5.]], dtype=float32)
+    >>> x.flags['C_CONTIGUOUS']
+    True
+
+    """
+    try:
+        is_f_contiguous = a.flags.f_contiguous
+    except AttributeError:
+        # Not a ndarray
+        is_f_contiguous = False
+    if is_f_contiguous:
+        return array(a, dtype, copy=False, order='F', ndmin=1)
+    else:
+        return array(a, dtype, copy=False, order='C', ndmin=1)
 
 def require(a, dtype=None, requirements=None):
     """

@@ -32,6 +32,8 @@ From existing data
    asarray
    asanyarray
    ascontiguousarray
+   asfortranarray
+   asanycontiguousarray
    asmatrix
    copy
    frombuffer

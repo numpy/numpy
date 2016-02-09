@@ -304,14 +304,28 @@ class TestArrayConstruction(TestCase):
         assert_array_equal(d, [[1, 5, 3], [1,2,3]])
 
     def test_array_cont(self):
-        d = np.ones(10)[::2]
-        assert_(np.ascontiguousarray(d).flags.c_contiguous)
-        assert_(np.ascontiguousarray(d).flags.f_contiguous)
-        assert_(np.asfortranarray(d).flags.c_contiguous)
-        assert_(np.asfortranarray(d).flags.f_contiguous)
-        d = np.ones((10, 10))[::2,::2]
-        assert_(np.ascontiguousarray(d).flags.c_contiguous)
-        assert_(np.asfortranarray(d).flags.f_contiguous)
+        a = np.ones(12)
+        b = a.reshape(3, 4)
+        for arr in (a, a[::2], b, b.T, b[::2]):
+            res = np.ascontiguousarray(arr)
+            assert_(res.flags.c_contiguous)
+            assert_equal(res.flags.f_contiguous, res.ndim <= 1)
+            # It's a view if the original is C-contiguous, otherwise it's a copy
+            assert_equal(res.ctypes.data == arr.ctypes.data,
+                         arr.flags.c_contiguous)
+
+            res = np.asfortranarray(arr)
+            assert_(res.flags.f_contiguous)
+            assert_equal(res.flags.c_contiguous, arr.ndim <= 1)
+            # It's a view if the original is F-contiguous, otherwise it's a copy
+            assert_equal(res.ctypes.data == arr.ctypes.data,
+                         arr.flags.f_contiguous)
+
+            res = np.asanycontiguousarray(arr)
+            assert_(res.flags.c_contiguous or res.flags.f_contiguous)
+            # It's a view if the original is contiguous, otherwise it's a copy
+            assert_equal(res.ctypes.data == arr.ctypes.data,
+                         arr.flags.c_contiguous or arr.flags.f_contiguous)
 
 
 class TestAssignment(TestCase):
