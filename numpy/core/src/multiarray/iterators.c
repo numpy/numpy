@@ -207,6 +207,22 @@ slice_coerce_index(PyObject *o, npy_intp *v)
     return 1;
 }
 
+/*
+ * Same (slightly weird) semantics as slice_coerce_index, but raising a useful
+ * exception on failure. Written this way to get better error messages in
+ * 1.11, while creating minimal risky changes during beta cycle.
+ */
+static int
+slice_coerce_index_or_raise(PyObject *o, npy_intp *v)
+{
+    if (!slice_coerce_index(o, v)) {
+        PyErr_Format(PyExc_IndexError,
+                     "failed to coerce slice entry of type %s to integer",
+                     o->ob_type->tp_name);
+        return 0;
+    }
+    return 1;
+}
 
 /*
  * This is basically PySlice_GetIndicesEx, but with our coercion
@@ -226,7 +242,7 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *step = 1;
     }
     else {
-        if (!slice_coerce_index(r->step, step)) {
+        if (!slice_coerce_index_or_raise(r->step, step)) {
             return -1;
         }
         if (*step == 0) {
@@ -241,7 +257,7 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *start = *step < 0 ? length-1 : 0;
     }
     else {
-        if (!slice_coerce_index(r->start, start)) {
+        if (!slice_coerce_index_or_raise(r->start, start)) {
             return -1;
         }
         if (*start < 0) {
@@ -259,7 +275,7 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *stop = defstop;
     }
     else {
-        if (!slice_coerce_index(r->stop, stop)) {
+        if (!slice_coerce_index_or_raise(r->stop, stop)) {
             return -1;
         }
         if (*stop < 0) {
