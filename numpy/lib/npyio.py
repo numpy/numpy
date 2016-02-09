@@ -627,7 +627,11 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
-    fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
+
+    # Since target file might be big enough to exceed capacity of a global
+    # temporary directory, create temp file side-by-side with the target file.
+    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
+    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
     os.close(fd)
     try:
         for key, val in namedict.items():
@@ -640,6 +644,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
                 fid.close()
                 fid = None
                 zipf.write(tmpfile, arcname=fname)
+            except IOError as exc:
+                raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
             finally:
                 if fid:
                     fid.close()
