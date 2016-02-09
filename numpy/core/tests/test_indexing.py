@@ -52,38 +52,38 @@ class TestIndexing(TestCase):
         a = np.array([[5]])
 
         # start as float.
-        assert_raises(IndexError, lambda: a[0.0:])
-        assert_raises(IndexError, lambda: a[0:, 0.0:2])
-        assert_raises(IndexError, lambda: a[0.0::2, :0])
-        assert_raises(IndexError, lambda: a[0.0:1:2,:])
-        assert_raises(IndexError, lambda: a[:, 0.0:])
+        assert_raises(TypeError, lambda: a[0.0:])
+        assert_raises(TypeError, lambda: a[0:, 0.0:2])
+        assert_raises(TypeError, lambda: a[0.0::2, :0])
+        assert_raises(TypeError, lambda: a[0.0:1:2,:])
+        assert_raises(TypeError, lambda: a[:, 0.0:])
         # stop as float.
-        assert_raises(IndexError, lambda: a[:0.0])
-        assert_raises(IndexError, lambda: a[:0, 1:2.0])
-        assert_raises(IndexError, lambda: a[:0.0:2, :0])
-        assert_raises(IndexError, lambda: a[:0.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4.0:2])
+        assert_raises(TypeError, lambda: a[:0.0])
+        assert_raises(TypeError, lambda: a[:0, 1:2.0])
+        assert_raises(TypeError, lambda: a[:0.0:2, :0])
+        assert_raises(TypeError, lambda: a[:0.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4.0:2])
         # step as float.
-        assert_raises(IndexError, lambda: a[::1.0])
-        assert_raises(IndexError, lambda: a[0:, :2:2.0])
-        assert_raises(IndexError, lambda: a[1::4.0, :0])
-        assert_raises(IndexError, lambda: a[::5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4:2.0])
+        assert_raises(TypeError, lambda: a[::1.0])
+        assert_raises(TypeError, lambda: a[0:, :2:2.0])
+        assert_raises(TypeError, lambda: a[1::4.0, :0])
+        assert_raises(TypeError, lambda: a[::5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4:2.0])
         # mixed.
-        assert_raises(IndexError, lambda: a[1.0:2:2.0])
-        assert_raises(IndexError, lambda: a[1.0::2.0])
-        assert_raises(IndexError, lambda: a[0:, :2.0:2.0])
-        assert_raises(IndexError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(IndexError, lambda: a[1.0:5.0:5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0.4:4.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:2:2.0])
+        assert_raises(TypeError, lambda: a[1.0::2.0])
+        assert_raises(TypeError, lambda: a[0:, :2.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:1:4.0, :0])
+        assert_raises(TypeError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
-        assert_raises(IndexError, lambda: a[::0.0])
+        assert_raises(TypeError, lambda: a[::0.0])
 
     def test_index_no_array_to_index(self):
         # No non-scalar arrays.
         a = np.array([[[1]]])
 
-        assert_raises(IndexError, lambda: a[a:a:a])
+        assert_raises(TypeError, lambda: a[a:a:a])
 
     def test_none_index(self):
         # `None` index adds newaxis
@@ -1134,7 +1134,6 @@ class TestBooleanArgumentErrors(TestCase):
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
         assert_raises(TypeError, np.take, args=(a, [0], False))
-        assert_raises(IndexError, lambda: a[False:True:True])
         assert_raises(IndexError, lambda: a[False, 0])
         assert_raises(IndexError, lambda: a[False, 0, 0])
 

@@ -20,8 +20,22 @@
 #define ELLIPSIS_INDEX -2
 #define SINGLE_INDEX -3
 
+/*
+ * Tries to convert 'o' into an npy_intp interpreted as an
+ * index. Returns 1 if it was successful, 0 otherwise. Does
+ * not set an exception.
+ */
 static int
-slice_coerce_index(PyObject *o, npy_intp *v);
+coerce_index(PyObject *o, npy_intp *v)
+{
+    *v = PyArray_PyIntAsIntp(o);
+
+    if ((*v) == -1 && PyErr_Occurred()) {
+        PyErr_Clear();
+        return 0;
+    }
+    return 1;
+}
 
 /*
  * This function converts one element of the indexing tuple
@@ -46,12 +60,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
-        if (slice_GetIndices((PySliceObject *)op, max,
-                             &i, &stop, step_size, n_steps) < 0) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_IndexError,
-                                "invalid slice");
-            }
+        if (NpySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
             goto fail;
         }
         if (*n_steps <= 0) {
@@ -60,21 +69,21 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
             i = 0;
         }
     }
-    else {
-        if (!slice_coerce_index(op, &i)) {
-            PyErr_SetString(PyExc_IndexError,
-                            "each index entry must be either a "
-                            "slice, an integer, Ellipsis, or "
-                            "newaxis");
-            goto fail;
-        }
+    else if (coerce_index(op, &i)) {
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
         if (check_index) {
             if (check_and_adjust_index(&i, max, axis, NULL) < 0) {
-            goto fail;
+                goto fail;
             }
         }
+    }
+    else {
+        PyErr_SetString(PyExc_IndexError,
+                        "each index entry must be either a "
+                        "slice, an integer, Ellipsis, or "
+                        "newaxis");
+        goto fail;
     }
     return i;
 
@@ -190,102 +199,6 @@ parse_index(PyArrayObject *self, PyObject *op,
     return nd_new;
 }
 
-/*
- * Tries to convert 'o' into an npy_intp interpreted as an
- * index. Returns 1 if it was successful, 0 otherwise. Does
- * not set an exception.
- */
-static int
-slice_coerce_index(PyObject *o, npy_intp *v)
-{
-    *v = PyArray_PyIntAsIntp(o);
-
-    if ((*v) == -1 && PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-    return 1;
-}
-
-
-/*
- * This is basically PySlice_GetIndicesEx, but with our coercion
- * of indices to integers (plus, that function is new in Python 2.3)
- *
- * N.B. The coercion to integers is deprecated; once the DeprecationWarning
- * is changed to an error, it would seem that this is obsolete.
- */
-NPY_NO_EXPORT int
-slice_GetIndices(PySliceObject *r, npy_intp length,
-                 npy_intp *start, npy_intp *stop, npy_intp *step,
-                 npy_intp *slicelength)
-{
-    npy_intp defstop;
-
-    if (r->step == Py_None) {
-        *step = 1;
-    }
-    else {
-        if (!slice_coerce_index(r->step, step)) {
-            return -1;
-        }
-        if (*step == 0) {
-            PyErr_SetString(PyExc_ValueError,
-                            "slice step cannot be zero");
-            return -1;
-        }
-    }
-    /* defstart = *step < 0 ? length - 1 : 0; */
-    defstop = *step < 0 ? -1 : length;
-    if (r->start == Py_None) {
-        *start = *step < 0 ? length-1 : 0;
-    }
-    else {
-        if (!slice_coerce_index(r->start, start)) {
-            return -1;
-        }
-        if (*start < 0) {
-            *start += length;
-        }
-        if (*start < 0) {
-            *start = (*step < 0) ? -1 : 0;
-        }
-        if (*start >= length) {
-            *start = (*step < 0) ? length - 1 : length;
-        }
-    }
-
-    if (r->stop == Py_None) {
-        *stop = defstop;
-    }
-    else {
-        if (!slice_coerce_index(r->stop, stop)) {
-            return -1;
-        }
-        if (*stop < 0) {
-            *stop += length;
-        }
-        if (*stop < 0) {
-            *stop = -1;
-        }
-        if (*stop > length) {
-            *stop = length;
-        }
-    }
-
-    if ((*step < 0 && *stop >= *start) ||
-        (*step > 0 && *start >= *stop)) {
-        *slicelength = 0;
-    }
-    else if (*step < 0) {
-        *slicelength = (*stop - *start + 1) / (*step) + 1;
-    }
-    else {
-        *slicelength = (*stop - *start - 1) / (*step) + 1;
-    }
-
-    return 0;
-}
 
 /*********************** Element-wise Array Iterator ***********************/
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
