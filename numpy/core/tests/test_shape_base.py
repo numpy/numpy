@@ -407,6 +407,28 @@ class TestBlock(TestCase):
                              [0, 0, 0, 0, 0, 0]])
         assert_almost_equal(result, expected)
 
+        # additional [] around rows should not have any influence
+        result = block([One, Two],
+                       Three,
+                       [four],
+                       [five, six],
+                       Zeros)
+        assert_almost_equal(result, expected)
+
+        result = block([One, Two],
+                       [Three],
+                       [four],
+                       [five, six],
+                       Zeros)
+        assert_almost_equal(result, expected)
+
+        result = block([One, Two],
+                       [Three],
+                       [four],
+                       [five, six],
+                       [Zeros])
+        assert_almost_equal(result, expected)
+
     def test_block_with_mismatched_shape(self):
         a = np.array([0, 0])
         b = np.eye(2)
