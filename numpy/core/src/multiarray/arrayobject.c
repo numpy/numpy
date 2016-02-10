@@ -619,30 +619,29 @@ array_repr_builtin(PyArrayObject *self, int repr)
     return ret;
 }
 
-static PyObject *PyArray_StrFunction = NULL;
-static PyObject *PyArray_ReprFunction = NULL;
-
 /*NUMPY_API
  * Set the array print function to be a Python function.
  */
 NPY_NO_EXPORT void
 PyArray_SetStringFunction(PyObject *op, int repr)
 {
-    if (repr) {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_ReprFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_ReprFunction = op;
-    }
-    else {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_StrFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_StrFunction = op;
+
+    PyObject *module_internal;
+
+    module_internal = PyImport_ImportModule("numpy.core._internal");
+    if (module_internal != NULL) {
+        if (repr) {
+            /* Add a reference to new callback */
+            Py_XINCREF(op);
+            /* Remember new callback */
+            PyModule_AddObject(module_internal, "_pyarray_repr_function", op);
+        }
+        else {
+            /* Add a reference to new callback */
+            Py_XINCREF(op);
+            /* Remember new callback */
+            PyModule_AddObject(module_internal, "_pyarray_str_function", op);
+        }
     }
 }
 
@@ -660,15 +659,23 @@ PyArray_SetDatetimeParseFunction(PyObject *op)
 static PyObject *
 array_repr(PyArrayObject *self)
 {
-    PyObject *s, *arglist;
+    PyObject *module_internal, *callable, *s, *arglist;
 
-    if (PyArray_ReprFunction == NULL) {
-        s = array_repr_builtin(self, 1);
+    module_internal = PyImport_ImportModule("numpy.core._internal");
+    if (module_internal == NULL) {
+        s = NULL;
     }
     else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_ReprFunction, arglist);
-        Py_DECREF(arglist);
+        callable = PyDict_GetItemString(PyModule_GetDict(module_internal), "_pyarray_repr_function");
+
+        if (callable == NULL) {
+            s = array_repr_builtin(self, 1);
+        }
+        else {
+            arglist = Py_BuildValue("(O)", self);
+            s = PyEval_CallObject(callable, arglist);
+            Py_DECREF(arglist);
+        }
     }
     return s;
 }
@@ -676,15 +683,23 @@ array_repr(PyArrayObject *self)
 static PyObject *
 array_str(PyArrayObject *self)
 {
-    PyObject *s, *arglist;
+    PyObject *module_internal, *callable, *s, *arglist;
 
-    if (PyArray_StrFunction == NULL) {
-        s = array_repr_builtin(self, 0);
+    module_internal = PyImport_ImportModule("numpy.core._internal");
+    if (module_internal == NULL) {
+        s = NULL;
     }
     else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_StrFunction, arglist);
-        Py_DECREF(arglist);
+        callable = PyDict_GetItemString(PyModule_GetDict(module_internal), "_pyarray_str_function");
+
+        if (callable == NULL) {
+            s = array_repr_builtin(self, 1);
+        }
+        else {
+            arglist = Py_BuildValue("(O)", self);
+            s = PyEval_CallObject(callable, arglist);
+            Py_DECREF(arglist);
+        }
     }
     return s;
 }
