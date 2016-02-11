@@ -190,6 +190,9 @@ else:
     test = testing.nosetester._numpy_tester().test
     bench = testing.nosetester._numpy_tester().bench
 
+    # Allow distributors to run custom init code
+    from . import _distributor_init
+
     from . import core
     from .core import *
     from . import compat
