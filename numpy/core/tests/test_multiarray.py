@@ -2476,6 +2476,33 @@ class TestMethods(TestCase):
         assert_raises(AttributeError, lambda: a.conj())
         assert_raises(AttributeError, lambda: a.conjugate())
 
+    def test__complex__(self):
+        dtypes = ['i1', 'i2', 'i4', 'i8',
+                  'u1', 'u2', 'u4', 'u8',
+                  'f', 'd', 'g', 'F', 'D', 'G',
+                  '?', 'O']
+        for dt in dtypes:
+            a = np.array(7, dtype=dt)
+            b = np.array([7], dtype=dt)
+            c = np.array([[[[[7]]]]], dtype=dt)
+
+            msg = 'dtype: {0}'.format(dt)
+            ap = complex(a)
+            assert_equal(ap, a, msg)
+            bp = complex(b)
+            assert_equal(bp, b, msg)
+            cp = complex(c)
+            assert_equal(cp, c, msg)
+
+        s = np.array([[['1+2j']]], 'S')
+        sp = complex(s)
+        assert_equal(sp, 1+2j)
+
+        u = np.array([[['1+2j']]], 'U')
+        up = complex(u)
+        assert_equal(up, 1+2j)
+
+
 class TestBinop(object):
     def test_inplace(self):
         # test refcount 1 inplace conversion
