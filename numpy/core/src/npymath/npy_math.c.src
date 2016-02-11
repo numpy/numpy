@@ -608,6 +608,36 @@ double npy_log2(double x)
     }
 }
 
+
+/* remainder(x, y)
+ *
+ * Unlike Python, we assume that the floor function is sacred rather
+ * than fmod. The result is guaranteed to have the same sign as the
+ * divisor and abs(remainder) < abs(y).
+ */
+@type@ npy_remainder@c@(@type@ x, @type@ y)
+{
+    @type@ rem = x - y*npy_floor@c@(x/y);
+
+    if (y < 0) {
+        if (rem >= 0) {
+            rem = -0.0@c@;
+        }
+        else if (rem <= y) {
+            rem = npy_nextafter@c@(y, 0);
+        }
+    }
+    else if (y > 0) {
+        if (rem <= 0) {
+            rem = 0.0@c@;
+        }
+        else if (rem >= y) {
+            rem = npy_nextafter@c@(y, 0);
+        }
+    }
+    return rem;
+}
+
 #undef LOGE2
 #undef LOG2E
 #undef RAD2DEG

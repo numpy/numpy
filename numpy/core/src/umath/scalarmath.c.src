@@ -21,6 +21,7 @@
 #include "npy_pycompat.h"
 
 #include "numpy/halffloat.h"
+#include "numpy/npy_math.h"
 #include "templ_common.h"
 
 /* Basic operations:
@@ -283,7 +284,6 @@ static @type@ (*_basic_@name@_fmod)(@type@, @type@);
 
 static npy_half (*_basic_half_floor)(npy_half);
 static npy_half (*_basic_half_sqrt)(npy_half);
-static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
 #define half_ctype_add(a, b, outp) *(outp) = \
         npy_float_to_half(npy_half_to_float(a) + npy_half_to_float(b))
@@ -353,22 +353,21 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
     } while(0)
 /**end repeat**/
 
+
 /**begin repeat
  * #name = float, double, longdouble#
  * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f, ,l#
  */
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    @type@ tmp = a/b;
-    *out = b * (tmp - _basic_@name@_floor(tmp));
+    *out = npy_remainder@c@(a, b);
 }
 /**end repeat**/
 
 static void
 half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
-    float tmp, fa = npy_half_to_float(a), fb = npy_half_to_float(b);
-    float_ctype_remainder(fa, fb, &tmp);
-    *out = npy_float_to_half(tmp);
+    *out = npy_half_remainder(a, b);
 }
 
 
@@ -1721,7 +1720,6 @@ get_functions(PyObject * mm)
         i += 3;
         j++;
     }
-    _basic_half_fmod = funcdata[j - 1];
     _basic_float_fmod = funcdata[j];
     _basic_double_fmod = funcdata[j + 1];
     _basic_longdouble_fmod = funcdata[j + 2];

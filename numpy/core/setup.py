@@ -896,6 +896,7 @@ def configuration(parent_package='',top_path=None):
 
     umath_deps = [
             generate_umath_py,
+            join('include', 'numpy', 'npy_math.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),

@@ -309,16 +309,19 @@ double npy_deg2rad(double x);
 double npy_rad2deg(double x);
 double npy_logaddexp(double x, double y);
 double npy_logaddexp2(double x, double y);
+double npy_remainder(double x, double y);
 
 float npy_deg2radf(float x);
 float npy_rad2degf(float x);
 float npy_logaddexpf(float x, float y);
 float npy_logaddexp2f(float x, float y);
+float npy_remainderf(float x, float y);
 
 npy_longdouble npy_deg2radl(npy_longdouble x);
 npy_longdouble npy_rad2degl(npy_longdouble x);
 npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
+npy_longdouble npy_remainderl(npy_longdouble x, npy_longdouble y);
 
 #define npy_degrees npy_rad2deg
 #define npy_degreesf npy_rad2degf
