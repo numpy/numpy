@@ -2448,42 +2448,6 @@ class TestMethods(TestCase):
         assert_raises(AttributeError, lambda: a.conj())
         assert_raises(AttributeError, lambda: a.conjugate())
 
-    def test_divmod_basic(self):
-        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
-                    continue
-                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
-                    continue
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*71, dtype=dt1)
-                b = np.array(sg2*19, dtype=dt2)
-                div, rem = divmod(a, b)
-                assert_allclose(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
-
-    def test_divmod_roundoff(self):
-        # gh-6127
-        dt = 'fdg'
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*78*6e-8, dtype=dt1)
-                b = np.array(sg2*6e-8, dtype=dt2)
-                div, rem = divmod(a, b)
-                assert_allclose(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
-
-
 class TestBinop(object):
     def test_inplace(self):
         # test refcount 1 inplace conversion
