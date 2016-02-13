@@ -150,7 +150,7 @@ def _hist_optim_numbins_estimator(a, estimator):
             if sigma > 0:
                 # These three operations add up to
                 # g1 = np.mean(((x - np.mean(x)) / sigma)**3)
-                # but use only one temp array instead of three 
+                # but use only one temp array instead of three
                 temp = x - np.mean(x)
                 np.true_divide(temp, sigma, temp)
                 np.power(temp, 3, temp)
@@ -205,7 +205,7 @@ def _hist_optim_numbins_estimator(a, estimator):
 
 def histogram(a, bins=10, range=None, normed=False, weights=None,
               density=None):
-    """
+    r"""
     Compute the histogram of a set of data.
 
     Parameters
@@ -325,14 +325,16 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         Switchover point usually happens when ``x.size`` is around 1000.
 
     'FD' (Freedman Diaconis Estimator)
-        .. math:: h = 2 \\frac{IQR}{n^{1/3}}
+        .. math:: h = 2 \frac{IQR}{n^{1/3}}
+
         The binwidth is proportional to the interquartile range (IQR)
         and inversely proportional to cube root of a.size. Can be too
         conservative for small datasets, but is quite good for large
         datasets. The IQR is very robust to outliers.
 
     'Scott'
-        .. math:: h = \\sigma \\sqrt[3]{\\frac{24 * \\sqrt{\\pi}}{n}}
+        .. math:: h = \sigma \sqrt[3]{\frac{24 * \sqrt{\pi}}{n}}
+
         The binwidth is proportional to the standard deviation of the
         data and inversely proportional to cube root of ``x.size``. Can
         be too conservative for small datasets, but is quite good for
@@ -341,32 +343,34 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         estimator in the absence of outliers.
 
     'Rice'
-        .. math:: n_h = \\left\\lceil 2n^{1/3} \\right\\rceil
+        .. math:: n_h = \left\lceil 2n^{1/3} \right\rceil
+
         The number of bins is only proportional to cube root of
         ``a.size``. It tends to overestimate the number of bins and it
         does not take into account data variability.
 
     'Sturges'
-        .. math:: n_h = \\left\\lceil \\log _{2}n+1 \\right\\rceil
+        .. math:: n_h = \left\lceil \log _{2}n+1 \right\rceil
+
         The number of bins is the base 2 log of ``a.size``.  This
         estimator assumes normality of data and is too conservative for
         larger, non-normal datasets. This is the default method in R's
         ``hist`` method.
 
     'Doane'
-        .. math:: n_h = \\left\\lceil 1 + \\log_{2}(n) +
-            \\log_{2}(1 + \\frac{\\left g_1 \\right}{\\sigma_{g_1})}
-            \\right\\rceil
+        .. math:: n_h = \left\lceil 1 + \log_{2}(n) +
+            \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1})}
+            \right\rceil
 
-            g_1 = mean[(\\frac{x - \\mu}{\\sigma})^3]
+            g_1 = mean[(\frac{x - \mu}{\sigma})^3]
 
-            \\sigma_{g_1} = \\sqrt{\\frac{6(n - 2)}{(n + 1)(n + 3)}}
+            \sigma_{g_1} = \sqrt{\frac{6(n - 2)}{(n + 1)(n + 3)}}
 
         An improved version of Sturges' formula that produces better
         estimates for non-normal datasets.
 
     'Sqrt'
-        .. math:: n_h = \\left\\lceil \\sqrt n \\right\\rceil
+        .. math:: n_h = \left\lceil \sqrt n \right\rceil
         The simplest and fastest estimator. Only takes into account the
         data size.
 
@@ -395,12 +399,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     >>> import matplotlib.pyplot as plt
     >>> rng = np.random.RandomState(10)  # deterministic random data
-    >>> a = np.hstack((rng.normal(size = 1000), rng.normal(loc = 5, scale = 2, size = 1000)))
-    >>> plt.hist(a, bins = 'auto')  # plt.hist passes it's arguments to np.histogram
+    >>> a = np.hstack((rng.normal(size=1000),
+    ...                rng.normal(loc=5, scale=2, size=1000)))
+    >>> plt.hist(a, bins='auto')  # plt.hist passes it's arguments to np.histogram
     >>> plt.title("Histogram with 'auto' bins")
     >>> plt.show()
-    """
 
+    """
     a = asarray(a)
     if weights is not None:
         weights = asarray(weights)
@@ -1217,7 +1222,7 @@ def gradient(f, *varargs, **kwargs):
         single scalar specifies sample distance for all dimensions.
         if `axis` is given, the number of varargs must equal the number of axes.
     edge_order : {1, 2}, optional
-        Gradient is calculated using N\ :sup:`th` order accurate differences
+        Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
 
         .. versionadded:: 1.9.1
@@ -1425,7 +1430,6 @@ def diff(a, n=1, axis=-1):
     diff : ndarray
         The n-th differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`.
-.
 
     See Also
     --------
@@ -2435,6 +2439,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
@@ -2607,7 +2612,6 @@ def bartlett(M):
            http://en.wikipedia.org/wiki/Window_function
     .. [5] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 429.
-
 
     Examples
     --------
@@ -3482,7 +3486,7 @@ def percentile(a, q, axis=None, out=None,
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow use of memory of input array `a` 
+        If True, then allow use of memory of input array `a`
         calculations. The input array will be modified by the call to
         `percentile`. This will save memory when you do not need to
         preserve the contents of the input array. In this case you
@@ -3517,7 +3521,7 @@ def percentile(a, q, axis=None, out=None,
         If `q` is a single percentile and `axis=None`, then the result
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
-        the axes that remain after the reduction of `a`. If the input 
+        the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
         data-type is ``float64``. Otherwise, the output data-type is the
         same as that of the input. If `out` is specified, that array is
