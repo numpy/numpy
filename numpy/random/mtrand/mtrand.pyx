@@ -4299,11 +4299,13 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> import scipy.special as sps
-        Truncate s values at 50 so plot is interesting
+        >>> from scipy import special
+
+        Truncate s values at 50 so plot is interesting:
+
         >>> count, bins, ignored = plt.hist(s[s<50], 50, normed=True)
         >>> x = np.arange(1., 50.)
-        >>> y = x**(-a)/sps.zetac(a)
+        >>> y = x**(-a) / special.zetac(a)
         >>> plt.plot(x, y/max(y), linewidth=2, color='r')
         >>> plt.show()
 

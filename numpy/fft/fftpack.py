@@ -119,6 +119,7 @@ def fft(a, n=None, axis=-1, norm=None):
         used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -169,6 +170,10 @@ def fft(a, n=None, axis=-1, norm=None):
              1.14383329e-17 +1.22460635e-16j,
              -1.64863782e-15 +1.77635684e-15j])
 
+    In this example, real input has an FFT which is Hermitian, i.e., symmetric
+    in the real part and anti-symmetric in the imaginary part, as described in
+    the `numpy.fft` documentation:
+
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
@@ -176,10 +181,6 @@ def fft(a, n=None, axis=-1, norm=None):
     >>> plt.plot(freq, sp.real, freq, sp.imag)
     [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
     >>> plt.show()
-
-    In this example, real input has an FFT which is Hermitian, i.e., symmetric
-    in the real part and anti-symmetric in the imaginary part, as described in
-    the `numpy.fft` documentation.
 
     """
 
@@ -229,6 +230,7 @@ def ifft(a, n=None, axis=-1, norm=None):
         axis is used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -306,6 +308,7 @@ def rfft(a, n=None, axis=-1, norm=None):
         used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -400,6 +403,7 @@ def irfft(a, n=None, axis=-1, norm=None):
         axis is used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -478,6 +482,7 @@ def hfft(a, n=None, axis=-1, norm=None):
         axis is used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -555,6 +560,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
         axis is used.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -638,8 +644,8 @@ def fftn(a, s=None, axes=None, norm=None):
         Input array, can be complex.
     s : sequence of ints, optional
         Shape (length of each transformed axis) of the output
-        (`s[0]` refers to axis 0, `s[1]` to axis 1, etc.).
-        This corresponds to `n` for `fft(x, n)`.
+        (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
+        This corresponds to ``n`` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
@@ -651,6 +657,7 @@ def fftn(a, s=None, axes=None, norm=None):
         performed multiple times.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -756,6 +763,7 @@ def ifftn(a, s=None, axes=None, norm=None):
         axis is performed multiple times.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -831,8 +839,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         Input array, can be complex
     s : sequence of ints, optional
         Shape (length of each transformed axis) of the output
-        (`s[0]` refers to axis 0, `s[1]` to axis 1, etc.).
-        This corresponds to `n` for `fft(x, n)`.
+        (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
+        This corresponds to ``n`` for ``fft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
         the input is cropped.  If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
@@ -844,6 +852,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         that a one-dimensional FFT is performed.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -940,6 +949,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         that a one-dimensional FFT is performed.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -1019,6 +1029,7 @@ def rfftn(a, s=None, axes=None, norm=None):
         axes are used, or all axes if `s` is also not specified.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -1096,6 +1107,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         Axes over which to compute the FFT.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -1153,6 +1165,7 @@ def irfftn(a, s=None, axes=None, norm=None):
         axis is performed multiple times.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -1226,6 +1239,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
         Default is the last two axes.
     norm : {None, "ortho"}, optional
         .. versionadded:: 1.10.0
+
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
