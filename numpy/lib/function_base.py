@@ -106,8 +106,9 @@ def _hist_optim_numbins_estimator(a, estimator, data_range=None, data_weights=No
         return 1
 
     if data_weights is not None:
-        raise TypeError("Automated estimation of the number of "
-                        "bins is not supported for weighted data")
+        raise RuntimeWarning("Automated estimation of the number of "
+                             "bins is not supported for weighted data. "
+                             "Will treat data as unweighted")
 
     if data_range is not None:
         mn, mx = data_range
@@ -122,7 +123,7 @@ def _hist_optim_numbins_estimator(a, estimator, data_range=None, data_weights=No
 
         Used by many programs for its simplicity.
         """
-        return np.ceil(np.sqrt(x.size)
+        return np.ceil(np.sqrt(x.size))
 
     def sturges(x):
         """

@@ -1409,7 +1409,7 @@ class TestHistogramOptimBinNums(TestCase):
         """
         estimator_list = ['fd', 'scott', 'rice', 'sturges', 'auto']
         for estimator in estimator_list:
-            assert_raises(TypeError, histogram, [1, 2, 3], estimator, weights=[1, 2, 3])
+            assert_raises(RuntimeWarning, histogram, [1, 2, 3], estimator, weights=[1, 2, 3])
 
 
 class TestHistogramdd(TestCase):
