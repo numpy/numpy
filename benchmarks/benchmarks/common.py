@@ -22,8 +22,9 @@ TYPES1 = [
     'int32', 'float32',
     'int64', 'float64',  'complex64',
     'longfloat', 'complex128',
-    'complex256',
 ]
+if 'complex256' in numpy.typeDict:
+    TYPES1.append('complex256')
 
 
 def memoize(func):
