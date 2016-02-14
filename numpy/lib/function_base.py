@@ -76,7 +76,7 @@ def iterable(y):
     return True
 
 
-def _hist_optim_numbins_estimator(a, estimator):
+def _hist_optim_numbins_estimator(a, estimator, data_range=None, data_weights=None):
     """
     A helper function to be called from ``histogram`` to deal with
     estimating optimal number of bins.
@@ -84,14 +84,38 @@ def _hist_optim_numbins_estimator(a, estimator):
     A description of the estimators can be found at
     https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width
 
+    a: np.array
+        The data with which to estimate the number of bins
+
     estimator: str
         If ``estimator`` is one of ['auto', 'fd', 'scott', 'doane',
         'rice', 'sturges', 'sqrt'], this function will choose the
         appropriate estimation method and return the optimal number of
         bins it calculates.
+
+    data_range: tuple (min, max)
+        What range should the data to be binned be restricted to
+
+    data_weights:
+        weights are not supported, must be left blank or None
     """
+    assert isinstance(estimator, basestring)
+    # private function should not be called otherwise
+
     if a.size == 0:
         return 1
+
+    if data_weights is not None:
+        raise RuntimeWarning("Automated estimation of the number of "
+                             "bins is not supported for weighted data. "
+                             "Will treat data as unweighted")
+
+    if data_range is not None:
+        mn, mx = data_range
+        keep = (a >= mn)
+        keep &= (a <= mx)
+        if not np.logical_and.reduce(keep):
+            a = a[keep]
 
     def sqrt(x):
         """
@@ -426,7 +450,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
 
     if isinstance(bins, basestring):
-        bins = _hist_optim_numbins_estimator(a, bins)
+        bins = _hist_optim_numbins_estimator(a, bins, range, weights)
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
 
