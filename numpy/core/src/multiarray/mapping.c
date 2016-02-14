@@ -178,6 +178,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
     int index_type = 0;
     int ellipsis_pos = -1;
+    static PyObject *VisibleDeprecation = NULL;
+
+    npy_cache_import(
+        "numpy", "VisibleDeprecationWarning", &VisibleDeprecation);
 
     /*
      * The index might be a multi-dimensional index, but not yet a tuple
@@ -294,9 +298,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
              */
             if (index_type & HAS_ELLIPSIS) {
                 /* 2013-04-14, 1.8 */
-                if (DEPRECATE(
+                if (PyErr_WarnEx(
+                        VisibleDeprecation,
                         "an index can only have a single Ellipsis (`...`); "
-                        "replace all but one with slices (`:`).") < 0) {
+                        "replace all but one with slices (`:`).",
+                        1) < 0) {
                     goto failed_building_indices;
                 }
                 index_type |= HAS_SLICE;
@@ -470,10 +476,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     if (PyArray_NDIM(tmp_arr) == 0) {
                         /* match integer deprecation warning */
                         /* 2013-09-25, 1.8 */
-                        if (DEPRECATE(
-                                    "using a non-integer number instead of an "
-                                    "integer will result in an error in the "
-                                    "future") < 0) {
+                        if (PyErr_WarnEx(
+                                VisibleDeprecation,
+                                "using a non-integer number instead of an "
+                                "integer will result in an error in the "
+                                "future",
+                                1) < 0) {
 
                             /* The error message raised in the future */
                             PyErr_SetString(PyExc_IndexError,
@@ -486,10 +494,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     }
                     else {
                         /* 2013-09-25, 1.8 */
-                        if (DEPRECATE(
-                                    "non integer (and non boolean) array-likes "
-                                    "will not be accepted as indices in the "
-                                    "future") < 0) {
+                        if (PyErr_WarnEx(
+                                VisibleDeprecation,
+                                "non integer (and non boolean) array-likes "
+                                "will not be accepted as indices in the "
+                                "future",
+                                1) < 0) {
 
                             /* Error message to be raised in the future */
                             PyErr_SetString(PyExc_IndexError,
@@ -778,7 +788,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         for (i = 0; i < curr_idx; i++) {
             if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
                 if (indices[i].value != PyArray_DIM(self, used_ndim)) {
-                    static PyObject *warning;
+                    static PyObject *warning = NULL;
 
                     char err_msg[174];
                     PyOS_snprintf(err_msg, sizeof(err_msg),

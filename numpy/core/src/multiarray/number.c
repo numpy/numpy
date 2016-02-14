@@ -1025,6 +1025,11 @@ _array_copy_nice(PyArrayObject *self)
 static PyObject *
 array_index(PyArrayObject *v)
 {
+    static PyObject *VisibleDeprecation = NULL;
+
+    npy_cache_import(
+        "numpy", "VisibleDeprecationWarning", &VisibleDeprecation);
+
     if (!PyArray_ISINTEGER(v) || PyArray_SIZE(v) != 1) {
         PyErr_SetString(PyExc_TypeError, "only integer arrays with "     \
                         "one element can be converted to an index");
@@ -1032,8 +1037,11 @@ array_index(PyArrayObject *v)
     }
     if (PyArray_NDIM(v) != 0) {
         /* 2013-04-20, 1.8 */
-        if (DEPRECATE("converting an array with ndim > 0 to an index"
-                      " will result in an error in the future") < 0) {
+        if (PyErr_WarnEx(
+                VisibleDeprecation,
+                "converting an array with ndim > 0 to an index"
+                " will result in an error in the future",
+                1) < 0) {
             return NULL;
         }
     }

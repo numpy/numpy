@@ -22,6 +22,109 @@ except ImportError:
     _has_pytz = False
 
 
+class _VisibleDeprecationTestCase(object):
+    # Just as warning: warnings uses re.match, so the start of this message
+    # must match.
+    message = ''
+
+    def setUp(self):
+        self.warn_ctx = warnings.catch_warnings(record=True)
+        self.log = self.warn_ctx.__enter__()
+
+        # Do *not* ignore other DeprecationWarnings. Ignoring warnings
+        # can give very confusing results because of
+        # http://bugs.python.org/issue4180 and it is probably simplest to
+        # try to keep the tests cleanly giving only the right warning type.
+        # (While checking them set to "error" those are ignored anyway)
+        # We still have them show up, because otherwise they would be raised
+        warnings.filterwarnings("always", category=np.VisibleDeprecationWarning)
+        warnings.filterwarnings("always", message=self.message,
+                                category=np.VisibleDeprecationWarning)
+
+    def tearDown(self):
+        self.warn_ctx.__exit__()
+
+    def assert_deprecated(self, function, num=1, ignore_others=False,
+                          function_fails=False,
+                          exceptions=(np.VisibleDeprecationWarning,),
+                          args=(), kwargs={}):
+        """Test if VisibleDeprecationWarnings are given and raised.
+
+        This first checks if the function when called gives `num`
+        VisibleDeprecationWarnings, after that it tries to raise these
+        VisibleDeprecationWarnings and compares them with `exceptions`.
+        The exceptions can be different for cases where this code path
+        is simply not anticipated and the exception is replaced.
+
+        Parameters
+        ----------
+        f : callable
+            The function to test
+        num : int
+            Number of VisibleDeprecationWarnings to expect. This should
+            normally be 1.
+        ignore_other : bool
+            Whether warnings of the wrong type should be ignored (note that
+            the message is not checked)
+        function_fails : bool
+            If the function would normally fail, setting this will check for
+            warnings inside a try/except block.
+        exceptions : Exception or tuple of Exceptions
+            Exception to expect when turning the warnings into an error.
+            The default checks for DeprecationWarnings. If exceptions is
+            empty the function is expected to run successfull.
+        args : tuple
+            Arguments for `f`
+        kwargs : dict
+            Keyword arguments for `f`
+        """
+        # reset the log
+        self.log[:] = []
+
+        try:
+            function(*args, **kwargs)
+        except (Exception if function_fails else tuple()):
+            pass
+
+        # just in case, clear the registry
+        num_found = 0
+        for warning in self.log:
+            if warning.category is np.VisibleDeprecationWarning:
+                num_found += 1
+            elif not ignore_others:
+                raise AssertionError(
+                        "expected DeprecationWarning but got: %s" %
+                        (warning.category,))
+        if num is not None and num_found != num:
+            msg = "%i warnings found but %i expected." % (len(self.log), num)
+            lst = [w.category for w in self.log]
+            raise AssertionError("\n".join([msg] + lst))
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message=self.message,
+                                    category=np.VisibleDeprecationWarning)
+            try:
+                function(*args, **kwargs)
+                if exceptions != tuple():
+                    raise AssertionError(
+                            "No error raised during function call")
+            except exceptions:
+                if exceptions == tuple():
+                    raise AssertionError(
+                            "Error raised during function call")
+
+    def assert_not_deprecated(self, function, args=(), kwargs={}):
+        """Test if VisibleDeprecationWarnings are given and raised.
+
+        This is just a shorthand for:
+
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+        """
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+
+
 class _DeprecationTestCase(object):
     # Just as warning: warnings uses re.match, so the start of this message
     # must match.
@@ -123,7 +226,7 @@ class _DeprecationTestCase(object):
                         exceptions=tuple(), args=args, kwargs=kwargs)
 
 
-class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
+class TestFloatNonIntegerArgumentDeprecation(_VisibleDeprecationTestCase):
     """
     These test that ``DeprecationWarning`` is given when you try to use
     non-integers as arguments to for indexing and slicing e.g. ``a[0.0:5]``
@@ -262,7 +365,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.min, num=2, args=(d, (.2, 1.2)))
 
 
-class TestBooleanArgumentDeprecation(_DeprecationTestCase):
+class TestBooleanArgumentDeprecation(_VisibleDeprecationTestCase):
     """This tests that using a boolean as integer argument/indexing is
     deprecated.
 
@@ -286,7 +389,7 @@ class TestBooleanArgumentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(lambda: a[False, 0, 0], exceptions=IndexError)
 
 
-class TestArrayToIndexDeprecation(_DeprecationTestCase):
+class TestArrayToIndexDeprecation(_VisibleDeprecationTestCase):
     """This tests that creating an an index from an array is deprecated
     if the array is not 0d.
 
@@ -308,7 +411,7 @@ class TestArrayToIndexDeprecation(_DeprecationTestCase):
         # Check slicing. Normal indexing checks arrays specifically.
         self.assert_deprecated(lambda: a[a:a:a], exceptions=(), num=3)
 
-class TestNonIntegerArrayLike(_DeprecationTestCase):
+class TestNonIntegerArrayLike(_VisibleDeprecationTestCase):
     """Tests that array likes, i.e. lists give a deprecation warning
     when they cannot be safely cast to an integer.
     """
@@ -338,7 +441,7 @@ class TestNonIntegerArrayLike(_DeprecationTestCase):
             #assert_raises(FutureWarning, a.__getitem__, True)
 
 
-class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
+class TestMultipleEllipsisDeprecation(_VisibleDeprecationTestCase):
     message = "an index can only have a single Ellipsis \(`...`\); replace " \
               "all but one with slices \(`:`\)."
 
@@ -347,7 +450,7 @@ class TestMultipleEllipsisDeprecation(_DeprecationTestCase):
         self.assert_deprecated(a.__getitem__, args=((Ellipsis, Ellipsis),))
 
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', '', DeprecationWarning)
+            warnings.filterwarnings('ignore', '', np.VisibleDeprecationWarning)
             # Just check that this works:
             b = a[...,...]
             assert_array_equal(a, b)

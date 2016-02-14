@@ -4,12 +4,14 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "arraytypes.h"
@@ -797,6 +799,10 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
     long long_value = -1;
 #endif
     PyObject *obj, *err;
+    static PyObject *VisibleDeprecation = NULL;
+
+    npy_cache_import(
+        "numpy", "VisibleDeprecationWarning", &VisibleDeprecation);
 
     if (!o) {
         PyErr_SetString(PyExc_TypeError, msg);
@@ -806,8 +812,11 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
     /* Be a bit stricter and not allow bools, np.bool_ is handled later */
     if (PyBool_Check(o)) {
         /* 2013-04-13, 1.8 */
-        if (DEPRECATE("using a boolean instead of an integer"
-                      " will result in an error in the future") < 0) {
+        if (PyErr_WarnEx(
+                VisibleDeprecation,
+                "using a boolean instead of an integer"
+                " will result in an error in the future",
+                1) < 0) {
             return -1;
         }
     }
@@ -840,8 +849,11 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
     /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
     if (PyArray_IsScalar(o, Bool)) {
         /* 2013-06-09, 1.8 */
-        if (DEPRECATE("using a boolean instead of an integer"
-                      " will result in an error in the future") < 0) {
+        if (PyErr_WarnEx(
+                VisibleDeprecation,
+                "using a boolean instead of an integer"
+                " will result in an error in the future",
+                1) < 0) {
             return -1;
         }
     }
@@ -908,8 +920,11 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
     /* Give a deprecation warning, unless there was already an error */
     if (!error_converting(long_value)) {
         /* 2013-04-13, 1.8 */
-        if (DEPRECATE("using a non-integer number instead of an integer"
-                      " will result in an error in the future") < 0) {
+        if (PyErr_WarnEx(
+                VisibleDeprecation,
+                "using a non-integer number instead of an integer"
+                " will result in an error in the future",
+                1) < 0) {
             return -1;
         }
     }
