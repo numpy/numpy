@@ -662,7 +662,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
         for (i = 0; i < curr_idx; i++) {
             if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
                 if (indices[i].value != PyArray_DIM(self, used_ndim)) {
-                    static PyObject *warning;
+                    static PyObject *warning = NULL;
 
                     char err_msg[174];
                     PyOS_snprintf(err_msg, sizeof(err_msg),
