@@ -29,7 +29,7 @@ from numpy.ma.testutils import (
     )
 from numpy.ma.core import (
     MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
-    allclose, allequal, alltrue, angle, anom, arange, arccos, arctan2,
+    allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
     arcsin, arctan, argsort, array, asarray, choose, concatenate,
     conjugate, cos, cosh, count, default_fill_value, diag, divide, empty,
     empty_like, equal, exp, flatten_mask, filled, fix_invalid,
@@ -1943,6 +1943,33 @@ class TestUfuncs(TestCase):
         assert_(a * me_too == "Me2rmul")
         assert_(a / me_too == "Me2rdiv")
 
+    def test_no_masked_nan_warnings(self):
+        # check that a nan in masked position does not
+        # cause ufunc warnings
+
+        m = np.ma.array([0.5, np.nan], mask=[0,1])
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+
+            # test unary and binary ufuncs
+            exp(m)
+            add(m, 1)
+            m > 0
+
+            # test different unary domains
+            sqrt(m)
+            log(m)
+            tan(m)
+            arcsin(m)
+            arccos(m)
+            arccosh(m)
+
+            # test binary domains
+            divide(m, 2)
+
+            # also check that allclose uses ma ufuncs, to avoid warning
+            allclose(m, 0.5)
 
 class TestMaskedArrayInPlaceArithmetics(TestCase):
     # Test MaskedArray Arithmetics

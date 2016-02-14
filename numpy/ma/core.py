@@ -771,8 +771,11 @@ class _DomainCheckInterval:
 
     def __call__(self, x):
         "Execute the call behavior."
-        return umath.logical_or(umath.greater(x, self.b),
-                                umath.less(x, self.a))
+        # nans at masked positions cause RuntimeWarnings, even though
+        # they are masked. To avoid this we suppress warnings.
+        with np.errstate(invalid='ignore'):
+            return umath.logical_or(umath.greater(x, self.b),
+                                    umath.less(x, self.a))
 
 
 class _DomainTan:
@@ -789,7 +792,8 @@ class _DomainTan:
 
     def __call__(self, x):
         "Executes the call behavior."
-        return umath.less(umath.absolute(umath.cos(x)), self.eps)
+        with np.errstate(invalid='ignore'):
+            return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
 
 class _DomainSafeDivide:
@@ -809,7 +813,8 @@ class _DomainSafeDivide:
             self.tolerance = np.finfo(float).tiny
         # don't call ma ufuncs from __array_wrap__ which would fail for scalars
         a, b = np.asarray(a), np.asarray(b)
-        return umath.absolute(a) * self.tolerance >= umath.absolute(b)
+        with np.errstate(invalid='ignore'):
+            return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
 class _DomainGreater:
@@ -824,7 +829,8 @@ class _DomainGreater:
 
     def __call__(self, x):
         "Executes the call behavior."
-        return umath.less_equal(x, self.critical_value)
+        with np.errstate(invalid='ignore'):
+            return umath.less_equal(x, self.critical_value)
 
 
 class _DomainGreaterEqual:
@@ -839,7 +845,8 @@ class _DomainGreaterEqual:
 
     def __call__(self, x):
         "Executes the call behavior."
-        return umath.less(x, self.critical_value)
+        with np.errstate(invalid='ignore'):
+            return umath.less(x, self.critical_value)
 
 
 class _MaskedUnaryOperation:
@@ -878,6 +885,8 @@ class _MaskedUnaryOperation:
         # Deal with domain
         if self.domain is not None:
             # Case 1.1. : Domained function
+            # nans at masked positions cause RuntimeWarnings, even though
+            # they are masked. To avoid this we suppress warnings.
             with np.errstate(divide='ignore', invalid='ignore'):
                 result = self.f(d, *args, **kwargs)
             # Make a mask
@@ -887,7 +896,8 @@ class _MaskedUnaryOperation:
         else:
             # Case 1.2. : Function without a domain
             # Get the result and the mask
-            result = self.f(d, *args, **kwargs)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                result = self.f(d, *args, **kwargs)
             m = getmask(a)
 
         if not result.ndim:
@@ -1123,7 +1133,7 @@ class _DomainedBinaryOperation:
         # Apply the domain
         domain = ufunc_domain.get(self.f, None)
         if domain is not None:
-            m |= filled(domain(da, db), True)
+            m |= domain(da, db)
         # Take care of the scalar case first
         if (not m.ndim):
             if m:
@@ -2951,9 +2961,11 @@ class MaskedArray(ndarray):
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 if len(args) > 2:
-                    d = filled(reduce(domain, args), True)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        d = filled(reduce(domain, args), True)
                 else:
-                    d = filled(domain(*args), True)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        d = filled(domain(*args), True)
                 # Fill the result where the domain is wrong
                 try:
                     # Binary domain: take the last value
@@ -7505,8 +7517,7 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
         return False
     # No infs at all
     if not np.any(xinf):
-        d = filled(umath.less_equal(umath.absolute(x - y),
-                                    atol + rtol * umath.absolute(y)),
+        d = filled(less_equal(absolute(x - y), atol + rtol * absolute(y)),
                    masked_equal)
         return np.all(d)
 
@@ -7515,8 +7526,7 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     x = x[~xinf]
     y = y[~xinf]
 
-    d = filled(umath.less_equal(umath.absolute(x - y),
-                                atol + rtol * umath.absolute(y)),
+    d = filled(less_equal(absolute(x - y), atol + rtol * absolute(y)),
                masked_equal)
 
     return np.all(d)
