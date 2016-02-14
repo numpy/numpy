@@ -108,15 +108,6 @@ have written pre-processors to assist Sphinx_ in its task.
 The length of docstring lines should be kept to 75 characters to
 facilitate reading the docstrings in text terminals.
 
-Status
-------
-We are busy converting existing docstrings to the new format,
-expanding them where they are lacking, as well as writing new ones for
-undocumented functions.  Volunteers are welcome to join the effort on
-our new documentation system (see the `Documentation Editor
-<http://docs.scipy.org/doc/>`_ and the `Developer Zone
-<http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
-
 Sections
 --------
 The sections of the docstring are:
