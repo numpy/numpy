@@ -1198,6 +1198,12 @@ class TestMaskedArrayArithmetic(TestCase):
         a /= 1.
         assert_equal(a.mask, [0, 0, 0])
 
+    def test_ufunc_nomask(self):
+        # check the case ufuncs should set the mask to false
+        m = np.ma.array([1])
+        # check we don't get array([False], dtype=bool)
+        assert_equal(np.true_divide(m, 5).mask.shape, ())
+
     def test_noshink_on_creation(self):
         # Check that the mask is not shrunk on array creation when not wanted
         a = np.ma.masked_values([1., 2.5, 3.1], 1.5, shrink=False)
