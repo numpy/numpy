@@ -2970,25 +2970,28 @@ class MaskedArray(ndarray):
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
                         d = filled(domain(*args), True)
-                # Fill the result where the domain is wrong
-                try:
-                    # Binary domain: take the last value
-                    fill_value = ufunc_fills[func][-1]
-                except TypeError:
-                    # Unary domain: just use this one
-                    fill_value = ufunc_fills[func]
-                except KeyError:
-                    # Domain not recognized, use fill_value instead
-                    fill_value = self.fill_value
-                result = result.copy()
-                np.copyto(result, fill_value, where=d)
-                # Update the mask
-                if m is nomask:
-                    if d is not nomask:
+
+                if d.any():
+                    # Fill the result where the domain is wrong
+                    try:
+                        # Binary domain: take the last value
+                        fill_value = ufunc_fills[func][-1]
+                    except TypeError:
+                        # Unary domain: just use this one
+                        fill_value = ufunc_fills[func]
+                    except KeyError:
+                        # Domain not recognized, use fill_value instead
+                        fill_value = self.fill_value
+                    result = result.copy()
+                    np.copyto(result, fill_value, where=d)
+
+                    # Update the mask
+                    if m is nomask:
                         m = d
-                else:
-                    # Don't modify inplace, we risk back-propagation
-                    m = (m | d)
+                    else:
+                        # Don't modify inplace, we risk back-propagation
+                        m = (m | d)
+
             # Make sure the mask has the proper size
             if result.shape == () and m:
                 return masked
