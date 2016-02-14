@@ -49,6 +49,17 @@ The following changes are scheduled for Numpy 1.12.0.
   to match that of floating point "not a number" (NaN) values: all
   comparisons involving NaT will return False, except for NaT != NaT which
   will return True.
+* Indexing with floats will raise IndexError,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like will raise ``IndexError``,
+  e.g., ``a['1', '2']``
+* Indexing with multiple ellipsis will raise ``IndexError``,
+  e.g., ``a[..., ...]``.
+* Indexing with boolean where integer expected will raise ``IndexError``,
+  e.g., ``a[False:True:True]``.
+* Non-integers used as index values will raise ``TypeError``,
+  e.g., in ``reshape``, ``take``, and specifying reduce axis.
+
 
 In a future release the following changes will be made.
 
@@ -116,21 +127,6 @@ This behaviour mimics that of other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
-
-DeprecationWarning to error
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Indexing with floats raises IndexError,
-  e.g., a[0, 0.0].
-* Indexing with non-integer array_like raises ``IndexError``,
-  e.g., ``a['1', '2']``
-* Indexing with multiple ellipsis raises ``IndexError``,
-  e.g., ``a[..., ...]``.
-* Indexing with boolean where integer expected raises ``IndexError``,
-  e.g., ``a[False:True:True]``.
-* Non-integers used as index values raise ``TypeError``,
-  e.g., in ``reshape``, ``take``, and specifying reduce axis.
-
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
