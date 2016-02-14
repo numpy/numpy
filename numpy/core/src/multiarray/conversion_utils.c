@@ -798,14 +798,18 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 #endif
     PyObject *obj, *err;
 
-    /*
-     * Be a bit stricter and not allow bools.
-     * np.bool_ is also disallowed as Boolean arrays do not currently
-     * support index.
-     */
-    if (!o || PyBool_Check(o) || PyArray_IsScalar(o, Bool)) {
+    if (!o) {
         PyErr_SetString(PyExc_TypeError, msg);
         return -1;
+    }
+
+    /* Be a bit stricter and not allow bools, np.bool_ is handled later */
+    if (PyBool_Check(o)) {
+        /* 2013-04-13, 1.8 */
+        if (DEPRECATE("using a boolean instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
+        }
     }
 
     /*
@@ -833,22 +837,84 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
         return (npy_intp)long_value;
     }
 
+    /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
+    if (PyArray_IsScalar(o, Bool)) {
+        /* 2013-06-09, 1.8 */
+        if (DEPRECATE("using a boolean instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
+        }
+    }
+
     /*
      * The most general case. PyNumber_Index(o) covers everything
      * including arrays. In principle it may be possible to replace
      * the whole function by PyIndex_AsSSize_t after deprecation.
      */
     obj = PyNumber_Index(o);
-    if (obj == NULL) {
+    if (obj) {
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+#else
+        long_value = PyLong_AsLong(obj);
+#endif
+        Py_DECREF(obj);
+        goto finish;
+    }
+    else {
+        /*
+         * Set the TypeError like PyNumber_Index(o) would after trying
+         * the general case.
+         */
+        PyErr_Clear();
+    }
+
+    /*
+     * For backward compatibility check the number C-Api number protcol
+     * This should be removed up the finish label after deprecation.
+     */
+    if (Py_TYPE(o)->tp_as_number != NULL &&
+        Py_TYPE(o)->tp_as_number->nb_int != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
+        if (obj == NULL) {
+            return -1;
+        }
+ #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+ #else
+        long_value = PyLong_AsLong(obj);
+ #endif
+        Py_DECREF(obj);
+    }
+#if !defined(NPY_PY3K)
+    else if (Py_TYPE(o)->tp_as_number != NULL &&
+             Py_TYPE(o)->tp_as_number->nb_long != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
+        if (obj == NULL) {
+            return -1;
+        }
+  #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+  #else
+        long_value = PyLong_AsLong(obj);
+  #endif
+        Py_DECREF(obj);
+    }
+#endif
+    else {
+        PyErr_SetString(PyExc_TypeError, msg);
         return -1;
     }
-#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-    long_value = PyLong_AsLongLong(obj);
-#else
-    long_value = PyLong_AsLong(obj);
-#endif
-    Py_DECREF(obj);
+    /* Give a deprecation warning, unless there was already an error */
+    if (!error_converting(long_value)) {
+        /* 2013-04-13, 1.8 */
+        if (DEPRECATE("using a non-integer number instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
+        }
+    }
 
+ finish:
     if (error_converting(long_value)) {
         err = PyErr_Occurred();
         /* Only replace TypeError's here, which are the normal errors. */
@@ -857,9 +923,9 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
         }
         return -1;
     }
-    goto overflow_check; /* silence unused warning */
 
-overflow_check:
+    goto overflow_check; /* silence unused warning */
+ overflow_check:
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
   #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {

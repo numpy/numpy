@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 import warnings
 import functools
-import operator
 
 import numpy as np
 from numpy.core.multiarray_tests import array_indexing
@@ -22,69 +21,6 @@ except ImportError:
 
 
 class TestIndexing(TestCase):
-    def test_index_no_floats(self):
-        a = np.array([[[5]]])
-
-        assert_raises(IndexError, lambda: a[0.0])
-        assert_raises(IndexError, lambda: a[0, 0.0])
-        assert_raises(IndexError, lambda: a[0.0, 0])
-        assert_raises(IndexError, lambda: a[0.0,:])
-        assert_raises(IndexError, lambda: a[:, 0.0])
-        assert_raises(IndexError, lambda: a[:, 0.0,:])
-        assert_raises(IndexError, lambda: a[0.0,:,:])
-        assert_raises(IndexError, lambda: a[0, 0, 0.0])
-        assert_raises(IndexError, lambda: a[0.0, 0, 0])
-        assert_raises(IndexError, lambda: a[0, 0.0, 0])
-        assert_raises(IndexError, lambda: a[-1.4])
-        assert_raises(IndexError, lambda: a[0, -1.4])
-        assert_raises(IndexError, lambda: a[-1.4, 0])
-        assert_raises(IndexError, lambda: a[-1.4,:])
-        assert_raises(IndexError, lambda: a[:, -1.4])
-        assert_raises(IndexError, lambda: a[:, -1.4,:])
-        assert_raises(IndexError, lambda: a[-1.4,:,:])
-        assert_raises(IndexError, lambda: a[0, 0, -1.4])
-        assert_raises(IndexError, lambda: a[-1.4, 0, 0])
-        assert_raises(IndexError, lambda: a[0, -1.4, 0])
-        assert_raises(IndexError, lambda: a[0.0:, 0.0])
-        assert_raises(IndexError, lambda: a[0.0:, 0.0,:])
-
-    def test_slicing_no_floats(self):
-        a = np.array([[5]])
-
-        # start as float.
-        assert_raises(IndexError, lambda: a[0.0:])
-        assert_raises(IndexError, lambda: a[0:, 0.0:2])
-        assert_raises(IndexError, lambda: a[0.0::2, :0])
-        assert_raises(IndexError, lambda: a[0.0:1:2,:])
-        assert_raises(IndexError, lambda: a[:, 0.0:])
-        # stop as float.
-        assert_raises(IndexError, lambda: a[:0.0])
-        assert_raises(IndexError, lambda: a[:0, 1:2.0])
-        assert_raises(IndexError, lambda: a[:0.0:2, :0])
-        assert_raises(IndexError, lambda: a[:0.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4.0:2])
-        # step as float.
-        assert_raises(IndexError, lambda: a[::1.0])
-        assert_raises(IndexError, lambda: a[0:, :2:2.0])
-        assert_raises(IndexError, lambda: a[1::4.0, :0])
-        assert_raises(IndexError, lambda: a[::5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4:2.0])
-        # mixed.
-        assert_raises(IndexError, lambda: a[1.0:2:2.0])
-        assert_raises(IndexError, lambda: a[1.0::2.0])
-        assert_raises(IndexError, lambda: a[0:, :2.0:2.0])
-        assert_raises(IndexError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(IndexError, lambda: a[1.0:5.0:5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0.4:4.0:2.0])
-        # should still get the DeprecationWarning if step = 0.
-        assert_raises(IndexError, lambda: a[::0.0])
-
-    def test_index_no_array_to_index(self):
-        # No non-scalar arrays.
-        a = np.array([[[1]]])
-
-        assert_raises(IndexError, lambda: a[a:a:a])
-
     def test_none_index(self):
         # `None` index adds newaxis
         a = np.array([1, 2, 3])
@@ -99,9 +35,19 @@ class TestIndexing(TestCase):
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
 
+        # Regression, it needs to fall through integer and fancy indexing
+        # cases, so need the with statement to ignore the non-integer error.
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', '', DeprecationWarning)
+            a = np.array([1.])
+            assert_(isinstance(a[0.], np.float_))
+
+            a = np.array([np.array(1)], dtype=object)
+            assert_(isinstance(a[0.], np.ndarray))
+
     def test_same_kind_index_casting(self):
-        # Indexes should be cast with same-kind and not safe, even if that
-        # is somewhat unsafe. So test various different code paths.
+        # Indexes should be cast with same-kind and not safe, even if
+        # that is somewhat unsafe. So test various different code paths.
         index = np.arange(5)
         u_index = index.astype(np.uintp)
         arr = np.arange(10)
@@ -139,8 +85,7 @@ class TestIndexing(TestCase):
                       [4, 5, 6],
                       [7, 8, 9]])
         assert_equal(a[...], a)
-        # `a[...]` was `a` in numpy <1.9.
-        assert_(a[...].base is a)
+        assert_(a[...].base is a)  # `a[...]` was `a` in numpy <1.9.)
 
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
@@ -700,8 +645,7 @@ class TestMultiIndexingAutomated(TestCase):
             np.zeros([1]*31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
         # Some simpler indices that still cover a bit more
-        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
-                               'skip']
+        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
         # Very simple ones to fill the rest:
         self.fill_indices = [slice(None, None), 0]
 
@@ -775,18 +719,16 @@ class TestMultiIndexingAutomated(TestCase):
                 indx = np.array(indx, dtype=np.intp)
                 in_indices[i] = indx
             elif indx.dtype.kind != 'b' and indx.dtype.kind != 'i':
-                raise IndexError('arrays used as indices must be of '
-                                 'integer (or boolean) type')
+                raise IndexError('arrays used as indices must be of integer (or boolean) type')
             if indx.ndim != 0:
                 no_copy = False
             ndim += 1
             fancy_dim += 1
 
         if arr.ndim - ndim < 0:
-            # we can't take more dimensions then we have, not even for 0-d
-            # arrays.  since a[()] makes sense, but not a[(),]. We will
-            # raise an error later on, unless a broadcasting error occurs
-            # first.
+            # we can't take more dimensions then we have, not even for 0-d arrays.
+            # since a[()] makes sense, but not a[(),]. We will raise an error
+            # later on, unless a broadcasting error occurs first.
             raise IndexError
 
         if ndim == 0 and None not in in_indices:
@@ -794,8 +736,7 @@ class TestMultiIndexingAutomated(TestCase):
             return arr.copy(), no_copy
 
         if ellipsis_pos is not None:
-            in_indices[ellipsis_pos:ellipsis_pos+1] = ([slice(None, None)] *
-                                                       (arr.ndim - ndim))
+            in_indices[ellipsis_pos:ellipsis_pos+1] = [slice(None, None)] * (arr.ndim - ndim)
 
         for ax, indx in enumerate(in_indices):
             if isinstance(indx, slice):
@@ -838,23 +779,21 @@ class TestMultiIndexingAutomated(TestCase):
                     if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
                         raise IndexError
             if indx.ndim == 0:
-                # The index is a scalar. This used to be two fold, but if
-                # fancy indexing was active, the check was done later,
-                # possibly after broadcasting it away (1.7. or earlier).
-                # Now it is always done.
+                # The index is a scalar. This used to be two fold, but if fancy
+                # indexing was active, the check was done later, possibly
+                # after broadcasting it away (1.7. or earlier). Now it is always
+                # done.
                 if indx >= arr.shape[ax] or indx < - arr.shape[ax]:
                     raise IndexError
-            if (len(indices) > 0 and
-                    indices[-1][0] == 'f' and
-                    ax != ellipsis_pos):
+            if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
                 # NOTE: There could still have been a 0-sized Ellipsis
                 # between them. Checked that with ellipsis_pos.
                 indices[-1].append(indx)
             else:
                 # We have a fancy index that is not after an existing one.
-                # NOTE: A 0-d array triggers this as well, while one may
-                # expect it to not trigger it, since a scalar would not be
-                # considered fancy indexing.
+                # NOTE: A 0-d array triggers this as well, while
+                # one may expect it to not trigger it, since a scalar
+                # would not be considered fancy indexing.
                 num_fancy += 1
                 indices.append(['f', indx])
 
@@ -912,15 +851,13 @@ class TestMultiIndexingAutomated(TestCase):
                         # Work around for a crash or IndexError with 'wrap'
                         # in some 0-sized cases.
                         try:
-                            mi = np.ravel_multi_index(indx[1:], orig_slice,
-                                                      mode='raise')
+                            mi = np.ravel_multi_index(indx[1:], orig_slice, mode='raise')
                         except:
                             # This happens with 0-sized orig_slice (sometimes?)
                             # here it is a ValueError, but indexing gives a:
                             raise IndexError('invalid index into 0-sized')
                     else:
-                        mi = np.ravel_multi_index(indx[1:], orig_slice,
-                                                  mode='wrap')
+                        mi = np.ravel_multi_index(indx[1:], orig_slice, mode='wrap')
                 else:
                     # Maybe never happens...
                     raise ValueError
@@ -1022,12 +959,9 @@ class TestMultiIndexingAutomated(TestCase):
         # it is aligned to the left. This is probably correct for
         # consistency with arr[boolean_array,] also no broadcasting
         # is done at all
-        self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool),))
-        self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
-        self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
+        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool),))
+        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
+        self._check_multi_index(self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
 
     def test_multidim(self):
         # Automatically test combinations with complex indexes on 2nd (or 1st)
@@ -1065,119 +999,6 @@ class TestMultiIndexingAutomated(TestCase):
             warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
-
-class TestFloatNonIntegerArgument(TestCase):
-    """
-    These test that ``TypeError`` is raised when you try to use
-    non-integers as arguments to for indexing and slicing e.g. ``a[0.0:5]``
-    and ``a[0.5]``, or other functions like ``array.reshape(1., -1)``.
-
-    """
-    def test_valid_indexing(self):
-        # These should raise no errors.
-        a = np.array([[[5]]])
-
-        a[np.array([0])]
-        a[[0, 0]]
-        a[:, [0, 0]]
-        a[:, 0,:]
-        a[:,:,:]
-
-    def test_valid_slicing(self):
-        # These should raise no errors.
-        a = np.array([[[5]]])
-
-        a[::]
-        a[0:]
-        a[:2]
-        a[0:2]
-        a[::2]
-        a[1::2]
-        a[:2:2]
-        a[1:2:2]
-
-    def test_non_integer_argument_errors(self):
-        a = np.array([[5]])
-
-        assert_raises(TypeError, np.reshape, a, (1., 1., -1))
-        assert_raises(TypeError, np.reshape, a, (np.array(1.), -1))
-        assert_raises(TypeError, np.take, a, [0], 1.)
-        assert_raises(TypeError, np.take, a, [0], np.float64(1.))
-
-    def test_non_integer_sequence_multiplication(self):
-        # Numpy scalar sequence multiply should not work with non-integers
-        def mult(a, b):
-            return a * b
-
-        assert_raises(TypeError, mult, [1], np.float_(3))
-        # following should be OK
-        mult([1], np.int_(3))
-
-    def test_reduce_axis_float_index(self):
-        d = np.zeros((3,3,3))
-        assert_raises(TypeError, np.min, d, 0.5)
-        assert_raises(TypeError, np.min, d, (0.5, 1))
-        assert_raises(TypeError, np.min, d, (1, 2.2))
-        assert_raises(TypeError, np.min, d, (.2, 1.2))
-
-
-class TestBooleanArgumentErrors(TestCase):
-    """Using a boolean as integer argument/indexing is an error.
-
-    """
-    def test_bool_as_int_argument(self):
-        a = np.array([[[1]]])
-
-        assert_raises(TypeError, np.reshape, a, (True, -1))
-        assert_raises(TypeError, np.reshape, a, (np.bool_(True), -1))
-        # Note that operator.index(np.array(True)) does not work, a boolean
-        # array is thus also deprecated, but not with the same message:
-        assert_raises(TypeError, operator.index, np.array(True))
-        assert_raises(TypeError, np.take, args=(a, [0], False))
-        assert_raises(IndexError, lambda: a[False:True:True])
-        assert_raises(IndexError, lambda: a[False, 0])
-        assert_raises(IndexError, lambda: a[False, 0, 0])
-
-
-class TestArrayToIndexDeprecation(TestCase):
-    """Creating an an index from array not 0-D is an error.
-
-    """
-    def test_array_to_index_error(self):
-        # so no exception is expected. The raising is effectively tested above.
-        a = np.array([[[1]]])
-
-        assert_raises(TypeError, operator.index, np.array([1]))
-        assert_raises(TypeError, np.reshape, a, (a, -1))
-        assert_raises(TypeError, np.take, a, [0], a)
-
-
-class TestNonIntegerArrayLike(TestCase):
-    """Tests that array_likes only valid if can safely cast to integer.
-
-    For instance, lists give IndexError when they cannot be safely cast to
-    an integer.
-
-    """
-    def test_basic(self):
-        a = np.arange(10)
-
-        assert_raises(IndexError, a.__getitem__, [0.5, 1.5])
-        assert_raises(IndexError, a.__getitem__, (['1', '2'],))
-
-        # The following is valid
-        a.__getitem__([])
-
-
-class TestMultipleEllipsisError(TestCase):
-    """An index can only have a single ellipsis.
-
-    """
-    def test_basic(self):
-        a = np.arange(10)
-        assert_raises(IndexError, lambda: a[..., ...])
-        assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 2,))
-        assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
 class TestCApiAccess(TestCase):
