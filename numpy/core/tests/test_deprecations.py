@@ -22,6 +22,109 @@ except ImportError:
     _has_pytz = False
 
 
+class _VisibleDeprecationTestCase(object):
+    # Just as warning: warnings uses re.match, so the start of this message
+    # must match.
+    message = ''
+
+    def setUp(self):
+        self.warn_ctx = warnings.catch_warnings(record=True)
+        self.log = self.warn_ctx.__enter__()
+
+        # Do *not* ignore other DeprecationWarnings. Ignoring warnings
+        # can give very confusing results because of
+        # http://bugs.python.org/issue4180 and it is probably simplest to
+        # try to keep the tests cleanly giving only the right warning type.
+        # (While checking them set to "error" those are ignored anyway)
+        # We still have them show up, because otherwise they would be raised
+        warnings.filterwarnings("always", category=np.VisibleDeprecationWarning)
+        warnings.filterwarnings("always", message=self.message,
+                                category=np.VisibleDeprecationWarning)
+
+    def tearDown(self):
+        self.warn_ctx.__exit__()
+
+    def assert_deprecated(self, function, num=1, ignore_others=False,
+                          function_fails=False,
+                          exceptions=(np.VisibleDeprecationWarning,),
+                          args=(), kwargs={}):
+        """Test if VisibleDeprecationWarnings are given and raised.
+
+        This first checks if the function when called gives `num`
+        VisibleDeprecationWarnings, after that it tries to raise these
+        VisibleDeprecationWarnings and compares them with `exceptions`.
+        The exceptions can be different for cases where this code path
+        is simply not anticipated and the exception is replaced.
+
+        Parameters
+        ----------
+        f : callable
+            The function to test
+        num : int
+            Number of VisibleDeprecationWarnings to expect. This should
+            normally be 1.
+        ignore_other : bool
+            Whether warnings of the wrong type should be ignored (note that
+            the message is not checked)
+        function_fails : bool
+            If the function would normally fail, setting this will check for
+            warnings inside a try/except block.
+        exceptions : Exception or tuple of Exceptions
+            Exception to expect when turning the warnings into an error.
+            The default checks for DeprecationWarnings. If exceptions is
+            empty the function is expected to run successfull.
+        args : tuple
+            Arguments for `f`
+        kwargs : dict
+            Keyword arguments for `f`
+        """
+        # reset the log
+        self.log[:] = []
+
+        try:
+            function(*args, **kwargs)
+        except (Exception if function_fails else tuple()):
+            pass
+
+        # just in case, clear the registry
+        num_found = 0
+        for warning in self.log:
+            if warning.category is np.VisibleDeprecationWarning:
+                num_found += 1
+            elif not ignore_others:
+                raise AssertionError(
+                        "expected DeprecationWarning but got: %s" %
+                        (warning.category,))
+        if num is not None and num_found != num:
+            msg = "%i warnings found but %i expected." % (len(self.log), num)
+            lst = [w.category for w in self.log]
+            raise AssertionError("\n".join([msg] + lst))
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message=self.message,
+                                    category=np.VisibleDeprecationWarning)
+            try:
+                function(*args, **kwargs)
+                if exceptions != tuple():
+                    raise AssertionError(
+                            "No error raised during function call")
+            except exceptions:
+                if exceptions == tuple():
+                    raise AssertionError(
+                            "Error raised during function call")
+
+    def assert_not_deprecated(self, function, args=(), kwargs={}):
+        """Test if VisibleDeprecationWarnings are given and raised.
+
+        This is just a shorthand for:
+
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+        """
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+
+
 class _DeprecationTestCase(object):
     # Just as warning: warnings uses re.match, so the start of this message
     # must match.
