@@ -998,7 +998,7 @@ class TestArraySetOps(TestCase):
         control = array([1, 1, 1, 4], mask=[1, 0, 0, 1])
         test = ediff1d(x)
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin(self):
@@ -1007,13 +1007,13 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_begin=masked)
         control = array([0, 1, 1, 1, 4], mask=[1, 1, 0, 0, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_begin=[1, 2, 3])
         control = array([1, 2, 3, 1, 1, 1, 4], mask=[0, 0, 0, 1, 0, 0, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_toend(self):
@@ -1022,13 +1022,13 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_end=masked)
         control = array([1, 1, 1, 4, 0], mask=[1, 0, 0, 1, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=[1, 2, 3])
         control = array([1, 1, 1, 4, 1, 2, 3], mask=[1, 0, 0, 1, 0, 0, 0])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin_toend(self):
@@ -1037,14 +1037,14 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 4, 0], mask=[1, 1, 0, 0, 1, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=[1, 2, 3], to_begin=masked)
         control = array([0, 1, 1, 1, 4, 1, 2, 3],
                         mask=[1, 1, 0, 0, 1, 0, 0, 0])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_ndarray(self):
@@ -1054,13 +1054,13 @@ class TestArraySetOps(TestCase):
         control = array([1, 1, 1, 1], mask=[0, 0, 0, 0])
         assert_equal(test, control)
         self.assertTrue(isinstance(test, MaskedArray))
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 1, 0], mask=[1, 0, 0, 0, 0, 1])
         self.assertTrue(isinstance(test, MaskedArray))
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_intersect1d(self):
