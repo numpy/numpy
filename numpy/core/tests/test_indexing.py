@@ -117,7 +117,8 @@ class TestIndexing(object):
         assert_array_equal(arr, np.arange(5)[:,None].repeat(2, axis=1))
 
         arr = np.arange(25).reshape(5, 5)
-        assert_array_equal(arr[u_index, u_index], arr[index, index])
+        assert_array_equal(arr.vindex[u_index, u_index],
+                           arr.lindex[index, index])
 
     def test_empty_fancy_index(self):
         # Empty list index creates an empty array
@@ -507,7 +508,7 @@ class TestIndexing(object):
         assert_array_equal(x[ind], x[ind.copy()])
         # higher dimensional advanced index
         zind = np.zeros(4, dtype=np.intp)
-        assert_array_equal(x2[ind, zind], x2[ind.copy(), zind])
+        assert_array_equal(x2.lindex[ind, zind], x2.vindex[ind.copy(), zind])
 
     def test_indexing_array_negative_strides(self):
         # From gh-8264,
@@ -541,7 +542,7 @@ class TestBroadcastedAssignments(object):
         a[[0, 1, 2], :] = np.ones((1, 3, 2))
         a[:, [0, 1]] = np.ones((1, 3, 2))
         # Fancy without subspace (with broadcasting)
-        a[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
+        a.vindex[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
 
     def test_prepend_not_one(self):
         assign = self.assign
@@ -567,7 +568,7 @@ class TestBroadcastedAssignments(object):
     def test_index_is_larger(self):
         # Simple case of fancy index broadcasting of the index.
         a = np.zeros((5, 5))
-        a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
+        a.vindex[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
 
         assert_((a[:3, :3] == [2, 3, 4]).all())
 
