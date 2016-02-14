@@ -80,6 +80,12 @@ C API
 New Features
 ============
 
+Writeable keyword argument for ``as_strided``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.lib.stride_tricks.as_strided`` now has a ``writeable``
+keyword argument. It can be set to False when no write operation
+to the returned array is expected to avoid accidental
+unpredictable writes.
 
 
 Improvements
