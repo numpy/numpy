@@ -1706,8 +1706,26 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const @type@ div = in1/in2;
-        *((@type@ *)op1) = in2*(div - npy_floor@c@(div));
+        @type@ rem;
+
+        rem = in1 - in2*npy_floor@c@(in1/in2);
+        if (in2 < 0) {
+            if (rem >= 0) {
+                rem = -0.0@c@;
+            }
+            else if (rem <= in2) {
+                rem = npy_nextafter@c@(in2, 0);
+            }
+        }
+        else if (in2 > 0) {
+            if (rem <= 0) {
+                rem = 0.0@c@;
+            }
+            else if (rem >= in2) {
+                rem = npy_nextafter@c@(in2, 0);
+            }
+        }
+        *((@type@ *)op1) = rem;
     }
 }
 
@@ -2023,13 +2041,18 @@ HALF_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
     BINARY_LOOP {
         const float in1 = npy_half_to_float(*(npy_half *)ip1);
         const float in2 = npy_half_to_float(*(npy_half *)ip2);
-        const float res = npy_fmodf(in1,in2);
-        if (res && ((in2 < 0) != (res < 0))) {
-            *((npy_half *)op1) = npy_float_to_half(res + in2);
+        float remf;
+        npy_half remh;
+
+        remh = npy_float_to_half(npy_remainderf(in1, in2));
+        remf = npy_half_to_float(remh);
+        if (in2 > 0 && remf >= in2) {
+            remh = npy_half_nextafter(remh, NPY_HALF_ZERO);
         }
-        else {
-            *((npy_half *)op1) = npy_float_to_half(res);
+        if (in2 < 0 && remf <= in2) {
+            remh = npy_half_nextafter(remh, NPY_HALF_ZERO);
         }
+        *((npy_half *)op1) = remh;
     }
 }
 

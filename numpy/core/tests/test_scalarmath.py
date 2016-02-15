@@ -2,6 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import itertools
+import warnings
+import operator
 
 import numpy as np
 from numpy.testing.utils import _gen_alignment_data
@@ -137,8 +139,12 @@ class TestPower(TestCase):
                     assert_almost_equal(result, 9, err_msg=msg)
 
 
-class TestDivmod(TestCase):
-    def test_divmod_basic(self):
+class TestModulus(TestCase):
+
+    floordiv = operator.floordiv
+    mod = operator.mod
+
+    def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
         for dt1, dt2 in itertools.product(dt, dt):
             for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
@@ -150,28 +156,85 @@ class TestDivmod(TestCase):
                 msg = fmt % (dt1, dt2, sg1, sg2)
                 a = np.array(sg1*71, dtype=dt1)[()]
                 b = np.array(sg2*19, dtype=dt2)[()]
-                div, rem = divmod(a, b)
+                div = self.floordiv(a, b)
+                rem = self.mod(a, b)
                 assert_allclose(div*b + rem, a, err_msg=msg)
                 if sg2 == -1:
                     assert_(b < rem <= 0, msg)
                 else:
                     assert_(b > rem >= 0, msg)
 
-    def test_divmod_roundoff(self):
+    def test_float_modulus_exact(self):
+        # test that float results are exact for small integers. This also
+        # holds for the same integers scaled by powers of two.
+        nlst = list(range(-127, 0))
+        plst = list(range(1, 128))
+        dividend = nlst + [0] + plst
+        divisor = nlst + plst
+        arg = list(itertools.product(dividend, divisor))
+        tgt = list(divmod(*t) for t in arg)
+
+        a, b = np.array(arg, dtype=int).T
+        # convert exact integer results from Python to float so that
+        # signed zero can be used, it is checked.
+        tgtdiv, tgtrem = np.array(tgt, dtype=float).T
+        tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
+        tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
+
+        for dt in np.typecodes['Float']:
+            msg = 'dtype: %s' % (dt,)
+            fa = a.astype(dt)
+            fb = b.astype(dt)
+            # use list comprehension so a_ and b_ are scalars
+            div = [self.floordiv(a_, b_) for  a_, b_ in zip(fa, fb)]
+            rem = [self.mod(a_, b_) for a_, b_ in zip(fa, fb)]
+            assert_equal(div, tgtdiv, err_msg=msg)
+            assert_equal(rem, tgtrem, err_msg=msg)
+
+    def test_float_modulus_roundoff(self):
         # gh-6127
-        dt = 'fdg'
+        dt = np.typecodes['Float']
         for dt1, dt2 in itertools.product(dt, dt):
             for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
                 fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                 msg = fmt % (dt1, dt2, sg1, sg2)
                 a = np.array(sg1*78*6e-8, dtype=dt1)[()]
                 b = np.array(sg2*6e-8, dtype=dt2)[()]
-                div, rem = divmod(a, b)
+                div = self.floordiv(a, b)
+                rem = self.mod(a, b)
                 assert_allclose(div*b + rem, a, err_msg=msg)
                 if sg2 == -1:
                     assert_(b < rem <= 0, msg)
                 else:
                     assert_(b > rem >= 0, msg)
+
+    def test_float_modulus_corner_cases(self):
+        # Check remainder magnitude.
+        for dt in np.typecodes['Float']:
+            b = np.array(1.0, dtype=dt)
+            a = np.nextafter(np.array(0.0, dtype=dt), -b)
+            rem = self.mod(a, b)
+            assert_(rem < b, 'dt: %s' % dt)
+            rem = self.mod(-a, -b)
+            assert_(rem > -b, 'dt: %s' % dt)
+
+        # Check nans, inf
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warnings.simplefilter('ignore', RuntimeWarning)
+            for dt in np.typecodes['Float']:
+                fone = np.array(1.0, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
+                rem = self.mod(fone, fzer)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+                rem = self.mod(fone, finf)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+                rem = self.mod(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+                rem = self.mod(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
 
 
 class TestComplexDivision(TestCase):

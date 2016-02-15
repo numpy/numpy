@@ -72,6 +72,25 @@ int npy_half_signbit(npy_half h)
     return (h&0x8000u) != 0;
 }
 
+npy_half npy_half_remainder(npy_half x, npy_half y)
+{
+    const npy_half half_zero = (npy_half)0;
+    const float xf = npy_half_to_float(x);
+    const float yf = npy_half_to_float(y);
+    float remf;
+    npy_half remh;
+
+    remh = npy_float_to_half(npy_remainderf(xf, yf));
+    remf = npy_half_to_float(remh);
+    if (yf > 0 && remf >= yf) {
+        remh = npy_half_nextafter(remh, half_zero);
+    }
+    if (yf < 0 && remf <= yf) {
+        remh = npy_half_nextafter(remh, half_zero);
+    }
+    return remh;
+}
+
 npy_half npy_half_spacing(npy_half h)
 {
     npy_half ret;
