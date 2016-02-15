@@ -2326,12 +2326,10 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     }
 
     if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
-        !(PyArray_TYPE(self) == NPY_OBJECT) &&
-        !(PyArray_TYPE(self) == NPY_STRING) &&
-        !(PyArray_TYPE(self) == NPY_UNICODE)) {
+            !(PyArray_TYPE(self) == NPY_OBJECT)) {
         PyObject *err, *msg_part;
         Py_DECREF(dtype);
-        err = PyString_FromString("unable to convert dtype: ");
+        err = PyString_FromString("unable to convert ");
         if (err == NULL) {
             return NULL;
         }

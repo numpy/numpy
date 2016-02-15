@@ -2494,14 +2494,6 @@ class TestMethods(TestCase):
             cp = complex(c)
             assert_equal(cp, c, msg)
 
-        s = np.array([[['1+2j']]], 'S')
-        sp = complex(s)
-        assert_equal(sp, 1+2j)
-
-        u = np.array([[['1+2j']]], 'U')
-        up = complex(u)
-        assert_equal(up, 1+2j)
-
 
 class TestBinop(object):
     def test_inplace(self):
