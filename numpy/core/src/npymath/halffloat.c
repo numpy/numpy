@@ -224,6 +224,17 @@ int npy_half_ge(npy_half h1, npy_half h2)
     return npy_half_le(h2, h1);
 }
 
+npy_half npy_half_divmod(npy_half h1, npy_half h2, npy_half *modulus)
+{
+    float fh1 = npy_half_to_float(h1);
+    float fh2 = npy_half_to_float(h2);
+    float div, mod;
+
+    div = npy_divmodf(fh1, fh2, &mod);
+    *modulus = npy_float_to_half(mod);
+    return npy_float_to_half(div);
+}
+
 
 
 /*

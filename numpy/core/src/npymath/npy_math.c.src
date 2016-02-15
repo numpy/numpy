@@ -608,6 +608,54 @@ double npy_log2(double x)
     }
 }
 
+/*
+ * Python version of divmod.
+ *
+ * The implementation is mostly copied from cpython 3.5.
+ */
+@type@
+npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
+{
+    @type@ div, mod, floordiv;
+
+    mod = npy_fmod@c@(a, b);
+
+    if (!b) {
+        /* If b == 0, return result of fmod. For IEEE is nan */
+        *modulus = mod;
+        return mod;
+    }
+
+    /* a - mod should be very nearly an integer multiple of b */
+    div = (a - mod) / b;
+
+    /* adjust fmod result to conform to Python convention of remainder */
+    if (mod) {
+        if ((b < 0) != (mod < 0)) {
+            mod += b;
+            div -= 1.0@c@;
+        }
+    }
+    else {
+        /* if mod is zero ensure correct sign */
+        mod = (b > 0) ? 0.0@c@ : -0.0@c@;
+    }
+
+    /* snap quotient to nearest integral value */
+    if (div) {
+        floordiv = npy_floor(div);
+        if (div - floordiv > 0.5@c@)
+            floordiv += 1.0@c@;
+    }
+    else {
+        /* if div is zero ensure correct sign */
+        floordiv = (a / b > 0) ?  0.0@c@ : -0.0@c@;
+    }
+
+    *modulus = mod;
+    return floordiv;
+}
+
 #undef LOGE2
 #undef LOG2E
 #undef RAD2DEG
