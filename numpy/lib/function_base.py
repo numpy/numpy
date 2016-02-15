@@ -76,7 +76,7 @@ def iterable(y):
     return True
 
 
-def _hist_optim_numbins_estimator(a, estimator):
+def _hist_optim_numbins_estimator(a, estimator, data_range=None, data_weights=None):
     """
     A helper function to be called from ``histogram`` to deal with
     estimating optimal number of bins.
@@ -84,14 +84,33 @@ def _hist_optim_numbins_estimator(a, estimator):
     A description of the estimators can be found at
     https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width
 
+    Parameters
+    ----------
+    a : array_like
+        The data with which to estimate the number of bins
     estimator: str
         If ``estimator`` is one of ['auto', 'fd', 'scott', 'doane',
         'rice', 'sturges', 'sqrt'], this function will choose the
         appropriate estimation method and return the optimal number of
         bins it calculates.
+    data_range: tuple (min, max)
+        The range that the data to be binned should be restricted to.
+    data_weights:
+        weights are not supported, so this field must be empty or None.
     """
     if a.size == 0:
         return 1
+
+    if data_weights is not None:
+        raise TypeError("Automated estimation of the number of "
+                        "bins is not supported for weighted data")
+
+    if data_range is not None:
+        mn, mx = data_range
+        keep = (a >= mn)
+        keep &= (a <= mx)
+        if not np.logical_and.reduce(keep):
+            a = a[keep]
 
     def sqrt(x):
         """
@@ -223,7 +242,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         If `bins` is a string from the list below, `histogram` will use
         the method chosen to calculate the optimal number of bins (see
         Notes for more detail on the estimators). For visualisation, we
-        suggest using the 'auto' option.
+        suggest using the 'auto' option. Weighted data is not supported
+        for automated bin size selection.
 
         'auto'
             Maximum of the 'sturges' and 'fd' estimators. Provides good
@@ -426,7 +446,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
 
     if isinstance(bins, basestring):
-        bins = _hist_optim_numbins_estimator(a, bins)
+        bins = _hist_optim_numbins_estimator(a, bins, range, weights)
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
 
