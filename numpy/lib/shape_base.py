@@ -325,6 +325,10 @@ def dstack(tup):
     This is a simple way to stack 2D arrays (images) into a single
     3D array for processing.
 
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack`` (keep in mind that
+    ``np.stack`` was added in numpy version 1.10).
+
     Parameters
     ----------
     tup : sequence of arrays
