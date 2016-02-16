@@ -130,6 +130,12 @@
 # include_dirs = /opt/OpenBLAS/include
 # runtime_library_dirs = /opt/OpenBLAS/lib
 
+# [blis]
+# libraries = blis
+# library_dirs = /home/username/blis/lib
+# include_dirs = /home/username/blis/include/blis
+# runtime_library_dirs = /home/username/blis/lib
+
 # MKL
 #----
 # MKL is Intel's very optimized yet proprietary implementation of BLAS and
