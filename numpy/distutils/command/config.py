@@ -354,7 +354,7 @@ int main (void)
             list of header paths
         libraries : seq
             list of libraries to link the code snippet to
-        libraru_dirs : seq
+        library_dirs : seq
             list of library paths
         decl : dict
             for every (key, value), the declaration in the value will be

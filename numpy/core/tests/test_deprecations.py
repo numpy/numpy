@@ -57,11 +57,11 @@ class _DeprecationTestCase(object):
 
         Parameters
         ----------
-        f : callable
+        function : callable
             The function to test
         num : int
             Number of DeprecationWarnings to expect. This should normally be 1.
-        ignore_other : bool
+        ignore_others : bool
             Whether warnings of the wrong type should be ignored (note that
             the message is not checked)
         function_fails : bool
