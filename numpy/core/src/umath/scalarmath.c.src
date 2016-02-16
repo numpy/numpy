@@ -271,7 +271,6 @@ static void
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f, , l#
  */
-static @type@ (*_basic_@name@_floor)(@type@);
 static @type@ (*_basic_@name@_sqrt)(@type@);
 static @type@ (*_basic_@name@_fmod)(@type@, @type@);
 
@@ -304,7 +303,6 @@ static void
 
 /**end repeat**/
 
-static npy_half (*_basic_half_floor)(npy_half);
 static npy_half (*_basic_half_sqrt)(npy_half);
 static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
@@ -1689,25 +1687,6 @@ get_functions(PyObject * mm)
     _basic_cfloat_pow = funcdata[j + 3];
     _basic_cdouble_pow = funcdata[j + 4];
     _basic_clongdouble_pow = funcdata[j + 5];
-    Py_DECREF(obj);
-
-    /* Get the floor functions */
-    obj = PyObject_GetAttrString(mm, "floor");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while(signatures[i] != NPY_FLOAT) {
-        i += 2;
-        j++;
-    }
-    _basic_half_floor = funcdata[j - 1];
-    _basic_float_floor = funcdata[j];
-    _basic_double_floor = funcdata[j + 1];
-    _basic_longdouble_floor = funcdata[j + 2];
     Py_DECREF(obj);
 
     /* Get the sqrt functions */
