@@ -1819,6 +1819,13 @@ class TestFillingValues(TestCase):
         y = x.view(dtype=np.int32)
         assert_(y.fill_value == 999999)
 
+    def test_fillvalue_bytes_or_str(self):
+        # Test whether fill values work as expected for structured dtypes
+        # containing bytes or str.  See issue #7259.
+        a = empty(shape=(3, ), dtype="(2)3S,(2)3U")
+        assert_equal(a["f0"].fill_value, default_fill_value(b"spam"))
+        assert_equal(a["f1"].fill_value, default_fill_value("eggs"))
+
 
 class TestUfuncs(TestCase):
     # Test class for the application of ufuncs on MaskedArrays.
