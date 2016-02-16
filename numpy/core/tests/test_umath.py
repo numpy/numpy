@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 import warnings
+import itertools
 
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
@@ -220,6 +221,102 @@ class TestDivision(TestCase):
         x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
+
+
+class TestRemainder(TestCase):
+
+    def test_remainder_basic(self):
+        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
+                    continue
+                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
+                    continue
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*71, dtype=dt1)
+                b = np.array(sg2*19, dtype=dt2)
+                div = np.floor_divide(a, b)
+                rem = np.remainder(a, b)
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_remainder_exact(self):
+        # test that float results are exact for small integers. This also
+        # holds for the same integers scaled by powers of two.
+        nlst = list(range(-127, 0))
+        plst = list(range(1, 128))
+        dividend = nlst + [0] + plst
+        divisor = nlst + plst
+        arg = list(itertools.product(dividend, divisor))
+        tgt = list(divmod(*t) for t in arg)
+
+        a, b = np.array(arg, dtype=int).T
+        # convert exact integer results from Python to float so that
+        # signed zero can be used, it is checked.
+        tgtdiv, tgtrem = np.array(tgt, dtype=float).T
+        tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
+        tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
+
+        for dt in np.typecodes['Float']:
+            msg = 'dtype: %s' % (dt,)
+            fa = a.astype(dt)
+            fb = b.astype(dt)
+            div = np.floor_divide(fa, fb)
+            rem = np.remainder(fa, fb)
+            assert_equal(div, tgtdiv, err_msg=msg)
+            assert_equal(rem, tgtrem, err_msg=msg)
+
+    def test_float_remainder_roundoff(self):
+        # gh-6127
+        dt = np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*78*6e-8, dtype=dt1)
+                b = np.array(sg2*6e-8, dtype=dt2)
+                div = np.floor_divide(a, b)
+                rem = np.remainder(a, b)
+                # Equal assertion should hold when fmod is used
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_remainder_corner_cases(self):
+        # Check remainder magnitude.
+        for dt in np.typecodes['Float']:
+            b = np.array(1.0, dtype=dt)
+            a = np.nextafter(np.array(0.0, dtype=dt), -b)
+            rem = np.remainder(a, b)
+            assert_(rem <= b, 'dt: %s' % dt)
+            rem = np.remainder(-a, -b)
+            assert_(rem >= -b, 'dt: %s' % dt)
+
+        # Check nans, inf
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warnings.simplefilter('ignore', RuntimeWarning)
+            for dt in np.typecodes['Float']:
+                fone = np.array(1.0, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
+                rem = np.remainder(fone, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                # MSVC 2008 returns NaN here, so disable the check.
+                #rem = np.remainder(fone, finf)
+                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
 
 
 class TestCbrt(TestCase):
