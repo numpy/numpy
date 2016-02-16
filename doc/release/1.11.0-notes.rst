@@ -152,7 +152,6 @@ to preserve struct layout). These were never used for anything, so
 it's unlikely that any third-party code is using them either, but we
 mention it here for completeness.
 
-
 New Features
 ============
 

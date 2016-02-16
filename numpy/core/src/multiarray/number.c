@@ -1025,10 +1025,25 @@ _array_copy_nice(PyArrayObject *self)
 static PyObject *
 array_index(PyArrayObject *v)
 {
-    if (!PyArray_ISINTEGER(v) || PyArray_NDIM(v) != 0) {
-        PyErr_SetString(PyExc_TypeError,
-            "only integer scalar arrays can be converted to a scalar index");
+    static PyObject *VisibleDeprecation = NULL;
+
+    npy_cache_import(
+        "numpy", "VisibleDeprecationWarning", &VisibleDeprecation);
+
+    if (!PyArray_ISINTEGER(v) || PyArray_SIZE(v) != 1) {
+        PyErr_SetString(PyExc_TypeError, "only integer arrays with "     \
+                        "one element can be converted to an index");
         return NULL;
+    }
+    if (PyArray_NDIM(v) != 0) {
+        /* 2013-04-20, 1.8 */
+        if (PyErr_WarnEx(
+                VisibleDeprecation,
+                "converting an array with ndim > 0 to an index"
+                " will result in an error in the future",
+                1) < 0) {
+            return NULL;
+        }
     }
     return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
 }
