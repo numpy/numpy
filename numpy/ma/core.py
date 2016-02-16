@@ -3527,7 +3527,14 @@ class MaskedArray(ndarray):
         """
         if self._fill_value is None:
             self._fill_value = _check_fill_value(None, self.dtype)
-        return self._fill_value[()]
+
+        # Temporary workaround to account for the fact that str and bytes
+        # scalars cannot be indexed with (), whereas all other numpy
+        # scalars can. See issues #7259 and #7267.
+        # The if-block can be removed after #7267 has been fixed.
+        if isinstance(self._fill_value, ndarray):
+            return self._fill_value[()]
+        return self._fill_value
 
     def set_fill_value(self, value=None):
         """
