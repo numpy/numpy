@@ -5,7 +5,7 @@ this improves readability.
 Every module should have a docstring at the very top of the file.  The
 module's docstring may extend over multiple lines.  If your docstring does
 extend over multiple lines, the closing three quotation marks must be on
-a line by itself, preferably preceeded by a blank line.
+a line by itself, preferably preceded by a blank line.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -52,7 +52,7 @@ def foo(var1, var2, long_var_name='hi') :
         The type above can either refer to an actual Python type
         (e.g. ``int``), or describe the type of the variable in more
         detail, e.g. ``(N,) ndarray`` or ``array_like``.
-    Long_variable_name : {'hi', 'ho'}, optional
+    long_var_name : {'hi', 'ho'}, optional
         Choices in brackets, default first when optional.
 
     Returns
