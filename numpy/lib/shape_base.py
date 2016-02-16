@@ -326,8 +326,8 @@ def dstack(tup):
     3D array for processing.
 
     This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack`` (keep in mind that
-    ``np.stack`` was added in numpy version 1.10).
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------

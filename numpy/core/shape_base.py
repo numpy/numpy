@@ -185,8 +185,8 @@ def vstack(tup):
     array. Rebuild arrays divided by `vsplit`.
 
     This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack`` (keep in mind that
-    ``np.stack`` was added in numpy version 1.10).
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------
@@ -241,8 +241,8 @@ def hstack(tup):
     a single array. Rebuild arrays divided by `hsplit`.
 
     This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack`` (keep in mind that
-    ``np.stack`` was added in numpy version 1.10).
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------
