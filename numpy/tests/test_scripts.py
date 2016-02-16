@@ -49,7 +49,7 @@ def run_command(cmd, check_code=True):
         cmd = ['"{0}"'.format(c) if ' ' in c else c for c in cmd]
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    if proc.poll() == None:
+    if proc.poll() is None:
         proc.terminate()
     if check_code and proc.returncode != 0:
         raise RuntimeError('\n'.join(
