@@ -20,6 +20,7 @@ classes are available:
   blas_info
   lapack_info
   openblas_info
+  blis_info
   blas_opt_info       # usage recommended
   lapack_opt_info     # usage recommended
   fftw_info,dfftw_info,sfftw_info
@@ -323,6 +324,7 @@ def get_info(name, notfound_action=0):
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
           'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -482,6 +484,7 @@ class system_info(object):
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
+
         if self.section is not None:
             self.search_static_first = self.cp.getboolean(
                 self.section, 'search_static_first')
@@ -497,7 +500,7 @@ class system_info(object):
         libs = self.get_libraries()
         dirs = self.get_lib_dirs()
         # The extensions use runtime_library_dirs
-        r_dirs = self.get_runtime_lib_dirs() 
+        r_dirs = self.get_runtime_lib_dirs()
         # Intrinsic distutils use rpath, we simply append both entries
         # as though they were one entry
         r_dirs.extend(self.get_runtime_lib_dirs(key='rpath'))
@@ -508,17 +511,20 @@ class system_info(object):
                 dict_append(info, **i)
             else:
                 log.info('Library %s was not found. Ignoring' % (lib))
-            i = self.check_libs(r_dirs, [lib])
-            if i is not None:
-                # Swap library keywords found to runtime_library_dirs
-                # the libraries are insisting on the user having defined
-                # them using the library_dirs, and not necessarily by
-                # runtime_library_dirs
-                del i['libraries']
-                i['runtime_library_dirs'] = i.pop('library_dirs')
-                dict_append(info, **i)
-            else:
-                log.info('Runtime library %s was not found. Ignoring' % (lib))
+
+            if r_dirs:
+                i = self.check_libs(r_dirs, [lib])
+                if i is not None:
+                    # Swap library keywords found to runtime_library_dirs
+                    # the libraries are insisting on the user having defined
+                    # them using the library_dirs, and not necessarily by
+                    # runtime_library_dirs
+                    del i['libraries']
+                    i['runtime_library_dirs'] = i.pop('library_dirs')
+                    dict_append(info, **i)
+                else:
+                    log.info('Runtime library %s was not found. Ignoring' % (lib))
+
         return info
 
     def set_info(self, **info):
@@ -643,7 +649,10 @@ class system_info(object):
         return self.get_paths(self.section, key)
 
     def get_runtime_lib_dirs(self, key='runtime_library_dirs'):
-        return self.get_paths(self.section, key)
+        path = self.get_paths(self.section, key)
+        if path == ['']:
+            path = []
+        return path
 
     def get_include_dirs(self, key='include_dirs'):
         return self.get_paths(self.section, key)
@@ -711,6 +720,7 @@ class system_info(object):
         if not info:
             log.info('  libraries %s not found in %s', ','.join(libs),
                      lib_dirs)
+
         return info
 
     def _lib_list(self, lib_dir, libs, exts):
@@ -736,6 +746,7 @@ class system_info(object):
                         l += '.dll'
                     liblist.append(l)
                     break
+
         return liblist
 
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
@@ -1584,6 +1595,11 @@ class blas_opt_info(system_info):
             self.set_info(**blas_mkl_info)
             return
 
+        blis_info = get_info('blis')
+        if blis_info:
+            self.set_info(**blis_info)
+            return
+
         openblas_info = get_info('openblas')
         if openblas_info:
             self.set_info(**openblas_info)
@@ -1796,6 +1812,31 @@ class openblas_lapack_info(openblas_info):
         finally:
             shutil.rmtree(tmpdir)
         return res
+
+
+class blis_info(blas_info):
+    section = 'blis'
+    dir_env_var = 'BLIS'
+    _lib_names = ['blis']
+    notfounderror = BlasNotFoundError
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        blis_libs = self.get_libs('libraries', self._lib_names)
+        if blis_libs == self._lib_names:
+            blis_libs = self.get_libs('blis_libs', self._lib_names)
+
+        info = self.check_libs2(lib_dirs, blis_libs, [])
+        if info is None:
+            return
+
+        # Add include dirs
+        incl_dirs = self.get_include_dirs()
+        dict_append(info,
+                    language='c',
+                    define_macros=[('HAVE_CBLAS', None)],
+                    include_dirs=incl_dirs)
+        self.set_info(**info)
 
 
 class blas_src_info(system_info):
@@ -2345,7 +2386,7 @@ def dict_append(d, **kws):
             languages.append(v)
             continue
         if k in d:
-            if k in ['library_dirs', 'include_dirs', 
+            if k in ['library_dirs', 'include_dirs',
                      'extra_compile_args', 'extra_link_args',
                      'runtime_library_dirs', 'define_macros']:
                 [d[k].append(vv) for vv in v if vv not in d[k]]
