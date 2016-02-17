@@ -3680,7 +3680,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('item',
 
     Examples
     --------
-    >>> x = np.random.randint(9, size=(3, 3))
+    >>> x = np.random.randint(low=9, size=(3, 3))
     >>> x
     array([[3, 1, 7],
            [2, 8, 3],

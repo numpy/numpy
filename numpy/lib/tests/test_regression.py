@@ -147,13 +147,13 @@ class TestRegression(TestCase):
         def dp():
             n = 3
             a = np.ones((n,)*5)
-            i = np.random.randint(0, n, size=thesize)
+            i = np.random.randint(low=0, high=n, size=thesize)
             a[np.ix_(i, i, i, i, i)] = 0
 
         def dp2():
             n = 3
             a = np.ones((n,)*5)
-            i = np.random.randint(0, n, size=thesize)
+            i = np.random.randint(low=0, high=n, size=thesize)
             a[np.ix_(i, i, i, i, i)]
 
         self.assertRaises(ValueError, dp)

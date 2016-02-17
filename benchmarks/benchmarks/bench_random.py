@@ -34,11 +34,11 @@ class Randint(Benchmark):
 
     def time_randint_fast(self):
         """Compare to uint32 below"""
-        np.random.randint(0, 2**30, size=10**5)
+        np.random.randint(low=0, high=2**30, size=10**5)
 
     def time_randint_slow(self):
         """Compare to uint32 below"""
-        np.random.randint(0, 2**30 + 1, size=10**5)
+        np.random.randint(low=0, high=2**30 + 1, size=10**5)
 
 
 class Randint_dtype(Benchmark):
@@ -59,9 +59,9 @@ class Randint_dtype(Benchmark):
 
     def time_randint_fast(self, name):
         high = self.high[name]
-        np.random.randint(0, high, size=10**5, dtype=name)
+        np.random.randint(low=0, high=high, size=10**5, dtype=name)
 
     def time_randint_slow(self, name):
         high = self.high[name]
-        np.random.randint(0, high + 1, size=10**5, dtype=name)
+        np.random.randint(low=0, high=high + 1, size=10**5, dtype=name)
 

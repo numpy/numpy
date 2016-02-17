@@ -13,19 +13,19 @@ import warnings
 class TestSeed(TestCase):
     def test_scalar(self):
         s = np.random.RandomState(0)
-        assert_equal(s.randint(1000), 684)
+        assert_equal(s.randint(low=1000), 684)
         s = np.random.RandomState(4294967295)
-        assert_equal(s.randint(1000), 419)
+        assert_equal(s.randint(low=1000), 419)
 
     def test_array(self):
         s = np.random.RandomState(range(10))
-        assert_equal(s.randint(1000), 468)
+        assert_equal(s.randint(low=1000), 468)
         s = np.random.RandomState(np.arange(10))
-        assert_equal(s.randint(1000), 468)
+        assert_equal(s.randint(low=1000), 468)
         s = np.random.RandomState([0])
-        assert_equal(s.randint(1000), 973)
+        assert_equal(s.randint(low=1000), 973)
         s = np.random.RandomState([4294967295])
-        assert_equal(s.randint(1000), 265)
+        assert_equal(s.randint(low=1000), 265)
 
     def test_invalid_scalar(self):
         # seed must be an unsigned 32 bit integer
@@ -64,8 +64,8 @@ class TestMultinomial(TestCase):
         random.multinomial(100, [0.2, 0.8, 0.0, 0.0, 0.0])
 
     def test_int_negative_interval(self):
-        assert_(-5 <= random.randint(-5, -1) < -1)
-        x = random.randint(-5, -1, 5)
+        assert_(-5 <= random.randint(low=-5, high=-1) < -1)
+        x = random.randint(low=-5, high=-1, size=5)
         assert_(np.all(-5 <= x))
         assert_(np.all(x < -1))
 
@@ -147,31 +147,31 @@ class TestRandint(TestCase):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
-            assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
-            assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
+            assert_raises(ValueError, self.rfunc, low=lbnd - 1, high=ubnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, low=lbnd, high=ubnd + 1, dtype=dt)
+            assert_raises(ValueError, self.rfunc, low=ubnd, high=lbnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, low=1, high=0, dtype=dt)
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
             tgt = ubnd - 1
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc(low=tgt, high=tgt + 1, size=1000, dtype=dt), tgt)
             tgt = lbnd
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc(low=tgt, high=tgt + 1, size=1000, dtype=dt), tgt)
             tgt = (lbnd + ubnd)//2
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc(low=tgt, high=tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
         np.random.seed()
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
-                vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
+                vals = self.rfunc(low=2, high=ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+        vals = self.rfunc(low=0, high=2, size=2**16, dtype=np.bool)
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
@@ -195,18 +195,50 @@ class TestRandint(TestCase):
 
             # view as little endian for hash
             if sys.byteorder == 'little':
-                val = self.rfunc(0, 6, size=1000, dtype=dt)
+                val = self.rfunc(low=0, high=6, size=1000, dtype=dt)
             else:
-                val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
+                val = self.rfunc(low=0, high=6, size=1000, dtype=dt).byteswap()
 
             res = hashlib.md5(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianess
         np.random.seed(1234)
-        val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
+        val = self.rfunc(low=0, high=2, size=1000, dtype=np.bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
+
+    def test_varying_bounds_args(self):
+        dt = np.int32
+        res = -1324913873
+        np.random.seed(1234)
+        assert_equal(self.rfunc(dtype=dt), res)
+
+        res = -1324913873
+        np.random.seed(1234)
+        assert_equal(self.rfunc(high=1000, dtype=dt), res)
+
+        res = -1324913873
+        np.random.seed(1234)
+        assert_equal(self.rfunc(high=-1000, dtype=dt), res)
+
+        res = 822569774
+        np.random.seed(1234)
+        assert_equal(self.rfunc(low=-1, dtype=dt), res)
+
+        np.random.seed(1234)
+        assert_equal(self.rfunc(low=1, dtype=dt), 0)
+
+    # Make sure that the order of the keyword arguments
+    # remains in the order 'low', 'high', 'size', and 'dtype'
+    # That way, people can continue to call this function
+    # without necessarily spelling out each keyword
+    def test_old_arg_invocation(self):
+        np.random.seed(1234)
+        expected = np.array([487191, 452283, 166158, 909341])
+
+        # low = 1000, high = 1000000, size = 4, dtype = np.int64
+        assert_equal(self.rfunc(1000, 1000000, 4, np.int64), expected)
 
 
 class TestRandomDist(TestCase):
@@ -234,7 +266,7 @@ class TestRandomDist(TestCase):
 
     def test_randint(self):
         np.random.seed(self.seed)
-        actual = np.random.randint(-99, 99, size=(3, 2))
+        actual = np.random.randint(low=-99, high=99, size=(3, 2))
         desired = np.array([[31, 3],
                             [-52, 41],
                             [-48, -66]])
@@ -1450,13 +1482,13 @@ class TestSingleEltArrayInput(TestCase):
 #        low = np.array([0])
 #
 #        for dt in itype:
-#            out = func(low, high, dtype=dt)
+#            out = func(low=low, high=high, dtype=dt)
 #            self.assert_equal(out.shape, self.tgtShape)
 #
-#            out = func(low[0], high, dtype=dt)
+#            out = func(low=low[0], high=high, dtype=dt)
 #            self.assert_equal(out.shape, self.tgtShape)
 #
-#            out = func(low, high[0], dtype=dt)
+#            out = func(low=low, high=high[0], dtype=dt)
 #            self.assert_equal(out.shape, self.tgtShape)
 
     def test_three_arg_funcs(self):

@@ -13,13 +13,13 @@ def test():
     np.random.seed(np.arange(10))
 
     # Create a random array
-    ndims = randint(5)+1
-    shape = tuple(randint(10)+1 for dim in range(ndims))
+    ndims = randint(low=5)+1
+    shape = tuple(randint(low=10)+1 for dim in range(ndims))
     els = reduce(mul, shape)
     a = np.arange(els)
     a.shape = shape
 
-    buf_size = randint(2*els)
+    buf_size = randint(low=2*els)
     b = Arrayterator(a, buf_size)
 
     # Check that each block has at most ``buf_size`` elements
@@ -30,9 +30,9 @@ def test():
     assert_(list(b.flat) == list(a.flat))
 
     # Slice arrayterator
-    start = [randint(dim) for dim in shape]
-    stop = [randint(dim)+1 for dim in shape]
-    step = [randint(dim)+1 for dim in shape]
+    start = [randint(low=dim) for dim in shape]
+    stop = [randint(low=dim)+1 for dim in shape]
+    step = [randint(low=dim)+1 for dim in shape]
     slice_ = tuple(slice(*t) for t in zip(start, stop, step))
     c = b[slice_]
     d = a[slice_]

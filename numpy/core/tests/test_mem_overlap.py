@@ -110,19 +110,19 @@ def test_diophantine_fuzz():
         numbers = []
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
-            A_max = 1 + rng.randint(0, 11, dtype=np.intp)**6
-            U_max = rng.randint(0, 11, dtype=np.intp)**6
+            A_max = 1 + rng.randint(low=0, high=11, dtype=np.intp)**6
+            U_max = rng.randint(low=0, high=11, dtype=np.intp)**6
 
             A_max = min(max_int, A_max)
             U_max = min(max_int-1, U_max)
 
-            A = tuple(rng.randint(1, A_max+1, dtype=np.intp)
+            A = tuple(rng.randint(low=1, high=A_max+1, dtype=np.intp)
                       for j in range(ndim))
-            U = tuple(rng.randint(0, U_max+2, dtype=np.intp)
+            U = tuple(rng.randint(low=0, high=U_max+2, dtype=np.intp)
                       for j in range(ndim))
 
             b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = rng.randint(-1, b_ub+2, dtype=np.intp)
+            b = rng.randint(low=-1, high=b_ub+2, dtype=np.intp)
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0
@@ -260,9 +260,9 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
-        if rng.randint(0, 2, dtype=np.intp) == 0:
+        start = rng.randint(low=0, high=n+1, dtype=np.intp)
+        stop = rng.randint(low=start, high=n+1, dtype=np.intp)
+        if rng.randint(low=0, high=2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
@@ -271,14 +271,14 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     infeasible = 0
 
     while min(feasible, infeasible) < min_count:
-        steps = tuple(rng.randint(1, 11, dtype=np.intp)
-                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
+        steps = tuple(rng.randint(low=1, high=11, dtype=np.intp)
+                      if rng.randint(low=0, high=5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
         if same_steps:
             steps2 = steps
         else:
-            steps2 = tuple(rng.randint(1, 11, dtype=np.intp)
-                           if rng.randint(0, 5, dtype=np.intp) == 0 else 1
+            steps2 = tuple(rng.randint(low=1, high=11, dtype=np.intp)
+                           if rng.randint(low=0, high=5, dtype=np.intp) == 0 else 1
                            for j in range(x.ndim))
 
         t1 = np.arange(x.ndim)
@@ -378,9 +378,9 @@ def test_internal_overlap_slices():
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
-        if rng.randint(0, 2, dtype=np.intp) == 0:
+        start = rng.randint(low=0, high=n+1, dtype=np.intp)
+        stop = rng.randint(low=start, high=n+1, dtype=np.intp)
+        if rng.randint(low=0, high=2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
@@ -389,8 +389,8 @@ def test_internal_overlap_slices():
     min_count = 5000
 
     while cases < min_count:
-        steps = tuple(rng.randint(1, 11, dtype=np.intp)
-                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
+        steps = tuple(rng.randint(low=1, high=11, dtype=np.intp)
+                      if rng.randint(low=0, high=5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
         t1 = np.arange(x.ndim)
         rng.shuffle(t1)
@@ -474,11 +474,11 @@ def test_internal_overlap_fuzz():
     rng = np.random.RandomState(1234)
 
     while min(overlap, no_overlap) < min_count:
-        ndim = rng.randint(1, 4, dtype=np.intp)
+        ndim = rng.randint(low=1, high=4, dtype=np.intp)
 
-        strides = tuple(rng.randint(-1000, 1000, dtype=np.intp)
+        strides = tuple(rng.randint(low=-1000, high=1000, dtype=np.intp)
                         for j in range(ndim))
-        shape = tuple(rng.randint(1, 30, dtype=np.intp)
+        shape = tuple(rng.randint(low=1, high=30, dtype=np.intp)
                       for j in range(ndim))
 
         a = as_strided(x, strides=strides, shape=shape)

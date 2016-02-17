@@ -518,7 +518,7 @@ class TestNanFunctions_Median(TestCase):
         for s in [5, 20, 51, 200, 1000]:
             d = np.random.randn(4, s)
             # Randomly set some elements to NaN:
-            w = np.random.randint(0, d.size, size=d.size // 5)
+            w = np.random.randint(low=0, high=d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
             d[:,0] = 1.  # ensure at least one good value
             # use normal median without nans to compare

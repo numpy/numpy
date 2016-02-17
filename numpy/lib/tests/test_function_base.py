@@ -2571,7 +2571,7 @@ class TestMedian(TestCase):
                        [0, 1],
                        [6, 7],
                        [4, 5]])
-        for a in [a3, np.random.randint(0, 100, size=(2, 3, 4))]:
+        for a in [a3, np.random.randint(low=0, high=100, size=(2, 3, 4))]:
             orig = a.copy()
             np.median(a, axis=None)
             for ax in range(a.ndim):

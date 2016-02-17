@@ -347,7 +347,7 @@ class TestTile(TestCase):
         reps = [(2,), (1, 2), (2, 1), (2, 2), (2, 3, 2), (3, 2)]
         shape = [(3,), (2, 3), (3, 4, 3), (3, 2, 3), (4, 3, 2, 4), (2, 2)]
         for s in shape:
-            b = randint(0, 10, size=s)
+            b = randint(low=0, high=10, size=s)
             for r in reps:
                 a = np.ones(r, b.dtype)
                 large = tile(b, r)
