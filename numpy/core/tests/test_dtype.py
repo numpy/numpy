@@ -590,6 +590,10 @@ def test_rational_dtype():
     a = np.array([1111], dtype=rational).astype
     assert_raises(OverflowError, a, 'int8')
 
+    # test that dtype detection finds user-defined types
+    x = rational(1)
+    assert_equal(np.array([x,x]).dtype, np.dtype(rational))
+
 
 if __name__ == "__main__":
     run_module_suite()
