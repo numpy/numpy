@@ -468,9 +468,14 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
     /*
      * If we reached the maximum recursion depth without hitting one
-     * of the above cases, the output dtype should be OBJECT
+     * of the above cases, and obj isn't a sequence-like object, the output
+     * dtype should be either OBJECT or a user-defined type.
+     *
+     * Note that some libraries define sequence-like classes but want them to
+     * be treated as objects, and they expect numpy to treat it as an object if
+     * __len__ is not defined.
      */
-    if (maxdims == 0 || !PySequence_Check(obj)) {
+    if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
         if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
             Py_XDECREF(*out_dtype);
             *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
@@ -481,21 +486,12 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /*
-     * If we get here, it may be a sequence. However some libraries define
-     * sequence-like classes but want them to be treated as objects, and they
-     * expect numpy to treat it as an object if __len__ is not defined.
-     */
-    size = PySequence_Size(obj);
-    if (size < 0) {
-        goto fail;
-    }
-
     /* Recursive case, first check the sequence contains only one type */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+    size = PySequence_Fast_GET_SIZE(seq);
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
