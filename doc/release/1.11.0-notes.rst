@@ -149,6 +149,15 @@ it's unlikely that any third-party code is using them either, but we
 mention it here for completeness.
 
 
+object dtype detection for old-style classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In python 2, objects which are instances of old-style user-defined classes no
+longer automatically count as 'object' type in the dtype-detection handler.
+Instead, as in python 3, they may potentially count as sequences, but only if
+they define both a `__len__` and a `__getitem__` method. This fixes a segfault
+and inconsistency between python 2 and 3.
+
 New Features
 ============
 
