@@ -3587,7 +3587,7 @@ class TestIO(object):
         # but for now test for proper errors
         b = io.BytesIO()
         assert_raises(IOError, np.fromfile, b, np.uint8, 80)
-        d = np.ones(7);
+        d = np.ones(7)
         assert_raises(IOError, lambda x: x.tofile(b), d)
 
     def test_bool_fromstring(self):
@@ -3676,7 +3676,7 @@ class TestIO(object):
         d = np.zeros(4 * 1024 ** 2)
         d.tofile(self.filename)
         assert_equal(os.path.getsize(self.filename), d.nbytes)
-        assert_array_equal(d, np.fromfile(self.filename));
+        assert_array_equal(d, np.fromfile(self.filename))
         # check offset
         with open(self.filename, "r+b") as f:
             f.seek(d.nbytes)
