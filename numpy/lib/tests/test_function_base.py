@@ -2389,8 +2389,8 @@ class TestPercentile(TestCase):
         assert_equal(np.percentile(x, [25, 60], axis=(0,)),
                      np.percentile(x, [25, 60], axis=0))
 
-        d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
-        np.random.shuffle(d)
+        d = np.arange(3 * 5 * 7 * 11).reshape((3, 5, 7, 11))
+        np.random.shuffle(d.ravel())
         assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
                      np.percentile(d[:,:,:, 0].flatten(), 25))
         assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
@@ -2617,7 +2617,7 @@ class TestMedian(TestCase):
                         [3,  4])
 
         a4 = np.arange(3 * 4 * 5, dtype=np.float32).reshape((3, 4, 5))
-        map(np.random.shuffle, a4)
+        np.random.shuffle(a4.ravel())
         assert_allclose(np.median(a4, axis=None),
                         np.median(a4.copy(), axis=None, overwrite_input=True))
         assert_allclose(np.median(a4, axis=0),
@@ -2765,8 +2765,8 @@ class TestMedian(TestCase):
         assert_equal(np.median(x, axis=(0, )), np.median(x, axis=0))
         assert_equal(np.median(x, axis=(-1, )), np.median(x, axis=-1))
 
-        d = np.arange(3 * 5 * 7 * 11).reshape(3, 5, 7, 11)
-        np.random.shuffle(d)
+        d = np.arange(3 * 5 * 7 * 11).reshape((3, 5, 7, 11))
+        np.random.shuffle(d.ravel())
         assert_equal(np.median(d, axis=(0, 1, 2))[0],
                      np.median(d[:,:,:, 0].flatten()))
         assert_equal(np.median(d, axis=(0, 1, 3))[1],
