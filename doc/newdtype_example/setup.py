@@ -7,7 +7,7 @@ def configuration(parent_package = '', top_path=None):
     config = Configuration('floatint', parent_package, top_path)
 
     config.add_extension('floatint',
-                         sources = ['floatint.c']);
+                         sources = ['floatint.c'])
     return config
 
 setup(configuration=configuration)
