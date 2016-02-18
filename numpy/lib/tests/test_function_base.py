@@ -533,6 +533,16 @@ class TestDelete(TestCase):
         assert_(isinstance(delete(a, slice(1, 2)), SubClass))
         assert_(isinstance(delete(a, slice(1, -2)), SubClass))
 
+    def test_array_order_preserve(self):
+        # See gh-7113
+        k = np.arange(10).reshape(2, 5, order='F')
+        m = delete(k, slice(60, None), axis=1)
+
+        # 'k' is Fortran ordered, and 'm' should have the
+        # same ordering as 'k' and NOT become C ordered
+        assert_equal(m.flags.c_contiguous, k.flags.c_contiguous)
+        assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
+
 
 class TestGradient(TestCase):
 
