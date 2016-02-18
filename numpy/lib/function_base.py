@@ -4097,7 +4097,7 @@ def delete(arr, obj, axis=None):
         if wrap:
             return wrap(arr)
         else:
-            return arr.copy()
+            return arr.copy(order=arrorder)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
@@ -4110,9 +4110,9 @@ def delete(arr, obj, axis=None):
 
         if numtodel <= 0:
             if wrap:
-                return wrap(arr.copy())
+                return wrap(arr.copy(order=arrorder))
             else:
-                return arr.copy()
+                return arr.copy(order=arrorder)
 
         # Invert if step is negative:
         if step < 0:
@@ -4333,7 +4333,7 @@ def insert(arr, obj, values, axis=None):
         warnings.warn(
             "in the future the special handling of scalars will be removed "
             "from insert and raise an error", DeprecationWarning)
-        arr = arr.copy()
+        arr = arr.copy(order=arrorder)
         arr[...] = values
         if wrap:
             return wrap(arr)
