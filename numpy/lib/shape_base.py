@@ -35,7 +35,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         Input array.
     args : any
         Additional arguments to `func1d`.
-    kwargs: any
+    kwargs : any
         Additional named arguments to `func1d`.
 
         .. versionadded:: 1.9.0
