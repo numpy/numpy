@@ -1234,7 +1234,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                                 ret_dims, NPY_INTP,
                                 ret_strides,
                                 PyArray_BYTES(ret_arr) + i*sizeof(npy_intp),
-                                0, 0, NULL);
+                                0, NPY_ARRAY_WRITEABLE, NULL);
         if (view == NULL) {
             goto fail;
         }
