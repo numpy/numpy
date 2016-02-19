@@ -138,7 +138,7 @@ class TestRandint(TestCase):
     rfunc = np.random.randint
 
     # valid integer/boolean types
-    itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
+    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
@@ -146,17 +146,17 @@ class TestRandint(TestCase):
 
     def test_bounds_checking(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
-            assert_raises(ValueError, self.rfunc, lbnd - 1 , ubnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, lbnd , ubnd + 1, dtype=dt)
-            assert_raises(ValueError, self.rfunc, ubnd , lbnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, 1 , 0, dtype=dt)
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
+            assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
             tgt = lbnd
@@ -212,11 +212,20 @@ class TestRandint(TestCase):
     def test_respect_dtype_singleton(self):
         # See gh-7203
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             self.assertEqual(sample.dtype, np.dtype(dt))
+
+        for dt in (np.bool, np.int, np.long):
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+
+            # gh-7284: Ensure that we get Python data types
+            sample = self.rfunc(lbnd, ubnd, dtype=dt)
+            self.assertFalse(hasattr(sample, 'dtype'))
+            self.assertEqual(type(sample), dt)
 
 
 class TestRandomDist(TestCase):
