@@ -702,6 +702,16 @@ class TestCreation(TestCase):
         d = np.array([Point2(), Point2(), Point2()])
         assert_equal(d.dtype, np.dtype(object))
 
+    def test_false_len_sequence(self):
+        # gh-7264, segfault for this example
+        class C:
+            def __getitem__(self, i):
+                raise IndexError
+            def __len__(self):
+                return 42
+
+        assert_raises(ValueError, np.array, C()) # segfault?
+
 
 class TestStructured(TestCase):
     def test_subarray_field_access(self):

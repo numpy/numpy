@@ -695,11 +695,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 
     /* obj is not a Sequence */
     if (!PySequence_Check(obj) ||
-#if defined(NPY_PY3K)
-        /* FIXME: XXX -- what is the correct thing to do here? */
-#else
-            PyInstance_Check(obj) ||
-#endif
             PySequence_Length(obj) < 0) {
         *maxndim = 0;
         PyErr_Clear();
