@@ -300,7 +300,7 @@ class TestDerivative(TestCase):
         assert_raises(ValueError, poly.polyder, [0], .5)
         assert_raises(ValueError, poly.polyder, [0], -1)
 
-        # check that zeroth deriviative does nothing
+        # check that zeroth derivative does nothing
         for i in range(5):
             tgt = [0]*i + [1]
             res = poly.polyder(tgt, m=0)

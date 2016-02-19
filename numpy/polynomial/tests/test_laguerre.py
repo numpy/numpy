@@ -297,7 +297,7 @@ class TestDerivative(TestCase):
         assert_raises(ValueError, lag.lagder, [0], .5)
         assert_raises(ValueError, lag.lagder, [0], -1)
 
-        # check that zeroth deriviative does nothing
+        # check that zeroth derivative does nothing
         for i in range(5):
             tgt = [0]*i + [1]
             res = lag.lagder(tgt, m=0)
