@@ -767,7 +767,7 @@ class TestMaskedArray(TestCase):
         assert_(str(t_ma[0]) == "([1, --, 3],)")
         assert_(repr(t_ma[0]) == "([1, --, 3],)")
 
-        # additonal tests with structured arrays
+        # additional tests with structured arrays
 
         t_2d = masked_array(data = [([[1, 2], [3,4]],)],
                             mask = [([[False, True], [True, False]],)],
@@ -906,7 +906,7 @@ class TestMaskedArrayArithmetic(TestCase):
         self.assertTrue(minimum(xm, xm).mask)
 
     def test_masked_singleton_equality(self):
-        # Tests (in)equality on masked snigleton
+        # Tests (in)equality on masked singleton
         a = array([1, 2, 3], mask=[1, 1, 0])
         assert_((a[0] == 0) is masked)
         assert_((a[0] != 0) is masked)
@@ -1803,11 +1803,11 @@ class TestFillingValues(TestCase):
         y = x.view(np.ndarray)
         y = x.view(type=np.ndarray)
 
-        # Check that fill_value can be overriden with view
+        # Check that fill_value can be overridden with view
         y = x.view(MaskedArray, fill_value=2)
         assert_(y.fill_value == 2)
 
-        # Check that fill_value can be overriden with view (using type=)
+        # Check that fill_value can be overridden with view (using type=)
         y = x.view(type=MaskedArray, fill_value=2)
         assert_(y.fill_value == 2)
 
@@ -3899,7 +3899,7 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_flatten_mask(self):
         # Tests flatten mask
-        # Standarad dtype
+        # Standard dtype
         mask = np.array([0, 0, 1], dtype=np.bool)
         assert_equal(flatten_mask(mask), mask)
         # Flexible dtype
@@ -3965,7 +3965,7 @@ class TestMaskedArrayFunctions(TestCase):
         test = np.ma.compressed(M(shape=(0,1,2)))
         assert_equal(test.ndim, 1)
 
-        # with .compessed() overriden
+        # with .compressed() overridden
         class M(MaskedArray):
             def compressed(self):
                 return 42

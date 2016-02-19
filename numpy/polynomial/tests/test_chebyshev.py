@@ -312,7 +312,7 @@ class TestDerivative(TestCase):
         assert_raises(ValueError, cheb.chebder, [0], .5)
         assert_raises(ValueError, cheb.chebder, [0], -1)
 
-        # check that zeroth deriviative does nothing
+        # check that zeroth derivative does nothing
         for i in range(5):
             tgt = [0]*i + [1]
             res = cheb.chebder(tgt, m=0)

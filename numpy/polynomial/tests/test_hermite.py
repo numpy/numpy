@@ -300,7 +300,7 @@ class TestDerivative(TestCase):
         assert_raises(ValueError, herm.hermder, [0], .5)
         assert_raises(ValueError, herm.hermder, [0], -1)
 
-        # check that zeroth deriviative does nothing
+        # check that zeroth derivative does nothing
         for i in range(5):
             tgt = [0]*i + [1]
             res = herm.hermder(tgt, m=0)

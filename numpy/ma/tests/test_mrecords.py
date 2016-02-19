@@ -209,7 +209,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.a.mask, [0, 0, 1, 1, 0])
         assert_equal(mbase.b.mask, [1, 1, 0, 0, 0])
         assert_equal(mbase.c.mask, [0, 0, 1, 1, 0])
-        # Reinitalizes and redo
+        # Reinitialize and redo
         mbase.mask = False
         mbase.fieldmask = nmask
         assert_equal(mbase.a.mask, [0, 0, 1, 1, 0])
