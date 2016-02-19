@@ -53,6 +53,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
  */
 #endif /* NPY_PY3K */
 
+/* Py3 changes PySlice_GetIndicesEx' first argument's type to PyObject* */
+#ifdef NPY_PY3K
+#  define NpySlice_GetIndicesEx PySlice_GetIndicesEx
+#else
+#  define NpySlice_GetIndicesEx(op, nop, start, end, step, slicelength) \
+    PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
+#endif
+
 /*
  * PyString -> PyBytes
  */
