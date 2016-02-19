@@ -1189,7 +1189,7 @@ cdef class RandomState:
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
 
-    def randint(self, low, high=None, size=None, dtype='l'):
+    def randint(self, low, high=None, size=None, dtype=int):
         """
         randint(low, high=None, size=None, dtype='l')
 
@@ -1216,7 +1216,7 @@ cdef class RandomState:
             Desired dtype of the result. All dtypes are determined by their
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
-            on the platform. The default value is 'l' (C long).
+            on the platform. The default value is 'np.int'.
 
             .. versionadded:: 1.11.0
 
@@ -1264,7 +1264,13 @@ cdef class RandomState:
             raise ValueError("low >= high")
 
         with self.lock:
-            return randfunc(low, high - 1, size, self.state_address)
+            ret = randfunc(low, high - 1, size, self.state_address)
+
+            if size is None:
+                if dtype in (np.bool, np.int, np.long):
+                    return dtype(ret)
+
+            return ret
 
     def bytes(self, npy_intp length):
         """
