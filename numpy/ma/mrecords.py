@@ -776,7 +776,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     # Create a new empty recarray
     newdtype = np.dtype(_data.dtype.descr + [(newfieldname, newfield.dtype)])
     newdata = recarray(_data.shape, newdtype)
-    # Add the exisintg field
+    # Add the existing field
     [newdata.setfield(_data.getfield(*f), *f)
          for f in _data.dtype.fields.values()]
     # Add the new field
