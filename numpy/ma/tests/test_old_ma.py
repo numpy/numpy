@@ -423,7 +423,7 @@ class TestMa(TestCase):
         assert_(eq(z, [99, 1, 1, 99, 99, 99]))
 
     def test_testMinMax2(self):
-        # Test of minumum, maximum.
+        # Test of minimum, maximum.
         assert_(eq(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3]))
         assert_(eq(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9]))
         x = arange(5)
