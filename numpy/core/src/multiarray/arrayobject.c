@@ -96,7 +96,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     }
 
     /*
-     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * Any writes to 'arr' will magically turn into writes to 'base', so we
      * should warn if necessary.
      */
     if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {

@@ -223,7 +223,7 @@ def removeHeader(source):
     return lines.getValue()
 
 def replaceDlamch(source):
-    """Replace dlamch_ calls with appropiate macros"""
+    """Replace dlamch_ calls with appropriate macros"""
     def repl(m):
         s = m.group(1)
         return dict(E='EPSILON', P='PRECISION', S='SAFEMINIMUM',

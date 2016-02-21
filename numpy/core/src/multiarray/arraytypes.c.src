@@ -575,7 +575,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     }
     memcpy(ov, ptr, PyArray_MIN(PyArray_DESCR(ap)->elsize,len));
     /*
-     * If string lenth is smaller than room in array
+     * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
      */
     if (PyArray_DESCR(ap)->elsize > len) {

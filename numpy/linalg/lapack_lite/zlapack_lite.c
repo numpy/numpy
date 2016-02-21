@@ -10044,7 +10044,7 @@ L80:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurence the dimension of the
+          the Z vector.  For each such occurrence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED2.
 
