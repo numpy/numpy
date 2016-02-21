@@ -23,6 +23,18 @@ Future Changes
 Compatibility notes
 ===================
 
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Indexing with floats raises ``IndexError``,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like raises ``IndexError``,
+  e.g., ``a['1', '2']``
+* Indexing with multiple ellipsis raises ``IndexError``,
+  e.g., ``a[..., ...]``.
+* Non-integers used as index values raise ``TypeError``,
+  e.g., in ``reshape``, ``take``, and specifying reduce axis.
+
 Relaxed stride checking is the default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
