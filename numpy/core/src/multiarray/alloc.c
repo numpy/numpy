@@ -142,7 +142,7 @@ NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data;
  * When the hook is called, the GIL will be held by the calling
  * thread.  The hook should be written to be reentrant, if it performs
  * operations that might cause new allocation events (such as the
- * creation/descruction numpy objects, or creating/destroying Python
+ * creation/destruction numpy objects, or creating/destroying Python
  * objects which might cause a gc)
  */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *

@@ -156,7 +156,7 @@ def matrix_power(M, n):
     >>> q = np.zeros((4, 4))
     >>> q[0:2, 0:2] = -i
     >>> q[2:4, 2:4] = i
-    >>> q # one of the three quarternion units not equal to 1
+    >>> q # one of the three quaternion units not equal to 1
     array([[ 0., -1.,  0.,  0.],
            [ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.],

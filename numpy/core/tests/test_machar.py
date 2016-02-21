@@ -17,7 +17,7 @@ class TestMachAr(TestCase):
 
     def test_underlow(self):
         # Regression test for #759:
-        # instanciating MachAr for dtype = np.float96 raises spurious warning.
+        # instantiating MachAr for dtype = np.float96 raises spurious warning.
         with errstate(all='raise'):
             try:
                 self._run_machar_highprec()

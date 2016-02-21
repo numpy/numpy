@@ -27,7 +27,7 @@ extern "C" CONFUSE_EMACS
 #include "__multiarray_api.h"
 
 
-/* C-API that requries previous API to be defined */
+/* C-API that requires previous API to be defined */
 
 #define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
 

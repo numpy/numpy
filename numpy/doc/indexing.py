@@ -158,8 +158,8 @@ Indexing Multi-dimensional arrays
 
 Things become more complex when multidimensional arrays are indexed,
 particularly with multidimensional index arrays. These tend to be
-more unusal uses, but theyare permitted, and they are useful for some
-problems. We'll  start with thesimplest multidimensional case (using
+more unusual uses, but they are permitted, and they are useful for some
+problems. We'll  start with the simplest multidimensional case (using
 the array y from the previous examples): ::
 
  >>> y[np.array([0,2,4]), np.array([0,1,2])]
@@ -211,7 +211,7 @@ such an array with an image with shape (ny, nx) with dtype=np.uint8
 lookup table) will result in an array of shape (ny, nx, 3) where a
 triple of RGB values is associated with each pixel location.
 
-In general, the shape of the resulant array will be the concatenation
+In general, the shape of the resultant array will be the concatenation
 of the shape of the index array (or the shape that all the index arrays
 were broadcast to) with the shape of any unused dimensions (those not
 indexed) in the array being indexed.

@@ -17,12 +17,12 @@ i.e.
  */
 /**end repeat1**/
 
-When using nested loops, you can optionally exlude particular
+When using nested loops, you can optionally exclude particular
 combinations of the variables using (inside the comment portion of the inner loop):
 
  :exclude: var1=value1, var2=value2, ...
 
-This will exlude the pattern where var1 is value1 and var2 is value2 when
+This will exclude the pattern where var1 is value1 and var2 is value2 when
 the result is being generated.
 
 
@@ -149,7 +149,7 @@ def parse_values(astr):
     # empty values, i.e., ()*4 yields ',,,'. The result is
     # split at ',' and a list of values returned.
     astr = parenrep.sub(paren_repl, astr)
-    # replaces occurences of xxx*3 with xxx, xxx, xxx
+    # replaces occurrences of xxx*3 with xxx, xxx, xxx
     astr = ','.join([plainrep.sub(paren_repl, x.strip())
                      for x in astr.split(',')])
     return astr.split(',')

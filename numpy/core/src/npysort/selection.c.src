@@ -7,7 +7,7 @@
  * http://ndevilla.free.fr/median/median/
  *
  * Quick select with median of 3 pivot is usually the fastest,
- * but the worst case scenario can be quadratic complexcity,
+ * but the worst case scenario can be quadratic complexity,
  * e.g. np.roll(np.arange(x), x / 2)
  * To avoid this if it recurses too much it falls back to the
  * worst case linear median of median of group 5 pivot strategy.

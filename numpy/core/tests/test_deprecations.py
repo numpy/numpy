@@ -72,7 +72,7 @@ class _VisibleDeprecationTestCase(object):
         exceptions : Exception or tuple of Exceptions
             Exception to expect when turning the warnings into an error.
             The default checks for DeprecationWarnings. If exceptions is
-            empty the function is expected to run successfull.
+            empty the function is expected to run successfully.
         args : tuple
             Arguments for `function`
         kwargs : dict
@@ -173,7 +173,7 @@ class _DeprecationTestCase(object):
         exceptions : Exception or tuple of Exceptions
             Exception to expect when turning the warnings into an error.
             The default checks for DeprecationWarnings. If exceptions is
-            empty the function is expected to run successfull.
+            empty the function is expected to run successfully.
         args : tuple
             Arguments for `function`
         kwargs : dict

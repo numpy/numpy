@@ -2,7 +2,7 @@
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
- * Please keep this independant of python ! Only basic types (npy_longdouble)
+ * Please keep this independent of python ! Only basic types (npy_longdouble)
  * can be used, otherwise, pure C, without any use of Python facilities
  *
  * How to add a function to this section
@@ -29,7 +29,7 @@
  *    ii) Avoid as much as possible to declare any function here. Declaring
  *    functions is not portable: some platforms define some function inline
  *    with a non standard identifier, for example, or may put another
- *    idendifier which changes the calling convention of the function. If you
+ *    identifier which changes the calling convention of the function. If you
  *    really have to, ALWAYS declare it for the one platform you are dealing
  *    with:
  *

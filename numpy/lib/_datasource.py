@@ -6,7 +6,7 @@ low-level details.  Through datasource, a researcher can obtain and use a
 file with one function call, regardless of location of the file.
 
 DataSource is meant to augment standard python libraries, not replace them.
-It should work seemlessly with standard file IO operations and the os
+It should work seamlessly with standard file IO operations and the os
 module.
 
 DataSource files can originate locally or remotely:
@@ -317,7 +317,7 @@ class DataSource (object):
         return a path to that local file.
 
         The search will include possible compressed versions of the file
-        and return the first occurence found.
+        and return the first occurrence found.
 
         """
 

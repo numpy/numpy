@@ -21,8 +21,8 @@ properly. Assuming that you have an unpacked LAPACK source tree in
 $ python ./make_lite.py wrapped_routines ~/LAPACK new-lite/
 
 This will grab the right routines, with dependencies, put them into the
-appropiate ``blas_lite.f``, ``dlapack_lite.f``, or ``zlapack_lite.f`` files,
-run ``f2c`` over them, then do some scrubbing similiar to that done to
+appropriate ``blas_lite.f``, ``dlapack_lite.f``, or ``zlapack_lite.f`` files,
+run ``f2c`` over them, then do some scrubbing similar to that done to
 generate the CLAPACK_ distribution.
 
 .. _CLAPACK: http://netlib.org/clapack/index.html

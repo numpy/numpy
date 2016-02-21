@@ -107,7 +107,7 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 }
 
 /*
- * Assigns the array from 'src' to 'dst, whereever the 'wheremask'
+ * Assigns the array from 'src' to 'dst, wherever the 'wheremask'
  * value is True. The strides must already have been broadcast.
  *
  * Returns 0 on success, -1 on failure.
@@ -230,7 +230,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /*
-     * Performance fix for expresions like "a[1000:6000] += x".  In this
+     * Performance fix for expressions like "a[1000:6000] += x".  In this
      * case, first an in-place add is done, followed by an assignment,
      * equivalently expressed like this:
      *

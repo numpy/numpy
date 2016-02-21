@@ -231,7 +231,7 @@ where our object creation housekeeping usually goes.
 * For view casting and new-from-template, the equivalent of
   ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
-The arguments that ``__array_finalize__`` recieves differ for the three
+The arguments that ``__array_finalize__`` receives differ for the three
 methods of instance creation above.
 
 The following code allows us to look at the call sequences and arguments:
