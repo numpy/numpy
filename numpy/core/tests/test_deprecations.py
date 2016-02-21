@@ -58,12 +58,12 @@ class _VisibleDeprecationTestCase(object):
 
         Parameters
         ----------
-        f : callable
+        function : callable
             The function to test
         num : int
             Number of VisibleDeprecationWarnings to expect. This should
             normally be 1.
-        ignore_other : bool
+        ignore_others : bool
             Whether warnings of the wrong type should be ignored (note that
             the message is not checked)
         function_fails : bool
@@ -74,9 +74,9 @@ class _VisibleDeprecationTestCase(object):
             The default checks for DeprecationWarnings. If exceptions is
             empty the function is expected to run successfull.
         args : tuple
-            Arguments for `f`
+            Arguments for `function`
         kwargs : dict
-            Keyword arguments for `f`
+            Keyword arguments for `function`
         """
         # reset the log
         self.log[:] = []
@@ -175,9 +175,9 @@ class _DeprecationTestCase(object):
             The default checks for DeprecationWarnings. If exceptions is
             empty the function is expected to run successfull.
         args : tuple
-            Arguments for `f`
+            Arguments for `function`
         kwargs : dict
-            Keyword arguments for `f`
+            Keyword arguments for `function`
         """
         # reset the log
         self.log[:] = []
