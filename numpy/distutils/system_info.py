@@ -1479,14 +1479,14 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
 
-        openblas_info = get_info('openblas_lapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
         lapack_mkl_info = get_info('lapack_mkl')
         if lapack_mkl_info:
             self.set_info(**lapack_mkl_info)
+            return
+
+        openblas_info = get_info('openblas_lapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
             return
 
         atlas_info = get_info('atlas_3_10_threads')
