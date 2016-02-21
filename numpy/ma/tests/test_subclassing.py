@@ -47,6 +47,14 @@ class SubArray(np.ndarray):
 subarray = SubArray
 
 
+class SubMaskedArray(MaskedArray):
+    """Pure subclass of MaskedArray, keeping some info on subclass."""
+    def __new__(cls, info=None, **kwargs):
+        obj = super(SubMaskedArray, cls).__new__(cls, **kwargs)
+        obj._optinfo['info'] = info
+        return obj
+
+
 class MSubArray(SubArray, MaskedArray):
 
     def __new__(cls, data, info={}, mask=nomask):
@@ -331,6 +339,18 @@ class TestSubclassing(TestCase):
                       np.ma.core.masked_print_option)
         mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
         self.assertTrue(str(mxcsub) == 'myprefix [-- 1 -- 3 4] mypostfix')
+
+    def test_pure_subclass_info_preservation(self):
+        # Test that ufuncs and methods conserve extra information consistently;
+        # see gh-7122.
+        arr1 = SubMaskedArray('test', data=[1,2,3,4,5,6])
+        arr2 = SubMaskedArray(data=[0,1,2,3,4,5])
+        diff1 = np.subtract(arr1, arr2)
+        self.assertTrue('info' in diff1._optinfo)
+        self.assertTrue(diff1._optinfo['info'] == 'test')
+        diff2 = arr1 - arr2
+        self.assertTrue('info' in diff2._optinfo)
+        self.assertTrue(diff2._optinfo['info'] == 'test')
 
 
 ###############################################################################

@@ -911,7 +911,7 @@ class _MaskedUnaryOperation:
         # Transform to
         masked_result = result.view(get_masked_subclass(a))
         masked_result._mask = m
-        masked_result._update_from(result)
+        masked_result._update_from(a)
         return masked_result
 
     def __str__(self):
@@ -999,7 +999,10 @@ class _MaskedBinaryOperation:
         # Transforms to a (subclass of) MaskedArray
         masked_result = result.view(get_masked_subclass(a, b))
         masked_result._mask = m
-        masked_result._update_from(result)
+        if isinstance(a, MaskedArray):
+            masked_result._update_from(a)
+        elif isinstance(b, MaskedArray):
+            masked_result._update_from(b)
         return masked_result
 
     def reduce(self, target, axis=0, dtype=None):
@@ -1030,7 +1033,6 @@ class _MaskedBinaryOperation:
                 return tr
         masked_tr = tr.view(tclass)
         masked_tr._mask = mr
-        masked_tr._update_from(tr)
         return masked_tr
 
     def outer(self, a, b):
@@ -1056,7 +1058,6 @@ class _MaskedBinaryOperation:
             return d
         masked_d = d.view(get_masked_subclass(a, b))
         masked_d._mask = m
-        masked_d._update_from(d)
         return masked_d
 
     def accumulate(self, target, axis=0):
@@ -1068,7 +1069,6 @@ class _MaskedBinaryOperation:
         t = filled(target, self.filly)
         result = self.f.accumulate(t, axis)
         masked_result = result.view(tclass)
-        masked_result._update_from(result)
         return masked_result
 
     def __str__(self):
@@ -1145,7 +1145,10 @@ class _DomainedBinaryOperation:
         # Transforms to a (subclass of) MaskedArray
         masked_result = result.view(get_masked_subclass(a, b))
         masked_result._mask = m
-        masked_result._update_from(result)
+        if isinstance(a, MaskedArray):
+            masked_result._update_from(a)
+        elif isinstance(b, MaskedArray):
+            masked_result._update_from(b)
         return masked_result
 
     def __str__(self):
