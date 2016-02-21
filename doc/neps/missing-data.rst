@@ -413,11 +413,11 @@ New ndarray Methods
 New functions added to the numpy namespace are::
 
     np.isna(arr) [IMPLEMENTED]
-        Returns a boolean array with True whereever the array is masked
+        Returns a boolean array with True wherever the array is masked
         or matches the NA bitpattern, and False elsewhere
 
     np.isavail(arr)
-        Returns a boolean array with False whereever the array is masked
+        Returns a boolean array with False wherever the array is masked
         or matches the NA bitpattern, and True elsewhere
 
 New functions added to the ndarray are::

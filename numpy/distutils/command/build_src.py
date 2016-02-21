@@ -24,7 +24,7 @@ from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
 
 def subst_vars(target, source, d):
-    """Substitute any occurence of @foo@ by d['foo'] from source file into
+    """Substitute any occurrence of @foo@ by d['foo'] from source file into
     target."""
     var = re.compile('@([a-zA-Z_]+)@')
     fs = open(source, 'r')

@@ -9,7 +9,7 @@ import re
 
 def get_sdist_tarball():
     """Return the name of the installer built by wininst command."""
-    # Yeah, the name logic is harcoded in distutils. We have to reproduce it
+    # Yeah, the name logic is hardcoded in distutils. We have to reproduce it
     # here
     name = "numpy-%s.zip" % get_numpy_version()
     return name

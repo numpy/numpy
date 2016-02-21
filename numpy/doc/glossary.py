@@ -182,7 +182,7 @@ Glossary
          >>> [item**2 for item in x]
          [1, 4, 9]
 
-       It is often used in combintion with ``enumerate``::
+       It is often used in combination with ``enumerate``::
          >>> keys = ['a','b','c']
          >>> for n, k in enumerate(keys):
          ...     print("Key %d: %s" % (n, k))

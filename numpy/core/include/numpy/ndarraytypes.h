@@ -661,7 +661,7 @@ typedef struct tagPyArrayObject_fields {
      * views occur.
      *
      * For creation from buffer object it
-     * points to an object that shold be
+     * points to an object that should be
      * decref'd on deletion
      *
      * For UPDATEIFCOPY flag this is an
@@ -813,7 +813,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_ELEMENTSTRIDES  0x0080
 
 /*
- * Array data is aligned on the appropiate memory address for the type
+ * Array data is aligned on the appropriate memory address for the type
  * stored according to how the compiler would align things (e.g., an
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)

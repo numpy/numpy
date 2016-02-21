@@ -1101,7 +1101,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  *          validate this!
  *          If an axis flagged for removal has a shape larger then one,
  *          the aligned flag (and in the future the contiguous flags),
- *          may need explicite update.
+ *          may need explicit update.
  *          (check also NPY_RELAXED_STRIDES_CHECKING)
  *
  * For example, this can be used to remove the reduction axes
