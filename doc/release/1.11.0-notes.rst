@@ -49,6 +49,15 @@ The following changes are scheduled for Numpy 1.12.0.
   to match that of floating point "not a number" (NaN) values: all
   comparisons involving NaT will return False, except for NaT != NaT which
   will return True.
+* Indexing with floats will raise IndexError,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like will raise ``IndexError``,
+  e.g., ``a['1', '2']``
+* Indexing with multiple ellipsis will raise ``IndexError``,
+  e.g., ``a[..., ...]``.
+* Non-integers used as index values will raise ``TypeError``,
+  e.g., in ``reshape``, ``take``, and specifying reduce axis.
+
 
 In a future release the following changes will be made.
 
@@ -117,21 +126,6 @@ arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
 
-DeprecationWarning to error
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Indexing with floats raises IndexError,
-  e.g., a[0, 0.0].
-* Indexing with non-integer array_like raises ``IndexError``,
-  e.g., ``a['1', '2']``
-* Indexing with multiple ellipsis raises ``IndexError``,
-  e.g., ``a[..., ...]``.
-* Indexing with boolean where integer expected raises ``IndexError``,
-  e.g., ``a[False:True:True]``.
-* Non-integers used as index values raise ``TypeError``,
-  e.g., in ``reshape``, ``take``, and specifying reduce axis.
-
-
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -142,6 +136,18 @@ FutureWarning to changed behavior
   due to a bug, sometimes no warning was raised and the dimensions were
   already preserved.
 
+``%`` and ``//`` operators
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+These operators are implemented with the ``remainder`` and ``floor_divide``
+functions respectively. Those functions are now based around ``fmod`` and are
+computed together so as to be compatible with each other and with the Python
+versions for float types.  The results should be marginally more accurate or
+outright bug fixes compared to the previous results, but they may
+differ significantly in cases where roundoff makes a difference in the integer
+returned by ``floor_divide``. Some corner cases also change, for instance, NaN
+is always returned for both functions when the divisor is zero,
+``divmod(1.0, inf)`` returns ``(0.0, 1.0)`` except on MSVC 2008, and
+``divmod(-1.0, inf)`` returns ``(-1.0, inf)``.
 
 C API
 ~~~~~
@@ -151,6 +157,7 @@ the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
 to preserve struct layout). These were never used for anything, so
 it's unlikely that any third-party code is using them either, but we
 mention it here for completeness.
+
 
 object dtype detection for old-style classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,6 +221,9 @@ New Features
   the fit, the coefficients of all other terms being constrained to zero.
   The change is backward compatible, passing a scalar ``deg`` will behave
   as before.
+
+* A divmod function for float types modeled after the Python version has
+  been added to the npy_math library.
 
 
 Improvements
