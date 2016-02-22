@@ -4262,6 +4262,29 @@ def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
 
+
+def test_sum_keepdims():
+
+    # Regression test for numpy/numpy#7312 which was due to masked_array.sum
+    # not supporting the keepdims option.
+
+    # First make sure keepdims works when called explicitly
+    result = np.sum(np.ma.masked_array([1, 2, 3], mask=[0, 0, 1]), keepdims=True)
+    assert result.shape == (1,)
+    assert result[0] == 3
+
+    # Also check that nanvar works correctly (which requires sum to support
+    # keepdims)
+    result = np.nanvar(np.ma.masked_array([1, 2, np.nan], mask=[0, 0, 1]))
+    assert result == 0.25
+
+    # Finally, also make sure that everything works correctly when using the
+    # 'out=' option
+    result = np.zeros(1)
+    np.sum(np.ma.masked_array([1, 2, 3], mask=[0, 0, 1]), keepdims=True, out=result)
+    assert result[0] == 3
+
+
 ###############################################################################
 if __name__ == "__main__":
     run_module_suite()
