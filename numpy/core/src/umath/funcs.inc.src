@@ -89,7 +89,7 @@ npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
         return i2;
     }
     else if (i2 == NULL) {
-        Py_INCREF(i2);
+        Py_INCREF(i1);
         return i1;
     }
     else {
