@@ -101,6 +101,11 @@ class TestNdpointer(TestCase):
         self.assertTrue(p.from_param(x))
         self.assertRaises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
+    def test_cache(self):
+        a1 = ndpointer(dtype=np.float64)
+        a2 = ndpointer(dtype=np.float64)
+        self.assertEqual(a1, a2)
+
 
 if __name__ == "__main__":
     run_module_suite()
