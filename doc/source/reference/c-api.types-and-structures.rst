@@ -542,8 +542,8 @@ PyArrayDescr_Type
 
         An array of function pointers to a particular sorting
         algorithms. A particular sorting algorithm is obtained using a
-        key (so far :c:data:`NPY_QUICKSORT`, :data`NPY_HEAPSORT`, and
-        :c:data:`NPY_MERGESORT` are defined). These sorts are done
+        key (so far :c:data:`NPY_QUICKSORT`, :c:data:`NPY_HEAPSORT`,
+        and :c:data:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
     .. c:member:: int argsort(void* start, npy_intp* result, npy_intp length, void *arr)
