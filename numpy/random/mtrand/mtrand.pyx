@@ -158,7 +158,9 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size,
     cdef npy_intp i
 
     if size is None:
-        return func(state)
+        with lock, nogil:
+            rv = func(state)
+        return rv
     else:
         array = <ndarray>np.empty(size, np.float64)
         length = PyArray_SIZE(array)
@@ -177,7 +179,9 @@ cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a
     cdef npy_intp i
 
     if size is None:
-        return func(state, a)
+        with lock, nogil:
+            rv = func(state, a)
+        return rv
     else:
         array = <ndarray>np.empty(size, np.float64)
         length = PyArray_SIZE(array)
@@ -229,7 +233,9 @@ cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a
     cdef npy_intp i
 
     if size is None:
-        return func(state, a, b)
+        with lock, nogil:
+            rv = func(state, a, b)
+        return rv
     else:
         array = <ndarray>np.empty(size, np.float64)
         length = PyArray_SIZE(array)
@@ -278,7 +284,9 @@ cdef object cont3_array_sc(rk_state *state, rk_cont3 func, object size, double a
     cdef npy_intp i
 
     if size is None:
-        return func(state, a, b, c)
+        with lock, nogil:
+            rv = func(state, a, b, c)
+        return rv
     else:
         array = <ndarray>np.empty(size, np.float64)
         length = PyArray_SIZE(array)
@@ -327,7 +335,9 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size, object lock
     cdef npy_intp i
 
     if size is None:
-        return func(state)
+        with lock, nogil:
+            rv = func(state)
+        return rv
     else:
         array = <ndarray>np.empty(size, int)
         length = PyArray_SIZE(array)
@@ -345,7 +355,9 @@ cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size,
     cdef npy_intp i
 
     if size is None:
-        return func(state, n, p)
+        with lock, nogil:
+            rv = func(state, n, p)
+        return rv
     else:
         array = <ndarray>np.empty(size, int)
         length = PyArray_SIZE(array)
@@ -392,7 +404,9 @@ cdef object discdd_array_sc(rk_state *state, rk_discdd func, object size,
     cdef npy_intp i
 
     if size is None:
-        return func(state, n, p)
+        with lock, nogil:
+            rv = func(state, n, p)
+        return rv
     else:
         array = <ndarray>np.empty(size, int)
         length = PyArray_SIZE(array)
@@ -439,7 +453,9 @@ cdef object discnmN_array_sc(rk_state *state, rk_discnmN func, object size,
     cdef npy_intp i
 
     if size is None:
-        return func(state, n, m, N)
+        with lock, nogil:
+            rv = func(state, n, m, N)
+        return rv
     else:
         array = <ndarray>np.empty(size, int)
         length = PyArray_SIZE(array)
@@ -488,7 +504,9 @@ cdef object discd_array_sc(rk_state *state, rk_discd func, object size,
     cdef npy_intp i
 
     if size is None:
-        return func(state, a)
+        with lock, nogil:
+            rv = func(state, a)
+        return rv
     else:
         array = <ndarray>np.empty(size, int)
         length = PyArray_SIZE(array)
