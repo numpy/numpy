@@ -100,6 +100,13 @@ to the returned array is expected to avoid accidental
 unpredictable writes.
 
 
+BLIS support in ``numpy.distutils``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building against the BLAS implementation provided by the BLIS library is now
+supported.  See the ``[blis]`` section in ``site.cfg.example`` (in the root of
+the numpy repo or source distribution).
+
+
 Improvements
 ============
 
