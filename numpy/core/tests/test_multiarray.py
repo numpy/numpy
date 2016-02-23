@@ -593,6 +593,7 @@ class TestCreation(TestCase):
         for dt in types:
             d = np.zeros((30 * 1024**2,), dtype=dt)
             assert_(not d.any())
+            del(d)
 
     def test_zeros_obj(self):
         # test initialization from PyLong(0)
