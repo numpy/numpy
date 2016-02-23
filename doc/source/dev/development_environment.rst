@@ -203,3 +203,18 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
 
 .. _Waf: https://code.google.com/p/waf/
+
+Understanding the code & getting started
+----------------------------------------
+
+The best strategy to better understand the code base is to pick something you
+want to change and start reading the code to figure out how it works. When in 
+doubt, you can ask questions on the mailing list. It is perfectly okay if your
+pull requests aren't perfect, the community is always happy to help. As a 
+volunteer project, things do sometimes get dropped and it's totally fine to 
+ping us if something has sat without a response for about two to four weeks.
+
+So go ahead and pick something that annoys or confuses you about numpy, 
+experiment with the code, hang around for discussions or go through the 
+reference documents to try to fix it. Things will fall in place and soon 
+you'll have a pretty good understanding of the project as a whole. Good Luck!
