@@ -459,6 +459,15 @@ improved precision. This should be useful in packages such as Theano
 where the precision of float16 is adequate and its smaller footprint is
 desirable.
 
+``sinc`` now accepts optional `scale` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Scale is the factor applied to `x` before passing it to the mathematical
+sinc function. The previous (default) scale was `np.pi`. Two string
+arguments are recognized in addition to any array_like that broadcasts
+to the shape of the input array: 'normalized' and 'unnormalized'. The
+current behavior is 'normalized' by default: sinc(x) = sin(pi*x)/(pi*x).
+The mathematical function is 'unnormalized': sinc(x) = sin(x)/x.
+
 
 Changes
 =======

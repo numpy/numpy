@@ -1528,7 +1528,7 @@ class TestTrapz(TestCase):
 class TestSinc(TestCase):
 
     def test_simple(self):
-        assert_(sinc(0) == 1)
+        assert_equal(sinc(0), 1)
         w = sinc(np.linspace(-1, 1, 100))
         # check symmetry
         assert_array_almost_equal(w, flipud(w), 7)
@@ -1540,6 +1540,45 @@ class TestSinc(TestCase):
         y3 = sinc(tuple(x))
         assert_array_equal(y1, y2)
         assert_array_equal(y1, y3)
+
+    def test_scale(self):
+        x = np.linspace(-1, 1, 100)
+
+        # Check backwards-compatibility of default
+        assert_array_equal(sinc(x, scale='normalized'), sinc(x))
+
+        # Check unnormalized
+        assert_equal(sinc(0, scale='unnormalized'), 1)
+        assert_almost_equal(sinc(np.pi, scale='unnormalized'), 0)
+        assert_almost_equal(sinc(np.pi / 2.0, scale='unnormalized'), 2.0 / np.pi)
+
+        # Check scalar
+        assert_equal(sinc(0, scale=2), 1)
+        assert_almost_equal(sinc(np.pi / 2.0, scale=2.0), 0)
+        assert_almost_equal(sinc(np.pi / 4.0, scale=2.0), 2.0 / np.pi)
+
+        # Check negative
+        assert_equal(sinc(0, scale=-5), 1)
+        assert_equal(sinc(x, scale=-5.0), sinc(x, scale=5.0))
+
+        # Test huge
+        assert_equal(sinc(0, scale=1e20), 1)
+
+        # Test broadcast
+        y = np.arange(3 * 4).reshape(3, 4)
+        np.random.shuffle(y.ravel())
+        scales = np.arange(4) + 1
+        out = sinc(y, scale=scales)
+        assert_equal(out.shape, y.shape)
+        for i in range(scales.shape[0]):
+            assert_almost_equal(sinc(y[:, i], scale=scales[i]), out[:, i])
+        # Same size as input
+        assert_array_equal(sinc(y + 1, scale=1. / (y + 1)), np.sin(1))
+        # Incorrect broadcast
+        assert_raises(ValueError, sinc, y, scale=scales[0:-1])
+
+        # Check bad names
+        assert_raises(ValueError, sinc, x, scale='foo')
 
 
 class TestHistogram(TestCase):

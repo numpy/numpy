@@ -3834,17 +3834,33 @@ def kaiser(M, beta):
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
 
 
-def sinc(x):
-    """
-    Return the sinc function.
+def sinc(x, scale = 'normalized'):
+    r"""
+    Apply the sinc function to an array, element-wise.
 
-    The sinc function is :math:`\\sin(\\pi x)/(\\pi x)`.
+    The normalized sinc function is :math:`\frac{\sin(\pi x)}{\pi x}`.
+    The unnormalized sinc function is :math:`\frac{\sin(x)}{x}`. The
+    normalized version is used more commonly because it has roots at
+    integer values of `x` and the integral is exactly one.
+
+    For arbitrary scales, the function is defined as
+    :math:`\frac{\sin(scale \cdot x)}{scale \cdot x}`. In this case, the
+    integral from negative infinity to infinity is
+    :math:`\frac{\pi}{scale}` and roots are at multiples of
+    `\frac{\pi}{scale}`.
 
     Parameters
     ----------
     x : ndarray
         Array (possibly multi-dimensional) of values for which to to
         calculate ``sinc(x)``.
+    scale : {'normalized', 'unnormalized', scalar or array_like}, optional
+        The scale to apply to `x` when computing the sinc function. The
+        default is the most common engineering usage, 'normalized'. The
+        mathematical definition is 'unnormalized'. If an arbitrary scale
+        is provided as an array, it must broadcast against `x`. This
+        parameter should be used as a keyword only parameter. Support for
+        it as a positional parameter may be removed in the near future.
 
     Returns
     -------
@@ -3858,16 +3874,16 @@ def sinc(x):
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
-    including in anti-aliasing, in the construction of a Lanczos resampling
-    filter, and in interpolation.
+    including in anti-aliasing, in the construction of a Lanczos
+    resampling filter, and in interpolation.
 
     For bandlimited interpolation of discrete-time signals, the ideal
     interpolation kernel is proportional to the sinc function.
 
     References
     ----------
-    .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
-           Resource. http://mathworld.wolfram.com/SincFunction.html
+    .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram
+           Web Resource. http://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
            http://en.wikipedia.org/wiki/Sinc_function
 
@@ -3890,9 +3906,9 @@ def sinc(x):
             -5.84680802e-02,  -8.90384387e-02,  -8.40918587e-02,
             -4.92362781e-02,  -3.89804309e-17])
 
-    >>> plt.plot(x, np.sinc(x))
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Sinc Function")
+    >>> plt.plot(x, np.sinc(x), x, np.sinc(x, scale='unnormalized'))
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.title("Normalized and Un-normalized Sinc Functions")
     <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
     <matplotlib.text.Text object at 0x...>
@@ -3908,9 +3924,25 @@ def sinc(x):
     <matplotlib.image.AxesImage object at 0x...>
 
     """
+    if isinstance(scale, str):
+        if scale == 'normalized':
+            scale = pi
+        elif scale == 'unnormalized':
+            scale = 1.0
+        else:
+            raise ValueError("{} is not a valid scaling for `sinc`".format(scale))
+
     x = np.asanyarray(x)
-    y = pi * where(x == 0, 1.0e-20, x)
-    return sin(y)/y
+
+    if isinstance(x.dtype, np.inexact):
+        min_val = np.finfo(x.dtype).tiny
+    else:
+        min_val = np.finfo(np.float_).tiny
+
+    y = where(x == 0, min_val, x)
+    if np.any(scale != 1.0):
+        y *= scale
+    return sin(y) / y
 
 
 def msort(a):
