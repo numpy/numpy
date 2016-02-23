@@ -5021,6 +5021,10 @@ cdef class RandomState:
 
         Modify a sequence in-place by shuffling its contents.
 
+        This function only shuffles the array along the first axis of a
+        multi-dimensional array. The order of sub-arrays is changed but
+        their contents remains the same.
+
         Parameters
         ----------
         x : array_like
@@ -5037,8 +5041,7 @@ cdef class RandomState:
         >>> arr
         [1 7 5 2 9 4 3 6 0 8]
 
-        This function only shuffles the array along the first index of a
-        multi-dimensional array:
+        Multi-dimensional arrays are only shuffled along the first axis:
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> np.random.shuffle(arr)
