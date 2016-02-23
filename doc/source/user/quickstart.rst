@@ -30,7 +30,7 @@ number of axes is *rank*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` is an
 array of rank 1, because it has one axis. That axis has a length of 3.
-In example pictured below, the array has rank 2 (it is 2-dimensional).
+In the example pictured below, the array has rank 2 (it is 2-dimensional).
 The first dimension (axis) has a length of 2, the second dimension has a
 length of 3.
 
