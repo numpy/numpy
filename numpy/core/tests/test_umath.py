@@ -172,6 +172,33 @@ class TestOut(TestCase):
                     assert_(type(r2) == np.ndarray)
                 assert_(w[0].category is DeprecationWarning)
 
+    def test_out_ndlike(self):
+        # Check that __array__ is called on out
+        class NDLike(object):
+            def __init__(self, values):
+                self.values = values
+
+            def __array__(self):
+                return self.values
+
+        a = NDLike(np.array([0.5]))
+        b = NDLike(np.array([1.5]))
+        out = NDLike(np.array([0.0]))
+
+        result = np.add(a, b, out=out)
+        assert_(result[0] == 2.0)
+        assert_(out.values[0] == 2.0)
+        assert_(result is out.values)
+
+        # Test with values not an array
+        out_list = NDLike([0.0])
+        with assert_raises(TypeError):
+            np.add(a, b, out=out_list)
+
+        out_none = NDLike(None)
+        with assert_raises(TypeError):
+            np.add(a, b, out=out_none)
+
 
 class TestDivision(TestCase):
     def test_division_int(self):

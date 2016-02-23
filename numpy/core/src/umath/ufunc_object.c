@@ -730,6 +730,8 @@ fail:
 static int
 _set_out_array(PyObject *obj, PyArrayObject **store)
 {
+    PyObject* array_method;
+        
     if (obj == Py_None) {
         /* Translate None to NULL */
         return 0;
@@ -744,6 +746,29 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
         *store = (PyArrayObject *)obj;
 
         return 0;
+    }
+
+    /* If out is not an array, try calling __array__ */
+    array_method = PyObject_GetAttrString(obj, "__array__");
+    if (array_method != NULL) {
+        /* If __array__ exists, call it and use as output */
+        PyObject* array = PyObject_CallFunctionObjArgs(array_method, NULL); 
+        Py_DECREF(array_method);
+        if PyArray_Check(array) {
+            if (PyArray_FailUnlessWriteable((PyArrayObject *)array,
+                                            "output array") < 0) {
+                return -1;
+            }
+            *store = (PyArrayObject *)array;
+
+            return 0;
+        }
+        else {
+            Py_XDECREF(array);
+            PyErr_SetString(PyExc_TypeError, 
+                            "out.__array__() must be of ArrayType");
+            return -1;
+        }
     }
     PyErr_SetString(PyExc_TypeError, "return arrays must be of ArrayType");
 
