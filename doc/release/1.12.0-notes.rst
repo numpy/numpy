@@ -158,6 +158,14 @@ the Python global interpreter lock.
 Changes
 =======
 
+All array-like methods are now called with keyword arguments in fromnumeric.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Internally, many array-like methods in fromnumeric.py were being called with
+positional arguments instead of keyword arguments as their external signatures
+were doing. This caused a complication in the downstream 'pandas' library
+that encountered an issue with 'numpy' compatibility. Now, all array-like
+methods in this module are called with keyword arguments instead.
+
 Deprecations
 ============
 
