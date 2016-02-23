@@ -1596,11 +1596,14 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
  * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
+ * #isnan = 1, 0*3#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    if (!run_@kind@_simd_@TYPE@(args, dimensions, steps)) {
+    char * margs[] = {args[0], args[0], args[1]};
+    npy_intp msteps[] = {steps[0], steps[0], steps[1]};
+    if (!@isnan@ || !run_binary_simd_not_equal_@TYPE@(margs, dimensions, msteps)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             *((npy_bool *)op1) = @func@(in1) != 0;
