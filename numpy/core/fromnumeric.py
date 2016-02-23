@@ -119,8 +119,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     try:
         take = a.take
     except AttributeError:
-        return _wrapit(a, 'take', indices, axis, out, mode)
-    return take(indices, axis, out, mode)
+        return _wrapit(a, 'take', indices, axis=axis, out=out, mode=mode)
+    return take(indices, axis=axis, out=out, mode=mode)
 
 
 # not deprecated --- copy if necessary, view otherwise
@@ -393,8 +393,8 @@ def repeat(a, repeats, axis=None):
     try:
         repeat = a.repeat
     except AttributeError:
-        return _wrapit(a, 'repeat', repeats, axis)
-    return repeat(repeats, axis)
+        return _wrapit(a, 'repeat', repeats, axis=axis)
+    return repeat(repeats, axis=axis)
 
 
 def put(a, ind, v, mode='raise'):
@@ -451,7 +451,7 @@ def put(a, ind, v, mode='raise'):
         raise TypeError("argument 1 must be numpy.ndarray, "
                         "not {name}".format(name=type(a).__name__))
 
-    return put(ind, v, mode)
+    return put(ind, v, mode=mode)
 
 
 def swapaxes(a, axis1, axis2):
@@ -550,10 +550,13 @@ def transpose(a, axes=None):
     (2, 1, 3)
 
     """
+    # The array method takes 'axes' as a var-args
+    # argument and not a keyword argument
     try:
         transpose = a.transpose
     except AttributeError:
         return _wrapit(a, 'transpose', axes)
+
     return transpose(axes)
 
 
@@ -713,7 +716,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     try:
         argpartition = a.argpartition
     except AttributeError:
-        return _wrapit(a, 'argpartition',kth, axis, kind, order)
+        return _wrapit(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
     return argpartition(kth, axis, kind=kind, order=order)
 
 
@@ -824,7 +827,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         axis = 0
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis, kind, order)
+    a.sort(axis=axis, kind=kind, order=order)
     return a
 
 
@@ -912,8 +915,8 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     try:
         argsort = a.argsort
     except AttributeError:
-        return _wrapit(a, 'argsort', axis, kind, order)
-    return argsort(axis, kind, order)
+        return _wrapit(a, 'argsort', axis=axis, kind=kind, order=order)
+    return argsort(axis=axis, kind=kind, order=order)
 
 
 def argmax(a, axis=None, out=None):
@@ -972,8 +975,8 @@ def argmax(a, axis=None, out=None):
     try:
         argmax = a.argmax
     except AttributeError:
-        return _wrapit(a, 'argmax', axis, out)
-    return argmax(axis, out)
+        return _wrapit(a, 'argmax', axis=axis, out=out)
+    return argmax(axis=axis, out=out)
 
 
 def argmin(a, axis=None, out=None):
@@ -1032,8 +1035,8 @@ def argmin(a, axis=None, out=None):
     try:
         argmin = a.argmin
     except AttributeError:
-        return _wrapit(a, 'argmin', axis, out)
-    return argmin(axis, out)
+        return _wrapit(a, 'argmin', axis=axis, out=out)
+    return argmin(axis=axis, out=out)
 
 
 def searchsorted(a, v, side='left', sorter=None):
@@ -1092,8 +1095,8 @@ def searchsorted(a, v, side='left', sorter=None):
     try:
         searchsorted = a.searchsorted
     except AttributeError:
-        return _wrapit(a, 'searchsorted', v, side, sorter)
-    return searchsorted(v, side, sorter)
+        return _wrapit(a, 'searchsorted', v, side=side, sorter=sorter)
+    return searchsorted(v, side=side, sorter=sorter)
 
 
 def resize(a, new_shape):
@@ -1314,9 +1317,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     """
     if isinstance(a, np.matrix):
         # Make diagonal of matrix 1-D to preserve backward compatibility.
-        return asarray(a).diagonal(offset, axis1, axis2)
+        return asarray(a).diagonal(offset=offset, axis1=axis1, axis2=axis2)
     else:
-        return asanyarray(a).diagonal(offset, axis1, axis2)
+        return asanyarray(a).diagonal(offset=offset, axis1=axis1, axis2=axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
@@ -1377,9 +1380,9 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     if isinstance(a, np.matrix):
         # Get trace of matrix via an array to preserve backward compatibility.
-        return asarray(a).trace(offset, axis1, axis2, dtype, out)
+        return asarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
     else:
-        return asanyarray(a).trace(offset, axis1, axis2, dtype, out)
+        return asanyarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
 
 
 
@@ -1485,9 +1488,9 @@ def ravel(a, order='C'):
 
     """
     if isinstance(a, np.matrix):
-        return asarray(a).ravel(order)
+        return asarray(a).ravel(order=order)
     else:
-        return asanyarray(a).ravel(order)
+        return asanyarray(a).ravel(order=order)
 
 
 def nonzero(a):
@@ -1682,8 +1685,8 @@ def compress(condition, a, axis=None, out=None):
     try:
         compress = a.compress
     except AttributeError:
-        return _wrapit(a, 'compress', condition, axis, out)
-    return compress(condition, axis, out)
+        return _wrapit(a, 'compress', condition, axis=axis, out=out)
+    return compress(condition, axis=axis, out=out)
 
 
 def clip(a, a_min, a_max, out=None):
@@ -1739,8 +1742,8 @@ def clip(a, a_min, a_max, out=None):
     try:
         clip = a.clip
     except AttributeError:
-        return _wrapit(a, 'clip', a_min, a_max, out)
-    return clip(a_min, a_max, out)
+        return _wrapit(a, 'clip', a_min, a_max, out=out)
+    return clip(a_min, a_max, out=out)
 
 
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
@@ -2133,8 +2136,8 @@ def cumsum(a, axis=None, dtype=None, out=None):
     try:
         cumsum = a.cumsum
     except AttributeError:
-        return _wrapit(a, 'cumsum', axis, dtype, out)
-    return cumsum(axis, dtype, out)
+        return _wrapit(a, 'cumsum', axis=axis, dtype=dtype, out=out)
+    return cumsum(axis=axis, dtype=dtype, out=out)
 
 
 def cumproduct(a, axis=None, dtype=None, out=None):
@@ -2150,8 +2153,8 @@ def cumproduct(a, axis=None, dtype=None, out=None):
     try:
         cumprod = a.cumprod
     except AttributeError:
-        return _wrapit(a, 'cumprod', axis, dtype, out)
-    return cumprod(axis, dtype, out)
+        return _wrapit(a, 'cumprod', axis=axis, dtype=dtype, out=out)
+    return cumprod(axis=axis, dtype=dtype, out=out)
 
 
 def ptp(a, axis=None, out=None):
@@ -2195,8 +2198,8 @@ def ptp(a, axis=None, out=None):
     try:
         ptp = a.ptp
     except AttributeError:
-        return _wrapit(a, 'ptp', axis, out)
-    return ptp(axis, out)
+        return _wrapit(a, 'ptp', axis=axis, out=out)
+    return ptp(axis=axis, out=out)
 
 
 def amax(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2609,8 +2612,8 @@ def cumprod(a, axis=None, dtype=None, out=None):
     try:
         cumprod = a.cumprod
     except AttributeError:
-        return _wrapit(a, 'cumprod', axis, dtype, out)
-    return cumprod(axis, dtype, out)
+        return _wrapit(a, 'cumprod', axis=axis, dtype=dtype, out=out)
+    return cumprod(axis=axis, dtype=dtype, out=out)
 
 
 def ndim(a):
@@ -2821,8 +2824,8 @@ def around(a, decimals=0, out=None):
     try:
         round = a.round
     except AttributeError:
-        return _wrapit(a, 'round', decimals, out)
-    return round(decimals, out)
+        return _wrapit(a, 'round', decimals=decimals, out=out)
+    return round(decimals=decimals, out=out)
 
 
 def round_(a, decimals=0, out=None):
@@ -2839,8 +2842,8 @@ def round_(a, decimals=0, out=None):
     try:
         round = a.round
     except AttributeError:
-        return _wrapit(a, 'round', decimals, out)
-    return round(decimals, out)
+        return _wrapit(a, 'round', decimals=decimals, out=out)
+    return round(decimals=decimals, out=out)
 
 
 def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
