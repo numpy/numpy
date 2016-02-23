@@ -559,7 +559,7 @@ static void
 sse2_signbit_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
 {
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
-        op[i] = npy_signbit(ip1[i]) != 0;
+        op[i] = npy_signbit(ip1[i]);
     }
     LOOP_BLOCKED(@type@, 16) {
         @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
@@ -576,7 +576,7 @@ sse2_signbit_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
         }
     }
     LOOP_BLOCKED_END {
-        op[i] = npy_signbit(ip1[i]) != 0;
+        op[i] = npy_signbit(ip1[i]);
     }
 }
 
@@ -600,7 +600,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
 #endif
 #endif
     LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
-        op[i] = npy_@kind@(ip1[i]) != 0;
+        op[i] = npy_@kind@(ip1[i]);
     }
     LOOP_BLOCKED(@type@, 64) {
         @vtype@ a = @vpre@_load_@vsuf@(&ip1[i + 0 * 16 / sizeof(@type@)]);
@@ -641,7 +641,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
         sse2_compress4_to_byte_@TYPE@(r1, r2, r3, &r4, &op[i]);
     }
     LOOP_BLOCKED_END {
-        op[i] = npy_@kind@(ip1[i]) != 0;
+        op[i] = npy_@kind@(ip1[i]);
     }
     /* silence exceptions from comparisons */
     npy_clear_floatstatus();
