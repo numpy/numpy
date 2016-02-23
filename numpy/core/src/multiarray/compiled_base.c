@@ -802,13 +802,10 @@ static int sequence_to_arrays(PyObject *seq,
  *             recasting is needed.
  * paramname - Name to be used for error string.
  */
-static int _cast_to_intp_or_fail(PyArrayObject **op,
-                                 char *paramname)
+static int
+_cast_to_intp_or_fail(PyArrayObject **op, char *paramname)
 {
     PyArray_Descr *dtype = PyArray_DescrFromType(NPY_INTP);
-    if (dtype == NULL) {
-        return -1;
-    }
 
     if (!PyArray_CanCastArrayTo(*op, dtype, NPY_SAME_KIND_CASTING)) {
         if (PyArray_SIZE(*op) == 0) {
@@ -986,9 +983,6 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
                                NPY_ITER_ALIGNED|
                                NPY_ITER_ALLOCATE;
     dtype[0] = PyArray_DescrFromType(NPY_INTP);
-    if (dtype[0] == NULL) {
-        goto fail;
-    }
 
     for (i = 1; i <= dimensions.len; ++i) {
         dtype[i] = dtype[0];
