@@ -421,7 +421,7 @@ From other objects
 
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
-        can be done safely, otherwise an error is reaised.
+        can be done safely, otherwise an error is raised.
 
     .. c:var:: NPY_ARRAY_UPDATEIFCOPY
 
