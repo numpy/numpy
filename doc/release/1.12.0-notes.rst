@@ -148,5 +148,8 @@ Deprecations
 
 Assignment of ndarray object's ``data`` attribute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Assigning the 'data' attribute is an inherently unsafe operation as pointed out
-in gh-7083. Such a capability will be removed in the future.
+Assigning the 'data' attribute is an inherently unsafe operation as pointed out in gh-7083. Such a capability will be removed in the future.
+
+num attribute of linspace
+~~~~~~~~~~~~~~~~~~~~~~~~~
+*np.linspace* now raises DeprecationWarning when num cannot be safely interpreted as an integer.
