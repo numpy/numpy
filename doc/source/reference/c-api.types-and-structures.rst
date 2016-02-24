@@ -871,8 +871,8 @@ PyArrayIter_Type
    .. c:member:: npy_intp *PyArrayIterObject.backstrides
 
        How many bytes needed to jump from the end of a dimension back
-       to its beginning. Note that *backstrides* [k]= *strides* [k]*d
-       *ims_m1* [k], but it is stored here as an optimization.
+       to its beginning. Note that `backstrides`[k]= `strides`[k] *
+       `dims_m1`[k], but it is stored here as an optimization.
 
    .. c:member:: npy_intp *PyArrayIterObject.factors
 
