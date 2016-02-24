@@ -578,6 +578,22 @@ class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(a.__setattr__, args=('data', b.data))
 
 
+class TestLinspaceInvalidNumParameter(_DeprecationTestCase):
+    """Argument to the num parameter in linspace that cannot be 
+    safely interpreted as an integer is deprecated in 1.12.0.
+
+    Argument to the num parameter in linspace that cannot be 
+    safely interpreted as an integer should not be allowed. 
+    In the interest of not breaking code that passes
+    an argument that could still be interpreted as an integer, a
+    DeprecationWarning will be issued for the time being to give 
+    developers time to refactor relevant code.
+    """
+    def test_float_arg(self):
+        # 2016-02-25, PR#7328
+        self.assert_deprecated(np.linspace, args=(0, 10, 2.5))
+
+
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()

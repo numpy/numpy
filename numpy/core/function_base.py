@@ -1,9 +1,23 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
+import operator
+
 __all__ = ['logspace', 'linspace']
 
 from . import numeric as _nx
 from .numeric import result_type, NaN, shares_memory, MAY_SHARE_BOUNDS, TooHardError
+
+def _index_deprecate(i, stacklevel=2):
+    try:
+        i = operator.index(i)
+    except TypeError:
+        msg = ("object of type {} cannot be safely interpreted as "
+               "an integer.".format(type(i)))
+        stacklevel += 1
+        warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
+        i = int(i)
+    return i
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
@@ -81,7 +95,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     >>> plt.show()
 
     """
-    num = int(num)
+    # 2016-02-25, 1.12
+    num = _index_deprecate(num)
     if num < 0:
         raise ValueError("Number of samples, %s, must be non-negative." % num)
     div = (num - 1) if endpoint else num
