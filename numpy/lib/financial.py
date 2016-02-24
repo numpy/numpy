@@ -651,7 +651,7 @@ def irr(values):
     """
     res = np.roots(values[::-1])
     mask = (res.imag == 0) & (res.real > 0)
-    if res.size == 0:
+    if not mask.any():
         return np.nan
     res = res[mask].real
     # NPV(rate) = 0 can have more than one solution so we return
