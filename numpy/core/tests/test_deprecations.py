@@ -741,6 +741,7 @@ class TestDatetime64Timezone(_DeprecationTestCase):
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
 
     @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    @dec.knownfailureif(sys.version_info[0:2] < (2, 7))
     def test_datetime(self):
         tz = pytz.timezone('US/Eastern')
         dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
