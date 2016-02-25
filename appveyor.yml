@@ -23,7 +23,7 @@ build_script:
   - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
   - conda config --set always_yes yes
   - conda update conda
-  - conda install cython nose
+  - conda install cython nose pytz
   - pip install . -vvv
 
 test_script:

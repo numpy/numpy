@@ -88,6 +88,7 @@ before_install:
   - python -V
   - pip install --upgrade pip setuptools
   - pip install nose
+  - pip install pytz
   # pip install coverage
   # Speed up install by not compiling Cython
   - pip install --install-option="--no-cython-compile" Cython
