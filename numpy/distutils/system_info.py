@@ -72,7 +72,7 @@ The file 'site.cfg' is looked for in
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
 section ALL has options that are the default for each section. The
-available sections are fftw, atlas, and x11. Appropiate defaults are
+available sections are fftw, atlas, and x11. Appropriate defaults are
 used if nothing is specified.
 
 The order of finding the locations of resources is the following:
