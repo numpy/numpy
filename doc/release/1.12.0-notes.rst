@@ -99,6 +99,12 @@ keyword argument. It can be set to False when no write operation
 to the returned array is expected to avoid accidental
 unpredictable writes.
 
+Generalized ``flip``
+~~~~~~~~~~~~~~~~~~~~
+``flipud`` and ``fliplr`` reverse the elements of an array along axis=0 and
+axis=1 respectively. The newly added ``flip`` function reverses the elements of
+an array along any given axis.
+
 
 BLIS support in ``numpy.distutils``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

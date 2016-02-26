@@ -23,6 +23,89 @@ from numpy.lib import (
 from numpy.compat import long
 
 
+def get_mat(n):
+    data = np.arange(n)
+    data = np.add.outer(data, data)
+    return data
+
+
+class TestFlip(TestCase):
+    def test_axes(self):
+        self.assertRaises(ValueError, np.flip, np.ones(4), axis=1)
+        self.assertRaises(ValueError, np.flip, np.ones((4, 4)), axis=2)
+        self.assertRaises(ValueError, np.flip, np.ones((4, 4)), axis=-3)
+
+    def test_basic_lr(self):
+        a = get_mat(4)
+        b = a[:, ::-1]
+        assert_equal(np.flip(a, 1), b)
+        a = [[0, 1, 2],
+             [3, 4, 5]]
+        b = [[2, 1, 0],
+             [5, 4, 3]]
+        assert_equal(np.flip(a, 1), b)
+
+    def test_basic_ud(self):
+        a = get_mat(4)
+        b = a[::-1, :]
+        assert_equal(np.flip(a, 0), b)
+        a = [[0, 1, 2],
+             [3, 4, 5]]
+        b = [[3, 4, 5],
+             [0, 1, 2]]
+        assert_equal(np.flip(a, 0), b)
+
+    def test_3d_swap_axis0(self):
+        a = np.array([[[0, 1],
+                       [2, 3]],
+
+                      [[4, 5],
+                       [6, 7]]])
+
+        b = np.array([[[4, 5],
+                       [6, 7]],
+
+                      [[0, 1],
+                       [2, 3]]])
+
+        assert_equal(np.flip(a, 0), b)
+
+    def test_3d_swap_axis1(self):
+        a = np.array([[[0, 1],
+                       [2, 3]],
+
+                      [[4, 5],
+                       [6, 7]]])
+
+        b = np.array([[[2, 3],
+                       [0, 1]],
+
+                      [[6, 7],
+                       [4, 5]]])
+
+        assert_equal(np.flip(a, 1), b)
+
+    def test_3d_swap_axis2(self):
+        a = np.array([[[0, 1],
+                      [2, 3]],
+
+                     [[4, 5],
+                      [6, 7]]])
+
+        b = np.array([[[1, 0],
+                    [3, 2]],
+
+                   [[5, 4],
+                    [7, 6]]])
+
+        assert_equal(np.flip(a, 2), b)
+
+    def test_4d(self):
+        a = np.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5)
+        for i in range(a.ndim):
+            assert_equal(np.flip(a, i), np.flipud(a.swapaxes(0, i)).swapaxes(i, 0))
+
+
 class TestAny(TestCase):
 
     def test_basic(self):
