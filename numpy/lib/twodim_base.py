@@ -57,7 +57,7 @@ def fliplr(m):
 
     Notes
     -----
-    Equivalent to A[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
 
     Examples
     --------
@@ -72,7 +72,7 @@ def fliplr(m):
            [ 3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
-    >>> np.all(np.fliplr(A)==A[:,::-1,...])
+    >>> np.all(np.fliplr(A) == A[:,::-1,...])
     True
 
     """
@@ -107,7 +107,7 @@ def flipud(m):
 
     Notes
     -----
-    Equivalent to ``A[::-1,...]``.
+    Equivalent to ``m[::-1,...]``.
     Does not require the array to be two-dimensional.
 
     Examples
@@ -123,7 +123,7 @@ def flipud(m):
            [ 1.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
-    >>> np.all(np.flipud(A)==A[::-1,...])
+    >>> np.all(np.flipud(A) == A[::-1,...])
     True
 
     >>> np.flipud([1,2])
