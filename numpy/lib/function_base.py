@@ -3336,7 +3336,7 @@ def _ureduce(a, func, **kwargs):
     func : callable
         Reduction function capable of receiving a single axis argument.
         It is is called with `a` as first argument followed by `kwargs`.
-     kwargs : keyword arguments
+    kwargs : keyword arguments
         additional keyword arguments to pass to `func`.
 
     Returns
