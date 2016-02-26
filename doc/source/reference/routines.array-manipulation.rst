@@ -109,6 +109,7 @@ Rearranging elements
 .. autosummary::
    :toctree: generated/
 
+   flip
    fliplr
    flipud
    reshape
