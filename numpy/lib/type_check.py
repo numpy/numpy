@@ -357,13 +357,13 @@ def nan_to_num(x):
     """
     x = _nx.array(x, subok=True)
     xtype = x.dtype.type
+    isscalar = (x.ndim == 0)
+    x = x[None] if isscalar else x
     if not issubclass(xtype, _nx.inexact):
-        return x
+        return x[0] if isscalar else x
 
     iscomplex = issubclass(xtype, _nx.complexfloating)
-    isscalar = (x.ndim == 0)
 
-    x = x[None] if isscalar else x
     dest = (x.real, x.imag) if iscomplex else (x,)
     maxf, minf = _getmaxmin(x.real.dtype)
     for d in dest:
