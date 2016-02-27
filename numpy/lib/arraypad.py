@@ -1270,7 +1270,7 @@ def pad(array, pad_width, mode=None, **kwargs):
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
     >>> a = [[1, 2], [3, 4]]
-    >>> np.lib.pad(a, ((3, 2), (2, 3)), 'minimum')
+    >>> np.lib.pad(a, np.array(((3, 2), (2, 3))), 'minimum')
     array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
