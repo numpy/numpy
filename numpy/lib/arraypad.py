@@ -1052,7 +1052,7 @@ def _normalize_shape(ndarray, shape, cast_to_int=True):
             arr = arr.repeat(2, axis=1)
         elif arr.shape[0] == ndims:
             # Input correctly formatted, pass it on as `arr`
-            arr = shape
+            pass
         else:
             fmt = "Unable to create correctly shaped tuple from %s"
             raise ValueError(fmt % (shape,))
