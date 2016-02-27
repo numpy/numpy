@@ -4,14 +4,14 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
-    where, int8, int16, int32, int64, empty, promote_types, diagonal,
+    absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
+    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     )
-from numpy.core import iinfo
+from numpy.core import iinfo, transpose
 
 
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
 
@@ -134,59 +134,6 @@ def flipud(m):
     if m.ndim < 1:
         raise ValueError("Input must be >= 1-d.")
     return m[::-1, ...]
-
-
-def rot90(m, k=1):
-    """
-    Rotate an array by 90 degrees in the counter-clockwise direction.
-
-    The first two dimensions are rotated; therefore, the array must be at
-    least 2-D.
-
-    Parameters
-    ----------
-    m : array_like
-        Array of two or more dimensions.
-    k : integer
-        Number of times the array is rotated by 90 degrees.
-
-    Returns
-    -------
-    y : ndarray
-        Rotated array.
-
-    See Also
-    --------
-    fliplr : Flip an array horizontally.
-    flipud : Flip an array vertically.
-
-    Examples
-    --------
-    >>> m = np.array([[1,2],[3,4]], int)
-    >>> m
-    array([[1, 2],
-           [3, 4]])
-    >>> np.rot90(m)
-    array([[2, 4],
-           [1, 3]])
-    >>> np.rot90(m, 2)
-    array([[4, 3],
-           [2, 1]])
-
-    """
-    m = asanyarray(m)
-    if m.ndim < 2:
-        raise ValueError("Input must >= 2-d.")
-    k = k % 4
-    if k == 0:
-        return m
-    elif k == 1:
-        return fliplr(m).swapaxes(0, 1)
-    elif k == 2:
-        return fliplr(flipud(m))
-    else:
-        # k == 3
-        return fliplr(m.swapaxes(0, 1))
 
 
 def eye(N, M=None, k=0, dtype=float):
