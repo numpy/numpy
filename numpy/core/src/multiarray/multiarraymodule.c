@@ -4488,7 +4488,7 @@ intern_strings(void)
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_array_finalize && npy_ma_str_ufunc &&
+           npy_ma_str_buffer && npy_ma_str_ufunc &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
            npy_ma_str_ndmin;
 }
