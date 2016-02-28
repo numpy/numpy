@@ -278,10 +278,16 @@ class TestNanToNum(TestCase):
 
     def test_integer(self):
         vals = nan_to_num(1)
-        assert_all(vals == 1)
+        assert_all(type(vals) == np.int64)
         vals = nan_to_num([1])
         assert_array_equal(vals, np.array([1], np.int))
 
+    def test_float(self):
+        vals = nan_to_num(1.0)
+        assert_all(type(vals) == np.float64)
+        vals = nan_to_num([1.0])
+        assert_array_equal(vals, np.array([1.0], np.float))
+        
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
         assert_all(vals == 1+1j)
