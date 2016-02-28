@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, kron, tile
+    vsplit, dstack, column_stack, kron, tile
     )
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
@@ -175,8 +175,15 @@ class TestSplit(TestCase):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+class TestColumnStack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, column_stack, 1)
+
 
 class TestDstack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, dstack, 1)
+
     def test_0D_array(self):
         a = np.array(1)
         b = np.array(2)
@@ -212,6 +219,9 @@ class TestHsplit(TestCase):
     """Only testing for integer splits.
 
     """
+    def test_non_iterable(self):
+        assert_raises(ValueError, hsplit, 1, 1)
+
     def test_0D_array(self):
         a = np.array(1)
         try:
@@ -238,6 +248,13 @@ class TestVsplit(TestCase):
     """Only testing for integer splits.
 
     """
+    def test_non_iterable(self):
+        assert_raises(ValueError, vsplit, 1, 1)
+
+    def test_0D_array(self):
+        a = np.array(1)
+        assert_raises(ValueError, vsplit, a, 2)
+
     def test_1D_array(self):
         a = np.array([1, 2, 3, 4])
         try:
@@ -256,6 +273,20 @@ class TestVsplit(TestCase):
 
 class TestDsplit(TestCase):
     # Only testing for integer splits.
+    def test_non_iterable(self):
+        assert_raises(ValueError, dsplit, 1, 1)
+
+    def test_0D_array(self):
+        a = np.array(1)
+        assert_raises(ValueError, dsplit, a, 2)
+
+    def test_1D_array(self):
+        a = np.array([1, 2, 3, 4])
+        try:
+            dsplit(a, 2)
+            assert_(0)
+        except ValueError:
+            pass
 
     def test_2D_array(self):
         a = np.array([[1, 2, 3, 4],
