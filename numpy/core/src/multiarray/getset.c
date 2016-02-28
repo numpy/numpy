@@ -321,66 +321,6 @@ array_data_get(PyArrayObject *self)
 #endif
 }
 
-/*
- * TODO: Given view semantics, I think this function is a really
- *       bad idea, and should be removed!
- */
-static int
-array_data_set(PyArrayObject *self, PyObject *op)
-{
-    void *buf;
-    Py_ssize_t buf_len;
-    int writeable=1;
-
-    if (op == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array data");
-        return -1;
-    }
-    if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
-        writeable = 0;
-        if (PyObject_AsReadBuffer(op, (const void **)&buf, &buf_len) < 0) {
-            PyErr_SetString(PyExc_AttributeError,
-                            "object does not have single-segment " \
-                            "buffer interface");
-            return -1;
-        }
-    }
-    if (!PyArray_ISONESEGMENT(self)) {
-        PyErr_SetString(PyExc_AttributeError, "cannot set single-" \
-                        "segment buffer for discontiguous array");
-        return -1;
-    }
-    if (PyArray_NBYTES(self) > buf_len) {
-        PyErr_SetString(PyExc_AttributeError, "not enough data for array");
-        return -1;
-    }
-    if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
-        PyArray_XDECREF(self);
-        PyDataMem_FREE(PyArray_DATA(self));
-    }
-    if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
-                                                NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
-        }
-        Py_DECREF(PyArray_BASE(self));
-        ((PyArrayObject_fields *)self)->base = NULL;
-    }
-    Py_INCREF(op);
-    if (PyArray_SetBaseObject(self, op) < 0) {
-        return -1;
-    }
-    ((PyArrayObject_fields *)self)->data = buf;
-    ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
-    if (!writeable) {
-        PyArray_CLEARFLAGS(self, ~NPY_ARRAY_WRITEABLE);
-    }
-    return 0;
-}
-
-
 static PyObject *
 array_itemsize_get(PyArrayObject *self)
 {
@@ -941,7 +881,7 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"data",
         (getter)array_data_get,
-        (setter)array_data_set,
+        NULL,
         NULL, NULL},
     {"itemsize",
         (getter)array_itemsize_get,
