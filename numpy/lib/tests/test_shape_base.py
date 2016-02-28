@@ -220,7 +220,7 @@ class TestHsplit(TestCase):
 
     """
     def test_non_iterable(self):
-        assert_raises(ValueError, hsplit, 1,1)
+        assert_raises(ValueError, hsplit, 1, 1)
 
     def test_0D_array(self):
         a = np.array(1)
@@ -249,15 +249,11 @@ class TestVsplit(TestCase):
 
     """
     def test_non_iterable(self):
-        assert_raises(ValueError, vsplit, 1,1)
+        assert_raises(ValueError, vsplit, 1, 1)
 
     def test_0D_array(self):
         a = np.array(1)
-        try:
-            vsplit(a, 2)
-            assert_(0)
-        except ValueError:
-            pass
+        assert_raises(ValueError, vsplit, a, 2)
 
     def test_1D_array(self):
         a = np.array([1, 2, 3, 4])
@@ -278,15 +274,11 @@ class TestVsplit(TestCase):
 class TestDsplit(TestCase):
     # Only testing for integer splits.
     def test_non_iterable(self):
-        assert_raises(ValueError, dsplit, 1,1)
+        assert_raises(ValueError, dsplit, 1, 1)
 
     def test_0D_array(self):
         a = np.array(1)
-        try:
-            dsplit(a, 2)
-            assert_(0)
-        except ValueError:
-            pass
+        assert_raises(ValueError, dsplit, a, 2)
 
     def test_1D_array(self):
         a = np.array([1, 2, 3, 4])
