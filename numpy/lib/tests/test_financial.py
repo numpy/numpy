@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_almost_equal,
-    assert_allclose
+    assert_allclose, assert_equal
     )
 
 
@@ -25,6 +25,11 @@ class TestFinancial(TestCase):
         assert_almost_equal(np.irr(v), 0.06206, 2)
         v = [-5, 10.5, 1, -8, 1]
         assert_almost_equal(np.irr(v), 0.0886, 2)
+
+        # Test that if there is no solution then np.irr returns nan
+        # Fixes gh-6744
+        v = [-1, -2, -3]
+        assert_equal(np.irr(v), np.nan)
 
     def test_pv(self):
         assert_almost_equal(np.pv(0.07, 20, 12000, 0), -127128.17, 2)
