@@ -130,6 +130,27 @@
 # include_dirs = /opt/OpenBLAS/include
 # runtime_library_dirs = /opt/OpenBLAS/lib
 
+# BLIS
+# ----
+# BLIS (https://github.com/flame/blis) also provides a BLAS interface.  It's a
+# relatively new library, its performance in some cases seems to match that of
+# MKL and OpenBLAS, but it hasn't been benchmarked with Numpy or Scipy yet.
+#
+# Notes on compiling BLIS itself:
+#   - the CBLAS interface (needed by Numpy) isn't built by default; define
+#     BLIS_ENABLE_CBLAS to build it.
+#   - ``./configure auto`` doesn't support 32-bit builds, see gh-7294 for
+#     details.
+# Notes on compiling Numpy against BLIS:
+#   - ``include_dirs`` below should be the directory where the BLIS cblas.h
+#     header is installed.
+#
+# [blis]
+# libraries = blis
+# library_dirs = /home/username/blis/lib
+# include_dirs = /home/username/blis/include/blis
+# runtime_library_dirs = /home/username/blis/lib
+
 # MKL
 #----
 # MKL is Intel's very optimized yet proprietary implementation of BLAS and
