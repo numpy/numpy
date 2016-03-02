@@ -79,6 +79,9 @@ static int
 assign_reduce_identity_zero(PyArrayObject *result, void *data);
 
 static int
+assign_reduce_identity_minusone(PyArrayObject *result, void *data);
+
+static int
 assign_reduce_identity_one(PyArrayObject *result, void *data);
 
 
@@ -2414,6 +2417,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                     case PyUFunc_One:
                         assign_reduce_identity_one(op[i], NULL);
                         break;
+                    case PyUFunc_MinusOne:
+                        assign_reduce_identity_minusone(op[i], NULL);
+                        break;
                     case PyUFunc_None:
                     case PyUFunc_ReorderableNone:
                         PyErr_Format(PyExc_ValueError,
@@ -2831,6 +2837,19 @@ assign_reduce_identity_one(PyArrayObject *result, void *NPY_UNUSED(data))
 }
 
 static int
+assign_reduce_identity_minusone(PyArrayObject *result, void *NPY_UNUSED(data))
+{
+    static PyObject *MinusOne = NULL;
+
+    if (MinusOne == NULL) {
+        if ((MinusOne = PyInt_FromLong(-1)) == NULL) {
+            return -1;
+        }
+    }
+    return PyArray_FillWithScalar(result, MinusOne);
+}
+
+static int
 reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
             npy_intp *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
@@ -2983,6 +3002,18 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                 assign_identity = NULL;
             }
             break;
+        case PyUFunc_MinusOne:
+            assign_identity = &assign_reduce_identity_minusone;
+            reorderable = 1;
+            /*
+             * The identity for a dynamic dtype like
+             * object arrays can't be used in general
+             */
+            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+                assign_identity = NULL;
+            }
+            break;
+
         case PyUFunc_None:
             reorderable = 0;
             break;
@@ -5572,6 +5603,8 @@ ufunc_get_identity(PyUFuncObject *ufunc)
         return PyInt_FromLong(1);
     case PyUFunc_Zero:
         return PyInt_FromLong(0);
+    case PyUFunc_MinusOne:
+        return PyInt_FromLong(-1);
     }
     Py_RETURN_NONE;
 }

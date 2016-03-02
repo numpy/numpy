@@ -251,15 +251,21 @@ typedef struct _tagPyUFuncObject {
 #endif
 
 /*
+ * UFunc has unit of 0, and the order of operations can be reordered
+ * This case allows reduction with multiple axes at once.
+ */
+#define PyUFunc_Zero 0
+/*
  * UFunc has unit of 1, and the order of operations can be reordered
  * This case allows reduction with multiple axes at once.
  */
 #define PyUFunc_One 1
 /*
- * UFunc has unit of 0, and the order of operations can be reordered
- * This case allows reduction with multiple axes at once.
+ * UFunc has unit of -1, and the order of operations can be reordered
+ * This case allows reduction with multiple axes at once. Intended for
+ * bitwise_and reduction.
  */
-#define PyUFunc_Zero 0
+#define PyUFunc_MinusOne 2
 /*
  * UFunc has no unit, and the order of operations cannot be reordered.
  * This case does not allow reduction with multiple axes at once.
