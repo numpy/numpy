@@ -507,7 +507,7 @@ defdict = {
           TD(O, f='PyNumber_Or'),
           ),
 'bitwise_xor':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.bitwise_xor'),
           None,
           TD(bints),
