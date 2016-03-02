@@ -13,6 +13,7 @@ sys.path.pop(0)
 Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
+AllOnes = "PyUFunc_MinusOne"
 ReorderableNone = "PyUFunc_ReorderableNone"
 
 # Sentinel value to specify using the full type description in the
@@ -493,7 +494,7 @@ defdict = {
           TD(flts, f="logaddexp2", astype={'e':'f'})
           ),
 'bitwise_and':
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, AllOnes,
           docstrings.get('numpy.core.umath.bitwise_and'),
           None,
           TD(bints),
