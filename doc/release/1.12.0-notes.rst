@@ -76,10 +76,10 @@ The following functions are changed: ``sum``, ``product``,
 ``nansum``, ``nanprod``, ``nanmean``, ``nanmedian``, ``nanvar``,
 ``nanstd``
 
-
-DeprecationWarning to error
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+``bitwise_and`` identity changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous identity was 1, it is now -1. See entry in `Improvements`_ for
+more explanation.
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +111,7 @@ Improvements
 ============
 
 *np.loadtxt* now supports a single integer as ``usecol`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Instead of using ``usecol=(n,)`` to read the nth column of a file
 it is now allowed to use ``usecol=n``. Also the error message is
 more user friendly when a non-integer is passed as a column index.
@@ -119,6 +119,14 @@ more user friendly when a non-integer is passed as a column index.
 Additional estimators for ``histogram``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins`` argument.
+
+``bitwise_and`` identity changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous identity was 1 with the result that all bits except the LSB were
+masked out when the reduce method was used.  The new identity is -1, which
+should work properly on twos complement machines as all bits will be set to
+one.
+
 
 Changes
 =======
