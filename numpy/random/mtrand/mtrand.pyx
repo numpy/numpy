@@ -891,10 +891,10 @@ cdef class RandomState:
     Parameters
     ----------
     seed : {None, int, array_like}, optional
-        Random seed initializing the pseudo-random number generator.
-        Can be an integer, an array (or other sequence) of integers of
-        any length, or ``None`` (the default).
-        If `seed` is ``None``, then `RandomState` will try to read data from
+        Random seed used to initialize the pseudo-random number generator.  Can
+        be any integer between 0 and 2**32 - 1 inclusive, an array (or other
+        sequence) of such integers, or ``None`` (the default).  If `seed` is
+        ``None``, then `RandomState` will try to read data from
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
 
@@ -952,13 +952,13 @@ cdef class RandomState:
             else:
                 idx = operator.index(seed)
                 if idx > int(2**32 - 1) or idx < 0:
-                    raise ValueError("Seed must be between 0 and 4294967295")
+                    raise ValueError("Seed must be between 0 and 2**32 - 1")
                 with self.lock:
                     rk_seed(idx, self.internal_state)
         except TypeError:
             obj = np.asarray(seed).astype(np.int64, casting='safe')
             if ((obj > int(2**32 - 1)) | (obj < 0)).any():
-                raise ValueError("Seed must be between 0 and 4294967295")
+                raise ValueError("Seed must be between 0 and 2**32 - 1")
             obj = obj.astype('L', casting='unsafe')
             with self.lock:
                 init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
