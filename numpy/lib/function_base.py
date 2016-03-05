@@ -905,7 +905,10 @@ def average(a, axis=None, weights=None, returned=False):
         avg = a.mean(axis)
         scl = avg.dtype.type(a.size/avg.size)
     else:
-        a = a + 0.0
+        # Cast bool, unsigned int, and int to float64 by default
+        if issubclass(a.dtype.type, (integer, bool)):
+            a = a.astype('float64')
+
         wgt = np.asarray(weights)
         # Sanity checks
         if a.shape != wgt.shape:
